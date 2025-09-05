@@ -30,7 +30,6 @@ import java.util.Set;
 public final class DirtyTracker {
 
     private final Set<Observable> dirty = Collections.newSetFromMap(new IdentityHashMap<>());
-
     private final Listener listener = new Listener(this);
 
     public void track(Observable observable) {
