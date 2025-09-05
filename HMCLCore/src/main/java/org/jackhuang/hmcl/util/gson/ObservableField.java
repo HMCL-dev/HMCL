@@ -30,6 +30,7 @@ import javafx.beans.property.SetProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
+import javafx.collections.ObservableSet;
 import org.jackhuang.hmcl.util.TypeUtils;
 
 import java.lang.invoke.MethodHandles;
@@ -46,15 +47,15 @@ public abstract class ObservableField<T> {
 
     public static <T> ObservableField<T> of(MethodHandles.Lookup lookup, Field field) {
         String name;
-        List<String> alternate;
+        List<String> alternateNames;
 
         SerializedName serializedName = field.getAnnotation(SerializedName.class);
         if (serializedName == null) {
             name = field.getName();
-            alternate = List.of();
+            alternateNames = List.of();
         } else {
             name = serializedName.value();
-            alternate = List.of(serializedName.alternate());
+            alternateNames = List.of(serializedName.alternate());
         }
 
         VarHandle varHandle;
@@ -68,40 +69,44 @@ public abstract class ObservableField<T> {
             Type listType = TypeUtils.getSupertype(field.getGenericType(), field.getType(), List.class);
             if (!(listType instanceof ParameterizedType))
                 throw new IllegalArgumentException("Cannot resolve the list type of " + field.getName());
-            return new CollectionField<>(name, alternate, varHandle, listType);
-        } else if (SetProperty.class.isAssignableFrom(field.getType())) {
+            return new CollectionField<>(name, alternateNames, varHandle, listType);
+        } else if (ObservableSet.class.isAssignableFrom(field.getType())) {
             Type setType = TypeUtils.getSupertype(field.getGenericType(), field.getType(), Set.class);
             if (!(setType instanceof ParameterizedType))
                 throw new IllegalArgumentException("Cannot resolve the set type of " + field.getName());
-            return new CollectionField<>(name, alternate, varHandle, setType);
+            return new CollectionField<>(name, alternateNames, varHandle, setType);
         } else if (ObservableMap.class.isAssignableFrom(field.getType())) {
             Type mapType = TypeUtils.getSupertype(field.getGenericType(), field.getType(), Map.class);
             if (!(mapType instanceof ParameterizedType))
                 throw new IllegalArgumentException("Cannot resolve the map type of " + field.getName());
-            return new MapField<>(name, alternate, varHandle, mapType);
+            return new MapField<>(name, alternateNames, varHandle, mapType);
         } else if (Property.class.isAssignableFrom(field.getType())) {
             Type propertyType = TypeUtils.getSupertype(field.getGenericType(), field.getType(), Property.class);
             if (!(propertyType instanceof ParameterizedType))
                 throw new IllegalArgumentException("Cannot resolve the element type of " + field.getName());
             Type elementType = ((ParameterizedType) propertyType).getActualTypeArguments()[0];
-            return new PropertyField<>(name, alternate, varHandle, elementType);
+            return new PropertyField<>(name, alternateNames, varHandle, elementType);
         } else {
             throw new IllegalArgumentException("Field " + field.getName() + " is not a property or observable collection");
         }
     }
 
     protected final String serializedName;
-    protected final List<String> alternate;
+    protected final List<String> alternateNames;
     protected final VarHandle varHandle;
 
-    private ObservableField(String serializedName, List<String> alternate, VarHandle varHandle) {
+    private ObservableField(String serializedName, List<String> alternateNames, VarHandle varHandle) {
         this.serializedName = serializedName;
-        this.alternate = alternate;
+        this.alternateNames = alternateNames;
         this.varHandle = varHandle;
     }
 
     public String getSerializedName() {
         return serializedName;
+    }
+
+    public List<String> getAlternateNames() {
+        return alternateNames;
     }
 
     public Observable get(T value) {
@@ -157,6 +162,10 @@ public abstract class ObservableField<T> {
                 ((ObservableList<Object>) fieldValue).setAll((List<Object>) deserialized);
             } else if (fieldValue instanceof SetProperty) {
                 ((SetProperty<Object>) fieldValue).set(FXCollections.observableSet((Set<Object>) deserialized));
+            } else if (fieldValue instanceof ObservableSet) {
+                ObservableSet<Object> set = (ObservableSet<Object>) fieldValue;
+                set.clear();
+                set.addAll((Set<Object>) deserialized);
             } else {
                 throw new JsonParseException("Unsupported field type: " + fieldValue.getClass());
             }
