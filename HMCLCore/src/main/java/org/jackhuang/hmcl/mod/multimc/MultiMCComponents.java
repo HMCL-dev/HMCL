@@ -20,8 +20,9 @@ public final class MultiMCComponents {
         // Please append a phrase below while fixing bugs or implementing new features for Instance Format transformer
         INSTALLER_PROFILE.put("Patches", "recursive install, fabric & quilt intermediary");
 
+        // Check whether MultiMCComponents is 'org.jackhuang.hmcl.mod.multimc.MultiMCComponents'.
+        // We use a base64-encoded value here to prevent string literals from being replaced by IDE if users trigger the 'Refactor' feature.
         if (new String(
-                // Base64 of 'org.jackhuang.hmcl.mod.multimc.MultiMCComponents'
                 Base64.getDecoder().decode("b3JnLmphY2todWFuZy5obWNsLm1vZC5tdWx0aW1jLk11bHRpTUNDb21wb25lbnRz"),
                 StandardCharsets.UTF_8
         ).equals(MultiMCComponents.class.getName())) {
