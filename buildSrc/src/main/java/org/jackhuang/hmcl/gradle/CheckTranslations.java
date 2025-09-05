@@ -117,7 +117,7 @@ public abstract class CheckTranslations extends DefaultTask {
         public void checkMisspelled(PropertiesFile file, String key, String value,
                                     String correct, String misspelled) {
             if (value.contains(misspelled)) {
-                if (!reportedMisspellings.add(Map.entry(file, misspelled))) {
+                if (reportedMisspellings.add(Map.entry(file, misspelled))) {
                     LOGGER.warn("The misspelled '{}' in '{}' should be replaced by '{}'",
                             misspelled, file.getFileName(), correct);
                 }
@@ -132,7 +132,7 @@ public abstract class CheckTranslations extends DefaultTask {
 
         public void check() {
             if (failedCount > 0)
-                throw new GradleException("Failed to check translations, " + failedCount + " failed");
+                throw new GradleException("Failed to check translations, " + failedCount + " found problems.");
         }
     }
 }
