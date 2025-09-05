@@ -28,10 +28,7 @@ import org.gradle.api.tasks.TaskAction;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.function.BiConsumer;
 
 /// @author Glavo
@@ -103,36 +100,100 @@ public abstract class CheckTranslations extends DefaultTask {
 
     private static final class Checker {
 
-        int failedCount;
+        private final Map<PropertiesFile, Set<Problem>> problems = new LinkedHashMap<>();
+        private int problemsCount;
 
         public void checkKeyExists(PropertiesFile file, String key) {
             if (!file.properties.containsKey(key)) {
-                LOGGER.warn("{} missing key '{}'", file.getFileName(), key);
-                onFailure();
+                onFailure(new Problem.MissingKey(file, key));
             }
         }
-
-        private final Set<Map.Entry<PropertiesFile, String>> reportedMisspellings = new HashSet<>();
 
         public void checkMisspelled(PropertiesFile file, String key, String value,
                                     String correct, String misspelled) {
             if (value.contains(misspelled)) {
-                if (reportedMisspellings.add(Map.entry(file, misspelled))) {
-                    LOGGER.warn("The misspelled '{}' in '{}' should be replaced by '{}'",
-                            misspelled, file.getFileName(), correct);
-                }
-
-                onFailure();
+                onFailure(new Problem.Misspelled(file, key, value, correct, misspelled));
             }
         }
 
-        public void onFailure() {
-            failedCount++;
+        public void onFailure(Problem problem) {
+            problemsCount++;
+            problems.computeIfAbsent(problem.file, ignored -> new LinkedHashSet<>())
+                    .add(problem);
         }
 
         public void check() {
-            if (failedCount > 0)
-                throw new GradleException("Failed to check translations, " + failedCount + " found problems.");
+            if (problemsCount > 0) {
+                problems.forEach((key, problems) -> {
+                    problems.forEach(problem -> {
+                        LOGGER.warn(problem.getMessage());
+                    });
+                });
+
+                throw new GradleException("Failed to check translations, " + problemsCount + " found problems.");
+            }
         }
+    }
+
+    private static abstract sealed class Problem {
+        final PropertiesFile file;
+
+        Problem(PropertiesFile file) {
+            this.file = file;
+        }
+
+        public abstract String getMessage();
+
+        private static final class MissingKey extends Problem {
+            private final String key;
+
+            MissingKey(PropertiesFile file, String key) {
+                super(file);
+                this.key = key;
+            }
+
+            @Override
+            public String getMessage() {
+                return "%s missing key '%s'".formatted(file.getFileName(), key);
+            }
+        }
+
+        private static final class Misspelled extends Problem {
+            private final String key;
+            private final String value;
+            private final String correct;
+            private final String misspelled;
+
+            Misspelled(PropertiesFile file, String key, String value, String correct, String misspelled) {
+                super(file);
+                this.key = key;
+                this.value = value;
+                this.correct = correct;
+                this.misspelled = misspelled;
+            }
+
+            @Override
+            public String getMessage() {
+                return "The misspelled '%1$s' in '%5$s' should be replaced by '%4$s'"
+                        .formatted(
+                                file.getFileName(),
+                                key, value,
+                                correct, misspelled
+                        );
+            }
+
+            @Override
+            public int hashCode() {
+                return Objects.hash(file, misspelled);
+            }
+
+            @Override
+            public boolean equals(Object obj) {
+                return obj instanceof Misspelled that
+                        && this.file.equals(that.file)
+                        && this.misspelled.equals(that.misspelled);
+            }
+        }
+
     }
 }
