@@ -126,7 +126,7 @@ public abstract class CheckTranslations extends DefaultTask {
             if (problemsCount > 0) {
                 problems.forEach((key, problems) -> {
                     problems.forEach(problem -> {
-                        LOGGER.warn(problem.getMessage());
+                        LOGGER.warn("{}: {}", key.getFileName(), problem.getMessage());
                     });
                 });
 
@@ -154,7 +154,7 @@ public abstract class CheckTranslations extends DefaultTask {
 
             @Override
             public String getMessage() {
-                return "%s missing key '%s'".formatted(file.getFileName(), key);
+                return "missing key '%s'".formatted(key);
             }
         }
 
@@ -174,12 +174,7 @@ public abstract class CheckTranslations extends DefaultTask {
 
             @Override
             public String getMessage() {
-                return "The misspelled '%1$s' in '%5$s' should be replaced by '%4$s'"
-                        .formatted(
-                                file.getFileName(),
-                                key, value,
-                                correct, misspelled
-                        );
+                return "misspelled '%s' should be replaced by '%s'".formatted(misspelled, correct);
             }
 
             @Override
