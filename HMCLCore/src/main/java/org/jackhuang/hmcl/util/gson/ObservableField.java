@@ -45,9 +45,17 @@ import java.util.Set;
 public abstract class ObservableField<T> {
 
     public static <T> ObservableField<T> of(MethodHandles.Lookup lookup, Field field) {
+        String name;
+        List<String> alternate;
+
         SerializedName serializedName = field.getAnnotation(SerializedName.class);
-        if (serializedName == null)
-            throw new IllegalArgumentException("Field " + field.getName() + " is missing @SerializedName annotation");
+        if (serializedName == null) {
+            name = field.getName();
+            alternate = List.of();
+        } else {
+            name = serializedName.value();
+            alternate = List.of(serializedName.alternate());
+        }
 
         VarHandle varHandle;
         try {
@@ -60,33 +68,35 @@ public abstract class ObservableField<T> {
             Type listType = TypeUtils.getSupertype(field.getGenericType(), field.getType(), List.class);
             if (!(listType instanceof ParameterizedType))
                 throw new IllegalArgumentException("Cannot resolve the list type of " + field.getName());
-            return new CollectionField<>(serializedName.value(), varHandle, listType);
+            return new CollectionField<>(name, alternate, varHandle, listType);
         } else if (SetProperty.class.isAssignableFrom(field.getType())) {
             Type setType = TypeUtils.getSupertype(field.getGenericType(), field.getType(), Set.class);
             if (!(setType instanceof ParameterizedType))
                 throw new IllegalArgumentException("Cannot resolve the set type of " + field.getName());
-            return new CollectionField<>(serializedName.value(), varHandle, setType);
+            return new CollectionField<>(name, alternate, varHandle, setType);
         } else if (ObservableMap.class.isAssignableFrom(field.getType())) {
             Type mapType = TypeUtils.getSupertype(field.getGenericType(), field.getType(), Map.class);
             if (!(mapType instanceof ParameterizedType))
                 throw new IllegalArgumentException("Cannot resolve the list map of " + field.getName());
-            return new MapField<>(serializedName.value(), varHandle, mapType);
+            return new MapField<>(name, alternate, varHandle, mapType);
         } else if (Property.class.isAssignableFrom(field.getType())) {
             Type propertyType = TypeUtils.getSupertype(field.getGenericType(), field.getType(), Property.class);
             if (!(propertyType instanceof ParameterizedType))
                 throw new IllegalArgumentException("Cannot resolve the element type of " + field.getName());
             Type elementType = ((ParameterizedType) propertyType).getActualTypeArguments()[0];
-            return new PropertyField<>(serializedName.value(), varHandle, elementType);
+            return new PropertyField<>(name, alternate, varHandle, elementType);
         } else {
             throw new IllegalArgumentException("Field " + field.getName() + " is not a property or observable collection");
         }
     }
 
     protected final String serializedName;
+    protected final List<String> alternate;
     protected final VarHandle varHandle;
 
-    private ObservableField(String serializedName, VarHandle varHandle) {
+    private ObservableField(String serializedName, List<String> alternate, VarHandle varHandle) {
         this.serializedName = serializedName;
+        this.alternate = alternate;
         this.varHandle = varHandle;
     }
 
@@ -105,8 +115,8 @@ public abstract class ObservableField<T> {
     private static final class PropertyField<T> extends ObservableField<T> {
         private final Type elementType;
 
-        PropertyField(String serializedName, VarHandle varHandle, Type elementType) {
-            super(serializedName, varHandle);
+        PropertyField(String serializedName, List<String> alternate, VarHandle varHandle, Type elementType) {
+            super(serializedName, alternate, varHandle);
             this.elementType = elementType;
         }
 
@@ -125,8 +135,8 @@ public abstract class ObservableField<T> {
     private static final class CollectionField<T> extends ObservableField<T> {
         private final Type collectionType;
 
-        CollectionField(String serializedName, VarHandle varHandle, Type collectionType) {
-            super(serializedName, varHandle);
+        CollectionField(String serializedName, List<String> alternate, VarHandle varHandle, Type collectionType) {
+            super(serializedName, alternate, varHandle);
             this.collectionType = collectionType;
         }
 
@@ -156,8 +166,8 @@ public abstract class ObservableField<T> {
     private static final class MapField<T> extends ObservableField<T> {
         private final Type mapType;
 
-        MapField(String serializedName, VarHandle varHandle, Type mapType) {
-            super(serializedName, varHandle);
+        MapField(String serializedName, List<String> alternate, VarHandle varHandle, Type mapType) {
+            super(serializedName, alternate, varHandle);
             this.mapType = mapType;
         }
 
