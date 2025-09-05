@@ -52,28 +52,28 @@ public abstract class ObservableField<T> {
         try {
             varHandle = lookup.unreflectVarHandle(field);
         } catch (IllegalAccessException e) {
-            throw new AssertionError(e);
+            throw new IllegalArgumentException(e);
         }
 
         if (ObservableList.class.isAssignableFrom(field.getType())) {
             Type listType = TypeUtils.getSupertype(field.getGenericType(), field.getType(), List.class);
             if (!(listType instanceof ParameterizedType))
-                throw new AssertionError("Cannot resolve the list type of " + field.getName());
+                throw new IllegalArgumentException("Cannot resolve the list type of " + field.getName());
             return new CollectionField<>(serializedName.value(), varHandle, listType);
         } else if (SetProperty.class.isAssignableFrom(field.getType())) {
             Type setType = TypeUtils.getSupertype(field.getGenericType(), field.getType(), Set.class);
             if (!(setType instanceof ParameterizedType))
-                throw new AssertionError("Cannot resolve the set type of " + field.getName());
+                throw new IllegalArgumentException("Cannot resolve the set type of " + field.getName());
             return new CollectionField<>(serializedName.value(), varHandle, setType);
         } else if (ObservableMap.class.isAssignableFrom(field.getType())) {
             Type mapType = TypeUtils.getSupertype(field.getGenericType(), field.getType(), Map.class);
             if (!(mapType instanceof ParameterizedType))
-                throw new AssertionError("Cannot resolve the list map of " + field.getName());
+                throw new IllegalArgumentException("Cannot resolve the list map of " + field.getName());
             return new MapField<>(serializedName.value(), varHandle, mapType);
         } else if (Property.class.isAssignableFrom(field.getType())) {
             Type propertyType = TypeUtils.getSupertype(field.getGenericType(), field.getType(), Property.class);
             if (!(propertyType instanceof ParameterizedType))
-                throw new AssertionError("Cannot resolve the element type of " + field.getName());
+                throw new IllegalArgumentException("Cannot resolve the element type of " + field.getName());
             Type elementType = ((ParameterizedType) propertyType).getActualTypeArguments()[0];
             return new PropertyField<>(serializedName.value(), varHandle, elementType);
         } else {
