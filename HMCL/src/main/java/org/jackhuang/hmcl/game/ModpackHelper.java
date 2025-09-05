@@ -280,7 +280,7 @@ public final class ModpackHelper {
         }
     }
 
-    public static void applyCommandAndJvmSettings(MultiMCInstanceConfiguration c, VersionSetting vs) {
+    private static void applyCommandAndJvmSettings(MultiMCInstanceConfiguration c, VersionSetting vs) {
         if (c.isOverrideCommands()) {
             vs.setWrapper(Lang.nonNull(c.getWrapperCommand(), ""));
             vs.setPreLaunchCommand(Lang.nonNull(c.getPreLaunchCommand(), ""));
