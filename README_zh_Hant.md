@@ -1,4 +1,4 @@
-# ⛏ Hello Minecraft! Launcher 💎
+# Hello Minecraft! Launcher
 
 [![Build Status](https://ci.huangyuhui.net/job/HMCL/badge/icon?.svg)](https://ci.huangyuhui.net/job/HMCL)
 ![Downloads](https://img.shields.io/github/downloads/HMCL-dev/HMCL/total?style=flat)
