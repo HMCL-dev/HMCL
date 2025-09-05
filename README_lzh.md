@@ -11,7 +11,7 @@
 
 ### 概說
 
-HMCL 者，開源之礦藝啟者也。能理改囊，善於遊戲之自定，且自動安裝諸如Forge、NeoForge、Fabric、Quilt、LiteLoader、OptiFine諸改囊，亦可製作改囊集，界面亦可隨意更易。
+HMCL 者，開源之礦藝啟者也。能理改囊，善於遊戲之自定，且自動安裝諸如 Forge、NeoForge、Fabric、Quilt、LiteLoader、OptiFine 諸改囊，亦可製作改囊集，界面亦可隨意更易。
 
 HMCL 跨域甚廣。無論 Windows、Linux、macOS、FreeBSD 諸常見械綱，抑或 x86、ARM、RISC-V、MIPS、LoongArch 諸大構處理器，皆可運行。
 君可憑此，於諸算機間自如遊戲。
@@ -47,15 +47,15 @@ HMCL 跨域甚廣。無論 Windows、Linux、macOS、FreeBSD 諸常見械綱，�
 
 務必保汝已安裝爪哇十七或更高者。
 
-## JVM 之選項（以資除謬）
+## 爪哇虛機之通弦（以資勘誤）
 
 | 參數                                           | 解釋                                                      |
 |----------------------------------------------|---------------------------------------------------------|
 | `-Dhmcl.home=<path>`                         | 易 HMCL 之用戶目錄                                            |
 | `-Dhmcl.self_integrity_check.disable=true`   | 檢查更新時不驗本體之全                                             |
 | `-Dhmcl.bmclapi.override=<url>`              | 易 BMCLAPI 之 API 根，預設為 `https://bmclapi2.bangbang93.com` |
-| `-Dhmcl.font.override=<font family>`         | 易字族                                                     |
-| `-Dhmcl.version.override=<version>`          | 易版本號                                                    |
+| `-Dhmcl.font.override=<font family>`         | 易書體                                                     |
+| `-Dhmcl.version.override=<version>`          | 易版                                                      |
 | `-Dhmcl.update_source.override=<url>`        | 易 HMCL 之更新所                                             |
 | `-Dhmcl.authlibinjector.location=<path>`     | 用所指之 authlib-injector，毋需下載                              |
 | `-Dhmcl.openjfx.repo=<maven repository url>` | 增 OpenJFX 下載之自定 Maven 庫                                 |
