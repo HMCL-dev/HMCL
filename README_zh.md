@@ -1,4 +1,4 @@
-# ⛏ Hello Minecraft! Launcher 💎
+# Hello Minecraft! Launcher
 
 [![Build Status](https://ci.huangyuhui.net/job/HMCL/badge/icon?.svg)](https://ci.huangyuhui.net/job/HMCL)
 ![Downloads](https://img.shields.io/github/downloads/HMCL-dev/HMCL/total?style=flat)
@@ -6,7 +6,8 @@
 [![Discord](https://img.shields.io/discord/995291757799538688.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/jVvC7HfM6U)
 [![QQ Group](https://img.shields.io/badge/QQ-HMCL-bright?label=&logo=qq&logoColor=ffffff&color=1EBAFC&labelColor=1DB0EF&logoSize=auto)](https://docs.hmcl.net/groups.html)
 
-[English](README.md) | **简体中文** | [繁體中文](README_zh_Hant.md)
+[English](README.md) | **中文** (**简体**, [繁體](README_zh_Hant.md), [文言](README_lzh.md)) | [日本語](README_ja.md) |
+[español](README_es.md) | [русский](README_ru.md) | [українська](README_uk.md)
 
 ## 简介
 
@@ -42,7 +43,6 @@ HMCL 有着强大的跨平台能力。它不仅支持 Windows、Linux、macOS、
 
 * IDE：IntelliJ IDEA
 * 编译器：Java 17+
-* **不要**修改 `gradle` 相关文件
 
 ### 编译
 
