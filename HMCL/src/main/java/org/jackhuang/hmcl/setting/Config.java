@@ -303,7 +303,7 @@ public final class Config implements Observable {
         this.logLines.set(logLines);
     }
 
-    // UI Settings
+    // UI
 
     @SerializedName("theme")
     private final ObjectProperty<Theme> theme = new SimpleObjectProperty<>();
