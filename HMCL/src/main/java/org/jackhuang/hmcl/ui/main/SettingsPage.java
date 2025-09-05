@@ -82,7 +82,7 @@ public final class SettingsPage extends SettingsView {
 
             if (oldValue != null && newValue != null && !oldValue.equals(newValue)) {
                 JFXButton restartButton = new JFXButton(i18n("button.restart"));
-                restartButton.getStyleClass().add("dialog-success");
+                restartButton.getStyleClass().add("dialog-accept");
                 restartButton.setOnAction(e -> {
                     try {
                         Restarter.restartWithLocale(newValue);
@@ -101,8 +101,8 @@ public final class SettingsPage extends SettingsView {
                 };
 
                 Controllers.confirmAction(
-                        i18n("settings.launcher.language.restart_message"),
-                        i18n("settings.launcher.language.restart_title"),
+                        i18n("settings.launcher.language.restart"),
+                        i18n("message.info"),
                         MessageType.INFO,
                         restartButton,
                         cancelAction
