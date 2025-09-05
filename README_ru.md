@@ -9,23 +9,23 @@
 [English](README.md) | [简体中文](README_zh.md) | [繁體中文](README_zh_Hant.md) | [文言文](README_lzh.md) | [日本語](README_ja.md) |
 [español](README_es.md) | **русский** | [українська](README_uk.md)
 
-## Introduction
+## Введение
 
-HMCL is an open-source, cross-platform Minecraft launcher that supports Mod Management, Game Customizing, ModLoader Installing (Forge, NeoForge, Fabric, Quilt, LiteLoader, and OptiFine), Modpack Creating, UI Customization, and more.
+HMCL — это открытый, кроссплатформенный лаунчер для Minecraft с поддержкой управления модами, настройки игры, установки загрузчиков модов (Forge, NeoForge, Fabric, Quilt, LiteLoader и OptiFine), создания модпаков, настройки интерфейса и многого другого.
 
-HMCL has amazing cross-platform capabilities. Not only does it run on different operating systems like Windows, Linux, macOS, and FreeBSD, but it also supports various CPU architectures such as x86, ARM, RISC-V, MIPS, and LoongArch. You can easily enjoy Minecraft across different platforms through HMCL.
+HMCL обладает отличной кроссплатформенностью. Он работает не только на различных операционных системах, таких как Windows, Linux, macOS и FreeBSD, но и поддерживает различные архитектуры процессоров: x86, ARM, RISC-V, MIPS и LoongArch. Благодаря HMCL вы можете легко наслаждаться Minecraft на разных платформах.
 
-For systems and CPU architectures supported by HMCL, please refer to [this table](docs/PLATFORM.md).
+Список поддерживаемых систем и архитектур процессоров HMCL смотрите в [этой таблице](docs/PLATFORM.md).
 
-## Download
+## Загрузка
 
-Download the latest version from the [official website](https://hmcl.huangyuhui.net/download).
+Скачайте последнюю версию с [официального сайта](https://hmcl.huangyuhui.net/download).
 
-You can also find the latest version of HMCL in [GitHub Releases](https://github.com/HMCL-dev/HMCL/releases).
+Также вы можете найти последнюю версию HMCL в [релизах на GitHub](https://github.com/HMCL-dev/HMCL/releases).
 
-Although not necessary, it is recommended only to download releases from the official websites listed above.
+Хотя это не обязательно, рекомендуется скачивать релизы только с указанных выше официальных сайтов.
 
-## License
+## Лицензия
 
 The software is distributed under [GPLv3](https://www.gnu.org/licenses/gpl-3.0.html) license with the following additional terms:
 
@@ -37,37 +37,37 @@ The software is distributed under [GPLv3](https://www.gnu.org/licenses/gpl-3.0.h
 
 2. You must not remove the copyright declaration displayed in the software. (Under [GPLv3, 7(b)](https://github.com/HMCL-dev/HMCL/blob/11820e31a85d8989e41d97476712b07e7094b190/LICENSE#L368-L370))
 
-## Contribution
+## Вклад
 
-If you want to submit a pull request, here are some requirements:
+Если вы хотите отправить pull request, ознакомьтесь с требованиями:
 
 * IDE: IntelliJ IDEA
-* Compiler: Java 17+
-* Do NOT modify `gradle` files
+* Компилятор: Java 17+
+* Не изменяйте файлы `gradle`
 
-### Compilation
+### Сборка
 
-Simply execute the following command in the project root directory:
+Выполните следующую команду в корневой директории проекта:
 
 ```bash
 ./gradlew clean build
 ```
 
-Make sure you have Java 17 or later installed.
+Убедитесь, что у вас установлена Java 17 или новее.
 
-## JVM Options (for debugging)
+## Параметры JVM (для отладки)
 
-| Parameter                                    | Description                                                                                   |
-| -------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `-Dhmcl.home=<path>`                         | Override HMCL directory                                                                       |
-| `-Dhmcl.self_integrity_check.disable=true`   | Bypass the self integrity check when checking for updates                                     |
-| `-Dhmcl.bmclapi.override=<url>`              | Override API Root of BMCLAPI download provider. Defaults to `https://bmclapi2.bangbang93.com` |
-| `-Dhmcl.font.override=<font family>`         | Override font family                                                                          |
-| `-Dhmcl.version.override=<version>`          | Override the version number                                                                   |
-| `-Dhmcl.update_source.override=<url>`        | Override the update source for HMCL itself                                                    |
-| `-Dhmcl.authlibinjector.location=<path>`     | Use the specified authlib-injector (instead of downloading one)                               |
-| `-Dhmcl.openjfx.repo=<maven repository url>` | Add custom Maven repository for downloading OpenJFX                                           |
-| `-Dhmcl.native.encoding=<encoding>`          | Override the native encoding                                                                  |
-| `-Dhmcl.microsoft.auth.id=<App ID>`          | Override Microsoft OAuth App ID                                                               |
-| `-Dhmcl.microsoft.auth.secret=<App Secret>`  | Override Microsoft OAuth App Secret                                                           |
-| `-Dhmcl.curseforge.apikey=<Api Key>`         | Override CurseForge API Key                                                                   |
+| Параметр                                      | Описание                                                                                                      |
+|-----------------------------------------------|---------------------------------------------------------------------------------------------------------------|
+| `-Dhmcl.home=<путь>`                          | Переопределить директорию HMCL                                                                                |
+| `-Dhmcl.self_integrity_check.disable=true`    | Отключить проверку целостности при проверке обновлений                                                        |
+| `-Dhmcl.bmclapi.override=<url>`               | Переопределить корневой API-адрес провайдера загрузки BMCLAPI. По умолчанию `https://bmclapi2.bangbang93.com` |
+| `-Dhmcl.font.override=<название шрифта>`      | Переопределить семейство шрифтов                                                                              |
+| `-Dhmcl.version.override=<версия>`            | Переопределить номер версии                                                                                   |
+| `-Dhmcl.update_source.override=<url>`         | Переопределить источник обновлений для самого HMCL                                                            |
+| `-Dhmcl.authlibinjector.location=<путь>`      | Использовать указанный authlib-injector (вместо загрузки)                                                     |
+| `-Dhmcl.openjfx.repo=<url репозитория maven>` | Добавить пользовательский Maven-репозиторий для загрузки OpenJFX                                              |
+| `-Dhmcl.native.encoding=<кодировка>`          | Переопределить нативную кодировку                                                                             |
+| `-Dhmcl.microsoft.auth.id=<App ID>`           | Переопределить Microsoft OAuth App ID                                                                         |
+| `-Dhmcl.microsoft.auth.secret=<App Secret>`   | Переопределить Microsoft OAuth App Secret                                                                     |
+| `-Dhmcl.curseforge.apikey=<Api Key>`          | Переопределить CurseForge API Key                                                                             |

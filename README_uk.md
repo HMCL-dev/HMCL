@@ -9,23 +9,23 @@
 [English](README.md) | [简体中文](README_zh.md) | [繁體中文](README_zh_Hant.md) | [文言文](README_lzh.md) | [日本語](README_ja.md) |
 [español](README_es.md) | [русский](README_ru.md) | **українська**
 
-## Introduction
+## Вступ
 
-HMCL is an open-source, cross-platform Minecraft launcher that supports Mod Management, Game Customizing, ModLoader Installing (Forge, NeoForge, Fabric, Quilt, LiteLoader, and OptiFine), Modpack Creating, UI Customization, and more.
+HMCL — це відкритий, кросплатформний лаунчер для Minecraft, який підтримує керування модами, налаштування гри, встановлення модлоадерів (Forge, NeoForge, Fabric, Quilt, LiteLoader та OptiFine), створення модпаків, налаштування інтерфейсу та багато іншого.
 
-HMCL has amazing cross-platform capabilities. Not only does it run on different operating systems like Windows, Linux, macOS, and FreeBSD, but it also supports various CPU architectures such as x86, ARM, RISC-V, MIPS, and LoongArch. You can easily enjoy Minecraft across different platforms through HMCL.
+HMCL має чудові кросплатформні можливості. Він працює не лише на різних операційних системах, таких як Windows, Linux, macOS і FreeBSD, а й підтримує різні архітектури процесорів, такі як x86, ARM, RISC-V, MIPS і LoongArch. Ви можете легко насолоджуватися Minecraft на різних платформах за допомогою HMCL.
 
-For systems and CPU architectures supported by HMCL, please refer to [this table](docs/PLATFORM.md).
+Щодо підтримуваних систем і архітектур процесорів дивіться [цю таблицю](docs/PLATFORM.md).
 
-## Download
+## Завантаження
 
-Download the latest version from the [official website](https://hmcl.huangyuhui.net/download).
+Завантажте останню версію з [офіційного сайту](https://hmcl.huangyuhui.net/download).
 
-You can also find the latest version of HMCL in [GitHub Releases](https://github.com/HMCL-dev/HMCL/releases).
+Також ви можете знайти останню версію HMCL у [релізах GitHub](https://github.com/HMCL-dev/HMCL/releases).
 
-Although not necessary, it is recommended only to download releases from the official websites listed above.
+Хоча це не обовʼязково, рекомендується завантажувати релізи лише з офіційних сайтів, зазначених вище.
 
-## License
+### Ліцензія
 
 The software is distributed under [GPLv3](https://www.gnu.org/licenses/gpl-3.0.html) license with the following additional terms:
 
@@ -37,28 +37,28 @@ The software is distributed under [GPLv3](https://www.gnu.org/licenses/gpl-3.0.h
 
 2. You must not remove the copyright declaration displayed in the software. (Under [GPLv3, 7(b)](https://github.com/HMCL-dev/HMCL/blob/11820e31a85d8989e41d97476712b07e7094b190/LICENSE#L368-L370))
 
-## Contribution
+## Внесок
 
-If you want to submit a pull request, here are some requirements:
+Якщо ви хочете надіслати pull request, ознайомтеся з наступними вимогами:
 
 * IDE: IntelliJ IDEA
-* Compiler: Java 17+
-* Do NOT modify `gradle` files
+* Компілятор: Java 17+
+* НЕ змінюйте файли `gradle`
 
-### Compilation
+### Компіляція
 
-Simply execute the following command in the project root directory:
+Просто виконайте наступну команду в кореневому каталозі проєкту:
 
 ```bash
 ./gradlew clean build
 ```
 
-Make sure you have Java 17 or later installed.
+Переконайтеся, що у вас встановлено Java 17 або новішої версії.
 
 ## JVM Options (for debugging)
 
 | Parameter                                    | Description                                                                                   |
-| -------------------------------------------- | --------------------------------------------------------------------------------------------- |
+|----------------------------------------------|-----------------------------------------------------------------------------------------------|
 | `-Dhmcl.home=<path>`                         | Override HMCL directory                                                                       |
 | `-Dhmcl.self_integrity_check.disable=true`   | Bypass the self integrity check when checking for updates                                     |
 | `-Dhmcl.bmclapi.override=<url>`              | Override API Root of BMCLAPI download provider. Defaults to `https://bmclapi2.bangbang93.com` |

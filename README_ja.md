@@ -9,23 +9,23 @@
 [English](README.md) | [简体中文](README_zh.md) | [繁體中文](README_zh_Hant.md) | [文言文](README_lzh.md) | **日本語** |
 [español](README_es.md) | [русский](README_ru.md) | [українська](README_uk.md)
 
-## Introduction
+## 紹介
 
-HMCL is an open-source, cross-platform Minecraft launcher that supports Mod Management, Game Customizing, ModLoader Installing (Forge, NeoForge, Fabric, Quilt, LiteLoader, and OptiFine), Modpack Creating, UI Customization, and more.
+HMCLはオープンソースでクロスプラットフォーム対応のMinecraftランチャーです。Mod管理、ゲームカスタマイズ、Modローダーのインストール（Forge、NeoForge、Fabric、Quilt、LiteLoader、OptiFine）、Modパック作成、UIカスタマイズなど、さまざまな機能をサポートしています。
 
-HMCL has amazing cross-platform capabilities. Not only does it run on different operating systems like Windows, Linux, macOS, and FreeBSD, but it also supports various CPU architectures such as x86, ARM, RISC-V, MIPS, and LoongArch. You can easily enjoy Minecraft across different platforms through HMCL.
+HMCLは優れたクロスプラットフォーム性能を持っています。Windows、Linux、macOS、FreeBSDなどの異なるオペレーティングシステムだけでなく、x86、ARM、RISC-V、MIPS、LoongArchなどのさまざまなCPUアーキテクチャにも対応しています。HMCLを使えば、さまざまなプラットフォームでMinecraftを簡単に楽しむことができます。
 
-For systems and CPU architectures supported by HMCL, please refer to [this table](docs/PLATFORM.md).
+HMCLが対応しているシステムやCPUアーキテクチャについては、[この表](docs/PLATFORM.md)をご参照ください。
 
-## Download
+## ダウンロード
 
-Download the latest version from the [official website](https://hmcl.huangyuhui.net/download).
+最新版は[公式サイト](https://hmcl.huangyuhui.net/download)からダウンロードできます。
 
-You can also find the latest version of HMCL in [GitHub Releases](https://github.com/HMCL-dev/HMCL/releases).
+また、[GitHub Releases](https://github.com/HMCL-dev/HMCL/releases)でも最新版を入手できます。
 
-Although not necessary, it is recommended only to download releases from the official websites listed above.
+必要ではありませんが、上記の公式サイトからのみリリース版をダウンロードすることを推奨します。
 
-## License
+## ライセンス
 
 The software is distributed under [GPLv3](https://www.gnu.org/licenses/gpl-3.0.html) license with the following additional terms:
 
@@ -37,37 +37,37 @@ The software is distributed under [GPLv3](https://www.gnu.org/licenses/gpl-3.0.h
 
 2. You must not remove the copyright declaration displayed in the software. (Under [GPLv3, 7(b)](https://github.com/HMCL-dev/HMCL/blob/11820e31a85d8989e41d97476712b07e7094b190/LICENSE#L368-L370))
 
-## Contribution
+## コントリビューション
 
-If you want to submit a pull request, here are some requirements:
+プルリクエストを送信したい場合、以下の要件を満たしてください。
 
-* IDE: IntelliJ IDEA
-* Compiler: Java 17+
-* Do NOT modify `gradle` files
+* IDE：IntelliJ IDEA
+* コンパイラ：Java 17以上
+* `gradle`ファイルは変更しないでください
 
-### Compilation
+### コンパイル方法
 
-Simply execute the following command in the project root directory:
+プロジェクトのルートディレクトリで次のコマンドを実行してください。
 
 ```bash
 ./gradlew clean build
 ```
 
-Make sure you have Java 17 or later installed.
+Java 17以上がインストールされていることを確認してください。
 
-## JVM Options (for debugging)
+## JVMオプション（デバッグ用）
 
-| Parameter                                    | Description                                                                                   |
-| -------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `-Dhmcl.home=<path>`                         | Override HMCL directory                                                                       |
-| `-Dhmcl.self_integrity_check.disable=true`   | Bypass the self integrity check when checking for updates                                     |
-| `-Dhmcl.bmclapi.override=<url>`              | Override API Root of BMCLAPI download provider. Defaults to `https://bmclapi2.bangbang93.com` |
-| `-Dhmcl.font.override=<font family>`         | Override font family                                                                          |
-| `-Dhmcl.version.override=<version>`          | Override the version number                                                                   |
-| `-Dhmcl.update_source.override=<url>`        | Override the update source for HMCL itself                                                    |
-| `-Dhmcl.authlibinjector.location=<path>`     | Use the specified authlib-injector (instead of downloading one)                               |
-| `-Dhmcl.openjfx.repo=<maven repository url>` | Add custom Maven repository for downloading OpenJFX                                           |
-| `-Dhmcl.native.encoding=<encoding>`          | Override the native encoding                                                                  |
-| `-Dhmcl.microsoft.auth.id=<App ID>`          | Override Microsoft OAuth App ID                                                               |
-| `-Dhmcl.microsoft.auth.secret=<App Secret>`  | Override Microsoft OAuth App Secret                                                           |
-| `-Dhmcl.curseforge.apikey=<Api Key>`         | Override CurseForge API Key                                                                   |
+| パラメータ                                        | 説明                                                                          |
+|----------------------------------------------|-----------------------------------------------------------------------------|
+| `-Dhmcl.home=<path>`                         | HMCLディレクトリを上書きします                                                           |
+| `-Dhmcl.self_integrity_check.disable=true`   | アップデート時の自己整合性チェックをバイパスします                                                   |
+| `-Dhmcl.bmclapi.override=<url>`              | BMCLAPIダウンロードプロバイダーのAPIルートを上書きします。デフォルトは`https://bmclapi2.bangbang93.com`です |
+| `-Dhmcl.font.override=<font family>`         | フォントファミリーを上書きします                                                            |
+| `-Dhmcl.version.override=<version>`          | バージョン番号を上書きします                                                              |
+| `-Dhmcl.update_source.override=<url>`        | HMCL本体のアップデートソースを上書きします                                                     |
+| `-Dhmcl.authlibinjector.location=<path>`     | 指定したauthlib-injectorを使用します（ダウンロードせずに）                                       |
+| `-Dhmcl.openjfx.repo=<maven repository url>` | OpenJFXダウンロード用のカスタムMavenリポジトリを追加します                                         |
+| `-Dhmcl.native.encoding=<encoding>`          | ネイティブエンコーディングを上書きします                                                        |
+| `-Dhmcl.microsoft.auth.id=<App ID>`          | Microsoft OAuthアプリIDを上書きします                                                 |
+| `-Dhmcl.microsoft.auth.secret=<App Secret>`  | Microsoft OAuthアプリシークレットを上書きします                                             |
+| `-Dhmcl.curseforge.apikey=<Api Key>`         | CurseForge APIキーを上書きします                                                     |
