@@ -9,65 +9,65 @@
 [English](README.md) | [简体中文](README_zh.md) | [繁體中文](README_zh_Hant.md) | **文言文** | [日本語](README_ja.md) |
 [español](README_es.md) | [русский](README_ru.md) | [українська](README_uk.md)
 
-## Introduction
+## 簡介
 
-HMCL is an open-source, cross-platform Minecraft launcher that supports Mod Management, Game Customizing, ModLoader Installing (Forge, NeoForge, Fabric, Quilt, LiteLoader, and OptiFine), Modpack Creating, UI Customization, and more.
+HMCL 是一款開源、跨平臺的 Minecraft 啟動器，支援模組管理、遊戲客製化、遊戲自動安裝 (Forge、NeoForge、Fabric、Quilt、LiteLoader 和 OptiFine)、模組包建立、介面客製化等功能。
 
-HMCL has amazing cross-platform capabilities. Not only does it run on different operating systems like Windows, Linux, macOS, and FreeBSD, but it also supports various CPU architectures such as x86, ARM, RISC-V, MIPS, and LoongArch. You can easily enjoy Minecraft across different platforms through HMCL.
+HMCL 有著強大的跨平臺能力。它不僅支援 Windows、Linux、macOS、FreeBSD 等常見的作業系統，同時也支援 x86、ARM、RISC-V、MIPS、LoongArch 等不同的 CPU 架構。你可以使用 HMCL 在不同平臺上輕鬆地遊玩 Minecraft。
 
-For systems and CPU architectures supported by HMCL, please refer to [this table](docs/PLATFORM.md).
+如果你想要了解 HMCL 對不同平臺的支援程度，請參見 [此表格](docs/PLATFORM_zh_Hant.md)。
 
-## Download
+## 下載
 
-Download the latest version from the [official website](https://hmcl.huangyuhui.net/download).
+請從 [HMCL 官網](https://hmcl.huangyuhui.net/download) 下載最新版本的 HMCL。
 
-You can also find the latest version of HMCL in [GitHub Releases](https://github.com/HMCL-dev/HMCL/releases).
+你也可以在 [GitHub Releases](https://github.com/HMCL-dev/HMCL/releases) 中下載最新版本的 HMCL。
 
-Although not necessary, it is recommended only to download releases from the official websites listed above.
+雖然並不強制，但仍建議透過 HMCL 官網下載啟動器。
 
-## License
+## 開源協議
 
-The software is distributed under [GPLv3](https://www.gnu.org/licenses/gpl-3.0.html) license with the following additional terms:
+該程式在 [GPLv3](https://www.gnu.org/licenses/gpl-3.0.html) 開源協議下發布，同時附有以下附加條款。
 
-### Additional terms under GPLv3 Section 7
+### 附加條款 (依據 GPLv3 開源協議第七條)
 
-1. When you distribute a modified version of the software, you must change the software name or the version number in a reasonable way in order to distinguish it from the original version. (Under [GPLv3, 7(c)](https://github.com/HMCL-dev/HMCL/blob/11820e31a85d8989e41d97476712b07e7094b190/LICENSE#L372-L374))
+1. 當你分發該程式的修改版本時，你必須以一種合理的方式修改該程式的名稱或版本號，以示其與原始版本不同。(依據 [GPLv3, 7(c)](https://github.com/HMCL-dev/HMCL/blob/11820e31a85d8989e41d97476712b07e7094b190/LICENSE#L372-L374))
 
-   The software name and the version number can be edited [here](https://github.com/HMCL-dev/HMCL/blob/javafx/HMCL/src/main/java/org/jackhuang/hmcl/Metadata.java#L33-L35).
+   該程式的名稱及版本號可在 [此處](https://github.com/HMCL-dev/HMCL/blob/javafx/HMCL/src/main/java/org/jackhuang/hmcl/Metadata.java#L33-L35) 修改。
 
-2. You must not remove the copyright declaration displayed in the software. (Under [GPLv3, 7(b)](https://github.com/HMCL-dev/HMCL/blob/11820e31a85d8989e41d97476712b07e7094b190/LICENSE#L368-L370))
+2. 你不得移除該程式所顯示的版權宣告。(依據 [GPLv3, 7(b)](https://github.com/HMCL-dev/HMCL/blob/11820e31a85d8989e41d97476712b07e7094b190/LICENSE#L368-L370))
 
-## Contribution
+## 貢獻
 
-If you want to submit a pull request, here are some requirements:
+如果你想提交一個 Pull Request，必須遵守如下要求：
 
-* IDE: IntelliJ IDEA
-* Compiler: Java 17+
-* Do NOT modify `gradle` files
+* IDE：IntelliJ IDEA
+* 編譯器：Java 17+
+* **不要**修改 `gradle` 相關文件
 
-### Compilation
+### 編譯
 
-Simply execute the following command in the project root directory:
+於項目根目錄執行以下指令：
 
 ```bash
 ./gradlew clean build
 ```
 
-Make sure you have Java 17 or later installed.
+請確保你至少安裝了 JDK 17 或更高版本。
 
-## JVM Options (for debugging)
+## JVM 選項 (用於除錯)
 
-| Parameter                                    | Description                                                                                   |
-| -------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `-Dhmcl.home=<path>`                         | Override HMCL directory                                                                       |
-| `-Dhmcl.self_integrity_check.disable=true`   | Bypass the self integrity check when checking for updates                                     |
-| `-Dhmcl.bmclapi.override=<url>`              | Override API Root of BMCLAPI download provider. Defaults to `https://bmclapi2.bangbang93.com` |
-| `-Dhmcl.font.override=<font family>`         | Override font family                                                                          |
-| `-Dhmcl.version.override=<version>`          | Override the version number                                                                   |
-| `-Dhmcl.update_source.override=<url>`        | Override the update source for HMCL itself                                                    |
-| `-Dhmcl.authlibinjector.location=<path>`     | Use the specified authlib-injector (instead of downloading one)                               |
-| `-Dhmcl.openjfx.repo=<maven repository url>` | Add custom Maven repository for downloading OpenJFX                                           |
-| `-Dhmcl.native.encoding=<encoding>`          | Override the native encoding                                                                  |
-| `-Dhmcl.microsoft.auth.id=<App ID>`          | Override Microsoft OAuth App ID                                                               |
-| `-Dhmcl.microsoft.auth.secret=<App Secret>`  | Override Microsoft OAuth App Secret                                                           |
-| `-Dhmcl.curseforge.apikey=<Api Key>`         | Override CurseForge API Key                                                                   |
+| 參數                                         | 簡介                                                                 |
+| -------------------------------------------- | -------------------------------------------------------------------- |
+| `-Dhmcl.home=<path>`                         | 覆蓋 HMCL 使用者目錄                                                 |
+| `-Dhmcl.self_integrity_check.disable=true`   | 檢查更新時不檢查本體完整性                                           |
+| `-Dhmcl.bmclapi.override=<url>`              | 覆蓋 BMCLAPI 的 API Root，預設值為 `https://bmclapi2.bangbang93.com` |
+| `-Dhmcl.font.override=<font family>`         | 覆蓋字族                                                             |
+| `-Dhmcl.version.override=<version>`          | 覆蓋版本號                                                           |
+| `-Dhmcl.update_source.override=<url>`        | 覆蓋 HMCL 更新來源                                                   |
+| `-Dhmcl.authlibinjector.location=<path>`     | 使用指定的 authlib-injector (而非下載一個)                           |
+| `-Dhmcl.openjfx.repo=<maven repository url>` | 添加用於下載 OpenJFX 的自訂 Maven 倉庫                               |
+| `-Dhmcl.native.encoding=<encoding>`          | 覆蓋原生編碼                                                         |
+| `-Dhmcl.microsoft.auth.id=<App ID>`          | 覆蓋 Microsoft OAuth App ID                                          |
+| `-Dhmcl.microsoft.auth.secret=<App Secret>`  | 覆蓋 Microsoft OAuth App 金鑰                                        |
+| `-Dhmcl.curseforge.apikey=<Api Key>`         | 覆蓋 CurseForge API 金鑰                                        |
