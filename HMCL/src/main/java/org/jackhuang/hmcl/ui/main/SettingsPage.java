@@ -101,8 +101,8 @@ public final class SettingsPage extends SettingsView {
                 };
 
                 Controllers.confirmAction(
-                        i18n("settings.launcher.language.restart_message"),
-                        i18n("settings.launcher.language.restart_title"),
+                        i18n("settings.launcher.language.restart"),
+                        i18n("message.info"),
                         MessageType.INFO,
                         restartButton,
                         cancelAction
