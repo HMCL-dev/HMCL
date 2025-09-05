@@ -68,6 +68,23 @@ public final class Config implements Observable {
             .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
             .create();
 
+    private static final List<ObservableField<Config>> FIELDS;
+
+    static {
+        final MethodHandles.Lookup lookup = MethodHandles.lookup();
+        Field[] fields = Config.class.getDeclaredFields();
+
+        var configFields = new ArrayList<ObservableField<Config>>(fields.length);
+        for (Field field : fields) {
+            int modifiers = field.getModifiers();
+            if (Modifier.isTransient(modifiers) || Modifier.isStatic(modifiers))
+                continue;
+
+            configFields.add(ObservableField.of(lookup, field));
+        }
+        FIELDS = List.copyOf(configFields);
+    }
+
     @Nullable
     public static Config fromJson(String json) throws JsonParseException {
         return CONFIG_GSON.fromJson(json, Config.class);
@@ -728,22 +745,6 @@ public final class Config implements Observable {
 
     public ObservableMap<String, Object> getShownTips() {
         return shownTips;
-    }
-
-    private static final List<ObservableField<Config>> FIELDS;
-
-    static {
-        final MethodHandles.Lookup lookup = MethodHandles.lookup();
-        Field[] fields = Config.class.getDeclaredFields();
-
-        var configFields = new ArrayList<ObservableField<Config>>(fields.length);
-        for (Field field : fields) {
-            if (Modifier.isTransient(field.getModifiers()) || Modifier.isStatic(field.getModifiers()))
-                continue;
-
-            configFields.add(ObservableField.of(lookup, field));
-        }
-        FIELDS = List.copyOf(configFields);
     }
 
     public static final class Adapter implements JsonSerializer<Config>, JsonDeserializer<Config> {
