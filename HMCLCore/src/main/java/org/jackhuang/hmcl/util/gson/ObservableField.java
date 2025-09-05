@@ -38,6 +38,7 @@ import java.lang.invoke.VarHandle;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -74,7 +75,13 @@ public abstract class ObservableField<T> {
             Type setType = TypeUtils.getSupertype(field.getGenericType(), field.getType(), Set.class);
             if (!(setType instanceof ParameterizedType))
                 throw new IllegalArgumentException("Cannot resolve the set type of " + field.getName());
-            return new CollectionField<>(name, alternateNames, varHandle, setType);
+
+            ParameterizedType listType = TypeUtils.newParameterizedTypeWithOwner(
+                    null,
+                    List.class,
+                    ((ParameterizedType) setType).getActualTypeArguments()[0]
+            );
+            return new CollectionField<>(name, alternateNames, varHandle, listType);
         } else if (ObservableMap.class.isAssignableFrom(field.getType())) {
             Type mapType = TypeUtils.getSupertype(field.getGenericType(), field.getType(), Map.class);
             if (!(mapType instanceof ParameterizedType))
@@ -138,34 +145,34 @@ public abstract class ObservableField<T> {
     }
 
     private static final class CollectionField<T> extends ObservableField<T> {
-        private final Type collectionType;
+        private final Type listType;
 
-        CollectionField(String serializedName, List<String> alternate, VarHandle varHandle, Type collectionType) {
+        CollectionField(String serializedName, List<String> alternate, VarHandle varHandle, Type listType) {
             super(serializedName, alternate, varHandle);
-            this.collectionType = collectionType;
+            this.listType = listType;
         }
 
         @Override
         public JsonElement serialize(T value, JsonSerializationContext context) {
-            return context.serialize(get(value), collectionType);
+            return context.serialize(get(value), listType);
         }
 
         @SuppressWarnings({"unchecked"})
         @Override
         public void deserialize(T value, JsonElement element, JsonDeserializationContext context) {
-            Object deserialized = context.deserialize(element, collectionType);
+            List<?> deserialized = context.deserialize(element, listType);
             Object fieldValue = get(value);
 
             if (fieldValue instanceof ListProperty) {
                 ((ListProperty<Object>) fieldValue).set(FXCollections.observableList((List<Object>) deserialized));
             } else if (fieldValue instanceof ObservableList) {
-                ((ObservableList<Object>) fieldValue).setAll((List<Object>) deserialized);
+                ((ObservableList<Object>) fieldValue).setAll(deserialized);
             } else if (fieldValue instanceof SetProperty) {
-                ((SetProperty<Object>) fieldValue).set(FXCollections.observableSet((Set<Object>) deserialized));
+                ((SetProperty<Object>) fieldValue).set(FXCollections.observableSet(new HashSet<>(deserialized)));
             } else if (fieldValue instanceof ObservableSet) {
                 ObservableSet<Object> set = (ObservableSet<Object>) fieldValue;
                 set.clear();
-                set.addAll((Set<Object>) deserialized);
+                set.addAll(deserialized);
             } else {
                 throw new JsonParseException("Unsupported field type: " + fieldValue.getClass());
             }
