@@ -788,13 +788,13 @@ public final class Config implements Observable {
             Config config = new Config();
 
             var values = new LinkedHashMap<>(json.getAsJsonObject().asMap());
-            FIELDS.forEach(field -> {
+            for (ObservableField<Config> field : FIELDS) {
                 JsonElement value = values.remove(field.getSerializedName());
                 if (value != null) {
                     config.tracker.markDirty(field.get(config));
                     field.deserialize(config, value, context);
                 }
-            });
+            }
 
             config.unknownFields.putAll(values);
             return config;
