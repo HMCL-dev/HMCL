@@ -24,7 +24,10 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public record Document(DocumentFileTree dir, Path file, List<Item> items) {
+public record Document(DocumentFileTree directory,
+                       Path file,
+                       String name, DocumentLocale locale,
+                       List<Item> items) {
 
     private static final Pattern MACRO_BEGIN = Pattern.compile(
             "<!-- #BEGIN (?<name>\\w+) -->"
@@ -72,7 +75,7 @@ public record Document(DocumentFileTree dir, Path file, List<Item> items) {
         return builder.toString();
     }
 
-    public static Document of(DocumentFileTree dir, Path file) throws IOException {
+    public static Document load(DocumentFileTree directory, Path file, String name, DocumentLocale locale) throws IOException {
         var items = new ArrayList<Item>();
         try (var reader = Files.newBufferedReader(file)) {
             String line;
@@ -124,7 +127,7 @@ public record Document(DocumentFileTree dir, Path file, List<Item> items) {
                 }
             }
         }
-        return new Document(dir, file, items);
+        return new Document(directory, file, name, locale, items);
     }
 
     public sealed interface Item {

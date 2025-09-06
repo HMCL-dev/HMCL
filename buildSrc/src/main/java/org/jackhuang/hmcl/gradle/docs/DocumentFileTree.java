@@ -26,7 +26,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Map;
 import java.util.TreeMap;
 
 /// @author Glavo
@@ -46,9 +45,9 @@ public final class DocumentFileTree {
                         throw new AssertionError();
 
                     var result = DocumentLocale.parseFileName(fileName.substring(0, fileName.length() - ".md".length()));
-                    tree.getFiles().computeIfAbsent(result.getValue(), ignored -> new LocalizedDocument())
+                    tree.getFiles().computeIfAbsent(result.getValue(), name -> new LocalizedDocument(tree, name))
                             .getDocuments()
-                            .put(result.getKey(), Document.of(tree, file));
+                            .put(result.getKey(), Document.load(tree, file, result.getValue(), result.getKey()));
                 }
                 return FileVisitResult.CONTINUE;
             }

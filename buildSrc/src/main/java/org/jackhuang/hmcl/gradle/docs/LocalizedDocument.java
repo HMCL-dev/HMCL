@@ -21,7 +21,18 @@ import java.util.EnumMap;
 
 /// @author Glavo
 public final class LocalizedDocument {
+    private final DocumentFileTree directory;
+    private final String name;
     private final EnumMap<DocumentLocale, Document> documents = new EnumMap<>(DocumentLocale.class);
+
+    public LocalizedDocument(DocumentFileTree directory, String name) {
+        this.directory = directory;
+        this.name = name;
+    }
+
+    public DocumentFileTree getDirectory() {
+        return directory;
+    }
 
     public EnumMap<DocumentLocale, Document> getDocuments() {
         return documents;
