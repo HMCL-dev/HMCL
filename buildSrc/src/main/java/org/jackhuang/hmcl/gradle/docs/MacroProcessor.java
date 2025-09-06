@@ -97,6 +97,8 @@ public enum MacroProcessor {
                         outputBuilder.append(")");
                     }
                 }
+
+                outputBuilder.append('\n');
             }
             MacroProcessor.writeEnd(outputBuilder, macroBlock);
         }
