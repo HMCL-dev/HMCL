@@ -37,7 +37,7 @@ public abstract class UpdateDocuments extends DefaultTask {
 
         for (Document.Item item : document.items()) {
             if (item instanceof Document.Line line) {
-                outputBuilder.append(line).append('\n');
+                outputBuilder.append(line.content()).append('\n');
             } else if (item instanceof Document.MacroBlock macro) {
                 var processor = MacroProcessor.valueOf(macro.name());
                 processor.apply(document, macro, outputBuilder);
