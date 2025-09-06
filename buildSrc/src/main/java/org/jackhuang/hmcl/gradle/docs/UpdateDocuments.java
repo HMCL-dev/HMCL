@@ -23,6 +23,7 @@ import org.gradle.api.tasks.InputDirectory;
 import org.gradle.api.tasks.TaskAction;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 /// @author Glavo
@@ -43,6 +44,8 @@ public abstract class UpdateDocuments extends DefaultTask {
             } else
                 throw new IllegalArgumentException("Unknown item type: " + item.getClass());
         }
+
+        Files.writeString(document.file(), outputBuilder.toString());
     }
 
     private void processDocuments(DocumentFileTree tree) throws IOException {
