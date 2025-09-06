@@ -81,7 +81,7 @@ public record Document(DocumentFileTree directory,
             String line;
 
             while ((line = reader.readLine()) != null) {
-                if (!line.startsWith("<!-- #BEGIN")) {
+                if (!line.startsWith("<!-- #")) {
                     items.add(new Line(line));
                 } else {
                     Matcher matcher = MACRO_BEGIN.matcher(line);
