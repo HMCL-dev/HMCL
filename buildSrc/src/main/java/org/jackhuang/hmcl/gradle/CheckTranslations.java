@@ -105,14 +105,14 @@ public abstract class CheckTranslations extends DefaultTask {
 
         public void checkKeyExists(PropertiesFile file, String key) {
             if (!file.properties.containsKey(key)) {
-                onFailure(file, new Problem.MissingKey(file, key));
+                onFailure(file, new Problem.MissingKey(key));
             }
         }
 
         public void checkMisspelled(PropertiesFile file, String key, String value,
                                     String correct, String misspelled) {
             if (value.contains(misspelled)) {
-                onFailure(file, new Problem.Misspelled(file, correct, misspelled));
+                onFailure(file, new Problem.Misspelled(correct, misspelled));
             }
         }
 
@@ -141,8 +141,7 @@ public abstract class CheckTranslations extends DefaultTask {
         private static final class MissingKey extends Problem {
             private final String key;
 
-            MissingKey(PropertiesFile file, String key) {
-                super();
+            MissingKey(String key) {
                 this.key = key;
             }
 
@@ -156,8 +155,7 @@ public abstract class CheckTranslations extends DefaultTask {
             private final String correct;
             private final String misspelled;
 
-            Misspelled(PropertiesFile file, String correct, String misspelled) {
-                super();
+            Misspelled(String correct, String misspelled) {
                 this.correct = correct;
                 this.misspelled = misspelled;
             }
