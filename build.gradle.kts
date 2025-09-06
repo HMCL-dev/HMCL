@@ -1,3 +1,5 @@
+import org.jackhuang.hmcl.gradle.docs.UpdateDocuments
+
 plugins {
     id("checkstyle")
 }
@@ -60,3 +62,8 @@ subprojects {
 org.jackhuang.hmcl.gradle.javafx.JavaFXUtils.register(rootProject)
 
 defaultTasks("clean", "build")
+
+
+tasks.register<UpdateDocuments>("updateDocuments") {
+    documentsDir.set(layout.projectDirectory.dir("docs"))
+}
