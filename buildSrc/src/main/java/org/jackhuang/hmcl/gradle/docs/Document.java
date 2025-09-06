@@ -99,7 +99,7 @@ public record Document(DocumentFileTree directory,
                             break;
 
                         Matcher propertyMatcher = MACRO_PROPERTY_LINE.matcher(line);
-                        if (matcher.matches()) {
+                        if (propertyMatcher.matches()) {
                             String propertyName = propertyMatcher.group("name");
                             String propertyValue = parsePropertyValue(propertyMatcher.group("value"));
 
