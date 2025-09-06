@@ -80,7 +80,6 @@ public record Document(DocumentFileTree directory,
         try (var reader = Files.newBufferedReader(file)) {
             String line;
 
-            mainLoop:
             while ((line = reader.readLine()) != null) {
                 if (!line.startsWith("<!-- #BEGIN")) {
                     items.add(new Line(line));

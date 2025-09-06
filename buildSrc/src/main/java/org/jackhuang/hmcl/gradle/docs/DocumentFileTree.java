@@ -45,9 +45,9 @@ public final class DocumentFileTree {
                         throw new AssertionError();
 
                     var result = DocumentLocale.parseFileName(fileName.substring(0, fileName.length() - ".md".length()));
-                    tree.getFiles().computeIfAbsent(result.getValue(), name -> new LocalizedDocument(tree, name))
+                    tree.getFiles().computeIfAbsent(result.name(), name -> new LocalizedDocument(tree, name))
                             .getDocuments()
-                            .put(result.getKey(), Document.load(tree, file, result.getValue(), result.getKey()));
+                            .put(result.locale(), Document.load(tree, file, result.name(), result.locale()));
                 }
                 return FileVisitResult.CONTINUE;
             }
@@ -87,7 +87,8 @@ public final class DocumentFileTree {
                 continue;
             else if (name.equals("..")) {
                 current = current.parent;
-                return null;
+                if (current == null)
+                    return null;
             } else {
                 DocumentFileTree finalCurrent = current;
                 current = current.children.computeIfAbsent(name, ignored -> new DocumentFileTree(finalCurrent));

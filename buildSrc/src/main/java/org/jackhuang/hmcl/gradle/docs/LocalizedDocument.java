@@ -30,6 +30,10 @@ public final class LocalizedDocument {
         this.name = name;
     }
 
+    public String getName() {
+        return name;
+    }
+
     public DocumentFileTree getDirectory() {
         return directory;
     }

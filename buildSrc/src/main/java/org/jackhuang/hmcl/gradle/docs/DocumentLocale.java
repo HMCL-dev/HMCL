@@ -78,16 +78,19 @@ public enum DocumentLocale {
     UKRAINIAN("uk"),
     ;
 
-    public static Map.Entry<DocumentLocale, String> parseFileName(String fileNameWithoutExtension) {
+    public record LocaleAndName(DocumentLocale locale, String name) {
+    }
+
+    public static LocaleAndName parseFileName(String fileNameWithoutExtension) {
         for (DocumentLocale locale : values()) {
             String suffix = locale.getFileNameSuffix();
             if (suffix.isEmpty())
                 continue;
 
             if (fileNameWithoutExtension.endsWith(suffix))
-                return Map.entry(locale, fileNameWithoutExtension.substring(0, fileNameWithoutExtension.length() - locale.getFileNameSuffix().length()));
+                return new LocaleAndName(locale, fileNameWithoutExtension.substring(0, fileNameWithoutExtension.length() - locale.getFileNameSuffix().length()));
         }
-        return Map.entry(ENGLISH, fileNameWithoutExtension);
+        return new LocaleAndName(ENGLISH, fileNameWithoutExtension);
     }
 
     private final Locale locale;
