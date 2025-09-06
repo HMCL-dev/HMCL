@@ -1,6 +1,7 @@
 # 平臺支援狀態
 
 <!-- #BEGIN LANGUAGE_SWITCHER -->
+[English](PLATFORM.md) | **中文** ([简体](PLATFORM_zh.md), **繁體**)
 <!-- #END LANGUAGE_SWITCHER -->
 
 |                            | Windows                                           | Linux                      | macOS                                                                  | FreeBSD                   |

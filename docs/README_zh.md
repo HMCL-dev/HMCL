@@ -7,6 +7,7 @@
 [![QQ Group](https://img.shields.io/badge/QQ-HMCL-bright?label=&logo=qq&logoColor=ffffff&color=1EBAFC&labelColor=1DB0EF&logoSize=auto)](https://docs.hmcl.net/groups.html)
 
 <!-- #BEGIN LANGUAGE_SWITCHER -->
+[English](README.md) | **中文** (**简体**, [繁體](README_zh_Hant.md), [文言](README_lzh.md)) | [español](README_es.md) | [русский](README_ru.md) | [українська](README_uk.md)
 <!-- #END LANGUAGE_SWITCHER -->
 
 ## 简介
