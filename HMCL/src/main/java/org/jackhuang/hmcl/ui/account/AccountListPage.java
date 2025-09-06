@@ -53,7 +53,6 @@ import org.jackhuang.hmcl.util.platform.windows.WinConstants;
 import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Arrays;
 import java.util.Locale;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
@@ -66,14 +65,7 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
     static final BooleanProperty RESTRICTED = new SimpleBooleanProperty(true);
 
     private static boolean isExemptedRegion() {
-        if (Arrays.asList(
-                "Asia/Shanghai",
-                // Although Asia/Beijing is not a legal name, Deepin uses it
-                "Asia/Beijing",
-                "Asia/Chongqing",
-                "Asia/Chungking",
-                "Asia/Harbin"
-        ).contains(ZoneId.systemDefault().getId()))
+        if ("Asia/Shanghai".equals(ZoneId.systemDefault().getId()))
             return true;
 
         // Check if the time zone is UTC+8
