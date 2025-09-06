@@ -90,12 +90,13 @@ public record Document(DocumentFileTree directory,
                         throw new IOException("Invalid macro begin line: " + line);
 
                     String macroName = matcher.group("name");
+                    String endLine = "<!-- #END " + macroName + " -->";
                     var properties = new LinkedHashMap<String, List<String>>();
                     var lines = new ArrayList<String>();
 
                     // Handle properties
                     while ((line = reader.readLine()) != null) {
-                        if (!line.startsWith("<!-- #"))
+                        if (!line.startsWith("<!-- #") || line.equals(endLine))
                             break;
 
                         Matcher propertyMatcher = MACRO_PROPERTY_LINE.matcher(line);
@@ -111,14 +112,16 @@ public record Document(DocumentFileTree directory,
                     }
 
                     // Handle lines
-                    while ((line = reader.readLine()) != null) {
-                        if (line.startsWith("<!-- #"))
-                            break;
+                    if (line != null && !line.equals(endLine)) {
+                        while ((line = reader.readLine()) != null) {
+                            if (line.startsWith("<!-- #"))
+                                break;
 
-                        lines.add(line);
+                            lines.add(line);
+                        }
                     }
 
-                    if (line == null || !line.equals("<!-- #END " + macroName + " -->"))
+                    if (line == null || !line.equals(endLine))
                         throw new IOException("Invalid macro end line: " + line);
 
                     items.add(new MacroBlock(macroName,
