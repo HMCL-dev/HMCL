@@ -47,7 +47,7 @@ public enum MacroProcessor {
                 var languageToDocs = new LinkedHashMap<String, List<Document>>();
                 for (DocumentLocale locale : DocumentLocale.values()) {
                     Document targetDoc = localized.getDocuments().get(locale);
-                    if (localized.getDocuments().containsKey(locale)) {
+                    if (targetDoc != null) {
                         languageToDocs.computeIfAbsent(locale.getLanguageDisplayName(), name -> new ArrayList<>(1))
                                 .add(targetDoc);
                     }
