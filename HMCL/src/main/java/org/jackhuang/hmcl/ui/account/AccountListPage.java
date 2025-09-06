@@ -66,7 +66,6 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
     static final BooleanProperty RESTRICTED = new SimpleBooleanProperty(true);
 
     private static boolean isExemptedRegion() {
-        String zoneId = ZoneId.systemDefault().getId();
         if (Arrays.asList(
                 "Asia/Shanghai",
                 // Although Asia/Beijing is not a legal name, Deepin uses it
@@ -74,7 +73,7 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                 "Asia/Chongqing",
                 "Asia/Chungking",
                 "Asia/Harbin"
-        ).contains(zoneId))
+        ).contains(ZoneId.systemDefault().getId()))
             return true;
 
         // Check if the time zone is UTC+8
