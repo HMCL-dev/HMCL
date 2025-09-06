@@ -79,9 +79,7 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
 
         // Check if the time zone is UTC+8
         if (ZonedDateTime.now().getOffset().getTotalSeconds() == Duration.ofHours(8).toSeconds()) {
-            Locale systemLocale = LocaleUtils.SYSTEM_DEFAULT;
-
-            if (systemLocale.getCountry().equals("CN"))
+            if (LocaleUtils.SYSTEM_DEFAULT.getCountry().equals("CN"))
                 return true;
 
             if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && NativeUtils.USE_JNA) {
