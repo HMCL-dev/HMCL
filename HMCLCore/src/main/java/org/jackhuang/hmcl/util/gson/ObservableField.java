@@ -146,6 +146,8 @@ public abstract class ObservableField<T> {
 
     private static final class CollectionField<T> extends ObservableField<T> {
         private final Type collectionType;
+
+        /// When deserializing a Set, we first deserialize it into a `List`, then put the elements into the Set.
         private final Type listType;
 
         CollectionField(String serializedName, List<String> alternate, VarHandle varHandle,
