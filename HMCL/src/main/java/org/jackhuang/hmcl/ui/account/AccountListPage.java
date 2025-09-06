@@ -66,7 +66,7 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
     static final BooleanProperty RESTRICTED = new SimpleBooleanProperty(true);
 
     private static boolean isExemptedRegion() {
-        ZoneId zoneId = ZoneId.systemDefault();
+        String zoneId = ZoneId.systemDefault().getId();
         if (Arrays.asList(
                 "Asia/Shanghai",
                 // Although Asia/Beijing is not a legal name, Deepin uses it
@@ -74,18 +74,15 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                 "Asia/Chongqing",
                 "Asia/Chungking",
                 "Asia/Harbin"
-        ).contains(zoneId.getId()))
+        ).contains(zoneId))
             return true;
 
         // Check if the time zone is UTC+8
-        if (ZonedDateTime.now(zoneId).getOffset().getTotalSeconds() == Duration.ofHours(8).toSeconds()) {
+        if (ZonedDateTime.now().getOffset().getTotalSeconds() == Duration.ofHours(8).toSeconds()) {
             Locale systemLocale = LocaleUtils.SYSTEM_DEFAULT;
 
-            if (systemLocale.getCountry().equals("CN")) {
-                // Check if the time zone is UTC+8
-                if (ZonedDateTime.now(zoneId).getOffset().getTotalSeconds() == Duration.ofHours(8).toSeconds())
-                    return true;
-            }
+            if (systemLocale.getCountry().equals("CN"))
+                return true;
 
             if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && NativeUtils.USE_JNA) {
                 Kernel32 kernel32 = Kernel32.INSTANCE;
