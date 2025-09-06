@@ -41,6 +41,7 @@ import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.ui.construct.ClassTitle;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
@@ -49,7 +50,9 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.windows.Kernel32;
 import org.jackhuang.hmcl.util.platform.windows.WinConstants;
 
+import java.time.Duration;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Locale;
 
@@ -63,7 +66,7 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
     static final BooleanProperty RESTRICTED = new SimpleBooleanProperty(true);
 
     private static boolean isExemptedRegion() {
-        String zoneId = ZoneId.systemDefault().getId();
+        ZoneId zoneId = ZoneId.systemDefault();
         if (Arrays.asList(
                 "Asia/Shanghai",
                 // Although Asia/Beijing is not a legal name, Deepin uses it
@@ -71,19 +74,27 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                 "Asia/Chongqing",
                 "Asia/Chungking",
                 "Asia/Harbin"
-        ).contains(zoneId))
+        ).contains(zoneId.getId()))
             return true;
 
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && NativeUtils.USE_JNA) {
-            Kernel32 kernel32 = Kernel32.INSTANCE;
+        // Check if the time zone is UTC+8
+        if (ZonedDateTime.now(zoneId).getOffset().getTotalSeconds() == Duration.ofHours(8).toSeconds()) {
+            Locale systemLocale = LocaleUtils.SYSTEM_DEFAULT;
 
-            // https://learn.microsoft.com/windows/win32/intl/table-of-geographical-locations
-            if (kernel32 != null && kernel32.GetUserGeoID(WinConstants.GEOCLASS_NATION) == 45) // China
-                return true;
-        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX && "GMT+08:00".equals(zoneId))
-            // Some Linux distributions may use invalid time zone ids (e.g., Asia/Beijing)
-            // Java may not be able to resolve this name and use GMT+08:00 instead.
-            return true;
+            if (systemLocale.getCountry().equals("CN")) {
+                // Check if the time zone is UTC+8
+                if (ZonedDateTime.now(zoneId).getOffset().getTotalSeconds() == Duration.ofHours(8).toSeconds())
+                    return true;
+            }
+
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && NativeUtils.USE_JNA) {
+                Kernel32 kernel32 = Kernel32.INSTANCE;
+
+                // https://learn.microsoft.com/windows/win32/intl/table-of-geographical-locations
+                if (kernel32 != null && kernel32.GetUserGeoID(WinConstants.GEOCLASS_NATION) == 45) // China
+                    return true;
+            }
+        }
 
         return false;
     }
