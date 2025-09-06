@@ -70,7 +70,7 @@ public abstract class ObservableField<T> {
             Type listType = TypeUtils.getSupertype(field.getGenericType(), field.getType(), List.class);
             if (!(listType instanceof ParameterizedType))
                 throw new IllegalArgumentException("Cannot resolve the list type of " + field.getName());
-            return new CollectionField<>(name, alternateNames, varHandle, listType);
+            return new CollectionField<>(name, alternateNames, varHandle, listType, listType);
         } else if (ObservableSet.class.isAssignableFrom(field.getType())) {
             Type setType = TypeUtils.getSupertype(field.getGenericType(), field.getType(), Set.class);
             if (!(setType instanceof ParameterizedType))
@@ -81,7 +81,7 @@ public abstract class ObservableField<T> {
                     List.class,
                     ((ParameterizedType) setType).getActualTypeArguments()[0]
             );
-            return new CollectionField<>(name, alternateNames, varHandle, listType);
+            return new CollectionField<>(name, alternateNames, varHandle, setType, listType);
         } else if (ObservableMap.class.isAssignableFrom(field.getType())) {
             Type mapType = TypeUtils.getSupertype(field.getGenericType(), field.getType(), Map.class);
             if (!(mapType instanceof ParameterizedType))
@@ -134,7 +134,7 @@ public abstract class ObservableField<T> {
 
         @Override
         public JsonElement serialize(T value, JsonSerializationContext context) {
-            return context.serialize(((Property<?>) get(value)).getValue());
+            return context.serialize(((Property<?>) get(value)).getValue(), elementType);
         }
 
         @Override
@@ -145,16 +145,21 @@ public abstract class ObservableField<T> {
     }
 
     private static final class CollectionField<T> extends ObservableField<T> {
+        private final Type collectionType;
+
+        /// When deserializing a Set, we first deserialize it into a `List`, then put the elements into the Set.
         private final Type listType;
 
-        CollectionField(String serializedName, List<String> alternate, VarHandle varHandle, Type listType) {
+        CollectionField(String serializedName, List<String> alternate, VarHandle varHandle,
+                        Type collectionType, Type listType) {
             super(serializedName, alternate, varHandle);
+            this.collectionType = collectionType;
             this.listType = listType;
         }
 
         @Override
         public JsonElement serialize(T value, JsonSerializationContext context) {
-            return context.serialize(get(value), listType);
+            return context.serialize(get(value), collectionType);
         }
 
         @SuppressWarnings({"unchecked"})
