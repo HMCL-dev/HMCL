@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.gradle.docs;
 
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.DirectoryProperty;
+import org.gradle.api.logging.Logging;
 import org.gradle.api.tasks.InputDirectory;
 import org.gradle.api.tasks.TaskAction;
 
@@ -37,7 +38,7 @@ public abstract class UpdateDocuments extends DefaultTask {
     // ---
 
     private static final Pattern LINK_PATTERN = Pattern.compile(
-            "(?<=]\\()<file>[a-zA-Z0-9_\\-./]+\\.md(?=\\))"
+            "(?<=]\\()[a-zA-Z0-9_\\-./]+\\.md(?=\\))"
     );
 
     private void processLine(StringBuilder outputBuilder, String line, Document document) {
