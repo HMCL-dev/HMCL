@@ -56,6 +56,7 @@ public enum DocumentLocale {
             return List.of(TRADITIONAL_CHINESE, SIMPLIFIED_CHINESE, ENGLISH);
         }
     },
+    JAPANESE("ja"),
     WENYAN("lzh") {
         @Override
         public String getLanguageDisplayName() {
