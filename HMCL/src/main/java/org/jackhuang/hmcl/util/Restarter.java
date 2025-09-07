@@ -32,10 +32,12 @@ import java.util.Map;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 
 /**
- * Common restart tool class, used for:
- *  - Restart after update
- *  - Restart after switching interface language
- *  - Any scenario that requires a restart to take effect
+ * <p>A common restart tool class, used for:</p>
+ * <ul>
+ *   <li>Restart after update</li>
+ *   <li>Restart after switching interface language</li>
+ *   <li>Any scenario that requires a restart to take effect</li>
+ * </ul>
  */
 public final class Restarter {
 
@@ -60,8 +62,10 @@ public final class Restarter {
     }
 
     /**
+     * <p>
      * Set the JAR path to start
      * If not, the current running JAR will be used by default
+     * </p>
      */
     public Restarter setJarPath(Path jarPath) {
         this.jarPath = jarPath;
@@ -101,14 +105,4 @@ public final class Restarter {
 
         EntryPoint.exit(0);
     }
-
-    public static void restartWithSameArgs() throws IOException {
-        builder().restart();
-    }
-
-    public static void restartWithLocale(Locales.SupportedLocale locale) throws IOException {
-        config().setLocalization(locale);
-        builder().restart();
-    }
-
 }

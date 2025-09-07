@@ -85,7 +85,7 @@ public final class SettingsPage extends SettingsView {
                 restartButton.getStyleClass().add("dialog-accept");
                 restartButton.setOnAction(e -> {
                     try {
-                        Restarter.restartWithLocale(newValue);
+                        Restarter.builder().restart();
                     } catch (IOException ex) {
                         LOG.log(Level.WARNING, "Failed to restart", ex);
                         ignoreLanguageChange = true;
