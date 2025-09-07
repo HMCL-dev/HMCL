@@ -157,8 +157,6 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         private final ImageView imageView = new ImageView();
         private final StackPane pane = new StackPane();
 
-        private final StringProperty wikiLink = new SimpleStringProperty();
-
         private final Holder<RemoteVersionListCell> lastCell;
 
         RemoteVersionListCell(Holder<RemoteVersionListCell> lastCell, VersionsPage control) {
@@ -174,8 +172,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             {
                 if ("game".equals(control.libraryId)) {
                     JFXButton wikiButton = newToggleButton4(SVG.GLOBE_BOOK);
-                    wikiButton.setOnAction(event -> FXUtils.openLink(wikiLink.get()));
-                    wikiButton.visibleProperty().bind(wikiLink.isNotEmpty());
+                    wikiButton.setOnAction(event -> onOpenWiki());
                     FXUtils.installFastTooltip(wikiButton, i18n("wiki.tooltip"));
                     actions.getChildren().add(wikiButton);
                 }
@@ -201,6 +198,14 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
             control.navigation.getSettings().put(control.libraryId, item);
             control.callback.run();
+        }
+
+        private void onOpenWiki() {
+            RemoteVersion item = getItem();
+            if (!(item instanceof GameRemoteVersion))
+                return;
+
+            FXUtils.openLink(I18n.getWikiLink((GameRemoteVersion) item));
         }
 
         @Override
@@ -248,7 +253,6 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                         imageView.setImage(VersionIconType.CRAFT_TABLE.getIcon());
                         break;
                 }
-                wikiLink.set(I18n.getWikiLink((GameRemoteVersion) remoteVersion));
             } else {
                 VersionIconType iconType;
                 if (remoteVersion instanceof LiteLoaderRemoteVersion)
@@ -273,7 +277,6 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     twoLineListItem.setSubtitle(remoteVersion.getGameVersion());
                 else
                     twoLineListItem.getTags().setAll(remoteVersion.getGameVersion());
-                wikiLink.set(null);
             }
         }
     }
