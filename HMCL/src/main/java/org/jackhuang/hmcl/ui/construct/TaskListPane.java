@@ -33,6 +33,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
+import org.jackhuang.hmcl.download.cleanroom.CleanroomInstallTask;
 import org.jackhuang.hmcl.download.fabric.FabricAPIInstallTask;
 import org.jackhuang.hmcl.download.fabric.FabricInstallTask;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallTask;
@@ -164,6 +165,8 @@ public final class TaskListPane extends StackPane {
                     if (task.getInheritedStage() != null && task.getInheritedStage().startsWith("hmcl.install.game"))
                         return;
                     task.setName(i18n("install.installer.install", i18n("install.installer.game")));
+                } else if (task instanceof CleanroomInstallTask) {
+                    task.setName(i18n("install.installer.install", i18n("install.installer.cleanroom")));
                 } else if (task instanceof ForgeNewInstallTask || task instanceof ForgeOldInstallTask) {
                     task.setName(i18n("install.installer.install", i18n("install.installer.forge")));
                 } else if (task instanceof NeoForgeInstallTask || task instanceof NeoForgeOldInstallTask) {
@@ -439,6 +442,7 @@ public final class TaskListPane extends StackPane {
                 case "hmcl.install.libraries":  message = i18n("libraries.download"); break;
                 case "hmcl.install.game":       message = i18n("install.installer.install", i18n("install.installer.game") + " " + stageValue); break;
                 case "hmcl.install.forge":      message = i18n("install.installer.install", i18n("install.installer.forge") + " " + stageValue); break;
+                case "hmcl.install.cleanroom":  message = i18n("install.installer.install", i18n("install.installer.cleanroom") + " " + stageValue); break;
                 case "hmcl.install.neoforge":   message = i18n("install.installer.install", i18n("install.installer.neoforge") + " " + stageValue); break;
                 case "hmcl.install.liteloader": message = i18n("install.installer.install", i18n("install.installer.liteloader") + " " + stageValue); break;
                 case "hmcl.install.optifine":   message = i18n("install.installer.install", i18n("install.installer.optifine") + " " + stageValue); break;
