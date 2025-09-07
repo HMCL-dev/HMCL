@@ -132,10 +132,9 @@ public enum MacroProcessor {
         @Override
         public void apply(Document document, Document.MacroBlock macroBlock, StringBuilder outputBuilder) throws IOException {
             var mutableProperties = new LinkedHashMap<>(macroBlock.properties());
-
-            String name = MacroProcessor.removeSingleProperty(mutableProperties, "NAME");
-            if (name == null)
-                throw new IllegalArgumentException("Missing property: name");
+            String from = MacroProcessor.removeSingleProperty(mutableProperties, "FROM");
+            if (from == null)
+                throw new IllegalArgumentException("Missing property: FROM");
 
             List<Replace> replaces = Objects.requireNonNullElse(mutableProperties.remove("REPLACE"), List.<String>of())
                     .stream()
@@ -151,7 +150,7 @@ public enum MacroProcessor {
             if (localizedDocument == null || (fromDocument = localizedDocument.getDocuments().get(DocumentLocale.ENGLISH)) == null)
                 throw new IOException("Document " + document.name() + " for english does not exist");
 
-            List<String> nameList = List.of(name);
+            List<String> nameList = List.of(from);
 
             var fromBlock = (Document.MacroBlock) fromDocument.items().stream()
                     .filter(it -> it instanceof Document.MacroBlock macro
@@ -159,7 +158,7 @@ public enum MacroProcessor {
                             && nameList.equals(macro.properties().get("NAME"))
                     )
                     .findFirst()
-                    .orElseThrow(() -> new IOException("Cannot find the block \"" + name + "\" in " + fromDocument.file()));
+                    .orElseThrow(() -> new IOException("Cannot find the block \"" + from + "\" in " + fromDocument.file()));
 
             MacroProcessor.writeBegin(outputBuilder, macroBlock);
             MacroProcessor.writeProperties(outputBuilder, macroBlock);
@@ -176,7 +175,7 @@ public enum MacroProcessor {
 
     private static String removeSingleProperty(Map<String, List<String>> properties, String name) {
         List<String> values = properties.remove(name);
-        if (values == null || properties.isEmpty())
+        if (values == null || values.isEmpty())
             return null;
 
         if (values.size() != 1)
