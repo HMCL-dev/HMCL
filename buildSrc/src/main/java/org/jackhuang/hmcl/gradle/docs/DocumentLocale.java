@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.gradle.docs;
 
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 
 /// @author Glavo
 public enum DocumentLocale {
@@ -29,38 +28,17 @@ public enum DocumentLocale {
             return List.of(ENGLISH);
         }
     },
-    SIMPLIFIED_CHINESE(Locale.forLanguageTag("zh-Hans"), "zh") {
-        @Override
-        public String getLanguageDisplayName() {
-            return "中文";
-        }
-
-        @Override
-        public String getSubLanguageDisplayName() {
-            return "简体";
-        }
-    },
+    SIMPLIFIED_CHINESE(Locale.forLanguageTag("zh-Hans"), "zh"),
     TRADITIONAL_CHINESE("zh-Hant") {
-        @Override
-        public String getLanguageDisplayName() {
-            return "中文";
-        }
-
-        @Override
-        public String getSubLanguageDisplayName() {
-            return "繁體";
-        }
-
         @Override
         public List<DocumentLocale> getCandidates() {
             return List.of(TRADITIONAL_CHINESE, SIMPLIFIED_CHINESE, ENGLISH);
         }
     },
-    JAPANESE("ja"),
     WENYAN("lzh") {
         @Override
         public String getLanguageDisplayName() {
-            return "中文";
+            return TRADITIONAL_CHINESE.getLanguageDisplayName();
         }
 
         @Override
@@ -73,6 +51,7 @@ public enum DocumentLocale {
             return List.of(WENYAN, TRADITIONAL_CHINESE, SIMPLIFIED_CHINESE, ENGLISH);
         }
     },
+    JAPANESE("ja"),
     SPANISH("es"),
     RUSSIAN("ru"),
     UKRAINIAN("uk"),
@@ -112,6 +91,16 @@ public enum DocumentLocale {
     }
 
     public String getSubLanguageDisplayName() {
+        boolean hasScript = !locale.getScript().isEmpty();
+        boolean hasRegion = !locale.getCountry().isEmpty();
+
+        if (hasScript && hasRegion)
+            throw new AssertionError("Unsupported locale: " + locale);
+
+        if (hasScript)
+            return locale.getDisplayScript(locale);
+        if (hasRegion)
+            return locale.getDisplayCountry(locale);
         return "";
     }
 

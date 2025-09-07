@@ -24,6 +24,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/// @author Glavo
 public record Document(DocumentFileTree directory,
                        Path file,
                        String name, DocumentLocale locale,
@@ -56,23 +57,29 @@ public record Document(DocumentFileTree directory,
             if (ch == '\\' && i < value.length() - 1) {
                 char next = value.charAt(++i);
                 switch (next) {
-                    case 'n':
-                        builder.append('\n');
-                        break;
-                    case 'r':
-                        builder.append('\r');
-                        break;
-                    case '\\':
-                        builder.append('\\');
-                        break;
-                    default:
-                        builder.append(next);
+                    case 'n' -> builder.append('\n');
+                    case 'r' -> builder.append('\r');
+                    case '\\' -> builder.append('\\');
+                    default -> builder.append(next);
                 }
             } else {
                 builder.append(ch);
             }
         }
         return builder.toString();
+    }
+
+    static void writePropertyValue(StringBuilder builder, String value) {
+        for (int i = 0; i < value.length(); i++) {
+            char ch = value.charAt(i);
+
+            switch (ch) {
+                case '\\' -> builder.append("\\\\");
+                case '\r' -> builder.append("\\r");
+                case '\n' -> builder.append("\\n");
+                default -> builder.append(ch);
+            }
+        }
     }
 
     public static Document load(DocumentFileTree directory, Path file, String name, DocumentLocale locale) throws IOException {

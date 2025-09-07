@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.gradle.docs;
 
+import javax.print.Doc;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -103,18 +104,15 @@ public enum MacroProcessor {
             MacroProcessor.writeEnd(outputBuilder, macroBlock);
         }
     },
-    KEEP {
+    BLOCK {
         @Override
         public void apply(Document document, Document.MacroBlock macroBlock, StringBuilder outputBuilder) throws IOException {
-            if (!macroBlock.properties().isEmpty())
-                throw new IllegalArgumentException("The KEEP macro must not have properties.");
-
             MacroProcessor.writeBegin(outputBuilder, macroBlock);
+            MacroProcessor.writeProperties(outputBuilder, macroBlock);
             for (String line : macroBlock.contentLines()) {
                 outputBuilder.append(line).append('\n');
             }
             MacroProcessor.writeEnd(outputBuilder, macroBlock);
-
         }
     };
 
@@ -128,6 +126,16 @@ public enum MacroProcessor {
         builder.append("<!-- #END ");
         builder.append(macroBlock.name());
         builder.append(" -->\n");
+    }
+
+    private static void writeProperties(StringBuilder builder, Document.MacroBlock macroBlock) throws IOException {
+        macroBlock.properties().forEach((key, values) -> {
+            for (String value : values) {
+                builder.append("<!-- #PROPERTY ").append(key).append('=');
+                Document.writePropertyValue(builder, value);
+                builder.append(" -->\n");
+            }
+        });
     }
 
     public abstract void apply(Document document,

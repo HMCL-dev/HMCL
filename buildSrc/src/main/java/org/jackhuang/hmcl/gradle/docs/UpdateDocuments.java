@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.gradle.docs;
 
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.DirectoryProperty;
-import org.gradle.api.logging.Logging;
 import org.gradle.api.tasks.InputDirectory;
 import org.gradle.api.tasks.TaskAction;
 
