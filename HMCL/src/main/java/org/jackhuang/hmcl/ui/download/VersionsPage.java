@@ -29,7 +29,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
-import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionList;
@@ -38,7 +37,6 @@ import org.jackhuang.hmcl.download.fabric.FabricAPIRemoteVersion;
 import org.jackhuang.hmcl.download.fabric.FabricRemoteVersion;
 import org.jackhuang.hmcl.download.forge.ForgeRemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
-import org.jackhuang.hmcl.download.game.GameServerDownloadTask;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderRemoteVersion;
 import org.jackhuang.hmcl.download.neoforge.NeoForgeRemoteVersion;
 import org.jackhuang.hmcl.download.optifine.OptiFineRemoteVersion;
@@ -47,7 +45,6 @@ import org.jackhuang.hmcl.download.quilt.QuiltRemoteVersion;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
@@ -58,11 +55,9 @@ import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
-import java.io.File;
 import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -162,7 +157,6 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         private final ImageView imageView = new ImageView();
         private final StackPane pane = new StackPane();
 
-        private final BooleanProperty supportDownloadServer = new SimpleBooleanProperty(false);
         private final StringProperty wikiLink = new SimpleStringProperty();
 
         private final Holder<RemoteVersionListCell> lastCell;
@@ -179,12 +173,6 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             actions.setAlignment(Pos.CENTER);
             {
                 if ("game".equals(control.libraryId)) {
-                    JFXButton downloadServerButton = newToggleButton4(SVG.LAN);
-                    downloadServerButton.visibleProperty().bind(supportDownloadServer);
-                    downloadServerButton.setOnAction(event -> onDownloadServer());
-                    FXUtils.installFastTooltip(downloadServerButton, i18n("version.server.download"));
-                    actions.getChildren().add(downloadServerButton);
-
                     JFXButton wikiButton = newToggleButton4(SVG.GLOBE_BOOK);
                     wikiButton.setOnAction(event -> FXUtils.openLink(wikiLink.get()));
                     wikiButton.visibleProperty().bind(wikiLink.isNotEmpty());
@@ -215,28 +203,6 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             control.callback.run();
         }
 
-        private void onDownloadServer() {
-            RemoteVersion item = getItem();
-            if (!(item instanceof GameRemoteVersion))
-                return;
-
-            GameRemoteVersion gameRemoteVersion = (GameRemoteVersion) item;
-
-            FileChooser fileChooser = new FileChooser();
-            fileChooser.getExtensionFilters().setAll(
-                    new FileChooser.ExtensionFilter("JAR", "*.jar")
-            );
-            fileChooser.setInitialFileName(gameRemoteVersion.getGameVersion() + ".jar");
-            File file = fileChooser.showSaveDialog(getScene().getWindow());
-            if (file != null) {
-                Controllers.taskDialog(
-                        new GameServerDownloadTask(control.downloadProvider, file.toPath(), gameRemoteVersion),
-                        i18n("version.server.download"),
-                        TaskCancellationAction.NORMAL
-                );
-            }
-        }
-
         @Override
         public void updateItem(RemoteVersion remoteVersion, boolean empty) {
             super.updateItem(remoteVersion, empty);
@@ -263,11 +229,8 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                 RemoteVersion.Type versionType = remoteVersion.getVersionType();
                 switch (versionType) {
                     case RELEASE:
-                        content.getTags().setAll(i18n("version.game.release"));
-                        content.setImage(VersionIconType.GRASS.getIcon());
                         twoLineListItem.getTags().setAll(i18n("version.game.release"));
                         imageView.setImage(VersionIconType.GRASS.getIcon());
-                        supportDownloadServer.set(true);
                         break;
                     case PENDING:
                     case SNAPSHOT:
@@ -279,14 +242,10 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                             twoLineListItem.getTags().setAll(i18n("version.game.snapshot"));
                             imageView.setImage(VersionIconType.COMMAND.getIcon());
                         }
-                        supportDownloadServer.set(true);
                         break;
                     default:
-                        content.getTags().setAll(i18n("version.game.old"));
-                        content.setImage(VersionIconType.CRAFT_TABLE.getIcon());
                         twoLineListItem.getTags().setAll(i18n("version.game.old"));
                         imageView.setImage(VersionIconType.CRAFT_TABLE.getIcon());
-                        supportDownloadServer.set(false);
                         break;
                 }
                 wikiLink.set(I18n.getWikiLink((GameRemoteVersion) remoteVersion));
@@ -314,7 +273,6 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     twoLineListItem.setSubtitle(remoteVersion.getGameVersion());
                 else
                     twoLineListItem.getTags().setAll(remoteVersion.getGameVersion());
-                supportDownloadServer.set(false);
                 wikiLink.set(null);
             }
         }
