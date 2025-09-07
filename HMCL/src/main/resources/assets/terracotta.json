@@ -3,20 +3,19 @@
     "0.3.8-rc.1",
     "0.3.8-rc.2",
     "0.3.8-rc.3",
-    "0.3.8-rc.4"
+    "0.3.8-rc.4",
+    "0.3.8-rc.5"
   ],
-  "version": "0.3.8-rc.5",
+  "version": "0.3.9-rc.1",
   "classifiers": {
-    "windows-x86_64.exe": "sha256:fda4e56824fca62ab78000abb686a0cb6c50f022ba88045c63157901ccac4263",
-    "windows-arm64.exe": "sha256:f513dd8a6249c86ff4c4b879cbb094ae4eb10c37d8bdc475cc36967618b539ae",
-    "macos-x86_64": "sha256:032bbfc4c27e6b250d2156d5943bf40b51fa4e66acfb978ed3f92ab3232a29a7",
-    "macos-x86_64.pkg": "sha256:80088017611fefdb113b58f4fead050cb8098e4e57386565e65a47df8051a9ab",
-    "macos-arm64": "sha256:73423a9dbb849d9b41fb608ddc8e677fac222849c17059fb930dffdb9fac345d",
-    "macos-arm64.pkg": "sha256:498f74efc19d2f151c1cea47c42792d4e48dbcb2b82764b4a9e33739b3862915",
-    "linux-x86_64": "sha256:3afa2703e3bef495ec187f028847fc4ddc3bc2c8912dbc520054072dfc40ca04",
-    "linux-x86_64.AppImage": "sha256:34b9c35d61bd8841cab2321415586f686c8189eacc275225942ad36b98de9f0c",
-    "linux-arm64": "sha256:a7b152da931c883d7e08e499160ca3844180bf4b5fd4ca6b0193f613821ec7af",
-    "linux-arm64.AppImage": "sha256:0099473c4cebffcff5dee610932bca561505206d17d21f8eacb861960dadefe7"
+    "windows-x86_64.exe": "sha256:24b31960beeb43f6bf299086f91222ffae4b0923469e760e872467f542d0c9c1",
+    "windows-arm64.exe": "sha256:3451fe36e1b1050d7f39de47455431aef1f6f72bd7a70e2c1da2353a2a956fdb",
+    "macos-x86_64.pkg": "sha256:85d5f0367bfb954ee1784816524b1eed9c9be0b104a5d256b8219d398152bc79",
+    "macos-x86_64": "sha256:55640f684c9a7fbcc5acea088ac0ec22a338d30a62c8df00d91a0a25213d89dd",
+    "macos-arm64": "sha256:e4069f5b587eb87b06e2dbb3240f69aee2bb056206b20e8700641c264e231148",
+    "macos-arm64.pkg": "sha256:540f28b00305636d433ed1f151b4a928f4d3f9b93b1c81fe79616f02f3f0efbf",
+    "linux-x86_64": "sha256:17ce8be9e279c2ac4f3f6e0c4c17b86107d86588de31307e936fa110c7c6935b",
+    "linux-arm64": "sha256:79b77b4fcf3e58b901f9fe089e9277469498403da5cd6a65ef2a8d37411d7d2a"
   },
   "downloads": [
     "https://github.com/burningtnt/Terracotta/releases/download/V${version}/terracotta-${version}-${classifier}",

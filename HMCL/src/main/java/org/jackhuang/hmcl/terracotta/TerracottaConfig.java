@@ -1,6 +1,7 @@
 package org.jackhuang.hmcl.terracotta;
 
 import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.terracotta.provider.ITerracottaProvider;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.Hex;
@@ -29,7 +30,7 @@ public final class TerracottaConfig {
         return path;
     }
 
-    public FileDownloadTask create() {
+    public Task<?> create() {
         return new FileDownloadTask(links, path, checking);
     }
 

@@ -6,6 +6,8 @@ import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import org.jackhuang.hmcl.auth.Account;
+import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -25,6 +27,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class TerracottaManager {
@@ -73,13 +76,6 @@ public final class TerracottaManager {
     }
 
     private static final class BackgroundDaemon implements Runnable {
-        private static final TerracottaState.Exception.Type[] LOOKUP = {
-                TerracottaState.Exception.Type.PING_HOST_FAIL,
-                TerracottaState.Exception.Type.PING_HOST_RST,
-                TerracottaState.Exception.Type.GUEST_ET_CRASH,
-                TerracottaState.Exception.Type.HOST_ET_CRASH,
-                TerracottaState.Exception.Type.PING_SERVER_RST
-        };
 
         @Override
         public void run() {
@@ -93,35 +89,19 @@ public final class TerracottaManager {
 
                 int port = ((TerracottaState.PortSpecific) state).port;
                 int index = state instanceof TerracottaState.Ready ? ((TerracottaState.Ready) state).index : Integer.MIN_VALUE;
+
                 TerracottaState next;
                 try {
                     next = new GetTask(URI.create(String.format("http://127.0.0.1:%d/state", port)))
                             .setSignificance(Task.TaskSignificance.MINOR)
-                            .thenApplyAsync(jsonString -> JsonUtils.fromNonNullJson(jsonString, TypeToken.get(JsonObject.class)))
-                            .setSignificance(Task.TaskSignificance.MINOR)
-                            .thenApplyAsync(object -> {
-                                int in = object.get("index").getAsInt();
-                                if (in <= index) {
+                            .thenApplyAsync(jsonString -> {
+                                TerracottaState.Ready object = JsonUtils.fromNonNullJson(jsonString, TypeToken.get(TerracottaState.Ready.class));
+                                if (object.index <= index) {
                                     return null;
                                 }
 
-                                switch (object.get("state").getAsString()) {
-                                    case "waiting":
-                                        return new TerracottaState.Waiting(port, in);
-                                    case "scanning":
-                                        return new TerracottaState.Scanning(port, in);
-                                    case "hosting":
-                                        return new TerracottaState.Hosting(port, in, object.get("room").getAsString());
-                                    case "guesting":
-                                        return new TerracottaState.Guesting(
-                                                port, in,
-                                                object.get("url").getAsString(), object.get("ok").getAsBoolean()
-                                        );
-                                    case "exception":
-                                        return new TerracottaState.Exception(port, in, LOOKUP[object.get("type").getAsInt()]);
-                                    default:
-                                        throw new IllegalArgumentException();
-                                }
+                                object.port = port;
+                                return object;
                             })
                             .setSignificance(Task.TaskSignificance.MINOR)
                             .run();
@@ -219,28 +199,36 @@ public final class TerracottaManager {
             new GetTask(URI.create(String.format("http://127.0.0.1:%d/state/ide", ((TerracottaState.PortSpecific) state).port)))
                     .setSignificance(Task.TaskSignificance.MINOR)
                     .start();
-            return new TerracottaState.Waiting(-1, -1);
+            return new TerracottaState.Waiting(-1, -1, null);
         }
         return null;
     }
 
-    public static TerracottaState.Scanning setScanning() {
+    private static String getPlayerName() {
+        Account account = Accounts.getSelectedAccount();
+        return account != null ? account.getCharacter() : i18n("terracotta.player_anonymous");
+    }
+
+    public static TerracottaState.HostScanning setScanning() {
         TerracottaState state = STATE_V.get();
         if (state instanceof TerracottaState.PortSpecific) {
-            new GetTask(URI.create(String.format("http://127.0.0.1:%d/state/scanning", ((TerracottaState.PortSpecific) state).port)))
-                    .setSignificance(Task.TaskSignificance.MINOR)
-                    .start();
-            return new TerracottaState.Scanning(-1, -1);
+            new GetTask(NetworkUtils.toURI(String.format(
+                    "http://127.0.0.1:%d/state/scanning?player=%s", ((TerracottaState.PortSpecific) state).port, getPlayerName()))
+            ).setSignificance(Task.TaskSignificance.MINOR).start();
+
+            return new TerracottaState.HostScanning(-1, -1, null);
         }
         return null;
     }
 
-    public static Task<TerracottaState.Guesting> setGuesting(String room) {
+    public static Task<TerracottaState.GuestStarting> setGuesting(String room) {
         TerracottaState state = STATE_V.get();
         if (state instanceof TerracottaState.PortSpecific) {
-            return new GetTask(NetworkUtils.toURI(String.format("http://127.0.0.1:%d/state/guesting?room=%s", ((TerracottaState.PortSpecific) state).port, room)))
+            return new GetTask(NetworkUtils.toURI(String.format(
+                    "http://127.0.0.1:%d/state/guesting?room=%s&player=%s", ((TerracottaState.PortSpecific) state).port, room, getPlayerName()
+            )))
                     .setSignificance(Task.TaskSignificance.MINOR)
-                    .thenSupplyAsync(() -> new TerracottaState.Guesting(-1, -1, null, false))
+                    .thenSupplyAsync(() -> new TerracottaState.GuestStarting(-1, -1, null))
                     .setSignificance(Task.TaskSignificance.MINOR);
         } else {
             return null;

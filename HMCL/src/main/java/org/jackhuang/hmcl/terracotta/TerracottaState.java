@@ -1,6 +1,15 @@
 package org.jackhuang.hmcl.terracotta;
 
+import com.google.gson.JsonParseException;
+import com.google.gson.annotations.SerializedName;
 import javafx.beans.property.ReadOnlyDoubleProperty;
+import org.jackhuang.hmcl.terracotta.profile.TerracottaProfile;
+import org.jackhuang.hmcl.util.gson.JsonSubtype;
+import org.jackhuang.hmcl.util.gson.JsonType;
+import org.jackhuang.hmcl.util.gson.TolerableValidationException;
+import org.jackhuang.hmcl.util.gson.Validation;
+
+import java.util.List;
 
 public abstract class TerracottaState {
     protected TerracottaState() {
@@ -43,19 +52,37 @@ public abstract class TerracottaState {
     }
 
     static abstract class PortSpecific extends TerracottaState {
-        final int port;
+        transient int port;
 
         protected PortSpecific(int port) {
             this.port = port;
         }
     }
 
+    @JsonType(
+            property = "state",
+            subtypes = {
+                    @JsonSubtype(clazz = Waiting.class, name = "waiting"),
+                    @JsonSubtype(clazz = HostScanning.class, name = "host-scanning"),
+                    @JsonSubtype(clazz = HostStarting.class, name = "host-starting"),
+                    @JsonSubtype(clazz = HostOK.class, name = "host-ok"),
+                    @JsonSubtype(clazz = GuestStarting.class, name = "guest-connecting"),
+                    @JsonSubtype(clazz = GuestOK.class, name = "guest-starting"),
+                    @JsonSubtype(clazz = Exception.class, name = "guest-ok"),
+            }
+    )
     static abstract class Ready extends PortSpecific {
+        @SerializedName("index")
         final int index;
 
-        Ready(int port, int index) {
+        @SerializedName("state")
+        @SuppressWarnings({"unused", "FieldCanBeLocal"})
+        private final String state;
+
+        Ready(int port, int index, String state) {
             super(port);
             this.index = index;
+            this.state = state;
         }
     }
 
@@ -66,67 +93,109 @@ public abstract class TerracottaState {
     }
 
     public static final class Waiting extends Ready {
-        Waiting(int port, int index) {
-            super(port, index);
+        Waiting(int port, int index, String state) {
+            super(port, index, state);
         }
     }
 
-    public static final class Scanning extends Ready {
-        Scanning(int port, int index) {
-            super(port, index);
+    public static final class HostScanning extends Ready {
+        HostScanning(int port, int index, String state) {
+            super(port, index, state);
         }
     }
 
-    public static final class Hosting extends Ready {
-        final String code;
+    public static final class HostStarting extends Ready {
+        HostStarting(int port, int index, String state) {
+            super(port, index, state);
+        }
+    }
 
-        Hosting(int port, int index, String code) {
-            super(port, index);
+    public static final class HostOK extends Ready {
+        @SerializedName("room")
+        private final String code;
+
+        @SerializedName("profiles")
+        private final List<TerracottaProfile> profiles;
+
+        HostOK(int port, int index, String state, String code, List<TerracottaProfile> profiles) {
+            super(port, index, state);
             this.code = code;
+            this.profiles = profiles;
         }
 
         public String getCode() {
             return code;
         }
+
+        public List<TerracottaProfile> getProfiles() {
+            return profiles;
+        }
     }
 
-    public static final class Guesting extends Ready {
-        final String url;
-        final boolean ok;
+    public static final class GuestStarting extends Ready {
+        GuestStarting(int port, int index, String state) {
+            super(port, index, state);
+        }
+    }
 
-        Guesting(int port, int index, String url, boolean ok) {
-            super(port, index);
+    public static final class GuestOK extends Ready {
+        @SerializedName("url")
+        private final String url;
+
+        @SerializedName("profiles")
+        private final List<TerracottaProfile> profiles;
+
+        GuestOK(int port, int index, String state, String url, List<TerracottaProfile> profiles) {
+            super(port, index, state);
             this.url = url;
-            this.ok = ok;
+            this.profiles = profiles;
         }
 
         public String getUrl() {
             return url;
         }
 
-        public boolean isOk() {
-            return ok;
+        public List<TerracottaProfile> getProfiles() {
+            return profiles;
         }
     }
 
-    public static final class Exception extends Ready {
+    public static final class Exception extends Ready implements Validation {
         public enum Type {
             PING_HOST_FAIL,
             PING_HOST_RST,
             GUEST_ET_CRASH,
             HOST_ET_CRASH,
-            PING_SERVER_RST
+            PING_SERVER_RST,
+            SCAFFOLDING_INVALID_RESPONSE
         }
 
-        private final Type type;
+        private static final TerracottaState.Exception.Type[] LOOKUP = {
+                Type.PING_HOST_FAIL,
+                Type.PING_HOST_RST,
+                Type.GUEST_ET_CRASH,
+                Type.HOST_ET_CRASH,
+                Type.PING_SERVER_RST,
+                Type.SCAFFOLDING_INVALID_RESPONSE
+        };
 
-        Exception(int port, int index, Type type) {
-            super(port, index);
+        @SerializedName("type")
+        private final int type;
+
+        Exception(int port, int index, String state, int type) {
+            super(port, index, state);
             this.type = type;
         }
 
+        @Override
+        public void validate() throws JsonParseException, TolerableValidationException {
+            if (type < 0 || type >= LOOKUP.length) {
+                throw new JsonParseException(String.format("Type must between [0, %s)", LOOKUP.length));
+            }
+        }
+
         public Type getType() {
-            return type;
+            return LOOKUP[type];
         }
     }
 
