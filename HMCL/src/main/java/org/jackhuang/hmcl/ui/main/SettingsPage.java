@@ -220,12 +220,11 @@ public final class SettingsPage extends SettingsView {
                             // If an exception occurs while decompressing the input file, we should
                             // ensure the input file and the current zip entry are closed.
 
-                            InputStream input = null;
+                            InputStream input;
                             try {
                                 input = Files.newInputStream(path);
                             } catch (Throwable ex) {
                                 LOG.warning("Failed to open log file " + path, ex);
-                                IOUtils.closeQuietly(input, ex);
                                 continue;
                             }
 
