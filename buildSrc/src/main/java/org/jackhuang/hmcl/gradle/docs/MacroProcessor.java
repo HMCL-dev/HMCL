@@ -23,17 +23,37 @@ import java.util.regex.Pattern;
 
 /// @author Glavo
 public enum MacroProcessor {
+    /// Does not process the content in any way.
+    ///
+    /// Supported properties:
+    ///
+    /// - `NAME`: The name of this block (used by other macros).
+    /// - `PROCESS_LINK`: If set to `FALSE`, document links in the content will not be automatically updated.
     BLOCK {
         @Override
         public void apply(Document document, Document.MacroBlock macroBlock, StringBuilder outputBuilder) throws IOException {
+            var mutableProperties = new LinkedHashMap<>(macroBlock.properties());
+            MacroProcessor.removeSingleProperty(mutableProperties, "NAME");
+            boolean processLink = !"FALSE".equalsIgnoreCase(MacroProcessor.removeSingleProperty(mutableProperties, "PROCESS_LINK"));
+
+            if (!mutableProperties.isEmpty())
+                throw new IllegalArgumentException("Unsupported properties: " + mutableProperties.keySet());
+
             MacroProcessor.writeBegin(outputBuilder, macroBlock);
             MacroProcessor.writeProperties(outputBuilder, macroBlock);
             for (String line : macroBlock.contentLines()) {
-                outputBuilder.append(line).append('\n');
+                if (processLink)
+                    MacroProcessor.processLine(outputBuilder, line, document);
+                else
+                    outputBuilder.append(line).append('\n');
             }
             MacroProcessor.writeEnd(outputBuilder, macroBlock);
         }
     },
+
+    /// Used to automatically generate links to other language versions of the current document.
+    ///
+    /// Does not support any properties.
     LANGUAGE_SWITCHER {
         private static <T> boolean containsIdentity(List<T> list, T element) {
             for (T t : list) {
@@ -113,6 +133,14 @@ public enum MacroProcessor {
             MacroProcessor.writeEnd(outputBuilder, macroBlock);
         }
     },
+
+    /// Copy the block with the specified name from the English version of the current document.
+    ///
+    /// Supported properties:
+    ///
+    /// - `NAME` (required): Specifies the block to be copied.
+    /// - `REPLACE` (repeatable): Used to replace specified text. Accepts a list containing two strings. The first string is a regular expression for matching content; the second string is the replacement target.
+    /// - `PROCESS_LINK`: If set to `FALSE`, document links in the content will not be automatically updated.
     COPY {
         private record Replace(Pattern pattern, String replacement) {
         }
