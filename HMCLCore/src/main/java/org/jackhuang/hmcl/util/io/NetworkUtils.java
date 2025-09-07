@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.util.io;
 
 import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -45,8 +46,31 @@ public final class NetworkUtils {
     private NetworkUtils() {
     }
 
+    public static boolean isLoopbackAddress(URI uri) {
+        String host = uri.getHost();
+        if (StringUtils.isBlank(host))
+            return false;
+
+        try {
+            InetAddress addr = InetAddress.getByName(host);
+            return addr.isLoopbackAddress();
+        } catch (UnknownHostException e) {
+            return false;
+        }
+    }
+
     public static boolean isHttpUri(URI uri) {
         return "http".equals(uri.getScheme()) || "https".equals(uri.getScheme());
+    }
+
+    public static String addHttpsIfMissing(String url) {
+        if (Pattern.compile("^(?<scheme>[a-zA-Z][a-zA-Z0-9+.-]*)://").matcher(url).find())
+            return url;
+
+        if (url.startsWith("//"))
+            return "https:" + url;
+        else
+            return "https://" + url;
     }
 
     public static String withQuery(String baseUrl, Map<String, String> params) {
@@ -112,7 +136,12 @@ public final class NetworkUtils {
     }
 
     public static URLConnection createConnection(URI uri) throws IOException {
-        URLConnection connection = uri.toURL().openConnection();
+        URLConnection connection;
+        try {
+            connection = uri.toURL().openConnection();
+        } catch (IllegalArgumentException | MalformedURLException e) {
+            throw new IOException(e);
+        }
         connection.setConnectTimeout(TIME_OUT);
         connection.setReadTimeout(TIME_OUT);
         if (connection instanceof HttpURLConnection) {
@@ -186,8 +215,8 @@ public final class NetworkUtils {
                         }
                     }
 
-                    // Invalid surrogate pair, encode as '?'
-                    builder.append("%3F");
+                    // Invalid surrogate pair, encode as U+FFFD (replacement character)
+                    encodeCodePoint(builder, 0xfffd);
                     continue;
                 }
 
