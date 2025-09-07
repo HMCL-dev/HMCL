@@ -166,6 +166,7 @@ public final class SettingsPage extends SettingsView {
                                              ? new GZIPInputStream(fis)
                                              : new XZInputStream(fis)) {
                                     uncompressed.transferTo(Channels.newOutputStream(tempChannel));
+                                    tempChannel.position(0);
                                 } catch (IOException e) {
                                     LOG.warning("Failed to decompress log: " + path, e);
                                     break decompress;
