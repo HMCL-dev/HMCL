@@ -67,8 +67,9 @@ public abstract class TerracottaState {
                     @JsonSubtype(clazz = HostStarting.class, name = "host-starting"),
                     @JsonSubtype(clazz = HostOK.class, name = "host-ok"),
                     @JsonSubtype(clazz = GuestStarting.class, name = "guest-connecting"),
-                    @JsonSubtype(clazz = GuestOK.class, name = "guest-starting"),
-                    @JsonSubtype(clazz = Exception.class, name = "guest-ok"),
+                    @JsonSubtype(clazz = GuestStarting.class, name = "guest-starting"),
+                    @JsonSubtype(clazz = GuestOK.class, name = "guest-ok"),
+                    @JsonSubtype(clazz = Exception.class, name = "exception"),
             }
     )
     static abstract class Ready extends PortSpecific {
@@ -110,7 +111,7 @@ public abstract class TerracottaState {
         }
     }
 
-    public static final class HostOK extends Ready {
+    public static final class HostOK extends Ready implements Validation {
         @SerializedName("room")
         private final String code;
 
@@ -121,6 +122,16 @@ public abstract class TerracottaState {
             super(port, index, state);
             this.code = code;
             this.profiles = profiles;
+        }
+
+        @Override
+        public void validate() throws JsonParseException, TolerableValidationException {
+            if (code == null) {
+                throw new JsonParseException("code is null");
+            }
+            if (profiles == null) {
+                throw new JsonParseException("profiles is null");
+            }
         }
 
         public String getCode() {
@@ -138,7 +149,7 @@ public abstract class TerracottaState {
         }
     }
 
-    public static final class GuestOK extends Ready {
+    public static final class GuestOK extends Ready implements Validation {
         @SerializedName("url")
         private final String url;
 
@@ -149,6 +160,13 @@ public abstract class TerracottaState {
             super(port, index, state);
             this.url = url;
             this.profiles = profiles;
+        }
+
+        @Override
+        public void validate() throws JsonParseException, TolerableValidationException {
+            if (profiles == null) {
+                throw new JsonParseException("profiles is null");
+            }
         }
 
         public String getUrl() {
