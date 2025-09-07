@@ -52,6 +52,7 @@ import javafx.stage.Stage;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
+import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -1156,6 +1157,13 @@ public final class FXUtils {
         JFXButton button = new JFXButton(text);
         button.getStyleClass().add("jfx-button-border");
         button.setButtonType(JFXButton.ButtonType.RAISED);
+        return button;
+    }
+
+    public static JFXButton newToggleButton4(SVG icon) {
+        JFXButton button = new JFXButton();
+        button.getStyleClass().add("toggle-icon4");
+        button.setGraphic(icon.createIcon(Theme.blackFill(), -1));
         return button;
     }
 
