@@ -1,6 +1,8 @@
 # Platform Support Status
 
-**English** | [简体中文](PLATFORM_cn.md) | [繁體中文](PLATFORM_tw.md)
+<!-- #BEGIN LANGUAGE_SWITCHER -->
+**English** | 中文 ([简体](PLATFORM_zh.md), [繁體](PLATFORM_zh_Hant.md))
+<!-- #END LANGUAGE_SWITCHER -->
 
 |                            | Windows                                           | Linux                      | macOS                                                                   | FreeBSD                    |
 |----------------------------|:--------------------------------------------------|:---------------------------|:------------------------------------------------------------------------|:---------------------------|

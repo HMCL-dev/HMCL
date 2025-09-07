@@ -33,6 +33,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
+import org.jackhuang.hmcl.download.cleanroom.CleanroomInstallTask;
 import org.jackhuang.hmcl.download.fabric.FabricAPIInstallTask;
 import org.jackhuang.hmcl.download.fabric.FabricInstallTask;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallTask;
@@ -167,6 +168,8 @@ public final class TaskListPane extends StackPane {
                     task.setName(i18n("install.installer.install", i18n("install.installer.game")));
                 } else if (task instanceof GameServerDownloadTask) {
                     task.setName(i18n("version.server.download"));
+                } else if (task instanceof CleanroomInstallTask) {
+                    task.setName(i18n("install.installer.install", i18n("install.installer.cleanroom")));
                 } else if (task instanceof ForgeNewInstallTask || task instanceof ForgeOldInstallTask) {
                     task.setName(i18n("install.installer.install", i18n("install.installer.forge")));
                 } else if (task instanceof NeoForgeInstallTask || task instanceof NeoForgeOldInstallTask) {
@@ -282,10 +285,10 @@ public final class TaskListPane extends StackPane {
         private final JFXProgressBar bar = new JFXProgressBar();
 
         private WeakReference<StageNode> prevStageNodeRef;
-        private ChangeListener<StageNode.Status> statusChangeListener;
+        private StatusChangeListener statusChangeListener;
 
         private Cell() {
-            setPadding(Insets.EMPTY);
+            setPadding(new Insets(0, 0, 4, 0));
 
             prefWidthProperty().bind(cellWidth);
 
@@ -367,32 +370,32 @@ public final class TaskListPane extends StackPane {
                 pane.setBottom(null);
             }
         }
+    }
 
-        private final class StatusChangeListener implements ChangeListener<StageNode.Status>, WeakListener {
+    private static final class StatusChangeListener implements ChangeListener<StageNode.Status>, WeakListener {
 
-            private final WeakReference<Cell> cellRef;
+        private final WeakReference<Cell> cellRef;
 
-            private StatusChangeListener(Cell cell) {
-                this.cellRef = new WeakReference<>(cell);
+        private StatusChangeListener(Cell cell) {
+            this.cellRef = new WeakReference<>(cell);
+        }
+
+        @Override
+        public boolean wasGarbageCollected() {
+            return cellRef.get() == null;
+        }
+
+        @Override
+        public void changed(ObservableValue<? extends StageNode.Status> observable,
+                            StageNode.Status oldValue,
+                            StageNode.Status newValue) {
+            Cell cell = cellRef.get();
+            if (cell == null) {
+                if (observable != null)
+                    observable.removeListener(this);
+                return;
             }
-
-            @Override
-            public boolean wasGarbageCollected() {
-                return cellRef.get() == null;
-            }
-
-            @Override
-            public void changed(ObservableValue<? extends StageNode.Status> observable,
-                                StageNode.Status oldValue,
-                                StageNode.Status newValue) {
-                Cell cell = cellRef.get();
-                if (cell == null) {
-                    if (observable != null)
-                        observable.removeListener(this);
-                    return;
-                }
-                cell.updateLeftIcon(newValue);
-            }
+            cell.updateLeftIcon(newValue);
         }
     }
 
@@ -442,6 +445,7 @@ public final class TaskListPane extends StackPane {
                 case "hmcl.install.libraries":  message = i18n("libraries.download"); break;
                 case "hmcl.install.game":       message = i18n("install.installer.install", i18n("install.installer.game") + " " + stageValue); break;
                 case "hmcl.install.forge":      message = i18n("install.installer.install", i18n("install.installer.forge") + " " + stageValue); break;
+                case "hmcl.install.cleanroom":  message = i18n("install.installer.install", i18n("install.installer.cleanroom") + " " + stageValue); break;
                 case "hmcl.install.neoforge":   message = i18n("install.installer.install", i18n("install.installer.neoforge") + " " + stageValue); break;
                 case "hmcl.install.liteloader": message = i18n("install.installer.install", i18n("install.installer.liteloader") + " " + stageValue); break;
                 case "hmcl.install.optifine":   message = i18n("install.installer.install", i18n("install.installer.optifine") + " " + stageValue); break;

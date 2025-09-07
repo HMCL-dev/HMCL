@@ -33,6 +33,7 @@ import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionList;
+import org.jackhuang.hmcl.download.cleanroom.CleanroomRemoteVersion;
 import org.jackhuang.hmcl.download.fabric.FabricAPIRemoteVersion;
 import org.jackhuang.hmcl.download.fabric.FabricRemoteVersion;
 import org.jackhuang.hmcl.download.forge.ForgeRemoteVersion;
@@ -251,7 +252,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             }
             setGraphic(pane);
 
-            twoLineListItem.setTitle(remoteVersion.getSelfVersion());
+            twoLineListItem.setTitle(I18n.getDisplaySelfVersion(remoteVersion));
             if (remoteVersion.getReleaseDate() != null) {
                 twoLineListItem.setSubtitle(I18n.formatDateTime(remoteVersion.getReleaseDate()));
             } else {
@@ -260,12 +261,12 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
             if (remoteVersion instanceof GameRemoteVersion) {
                 RemoteVersion.Type versionType = remoteVersion.getVersionType();
-                String wikiSuffix = getWikiUrlSuffix(remoteVersion.getGameVersion());
                 switch (versionType) {
                     case RELEASE:
+                        content.getTags().setAll(i18n("version.game.release"));
+                        content.setImage(VersionIconType.GRASS.getIcon());
                         twoLineListItem.getTags().setAll(i18n("version.game.release"));
                         imageView.setImage(VersionIconType.GRASS.getIcon());
-                        wikiLink.set(i18n("wiki.version.game", wikiSuffix));
                         supportDownloadServer.set(true);
                         break;
                     case PENDING:
@@ -278,16 +279,17 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                             twoLineListItem.getTags().setAll(i18n("version.game.snapshot"));
                             imageView.setImage(VersionIconType.COMMAND.getIcon());
                         }
-                        wikiLink.set(i18n("wiki.version.game", wikiSuffix));
                         supportDownloadServer.set(true);
                         break;
                     default:
+                        content.getTags().setAll(i18n("version.game.old"));
+                        content.setImage(VersionIconType.CRAFT_TABLE.getIcon());
                         twoLineListItem.getTags().setAll(i18n("version.game.old"));
                         imageView.setImage(VersionIconType.CRAFT_TABLE.getIcon());
-                        wikiLink.set(i18n("wiki.version.game", wikiSuffix));
                         supportDownloadServer.set(false);
                         break;
                 }
+                wikiLink.set(I18n.getWikiLink((GameRemoteVersion) remoteVersion));
             } else {
                 VersionIconType iconType;
                 if (remoteVersion instanceof LiteLoaderRemoteVersion)
@@ -296,6 +298,8 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     iconType = VersionIconType.OPTIFINE;
                 else if (remoteVersion instanceof ForgeRemoteVersion)
                     iconType = VersionIconType.FORGE;
+                else if (remoteVersion instanceof CleanroomRemoteVersion)
+                    iconType = VersionIconType.CLEANROOM;
                 else if (remoteVersion instanceof NeoForgeRemoteVersion)
                     iconType = VersionIconType.NEO_FORGE;
                 else if (remoteVersion instanceof FabricRemoteVersion || remoteVersion instanceof FabricAPIRemoteVersion)
@@ -313,75 +317,6 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                 supportDownloadServer.set(false);
                 wikiLink.set(null);
             }
-        }
-
-        private String getWikiUrlSuffix(String gameVersion) {
-            String id = gameVersion.toLowerCase(Locale.ROOT);
-
-            switch (id) {
-                case "0.30-1":
-                case "0.30-2":
-                case "c0.30_01c":
-                    return i18n("wiki.version.game.search", "Classic_0.30");
-                case "in-20100206-2103":
-                    return i18n("wiki.version.game.search", "Indev_20100206");
-                case "inf-20100630-1":
-                    return i18n("wiki.version.game.search", "Infdev_20100630");
-                case "inf-20100630-2":
-                    return i18n("wiki.version.game.search", "Alpha_v1.0.0");
-                case "1.19_deep_dark_experimental_snapshot-1":
-                    return "1.19-exp1";
-                case "in-20100130":
-                    return i18n("wiki.version.game.search", "Indev_0.31_20100130");
-                case "b1.6-tb3":
-                    return i18n("wiki.version.game.search", "Beta_1.6_Test_Build_3");
-                case "1.14_combat-212796":
-                    return i18n("wiki.version.game.search", "1.14.3_-_Combat_Test");
-                case "1.14_combat-0":
-                    return i18n("wiki.version.game.search", "Combat_Test_2");
-                case "1.14_combat-3":
-                    return i18n("wiki.version.game.search", "Combat_Test_3");
-                case "1_15_combat-1":
-                    return i18n("wiki.version.game.search", "Combat_Test_4");
-                case "1_15_combat-6":
-                    return i18n("wiki.version.game.search", "Combat_Test_5");
-                case "1_16_combat-0":
-                    return i18n("wiki.version.game.search", "Combat_Test_6");
-                case "1_16_combat-1":
-                    return i18n("wiki.version.game.search", "Combat_Test_7");
-                case "1_16_combat-2":
-                    return i18n("wiki.version.game.search", "Combat_Test_7b");
-                case "1_16_combat-3":
-                    return i18n("wiki.version.game.search", "Combat_Test_7c");
-                case "1_16_combat-4":
-                    return i18n("wiki.version.game.search", "Combat_Test_8");
-                case "1_16_combat-5":
-                    return i18n("wiki.version.game.search", "Combat_Test_8b");
-                case "1_16_combat-6":
-                    return i18n("wiki.version.game.search", "Combat_Test_8c");
-            }
-
-            if (id.startsWith("1.0.0-rc2")) return "RC2";
-            if (id.startsWith("2.0")) return i18n("wiki.version.game.search", "2.0");
-            if (id.startsWith("b1.8-pre1")) return "Beta_1.8-pre1";
-            if (id.startsWith("b1.1-")) return i18n("wiki.version.game.search", "Beta_1.1");
-            if (id.startsWith("a1.1.0")) return "Alpha_v1.1.0";
-            if (id.startsWith("a1.0.14")) return "Alpha_v1.0.14";
-            if (id.startsWith("a1.0.13_01")) return "Alpha_v1.0.13_01";
-            if (id.startsWith("in-20100214")) return i18n("wiki.version.game.search", "Indev_20100214");
-
-            if (id.contains("experimental-snapshot")) {
-                return id.replace("_experimental-snapshot-", "-exp");
-            }
-
-            if (id.startsWith("inf-")) return id.replace("inf-", "Infdev_");
-            if (id.startsWith("in-")) return id.replace("in-", "Indev_");
-            if (id.startsWith("rd-")) return "pre-Classic_" + id;
-            if (id.startsWith("b")) return id.replace("b", "Beta_");
-            if (id.startsWith("a")) return id.replace("a", "Alpha_v");
-            if (id.startsWith("c")) return id.replace("c", "Classic_").replace("st", "SURVIVAL_TEST");
-
-            return i18n("wiki.version.game.search", id);
         }
     }
 
