@@ -17,11 +17,6 @@
  */
 package org.jackhuang.hmcl.util;
 
-import org.jackhuang.hmcl.EntryPoint;
-import org.jackhuang.hmcl.java.JavaRuntime;
-import org.jackhuang.hmcl.util.i18n.Locales;
-import org.jackhuang.hmcl.util.io.JarUtils;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -29,7 +24,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import org.jackhuang.hmcl.EntryPoint;
+import org.jackhuang.hmcl.java.JavaRuntime;
+import org.jackhuang.hmcl.util.io.JarUtils;
 
 /**
  * <p>A common restart tool class, used for:</p>

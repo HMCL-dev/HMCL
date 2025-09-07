@@ -23,7 +23,6 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
-import javafx.scene.control.ButtonBase;
 import javafx.scene.control.ToggleGroup;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.Settings;
