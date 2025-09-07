@@ -33,6 +33,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.Clipboard;
+import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
@@ -245,8 +247,13 @@ public class TerracottaControllerPage extends StackPane {
                 VBox code = new VBox(4);
                 code.setAlignment(Pos.CENTER);
                 {
-                    TextFlow desc = FXUtils.segmentToTextFlow(i18n("terracotta.status.host_ok.code_desc"), Controllers::onHyperlinkAction);
-                    FXUtils.copyText(cs);
+                    Label desc = new Label(i18n("terracotta.status.host_ok.code"));
+                    {
+                        ClipboardContent cp = new ClipboardContent();
+                        cp.putString(cs);
+                        Clipboard.getSystemClipboard().setContent(cp);
+                    }
+
                     Label label = new Label(cs);
                     label.setCursor(Cursor.TEXT);
 
@@ -258,18 +265,24 @@ public class TerracottaControllerPage extends StackPane {
                 }
                 code.setOnMouseClicked(ev -> FXUtils.copyText(cs));
 
-                LineButton room = new LineButton();
-                room.setLeftIcon(SVG.ARROW_BACK);
-                room.setTitle(i18n("terracotta.back"));
-                room.setSubtitle(i18n("terracotta.status.host_ok.back"));
-                room.setOnMouseClicked(ev -> {
+                LineButton copy = new LineButton();
+                copy.setLeftIcon(SVG.CONTENT_COPY);
+                copy.setTitle(i18n("terracotta.status.host_ok.code.copy"));
+                copy.setSubtitle(i18n("terracotta.status.host_ok.code.desc"));
+                copy.setOnMouseClicked(ev -> FXUtils.copyText(cs));
+
+                LineButton back = new LineButton();
+                back.setLeftIcon(SVG.ARROW_BACK);
+                back.setTitle(i18n("terracotta.back"));
+                back.setSubtitle(i18n("terracotta.status.host_ok.back"));
+                back.setOnMouseClicked(ev -> {
                     TerracottaState.Waiting s = TerracottaManager.setWaiting();
                     if (s != null) {
                         UI_STATE.set(s);
                     }
                 });
 
-                nodesProperty.setAll(code, room);
+                nodesProperty.setAll(code, copy, back);
                 displayProfiles(((TerracottaState.HostOK) state).getProfiles(), nodesProperty);
             } else if (state instanceof TerracottaState.GuestStarting) {
                 statusProperty.set(i18n("terracotta.status.guest_starting"));
