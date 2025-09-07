@@ -132,9 +132,9 @@ public enum MacroProcessor {
         @Override
         public void apply(Document document, Document.MacroBlock macroBlock, StringBuilder outputBuilder) throws IOException {
             var mutableProperties = new LinkedHashMap<>(macroBlock.properties());
-            String from = MacroProcessor.removeSingleProperty(mutableProperties, "FROM");
-            if (from == null)
-                throw new IllegalArgumentException("Missing property: FROM");
+            String blockName = MacroProcessor.removeSingleProperty(mutableProperties, "NAME");
+            if (blockName == null)
+                throw new IllegalArgumentException("Missing property: NAME");
 
             List<Replace> replaces = Objects.requireNonNullElse(mutableProperties.remove("REPLACE"), List.<String>of())
                     .stream()
@@ -151,7 +151,7 @@ public enum MacroProcessor {
             if (localizedDocument == null || (fromDocument = localizedDocument.getDocuments().get(DocumentLocale.ENGLISH)) == null)
                 throw new IOException("Document " + document.name() + " for english does not exist");
 
-            List<String> nameList = List.of(from);
+            List<String> nameList = List.of(blockName);
 
             var fromBlock = (Document.MacroBlock) fromDocument.items().stream()
                     .filter(it -> it instanceof Document.MacroBlock macro
@@ -159,7 +159,7 @@ public enum MacroProcessor {
                             && nameList.equals(macro.properties().get("NAME"))
                     )
                     .findFirst()
-                    .orElseThrow(() -> new IOException("Cannot find the block \"" + from + "\" in " + fromDocument.file()));
+                    .orElseThrow(() -> new IOException("Cannot find the block \"" + blockName + "\" in " + fromDocument.file()));
 
             MacroProcessor.writeBegin(outputBuilder, macroBlock);
             MacroProcessor.writeProperties(outputBuilder, macroBlock);

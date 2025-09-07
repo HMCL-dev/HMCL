@@ -5,7 +5,7 @@
 <!-- #END LANGUAGE_SWITCHER -->
 
 <!-- #BEGIN COPY -->
-<!-- #PROPERTY FROM=PLATFORM_TABLE -->
+<!-- #PROPERTY NAME=PLATFORM_TABLE -->
 <!-- #PROPERTY REPLACE="\\(Old World\\)" "(旧世界)" -->
 <!-- #PROPERTY REPLACE="\\(use Rosetta 2\\)" "(使用 Rosetta 2)" -->
 |                            | Windows                                           | Linux                      | macOS                                                                   | FreeBSD                    |
