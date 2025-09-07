@@ -102,8 +102,10 @@ public record Document(DocumentFileTree directory,
 
                     // Handle properties
                     while ((line = reader.readLine()) != null) {
-                        if (!line.startsWith("<!-- #") || line.equals(endLine))
+                        if (!line.startsWith("<!-- #") || line.equals(endLine)) {
+                            lines.add(line);
                             break;
+                        }
 
                         Matcher propertyMatcher = MACRO_PROPERTY_LINE.matcher(line);
                         if (propertyMatcher.matches()) {
