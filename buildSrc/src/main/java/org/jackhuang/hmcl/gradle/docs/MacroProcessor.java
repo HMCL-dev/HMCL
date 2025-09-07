@@ -141,9 +141,10 @@ public enum MacroProcessor {
                     .map(it -> parseReplace(it))
                     .toList();
 
+            boolean processLink = !"FALSE".equalsIgnoreCase(MacroProcessor.removeSingleProperty(mutableProperties, "PROCESS_LINK"));
+
             if (!mutableProperties.isEmpty())
                 throw new IllegalArgumentException("Unsupported properties: " + mutableProperties.keySet());
-
 
             LocalizedDocument localizedDocument = document.directory().getFiles().get(document.name());
             Document fromDocument;
@@ -166,7 +167,10 @@ public enum MacroProcessor {
                 for (Replace replace : replaces) {
                     line = replace.pattern.matcher(line).replaceAll(replace.replacement());
                 }
-                outputBuilder.append(line).append('\n');
+                if (processLink)
+                    processLine(outputBuilder, line, document);
+                else
+                    outputBuilder.append(line).append('\n');
             }
             MacroProcessor.writeEnd(outputBuilder, macroBlock);
         }
@@ -222,6 +226,65 @@ public enum MacroProcessor {
             parts.add(current.toString());
 
         return parts;
+    }
+
+    private static final Pattern LINK_PATTERN = Pattern.compile(
+            "(?<=]\\()[a-zA-Z0-9_\\-./]+\\.md(?=\\))"
+    );
+
+    static void processLine(StringBuilder outputBuilder, String line, Document document) {
+        outputBuilder.append(LINK_PATTERN.matcher(line).replaceAll(matchResult -> {
+            String rawLink = matchResult.group();
+            String[] splitPath = rawLink.split("/");
+
+            if (splitPath.length == 0)
+                return rawLink;
+
+            String fileName = splitPath[splitPath.length - 1];
+            if (!fileName.endsWith(".md"))
+                return rawLink;
+
+            DocumentFileTree current = document.directory();
+            for (int i = 0; i < splitPath.length - 1; i++) {
+                String name = splitPath[i];
+                switch (name) {
+                    case "" -> {
+                        return rawLink;
+                    }
+                    case "." -> {
+                        continue;
+                    }
+                    case ".." -> {
+                        current = current.getParent();
+                        if (current == null)
+                            return rawLink;
+                    }
+                    default -> {
+                        current = current.getChildren().get(name);
+                        if (current == null)
+                            return rawLink;
+                    }
+                }
+            }
+
+            DocumentLocale.LocaleAndName currentLocaleAndName = DocumentLocale.parseFileName(fileName.substring(0, fileName.length() - ".md".length()));
+            LocalizedDocument localizedDocument = current.getFiles().get(currentLocaleAndName.name());
+            if (localizedDocument != null) {
+                List<DocumentLocale> candidateLocales = document.locale().getCandidates();
+                for (DocumentLocale candidateLocale : candidateLocales) {
+                    if (candidateLocale == currentLocaleAndName.locale())
+                        return rawLink;
+
+                    Document targetDoc = localizedDocument.getDocuments().get(candidateLocale);
+                    if (targetDoc != null) {
+                        splitPath[splitPath.length - 1] = targetDoc.file().getFileName().toString();
+                        return String.join("/", splitPath);
+                    }
+                }
+            }
+
+            return rawLink;
+        })).append('\n');
     }
 
     private static void writeBegin(StringBuilder builder, Document.MacroBlock macroBlock) throws IOException {
