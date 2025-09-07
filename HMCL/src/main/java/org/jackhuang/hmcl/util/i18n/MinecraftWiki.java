@@ -50,13 +50,15 @@ public final class MinecraftWiki {
         }
 
         String variantSuffix;
-        if (Locales.isChinese(locale.getLocale())) {
-            if (Locales.isSimplifiedChinese(locale.getLocale()))
+        if (LocaleUtils.isChinese(locale.getLocale())) {
+            if (!"Hant".equals(LocaleUtils.getScript(locale.getLocale()))) {
                 variantSuffix = "?variant=zh-cn";
-            else if (locale.getLocale().getCountry().equals("HK") || locale.getLocale().getCountry().equals("MO"))
-                variantSuffix = "?variant=zh-hk";
-            else
-                variantSuffix = "?variant=zh-tw";
+            } else {
+                String region = locale.getLocale().getCountry();
+                variantSuffix = region.equals("HK") || region.equals("MO")
+                        ? "?variant=zh-hk"
+                        : "?variant=zh-tw";
+            }
         } else
             variantSuffix = "";
 

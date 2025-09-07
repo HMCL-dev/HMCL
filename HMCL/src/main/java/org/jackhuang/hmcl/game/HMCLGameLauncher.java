@@ -21,7 +21,7 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.launch.DefaultLauncher;
 import org.jackhuang.hmcl.launch.ProcessListener;
-import org.jackhuang.hmcl.util.i18n.Locales;
+import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -81,7 +81,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         }
 
         Locale locale = Locale.getDefault();
-        if (Locales.isEnglish(locale))
+        if (LocaleUtils.isEnglish(locale))
             return;
 
         /*
@@ -115,14 +115,6 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         String region = locale.getCountry();
 
         switch (language) {
-            case "zh":
-            case "cmn":
-                if (Locales.isSimplifiedChinese(locale))
-                    return "zh_CN";
-                if (gameVersion.compareTo("1.16") >= 0
-                        && (region.equals("HK") || region.equals("MO")))
-                    return "zh_HK";
-                return "zh_TW";
             case "ru":
                 return "ru_RU";
             case "uk":
@@ -135,7 +127,18 @@ public final class HMCLGameLauncher extends DefaultLauncher {
                 return gameVersion.compareTo("1.16") >= 0
                         ? "lzh"
                         : "";
+            case "zh":
             default:
+                if (LocaleUtils.isChinese(locale)) {
+                    String script = LocaleUtils.getScript(locale);
+                    if ("Hant".equals(script)) {
+                        if ((region.equals("HK") || region.equals("MO") && gameVersion.compareTo("1.16") >= 0))
+                            return "zh_HK";
+                        return "zh_TW";
+                    }
+                    return "zh_CN";
+                }
+
                 return "";
         }
     }

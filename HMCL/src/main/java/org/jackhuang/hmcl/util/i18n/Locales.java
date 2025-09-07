@@ -20,9 +20,7 @@ package org.jackhuang.hmcl.util.i18n;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
-import org.jackhuang.hmcl.download.RemoteVersion;
-import org.jackhuang.hmcl.download.game.GameRemoteVersion;
-import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.IOException;
 import java.time.ZoneId;
@@ -36,7 +34,15 @@ public final class Locales {
     private Locales() {
     }
 
-    public static final SupportedLocale DEFAULT = new SupportedLocale("def", Locale.getDefault()) {
+    private static Locale getDefaultLocale() {
+        String language = System.getenv("HMCL_LANGUAGE");
+        if (StringUtils.isNotBlank(language))
+            return Locale.forLanguageTag(language);
+        else
+            return LocaleUtils.SYSTEM_DEFAULT;
+    }
+
+    public static final SupportedLocale DEFAULT = new SupportedLocale("def", getDefaultLocale()) {
         @Override
         public String getDisplayName(SupportedLocale inLocale) {
             try {
@@ -76,12 +82,12 @@ public final class Locales {
     /**
      * Chinese (Simplified)
      */
-    public static final SupportedLocale ZH_HANS = new SupportedLocale("zh_CN", Locale.forLanguageTag("zh-Hans"));
+    public static final SupportedLocale ZH_HANS = new SupportedLocale("zh_CN", LocaleUtils.LOCALE_ZH_HANS);
 
     /**
      * Chinese (Traditional)
      */
-    public static final SupportedLocale ZH_HANT = new SupportedLocale("zh", Locale.forLanguageTag("zh-Hant"));
+    public static final SupportedLocale ZH_HANT = new SupportedLocale("zh", LocaleUtils.LOCALE_ZH_HANT);
 
     /**
      * Wenyan (Classical Chinese)
@@ -90,26 +96,13 @@ public final class Locales {
 
         @Override
         public String getDisplayName(SupportedLocale inLocale) {
-            if (isChinese(inLocale.locale))
+            if (LocaleUtils.isChinese(inLocale.locale))
                 return "文言";
 
             String name = super.getDisplayName(inLocale);
             return name.equals("lzh") || name.equals("Literary Chinese")
-                    ? "Classical Chinese"
+                    ? "Chinese (Classical)"
                     : name;
-        }
-
-        @Override
-        public String formatDateTime(TemporalAccessor time) {
-            return WenyanUtils.formatDateTime(time);
-        }
-
-        @Override
-        public String getDisplaySelfVersion(RemoteVersion version) {
-            if (version instanceof GameRemoteVersion)
-                return WenyanUtils.translateGameVersion(GameVersionNumber.asGameVersion(version.getSelfVersion()));
-            else
-                return WenyanUtils.translateGenericVersion(version.getSelfVersion());
         }
     };
 
@@ -126,40 +119,13 @@ public final class Locales {
         return DEFAULT;
     }
 
-    public static boolean isEnglish(Locale locale) {
-        return locale.getLanguage().equals("en") || locale.getLanguage().isEmpty();
-    }
-
-    public static boolean isChinese(Locale locale) {
-        switch (locale.getLanguage()) {
-            case "zh":
-            case "lzh":
-            case "cmn":
-                return true;
-            default:
-                return false;
-        }
-    }
-
-    public static boolean isSimplifiedChinese(Locale locale) {
-        if (locale.getLanguage().equals("zh") || locale.getLanguage().equals("cmn")) {
-            String script = locale.getScript();
-            if (script.isEmpty()) {
-                String region = locale.getCountry();
-                return region.isEmpty() || region.equals("CN") || region.equals("SG") || region.equals("MY");
-            } else
-                return script.equals("Hans");
-        } else {
-            return false;
-        }
-    }
-
     @JsonAdapter(SupportedLocale.TypeAdapter.class)
     public static class SupportedLocale {
         private final String name;
         private final Locale locale;
         private ResourceBundle resourceBundle;
         private DateTimeFormatter dateTimeFormatter;
+        private List<Locale> candidateLocales;
 
         SupportedLocale(String name, Locale locale) {
             this.name = name;
@@ -183,9 +149,16 @@ public final class Locales {
         public ResourceBundle getResourceBundle() {
             ResourceBundle bundle = resourceBundle;
             if (resourceBundle == null)
-                resourceBundle = bundle = ResourceBundle.getBundle("assets.lang.I18N", locale, Control.INSTANCE);
+                resourceBundle = bundle = ResourceBundle.getBundle("assets.lang.I18N", locale,
+                        DefaultResourceBundleControl.INSTANCE);
 
             return bundle;
+        }
+
+        public List<Locale> getCandidateLocales() {
+            if (candidateLocales == null)
+                candidateLocales = List.copyOf(LocaleUtils.getCandidateLocales(locale));
+            return candidateLocales;
         }
 
         public String i18n(String key, Object... formatArgs) {
@@ -211,37 +184,43 @@ public final class Locales {
 
         public String formatDateTime(TemporalAccessor time) {
             DateTimeFormatter formatter = dateTimeFormatter;
-            if (formatter == null)
+            if (formatter == null) {
+                if (locale.getLanguage().equals("lzh"))
+                    return WenyanUtils.formatDateTime(time);
+
                 formatter = dateTimeFormatter = DateTimeFormatter.ofPattern(getResourceBundle().getString("datetime.format"))
                         .withZone(ZoneId.systemDefault());
+            }
             return formatter.format(time);
-        }
-
-        public String getDisplaySelfVersion(RemoteVersion version) {
-            return version.getSelfVersion();
         }
 
         public String getFcMatchPattern() {
             String language = locale.getLanguage();
             String region = locale.getCountry();
 
-            if (isEnglish(locale))
+            if (LocaleUtils.isEnglish(locale))
                 return "";
 
-            if (isChinese(locale)) {
+            if (LocaleUtils.isChinese(locale)) {
                 String lang;
                 String charset;
 
-                if (isSimplifiedChinese(locale)) {
-                    lang = region.equals("SG") || region.equals("MY")
-                            ? "zh-" + region
-                            : "zh-CN";
-                    charset = "0x6e38,0x620f";
-                } else {
-                    lang = region.equals("HK") || region.equals("MO")
-                            ? "zh-" + region
-                            : "zh-TW";
-                    charset = "0x904a,0x6232";
+                String script = LocaleUtils.getScript(locale);
+                switch (script) {
+                    case "Hans":
+                        lang = region.equals("SG") || region.equals("MY")
+                                ? "zh-" + region
+                                : "zh-CN";
+                        charset = "0x6e38,0x620f";
+                        break;
+                    case "Hant":
+                        lang = region.equals("HK") || region.equals("MO")
+                                ? "zh-" + region
+                                : "zh-TW";
+                        charset = "0x904a,0x6232";
+                        break;
+                    default:
+                        return "";
                 }
 
                 return ":lang=" + lang + ":charset=" + charset;
@@ -251,8 +230,8 @@ public final class Locales {
         }
 
         public boolean isSameLanguage(SupportedLocale other) {
-            return this.getLocale().getLanguage().equals(other.getLocale().getLanguage())
-                    || isChinese(this.getLocale()) && isChinese(other.getLocale());
+            return (this.getLocale().getLanguage().equals(other.getLocale().getLanguage()))
+                    || (LocaleUtils.isChinese(this.getLocale()) && LocaleUtils.isChinese(other.getLocale()));
         }
 
         public static final class TypeAdapter extends com.google.gson.TypeAdapter<SupportedLocale> {
@@ -268,50 +247,4 @@ public final class Locales {
         }
     }
 
-    public static final class Control extends ResourceBundle.Control {
-        public static final Control INSTANCE = new Control();
-
-        @Override
-        public List<Locale> getCandidateLocales(String baseName, Locale locale) {
-            List<Locale> candidateLocales = super.getCandidateLocales(baseName, locale);
-            if (isChinese(locale)) {
-                int chineseIndex = candidateLocales.indexOf(Locale.CHINESE);
-
-                // For "lzh" and "cmn"
-                if (chineseIndex < 0) {
-                    if (!(candidateLocales instanceof ArrayList))
-                        candidateLocales = new ArrayList<>(candidateLocales);
-
-                    int i = candidateLocales.size() - 1;
-                    while (i >= 0) {
-                        Locale l = candidateLocales.get(i);
-                        if (!isEnglish(l))
-                            break;
-                        i--;
-                    }
-
-                    chineseIndex = i + 1;
-                    candidateLocales.add(chineseIndex, Locale.CHINESE);
-                }
-
-                if (isSimplifiedChinese(locale)) {
-                    if (!candidateLocales.contains(Locale.SIMPLIFIED_CHINESE)) {
-                        if (!(candidateLocales instanceof ArrayList))
-                            candidateLocales = new ArrayList<>(candidateLocales);
-                        candidateLocales.add(chineseIndex, Locale.SIMPLIFIED_CHINESE);
-                    }
-                }
-            }
-
-            if (candidateLocales.size() == 1 && candidateLocales.get(0).getLanguage().isEmpty()) {
-                if (!(candidateLocales instanceof ArrayList))
-                    candidateLocales = new ArrayList<>(candidateLocales);
-
-                candidateLocales.add(0, Locale.ENGLISH);
-            }
-
-            return candidateLocales;
-        }
-
-    }
 }
