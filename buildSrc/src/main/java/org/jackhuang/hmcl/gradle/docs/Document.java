@@ -97,40 +97,46 @@ public record Document(DocumentFileTree directory,
 
                     String macroName = matcher.group("name");
                     String endLine = "<!-- #END " + macroName + " -->";
-                    var properties = new LinkedHashMap<String, List<String>>();
                     var lines = new ArrayList<String>();
+                    while (true) {
+                        line = reader.readLine();
+
+                        if (line == null)
+                            throw new IOException("Missing end line for macro: " + macroName);
+                        else if (line.startsWith("<!-- #END")) {
+                            if (line.equals(endLine)) {
+                                break;
+                            } else {
+                                throw new IOException("Invalid macro end line: " + line);
+                            }
+                        } else {
+                            lines.add(line);
+                        }
+                    }
+
+                    var properties = new LinkedHashMap<String, List<String>>();
+                    int propertiesCount = 0;
 
                     // Handle properties
-                    while ((line = reader.readLine()) != null) {
-                        if (!line.startsWith("<!-- #") || line.equals(endLine)) {
-                            lines.add(line);
+                    for (String macroBodyLine : lines) {
+                        if (!macroBodyLine.startsWith("<!-- #"))
                             break;
-                        }
 
-                        Matcher propertyMatcher = MACRO_PROPERTY_LINE.matcher(line);
+                        Matcher propertyMatcher = MACRO_PROPERTY_LINE.matcher(macroBodyLine);
                         if (propertyMatcher.matches()) {
                             String propertyName = propertyMatcher.group("name");
                             String propertyValue = parsePropertyValue(propertyMatcher.group("value"));
 
                             properties.computeIfAbsent(propertyName, k -> new ArrayList<>(1))
                                     .add(propertyValue);
+                            propertiesCount++;
                         } else {
-                            throw new IOException("Invalid macro property line: " + line);
+                            throw new IOException("Invalid macro property line: " + macroBodyLine);
                         }
                     }
 
-                    // Handle lines
-                    if (line != null && !line.equals(endLine)) {
-                        while ((line = reader.readLine()) != null) {
-                            if (line.startsWith("<!-- #"))
-                                break;
-
-                            lines.add(line);
-                        }
-                    }
-
-                    if (line == null || !line.equals(endLine))
-                        throw new IOException("Invalid macro end line: " + line);
+                    if (propertiesCount > 0)
+                        lines.subList(0, propertiesCount).clear();
 
                     items.add(new MacroBlock(macroName,
                             Collections.unmodifiableMap(properties),
