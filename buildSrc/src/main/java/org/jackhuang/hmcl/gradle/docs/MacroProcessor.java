@@ -21,6 +21,27 @@ import java.io.IOException;
 import java.util.*;
 import java.util.regex.Pattern;
 
+/// Macro processor for automatically updating documentation.
+///
+/// Users can use the macro processor in `.md` documents within the `docs` folder and its subfolders.
+/// The parts to be processed should be wrapped with `<!-- #BEGIN MACRO_NAME -->` and `<!-- #END MACRO_NAME -->` lines.
+///
+/// For example, if you create a document `FOO.md` and translate it into Simplified Chinese, Traditional Chinese, and Japanese,
+/// you can add the following content in these files to create links to other language versions:
+///
+/// ```markdown
+/// <!-- #BEGIN LANGUAGE_SWITCHER -->
+/// <!-- #END LANGUAGE_SWITCHER -->
+/// ```
+///
+/// After running `./gradlew updateDocuments`, the macro processor will automatically update the content between these two lines:
+///
+/// ```
+/// <!-- #BEGIN LANGUAGE_SWITCHER -->
+/// **English** | 中文 ([简体](FOO_zh.md), [繁體](FOO_zh_Hant.md)) | [日本語](FOO_ja.md)
+/// <!-- #END LANGUAGE_SWITCHER -->
+/// ```
+///
 /// @author Glavo
 public enum MacroProcessor {
     /// Does not process the content in any way.
