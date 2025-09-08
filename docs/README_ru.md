@@ -1,10 +1,13 @@
 # Hello Minecraft! Launcher
 
+<!-- #BEGIN COPY -->
+<!-- #PROPERTY NAME=BADGES -->
 [![Build Status](https://ci.huangyuhui.net/job/HMCL/badge/icon?.svg)](https://ci.huangyuhui.net/job/HMCL)
 ![Downloads](https://img.shields.io/github/downloads/HMCL-dev/HMCL/total?style=flat)
 ![Stars](https://img.shields.io/github/stars/HMCL-dev/HMCL?style=flat)
 [![Discord](https://img.shields.io/discord/995291757799538688.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/jVvC7HfM6U)
 [![QQ Group](https://img.shields.io/badge/QQ-HMCL-bright?label=&logo=qq&logoColor=ffffff&color=1EBAFC&labelColor=1DB0EF&logoSize=auto)](https://docs.hmcl.net/groups.html)
+<!-- #END COPY -->
 
 <!-- #BEGIN LANGUAGE_SWITCHER -->
 [English](README.md) | 中文 ([简体](README_zh.md), [繁體](README_zh_Hant.md), [文言](README_lzh.md)) | [日本語](README_ja.md) | [español](README_es.md) | **русский** | [українська](README_uk.md)
