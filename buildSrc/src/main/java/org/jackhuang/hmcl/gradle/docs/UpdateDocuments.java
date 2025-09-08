@@ -25,8 +25,6 @@ import org.gradle.api.tasks.TaskAction;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.regex.Pattern;
 
 /// @author Glavo
 public abstract class UpdateDocuments extends DefaultTask {
@@ -36,71 +34,12 @@ public abstract class UpdateDocuments extends DefaultTask {
 
     // ---
 
-    private static final Pattern LINK_PATTERN = Pattern.compile(
-            "(?<=]\\()[a-zA-Z0-9_\\-./]+\\.md(?=\\))"
-    );
-
-    private void processLine(StringBuilder outputBuilder, String line, Document document) {
-        outputBuilder.append(LINK_PATTERN.matcher(line).replaceAll(matchResult -> {
-            String rawLink = matchResult.group();
-            String[] splitPath = rawLink.split("/");
-
-            if (splitPath.length == 0)
-                return rawLink;
-
-            String fileName = splitPath[splitPath.length - 1];
-            if (!fileName.endsWith(".md"))
-                return rawLink;
-
-            DocumentFileTree current = document.directory();
-            for (int i = 0; i < splitPath.length - 1; i++) {
-                String name = splitPath[i];
-                switch (name) {
-                    case "" -> {
-                        return rawLink;
-                    }
-                    case "." -> {
-                        continue;
-                    }
-                    case ".." -> {
-                        current = current.getParent();
-                        if (current == null)
-                            return rawLink;
-                    }
-                    default -> {
-                        current = current.getChildren().get(name);
-                        if (current == null)
-                            return rawLink;
-                    }
-                }
-            }
-
-            DocumentLocale.LocaleAndName currentLocaleAndName = DocumentLocale.parseFileName(fileName.substring(0, fileName.length() - ".md".length()));
-            LocalizedDocument localizedDocument = current.getFiles().get(currentLocaleAndName.name());
-            if (localizedDocument != null) {
-                List<DocumentLocale> candidateLocales = document.locale().getCandidates();
-                for (DocumentLocale candidateLocale : candidateLocales) {
-                    if (candidateLocale == currentLocaleAndName.locale())
-                        return rawLink;
-
-                    Document targetDoc = localizedDocument.getDocuments().get(candidateLocale);
-                    if (targetDoc != null) {
-                        splitPath[splitPath.length - 1] = targetDoc.file().getFileName().toString();
-                        return String.join("/", splitPath);
-                    }
-                }
-            }
-
-            return rawLink;
-        })).append('\n');
-    }
-
     private void updateDocument(Document document) throws IOException {
         StringBuilder outputBuilder = new StringBuilder(8192);
 
         for (Document.Item item : document.items()) {
             if (item instanceof Document.Line line) {
-                processLine(outputBuilder, line.content(), document);
+                MacroProcessor.processLine(outputBuilder, line.content(), document);
             } else if (item instanceof Document.MacroBlock macro) {
                 var processor = MacroProcessor.valueOf(macro.name());
                 processor.apply(document, macro, outputBuilder);
