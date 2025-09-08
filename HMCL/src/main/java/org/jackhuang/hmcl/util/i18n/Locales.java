@@ -44,13 +44,8 @@ public final class Locales {
 
     public static final SupportedLocale DEFAULT = new SupportedLocale("def", getDefaultLocale()) {
         @Override
-        public String getDisplayName(SupportedLocale inLocale) {
-            try {
-                return inLocale.getResourceBundle().getString("lang.default");
-            } catch (Throwable e) {
-                LOG.warning("Failed to get localized name for default locale", e);
-                return "Default";
-            }
+        public boolean isDefault() {
+            return true;
         }
     };
 
@@ -92,19 +87,7 @@ public final class Locales {
     /**
      * Wenyan (Classical Chinese)
      */
-    public static final SupportedLocale WENYAN = new SupportedLocale("lzh", Locale.forLanguageTag("lzh")) {
-
-        @Override
-        public String getDisplayName(SupportedLocale inLocale) {
-            if (LocaleUtils.isChinese(inLocale.locale))
-                return "文言";
-
-            String name = super.getDisplayName(inLocale);
-            return name.equals("lzh") || name.equals("Literary Chinese")
-                    ? "Chinese (Classical)"
-                    : name;
-        }
-    };
+    public static final SupportedLocale WENYAN = new SupportedLocale("lzh", Locale.forLanguageTag("lzh"));
 
     public static final List<SupportedLocale> LOCALES = List.of(DEFAULT, EN, ES, JA, RU, UK, ZH_HANS, ZH_HANT, WENYAN);
 
@@ -132,6 +115,10 @@ public final class Locales {
             this.locale = locale;
         }
 
+        public boolean isDefault() {
+            return false;
+        }
+
         public String getName() {
             return name;
         }
@@ -143,6 +130,26 @@ public final class Locales {
         public String getDisplayName(SupportedLocale inLocale) {
             if (inLocale.locale.getLanguage().equals("lzh"))
                 inLocale = ZH_HANT;
+
+            if (isDefault()) {
+                try {
+                    return inLocale.getResourceBundle().getString("lang.default");
+                } catch (Throwable e) {
+                    LOG.warning("Failed to get localized name for default locale", e);
+                    return "Default";
+                }
+            }
+
+            if (this.locale.getLanguage().equals("lzh")) {
+                if (LocaleUtils.isChinese(inLocale.locale))
+                    return "文言";
+
+                String name = locale.getDisplayName(inLocale.getLocale());
+                return name.equals("lzh") || name.equals("Literary Chinese")
+                        ? "Chinese (Classical)"
+                        : name;
+            }
+
             return locale.getDisplayName(inLocale.getLocale());
         }
 

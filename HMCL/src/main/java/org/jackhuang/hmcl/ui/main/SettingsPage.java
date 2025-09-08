@@ -37,6 +37,7 @@ import org.jackhuang.hmcl.util.Restarter;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.Locales;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.logging.Level;
 import org.tukaani.xz.XZInputStream;
 
@@ -44,11 +45,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -170,6 +168,42 @@ public final class SettingsPage extends SettingsView {
         UpdateHandler.updateFrom(target);
     }
 
+    /// This method guarantees to close both `input` and the current zip entry.
+    ///
+    /// If no exception occurs, this method returns `true`;
+    /// If an exception occurs while reading from `input`, this method returns `false`;
+    /// If an exception occurs while writing to `output`, this method will throw it as is.
+    private static boolean exportLogFile(ZipOutputStream output,
+                                         Path file, // For logging
+                                         String entryName,
+                                         InputStream input,
+                                         byte[] buffer) throws IOException {
+        //noinspection TryFinallyCanBeTryWithResources
+        try {
+            output.putNextEntry(new ZipEntry(entryName));
+            int read;
+            while (true) {
+                try {
+                    read = input.read(buffer);
+                    if (read <= 0)
+                        return true;
+                } catch (Throwable ex) {
+                    LOG.warning("Failed to decompress log file " + file, ex);
+                    return false;
+                }
+
+                output.write(buffer, 0, read);
+            }
+        } finally {
+            try {
+                input.close();
+            } catch (Throwable ex) {
+                LOG.warning("Failed to close log file " + file, ex);
+            }
+            output.closeEntry();
+        }
+    }
+
     @Override
     protected void onExportLogs() {
         thread(() -> {
@@ -190,45 +224,54 @@ public final class SettingsPage extends SettingsView {
 
                     LOG.info("Exporting latest logs to " + outputFile);
 
-                    Path tempFile = Files.createTempFile("hmcl-decompress-log-", ".txt");
-                    try (var tempChannel = FileChannel.open(tempFile, StandardOpenOption.READ, StandardOpenOption.WRITE);
-                         var os = Files.newOutputStream(outputFile);
+                    byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
+                    try (var os = Files.newOutputStream(outputFile);
                          var zos = new ZipOutputStream(os)) {
 
                         for (Path path : recentLogFiles) {
-                            String extension = FileUtils.getExtension(path);
-                            decompress:
-                            if ("gz".equalsIgnoreCase(extension) || "xz".equalsIgnoreCase(extension)) {
-                                try (InputStream fis = Files.newInputStream(path);
-                                     InputStream uncompressed = "gz".equalsIgnoreCase(extension)
-                                             ? new GZIPInputStream(fis)
-                                             : new XZInputStream(fis)) {
-                                    uncompressed.transferTo(Channels.newOutputStream(tempChannel));
-                                } catch (IOException e) {
-                                    LOG.warning("Failed to decompress log: " + path, e);
-                                    break decompress;
+                            String fileName = FileUtils.getName(path);
+                            String extension = StringUtils.substringAfterLast(fileName, '.');
+
+                            if ("gz".equals(extension) || "xz".equals(extension)) {
+                                // If an exception occurs while decompressing the input file, we should
+                                // ensure the input file and the current zip entry are closed,
+                                // then copy the compressed file content as-is into a new entry in the zip file.
+
+                                InputStream input = null;
+                                try {
+                                    input = Files.newInputStream(path);
+                                    input = "gz".equals(extension)
+                                            ? new GZIPInputStream(input)
+                                            : new XZInputStream(input);
+                                } catch (Throwable ex) {
+                                    LOG.warning("Failed to open log file " + path, ex);
+                                    IOUtils.closeQuietly(input, ex);
+                                    input = null;
                                 }
 
-                                zos.putNextEntry(new ZipEntry(StringUtils.substringBeforeLast(FileUtils.getName(path), '.')));
-                                Channels.newInputStream(tempChannel).transferTo(zos);
-                                zos.closeEntry();
-                                tempChannel.truncate(0);
+                                String entryName = StringUtils.substringBeforeLast(fileName, ".");
+                                if (input != null && exportLogFile(zos, path, entryName, input, buffer))
+                                    continue;
+                            }
+
+                            // Copy the log file content as-is into a new entry in the zip file.
+                            // If an exception occurs while decompressing the input file, we should
+                            // ensure the input file and the current zip entry are closed.
+
+                            InputStream input;
+                            try {
+                                input = Files.newInputStream(path);
+                            } catch (Throwable ex) {
+                                LOG.warning("Failed to open log file " + path, ex);
                                 continue;
                             }
 
-                            zos.putNextEntry(new ZipEntry(FileUtils.getName(path)));
-                            Files.copy(path, zos);
-                            zos.closeEntry();
+                            exportLogFile(zos, path, fileName, input, buffer);
                         }
 
                         zos.putNextEntry(new ZipEntry("hmcl-latest.log"));
                         LOG.exportLogs(zos);
                         zos.closeEntry();
-                    } finally {
-                        try {
-                            Files.deleteIfExists(tempFile);
-                        } catch (IOException ignored) {
-                        }
                     }
                 }
             } catch (IOException e) {

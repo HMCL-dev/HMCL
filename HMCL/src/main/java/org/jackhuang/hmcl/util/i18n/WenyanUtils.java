@@ -44,7 +44,7 @@ public final class WenyanUtils {
     };
 
     private static final char[] TIAN_GAN = {'甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'};
-    private static final char[] DI_ZHI = {'子', '醜', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'};
+    private static final char[] DI_ZHI = {'子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'};
 
     private static String digitToString(char digit) {
         return digit >= '0' && digit <= '9'
