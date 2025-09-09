@@ -77,10 +77,7 @@ public final class WenyanUtils {
     static void appendHour(StringBuilder builder, int hour) {
         builder.append(DI_ZHI[((hour + 1) % 24) / 2]);
 
-        if (hour % 2 == 0)
-            builder.append('正');
-        else
-            builder.append('初');
+        builder.append(hour % 2 == 0 ? '正' : '初');
     }
 
     public static String formatDateTime(TemporalAccessor time) {
