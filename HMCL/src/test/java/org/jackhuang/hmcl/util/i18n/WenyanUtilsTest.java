@@ -19,6 +19,8 @@ package org.jackhuang.hmcl.util.i18n;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
@@ -38,5 +40,19 @@ public final class WenyanUtilsTest {
         assertYearToString("乙巳", 2025);
         assertYearToString("甲子", -2996);
         assertYearToString("庚子", 1000);
+    }
+
+    @Test
+    public void testHourToString() {
+
+        List<String> list = List.of(
+                "子正", "丑初", "丑正", "寅初", "寅正", "卯初", "卯正", "辰初", "辰正", "巳初", "巳正", "午初",
+                "午正", "未初", "未正", "申初", "申正", "酉初", "酉正", "戌初", "戌正", "亥初", "亥正", "子初"
+        );
+        for (int hour = 0; hour < list.size(); hour++) {
+            StringBuilder builder = new StringBuilder(2);
+            WenyanUtils.appendHour(builder, hour);
+            assertEquals(list.get(hour), builder.toString());
+        }
     }
 }
