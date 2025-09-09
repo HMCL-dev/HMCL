@@ -225,6 +225,7 @@ public abstract class TerracottaState {
             TERRACOTTA,
             UNKNOWN;
         }
+
         private final Type type;
 
         public Fatal(Type type) {

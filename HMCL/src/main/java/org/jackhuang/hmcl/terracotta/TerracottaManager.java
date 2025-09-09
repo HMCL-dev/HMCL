@@ -132,9 +132,7 @@ public final class TerracottaManager {
         FXUtils.checkFxUserThread();
 
         TerracottaState state = STATE_V.get();
-        if (!(state instanceof TerracottaState.Uninitialized ||
-                state instanceof TerracottaState.Fatal && ((TerracottaState.Fatal) state).isRecoverable()
-        )) {
+        if (!(state instanceof TerracottaState.Uninitialized || state instanceof TerracottaState.Fatal && ((TerracottaState.Fatal) state).isRecoverable())) {
             return null;
         }
 
