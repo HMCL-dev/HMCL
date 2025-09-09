@@ -281,6 +281,10 @@ public enum OperatingSystem {
         return WINDOWS_VERSION != null && WINDOWS_VERSION.compareTo(WindowsVersion.WINDOWS_7) >= 0;
     }
 
+    public static boolean isWindows81OrLater() {
+        return WINDOWS_VERSION != null && WINDOWS_VERSION.compareTo(WindowsVersion.WINDOWS_8_1) >= 0;
+    }
+
     public static Path getWorkingDirectory(String folder) {
         String home = System.getProperty("user.home", ".");
         switch (OperatingSystem.CURRENT_OS) {

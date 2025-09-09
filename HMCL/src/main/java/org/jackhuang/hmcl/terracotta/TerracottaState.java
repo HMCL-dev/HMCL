@@ -218,9 +218,25 @@ public abstract class TerracottaState {
     }
 
     public static final class Fatal extends TerracottaState {
-        static final Fatal INSTANCE = new Fatal();
+        public enum Type {
+            OS,
+            NETWORK,
+            INSTALL,
+            TERRACOTTA,
+            UNKNOWN;
+        }
+        private final Type type;
 
-        private Fatal() {
+        public Fatal(Type type) {
+            this.type = type;
+        }
+
+        public Type getType() {
+            return type;
+        }
+
+        public boolean isRecoverable() {
+            return this.type != Type.OS && this.type != Type.UNKNOWN;
         }
     }
 }

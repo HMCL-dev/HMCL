@@ -338,9 +338,27 @@ public class TerracottaControllerPage extends StackPane {
 
                 nodesProperty.setAll(back);
             } else if (state instanceof TerracottaState.Fatal) {
-                statusProperty.set(i18n("terracotta.status.fatal"));
+                String message = i18n("terracotta.status.fatal." + ((TerracottaState.Fatal) state).getType().name().toLowerCase(Locale.ROOT));
+
+                statusProperty.set(message);
                 progressProperty.set(1);
-                nodesProperty.setAll();
+
+                if (((TerracottaState.Fatal) state).isRecoverable()) {
+                    LineButton retry = new LineButton();
+                    retry.setLeftIcon(SVG.RESTORE);
+                    retry.setTitle(i18n("terracotta.status.fatal.retry"));
+                    retry.setSubtitle(message);
+
+                    retry.setOnMouseClicked(ev -> {
+                        TerracottaState s = TerracottaManager.recover();
+                        if (s != null) {
+                            UI_STATE.set(s);
+                        }
+                    });
+                    nodesProperty.setAll(retry);
+                } else {
+                    nodesProperty.setAll();
+                }
             } else {
                 throw new AssertionError(state.getClass().getName());
             }

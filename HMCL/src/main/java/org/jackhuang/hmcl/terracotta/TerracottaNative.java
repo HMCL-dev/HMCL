@@ -13,13 +13,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-public final class TerracottaConfig {
+public final class TerracottaNative {
     private final List<URI> links;
     private final FileDownloadTask.IntegrityCheck checking;
     private final Path path;
     private final List<Path> legacy;
 
-    public TerracottaConfig(List<URI> links, Path path, List<Path> legacy, FileDownloadTask.IntegrityCheck checking) {
+    public TerracottaNative(List<URI> links, Path path, List<Path> legacy, FileDownloadTask.IntegrityCheck checking) {
         this.links = links;
         this.path = path;
         this.checking = checking;

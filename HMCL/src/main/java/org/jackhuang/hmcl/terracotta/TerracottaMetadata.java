@@ -6,6 +6,8 @@ import org.jackhuang.hmcl.terracotta.provider.GeneralProvider;
 import org.jackhuang.hmcl.terracotta.provider.ITerracottaProvider;
 import org.jackhuang.hmcl.terracotta.provider.MacOSProvider;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.platform.Architecture;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,16 +31,16 @@ public final class TerracottaMetadata {
     private TerracottaMetadata() {
     }
 
-    public static final TerracottaConfig WINDOWS_X86_64;
-    public static final TerracottaConfig WINDOWS_ARM64;
+    public static final TerracottaNative WINDOWS_X86_64;
+    public static final TerracottaNative WINDOWS_ARM64;
 
-    public static final TerracottaConfig LINUX_X86_64;
-    public static final TerracottaConfig LINUX_ARM64;
+    public static final TerracottaNative LINUX_X86_64;
+    public static final TerracottaNative LINUX_ARM64;
 
-    public static final TerracottaConfig MACOS_INSTALLER_X86_64;
-    public static final TerracottaConfig MACOS_INSTALLER_ARM64;
-    public static final TerracottaConfig MACOS_BIN_X86_64;
-    public static final TerracottaConfig MACOS_BIN_ARM64;
+    public static final TerracottaNative MACOS_INSTALLER_X86_64;
+    public static final TerracottaNative MACOS_INSTALLER_ARM64;
+    public static final TerracottaNative MACOS_BIN_X86_64;
+    public static final TerracottaNative MACOS_BIN_ARM64;
 
     private static final class Config {
         private final List<String> legacy;
@@ -53,7 +55,7 @@ public final class TerracottaMetadata {
             this.downloads = downloads;
         }
 
-        private TerracottaConfig create(String classifier) {
+        private TerracottaNative of(String classifier) {
             List<URI> links = new ArrayList<>(this.downloads.size());
             for (String download : this.downloads) {
                 links.add(URI.create(download.replace("${version}", this.version).replace("${classifier}", classifier)));
@@ -72,7 +74,7 @@ public final class TerracottaMetadata {
                 ).toAbsolutePath());
             }
 
-            return new TerracottaConfig(
+            return new TerracottaNative(
                     Collections.unmodifiableList(links),
                     Metadata.DEPENDENCIES_DIRECTORY.resolve(
                             String.format("terracota/%s/terracotta-%s", this.version, classifier)
@@ -93,14 +95,14 @@ public final class TerracottaMetadata {
             throw new ExceptionInInitializerError(e);
         }
 
-        WINDOWS_X86_64 = config.create("windows-x86_64.exe");
-        WINDOWS_ARM64 = config.create("windows-arm64.exe");
-        LINUX_X86_64 = config.create("linux-x86_64");
-        LINUX_ARM64 = config.create("linux-arm64");
-        MACOS_INSTALLER_X86_64 = config.create("macos-x86_64.pkg");
-        MACOS_INSTALLER_ARM64 = config.create("macos-arm64.pkg");
-        MACOS_BIN_X86_64 = config.create("macos-x86_64");
-        MACOS_BIN_ARM64 = config.create("macos-arm64");
+        WINDOWS_X86_64 = config.of("windows-x86_64.exe");
+        WINDOWS_ARM64 = config.of("windows-arm64.exe");
+        LINUX_X86_64 = config.of("linux-x86_64");
+        LINUX_ARM64 = config.of("linux-arm64");
+        MACOS_INSTALLER_X86_64 = config.of("macos-x86_64.pkg");
+        MACOS_INSTALLER_ARM64 = config.of("macos-arm64.pkg");
+        MACOS_BIN_X86_64 = config.of("macos-x86_64");
+        MACOS_BIN_ARM64 = config.of("macos-arm64");
 
         int LEGACY_BUT_NOT_OUT_OF_DATE_COUNT = 3;
         if (config.legacy.size() < LEGACY_BUT_NOT_OUT_OF_DATE_COUNT) {
@@ -116,8 +118,12 @@ public final class TerracottaMetadata {
         }
     }
 
-    public static void deleteLegacy() {
+    public static void removeLegacy() {
         for (Path path : LEGACY_PATH) {
+            if (!Files.exists(path)) {
+                continue;
+            }
+
             try {
                 Files.walkFileTree(path, new SimpleFileVisitor<>() {
                     @Override
@@ -133,7 +139,7 @@ public final class TerracottaMetadata {
                     }
                 });
             } catch (IOException e) {
-                LOG.warning("Cannot delete legacy");
+                LOG.warning(String.format("Unable to delete legacy version: %s", path), e);
             }
         }
     }
@@ -141,12 +147,26 @@ public final class TerracottaMetadata {
     public static final ITerracottaProvider PROVIDER = locateProvider();
 
     private static ITerracottaProvider locateProvider() {
-        if (GeneralProvider.TARGET != null) {
-            return new GeneralProvider();
-        } else if (MacOSProvider.INSTALLER != null) {
-            return new MacOSProvider();
-        } else {
+        if (Architecture.SYSTEM_ARCH != Architecture.X86_64 && Architecture.SYSTEM_ARCH != Architecture.ARM64) {
             return null;
+        }
+
+        switch (OperatingSystem.CURRENT_OS) {
+            case WINDOWS: {
+                if (OperatingSystem.isWindows81OrLater()) {
+                    return new GeneralProvider();
+                }
+                return null;
+            }
+            case LINUX: {
+                return new GeneralProvider();
+            }
+            case MACOS: {
+                return new MacOSProvider();
+            }
+            default: {
+                return null;
+            }
         }
     }
 }

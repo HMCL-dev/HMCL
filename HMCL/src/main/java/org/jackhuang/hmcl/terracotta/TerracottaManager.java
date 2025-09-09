@@ -8,6 +8,7 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.setting.Accounts;
+import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -19,6 +20,7 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 
+import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -41,7 +43,7 @@ public final class TerracottaManager {
     static {
         Task.runAsync(() -> {
             if (TerracottaMetadata.PROVIDER == null) {
-                setState(TerracottaState.Fatal.INSTANCE);
+                setState(new TerracottaState.Fatal(TerracottaState.Fatal.Type.OS));
                 LOG.warning("Terracotta hasn't support your OS: " + org.jackhuang.hmcl.util.platform.Platform.SYSTEM_PLATFORM);
             } else {
                 switch (TerracottaMetadata.PROVIDER.status()) {
@@ -56,13 +58,13 @@ public final class TerracottaManager {
                     case READY: {
                         TerracottaState.Launching launching = new TerracottaState.Launching();
                         setState(launching);
-                        launch(launching);
+                        launch0(launching);
                     }
                 }
             }
         }).whenComplete(exception -> {
             if (exception != null) {
-                compareAndSet(TerracottaState.Bootstrap.INSTANCE, TerracottaState.Fatal.INSTANCE);
+                compareAndSet(TerracottaState.Bootstrap.INSTANCE, new TerracottaState.Fatal(TerracottaState.Fatal.Type.UNKNOWN));
             }
         }).start();
     }
@@ -113,7 +115,7 @@ public final class TerracottaManager {
                         continue;
                     }
                     LOG.warning("Cannot fetch state from Terracotta.", e);
-                    next = TerracottaState.Fatal.INSTANCE;
+                    next = new TerracottaState.Fatal(TerracottaState.Fatal.Type.TERRACOTTA);
                 }
 
                 if (next != null) {
@@ -130,67 +132,96 @@ public final class TerracottaManager {
         FXUtils.checkFxUserThread();
 
         TerracottaState state = STATE_V.get();
-        if (!(state instanceof TerracottaState.Uninitialized)) {
+        if (!(state instanceof TerracottaState.Uninitialized ||
+                state instanceof TerracottaState.Fatal && ((TerracottaState.Fatal) state).isRecoverable()
+        )) {
             return null;
         }
 
         ReadOnlyDoubleWrapper progress = new ReadOnlyDoubleWrapper(0);
         TerracottaState.Preparing preparing = new TerracottaState.Preparing(progress.getReadOnlyProperty());
 
-        try {
-            Objects.requireNonNull(TerracottaMetadata.PROVIDER).install(progress).thenRunAsync(() -> {
+        Task.composeAsync(() ->
+                Objects.requireNonNull(TerracottaMetadata.PROVIDER).install(progress)
+        ).whenComplete(exception -> {
+            if (exception == null) {
+                TerracottaMetadata.removeLegacy();
+
                 TerracottaState.Launching launching = new TerracottaState.Launching();
                 if (compareAndSet(preparing, launching)) {
-                    launch(launching);
+                    launch0(launching);
                 }
-            }).whenComplete(exception -> {
-                compareAndSet(preparing, TerracottaState.Fatal.INSTANCE);
-            }).start();
+            } else if (exception instanceof DownloadException) {
+                compareAndSet(preparing, new TerracottaState.Fatal(TerracottaState.Fatal.Type.NETWORK));
+            } else {
+                compareAndSet(preparing, new TerracottaState.Fatal(TerracottaState.Fatal.Type.INSTALL));
+            }
+        }).start();
 
-            return setState(preparing);
-        } catch (Exception e) {
-            setState(TerracottaState.Fatal.INSTANCE);
+        return setState(preparing);
+    }
+
+    public static TerracottaState recover() {
+        FXUtils.checkFxUserThread();
+
+        TerracottaState state = STATE_V.get();
+        if (!(state instanceof TerracottaState.Fatal && ((TerracottaState.Fatal) state).isRecoverable())) {
             return null;
+        }
+
+        try {
+            switch (Objects.requireNonNull(TerracottaMetadata.PROVIDER).status()) {
+                case NOT_EXIST:
+                case LEGACY_VERSION: {
+                    return initialize();
+                }
+                case READY: {
+                    TerracottaState.Launching launching = new TerracottaState.Launching();
+                    setState(launching);
+                    launch0(launching);
+                    return launching;
+                }
+                default: {
+                    throw new AssertionError();
+                }
+            }
+        } catch (NullPointerException | IOException e) {
+            LOG.warning("Cannot determine Terracotta state.", e);
+            return setState(new TerracottaState.Fatal(TerracottaState.Fatal.Type.UNKNOWN));
         }
     }
 
-    private static void launch(TerracottaState.Launching state) {
-        try {
+    private static void launch0(TerracottaState.Launching state) {
+        Task.supplyAsync(() -> {
             Path path = Files.createTempDirectory(String.format("hmcl-terracotta-%d", UUID.randomUUID().getLeastSignificantBits())).resolve("http").toAbsolutePath();
             ManagedProcess process = new ManagedProcess(new ProcessBuilder(Objects.requireNonNull(TerracottaMetadata.PROVIDER).launch(path)));
             process.pumpInputStream(SystemUtils::onLogLine);
             process.pumpErrorStream(SystemUtils::onLogLine);
 
-            Task.supplyAsync(() -> {
-                long exitTime = -1;
-                while (true) {
-                    if (Files.exists(path)) {
-                        JsonObject object = JsonUtils.fromNonNullJson(Files.readString(path), JsonObject.class);
-                        return object.get("port").getAsInt();
-                    }
+            long exitTime = -1;
+            while (true) {
+                if (Files.exists(path)) {
+                    JsonObject object = JsonUtils.fromNonNullJson(Files.readString(path), JsonObject.class);
+                    return object.get("port").getAsInt();
+                }
 
-                    if (!process.isRunning()) {
-                        if (exitTime == -1) {
-                            exitTime = System.currentTimeMillis();
-                        } else if (System.currentTimeMillis() - exitTime >= 10000) {
-                            throw new IllegalStateException("Process has exited for 10s.");
-                        }
+                if (!process.isRunning()) {
+                    if (exitTime == -1) {
+                        exitTime = System.currentTimeMillis();
+                    } else if (System.currentTimeMillis() - exitTime >= 10000) {
+                        throw new IllegalStateException("Process has exited for 10s.");
                     }
                 }
-            }).whenComplete(Schedulers.javafx(), (port, exception) -> {
-                TerracottaState next;
-                if (exception == null) {
-                    next = new TerracottaState.Unknown(port);
-                } else {
-                    LOG.warning("Cannot get Terracotta HTTP API port: Process has exited.");
-                    next = TerracottaState.Fatal.INSTANCE;
-                }
-                compareAndSet(state, next);
-            }).start();
-        } catch (Exception e) {
-            LOG.warning("Cannot launch Terracotta.", e);
-            Platform.runLater(() -> setState(TerracottaState.Fatal.INSTANCE));
-        }
+            }
+        }).whenComplete(Schedulers.javafx(), (port, exception) -> {
+            TerracottaState next;
+            if (exception == null) {
+                next = new TerracottaState.Unknown(port);
+            } else {
+                next = new TerracottaState.Fatal(TerracottaState.Fatal.Type.TERRACOTTA);
+            }
+            compareAndSet(state, next);
+        }).start();
     }
 
     public static TerracottaState.Waiting setWaiting() {
