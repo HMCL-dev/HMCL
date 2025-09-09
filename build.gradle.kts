@@ -27,6 +27,10 @@ subprojects {
         options.encoding = "UTF-8"
     }
 
+    @Suppress("UnstableApiUsage")
+    tasks.withType<Checkstyle> {
+        maxHeapSize.set("2g")
+    }
     configure<CheckstyleExtension> {
         sourceSets = setOf()
     }
