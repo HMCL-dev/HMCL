@@ -188,14 +188,7 @@ public abstract class TerracottaState {
             SCAFFOLDING_INVALID_RESPONSE
         }
 
-        private static final TerracottaState.Exception.Type[] LOOKUP = {
-                Type.PING_HOST_FAIL,
-                Type.PING_HOST_RST,
-                Type.GUEST_ET_CRASH,
-                Type.HOST_ET_CRASH,
-                Type.PING_SERVER_RST,
-                Type.SCAFFOLDING_INVALID_RESPONSE
-        };
+        private static final TerracottaState.Exception.Type[] LOOKUP = Type.values();
 
         @SerializedName("type")
         private final int type;
