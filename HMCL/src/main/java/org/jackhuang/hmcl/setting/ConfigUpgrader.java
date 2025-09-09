@@ -31,7 +31,6 @@ final class ConfigUpgrader {
     private ConfigUpgrader() {
     }
 
-
     /**
      * This method is for the compatibility with old HMCL versions.
      *
