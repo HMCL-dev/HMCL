@@ -310,7 +310,7 @@ public final class Controllers {
             }
         }
 
-        if (JavaRuntime.CURRENT_VERSION < 10) {
+        if (JavaRuntime.CURRENT_VERSION < Metadata.MINIMUM_SUPPORTED_JAVA_VERSION) {
             Number shownTipVersion = null;
 
             try {
