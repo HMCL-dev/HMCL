@@ -106,12 +106,24 @@
     -fx-background-color: -fx-base-darker-color;
 }
 
+.memory-used:disabled {
+    -fx-opacity: 0.4;
+}
+
 .memory-allocate {
     -fx-background-color: derive(-fx-base-color, 100%);
 }
 
+.memory-allocate:disabled {
+    -fx-opacity: 0.4;
+}
+
 .memory-total {
     -fx-background-color: -fx-base-rippler-color;
+}
+
+.memory-total:disabled {
+    -fx-opacity: 0.4;
 }
 
 .update-label {
