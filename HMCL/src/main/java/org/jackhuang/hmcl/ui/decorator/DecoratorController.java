@@ -198,6 +198,8 @@ public class DecoratorController {
 
     private Background getBackground() {
         EnumBackgroundImage imageType = config().getBackgroundImageType();
+        if (imageType == null)
+            imageType = EnumBackgroundImage.DEFAULT;
 
         Image image = null;
         switch (imageType) {
