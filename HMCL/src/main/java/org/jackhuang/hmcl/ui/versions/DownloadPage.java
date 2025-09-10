@@ -220,7 +220,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             {
                 ImageView imageView = new ImageView();
                 if (StringUtils.isNotBlank(getSkinnable().addon.getIconUrl())) {
-                    imageView.setImage(FXUtils.newRemoteImage(getSkinnable().addon.getIconUrl(), 40, 40, true, true, true));
+                    imageView.imageProperty().bind(FXUtils.newRemoteImage(getSkinnable().addon.getIconUrl(), 40, 40, true, true));
                 }
                 descriptionPane.getChildren().add(FXUtils.limitingSize(imageView, 40, 40));
 
@@ -359,7 +359,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                         .collect(Collectors.toList()));
 
                 if (StringUtils.isNotBlank(addon.getIconUrl())) {
-                    imageView.setImage(FXUtils.newRemoteImage(addon.getIconUrl(), 40, 40, true, true, true));
+                    imageView.imageProperty().bind(FXUtils.newRemoteImage(addon.getIconUrl(), 40, 40, true, true));
                 }
             } else {
                 content.setTitle(i18n("mods.broken_dependency.title"));
