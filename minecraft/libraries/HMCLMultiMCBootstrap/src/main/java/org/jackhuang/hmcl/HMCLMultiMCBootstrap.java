@@ -17,19 +17,51 @@
  */
 package org.jackhuang.hmcl;
 
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.net.URI;
+import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Scanner;
 
 public final class HMCLMultiMCBootstrap {
     private HMCLMultiMCBootstrap() {
     }
 
-    public static void main(String[] args) throws Exception {
-        String mainClass = read("hmcl.mmc.bootstrap.main");
-        String installerInfo = read("hmcl.mmc.bootstrap.installer");
+    public static void main(String[] args) throws Throwable {
+        String profile = System.getProperty("hmcl.mmc.bootstrap");
+        if (profile == null) {
+            launchLegacy(args);
+            return;
+        }
 
+        URI uri = URI.create(profile);
+        if (Objects.equals(uri.getPath(), "/bootstrap_profile_v1/")) {
+            launchV1(parseQuery(uri.getRawQuery()), args);
+        }
+    }
+
+    private static void launchV1(Map<String, String> arguments, String[] args) throws Throwable {
+        String mainClass = arguments.get("main_class");
+        String installerInfo = arguments.get("installer");
+
+        launch(installerInfo, mainClass, args);
+    }
+
+    private static void launchLegacy(String[] args) throws Throwable {
+        String mainClass = new String(Base64.getUrlDecoder().decode(System.getProperty("hmcl.mmc.bootstrap.main")), StandardCharsets.UTF_8);
+        String installerInfo = new String(Base64.getUrlDecoder().decode(System.getProperty("hmcl.mmc.bootstrap.installer")), StandardCharsets.UTF_8);
+
+        launch(installerInfo, mainClass, args);
+    }
+
+    private static void launch(String installerInfo, String mainClass, String[] args) throws Throwable {
         System.out.println("This version is installed by HMCLCore's MultiMC combat layer.");
         System.out.println("Installer Properties:");
         System.out.println(installerInfo);
@@ -53,7 +85,32 @@ public final class HMCLMultiMCBootstrap {
         throw new IllegalArgumentException("Cannot find method 'main(String[])' in " + mainClass);
     }
 
-    private static String read(String key) {
-        return new String(Base64.getUrlDecoder().decode(System.getProperty(key)), StandardCharsets.UTF_8);
+    private static Map<String, String> parseQuery(String queryParameterString) {
+        if (queryParameterString == null) return Collections.emptyMap();
+
+        Map<String, String> result = new HashMap<>();
+
+        try (Scanner scanner = new Scanner(queryParameterString)) {
+            scanner.useDelimiter("&");
+            while (scanner.hasNext()) {
+                String[] nameValue = scanner.next().split("=");
+                if (nameValue.length == 0 || nameValue.length > 2) {
+                    throw new IllegalArgumentException("bad query string");
+                }
+
+                String name = decodeURL(nameValue[0]);
+                String value = nameValue.length == 2 ? decodeURL(nameValue[1]) : null;
+                result.put(name, value);
+            }
+        }
+        return result;
+    }
+
+    private static String decodeURL(String value) {
+        try {
+            return URLDecoder.decode(value, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new AssertionError(e);
+        }
     }
 }

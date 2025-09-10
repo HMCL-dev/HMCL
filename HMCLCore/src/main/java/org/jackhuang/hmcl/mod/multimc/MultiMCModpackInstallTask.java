@@ -264,7 +264,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
                     Path from = repository.getLibraryFile(artifact.getVersion(), library).toPath();
                     Path target = repository.getLibraryFile(artifact.getVersion(), library.withoutCommunityFields()).toPath();
                     Files.createDirectories(target.getParent());
-                    Files.copy(from, target);
+                    Files.copy(from, target, StandardCopyOption.REPLACE_EXISTING);
                 }
             }
 

@@ -37,6 +37,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonMap;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
@@ -47,6 +48,7 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -396,12 +398,10 @@ public final class MultiMCInstancePatch {
 
         {
             libraries.add(0, BOOTSTRAP_LIBRARY);
-            jvmArguments.add(new StringArgument("-Dhmcl.mmc.bootstrap.main=" + Base64.getUrlEncoder().encodeToString(
-                    mainClass.getBytes(StandardCharsets.UTF_8)
-            )));
-            jvmArguments.add(new StringArgument("-Dhmcl.mmc.bootstrap.installer=" + Base64.getUrlEncoder().encodeToString(
-                    MultiMCComponents.getInstallerProfile().getBytes(StandardCharsets.UTF_8)
-            )));
+            jvmArguments.add(new StringArgument("-Dhmcl.mmc.bootstrap=" + NetworkUtils.withQuery("hmcl:///bootstrap_profile_v1/", Map.of(
+                    "main_class", mainClass,
+                    "installer", MultiMCComponents.getInstallerProfile()
+            ))));
             mainClass = "org.jackhuang.hmcl.HMCLMultiMCBootstrap";
         }
 
