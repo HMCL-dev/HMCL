@@ -54,8 +54,8 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.IconedTwoLineListItem;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.AggregatedObservableList;
@@ -113,7 +113,7 @@ public class TerracottaControllerPage extends StackPane {
                 start.setTitle(i18n(String.format("terracotta.status.uninitialized.%s.title", fork)));
                 start.setSubtitle(i18n("terracotta.status.uninitialized.desc"));
                 start.setRightIcon(SVG.ARROW_FORWARD);
-                start.setOnMouseClicked(ev -> {
+                start.setOnAction(() -> {
                     if (((TerracottaState.Uninitialized) state).hasLegacy()) {
                         TerracottaState.Preparing s = TerracottaManager.initialize();
                         if (s != null) {
@@ -130,7 +130,7 @@ public class TerracottaControllerPage extends StackPane {
                     }
                 });
 
-                nodesProperty.setAll(body, start);
+                nodesProperty.setAll(body, start.build());
             } else if (state instanceof TerracottaState.Preparing) {
                 statusProperty.set(i18n("terracotta.status.preparing"));
                 progressProperty.bind(((TerracottaState.Preparing) state).progressProperty());
@@ -155,7 +155,7 @@ public class TerracottaControllerPage extends StackPane {
                 host.setTitle(i18n("terracotta.status.waiting.host.title"));
                 host.setSubtitle(i18n("terracotta.status.waiting.host.desc"));
                 host.setRightIcon(SVG.ARROW_FORWARD);
-                host.setOnMouseClicked(ev -> {
+                host.setOnAction(() -> {
                     if (LauncherHelper.countMangedProcesses() >= 1) {
                         TerracottaState.HostScanning s = TerracottaManager.setScanning();
                         if (s != null) {
@@ -184,7 +184,7 @@ public class TerracottaControllerPage extends StackPane {
                 guest.setTitle(i18n("terracotta.status.waiting.guest.title"));
                 guest.setSubtitle(i18n("terracotta.status.waiting.guest.desc"));
                 guest.setRightIcon(SVG.ARROW_FORWARD);
-                guest.setOnMouseClicked(ev -> {
+                guest.setOnAction(() -> {
                     Controllers.prompt(i18n("terracotta.status.waiting.guest.prompt.title"), (code, resolve, reject) -> {
                         Task<TerracottaState.GuestStarting> task = TerracottaManager.setGuesting(code);
                         if (task != null) {
@@ -202,7 +202,7 @@ public class TerracottaControllerPage extends StackPane {
                     });
                 });
 
-                nodesProperty.setAll(flow, host, guest);
+                nodesProperty.setAll(flow, host.build(), guest.build());
             } else if (state instanceof TerracottaState.HostScanning) {
                 statusProperty.set(i18n("terracotta.status.scanning"));
                 progressProperty.set(-1);
@@ -214,14 +214,14 @@ public class TerracottaControllerPage extends StackPane {
                 room.setLeftIcon(SVG.ARROW_BACK);
                 room.setTitle(i18n("terracotta.back"));
                 room.setSubtitle(i18n("terracotta.status.scanning.back"));
-                room.setOnMouseClicked(ev -> {
+                room.setOnAction(() -> {
                     TerracottaState.Waiting s = TerracottaManager.setWaiting();
                     if (s != null) {
                         UI_STATE.set(s);
                     }
                 });
 
-                nodesProperty.setAll(body, room);
+                nodesProperty.setAll(body, room.build());
             } else if (state instanceof TerracottaState.HostStarting) {
                 statusProperty.set(i18n("terracotta.status.host_starting"));
                 progressProperty.set(-1);
@@ -230,14 +230,14 @@ public class TerracottaControllerPage extends StackPane {
                 room.setLeftIcon(SVG.ARROW_BACK);
                 room.setTitle(i18n("terracotta.back"));
                 room.setSubtitle(i18n("terracotta.status.host_starting.back"));
-                room.setOnMouseClicked(ev -> {
+                room.setOnAction(() -> {
                     TerracottaState.Waiting s = TerracottaManager.setWaiting();
                     if (s != null) {
                         UI_STATE.set(s);
                     }
                 });
 
-                nodesProperty.setAll(room);
+                nodesProperty.setAll(room.build());
             } else if (state instanceof TerracottaState.HostOK) {
                 String cs = ((TerracottaState.HostOK) state).getCode();
 
@@ -263,26 +263,26 @@ public class TerracottaControllerPage extends StackPane {
 
                     code.getChildren().setAll(desc, label);
                 }
-                code.setOnMouseClicked(ev -> FXUtils.copyText(cs));
+                FXUtils.onClicked(code, () -> FXUtils.copyText(cs));
 
                 LineButton copy = new LineButton();
                 copy.setLeftIcon(SVG.CONTENT_COPY);
                 copy.setTitle(i18n("terracotta.status.host_ok.code.copy"));
                 copy.setSubtitle(i18n("terracotta.status.host_ok.code.desc"));
-                copy.setOnMouseClicked(ev -> FXUtils.copyText(cs));
+                copy.setOnAction(() -> FXUtils.copyText(cs));
 
                 LineButton back = new LineButton();
                 back.setLeftIcon(SVG.ARROW_BACK);
                 back.setTitle(i18n("terracotta.back"));
                 back.setSubtitle(i18n("terracotta.status.host_ok.back"));
-                back.setOnMouseClicked(ev -> {
+                back.setOnAction(() -> {
                     TerracottaState.Waiting s = TerracottaManager.setWaiting();
                     if (s != null) {
                         UI_STATE.set(s);
                     }
                 });
 
-                nodesProperty.setAll(code, copy, back);
+                nodesProperty.setAll(code, copy.build(), back.build());
                 displayProfiles(((TerracottaState.HostOK) state).getProfiles(), nodesProperty);
             } else if (state instanceof TerracottaState.GuestStarting) {
                 statusProperty.set(i18n("terracotta.status.guest_starting"));
@@ -292,14 +292,14 @@ public class TerracottaControllerPage extends StackPane {
                 room.setLeftIcon(SVG.ARROW_BACK);
                 room.setTitle(i18n("terracotta.back"));
                 room.setSubtitle(i18n("terracotta.status.guest_starting.back"));
-                room.setOnMouseClicked(ev -> {
+                room.setOnAction(() -> {
                     TerracottaState.Waiting s = TerracottaManager.setWaiting();
                     if (s != null) {
                         UI_STATE.set(s);
                     }
                 });
 
-                nodesProperty.setAll(room);
+                nodesProperty.setAll(room.build());
             } else if (state instanceof TerracottaState.GuestOK) {
                 statusProperty.set(i18n("terracotta.status.guest_ok"));
                 progressProperty.set(1);
@@ -307,18 +307,18 @@ public class TerracottaControllerPage extends StackPane {
                 room.setLeftIcon(SVG.ARROW_BACK);
                 room.setTitle(i18n("terracotta.back"));
                 room.setSubtitle(i18n("terracotta.status.guest_ok.back"));
-                room.setOnMouseClicked(ev -> {
+                room.setOnAction(() -> {
                     TerracottaState.Waiting s = TerracottaManager.setWaiting();
                     if (s != null) {
                         UI_STATE.set(s);
                     }
                 });
 
-                IconedTwoLineListItem tutorial = new IconedTwoLineListItem();
+                LineButton tutorial = new LineButton();
                 tutorial.setTitle(i18n("terracotta.status.guest_ok.title"));
                 tutorial.setSubtitle(i18n("terracotta.status.guest_ok.desc", ((TerracottaState.GuestOK) state).getUrl()));
 
-                nodesProperty.setAll(tutorial, room);
+                nodesProperty.setAll(tutorial, room.build());
                 displayProfiles(((TerracottaState.GuestOK) state).getProfiles(), nodesProperty);
             } else if (state instanceof TerracottaState.Exception) {
                 statusProperty.set(i18n("terracotta.status.exception.desc." + ((TerracottaState.Exception) state).getType().name().toLowerCase(Locale.ROOT)));
@@ -329,14 +329,14 @@ public class TerracottaControllerPage extends StackPane {
                 back.setLeftIcon(SVG.ARROW_BACK);
                 back.setTitle(i18n("terracotta.back"));
                 back.setSubtitle(i18n("terracotta.status.exception.back"));
-                back.setOnMouseClicked(ev -> {
+                back.setOnAction(() -> {
                     TerracottaState.Waiting s = TerracottaManager.setWaiting();
                     if (s != null) {
                         UI_STATE.set(s);
                     }
                 });
 
-                nodesProperty.setAll(back);
+                nodesProperty.setAll(back.build());
             } else if (state instanceof TerracottaState.Fatal) {
                 String message = i18n("terracotta.status.fatal." + ((TerracottaState.Fatal) state).getType().name().toLowerCase(Locale.ROOT));
 
@@ -349,13 +349,13 @@ public class TerracottaControllerPage extends StackPane {
                     retry.setTitle(i18n("terracotta.status.fatal.retry"));
                     retry.setSubtitle(message);
 
-                    retry.setOnMouseClicked(ev -> {
+                    retry.setOnAction(() -> {
                         TerracottaState s = TerracottaManager.recover();
                         if (s != null) {
                             UI_STATE.set(s);
                         }
                     });
-                    nodesProperty.setAll(retry);
+                    nodesProperty.setAll(retry.build());
                 } else {
                     nodesProperty.setAll();
                 }
@@ -421,6 +421,7 @@ public class TerracottaControllerPage extends StackPane {
         private final TwoLineListItem middle = new TwoLineListItem();
         private final ObjectProperty<Node> left = new SimpleObjectProperty<>();
         private final ObjectProperty<Node> right = new SimpleObjectProperty<>();
+        private final ObjectProperty<Runnable> action = new SimpleObjectProperty<>();
 
         public LineButton() {
             setAlignment(Pos.CENTER_LEFT);
@@ -463,6 +464,24 @@ public class TerracottaControllerPage extends StackPane {
 
         public void setRightIcon(SVG right) {
             this.right.set(right.createIcon(Theme.blackFill(), 28));
+        }
+
+        public void setOnAction(Runnable action) {
+            this.action.set(action);
+        }
+
+        public RipplerContainer build() {
+            setPadding(new Insets(10, 16, 10, 16));
+
+            RipplerContainer container = new RipplerContainer(this);
+            container.getProperties().put("ComponentList.noPadding", true);
+            FXUtils.onClicked(container, () -> {
+                Runnable action = this.action.get();
+                if (action != null) {
+                    action.run();
+                }
+            });
+            return container;
         }
     }
 }

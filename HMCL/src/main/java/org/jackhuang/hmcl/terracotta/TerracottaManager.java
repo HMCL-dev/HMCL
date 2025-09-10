@@ -139,7 +139,7 @@ public final class TerracottaManager {
         ReadOnlyDoubleWrapper progress = new ReadOnlyDoubleWrapper(0);
         TerracottaState.Preparing preparing = new TerracottaState.Preparing(progress.getReadOnlyProperty());
 
-        Task.composeAsync(() ->
+        Task.composeAsync(Schedulers.javafx(), () ->
                 Objects.requireNonNull(TerracottaMetadata.PROVIDER).install(progress)
         ).whenComplete(exception -> {
             if (exception == null) {
