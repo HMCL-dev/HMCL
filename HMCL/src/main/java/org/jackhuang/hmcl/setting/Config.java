@@ -50,6 +50,7 @@ import java.util.TreeMap;
 
 public final class Config implements Observable {
 
+    public static final int CURRENT_VERSION = 2;
     public static final int CURRENT_UI_VERSION = 0;
 
     public static final Gson CONFIG_GSON = new GsonBuilder()
