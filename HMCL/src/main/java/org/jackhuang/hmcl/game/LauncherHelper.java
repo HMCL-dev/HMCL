@@ -59,6 +59,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import java.lang.ref.WeakReference;
 
 import static javafx.application.Platform.runLater;
 import static javafx.application.Platform.setImplicitExit;
@@ -125,6 +126,9 @@ public final class LauncherHelper {
     }
 
     private void launch0() {
+        // https://github.com/HMCL-dev/HMCL/pull/4121
+        PROCESSES.removeIf(it -> it.get() == null);
+
         HMCLGameRepository repository = profile.getRepository();
         DefaultDependencyManager dependencyManager = profile.getDependency();
         AtomicReference<Version> version = new AtomicReference<>(MaintainTask.maintain(repository, repository.getResolvedVersion(selectedVersion)));
@@ -209,7 +213,7 @@ public final class LauncherHelper {
                     }
                 }).thenAcceptAsync(process -> { // process is LaunchTask's result
                     if (scriptFile == null) {
-                        PROCESSES.add(process);
+                        PROCESSES.add(new WeakReference<>(process));
                         if (launcherVisibility == LauncherVisibility.CLOSE)
                             Launcher.stopApplication();
                         else
@@ -896,10 +900,10 @@ public final class LauncherHelper {
 
     }
 
-    public static final Queue<ManagedProcess> PROCESSES = new ConcurrentLinkedQueue<>();
+    public static final Queue<WeakReference<ManagedProcess>> PROCESSES = new ConcurrentLinkedQueue<>();
 
     public static void stopManagedProcesses() {
         while (!PROCESSES.isEmpty())
-            Optional.ofNullable(PROCESSES.poll()).ifPresent(ManagedProcess::stop);
+            Optional.ofNullable(PROCESSES.poll()).map(WeakReference::get).ifPresent(ManagedProcess::stop);
     }
 }
