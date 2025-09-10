@@ -825,7 +825,7 @@ public final class FXUtils {
                 byte[] header = new byte[12];
                 ByteBuffer buffer = ByteBuffer.wrap(header);
                 //noinspection StatementWithEmptyBody
-                while (channel.read(buffer) > 0) {
+                while (buffer.hasRemaining() && channel.read(buffer) > 0) {
                 }
 
                 channel.position(0L);
@@ -955,9 +955,9 @@ public final class FXUtils {
      *                        the specified bounding box
      * @return the image resource within the jar.
      */
-    public static ObservableValue<Image> newRemoteImage(String url, double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth) {
+    public static ObservableValue<Image> newRemoteImage(String url, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
         SimpleObjectProperty<Image> image = new SimpleObjectProperty<>();
-        getRemoteImageTask(url, (int) requestedWidth, (int) requestedHeight, preserveRatio, smooth)
+        getRemoteImageTask(url, requestedWidth, requestedHeight, preserveRatio, smooth)
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
                     if (exception == null) {
                         image.set(result);
