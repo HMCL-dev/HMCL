@@ -45,6 +45,7 @@ public final class ConfigHolder {
     private static GlobalConfig globalConfigInstance;
     private static boolean newlyCreated;
     private static boolean ownerChanged = false;
+    private static boolean unsupportedVersion = false;
 
     public static Config config() {
         if (configInstance == null) {
@@ -72,6 +73,10 @@ public final class ConfigHolder {
         return ownerChanged;
     }
 
+    public static boolean isUnsupportedVersion() {
+        return unsupportedVersion;
+    }
+
     public static void init() throws IOException {
         if (configInstance != null) {
             throw new IllegalStateException("Configuration is already loaded");
@@ -82,7 +87,8 @@ public final class ConfigHolder {
         LOG.info("Config location: " + configLocation);
 
         configInstance = loadConfig();
-        configInstance.addListener(source -> FileSaver.save(configLocation, configInstance.toJson()));
+        if (!unsupportedVersion)
+            configInstance.addListener(source -> FileSaver.save(configLocation, configInstance.toJson()));
 
         globalConfigInstance = loadGlobalConfig();
         globalConfigInstance.addListener(source -> FileSaver.save(GLOBAL_CONFIG_PATH, globalConfigInstance.toJson()));
@@ -163,7 +169,14 @@ public final class ConfigHolder {
                 if (deserialized == null) {
                     LOG.info("Config is empty");
                 } else {
-                    ConfigUpgrader.upgradeConfig(deserialized, content);
+                    int configVersion = deserialized.getConfigVersion();
+                    if (configVersion < Config.CURRENT_VERSION) {
+                        ConfigUpgrader.upgradeConfig(deserialized, content);
+                    } else if (configVersion > Config.CURRENT_VERSION) {
+                        unsupportedVersion = true;
+                        LOG.warning(String.format("Current HMCL only support the configuration version up to %d. However, the version now is %d.", Config.CURRENT_VERSION, configVersion));
+                    }
+
                     return deserialized;
                 }
             } catch (JsonParseException e) {

@@ -31,8 +31,6 @@ final class ConfigUpgrader {
     private ConfigUpgrader() {
     }
 
-    private static final int CURRENT_VERSION = 2;
-
     /**
      * This method is for the compatibility with old HMCL versions.
      *
@@ -42,17 +40,10 @@ final class ConfigUpgrader {
     static void upgradeConfig(Config deserialized, String rawContent) {
         int configVersion = deserialized.getConfigVersion();
 
-        if (configVersion == CURRENT_VERSION) {
+        if (configVersion >= Config.CURRENT_VERSION)
             return;
-        }
 
-        if (configVersion > CURRENT_VERSION) {
-            LOG.warning(String.format("Current HMCL only support the configuration version up to %d. However, the version now is %d.", CURRENT_VERSION, configVersion));
-            deserialized.setConfigVersion(CURRENT_VERSION);
-            return;
-        }
-
-        LOG.info(String.format("Updating configuration from %d to %d.", configVersion, CURRENT_VERSION));
+        LOG.info(String.format("Updating configuration from %d to %d.", configVersion, Config.CURRENT_VERSION));
         Map<?, ?> rawJson = Collections.unmodifiableMap(new Gson().<Map<?, ?>>fromJson(rawContent, Map.class));
 
         if (configVersion < 1) {
@@ -100,6 +91,6 @@ final class ConfigUpgrader {
             }
         }
 
-        deserialized.setConfigVersion(CURRENT_VERSION);
+        deserialized.setConfigVersion(Config.CURRENT_VERSION);
     }
 }
