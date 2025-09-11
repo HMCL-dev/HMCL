@@ -71,8 +71,23 @@ public final class LocaleUtilsTest {
 
         assertCandidateLocales("ja", List.of("ja", "und"));
         assertCandidateLocales("ja-JP", List.of("ja-JP", "ja", "und"));
+        assertCandidateLocales("jpa", List.of("jpa", "ja", "und"));
+        assertCandidateLocales("jpa-JP", List.of("jpa-JP", "jpa", "ja-JP", "ja", "und"));
 
         assertCandidateLocales("en", List.of("en", "und"));
+        assertCandidateLocales("en-US", List.of("en-US", "en", "und"));
+        assertCandidateLocales("eng", List.of("eng", "en", "und"));
+        assertCandidateLocales("eng-US", List.of("eng-US", "eng", "en-US", "en", "und"));
+
+        assertCandidateLocales("es", List.of("es", "und"));
+        assertCandidateLocales("spa", List.of("spa", "es", "und"));
+
+        assertCandidateLocales("ru", List.of("ru", "und"));
+        assertCandidateLocales("rus", List.of("rus", "ru", "und"));
+
+        assertCandidateLocales("uk", List.of("uk", "und"));
+        assertCandidateLocales("ukr", List.of("ukr", "uk", "und"));
+
         assertCandidateLocales("und", List.of("en", "und"));
     }
 
