@@ -326,5 +326,9 @@ public final class GameVersionNumberTest {
         assertFalse(asGameVersion("1.12.2-pre1").isAtLeast("1.13", "17w43a"));
         assertFalse(asGameVersion("rd-132211").isAtLeast("1.13", "17w43a"));
         assertFalse(asGameVersion("a1.0.6").isAtLeast("1.13", "17w43a"));
+
+        assertThrows(IllegalArgumentException.class, () -> asGameVersion("1.13").isAtLeast("17w43a", "17w43a"));
+        assertThrows(IllegalArgumentException.class, () -> asGameVersion("17w43a").isAtLeast("1.13", "1.13"));
+        assertThrows(IllegalArgumentException.class, () -> asGameVersion("17w43a").isAtLeast("1.13", "22w13oneblockatatime"));
     }
 }
