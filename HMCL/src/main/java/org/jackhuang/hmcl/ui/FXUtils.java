@@ -1380,9 +1380,10 @@ public final class FXUtils {
      * Now handles first-time popup display by forcing layout measurement.
      *
      * @param root the root node to calculate position relative to
+     * @param popupInstance the popup instance to position
      * @return the optimal vertical position for the popup menu
      */
-    public static JFXPopup.PopupVPosition determineOptimalPopupPosition(BorderPane root, JFXPopup popupInstance) {
+    public static JFXPopup.PopupVPosition determineOptimalPopupPosition(Node root, JFXPopup popupInstance) {
         // Get the screen bounds in screen coordinates
         Bounds screenBounds = root.localToScreen(root.getBoundsInLocal());
 
@@ -1403,7 +1404,7 @@ public final class FXUtils {
 
         // Calculate available space relative to the current screen
         double availableSpaceAbove = itemScreenY - screenMinY;
-        double availableSpaceBelow = screenMinY + screenHeight - itemScreenY - root.getHeight();
+        double availableSpaceBelow = screenMinY + screenHeight - itemScreenY - root.getBoundsInLocal().getHeight();
 
         // Get popup content and ensure it's properly measured
         Region popupContent = popupInstance.getPopupContent();
