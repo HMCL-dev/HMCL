@@ -52,10 +52,18 @@ public final class LocaleUtils {
                 : locale.stripExtensions().toLanguageTag();
     }
 
+    public static boolean isISO1Language(String language) {
+        return language.length() == 2;
+    }
+
+    public static boolean isISO3Language(String language) {
+        return language.length() == 3;
+    }
+
     public static @NotNull String getISO1Language(Locale locale) {
         String language = locale.getLanguage();
         if (language.isEmpty()) return "en";
-        return language.length() != 3 ? language : toISO1Language(language);
+        return isISO3Language(language) ? toISO1Language(language) : language;
     }
 
     /// Get the script of the locale. If the script is empty and the language is Chinese,
