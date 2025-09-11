@@ -15,6 +15,10 @@ public abstract class TerracottaState {
     protected TerracottaState() {
     }
 
+    public boolean isUIFakeState() {
+        return false;
+    }
+
     public static final class Bootstrap extends TerracottaState {
         static final Bootstrap INSTANCE = new Bootstrap();
 
@@ -77,13 +81,17 @@ public abstract class TerracottaState {
         final int index;
 
         @SerializedName("state")
-        @SuppressWarnings({"unused", "FieldCanBeLocal"})
         private final String state;
 
         Ready(int port, int index, String state) {
             super(port);
             this.index = index;
             this.state = state;
+        }
+
+        @Override
+        public boolean isUIFakeState() {
+            return this.index == -1;
         }
     }
 

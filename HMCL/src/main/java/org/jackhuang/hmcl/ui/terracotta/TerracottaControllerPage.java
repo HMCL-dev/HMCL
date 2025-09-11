@@ -18,11 +18,12 @@
 package org.jackhuang.hmcl.ui.terracotta;
 
 import com.jfoenix.controls.JFXProgressBar;
-import javafx.beans.binding.Bindings;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.WeakChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -53,12 +54,13 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
+import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
+import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.versions.Versions;
-import org.jackhuang.hmcl.util.AggregatedObservableList;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -80,19 +82,17 @@ public class TerracottaControllerPage extends StackPane {
     private final WeakListenerHolder holder = new WeakListenerHolder();
 
     public TerracottaControllerPage() {
-        VBox content = new VBox(10);
-        content.setPadding(new Insets(10));
-        content.setFillWidth(true);
-        ScrollPane scrollPane = new ScrollPane(content);
-        FXUtils.smoothScrolling(scrollPane);
-        scrollPane.setFitToWidth(true);
-        getChildren().setAll(scrollPane);
+        TransitionPane transition = new TransitionPane();
 
         ObjectProperty<String> statusProperty = new SimpleObjectProperty<>();
         DoubleProperty progressProperty = new SimpleDoubleProperty();
         ObservableList<Node> nodesProperty = FXCollections.observableList(new ArrayList<>());
 
-        holder.add(FXUtils.onWeakChangeAndOperate(UI_STATE, state -> {
+        ChangeListener<TerracottaState> listener = (_uiState, legacyState, state) -> {
+            if (legacyState.isUIFakeState() && !state.isUIFakeState() && legacyState.getClass() == state.getClass()) {
+                return;
+            }
+
             progressProperty.unbind();
 
             if (state instanceof TerracottaState.Bootstrap) {
@@ -362,30 +362,41 @@ public class TerracottaControllerPage extends StackPane {
             } else {
                 throw new AssertionError(state.getClass().getName());
             }
-        }));
 
-        ComponentList components = new ComponentList();
-        {
-            VBox statusPane = new VBox(8);
-            VBox.setMargin(statusPane, new Insets(0, 0, 0, 4));
+            ComponentList components = new ComponentList();
             {
-                Label status = new Label();
-                status.textProperty().bind(statusProperty);
-                JFXProgressBar progress = new JFXProgressBar();
-                progress.progressProperty().bind(progressProperty);
-                progress.setMaxWidth(Double.MAX_VALUE);
+                VBox statusPane = new VBox(8);
+                VBox.setMargin(statusPane, new Insets(0, 0, 0, 4));
+                {
+                    Label status = new Label();
+                    status.textProperty().bind(statusProperty);
+                    JFXProgressBar progress = new JFXProgressBar();
+                    progress.progressProperty().bind(progressProperty);
+                    progress.setMaxWidth(Double.MAX_VALUE);
 
-                statusPane.getChildren().setAll(status, progress);
+                    statusPane.getChildren().setAll(status, progress);
+                }
+
+                ObservableList<Node> children = components.getContent();
+                children.add(statusPane);
+                children.addAll(nodesProperty);
             }
 
-            AggregatedObservableList<Node> children = new AggregatedObservableList<>();
-            holder.add(children);
-            children.appendList(FXCollections.singletonObservableList(statusPane));
-            children.appendList(nodesProperty);
-            Bindings.bindContent(components.getContent(), children.getAggregatedList());
-        }
+            transition.setContent(components, ContainerAnimations.SWIPE_LEFT_FADE_SHORT);
+        };
+        holder.add(listener);
+        UI_STATE.addListener(new WeakChangeListener<>(listener));
 
-        content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("terracotta.status")), components);
+        VBox content = new VBox(10);
+        content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("terracotta.status")), transition);
+        content.setPadding(new Insets(10));
+        content.setFillWidth(true);
+
+        ScrollPane scrollPane = new ScrollPane(content);
+        FXUtils.smoothScrolling(scrollPane);
+        scrollPane.setFitToWidth(true);
+
+        getChildren().setAll(scrollPane);
     }
 
     private static void displayProfiles(List<TerracottaProfile> profiles, ObservableList<Node> nodes) {
