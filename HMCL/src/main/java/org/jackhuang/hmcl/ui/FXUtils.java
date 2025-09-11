@@ -31,7 +31,9 @@ import javafx.collections.ObservableMap;
 import javafx.event.Event;
 import javafx.event.EventDispatcher;
 import javafx.event.EventType;
+import javafx.geometry.Bounds;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -48,6 +50,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.FileChooser;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 import javafx.util.Duration;
@@ -1377,5 +1380,66 @@ public final class FXUtils {
     public static FileChooser.ExtensionFilter getImageExtensionFilter() {
         return new FileChooser.ExtensionFilter(i18n("extension.png"),
                 IMAGE_EXTENSIONS.stream().map(ext -> "*." + ext).toArray(String[]::new));
+    }
+
+    /**
+     * Intelligently determines the popup position to prevent the menu from exceeding screen boundaries.
+     * Supports multi-monitor setups by detecting the current screen where the component is located.
+     * Now handles first-time popup display by forcing layout measurement.
+     *
+     * @param root the root node to calculate position relative to
+     * @param popupInstance the popup instance to position
+     * @return the optimal vertical position for the popup menu
+     */
+    public static JFXPopup.PopupVPosition determineOptimalPopupPosition(Node root, JFXPopup popupInstance) {
+        // Get the screen bounds in screen coordinates
+        Bounds screenBounds = root.localToScreen(root.getBoundsInLocal());
+
+        // Convert Bounds to Rectangle2D for getScreensForRectangle method
+        Rectangle2D boundsRect = new Rectangle2D(
+                screenBounds.getMinX(), screenBounds.getMinY(),
+                screenBounds.getWidth(), screenBounds.getHeight()
+        );
+
+        // Find the screen that contains this component (supports multi-monitor)
+        List<Screen> screens = Screen.getScreensForRectangle(boundsRect);
+        Screen currentScreen = screens.isEmpty() ? Screen.getPrimary() : screens.get(0);
+        Rectangle2D visualBounds = currentScreen.getVisualBounds();
+
+        double screenHeight = visualBounds.getHeight();
+        double screenMinY = visualBounds.getMinY();
+        double itemScreenY = screenBounds.getMinY();
+
+        // Calculate available space relative to the current screen
+        double availableSpaceAbove = itemScreenY - screenMinY;
+        double availableSpaceBelow = screenMinY + screenHeight - itemScreenY - root.getBoundsInLocal().getHeight();
+
+        // Get popup content and ensure it's properly measured
+        Region popupContent = popupInstance.getPopupContent();
+
+        double menuHeight;
+        if (popupContent.getHeight() <= 0) {
+            // Force layout measurement if height is not yet available
+            popupContent.autosize();
+            popupContent.applyCss();
+            popupContent.layout();
+
+            // Get the measured height, or use a reasonable fallback
+            menuHeight = popupContent.getHeight();
+            if (menuHeight <= 0) {
+                // Fallback: estimate based on number of menu items
+                // Each menu item is roughly 36px height + separators + padding
+                menuHeight = 300; // Conservative estimate for the current menu structure
+            }
+        } else {
+            menuHeight = popupContent.getHeight();
+        }
+
+        // Add some margin for safety
+        menuHeight += 20;
+
+        return (availableSpaceAbove > menuHeight && availableSpaceBelow < menuHeight)
+                ? JFXPopup.PopupVPosition.BOTTOM  // Show menu below the button, expanding downward
+                : JFXPopup.PopupVPosition.TOP;    // Show menu above the button, expanding upward
     }
 }
