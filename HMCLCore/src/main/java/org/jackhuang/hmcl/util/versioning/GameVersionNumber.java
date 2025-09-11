@@ -31,7 +31,7 @@ import java.util.regex.Pattern;
 /**
  * @author Glavo
  */
-public abstract class GameVersionNumber implements Comparable<GameVersionNumber> {
+public abstract sealed class GameVersionNumber implements Comparable<GameVersionNumber> {
 
     public static String[] getDefaultGameVersions() {
         return Versions.DEFAULT_GAME_VERSIONS;
@@ -201,9 +201,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (!(o instanceof Old)) return false;
-            Old other = (Old) o;
-            return type == other.type && this.versionNumber.compareTo(other.versionNumber) == 0;
+            return o instanceof Old other && type == other.type && this.versionNumber.compareTo(other.versionNumber) == 0;
         }
 
         @Override
@@ -356,9 +354,12 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            Release other = (Release) o;
-            return major == other.major && minor == other.minor && patch == other.patch && eaType == other.eaType && eaVersion.equals(other.eaVersion);
+            return o instanceof Release other
+                    && major == other.major
+                    && minor == other.minor
+                    && patch == other.patch
+                    && eaType == other.eaType
+                    && eaVersion.equals(other.eaVersion);
         }
     }
 
@@ -428,9 +429,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            Snapshot other = (Snapshot) o;
-            return this.intValue == other.intValue;
+            return o instanceof Snapshot other && this.intValue == other.intValue;
         }
 
         @Override
@@ -534,9 +533,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            Special other = (Special) o;
-            return Objects.equals(this.value, other.value);
+            return o instanceof Special other && this.value.equals(other.value);
         }
     }
 
@@ -566,8 +563,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
                     if (currentRelease == null)
                         currentRelease = (Release) version;
 
-                    if (version instanceof Snapshot) {
-                        Snapshot snapshot = (Snapshot) version;
+                    if (version instanceof Snapshot snapshot) {
                         snapshots.add(snapshot);
                         snapshotPrev.add(currentRelease);
                     } else if (version instanceof Release) {
@@ -576,8 +572,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
                         if (currentRelease.eaType == Release.TYPE_GA) {
                             defaultGameVersions.addFirst(currentRelease.value);
                         }
-                    } else if (version instanceof Special) {
-                        Special special = (Special) version;
+                    } else if (version instanceof Special special) {
                         special.prev = prev;
                         SPECIALS.put(special.value, special);
                     } else
