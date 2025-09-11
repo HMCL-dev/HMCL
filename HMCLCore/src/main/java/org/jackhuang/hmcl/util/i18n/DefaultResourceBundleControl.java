@@ -31,8 +31,8 @@ import java.util.ResourceBundle;
 /// - For all Chinese locales, `zh-CN` is always added to the candidate list. If `zh-Hans` already exists in the candidate list,
 ///   `zh-CN` is inserted before `zh`; otherwise, it is inserted after `zh`.
 /// - For all Traditional Chinese locales, `zh-TW` is always added to the candidate list (before `zh`).
-/// - For all Chinese variants (such as `lzh`, `cmn`, `yue`, etc.), a candidate list with the language code replaced by `zh`
-///   is added to the end of the candidate list.
+/// - For all [supported][LocaleUtils#toISO1Language(String)] ISO 639-3 language code (such as `eng`, `zho`, `lzh`, etc.),
+///  a candidate list with the language code replaced by the ISO 639-1 (Macro)language code is added to the end of the candidate list.
 ///
 /// @author Glavo
 public class DefaultResourceBundleControl extends ResourceBundle.Control {
@@ -52,53 +52,57 @@ public class DefaultResourceBundleControl extends ResourceBundle.Control {
     public List<Locale> getCandidateLocales(String baseName, Locale locale) {
         if (locale.getLanguage().isEmpty())
             return getCandidateLocales(baseName, Locale.ENGLISH);
-
-        if (LocaleUtils.isChinese(locale)) {
-            String language = locale.getLanguage();
+        else if (LocaleUtils.isChinese(locale)) {
             String script = locale.getScript();
 
             if (script.isEmpty()) {
                 script = LocaleUtils.getScript(locale);
-                locale = new Locale.Builder()
-                        .setLocale(locale)
-                        .setScript(script)
-                        .build();
+                if (!script.isEmpty())
+                    return getCandidateLocales(baseName, new Locale.Builder()
+                            .setLocale(locale)
+                            .setScript(script)
+                            .build());
             }
+        }
 
-            List<Locale> locales = super.getCandidateLocales("", locale);
+        String language = locale.getLanguage();
 
-            if (language.equals("zh")) {
-                if (locales.contains(LocaleUtils.LOCALE_ZH_HANT) && !locales.contains(Locale.TRADITIONAL_CHINESE)) {
-                    locales = ensureEditable(locales);
-                    int chineseIdx = locales.indexOf(Locale.CHINESE);
-                    if (chineseIdx >= 0)
-                        locales.add(chineseIdx, Locale.TRADITIONAL_CHINESE);
-                }
+        List<Locale> locales = super.getCandidateLocales(baseName, locale);
 
-                if (!locales.contains(Locale.SIMPLIFIED_CHINESE)) {
-                    int chineseIdx = locales.indexOf(Locale.CHINESE);
+        // Is ISO 639-3 language tag
+        if (language.length() == 3) {
+            String iso1 = LocaleUtils.toISO1Language(locale.getLanguage());
 
-                    if (chineseIdx >= 0) {
-                        locales = ensureEditable(locales);
-                        if (locales.contains(LocaleUtils.LOCALE_ZH_HANS))
-                            locales.add(chineseIdx, Locale.SIMPLIFIED_CHINESE);
-                        else
-                            locales.add(chineseIdx + 1, Locale.SIMPLIFIED_CHINESE);
-                    }
-                }
-            } else {
+            if (iso1.length() == 2) {
                 locales = ensureEditable(locales);
                 locales.removeIf(it -> !it.getLanguage().equals(language));
 
-                locales.addAll(getCandidateLocales("", new Locale.Builder()
+                locales.addAll(getCandidateLocales(baseName, new Locale.Builder()
                         .setLocale(locale)
-                        .setLanguage("zh")
+                        .setLanguage(iso1)
                         .build()));
             }
+        } else if (language.equals("zh")) {
+            if (locales.contains(LocaleUtils.LOCALE_ZH_HANT) && !locales.contains(Locale.TRADITIONAL_CHINESE)) {
+                locales = ensureEditable(locales);
+                int chineseIdx = locales.indexOf(Locale.CHINESE);
+                if (chineseIdx >= 0)
+                    locales.add(chineseIdx, Locale.TRADITIONAL_CHINESE);
+            }
 
-            return locales;
+            if (!locales.contains(Locale.SIMPLIFIED_CHINESE)) {
+                int chineseIdx = locales.indexOf(Locale.CHINESE);
+
+                if (chineseIdx >= 0) {
+                    locales = ensureEditable(locales);
+                    if (locales.contains(LocaleUtils.LOCALE_ZH_HANS))
+                        locales.add(chineseIdx, Locale.SIMPLIFIED_CHINESE);
+                    else
+                        locales.add(chineseIdx + 1, Locale.SIMPLIFIED_CHINESE);
+                }
+            }
         }
 
-        return super.getCandidateLocales(baseName, locale);
+        return locales;
     }
 }
