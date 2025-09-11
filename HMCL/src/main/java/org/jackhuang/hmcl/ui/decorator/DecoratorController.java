@@ -176,17 +176,12 @@ public class DecoratorController {
             });
         }
 
-        try {
-            // For JavaFX 12+
-            MouseButton button = MouseButton.valueOf("BACK");
-            navigator.addEventFilter(MouseEvent.MOUSE_CLICKED, e -> {
-                if (e.getButton() == button) {
-                    back();
-                    e.consume();
-                }
-            });
-        } catch (IllegalArgumentException ignored) {
-        }
+        navigator.addEventFilter(MouseEvent.MOUSE_CLICKED, e -> {
+            if (e.getButton() == MouseButton.BACK) {
+                back();
+                e.consume();
+            }
+        });
     }
 
     public Decorator getDecorator() {
