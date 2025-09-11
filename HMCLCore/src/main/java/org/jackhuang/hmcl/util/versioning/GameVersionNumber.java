@@ -130,8 +130,9 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
         return compareToImpl(other);
     }
 
-    public boolean isAtLeast(@NotNull String other) {
-        return this.compareTo(other) >= 0;
+    /// @see #isAtLeast(String, String, boolean)
+    public boolean isAtLeast(@NotNull String releaseVersion, @NotNull String snapshotVersion) {
+        return isAtLeast(releaseVersion, snapshotVersion, false);
     }
 
     /// When comparing between Release Version and Snapshot Version, it is necessary to load `/assets/game/versions.txt` and perform a lookup, which is less efficient.
@@ -144,9 +145,19 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
     /// ```java
     /// GameVersionNumber.asVersion("...").isAtLeast("1.13", "17w43a");
     /// ```
-    public boolean isAtLeast(@NotNull String releaseVersion, @NotNull String snapshotVersion) {
+    ///
+    /// @param strictReleaseVersion When `strictReleaseVersion` is `false`, `releaseVersion` is considered less than
+    /// its corresponding pre/rc versions.
+    public boolean isAtLeast(@NotNull String releaseVersion, @NotNull String snapshotVersion, boolean strictReleaseVersion) {
         if (this instanceof Release self) {
-            return self.compareToRelease(Release.parseSimple(releaseVersion)) >= 0;
+            Release other;
+            if (strictReleaseVersion) {
+                other = Release.parse(releaseVersion);
+            } else {
+                other = Release.parseSimple(releaseVersion);
+            }
+
+            return self.compareToRelease(other) >= 0;
         } else {
             return this.compareTo(Snapshot.parse(snapshotVersion)) >= 0;
         }
