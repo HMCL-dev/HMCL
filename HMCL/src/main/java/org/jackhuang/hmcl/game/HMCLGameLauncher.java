@@ -114,8 +114,8 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         String region = locale.getCountry();
 
         return switch (LocaleUtils.getISO1Language(locale)) {
-            case "ja" -> "ja_JP";
             case "es" -> "es_ES";
+            case "ja" -> "ja_JP";
             case "ru" -> "ru_RU";
             case "uk" -> "uk_UA";
             case "zh" -> {
