@@ -89,7 +89,7 @@ public class TerracottaControllerPage extends StackPane {
         ObservableList<Node> nodesProperty = FXCollections.observableList(new ArrayList<>());
 
         ChangeListener<TerracottaState> listener = (_uiState, legacyState, state) -> {
-            if (legacyState.isUIFakeState() && !state.isUIFakeState() && legacyState.getClass() == state.getClass()) {
+            if (legacyState != null && legacyState.isUIFakeState() && !state.isUIFakeState() && legacyState.getClass() == state.getClass()) {
                 return;
             }
 
@@ -384,6 +384,7 @@ public class TerracottaControllerPage extends StackPane {
 
             transition.setContent(components, ContainerAnimations.SWIPE_LEFT_FADE_SHORT);
         };
+        listener.changed(UI_STATE, null, UI_STATE.get());
         holder.add(listener);
         UI_STATE.addListener(new WeakChangeListener<>(listener));
 

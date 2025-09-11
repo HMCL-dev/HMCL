@@ -6,24 +6,25 @@
     "0.3.8-rc.4",
     "0.3.8-rc.5",
     "0.3.9-rc.1",
-    "0.3.9-rc.2"
+    "0.3.9-rc.2",
+    "0.3.9-rc.3"
   ],
-  "version": "0.3.9-rc.3",
+  "version": "0.3.9-rc.4",
   "classifiers": {
-    "linux-arm64": "sha256:d561155c1f72c2f2dcb97b7709d21d5289172b53107083d308e2a3eca3f710c0",
-    "linux-x86_64": "sha256:c3f7cb6b52b30834a40cc0f9955aad9a0f51623bad6782e9f72cbb0e42262a85",
-    "macos-arm64": "sha256:eb0a392617ef40079cfa9ff50fdc86a36bc9921d9f35d9d6b25b93f089911bcb",
-    "macos-arm64.pkg": "sha256:6b62141945f92f5d56c2b829c7bfcca9bd50803c91c17980632d78a77b3f799b",
-    "macos-x86_64": "sha256:c49535eb952890b3c23d636c66c40273e6dfa3e90bbf4775367e32f68e6a9498",
-    "macos-x86_64.pkg": "sha256:5984d745dcc94f202b3e4c0d782be174dec0ae5dbf03dd9a57a0a159db5e6a93",
-    "windows-arm64.exe": "sha256:79b86a8b8c28b4abfc1fed1c382d4380e233475167f1509b72bc0c4d8d5b82ef",
-    "windows-x86_64.exe": "sha256:6f83728becdf09bc914f76c182b195721385daa5cc92e378d306d9e6d055237e"
+    "linux-arm64": "sha256:c18549cdb6bc9b8ef09d59d5471963079c3c727266800bcf25c53c4b95f46954",
+    "linux-x86_64": "sha256:39f9e8a0b4cf27097390cdfd22944956a490371a24751472d797cbc63de7d65d",
+    "macos-arm64": "sha256:e73323ed661edaa771a857cee1f8bb29ebb47f1754bd0893188b074c38f5d4bd",
+    "macos-arm64.pkg": "sha256:8cde0bc8f85821571cd29d55541a5fb2c2248a9f6e15b3b772ac15b24ae9ef65",
+    "macos-x86_64": "sha256:de5e71992689df046b7001bb7418211515f5fac277deb110ca2241d75b4c0ad4",
+    "macos-x86_64.pkg": "sha256:37a5144f71ca76fe5f4cff3d6c3a93601d5ada60e2458614c88ca56645ca9feb",
+    "windows-arm64.exe": "sha256:7fdf5f754c37497e0da03db56a0ca719fb108c7a21ae30f29e26418b5661cb1d",
+    "windows-x86_64.exe": "sha256:f8258ebb7a7f0657d538fcacb7a0da9998132754be0b9ecd911eeef3ad9e203d"
   },
   "downloads": [
-    "https://github.com/burningtnt/Terracotta/releases/download/V${version}/terracotta-${version}-${classifier}",
-    "https://alist.8mi.tech/d/mirror/HMCL-Terracotta/Auto/V${version}/terracotta-${version}-${classifier}",
-    "https://ghfast.top/https://github.com/burningtnt/Terracotta/releases/download/V${version}/terracotta-${version}-${classifier}",
-    "https://cdn.crashmc.com/https://github.com/burningtnt/Terracotta/releases/download/V${version}/terracotta-${version}-${classifier}",
-    "https://cp.zkitefly.eu.org/https://github.com/burningtnt/Terracotta/releases/download/V${version}/terracotta-${version}-${classifier}"
+    "https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}",
+    "https://alist.8mi.tech/d/mirror/HMCL-Terracotta/Auto/v${version}/terracotta-${version}-${classifier}",
+    "https://ghfast.top/https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}",
+    "https://cdn.crashmc.com/https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}",
+    "https://cp.zkitefly.eu.org/https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}"
   ]
 }
