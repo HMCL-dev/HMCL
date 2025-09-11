@@ -130,6 +130,10 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
         return compareToImpl(other);
     }
 
+    public boolean isAtLeast(@NotNull String other) {
+        return this.compareTo(other) >= 0;
+    }
+
     /// When comparing between Release Version and Snapshot Version, it is necessary to load `/assets/game/versions.txt` and perform a lookup, which is less efficient.
     /// Therefore, when checking whether a version contains a certain feature, you should use this method and provide both the first release version and the exact snapshot version that introduced the feature,
     /// so that the comparison can be performed quickly without a lookup.
