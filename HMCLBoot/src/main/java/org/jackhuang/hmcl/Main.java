@@ -23,7 +23,7 @@ import org.jackhuang.hmcl.util.SwingUtils;
  * @author Glavo
  */
 public final class Main {
-    private static final int MINIMUM_JAVA_VERSION = 11;
+    private static final int MINIMUM_JAVA_VERSION = 17;
 
     private Main() {
     }
