@@ -26,6 +26,7 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+import static org.jackhuang.hmcl.util.versioning.GameVersionNumber.asGameVersion;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -66,8 +67,8 @@ public final class GameVersionNumberTest {
     }
 
     private static void assertGameVersionEquals(String version1, String version2) {
-        assertEquals(0, GameVersionNumber.asGameVersion(version1).compareTo(version2), errorMessage(version1, version2));
-        assertEquals(GameVersionNumber.asGameVersion(version1), GameVersionNumber.asGameVersion(version2), errorMessage(version1, version2));
+        assertEquals(0, asGameVersion(version1).compareTo(version2), errorMessage(version1, version2));
+        assertEquals(asGameVersion(version1), asGameVersion(version2), errorMessage(version1, version2));
     }
 
     private static String toString(GameVersionNumber gameVersionNumber) {
@@ -76,12 +77,12 @@ public final class GameVersionNumberTest {
 
     private static void assertOrder(String... versions) {
         for (int i = 0; i < versions.length - 1; i++) {
-            GameVersionNumber version1 = GameVersionNumber.asGameVersion(versions[i]);
+            GameVersionNumber version1 = asGameVersion(versions[i]);
 
             assertGameVersionEquals(versions[i]);
 
             for (int j = i + 1; j < versions.length; j++) {
-                GameVersionNumber version2 = GameVersionNumber.asGameVersion(versions[j]);
+                GameVersionNumber version2 = asGameVersion(versions[j]);
 
                 assertEquals(-1, version1.compareTo(version2), String.format("version1=%s (%s), version2=%s (%s)", versions[i], toString(version1), versions[j], toString(version2)));
                 assertEquals(1, version2.compareTo(version1), String.format("version1=%s (%s), version2=%s (%s)", versions[i], toString(version1), versions[j], toString(version2)));
@@ -92,7 +93,7 @@ public final class GameVersionNumberTest {
     }
 
     private void assertOldVersion(String oldVersion, GameVersionNumber.Type type, String versionNumber) {
-        GameVersionNumber version = GameVersionNumber.asGameVersion(oldVersion);
+        GameVersionNumber version = asGameVersion(oldVersion);
         assertInstanceOf(GameVersionNumber.Old.class, version);
         GameVersionNumber.Old old = (GameVersionNumber.Old) version;
         assertSame(type, old.type);
@@ -100,7 +101,7 @@ public final class GameVersionNumberTest {
     }
 
     private static boolean isAprilFools(String version) {
-        return GameVersionNumber.asGameVersion(version).isAprilFools();
+        return asGameVersion(version).isAprilFools();
     }
 
     @Test
@@ -142,7 +143,7 @@ public final class GameVersionNumberTest {
     public void testParseNew() {
         List<String> versions = readVersions();
         for (String version : versions) {
-            assertFalse(GameVersionNumber.asGameVersion(version) instanceof GameVersionNumber.Old, "version=" + version);
+            assertFalse(asGameVersion(version) instanceof GameVersionNumber.Old, "version=" + version);
         }
     }
 
@@ -306,5 +307,24 @@ public final class GameVersionNumberTest {
                 "11w47a",
                 "1.1"
         );
+    }
+
+    @Test
+    public void isAtLeast() {
+        assertTrue(asGameVersion("1.13").isAtLeast("1.13", "17w43a"));
+        assertTrue(asGameVersion("1.13.1").isAtLeast("1.13", "17w43a"));
+        assertTrue(asGameVersion("1.14").isAtLeast("1.13", "17w43a"));
+        assertTrue(asGameVersion("1.13-rc1").isAtLeast("1.13", "17w43a"));
+        assertTrue(asGameVersion("1.13-pre1").isAtLeast("1.13", "17w43a"));
+        assertTrue(asGameVersion("17w43a").isAtLeast("1.13", "17w43a"));
+        assertTrue(asGameVersion("17w43b").isAtLeast("1.13", "17w43a"));
+        assertTrue(asGameVersion("17w45a").isAtLeast("1.13", "17w43a"));
+
+        assertFalse(asGameVersion("17w31a").isAtLeast("1.13", "17w43a"));
+        assertFalse(asGameVersion("1.12").isAtLeast("1.13", "17w43a"));
+        assertFalse(asGameVersion("1.12.2").isAtLeast("1.13", "17w43a"));
+        assertFalse(asGameVersion("1.12.2-pre1").isAtLeast("1.13", "17w43a"));
+        assertFalse(asGameVersion("rd-132211").isAtLeast("1.13", "17w43a"));
+        assertFalse(asGameVersion("a1.0.6").isAtLeast("1.13", "17w43a"));
     }
 }

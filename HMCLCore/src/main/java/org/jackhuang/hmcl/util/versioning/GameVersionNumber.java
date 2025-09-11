@@ -133,9 +133,16 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
     /// When comparing between Release Version and Snapshot Version, it is necessary to load `/assets/game/versions.txt` and perform a lookup, which is less efficient.
     /// Therefore, when checking whether a version contains a certain feature, you should use this method and provide both the first release version and the exact snapshot version that introduced the feature,
     /// so that the comparison can be performed quickly without a lookup.
+    ///
+    /// For example, the datapack feature was introduced in Minecraft 1.13, and more specifically in snapshot `17w43a`.
+    ///  So you can test whether a game version supports datapacks like this:
+    ///
+    /// ```java
+    /// GameVersionNumber.asVersion("...").isAtLeast("1.13", "17w43a");
+    /// ```
     public boolean isAtLeast(@NotNull String releaseVersion, @NotNull String snapshotVersion) {
         if (this instanceof Release self) {
-            return self.compareToRelease(Release.parseSimple(snapshotVersion)) >= 0;
+            return self.compareToRelease(Release.parseSimple(releaseVersion)) >= 0;
         } else {
             return this.compareTo(Snapshot.parse(snapshotVersion)) >= 0;
         }
