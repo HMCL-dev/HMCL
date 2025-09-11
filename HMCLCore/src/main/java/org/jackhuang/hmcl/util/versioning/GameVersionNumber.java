@@ -140,7 +140,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
     /// so that the comparison can be performed quickly without a lookup.
     ///
     /// For example, the datapack feature was introduced in Minecraft 1.13, and more specifically in snapshot `17w43a`.
-    ///  So you can test whether a game version supports datapacks like this:
+    /// So you can test whether a game version supports datapacks like this:
     ///
     /// ```java
     /// GameVersionNumber.asVersion("...").isAtLeast("1.13", "17w43a");
