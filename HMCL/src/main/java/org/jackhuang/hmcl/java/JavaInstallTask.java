@@ -101,8 +101,7 @@ public final class JavaInstallTask extends Task<JavaManifest> {
                     //noinspection ResultOfMethodCallIgnored
                     path.toFile().setExecutable(true);
 
-                byte[] data = messageDigest.digest();
-                files.put(String.join("/", nameStack), new JavaLocalFiles.LocalFile(HexFormat.of().formatHex(data), size));
+                files.put(String.join("/", nameStack), new JavaLocalFiles.LocalFile(HexFormat.of().formatHex(messageDigest.digest()), size));
             }
             nameStack.remove(nameStack.size() - 1);
         }

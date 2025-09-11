@@ -90,8 +90,7 @@ public final class Texture {
             digest.update(buf, 0, pos);
         }
 
-        byte[] data = digest.digest();
-        return HexFormat.of().formatHex(data);
+        return HexFormat.of().formatHex(digest.digest());
     }
 
     private static void putInt(byte[] array, int offset, int x) {

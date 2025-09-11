@@ -75,18 +75,15 @@ public final class DigestUtils {
     }
 
     public static String digestToString(String algorithm, byte[] data) throws IOException {
-        byte[] data1 = digest(algorithm, data);
-        return HexFormat.of().formatHex(data1);
+        return HexFormat.of().formatHex(digest(algorithm, data));
     }
 
     public static String digestToString(String algorithm, Path path) throws IOException {
-        byte[] data = digest(algorithm, path);
-        return HexFormat.of().formatHex(data);
+        return HexFormat.of().formatHex(digest(algorithm, path));
     }
 
     public static String digestToString(String algorithm, InputStream data) throws IOException {
-        byte[] data1 = digest(algorithm, data);
-        return HexFormat.of().formatHex(data1);
+        return HexFormat.of().formatHex(digest(algorithm, data));
     }
 
     private static final ThreadLocal<byte[]> threadLocalBuffer = ThreadLocal.withInitial(() -> new byte[STREAM_BUFFER_LENGTH]);
