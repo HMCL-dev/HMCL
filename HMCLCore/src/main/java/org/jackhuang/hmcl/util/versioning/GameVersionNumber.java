@@ -103,8 +103,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
         if (this instanceof Special)
             return true;
 
-        if (this instanceof Snapshot) {
-            Snapshot snapshot = (Snapshot) this;
+        if (this instanceof Snapshot snapshot) {
             return snapshot.intValue == Snapshot.toInt(15, 14, 'a');
         }
 
@@ -129,6 +128,17 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
             return Integer.compare(this.getType().ordinal(), other.getType().ordinal());
 
         return compareToImpl(other);
+    }
+
+    /// When comparing between Release Version and Snapshot Version, it is necessary to load `/assets/game/versions.txt` and perform a lookup, which is less efficient.
+    /// Therefore, when checking whether a version contains a certain feature, you should use this method and provide both the first release version and the exact snapshot version that introduced the feature,
+    /// so that the comparison can be performed quickly without a lookup.
+    public boolean isAtLeast(@NotNull String releaseVersion, @NotNull String snapshotVersion) {
+        if (this instanceof Release self) {
+            return self.compareToRelease(Release.parseSimple(snapshotVersion)) >= 0;
+        } else {
+            return this.compareTo(Snapshot.parse(snapshotVersion)) >= 0;
+        }
     }
 
     @Override
@@ -254,6 +264,52 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
             return new Release(value, 1, minor, patch, eaType, eaVersion);
         }
 
+        private static int getNumberLength(String value, int offset) {
+            int current = offset;
+            while (current < value.length()) {
+                char ch = value.charAt(current);
+                if (ch < '0' || ch > '9')
+                    break;
+
+                current++;
+            }
+
+            return current - offset;
+        }
+
+        /// Quickly parses a simple format (`1\.[0-9]+(\.[0-9]+)?`) release version.
+        /// The returned [#eaType] will be set to [#TYPE_UNKNOWN], meaning it will be less than all pre/rc and official versions of this version.
+        ///
+        /// @see GameVersionNumber#isAtLeast(String, String)
+        static Release parseSimple(String value) {
+            if (!value.startsWith("1."))
+                throw new IllegalArgumentException(value);
+
+            final int minorOffset = 2;
+
+            int minorLength = getNumberLength(value, minorOffset);
+            if (minorLength == 0)
+                throw new IllegalArgumentException(value);
+
+            try {
+                int minor = Integer.parseInt(value.substring(minorOffset, minorOffset + minorLength));
+                int patch = 0;
+
+                if (minorOffset + minorLength < value.length()) {
+                    int patchOffset = minorOffset + minorLength + 1;
+
+                    if (patchOffset >= value.length() || value.charAt(patchOffset - 1) != '.')
+                        throw new IllegalArgumentException(value);
+
+                    patch = Integer.parseInt(value.substring(patchOffset));
+                }
+
+                return new Release(value, 1, minor, patch, TYPE_UNKNOWN, VersionNumber.ZERO);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException(value);
+            }
+        }
+
         private final int major;
         private final int minor;
         private final int patch;
@@ -278,24 +334,20 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
 
         int compareToRelease(Release other) {
             int c = Integer.compare(this.major, other.major);
-            if (c != 0) {
+            if (c != 0)
                 return c;
-            }
 
             c = Integer.compare(this.minor, other.minor);
-            if (c != 0) {
+            if (c != 0)
                 return c;
-            }
 
             c = Integer.compare(this.patch, other.patch);
-            if (c != 0) {
+            if (c != 0)
                 return c;
-            }
 
             c = Integer.compare(this.eaType, other.eaType);
-            if (c != 0) {
+            if (c != 0)
                 return c;
-            }
 
             return this.eaVersion.compareTo(other.eaVersion);
         }
