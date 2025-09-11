@@ -26,8 +26,6 @@ import javafx.beans.value.ObservableValue;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.image.Image;
-import javafx.scene.image.PixelReader;
-import javafx.scene.image.PixelWriter;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
@@ -264,15 +262,8 @@ public final class TexturesLoader {
         int scale = (int) skin.getWidth() / 64;
         int faceOffset = (int) Math.round(size / 18.0);
 
-        try {
-            g.setImageSmoothing(false);
-            drawAvatar(g, skin, size, scale, faceOffset);
-        } catch (NoSuchMethodError ignored) {
-            // Earlier JavaFX did not support GraphicsContext::setImageSmoothing
-            // In order to prevent the blurring caused by bilinear interpolation,
-            // we use the self-implemented nearest neighbor interpolation to scale
-            drawAvatarSlow(g, skin, size, scale, faceOffset);
-        }
+        g.setImageSmoothing(false);
+        drawAvatar(g, skin, size, scale, faceOffset);
     }
 
     private static void drawAvatar(GraphicsContext g, Image skin, int size, int scale, int faceOffset) {
@@ -282,37 +273,6 @@ public final class TexturesLoader {
         g.drawImage(skin,
                 40 * scale, 8 * scale, 8 * scale, 8 * scale,
                 0, 0, size, size);
-    }
-
-    private static void drawAvatarSlow(GraphicsContext g, Image skin, int size, int scale, int faceOffset) {
-        PixelReader reader = skin.getPixelReader();
-        PixelWriter writer = g.getPixelWriter();
-        drawImage(writer, reader,
-                8 * scale, 8 * scale, 8 * scale, 8 * scale,
-                faceOffset, faceOffset, size - 2 * faceOffset, size - 2 * faceOffset);
-        drawImage(writer, reader,
-                40 * scale, 8 * scale, 8 * scale, 8 * scale,
-                0, 0, size, size);
-    }
-
-    /*
-     * Scale and draw image using nearest-neighbor interpolation
-     */
-    private static void drawImage(PixelWriter writer, PixelReader reader,
-                                  int sx, int sy, int sw, int sh,
-                                  int dx, int dy, int dw, int dh) {
-        double xScale = ((double) sw) / dw;
-        double yScale = ((double) sh) / dh;
-
-        for (int xOffset = 0; xOffset < dw; xOffset++) {
-            for (int yOffset = 0; yOffset < dh; yOffset++) {
-                int color = reader.getArgb(sx + (int) (xOffset * xScale), sy + (int) (yOffset * yScale));
-
-                // Draw only non-transparent pixels
-                if ((color >>> 24) != 0)
-                    writer.setArgb(dx + xOffset, dy + yOffset, color);
-            }
-        }
     }
 
     private static final class SkinBindingChangeListener implements ChangeListener<LoadedTexture> {
