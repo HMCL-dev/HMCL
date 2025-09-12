@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.task;
 
+import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,8 +52,11 @@ public final class CacheFileTask extends FetchTask<Path> {
         // Check cache
         for (URI uri : uris) {
             try {
-                setResult(repository.getCachedRemoteFile(uri));
+                setResult(repository.getCachedRemoteFile(uri, true));
+                LOG.info("Using cached file for " + NetworkUtils.dropQuery(uri));
                 return EnumCheckETag.CACHED;
+            } catch (CacheRepository.CacheExpiredException e) {
+                LOG.info("Cache expired for " + NetworkUtils.dropQuery(uri));
             } catch (IOException ignored) {
             }
         }

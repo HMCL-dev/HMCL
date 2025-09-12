@@ -36,7 +36,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileTime;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -154,10 +153,6 @@ public class CacheRepository {
         return cache;
     }
 
-    public Path getCachedRemoteFile(URI uri) throws IOException {
-        return getCachedRemoteFile(uri, false);
-    }
-
     public Path getCachedRemoteFile(URI uri, boolean checkExpires) throws IOException {
         lock.readLock().lock();
         ETagItem eTagItem;
@@ -168,9 +163,8 @@ public class CacheRepository {
         }
         if (eTagItem == null) throw new IOException("Cannot find the URL");
         if (StringUtils.isBlank(eTagItem.hash) || !fileExists(SHA1, eTagItem.hash)) throw new FileNotFoundException();
-        if (checkExpires && System.currentTimeMillis() > eTagItem.expires) {
-            throw new IOException("Cache expired: " + eTagItem.expires);
-        }
+        if (checkExpires && System.currentTimeMillis() > eTagItem.expires)
+            throw new CacheExpiredException(eTagItem.expires);
 
         Path file = getFile(SHA1, eTagItem.hash);
         if (Files.getLastModifiedTime(file).toMillis() != eTagItem.localLastModified) {
@@ -457,4 +451,21 @@ public class CacheRepository {
     }
 
     public static final String SHA1 = "SHA-1";
+
+    public static class CacheExpiredException extends IOException {
+        private final long expires;
+
+        public CacheExpiredException(long expires) {
+            this.expires = expires;
+        }
+
+        public CacheExpiredException(String message, long expires) {
+            super(message);
+            this.expires = expires;
+        }
+
+        public long getExpires() {
+            return expires;
+        }
+    }
 }
