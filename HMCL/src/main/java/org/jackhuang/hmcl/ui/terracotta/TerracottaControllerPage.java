@@ -99,8 +99,8 @@ public class TerracottaControllerPage extends StackPane {
                 statusProperty.set(i18n("terracotta.status.bootstrap"));
                 progressProperty.set(-1);
                 nodesProperty.setAll();
-            } else if (state instanceof TerracottaState.Uninitialized) {
-                String fork = ((TerracottaState.Uninitialized) state).hasLegacy() ? "update" : "not_exist";
+            } else if (state instanceof TerracottaState.Uninitialized uninitialized) {
+                String fork = uninitialized.hasLegacy() ? "update" : "not_exist";
 
                 statusProperty.set(i18n("terracotta.status.uninitialized." + fork));
                 progressProperty.set(0);
@@ -114,7 +114,7 @@ public class TerracottaControllerPage extends StackPane {
                 start.setSubtitle(i18n("terracotta.status.uninitialized.desc"));
                 start.setRightIcon(SVG.ARROW_FORWARD);
                 start.setOnAction(() -> {
-                    if (((TerracottaState.Uninitialized) state).hasLegacy()) {
+                    if (uninitialized.hasLegacy()) {
                         TerracottaState.Preparing s = TerracottaManager.initialize();
                         if (s != null) {
                             UI_STATE.set(s);
@@ -238,8 +238,8 @@ public class TerracottaControllerPage extends StackPane {
                 });
 
                 nodesProperty.setAll(room.build());
-            } else if (state instanceof TerracottaState.HostOK) {
-                String cs = ((TerracottaState.HostOK) state).getCode();
+            } else if (state instanceof TerracottaState.HostOK hostOK) {
+                String cs = hostOK.getCode();
 
                 statusProperty.set(i18n("terracotta.status.host_ok"));
                 progressProperty.set(1);
@@ -283,7 +283,7 @@ public class TerracottaControllerPage extends StackPane {
                 });
 
                 nodesProperty.setAll(code, copy.build(), back.build());
-                displayProfiles(((TerracottaState.HostOK) state).getProfiles(), nodesProperty);
+                displayProfiles(hostOK.getProfiles(), nodesProperty);
             } else if (state instanceof TerracottaState.GuestStarting) {
                 statusProperty.set(i18n("terracotta.status.guest_starting"));
                 progressProperty.set(-1);
@@ -300,7 +300,7 @@ public class TerracottaControllerPage extends StackPane {
                 });
 
                 nodesProperty.setAll(room.build());
-            } else if (state instanceof TerracottaState.GuestOK) {
+            } else if (state instanceof TerracottaState.GuestOK guestOK) {
                 statusProperty.set(i18n("terracotta.status.guest_ok"));
                 progressProperty.set(1);
                 LineButton room = new LineButton();
@@ -316,12 +316,12 @@ public class TerracottaControllerPage extends StackPane {
 
                 LineButton tutorial = new LineButton();
                 tutorial.setTitle(i18n("terracotta.status.guest_ok.title"));
-                tutorial.setSubtitle(i18n("terracotta.status.guest_ok.desc", ((TerracottaState.GuestOK) state).getUrl()));
+                tutorial.setSubtitle(i18n("terracotta.status.guest_ok.desc", guestOK.getUrl()));
 
                 nodesProperty.setAll(tutorial, room.build());
-                displayProfiles(((TerracottaState.GuestOK) state).getProfiles(), nodesProperty);
-            } else if (state instanceof TerracottaState.Exception) {
-                statusProperty.set(i18n("terracotta.status.exception.desc." + ((TerracottaState.Exception) state).getType().name().toLowerCase(Locale.ROOT)));
+                displayProfiles(guestOK.getProfiles(), nodesProperty);
+            } else if (state instanceof TerracottaState.Exception exception) {
+                statusProperty.set(i18n("terracotta.status.exception.desc." + exception.getType().name().toLowerCase(Locale.ROOT)));
                 progressProperty.set(1);
                 nodesProperty.setAll();
 
@@ -337,13 +337,13 @@ public class TerracottaControllerPage extends StackPane {
                 });
 
                 nodesProperty.setAll(back.build());
-            } else if (state instanceof TerracottaState.Fatal) {
-                String message = i18n("terracotta.status.fatal." + ((TerracottaState.Fatal) state).getType().name().toLowerCase(Locale.ROOT));
+            } else if (state instanceof TerracottaState.Fatal fatal) {
+                String message = i18n("terracotta.status.fatal." + fatal.getType().name().toLowerCase(Locale.ROOT));
 
                 statusProperty.set(message);
                 progressProperty.set(1);
 
-                if (((TerracottaState.Fatal) state).isRecoverable()) {
+                if (fatal.isRecoverable()) {
                     LineButton retry = new LineButton();
                     retry.setLeftIcon(SVG.RESTORE);
                     retry.setTitle(i18n("terracotta.status.fatal.retry"));

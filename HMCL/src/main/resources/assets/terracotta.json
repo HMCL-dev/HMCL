@@ -7,18 +7,19 @@
     "0.3.8-rc.5",
     "0.3.9-rc.1",
     "0.3.9-rc.2",
-    "0.3.9-rc.3"
+    "0.3.9-rc.3",
+    "0.3.9-rc.4"
   ],
-  "version": "0.3.9-rc.4",
+  "version": "0.3.9-rc.5",
   "classifiers": {
-    "linux-arm64": "sha256:c18549cdb6bc9b8ef09d59d5471963079c3c727266800bcf25c53c4b95f46954",
-    "linux-x86_64": "sha256:39f9e8a0b4cf27097390cdfd22944956a490371a24751472d797cbc63de7d65d",
-    "macos-arm64": "sha256:e73323ed661edaa771a857cee1f8bb29ebb47f1754bd0893188b074c38f5d4bd",
-    "macos-arm64.pkg": "sha256:8cde0bc8f85821571cd29d55541a5fb2c2248a9f6e15b3b772ac15b24ae9ef65",
-    "macos-x86_64": "sha256:de5e71992689df046b7001bb7418211515f5fac277deb110ca2241d75b4c0ad4",
-    "macos-x86_64.pkg": "sha256:37a5144f71ca76fe5f4cff3d6c3a93601d5ada60e2458614c88ca56645ca9feb",
-    "windows-arm64.exe": "sha256:7fdf5f754c37497e0da03db56a0ca719fb108c7a21ae30f29e26418b5661cb1d",
-    "windows-x86_64.exe": "sha256:f8258ebb7a7f0657d538fcacb7a0da9998132754be0b9ecd911eeef3ad9e203d"
+    "linux-arm64": "sha256:8a5fbd423cfbeaf3a1d7d96013ae6a113b845a281ebd81dbe3654dda9e12f743",
+    "linux-x86_64": "sha256:e14f2d85aa29c483d51448fc7425e31809b820452992e8e1d90ac5df0680c8f4",
+    "macos-arm64": "sha256:21aaa3d360c4ae121e6a74377f8a22ac9c3bb7056a071ab3564cbaae156ec7f0",
+    "macos-arm64.pkg": "sha256:78b991fb43b7cd392d7dabee0b6a095140531299fdb953853fff0c59346dc249",
+    "macos-x86_64": "sha256:b3af2146b8b8660fd9142b19b59ea9adac966045ba77872d24071232789e3a83",
+    "macos-x86_64.pkg": "sha256:bd6b1f4e1fd3f692391031bf2585f7be9132c59a5842164c70e22e9155b50778",
+    "windows-arm64.exe": "sha256:dec13069257020bbe64635e841c39545656c1027bfe10a17cc3ba4ce7df74a77",
+    "windows-x86_64.exe": "sha256:03d9990d19708a378cfa5204fcd97aa4d80aff5ec2b49579ce143aeef512e83a"
   },
   "downloads": [
     "https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}",

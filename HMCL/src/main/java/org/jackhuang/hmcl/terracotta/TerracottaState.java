@@ -11,7 +11,7 @@ import org.jackhuang.hmcl.util.gson.Validation;
 
 import java.util.List;
 
-public abstract class TerracottaState {
+public abstract sealed class TerracottaState {
     protected TerracottaState() {
     }
 
@@ -55,7 +55,7 @@ public abstract class TerracottaState {
         }
     }
 
-    static abstract class PortSpecific extends TerracottaState {
+    static abstract sealed class PortSpecific extends TerracottaState {
         transient int port;
 
         protected PortSpecific(int port) {
@@ -76,7 +76,7 @@ public abstract class TerracottaState {
                     @JsonSubtype(clazz = Exception.class, name = "exception"),
             }
     )
-    static abstract class Ready extends PortSpecific {
+    static abstract sealed class Ready extends PortSpecific {
         @SerializedName("index")
         final int index;
 
