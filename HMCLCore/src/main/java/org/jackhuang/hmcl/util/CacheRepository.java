@@ -36,12 +36,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.FileTime;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.BiFunction;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.jackhuang.hmcl.util.gson.JsonUtils.*;
@@ -222,6 +226,8 @@ public class CacheRepository {
         });
     }
 
+    private static final Pattern MAX_AGE = Pattern.compile("(s-maxage|max-age)=(?<time>[0-9]+)");
+
     private Path cacheData(URLConnection connection, ExceptionalSupplier<CacheResult, IOException> cacheSupplier) throws IOException {
         String eTag = connection.getHeaderField("ETag");
         if (StringUtils.isBlank(eTag)) return null;
@@ -231,10 +237,41 @@ public class CacheRepository {
         } catch (IllegalArgumentException e) {
             throw new IOException(e);
         }
+        long expires = 0L;
+
+        expires:
+        try {
+            String cacheControl = connection.getHeaderField("Cache-Control");
+            if (StringUtils.isNotBlank(cacheControl)) {
+                if (cacheControl.contains("no-store"))
+                    return null;
+
+                Matcher matcher = MAX_AGE.matcher(cacheControl);
+                if (matcher.find()) {
+                    long seconds = Long.parseLong(matcher.group("time"));
+                    expires = Instant.now().plusSeconds(seconds).toEpochMilli();
+                    break expires;
+                }
+            }
+
+            String expiresHeader = connection.getHeaderField("Expires");
+            if (StringUtils.isNotBlank(expiresHeader)) {
+                expires = ZonedDateTime.parse(expiresHeader.trim(), DateTimeFormatter.RFC_1123_DATE_TIME)
+                        .toInstant().toEpochMilli();
+            }
+        } catch (Throwable e) {
+            LOG.warning("Failed to parse expires time", e);
+        }
+
         String lastModified = connection.getHeaderField("Last-Modified");
 
         CacheResult cacheResult = cacheSupplier.get();
-        ETagItem eTagItem = new ETagItem(uri.toString(), eTag, cacheResult.hash, Files.getLastModifiedTime(cacheResult.cachedFile).toMillis(), lastModified);
+        ETagItem eTagItem = new ETagItem(uri.toString(),
+                eTag,
+                cacheResult.hash,
+                Files.getLastModifiedTime(cacheResult.cachedFile).toMillis(),
+                lastModified,
+                expires);
         lock.writeLock().lock();
         try {
             index.compute(uri, updateEntity(eTagItem, true));
