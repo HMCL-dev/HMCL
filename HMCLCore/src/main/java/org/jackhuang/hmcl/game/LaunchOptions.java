@@ -63,6 +63,7 @@ public class LaunchOptions implements Serializable {
     private Renderer renderer = Renderer.DEFAULT;
     private boolean useNativeGLFW;
     private boolean useNativeOpenAL;
+    private boolean useDebugLogOutput;
     private boolean daemon;
 
     /**
@@ -272,6 +273,10 @@ public class LaunchOptions implements Serializable {
 
     public boolean isUseNativeOpenAL() {
         return useNativeOpenAL;
+    }
+
+    public boolean isUseDebugLogOutput() {
+        return useDebugLogOutput;
     }
 
     /**
@@ -484,5 +489,9 @@ public class LaunchOptions implements Serializable {
             return this;
         }
 
+        public Builder setUseDebugLogOutput(boolean u) {
+            options.useDebugLogOutput = u;
+            return this;
+        }
     }
 }
