@@ -32,6 +32,7 @@ import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.Clipboard;
@@ -254,12 +255,20 @@ public class TerracottaControllerPage extends StackPane {
                         Clipboard.getSystemClipboard().setContent(cp);
                     }
 
-                    Label label = new Label(cs);
-                    label.setCursor(Cursor.TEXT);
-
+                    // FIXME: The implementation to display Room Code is ambiguous. Consider using more clearer JavaFX Element in the future.
+                    TextField label = new TextField(cs);
+                    label.setEditable(false);
+                    label.setFocusTraversable(false);
+                    label.setAlignment(Pos.CENTER);
+                    label.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
                     VBox.setMargin(label, new Insets(10, 0, 10, 0));
                     label.setScaleX(1.8);
                     label.setScaleY(1.8);
+                    holder.add(FXUtils.onWeakChange(label.selectedTextProperty(), string -> {
+                        if (string != null && !string.isEmpty() && !cs.equals(string)) {
+                            label.selectAll();
+                        }
+                    }));
 
                     code.getChildren().setAll(desc, label);
                 }
