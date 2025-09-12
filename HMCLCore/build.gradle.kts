@@ -3,8 +3,8 @@ plugins {
 }
 
 tasks.withType<JavaCompile> {
-    sourceCompatibility = "11"
-    targetCompatibility = "11"
+    sourceCompatibility = "17"
+    targetCompatibility = "17"
 }
 
 tasks.compileJava {
@@ -30,4 +30,5 @@ dependencies {
     compileOnlyApi(libs.jetbrains.annotations)
 
     testImplementation(libs.jna.platform)
+    testImplementation(libs.jimfs)
 }

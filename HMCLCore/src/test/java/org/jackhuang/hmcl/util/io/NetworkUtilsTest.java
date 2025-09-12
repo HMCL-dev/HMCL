@@ -19,16 +19,30 @@ package org.jackhuang.hmcl.util.io;
 
 import org.junit.jupiter.api.Test;
 
+import java.net.URI;
+
 import static java.nio.charset.StandardCharsets.US_ASCII;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.jackhuang.hmcl.util.io.NetworkUtils.encodeLocation;
-import static org.jackhuang.hmcl.util.io.NetworkUtils.getCharsetFromContentType;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.jackhuang.hmcl.util.io.NetworkUtils.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Glavo
  */
 public class NetworkUtilsTest {
+
+    @Test
+    public void testIsLoopbackAddress() {
+        assertTrue(isLoopbackAddress(URI.create("https://127.0.0.1/test")));
+        assertTrue(isLoopbackAddress(URI.create("https://127.0.0.1:8080/test")));
+        assertTrue(isLoopbackAddress(URI.create("https://localhost/test")));
+        assertTrue(isLoopbackAddress(URI.create("https://localhost:8080/test")));
+        assertTrue(isLoopbackAddress(URI.create("https://[::1]/test")));
+        assertTrue(isLoopbackAddress(URI.create("https://[::1]:8080/test")));
+
+        assertFalse(isLoopbackAddress(URI.create("https://www.example.com/test")));
+        assertFalse(isLoopbackAddress(URI.create("https://www.example.com:8080/test")));
+    }
 
     @Test
     public void testEncodeLocation() {

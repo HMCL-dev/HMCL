@@ -99,9 +99,6 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
                     } else {
                         LOG.warning("Failed to load world list page", exception);
                     }
-
-                    // https://github.com/HMCL-dev/HMCL/issues/938
-                    System.gc();
                 }).start();
     }
 

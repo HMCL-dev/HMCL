@@ -110,9 +110,6 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                 itemsProperty().setAll(list.stream().map(ModListPageSkin.ModInfoObject::new).sorted().collect(Collectors.toList()));
             else
                 getProperties().remove(ModListPage.class);
-
-            // https://github.com/HMCL-dev/HMCL/issues/938
-            System.gc();
         }, Platform::runLater);
     }
 

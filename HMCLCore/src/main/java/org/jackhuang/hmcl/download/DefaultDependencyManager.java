@@ -85,7 +85,8 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                     else
                         return null;
                 }).thenComposeAsync(checkPatchCompletionAsync(version, integrityCheck)),
-                new GameAssetDownloadTask(this, version, GameAssetDownloadTask.DOWNLOAD_INDEX_IF_NECESSARY, integrityCheck),
+                new GameAssetDownloadTask(this, version, GameAssetDownloadTask.DOWNLOAD_INDEX_IF_NECESSARY, integrityCheck)
+                        .setSignificance(Task.TaskSignificance.MODERATE),
                 new GameLibrariesTask(this, version, integrityCheck)
         );
     }

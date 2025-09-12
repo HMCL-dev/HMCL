@@ -125,9 +125,6 @@ public class HMCLGameRepository extends DefaultGameRepository {
         } catch (IOException ex) {
             LOG.warning("Unable to create launcher_profiles.json, Forge/LiteLoader installer will not work.", ex);
         }
-
-        // https://github.com/HMCL-dev/HMCL/issues/938
-        System.gc();
     }
 
     public void changeDirectory(File newDirectory) {
@@ -314,6 +311,8 @@ public class HMCLGameRepository extends DefaultGameRepository {
                     return VersionIconType.FABRIC.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FORGE))
                     return VersionIconType.FORGE.getIcon();
+                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM))
+                    return VersionIconType.CLEANROOM.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE))
                     return VersionIconType.NEO_FORGE.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.QUILT))
