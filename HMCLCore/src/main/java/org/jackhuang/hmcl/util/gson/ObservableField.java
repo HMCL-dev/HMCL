@@ -133,8 +133,8 @@ public abstract class ObservableField<T> {
         public void serialize(JsonObject result, T value, JsonSerializationContext context) {
             Property<?> property = (Property<?>) get(value);
 
-            if (property instanceof RawPreservingProperty<?> rawPreservingProperty) {
-                JsonElement rawJson = rawPreservingProperty.getRawJson();
+            if (property instanceof RawPreservingProperty<?> rawPreserving) {
+                JsonElement rawJson = rawPreserving.getRawJson();
                 if (rawJson != null) {
                     result.add(getSerializedName(), rawJson);
                     return;
@@ -153,7 +153,7 @@ public abstract class ObservableField<T> {
 
             try {
                 property.setValue(context.deserialize(element, elementType));
-            } catch (JsonParseException e) {
+            } catch (Throwable e) {
                 if (property instanceof RawPreservingProperty<?>) {
                     ((RawPreservingProperty<?>) property).setRawJson(element);
                 } else {
