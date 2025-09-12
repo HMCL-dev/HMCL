@@ -232,6 +232,7 @@ public class CacheRepository {
             throw new IOException(e);
         }
         String lastModified = connection.getHeaderField("Last-Modified");
+
         CacheResult cacheResult = cacheSupplier.get();
         ETagItem eTagItem = new ETagItem(uri.toString(), eTag, cacheResult.hash, Files.getLastModifiedTime(cacheResult.cachedFile).toMillis(), lastModified);
         lock.writeLock().lock();
@@ -336,20 +337,26 @@ public class CacheRepository {
         private final long localLastModified;
         @SerializedName("remote")
         private final String remoteLastModified;
+        private final long expires;
 
         /**
          * For Gson.
          */
         public ETagItem() {
-            this(null, null, null, 0, null);
+            this(null, null, null, 0, null, 0L);
         }
 
-        public ETagItem(String url, String eTag, String hash, long localLastModified, String remoteLastModified) {
+        public ETagItem(String url, String eTag, String hash, long localLastModified, String remoteLastModified, long expires) {
             this.url = url;
             this.eTag = eTag;
             this.hash = hash;
             this.localLastModified = localLastModified;
             this.remoteLastModified = remoteLastModified;
+            this.expires = expires;
+        }
+
+        public long getExpires() {
+            return expires;
         }
 
         public int compareTo(ETagItem other) {
@@ -367,18 +374,18 @@ public class CacheRepository {
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            ETagItem eTagItem = (ETagItem) o;
-            return localLastModified == eTagItem.localLastModified &&
-                    Objects.equals(url, eTagItem.url) &&
-                    Objects.equals(eTag, eTagItem.eTag) &&
-                    Objects.equals(hash, eTagItem.hash) &&
-                    Objects.equals(remoteLastModified, eTagItem.remoteLastModified);
+            return o instanceof ETagItem that
+                    && localLastModified == that.localLastModified
+                    && Objects.equals(url, that.url)
+                    && Objects.equals(eTag, that.eTag)
+                    && Objects.equals(hash, that.hash)
+                    && Objects.equals(remoteLastModified, that.remoteLastModified)
+                    && this.expires == that.expires;
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(url, eTag, hash, localLastModified, remoteLastModified);
+            return Objects.hash(url, eTag, hash, localLastModified, remoteLastModified, expires);
         }
 
         @Override
@@ -389,6 +396,7 @@ public class CacheRepository {
                     ", hash='" + hash + '\'' +
                     ", localLastModified=" + localLastModified +
                     ", remoteLastModified='" + remoteLastModified + '\'' +
+                    ", expires=" + expires +
                     ']';
         }
     }
