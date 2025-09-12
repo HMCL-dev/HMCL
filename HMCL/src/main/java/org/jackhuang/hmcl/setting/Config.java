@@ -786,6 +786,14 @@ public final class Config implements Observable {
             var values = new LinkedHashMap<>(json.getAsJsonObject().asMap());
             for (ObservableField<Config> field : FIELDS) {
                 JsonElement value = values.remove(field.getSerializedName());
+                if (value == null) {
+                    for (String alternateName : field.getAlternateNames()) {
+                        value = values.remove(alternateName);
+                        if (value != null)
+                            break;
+                    }
+                }
+
                 if (value != null) {
                     config.tracker.markDirty(field.get(config));
                     field.deserialize(config, value, context);
