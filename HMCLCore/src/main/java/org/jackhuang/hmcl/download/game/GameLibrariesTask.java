@@ -75,6 +75,7 @@ public final class GameLibrariesTask extends Task<Void> {
         this.integrityCheck = integrityCheck;
         this.libraries = libraries;
 
+        setStage("hmcl.install.libraries");
         setSignificance(TaskSignificance.MODERATE);
     }
 
@@ -115,6 +116,7 @@ public final class GameLibrariesTask extends Task<Void> {
 
     @Override
     public void execute() throws IOException {
+        int progress = 0;
         GameRepository gameRepository = dependencyManager.getGameRepository();
         for (Library library : libraries) {
             if (!library.appliesToCurrentEnvironment()) {
@@ -135,10 +137,17 @@ public final class GameLibrariesTask extends Task<Void> {
                 }
             }
             if (shouldDownloadLibrary(gameRepository, version, library, integrityCheck) && (library.hasDownloadURL() || !"optifine".equals(library.getGroupId()))) {
-                dependencies.add(new LibraryDownloadTask(dependencyManager, file, library));
+                dependencies.add(new LibraryDownloadTask(dependencyManager, file, library).withCounter("hmcl.install.libraries"));
             } else {
                 dependencyManager.getCacheRepository().tryCacheLibrary(library, file.toPath());
             }
+
+            updateProgress(++progress, libraries.size());
+        }
+
+        if (!dependencies.isEmpty()) {
+            getProperties().put("total", dependencies.size());
+            notifyPropertiesChanged();
         }
     }
 

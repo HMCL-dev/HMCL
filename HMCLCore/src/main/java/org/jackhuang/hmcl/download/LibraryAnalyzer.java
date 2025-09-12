@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.intellij.lang.annotations.Language;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.util.Lang;
@@ -121,7 +122,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
     /**
      * Remove library by library id
      *
-     * @param libraryId patch id or "forge"/"optifine"/"liteloader"/"fabric"/"quilt"/"neoforge"
+     * @param libraryId patch id or "forge"/"optifine"/"liteloader"/"fabric"/"quilt"/"neoforge"/"cleanroom"
      * @return this
      */
     public LibraryAnalyzer removeLibrary(String libraryId) {
@@ -171,6 +172,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         String mainClass = resolvedVersion.getMainClass();
         return mainClass != null && (LAUNCH_WRAPPER_MAIN.equals(mainClass)
                 || mainClass.startsWith("net.minecraftforge")
+                || mainClass.startsWith("top.outlands") //Cleanroom
                 || mainClass.startsWith("net.fabricmc")
                 || mainClass.startsWith("org.quiltmc")
                 || mainClass.startsWith("cpw.mods"));
@@ -186,10 +188,10 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
     }
 
     public enum LibraryType {
-        MINECRAFT(true, "game", Pattern.compile("^$"), Pattern.compile("^$"), null),
-        FABRIC(true, "fabric", Pattern.compile("net\\.fabricmc"), Pattern.compile("fabric-loader"), ModLoaderType.FABRIC),
-        FABRIC_API(true, "fabric-api", Pattern.compile("net\\.fabricmc"), Pattern.compile("fabric-api"), null),
-        FORGE(true, "forge", Pattern.compile("net\\.minecraftforge"), Pattern.compile("(forge|fmlloader)"), ModLoaderType.FORGE) {
+        MINECRAFT(true, "game", "^$", "^$", null),
+        FABRIC(true, "fabric", "net\\.fabricmc", "fabric-loader", ModLoaderType.FABRIC),
+        FABRIC_API(true, "fabric-api", "net\\.fabricmc", "fabric-api", null),
+        FORGE(true, "forge", "net\\.minecraftforge", "(forge|fmlloader)", ModLoaderType.FORGE) {
             private final Pattern FORGE_VERSION_MATCHER = Pattern.compile("^([0-9.]+)-(?<forge>[0-9.]+)(-([0-9.]+))?$");
 
             @Override
@@ -211,7 +213,8 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
                 return super.matchLibrary(library, libraries);
             }
         },
-        NEO_FORGE(true, "neoforge", Pattern.compile("net\\.neoforged\\.fancymodloader"), Pattern.compile("(core|loader)"), ModLoaderType.NEO_FORGED) {
+        CLEANROOM(true, "cleanroom", "com\\.cleanroommc", "cleanroom", ModLoaderType.CLEANROOM),
+        NEO_FORGE(true, "neoforge", "net\\.neoforged\\.fancymodloader", "(core|loader)", ModLoaderType.NEO_FORGED) {
             private final Pattern NEO_FORGE_VERSION_MATCHER = Pattern.compile("^([0-9.]+)-(?<forge>[0-9.]+)(-([0-9.]+))?$");
 
             @Override
@@ -263,11 +266,11 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             }
 
         },
-        LITELOADER(true, "liteloader", Pattern.compile("com\\.mumfrey"), Pattern.compile("liteloader"), ModLoaderType.LITE_LOADER),
-        OPTIFINE(false, "optifine", Pattern.compile("(net\\.)?optifine"), Pattern.compile("^(?!.*launchwrapper).*$"), null),
-        QUILT(true, "quilt", Pattern.compile("org\\.quiltmc"), Pattern.compile("quilt-loader"), ModLoaderType.QUILT),
-        QUILT_API(true, "quilt-api", Pattern.compile("org\\.quiltmc"), Pattern.compile("quilt-api"), null),
-        BOOTSTRAP_LAUNCHER(false, "", Pattern.compile("cpw\\.mods"), Pattern.compile("bootstraplauncher"), null);
+        LITELOADER(true, "liteloader", "com\\.mumfrey", "liteloader", ModLoaderType.LITE_LOADER),
+        OPTIFINE(false, "optifine", "(net\\.)?optifine", "^(?!.*launchwrapper).*$", null),
+        QUILT(true, "quilt", "org\\.quiltmc", "quilt-loader", ModLoaderType.QUILT),
+        QUILT_API(true, "quilt-api", "org\\.quiltmc", "quilt-api", null),
+        BOOTSTRAP_LAUNCHER(false, "", "cpw\\.mods", "bootstraplauncher", null);
 
         private final boolean modLoader;
         private final String patchId;
@@ -281,11 +284,11 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             }
         }
 
-        LibraryType(boolean modLoader, String patchId, Pattern group, Pattern artifact, ModLoaderType modLoaderType) {
+        LibraryType(boolean modLoader, String patchId, @Language("RegExp") String group, @Language("RegExp") String artifact, ModLoaderType modLoaderType) {
             this.modLoader = modLoader;
             this.patchId = patchId;
-            this.group = group;
-            this.artifact = artifact;
+            this.group = Pattern.compile(group);
+            this.artifact = Pattern.compile(artifact);
             this.modLoaderType = modLoaderType;
         }
 

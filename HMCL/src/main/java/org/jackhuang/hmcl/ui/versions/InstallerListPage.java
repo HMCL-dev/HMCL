@@ -76,7 +76,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
 
             InstallerItem.InstallerItemGroup group = new InstallerItem.InstallerItemGroup(gameVersion, InstallerItem.Style.LIST_ITEM);
 
-            // Conventional libraries: game, fabric, forge, neoforge, liteloader, optifine
+            // Conventional libraries: game, fabric, forge, cleanroom, neoforge, liteloader, optifine
             for (InstallerItem item : group.getLibraries()) {
                 String libraryId = item.getLibraryId();
 
@@ -114,6 +114,8 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
             for (LibraryAnalyzer.LibraryMark mark : analyzer) {
                 String libraryId = mark.getLibraryId();
                 String libraryVersion = mark.getLibraryVersion();
+                if ("mcbbs".equals(libraryId))
+                    continue;
 
                 // we have done this library above.
                 if (LibraryAnalyzer.LibraryType.fromPatchId(libraryId) != null)

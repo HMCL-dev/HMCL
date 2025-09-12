@@ -17,13 +17,11 @@
  */
 package org.jackhuang.hmcl.auth.authlibinjector;
 
-import static org.jackhuang.hmcl.util.io.NetworkUtils.toURL;
-
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilProvider;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 
-import java.net.URL;
+import java.net.URI;
 import java.util.UUID;
 
 public class AuthlibInjectorProvider implements YggdrasilProvider {
@@ -35,33 +33,33 @@ public class AuthlibInjectorProvider implements YggdrasilProvider {
     }
 
     @Override
-    public URL getAuthenticationURL() throws AuthenticationException {
-        return toURL(apiRoot + "authserver/authenticate");
+    public URI getAuthenticationURL() throws AuthenticationException {
+        return URI.create(apiRoot + "authserver/authenticate");
     }
 
     @Override
-    public URL getRefreshmentURL() throws AuthenticationException {
-        return toURL(apiRoot + "authserver/refresh");
+    public URI getRefreshmentURL() throws AuthenticationException {
+        return URI.create(apiRoot + "authserver/refresh");
     }
 
     @Override
-    public URL getValidationURL() throws AuthenticationException {
-        return toURL(apiRoot + "authserver/validate");
+    public URI getValidationURL() throws AuthenticationException {
+        return URI.create(apiRoot + "authserver/validate");
     }
 
     @Override
-    public URL getInvalidationURL() throws AuthenticationException {
-        return toURL(apiRoot + "authserver/invalidate");
+    public URI getInvalidationURL() throws AuthenticationException {
+        return URI.create(apiRoot + "authserver/invalidate");
     }
 
     @Override
-    public URL getSkinUploadURL(UUID uuid) throws UnsupportedOperationException {
-        return toURL(apiRoot + "api/user/profile/" + UUIDTypeAdapter.fromUUID(uuid) + "/skin");
+    public URI getSkinUploadURL(UUID uuid) throws UnsupportedOperationException {
+        return URI.create(apiRoot + "api/user/profile/" + UUIDTypeAdapter.fromUUID(uuid) + "/skin");
     }
 
     @Override
-    public URL getProfilePropertiesURL(UUID uuid) throws AuthenticationException {
-        return toURL(apiRoot + "sessionserver/session/minecraft/profile/" + UUIDTypeAdapter.fromUUID(uuid));
+    public URI getProfilePropertiesURL(UUID uuid) throws AuthenticationException {
+        return URI.create(apiRoot + "sessionserver/session/minecraft/profile/" + UUIDTypeAdapter.fromUUID(uuid));
     }
 
     @Override

@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.game;
 
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
@@ -41,9 +42,9 @@ public abstract class LocalizedRemoteModRepository implements RemoteModRepositor
     protected abstract SortType getBackedRemoteModRepositorySortOrder();
 
     @Override
-    public SearchResult search(String gameVersion, Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder) throws IOException {
+    public SearchResult search(DownloadProvider downloadProvider, String gameVersion, Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder) throws IOException {
         if (!StringUtils.containsChinese(searchFilter)) {
-            return getBackedRemoteModRepository().search(gameVersion, category, pageOffset, pageSize, searchFilter, sort, sortOrder);
+            return getBackedRemoteModRepository().search(downloadProvider, gameVersion, category, pageOffset, pageSize, searchFilter, sort, sortOrder);
         }
 
         Set<String> englishSearchFiltersSet = new HashSet<>(INITIAL_CAPACITY);
@@ -65,7 +66,7 @@ public abstract class LocalizedRemoteModRepository implements RemoteModRepositor
         RemoteMod[] searchResultArray = new RemoteMod[pageSize];
         int totalPages, chineseIndex = 0, englishIndex = pageSize - 1;
         {
-            SearchResult searchResult = getBackedRemoteModRepository().search(gameVersion, category, pageOffset, pageSize, String.join(" ", englishSearchFiltersSet), getBackedRemoteModRepositorySortOrder(), sortOrder);
+            SearchResult searchResult = getBackedRemoteModRepository().search(downloadProvider, gameVersion, category, pageOffset, pageSize, String.join(" ", englishSearchFiltersSet), getBackedRemoteModRepositorySortOrder(), sortOrder);
             for (Iterator<RemoteMod> iterator = searchResult.getUnsortedResults().iterator(); iterator.hasNext(); ) {
                 if (chineseIndex > englishIndex) {
                     LOG.warning("Too many search results! Are the backed remote mod repository broken? Or are the API broken?");

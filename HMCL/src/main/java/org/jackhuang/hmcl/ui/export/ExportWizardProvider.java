@@ -18,14 +18,16 @@
 package org.jackhuang.hmcl.ui.export;
 
 import javafx.scene.Node;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.mod.ModAdviser;
 import org.jackhuang.hmcl.mod.ModpackExportInfo;
 import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackExportTask;
 import org.jackhuang.hmcl.mod.multimc.MultiMCInstanceConfiguration;
 import org.jackhuang.hmcl.mod.multimc.MultiMCModpackExportTask;
 import org.jackhuang.hmcl.mod.server.ServerModpackExportTask;
+import org.jackhuang.hmcl.mod.modrinth.ModrinthModpackExportTask;
 import org.jackhuang.hmcl.setting.Config;
-import org.jackhuang.hmcl.setting.ConfigHolder;
+import org.jackhuang.hmcl.setting.FontManager;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.task.Task;
@@ -75,6 +77,10 @@ public final class ExportWizardProvider implements WizardProvider {
             File tempModpack;
             Task<?> exportTask;
 
+            {
+                setSignificance(TaskSignificance.MODERATE);
+            }
+
             @Override
             public boolean doPreExecute() {
                 return true;
@@ -98,6 +104,9 @@ public final class ExportWizardProvider implements WizardProvider {
                         break;
                     case ModpackTypeSelectionPage.MODPACK_TYPE_SERVER:
                         exportTask = exportAsServer(exportInfo, dest);
+                        break;
+                    case ModpackTypeSelectionPage.MODPACK_TYPE_MODRINTH:
+                        exportTask = exportAsModrinth(exportInfo, dest);
                         break;
                     default:
                         throw new IllegalStateException("Unrecognized modpack type " + modpackType);
@@ -123,19 +132,31 @@ public final class ExportWizardProvider implements WizardProvider {
                     exported.setPreferredLoginType(config().getPreferredLoginType());
                     exported.getAuthlibInjectorServers().setAll(config().getAuthlibInjectorServers());
 
-                    zip.putTextFile(exported.toJson(), ConfigHolder.CONFIG_FILENAME);
+                    zip.putTextFile(exported.toJson(), ".hmcl/hmcl.json");
                     zip.putFile(tempModpack, "modpack.zip");
 
-                    File bg = new File("bg").getAbsoluteFile();
-                    if (bg.isDirectory())
-                        zip.putDirectory(bg.toPath(), "bg");
+                    Path bg = Metadata.HMCL_CURRENT_DIRECTORY.resolve("background");
+                    if (!Files.isDirectory(bg))
+                        bg = Metadata.CURRENT_DIRECTORY.resolve("bg");
+                    if (Files.isDirectory(bg))
+                        zip.putDirectory(bg, ".hmcl/bg");
 
                     for (String extension : FXUtils.IMAGE_EXTENSIONS) {
                         String fileName = "background." + extension;
+                        Path background = Metadata.HMCL_CURRENT_DIRECTORY.resolve(fileName);
+                        if (!Files.isRegularFile(background))
+                            background = Metadata.CURRENT_DIRECTORY.resolve(fileName);
+                        if (Files.isRegularFile(background))
+                            zip.putFile(background, ".hmcl/" + fileName);
+                    }
 
-                        File background = new File(fileName).getAbsoluteFile();
-                        if (background.isFile())
-                            zip.putFile(background, "background.png");
+                    for (String extension : FontManager.FONT_EXTENSIONS) {
+                        String fileName = "font." + extension;
+                        Path font = Metadata.HMCL_CURRENT_DIRECTORY.resolve(fileName);
+                        if (!Files.isRegularFile(font))
+                            font = Metadata.CURRENT_DIRECTORY.resolve(fileName);
+                        if (Files.isRegularFile(font))
+                            zip.putFile(font, ".hmcl/" + fileName);
                     }
 
                     zip.putFile(launcherJar, launcherJar.getFileName().toString());
@@ -147,6 +168,10 @@ public final class ExportWizardProvider implements WizardProvider {
     private Task<?> exportAsMcbbs(ModpackExportInfo exportInfo, File modpackFile) {
         return new Task<Void>() {
             Task<?> dependency = null;
+
+            {
+                setSignificance(TaskSignificance.MODERATE);
+            }
 
             @Override
             public void execute() {
@@ -163,6 +188,10 @@ public final class ExportWizardProvider implements WizardProvider {
     private Task<?> exportAsMultiMC(ModpackExportInfo exportInfo, File modpackFile) {
         return new Task<Void>() {
             Task<?> dependency;
+
+            {
+                setSignificance(TaskSignificance.MODERATE);
+            }
 
             @Override
             public void execute() {
@@ -208,9 +237,38 @@ public final class ExportWizardProvider implements WizardProvider {
         return new Task<Void>() {
             Task<?> dependency;
 
+            {
+                setSignificance(TaskSignificance.MODERATE);
+            }
+
             @Override
             public void execute() {
                 dependency = new ServerModpackExportTask(profile.getRepository(), version, exportInfo, modpackFile);
+            }
+
+            @Override
+            public Collection<Task<?>> getDependencies() {
+                return Collections.singleton(dependency);
+            }
+        };
+    }
+
+    private Task<?> exportAsModrinth(ModpackExportInfo exportInfo, File modpackFile) {
+        return new Task<Void>() {
+            Task<?> dependency;
+
+            {
+                setSignificance(TaskSignificance.MODERATE);
+            }
+
+            @Override
+            public void execute() {
+                dependency = new ModrinthModpackExportTask(
+                    profile.getRepository(),
+                    version,
+                    exportInfo,
+                    modpackFile
+                );
             }
 
             @Override

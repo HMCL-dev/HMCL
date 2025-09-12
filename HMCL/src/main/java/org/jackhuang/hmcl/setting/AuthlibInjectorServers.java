@@ -24,7 +24,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.TolerableValidationException;
 import org.jackhuang.hmcl.util.gson.Validation;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 
 import java.io.IOException;
@@ -73,8 +72,7 @@ public final class AuthlibInjectorServers implements Validation {
         if (ConfigHolder.isNewlyCreated() && Files.exists(configLocation)) {
             AuthlibInjectorServers configInstance;
             try {
-                String content = FileUtils.readText(configLocation);
-                configInstance = JsonUtils.GSON.fromJson(content, AuthlibInjectorServers.class);
+                configInstance = JsonUtils.fromJsonFile(configLocation, AuthlibInjectorServers.class);
             } catch (IOException | JsonParseException e) {
                 LOG.warning("Malformed authlib-injectors.json", e);
                 return;

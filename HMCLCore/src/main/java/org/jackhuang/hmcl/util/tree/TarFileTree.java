@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.util.tree;
 
 import kala.compress.archivers.tar.TarArchiveEntry;
 import kala.compress.archivers.tar.TarArchiveReader;
-import org.jackhuang.hmcl.util.io.IOUtils;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -42,7 +41,7 @@ public final class TarFileTree extends ArchiveFileTree<TarArchiveReader, TarArch
             try (GZIPInputStream input = new GZIPInputStream(Files.newInputStream(file));
                  OutputStream output = Files.newOutputStream(tempFile, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)
             ) {
-                IOUtils.copyTo(input, output);
+                input.transferTo(output);
                 tarFile = new TarArchiveReader(tempFile);
             } catch (Throwable e) {
                 try {

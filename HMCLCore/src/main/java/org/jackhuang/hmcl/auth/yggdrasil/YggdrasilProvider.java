@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.auth.yggdrasil;
 
 import org.jackhuang.hmcl.auth.AuthenticationException;
 
-import java.net.URL;
+import java.net.URI;
 import java.util.UUID;
 
 /**
@@ -27,13 +27,13 @@ import java.util.UUID;
  */
 public interface YggdrasilProvider {
 
-    URL getAuthenticationURL() throws AuthenticationException;
+    URI getAuthenticationURL() throws AuthenticationException;
 
-    URL getRefreshmentURL() throws AuthenticationException;
+    URI getRefreshmentURL() throws AuthenticationException;
 
-    URL getValidationURL() throws AuthenticationException;
+    URI getValidationURL() throws AuthenticationException;
 
-    URL getInvalidationURL() throws AuthenticationException;
+    URI getInvalidationURL() throws AuthenticationException;
 
     /**
      * URL to upload skin.
@@ -51,8 +51,8 @@ public interface YggdrasilProvider {
      * @throws AuthenticationException if url cannot be generated. e.g. some parameter or query is malformed.
      * @throws UnsupportedOperationException if the Yggdrasil provider does not support third-party skin uploading.
      */
-    URL getSkinUploadURL(UUID uuid) throws AuthenticationException, UnsupportedOperationException;
+    URI getSkinUploadURL(UUID uuid) throws AuthenticationException, UnsupportedOperationException;
 
-    URL getProfilePropertiesURL(UUID uuid) throws AuthenticationException;
+    URI getProfilePropertiesURL(UUID uuid) throws AuthenticationException;
 
 }

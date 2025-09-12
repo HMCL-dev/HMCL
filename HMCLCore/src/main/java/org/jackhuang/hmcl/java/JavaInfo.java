@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.java;
 
 import kala.compress.archivers.ArchiveEntry;
-import org.jackhuang.hmcl.util.KeyValuePairProperties;
+import org.jackhuang.hmcl.util.KeyValuePairUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -33,6 +33,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Map;
 
 /**
  * @author Glavo
@@ -60,7 +61,7 @@ public final class JavaInfo {
     }
 
     public static JavaInfo fromReleaseFile(BufferedReader reader) throws IOException {
-        KeyValuePairProperties properties = KeyValuePairProperties.load(reader);
+        Map<String, String> properties = KeyValuePairUtils.loadProperties(reader);
         String osName = properties.get("OS_NAME");
         String osArch = properties.get("OS_ARCH");
         String vendor = properties.get("IMPLEMENTOR");
@@ -133,108 +134,6 @@ public final class JavaInfo {
             default:
                 return vendor;
         }
-    }
-
-    private static final String OS_ARCH = "os.arch = ";
-    private static final String JAVA_VERSION = "java.version = ";
-    private static final String JAVA_VENDOR = "java.vendor = ";
-    private static final String VERSION_PREFIX = "version \"";
-
-    public static JavaInfo fromExecutable(Path executable) throws IOException {
-        return fromExecutable(executable, true);
-    }
-
-    public static JavaInfo fromExecutable(Path executable, boolean tryFindReleaseFile) throws IOException {
-        assert executable.isAbsolute();
-        Path parent = executable.getParent();
-        if (tryFindReleaseFile && parent != null && parent.getFileName() != null && parent.getFileName().toString().equals("bin")) {
-            Path javaHome = parent.getParent();
-            if (javaHome != null && javaHome.getFileName() != null) {
-                Path releaseFile = javaHome.resolve("release");
-                String javaHomeName = javaHome.getFileName().toString();
-                if ((javaHomeName.contains("jre") || javaHomeName.contains("jdk") || javaHomeName.contains("openj9")) && Files.isRegularFile(releaseFile)) {
-                    try {
-                        return fromReleaseFile(releaseFile);
-                    } catch (IOException ignored) {
-                    }
-                }
-            }
-        }
-
-        String osArch = null;
-        String version = null;
-        String vendor = null;
-        Platform platform = null;
-
-        String executablePath = executable.toString();
-
-        Process process = new ProcessBuilder(executablePath, "-XshowSettings:properties", "-version").start();
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream(), OperatingSystem.NATIVE_CHARSET))) {
-            for (String line; (line = reader.readLine()) != null; ) {
-
-                int idx = line.indexOf(OS_ARCH);
-                if (idx >= 0) {
-                    osArch = line.substring(idx + OS_ARCH.length()).trim();
-                    if (version != null && vendor != null)
-                        break;
-                    else
-                        continue;
-                }
-
-                idx = line.indexOf(JAVA_VERSION);
-                if (idx >= 0) {
-                    version = line.substring(idx + JAVA_VERSION.length()).trim();
-                    if (osArch != null && vendor != null)
-                        break;
-                    else
-                        continue;
-                }
-
-                idx = line.indexOf(JAVA_VENDOR);
-                if (idx >= 0) {
-                    vendor = line.substring(idx + JAVA_VENDOR.length()).trim();
-                    if (osArch != null && version != null)
-                        break;
-                    else
-                        //noinspection UnnecessaryContinue
-                        continue;
-                }
-            }
-        }
-
-        if (osArch != null)
-            platform = Platform.getPlatform(OperatingSystem.CURRENT_OS, Architecture.parseArchName(osArch));
-
-        // Java 6
-        if (version == null) {
-            boolean is64Bit = false;
-            process = new ProcessBuilder(executablePath, "-version").start();
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream(), OperatingSystem.NATIVE_CHARSET))) {
-                for (String line; (line = reader.readLine()) != null; ) {
-                    if (version == null) {
-                        int idx = line.indexOf(VERSION_PREFIX);
-                        if (idx >= 0) {
-                            int begin = idx + VERSION_PREFIX.length();
-                            int end = line.indexOf('"', begin);
-                            if (end >= 0) {
-                                version = line.substring(begin, end);
-                            }
-                        }
-                    }
-
-                    if (line.contains("64-Bit"))
-                        is64Bit = true;
-                }
-            }
-
-            if (platform == null)
-                platform = Platform.getPlatform(OperatingSystem.CURRENT_OS, is64Bit ? Architecture.X86_64 : Architecture.X86);
-
-            if (version == null)
-                throw new IOException("Cannot determine version");
-        }
-
-        return new JavaInfo(platform, version, vendor);
     }
 
     public static final JavaInfo CURRENT_ENVIRONMENT = new JavaInfo(Platform.CURRENT_PLATFORM, System.getProperty("java.version"), System.getProperty("java.vendor"));

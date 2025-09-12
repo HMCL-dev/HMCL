@@ -36,25 +36,20 @@ import java.util.Optional;
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.MINECRAFT;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-class AdditionalInstallersPage extends InstallersPage {
+class AdditionalInstallersPage extends AbstractInstallersPage {
     protected final BooleanProperty compatible = new SimpleBooleanProperty();
     protected final GameRepository repository;
     protected final String gameVersion;
     protected final Version version;
 
     public AdditionalInstallersPage(String gameVersion, Version version, WizardController controller, HMCLGameRepository repository, DownloadProvider downloadProvider) {
-        super(controller, repository, gameVersion, downloadProvider);
+        super(controller, gameVersion, downloadProvider);
         this.gameVersion = gameVersion;
         this.version = version;
         this.repository = repository;
 
-        txtName.getValidators().clear();
         txtName.setText(version.getId());
         txtName.setEditable(false);
-
-        installable.bind(Bindings.createBooleanBinding(
-                () -> compatible.get() && txtName.validate(),
-                txtName.textProperty(), compatible));
 
         for (InstallerItem library : group.getLibraries()) {
             String libraryId = library.getLibraryId();
@@ -64,6 +59,8 @@ class AdditionalInstallersPage extends InstallersPage {
                 reload();
             });
         }
+
+        installable.bind(Bindings.createBooleanBinding(() -> compatible.get() && txtName.validate(), txtName.textProperty(), compatible));
     }
 
     @Override

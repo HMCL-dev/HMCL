@@ -19,14 +19,12 @@ package org.jackhuang.hmcl.util.io;
 
 import org.jackhuang.hmcl.util.function.ExceptionalPredicate;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipException;
 import java.util.zip.ZipOutputStream;
@@ -153,6 +151,27 @@ public final class Zipper implements Closeable {
         zos.putNextEntry(new ZipEntry(normalize(path)));
         IOUtils.copyTo(in, zos, buffer);
         zos.closeEntry();
+    }
+
+    public void putLines(Stream<String> lines, String path) throws IOException {
+        zos.putNextEntry(new ZipEntry(normalize(path)));
+
+        try {
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(zos));
+            lines.forEachOrdered(line -> {
+                try {
+                    writer.write(line);
+                    writer.write('\n');
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            });
+            writer.flush();
+        } catch (UncheckedIOException e) {
+            throw e.getCause();
+        } finally {
+            zos.closeEntry();
+        }
     }
 
     public void putTextFile(String text, String path) throws IOException {

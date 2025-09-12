@@ -24,15 +24,15 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.LinkedHashMap;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.util.io.HttpRequest;
-import org.jackhuang.hmcl.util.io.IOUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,18 +57,15 @@ public class AuthlibInjectorServer implements Observable {
 
     public static AuthlibInjectorServer locateServer(String url) throws IOException {
         try {
-            url = addHttpsIfMissing(url);
-            HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
-            conn.setRequestProperty("Accept-Language", Locale.getDefault().toLanguageTag());
-
+            url = NetworkUtils.addHttpsIfMissing(url);
+            HttpURLConnection conn = NetworkUtils.createHttpConnection(url);
             String ali = conn.getHeaderField("x-authlib-injector-api-location");
             if (ali != null) {
-                URL absoluteAli = new URL(conn.getURL(), ali);
+                URI absoluteAli = conn.getURL().toURI().resolve(NetworkUtils.toURI(ali));
                 if (!urlEqualsIgnoreSlash(url, absoluteAli.toString())) {
                     conn.disconnect();
                     url = absoluteAli.toString();
-                    conn = (HttpURLConnection) absoluteAli.openConnection();
-                    conn.setRequestProperty("Accept-Language", Locale.getDefault().toLanguageTag());
+                    conn = NetworkUtils.createHttpConnection(absoluteAli);
                 }
             }
 
@@ -77,22 +74,14 @@ public class AuthlibInjectorServer implements Observable {
 
             try {
                 AuthlibInjectorServer server = new AuthlibInjectorServer(url);
-                server.refreshMetadata(IOUtils.readFullyAsStringWithClosing(conn.getInputStream()));
+                server.refreshMetadata(NetworkUtils.readFullyAsString(conn));
                 return server;
             } finally {
                 conn.disconnect();
             }
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException | URISyntaxException e) {
             throw new IOException(e);
         }
-    }
-
-    private static String addHttpsIfMissing(String url) {
-        String lowercased = url.toLowerCase(Locale.ROOT);
-        if (!lowercased.startsWith("http://") && !lowercased.startsWith("https://")) {
-            url = "https://" + url;
-        }
-        return url;
     }
 
     private static boolean urlEqualsIgnoreSlash(String a, String b) {
@@ -103,7 +92,7 @@ public class AuthlibInjectorServer implements Observable {
         return a.equals(b);
     }
 
-    private String url;
+    private final String url;
     @Nullable
     private String metadataResponse;
     private long metadataTimestamp;

@@ -66,7 +66,7 @@ public final class VanillaInstallWizardProvider implements WizardProvider {
 
     @Override
     public Object finish(Map<String, Object> settings) {
-        settings.put("title", i18n("install.new_game"));
+        settings.put("title", i18n("install.new_game.installation"));
         settings.put("success_message", i18n("install.success"));
         settings.put("failure_callback", (FailureCallback) (settings1, exception, next) -> UpdateInstallerWizardProvider.alertFailureMessage(exception, next));
 

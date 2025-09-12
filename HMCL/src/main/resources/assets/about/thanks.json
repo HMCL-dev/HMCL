@@ -50,7 +50,8 @@
   {
     "image" : "/assets/img/red_lnn.png",
     "title" : "Red_lnn",
-    "subtitleLocalized" : "about.thanks_to.red_lnn.statement"
+    "subtitleLocalized" : "about.thanks_to.red_lnn.statement",
+    "externalLink" : "https://redlnn.top"
   },
   {
     "image" : "/assets/img/mcmod.png",
@@ -62,6 +63,12 @@
     "image" : "/assets/img/chest.png",
     "titleLocalized" : "about.thanks_to.mcbbs",
     "subtitleLocalized" : "about.thanks_to.mcbbs.statement"
+  },
+  {
+    "image" : "/assets/img/mcim.png",
+    "titleLocalized" : "about.thanks_to.mcim",
+    "subtitleLocalized" : "about.thanks_to.mcim.statement",
+    "externalLink" : "https://github.com/mcmod-info-mirror"
   },
   {
     "image" : "/assets/img/github.png",

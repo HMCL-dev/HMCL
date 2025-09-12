@@ -1,3 +1,5 @@
+import org.jackhuang.hmcl.gradle.docs.UpdateDocuments
+
 plugins {
     id("checkstyle")
 }
@@ -24,9 +26,6 @@ subprojects {
     }
 
     tasks.withType<JavaCompile> {
-        sourceCompatibility = "1.8"
-        targetCompatibility = "1.8"
-
         options.encoding = "UTF-8"
     }
 
@@ -35,7 +34,8 @@ subprojects {
     }
 
     dependencies {
-        "testImplementation"("org.junit.jupiter:junit-jupiter:5.10.2")
+        "testImplementation"(rootProject.libs.junit.jupiter)
+        "testRuntimeOnly"("org.junit.platform:junit-platform-launcher")
     }
 
     tasks.withType<Test> {
@@ -53,62 +53,17 @@ subprojects {
             mavenLocal()
         }
     }
-}
 
-tasks.create("checkTranslations") {
-    doLast {
-        val hmclLangDir = file("HMCL/src/main/resources/assets/lang")
-
-        val en = java.util.Properties().apply {
-            hmclLangDir.resolve("I18N.properties").bufferedReader().use { load(it) }
-        }
-
-        val zh = java.util.Properties().apply {
-            hmclLangDir.resolve("I18N_zh.properties").bufferedReader().use { load(it) }
-        }
-
-        val zh_CN = java.util.Properties().apply {
-            hmclLangDir.resolve("I18N_zh_CN.properties").bufferedReader().use { load(it) }
-        }
-
-        var success = true
-
-        zh_CN.forEach {
-            if (!en.containsKey(it.key)) {
-                project.logger.warn("I18N.properties missing key '${it.key}'")
-                success = false
-            }
-        }
-
-        zh_CN.forEach {
-            if (!zh.containsKey(it.key)) {
-                project.logger.warn("I18N_zh.properties missing key '${it.key}'")
-                success = false
-            }
-        }
-
-        zh_CN.forEach {
-            if (it.value.toString().contains("帐户")) {
-                project.logger.warn("The misspelled '帐户' in '${it.key}' should be replaced by '账户'")
-                success = false
-            }
-        }
-
-        zh_CN.forEach {
-            if (it.value.toString().contains("其它")) {
-                project.logger.warn("The misspelled '其它' in '${it.key}' should be replaced by '其他'")
-                success = false
-            }
-        }
-
-        if (!success) {
-            throw GradleException("Part of the translation is missing")
-        }
+    tasks.register("checkstyle") {
+        dependsOn(tasks["checkstyleMain"], tasks["checkstyleTest"])
     }
 }
 
-apply {
-    from("javafx.gradle.kts")
-}
+org.jackhuang.hmcl.gradle.javafx.JavaFXUtils.register(rootProject)
 
 defaultTasks("clean", "build")
+
+
+tasks.register<UpdateDocuments>("updateDocuments") {
+    documentsDir.set(layout.projectDirectory.dir("docs"))
+}

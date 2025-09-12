@@ -18,20 +18,22 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.*;
-import com.twelvemonkeys.imageio.plugins.webp.WebPImageReaderSpi;
 import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.WeakListener;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.Property;
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.*;
 import javafx.beans.value.*;
+import javafx.collections.ObservableMap;
 import javafx.event.Event;
 import javafx.event.EventDispatcher;
 import javafx.event.EventType;
+import javafx.geometry.Bounds;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -41,24 +43,25 @@ import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.*;
-import javafx.scene.layout.ColumnConstraints;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.FileChooser;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
-import org.glavo.png.PNGType;
-import org.glavo.png.PNGWriter;
-import org.glavo.png.javafx.PNGJavaFXUtils;
+import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.task.CacheFileTask;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
+import org.jackhuang.hmcl.ui.image.ImageLoader;
+import org.jackhuang.hmcl.ui.image.ImageUtils;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -66,24 +69,23 @@ import org.jackhuang.hmcl.util.javafx.ExtendedProperties;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
+import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import javax.imageio.ImageIO;
-import javax.imageio.ImageReader;
-import javax.imageio.stream.ImageInputStream;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.lang.ref.WeakReference;
 import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -106,6 +108,11 @@ public final class FXUtils {
 
     public static final int JAVAFX_MAJOR_VERSION;
 
+    /// @see Platform.Preferences
+    public static final @Nullable ObservableMap<String, Object> PREFERENCES;
+    public static final @Nullable ObservableBooleanValue DARK_MODE;
+    public static final @Nullable Boolean REDUCED_MOTION;
+
     static {
         String jfxVersion = System.getProperty("javafx.version");
         int majorVersion = -1;
@@ -116,27 +123,51 @@ public final class FXUtils {
             }
         }
         JAVAFX_MAJOR_VERSION = majorVersion;
+
+        ObservableMap<String, Object> preferences = null;
+        ObservableBooleanValue darkMode = null;
+        Boolean reducedMotion = null;
+        if (JAVAFX_MAJOR_VERSION >= 22) {
+            try {
+                MethodHandles.Lookup lookup = MethodHandles.publicLookup();
+                Class<?> preferencesClass = Class.forName("javafx.application.Platform$Preferences");
+                @SuppressWarnings("unchecked")
+                var preferences0 = (ObservableMap<String, Object>) lookup.findStatic(Platform.class, "getPreferences", MethodType.methodType(preferencesClass))
+                        .invoke();
+                preferences = preferences0;
+
+                @SuppressWarnings("unchecked")
+                var colorSchemeProperty =
+                        (ReadOnlyObjectProperty<? extends Enum<?>>)
+                                lookup.findVirtual(preferencesClass, "colorSchemeProperty", MethodType.methodType(ReadOnlyObjectProperty.class))
+                                        .invoke(preferences);
+
+                darkMode = Bindings.createBooleanBinding(() ->
+                        "DARK".equals(colorSchemeProperty.get().name()), colorSchemeProperty);
+
+                if (JAVAFX_MAJOR_VERSION >= 24) {
+                    reducedMotion = (boolean)
+                            lookup.findVirtual(preferencesClass, "isReducedMotion", MethodType.methodType(boolean.class))
+                                    .invoke(preferences);
+                }
+            } catch (Throwable e) {
+                LOG.warning("Failed to get preferences", e);
+            }
+        }
+        PREFERENCES = preferences;
+        DARK_MODE = darkMode;
+        REDUCED_MOTION = reducedMotion;
     }
 
     public static final String DEFAULT_MONOSPACE_FONT = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "Consolas" : "Monospace";
 
     public static final List<String> IMAGE_EXTENSIONS = Lang.immutableListOf(
-            "png", "jpg", "jpeg", "bmp", "gif", "webp"
+            "png", "jpg", "jpeg", "bmp", "gif", "webp", "apng"
     );
 
     private static final Map<String, Image> builtinImageCache = new ConcurrentHashMap<>();
-    private static final Map<String, Path> remoteImageCache = new ConcurrentHashMap<>();
 
     public static void shutdown() {
-        for (Map.Entry<String, Path> entry : remoteImageCache.entrySet()) {
-            try {
-                Files.deleteIfExists(entry.getValue());
-            } catch (IOException e) {
-                LOG.warning(String.format("Failed to delete cache file %s.", entry.getValue()), e);
-            }
-            remoteImageCache.remove(entry.getKey());
-        }
-
         builtinImageCache.clear();
     }
 
@@ -329,8 +360,15 @@ public final class FXUtils {
     private static final Duration TOOLTIP_SLOW_SHOW_DELAY = Duration.millis(500);
     private static final Duration TOOLTIP_SHOW_DURATION = Duration.millis(5000);
 
+    public static void installTooltip(Node node, Duration showDelay, Duration showDuration, Duration hideDelay, Tooltip tooltip) {
+        tooltip.setShowDelay(showDelay);
+        tooltip.setShowDuration(showDuration);
+        tooltip.setHideDelay(hideDelay);
+        Tooltip.install(node, tooltip);
+    }
+
     public static void installFastTooltip(Node node, Tooltip tooltip) {
-        runInFX(() -> TooltipInstaller.INSTALLER.installTooltip(node, TOOLTIP_FAST_SHOW_DELAY, TOOLTIP_SHOW_DURATION, Duration.ZERO, tooltip));
+        runInFX(() -> installTooltip(node, TOOLTIP_FAST_SHOW_DELAY, TOOLTIP_SHOW_DURATION, Duration.ZERO, tooltip));
     }
 
     public static void installFastTooltip(Node node, String tooltip) {
@@ -338,7 +376,7 @@ public final class FXUtils {
     }
 
     public static void installSlowTooltip(Node node, Tooltip tooltip) {
-        runInFX(() -> TooltipInstaller.INSTALLER.installTooltip(node, TOOLTIP_SLOW_SHOW_DELAY, TOOLTIP_SHOW_DURATION, Duration.ZERO, tooltip));
+        runInFX(() -> installTooltip(node, TOOLTIP_SLOW_SHOW_DELAY, TOOLTIP_SHOW_DURATION, Duration.ZERO, tooltip));
     }
 
     public static void installSlowTooltip(Node node, String tooltip) {
@@ -380,7 +418,7 @@ public final class FXUtils {
         String openCommand;
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
             openCommand = "explorer.exe";
-        else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
+        else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
             openCommand = "/usr/bin/open";
         else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && new File("/usr/bin/xdg-open").exists())
             openCommand = "/usr/bin/xdg-open";
@@ -411,31 +449,15 @@ public final class FXUtils {
         });
     }
 
-    private static String which(String command) {
-        String path = System.getenv("PATH");
-        if (path == null)
-            return null;
-
-        for (String item : path.split(OperatingSystem.PATH_SEPARATOR)) {
-            try {
-                Path program = Paths.get(item, command);
-                if (Files.isExecutable(program))
-                    return program.toRealPath().toString();
-            } catch (Throwable ignored) {
-            }
-        }
-        return null;
-    }
-
     public static void showFileInExplorer(Path file) {
         String path = file.toAbsolutePath().toString();
 
         String[] openCommands;
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
             openCommands = new String[]{"explorer.exe", "/select,", path};
-        else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
+        else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
             openCommands = new String[]{"/usr/bin/open", "-R", path};
-        else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && which("dbus-send") != null)
+        else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && SystemUtils.which("dbus-send") != null)
             openCommands = new String[]{
                     "dbus-send",
                     "--print-reply",
@@ -501,10 +523,10 @@ public final class FXUtils {
             }
             if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
                 for (String browser : linuxBrowsers) {
-                    String path = which(browser);
+                    Path path = SystemUtils.which(browser);
                     if (path != null) {
                         try {
-                            Runtime.getRuntime().exec(new String[]{browser, link});
+                            Runtime.getRuntime().exec(new String[]{path.toString(), link});
                             return;
                         } catch (Throwable ignored) {
                         }
@@ -515,7 +537,7 @@ public final class FXUtils {
             try {
                 java.awt.Desktop.getDesktop().browse(new URI(link));
             } catch (Throwable e) {
-                if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
                     try {
                         Runtime.getRuntime().exec(new String[]{"/usr/bin/open", link});
                     } catch (IOException ex) {
@@ -717,6 +739,240 @@ public final class FXUtils {
         property.removeListener(binding);
     }
 
+    private static final class PaintBidirectionalBinding implements InvalidationListener, WeakListener {
+        private final WeakReference<ColorPicker> colorPickerRef;
+        private final WeakReference<Property<Paint>> propertyRef;
+        private final int hashCode;
+
+        private boolean updating = false;
+
+        private PaintBidirectionalBinding(ColorPicker colorPicker, Property<Paint> property) {
+            this.colorPickerRef = new WeakReference<>(colorPicker);
+            this.propertyRef = new WeakReference<>(property);
+            this.hashCode = System.identityHashCode(colorPicker) ^ System.identityHashCode(property);
+        }
+
+        @Override
+        public void invalidated(Observable sourceProperty) {
+            if (!updating) {
+                final ColorPicker colorPicker = colorPickerRef.get();
+                final Property<Paint> property = propertyRef.get();
+
+                if (colorPicker == null || property == null) {
+                    if (colorPicker != null) {
+                        colorPicker.valueProperty().removeListener(this);
+                    }
+
+                    if (property != null) {
+                        property.removeListener(this);
+                    }
+                } else {
+                    updating = true;
+                    try {
+                        if (property == sourceProperty) {
+                            Paint newValue = property.getValue();
+                            if (newValue instanceof Color)
+                                colorPicker.setValue((Color) newValue);
+                            else
+                                colorPicker.setValue(null);
+                        } else {
+                            Paint newValue = colorPicker.getValue();
+                            property.setValue(newValue);
+                        }
+                    } finally {
+                        updating = false;
+                    }
+                }
+            }
+        }
+
+        @Override
+        public boolean wasGarbageCollected() {
+            return colorPickerRef.get() == null || propertyRef.get() == null;
+        }
+
+        @Override
+        public int hashCode() {
+            return hashCode;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (!(o instanceof FXUtils.PaintBidirectionalBinding))
+                return false;
+
+            var that = (FXUtils.PaintBidirectionalBinding) o;
+
+            final ColorPicker colorPicker = this.colorPickerRef.get();
+            final Property<Paint> property = this.propertyRef.get();
+
+            final ColorPicker thatColorPicker = that.colorPickerRef.get();
+            final Property<?> thatProperty = that.propertyRef.get();
+
+            if (colorPicker == null || property == null || thatColorPicker == null || thatProperty == null)
+                return false;
+
+            return colorPicker == thatColorPicker && property == thatProperty;
+        }
+    }
+
+    public static void bindPaint(ColorPicker colorPicker, Property<Paint> property) {
+        PaintBidirectionalBinding binding = new PaintBidirectionalBinding(colorPicker, property);
+
+        colorPicker.valueProperty().removeListener(binding);
+        property.removeListener(binding);
+
+        if (property.getValue() instanceof Color)
+            colorPicker.setValue((Color) property.getValue());
+        else
+            colorPicker.setValue(null);
+
+        colorPicker.valueProperty().addListener(binding);
+        property.addListener(binding);
+    }
+
+    private static final class WindowsSizeBidirectionalBinding implements InvalidationListener, WeakListener {
+        private final WeakReference<JFXComboBox<String>> comboBoxRef;
+        private final WeakReference<IntegerProperty> widthPropertyRef;
+        private final WeakReference<IntegerProperty> heightPropertyRef;
+
+        private final int hashCode;
+
+        private boolean updating = false;
+
+        private WindowsSizeBidirectionalBinding(JFXComboBox<String> comboBox,
+                                                IntegerProperty widthProperty,
+                                                IntegerProperty heightProperty) {
+            this.comboBoxRef = new WeakReference<>(comboBox);
+            this.widthPropertyRef = new WeakReference<>(widthProperty);
+            this.heightPropertyRef = new WeakReference<>(heightProperty);
+            this.hashCode = System.identityHashCode(comboBox)
+                    ^ System.identityHashCode(widthProperty)
+                    ^ System.identityHashCode(heightProperty);
+        }
+
+        @Override
+        public void invalidated(Observable observable) {
+            if (!updating) {
+                var comboBox = this.comboBoxRef.get();
+                var widthProperty = this.widthPropertyRef.get();
+                var heightProperty = this.heightPropertyRef.get();
+
+                if (comboBox == null || widthProperty == null || heightProperty == null) {
+                    if (comboBox != null) {
+                        comboBox.focusedProperty().removeListener(this);
+                        comboBox.sceneProperty().removeListener(this);
+                    }
+                    if (widthProperty != null)
+                        widthProperty.removeListener(this);
+                    if (heightProperty != null)
+                        heightProperty.removeListener(this);
+                } else {
+                    updating = true;
+                    try {
+                        int width = widthProperty.get();
+                        int height = heightProperty.get();
+
+                        if (observable instanceof ReadOnlyProperty<?>
+                                && ((ReadOnlyProperty<?>) observable).getBean() == comboBox) {
+                            String value = comboBox.valueProperty().get();
+                            if (value == null)
+                                value = "";
+                            int idx = value.indexOf('x');
+                            if (idx < 0)
+                                idx = value.indexOf('*');
+
+                            if (idx < 0) {
+                                LOG.warning("Bad window size: " + value);
+                                comboBox.setValue(width + "x" + height);
+                                return;
+                            }
+
+                            String widthStr = value.substring(0, idx).trim();
+                            String heightStr = value.substring(idx + 1).trim();
+
+                            int newWidth;
+                            int newHeight;
+                            try {
+                                newWidth = Integer.parseInt(widthStr);
+                                newHeight = Integer.parseInt(heightStr);
+                            } catch (NumberFormatException e) {
+                                LOG.warning("Bad window size: " + value);
+                                comboBox.setValue(width + "x" + height);
+                                return;
+                            }
+
+                            widthProperty.set(newWidth);
+                            heightProperty.set(newHeight);
+                        } else {
+                            comboBox.setValue(width + "x" + height);
+                        }
+                    } finally {
+                        updating = false;
+                    }
+                }
+            }
+        }
+
+        @Override
+        public boolean wasGarbageCollected() {
+            return this.comboBoxRef.get() == null
+                    || this.widthPropertyRef.get() == null
+                    || this.heightPropertyRef.get() == null;
+        }
+
+        @Override
+        public int hashCode() {
+            return hashCode;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (!(obj instanceof WindowsSizeBidirectionalBinding))
+                return false;
+
+            var that = (WindowsSizeBidirectionalBinding) obj;
+
+            var comboBox = this.comboBoxRef.get();
+            var widthProperty = this.widthPropertyRef.get();
+            var heightProperty = this.heightPropertyRef.get();
+
+            var thatComboBox = that.comboBoxRef.get();
+            var thatWidthProperty = that.widthPropertyRef.get();
+            var thatHeightProperty = that.heightPropertyRef.get();
+
+            if (comboBox == null || widthProperty == null || heightProperty == null
+                    || thatComboBox == null || thatWidthProperty == null || thatHeightProperty == null) {
+                return false;
+            }
+
+            return comboBox == thatComboBox
+                    && widthProperty == thatWidthProperty
+                    && heightProperty == thatHeightProperty;
+        }
+    }
+
+    public static void bindWindowsSize(JFXComboBox<String> comboBox, IntegerProperty widthProperty, IntegerProperty heightProperty) {
+        comboBox.setValue(widthProperty.get() + "x" + heightProperty.get());
+        var binding = new WindowsSizeBidirectionalBinding(comboBox, widthProperty, heightProperty);
+        comboBox.focusedProperty().addListener(binding);
+        comboBox.sceneProperty().addListener(binding);
+        widthProperty.addListener(binding);
+        heightProperty.addListener(binding);
+    }
+
+    public static void unbindWindowsSize(JFXComboBox<String> comboBox, IntegerProperty widthProperty, IntegerProperty heightProperty) {
+        var binding = new WindowsSizeBidirectionalBinding(comboBox, widthProperty, heightProperty);
+        comboBox.focusedProperty().removeListener(binding);
+        comboBox.sceneProperty().removeListener(binding);
+        widthProperty.removeListener(binding);
+        heightProperty.removeListener(binding);
+    }
+
     public static void bindAllEnabled(BooleanProperty allEnabled, BooleanProperty... children) {
         int itemCount = children.length;
         int childSelectedCount = 0;
@@ -776,7 +1032,7 @@ public final class FXUtils {
         String icon;
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
             icon = "/assets/img/icon.png";
-        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
             icon = "/assets/img/icon-mac.png";
         } else {
             icon = "/assets/img/icon@4x.png";
@@ -784,47 +1040,53 @@ public final class FXUtils {
         stage.getIcons().add(newBuiltinImage(icon));
     }
 
-    private static Image loadWebPImage(InputStream input) throws IOException {
-        WebPImageReaderSpi spi = new WebPImageReaderSpi();
-        ImageReader reader = spi.createReaderInstance(null);
-
-        try (ImageInputStream imageInput = ImageIO.createImageInputStream(input)) {
-            reader.setInput(imageInput, true, true);
-            return SwingFXUtils.toFXImage(reader.read(0, reader.getDefaultReadParam()), null);
-        } finally {
-            reader.dispose();
-        }
-    }
-
     public static Image loadImage(Path path) throws Exception {
-        try (InputStream input = Files.newInputStream(path)) {
-            if ("webp".equalsIgnoreCase(FileUtils.getExtension(path)))
-                return loadWebPImage(input);
-            else {
-                Image image = new Image(input);
-                if (image.isError())
-                    throw image.getException();
-                return image;
+        return loadImage(path, 0, 0, false, false);
+    }
+
+    public static Image loadImage(Path path,
+                                  int requestedWidth, int requestedHeight,
+                                  boolean preserveRatio, boolean smooth) throws Exception {
+        try (var input = new BufferedInputStream(Files.newInputStream(path))) {
+            String ext = FileUtils.getExtension(path).toLowerCase(Locale.ROOT);
+            ImageLoader loader = ImageUtils.EXT_TO_LOADER.get(ext);
+            if (loader == null && !ImageUtils.DEFAULT_EXTS.contains(ext)) {
+                input.mark(ImageUtils.HEADER_BUFFER_SIZE);
+                byte[] headerBuffer = input.readNBytes(ImageUtils.HEADER_BUFFER_SIZE);
+                input.reset();
+                loader = ImageUtils.guessLoader(headerBuffer);
             }
+            if (loader == null)
+                loader = ImageUtils.DEFAULT;
+            return loader.load(input, requestedWidth, requestedHeight, preserveRatio, smooth);
         }
     }
 
-    public static Image loadImage(URL url) throws Exception {
-        URLConnection connection = NetworkUtils.createConnection(url);
-        if (connection instanceof HttpURLConnection) {
-            connection = NetworkUtils.resolveConnection((HttpURLConnection) connection);
-        }
+    public static Image loadImage(String url) throws Exception {
+        URI uri = NetworkUtils.toURI(url);
 
-        try (InputStream input = connection.getInputStream()) {
-            String path = url.getPath();
-            if (path != null && "webp".equalsIgnoreCase(StringUtils.substringAfterLast(path, '.')))
-                return loadWebPImage(input);
-            else {
-                Image image = new Image(input);
-                if (image.isError())
-                    throw image.getException();
-                return image;
+        URLConnection connection = NetworkUtils.createConnection(uri);
+        if (connection instanceof HttpURLConnection)
+            connection = NetworkUtils.resolveConnection((HttpURLConnection) connection);
+
+        try (BufferedInputStream input = new BufferedInputStream(connection.getInputStream())) {
+            String contentType = Objects.requireNonNull(connection.getContentType(), "");
+            Matcher matcher = ImageUtils.CONTENT_TYPE_PATTERN.matcher(contentType);
+            if (matcher.find())
+                contentType = matcher.group("type");
+
+            ImageLoader loader = ImageUtils.CONTENT_TYPE_TO_LOADER.get(contentType);
+            if (loader == null && !ImageUtils.DEFAULT_CONTENT_TYPES.contains(contentType)) {
+                input.mark(ImageUtils.HEADER_BUFFER_SIZE);
+                byte[] headerBuffer = input.readNBytes(ImageUtils.HEADER_BUFFER_SIZE);
+                input.reset();
+                loader = ImageUtils.guessLoader(headerBuffer);
             }
+
+            if (loader == null)
+                loader = ImageUtils.DEFAULT;
+
+            return loader.load(input, 0, 0, false, false);
         }
     }
 
@@ -868,78 +1130,22 @@ public final class FXUtils {
         }
     }
 
-    /**
-     * Load image from the internet. It will cache the data of images for the further usage.
-     * The cached data will be deleted when HMCL is closed or hidden.
-     *
-     * @param url the url of image. The image resource should be a file on the internet.
-     * @return the image resource within the jar.
-     */
-    public static Image newRemoteImage(String url) {
-        return newRemoteImage(url, 0, 0, false, false, false);
+    public static Task<Image> getRemoteImageTask(String url, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
+        return new CacheFileTask(url)
+                .thenApplyAsync(file -> loadImage(file, requestedWidth, requestedHeight, preserveRatio, smooth));
     }
 
-    /**
-     * Load image from the internet. It will cache the data of images for the further usage.
-     * The cached data will be deleted when HMCL is closed or hidden.
-     *
-     * @param url             the url of image. The image resource should be a file on the internet.
-     * @param requestedWidth  the image's bounding box width
-     * @param requestedHeight the image's bounding box height
-     * @param preserveRatio   indicates whether to preserve the aspect ratio of
-     *                        the original image when scaling to fit the image within the
-     *                        specified bounding box
-     * @param smooth          indicates whether to use a better quality filtering
-     *                        algorithm or a faster one when scaling this image to fit within
-     *                        the specified bounding box
-     * @return the image resource within the jar.
-     */
-    public static Image newRemoteImage(String url, double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth, boolean backgroundLoading) {
-        Path currentPath = remoteImageCache.get(url);
-        if (currentPath != null) {
-            if (Files.isReadable(currentPath)) {
-                try (InputStream inputStream = Files.newInputStream(currentPath)) {
-                    return new Image(inputStream, requestedWidth, requestedHeight, preserveRatio, smooth);
-                } catch (IOException e) {
-                    LOG.warning("An exception encountered while reading data from cached image file.", e);
-                }
-            }
-
-            // The file is unavailable or unreadable.
-            remoteImageCache.remove(url);
-
-            try {
-                Files.deleteIfExists(currentPath);
-            } catch (IOException e) {
-                LOG.warning("An exception encountered while deleting broken cached image file.", e);
-            }
-        }
-
-        Image image = new Image(url, requestedWidth, requestedHeight, preserveRatio, smooth, backgroundLoading);
-        image.progressProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue.doubleValue() >= 1.0 && !image.isError() && image.getPixelReader() != null && image.getWidth() > 0.0 && image.getHeight() > 0.0) {
-                Task.runAsync(() -> {
-                    Path newPath = Files.createTempFile("hmcl-net-resource-cache-", ".cache");
-                    try ( // Make sure the file is released from JVM before we put the path into remoteImageCache.
-                          OutputStream outputStream = Files.newOutputStream(newPath);
-                          PNGWriter writer = new PNGWriter(outputStream, PNGType.RGBA, PNGWriter.DEFAULT_COMPRESS_LEVEL)
-                    ) {
-                        writer.write(PNGJavaFXUtils.asArgbImage(image));
-                    } catch (IOException e) {
-                        try {
-                            Files.delete(newPath);
-                        } catch (IOException e2) {
-                            e2.addSuppressed(e);
-                            throw e2;
-                        }
-                        throw e;
+    public static ObservableValue<Image> newRemoteImage(String url, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
+        var image = new SimpleObjectProperty<Image>();
+        getRemoteImageTask(url, requestedWidth, requestedHeight, preserveRatio, smooth)
+                .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                    if (exception == null) {
+                        image.set(result);
+                    } else {
+                        LOG.warning("An exception encountered while loading remote image: " + url, exception);
                     }
-                    if (remoteImageCache.putIfAbsent(url, newPath) != null) {
-                        Files.delete(newPath); // The image has been loaded in another task. Delete the image here in order not to pollute the tmp folder.
-                    }
-                }).start();
-            }
-        });
+                })
+                .start();
         return image;
     }
 
@@ -954,6 +1160,13 @@ public final class FXUtils {
         JFXButton button = new JFXButton(text);
         button.getStyleClass().add("jfx-button-border");
         button.setButtonType(JFXButton.ButtonType.RAISED);
+        return button;
+    }
+
+    public static JFXButton newToggleButton4(SVG icon) {
+        JFXButton button = new JFXButton();
+        button.getStyleClass().add("toggle-icon4");
+        button.setGraphic(icon.createIcon(Theme.blackFill(), -1));
         return button;
     }
 
@@ -1167,5 +1380,66 @@ public final class FXUtils {
     public static FileChooser.ExtensionFilter getImageExtensionFilter() {
         return new FileChooser.ExtensionFilter(i18n("extension.png"),
                 IMAGE_EXTENSIONS.stream().map(ext -> "*." + ext).toArray(String[]::new));
+    }
+
+    /**
+     * Intelligently determines the popup position to prevent the menu from exceeding screen boundaries.
+     * Supports multi-monitor setups by detecting the current screen where the component is located.
+     * Now handles first-time popup display by forcing layout measurement.
+     *
+     * @param root the root node to calculate position relative to
+     * @param popupInstance the popup instance to position
+     * @return the optimal vertical position for the popup menu
+     */
+    public static JFXPopup.PopupVPosition determineOptimalPopupPosition(Node root, JFXPopup popupInstance) {
+        // Get the screen bounds in screen coordinates
+        Bounds screenBounds = root.localToScreen(root.getBoundsInLocal());
+
+        // Convert Bounds to Rectangle2D for getScreensForRectangle method
+        Rectangle2D boundsRect = new Rectangle2D(
+                screenBounds.getMinX(), screenBounds.getMinY(),
+                screenBounds.getWidth(), screenBounds.getHeight()
+        );
+
+        // Find the screen that contains this component (supports multi-monitor)
+        List<Screen> screens = Screen.getScreensForRectangle(boundsRect);
+        Screen currentScreen = screens.isEmpty() ? Screen.getPrimary() : screens.get(0);
+        Rectangle2D visualBounds = currentScreen.getVisualBounds();
+
+        double screenHeight = visualBounds.getHeight();
+        double screenMinY = visualBounds.getMinY();
+        double itemScreenY = screenBounds.getMinY();
+
+        // Calculate available space relative to the current screen
+        double availableSpaceAbove = itemScreenY - screenMinY;
+        double availableSpaceBelow = screenMinY + screenHeight - itemScreenY - root.getBoundsInLocal().getHeight();
+
+        // Get popup content and ensure it's properly measured
+        Region popupContent = popupInstance.getPopupContent();
+
+        double menuHeight;
+        if (popupContent.getHeight() <= 0) {
+            // Force layout measurement if height is not yet available
+            popupContent.autosize();
+            popupContent.applyCss();
+            popupContent.layout();
+
+            // Get the measured height, or use a reasonable fallback
+            menuHeight = popupContent.getHeight();
+            if (menuHeight <= 0) {
+                // Fallback: estimate based on number of menu items
+                // Each menu item is roughly 36px height + separators + padding
+                menuHeight = 300; // Conservative estimate for the current menu structure
+            }
+        } else {
+            menuHeight = popupContent.getHeight();
+        }
+
+        // Add some margin for safety
+        menuHeight += 20;
+
+        return (availableSpaceAbove > menuHeight && availableSpaceBelow < menuHeight)
+                ? JFXPopup.PopupVPosition.BOTTOM  // Show menu below the button, expanding downward
+                : JFXPopup.PopupVPosition.TOP;    // Show menu above the button, expanding upward
     }
 }

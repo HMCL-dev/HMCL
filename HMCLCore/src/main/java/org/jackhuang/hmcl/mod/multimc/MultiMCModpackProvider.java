@@ -31,9 +31,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.stream.Stream;
 
 public final class MultiMCModpackProvider implements ModpackProvider {
     public static final MultiMCModpackProvider INSTANCE = new MultiMCModpackProvider();
@@ -54,20 +52,6 @@ public final class MultiMCModpackProvider implements ModpackProvider {
             throw new MismatchedModpackTypeException(getName(), modpack.getManifest().getProvider().getName());
 
         return new ModpackUpdateTask(dependencyManager.getGameRepository(), name, new MultiMCModpackInstallTask(dependencyManager, zipFile, modpack, (MultiMCInstanceConfiguration) modpack.getManifest(), name));
-    }
-
-    private static boolean testPath(Path root) {
-        return Files.exists(root.resolve("instance.cfg"));
-    }
-
-    public static Path getRootPath(Path root) throws IOException {
-        if (testPath(root)) return root;
-        try (Stream<Path> stream = Files.list(root)) {
-            Path candidate = stream.filter(Files::isDirectory).findAny()
-                    .orElseThrow(() -> new IOException("Not a valid MultiMC modpack"));
-            if (testPath(candidate)) return candidate;
-            throw new IOException("Not a valid MultiMC modpack");
-        }
     }
 
     private static String getRootEntryName(ZipArchiveReader file) throws IOException {

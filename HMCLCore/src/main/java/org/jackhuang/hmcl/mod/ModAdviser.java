@@ -42,17 +42,29 @@ public interface ModAdviser {
     }
 
     List<String> MODPACK_BLACK_LIST = Lang.immutableListOf(
-            "regex:(.*?)\\.log",
-            "usernamecache.json", "usercache.json", // Minecraft
-            "launcher_profiles.json", "launcher.pack.lzma", // Old Minecraft Launcher
-            "launcher_accounts.json", "launcher_cef_log.txt", "launcher_log.txt", "launcher_msa_credentials.bin", "launcher_settings.json", "launcher_ui_state.json", "realms_persistence.json", "webcache2", "treatment_tags.json", // New Minecraft Launcher
-            "clientId.txt", "PCL.ini", // Plain Craft Launcher
-            "backup", "pack.json", "launcher.jar", "cache", "modpack.cfg", // HMCL
-            "manifest.json", "minecraftinstance.json", ".curseclient", // Curse
-            ".fabric", ".mixin.out", // Fabric
-            "jars", "logs", "versions", "assets", "libraries", "crash-reports", "NVIDIA", "AMD", "screenshots", "natives", "native", "$native", "server-resource-packs", // Minecraft
-            "downloads", // Curse
-            "asm", "backups", "TCNodeTracker", "CustomDISkins", "data", "CustomSkinLoader/caches" // Mods
+        "regex:(.*?)\\.log",
+        "regex:.*\\.dat_old$", "regex:.*\\.old$", // Backup files
+        "regex:.*\\.BakaCoreInfo$", // BakaXL
+        "regex:.*-natives",
+        "usernamecache.json", "usercache.json", // Minecraft
+        "launcher_profiles.json", "launcher.pack.lzma", // Old Minecraft Launcher
+        "launcher_accounts.json", "launcher_cef_log.txt", "launcher_log.txt", "launcher_msa_credentials.bin", "launcher_settings.json", "launcher_ui_state.json", "realms_persistence.json", "webcache2", "treatment_tags.json", // New Minecraft Launcher
+        "clientId.txt", "PCL.ini", // Plain Craft Launcher
+        "backup", "pack.json", "launcher.jar", "cache", "modpack.cfg", "log4j2.xml", "hmclversion.cfg", // HMCL
+        "manifest.json", "minecraftinstance.json", ".curseclient", // Curse
+        "modrinth.index.json", // Modrinth
+        ".fabric", ".mixin.out", ".optifine", // Fabric/OptiFine
+        "jars", "logs", "versions", "assets", "libraries", "crash-reports", "NVIDIA", "AMD", "screenshots", "natives", "native", "$native", "$natives", "server-resource-packs", "command_history.txt", // Minecraft
+        "downloads", "essential", // Downloads and Essential
+        "asm", "backups", "TCNodeTracker", "CustomDISkins", "data", "CustomSkinLoader/caches", // Mods
+        "debug", // Debug files
+        ".replay_cache", "replay_recordings", "replay_videos", // ReplayMod
+        "irisUpdateInfo.json", // Iris
+        "modernfix", // ModernFix
+        "modtranslations", // Mod translations
+        "schematics", // Schematics mod
+        "journeymap/data", // JourneyMap
+        "mods/.connector" // Sinytra Connector
     );
 
     List<String> MODPACK_SUGGESTED_BLACK_LIST = Lang.immutableListOf(

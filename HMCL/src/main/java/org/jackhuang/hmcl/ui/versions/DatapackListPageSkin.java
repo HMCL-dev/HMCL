@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.ui.versions;
 import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
-import com.jfoenix.effects.JFXDepthManager;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.geometry.Insets;
@@ -29,87 +28,57 @@ import javafx.scene.control.SelectionMode;
 import javafx.scene.control.SkinBase;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.Region;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.mod.Datapack;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.construct.FloatListCell;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
-import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.StringUtils;
 
 import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
-import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton;
+import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-class DatapackListPageSkin extends SkinBase<DatapackListPage> {
+final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
 
     DatapackListPageSkin(DatapackListPage skinnable) {
         super(skinnable);
 
-        BorderPane root = new BorderPane();
-        root.getStyleClass().add("content-background");
+        StackPane pane = new StackPane();
+        pane.setPadding(new Insets(10));
+        pane.getStyleClass().addAll("notice-pane");
+
+        ComponentList root = new ComponentList();
+        root.getStyleClass().add("no-padding");
         JFXListView<DatapackInfoObject> listView = new JFXListView<>();
 
         {
             HBox toolbar = new HBox();
-            toolbar.getStyleClass().add("jfx-tool-bar-second");
-            JFXDepthManager.setDepth(toolbar, 1);
-            toolbar.setPickOnBounds(false);
-
-            toolbar.getChildren().add(createToolbarButton(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh));
-            toolbar.getChildren().add(createToolbarButton(i18n("datapack.add"), SVG.ADD, skinnable::add));
-            toolbar.getChildren().add(createToolbarButton(i18n("button.remove"), SVG.DELETE, () -> {
+            toolbar.getChildren().add(createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh));
+            toolbar.getChildren().add(createToolbarButton2(i18n("datapack.add"), SVG.ADD, skinnable::add));
+            toolbar.getChildren().add(createToolbarButton2(i18n("button.remove"), SVG.DELETE, () -> {
                 Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
                     skinnable.removeSelected(listView.getSelectionModel().getSelectedItems());
                 }, null);
             }));
-            toolbar.getChildren().add(createToolbarButton(i18n("mods.enable"), SVG.CHECK, () ->
+            toolbar.getChildren().add(createToolbarButton2(i18n("mods.enable"), SVG.CHECK, () ->
                     skinnable.enableSelected(listView.getSelectionModel().getSelectedItems())));
-            toolbar.getChildren().add(createToolbarButton(i18n("mods.disable"), SVG.CLOSE, () ->
+            toolbar.getChildren().add(createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () ->
                     skinnable.disableSelected(listView.getSelectionModel().getSelectedItems())));
-            root.setTop(toolbar);
+            root.getContent().add(toolbar);
         }
 
         {
             SpinnerPane center = new SpinnerPane();
+            ComponentList.setVgrow(center, Priority.ALWAYS);
             center.getStyleClass().add("large-spinner-pane");
             center.loadingProperty().bind(skinnable.loadingProperty());
 
-            listView.setCellFactory(x -> new FloatListCell<DatapackInfoObject>(listView) {
-                JFXCheckBox checkBox = new JFXCheckBox();
-                TwoLineListItem content = new TwoLineListItem();
-                BooleanProperty booleanProperty;
-
-                {
-                    Region clippedContainer = (Region)listView.lookup(".clipped-container");
-                    HBox container = new HBox(8);
-                    container.setPadding(new Insets(0, 0, 0, 6));
-                    container.setAlignment(Pos.CENTER_LEFT);
-                    pane.getChildren().add(container);
-                    pane.setPadding(new Insets(8, 8, 8, 0));
-                    if (clippedContainer != null) {
-                        maxWidthProperty().bind(clippedContainer.widthProperty());
-                        prefWidthProperty().bind(clippedContainer.widthProperty());
-                        minWidthProperty().bind(clippedContainer.widthProperty());
-                    }
-
-                    container.getChildren().setAll(checkBox, content);
-                }
-
-                @Override
-                protected void updateControl(DatapackInfoObject dataItem, boolean empty) {
-                    if (empty) return;
-                    content.setTitle(dataItem.getTitle());
-                    content.setSubtitle(dataItem.getSubtitle());
-                    if (booleanProperty != null) {
-                        checkBox.selectedProperty().unbindBidirectional(booleanProperty);
-                    }
-                    checkBox.selectedProperty().bindBidirectional(booleanProperty = dataItem.active);
-                }
-            });
+            Holder<Object> lastCell = new Holder<>();
+            listView.setCellFactory(x -> new DatapackInfoListCell(listView, lastCell));
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
             Bindings.bindContent(listView.getItems(), skinnable.getItems());
 
@@ -117,10 +86,11 @@ class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
 
             center.setContent(listView);
-            root.setCenter(center);
+            root.getContent().add(center);
         }
 
-        getChildren().setAll(root);
+        pane.getChildren().setAll(root);
+        getChildren().setAll(pane);
     }
 
     static class DatapackInfoObject extends RecursiveTreeObject<DatapackInfoObject> {
@@ -142,6 +112,38 @@ class DatapackListPageSkin extends SkinBase<DatapackListPage> {
 
         Datapack.Pack getPackInfo() {
             return packInfo;
+        }
+    }
+
+    private static final class DatapackInfoListCell extends MDListCell<DatapackInfoObject> {
+        final JFXCheckBox checkBox = new JFXCheckBox();
+        final TwoLineListItem content = new TwoLineListItem();
+        BooleanProperty booleanProperty;
+
+        DatapackInfoListCell(JFXListView<DatapackInfoObject> listView, Holder<Object> lastCell) {
+            super(listView, lastCell);
+
+            HBox container = new HBox(8);
+            container.setPickOnBounds(false);
+            container.setAlignment(Pos.CENTER_LEFT);
+            HBox.setHgrow(content, Priority.ALWAYS);
+            content.setMouseTransparent(true);
+            setSelectable();
+
+            StackPane.setMargin(container, new Insets(8));
+            container.getChildren().setAll(checkBox, content);
+            getContainer().getChildren().setAll(container);
+        }
+
+        @Override
+        protected void updateControl(DatapackInfoObject dataItem, boolean empty) {
+            if (empty) return;
+            content.setTitle(dataItem.getTitle());
+            content.setSubtitle(dataItem.getSubtitle());
+            if (booleanProperty != null) {
+                checkBox.selectedProperty().unbindBidirectional(booleanProperty);
+            }
+            checkBox.selectedProperty().bindBidirectional(booleanProperty = dataItem.active);
         }
     }
 }

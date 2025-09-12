@@ -93,7 +93,7 @@ public final class AggregatedObservableList<T> {
 
     /**
      * Get the start index of this list inside the aggregated List.
-     * This is a private function. we can safely asume, that the list is in the map.
+     * This is a private function. we can safely assume, that the list is in the map.
      *
      * @param list the list in question
      * @return the start index of this list in the aggregated List
@@ -114,7 +114,7 @@ public final class AggregatedObservableList<T> {
 
     /**
      * Get the end index of this list inside the aggregated List.
-     * This is a private function. we can safely asume, that the list is in the map.
+     * This is a private function. we can safely assume, that the list is in the map.
      *
      * @param list       the list in question
      * @param startIndex the start of the list (retrieve with {@link #getStartIndex(ObservableList)}

@@ -50,10 +50,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
@@ -140,7 +137,7 @@ public final class ModpackHelper {
             throw new FileNotFoundException(file.getPath());
         else
             try {
-                return JsonUtils.GSON.fromJson(FileUtils.readText(file), ModpackConfiguration.class);
+                return JsonUtils.fromJsonFile(file.toPath(), ModpackConfiguration.class);
             } catch (JsonParseException e) {
                 throw new IOException("Malformed modpack configuration");
             }
@@ -210,14 +207,17 @@ public final class ModpackHelper {
         if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
             return modpack.getInstallTask(profile.getDependency(), zipFile, name)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
-                    .thenComposeAsync(createMultiMCPostInstallTask(profile, (MultiMCInstanceConfiguration) modpack.getManifest(), name));
+                    .thenComposeAsync(createMultiMCPostInstallTask(profile, (MultiMCInstanceConfiguration) modpack.getManifest(), name))
+                    .withStagesHint(List.of("hmcl.modpack", "hmcl.modpack.download"));
         else if (modpack.getManifest() instanceof McbbsModpackManifest)
             return modpack.getInstallTask(profile.getDependency(), zipFile, name)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
-                    .thenComposeAsync(createMcbbsPostInstallTask(profile, (McbbsModpackManifest) modpack.getManifest(), name));
+                    .thenComposeAsync(createMcbbsPostInstallTask(profile, (McbbsModpackManifest) modpack.getManifest(), name))
+                    .withStagesHint(List.of("hmcl.modpack", "hmcl.modpack.download"));
         else
             return modpack.getInstallTask(profile.getDependency(), zipFile, name)
-                    .whenComplete(Schedulers.javafx(), success, failure);
+                    .whenComplete(Schedulers.javafx(), success, failure)
+                    .withStagesHint(List.of("hmcl.modpack", "hmcl.modpack.download"));
     }
 
     public static Task<Void> getUpdateTask(Profile profile, ServerModpackManifest manifest, Charset charset, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException {
@@ -236,7 +236,11 @@ public final class ModpackHelper {
         if (provider == null) {
             throw new UnsupportedModpackException();
         }
-        return provider.createUpdateTask(profile.getDependency(), name, zipFile, modpack);
+        if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
+            return provider.createUpdateTask(profile.getDependency(), name, zipFile, modpack)
+                    .thenComposeAsync(() -> createMultiMCPostUpdateTask(profile, (MultiMCInstanceConfiguration) modpack.getManifest(), name));
+        else
+            return provider.createUpdateTask(profile.getDependency(), name, zipFile, modpack);
     }
 
     public static void toVersionSetting(MultiMCInstanceConfiguration c, VersionSetting vs) {
@@ -274,6 +278,24 @@ public final class ModpackHelper {
             if (c.getHeight() != null)
                 vs.setHeight(c.getHeight());
         }
+    }
+
+    private static void applyCommandAndJvmSettings(MultiMCInstanceConfiguration c, VersionSetting vs) {
+        if (c.isOverrideCommands()) {
+            vs.setWrapper(Lang.nonNull(c.getWrapperCommand(), ""));
+            vs.setPreLaunchCommand(Lang.nonNull(c.getPreLaunchCommand(), ""));
+        }
+
+        if (c.isOverrideJavaArgs()) {
+            vs.setJavaArgs(Lang.nonNull(c.getJvmArgs(), ""));
+        }
+    }
+
+    private static Task<Void> createMultiMCPostUpdateTask(Profile profile, MultiMCInstanceConfiguration manifest, String version) {
+        return Task.runAsync(Schedulers.javafx(), () -> {
+            VersionSetting vs = Objects.requireNonNull(profile.getRepository().specializeVersionSetting(version));
+            ModpackHelper.applyCommandAndJvmSettings(manifest, vs);
+        });
     }
 
     private static Task<Void> createMultiMCPostInstallTask(Profile profile, MultiMCInstanceConfiguration manifest, String version) {

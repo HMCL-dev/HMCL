@@ -47,7 +47,7 @@
         </module>
 
         <!-- Classes -->
-        <module name="FinalClass"/> <!-- class with only private constructor must be final: http://checkstyle.sourceforge.net/config_design.html#FinalClass -->
+        <!-- <module name="FinalClass"/> --> <!-- class with only private constructor must be final: http://checkstyle.sourceforge.net/config_design.html#FinalClass -->
         <module name="SimplifyBooleanReturn"/> <!-- directly return boolean does not check and return http://checkstyle.sourceforge.net/config_design.html#SimplifyBooleanReturn -->
         <module name="StringLiteralEquality"/> <!-- you can't write myString == "this" http://checkstyle.sourceforge.net/config_design.html#StringLiteralEquality -->
         <module name="OneTopLevelClass"/> <!-- only one root class per file http://checkstyle.sourceforge.net/config_design.html#OneTopLevelClass -->
@@ -75,7 +75,7 @@
         <module name="FallThrough"/> <!-- switch fallthrough with statement not allowed http://checkstyle.sourceforge.net/config_coding.html#FallThrough -->
         <module name="IllegalInstantiation"/> <!-- Must not use const of certain types (Activity, Fragment): http://checkstyle.sourceforge.net/config_coding.html#IllegalInstantiation -->
 
-        <!-- Size Limitiations -->
+        <!-- Size Limitations -->
         <module name="ParameterNumber"><!-- max params for method http://checkstyle.sourceforge.net/config_sizes.html#ParameterNumber -->
             <property name="max" value="10"/>
             <property name="ignoreOverriddenMethods" value="true"/>

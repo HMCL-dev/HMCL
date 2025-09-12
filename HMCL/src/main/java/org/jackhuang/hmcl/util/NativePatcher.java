@@ -26,7 +26,10 @@ import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
+import org.jackhuang.hmcl.util.platform.windows.WindowsVersion;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -116,10 +119,10 @@ public final class NativePatcher {
         if (settings.isNotPatchNatives())
             return version;
 
-        if (arch.isX86() && (os == OperatingSystem.WINDOWS || os == OperatingSystem.LINUX || os == OperatingSystem.OSX))
+        if (arch.isX86() && (os == OperatingSystem.WINDOWS || os == OperatingSystem.LINUX || os == OperatingSystem.MACOS))
             return version;
 
-        if (arch == Architecture.ARM64 && (os == OperatingSystem.OSX || os == OperatingSystem.WINDOWS)
+        if (arch == Architecture.ARM64 && (os == OperatingSystem.MACOS || os == OperatingSystem.WINDOWS)
                 && gameVersionNumber != null
                 && gameVersionNumber.compareTo("1.19") >= 0)
             return version;
@@ -178,7 +181,19 @@ public final class NativePatcher {
         return version.setLibraries(newLibraries);
     }
 
-    public static Library getMesaLoader(JavaRuntime javaVersion) {
-        return getNatives(javaVersion.getPlatform()).get("mesa-loader");
+    public static @Nullable Library getWindowsMesaLoader(@NotNull JavaRuntime javaVersion, @NotNull Renderer renderer, @NotNull WindowsVersion windowsVersion) {
+        if (renderer == Renderer.DEFAULT)
+            return null;
+
+        if (windowsVersion.compareTo(WindowsVersion.WINDOWS_10) >= 0) {
+            return getNatives(javaVersion.getPlatform()).get("mesa-loader");
+        } else if (windowsVersion.compareTo(WindowsVersion.WINDOWS_7) >= 0) {
+            if (renderer == Renderer.LLVMPIPE)
+                return getNatives(javaVersion.getPlatform()).get("software-renderer-loader");
+            else
+                return null;
+        } else {
+            return null;
+        }
     }
 }

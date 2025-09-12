@@ -18,9 +18,13 @@
 package org.jackhuang.hmcl.game.tlauncher;
 
 import com.google.gson.annotations.SerializedName;
-import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.game.Artifact;
+import org.jackhuang.hmcl.game.CompatibilityRule;
+import org.jackhuang.hmcl.game.ExtractRules;
+import org.jackhuang.hmcl.game.LibrariesDownloadInfo;
+import org.jackhuang.hmcl.game.Library;
+import org.jackhuang.hmcl.game.LibraryDownloadInfo;
 import org.jackhuang.hmcl.util.Immutable;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.util.List;
 import java.util.Map;
@@ -36,11 +40,11 @@ public class TLauncherLibrary {
     @SerializedName("classifies") // stupid typo made by TLauncher
     private final Map<String, LibraryDownloadInfo> classifiers;
     private final ExtractRules extract;
-    private final Map<OperatingSystem, String> natives;
+    private final Map<String, String> natives;
     private final List<CompatibilityRule> rules;
     private final List<String> checksums;
 
-    public TLauncherLibrary(Artifact name, String url, LibraryDownloadInfo artifact, Map<String, LibraryDownloadInfo> classifiers, ExtractRules extract, Map<OperatingSystem, String> natives, List<CompatibilityRule> rules, List<String> checksums) {
+    public TLauncherLibrary(Artifact name, String url, LibraryDownloadInfo artifact, Map<String, LibraryDownloadInfo> classifiers, ExtractRules extract, Map<String, String> natives, List<CompatibilityRule> rules, List<String> checksums) {
         this.name = name;
         this.url = url;
         this.artifact = artifact;

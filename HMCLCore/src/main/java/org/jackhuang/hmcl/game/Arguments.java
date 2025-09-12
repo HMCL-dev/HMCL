@@ -79,8 +79,12 @@ public final class Arguments {
     }
 
     public Arguments addJVMArguments(List<String> jvmArguments) {
-        List<Argument> list = jvmArguments.stream().map(StringArgument::new).collect(Collectors.toList());
-        return new Arguments(getGame(), Lang.merge(getJvm(), list));
+        return addJVMArgumentsDirect(jvmArguments.stream().map(StringArgument::new).collect(Collectors.toList()));
+    }
+
+    // TODO: How to distinguish addJVMArgumentsDirect from addJVMArguments? Naming is hard :)
+    public Arguments addJVMArgumentsDirect(List<Argument> jvmArguments) {
+        return new Arguments(getGame(), Lang.merge(getJvm(), jvmArguments));
     }
 
     public static Arguments merge(Arguments a, Arguments b) {

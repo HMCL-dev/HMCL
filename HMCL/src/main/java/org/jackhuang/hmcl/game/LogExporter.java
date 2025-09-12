@@ -17,12 +17,13 @@
  */
 package org.jackhuang.hmcl.game;
 
+import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.lang.management.ManagementFactory;
@@ -93,9 +94,8 @@ public final class LogExporter {
                 if (Files.isRegularFile(file)) {
                     FileTime time = Files.readAttributes(file, BasicFileAttributes.class).lastModifiedTime();
                     if (time.toMillis() >= processStartTime) {
-                        try {
-                            String crashLog = Logger.filterForbiddenToken(FileUtils.readText(file, OperatingSystem.NATIVE_CHARSET));
-                            zipper.putTextFile(crashLog, file.getFileName().toString());
+                        try (BufferedReader reader = IOUtils.newBufferedReaderMaybeNativeEncoding(file)) {
+                            zipper.putLines(reader.lines().map(Logger::filterForbiddenToken), file.getFileName().toString());
                         } catch (IOException e) {
                             LOG.warning("Failed to read log file: " + file, e);
                         }

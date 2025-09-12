@@ -1,314 +1,468 @@
 {
-  "windows-x86": [
-    {
-      "module": "javafx.base",
-      "groupId": "org.openjfx",
-      "artifactId": "javafx-base",
-      "version": "19.0.2.1",
-      "classifier": "win-x86",
-      "sha1": "6c9ebafc7f9c4544d72fa5e306f4111e56b5db58"
-    },
-    {
-      "module": "javafx.graphics",
-      "groupId": "org.openjfx",
-      "artifactId": "javafx-graphics",
-      "version": "19.0.2.1",
-      "classifier": "win-x86",
-      "sha1": "a14a1fbe3a0dca81d99c53fd7be8e7c784a68afe"
-    },
-    {
-      "module": "javafx.controls",
-      "groupId": "org.openjfx",
-      "artifactId": "javafx-controls",
-      "version": "19.0.2.1",
-      "classifier": "win-x86",
-      "sha1": "7df1501701f9e9fbadab8ce55ef1dde128e2e88a"
-    }
-  ],
-  "windows-x86_64": [
-    {
-      "module": "javafx.base",
-      "groupId": "org.openjfx",
-      "artifactId": "javafx-base",
-      "version": "17.0.13",
-      "classifier": "win",
-      "sha1": "ae86377359860449040372d3693bccf046148513"
-    },
-    {
-      "module": "javafx.graphics",
-      "groupId": "org.openjfx",
-      "artifactId": "javafx-graphics",
-      "version": "17.0.13",
-      "classifier": "win",
-      "sha1": "bc0055a059b201d6c0be2293ccf72b6d2874fd1c"
-    },
-    {
-      "module": "javafx.controls",
-      "groupId": "org.openjfx",
-      "artifactId": "javafx-controls",
-      "version": "17.0.13",
-      "classifier": "win",
-      "sha1": "bcd765dca36fa9e5fb4c997491a2d908947603f5"
-    }
-  ],
-  "windows-arm64": [
-    {
-      "module": "javafx.base",
-      "groupId": "org.glavo.hmcl.openjfx",
-      "artifactId": "javafx-base",
-      "version": "18.0.2+1-arm64",
-      "classifier": "win",
-      "sha1": "4518a696b9d509dc09a7fe283452fce84a1686a8"
-    },
-    {
-      "module": "javafx.graphics",
-      "groupId": "org.glavo.hmcl.openjfx",
-      "artifactId": "javafx-graphics",
-      "version": "18.0.2+1-arm64",
-      "classifier": "win",
-      "sha1": "e19ba9aefc4bba8ff86dcdf416620b93b7bdea39"
-    },
-    {
-      "module": "javafx.controls",
-      "groupId": "org.glavo.hmcl.openjfx",
-      "artifactId": "javafx-controls",
-      "version": "18.0.2+1-arm64",
-      "classifier": "win",
-      "sha1": "0bf7380823bb8c420dd41837d2c71087b8953ec1"
-    }
-  ],
-  "osx-x86_64": [
-    {
-      "module": "javafx.base",
-      "groupId": "org.openjfx",
-      "artifactId": "javafx-base",
-      "version": "19.0.2.1",
-      "classifier": "mac",
-      "sha1": "73e422d8426aaa23e8c712b9f4d9bebf70d3bfb9"
-    },
-    {
-      "module": "javafx.graphics",
-      "groupId": "org.openjfx",
-      "artifactId": "javafx-graphics",
-      "version": "19.0.2.1",
-      "classifier": "mac",
-      "sha1": "6ab6f3e23421fcfa04e692d9d26a8f55a830c114"
-    },
-    {
-      "module": "javafx.controls",
-      "groupId": "org.openjfx",
-      "artifactId": "javafx-controls",
-      "version": "19.0.2.1",
-      "classifier": "mac",
-      "sha1": "b7786b1b63e741c0e234829825fae5fef9d96c31"
-    }
-  ],
-  "osx-arm64": [
-    {
-      "module": "javafx.base",
-      "groupId": "org.openjfx",
-      "artifactId": "javafx-base",
-      "version": "19.0.2.1",
-      "classifier": "mac-aarch64",
-      "sha1": "1d0d887c492330ed527b0614d115a4f32d2d05a4"
-    },
-    {
-      "module": "javafx.graphics",
-      "groupId": "org.openjfx",
-      "artifactId": "javafx-graphics",
-      "version": "19.0.2.1",
-      "classifier": "mac-aarch64",
-      "sha1": "64db28799e61e0f8f51e471c732599b2a6961803"
-    },
-    {
-      "module": "javafx.controls",
-      "groupId": "org.openjfx",
-      "artifactId": "javafx-controls",
-      "version": "19.0.2.1",
-      "classifier": "mac-aarch64",
-      "sha1": "3a14bd5f3ebe45d344c1f2bade0fe074e6ea2a83"
-    }
-  ],
-  "linux-x86_64": [
-    {
-      "module": "javafx.base",
-      "groupId": "org.openjfx",
-      "artifactId": "javafx-base",
-      "version": "17.0.13",
-      "classifier": "linux",
-      "sha1": "875f02b498b00c9692f6ed0af3da373b1d07bf03"
-    },
-    {
-      "module": "javafx.graphics",
-      "groupId": "org.openjfx",
-      "artifactId": "javafx-graphics",
-      "version": "17.0.13",
-      "classifier": "linux",
-      "sha1": "103f3bba5a177ba8912a92ef2ee0855de7ba050c"
-    },
-    {
-      "module": "javafx.controls",
-      "groupId": "org.openjfx",
-      "artifactId": "javafx-controls",
-      "version": "17.0.13",
-      "classifier": "linux",
-      "sha1": "940e9e05a974a3e484d5ec241d88a0c77ad013f2"
-    }
-  ],
-  "linux-arm32": [
-    {
-      "module": "javafx.base",
-      "groupId": "org.openjfx",
-      "artifactId": "javafx-base",
-      "version": "19.0.2.1",
-      "classifier": "linux-arm32-monocle",
-      "sha1": "452f455d6948788c1e5350a41259eb8101d3f82a"
-    },
-    {
-      "module": "javafx.graphics",
-      "groupId": "org.openjfx",
-      "artifactId": "javafx-graphics",
-      "version": "19.0.2.1",
-      "classifier": "linux-arm32-monocle",
-      "sha1": "b45b33252e88263fe80a462a45828b4562c3c709"
-    },
-    {
-      "module": "javafx.controls",
-      "groupId": "org.openjfx",
-      "artifactId": "javafx-controls",
-      "version": "19.0.2.1",
-      "classifier": "linux-arm32-monocle",
-      "sha1": "e606c619fc493ecd18d281b0ded3aa38ba15a9e5"
-    }
-  ],
-  "linux-arm64": [
-    {
-      "module": "javafx.base",
-      "groupId": "org.openjfx",
-      "artifactId": "javafx-base",
-      "version": "19.0.2.1",
-      "classifier": "linux-aarch64",
-      "sha1": "1490bfe619e148b3d58746d43f549d697640c935"
-    },
-    {
-      "module": "javafx.graphics",
-      "groupId": "org.openjfx",
-      "artifactId": "javafx-graphics",
-      "version": "19.0.2.1",
-      "classifier": "linux-aarch64",
-      "sha1": "cad8004a87f57d9813c52985894ef15e8011baee"
-    },
-    {
-      "module": "javafx.controls",
-      "groupId": "org.openjfx",
-      "artifactId": "javafx-controls",
-      "version": "19.0.2.1",
-      "classifier": "linux-aarch64",
-      "sha1": "ccc33fc1fcbf46130346f4330d6d70b71bdec7d0"
-    }
-  ],
-  "linux-loongarch64": [
-    {
-      "module": "javafx.base",
-      "groupId": "org.glavo.hmcl.openjfx",
-      "artifactId": "javafx-base",
-      "version": "17.0.8-loongarch64",
-      "classifier": "linux",
-      "sha1": "9d692dfc79eb334a7b4bae922aa57cb3a437345e"
-    },
-    {
-      "module": "javafx.graphics",
-      "groupId": "org.glavo.hmcl.openjfx",
-      "artifactId": "javafx-graphics",
-      "version": "17.0.8-loongarch64",
-      "classifier": "linux",
-      "sha1": "7f241dc6adc8beddb776f453a3c63a5848d7b90b"
-    },
-    {
-      "module": "javafx.controls",
-      "groupId": "org.glavo.hmcl.openjfx",
-      "artifactId": "javafx-controls",
-      "version": "17.0.8-loongarch64",
-      "classifier": "linux",
-      "sha1": "1c8b0141bec93ed21d7c0e9a2f69a1c7e3c734d2"
-    }
-  ],
-  "linux-loongarch64_ow": [
-    {
-      "module": "javafx.base",
-      "groupId": "org.glavo.hmcl.openjfx",
-      "artifactId": "javafx-base",
-      "version": "19-ea+10-loongson64",
-      "classifier": "linux",
-      "sha1": "f90663ba93aef9f818236ce19ecfa33dca0ffe10"
-    },
-    {
-      "module": "javafx.graphics",
-      "groupId": "org.glavo.hmcl.openjfx",
-      "artifactId": "javafx-graphics",
-      "version": "19-ea+10-loongson64",
-      "classifier": "linux",
-      "sha1": "6ff76304d08bba093abfe7f4d50ce6a49279c87f"
-    },
-    {
-      "module": "javafx.controls",
-      "groupId": "org.glavo.hmcl.openjfx",
-      "artifactId": "javafx-controls",
-      "version": "19-ea+10-loongson64",
-      "classifier": "linux",
-      "sha1": "8a16096d42de70f2548f18840cdcd49a07fc1654"
-    }
-  ],
-  "linux-riscv64": [
-    {
-      "module": "javafx.base",
-      "groupId": "org.glavo.hmcl.openjfx",
-      "artifactId": "javafx-base",
-      "version": "19.0.2.1-riscv64",
-      "classifier": "linux",
-      "sha1": "e33c7e0bac2931a8f7a752bb74e4e4e535eec4ad"
-    },
-    {
-      "module": "javafx.graphics",
-      "groupId": "org.glavo.hmcl.openjfx",
-      "artifactId": "javafx-graphics",
-      "version": "19.0.2.1-riscv64",
-      "classifier": "linux",
-      "sha1": "ac4e5edd55d84da80f8fc2d81a4c9994296a6c09"
-    },
-    {
-      "module": "javafx.controls",
-      "groupId": "org.glavo.hmcl.openjfx",
-      "artifactId": "javafx-controls",
-      "version": "19.0.2.1-riscv64",
-      "classifier": "linux",
-      "sha1": "efe6a87ea24972d45f1931528f87e64a53bd2232"
-    }
-  ],
-  "freebsd-x86_64": [
-    {
-      "module": "javafx.base",
-      "groupId": "org.glavo.hmcl.openjfx",
-      "artifactId": "javafx-base",
-      "version": "14.0.2.1-freebsd",
-      "classifier": "freebsd",
-      "sha1": "7bac900f0ab0d4d6dcf178252cf37ee1e0470d40"
-    },
-    {
-      "module": "javafx.graphics",
-      "groupId": "org.glavo.hmcl.openjfx",
-      "artifactId": "javafx-graphics",
-      "version": "14.0.2.1-freebsd",
-      "classifier": "freebsd",
-      "sha1": "7773ce02d1dc29160801e4e077ed2a26e93bed13"
-    },
-    {
-      "module": "javafx.controls",
-      "groupId": "org.glavo.hmcl.openjfx",
-      "artifactId": "javafx-controls",
-      "version": "14.0.2.1-freebsd",
-      "classifier": "freebsd",
-      "sha1": "34a3dd3ccbc898bacfdcb3256cfb87ddc50621d3"
-    }
-  ]
+  "windows-x86": {
+    "classic": [
+      {
+        "module": "javafx.base",
+        "groupId": "org.openjfx",
+        "artifactId": "javafx-base",
+        "version": "19.0.2.1",
+        "classifier": "win-x86",
+        "sha1": "6c9ebafc7f9c4544d72fa5e306f4111e56b5db58"
+      },
+      {
+        "module": "javafx.graphics",
+        "groupId": "org.openjfx",
+        "artifactId": "javafx-graphics",
+        "version": "19.0.2.1",
+        "classifier": "win-x86",
+        "sha1": "a14a1fbe3a0dca81d99c53fd7be8e7c784a68afe"
+      },
+      {
+        "module": "javafx.controls",
+        "groupId": "org.openjfx",
+        "artifactId": "javafx-controls",
+        "version": "19.0.2.1",
+        "classifier": "win-x86",
+        "sha1": "7df1501701f9e9fbadab8ce55ef1dde128e2e88a"
+      }
+    ]
+  },
+  "windows-x86_64": {
+    "classic": [
+      {
+        "module": "javafx.base",
+        "groupId": "org.openjfx",
+        "artifactId": "javafx-base",
+        "version": "17.0.15",
+        "classifier": "win",
+        "sha1": "b953b8de9dc783cf2d3b5be404e7b4413f9d88f3"
+      },
+      {
+        "module": "javafx.graphics",
+        "groupId": "org.openjfx",
+        "artifactId": "javafx-graphics",
+        "version": "17.0.15",
+        "classifier": "win",
+        "sha1": "970f11897d7852e9afcb470e89370532dbab1e00"
+      },
+      {
+        "module": "javafx.controls",
+        "groupId": "org.openjfx",
+        "artifactId": "javafx-controls",
+        "version": "17.0.15",
+        "classifier": "win",
+        "sha1": "b5df9cb5cc79714133119259c0bc31a201e27827"
+      }
+    ],
+    "modern": [
+      {
+        "module": "javafx.base",
+        "groupId": "org.openjfx",
+        "artifactId": "javafx-base",
+        "version": "24.0.1",
+        "classifier": "win",
+        "sha1": "4b10eb55326c5faae8b0fcaff99a0e8a09ee0624"
+      },
+      {
+        "module": "javafx.graphics",
+        "groupId": "org.openjfx",
+        "artifactId": "javafx-graphics",
+        "version": "24.0.1",
+        "classifier": "win",
+        "sha1": "0d432e25ea9cd73fb28b89658e0cba8b55e2b5b9"
+      },
+      {
+        "module": "javafx.controls",
+        "groupId": "org.openjfx",
+        "artifactId": "javafx-controls",
+        "version": "24.0.1",
+        "classifier": "win",
+        "sha1": "1a11fceb872b9d81234601a32b7bd0e9f9d40921"
+      }
+    ]
+  },
+  "windows-arm64": {
+    "classic": [
+      {
+        "module": "javafx.base",
+        "groupId": "org.glavo.hmcl.openjfx",
+        "artifactId": "javafx-base",
+        "version": "18.0.2+1-arm64",
+        "classifier": "win",
+        "sha1": "4518a696b9d509dc09a7fe283452fce84a1686a8"
+      },
+      {
+        "module": "javafx.graphics",
+        "groupId": "org.glavo.hmcl.openjfx",
+        "artifactId": "javafx-graphics",
+        "version": "18.0.2+1-arm64",
+        "classifier": "win",
+        "sha1": "e19ba9aefc4bba8ff86dcdf416620b93b7bdea39"
+      },
+      {
+        "module": "javafx.controls",
+        "groupId": "org.glavo.hmcl.openjfx",
+        "artifactId": "javafx-controls",
+        "version": "18.0.2+1-arm64",
+        "classifier": "win",
+        "sha1": "0bf7380823bb8c420dd41837d2c71087b8953ec1"
+      }
+    ]
+  },
+  "macos-x86_64": {
+    "classic": [
+      {
+        "module": "javafx.base",
+        "groupId": "org.openjfx",
+        "artifactId": "javafx-base",
+        "version": "17.0.15",
+        "classifier": "mac",
+        "sha1": "c81789b67704792ce3aa14ae0831f03953a94fd1"
+      },
+      {
+        "module": "javafx.graphics",
+        "groupId": "org.openjfx",
+        "artifactId": "javafx-graphics",
+        "version": "17.0.15",
+        "classifier": "mac",
+        "sha1": "ba75ad11b6e8f0f1e69e3f812e983ba7bc8862ad"
+      },
+      {
+        "module": "javafx.controls",
+        "groupId": "org.openjfx",
+        "artifactId": "javafx-controls",
+        "version": "17.0.15",
+        "classifier": "mac",
+        "sha1": "667947ed5cf35aafe1942536b4a2ec382d4a23c0"
+      }
+    ],
+    "modern": [
+      {
+        "module": "javafx.base",
+        "groupId": "org.openjfx",
+        "artifactId": "javafx-base",
+        "version": "24.0.1",
+        "classifier": "mac",
+        "sha1": "d83afabb980754a820f9d590e57ca3741178d330"
+      },
+      {
+        "module": "javafx.graphics",
+        "groupId": "org.openjfx",
+        "artifactId": "javafx-graphics",
+        "version": "24.0.1",
+        "classifier": "mac",
+        "sha1": "c42ed790229c95870622ec3c9657ae24c49b6004"
+      },
+      {
+        "module": "javafx.controls",
+        "groupId": "org.openjfx",
+        "artifactId": "javafx-controls",
+        "version": "24.0.1",
+        "classifier": "mac",
+        "sha1": "ee58a229feba345b15832a3b9dfdb2f81609ff7e"
+      }
+    ]
+  },
+  "macos-arm64": {
+    "classic": [
+      {
+        "module": "javafx.base",
+        "groupId": "org.openjfx",
+        "artifactId": "javafx-base",
+        "version": "17.0.15",
+        "classifier": "mac-aarch64",
+        "sha1": "0eb5a3f4592687a22aabf174a7e5cb05c54aae17"
+      },
+      {
+        "module": "javafx.graphics",
+        "groupId": "org.openjfx",
+        "artifactId": "javafx-graphics",
+        "version": "17.0.15",
+        "classifier": "mac-aarch64",
+        "sha1": "4c32f1341358627d1b7c4cb0c5a0bdd2617bb314"
+      },
+      {
+        "module": "javafx.controls",
+        "groupId": "org.openjfx",
+        "artifactId": "javafx-controls",
+        "version": "17.0.15",
+        "classifier": "mac-aarch64",
+        "sha1": "542d9ca6e6d8579e17a1af9fcdceb69dc3c6d983"
+      }
+    ],
+    "modern": [
+      {
+        "module": "javafx.base",
+        "groupId": "org.openjfx",
+        "artifactId": "javafx-base",
+        "version": "24.0.1",
+        "classifier": "mac-aarch64",
+        "sha1": "0278a9d1c739148c56ff0c96c9263fe27486526e"
+      },
+      {
+        "module": "javafx.graphics",
+        "groupId": "org.openjfx",
+        "artifactId": "javafx-graphics",
+        "version": "24.0.1",
+        "classifier": "mac-aarch64",
+        "sha1": "a7f93849791b2b1ef7b94584a77bb5246e2127dc"
+      },
+      {
+        "module": "javafx.controls",
+        "groupId": "org.openjfx",
+        "artifactId": "javafx-controls",
+        "version": "24.0.1",
+        "classifier": "mac-aarch64",
+        "sha1": "1aca61b354055c454e64a6781c60d1a908900c51"
+      }
+    ]
+  },
+  "linux-x86_64": {
+    "classic": [
+      {
+        "module": "javafx.base",
+        "groupId": "org.openjfx",
+        "artifactId": "javafx-base",
+        "version": "17.0.15",
+        "classifier": "linux",
+        "sha1": "ae63c4eae7766f2d7afcdab9c9ffbc10e7ee3b57"
+      },
+      {
+        "module": "javafx.graphics",
+        "groupId": "org.openjfx",
+        "artifactId": "javafx-graphics",
+        "version": "17.0.15",
+        "classifier": "linux",
+        "sha1": "9eead4a031fa59c7c66fad177c2786faf149790d"
+      },
+      {
+        "module": "javafx.controls",
+        "groupId": "org.openjfx",
+        "artifactId": "javafx-controls",
+        "version": "17.0.15",
+        "classifier": "linux",
+        "sha1": "31a1887450c2780f1b85eac11b305604f87cdbb7"
+      }
+    ],
+    "modern": [
+      {
+        "module": "javafx.base",
+        "groupId": "org.openjfx",
+        "artifactId": "javafx-base",
+        "version": "24.0.1",
+        "classifier": "linux",
+        "sha1": "1eb0dd4c9b54075b121b2246c41e2ff767b81768"
+      },
+      {
+        "module": "javafx.graphics",
+        "groupId": "org.openjfx",
+        "artifactId": "javafx-graphics",
+        "version": "24.0.1",
+        "classifier": "linux",
+        "sha1": "c0b9013d797e001b364baaa14cbe988b2dea28bf"
+      },
+      {
+        "module": "javafx.controls",
+        "groupId": "org.openjfx",
+        "artifactId": "javafx-controls",
+        "version": "24.0.1",
+        "classifier": "linux",
+        "sha1": "8946a980ee0077bd28752db645155fb292931d6e"
+      }
+    ]
+  },
+  "linux-arm32": {
+    "classic": [
+      {
+        "module": "javafx.base",
+        "groupId": "org.openjfx",
+        "artifactId": "javafx-base",
+        "version": "19.0.2.1",
+        "classifier": "linux-arm32-monocle",
+        "sha1": "452f455d6948788c1e5350a41259eb8101d3f82a"
+      },
+      {
+        "module": "javafx.graphics",
+        "groupId": "org.openjfx",
+        "artifactId": "javafx-graphics",
+        "version": "19.0.2.1",
+        "classifier": "linux-arm32-monocle",
+        "sha1": "b45b33252e88263fe80a462a45828b4562c3c709"
+      },
+      {
+        "module": "javafx.controls",
+        "groupId": "org.openjfx",
+        "artifactId": "javafx-controls",
+        "version": "19.0.2.1",
+        "classifier": "linux-arm32-monocle",
+        "sha1": "e606c619fc493ecd18d281b0ded3aa38ba15a9e5"
+      }
+    ]
+  },
+  "linux-arm64": {
+    "classic": [
+      {
+        "module": "javafx.base",
+        "groupId": "org.openjfx",
+        "artifactId": "javafx-base",
+        "version": "19.0.2.1",
+        "classifier": "linux-aarch64",
+        "sha1": "1490bfe619e148b3d58746d43f549d697640c935"
+      },
+      {
+        "module": "javafx.graphics",
+        "groupId": "org.openjfx",
+        "artifactId": "javafx-graphics",
+        "version": "19.0.2.1",
+        "classifier": "linux-aarch64",
+        "sha1": "cad8004a87f57d9813c52985894ef15e8011baee"
+      },
+      {
+        "module": "javafx.controls",
+        "groupId": "org.openjfx",
+        "artifactId": "javafx-controls",
+        "version": "19.0.2.1",
+        "classifier": "linux-aarch64",
+        "sha1": "ccc33fc1fcbf46130346f4330d6d70b71bdec7d0"
+      }
+    ],
+    "modern": [
+      {
+        "module": "javafx.base",
+        "groupId": "org.openjfx",
+        "artifactId": "javafx-base",
+        "version": "24.0.1",
+        "classifier": "linux-aarch64",
+        "sha1": "83340233e069b98a9fcf5b8196145a5eb8a3d870"
+      },
+      {
+        "module": "javafx.graphics",
+        "groupId": "org.openjfx",
+        "artifactId": "javafx-graphics",
+        "version": "24.0.1",
+        "classifier": "linux-aarch64",
+        "sha1": "cd153842a963efe000f038561a03b45bc8ce3307"
+      },
+      {
+        "module": "javafx.controls",
+        "groupId": "org.openjfx",
+        "artifactId": "javafx-controls",
+        "version": "24.0.1",
+        "classifier": "linux-aarch64",
+        "sha1": "02b8715e07579c3de1bd50fe51209666bba52d48"
+      }
+    ]
+  },
+  "linux-loongarch64": {
+    "classic": [
+      {
+        "module": "javafx.base",
+        "groupId": "org.glavo.hmcl.openjfx",
+        "artifactId": "javafx-base",
+        "version": "17.0.8-loongarch64",
+        "classifier": "linux",
+        "sha1": "9d692dfc79eb334a7b4bae922aa57cb3a437345e"
+      },
+      {
+        "module": "javafx.graphics",
+        "groupId": "org.glavo.hmcl.openjfx",
+        "artifactId": "javafx-graphics",
+        "version": "17.0.8-loongarch64",
+        "classifier": "linux",
+        "sha1": "7f241dc6adc8beddb776f453a3c63a5848d7b90b"
+      },
+      {
+        "module": "javafx.controls",
+        "groupId": "org.glavo.hmcl.openjfx",
+        "artifactId": "javafx-controls",
+        "version": "17.0.8-loongarch64",
+        "classifier": "linux",
+        "sha1": "1c8b0141bec93ed21d7c0e9a2f69a1c7e3c734d2"
+      }
+    ]
+  },
+  "linux-loongarch64_ow": {
+    "classic": [
+      {
+        "module": "javafx.base",
+        "groupId": "org.glavo.hmcl.openjfx",
+        "artifactId": "javafx-base",
+        "version": "19-ea+10-loongson64",
+        "classifier": "linux",
+        "sha1": "f90663ba93aef9f818236ce19ecfa33dca0ffe10"
+      },
+      {
+        "module": "javafx.graphics",
+        "groupId": "org.glavo.hmcl.openjfx",
+        "artifactId": "javafx-graphics",
+        "version": "19-ea+10-loongson64",
+        "classifier": "linux",
+        "sha1": "6ff76304d08bba093abfe7f4d50ce6a49279c87f"
+      },
+      {
+        "module": "javafx.controls",
+        "groupId": "org.glavo.hmcl.openjfx",
+        "artifactId": "javafx-controls",
+        "version": "19-ea+10-loongson64",
+        "classifier": "linux",
+        "sha1": "8a16096d42de70f2548f18840cdcd49a07fc1654"
+      }
+    ]
+  },
+  "linux-riscv64": {
+    "classic": [
+      {
+        "module": "javafx.base",
+        "groupId": "org.glavo.hmcl.openjfx",
+        "artifactId": "javafx-base",
+        "version": "19.0.2.1-riscv64",
+        "classifier": "linux",
+        "sha1": "e33c7e0bac2931a8f7a752bb74e4e4e535eec4ad"
+      },
+      {
+        "module": "javafx.graphics",
+        "groupId": "org.glavo.hmcl.openjfx",
+        "artifactId": "javafx-graphics",
+        "version": "19.0.2.1-riscv64",
+        "classifier": "linux",
+        "sha1": "ac4e5edd55d84da80f8fc2d81a4c9994296a6c09"
+      },
+      {
+        "module": "javafx.controls",
+        "groupId": "org.glavo.hmcl.openjfx",
+        "artifactId": "javafx-controls",
+        "version": "19.0.2.1-riscv64",
+        "classifier": "linux",
+        "sha1": "efe6a87ea24972d45f1931528f87e64a53bd2232"
+      }
+    ]
+  },
+  "freebsd-x86_64": {
+    "classic": [
+      {
+        "module": "javafx.base",
+        "groupId": "org.glavo.hmcl.openjfx",
+        "artifactId": "javafx-base",
+        "version": "14.0.2.1-freebsd",
+        "classifier": "freebsd",
+        "sha1": "7bac900f0ab0d4d6dcf178252cf37ee1e0470d40"
+      },
+      {
+        "module": "javafx.graphics",
+        "groupId": "org.glavo.hmcl.openjfx",
+        "artifactId": "javafx-graphics",
+        "version": "14.0.2.1-freebsd",
+        "classifier": "freebsd",
+        "sha1": "7773ce02d1dc29160801e4e077ed2a26e93bed13"
+      },
+      {
+        "module": "javafx.controls",
+        "groupId": "org.glavo.hmcl.openjfx",
+        "artifactId": "javafx-controls",
+        "version": "14.0.2.1-freebsd",
+        "classifier": "freebsd",
+        "sha1": "34a3dd3ccbc898bacfdcb3256cfb87ddc50621d3"
+      }
+    ]
+  }
 }

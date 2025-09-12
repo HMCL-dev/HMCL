@@ -21,17 +21,15 @@ import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.ServerAddress;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
-import org.jackhuang.hmcl.util.platform.Bits;
 import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.*;
-import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -42,8 +40,8 @@ import java.util.*;
 import java.util.function.Supplier;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * @author huangyuhui
@@ -73,14 +71,14 @@ public class DefaultLauncher extends Launcher {
             case HIGH:
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                     // res.add("cmd", "/C", "start", "unused title", "/B", "/high");
-                } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+                } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() || OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
                     res.add("nice", "-n", "-5");
                 }
                 break;
             case ABOVE_NORMAL:
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                     // res.add("cmd", "/C", "start", "unused title", "/B", "/abovenormal");
-                } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+                } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() || OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
                     res.add("nice", "-n", "-1");
                 }
                 break;
@@ -90,14 +88,14 @@ public class DefaultLauncher extends Launcher {
             case BELOW_NORMAL:
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                     // res.add("cmd", "/C", "start", "unused title", "/B", "/belownormal");
-                } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+                } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() || OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
                     res.add("nice", "-n", "1");
                 }
                 break;
             case LOW:
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                     // res.add("cmd", "/C", "start", "unused title", "/B", "/low");
-                } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() || OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+                } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() || OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
                     res.add("nice", "-n", "5");
                 }
                 break;
@@ -110,24 +108,6 @@ public class DefaultLauncher extends Launcher {
         res.add(options.getJava().getBinary().toString());
 
         res.addAllWithoutParsing(options.getOverrideJavaArguments());
-
-        Proxy proxy = options.getProxy();
-        if (proxy != null && StringUtils.isBlank(options.getProxyUser()) && StringUtils.isBlank(options.getProxyPass())) {
-            InetSocketAddress address = (InetSocketAddress) options.getProxy().address();
-            if (address != null) {
-                String host = address.getHostString();
-                int port = address.getPort();
-                if (proxy.type() == Proxy.Type.HTTP) {
-                    res.addDefault("-Dhttp.proxyHost=", host);
-                    res.addDefault("-Dhttp.proxyPort=", String.valueOf(port));
-                    res.addDefault("-Dhttps.proxyHost=", host);
-                    res.addDefault("-Dhttps.proxyPort=", String.valueOf(port));
-                } else if (proxy.type() == Proxy.Type.SOCKS) {
-                    res.addDefault("-DsocksProxyHost=", host);
-                    res.addDefault("-DsocksProxyPort=", String.valueOf(port));
-                }
-            }
-        }
 
         if (options.getMaxMemory() != null && options.getMaxMemory() > 0)
             res.addDefault("-Xmx", options.getMaxMemory() + "m");
@@ -178,7 +158,7 @@ public class DefaultLauncher extends Launcher {
 
             res.addDefault("-Dminecraft.client.jar=", repository.getVersionJar(version).toString());
 
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
                 res.addDefault("-Xdock:name=", "Minecraft " + version.getId());
                 repository.getAssetObject(version.getId(), version.getAssetIndex().getId(), "icons/minecraft.icns")
                         .ifPresent(minecraftIcns -> {
@@ -187,7 +167,27 @@ public class DefaultLauncher extends Launcher {
             }
 
             if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS)
-                res.addDefault("-Duser.home=", options.getGameDir().getParent());
+                res.addDefault("-Duser.home=", options.getGameDir().getAbsoluteFile().getParent());
+
+            Proxy.Type proxyType = options.getProxyType();
+            if (proxyType == null) {
+                res.addDefault("-Djava.net.useSystemProxies", "true");
+            } else {
+                String proxyHost = options.getProxyHost();
+                int proxyPort = options.getProxyPort();
+
+                if (StringUtils.isNotBlank(proxyHost) && proxyPort >= 0 && proxyPort <= 0xFFFF) {
+                    if (proxyType == Proxy.Type.HTTP) {
+                        res.addDefault("-Dhttp.proxyHost=", proxyHost);
+                        res.addDefault("-Dhttp.proxyPort=", String.valueOf(proxyPort));
+                        res.addDefault("-Dhttps.proxyHost=", proxyHost);
+                        res.addDefault("-Dhttps.proxyPort=", String.valueOf(proxyPort));
+                    } else if (proxyType == Proxy.Type.SOCKS) {
+                        res.addDefault("-DsocksProxyHost=", proxyHost);
+                        res.addDefault("-DsocksProxyPort=", String.valueOf(proxyPort));
+                    }
+                }
+            }
 
             final int javaVersion = options.getJava().getParsedVersion();
             final boolean is64bit = options.getJava().getBits() == Bits.BIT_64;
@@ -212,7 +212,7 @@ public class DefaultLauncher extends Launcher {
             if (javaVersion <= 8) {
                 res.addUnstableDefault("MaxInlineLevel", "15");
             }
-            if (is64bit && OperatingSystem.TOTAL_MEMORY > 4 * 1024) {
+            if (is64bit && SystemInfo.getTotalMemorySize() > 4L * 1024 * 1024 * 1024) {
                 res.addUnstableDefault("DontCompileHugeMethods", false);
                 res.addUnstableDefault("MaxNodeLimit", "240000");
                 res.addUnstableDefault("NodeLimitFudgeFactor", "8000");
@@ -246,6 +246,10 @@ public class DefaultLauncher extends Launcher {
 
         Set<String> classpath = repository.getClasspath(version);
 
+        if (analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM)) {
+            classpath.removeIf(c -> c.contains("2.9.4-nightly-20150209"));
+        }
+
         File jar = repository.getVersionJar(version);
         if (!jar.exists() || !jar.isFile())
             throw new IOException("Minecraft jar does not exist");
@@ -254,7 +258,7 @@ public class DefaultLauncher extends Launcher {
         // Provided Minecraft arguments
         Path gameAssets = repository.getActualAssetDirectory(version.getId(), version.getAssetIndex().getId());
         Map<String, String> configuration = getConfigurations();
-        configuration.put("${classpath}", String.join(OperatingSystem.PATH_SEPARATOR, classpath));
+        configuration.put("${classpath}", String.join(File.pathSeparator, classpath));
         configuration.put("${game_assets}", gameAssets.toAbsolutePath().toString());
         configuration.put("${assets_root}", gameAssets.toAbsolutePath().toString());
 
@@ -264,7 +268,7 @@ public class DefaultLauncher extends Launcher {
         // Here is a workaround for this issue: https://github.com/HMCL-dev/HMCL/issues/1141.
         String nativeFolderPath = nativeFolder.getAbsolutePath();
         Path tempNativeFolder = null;
-        if ((OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.OSX)
+        if ((OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
                 && !StringUtils.isASCII(nativeFolderPath)
                 && gameVersion.isPresent() && GameVersionNumber.compare(gameVersion.get(), "1.19") < 0) {
             tempNativeFolder = Paths.get("/", "tmp", "hmcl-natives-" + UUID.randomUUID());
@@ -294,28 +298,36 @@ public class DefaultLauncher extends Launcher {
             res.addAll(Arguments.parseArguments(argumentsFromAuthInfo.getGame(), configuration, features));
 
         if (StringUtils.isNotBlank(options.getServerIp())) {
-            String[] args = options.getServerIp().split(":");
-            if (GameVersionNumber.asGameVersion(gameVersion).compareTo("1.20") < 0) {
-                res.add("--server");
-                res.add(args[0]);
-                res.add("--port");
-                res.add(args.length > 1 ? args[1] : "25565");
-            } else {
-                res.add("--quickPlayMultiplayer");
-                res.add(args[0] + ":" + (args.length > 1 ? args[1] : "25565"));
+            String address = options.getServerIp();
+
+            try {
+                ServerAddress parsed = ServerAddress.parse(address);
+                if (GameVersionNumber.asGameVersion(gameVersion).compareTo("1.20") < 0) {
+                    res.add("--server");
+                    res.add(parsed.getHost());
+                    res.add("--port");
+                    res.add(parsed.getPort() >= 0 ? String.valueOf(parsed.getPort()) : "25565");
+                } else {
+                    res.add("--quickPlayMultiplayer");
+                    res.add(parsed.getPort() < 0 ? address + ":25565" : address);
+                }
+            } catch (IllegalArgumentException e) {
+                LOG.warning("Invalid server address: " + address, e);
             }
         }
 
         if (options.isFullscreen())
             res.add("--fullscreen");
 
-        if (options.getProxy() != null && options.getProxy().type() == Proxy.Type.SOCKS) {
-            InetSocketAddress address = (InetSocketAddress) options.getProxy().address();
-            if (address != null) {
+        if (options.getProxyType() == Proxy.Type.SOCKS) {
+            String proxyHost = options.getProxyHost();
+            int proxyPort = options.getProxyPort();
+
+            if (StringUtils.isNotBlank(proxyHost) && proxyPort >= 0 && proxyPort <= 0xFFFF) {
                 res.add("--proxyHost");
-                res.add(address.getHostString());
+                res.add(proxyHost);
                 res.add("--proxyPort");
-                res.add(String.valueOf(address.getPort()));
+                res.add(String.valueOf(proxyPort));
                 if (StringUtils.isNotBlank(options.getProxyUser()) && StringUtils.isNotBlank(options.getProxyPass())) {
                     res.add("--proxyUser");
                     res.add(options.getProxyUser());
@@ -410,7 +422,7 @@ public class DefaultLauncher extends Launcher {
         }
 
         try (InputStream input = source; OutputStream output = new FileOutputStream(targetFile)) {
-            IOUtils.copyTo(input, output);
+            input.transferTo(output);
         }
     }
 
@@ -431,9 +443,9 @@ public class DefaultLauncher extends Launcher {
                 pair("${resolution_width}", options.getWidth().toString()),
                 pair("${resolution_height}", options.getHeight().toString()),
                 pair("${library_directory}", repository.getLibrariesDirectory(version).getAbsolutePath()),
-                pair("${classpath_separator}", OperatingSystem.PATH_SEPARATOR),
+                pair("${classpath_separator}", File.pathSeparator),
                 pair("${primary_jar}", repository.getVersionJar(version).getAbsolutePath()),
-                pair("${language}", Locale.getDefault().toString()),
+                pair("${language}", Locale.getDefault().toLanguageTag()),
 
                 // defined by HMCL
                 // libraries_directory stands for historical reasons here. We don't know the official launcher
@@ -441,7 +453,7 @@ public class DefaultLauncher extends Launcher {
                 // when we propose this placeholder.
                 pair("${libraries_directory}", repository.getLibrariesDirectory(version).getAbsolutePath()),
                 // file_separator is used in -DignoreList
-                pair("${file_separator}", OperatingSystem.FILE_SEPARATOR),
+                pair("${file_separator}", File.separator),
                 pair("${primary_jar_name}", FileUtils.getName(repository.getVersionJar(version).toPath()))
         );
     }
@@ -541,6 +553,9 @@ public class DefaultLauncher extends Launcher {
 
         if (analyzer.has(LibraryAnalyzer.LibraryType.FORGE)) {
             env.put("INST_FORGE", "1");
+        }
+        if (analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM)) {
+            env.put("INST_CLEANROOM", "1");
         }
         if (analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE)) {
             env.put("INST_NEOFORGE", "1");

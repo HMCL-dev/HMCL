@@ -108,6 +108,7 @@ public final class MessageDialogPane extends HBox {
                 content.getChildren().setAll(textFlow);
             else {
                 ScrollPane scrollPane = new ScrollPane(textFlow);
+                FXUtils.smoothScrolling(scrollPane);
                 scrollPane.setPrefHeight(350);
                 VBox.setVgrow(scrollPane, Priority.ALWAYS);
                 scrollPane.setFitToWidth(true);
@@ -158,6 +159,13 @@ public final class MessageDialogPane extends HBox {
 
         public Builder(String text, String title, MessageType type) {
             this.dialog = new MessageDialogPane(text, title, type);
+        }
+
+        public Builder addHyperLink(String text, String externalLink) {
+            JFXHyperlink link = new JFXHyperlink(text);
+            link.setExternalLink(externalLink);
+            dialog.actions.getChildren().add(link);
+            return this;
         }
 
         public Builder addAction(Node actionNode) {

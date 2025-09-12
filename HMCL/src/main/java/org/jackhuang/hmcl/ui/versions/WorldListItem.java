@@ -24,7 +24,6 @@ import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
-import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -66,20 +65,7 @@ public final class WorldListItem extends Control {
         FXUtils.openFolder(world.getFile().toFile());
     }
 
-    public void manageDatapacks() {
-        if (world.getGameVersion() == null || // old game will not write game version to level.dat
-                GameVersionNumber.compare(world.getGameVersion(), "1.13") < 0) {
-            Controllers.dialog(i18n("world.datapack.1_13"));
-            return;
-        }
-        Controllers.navigate(new DatapackListPage(world.getWorldName(), world.getFile()));
-    }
-
-    public void showInfo() {
-        Controllers.navigate(new WorldInfoPage(world));
-    }
-
-    public void showBackupPage() {
-        Controllers.navigate(new WorldBackupsPage(world, backupsDir));
+    public void showManagePage() {
+        Controllers.navigate(new WorldManagePage(world, backupsDir));
     }
 }

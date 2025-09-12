@@ -28,6 +28,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -64,6 +66,16 @@ public final class JsonUtils {
 
     public static <K, V> TypeToken<Map<K, V>> mapTypeOf(Class<K> keyType, TypeToken<V> valueType) {
         return (TypeToken<Map<K, V>>) TypeToken.getParameterized(Map.class, keyType, valueType.getType());
+    }
+
+    public static <T> T fromJsonFile(Path file, Class<T> classOfT) throws IOException {
+        return fromJsonFile(file, TypeToken.get(classOfT));
+    }
+
+    public static <T> T fromJsonFile(Path file, TypeToken<T> type) throws IOException {
+        try (var reader = Files.newBufferedReader(file)) {
+            return GSON.fromJson(reader, type.getType());
+        }
     }
 
     public static <T> T fromJsonFully(InputStream json, Class<T> classOfT) throws IOException, JsonParseException {
@@ -123,6 +135,12 @@ public final class JsonUtils {
             return GSON.fromJson(json, type);
         } catch (JsonSyntaxException e) {
             return null;
+        }
+    }
+
+    public static void writeToJsonFile(Path file, Object value) throws IOException {
+        try (var writer = Files.newBufferedWriter(file)) {
+            GSON.toJson(value, writer);
         }
     }
 

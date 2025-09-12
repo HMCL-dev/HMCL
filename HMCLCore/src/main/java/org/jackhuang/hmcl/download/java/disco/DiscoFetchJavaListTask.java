@@ -23,7 +23,6 @@ import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
-import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
@@ -37,14 +36,6 @@ public final class DiscoFetchJavaListTask extends Task<EnumMap<JavaPackageType, 
 
     public static final String API_ROOT = System.getProperty("hmcl.discoapi.override", "https://api.foojay.io/disco/v3.0");
 
-    private static String getOperatingSystemName(OperatingSystem os) {
-        return os == OperatingSystem.OSX ? "macos" : os.getCheckedName();
-    }
-
-    private static String getArchitectureName(Architecture arch) {
-        return arch.getCheckedName();
-    }
-
     private final DiscoJavaDistribution distribution;
     private final String archiveType;
     private final Task<String> fetchPackagesTask;
@@ -55,8 +46,8 @@ public final class DiscoFetchJavaListTask extends Task<EnumMap<JavaPackageType, 
 
         HashMap<String, String> params = new HashMap<>();
         params.put("distribution", distribution.getApiParameter());
-        params.put("operating_system", getOperatingSystemName(platform.getOperatingSystem()));
-        params.put("architecture", getArchitectureName(platform.getArchitecture()));
+        params.put("operating_system", platform.getOperatingSystem().getCheckedName());
+        params.put("architecture", platform.getArchitecture().getCheckedName());
         params.put("archive_type", archiveType);
         params.put("directly_downloadable", "true");
         if (platform.getOperatingSystem() == OperatingSystem.LINUX)

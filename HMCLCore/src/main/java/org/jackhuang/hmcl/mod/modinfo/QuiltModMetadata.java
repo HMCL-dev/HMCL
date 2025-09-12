@@ -7,7 +7,6 @@ import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
@@ -60,7 +59,7 @@ public final class QuiltModMetadata {
             throw new IOException("File " + modFile + " is not a Quilt mod.");
         }
 
-        QuiltModMetadata root = JsonUtils.fromNonNullJson(FileUtils.readText(path), QuiltModMetadata.class);
+        QuiltModMetadata root = JsonUtils.fromNonNullJson(Files.readString(path), QuiltModMetadata.class);
         if (root.schema_version != 1) {
             throw new IOException("File " + modFile + " is not a supported Quilt mod.");
         }

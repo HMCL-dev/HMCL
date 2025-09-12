@@ -29,7 +29,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
 import org.jackhuang.hmcl.util.javafx.PropertyUtils;
 import org.jackhuang.hmcl.java.JavaRuntime;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
@@ -39,6 +39,7 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
@@ -47,7 +48,16 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 @JsonAdapter(VersionSetting.Serializer.class)
 public final class VersionSetting implements Cloneable, Observable {
 
-    private transient ObservableHelper helper = new ObservableHelper(this);
+    private static final int SUGGESTED_MEMORY;
+
+    static {
+        double totalMemoryMB = MEGABYTES.convertFromBytes(SystemInfo.getTotalMemorySize());
+        SUGGESTED_MEMORY = totalMemoryMB >= 32768
+                ? 8192
+                : Integer.max((int) (Math.round(totalMemoryMB / 4.0 / 128.0) * 128), 256);
+    }
+
+    private final transient ObservableHelper helper = new ObservableHelper(this);
 
     public VersionSetting() {
         PropertyUtils.attachListener(this, helper);
@@ -219,7 +229,7 @@ public final class VersionSetting implements Cloneable, Observable {
         permSizeProperty.set(permSize);
     }
 
-    private final IntegerProperty maxMemoryProperty = new SimpleIntegerProperty(this, "maxMemory", OperatingSystem.SUGGESTED_MEMORY);
+    private final IntegerProperty maxMemoryProperty = new SimpleIntegerProperty(this, "maxMemory", SUGGESTED_MEMORY);
 
     public IntegerProperty maxMemoryProperty() {
         return maxMemoryProperty;
@@ -734,7 +744,7 @@ public final class VersionSetting implements Cloneable, Observable {
             obj.addProperty("javaArgs", src.getJavaArgs());
             obj.addProperty("minecraftArgs", src.getMinecraftArgs());
             obj.addProperty("environmentVariables", src.getEnvironmentVariables());
-            obj.addProperty("maxMemory", src.getMaxMemory() <= 0 ? OperatingSystem.SUGGESTED_MEMORY : src.getMaxMemory());
+            obj.addProperty("maxMemory", src.getMaxMemory() <= 0 ? SUGGESTED_MEMORY : src.getMaxMemory());
             obj.addProperty("minMemory", src.getMinMemory());
             obj.addProperty("autoMemory", src.isAutoMemory());
             obj.addProperty("permSize", src.getPermSize());
@@ -787,22 +797,14 @@ public final class VersionSetting implements Cloneable, Observable {
             return obj;
         }
 
-        private static <T> T getOrDefault(T[] values, JsonElement index, T defaultValue) {
-            if (index == null)
-                return defaultValue;
-
-            int idx = index.getAsInt();
-            return idx >= 0 && idx < values.length ? values[idx] : defaultValue;
-        }
-
         @Override
         public VersionSetting deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             if (!(json instanceof JsonObject))
                 return null;
             JsonObject obj = (JsonObject) json;
 
-            int maxMemoryN = parseJsonPrimitive(Optional.ofNullable(obj.get("maxMemory")).map(JsonElement::getAsJsonPrimitive).orElse(null), OperatingSystem.SUGGESTED_MEMORY);
-            if (maxMemoryN <= 0) maxMemoryN = OperatingSystem.SUGGESTED_MEMORY;
+            int maxMemoryN = parseJsonPrimitive(Optional.ofNullable(obj.get("maxMemory")).map(JsonElement::getAsJsonPrimitive).orElse(null), SUGGESTED_MEMORY);
+            if (maxMemoryN <= 0) maxMemoryN = SUGGESTED_MEMORY;
 
             VersionSetting vs = new VersionSetting();
 
@@ -829,14 +831,14 @@ public final class VersionSetting implements Cloneable, Observable {
             vs.setNotCheckJVM(Optional.ofNullable(obj.get("notCheckJVM")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setNotPatchNatives(Optional.ofNullable(obj.get("notPatchNatives")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setShowLogs(Optional.ofNullable(obj.get("showLogs")).map(JsonElement::getAsBoolean).orElse(false));
-            vs.setLauncherVisibility(getOrDefault(LauncherVisibility.values(), obj.get("launcherVisibility"), LauncherVisibility.HIDE));
-            vs.setProcessPriority(getOrDefault(ProcessPriority.values(), obj.get("processPriority"), ProcessPriority.NORMAL));
+            vs.setLauncherVisibility(parseJsonPrimitive(obj.getAsJsonPrimitive("launcherVisibility"), LauncherVisibility.class, LauncherVisibility.HIDE));
+            vs.setProcessPriority(parseJsonPrimitive(obj.getAsJsonPrimitive("processPriority"), ProcessPriority.class, ProcessPriority.NORMAL));
             vs.setUseNativeGLFW(Optional.ofNullable(obj.get("useNativeGLFW")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setUseNativeOpenAL(Optional.ofNullable(obj.get("useNativeOpenAL")).map(JsonElement::getAsBoolean).orElse(false));
-            vs.setGameDirType(getOrDefault(GameDirectoryType.values(), obj.get("gameDirType"), GameDirectoryType.ROOT_FOLDER));
+            vs.setGameDirType(parseJsonPrimitive(obj.getAsJsonPrimitive("gameDirType"), GameDirectoryType.class, GameDirectoryType.ROOT_FOLDER));
             vs.setDefaultJavaPath(Optional.ofNullable(obj.get("defaultJavaPath")).map(JsonElement::getAsString).orElse(null));
-            vs.setNativesDirType(getOrDefault(NativesDirectoryType.values(), obj.get("nativesDirType"), NativesDirectoryType.VERSION_FOLDER));
-            vs.setVersionIcon(getOrDefault(VersionIconType.values(), obj.get("versionIcon"), VersionIconType.DEFAULT));
+            vs.setNativesDirType(parseJsonPrimitive(obj.getAsJsonPrimitive("nativesDirType"), NativesDirectoryType.class, NativesDirectoryType.VERSION_FOLDER));
+            vs.setVersionIcon(parseJsonPrimitive(obj.getAsJsonPrimitive("versionIcon"), VersionIconType.class, VersionIconType.DEFAULT));
 
             if (obj.get("javaVersionType") != null) {
                 JavaVersionType javaVersionType = parseJsonPrimitive(obj.getAsJsonPrimitive("javaVersionType"), JavaVersionType.class, JavaVersionType.AUTO);
