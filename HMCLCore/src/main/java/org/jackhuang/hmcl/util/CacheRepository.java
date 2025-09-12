@@ -155,6 +155,10 @@ public class CacheRepository {
     }
 
     public Path getCachedRemoteFile(URI uri) throws IOException {
+        return getCachedRemoteFile(uri, false);
+    }
+
+    public Path getCachedRemoteFile(URI uri, boolean checkExpires) throws IOException {
         lock.readLock().lock();
         ETagItem eTagItem;
         try {
@@ -164,6 +168,10 @@ public class CacheRepository {
         }
         if (eTagItem == null) throw new IOException("Cannot find the URL");
         if (StringUtils.isBlank(eTagItem.hash) || !fileExists(SHA1, eTagItem.hash)) throw new FileNotFoundException();
+        if (checkExpires && System.currentTimeMillis() > eTagItem.expires) {
+            throw new IOException("Cache expired: " + eTagItem.expires);
+        }
+
         Path file = getFile(SHA1, eTagItem.hash);
         if (Files.getLastModifiedTime(file).toMillis() != eTagItem.localLastModified) {
             String hash = DigestUtils.digestToString(SHA1, file);

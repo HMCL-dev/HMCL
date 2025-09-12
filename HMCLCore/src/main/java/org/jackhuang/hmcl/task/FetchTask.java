@@ -100,6 +100,17 @@ public abstract class FetchTask<T> extends Task<T> {
         int repeat = 0;
         download:
         for (URI uri : uris) {
+            if (checkETag) {
+                // Handle cache
+                try {
+                    Path cache = repository.getCachedRemoteFile(uri, true);
+                    useCachedResult(cache);
+                    LOG.info("Using cached file for " + NetworkUtils.dropQuery(uri));
+                    return;
+                } catch (IOException ignored) {
+                }
+            }
+
             for (int retryTime = 0; retryTime < retry; retryTime++) {
                 if (isCancelled()) {
                     break download;
@@ -113,8 +124,7 @@ public abstract class FetchTask<T> extends Task<T> {
 
                     URLConnection conn = NetworkUtils.createConnection(uri);
 
-                    if (conn instanceof HttpURLConnection) {
-                        var httpConnection = (HttpURLConnection) conn;
+                    if (conn instanceof HttpURLConnection httpConnection) {
                         httpConnection.setRequestProperty("Accept-Encoding", "gzip");
 
                         if (checkETag) repository.injectConnection(httpConnection);
