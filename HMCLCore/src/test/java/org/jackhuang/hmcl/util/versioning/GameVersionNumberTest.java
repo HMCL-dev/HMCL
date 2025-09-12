@@ -154,7 +154,7 @@ public final class GameVersionNumberTest {
                 () -> assertEquals(minor, release.getMinor()),
                 () -> assertEquals(patch, release.getPatch()),
                 () -> assertEquals(GameVersionNumber.Release.TYPE_UNKNOWN, release.getEaType()),
-                () -> assertEquals(0, release.getEaType())
+                () -> assertEquals(VersionNumber.ZERO, release.getEaVersion())
         );
     }
 
