@@ -279,6 +279,85 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         }
     }
 
+    private static Task<Image> loadModIcon(LocalModFile modFile, int size) {
+        return Task.supplyAsync(() -> {
+            List<String> iconPaths = new ArrayList<>();
+
+            if (StringUtils.isNotBlank(modFile.getLogoPath())) {
+                iconPaths.add(modFile.getLogoPath());
+            }
+
+            iconPaths.addAll(Arrays.asList(
+                "icon.png",
+                "logo.png",
+                "mod_logo.png",
+                "pack.png",
+                "logoFile.png",
+                "assets/icon.png",
+                "assets/logo.png",
+                "assets/mod_icon.png",
+                "assets/mod_logo.png",
+                "META-INF/icon.png",
+                "META-INF/logo.png",
+                "META-INF/mod_icon.png",
+                "textures/icon.png",
+                "textures/logo.png",
+                "textures/mod_icon.png",
+                "resources/icon.png",
+                "resources/logo.png",
+                "resources/mod_icon.png"
+            ));
+
+            String modId = modFile.getId();
+            if (StringUtils.isNotBlank(modId)) {
+                iconPaths.addAll(Arrays.asList(
+                    "assets/" + modId + "/icon.png",
+                    "assets/" + modId + "/logo.png",
+                    "assets/" + modId.replace("-", "") + "/icon.png",
+                    "assets/" + modId.replace("-", "") + "/logo.png",
+                    modId + ".png",
+                    modId + "-logo.png",
+                    modId + "-icon.png",
+                    modId + "_logo.png",
+                    modId + "_icon.png",
+                    "textures/" + modId + "/icon.png",
+                    "textures/" + modId + "/logo.png",
+                    "resources/" + modId + "/icon.png",
+                    "resources/" + modId + "/logo.png"
+                ));
+            }
+
+            try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile.getFile())) {
+                for (String path : iconPaths) {
+                    Path iconPath = fs.getPath(path);
+                    if (Files.exists(iconPath)) {
+                        Image image = FXUtils.loadImage(iconPath, 40, 40, true, true);
+                        if (!image.isError() &&
+                                image.getWidth() > 0 &&
+                                image.getHeight() > 0 &&
+                                Math.abs(image.getWidth() - image.getHeight()) < 1) {
+                            return image;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                LOG.warning("Failed to load mod icons", e);
+            }
+
+            String defaultIcon;
+            switch (modFile.getModLoaderType()) {
+                case FORGE: defaultIcon = "/assets/img/forge.png"; break;
+                case NEO_FORGED: defaultIcon = "/assets/img/neoforge.png"; break;
+                case FABRIC: defaultIcon = "/assets/img/fabric.png"; break;
+                case QUILT: defaultIcon = "/assets/img/quilt.png"; break;
+                case LITE_LOADER: defaultIcon = "/assets/img/liteloader.png"; break;
+                default: defaultIcon = "/assets/img/command.png"; break;
+            }
+
+            return FXUtils.newBuiltinImage(defaultIcon, size, size, true, true);
+        });
+    }
+
     static class ModInfoObject extends RecursiveTreeObject<ModInfoObject> implements Comparable<ModInfoObject> {
         private final BooleanProperty active;
         private final LocalModFile localModFile;
@@ -291,15 +370,19 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             this.active = localModFile.activeProperty();
 
             StringBuilder title = new StringBuilder(localModFile.getName());
-            if (isNotBlank(localModFile.getVersion()))
-                title.append(" ").append(localModFile.getVersion());
             this.title = title.toString();
 
-            StringBuilder message = new StringBuilder(localModFile.getFileName());
-            if (isNotBlank(localModFile.getGameVersion()))
-                message.append(", ").append(i18n("mods.game.version")).append(": ").append(localModFile.getGameVersion());
-            if (isNotBlank(localModFile.getAuthors()))
-                message.append(", ").append(i18n("archive.author")).append(": ").append(localModFile.getAuthors());
+            List<String> parts = new ArrayList<>();
+            if (isNotBlank(localModFile.getId())) {
+                parts.add(localModFile.getId());
+            }
+            if (isNotBlank(localModFile.getVersion())) {
+                parts.add(localModFile.getVersion());
+            }
+            if (isNotBlank(localModFile.getGameVersion())) {
+                parts.add(i18n("game.version") + ": " + localModFile.getGameVersion());
+            }
+            String message = String.join(", ", parts);
             this.message = message.toString();
 
             this.mod = ModTranslations.MOD.getModById(localModFile.getId());
@@ -334,76 +417,39 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             titleContainer.setSpacing(8);
 
             ImageView imageView = new ImageView();
-            Task.supplyAsync(() -> {
-                try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modInfo.getModInfo().getFile())) {
-                    String logoPath = modInfo.getModInfo().getLogoPath();
-                    if (StringUtils.isNotBlank(logoPath)) {
-                        Path iconPath = fs.getPath(logoPath);
-                        if (Files.exists(iconPath)) {
-                            try {
-                                Image image = FXUtils.loadImage(iconPath, 40, 40, true, true);
-                                if (!image.isError() && image.getWidth() == image.getHeight())
-                                    return image;
-                            } catch (Throwable e) {
-                                LOG.warning("Failed to load image " + logoPath, e);
-                            }
-                        }
-                    }
-
-                    List<String> defaultPaths = new ArrayList<>(Arrays.asList(
-                            "icon.png",
-                            "logo.png",
-                            "mod_logo.png",
-                            "pack.png",
-                            "logoFile.png"
-                    ));
-
-                    String id = modInfo.getModInfo().getId();
-                    if (StringUtils.isNotBlank(id)) {
-                        defaultPaths.addAll(Arrays.asList(
-                                "assets/" + id + "/icon.png",
-                                "assets/" + id.replace("-", "") + "/icon.png",
-                                id + ".png",
-                                id + "-logo.png",
-                                id + "-icon.png",
-                                id + "_logo.png",
-                                id + "_icon.png"
-                        ));
-                    }
-
-                    for (String path : defaultPaths) {
-                        Path iconPath = fs.getPath(path);
-                        if (Files.exists(iconPath)) {
-                            Image image = FXUtils.loadImage(iconPath, 40, 40, true, true);
-                            if (!image.isError() && image.getWidth() == image.getHeight())
-                                return image;
-                        }
-                    }
-                } catch (Exception e) {
-                    LOG.warning("Failed to load icon", e);
-                }
-
-                return null;
-            }).whenComplete(Schedulers.javafx(), (image, exception) -> {
-                if (image != null) {
+            loadModIcon(modInfo.getModInfo(), 40)
+                .whenComplete(Schedulers.javafx(), (image, exception) -> {
                     imageView.setImage(image);
-                } else {
-                    imageView.setImage(FXUtils.newBuiltinImage("/assets/img/command.png", 40, 40, true, true));
-                }
-            }).start();
+                }).start();
 
             TwoLineListItem title = new TwoLineListItem();
             title.setTitle(modInfo.getModInfo().getName());
-            if (StringUtils.isNotBlank(modInfo.getModInfo().getVersion())) {
-                title.getTags().setAll(modInfo.getModInfo().getVersion());
+            if (modInfo.getMod() != null) {
+                title.getTags().add(modInfo.getMod().getDisplayName());
             }
-            title.setSubtitle(FileUtils.getName(modInfo.getModInfo().getFile()));
+            if (StringUtils.isNotBlank(modInfo.getModInfo().getAuthors())) {
+                title.getTags().add(i18n("archive.author") + ": " + modInfo.getModInfo().getAuthors());
+            }
+
+            List<String> subtitleParts = new ArrayList<>();
+            subtitleParts.add(FileUtils.getName(modInfo.getModInfo().getFile()));
+            if (StringUtils.isNotBlank(modInfo.getModInfo().getGameVersion())) {
+                subtitleParts.add(modInfo.getModInfo().getGameVersion());
+            }
+            if (StringUtils.isNotBlank(modInfo.getModInfo().getVersion())) {
+                subtitleParts.add(modInfo.getModInfo().getVersion());
+            }
+            if (StringUtils.isNotBlank(modInfo.getModInfo().getAuthors())) {
+                subtitleParts.add(i18n("archive.author") + ": " + modInfo.getModInfo().getAuthors());
+            }
+            title.setSubtitle(String.join(", ", subtitleParts));
 
             titleContainer.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), title);
             setHeading(titleContainer);
 
             Label description = new Label(modInfo.getModInfo().getDescription().toString());
             FXUtils.copyOnDoubleClick(description);
+            FXUtils.installFastTooltip(description, modInfo.getModInfo().getDescription().toString());
             setBody(description);
 
             if (StringUtils.isNotBlank(modInfo.getModInfo().getId())) {
@@ -511,6 +557,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
 
     final class ModInfoListCell extends MDListCell<ModInfoObject> {
         JFXCheckBox checkBox = new JFXCheckBox();
+        ImageView imageView = new ImageView();
         TwoLineListItem content = new TwoLineListItem();
         JFXButton restoreButton = new JFXButton();
         JFXButton infoButton = new JFXButton();
@@ -527,6 +574,11 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             content.setMouseTransparent(true);
             setSelectable();
 
+            imageView.setFitWidth(24);
+            imageView.setFitHeight(24);
+            imageView.setPreserveRatio(true);
+            imageView.setImage(FXUtils.newBuiltinImage("/assets/img/command.png", 24, 24, true, true));
+
             restoreButton.getStyleClass().add("toggle-icon4");
             restoreButton.setGraphic(FXUtils.limitingSize(SVG.RESTORE.createIcon(Theme.blackFill(), 24), 24, 24));
 
@@ -538,7 +590,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             infoButton.getStyleClass().add("toggle-icon4");
             infoButton.setGraphic(FXUtils.limitingSize(SVG.INFO.createIcon(Theme.blackFill(), 24), 24, 24));
 
-            container.getChildren().setAll(checkBox, content, restoreButton, revealButton, infoButton);
+            container.getChildren().setAll(checkBox, imageView, content, restoreButton, revealButton, infoButton);
 
             StackPane.setMargin(container, new Insets(8));
             getContainer().getChildren().setAll(container);
@@ -547,6 +599,12 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         @Override
         protected void updateControl(ModInfoObject dataItem, boolean empty) {
             if (empty) return;
+
+            loadModIcon(dataItem.getModInfo(), 24)
+                .whenComplete(Schedulers.javafx(), (image, exception) -> {
+                    imageView.setImage(image);
+                }).start();
+
             content.setTitle(dataItem.getTitle());
             content.getTags().clear();
             switch (dataItem.getModInfo().getModLoaderType()) {
@@ -570,9 +628,14 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                     break;
             }
             if (dataItem.getMod() != null && I18n.isUseChinese()) {
-                content.getTags().add(dataItem.getMod().getDisplayName());
+                if (isNotBlank(dataItem.getSubtitle())) {
+                    content.setSubtitle(dataItem.getSubtitle() + ", " + dataItem.getMod().getDisplayName());
+                } else {
+                    content.setSubtitle(dataItem.getMod().getDisplayName());
+                }
+            } else {
+                content.setSubtitle(dataItem.getSubtitle());
             }
-            content.setSubtitle(dataItem.getSubtitle());
             if (booleanProperty != null) {
                 checkBox.selectedProperty().unbindBidirectional(booleanProperty);
             }
