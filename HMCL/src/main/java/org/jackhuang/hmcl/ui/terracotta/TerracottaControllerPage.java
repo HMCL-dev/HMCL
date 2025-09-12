@@ -429,13 +429,6 @@ public class TerracottaControllerPage extends StackPane {
         nodes.add(statusPane);
     }
 
-    public static void copyCode() {
-        TerracottaState state = UI_STATE.get();
-        if (state instanceof TerracottaState.HostOK) {
-            FXUtils.copyText(((TerracottaState.HostOK) state).getCode());
-        }
-    }
-
     private static final class LineButton extends RipplerContainer {
         private final WeakListenerHolder holder = new WeakListenerHolder();
 

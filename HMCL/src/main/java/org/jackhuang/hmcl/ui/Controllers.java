@@ -488,9 +488,6 @@ public final class Controllers {
                     Profile profile = Profiles.getSelectedProfile();
                     Versions.launch(profile, profile.getSelectedVersion(), LauncherHelper::setKeep);
                     break;
-                case "hmcl://terracotta/copy_code":
-                    TerracottaControllerPage.copyCode();
-                    break;
             }
         } else {
             FXUtils.openLink(href);
