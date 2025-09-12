@@ -33,7 +33,6 @@ import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
-import org.jackhuang.hmcl.util.logging.Logger;
 
 import static javafx.beans.binding.Bindings.createStringBinding;
 import static org.jackhuang.hmcl.setting.Accounts.getAccountFactory;
