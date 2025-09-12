@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
+import org.jackhuang.hmcl.util.logging.Logger;
 
 import static javafx.beans.binding.Bindings.createStringBinding;
 import static org.jackhuang.hmcl.setting.Accounts.getAccountFactory;
@@ -78,15 +79,22 @@ public class AccountAdvancedListItem extends AdvancedListItem {
         setActionButtonVisible(false);
 
         setOnScroll(event -> {
+            double deltaY = event.getDeltaY();
+            if (deltaY == 0)
+                return;
+
             Account current = account.get();
             if (current == null) return;
+
             ObservableList<Account> accounts = Accounts.getAccounts();
-            int currentIndex = accounts.indexOf(account.get());
-            if (event.getDeltaY() > 0) { // up
+            int currentIndex = accounts.indexOf(current);
+            if (currentIndex < 0) return;
+
+            if (deltaY > 0) // up
                 currentIndex--;
-            } else { // down
+            else // down
                 currentIndex++;
-            }
+
             Accounts.setSelectedAccount(accounts.get((currentIndex + accounts.size()) % accounts.size()));
         });
     }
