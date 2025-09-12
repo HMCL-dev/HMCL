@@ -1214,6 +1214,32 @@ public final class FXUtils {
         return label;
     }
 
+    public static void showTooltipWhenTruncated(Labeled labeled) {
+        ReadOnlyBooleanProperty textTruncatedProperty = textTruncatedProperty(labeled);
+        if (textTruncatedProperty != null) {
+            InvalidationListener listener = new InvalidationListener() {
+                private Tooltip tooltip;
+
+                @Override
+                public void invalidated(Observable observable) {
+                    boolean isTextTruncated = textTruncatedProperty.get();
+                    if (isTextTruncated) {
+                        if (tooltip == null) {
+                            tooltip = new Tooltip();
+                            tooltip.textProperty().bind(labeled.textProperty());
+                        }
+
+                        FXUtils.installFastTooltip(labeled, tooltip);
+                    } else if (tooltip != null) {
+                        Tooltip.uninstall(labeled, tooltip);
+                    }
+                }
+            };
+            listener.invalidated(textTruncatedProperty);
+            textTruncatedProperty.addListener(listener);
+        }
+    }
+
     public static void applyDragListener(Node node, FileFilter filter, Consumer<List<File>> callback) {
         applyDragListener(node, filter, callback, null);
     }
