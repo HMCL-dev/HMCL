@@ -72,7 +72,6 @@ public class MicrosoftAccountSkinPane extends StackPane {
         this.account = account;
         this.profile = account.getMinecraftProfileResponse().orElse(null);
         this.accountChangeCapeDialog = new MicrosoftAccountChangeCapeDialog(account, profile);
-        getStyleClass().add("skin-pane");
 
         JFXDialogLayout layout = new JFXDialogLayout();
         getChildren().setAll(layout);
@@ -183,41 +182,23 @@ public class MicrosoftAccountSkinPane extends StackPane {
             Texture capeTexture = textures.get(TextureType.CAPE);
             Texture skinTexture = textures.get(TextureType.SKIN);
 
-            Task<Image> capeTask = (capeTexture != null) ?
-                    FXUtils.getRemoteImageTask(capeTexture.getUrl(), 0, 0, false, false) :
-                    null;
+            Task<Image> capeTask = (capeTexture != null) ? FXUtils.getRemoteImageTask(capeTexture.getUrl(), 0, 0, false, false) : Task.completed(null);
 
-            Task<Image> skinTask = (skinTexture != null) ?
-                    FXUtils.getRemoteImageTask(skinTexture.getUrl(), 0, 0, false, false) :
-                    Task.completed(null);
+            Task<Image> skinTask = (skinTexture != null) ? FXUtils.getRemoteImageTask(skinTexture.getUrl(), 0, 0, false, false) : Task.completed(null);
 
-            Task<Void> combinedTask = Task.allOf(
-                    capeTask != null ? capeTask : Task.completed(null),
-                    skinTask
-            ).thenRunAsync(Schedulers.javafx(), () -> {
-                Image loadedCapeImg = (capeTask != null) ? capeTask.getResult() : null;
+            Task<Void> combinedTask = Task.allOf(capeTask, skinTask).thenRunAsync(Schedulers.javafx(), () -> {
+                Image loadedCapeImg = capeTask.getResult();
                 Image loadedSkinImg = skinTask.getResult();
 
-                boolean isSlim = model == null ?
-                        Objects.equals(profile.getSkins().get(0).getVariant(), "SLIM") :
-                        model.equals(TextureModel.SLIM);
+                boolean isSlim = Objects.equals(profile.getSkins().get(0).getVariant(), "SLIM") || Objects.equals(model, TextureModel.SLIM);
 
-                canvas.updateSkin(
-                        localSkinImg != null ? localSkinImg : loadedSkinImg,
-                        isSlim,
-                        loadedCapeImg
-                );
+                canvas.updateSkin(localSkinImg != null ? localSkinImg : loadedSkinImg, isSlim, loadedCapeImg);
 
                 canvasSpinnerPane.hideSpinner();
-                canvas.getAnimationPlayer().addSkinAnimation(
-                        new SkinAniWavingArms(100, 2000, 7.5, canvas),
-                        new SkinAniRunning(100, 100, 30, canvas)
-                );
+                canvas.getAnimationPlayer().addSkinAnimation(new SkinAniWavingArms(100, 2000, 7.5, canvas), new SkinAniRunning(100, 100, 30, canvas));
             });
 
             combinedTask.start();
-
-
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception != null) {
                 LOG.warning("Failed to initiate skin update", exception);
