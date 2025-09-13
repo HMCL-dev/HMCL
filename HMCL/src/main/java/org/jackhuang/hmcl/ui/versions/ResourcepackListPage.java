@@ -200,11 +200,12 @@ public class ResourcepackListPage extends ListPageBase<ResourcepackListPage.Reso
             left.getChildren().addAll(createIcon(item.getFile().getIcon()));
 //            left.getChildren().addAll(item.checkBox, createIcon(item.getFile().getIcon()));
             left.setPadding(new Insets(0, 8, 0, 0));
-            FXUtils.setLimitWidth(left, 64);
+//            FXUtils.setLimitWidth(left, 64);
+            FXUtils.setLimitWidth(left, 48);
             root.setLeft(left);
 
             TwoLineListItem center = new TwoLineListItem();
-            center.setPadding(new Insets(0, 0, 0, 8));
+//            center.setPadding(new Insets(0, 0, 0, 8));
             center.setTitle(item.getFile().getName());
             center.setSubtitle(item.getFile().getDescription());
             root.setCenter(center);
