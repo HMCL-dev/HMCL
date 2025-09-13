@@ -175,7 +175,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             launcherSettingsItem.setTitle(i18n("settings"));
             launcherSettingsItem.setOnAction(e -> Controllers.navigate(Controllers.getSettingsPage()));
 
-            // sixth item in left sideba
+            // sixth item in left sidebar
             AdvancedListItem terracottaItem = new AdvancedListItem();
             terracottaItem.setLeftGraphic(wrap(SVG.HOST));
             terracottaItem.setActionButtonVisible(false);

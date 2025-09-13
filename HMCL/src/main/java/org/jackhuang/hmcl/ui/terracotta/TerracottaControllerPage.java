@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2025  huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -259,7 +259,7 @@ public class TerracottaControllerPage extends StackPane {
                             Clipboard.getSystemClipboard().setContent(cp);
                         }
 
-                        // FIXME: The implementation to display Room Code is ambiguous. Consider using more clearer JavaFX Element in the future.
+                        // FIXME: The implementation to display Room Code is ambiguous. Consider using a clearer JavaFX Element in the future.
                         TextField label = new TextField(cs);
                         label.setEditable(false);
                         label.setFocusTraversable(false);
