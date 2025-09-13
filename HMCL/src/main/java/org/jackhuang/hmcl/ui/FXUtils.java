@@ -545,37 +545,35 @@ public final class FXUtils {
         if (link == null)
             return;
 
+        String uri = NetworkUtils.encodeLocation(link);
         thread(() -> {
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                try {
-                    Runtime.getRuntime().exec(new String[]{"rundll32.exe", "url.dll,FileProtocolHandler", link});
+            try {
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                    Runtime.getRuntime().exec(new String[]{"rundll32.exe", "url.dll,FileProtocolHandler", uri});
                     return;
-                } catch (Throwable e) {
-                    LOG.warning("An exception occurred while calling rundll32", e);
-                }
-            }
-            if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
-                for (String browser : linuxBrowsers) {
-                    Path path = SystemUtils.which(browser);
-                    if (path != null) {
-                        try {
-                            Runtime.getRuntime().exec(new String[]{path.toString(), link});
-                            return;
-                        } catch (Throwable ignored) {
+                } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+                    Runtime.getRuntime().exec(new String[]{"open", uri});
+                    return;
+                } else {
+                    for (String browser : linuxBrowsers) {
+                        Path path = SystemUtils.which(browser);
+                        if (path != null) {
+                            try {
+                                Runtime.getRuntime().exec(new String[]{path.toString(), uri});
+                                return;
+                            } catch (Throwable ignored) {
+                            }
                         }
                     }
                     LOG.warning("No known browser found");
                 }
-            }
-            try {
-                java.awt.Desktop.getDesktop().browse(new URI(link));
             } catch (Throwable e) {
-                if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
-                    try {
-                        Runtime.getRuntime().exec(new String[]{"/usr/bin/open", link});
-                    } catch (IOException ex) {
-                        LOG.warning("Unable to open link: " + link, ex);
-                    }
+                LOG.warning("Failed to open link: " + link + ", fallback to java.awt.Desktop", e);
+            }
+
+            try {
+                java.awt.Desktop.getDesktop().browse(new URI(uri));
+            } catch (Throwable e) {
                 LOG.warning("Failed to open link: " + link, e);
             }
         });
