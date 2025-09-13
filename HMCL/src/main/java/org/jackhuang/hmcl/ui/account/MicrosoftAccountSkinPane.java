@@ -24,7 +24,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
@@ -45,11 +45,9 @@ import org.jackhuang.hmcl.ui.skin.SkinCanvas;
 import org.jackhuang.hmcl.ui.skin.animation.SkinAniRunning;
 import org.jackhuang.hmcl.ui.skin.animation.SkinAniWavingArms;
 import org.jackhuang.hmcl.util.logging.Logger;
-import org.jackhuang.hmcl.util.skin.InvalidSkinException;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
@@ -81,30 +79,23 @@ public class MicrosoftAccountSkinPane extends StackPane {
         canvas.enableRotation(.5);
         canvasSpinnerPane.setContent(canvas);
         canvasSpinnerPane.showSpinner();
-
-        StackPane canvasPane = new StackPane(canvasSpinnerPane);
-        canvasPane.setPrefWidth(300);
-        canvasPane.setPrefHeight(300);
+        canvasSpinnerPane.setPrefWidth(300);
+        canvasSpinnerPane.setPrefHeight(300);
 
         BorderPane pane = new BorderPane();
-        pane.setCenter(canvasPane);
+        pane.setCenter(canvasSpinnerPane);
 
-        FlowPane flowPane = new FlowPane();
-        flowPane.setPadding(new Insets(0, 0, 0, 0));
+        HBox actionsBox = new HBox();
+        actionsBox.setPadding(new Insets(0, 0, 0, 0));
 
-        StackPane skinOptionPane = new StackPane(flowPane);
+        StackPane skinOptionPane = new StackPane(actionsBox);
         skinOptionPane.setMaxWidth(300);
 
         updateCanvas().start();
 
-        JFXButton acceptButton = new JFXButton(i18n("button.ok"));
-        acceptButton.getStyleClass().add("dialog-accept");
-        acceptButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
-
-        JFXButton uploadSkinButton = new JFXButton(i18n("account.skin.upload"));
+        JFXButton uploadSkinButton = FXUtils.newBorderButton(i18n("account.skin.upload"));
         updateSkinButtonSpinnerPane.setContent(uploadSkinButton);
         updateSkinButtonSpinnerPane.setPrefSize(150, 40);
-        uploadSkinButton.getStyleClass().add("jfx-button-border");
         uploadSkinButton.setOnAction(event -> {
             updateSkinButtonSpinnerPane.showSpinner();
             Task<?> task = uploadSkin();
@@ -115,23 +106,22 @@ public class MicrosoftAccountSkinPane extends StackPane {
             }
         });
 
-        JFXButton changeCapeButton = new JFXButton(i18n("account.cape.change"));
+        JFXButton changeCapeButton = FXUtils.newBorderButton(i18n("account.cape.change"));
         updateSkinButtonSpinnerPane.setContent(uploadSkinButton);
-        changeCapeButton.getStyleClass().add("jfx-button-border");
         changeCapeButton.setOnAction(event -> Controllers.dialog(accountChangeCapeDialog));
-        flowPane.setAlignment(Pos.CENTER_RIGHT);
-        flowPane.getChildren().add(updateSkinButtonSpinnerPane);
-        flowPane.getChildren().add(changeCapeButton);
+        actionsBox.setAlignment(Pos.CENTER_RIGHT);
+        actionsBox.getChildren().add(updateSkinButtonSpinnerPane);
+        actionsBox.getChildren().add(changeCapeButton);
 
         pane.setBottom(skinOptionPane);
 
-        JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
-        cancelButton.getStyleClass().add("dialog-cancel");
-        cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
-        onEscPressed(this, cancelButton::fire);
+        JFXButton closeButton = new JFXButton(i18n("button.ok"));
+        closeButton.getStyleClass().add("dialog-accept");
+        closeButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
+        onEscPressed(this, closeButton::fire);
 
         layout.setBody(pane);
-        layout.setActions(acceptButton, cancelButton);
+        layout.setActions(closeButton);
     }
 
     private Task<?> uploadSkin() {
@@ -153,14 +143,11 @@ public class MicrosoftAccountSkinPane extends StackPane {
 
         return Task.runAsync(() -> {
             model = future.get();
+
             try (FileInputStream input = new FileInputStream(selectedFile)) {
                 localSkinImg = new Image(input);
-            } catch (IOException e) {
-                throw new InvalidSkinException("Failed to read skin image", e);
             }
-            if (localSkinImg.isError()) {
-                throw new InvalidSkinException("Failed to read skin image", localSkinImg.getException());
-            }
+
             boolean isSlim = model.equals(TextureModel.SLIM);
             LOG.info("Uploading skin [" + selectedFile + "], model [" + model + "]");
             account.uploadSkin(isSlim, selectedFile.toPath());
