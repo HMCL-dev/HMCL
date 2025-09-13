@@ -88,7 +88,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                 .addNavigationDrawerTab(header, worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE);
 
         if (world.getGameVersion() != null && // old game will not write game version to level.dat
-                GameVersionNumber.compare(world.getGameVersion(), "17w43a") >= 0) {
+                GameVersionNumber.asGameVersion(world.getGameVersion()).isAtLeast("1.13", "17w43a")) {
             header.getTabs().add(datapackTab);
             sideBar.addNavigationDrawerTab(header, datapackTab, i18n("world.datapack"), SVG.EXTENSION);
         }
