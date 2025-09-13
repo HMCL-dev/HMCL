@@ -204,7 +204,7 @@ public abstract sealed class TerracottaState {
 
         @Override
         public boolean isForkOf(TerracottaState state) {
-            return state instanceof HostOK hostOK && this.index - hostOK.index <= profileIndex;
+            return state instanceof GuestOK guestOK && this.index - guestOK.index <= profileIndex;
         }
     }
 
