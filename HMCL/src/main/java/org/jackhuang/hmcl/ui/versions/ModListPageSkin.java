@@ -395,7 +395,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             TwoLineListItem title = new TwoLineListItem();
             title.setTitle(modInfo.getModInfo().getName());
             if (StringUtils.isNotBlank(modInfo.getModInfo().getVersion())) {
-                title.getTags().setAll(modInfo.getModInfo().getVersion());
+                title.addTag(modInfo.getModInfo().getVersion());
             }
             title.setSubtitle(FileUtils.getName(modInfo.getModInfo().getFile()));
 
@@ -442,9 +442,10 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                                         default:
                                             continue;
                                     }
-                                    List<String> tags = title.getTags();
-                                    if (!tags.contains(loaderName)) {
-                                        tags.add(loaderName);
+                                    if (title.getTags()
+                                            .stream()
+                                            .noneMatch(it -> it.getText().equals(loaderName))) {
+                                        title.addTag(loaderName);
                                     }
                                 }
 
@@ -551,26 +552,26 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             content.getTags().clear();
             switch (dataItem.getModInfo().getModLoaderType()) {
                 case FORGE:
-                    content.getTags().add(i18n("install.installer.forge"));
+                    content.addTag(i18n("install.installer.forge"));
                     break;
                 case CLEANROOM:
-                    content.getTags().add(i18n("install.installer.cleanroom"));
+                    content.addTag(i18n("install.installer.cleanroom"));
                     break;
                 case NEO_FORGED:
-                    content.getTags().add(i18n("install.installer.neoforge"));
+                    content.addTag(i18n("install.installer.neoforge"));
                     break;
                 case FABRIC:
-                    content.getTags().add(i18n("install.installer.fabric"));
+                    content.addTag(i18n("install.installer.fabric"));
                     break;
                 case LITE_LOADER:
-                    content.getTags().add(i18n("install.installer.liteloader"));
+                    content.addTag(i18n("install.installer.liteloader"));
                     break;
                 case QUILT:
-                    content.getTags().add(i18n("install.installer.quilt"));
+                    content.addTag(i18n("install.installer.quilt"));
                     break;
             }
             if (dataItem.getMod() != null && I18n.isUseChinese()) {
-                content.getTags().add(dataItem.getMod().getDisplayName());
+                content.addTag(dataItem.getMod().getDisplayName());
             }
             content.setSubtitle(dataItem.getSubtitle());
             if (booleanProperty != null) {

@@ -241,21 +241,21 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
                 switch (versionType) {
                     case RELEASE -> {
-                        twoLineListItem.getTags().add(i18n("version.game.release"));
+                        twoLineListItem.addTag(i18n("version.game.release"));
                         imageView.setImage(VersionIconType.GRASS.getIcon());
                     }
                     case PENDING, SNAPSHOT -> {
                         if (versionType == RemoteVersion.Type.SNAPSHOT
                                 && GameVersionNumber.asGameVersion(remoteVersion.getGameVersion()).isAprilFools()) {
-                            twoLineListItem.getTags().add(i18n("version.game.april_fools"));
+                            twoLineListItem.addTag(i18n("version.game.april_fools"));
                             imageView.setImage(VersionIconType.APRIL_FOOLS.getIcon());
                         } else {
-                            twoLineListItem.getTags().add(i18n("version.game.snapshot"));
+                            twoLineListItem.addTag(i18n("version.game.snapshot"));
                             imageView.setImage(VersionIconType.COMMAND.getIcon());
                         }
                     }
                     default -> {
-                        twoLineListItem.getTags().add(i18n("version.game.old"));
+                        twoLineListItem.addTag(i18n("version.game.old"));
                         imageView.setImage(VersionIconType.CRAFT_TABLE.getIcon());
                     }
                 }
@@ -288,7 +288,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                 if (twoLineListItem.getSubtitle() == null)
                     twoLineListItem.setSubtitle(remoteVersion.getGameVersion());
                 else
-                    twoLineListItem.getTags().setAll(remoteVersion.getGameVersion());
+                    twoLineListItem.addTag(remoteVersion.getGameVersion());
             }
         }
     }
