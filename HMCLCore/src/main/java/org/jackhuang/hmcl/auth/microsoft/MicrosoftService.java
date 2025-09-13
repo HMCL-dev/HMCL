@@ -339,7 +339,7 @@ public class MicrosoftService {
             String response = NetworkUtils.readFullyAsString(con);
             if (StringUtils.isBlank(response)) {
                 if (con.getResponseCode() / 100 != 2)
-                    throw new ResponseCodeException(con.getURL(), con.getResponseCode());
+                    throw new ResponseCodeException(con.getURL().toURI(), con.getResponseCode());
             } else {
                 MinecraftErrorResponse profileResponse = GSON.fromJson(response, MinecraftErrorResponse.class);
                 if (StringUtils.isNotBlank(profileResponse.errorMessage) || con.getResponseCode() / 100 != 2)
