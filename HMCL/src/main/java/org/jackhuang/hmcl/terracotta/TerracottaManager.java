@@ -98,7 +98,6 @@ public final class TerracottaManager {
 
         @Override
         public void run() {
-            int failCounter = 0;
             while (true) {
                 TerracottaState state = STATE_V.get();
                 if (!(state instanceof TerracottaState.PortSpecific)) {
@@ -124,13 +123,7 @@ public final class TerracottaManager {
                             })
                             .setSignificance(Task.TaskSignificance.MINOR)
                             .run();
-                    failCounter = 0;
                 } catch (Exception e) {
-                    failCounter += 1;
-
-                    if (failCounter < 5) {
-                        continue;
-                    }
                     LOG.warning("Cannot fetch state from Terracotta.", e);
                     next = new TerracottaState.Fatal(TerracottaState.Fatal.Type.TERRACOTTA);
                 }
