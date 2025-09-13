@@ -200,14 +200,21 @@ public final class NativePatcher {
 
     public static SupportStatus checkSupportedStatus(GameRemoteVersion gameVersion, Platform platform,
                                                      @Nullable WindowsVersion windowsVersion) {
-        if (platform.getOperatingSystem() == OperatingSystem.WINDOWS && windowsVersion == null) {
-            throw new IllegalArgumentException("Windows version is null");
+        GameVersionNumber versionNumber = GameVersionNumber.asGameVersion(gameVersion.getSelfVersion());
+
+        if (platform.equals(Platform.WINDOWS_X86_64)) {
+            if (windowsVersion != null && windowsVersion.compareTo(WindowsVersion.WINDOWS_10) < 0) {
+                if (versionNumber.isAtLeast("1.20.5", "24w14a"))
+                    return SupportStatus.UNSUPPORTED;
+            }
+
+            return SupportStatus.OFFICIAL_SUPPORTED;
         }
 
-        if (platform.equals(Platform.WINDOWS_X86_64) || platform.equals(Platform.MACOS_X86_64) || platform.equals(Platform.LINUX_X86_64))
+        if (platform.equals(Platform.MACOS_X86_64) || platform.equals(Platform.LINUX_X86_64))
             return SupportStatus.OFFICIAL_SUPPORTED;
 
-        GameVersionNumber versionNumber = GameVersionNumber.asGameVersion(gameVersion.getSelfVersion());
+
         if (platform.equals(Platform.WINDOWS_X86) || platform.equals(Platform.LINUX_X86)) {
             if (versionNumber.isAtLeast("1.20.5", "24w14a"))
                 return SupportStatus.UNSUPPORTED;
@@ -221,11 +228,11 @@ public final class NativePatcher {
 
             if (platform.equals(Platform.WINDOWS_ARM64)) {
                 return versionNumber.compareTo("1.8") >= 0
-                        ? SupportStatus.ADDITIONAL_SUPPORTED
+                        ? SupportStatus.LAUNCHER_SUPPORTED
                         : SupportStatus.UNSUPPORTED;
             } else if (platform.equals(Platform.MACOS_ARM64)) {
                 return versionNumber.compareTo("1.6") >= 0
-                        ? SupportStatus.ADDITIONAL_SUPPORTED
+                        ? SupportStatus.LAUNCHER_SUPPORTED
                         : SupportStatus.UNSUPPORTED;
             }
 
@@ -257,7 +264,7 @@ public final class NativePatcher {
                 if (versionNumber.compareTo(CURRENT_UNKNOWN_VERSION) > 0)
                     return SupportStatus.UNTESTED;
 
-                return SupportStatus.ADDITIONAL_SUPPORTED;
+                return SupportStatus.LAUNCHER_SUPPORTED;
             } else {
                 return SupportStatus.UNSUPPORTED;
             }
@@ -268,9 +275,9 @@ public final class NativePatcher {
 
     public enum SupportStatus {
         OFFICIAL_SUPPORTED,
-        ADDITIONAL_SUPPORTED,
-        UNSUPPORTED,
+        LAUNCHER_SUPPORTED,
         UNTESTED,
+        UNSUPPORTED,
     }
 
     private NativePatcher() {

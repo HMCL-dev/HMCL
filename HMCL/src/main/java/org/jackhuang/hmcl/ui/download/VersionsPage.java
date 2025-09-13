@@ -42,6 +42,7 @@ import org.jackhuang.hmcl.download.neoforge.NeoForgeRemoteVersion;
 import org.jackhuang.hmcl.download.optifine.OptiFineRemoteVersion;
 import org.jackhuang.hmcl.download.quilt.QuiltAPIRemoteVersion;
 import org.jackhuang.hmcl.download.quilt.QuiltRemoteVersion;
+import org.jackhuang.hmcl.game.OSRestriction;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -54,8 +55,11 @@ import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.Holder;
+import org.jackhuang.hmcl.util.NativePatcher;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.util.Locale;
@@ -230,28 +234,36 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             } else {
                 twoLineListItem.setSubtitle(null);
             }
+            twoLineListItem.getTags().clear();
 
-            if (remoteVersion instanceof GameRemoteVersion) {
+            if (remoteVersion instanceof GameRemoteVersion gameRemoteVersion) {
                 RemoteVersion.Type versionType = remoteVersion.getVersionType();
                 switch (versionType) {
                     case RELEASE -> {
-                        twoLineListItem.getTags().setAll(i18n("version.game.release"));
+                        twoLineListItem.getTags().add(i18n("version.game.release"));
                         imageView.setImage(VersionIconType.GRASS.getIcon());
                     }
                     case PENDING, SNAPSHOT -> {
                         if (versionType == RemoteVersion.Type.SNAPSHOT
                                 && GameVersionNumber.asGameVersion(remoteVersion.getGameVersion()).isAprilFools()) {
-                            twoLineListItem.getTags().setAll(i18n("version.game.april_fools"));
+                            twoLineListItem.getTags().add(i18n("version.game.april_fools"));
                             imageView.setImage(VersionIconType.APRIL_FOOLS.getIcon());
                         } else {
-                            twoLineListItem.getTags().setAll(i18n("version.game.snapshot"));
+                            twoLineListItem.getTags().add(i18n("version.game.snapshot"));
                             imageView.setImage(VersionIconType.COMMAND.getIcon());
                         }
                     }
                     default -> {
-                        twoLineListItem.getTags().setAll(i18n("version.game.old"));
+                        twoLineListItem.getTags().add(i18n("version.game.old"));
                         imageView.setImage(VersionIconType.CRAFT_TABLE.getIcon());
                     }
+                }
+
+                switch (NativePatcher.checkSupportedStatus(gameRemoteVersion, Platform.SYSTEM_PLATFORM, OperatingSystem.WINDOWS_VERSION)) {
+                    case LAUNCHER_SUPPORTED ->
+                            twoLineListItem.getTags().add(i18n("version.game.support_status.launcher_supported"));
+                    case UNTESTED -> twoLineListItem.getTags().add(i18n("version.game.support_status.untested"));
+                    case UNSUPPORTED -> twoLineListItem.getTags().add(i18n("version.game.support_status.unsupported"));
                 }
             } else {
                 VersionIconType iconType;
