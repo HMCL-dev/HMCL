@@ -113,11 +113,21 @@ public abstract class FetchTask<T> extends Task<T> {
 
                     URLConnection conn = NetworkUtils.createConnection(uri);
 
-                    if (conn instanceof HttpURLConnection) {
-                        var httpConnection = (HttpURLConnection) conn;
+                    if (conn instanceof HttpURLConnection httpConnection) {
                         httpConnection.setRequestProperty("Accept-Encoding", "gzip");
 
-                        if (checkETag) repository.injectConnection(httpConnection);
+                        if (checkETag) {
+                            // Handle cache
+                            try {
+                                Path cache = repository.getCachedRemoteFile(uri, true);
+                                useCachedResult(cache);
+                                LOG.info("Using cached file for " + NetworkUtils.dropQuery(uri));
+                                return;
+                            } catch (IOException ignored) {
+                            }
+
+                            repository.injectConnection(httpConnection);
+                        }
                         Map<String, List<String>> requestProperties = httpConnection.getRequestProperties();
 
                         bmclapiHash = httpConnection.getHeaderField("x-bmclapi-hash");
@@ -172,10 +182,12 @@ public abstract class FetchTask<T> extends Task<T> {
                         if (responseCode == HttpURLConnection.HTTP_NOT_MODIFIED) {
                             // Handle cache
                             try {
-                                Path cache = repository.getCachedRemoteFile(NetworkUtils.toURI(conn.getURL()));
+                                Path cache = repository.getCachedRemoteFile(NetworkUtils.toURI(conn.getURL()), false);
                                 useCachedResult(cache);
                                 LOG.info("Using cached file for " + NetworkUtils.dropQuery(uri));
                                 return;
+                            } catch (CacheRepository.CacheExpiredException e) {
+                                LOG.info("Cache expired for " + NetworkUtils.dropQuery(uri));
                             } catch (IOException e) {
                                 LOG.warning("Unable to use cached file, redownload " + NetworkUtils.dropQuery(uri), e);
                                 repository.removeRemoteEntry(conn.getURL().toURI());
