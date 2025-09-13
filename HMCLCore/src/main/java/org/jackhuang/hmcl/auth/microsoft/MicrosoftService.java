@@ -343,7 +343,7 @@ public class MicrosoftService {
                 if (StringUtils.isNotBlank(profileResponse.errorMessage) || con.getResponseCode() / 100 != 2)
                     throw new AuthenticationException("Failed to hide cape, response code: " + con.getResponseCode() + ", response: " + response);
             }
-        } catch (IOException | JsonParseException e) {
+        } catch (IOException | JsonParseException | URISyntaxException e) {
             throw new AuthenticationException(e);
         }
     }
