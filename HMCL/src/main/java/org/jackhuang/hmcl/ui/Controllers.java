@@ -474,4 +474,13 @@ public final class Controllers {
 
         FXUtils.shutdown();
     }
+
+    public static void resetAllLazyPage() {
+        rootPage.reset();
+        versionPage.reset();
+        gameListPage.reset();
+        downloadPage.reset();
+        accountListPage.reset();
+        settingsPage.reset();
+    }
 }

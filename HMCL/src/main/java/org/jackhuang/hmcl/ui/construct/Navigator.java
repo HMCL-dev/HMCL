@@ -45,14 +45,21 @@ public class Navigator extends TransitionPane {
     private boolean initialized = false;
 
     public void init(Node init) {
-        stack.push(init);
         backable.set(canGoBack());
+        setRootPage(init);
         getChildren().setAll(init);
-
         fireEvent(new NavigationEvent(this, init, Navigation.NavigationDirection.START, NavigationEvent.NAVIGATED));
         if (init instanceof PageAware) ((PageAware) init).onPageShown();
 
         initialized = true;
+    }
+
+    public void setRootPage(Node root) {
+        if (stack.isEmpty()) {
+            stack.push(root);
+        } else {
+            stack.set(0, root);
+        }
     }
 
     public void navigate(Node node, AnimationProducer animationProducer) {
