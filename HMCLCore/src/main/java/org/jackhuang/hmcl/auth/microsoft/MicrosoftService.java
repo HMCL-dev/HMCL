@@ -279,7 +279,7 @@ public class MicrosoftService {
             String response = NetworkUtils.readFullyAsString(con);
             if (StringUtils.isBlank(response)) {
                 if (con.getResponseCode() / 100 != 2)
-                    throw new ResponseCodeException(con.getURL().toURI(), con.getResponseCode());
+                    throw new ResponseCodeException(con.getURL().toURI().toURI(), con.getResponseCode());
             } else {
                 MinecraftErrorResponse profileResponse = GSON.fromJson(response, MinecraftErrorResponse.class);
                 if (StringUtils.isNotBlank(profileResponse.errorMessage) || con.getResponseCode() / 100 != 2)
@@ -293,7 +293,7 @@ public class MicrosoftService {
 
     public void changeCape(String accessToken, String id) throws AuthenticationException, UnsupportedOperationException {
         try {
-            HttpURLConnection con = NetworkUtils.createHttpConnection(NetworkUtils.toURL("https://api.minecraftservices.com/minecraft/profile/capes/active"));
+            HttpURLConnection con = NetworkUtils.createHttpConnection("https://api.minecraftservices.com/minecraft/profile/capes/active");
             con.setRequestMethod("PUT");
             con.setRequestProperty("Authorization", "Bearer " + accessToken);
             con.setRequestProperty("Content-Type", "application/json");
@@ -304,10 +304,10 @@ public class MicrosoftService {
                 os.write(jsonPayload.getBytes(StandardCharsets.UTF_8));
             }
 
-            String response = NetworkUtils.readData(con);
+            String response = NetworkUtils.readFullyAsString(con);
             if (StringUtils.isBlank(response)) {
                 if (con.getResponseCode() / 100 != 2)
-                    throw new ResponseCodeException(con.getURL(), con.getResponseCode());
+                    throw new ResponseCodeException(con.getURL().toURI(), con.getResponseCode());
             } else {
                 MinecraftErrorResponse profileResponse = GSON.fromJson(response, MinecraftErrorResponse.class);
                 if (StringUtils.isNotBlank(profileResponse.errorMessage) || con.getResponseCode() / 100 != 2)
@@ -331,12 +331,12 @@ public class MicrosoftService {
 
     public void hideCape(String accessToken) throws AuthenticationException, UnsupportedOperationException {
         try {
-            HttpURLConnection con = NetworkUtils.createHttpConnection(NetworkUtils.toURL("https://api.minecraftservices.com//minecraft/profile/capes/active"));
+            HttpURLConnection con = NetworkUtils.createHttpConnection("https://api.minecraftservices.com//minecraft/profile/capes/active");
             con.setRequestMethod("DELETE");
             con.setRequestProperty("Authorization", "Bearer " + accessToken);
             con.setDoOutput(true);
 
-            String response = NetworkUtils.readData(con);
+            String response = NetworkUtils.readFullyAsString(con);
             if (StringUtils.isBlank(response)) {
                 if (con.getResponseCode() / 100 != 2)
                     throw new ResponseCodeException(con.getURL(), con.getResponseCode());
