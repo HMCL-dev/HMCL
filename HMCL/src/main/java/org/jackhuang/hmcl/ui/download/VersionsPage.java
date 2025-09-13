@@ -144,6 +144,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
     private enum VersionTypeFilter {
         ALL,
+        SUPPORTED,
         RELEASE,
         SNAPSHOTS,
         APRIL_FOOLS,
@@ -233,12 +234,11 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             if (remoteVersion instanceof GameRemoteVersion) {
                 RemoteVersion.Type versionType = remoteVersion.getVersionType();
                 switch (versionType) {
-                    case RELEASE:
+                    case RELEASE -> {
                         twoLineListItem.getTags().setAll(i18n("version.game.release"));
                         imageView.setImage(VersionIconType.GRASS.getIcon());
-                        break;
-                    case PENDING:
-                    case SNAPSHOT:
+                    }
+                    case PENDING, SNAPSHOT -> {
                         if (versionType == RemoteVersion.Type.SNAPSHOT
                                 && GameVersionNumber.asGameVersion(remoteVersion.getGameVersion()).isAprilFools()) {
                             twoLineListItem.getTags().setAll(i18n("version.game.april_fools"));
@@ -247,11 +247,11 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                             twoLineListItem.getTags().setAll(i18n("version.game.snapshot"));
                             imageView.setImage(VersionIconType.COMMAND.getIcon());
                         }
-                        break;
-                    default:
+                    }
+                    default -> {
                         twoLineListItem.getTags().setAll(i18n("version.game.old"));
                         imageView.setImage(VersionIconType.CRAFT_TABLE.getIcon());
-                        break;
+                    }
                 }
             } else {
                 VersionIconType iconType;
@@ -447,21 +447,15 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             if (filter != null)
                 versions = versions.filter(it -> {
                     RemoteVersion.Type versionType = it.getVersionType();
-                    switch (filter) {
-                        case RELEASE:
-                            return versionType == RemoteVersion.Type.RELEASE;
-                        case SNAPSHOTS:
-                            return versionType == RemoteVersion.Type.SNAPSHOT
-                                    || versionType == RemoteVersion.Type.PENDING;
-                        case APRIL_FOOLS:
-                            return versionType == RemoteVersion.Type.SNAPSHOT
-                                    && GameVersionNumber.asGameVersion(it.getGameVersion()).isAprilFools();
-                        case OLD:
-                            return versionType == RemoteVersion.Type.OLD;
-                        case ALL:
-                        default:
-                            return true;
-                    }
+                    return switch (filter) {
+                        case RELEASE -> versionType == RemoteVersion.Type.RELEASE;
+                        case SNAPSHOTS -> versionType == RemoteVersion.Type.SNAPSHOT
+                                || versionType == RemoteVersion.Type.PENDING;
+                        case APRIL_FOOLS -> versionType == RemoteVersion.Type.SNAPSHOT
+                                && GameVersionNumber.asGameVersion(it.getGameVersion()).isAprilFools();
+                        case OLD -> versionType == RemoteVersion.Type.OLD;
+                        case ALL, default -> true;
+                    };
                 });
 
             String nameQuery = nameField.getText();
