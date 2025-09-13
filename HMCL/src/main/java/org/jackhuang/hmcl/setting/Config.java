@@ -53,6 +53,7 @@ import java.util.*;
 @JsonAdapter(value = Config.Adapter.class)
 public final class Config implements Observable {
 
+    public static final int CURRENT_VERSION = 2;
     public static final int CURRENT_UI_VERSION = 0;
 
     public static final Gson CONFIG_GSON = new GsonBuilder()
@@ -125,7 +126,7 @@ public final class Config implements Observable {
     // Properties
 
     @SerializedName("_version")
-    private final IntegerProperty configVersion = new SimpleIntegerProperty(0);
+    private final IntegerProperty configVersion = new SimpleIntegerProperty(CURRENT_VERSION);
 
     public IntegerProperty configVersionProperty() {
         return configVersion;

@@ -52,6 +52,20 @@ public final class LocaleUtils {
                 : locale.stripExtensions().toLanguageTag();
     }
 
+    public static boolean isISO1Language(String language) {
+        return language.length() == 2;
+    }
+
+    public static boolean isISO3Language(String language) {
+        return language.length() == 3;
+    }
+
+    public static @NotNull String getISO1Language(Locale locale) {
+        String language = locale.getLanguage();
+        if (language.isEmpty()) return "en";
+        return isISO3Language(language) ? toISO1Language(language) : language;
+    }
+
     /// Get the script of the locale. If the script is empty and the language is Chinese,
     /// the script will be inferred based on the language, the region and the variant.
     public static @NotNull String getScript(Locale locale) {
@@ -164,20 +178,29 @@ public final class LocaleUtils {
 
     // ---
 
+    /// Try to convert ISO 639-3 language codes to ISO 639-1 language codes.
+    public static String toISO1Language(String languageTag) {
+        return switch (languageTag) {
+            case "eng" -> "en";
+            case "spa" -> "es";
+            case "jpa" -> "ja";
+            case "rus" -> "ru";
+            case "ukr" -> "uk";
+            case "zho", "cmn", "lzh", "cdo", "cjy", "cpx", "czh",
+                 "gan", "hak", "hsn", "mnp", "nan", "wuu", "yue" -> "zh";
+            default -> languageTag;
+        };
+    }
+
     public static boolean isEnglish(Locale locale) {
-        return locale.getLanguage().equals("en") || locale.getLanguage().isEmpty();
+        return "en".equals(getISO1Language(locale));
     }
 
     public static final Set<String> CHINESE_TRADITIONAL_REGIONS = Set.of("TW", "HK", "MO");
     public static final Set<String> CHINESE_LATN_VARIANTS = Set.of("pinyin", "wadegile", "tongyong");
-    public static final Set<String> CHINESE_LANGUAGES = Set.of(
-            "zh",
-            "zho", "cmn", "lzh", "cdo", "cjy", "cpx", "czh",
-            "gan", "hak", "hsn", "mnp", "nan", "wuu", "yue"
-    );
 
     public static boolean isChinese(Locale locale) {
-        return CHINESE_LANGUAGES.contains(locale.getLanguage());
+        return "zh".equals(getISO1Language(locale));
     }
 
     private LocaleUtils() {

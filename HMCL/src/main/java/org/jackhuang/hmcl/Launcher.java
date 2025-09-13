@@ -113,6 +113,10 @@ public final class Launcher extends Application {
                     return;
             }
 
+            if (ConfigHolder.isUnsupportedVersion()) {
+                showAlert(AlertType.WARNING, i18n("fatal.config_unsupported_version"));
+            }
+
             if (Metadata.HMCL_CURRENT_DIRECTORY.toString().indexOf('=') >= 0) {
                 showAlert(AlertType.WARNING, i18n("fatal.illegal_char"));
             }

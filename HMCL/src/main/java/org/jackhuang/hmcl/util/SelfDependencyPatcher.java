@@ -387,7 +387,7 @@ public final class SelfDependencyPatcher {
             }
         }
 
-        String sha1 = Hex.encodeHex(digest.digest());
+        String sha1 = HexFormat.of().formatHex(digest.digest());
         if (!dependency.sha1().equalsIgnoreCase(sha1))
             throw new ChecksumMismatchException("SHA-1", dependency.sha1(), sha1);
     }

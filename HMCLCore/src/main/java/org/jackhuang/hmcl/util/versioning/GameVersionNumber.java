@@ -31,7 +31,7 @@ import java.util.regex.Pattern;
 /**
  * @author Glavo
  */
-public abstract class GameVersionNumber implements Comparable<GameVersionNumber> {
+public abstract sealed class GameVersionNumber implements Comparable<GameVersionNumber> {
 
     public static String[] getDefaultGameVersions() {
         return Versions.DEFAULT_GAME_VERSIONS;
@@ -103,8 +103,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
         if (this instanceof Special)
             return true;
 
-        if (this instanceof Snapshot) {
-            Snapshot snapshot = (Snapshot) this;
+        if (this instanceof Snapshot snapshot) {
             return snapshot.intValue == Snapshot.toInt(15, 14, 'a');
         }
 
@@ -129,6 +128,39 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
             return Integer.compare(this.getType().ordinal(), other.getType().ordinal());
 
         return compareToImpl(other);
+    }
+
+    /// @see #isAtLeast(String, String, boolean)
+    public boolean isAtLeast(@NotNull String releaseVersion, @NotNull String snapshotVersion) {
+        return isAtLeast(releaseVersion, snapshotVersion, false);
+    }
+
+    /// When comparing between Release Version and Snapshot Version, it is necessary to load `/assets/game/versions.txt` and perform a lookup, which is less efficient.
+    /// Therefore, when checking whether a version contains a certain feature, you should use this method and provide both the first release version and the exact snapshot version that introduced the feature,
+    /// so that the comparison can be performed quickly without a lookup.
+    ///
+    /// For example, the datapack feature was introduced in Minecraft 1.13, and more specifically in snapshot `17w43a`.
+    /// So you can test whether a game version supports datapacks like this:
+    ///
+    /// ```java
+    /// GameVersionNumber.asVersion("...").isAtLeast("1.13", "17w43a");
+    /// ```
+    ///
+    /// @param strictReleaseVersion When `strictReleaseVersion` is `false`, `releaseVersion` is considered less than
+    /// its corresponding pre/rc versions.
+    public boolean isAtLeast(@NotNull String releaseVersion, @NotNull String snapshotVersion, boolean strictReleaseVersion) {
+        if (this instanceof Release self) {
+            Release other;
+            if (strictReleaseVersion) {
+                other = Release.parse(releaseVersion);
+            } else {
+                other = Release.parseSimple(releaseVersion);
+            }
+
+            return self.compareToRelease(other) >= 0;
+        } else {
+            return this.compareTo(Snapshot.parse(snapshotVersion)) >= 0;
+        }
     }
 
     @Override
@@ -201,9 +233,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (!(o instanceof Old)) return false;
-            Old other = (Old) o;
-            return type == other.type && this.versionNumber.compareTo(other.versionNumber) == 0;
+            return o instanceof Old other && type == other.type && this.versionNumber.compareTo(other.versionNumber) == 0;
         }
 
         @Override
@@ -256,6 +286,52 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
             return new Release(value, 1, minor, patch, eaType, eaVersion);
         }
 
+        private static int getNumberLength(String value, int offset) {
+            int current = offset;
+            while (current < value.length()) {
+                char ch = value.charAt(current);
+                if (ch < '0' || ch > '9')
+                    break;
+
+                current++;
+            }
+
+            return current - offset;
+        }
+
+        /// Quickly parses a simple format (`1\.[0-9]+(\.[0-9]+)?`) release version.
+        /// The returned [#eaType] will be set to [#TYPE_UNKNOWN], meaning it will be less than all pre/rc and official versions of this version.
+        ///
+        /// @see GameVersionNumber#isAtLeast(String, String)
+        static Release parseSimple(String value) {
+            if (!value.startsWith("1."))
+                throw new IllegalArgumentException(value);
+
+            final int minorOffset = 2;
+
+            int minorLength = getNumberLength(value, minorOffset);
+            if (minorLength == 0)
+                throw new IllegalArgumentException(value);
+
+            try {
+                int minor = Integer.parseInt(value.substring(minorOffset, minorOffset + minorLength));
+                int patch = 0;
+
+                if (minorOffset + minorLength < value.length()) {
+                    int patchOffset = minorOffset + minorLength + 1;
+
+                    if (patchOffset >= value.length() || value.charAt(patchOffset - 1) != '.')
+                        throw new IllegalArgumentException(value);
+
+                    patch = Integer.parseInt(value.substring(patchOffset));
+                }
+
+                return new Release(value, 1, minor, patch, TYPE_UNKNOWN, VersionNumber.ZERO);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException(value);
+            }
+        }
+
         private final int major;
         private final int minor;
         private final int patch;
@@ -280,24 +356,20 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
 
         int compareToRelease(Release other) {
             int c = Integer.compare(this.major, other.major);
-            if (c != 0) {
+            if (c != 0)
                 return c;
-            }
 
             c = Integer.compare(this.minor, other.minor);
-            if (c != 0) {
+            if (c != 0)
                 return c;
-            }
 
             c = Integer.compare(this.patch, other.patch);
-            if (c != 0) {
+            if (c != 0)
                 return c;
-            }
 
             c = Integer.compare(this.eaType, other.eaType);
-            if (c != 0) {
+            if (c != 0)
                 return c;
-            }
 
             return this.eaVersion.compareTo(other.eaVersion);
         }
@@ -356,9 +428,12 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            Release other = (Release) o;
-            return major == other.major && minor == other.minor && patch == other.patch && eaType == other.eaType && eaVersion.equals(other.eaVersion);
+            return o instanceof Release other
+                    && major == other.major
+                    && minor == other.minor
+                    && patch == other.patch
+                    && eaType == other.eaType
+                    && eaVersion.equals(other.eaVersion);
         }
     }
 
@@ -428,9 +503,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            Snapshot other = (Snapshot) o;
-            return this.intValue == other.intValue;
+            return o instanceof Snapshot other && this.intValue == other.intValue;
         }
 
         @Override
@@ -534,9 +607,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            Special other = (Special) o;
-            return Objects.equals(this.value, other.value);
+            return o instanceof Special other && this.value.equals(other.value);
         }
     }
 
@@ -566,8 +637,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
                     if (currentRelease == null)
                         currentRelease = (Release) version;
 
-                    if (version instanceof Snapshot) {
-                        Snapshot snapshot = (Snapshot) version;
+                    if (version instanceof Snapshot snapshot) {
                         snapshots.add(snapshot);
                         snapshotPrev.add(currentRelease);
                     } else if (version instanceof Release) {
@@ -576,8 +646,7 @@ public abstract class GameVersionNumber implements Comparable<GameVersionNumber>
                         if (currentRelease.eaType == Release.TYPE_GA) {
                             defaultGameVersions.addFirst(currentRelease.value);
                         }
-                    } else if (version instanceof Special) {
-                        Special special = (Special) version;
+                    } else if (version instanceof Special special) {
                         special.prev = prev;
                         SPECIALS.put(special.value, special);
                     } else
