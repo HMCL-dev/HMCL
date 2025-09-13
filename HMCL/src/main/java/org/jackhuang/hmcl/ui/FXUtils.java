@@ -1210,24 +1210,25 @@ public final class FXUtils {
         return label;
     }
 
+    private static final String LABEL_FULL_TEXT_PROP_KEY = FXUtils.class.getName() + ".LABEL_FULL_TEXT";
+
     public static void showTooltipWhenTruncated(Labeled labeled) {
         ReadOnlyBooleanProperty textTruncatedProperty = textTruncatedProperty(labeled);
         if (textTruncatedProperty != null) {
-            final var PROP_KEY = FXUtils.class.getName() + ".LABEL_FULL_TEXT";
             ChangeListener<Boolean> listener = (observable, oldValue, newValue) -> {
                 var label = (Labeled) ((ReadOnlyProperty<?>) observable).getBean();
-                var tooltip = (Tooltip) label.getProperties().get(PROP_KEY);
+                var tooltip = (Tooltip) label.getProperties().get(LABEL_FULL_TEXT_PROP_KEY);
 
                 if (newValue) {
                     if (tooltip == null) {
                         tooltip = new Tooltip();
-                        tooltip.textProperty().bind(labeled.textProperty());
-                        label.getProperties().put(PROP_KEY, tooltip);
+                        tooltip.textProperty().bind(label.textProperty());
+                        label.getProperties().put(LABEL_FULL_TEXT_PROP_KEY, tooltip);
                     }
 
-                    FXUtils.installFastTooltip(labeled, tooltip);
+                    FXUtils.installFastTooltip(label, tooltip);
                 } else if (tooltip != null) {
-                    Tooltip.uninstall(labeled, tooltip);
+                    Tooltip.uninstall(label, tooltip);
                 }
             };
             listener.changed(textTruncatedProperty, false, textTruncatedProperty.get());
