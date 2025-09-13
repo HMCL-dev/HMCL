@@ -80,6 +80,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
+import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.ref.WeakReference;
@@ -112,6 +113,8 @@ public final class FXUtils {
     public static final @Nullable ObservableMap<String, Object> PREFERENCES;
     public static final @Nullable ObservableBooleanValue DARK_MODE;
     public static final @Nullable Boolean REDUCED_MOTION;
+
+    public static final @Nullable MethodHandle TEXT_TRUNCATED_PROPERTY;
 
     static {
         String jfxVersion = System.getProperty("javafx.version");
@@ -157,6 +160,20 @@ public final class FXUtils {
         PREFERENCES = preferences;
         DARK_MODE = darkMode;
         REDUCED_MOTION = reducedMotion;
+
+        MethodHandle textTruncatedProperty = null;
+        if (JAVAFX_MAJOR_VERSION >= 23) {
+            try {
+                textTruncatedProperty = MethodHandles.publicLookup().findVirtual(
+                        Labeled.class,
+                        "textTruncatedProperty",
+                        MethodType.methodType(ReadOnlyBooleanProperty.class)
+                );
+            } catch (Throwable e) {
+                LOG.warning("Failed to lookup textTruncatedProperty", e);
+            }
+        }
+        TEXT_TRUNCATED_PROPERTY = textTruncatedProperty;
     }
 
     public static final String DEFAULT_MONOSPACE_FONT = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "Consolas" : "Monospace";
@@ -354,6 +371,22 @@ public final class FXUtils {
     public static void smoothScrolling(ScrollPane scrollPane) {
         if (AnimationUtils.isAnimationEnabled())
             ScrollUtils.addSmoothScrolling(scrollPane);
+    }
+
+    /// If the current environment is JavaFX 23 or higher, this method returns [Labeled#textTruncatedProperty()];
+    /// Otherwise, it returns `null`.
+    public static @Nullable ReadOnlyBooleanProperty textTruncatedProperty(Labeled labeled) {
+        if (TEXT_TRUNCATED_PROPERTY != null) {
+            try {
+                return (ReadOnlyBooleanProperty) TEXT_TRUNCATED_PROPERTY.invokeExact(labeled);
+            } catch (RuntimeException | Error e) {
+                throw e;
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            return null;
+        }
     }
 
     private static final Duration TOOLTIP_FAST_SHOW_DELAY = Duration.millis(50);
@@ -1170,15 +1203,37 @@ public final class FXUtils {
         return button;
     }
 
-    public static Label truncatedLabel(String text, int limit) {
-        Label label = new Label();
-        if (text.length() <= limit) {
-            label.setText(text);
-        } else {
-            label.setText(StringUtils.truncate(text, limit));
-            installFastTooltip(label, text);
-        }
+    public static Label newSafeTruncatedLabel(String text) {
+        Label label = new Label(text);
+        label.setTextOverrun(OverrunStyle.CENTER_WORD_ELLIPSIS);
+        showTooltipWhenTruncated(label);
         return label;
+    }
+
+    private static final String LABEL_FULL_TEXT_PROP_KEY = FXUtils.class.getName() + ".LABEL_FULL_TEXT";
+
+    public static void showTooltipWhenTruncated(Labeled labeled) {
+        ReadOnlyBooleanProperty textTruncatedProperty = textTruncatedProperty(labeled);
+        if (textTruncatedProperty != null) {
+            ChangeListener<Boolean> listener = (observable, oldValue, newValue) -> {
+                var label = (Labeled) ((ReadOnlyProperty<?>) observable).getBean();
+                var tooltip = (Tooltip) label.getProperties().get(LABEL_FULL_TEXT_PROP_KEY);
+
+                if (newValue) {
+                    if (tooltip == null) {
+                        tooltip = new Tooltip();
+                        tooltip.textProperty().bind(label.textProperty());
+                        label.getProperties().put(LABEL_FULL_TEXT_PROP_KEY, tooltip);
+                    }
+
+                    FXUtils.installFastTooltip(label, tooltip);
+                } else if (tooltip != null) {
+                    Tooltip.uninstall(label, tooltip);
+                }
+            };
+            listener.changed(textTruncatedProperty, false, textTruncatedProperty.get());
+            textTruncatedProperty.addListener(listener);
+        }
     }
 
     public static void applyDragListener(Node node, FileFilter filter, Consumer<List<File>> callback) {
@@ -1387,7 +1442,7 @@ public final class FXUtils {
      * Supports multi-monitor setups by detecting the current screen where the component is located.
      * Now handles first-time popup display by forcing layout measurement.
      *
-     * @param root the root node to calculate position relative to
+     * @param root          the root node to calculate position relative to
      * @param popupInstance the popup instance to position
      * @return the optimal vertical position for the popup menu
      */
