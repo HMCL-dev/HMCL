@@ -143,7 +143,11 @@ public final class TerracottaManager {
                 Objects.requireNonNull(TerracottaMetadata.PROVIDER).install(progress)
         ).whenComplete(exception -> {
             if (exception == null) {
-                TerracottaMetadata.removeLegacy();
+                try {
+                    TerracottaMetadata.removeLegacyVersionFiles();
+                } catch (IOException e) {
+                    LOG.warning("Unable to remove legacy terracotta files.", e);
+                }
 
                 TerracottaState.Launching launching = new TerracottaState.Launching();
                 if (compareAndSet(preparing, launching)) {

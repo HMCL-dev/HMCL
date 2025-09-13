@@ -1,17 +1,12 @@
 {
-  "legacy": [
-    "0.3.8-rc.1",
-    "0.3.8-rc.2",
-    "0.3.8-rc.3",
-    "0.3.8-rc.4",
-    "0.3.8-rc.5",
-    "0.3.9-rc.1",
-    "0.3.9-rc.2",
+  "version_legacy": "0\\.3\\.[89]-rc.[0-9]",
+  "version_recent": [
     "0.3.9-rc.3",
     "0.3.9-rc.4",
     "0.3.9-rc.5"
   ],
-  "version": "0.3.9-rc.6",
+  "version_latest": "0.3.9-rc.6",
+
   "classifiers": {
     "linux-arm64": "sha256:a47b4ae837d71206631b59fc699d02cad984d3e2eb565a4598ff6affb75d5684",
     "linux-x86_64": "sha256:949b8fa9c31e03b3301264642d844fecd1cabbdca912fdacd20d1e8f800ed4f9",

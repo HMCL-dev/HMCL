@@ -20,17 +20,9 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public final class MacOSProvider implements ITerracottaProvider {
     public final TerracottaNative installer, binary;
 
-    {
-        if (Architecture.SYSTEM_ARCH == Architecture.X86_64) {
-            installer = TerracottaMetadata.MACOS_INSTALLER_X86_64;
-            binary = TerracottaMetadata.MACOS_BIN_X86_64;
-        } else if (Architecture.SYSTEM_ARCH == Architecture.ARM64) {
-            installer = TerracottaMetadata.MACOS_INSTALLER_ARM64;
-            binary = TerracottaMetadata.MACOS_BIN_ARM64;
-        } else {
-            installer = null;
-            binary = null;
-        }
+    public MacOSProvider(TerracottaNative installer, TerracottaNative binary) {
+        this.installer = installer;
+        this.binary = binary;
     }
 
     @Override

@@ -1,11 +1,13 @@
 package org.jackhuang.hmcl.terracotta;
 
+import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.terracotta.provider.GeneralProvider;
 import org.jackhuang.hmcl.terracotta.provider.ITerracottaProvider;
 import org.jackhuang.hmcl.terracotta.provider.MacOSProvider;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNull;
@@ -14,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.DirectoryStream;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -24,6 +27,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -31,34 +35,18 @@ public final class TerracottaMetadata {
     private TerracottaMetadata() {
     }
 
-    public static final TerracottaNative WINDOWS_X86_64;
-    public static final TerracottaNative WINDOWS_ARM64;
+    private record Config(
+            @SerializedName("version_legacy") String legacy,
+            @SerializedName("version_recent") List<String> recent,
+            @SerializedName("version_latest") String latest,
 
-    public static final TerracottaNative LINUX_X86_64;
-    public static final TerracottaNative LINUX_ARM64;
-
-    public static final TerracottaNative MACOS_INSTALLER_X86_64;
-    public static final TerracottaNative MACOS_INSTALLER_ARM64;
-    public static final TerracottaNative MACOS_BIN_X86_64;
-    public static final TerracottaNative MACOS_BIN_ARM64;
-
-    private static final class Config {
-        private final List<String> legacy;
-        private final String version;
-        private final Map<String, String> classifiers;
-        private final List<String> downloads;
-
-        private Config(List<String> legacy, String version, Map<String, String> classifiers, List<String> downloads) {
-            this.legacy = legacy;
-            this.version = version;
-            this.classifiers = classifiers;
-            this.downloads = downloads;
-        }
-
+            @SerializedName("classifiers") Map<String, String> classifiers,
+            @SerializedName("downloads") List<String> downloads
+    ) {
         private TerracottaNative of(String classifier) {
             List<URI> links = new ArrayList<>(this.downloads.size());
             for (String download : this.downloads) {
-                links.add(URI.create(download.replace("${version}", this.version).replace("${classifier}", classifier)));
+                links.add(URI.create(download.replace("${version}", this.latest).replace("${classifier}", classifier)));
             }
 
             String hash = Objects.requireNonNull(this.classifiers.get(classifier), String.format("Classifier %s doesn't exist.", classifier));
@@ -67,25 +55,21 @@ public final class TerracottaMetadata {
             }
             hash = hash.substring("sha256:".length());
 
-            List<Path> legacyPath = new ArrayList<>(this.legacy.size());
-            for (String legacy : this.legacy) {
-                legacyPath.add(Metadata.DEPENDENCIES_DIRECTORY.resolve(
-                        String.format("terracota/%s/terracotta-%s", legacy, classifier)
-                ).toAbsolutePath());
-            }
-
             return new TerracottaNative(
                     Collections.unmodifiableList(links),
                     Metadata.DEPENDENCIES_DIRECTORY.resolve(
-                            String.format("terracota/%s/terracotta-%s", this.version, classifier)
+                            String.format("terracotta/%s/terracotta-%s", this.latest, classifier)
                     ).toAbsolutePath(),
-                    Collections.unmodifiableList(legacyPath),
                     new FileDownloadTask.IntegrityCheck("SHA-256", hash)
             );
         }
+
     }
 
-    private static final List<Path> LEGACY_PATH;
+    public static final ITerracottaProvider PROVIDER;
+    private static final Pattern LEGACY;
+    private static final List<String> RECENT;
+    private static final String LATEST;
 
     static {
         Config config;
@@ -95,78 +79,75 @@ public final class TerracottaMetadata {
             throw new ExceptionInInitializerError(e);
         }
 
-        WINDOWS_X86_64 = config.of("windows-x86_64.exe");
-        WINDOWS_ARM64 = config.of("windows-arm64.exe");
-        LINUX_X86_64 = config.of("linux-x86_64");
-        LINUX_ARM64 = config.of("linux-arm64");
-        MACOS_INSTALLER_X86_64 = config.of("macos-x86_64.pkg");
-        MACOS_INSTALLER_ARM64 = config.of("macos-arm64.pkg");
-        MACOS_BIN_X86_64 = config.of("macos-x86_64");
-        MACOS_BIN_ARM64 = config.of("macos-arm64");
-
-        int LEGACY_BUT_NOT_OUT_OF_DATE_COUNT = 3;
-        if (config.legacy.size() < LEGACY_BUT_NOT_OUT_OF_DATE_COUNT) {
-            LEGACY_PATH = List.of();
-        } else {
-            int count = config.legacy.size() - LEGACY_BUT_NOT_OUT_OF_DATE_COUNT;
-
-            List<Path> legacyPath = new ArrayList<>(count);
-            for (int i = 0; i < count; i++) {
-                legacyPath.add(Metadata.DEPENDENCIES_DIRECTORY.resolve(String.format("terracota/%s", config.legacy.get(i))).toAbsolutePath());
-            }
-            LEGACY_PATH = legacyPath;
-        }
+        PROVIDER = locateProvider(config);
+        LEGACY = Pattern.compile(config.legacy);
+        RECENT = config.recent;
+        LATEST = config.latest;
     }
 
-    public static void removeLegacy() {
-        for (Path path : LEGACY_PATH) {
-            if (!Files.exists(path)) {
-                continue;
-            }
-
-            try {
-                Files.walkFileTree(path, new SimpleFileVisitor<>() {
-                    @Override
-                    public @NotNull FileVisitResult visitFile(@NotNull Path file, @NotNull BasicFileAttributes attrs) throws IOException {
-                        Files.delete(file);
-                        return super.visitFile(file, attrs);
-                    }
-
-                    @Override
-                    public @NotNull FileVisitResult postVisitDirectory(@NotNull Path dir, @Nullable IOException exc) throws IOException {
-                        Files.delete(dir);
-                        return super.postVisitDirectory(dir, exc);
-                    }
-                });
-            } catch (IOException e) {
-                LOG.warning(String.format("Unable to delete legacy version: %s", path), e);
-            }
-        }
-    }
-
-    public static final ITerracottaProvider PROVIDER = locateProvider();
-
-    private static ITerracottaProvider locateProvider() {
-        if (Architecture.SYSTEM_ARCH != Architecture.X86_64 && Architecture.SYSTEM_ARCH != Architecture.ARM64) {
+    private static ITerracottaProvider locateProvider(Config config) {
+        String architecture = switch (Architecture.SYSTEM_ARCH) {
+            case X86_64 -> "x86_64";
+            case ARM64 -> "arm64";
+            default -> null;
+        };
+        if (architecture == null) {
             return null;
         }
 
-        switch (OperatingSystem.CURRENT_OS) {
-            case WINDOWS: {
+        return switch (OperatingSystem.CURRENT_OS) {
+            case WINDOWS -> {
                 if (OperatingSystem.isWindows81OrLater()) {
-                    return new GeneralProvider();
+                    yield new GeneralProvider(config.of(String.format("windows-%s.exe", architecture)));
                 }
-                return null;
+                yield null;
             }
-            case LINUX: {
-                return new GeneralProvider();
-            }
-            case MACOS: {
-                return new MacOSProvider();
-            }
-            default: {
-                return null;
+            case LINUX -> new GeneralProvider(config.of(String.format("linux-%s", architecture)));
+            case MACOS ->
+                    new MacOSProvider(config.of(String.format("macos-%s.pkg", architecture)), config.of(String.format("macos-%s", architecture)));
+            default -> null;
+        };
+    }
+
+    public static void removeLegacyVersionFiles() throws IOException {
+        try (DirectoryStream<Path> terracotta = Files.newDirectoryStream(Metadata.DEPENDENCIES_DIRECTORY.resolve("terracotta").toAbsolutePath())) {
+            for (Path path : terracotta) {
+                String name = FileUtils.getName(path);
+                if (LATEST.equals(name) || RECENT.contains(name) || !LEGACY.matcher(name).matches()) {
+                    continue;
+                }
+
+                try {
+                    Files.walkFileTree(path, new SimpleFileVisitor<>() {
+                        @Override
+                        public @NotNull FileVisitResult visitFile(@NotNull Path file, @NotNull BasicFileAttributes attrs) throws IOException {
+                            Files.delete(file);
+                            return super.visitFile(file, attrs);
+                        }
+
+                        @Override
+                        public @NotNull FileVisitResult postVisitDirectory(@NotNull Path dir, @Nullable IOException exc) throws IOException {
+                            Files.delete(dir);
+                            return super.postVisitDirectory(dir, exc);
+                        }
+                    });
+                } catch (IOException e) {
+                    LOG.warning(String.format("Unable to remove legacy terracotta files: %s", path), e);
+                }
             }
         }
+    }
+
+    public static boolean hasLegacyVersionFiles() throws IOException {
+        try (DirectoryStream<Path> terracotta = Files.newDirectoryStream(Metadata.DEPENDENCIES_DIRECTORY.resolve("terracotta").toAbsolutePath())) {
+            for (Path path : terracotta) {
+                String name = FileUtils.getName(path);
+                if (!LATEST.equals(name) && (RECENT.contains(name) || LEGACY.matcher(name).matches())) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }

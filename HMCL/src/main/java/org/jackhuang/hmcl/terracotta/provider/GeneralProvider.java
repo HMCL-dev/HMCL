@@ -16,12 +16,11 @@ import java.util.Map;
 import java.util.Set;
 
 public final class GeneralProvider implements ITerracottaProvider {
-    private final TerracottaNative target = Map.of(
-            Platform.WINDOWS_X86_64, TerracottaMetadata.WINDOWS_X86_64,
-            Platform.WINDOWS_ARM64, TerracottaMetadata.WINDOWS_ARM64,
-            Platform.LINUX_X86_64, TerracottaMetadata.LINUX_X86_64,
-            Platform.LINUX_ARM64, TerracottaMetadata.LINUX_ARM64
-    ).get(Platform.SYSTEM_PLATFORM);
+    private final TerracottaNative target;
+
+    public GeneralProvider(TerracottaNative target) {
+        this.target = target;
+    }
 
     @Override
     public Status status() throws IOException {

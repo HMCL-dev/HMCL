@@ -4,6 +4,7 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.terracotta.provider.ITerracottaProvider;
 import org.jackhuang.hmcl.util.DigestUtils;
+import org.jackhuang.hmcl.util.logging.Logger;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -16,13 +17,11 @@ public final class TerracottaNative {
     private final List<URI> links;
     private final FileDownloadTask.IntegrityCheck checking;
     private final Path path;
-    private final List<Path> legacy;
 
-    public TerracottaNative(List<URI> links, Path path, List<Path> legacy, FileDownloadTask.IntegrityCheck checking) {
+    public TerracottaNative(List<URI> links, Path path, FileDownloadTask.IntegrityCheck checking) {
         this.links = links;
         this.path = path;
         this.checking = checking;
-        this.legacy = legacy;
     }
 
     public Path getPath() {
@@ -44,10 +43,12 @@ public final class TerracottaNative {
             }
         }
 
-        for (Path legacy : legacy) {
-            if (Files.exists(legacy)) {
+        try {
+            if (TerracottaMetadata.hasLegacyVersionFiles()) {
                 return ITerracottaProvider.Status.LEGACY_VERSION;
             }
+        } catch (IOException e) {
+            Logger.LOG.warning("Cannot determine whether legacy versions exist.");
         }
         return ITerracottaProvider.Status.NOT_EXIST;
     }
