@@ -34,10 +34,7 @@ import org.hildan.fxgson.creators.ObservableSetCreator;
 import org.hildan.fxgson.factories.JavaFxPropertyTypeAdapterFactory;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
-import org.jackhuang.hmcl.util.gson.EnumOrdinalDeserializer;
-import org.jackhuang.hmcl.util.gson.FileTypeAdapter;
-import org.jackhuang.hmcl.util.gson.ObservableField;
-import org.jackhuang.hmcl.util.gson.PaintAdapter;
+import org.jackhuang.hmcl.util.gson.*;
 import org.jackhuang.hmcl.util.i18n.Locales;
 import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
 import org.jackhuang.hmcl.util.javafx.DirtyTracker;
@@ -260,7 +257,7 @@ public final class Config implements Observable {
     }
 
     @SerializedName("commonDirType")
-    private final ObjectProperty<EnumCommonDirectory> commonDirType = new SimpleObjectProperty<>(EnumCommonDirectory.DEFAULT);
+    private final ObjectProperty<EnumCommonDirectory> commonDirType = new RawPreservingObjectProperty<>(EnumCommonDirectory.DEFAULT);
 
     public ObjectProperty<EnumCommonDirectory> commonDirTypeProperty() {
         return commonDirType;
@@ -397,7 +394,7 @@ public final class Config implements Observable {
     }
 
     @SerializedName("backgroundType")
-    private final ObjectProperty<EnumBackgroundImage> backgroundImageType = new SimpleObjectProperty<>(EnumBackgroundImage.DEFAULT);
+    private final ObjectProperty<EnumBackgroundImage> backgroundImageType = new RawPreservingObjectProperty<>(EnumBackgroundImage.DEFAULT);
 
     public ObjectProperty<EnumBackgroundImage> backgroundImageTypeProperty() {
         return backgroundImageType;
@@ -769,9 +766,7 @@ public final class Config implements Observable {
             for (var field : FIELDS) {
                 Observable observable = field.get(config);
                 if (config.tracker.isDirty(observable)) {
-                    JsonElement serialized = field.serialize(config, context);
-                    if (serialized != null && !serialized.isJsonNull())
-                        result.add(field.getSerializedName(), serialized);
+                    field.serialize(result, config, context);
                 }
             }
             config.unknownFields.forEach(result::add);
@@ -791,6 +786,14 @@ public final class Config implements Observable {
             var values = new LinkedHashMap<>(json.getAsJsonObject().asMap());
             for (ObservableField<Config> field : FIELDS) {
                 JsonElement value = values.remove(field.getSerializedName());
+                if (value == null) {
+                    for (String alternateName : field.getAlternateNames()) {
+                        value = values.remove(alternateName);
+                        if (value != null)
+                            break;
+                    }
+                }
+
                 if (value != null) {
                     config.tracker.markDirty(field.get(config));
                     field.deserialize(config, value, context);
