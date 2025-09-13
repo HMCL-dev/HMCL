@@ -293,6 +293,14 @@
     -fx-font-size: 12px;
 }
 
+.two-line-list-item > .first-line > .tag-warning {
+    -fx-text-fill: #red;
+    -fx-background-color: -fx-base-rippler-color;
+    -fx-padding: 2;
+    -fx-font-weight: normal;
+    -fx-font-size: 12px;
+}
+
 .two-line-item-second-large {
 
 }
