@@ -27,6 +27,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -164,7 +165,7 @@ public class MicrosoftAccountChangeCapeDialog extends JFXDialogLayout {
                 displayName = cape.getAlias();
             }
 
-            MultiFileItem.Option<MicrosoftService.MinecraftProfileResponseCape> option = new MultiFileItem.Option<>(displayName , cape);
+            MultiFileItem.Option<MicrosoftService.MinecraftProfileResponseCape> option = new MultiFileItem.Option<>(displayName, cape);
             options.add(option);
             if (Objects.equals(cape.getState(), "ACTIVE")) {
                 currentCape = cape;
@@ -180,25 +181,37 @@ public class MicrosoftAccountChangeCapeDialog extends JFXDialogLayout {
     }
 
     private Task<?> loadCapePreview() {
-        return Task.runAsync(() -> {
-            String imagePath = "/assets/img/cape/" + capeId(capeItem.getSelectedData().getAlias()) + ".png";
-            URL imageURL = MicrosoftAccountChangeCapeDialog.class.getResource(imagePath);
+        CompletableFuture<Image> imageFuture = new CompletableFuture<>();
 
-            if (imageURL != null) {
-                previewCapeImage = FXUtils.newBuiltinImage(imagePath);
-            } else {
-                previewCapeImage = FXUtils.newRemoteImage(capeItem.getSelectedData().getUrl());
-                LOG.warning("Cannot find cape image: " + imagePath);
-            }
+        String imagePath = "/assets/img/cape/" + capeId(capeItem.getSelectedData().getAlias()) + ".png";
+        URL imageURL = MicrosoftAccountChangeCapeDialog.class.getResource(imagePath);
 
-            previewCapeImage = scaleImageNearestNeighbor(previewCapeImage, 10, 10);
-        }).whenComplete(Schedulers.javafx(), (exception) -> {
-            if (exception == null) {
-                capePreview.setImage(previewCapeImage);
-            } else {
-                Logger.LOG.error("Failed to load cape preview", exception);
-            }
-        });
+        if (imageURL != null) {
+            Image builtinImage = FXUtils.newBuiltinImage(imagePath);
+            imageFuture.complete(builtinImage);
+        } else {
+            Task<Image> remoteImageTask = FXUtils.getRemoteImageTask(capeItem.getSelectedData().getUrl(), 0, 0, false, false);
+            remoteImageTask.whenComplete(Schedulers.javafx(), (loadedImage, exception) -> {
+                if (exception != null) {
+                    LOG.warning("Cannot find cape image: " + imagePath, exception);
+                    imageFuture.completeExceptionally(exception);
+                } else {
+                    imageFuture.complete(loadedImage);
+                }
+            }).start();
+        }
+
+        return Task.fromCompletableFuture(imageFuture)
+                .thenRunAsync(Schedulers.javafx(), () -> {
+                    previewCapeImage = scaleImageNearestNeighbor(imageFuture.getNow(null), 10, 10);
+                    capePreview.setImage(previewCapeImage);
+                })
+                .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                    if (exception != null) {
+                        Logger.LOG.error("Failed to load cape preview", exception);
+                        capePreviewSpinner.hideSpinner();
+                    }
+                });
     }
 
     private String capeId(String alias) {
