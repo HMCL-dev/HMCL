@@ -60,6 +60,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     private final TabHeader.Tab<ModListPage> modListTab = new TabHeader.Tab<>("modListTab");
     private final TabHeader.Tab<WorldListPage> worldListTab = new TabHeader.Tab<>("worldList");
     private final TabHeader.Tab<SchematicsPage> schematicsTab = new TabHeader.Tab<>("schematicsTab");
+    private final TabHeader.Tab<ResourcepackListPage> resourcePackTab = new TabHeader.Tab<>("resourcePackTab");
     private final TransitionPane transitionPane = new TransitionPane();
     private final BooleanProperty currentVersionUpgradable = new SimpleBooleanProperty();
     private final ObjectProperty<Profile.ProfileVersion> version = new SimpleObjectProperty<>();
@@ -73,8 +74,9 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         modListTab.setNodeSupplier(loadVersionFor(ModListPage::new));
         worldListTab.setNodeSupplier(loadVersionFor(WorldListPage::new));
         schematicsTab.setNodeSupplier(loadVersionFor(SchematicsPage::new));
+        resourcePackTab.setNodeSupplier(loadVersionFor(ResourcepackListPage::new));
 
-        tab = new TabHeader(versionSettingsTab, installerListTab, modListTab, worldListTab, schematicsTab);
+        tab = new TabHeader(versionSettingsTab, installerListTab, modListTab, worldListTab, schematicsTab, resourcePackTab);
 
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
 
@@ -139,6 +141,8 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
             worldListTab.getNode().loadVersion(profile, version);
         if (schematicsTab.isInitialized())
             schematicsTab.getNode().loadVersion(profile, version);
+        if (resourcePackTab.isInitialized())
+            resourcePackTab.getNode().loadVersion(profile, version);
         currentVersionUpgradable.set(profile.getRepository().isModpack(version));
     }
 
@@ -283,11 +287,20 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                 schematicsListItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.schematicsTab));
                 schematicsListItem.setOnAction(e -> control.tab.select(control.schematicsTab));
 
+                AdvancedListItem resourcePackListItem = new AdvancedListItem();
+                resourcePackListItem.getStyleClass().add("navigation-drawer-item");
+                resourcePackListItem.setTitle(i18n("resourcepack.manage"));
+                resourcePackListItem.setLeftGraphic(wrap(SVG.TEXTURE));
+                resourcePackListItem.setActionButtonVisible(false);
+                resourcePackListItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.resourcePackTab));
+                resourcePackListItem.setOnAction(e -> control.tab.select(control.resourcePackTab));
+
                 AdvancedListBox sideBar = new AdvancedListBox()
                         .add(versionSettingsItem)
                         .add(installerListItem)
                         .add(modListItem)
                         .add(worldListItem)
+                        .add(resourcePackListItem)
                         .add(schematicsListItem);
                 VBox.setVgrow(sideBar, Priority.ALWAYS);
 
