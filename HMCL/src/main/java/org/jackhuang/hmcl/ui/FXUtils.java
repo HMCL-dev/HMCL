@@ -1203,39 +1203,34 @@ public final class FXUtils {
         return button;
     }
 
-    public static Label truncatedLabel(String text, int limit) {
-        Label label = new Label();
-        if (text.length() <= limit) {
-            label.setText(text);
-        } else {
-            label.setText(StringUtils.truncate(text, limit));
-            installFastTooltip(label, text);
-        }
+    public static Label newSafeTruncatedLabel(String text) {
+        Label label = new Label(text);
+        label.setTextOverrun(OverrunStyle.CENTER_WORD_ELLIPSIS);
+        showTooltipWhenTruncated(label);
         return label;
     }
 
     public static void showTooltipWhenTruncated(Labeled labeled) {
         ReadOnlyBooleanProperty textTruncatedProperty = textTruncatedProperty(labeled);
         if (textTruncatedProperty != null) {
-            InvalidationListener listener = new InvalidationListener() {
-                private Tooltip tooltip;
+            final var PROP_KEY = FXUtils.class.getName() + ".LABEL_FULL_TEXT";
+            ChangeListener<Boolean> listener = (observable, oldValue, newValue) -> {
+                var label = (Labeled) ((ReadOnlyProperty<?>) observable).getBean();
+                var tooltip = (Tooltip) label.getProperties().get(PROP_KEY);
 
-                @Override
-                public void invalidated(Observable observable) {
-                    boolean isTextTruncated = textTruncatedProperty.get();
-                    if (isTextTruncated) {
-                        if (tooltip == null) {
-                            tooltip = new Tooltip();
-                            tooltip.textProperty().bind(labeled.textProperty());
-                        }
-
-                        FXUtils.installFastTooltip(labeled, tooltip);
-                    } else if (tooltip != null) {
-                        Tooltip.uninstall(labeled, tooltip);
+                if (newValue) {
+                    if (tooltip == null) {
+                        tooltip = new Tooltip();
+                        tooltip.textProperty().bind(labeled.textProperty());
+                        label.getProperties().put(PROP_KEY, tooltip);
                     }
+
+                    FXUtils.installFastTooltip(labeled, tooltip);
+                } else if (tooltip != null) {
+                    Tooltip.uninstall(labeled, tooltip);
                 }
             };
-            listener.invalidated(textTruncatedProperty);
+            listener.changed(textTruncatedProperty, false, textTruncatedProperty.get());
             textTruncatedProperty.addListener(listener);
         }
     }
