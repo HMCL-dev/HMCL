@@ -506,7 +506,9 @@ public class TerracottaControllerPage extends StackPane {
                 TwoLineListItem item = new TwoLineListItem();
                 item.setTitle(profile.getName());
                 item.setSubtitle(profile.getVendor());
-                item.getTags().setAll(i18n("terracotta.player_kind." + profile.getType().name().toLowerCase(Locale.ROOT)));
+                item.getTags().setAll(TwoLineListItem.createTagLabel(
+                        i18n("terracotta.player_kind." + profile.getType().name().toLowerCase(Locale.ROOT)))
+                );
 
                 pane.getChildren().add(item);
             }
