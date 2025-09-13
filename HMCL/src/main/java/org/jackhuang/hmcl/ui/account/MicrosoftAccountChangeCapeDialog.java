@@ -8,7 +8,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.*;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Region;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftService;
 import org.jackhuang.hmcl.setting.Accounts;
@@ -36,7 +35,6 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public class MicrosoftAccountChangeCapeDialog extends JFXDialogLayout {
     private final MultiFileItem<MicrosoftService.MinecraftProfileResponseCape> capeItem = new MultiFileItem<>();
     private final MicrosoftService.MinecraftProfileResponse profile;
-    private final MicrosoftAccount account;
     private final ImageView capePreview = new ImageView();
     private final SpinnerPane capePreviewSpinner = new SpinnerPane();
     private Image previewCapeImage;
@@ -44,7 +42,6 @@ public class MicrosoftAccountChangeCapeDialog extends JFXDialogLayout {
 
     public MicrosoftAccountChangeCapeDialog(MicrosoftAccount account, MicrosoftService.MinecraftProfileResponse profile) {
         this.profile = profile;
-        this.account = account;
         setWidth(400);
         setHeading(new Label(i18n("account.cape.change")));
         BorderPane body = new BorderPane();
@@ -52,7 +49,7 @@ public class MicrosoftAccountChangeCapeDialog extends JFXDialogLayout {
         capePreviewSpinner.setPrefHeight(150);
         capePreviewSpinner.setPrefWidth(100);
 
-        initCapeItem();
+        initCapeItems();
 
         ScrollPane scrollPane = new ScrollPane(capeItem);
 
@@ -64,21 +61,18 @@ public class MicrosoftAccountChangeCapeDialog extends JFXDialogLayout {
         body.setCenter(scrollPane);
         FXUtils.smoothScrolling(scrollPane);
 
-        BorderPane rightPane = new BorderPane();
-        rightPane.setCenter(capePreviewSpinner);
-        rightPane.setMinWidth(Region.USE_PREF_SIZE);
-        body.setRight(rightPane);
+        body.setRight(capePreviewSpinner);
 
-        capePreview.setViewport(new Rectangle2D(1 * 10, 0, 10 * 10, 17 * 10));
+        capePreview.setViewport(new Rectangle2D(10, 0, 10 * 10, 17 * 10));
         capePreviewSpinner.setContent(capePreview);
 
-        InvalidationListener invalidationListener = observable -> {
+        InvalidationListener updateCapePreviewListener = observable -> {
             if (capeItem.getSelectedData() == null) {
                 capePreview.setImage(null);
                 return;
             }
             capePreviewSpinner.showSpinner();
-            loadCapePreview().whenComplete(Schedulers.javafx(), (exception -> {
+            updateCapePreview().whenComplete(Schedulers.javafx(), (exception -> {
                 if (exception == null) {
                     capePreviewSpinner.hideSpinner();
                 } else {
@@ -86,25 +80,35 @@ public class MicrosoftAccountChangeCapeDialog extends JFXDialogLayout {
                 }
             })).start();
         };
-        invalidationListener.invalidated(null);
+        updateCapePreviewListener.invalidated(null);
 
-        capeItem.selectedDataProperty().addListener(invalidationListener);
+        capeItem.selectedDataProperty().addListener(updateCapePreviewListener);
 
         getChildren().add(body);
 
-        JFXButton acceptButton = new JFXButton(i18n("button.ok"));
-        acceptButton.getStyleClass().add("dialog-accept");
+        JFXButton saveButton = new JFXButton(i18n("button.save"));
+        saveButton.getStyleClass().add("dialog-accept");
 
-        acceptButton.setOnAction(e -> {
-            Task<?> updateCapeTask = updateCapeSetting();
+        saveButton.setOnAction(e -> {
+            String cape = capeItem.getSelectedData().getId();
+
+            Task<?> updateCapeTask;
+            if ("empty".equals(cape) && currentCape != null) {
+                updateCapeTask = Task.runAsync(account::hideCape);
+            } else if (currentCape != null && cape.equals(currentCape.getId())) {
+                updateCapeTask = null;
+            } else {
+                updateCapeTask = Task.runAsync(() -> account.changeCape(cape));
+            }
+
             if (updateCapeTask != null) {
-                updateCapeTask.whenComplete(Schedulers.javafx(), (exception -> {
+                updateCapeTask.whenComplete(Schedulers.javafx(), (exception) -> {
                     if (exception != null) {
                         Logger.LOG.error("Failed to change cape", exception);
                         Controllers.dialog(Accounts.localizeErrorMessage(exception), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
                     }
                     fireEvent(new DialogCloseEvent());
-                })).start();
+                }).start();
             } else {
                 fireEvent(new DialogCloseEvent());
             }
@@ -116,46 +120,26 @@ public class MicrosoftAccountChangeCapeDialog extends JFXDialogLayout {
         onEscPressed(this, cancelButton::fire);
 
         setBody(body);
-        setActions(acceptButton, cancelButton);
+        setActions(saveButton, cancelButton);
     }
 
     public static Image scaleImageNearestNeighbor(Image img, double sx, double sy) {
-        PixelReader pr = img.getPixelReader();
         int ow = (int) img.getWidth(), oh = (int) img.getHeight();
         WritableImage scaled = new WritableImage((int) (ow * sx), (int) (oh * sy));
-        PixelWriter pw = scaled.getPixelWriter();
         for (int y = 0; y < scaled.getHeight(); y++)
             for (int x = 0; x < scaled.getWidth(); x++)
-                pw.setColor(x, y, pr.getColor(Math.min(Math.max((int) (x / sx), 0), ow - 1), Math.min(Math.max((int) (y / sy), 0), oh - 1)));
+                scaled.getPixelWriter().setColor(x, y, img.getPixelReader().getColor(Math.min(Math.max((int) (x / sx), 0), ow - 1), Math.min(Math.max((int) (y / sy), 0), oh - 1)));
         return scaled;
     }
 
-    private Task<?> updateCapeSetting() {
-        String cape = capeItem.getSelectedData().getId();
-
-        if ("empty".equals(cape)) {
-            if (currentCape == null) return null;
-            cape = null;
-        } else if (currentCape != null && cape.equals(currentCape.getId())) {
-            return null;
-        }
-
-        if (cape == null) {
-            return Task.runAsync(account::hideCape);
-        } else {
-            String finalCape = cape;
-            return Task.runAsync(() -> account.changeCape(finalCape));
-        }
-    }
-
-    private void initCapeItem() {
+    private void initCapeItems() {
         ArrayList<MultiFileItem.Option<MicrosoftService.MinecraftProfileResponseCape>> options = new ArrayList<>();
         List<MicrosoftService.MinecraftProfileResponseCape> capes = profile.getCapes();
 
         options.add(new MultiFileItem.Option<>(i18n("account.cape.none"), null));
 
         for (MicrosoftService.MinecraftProfileResponseCape cape : capes) {
-            String key = "account.cape.name." + capeId(cape.getAlias());
+            String key = "account.cape.name." + getCapeId(cape.getAlias());
             String displayName;
 
             if (I18n.hasKey(key)) {
@@ -173,17 +157,13 @@ public class MicrosoftAccountChangeCapeDialog extends JFXDialogLayout {
         }
 
         capeItem.loadChildren(options);
-        if (currentCape != null) {
-            capeItem.setSelectedData(currentCape);
-        } else {
-            capeItem.setSelectedData(null);
-        }
+        capeItem.setSelectedData(currentCape);
     }
 
-    private Task<?> loadCapePreview() {
+    private Task<?> updateCapePreview() {
         CompletableFuture<Image> imageFuture = new CompletableFuture<>();
 
-        String imagePath = "/assets/img/cape/" + capeId(capeItem.getSelectedData().getAlias()) + ".png";
+        String imagePath = "/assets/img/cape/" + getCapeId(capeItem.getSelectedData().getAlias()) + ".png";
         URL imageURL = MicrosoftAccountChangeCapeDialog.class.getResource(imagePath);
 
         if (imageURL != null) {
@@ -193,7 +173,7 @@ public class MicrosoftAccountChangeCapeDialog extends JFXDialogLayout {
             Task<Image> remoteImageTask = FXUtils.getRemoteImageTask(capeItem.getSelectedData().getUrl(), 0, 0, false, false);
             remoteImageTask.whenComplete(Schedulers.javafx(), (loadedImage, exception) -> {
                 if (exception != null) {
-                    LOG.warning("Cannot find cape image: " + imagePath, exception);
+                    LOG.warning("Cannot download cape image " + capeItem.getSelectedData().getUrl(), exception);
                     imageFuture.completeExceptionally(exception);
                 } else {
                     imageFuture.complete(loadedImage);
@@ -201,20 +181,18 @@ public class MicrosoftAccountChangeCapeDialog extends JFXDialogLayout {
             }).start();
         }
 
-        return Task.fromCompletableFuture(imageFuture)
-                .thenRunAsync(Schedulers.javafx(), () -> {
-                    previewCapeImage = scaleImageNearestNeighbor(imageFuture.getNow(null), 10, 10);
-                    capePreview.setImage(previewCapeImage);
-                })
-                .whenComplete(Schedulers.javafx(), (result, exception) -> {
-                    if (exception != null) {
-                        Logger.LOG.error("Failed to load cape preview", exception);
-                        capePreviewSpinner.hideSpinner();
-                    }
-                });
+        return Task.fromCompletableFuture(imageFuture).thenRunAsync(Schedulers.javafx(), () -> {
+            previewCapeImage = scaleImageNearestNeighbor(imageFuture.getNow(null), 10, 10);
+            capePreview.setImage(previewCapeImage);
+        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            if (exception != null) {
+                Logger.LOG.error("Failed to load cape preview", exception);
+                capePreviewSpinner.hideSpinner();
+            }
+        });
     }
 
-    private String capeId(String alias) {
+    private String getCapeId(String alias) {
         return alias.toLowerCase().replace(" ", "_").replace("'", "_").replace("-", "_");
     }
 }
