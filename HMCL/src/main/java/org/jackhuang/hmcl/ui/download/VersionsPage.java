@@ -360,18 +360,6 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                         );
                     }
                 }
-//                {
-//                    HBox actionsBox = new HBox(8);
-//                    GridPane.setColumnSpan(actionsBox, 4);
-//                    actionsBox.setAlignment(Pos.CENTER_RIGHT);
-//
-//                    JFXButton refreshButton = FXUtils.newRaisedButton(i18n("button.refresh"));
-//                    refreshButton.setOnAction(event -> control.onRefresh());
-//
-//                    actionsBox.getChildren().setAll(refreshButton);
-//
-//                    searchPane.addRow(rowIndex++, actionsBox);
-//                }
             }
 
             {
@@ -454,7 +442,8 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                         case APRIL_FOOLS -> versionType == RemoteVersion.Type.SNAPSHOT
                                 && GameVersionNumber.asGameVersion(it.getGameVersion()).isAprilFools();
                         case OLD -> versionType == RemoteVersion.Type.OLD;
-                        case ALL, default -> true;
+                        // case ALL,
+                        default -> true;
                     };
                 });
 
