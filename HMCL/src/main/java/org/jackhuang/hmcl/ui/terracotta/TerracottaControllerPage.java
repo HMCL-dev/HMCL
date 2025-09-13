@@ -240,59 +240,63 @@ public class TerracottaControllerPage extends StackPane {
 
                 nodesProperty.setAll(room);
             } else if (state instanceof TerracottaState.HostOK hostOK) {
-                String cs = hostOK.getCode();
+                if (hostOK.isForkOf(legacyState)) {
+                    ((PlayerProfileUI) nodesProperty.get(nodesProperty.size() - 1)).updateProfiles(hostOK.getProfiles());
+                    return;
+                } else {
+                    String cs = hostOK.getCode();
 
-                statusProperty.set(i18n("terracotta.status.host_ok"));
-                progressProperty.set(1);
+                    statusProperty.set(i18n("terracotta.status.host_ok"));
+                    progressProperty.set(1);
 
-                VBox code = new VBox(4);
-                code.setAlignment(Pos.CENTER);
-                {
-                    Label desc = new Label(i18n("terracotta.status.host_ok.code"));
+                    VBox code = new VBox(4);
+                    code.setAlignment(Pos.CENTER);
                     {
-                        ClipboardContent cp = new ClipboardContent();
-                        cp.putString(cs);
-                        Clipboard.getSystemClipboard().setContent(cp);
-                    }
-
-                    // FIXME: The implementation to display Room Code is ambiguous. Consider using more clearer JavaFX Element in the future.
-                    TextField label = new TextField(cs);
-                    label.setEditable(false);
-                    label.setFocusTraversable(false);
-                    label.setAlignment(Pos.CENTER);
-                    label.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
-                    VBox.setMargin(label, new Insets(10, 0, 10, 0));
-                    label.setScaleX(1.8);
-                    label.setScaleY(1.8);
-                    holder.add(FXUtils.onWeakChange(label.selectedTextProperty(), string -> {
-                        if (string != null && !string.isEmpty() && !cs.equals(string)) {
-                            label.selectAll();
+                        Label desc = new Label(i18n("terracotta.status.host_ok.code"));
+                        {
+                            ClipboardContent cp = new ClipboardContent();
+                            cp.putString(cs);
+                            Clipboard.getSystemClipboard().setContent(cp);
                         }
-                    }));
 
-                    code.getChildren().setAll(desc, label);
-                }
-                FXUtils.onClicked(code, () -> FXUtils.copyText(cs));
+                        // FIXME: The implementation to display Room Code is ambiguous. Consider using more clearer JavaFX Element in the future.
+                        TextField label = new TextField(cs);
+                        label.setEditable(false);
+                        label.setFocusTraversable(false);
+                        label.setAlignment(Pos.CENTER);
+                        label.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
+                        VBox.setMargin(label, new Insets(10, 0, 10, 0));
+                        label.setScaleX(1.8);
+                        label.setScaleY(1.8);
+                        holder.add(FXUtils.onWeakChange(label.selectedTextProperty(), string -> {
+                            if (string != null && !string.isEmpty() && !cs.equals(string)) {
+                                label.selectAll();
+                            }
+                        }));
 
-                LineButton copy = LineButton.of();
-                copy.setLeftIcon(SVG.CONTENT_COPY);
-                copy.setTitle(i18n("terracotta.status.host_ok.code.copy"));
-                copy.setSubtitle(i18n("terracotta.status.host_ok.code.desc"));
-                FXUtils.onClicked(copy, () -> FXUtils.copyText(cs));
-
-                LineButton back = LineButton.of();
-                back.setLeftIcon(SVG.ARROW_BACK);
-                back.setTitle(i18n("terracotta.back"));
-                back.setSubtitle(i18n("terracotta.status.host_ok.back"));
-                FXUtils.onClicked(back, () -> {
-                    TerracottaState.Waiting s = TerracottaManager.setWaiting();
-                    if (s != null) {
-                        UI_STATE.set(s);
+                        code.getChildren().setAll(desc, label);
                     }
-                });
+                    FXUtils.onClicked(code, () -> FXUtils.copyText(cs));
 
-                nodesProperty.setAll(code, copy, back);
-                displayProfiles(hostOK.getProfiles(), nodesProperty);
+                    LineButton copy = LineButton.of();
+                    copy.setLeftIcon(SVG.CONTENT_COPY);
+                    copy.setTitle(i18n("terracotta.status.host_ok.code.copy"));
+                    copy.setSubtitle(i18n("terracotta.status.host_ok.code.desc"));
+                    FXUtils.onClicked(copy, () -> FXUtils.copyText(cs));
+
+                    LineButton back = LineButton.of();
+                    back.setLeftIcon(SVG.ARROW_BACK);
+                    back.setTitle(i18n("terracotta.back"));
+                    back.setSubtitle(i18n("terracotta.status.host_ok.back"));
+                    FXUtils.onClicked(back, () -> {
+                        TerracottaState.Waiting s = TerracottaManager.setWaiting();
+                        if (s != null) {
+                            UI_STATE.set(s);
+                        }
+                    });
+
+                    nodesProperty.setAll(code, copy, back, new PlayerProfileUI(hostOK.getProfiles()));
+                }
             } else if (state instanceof TerracottaState.GuestStarting) {
                 statusProperty.set(i18n("terracotta.status.guest_starting"));
                 progressProperty.set(-1);
@@ -310,25 +314,30 @@ public class TerracottaControllerPage extends StackPane {
 
                 nodesProperty.setAll(room);
             } else if (state instanceof TerracottaState.GuestOK guestOK) {
-                statusProperty.set(i18n("terracotta.status.guest_ok"));
-                progressProperty.set(1);
-                LineButton room = LineButton.of();
-                room.setLeftIcon(SVG.ARROW_BACK);
-                room.setTitle(i18n("terracotta.back"));
-                room.setSubtitle(i18n("terracotta.status.guest_ok.back"));
-                FXUtils.onClicked(room, () -> {
-                    TerracottaState.Waiting s = TerracottaManager.setWaiting();
-                    if (s != null) {
-                        UI_STATE.set(s);
-                    }
-                });
+                if (guestOK.isForkOf(legacyState)) {
+                    ((PlayerProfileUI) nodesProperty.get(nodesProperty.size() - 1)).updateProfiles(guestOK.getProfiles());
+                    return;
+                } else {
+                    statusProperty.set(i18n("terracotta.status.guest_ok"));
+                    progressProperty.set(1);
 
-                LineButton tutorial = LineButton.of();
-                tutorial.setTitle(i18n("terracotta.status.guest_ok.title"));
-                tutorial.setSubtitle(i18n("terracotta.status.guest_ok.desc", guestOK.getUrl()));
+                    LineButton tutorial = LineButton.of();
+                    tutorial.setTitle(i18n("terracotta.status.guest_ok.title"));
+                    tutorial.setSubtitle(i18n("terracotta.status.guest_ok.desc", guestOK.getUrl()));
 
-                nodesProperty.setAll(tutorial, room);
-                displayProfiles(guestOK.getProfiles(), nodesProperty);
+                    LineButton back = LineButton.of();
+                    back.setLeftIcon(SVG.ARROW_BACK);
+                    back.setTitle(i18n("terracotta.back"));
+                    back.setSubtitle(i18n("terracotta.status.guest_ok.back"));
+                    FXUtils.onClicked(back, () -> {
+                        TerracottaState.Waiting s = TerracottaManager.setWaiting();
+                        if (s != null) {
+                            UI_STATE.set(s);
+                        }
+                    });
+
+                    nodesProperty.setAll(tutorial, back, new PlayerProfileUI(guestOK.getProfiles()));
+                }
             } else if (state instanceof TerracottaState.Exception exception) {
                 statusProperty.set(i18n("terracotta.status.exception.desc." + exception.getType().name().toLowerCase(Locale.ROOT)));
                 progressProperty.set(1);
@@ -409,26 +418,6 @@ public class TerracottaControllerPage extends StackPane {
         getChildren().setAll(scrollPane);
     }
 
-    private static void displayProfiles(List<TerracottaProfile> profiles, ObservableList<Node> nodes) {
-        VBox statusPane = new VBox(8);
-        VBox.setMargin(statusPane, new Insets(0, 0, 0, 4));
-
-        Label status = new Label();
-        status.setText(i18n("terracotta.player_list"));
-        statusPane.getChildren().setAll(status);
-
-        for (TerracottaProfile profile : profiles) {
-            TwoLineListItem item = new TwoLineListItem();
-            item.setTitle(profile.getName());
-            item.setSubtitle(profile.getVendor());
-            item.getTags().setAll(i18n("terracotta.player_kind." + profile.getType().name().toLowerCase(Locale.ROOT)));
-
-            statusPane.getChildren().add(item);
-        }
-
-        nodes.add(statusPane);
-    }
-
     private static final class LineButton extends RipplerContainer {
         private final WeakListenerHolder holder = new WeakListenerHolder();
 
@@ -490,6 +479,39 @@ public class TerracottaControllerPage extends StackPane {
 
         public void setRightIcon(SVG right) {
             this.right.set(right.createIcon(Theme.blackFill(), 28));
+        }
+    }
+
+    private static final class PlayerProfileUI extends VBox {
+        private final TransitionPane transition;
+
+        public PlayerProfileUI(List<TerracottaProfile> profiles) {
+            super(8);
+            VBox.setMargin(this, new Insets(0, 0, 0, 4));
+            {
+                Label status = new Label();
+                status.setText(i18n("terracotta.player_list"));
+
+                transition = new TransitionPane();
+                getChildren().setAll(status, transition);
+
+                updateProfiles(profiles);
+            }
+        }
+
+        private void updateProfiles(List<TerracottaProfile> profiles) {
+            VBox pane = new VBox(8);
+
+            for (TerracottaProfile profile : profiles) {
+                TwoLineListItem item = new TwoLineListItem();
+                item.setTitle(profile.getName());
+                item.setSubtitle(profile.getVendor());
+                item.getTags().setAll(i18n("terracotta.player_kind." + profile.getType().name().toLowerCase(Locale.ROOT)));
+
+                pane.getChildren().add(item);
+            }
+
+            this.transition.setContent(pane, ContainerAnimations.SWIPE_LEFT_FADE_SHORT);
         }
     }
 }

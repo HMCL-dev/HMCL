@@ -19,6 +19,10 @@ public abstract sealed class TerracottaState {
         return false;
     }
 
+    public boolean isForkOf(TerracottaState state) {
+        return false;
+    }
+
     public static final class Bootstrap extends TerracottaState {
         static final Bootstrap INSTANCE = new Bootstrap();
 
@@ -123,12 +127,16 @@ public abstract sealed class TerracottaState {
         @SerializedName("room")
         private final String code;
 
+        @SerializedName("profile_index")
+        private final int profileIndex;
+
         @SerializedName("profiles")
         private final List<TerracottaProfile> profiles;
 
-        HostOK(int port, int index, String state, String code, List<TerracottaProfile> profiles) {
+        HostOK(int port, int index, String state, String code, int profileIndex, List<TerracottaProfile> profiles) {
             super(port, index, state);
             this.code = code;
+            this.profileIndex = profileIndex;
             this.profiles = profiles;
         }
 
@@ -149,6 +157,11 @@ public abstract sealed class TerracottaState {
         public List<TerracottaProfile> getProfiles() {
             return profiles;
         }
+
+        @Override
+        public boolean isForkOf(TerracottaState state) {
+            return state instanceof HostOK hostOK && this.index - hostOK.index <= profileIndex;
+        }
     }
 
     public static final class GuestStarting extends Ready {
@@ -161,12 +174,16 @@ public abstract sealed class TerracottaState {
         @SerializedName("url")
         private final String url;
 
+        @SerializedName("profile_index")
+        private final int profileIndex;
+
         @SerializedName("profiles")
         private final List<TerracottaProfile> profiles;
 
-        GuestOK(int port, int index, String state, String url, List<TerracottaProfile> profiles) {
+        GuestOK(int port, int index, String state, String url, int profileIndex, List<TerracottaProfile> profiles) {
             super(port, index, state);
             this.url = url;
+            this.profileIndex = profileIndex;
             this.profiles = profiles;
         }
 
@@ -183,6 +200,11 @@ public abstract sealed class TerracottaState {
 
         public List<TerracottaProfile> getProfiles() {
             return profiles;
+        }
+
+        @Override
+        public boolean isForkOf(TerracottaState state) {
+            return state instanceof HostOK hostOK && this.index - hostOK.index <= profileIndex;
         }
     }
 
