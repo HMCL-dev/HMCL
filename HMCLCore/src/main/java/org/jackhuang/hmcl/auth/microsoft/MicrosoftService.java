@@ -37,7 +37,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.net.URISyntaxException;
+import java.net.;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -313,7 +313,7 @@ public class MicrosoftService {
                 if (StringUtils.isNotBlank(profileResponse.errorMessage) || con.getResponseCode() / 100 != 2)
                     throw new AuthenticationException("Failed to change cape, response code: " + con.getResponseCode() + ", response: " + response);
             }
-        } catch (IOException | JsonParseException e) {
+        } catch (IOException | JsonParseException | URISyntaxException e) {
             throw new AuthenticationException(e);
         }
     }
