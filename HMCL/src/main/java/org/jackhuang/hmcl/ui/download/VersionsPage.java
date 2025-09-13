@@ -42,7 +42,6 @@ import org.jackhuang.hmcl.download.neoforge.NeoForgeRemoteVersion;
 import org.jackhuang.hmcl.download.optifine.OptiFineRemoteVersion;
 import org.jackhuang.hmcl.download.quilt.QuiltAPIRemoteVersion;
 import org.jackhuang.hmcl.download.quilt.QuiltRemoteVersion;
-import org.jackhuang.hmcl.game.OSRestriction;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -236,8 +235,10 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             }
             twoLineListItem.getTags().clear();
 
-            if (remoteVersion instanceof GameRemoteVersion gameRemoteVersion) {
+            if (remoteVersion instanceof GameRemoteVersion) {
                 RemoteVersion.Type versionType = remoteVersion.getVersionType();
+                GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(remoteVersion.getGameVersion());
+
                 switch (versionType) {
                     case RELEASE -> {
                         twoLineListItem.getTags().add(i18n("version.game.release"));
@@ -259,9 +260,8 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     }
                 }
 
-                switch (NativePatcher.checkSupportedStatus(gameRemoteVersion, Platform.SYSTEM_PLATFORM, OperatingSystem.WINDOWS_VERSION)) {
-                    case LAUNCHER_SUPPORTED ->
-                            twoLineListItem.getTags().add(i18n("version.game.support_status.launcher_supported"));
+                switch (NativePatcher.checkSupportedStatus(gameVersion, Platform.SYSTEM_PLATFORM, OperatingSystem.WINDOWS_VERSION)) {
+                    case LAUNCHER_SUPPORTED -> twoLineListItem.getTags().add(i18n("version.game.support_status.launcher_supported"));
                     case UNTESTED -> twoLineListItem.getTags().add(i18n("version.game.support_status.untested"));
                     case UNSUPPORTED -> twoLineListItem.getTags().add(i18n("version.game.support_status.unsupported"));
                 }
