@@ -250,9 +250,9 @@ public final class JavaManagementPage extends ListPageBase<JavaManagementPage.Ja
             TwoLineListItem item = new TwoLineListItem();
             item.setTitle((java.isJDK() ? "JDK" : "JRE") + " " + java.getVersion());
             item.setSubtitle(java.getBinary().toString());
-            item.getTags().add(i18n("java.info.architecture") + ": " + java.getArchitecture().getDisplayName());
+            item.addTag(i18n("java.info.architecture") + ": " + java.getArchitecture().getDisplayName());
             if (vendor != null)
-                item.getTags().add(i18n("java.info.vendor") + ": " + vendor);
+                item.addTag(i18n("java.info.vendor") + ": " + vendor);
             BorderPane.setAlignment(item, Pos.CENTER);
             center.getChildren().setAll(item);
             root.setCenter(center);
