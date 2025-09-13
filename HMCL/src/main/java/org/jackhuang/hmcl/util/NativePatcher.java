@@ -208,6 +208,13 @@ public final class NativePatcher {
             return SupportStatus.OFFICIAL_SUPPORTED;
 
         GameVersionNumber versionNumber = GameVersionNumber.asGameVersion(gameVersion.getSelfVersion());
+        if (platform.equals(Platform.WINDOWS_X86) || platform.equals(Platform.LINUX_X86)) {
+            if (versionNumber.isAtLeast("1.20.5", "24w14a"))
+                return SupportStatus.UNSUPPORTED;
+            else
+                return SupportStatus.OFFICIAL_SUPPORTED;
+        }
+
         if (platform.equals(Platform.WINDOWS_ARM64) || platform.equals(Platform.MACOS_ARM64)) {
             if (versionNumber.compareTo("1.19") >= 0)
                 return SupportStatus.OFFICIAL_SUPPORTED;
@@ -223,13 +230,6 @@ public final class NativePatcher {
             }
 
             return SupportStatus.UNSUPPORTED;
-        }
-
-        if (platform.equals(Platform.WINDOWS_X86) || platform.equals(Platform.LINUX_X86)) {
-            if (versionNumber.isAtLeast("1.20.5", "24w14a"))
-                return SupportStatus.UNSUPPORTED;
-            else
-                return SupportStatus.OFFICIAL_SUPPORTED;
         }
 
         String minVersion = null;
