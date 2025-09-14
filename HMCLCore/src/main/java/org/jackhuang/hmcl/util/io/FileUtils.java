@@ -378,7 +378,6 @@ public final class FileUtils {
                     Files.delete(dir);
                 }
                 return FileVisitResult.CONTINUE;
-
             }
         });
     }
