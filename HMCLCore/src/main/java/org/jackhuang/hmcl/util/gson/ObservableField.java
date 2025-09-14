@@ -17,10 +17,7 @@
  */
 package org.jackhuang.hmcl.util.gson;
 
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParseException;
-import com.google.gson.JsonSerializationContext;
+import com.google.gson.*;
 import com.google.gson.annotations.SerializedName;
 import javafx.beans.Observable;
 import javafx.beans.property.ListProperty;
@@ -120,7 +117,7 @@ public abstract class ObservableField<T> {
         return (Observable) varHandle.get(value);
     }
 
-    public abstract JsonElement serialize(T value, JsonSerializationContext context);
+    public abstract void serialize(JsonObject result, T value, JsonSerializationContext context);
 
     public abstract void deserialize(T value, JsonElement element, JsonDeserializationContext context);
 
@@ -133,14 +130,36 @@ public abstract class ObservableField<T> {
         }
 
         @Override
-        public JsonElement serialize(T value, JsonSerializationContext context) {
-            return context.serialize(((Property<?>) get(value)).getValue(), elementType);
+        public void serialize(JsonObject result, T value, JsonSerializationContext context) {
+            Property<?> property = (Property<?>) get(value);
+
+            if (property instanceof RawPreservingProperty<?> rawPreserving) {
+                JsonElement rawJson = rawPreserving.getRawJson();
+                if (rawJson != null) {
+                    result.add(getSerializedName(), rawJson);
+                    return;
+                }
+            }
+
+            JsonElement serialized = context.serialize(property.getValue(), elementType);
+            if (serialized != null && !serialized.isJsonNull())
+                result.add(getSerializedName(), serialized);
         }
 
         @Override
         @SuppressWarnings({"unchecked", "rawtypes"})
         public void deserialize(T value, JsonElement element, JsonDeserializationContext context) {
-            ((Property) get(value)).setValue(context.deserialize(element, elementType));
+            Property property = (Property) get(value);
+
+            try {
+                property.setValue(context.deserialize(element, elementType));
+            } catch (Throwable e) {
+                if (property instanceof RawPreservingProperty<?>) {
+                    ((RawPreservingProperty<?>) property).setRawJson(element);
+                } else {
+                    throw e;
+                }
+            }
         }
     }
 
@@ -158,8 +177,8 @@ public abstract class ObservableField<T> {
         }
 
         @Override
-        public JsonElement serialize(T value, JsonSerializationContext context) {
-            return context.serialize(get(value), collectionType);
+        public void serialize(JsonObject result, T value, JsonSerializationContext context) {
+            result.add(getSerializedName(), context.serialize(get(value), collectionType));
         }
 
         @SuppressWarnings({"unchecked"})
@@ -193,8 +212,8 @@ public abstract class ObservableField<T> {
         }
 
         @Override
-        public JsonElement serialize(T value, JsonSerializationContext context) {
-            return context.serialize(get(value), mapType);
+        public void serialize(JsonObject result, T value, JsonSerializationContext context) {
+            result.add(getSerializedName(), context.serialize(get(value), mapType));
         }
 
         @SuppressWarnings({"unchecked"})
