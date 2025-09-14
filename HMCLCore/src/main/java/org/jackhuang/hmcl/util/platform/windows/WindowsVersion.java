@@ -1,4 +1,3 @@
-
 /*
  * Hello Minecraft! Launcher
  * Copyright (C) 2025 huangyuhui <huanghongxun2008@126.com> and contributors
@@ -18,6 +17,8 @@
  */
 package org.jackhuang.hmcl.util.platform.windows;
 
+import org.jackhuang.hmcl.util.platform.OSVersion;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -28,7 +29,7 @@ import java.util.regex.Pattern;
  * @author Glavo
  * @see <a href="https://learn.microsoft.com/windows/win32/sysinfo/operating-system-version">Operating System Version</a>
  */
-public final class WindowsVersion implements Comparable<WindowsVersion> {
+public final class WindowsVersion implements OSVersion, Comparable<WindowsVersion> {
 
     public static final WindowsVersion UNKNOWN = new WindowsVersion(0, 0);
 
@@ -90,6 +91,21 @@ public final class WindowsVersion implements Comparable<WindowsVersion> {
         }
     }
 
+    @Override
+    public @NotNull OperatingSystem getOperatingSystem() {
+        return OperatingSystem.WINDOWS;
+    }
+
+    @Override
+    public @NotNull String getVersion() {
+        return version;
+    }
+
+    @Override
+    public boolean isAtLeast(@NotNull OSVersion otherVersion) {
+        return otherVersion instanceof WindowsVersion other && this.compareTo(other) >= 0;
+    }
+
     public int getMajor() {
         return major;
     }
@@ -124,16 +140,11 @@ public final class WindowsVersion implements Comparable<WindowsVersion> {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (!(o instanceof WindowsVersion))
-            return false;
-        WindowsVersion that = (WindowsVersion) o;
-
-        return this.major == that.major &&
-                this.minor == that.minor &&
-                this.build == that.build &&
-                this.revision == that.revision;
+        return this == o || o instanceof WindowsVersion that
+                && this.major == that.major
+                && this.minor == that.minor
+                && this.build == that.build
+                && this.revision == that.revision;
     }
 
     @Override
