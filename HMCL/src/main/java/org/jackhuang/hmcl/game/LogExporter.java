@@ -43,7 +43,7 @@ public final class LogExporter {
     private LogExporter() {
     }
 
-    public static CompletableFuture<Void> exportLogs(Path zipFile, DefaultGameRepository gameRepository, String versionId, String logs, String launchScript) {
+    public static CompletableFuture<Void> exportLogs(Path zipFile, DefaultGameRepository gameRepository, String versionId, String logs, String launchScript, Path crashReportFile) {
         Path runDirectory = gameRepository.getRunDirectory(versionId).toPath();
         Path baseDirectory = gameRepository.getBaseDirectory().toPath();
         List<String> versions = new ArrayList<>();
@@ -65,6 +65,14 @@ public final class LogExporter {
 
         return CompletableFuture.runAsync(() -> {
             try (Zipper zipper = new Zipper(zipFile)) {
+                if (Files.exists(crashReportFile)) {
+                    try {
+                        zipper.putFile(crashReportFile, "hmcl-game-crash-report.log");
+                    } catch (IOException e) {
+                        LOG.warning("Failed to add crash report file to zip", e);
+                    }
+                }
+
                 processLogs(runDirectory.resolve("liteconfig"), "*.log", "liteconfig", zipper);
                 processLogs(runDirectory.resolve("logs"), "*.log", "logs", zipper);
                 processLogs(runDirectory, "*.log", "runDirectory", zipper);
