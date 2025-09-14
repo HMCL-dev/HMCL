@@ -105,7 +105,7 @@ public sealed interface OSVersion {
 
         @Override
         public boolean isAtLeast(@NotNull OSVersion otherVersion) {
-            return otherVersion instanceof Windows other && this.compareTo(other) >= 0;
+            return this == otherVersion || otherVersion instanceof Windows other && this.compareTo(other) >= 0;
         }
 
         @Override
