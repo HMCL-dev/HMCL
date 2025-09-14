@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.util.platform;
 import org.jackhuang.hmcl.util.KeyValuePairUtils;
 import org.jackhuang.hmcl.util.platform.windows.Kernel32;
 import org.jackhuang.hmcl.util.platform.windows.WinTypes;
-import org.jackhuang.hmcl.util.platform.windows.WindowsVersion;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -114,7 +113,7 @@ public enum OperatingSystem {
 
     /// The version of current operating system.
     ///
-    /// If [#CURRENT_OS] is [#WINDOWS], then [#SYSTEM_VERSION] must be an instance of [WindowsVersion].
+    /// If [#CURRENT_OS] is [#WINDOWS], then [#SYSTEM_VERSION] must be an instance of [OSVersion.Windows].
     public static final OSVersion SYSTEM_VERSION;
 
     public static final String OS_RELEASE_NAME;
@@ -152,14 +151,14 @@ public enum OperatingSystem {
 
         if (CURRENT_OS == WINDOWS) {
             int codePage = -1;
-            WindowsVersion windowsVersion = null;
+            OSVersion.Windows windowsVersion = null;
 
             Kernel32 kernel32 = Kernel32.INSTANCE;
             // Get Windows version number
             if (kernel32 != null) {
                 WinTypes.OSVERSIONINFOEXW osVersionInfo = new WinTypes.OSVERSIONINFOEXW();
                 if (kernel32.GetVersionExW(osVersionInfo)) {
-                    windowsVersion = new WindowsVersion(osVersionInfo.dwMajorVersion, osVersionInfo.dwMinorVersion, osVersionInfo.dwBuildNumber);
+                    windowsVersion = new OSVersion.Windows(osVersionInfo.dwMajorVersion, osVersionInfo.dwMinorVersion, osVersionInfo.dwBuildNumber);
                 } else
                     System.err.println("Failed to obtain OS version number (" + kernel32.GetLastError() + ")");
             }
@@ -171,7 +170,7 @@ public enum OperatingSystem {
                         Matcher matcher = Pattern.compile("(?<version>\\d+\\.\\d+\\.\\d+\\.\\d+?)]$")
                                 .matcher(reader.readLine().trim());
                         if (matcher.find())
-                            windowsVersion = new WindowsVersion(matcher.group("version"));
+                            windowsVersion = OSVersion.Windows.parse(matcher.group("version"));
                     }
                     process.destroy();
                 } catch (Throwable ignored) {
@@ -179,7 +178,7 @@ public enum OperatingSystem {
             }
 
             if (windowsVersion == null)
-                windowsVersion = new WindowsVersion(System.getProperty("os.version"));
+                windowsVersion = OSVersion.Windows.parse(System.getProperty("os.version"));
 
             // Get Code Page
 
@@ -203,16 +202,16 @@ public enum OperatingSystem {
             String osName = System.getProperty("os.name");
 
             // Java 17 or earlier recognizes Windows 11 as Windows 10
-            if (osName.equals("Windows 10") && windowsVersion.isAtLeast(WindowsVersion.WINDOWS_11))
+            if (osName.equals("Windows 10") && windowsVersion.isAtLeast(OSVersion.WINDOWS_11))
                 osName = "Windows 11";
 
             SYSTEM_NAME = osName;
             SYSTEM_VERSION = windowsVersion;
-            SYSTEM_BUILD_NUMBER = windowsVersion.getBuild();
+            SYSTEM_BUILD_NUMBER = windowsVersion.build();
             CODE_PAGE = codePage;
         } else {
             SYSTEM_NAME = System.getProperty("os.name");
-            SYSTEM_VERSION = new GenericOSVersion(CURRENT_OS, System.getProperty("os.version"));
+            SYSTEM_VERSION = OSVersion.of(CURRENT_OS, System.getProperty("os.version"));
             SYSTEM_BUILD_NUMBER = -1;
             CODE_PAGE = -1;
         }
@@ -270,7 +269,7 @@ public enum OperatingSystem {
     }
 
     public static boolean isWindows7OrLater() {
-        return SYSTEM_VERSION.isAtLeast(WindowsVersion.WINDOWS_7);
+        return SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_7);
     }
 
     public static Path getWorkingDirectory(String folder) {

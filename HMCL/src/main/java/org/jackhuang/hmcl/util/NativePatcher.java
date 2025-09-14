@@ -27,7 +27,6 @@ import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OSVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
-import org.jackhuang.hmcl.util.platform.windows.WindowsVersion;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -186,9 +185,9 @@ public final class NativePatcher {
         if (renderer == Renderer.DEFAULT)
             return null;
 
-        if (windowsVersion.isAtLeast(WindowsVersion.WINDOWS_10)) {
+        if (windowsVersion.isAtLeast(OSVersion.WINDOWS_10)) {
             return getNatives(javaVersion.getPlatform()).get("mesa-loader");
-        } else if (windowsVersion.isAtLeast(WindowsVersion.WINDOWS_7)) {
+        } else if (windowsVersion.isAtLeast(OSVersion.WINDOWS_7)) {
             if (renderer == Renderer.LLVMPIPE)
                 return getNatives(javaVersion.getPlatform()).get("software-renderer-loader");
             else
