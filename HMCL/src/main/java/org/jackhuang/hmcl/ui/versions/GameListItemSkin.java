@@ -20,15 +20,12 @@ package org.jackhuang.hmcl.ui.versions;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXPopup;
 import com.jfoenix.controls.JFXRadioButton;
-import javafx.geometry.Bounds;
 import javafx.geometry.Pos;
-import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
 import javafx.scene.control.SkinBase;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.stage.Screen;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -38,8 +35,7 @@ import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.util.Lazy;
 
-import java.util.List;
-
+import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameListItemSkin extends SkinBase<GameListItem> {
@@ -105,7 +101,7 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
             btnManage.setOnAction(e -> {
                 currentSkinnable = skinnable;
 
-                JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(root);
+                JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(root, popup.get());
                 popup.get().show(root, vPosition, JFXPopup.PopupHPosition.RIGHT, 0, vPosition == JFXPopup.PopupVPosition.TOP ? root.getHeight() : -root.getHeight());
             });
             btnManage.getStyleClass().add("toggle-icon4");
@@ -132,45 +128,9 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
             } else if (e.getButton() == MouseButton.SECONDARY) {
                 currentSkinnable = skinnable;
 
-                JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(root);
+                JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(root, popup.get());
                 popup.get().show(root, vPosition, JFXPopup.PopupHPosition.LEFT, e.getX(), vPosition == JFXPopup.PopupVPosition.TOP ? e.getY() : e.getY() - root.getHeight());
             }
         });
-    }
-
-    /**
-     * Intelligently determines the popup position to prevent the menu from exceeding screen boundaries.
-     * Supports multi-monitor setups by detecting the current screen where the component is located.
-     *
-     * @param root the root node to calculate position relative to
-     * @return the optimal vertical position for the popup menu
-     */
-    private static JFXPopup.PopupVPosition determineOptimalPopupPosition(BorderPane root) {
-        // Get the screen bounds in screen coordinates
-        Bounds screenBounds = root.localToScreen(root.getBoundsInLocal());
-
-        // Convert Bounds to Rectangle2D for getScreensForRectangle method
-        Rectangle2D boundsRect = new Rectangle2D(
-            screenBounds.getMinX(), screenBounds.getMinY(),
-            screenBounds.getWidth(), screenBounds.getHeight()
-        );
-
-        // Find the screen that contains this component (supports multi-monitor)
-        List<Screen> screens = Screen.getScreensForRectangle(boundsRect);
-        Screen currentScreen = screens.isEmpty() ? Screen.getPrimary() : screens.get(0);
-        Rectangle2D visualBounds = currentScreen.getVisualBounds();
-
-        double screenHeight = visualBounds.getHeight();
-        double screenMinY = visualBounds.getMinY();
-        double itemScreenY = screenBounds.getMinY();
-
-        // Calculate available space relative to the current screen
-        double availableSpaceAbove = itemScreenY - screenMinY;
-        double availableSpaceBelow = screenMinY + screenHeight - itemScreenY - root.getHeight();
-        double menuHeight = popup.get().getPopupContent().getHeight();
-
-        return (availableSpaceAbove > menuHeight && availableSpaceBelow < menuHeight)
-            ? JFXPopup.PopupVPosition.BOTTOM  // Show menu below the button, expanding downward
-            : JFXPopup.PopupVPosition.TOP;    // Show menu above the button, expanding upward
     }
 }

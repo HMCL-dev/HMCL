@@ -74,9 +74,6 @@ public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.Da
         Task.runAsync(datapack::loadFromDir)
                 .withRunAsync(Schedulers.javafx(), () -> {
                     setLoading(false);
-
-                    // https://github.com/HMCL-dev/HMCL/issues/938
-                    System.gc();
                 })
                 .start();
     }

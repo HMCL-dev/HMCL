@@ -22,19 +22,13 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Scene;
 import javafx.scene.paint.Color;
-import org.jackhuang.hmcl.ui.FXUtils;
 
-import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Locale;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * @author Glavo
@@ -57,23 +51,8 @@ public final class StyleSheets {
         config().themeProperty().addListener(o -> stylesheets.set(THEME_STYLE_SHEET_INDEX, getThemeStyleSheet()));
     }
 
-    private static String toStyleSheetUri(String styleSheet, String fallback) {
-        if (FXUtils.JAVAFX_MAJOR_VERSION >= 17)
-            // JavaFX 17+ support loading stylesheets from data URIs
-            // https://bugs.openjdk.org/browse/JDK-8267554
-            return "data:text/css;charset=UTF-8;base64," + Base64.getEncoder().encodeToString(styleSheet.getBytes(StandardCharsets.UTF_8));
-        else
-            try {
-                Path temp = Files.createTempFile("hmcl", ".css");
-                // For JavaFX 17 or earlier, CssParser uses the default charset
-                // https://bugs.openjdk.org/browse/JDK-8279328
-                Files.writeString(temp, styleSheet, Charset.defaultCharset());
-                temp.toFile().deleteOnExit();
-                return temp.toUri().toString();
-            } catch (IOException | NullPointerException e) {
-                LOG.error("Unable to create stylesheet, fallback to " + fallback, e);
-                return fallback;
-            }
+    private static String toStyleSheetUri(String styleSheet) {
+        return "data:text/css;charset=UTF-8;base64," + Base64.getEncoder().encodeToString(styleSheet.getBytes(StandardCharsets.UTF_8));
     }
 
     private static String getFontStyleSheet() {
@@ -123,7 +102,7 @@ public final class StyleSheets {
 
         builder.append('}');
 
-        return toStyleSheetUri(builder.toString(), fontFamily);
+        return toStyleSheetUri(builder.toString());
     }
 
     private static String rgba(Color color, double opacity) {
@@ -150,7 +129,7 @@ public final class StyleSheets {
                 "-fx-base-disabled-text-fill:" + rgba(theme.getForegroundColor(), 0.7) + ";" +
                 "-fx-base-text-fill:" + Theme.getColorDisplayName(theme.getForegroundColor()) + ";" +
                 "-theme-thumb:" + rgba(theme.getPaint(), 0.7) + ";" +
-                '}', blueCss);
+                '}');
     }
 
     public static void init(Scene scene) {

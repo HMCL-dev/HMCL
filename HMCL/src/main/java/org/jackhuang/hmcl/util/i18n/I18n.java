@@ -20,7 +20,12 @@ package org.jackhuang.hmcl.util.i18n;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
 import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.time.temporal.TemporalAccessor;
 import java.util.*;
 
@@ -30,11 +35,9 @@ public final class I18n {
     }
 
     private static volatile SupportedLocale locale = Locales.DEFAULT;
-    private static volatile ResourceBundle resourceBundle = locale.getResourceBundle();
 
     public static void setLocale(SupportedLocale locale) {
         I18n.locale = locale;
-        resourceBundle = locale.getResourceBundle();
     }
 
     public static SupportedLocale getLocale() {
@@ -42,11 +45,11 @@ public final class I18n {
     }
 
     public static boolean isUseChinese() {
-        return Locales.isChinese(locale.getLocale());
+        return LocaleUtils.isChinese(locale.getLocale());
     }
 
     public static ResourceBundle getResourceBundle() {
-        return resourceBundle;
+        return locale.getResourceBundle();
     }
 
     public static String i18n(String key, Object... formatArgs) {
@@ -62,7 +65,48 @@ public final class I18n {
     }
 
     public static String getDisplaySelfVersion(RemoteVersion version) {
-        return locale.getDisplaySelfVersion(version);
+        if (locale.getLocale().getLanguage().equals("lzh")) {
+            if (version instanceof GameRemoteVersion)
+                return WenyanUtils.translateGameVersion(GameVersionNumber.asGameVersion(version.getSelfVersion()));
+            else
+                return WenyanUtils.translateGenericVersion(version.getSelfVersion());
+        }
+        return version.getSelfVersion();
+    }
+
+    /// Find the builtin localized resource with given name and suffix.
+    ///
+    /// For example, if the current locale is `zh-CN`, when calling `getBuiltinResource("assets.lang.foo", "json")`,
+    /// this method will look for the following built-in resources in order:
+    ///
+    ///  - `assets/lang/foo_zh_Hans_CN.json`
+    ///  - `assets/lang/foo_zh_Hans.json`
+    ///  - `assets/lang/foo_zh_CN.json`
+    ///  - `assets/lang/foo_zh.json`
+    ///  - `assets/lang/foo.json`
+    ///
+    /// This method will return the first found resource;
+    /// if none of the above resources exist, it returns `null`.
+    public static @Nullable URL getBuiltinResource(String name, String suffix) {
+        var control = DefaultResourceBundleControl.INSTANCE;
+        var classLoader = I18n.class.getClassLoader();
+        for (Locale locale : locale.getCandidateLocales()) {
+            String resourceName = control.toResourceName(control.toBundleName(name, locale), suffix);
+            URL input = classLoader.getResource(resourceName);
+            if (input != null)
+                return input;
+        }
+        return null;
+    }
+
+    /// @see [#getBuiltinResource(String, String) ]
+    public static @Nullable InputStream getBuiltinResourceAsStream(String name, String suffix) {
+        URL resource = getBuiltinResource(name, suffix);
+        try {
+            return resource != null ? resource.openStream() : null;
+        } catch (IOException e) {
+            return null;
+        }
     }
 
     public static String getWikiLink(GameRemoteVersion remoteVersion) {

@@ -31,7 +31,9 @@ import javafx.collections.ObservableMap;
 import javafx.event.Event;
 import javafx.event.EventDispatcher;
 import javafx.event.EventType;
+import javafx.geometry.Bounds;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -48,10 +50,12 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.FileChooser;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
+import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -76,6 +80,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
+import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.ref.WeakReference;
@@ -108,6 +113,8 @@ public final class FXUtils {
     public static final @Nullable ObservableMap<String, Object> PREFERENCES;
     public static final @Nullable ObservableBooleanValue DARK_MODE;
     public static final @Nullable Boolean REDUCED_MOTION;
+
+    public static final @Nullable MethodHandle TEXT_TRUNCATED_PROPERTY;
 
     static {
         String jfxVersion = System.getProperty("javafx.version");
@@ -153,6 +160,20 @@ public final class FXUtils {
         PREFERENCES = preferences;
         DARK_MODE = darkMode;
         REDUCED_MOTION = reducedMotion;
+
+        MethodHandle textTruncatedProperty = null;
+        if (JAVAFX_MAJOR_VERSION >= 23) {
+            try {
+                textTruncatedProperty = MethodHandles.publicLookup().findVirtual(
+                        Labeled.class,
+                        "textTruncatedProperty",
+                        MethodType.methodType(ReadOnlyBooleanProperty.class)
+                );
+            } catch (Throwable e) {
+                LOG.warning("Failed to lookup textTruncatedProperty", e);
+            }
+        }
+        TEXT_TRUNCATED_PROPERTY = textTruncatedProperty;
     }
 
     public static final String DEFAULT_MONOSPACE_FONT = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "Consolas" : "Monospace";
@@ -352,6 +373,22 @@ public final class FXUtils {
             ScrollUtils.addSmoothScrolling(scrollPane);
     }
 
+    /// If the current environment is JavaFX 23 or higher, this method returns [Labeled#textTruncatedProperty()];
+    /// Otherwise, it returns `null`.
+    public static @Nullable ReadOnlyBooleanProperty textTruncatedProperty(Labeled labeled) {
+        if (TEXT_TRUNCATED_PROPERTY != null) {
+            try {
+                return (ReadOnlyBooleanProperty) TEXT_TRUNCATED_PROPERTY.invokeExact(labeled);
+            } catch (RuntimeException | Error e) {
+                throw e;
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            return null;
+        }
+    }
+
     private static final Duration TOOLTIP_FAST_SHOW_DELAY = Duration.millis(50);
     private static final Duration TOOLTIP_SLOW_SHOW_DELAY = Duration.millis(500);
     private static final Duration TOOLTIP_SHOW_DURATION = Duration.millis(5000);
@@ -508,37 +545,35 @@ public final class FXUtils {
         if (link == null)
             return;
 
+        String uri = NetworkUtils.encodeLocation(link);
         thread(() -> {
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                try {
-                    Runtime.getRuntime().exec(new String[]{"rundll32.exe", "url.dll,FileProtocolHandler", link});
+            try {
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                    Runtime.getRuntime().exec(new String[]{"rundll32.exe", "url.dll,FileProtocolHandler", uri});
                     return;
-                } catch (Throwable e) {
-                    LOG.warning("An exception occurred while calling rundll32", e);
-                }
-            }
-            if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
-                for (String browser : linuxBrowsers) {
-                    Path path = SystemUtils.which(browser);
-                    if (path != null) {
-                        try {
-                            Runtime.getRuntime().exec(new String[]{path.toString(), link});
-                            return;
-                        } catch (Throwable ignored) {
+                } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+                    Runtime.getRuntime().exec(new String[]{"open", uri});
+                    return;
+                } else {
+                    for (String browser : linuxBrowsers) {
+                        Path path = SystemUtils.which(browser);
+                        if (path != null) {
+                            try {
+                                Runtime.getRuntime().exec(new String[]{path.toString(), uri});
+                                return;
+                            } catch (Throwable ignored) {
+                            }
                         }
                     }
                     LOG.warning("No known browser found");
                 }
-            }
-            try {
-                java.awt.Desktop.getDesktop().browse(new URI(link));
             } catch (Throwable e) {
-                if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
-                    try {
-                        Runtime.getRuntime().exec(new String[]{"/usr/bin/open", link});
-                    } catch (IOException ex) {
-                        LOG.warning("Unable to open link: " + link, ex);
-                    }
+                LOG.warning("Failed to open link: " + link + ", fallback to java.awt.Desktop", e);
+            }
+
+            try {
+                java.awt.Desktop.getDesktop().browse(new URI(uri));
+            } catch (Throwable e) {
                 LOG.warning("Failed to open link: " + link, e);
             }
         });
@@ -1159,15 +1194,44 @@ public final class FXUtils {
         return button;
     }
 
-    public static Label truncatedLabel(String text, int limit) {
-        Label label = new Label();
-        if (text.length() <= limit) {
-            label.setText(text);
-        } else {
-            label.setText(StringUtils.truncate(text, limit));
-            installFastTooltip(label, text);
-        }
+    public static JFXButton newToggleButton4(SVG icon) {
+        JFXButton button = new JFXButton();
+        button.getStyleClass().add("toggle-icon4");
+        button.setGraphic(icon.createIcon(Theme.blackFill(), -1));
+        return button;
+    }
+
+    public static Label newSafeTruncatedLabel(String text) {
+        Label label = new Label(text);
+        label.setTextOverrun(OverrunStyle.CENTER_WORD_ELLIPSIS);
+        showTooltipWhenTruncated(label);
         return label;
+    }
+
+    private static final String LABEL_FULL_TEXT_PROP_KEY = FXUtils.class.getName() + ".LABEL_FULL_TEXT";
+
+    public static void showTooltipWhenTruncated(Labeled labeled) {
+        ReadOnlyBooleanProperty textTruncatedProperty = textTruncatedProperty(labeled);
+        if (textTruncatedProperty != null) {
+            ChangeListener<Boolean> listener = (observable, oldValue, newValue) -> {
+                var label = (Labeled) ((ReadOnlyProperty<?>) observable).getBean();
+                var tooltip = (Tooltip) label.getProperties().get(LABEL_FULL_TEXT_PROP_KEY);
+
+                if (newValue) {
+                    if (tooltip == null) {
+                        tooltip = new Tooltip();
+                        tooltip.textProperty().bind(label.textProperty());
+                        label.getProperties().put(LABEL_FULL_TEXT_PROP_KEY, tooltip);
+                    }
+
+                    FXUtils.installFastTooltip(label, tooltip);
+                } else if (tooltip != null) {
+                    Tooltip.uninstall(label, tooltip);
+                }
+            };
+            listener.changed(textTruncatedProperty, false, textTruncatedProperty.get());
+            textTruncatedProperty.addListener(listener);
+        }
     }
 
     public static void applyDragListener(Node node, FileFilter filter, Consumer<List<File>> callback) {
@@ -1369,5 +1433,66 @@ public final class FXUtils {
     public static FileChooser.ExtensionFilter getImageExtensionFilter() {
         return new FileChooser.ExtensionFilter(i18n("extension.png"),
                 IMAGE_EXTENSIONS.stream().map(ext -> "*." + ext).toArray(String[]::new));
+    }
+
+    /**
+     * Intelligently determines the popup position to prevent the menu from exceeding screen boundaries.
+     * Supports multi-monitor setups by detecting the current screen where the component is located.
+     * Now handles first-time popup display by forcing layout measurement.
+     *
+     * @param root          the root node to calculate position relative to
+     * @param popupInstance the popup instance to position
+     * @return the optimal vertical position for the popup menu
+     */
+    public static JFXPopup.PopupVPosition determineOptimalPopupPosition(Node root, JFXPopup popupInstance) {
+        // Get the screen bounds in screen coordinates
+        Bounds screenBounds = root.localToScreen(root.getBoundsInLocal());
+
+        // Convert Bounds to Rectangle2D for getScreensForRectangle method
+        Rectangle2D boundsRect = new Rectangle2D(
+                screenBounds.getMinX(), screenBounds.getMinY(),
+                screenBounds.getWidth(), screenBounds.getHeight()
+        );
+
+        // Find the screen that contains this component (supports multi-monitor)
+        List<Screen> screens = Screen.getScreensForRectangle(boundsRect);
+        Screen currentScreen = screens.isEmpty() ? Screen.getPrimary() : screens.get(0);
+        Rectangle2D visualBounds = currentScreen.getVisualBounds();
+
+        double screenHeight = visualBounds.getHeight();
+        double screenMinY = visualBounds.getMinY();
+        double itemScreenY = screenBounds.getMinY();
+
+        // Calculate available space relative to the current screen
+        double availableSpaceAbove = itemScreenY - screenMinY;
+        double availableSpaceBelow = screenMinY + screenHeight - itemScreenY - root.getBoundsInLocal().getHeight();
+
+        // Get popup content and ensure it's properly measured
+        Region popupContent = popupInstance.getPopupContent();
+
+        double menuHeight;
+        if (popupContent.getHeight() <= 0) {
+            // Force layout measurement if height is not yet available
+            popupContent.autosize();
+            popupContent.applyCss();
+            popupContent.layout();
+
+            // Get the measured height, or use a reasonable fallback
+            menuHeight = popupContent.getHeight();
+            if (menuHeight <= 0) {
+                // Fallback: estimate based on number of menu items
+                // Each menu item is roughly 36px height + separators + padding
+                menuHeight = 300; // Conservative estimate for the current menu structure
+            }
+        } else {
+            menuHeight = popupContent.getHeight();
+        }
+
+        // Add some margin for safety
+        menuHeight += 20;
+
+        return (availableSpaceAbove > menuHeight && availableSpaceBelow < menuHeight)
+                ? JFXPopup.PopupVPosition.BOTTOM  // Show menu below the button, expanding downward
+                : JFXPopup.PopupVPosition.TOP;    // Show menu above the button, expanding upward
     }
 }
