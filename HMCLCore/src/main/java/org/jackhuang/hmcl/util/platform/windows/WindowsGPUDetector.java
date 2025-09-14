@@ -50,7 +50,7 @@ final class WindowsGPUDetector {
 
     private static List<GraphicsCard> detectByCim() {
         try {
-            String getCimInstance = OperatingSystem.SYSTEM_VERSION.isAtLeast(WindowsVersion.WINDOWS_7)
+            String getCimInstance = OperatingSystem.SYSTEM_VERSION.getVersion().startsWith("6.1")
                     ? "Get-WmiObject"
                     : "Get-CimInstance";
 
