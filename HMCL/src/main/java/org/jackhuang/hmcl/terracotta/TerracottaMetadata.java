@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.terracotta.provider.MacOSProvider;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
+import org.jackhuang.hmcl.util.platform.OSVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -114,7 +115,7 @@ public final class TerracottaMetadata {
 
         return switch (OperatingSystem.CURRENT_OS) {
             case WINDOWS -> {
-                if (OperatingSystem.isWindows81OrLater()) {
+                if (OperatingSystem.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_8_1)) {
                     yield new GeneralProvider(config.of(String.format("windows-%s.exe", architecture)));
                 }
                 yield null;

@@ -160,10 +160,8 @@ public final class LauncherHelper {
                             }),
                             Task.composeAsync(() -> {
                                 Renderer renderer = setting.getRenderer();
-                                if (renderer != Renderer.DEFAULT
-                                        && OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
-                                        && OperatingSystem.WINDOWS_VERSION != null) {
-                                    Library lib = NativePatcher.getWindowsMesaLoader(java, renderer, OperatingSystem.WINDOWS_VERSION);
+                                if (renderer != Renderer.DEFAULT && OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                                    Library lib = NativePatcher.getWindowsMesaLoader(java, renderer, OperatingSystem.SYSTEM_VERSION);
                                     if (lib == null)
                                         return null;
                                     File file = dependencyManager.getGameRepository().getLibraryFile(version.get(), lib);

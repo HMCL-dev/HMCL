@@ -23,6 +23,8 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.file.*;
@@ -188,6 +190,16 @@ public final class FileUtils {
         Files.write(file, data);
     }
 
+    public static void deleteDirectory(Path directory) throws IOException {
+        if (!Files.exists(directory))
+            return;
+
+        if (!Files.isSymbolicLink(directory))
+            cleanDirectory(directory);
+
+        Files.deleteIfExists(directory);
+    }
+
     public static void deleteDirectory(File directory)
             throws IOException {
         if (!directory.exists())
@@ -339,6 +351,35 @@ public final class FileUtils {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    public static void cleanDirectory(Path directory)
+            throws IOException {
+        if (!Files.exists(directory)) {
+            Files.createDirectories(directory);
+            return;
+        }
+
+        if (!Files.isDirectory(directory)) {
+            String message = directory + " is not a directory";
+            throw new IllegalArgumentException(message);
+        }
+
+        Files.walkFileTree(directory, new SimpleFileVisitor<>() {
+            @Override
+            public @NotNull FileVisitResult visitFile(@NotNull Path file, @NotNull BasicFileAttributes attrs) throws IOException {
+                Files.delete(file);
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public @NotNull FileVisitResult postVisitDirectory(@NotNull Path dir, @Nullable IOException exc) throws IOException {
+                if (!dir.equals(directory)) {
+                    Files.delete(dir);
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        });
     }
 
     public static void cleanDirectory(File directory)
