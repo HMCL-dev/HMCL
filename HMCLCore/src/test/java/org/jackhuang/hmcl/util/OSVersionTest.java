@@ -22,8 +22,7 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 /// @author Glavo
 public class OSVersionTest {
@@ -45,6 +44,14 @@ public class OSVersionTest {
 
     @Test
     public void testIsAtLeast() {
+        assertTrue(OSVersion.WINDOWS_10.isAtLeast(OSVersion.WINDOWS_7));
+        assertTrue(OSVersion.WINDOWS_10.isAtLeast(OSVersion.WINDOWS_10));
+        assertFalse(OSVersion.WINDOWS_10.isAtLeast(OSVersion.WINDOWS_11));
+        assertFalse(OSVersion.WINDOWS_10.isAtLeast(OSVersion.of(OperatingSystem.LINUX, "4.0")));
 
+        assertTrue(OSVersion.of(OperatingSystem.LINUX, "4.0").isAtLeast(OSVersion.of(OperatingSystem.LINUX, "4.0")));
+        assertTrue(OSVersion.of(OperatingSystem.LINUX, "4.0").isAtLeast(OSVersion.of(OperatingSystem.LINUX, "3.0")));
+        assertFalse(OSVersion.of(OperatingSystem.LINUX, "4.0").isAtLeast(OSVersion.of(OperatingSystem.LINUX, "5.0")));
+        assertFalse(OSVersion.of(OperatingSystem.LINUX, "4.0").isAtLeast(OSVersion.of(OperatingSystem.WINDOWS, "4.0")));
     }
 }
