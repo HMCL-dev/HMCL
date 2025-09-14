@@ -49,6 +49,12 @@ public sealed interface OSVersion {
 
     /// Returns `true` if the current version and `otherVersion` have the same [operating system][#getOperatingSystem()]
     /// and the version is not lower than `otherVersion`; otherwise returns `false`.
+    ///
+    /// For example, if you want to check that the system is Windows and the version is at least Windows 7, you can do this:
+    ///
+    /// ```java
+    /// version.isAtLeast(OSVersion.WINDOWS_7)
+    /// ```
     boolean isAtLeast(@NotNull OSVersion otherVersion);
 
     record Windows(int major, int minor, int build, int revision,
