@@ -20,6 +20,8 @@ package org.jackhuang.hmcl.util.platform;
 import org.jetbrains.annotations.NotNull;
 
 /// @author Glavo
+/// @see GenericOSVersion
+/// @see org.jackhuang.hmcl.util.platform.windows.WindowsVersion
 public interface OSVersion {
     @NotNull OperatingSystem getOperatingSystem();
 

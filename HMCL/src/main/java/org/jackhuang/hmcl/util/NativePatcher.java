@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.java.JavaRuntime;
+import org.jackhuang.hmcl.util.platform.OSVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.platform.windows.WindowsVersion;
@@ -181,13 +182,13 @@ public final class NativePatcher {
         return version.setLibraries(newLibraries);
     }
 
-    public static @Nullable Library getWindowsMesaLoader(@NotNull JavaRuntime javaVersion, @NotNull Renderer renderer, @NotNull WindowsVersion windowsVersion) {
+    public static @Nullable Library getWindowsMesaLoader(@NotNull JavaRuntime javaVersion, @NotNull Renderer renderer, @NotNull OSVersion windowsVersion) {
         if (renderer == Renderer.DEFAULT)
             return null;
 
-        if (windowsVersion.compareTo(WindowsVersion.WINDOWS_10) >= 0) {
+        if (windowsVersion.isAtLeast(WindowsVersion.WINDOWS_10)) {
             return getNatives(javaVersion.getPlatform()).get("mesa-loader");
-        } else if (windowsVersion.compareTo(WindowsVersion.WINDOWS_7) >= 0) {
+        } else if (windowsVersion.isAtLeast(WindowsVersion.WINDOWS_7)) {
             if (renderer == Renderer.LLVMPIPE)
                 return getNatives(javaVersion.getPlatform()).get("software-renderer-loader");
             else

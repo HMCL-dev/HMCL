@@ -56,4 +56,9 @@ public record GenericOSVersion(@NotNull OperatingSystem os, @NotNull VersionNumb
                 && this.os == that.os
                 && this.version.compareTo(that.version) >= 0;
     }
+
+    @Override
+    public @NotNull String toString() {
+        return getVersion();
+    }
 }

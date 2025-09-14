@@ -21,7 +21,6 @@ import org.jackhuang.hmcl.util.KeyValuePairUtils;
 import org.jackhuang.hmcl.util.platform.windows.Kernel32;
 import org.jackhuang.hmcl.util.platform.windows.WinTypes;
 import org.jackhuang.hmcl.util.platform.windows.WindowsVersion;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -109,19 +108,14 @@ public enum OperatingSystem {
     public static final int SYSTEM_BUILD_NUMBER;
 
     /**
-     * The version number is non-null if and only if the operating system is {@linkplain #WINDOWS}.
-     */
-    public static final @Nullable WindowsVersion WINDOWS_VERSION;
-
-    /**
      * The name of current operating system.
      */
     public static final String SYSTEM_NAME;
 
-    /**
-     * The version of current operating system.
-     */
-    public static final String SYSTEM_VERSION;
+    /// The version of current operating system.
+    ///
+    /// If [#CURRENT_OS] is [#WINDOWS], then [#SYSTEM_VERSION] must be an instance of [WindowsVersion].
+    public static final OSVersion SYSTEM_VERSION;
 
     public static final String OS_RELEASE_NAME;
     public static final String OS_RELEASE_PRETTY_NAME;
@@ -209,19 +203,17 @@ public enum OperatingSystem {
             String osName = System.getProperty("os.name");
 
             // Java 17 or earlier recognizes Windows 11 as Windows 10
-            if (osName.equals("Windows 10") && windowsVersion.compareTo(WindowsVersion.WINDOWS_11) >= 0)
+            if (osName.equals("Windows 10") && windowsVersion.isAtLeast(WindowsVersion.WINDOWS_11))
                 osName = "Windows 11";
 
             SYSTEM_NAME = osName;
-            SYSTEM_VERSION = windowsVersion.toString();
+            SYSTEM_VERSION = windowsVersion;
             SYSTEM_BUILD_NUMBER = windowsVersion.getBuild();
-            WINDOWS_VERSION = windowsVersion;
             CODE_PAGE = codePage;
         } else {
             SYSTEM_NAME = System.getProperty("os.name");
-            SYSTEM_VERSION = System.getProperty("os.version");
+            SYSTEM_VERSION = new GenericOSVersion(CURRENT_OS, System.getProperty("os.version"));
             SYSTEM_BUILD_NUMBER = -1;
-            WINDOWS_VERSION = null;
             CODE_PAGE = -1;
         }
 
@@ -278,7 +270,7 @@ public enum OperatingSystem {
     }
 
     public static boolean isWindows7OrLater() {
-        return WINDOWS_VERSION != null && WINDOWS_VERSION.compareTo(WindowsVersion.WINDOWS_7) >= 0;
+        return SYSTEM_VERSION.isAtLeast(WindowsVersion.WINDOWS_7);
     }
 
     public static Path getWorkingDirectory(String folder) {
