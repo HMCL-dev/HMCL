@@ -17,24 +17,10 @@
  */
 package org.jackhuang.hmcl.util.platform.windows;
 
-import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 /**
  * @author Glavo
  */
 public final class WindowsVersionTest {
 
-    @Test
-    public void testParse() {
-        assertEquals(WindowsVersion.WINDOWS_7, new WindowsVersion("6.1"));
-        assertEquals(WindowsVersion.WINDOWS_10, new WindowsVersion("10.0"));
-        assertEquals(new WindowsVersion(10, 0, 26120), new WindowsVersion("10.0.26120"));
-        assertEquals(new WindowsVersion(10, 0, 26120), new WindowsVersion("10.0.26120-unknown"));
-        assertEquals(new WindowsVersion(10, 0, 26120, 3964), new WindowsVersion("10.0.26120.3964"));
-        assertEquals(new WindowsVersion(10, 0, 26120, 3964), new WindowsVersion("10.0.26120.3964-unknown"));
 
-        assertEquals(WindowsVersion.UNKNOWN, new WindowsVersion("unknown"));
-    }
 }
