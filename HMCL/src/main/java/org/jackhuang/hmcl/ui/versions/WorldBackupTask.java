@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.versions;
 
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -76,7 +77,12 @@ public final class WorldBackupTask extends Task<Path> {
                         if (path.endsWith("session.lock")) {
                             return FileVisitResult.CONTINUE;
                         }
-                        zipOutputStream.putNextEntry(new ZipEntry(rootName + "/" + rootDir.relativize(path).toString().replace('\\', '/')));
+                        Path relativePath = FileUtils.safeRelativize(rootDir, path);
+                        if (relativePath == null) {
+                            // Skip files that can't be relativized (different drive roots)
+                            return FileVisitResult.CONTINUE;
+                        }
+                        zipOutputStream.putNextEntry(new ZipEntry(rootName + "/" + relativePath.toString().replace('\\', '/')));
                         Files.copy(path, zipOutputStream);
                         zipOutputStream.closeEntry();
                         return FileVisitResult.CONTINUE;

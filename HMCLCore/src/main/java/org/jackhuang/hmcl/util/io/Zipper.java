@@ -92,22 +92,34 @@ public final class Zipper implements Closeable {
                 if (".DS_Store".equals(file.getFileName().toString())) {
                     return FileVisitResult.SKIP_SUBTREE;
                 }
-                String relativePath = normalize(source.relativize(file).normalize().toString());
-                if (filter != null && !filter.test(relativePath)) {
+                Path relativePath = FileUtils.safeRelativize(source, file);
+                if (relativePath == null) {
+                    // Skip files that can't be relativized (different drive roots)
+                    return FileVisitResult.CONTINUE;
+                }
+
+                String relativePathStr = normalize(relativePath.normalize().toString());
+                if (filter != null && !filter.test(relativePathStr)) {
                     return FileVisitResult.SKIP_SUBTREE;
                 }
-                putFile(file, resolve(root, relativePath));
+                putFile(file, resolve(root, relativePathStr));
                 return FileVisitResult.CONTINUE;
             }
 
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                String relativePath = normalize(source.relativize(dir).normalize().toString());
-                if (filter != null && !filter.test(relativePath)) {
+                Path relativePath = FileUtils.safeRelativize(source, dir);
+                if (relativePath == null) {
+                    // Skip directories that can't be relativized (different drive roots)
+                    return FileVisitResult.SKIP_SUBTREE;
+                }
+
+                String relativePathStr = normalize(relativePath.normalize().toString());
+                if (filter != null && !filter.test(relativePathStr)) {
                     return FileVisitResult.SKIP_SUBTREE;
                 }
                 try {
-                    zos.putNextEntry(new ZipEntry(resolve(root, relativePath) + "/"));
+                    zos.putNextEntry(new ZipEntry(resolve(root, relativePathStr) + "/"));
                     zos.closeEntry();
                 } catch (ZipException ignored) {
                     // Directory already exists

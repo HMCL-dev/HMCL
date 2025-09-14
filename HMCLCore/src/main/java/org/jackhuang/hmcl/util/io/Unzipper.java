@@ -113,9 +113,14 @@ public final class Unzipper {
                 @Override
                 public FileVisitResult visitFile(Path file,
                                                  BasicFileAttributes attrs) throws IOException {
-                    String relativePath = root.relativize(file).toString();
-                    Path destFile = dest.resolve(relativePath);
-                    if (filter != null && !filter.accept(file, false, destFile, relativePath))
+                    Path relativePath = FileUtils.safeRelativize(root, file);
+                    if (relativePath == null) {
+                        // Skip files that can't be relativized (different drive roots)
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    Path destFile = dest.resolve(relativePath.toString());
+                    if (filter != null && !filter.accept(file, false, destFile, relativePath.toString()))
                         return FileVisitResult.CONTINUE;
                     try {
                         Files.copy(file, destFile, replaceExistentFile ? new CopyOption[]{StandardCopyOption.REPLACE_EXISTING} : new CopyOption[]{});
@@ -129,9 +134,14 @@ public final class Unzipper {
                 @Override
                 public FileVisitResult preVisitDirectory(Path dir,
                                                          BasicFileAttributes attrs) throws IOException {
-                    String relativePath = root.relativize(dir).toString();
-                    Path dirToCreate = dest.resolve(relativePath);
-                    if (filter != null && !filter.accept(dir, true, dirToCreate, relativePath))
+                    Path relativePath = FileUtils.safeRelativize(root, dir);
+                    if (relativePath == null) {
+                        // Skip directories that can't be relativized (different drive roots)
+                        return FileVisitResult.SKIP_SUBTREE;
+                    }
+
+                    Path dirToCreate = dest.resolve(relativePath.toString());
+                    if (filter != null && !filter.accept(dir, true, dirToCreate, relativePath.toString()))
                         return FileVisitResult.SKIP_SUBTREE;
                     Files.createDirectories(dirToCreate);
                     return FileVisitResult.CONTINUE;

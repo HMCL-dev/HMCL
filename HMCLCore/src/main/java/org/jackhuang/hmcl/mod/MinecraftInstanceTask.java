@@ -66,8 +66,13 @@ public final class MinecraftInstanceTask<T> extends Task<ModpackConfiguration<T>
                     Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
                         @Override
                         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                            String relativePath = root.relativize(file).normalize().toString().replace(File.separatorChar, '/');
-                            overrides.add(new ModpackConfiguration.FileInformation(relativePath, DigestUtils.digestToString("SHA-1", file)));
+                            Path relativePath = FileUtils.safeRelativize(root, file);
+                            if (relativePath == null) {
+                                // Skip files that can't be relativized (different drive roots)
+                                return FileVisitResult.CONTINUE;
+                            }
+                            String relativePathStr = relativePath.normalize().toString().replace(File.separatorChar, '/');
+                            overrides.add(new ModpackConfiguration.FileInformation(relativePathStr, DigestUtils.digestToString("SHA-1", file)));
                             return FileVisitResult.CONTINUE;
                         }
                     });

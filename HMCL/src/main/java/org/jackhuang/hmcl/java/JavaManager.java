@@ -210,9 +210,9 @@ public final class JavaManager {
     public static Task<Void> getUninstallJavaTask(JavaRuntime java) {
         assert java.isManaged();
         Path root = REPOSITORY.getPlatformRoot(java.getPlatform());
-        Path relativized = root.relativize(java.getBinary());
 
-        if (relativized.getNameCount() > 1) {
+        String name = FileUtils.extractFirstComponent(root, java.getBinary());
+        if (name != null) {
             FXUtils.runInFX(() -> {
                 try {
                     removeJava(java);
@@ -221,9 +221,17 @@ public final class JavaManager {
                 }
             });
 
-            String name = relativized.getName(0).toString();
             return REPOSITORY.getUninstallJavaTask(java.getPlatform(), name);
         } else {
+            // If we can't determine the Java name, just remove it from the registry
+            FXUtils.runInFX(() -> {
+                try {
+                    removeJava(java);
+                } catch (InterruptedException ex) {
+                    throw new AssertionError("Unreachable code", ex);
+                }
+            });
+
             return Task.completed(null);
         }
     }

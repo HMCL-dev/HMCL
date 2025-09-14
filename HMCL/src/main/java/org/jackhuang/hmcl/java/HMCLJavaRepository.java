@@ -215,13 +215,13 @@ public final class HMCLJavaRepository implements JavaRepository {
     public Task<Void> getUninstallJavaTask(JavaRuntime java) {
         return Task.runAsync(() -> {
             Path root = getPlatformRoot(java.getPlatform());
-            Path relativized = root.relativize(java.getBinary());
 
-            if (relativized.getNameCount() > 1) {
-                String name = relativized.getName(0).toString();
+            String name = FileUtils.extractFirstComponent(root, java.getBinary());
+            if (name != null) {
                 Files.deleteIfExists(getManifestFile(java.getPlatform(), name));
                 FileUtils.deleteDirectory(getJavaDir(java.getPlatform(), name).toFile());
             }
+            // If we can't determine the Java name, we'll just skip the deletion
         });
     }
 }

@@ -102,6 +102,42 @@ public final class FileUtils {
         return StringUtils.addPrefix(StringUtils.removeSuffix(path, "/", "\\"), "/");
     }
 
+    /**
+     * Safely relativize one path against another, handling cross-drive scenarios on Windows.
+     * When the paths are on different drives (roots), returns null instead of throwing an exception.
+     *
+     * @param base the base path
+     * @param other the other path to relativize against base
+     * @return the relative path, or null if paths have different roots
+     */
+    public static Path safeRelativize(Path base, Path other) {
+        try {
+            return base.relativize(other);
+        } catch (IllegalArgumentException e) {
+            // This happens when paths have different roots (e.g., different drives on Windows)
+            return null;
+        }
+    }
+
+    /**
+     * Extracts the first component name from a path relative to a base path.
+     * This is useful for extracting directory names from managed installations.
+     *
+     * @param base the base path
+     * @param target the target path
+     * @return the first component name, or null if cannot be determined
+     */
+    public static String extractFirstComponent(Path base, Path target) {
+        Path relativized = safeRelativize(base, target);
+        if (relativized != null && relativized.getNameCount() > 0) {
+            return relativized.getName(0).toString();
+        }
+
+        // If we can't relativize the paths (e.g., cross-drive scenario),
+        // we cannot reliably determine the component name
+        return null;
+    }
+
     public static String getName(Path path) {
         if (path.getFileName() == null) return "";
         return StringUtils.removeSuffix(path.getFileName().toString(), "/", "\\");
@@ -228,22 +264,34 @@ public final class FileUtils {
         Files.walkFileTree(src, new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                if (!filePredicate.test(src.relativize(file).toString())) {
+                Path relativePath = safeRelativize(src, file);
+                if (relativePath == null) {
+                    // Skip files that can't be relativized (different drive roots)
+                    return FileVisitResult.CONTINUE;
+                }
+
+                if (!filePredicate.test(relativePath.toString())) {
                     return FileVisitResult.SKIP_SUBTREE;
                 }
 
-                Path destFile = dest.resolve(src.relativize(file).toString());
+                Path destFile = dest.resolve(relativePath.toString());
                 Files.copy(file, destFile, StandardCopyOption.REPLACE_EXISTING);
                 return FileVisitResult.CONTINUE;
             }
 
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                if (!filePredicate.test(src.relativize(dir).toString())) {
+                Path relativePath = safeRelativize(src, dir);
+                if (relativePath == null) {
+                    // Skip directories that can't be relativized (different drive roots)
                     return FileVisitResult.SKIP_SUBTREE;
                 }
 
-                Path destDir = dest.resolve(src.relativize(dir).toString());
+                if (!filePredicate.test(relativePath.toString())) {
+                    return FileVisitResult.SKIP_SUBTREE;
+                }
+
+                Path destDir = dest.resolve(relativePath.toString());
                 Files.createDirectories(destDir);
                 return FileVisitResult.CONTINUE;
             }
