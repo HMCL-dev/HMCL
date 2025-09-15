@@ -104,9 +104,9 @@ public final class Logger {
     }
 
     private void handle(LogEvent event) {
-        if (event instanceof LogEvent.DoLog) {
-            String log = format((LogEvent.DoLog) event);
-            Throwable exception = ((LogEvent.DoLog) event).exception();
+        if (event instanceof LogEvent.DoLog doLog) {
+            String log = format(doLog);
+            Throwable exception = doLog.exception();
 
             System.out.println(log);
             if (exception != null)
@@ -368,7 +368,9 @@ public final class Logger {
         log(Level.TRACE, CallerFinder.getCaller(), msg, exception);
     }
 
-    private static final class LogFile implements Comparable<LogFile> {
+    private record LogFile(Path file,
+                           int year, int month, int day, int hour, int minute, int second,
+                           int n) implements Comparable<LogFile> {
         private static final Pattern FILE_NAME_PATTERN = Pattern.compile("(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})T(?<hour>\\d{2})-(?<minute>\\d{2})-(?<second>\\d{2})(\\.(?<n>\\d+))?\\.log(\\.(gz|xz))?");
 
         private static @Nullable LogFile ofFile(Path file) {
@@ -390,26 +392,6 @@ public final class Logger {
             return new LogFile(file, year, month, day, hour, minute, second, n);
         }
 
-        private final Path file;
-        private final int year;
-        private final int month;
-        private final int day;
-        private final int hour;
-        private final int minute;
-        private final int second;
-        private final int n;
-
-        private LogFile(Path file, int year, int month, int day, int hour, int minute, int second, int n) {
-            this.file = file;
-            this.year = year;
-            this.month = month;
-            this.day = day;
-            this.hour = hour;
-            this.minute = minute;
-            this.second = second;
-            this.n = n;
-        }
-
         @Override
         public int compareTo(@NotNull Logger.LogFile that) {
             if (this.year != that.year) return Integer.compare(this.year, that.year);
@@ -429,7 +411,7 @@ public final class Logger {
 
         @Override
         public boolean equals(Object obj) {
-            return obj instanceof LogFile && compareTo((LogFile) obj) == 0;
+            return obj instanceof LogFile that && compareTo(that) == 0;
         }
     }
 }
