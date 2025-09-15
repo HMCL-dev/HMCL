@@ -17,14 +17,17 @@
  */
 package org.jackhuang.hmcl.util.i18n;
 
+import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.download.game.GameRemoteVersion;
 import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.Nullable;
 
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.time.temporal.TemporalAccessor;
 import java.util.*;
-
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class I18n {
 
@@ -32,55 +35,82 @@ public final class I18n {
     }
 
     private static volatile SupportedLocale locale = Locales.DEFAULT;
-    private static volatile ResourceBundle resourceBundle = locale.getResourceBundle();
-    private static volatile DateTimeFormatter dateTimeFormatter;
 
     public static void setLocale(SupportedLocale locale) {
         I18n.locale = locale;
-        resourceBundle = locale.getResourceBundle();
-        dateTimeFormatter = null;
+    }
+
+    public static SupportedLocale getLocale() {
+        return locale;
     }
 
     public static boolean isUseChinese() {
-        return locale.getLocale() == Locale.CHINA;
+        return LocaleUtils.isChinese(locale.getLocale());
     }
 
     public static ResourceBundle getResourceBundle() {
-        return resourceBundle;
-    }
-
-    public static String getName(SupportedLocale locale) {
-        return locale == Locales.DEFAULT ? resourceBundle.getString("lang.default") : locale.getResourceBundle().getString("lang");
+        return locale.getResourceBundle();
     }
 
     public static String i18n(String key, Object... formatArgs) {
-        try {
-            return String.format(getResourceBundle().getString(key), formatArgs);
-        } catch (MissingResourceException e) {
-            LOG.error("Cannot find key " + key + " in resource bundle", e);
-        } catch (IllegalFormatException e) {
-            LOG.error("Illegal format string, key=" + key + ", args=" + Arrays.toString(formatArgs), e);
-        }
-
-        return key + Arrays.toString(formatArgs);
+        return locale.i18n(key, formatArgs);
     }
 
     public static String i18n(String key) {
-        try {
-            return getResourceBundle().getString(key);
-        } catch (MissingResourceException e) {
-            LOG.error("Cannot find key " + key + " in resource bundle", e);
-            return key;
-        }
+        return locale.i18n(key);
     }
 
     public static String formatDateTime(TemporalAccessor time) {
-        DateTimeFormatter formatter = dateTimeFormatter;
-        if (formatter == null) {
-            formatter = dateTimeFormatter = DateTimeFormatter.ofPattern(getResourceBundle().getString("datetime.format")).withZone(ZoneId.systemDefault());
-        }
+        return locale.formatDateTime(time);
+    }
 
-        return formatter.format(time);
+    public static String getDisplaySelfVersion(RemoteVersion version) {
+        if (locale.getLocale().getLanguage().equals("lzh")) {
+            if (version instanceof GameRemoteVersion)
+                return WenyanUtils.translateGameVersion(GameVersionNumber.asGameVersion(version.getSelfVersion()));
+            else
+                return WenyanUtils.translateGenericVersion(version.getSelfVersion());
+        }
+        return version.getSelfVersion();
+    }
+
+    /// Find the builtin localized resource with given name and suffix.
+    ///
+    /// For example, if the current locale is `zh-CN`, when calling `getBuiltinResource("assets.lang.foo", "json")`,
+    /// this method will look for the following built-in resources in order:
+    ///
+    ///  - `assets/lang/foo_zh_Hans_CN.json`
+    ///  - `assets/lang/foo_zh_Hans.json`
+    ///  - `assets/lang/foo_zh_CN.json`
+    ///  - `assets/lang/foo_zh.json`
+    ///  - `assets/lang/foo.json`
+    ///
+    /// This method will return the first found resource;
+    /// if none of the above resources exist, it returns `null`.
+    public static @Nullable URL getBuiltinResource(String name, String suffix) {
+        var control = DefaultResourceBundleControl.INSTANCE;
+        var classLoader = I18n.class.getClassLoader();
+        for (Locale locale : locale.getCandidateLocales()) {
+            String resourceName = control.toResourceName(control.toBundleName(name, locale), suffix);
+            URL input = classLoader.getResource(resourceName);
+            if (input != null)
+                return input;
+        }
+        return null;
+    }
+
+    /// @see [#getBuiltinResource(String, String) ]
+    public static @Nullable InputStream getBuiltinResourceAsStream(String name, String suffix) {
+        URL resource = getBuiltinResource(name, suffix);
+        try {
+            return resource != null ? resource.openStream() : null;
+        } catch (IOException e) {
+            return null;
+        }
+    }
+
+    public static String getWikiLink(GameRemoteVersion remoteVersion) {
+        return MinecraftWiki.getWikiLink(locale, remoteVersion);
     }
 
     public static boolean hasKey(String key) {

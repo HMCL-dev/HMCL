@@ -78,15 +78,22 @@ public class AccountAdvancedListItem extends AdvancedListItem {
         setActionButtonVisible(false);
 
         setOnScroll(event -> {
+            double deltaY = event.getDeltaY();
+            if (deltaY == 0)
+                return;
+
             Account current = account.get();
             if (current == null) return;
+
             ObservableList<Account> accounts = Accounts.getAccounts();
-            int currentIndex = accounts.indexOf(account.get());
-            if (event.getDeltaY() > 0) { // up
+            int currentIndex = accounts.indexOf(current);
+            if (currentIndex < 0) return;
+
+            if (deltaY > 0) // up
                 currentIndex--;
-            } else { // down
+            else // down
                 currentIndex++;
-            }
+
             Accounts.setSelectedAccount(accounts.get((currentIndex + accounts.size()) % accounts.size()));
         });
     }

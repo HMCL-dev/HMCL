@@ -72,6 +72,8 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class Controllers {
     public static final String JAVA_VERSION_TIP = "javaVersion";
+    public static final String JAVA_INTERPRETED_MODE_TIP = "javaInterpretedMode";
+    public static final String SOFTWARE_RENDERING = "softwareRendering";
 
     public static final int MIN_WIDTH = 800 + 2 + 16; // bg width + border width*2 + shadow width*2
     public static final int MIN_HEIGHT = 450 + 2 + 40 + 16; // bg height + border width*2 + toolbar height + shadow width*2
@@ -345,6 +347,24 @@ public final class Controllers {
                         .ok(() -> config().getShownTips().put(JAVA_VERSION_TIP, Metadata.MINIMUM_SUPPORTED_JAVA_VERSION))
                         .build());
             }
+        }
+
+        // Check whether JIT is enabled in the current environment
+        if (!JavaRuntime.CURRENT_JIT_ENABLED && !Boolean.TRUE.equals(config().getShownTips().get(JAVA_INTERPRETED_MODE_TIP))) {
+            Controllers.dialog(new MessageDialogPane.Builder(i18n("warning.java_interpreted_mode"), i18n("message.warning"), MessageType.WARNING)
+                    .ok(null)
+                    .addCancel(i18n("button.do_not_show_again"), () ->
+                            config().getShownTips().put(JAVA_INTERPRETED_MODE_TIP, true))
+                    .build());
+        }
+
+        // Check whether hardware acceleration is enabled
+        if (!FXUtils.GPU_ACCELERATION_ENABLED && !Boolean.TRUE.equals(config().getShownTips().get(SOFTWARE_RENDERING))) {
+            Controllers.dialog(new MessageDialogPane.Builder(i18n("warning.software_rendering"), i18n("message.warning"), MessageType.WARNING)
+                    .ok(null)
+                    .addCancel(i18n("button.do_not_show_again"), () ->
+                            config().getShownTips().put(SOFTWARE_RENDERING, true))
+                    .build());
         }
 
         if (globalConfig().getAgreementVersion() < 1) {

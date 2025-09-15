@@ -228,9 +228,9 @@ public class DownloadPage extends Control implements DecoratorPage {
                 ModTranslations.Mod mod = getSkinnable().translations.getModByCurseForgeId(getSkinnable().addon.getSlug());
                 content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : getSkinnable().addon.getTitle());
                 content.setSubtitle(getSkinnable().addon.getDescription());
-                content.getTags().setAll(getSkinnable().addon.getCategories().stream()
+                getSkinnable().addon.getCategories().stream()
                         .map(category -> getSkinnable().page.getLocalizedCategory(category))
-                        .collect(Collectors.toList()));
+                        .forEach(content::addTag);
                 descriptionPane.getChildren().add(content);
 
                 if (getSkinnable().mod != null) {
@@ -353,10 +353,9 @@ public class DownloadPage extends Control implements DecoratorPage {
                 ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(page.repository.getType()).getModByCurseForgeId(addon.getSlug());
                 content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : addon.getTitle());
                 content.setSubtitle(addon.getDescription());
-                content.getTags().setAll(addon.getCategories().stream()
+                addon.getCategories().stream()
                         .map(page::getLocalizedCategory)
-                        .collect(Collectors.toList()));
-
+                        .forEach(content::addTag);
                 if (StringUtils.isNotBlank(addon.getIconUrl())) {
                     imageView.imageProperty().bind(FXUtils.newRemoteImage(addon.getIconUrl(), 40, 40, true, true));
                 }
@@ -389,15 +388,15 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                     switch (dataItem.getVersionType()) {
                         case Alpha:
-                            content.getTags().add(i18n("mods.channel.alpha"));
+                            content.addTag(i18n("mods.channel.alpha"));
                             graphicPane.getChildren().setAll(SVG.ALPHA_CIRCLE.createIcon(Theme.blackFill(), 24));
                             break;
                         case Beta:
-                            content.getTags().add(i18n("mods.channel.beta"));
+                            content.addTag(i18n("mods.channel.beta"));
                             graphicPane.getChildren().setAll(SVG.BETA_CIRCLE.createIcon(Theme.blackFill(), 24));
                             break;
                         case Release:
-                            content.getTags().add(i18n("mods.channel.release"));
+                            content.addTag(i18n("mods.channel.release"));
                             graphicPane.getChildren().setAll(SVG.RELEASE_CIRCLE.createIcon(Theme.blackFill(), 24));
                             break;
                     }
@@ -405,19 +404,22 @@ public class DownloadPage extends Control implements DecoratorPage {
                     for (ModLoaderType modLoaderType : dataItem.getLoaders()) {
                         switch (modLoaderType) {
                             case FORGE:
-                                content.getTags().add(i18n("install.installer.forge"));
+                                content.addTag(i18n("install.installer.forge"));
+                                break;
+                            case CLEANROOM:
+                                content.addTag(i18n("install.installer.cleanroom"));
                                 break;
                             case NEO_FORGED:
-                                content.getTags().add(i18n("install.installer.neoforge"));
+                                content.addTag(i18n("install.installer.neoforge"));
                                 break;
                             case FABRIC:
-                                content.getTags().add(i18n("install.installer.fabric"));
+                                content.addTag(i18n("install.installer.fabric"));
                                 break;
                             case LITE_LOADER:
-                                content.getTags().add(i18n("install.installer.liteloader"));
+                                content.addTag(i18n("install.installer.liteloader"));
                                 break;
                             case QUILT:
-                                content.getTags().add(i18n("install.installer.quilt"));
+                                content.addTag(i18n("install.installer.quilt"));
                                 break;
                         }
                     }

@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.task;
 
 import org.jackhuang.hmcl.util.DigestUtils;
-import org.jackhuang.hmcl.util.Hex;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -33,11 +32,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 import static java.util.Objects.requireNonNull;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -250,7 +245,7 @@ public class FileDownloadTask extends FetchTask<Void> {
 
                 // Integrity check
                 if (checksum != null) {
-                    String actualChecksum = Hex.encodeHex(digest.digest());
+                    String actualChecksum = HexFormat.of().formatHex(digest.digest());
                     if (!checksum.equalsIgnoreCase(actualChecksum)) {
                         throw new ChecksumMismatchException(algorithm, checksum, actualChecksum);
                     }

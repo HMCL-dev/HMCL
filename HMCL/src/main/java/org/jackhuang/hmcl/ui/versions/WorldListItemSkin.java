@@ -37,6 +37,7 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.time.Instant;
 
+import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 import static org.jackhuang.hmcl.util.StringUtils.parseColorEscapes;
 import static org.jackhuang.hmcl.util.i18n.I18n.formatDateTime;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -75,9 +76,9 @@ public final class WorldListItemSkin extends SkinBase<WorldListItem> {
             item.setSubtitle(i18n("world.datetime", formatDateTime(Instant.ofEpochMilli(world.getLastPlayed())), world.getGameVersion() == null ? i18n("message.unknown") : world.getGameVersion()));
 
             if (world.getGameVersion() != null)
-                item.getTags().add(world.getGameVersion());
+                item.addTag(world.getGameVersion());
             if (world.isLocked())
-                item.getTags().add(i18n("world.locked"));
+                item.addTag(i18n("world.locked"));
         }
 
         {
@@ -137,6 +138,8 @@ public final class WorldListItemSkin extends SkinBase<WorldListItem> {
                 new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), item::export, popup),
                 new IconedMenuItem(SVG.FOLDER_OPEN, i18n("folder.world"), item::reveal, popup));
 
-        popup.show(root, JFXPopup.PopupVPosition.TOP, hPosition, initOffsetX, initOffsetY);
+        JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(root, popup);
+
+        popup.show(root, vPosition, hPosition, initOffsetX, vPosition == JFXPopup.PopupVPosition.TOP ? initOffsetY : -initOffsetY);
     }
 }
