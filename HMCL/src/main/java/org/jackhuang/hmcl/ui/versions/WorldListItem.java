@@ -38,15 +38,16 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public final class WorldListItem extends Control {
     private final World world;
     private final Path backupsDir;
-    private Runnable onDelete;
+    private final WorldListPage parent;
 
     public WorldListItem(World world, Path backupsDir) {
-        this.world = world;
-        this.backupsDir = backupsDir;
+        this(world, backupsDir, null);
     }
 
-    public void setOnDelete(Runnable onDelete) {
-        this.onDelete = onDelete;
+    public WorldListItem(World world, Path backupsDir, WorldListPage parent) {
+        this.world = world;
+        this.backupsDir = backupsDir;
+        this.parent = parent;
     }
 
     @Override
@@ -75,16 +76,16 @@ public final class WorldListItem extends Control {
         Controllers.confirm(
                 i18n("button.remove.confirm"),
                 i18n("world.delete"),
-                () -> Task.runAsync(world::delete).whenComplete(Schedulers.javafx(), (result, exception) -> {
-                    if (exception == null && onDelete != null) {
-                        onDelete.run();
-                    } else if (exception instanceof WorldLockedException) {
-                        Controllers.dialog(i18n("world.backup.create.locked"), null, MessageDialogPane.MessageType.WARNING);
-                    } else {
-                        assert exception != null;
-                        Controllers.dialog(i18n("world.delete.failed", StringUtils.getStackTrace(exception)), null, MessageDialogPane.MessageType.WARNING);
-                    }
-                }).start(),
+                () -> Task.runAsync(world::delete)
+                        .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                            if (exception == null) {
+                                parent.remove(this);
+                            } else if (exception instanceof WorldLockedException) {
+                                Controllers.dialog(i18n("world.backup.create.locked"), null, MessageDialogPane.MessageType.WARNING);
+                            } else {
+                                Controllers.dialog(i18n("world.delete.failed", StringUtils.getStackTrace(exception)), null, MessageDialogPane.MessageType.WARNING);
+                            }
+                        }).start(),
                 null
         );
     }

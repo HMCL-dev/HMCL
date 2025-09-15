@@ -279,11 +279,7 @@ public final class World {
         if (isLocked()) {
             throw new WorldLockedException("The world " + getFile() + " has been locked");
         }
-        try {
-            FileUtils.deleteDirectory(file.toFile());
-        } catch (Exception e) {
-            throw new IOException("Failed to delete world", e);
-        }
+        FileUtils.deleteDirectory(file);
     }
 
     public CompoundTag readLevelDat() throws IOException {

@@ -39,8 +39,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class WorldListPage extends ListPageBase<WorldListItem> implements VersionPage.VersionLoadable {
     private final BooleanProperty showAll = new SimpleBooleanProperty(this, "showAll", false);
@@ -79,6 +79,10 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
         refresh();
     }
 
+    public void remove(WorldListItem item) {
+        itemsProperty().remove(item);
+    }
+
     public void refresh() {
         if (profile == null || id == null)
             return;
@@ -94,12 +98,10 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
                     worlds = result;
                     setLoading(false);
                     if (exception == null) {
-                        itemsProperty().setAll(result.stream().filter(world -> isShowAll() || world.getGameVersion() == null || world.getGameVersion().equals(gameVersion))
-                                .map(world -> {
-                                    WorldListItem item = new WorldListItem(world, backupsDir);
-                                    item.setOnDelete(() -> this.itemsProperty().removeIf(i -> i.getWorld().equals(world)));
-                                    return item;
-                                }).collect(Collectors.toList()));
+                        itemsProperty().setAll(result.stream()
+                                .filter(world -> isShowAll() || world.getGameVersion() == null || world.getGameVersion().equals(gameVersion))
+                                .map(world -> new WorldListItem(world, backupsDir, this))
+                                .collect(Collectors.toList()));
                     } else {
                         LOG.warning("Failed to load world list page", exception);
                     }
