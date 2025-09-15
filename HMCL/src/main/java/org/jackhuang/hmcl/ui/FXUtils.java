@@ -109,6 +109,25 @@ public final class FXUtils {
 
     public static final int JAVAFX_MAJOR_VERSION;
 
+    public static final String GRAPHICS_PIPELINE;
+    public static final boolean GPU_ACCELERATION_ENABLED;
+
+    static {
+        String pipelineName = "";
+
+        try {
+            Object pipeline = Class.forName("com.sun.prism.GraphicsPipeline").getMethod("getPipeline").invoke(null);
+            if (pipeline != null) {
+                pipelineName = pipeline.getClass().getName();
+            }
+        } catch (Throwable e) {
+            LOG.warning("Failed to get prism pipeline", e);
+        }
+
+        GRAPHICS_PIPELINE = pipelineName;
+        GPU_ACCELERATION_ENABLED = !pipelineName.endsWith(".SWPipeline");
+    }
+
     /// @see Platform.Preferences
     public static final @Nullable ObservableMap<String, Object> PREFERENCES;
     public static final @Nullable ObservableBooleanValue DARK_MODE;
