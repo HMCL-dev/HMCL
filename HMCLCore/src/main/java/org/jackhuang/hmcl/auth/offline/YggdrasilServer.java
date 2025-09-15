@@ -237,10 +237,10 @@ public class YggdrasilServer extends HttpServer {
         return Stream.of(entries)
                 .map(entry -> {
                     LinkedHashMap<String, String> property = new LinkedHashMap<>();
-                    property.put("name", entry.key());
-                    property.put("value", entry.value());
+                    property.put("name", entry.getKey());
+                    property.put("value", entry.getValue());
                     if (sign) {
-                        property.put("signature", sign(entry.value()));
+                        property.put("signature", sign(entry.getValue()));
                     }
                     return property;
                 })

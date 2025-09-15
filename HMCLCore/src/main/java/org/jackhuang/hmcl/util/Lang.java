@@ -70,7 +70,7 @@ public final class Lang {
     public static <K, V> Map<K, V> mapOf(Iterable<Pair<K, V>> pairs) {
         Map<K, V> map = new LinkedHashMap<>();
         for (Pair<K, V> pair : pairs)
-            map.put(pair.key(), pair.value());
+            map.put(pair.getKey(), pair.getValue());
         return map;
     }
 

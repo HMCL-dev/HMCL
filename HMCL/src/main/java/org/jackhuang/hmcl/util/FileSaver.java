@@ -102,7 +102,7 @@ public final class FileSaver extends Thread {
                     if (head == null || head == SHUTDOWN) {
                         stopCurrentSaver();
                     } else {
-                        map.put(head.key(), head.value());
+                        map.put(head.getKey(), head.getValue());
                         //noinspection BusyWait
                         Thread.sleep(200); // Waiting for more changes
                     }
@@ -113,7 +113,7 @@ public final class FileSaver extends Thread {
                         if (pair == SHUTDOWN)
                             stopCurrentSaver();
                         else
-                            map.put(pair.key(), pair.value());
+                            map.put(pair.getKey(), pair.getValue());
                     }
                     buffer.clear();
                 }
@@ -146,7 +146,7 @@ public final class FileSaver extends Thread {
                 HashMap<Path, String> map = new HashMap<>();
                 for (Pair<Path, String> pair : queue) {
                     if (pair != SHUTDOWN)
-                        map.put(pair.key(), pair.value());
+                        map.put(pair.getKey(), pair.getValue());
                 }
                 doSave(map);
             } finally {

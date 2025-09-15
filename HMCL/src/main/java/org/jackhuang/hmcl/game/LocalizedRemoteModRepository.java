@@ -101,7 +101,7 @@ public abstract class LocalizedRemoteModRepository implements RemoteModRepositor
                 }
             }
             return Pair.pair(remoteMod, l);
-        }).sorted(Comparator.comparingInt(Pair::value)).map(Pair::key), Arrays.stream(searchResultArray, englishIndex + 1, searchResultArray.length)), totalPages);
+        }).sorted(Comparator.comparingInt(Pair::getValue)).map(Pair::getKey), Arrays.stream(searchResultArray, englishIndex + 1, searchResultArray.length)), totalPages);
     }
 
     @Override

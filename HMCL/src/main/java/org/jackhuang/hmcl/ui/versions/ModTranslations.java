@@ -105,14 +105,14 @@ public enum ModTranslations {
         StringUtils.LongestCommonSubsequence lcs = new StringUtils.LongestCommonSubsequence(query.length(), maxKeywordLength);
         List<Pair<Integer, Mod>> modList = new ArrayList<>();
         for (Pair<String, Mod> keyword : keywords) {
-            int value = lcs.calc(query, keyword.key());
+            int value = lcs.calc(query, keyword.getKey());
             if (value >= Math.max(1, query.length() - 3)) {
-                modList.add(pair(value, keyword.value()));
+                modList.add(pair(value, keyword.getValue()));
             }
         }
         return modList.stream()
-                .sorted((a, b) -> -a.key().compareTo(b.key()))
-                .map(Pair::value)
+                .sorted((a, b) -> -a.getKey().compareTo(b.getKey()))
+                .map(Pair::getValue)
                 .collect(Collectors.toList());
     }
 

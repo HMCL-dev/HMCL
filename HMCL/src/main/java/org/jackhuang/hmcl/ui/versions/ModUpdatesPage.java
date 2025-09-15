@@ -281,8 +281,8 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
 
             this.dependents = new ArrayList<>();
             for (Pair<LocalModFile, RemoteMod.Version> mod : mods) {
-                LocalModFile local = mod.key();
-                RemoteMod.Version remote = mod.value();
+                LocalModFile local = mod.getKey();
+                RemoteMod.Version remote = mod.getValue();
                 boolean isDisabled = local.getModManager().isDisabled(local.getFile());
 
                 dependents.add(Task

@@ -620,7 +620,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 versionSetting.setDefaultJavaPath(null);
             } else {
                 @SuppressWarnings("unchecked")
-                JavaRuntime java = ((Pair<JavaVersionType, JavaRuntime>) newValue.getUserData()).value();
+                JavaRuntime java = ((Pair<JavaVersionType, JavaRuntime>) newValue.getUserData()).getValue();
                 versionSetting.setJavaVersionType(JavaVersionType.DETECTED);
                 versionSetting.setJavaVersion(java.getVersion());
                 versionSetting.setDefaultJavaPath(java.getBinary().toString());
@@ -671,7 +671,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                                 if (t.getUserData() != null) {
                                     @SuppressWarnings("unchecked")
                                     Pair<JavaVersionType, JavaRuntime> userData = (Pair<JavaVersionType, JavaRuntime>) t.getUserData();
-                                    if (userData.value() != null && java.getBinary().equals(userData.value().getBinary())) {
+                                    if (userData.getValue() != null && java.getBinary().equals(userData.getValue().getBinary())) {
                                         toggle = t;
                                         break;
 
@@ -712,8 +712,8 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         }
 
         Pair<JavaVersionType, JavaRuntime> selectedData = javaItem.getSelectedData();
-        if (selectedData != null && selectedData.value() != null) {
-            javaSublist.setSubtitle(selectedData.value().getBinary().toString());
+        if (selectedData != null && selectedData.getValue() != null) {
+            javaSublist.setSubtitle(selectedData.getValue().getBinary().toString());
             return;
         }
 

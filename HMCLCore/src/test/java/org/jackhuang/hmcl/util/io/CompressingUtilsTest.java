@@ -26,7 +26,7 @@ public final class CompressingUtilsTest {
                 pair("gbk.zip", Charset.forName("GB18030"))
         ).map(pair -> {
             try {
-                return Arguments.of(Paths.get(CompressingUtilsTest.class.getResource("/zip/" + pair.key()).toURI()), pair.value());
+                return Arguments.of(Paths.get(CompressingUtilsTest.class.getResource("/zip/" + pair.getKey()).toURI()), pair.getValue());
             } catch (URISyntaxException e) {
                 throw new AssertionError(e);
             }

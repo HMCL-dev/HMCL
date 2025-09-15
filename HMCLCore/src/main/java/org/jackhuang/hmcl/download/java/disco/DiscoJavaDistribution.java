@@ -104,7 +104,7 @@ public enum DiscoJavaDistribution implements JavaDistribution<DiscoJavaRemoteVer
         this.supportedPackageTypes = supportedPackageTypes;
 
         for (Pair<OperatingSystem, EnumSet<Architecture>> platform : supportedPlatforms) {
-            this.supportedPlatforms.put(platform.key(), platform.value());
+            this.supportedPlatforms.put(platform.getKey(), platform.getValue());
         }
     }
 
