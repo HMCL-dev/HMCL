@@ -350,7 +350,7 @@ public final class Controllers {
         }
 
         // Check whether JIT is enabled in the current environment
-        if (JavaRuntime.CURRENT_IN_INTERPRETED_MODE && !Boolean.TRUE.equals(config().getShownTips().get(JAVA_INTERPRETED_MODE_TIP))) {
+        if (!JavaRuntime.CURRENT_JIT_ENABLED && !Boolean.TRUE.equals(config().getShownTips().get(JAVA_INTERPRETED_MODE_TIP))) {
             Controllers.dialog(new MessageDialogPane.Builder(i18n("warning.java_interpreted_mode"), i18n("message.warning"), MessageType.WARNING)
                     .ok(null)
                     .addCancel(i18n("button.do_not_show_again"), () ->
