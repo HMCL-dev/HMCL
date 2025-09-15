@@ -40,11 +40,7 @@ public final class WorldListItem extends Control {
     private final Path backupsDir;
     private final WorldListPage parent;
 
-    public WorldListItem(World world, Path backupsDir) {
-        this(world, backupsDir, null);
-    }
-
-    public WorldListItem(World world, Path backupsDir, WorldListPage parent) {
+    public WorldListItem(WorldListPage parent, World world, Path backupsDir) {
         this.world = world;
         this.backupsDir = backupsDir;
         this.parent = parent;

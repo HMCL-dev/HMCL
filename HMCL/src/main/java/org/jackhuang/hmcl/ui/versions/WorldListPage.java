@@ -61,7 +61,7 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
             if (worlds != null)
                 itemsProperty().setAll(worlds.stream()
                         .filter(world -> isShowAll() || world.getGameVersion() == null || world.getGameVersion().equals(gameVersion))
-                        .map(world -> new WorldListItem(world, backupsDir)).collect(Collectors.toList()));
+                        .map(world -> new WorldListItem(this, world, backupsDir)).toList());
         });
     }
 
@@ -100,7 +100,7 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
                     if (exception == null) {
                         itemsProperty().setAll(result.stream()
                                 .filter(world -> isShowAll() || world.getGameVersion() == null || world.getGameVersion().equals(gameVersion))
-                                .map(world -> new WorldListItem(world, backupsDir, this))
+                                .map(world -> new WorldListItem(this, world, backupsDir))
                                 .collect(Collectors.toList()));
                     } else {
                         LOG.warning("Failed to load world list page", exception);
@@ -131,7 +131,7 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
                     Controllers.prompt(i18n("world.name.enter"), (name, resolve, reject) -> {
                         Task.runAsync(() -> world.install(savesDir, name))
                                 .whenComplete(Schedulers.javafx(), () -> {
-                                    itemsProperty().add(new WorldListItem(new World(savesDir.resolve(name)), backupsDir));
+                                    itemsProperty().add(new WorldListItem(null, new World(savesDir.resolve(name)), backupsDir));
                                     resolve.run();
                                 }, e -> {
                                     if (e instanceof FileAlreadyExistsException)
