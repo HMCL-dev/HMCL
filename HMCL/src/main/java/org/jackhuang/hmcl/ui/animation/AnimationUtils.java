@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.animation;
 
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -37,7 +38,9 @@ public final class AnimationUtils {
     public static void init() {
     }
 
-    private static final boolean ENABLED = !ConfigHolder.config().isAnimationDisabled() && FXUtils.REDUCED_MOTION != Boolean.TRUE;
+    private static final boolean ENABLED = !ConfigHolder.config().isAnimationDisabled()
+            && FXUtils.REDUCED_MOTION != Boolean.TRUE
+            && !JavaRuntime.CURRENT_IN_INTERPRETED_MODE;
     private static final boolean PLAY_WINDOW_ANIMATION = ENABLED && !OperatingSystem.CURRENT_OS.isLinuxOrBSD();
 
     public static boolean isAnimationEnabled() {
