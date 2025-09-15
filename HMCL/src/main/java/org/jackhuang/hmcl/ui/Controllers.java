@@ -72,6 +72,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class Controllers {
     public static final String JAVA_VERSION_TIP = "javaVersion";
+    public static final String JAVA_INTERPRETED_MODE_TIP = "javaInterpretedMode";
 
     public static final int MIN_WIDTH = 800 + 2 + 16; // bg width + border width*2 + shadow width*2
     public static final int MIN_HEIGHT = 450 + 2 + 40 + 16; // bg height + border width*2 + toolbar height + shadow width*2
@@ -348,14 +349,19 @@ public final class Controllers {
         }
 
         // Check whether JIT is enabled in the current environment
-        String vmInfo = System.getProperty("java.vm.info", "");
-        if (vmInfo.contains("interpreted mode") // HotSpot
-                || vmInfo.contains("JIT disabled") // J9
-        ) {
-            // TODO
+        if (JavaRuntime.CURRENT_IN_INTERPRETED_MODE && !Boolean.TRUE.equals(config().getShownTips().get(JAVA_INTERPRETED_MODE_TIP))) {
+
+            Controllers.dialog(new MessageDialogPane.Builder(i18n("warning.java_interpreted_mode"), i18n("message.warning"), MessageType.WARNING)
+                    .ok(null)
+                    .addCancel(i18n("button.do_not_show_again"), () ->
+                            config().getShownTips().put(JAVA_INTERPRETED_MODE_TIP, true))
+                    .build());
         }
 
+        // Check whether hardware acceleration is enabled
+        if (FXUtils.GRAPHICS_PIPELINE.endsWith(".SWPipeline")) {
 
+        }
 
         if (globalConfig().getAgreementVersion() < 1) {
             JFXDialogLayout agreementPane = new JFXDialogLayout();
