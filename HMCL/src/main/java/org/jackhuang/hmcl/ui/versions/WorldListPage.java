@@ -39,8 +39,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class WorldListPage extends ListPageBase<WorldListItem> implements VersionPage.VersionLoadable {
     private final BooleanProperty showAll = new SimpleBooleanProperty(this, "showAll", false);
@@ -61,7 +61,7 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
             if (worlds != null)
                 itemsProperty().setAll(worlds.stream()
                         .filter(world -> isShowAll() || world.getGameVersion() == null || world.getGameVersion().equals(gameVersion))
-                        .map(world -> new WorldListItem(world, backupsDir)).collect(Collectors.toList()));
+                        .map(world -> new WorldListItem(this, world, backupsDir)).toList());
         });
     }
 
@@ -79,6 +79,10 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
         refresh();
     }
 
+    public void remove(WorldListItem item) {
+        itemsProperty().remove(item);
+    }
+
     public void refresh() {
         if (profile == null || id == null)
             return;
@@ -94,8 +98,10 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
                     worlds = result;
                     setLoading(false);
                     if (exception == null) {
-                        itemsProperty().setAll(result.stream().filter(world -> isShowAll() || world.getGameVersion() == null || world.getGameVersion().equals(gameVersion))
-                                .map(world -> new WorldListItem(world, backupsDir)).collect(Collectors.toList()));
+                        itemsProperty().setAll(result.stream()
+                                .filter(world -> isShowAll() || world.getGameVersion() == null || world.getGameVersion().equals(gameVersion))
+                                .map(world -> new WorldListItem(this, world, backupsDir))
+                                .collect(Collectors.toList()));
                     } else {
                         LOG.warning("Failed to load world list page", exception);
                     }
@@ -125,7 +131,7 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
                     Controllers.prompt(i18n("world.name.enter"), (name, resolve, reject) -> {
                         Task.runAsync(() -> world.install(savesDir, name))
                                 .whenComplete(Schedulers.javafx(), () -> {
-                                    itemsProperty().add(new WorldListItem(new World(savesDir.resolve(name)), backupsDir));
+                                    itemsProperty().add(new WorldListItem(this, new World(savesDir.resolve(name)), backupsDir));
                                     resolve.run();
                                 }, e -> {
                                     if (e instanceof FileAlreadyExistsException)
