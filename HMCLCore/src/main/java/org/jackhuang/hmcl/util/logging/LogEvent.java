@@ -11,11 +11,11 @@ abstract class LogEvent {
     static final class DoLog extends LogEvent {
         final long time;
         final String caller;
-        final Level level;
+        final System.Logger.Level level;
         final String message;
         final Throwable exception;
 
-        DoLog(long time, String caller, Level level, String message, Throwable exception) {
+        DoLog(long time, String caller, System.Logger.Level level, String message, Throwable exception) {
             this.time = time;
             this.caller = caller;
             this.level = level;

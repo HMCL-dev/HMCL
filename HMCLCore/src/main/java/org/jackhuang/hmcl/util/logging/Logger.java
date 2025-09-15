@@ -23,6 +23,7 @@ import org.tukaani.xz.LZMA2Options;
 import org.tukaani.xz.XZOutputStream;
 
 import java.io.*;
+import java.lang.System.Logger.Level;
 import java.nio.file.*;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -114,8 +115,7 @@ public final class Logger {
             logWriter.println(log);
             if (exception != null)
                 exception.printStackTrace(logWriter);
-        } else if (event instanceof LogEvent.ExportLog) {
-            LogEvent.ExportLog exportEvent = (LogEvent.ExportLog) event;
+        } else if (event instanceof LogEvent.ExportLog exportEvent) {
             logWriter.flush();
             try {
                 if (logFile != null) {
