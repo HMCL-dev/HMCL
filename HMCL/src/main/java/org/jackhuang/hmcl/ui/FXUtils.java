@@ -110,6 +110,7 @@ public final class FXUtils {
     public static final int JAVAFX_MAJOR_VERSION;
 
     public static final String GRAPHICS_PIPELINE;
+    public static final boolean GPU_ACCELERATION_ENABLED;
 
     static {
         String pipelineName = "";
@@ -124,6 +125,7 @@ public final class FXUtils {
         }
 
         GRAPHICS_PIPELINE = pipelineName;
+        GPU_ACCELERATION_ENABLED = !pipelineName.endsWith(".SWPipeline");
     }
 
     /// @see Platform.Preferences

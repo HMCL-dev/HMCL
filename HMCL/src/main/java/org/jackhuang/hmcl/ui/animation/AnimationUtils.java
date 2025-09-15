@@ -40,6 +40,7 @@ public final class AnimationUtils {
 
     private static final boolean ENABLED = !ConfigHolder.config().isAnimationDisabled()
             && FXUtils.REDUCED_MOTION != Boolean.TRUE
+            && FXUtils.GPU_ACCELERATION_ENABLED
             && !JavaRuntime.CURRENT_IN_INTERPRETED_MODE;
     private static final boolean PLAY_WINDOW_ANIMATION = ENABLED && !OperatingSystem.CURRENT_OS.isLinuxOrBSD();
 
