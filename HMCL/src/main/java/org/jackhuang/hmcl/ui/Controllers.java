@@ -347,6 +347,16 @@ public final class Controllers {
             }
         }
 
+        // Check whether JIT is enabled in the current environment
+        String vmInfo = System.getProperty("java.vm.info", "");
+        if (vmInfo.contains("interpreted mode") // HotSpot
+                || vmInfo.contains("JIT disabled") // J9
+        ) {
+            // TODO
+        }
+
+
+
         if (globalConfig().getAgreementVersion() < 1) {
             JFXDialogLayout agreementPane = new JFXDialogLayout();
             agreementPane.setHeading(new Label(i18n("launcher.agreement")));
