@@ -131,7 +131,7 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
                     Controllers.prompt(i18n("world.name.enter"), (name, resolve, reject) -> {
                         Task.runAsync(() -> world.install(savesDir, name))
                                 .whenComplete(Schedulers.javafx(), () -> {
-                                    itemsProperty().add(new WorldListItem(null, new World(savesDir.resolve(name)), backupsDir));
+                                    itemsProperty().add(new WorldListItem(this, new World(savesDir.resolve(name)), backupsDir));
                                     resolve.run();
                                 }, e -> {
                                     if (e instanceof FileAlreadyExistsException)
