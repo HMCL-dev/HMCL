@@ -7,24 +7,16 @@ import java.util.concurrent.CountDownLatch;
 /**
  * @author Glavo
  */
-abstract class LogEvent {
-    static final class DoLog extends LogEvent {
-        final long time;
-        final String caller;
-        final System.Logger.Level level;
-        final String message;
-        final Throwable exception;
-
-        DoLog(long time, String caller, System.Logger.Level level, String message, Throwable exception) {
-            this.time = time;
-            this.caller = caller;
-            this.level = level;
-            this.message = message;
-            this.exception = exception;
-        }
+sealed interface LogEvent {
+    record DoLog(long time,
+                 String caller,
+                 System.Logger.Level level,
+                 String message,
+                 Throwable exception
+    ) implements LogEvent {
     }
 
-    static final class ExportLog extends LogEvent {
+    final class ExportLog implements LogEvent {
         final CountDownLatch latch = new CountDownLatch(1);
 
         final OutputStream output;
@@ -39,6 +31,6 @@ abstract class LogEvent {
         }
     }
 
-    static final class Shutdown extends LogEvent {
+    final class Shutdown implements LogEvent {
     }
 }

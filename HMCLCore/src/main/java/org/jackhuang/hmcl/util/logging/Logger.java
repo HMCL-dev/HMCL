@@ -87,26 +87,26 @@ public final class Logger {
         StringBuilder builder = this.builder;
         builder.setLength(0);
         builder.append('[');
-        TIME_FORMATTER.formatTo(Instant.ofEpochMilli(event.time), builder);
+        TIME_FORMATTER.formatTo(Instant.ofEpochMilli(event.time()), builder);
         builder.append("] [");
 
-        if (event.caller != null && event.caller.startsWith(PACKAGE_PREFIX)) {
-            builder.append("@.").append(event.caller, PACKAGE_PREFIX.length(), event.caller.length());
+        if (event.caller() != null && event.caller().startsWith(PACKAGE_PREFIX)) {
+            builder.append("@.").append(event.caller(), PACKAGE_PREFIX.length(), event.caller().length());
         } else {
-            builder.append(event.caller);
+            builder.append(event.caller());
         }
 
         builder.append('/')
-                .append(event.level)
+                .append(event.level())
                 .append("] ")
-                .append(filterForbiddenToken(event.message));
+                .append(filterForbiddenToken(event.message()));
         return builder.toString();
     }
 
     private void handle(LogEvent event) {
         if (event instanceof LogEvent.DoLog) {
             String log = format((LogEvent.DoLog) event);
-            Throwable exception = ((LogEvent.DoLog) event).exception;
+            Throwable exception = ((LogEvent.DoLog) event).exception();
 
             System.out.println(log);
             if (exception != null)
