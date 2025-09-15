@@ -411,8 +411,8 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                         pair("mods.curseforge", CurseForgeRemoteModRepository.MODS),
                         pair("mods.modrinth", ModrinthRemoteModRepository.MODS)
                 )) {
-                    RemoteModRepository repository = item.getValue();
-                    JFXHyperlink button = new JFXHyperlink(i18n(item.getKey()));
+                    RemoteModRepository repository = item.value();
+                    JFXHyperlink button = new JFXHyperlink(i18n(item.key()));
                     Task.runAsync(() -> {
                         Optional<RemoteMod.Version> versionOptional = repository.getRemoteVersionByLocalFile(modInfo.getModInfo(), modInfo.getModInfo().getFile());
                         if (versionOptional.isPresent()) {

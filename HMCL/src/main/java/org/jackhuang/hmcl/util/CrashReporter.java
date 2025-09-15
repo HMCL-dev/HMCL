@@ -64,9 +64,9 @@ public final class CrashReporter implements Thread.UncaughtExceptionHandler {
     private boolean checkThrowable(Throwable e) {
         String s = StringUtils.getStackTrace(e);
         for (Pair<String, String> entry : Hole.SOURCE)
-            if (s.contains(entry.getKey())) {
-                if (StringUtils.isNotBlank(entry.getValue())) {
-                    String info = entry.getValue();
+            if (s.contains(entry.key())) {
+                if (StringUtils.isNotBlank(entry.value())) {
+                    String info = entry.value();
                     LOG.error(info);
                     try {
                         Alert alert = new Alert(AlertType.INFORMATION, info);

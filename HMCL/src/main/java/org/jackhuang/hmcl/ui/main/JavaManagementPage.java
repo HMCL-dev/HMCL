@@ -161,7 +161,7 @@ public final class JavaManagementPage extends ListPageBase<JavaManagementPage.Ja
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
                 Controllers.getDecorator().startWizard(new SinglePageWizardProvider(controller ->
-                        new JavaInstallPage(controller::onFinish, result.getValue(), null, null, result.getKey(), file)));
+                        new JavaInstallPage(controller::onFinish, result.value(), null, null, result.key(), file)));
             } else {
                 if (exception instanceof UnsupportedPlatformException) {
                     Controllers.dialog(i18n("java.install.failed.unsupported_platform"), null, MessageDialogPane.MessageType.WARNING);

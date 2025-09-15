@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
 import org.jackhuang.hmcl.util.KeyUtils;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.io.HttpServer;
@@ -232,23 +233,17 @@ public class YggdrasilServer extends HttpServer {
     // === properties ===
 
     @SafeVarargs
-    public static List<?> properties(Map.Entry<String, String>... entries) {
-        return properties(false, entries);
-    }
-
-    @SafeVarargs
-    public static List<?> properties(boolean sign, Map.Entry<String, String>... entries) {
+    public static List<?> properties(boolean sign, Pair<String, String>... entries) {
         return Stream.of(entries)
                 .map(entry -> {
                     LinkedHashMap<String, String> property = new LinkedHashMap<>();
-                    property.put("name", entry.getKey());
-                    property.put("value", entry.getValue());
+                    property.put("name", entry.key());
+                    property.put("value", entry.value());
                     if (sign) {
-                        property.put("signature", sign(entry.getValue()));
+                        property.put("signature", sign(entry.value()));
                     }
                     return property;
                 })
-                .collect(Collectors.toList());
+                .toList();
     }
-
 }

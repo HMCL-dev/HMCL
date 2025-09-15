@@ -101,7 +101,7 @@ public final class ModManager {
         }
 
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile)) {
-            for (ModMetadataReader reader : currentReader.getKey()) {
+            for (ModMetadataReader reader : currentReader.key()) {
                 try {
                     return reader.fromFile(this, modFile, fs);
                 } catch (Exception ignore) {
@@ -114,7 +114,7 @@ public final class ModManager {
                 getLocalMod(FileUtils.getNameWithoutExtension(modFile), ModLoaderType.UNKNOWN),
                 modFile,
                 FileUtils.getNameWithoutExtension(modFile),
-                new LocalModFile.Description(currentReader.getValue())
+                new LocalModFile.Description(currentReader.value())
         );
     }
 

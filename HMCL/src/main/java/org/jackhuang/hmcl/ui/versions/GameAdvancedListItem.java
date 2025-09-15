@@ -41,8 +41,8 @@ public class GameAdvancedListItem extends AdvancedListItem {
 
     public GameAdvancedListItem() {
         Pair<Node, ImageView> view = createImageView(null);
-        setLeftGraphic(view.getKey());
-        imageView = view.getValue();
+        setLeftGraphic(view.key());
+        imageView = view.value();
 
         holder.add(FXUtils.onWeakChangeAndOperate(Profiles.selectedVersionProperty(), this::loadVersion));
 

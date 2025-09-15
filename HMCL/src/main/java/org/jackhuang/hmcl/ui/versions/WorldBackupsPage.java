@@ -143,9 +143,9 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
             return Pair.pair(path, new BackupInfo(path, new World(path), time, count));
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
-                WorldBackupsPage.this.getItems().add(result.getValue());
+                WorldBackupsPage.this.getItems().add(result.value());
                 WorldBackupsPage.this.getItems().sort(Comparator.naturalOrder());
-                Controllers.dialog(i18n("world.backup.create.success", result.getKey()), null, MessageDialogPane.MessageType.INFO);
+                Controllers.dialog(i18n("world.backup.create.success", result.key()), null, MessageDialogPane.MessageType.INFO);
             } else if (exception instanceof WorldLockedException) {
                 Controllers.dialog(i18n("world.backup.create.locked"), null, MessageDialogPane.MessageType.WARNING);
             } else {

@@ -138,8 +138,8 @@ public final class BMCLAPIDownloadProvider implements DownloadProvider {
     @Override
     public String injectURL(String baseURL) {
         for (Pair<String, String> pair : replacement) {
-            if (baseURL.startsWith(pair.getKey())) {
-                return pair.getValue() + baseURL.substring(pair.getKey().length());
+            if (baseURL.startsWith(pair.key())) {
+                return pair.value() + baseURL.substring(pair.key().length());
             }
         }
 

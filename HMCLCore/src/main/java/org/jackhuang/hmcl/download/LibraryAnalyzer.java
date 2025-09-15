@@ -48,11 +48,11 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
     }
 
     public Optional<String> getVersion(String type) {
-        return Optional.ofNullable(libraries.get(type)).map(Pair::getValue);
+        return Optional.ofNullable(libraries.get(type)).map(Pair::value);
     }
 
     public Optional<Library> getLibrary(LibraryType type) {
-        return Optional.ofNullable(libraries.get(type.getPatchId())).map(Pair::getKey);
+        return Optional.ofNullable(libraries.get(type.getPatchId())).map(Pair::key);
     }
 
     /**
@@ -78,7 +78,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             @Override
             public LibraryMark next() {
                 Map.Entry<String, Pair<Library, String>> entry = impl.next();
-                return new LibraryMark(entry.getKey(), entry.getValue().getValue(), getLibraryStatus(entry.getKey()));
+                return new LibraryMark(entry.getKey(), entry.getValue().value(), getLibraryStatus(entry.getKey()));
             }
         };
     }

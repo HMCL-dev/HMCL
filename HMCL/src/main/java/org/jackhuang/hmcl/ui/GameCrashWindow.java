@@ -153,10 +153,10 @@ public class GameCrashWindow extends Stage {
                 EnumMap<CrashReportAnalyzer.Rule, CrashReportAnalyzer.Result> results = new EnumMap<>(CrashReportAnalyzer.Rule.class);
                 Set<String> keywords = new HashSet<>();
                 for (Pair<Set<CrashReportAnalyzer.Result>, Set<String>> pair : (List<Pair<Set<CrashReportAnalyzer.Result>, Set<String>>>) (List<?>) taskResult) {
-                    for (CrashReportAnalyzer.Result result : pair.getKey()) {
+                    for (CrashReportAnalyzer.Result result : pair.key()) {
                         results.put(result.getRule(), result);
                     }
-                    keywords.addAll(pair.getValue());
+                    keywords.addAll(pair.value());
                 }
 
                 List<Node> segments = new ArrayList<>(FXUtils.parseSegment(i18n("game.crash.feedback"), Controllers::onHyperlinkAction));

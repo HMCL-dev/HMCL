@@ -149,7 +149,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
             }
 
             return pair(remoteMod, diff);
-        }).sorted(Comparator.comparingInt(Pair::getValue)).map(Pair::getKey), response.getData().stream().map(CurseAddon::toMod), calculateTotalPages(response, pageSize));
+        }).sorted(Comparator.comparingInt(Pair::value)).map(Pair::key), response.getData().stream().map(CurseAddon::toMod), calculateTotalPages(response, pageSize));
     }
 
     @Override
