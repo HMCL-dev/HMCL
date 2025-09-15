@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -141,17 +142,20 @@ public final class GameLibrariesTask extends Task<Void> {
             // https://github.com/HMCL-dev/HMCL/issues/3975
             if ("net.minecraftforge".equals(library.getGroupId()) && "minecraftforge".equals(library.getArtifactId())
                     && gameRepository instanceof DefaultGameRepository defaultGameRepository) {
-                for (FMLLib fmlLib : getFMLLibs(library.getVersion())) {
-                    Path file = defaultGameRepository.getBaseDirectory().toPath()
-                            .toAbsolutePath().normalize()
+                List<FMLLib> fmlLibs = getFMLLibs(library.getVersion());
+                if (fmlLibs != null) {
+                    Path libDir = defaultGameRepository.getBaseDirectory().toPath()
                             .resolve("lib")
-                            .resolve(fmlLib.name);
+                            .toAbsolutePath().normalize();
 
-                    if (shouldDownloadFMLLib(fmlLib, file)) {
-                        List<URI> uris = dependencyManager.getDownloadProvider()
-                                .injectURLWithCandidates(fmlLib.getDownloadURI());
-                        dependencies.add(new FileDownloadTask(uris, file)
-                                .withCounter("hmcl.install.libraries"));
+                    for (FMLLib fmlLib : fmlLibs) {
+                        Path file = libDir.resolve(fmlLib.name);
+                        if (shouldDownloadFMLLib(fmlLib, file)) {
+                            List<URI> uris = dependencyManager.getDownloadProvider()
+                                    .injectURLWithCandidates(fmlLib.getDownloadURI());
+                            dependencies.add(new FileDownloadTask(uris, file)
+                                    .withCounter("hmcl.install.libraries"));
+                        }
                     }
                 }
             }
@@ -184,9 +188,9 @@ public final class GameLibrariesTask extends Task<Void> {
         }
     }
 
-    private static List<FMLLib> getFMLLibs(String forgeVersion) {
+    private static @Nullable List<FMLLib> getFMLLibs(String forgeVersion) {
         if (forgeVersion == null)
-            return List.of();
+            return null;
 
         // Minecraft 1.5.2
         if (forgeVersion.startsWith("7.8.1.")) {
@@ -200,7 +204,7 @@ public final class GameLibrariesTask extends Task<Void> {
             );
         }
 
-        return List.of();
+        return null;
     }
 
     private record FMLLib(String name, String sha1) {
