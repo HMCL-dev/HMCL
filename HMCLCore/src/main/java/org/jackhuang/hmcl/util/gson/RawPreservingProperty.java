@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2025 huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,29 +15,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.util;
+package org.jackhuang.hmcl.util.gson;
 
-import org.jetbrains.annotations.NotNull;
+import com.google.gson.JsonElement;
+import javafx.beans.property.Property;
+import org.jetbrains.annotations.Nullable;
 
-/**
- * @author huangyuhui
- */
-public record Pair<K, V>(K key, V value) {
+/// If a Property implementing this interface fails to deserialize a json object into a value, it will store the original JsonElement internally.
+/// If the value does not change at runtime, the original JsonElement will be written back during serialization.
+///
+/// @author Glavo
+public interface RawPreservingProperty<T> extends Property<T> {
+    void setRawJson(JsonElement value);
 
-    public static <K, V> Pair<K, V> pair(K key, V value) {
-        return new Pair<>(key, value);
-    }
-
-    public K getKey() {
-        return key;
-    }
-
-    public V getValue() {
-        return value;
-    }
-
-    @Override
-    public @NotNull String toString() {
-        return "(" + key + ", " + value + ")";
-    }
+    @Nullable JsonElement getRawJson();
 }
