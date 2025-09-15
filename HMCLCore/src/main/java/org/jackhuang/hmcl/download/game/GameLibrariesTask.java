@@ -36,6 +36,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -116,11 +117,21 @@ public final class GameLibrariesTask extends Task<Void> {
 
     @Override
     public void execute() throws IOException {
+        int totalLibraries = libraries.size();
         int progress = 0;
         GameRepository gameRepository = dependencyManager.getGameRepository();
         for (Library library : libraries) {
             if (!library.appliesToCurrentEnvironment()) {
                 continue;
+            }
+
+            if ("net.minecraftforge".equals(library.getGroupId()) && "minecraftforge".equals(library.getArtifactId())) {
+                String forgeVersion = Objects.requireNonNullElse(library.getVersion(), "");
+
+                // Minecraft 1.5.2
+                if (forgeVersion.startsWith("7.8.1.")) {
+
+                }
             }
 
             File file = gameRepository.getLibraryFile(version, library);
@@ -142,7 +153,7 @@ public final class GameLibrariesTask extends Task<Void> {
                 dependencyManager.getCacheRepository().tryCacheLibrary(library, file.toPath());
             }
 
-            updateProgress(++progress, libraries.size());
+            updateProgress(++progress, totalLibraries);
         }
 
         if (!dependencies.isEmpty()) {
