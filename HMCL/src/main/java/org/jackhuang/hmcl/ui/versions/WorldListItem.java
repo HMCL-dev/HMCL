@@ -77,7 +77,7 @@ public final class WorldListItem extends Control {
                             if (exception == null) {
                                 parent.remove(this);
                             } else if (exception instanceof WorldLockedException) {
-                                Controllers.dialog(i18n("world.backup.create.locked"), null, MessageType.WARNING);
+                                Controllers.dialog(i18n("world.locked.failed"), null, MessageType.WARNING);
                             } else {
                                 Controllers.dialog(i18n("world.delete.failed", StringUtils.getStackTrace(exception)), null, MessageType.WARNING);
                             }
