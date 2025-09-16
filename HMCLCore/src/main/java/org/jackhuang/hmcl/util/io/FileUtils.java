@@ -34,6 +34,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -458,14 +459,14 @@ public final class FileUtils {
         return makeDirectory(file.getAbsoluteFile().getParentFile()) && (file.exists() || Lang.test(file::createNewFile));
     }
 
-    public static List<File> listFilesByExtension(File file, String extension) {
-        List<File> result = new ArrayList<>();
-        File[] files = file.listFiles();
-        if (files != null)
-            for (File it : files)
-                if (extension.equals(getExtension(it)))
-                    result.add(it);
-        return result;
+    public static List<Path> listFilesByExtension(Path file, String extension) {
+        try (Stream<Path> list = Files.list(file)) {
+            return list.filter(it -> Files.isRegularFile(it) && extension.equals(getExtension(it)))
+                    .toList();
+        } catch (IOException e) {
+            LOG.warning("Failed to list files by extension " + extension, e);
+            return List.of();
+        }
     }
 
     public static Optional<Path> tryGetPath(String first, String... more) {
