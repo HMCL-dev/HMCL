@@ -159,16 +159,16 @@ public class DefaultGameRepository implements GameRepository {
         return getBaseDirectory().resolve("versions/" + id);
     }
 
-    public File getVersionJson(String id) {
-        return getVersionRoot(id).resolve(id + ".json").toFile();
+    public Path getVersionJson(String id) {
+        return getVersionRoot(id).resolve(id + ".json");
     }
 
     public Version readVersionJson(String id) throws IOException, JsonParseException {
         return readVersionJson(getVersionJson(id));
     }
 
-    public Version readVersionJson(File file) throws IOException, JsonParseException {
-        String jsonText = Files.readString(file.toPath());
+    public Version readVersionJson(Path file) throws IOException, JsonParseException {
+        String jsonText = Files.readString(file);
         try {
             // Try TLauncher version json format
             return JsonUtils.fromNonNullJson(jsonText, TLauncherVersion.class).toVersion();
@@ -181,7 +181,7 @@ public class DefaultGameRepository implements GameRepository {
         } catch (JsonParseException ignored) {
         }
 
-        LOG.warning("Cannot parse version json: " + file.toString() + "\n" + jsonText);
+        LOG.warning("Cannot parse version json: " + file + "\n" + jsonText);
         throw new JsonParseException("Version json incorrect");
     }
 
@@ -221,7 +221,7 @@ public class DefaultGameRepository implements GameRepository {
             // fix inheritsFrom of versions that inherits from version [from].
             for (Version version : getVersions()) {
                 if (from.equals(version.getInheritsFrom())) {
-                    Path targetPath = getVersionJson(version.getId()).toPath();
+                    Path targetPath = getVersionJson(version.getId());
                     Files.createDirectories(targetPath.getParent());
                     JsonUtils.writeToJsonFile(targetPath, version.setInheritsFrom(to));
                 }
@@ -319,7 +319,7 @@ public class DefaultGameRepository implements GameRepository {
 
                 Version version;
                 try {
-                    version = readVersionJson(json);
+                    version = readVersionJson(json.toPath());
                 } catch (Exception e) {
                     LOG.warning("Malformed version json " + id, e);
                     // JsonSyntaxException or IOException or NullPointerException(!!)
@@ -327,7 +327,7 @@ public class DefaultGameRepository implements GameRepository {
                         return Stream.empty();
 
                     try {
-                        version = readVersionJson(json);
+                        version = readVersionJson(json.toPath());
                     } catch (Exception e2) {
                         LOG.error("User corrected version json is still malformed", e2);
                         return Stream.empty();
