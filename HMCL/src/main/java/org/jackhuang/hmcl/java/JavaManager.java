@@ -221,7 +221,6 @@ public final class JavaManager {
             return Task.completed(null);
 
         Path relativized = platformRoot.relativize(java.getBinary());
-
         if (relativized.getNameCount() > 1) {
             FXUtils.runInFX(() -> {
                 try {
