@@ -209,9 +209,18 @@ public final class JavaManager {
 
     public static Task<Void> getUninstallJavaTask(JavaRuntime java) {
         assert java.isManaged();
-        Path root = REPOSITORY.getPlatformRoot(java.getPlatform());
-        Path relativized = root.relativize(java.getBinary());
 
+        Path platformRoot;
+        try {
+            platformRoot = REPOSITORY.getPlatformRoot(java.getPlatform()).toRealPath();
+        } catch (Throwable ignored) {
+            return Task.completed(null);
+        }
+
+        if (!java.getBinary().startsWith(platformRoot))
+            return Task.completed(null);
+
+        Path relativized = platformRoot.relativize(java.getBinary());
         if (relativized.getNameCount() > 1) {
             FXUtils.runInFX(() -> {
                 try {
