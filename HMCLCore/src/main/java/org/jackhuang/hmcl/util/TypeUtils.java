@@ -603,7 +603,7 @@ public final class TypeUtils {
     /**
      * The WildcardType interface supports multiple upper bounds and multiple lower bounds. We only
      * support what the target Java version supports - at most one bound, see also
-     * <a href="https://bugs.openjdk.java.net/browse/JDK-8250660">JDK-8250660</a>.
+     * <a href="https://bugs.openjdk.org/browse/JDK-8250660">JDK-8250660</a>.
      * If a lower bound is set, the upper bound must be Object.class.
      */
     private static final class WildcardTypeImpl implements WildcardType, Serializable {
