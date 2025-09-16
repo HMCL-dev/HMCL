@@ -421,6 +421,6 @@ public class ForgeNewInstallTask extends Task<Version> {
 
     @Override
     public void postExecute() throws Exception {
-        FileUtils.deleteDirectory(tempDir.toFile());
+        FileUtils.deleteDirectory(tempDir);
     }
 }

@@ -214,7 +214,7 @@ public class DefaultGameRepository implements GameRepository {
 
             if (fromVersion.getId().equals(fromVersion.getJar()))
                 fromVersion = fromVersion.setJar(null);
-            FileUtils.writeText(toJson, JsonUtils.GSON.toJson(fromVersion.setId(to)));
+            JsonUtils.writeToJsonFile(toJson, fromVersion.setId(to));
 
             // fix inheritsFrom of versions that inherits from version [from].
             for (Version version : getVersions()) {
@@ -235,7 +235,7 @@ public class DefaultGameRepository implements GameRepository {
         if (EventBus.EVENT_BUS.fireEvent(new RemoveVersionEvent(this, id)) == Event.Result.DENY)
             return false;
         if (!versions.containsKey(id))
-            return FileUtils.deleteDirectoryQuietly(getVersionRoot(id));
+            return FileUtils.deleteDirectoryQuietly(getVersionRoot(id).toPath());
         File file = getVersionRoot(id);
         if (!file.exists())
             return true;

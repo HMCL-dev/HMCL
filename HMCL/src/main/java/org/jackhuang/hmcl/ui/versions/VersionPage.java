@@ -166,14 +166,14 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     }
 
     private void clearLibraries() {
-        FileUtils.deleteDirectoryQuietly(new File(getProfile().getRepository().getBaseDirectory(), "libraries"));
+        FileUtils.deleteDirectoryQuietly(getProfile().getRepository().getBaseDirectory().toPath().resolve("libraries"));
     }
 
     private void clearAssets() {
         HMCLGameRepository baseDirectory = getProfile().getRepository();
-        FileUtils.deleteDirectoryQuietly(new File(baseDirectory.getBaseDirectory(), "assets"));
+        FileUtils.deleteDirectoryQuietly(baseDirectory.getBaseDirectory().toPath().resolve("assets"));
         if (version.get() != null) {
-            FileUtils.deleteDirectoryQuietly(new File(baseDirectory.getRunDirectory(version.get().getVersion()), "resources"));
+            FileUtils.deleteDirectoryQuietly(baseDirectory.getRunDirectory(version.get().getVersion()).toPath().resolve("resources"));
         }
     }
 
