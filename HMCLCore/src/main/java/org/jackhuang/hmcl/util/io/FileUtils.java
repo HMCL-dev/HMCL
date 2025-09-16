@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.util.io;
 
 import org.glavo.chardet.DetectedCharset;
 import org.glavo.chardet.UniversalDetector;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -453,10 +452,6 @@ public final class FileUtils {
     public static boolean makeDirectory(File directory) {
         directory.mkdirs();
         return directory.isDirectory();
-    }
-
-    public static boolean makeFile(File file) {
-        return makeDirectory(file.getAbsoluteFile().getParentFile()) && (file.exists() || Lang.test(file::createNewFile));
     }
 
     public static List<Path> listFilesByExtension(Path file, String extension) {

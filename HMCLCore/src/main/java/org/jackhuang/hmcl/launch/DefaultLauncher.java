@@ -616,8 +616,7 @@ public class DefaultLauncher extends Launcher {
             }
         }
 
-        if (!FileUtils.makeFile(scriptFile))
-            throw new IOException("Script file: " + scriptFile + " cannot be created.");
+        Files.createDirectories(scriptFile.toPath().getParent());
 
         try (OutputStream outputStream = Files.newOutputStream(scriptFile.toPath())) {
             Charset charset = StandardCharsets.UTF_8;
