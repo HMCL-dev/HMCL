@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.util.io;
 
+import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import org.glavo.chardet.DetectedCharset;
 import org.glavo.chardet.UniversalDetector;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -266,7 +267,7 @@ public final class FileUtils {
     }
 
     public static void copyDirectory(Path src, Path dest, Predicate<String> filePredicate) throws IOException {
-        Files.walkFileTree(src, new SimpleFileVisitor<Path>() {
+        Files.walkFileTree(src, new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 if (!filePredicate.test(src.relativize(file).toString())) {
@@ -411,6 +412,7 @@ public final class FileUtils {
         });
     }
 
+    @CanIgnoreReturnValue
     public static boolean cleanDirectoryQuietly(Path directory) {
         try {
             cleanDirectory(directory);
