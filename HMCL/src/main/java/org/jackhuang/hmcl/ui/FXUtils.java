@@ -460,8 +460,10 @@ public final class FXUtils {
     }
 
     public static void openFolder(File file) {
-        if (!FileUtils.makeDirectory(file)) {
-            LOG.error("Unable to make directory " + file);
+        try {
+            Files.createDirectories(file.toPath());
+        } catch (IOException e) {
+            LOG.warning("Failed to create directory " + file);
             return;
         }
 

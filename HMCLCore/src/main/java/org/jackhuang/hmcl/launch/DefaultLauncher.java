@@ -378,7 +378,7 @@ public class DefaultLauncher extends Launcher {
 
     public void decompressNatives(File destination) throws NotDecompressingNativesException {
         try {
-            FileUtils.cleanDirectoryQuietly(destination);
+            FileUtils.cleanDirectoryQuietly(destination.toPath());
             for (Library library : version.getLibraries())
                 if (library.isNative())
                     new Unzipper(repository.getLibraryFile(version, library), destination)
@@ -596,7 +596,7 @@ public class DefaultLauncher extends Launcher {
         if (isUsingLog4j())
             extractLog4jConfigurationFile();
 
-        String scriptExtension = FileUtils.getExtension(scriptFile);
+        String scriptExtension = FileUtils.getExtension(scriptFile.getName());
         boolean usePowerShell = "ps1".equals(scriptExtension);
 
         if (!usePowerShell) {
@@ -616,8 +616,7 @@ public class DefaultLauncher extends Launcher {
             }
         }
 
-        if (!FileUtils.makeFile(scriptFile))
-            throw new IOException("Script file: " + scriptFile + " cannot be created.");
+        Files.createDirectories(scriptFile.toPath().getParent());
 
         try (OutputStream outputStream = Files.newOutputStream(scriptFile.toPath())) {
             Charset charset = StandardCharsets.UTF_8;

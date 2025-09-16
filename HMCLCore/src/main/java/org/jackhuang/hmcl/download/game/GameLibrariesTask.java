@@ -103,7 +103,7 @@ public final class GameLibrariesTask extends Task<Void> {
             if (library.getChecksums() != null && !library.getChecksums().isEmpty() && !LibraryDownloadTask.checksumValid(file, library.getChecksums())) {
                 return true;
             }
-            if (FileUtils.getExtension(file).equals("jar")) {
+            if (FileUtils.getExtension(file.getName()).equals("jar")) {
                 try {
                     FileDownloadTask.ZIP_INTEGRITY_CHECK_HANDLER.checkIntegrity(jar, jar);
                 } catch (IOException ignored) {

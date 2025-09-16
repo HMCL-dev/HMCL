@@ -167,7 +167,7 @@ public final class OptiFineInstallTask extends Task<Version> {
             if (Files.exists(launchWrapper2)) {
                 Library launchWrapper = new Library(new Artifact("optifine", "launchwrapper", "2.0"));
                 File launchWrapperFile = gameRepository.getLibraryFile(version, launchWrapper);
-                FileUtils.makeDirectory(launchWrapperFile.getAbsoluteFile().getParentFile());
+                Files.createDirectories(launchWrapperFile.toPath().toAbsolutePath().getParent());
                 FileUtils.copyFile(launchWrapper2, launchWrapperFile.toPath());
                 hasLaunchWrapper = true;
                 libraries.add(launchWrapper);
@@ -182,7 +182,7 @@ public final class OptiFineInstallTask extends Task<Version> {
 
                 if (Files.exists(launchWrapperJar)) {
                     File launchWrapperFile = gameRepository.getLibraryFile(version, launchWrapper);
-                    FileUtils.makeDirectory(launchWrapperFile.getAbsoluteFile().getParentFile());
+                    Files.createDirectories(launchWrapperFile.toPath().toAbsolutePath().getParent());
                     FileUtils.copyFile(launchWrapperJar, launchWrapperFile.toPath());
 
                     hasLaunchWrapper = true;

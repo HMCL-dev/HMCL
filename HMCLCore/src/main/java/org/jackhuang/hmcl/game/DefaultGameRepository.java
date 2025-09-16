@@ -214,7 +214,7 @@ public class DefaultGameRepository implements GameRepository {
 
             if (fromVersion.getId().equals(fromVersion.getJar()))
                 fromVersion = fromVersion.setJar(null);
-            FileUtils.writeText(toJson, JsonUtils.GSON.toJson(fromVersion.setId(to)));
+            JsonUtils.writeToJsonFile(toJson, fromVersion.setId(to));
 
             // fix inheritsFrom of versions that inherits from version [from].
             for (Version version : getVersions()) {
@@ -235,7 +235,7 @@ public class DefaultGameRepository implements GameRepository {
         if (EventBus.EVENT_BUS.fireEvent(new RemoveVersionEvent(this, id)) == Event.Result.DENY)
             return false;
         if (!versions.containsKey(id))
-            return FileUtils.deleteDirectoryQuietly(getVersionRoot(id));
+            return FileUtils.deleteDirectoryQuietly(getVersionRoot(id).toPath());
         File file = getVersionRoot(id);
         if (!file.exists())
             return true;
@@ -247,19 +247,23 @@ public class DefaultGameRepository implements GameRepository {
         try {
             versions.remove(id);
 
-            if (FileUtils.moveToTrash(removedFile)) {
+            if (FileUtils.moveToTrash(removedFile.toPath())) {
                 return true;
             }
 
             // remove json files first to ensure HMCL will not recognize this folder as a valid version.
-            List<File> jsons = FileUtils.listFilesByExtension(removedFile, "json");
-            jsons.forEach(f -> {
-                if (!f.delete())
-                    LOG.warning("Unable to delete file " + f);
-            });
+
+            for (Path path : FileUtils.listFilesByExtension(removedFile.toPath(), "json")) {
+                try {
+                    Files.delete(path);
+                } catch (IOException e) {
+                    LOG.warning("Failed to delete file " + path, e);
+                }
+            }
+
             // remove the version from version list regardless of whether the directory was removed successfully or not.
             try {
-                FileUtils.deleteDirectory(removedFile);
+                FileUtils.deleteDirectory(removedFile.toPath());
             } catch (IOException e) {
                 LOG.warning("Unable to remove version folder: " + file, e);
             }
@@ -288,10 +292,10 @@ public class DefaultGameRepository implements GameRepository {
                 // If user renamed the json file by mistake or created the json file in a wrong name,
                 // we will find the only json and rename it to correct name.
                 if (!json.exists()) {
-                    List<File> jsons = FileUtils.listFilesByExtension(dir, "json");
+                    List<Path> jsons = FileUtils.listFilesByExtension(dir.toPath(), "json");
                     if (jsons.size() == 1) {
                         LOG.info("Renaming json file " + jsons.get(0) + " to " + json);
-                        if (!jsons.get(0).renameTo(json)) {
+                        if (!jsons.get(0).toFile().renameTo(json)) {
                             LOG.warning("Cannot rename json file, ignoring version " + id);
                             return Stream.empty();
                         }

@@ -49,7 +49,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
     private String gameVersion;
 
     {
-        FXUtils.applyDragListener(this, it -> Arrays.asList("jar", "exe").contains(FileUtils.getExtension(it)), mods -> {
+        FXUtils.applyDragListener(this, it -> Arrays.asList("jar", "exe").contains(FileUtils.getExtension(it.getName())), mods -> {
             if (!mods.isEmpty())
                 doInstallOffline(mods.get(0));
         });

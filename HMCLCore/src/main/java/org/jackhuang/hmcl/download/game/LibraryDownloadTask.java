@@ -105,7 +105,7 @@ public class LibraryDownloadTask extends Task<Void> {
         Optional<Path> libPath = cacheRepository.getLibrary(originalLibrary);
         if (libPath.isPresent()) {
             try {
-                FileUtils.copyFile(libPath.get().toFile(), jar);
+                FileUtils.copyFile(libPath.get(), jar.toPath());
                 cached = true;
                 return;
             } catch (IOException e) {

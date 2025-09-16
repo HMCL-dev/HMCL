@@ -47,6 +47,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.*;
@@ -92,11 +93,13 @@ public class HMCLGameRepository extends DefaultGameRepository {
             case ROOT_FOLDER:
                 return super.getRunDirectory(id);
             case CUSTOM:
-                File dir = new File(getVersionSetting(id).getGameDir());
-                if (!FileUtils.isValidPath(dir)) return getVersionRoot(id);
-                return dir;
+                try {
+                    return Path.of(getVersionSetting(id).getGameDir()).toFile();
+                } catch (InvalidPathException ignored) {
+                    return getVersionRoot(id);
+                }
             default:
-                throw new Error();
+                throw new AssertionError("Unreachable");
         }
     }
 
@@ -119,9 +122,11 @@ public class HMCLGameRepository extends DefaultGameRepository {
         });
 
         try {
-            File file = new File(getBaseDirectory(), "launcher_profiles.json");
-            if (!file.exists() && !versions.isEmpty())
-                FileUtils.writeText(file, PROFILE);
+            Path file = getBaseDirectory().toPath().resolve("launcher_profiles.json");
+            if (!Files.exists(file) && !versions.isEmpty()) {
+                Files.createDirectories(file.getParent());
+                Files.writeString(file, PROFILE);
+            }
         } catch (IOException ex) {
             LOG.warning("Unable to create launcher_profiles.json, Forge/LiteLoader installer will not work.", ex);
         }
@@ -132,14 +137,14 @@ public class HMCLGameRepository extends DefaultGameRepository {
         refreshVersionsAsync().start();
     }
 
-    private void clean(File directory) throws IOException {
-        FileUtils.deleteDirectory(new File(directory, "crash-reports"));
-        FileUtils.deleteDirectory(new File(directory, "logs"));
+    private void clean(Path directory) throws IOException {
+        FileUtils.deleteDirectory(directory.resolve("crash-reports"));
+        FileUtils.deleteDirectory(directory.resolve("logs"));
     }
 
     public void clean(String id) throws IOException {
-        clean(getBaseDirectory());
-        clean(getRunDirectory(id));
+        clean(getBaseDirectory().toPath());
+        clean(getRunDirectory(id).toPath());
     }
 
     public void duplicateVersion(String srcId, String dstId, boolean copySaves) throws IOException {
@@ -270,14 +275,14 @@ public class HMCLGameRepository extends DefaultGameRepository {
     }
 
     public void setVersionIconFile(String id, File iconFile) throws IOException {
-        String ext = FileUtils.getExtension(iconFile).toLowerCase(Locale.ROOT);
+        String ext = FileUtils.getExtension(iconFile.getName()).toLowerCase(Locale.ROOT);
         if (!FXUtils.IMAGE_EXTENSIONS.contains(ext)) {
             throw new IllegalArgumentException("Unsupported icon file: " + ext);
         }
 
         deleteIconFile(id);
 
-        FileUtils.copyFile(iconFile, new File(getVersionRoot(id), "icon." + ext));
+        FileUtils.copyFile(iconFile.toPath(), getVersionRoot(id).toPath().resolve("icon." + ext));
     }
 
     public void deleteIconFile(String id) {
