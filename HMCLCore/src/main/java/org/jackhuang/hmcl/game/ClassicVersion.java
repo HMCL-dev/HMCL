@@ -46,8 +46,8 @@ public final class ClassicVersion extends Version {
     public static boolean hasClassicVersion(Path baseDirectory) {
         Path bin = baseDirectory.resolve("bin");
         return Files.isDirectory(bin)
-                && Files.exists(bin.resolve("lwjgl.jar")
-                && Files.exists(bin.resolve("jinput.jar")
-                && Files.exists(bin.resolve("lwjgl_util.jar");
+                && Files.exists(bin.resolve("lwjgl.jar"))
+                && Files.exists(bin.resolve("jinput.jar"))
+                && Files.exists(bin.resolve("lwjgl_util.jar"));
     }
 }
