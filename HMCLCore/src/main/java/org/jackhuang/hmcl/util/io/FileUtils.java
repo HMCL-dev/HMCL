@@ -114,14 +114,14 @@ public final class FileUtils {
         else return getName(path);
     }
 
+    // https://learn.microsoft.com/biztalk/core/restrictions-when-configuring-the-file-adapter
     private static final Set<String> INVALID_WINDOWS_RESOURCE_BASE_NAMES = Set.of(
-            "aux", "com1", "com2", "com3", "com4",
-            "com5", "com6", "com7", "com8", "com9", "con", "lpt1", "lpt2",
-            "lpt3", "lpt4", "lpt5", "lpt6", "lpt7", "lpt8", "lpt9", "nul", "prn"
+            "aux", "con", "nul", "prn", "clock$",
+            "com1", "com2", "com3", "com4", "com5", "com6", "com7", "com8", "com9",
+            "com¹", "com²", "com³",
+            "lpt1", "lpt2", "lpt3", "lpt4", "lpt5", "lpt6", "lpt7", "lpt8", "lpt9",
+            "lpt¹", "lpt²", "lpt³"
     );
-
-    // CLOCK$ may be used if an extension is provided
-    private static final Set<String> INVALID_WINDOWS_RESOURCE_FULL_NAMES = Set.of("clock$");
 
     /// @see #isNameValid(OperatingSystem, String)
     public static boolean isNameValid(String name) {
@@ -185,13 +185,9 @@ public final class FileUtils {
             if (Character.isWhitespace(lastChar))
                 return false;
 
-            String lowerName = name.toLowerCase(Locale.ROOT);
-            if (INVALID_WINDOWS_RESOURCE_FULL_NAMES.contains(lowerName))
-                return false;
-
             // on windows, filename suffixes are not relevant to name validity
-            String lowerBasename = StringUtils.substringBeforeLast(lowerName, '.');
-            if (INVALID_WINDOWS_RESOURCE_BASE_NAMES.contains(lowerBasename))
+            String basename = StringUtils.substringBeforeLast(name, '.');
+            if (INVALID_WINDOWS_RESOURCE_BASE_NAMES.contains(basename.toLowerCase(Locale.ROOT)))
                 return false;
         }
 
