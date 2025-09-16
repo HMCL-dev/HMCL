@@ -115,15 +115,12 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     @Override
-    public File getRunDirectory(String id) {
-        switch (getGameDirectoryType(id)) {
-            case VERSION_FOLDER:
-                return getVersionRoot(id);
-            case ROOT_FOLDER:
-                return getBaseDirectory();
-            default:
-                throw new IllegalStateException();
-        }
+    public Path getRunDirectory(String id) {
+        return switch (getGameDirectoryType(id)) {
+            case VERSION_FOLDER -> getVersionRoot(id).toPath();
+            case ROOT_FOLDER -> getBaseDirectory().toPath();
+            default -> throw new IllegalStateException();
+        };
     }
 
     @Override
@@ -456,7 +453,7 @@ public class DefaultGameRepository implements GameRepository {
             return assetsDir;
 
         if (index.isVirtual()) {
-            Path resourcesDir = getRunDirectory(version).toPath().resolve("resources");
+            Path resourcesDir = getRunDirectory(version).resolve("resources");
 
             int cnt = 0;
             int tot = index.getObjects().size();
@@ -528,15 +525,15 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     public Path getSavesDirectory(String id) {
-        return getRunDirectory(id).toPath().resolve("saves");
+        return getRunDirectory(id).resolve("saves");
     }
 
     public Path getBackupsDirectory(String id) {
-        return getRunDirectory(id).toPath().resolve("backups");
+        return getRunDirectory(id).resolve("backups");
     }
 
     public Path getSchematicsDirectory(String id) {
-        return getRunDirectory(id).toPath().resolve("schematics");
+        return getRunDirectory(id).resolve("schematics");
     }
 
     @Override

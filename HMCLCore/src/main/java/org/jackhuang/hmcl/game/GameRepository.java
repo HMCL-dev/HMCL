@@ -104,7 +104,7 @@ public interface GameRepository extends VersionProvider {
      *
      * @param id the version id
      */
-    File getRunDirectory(String id);
+    Path getRunDirectory(String id);
 
     Path getLibrariesDirectory(Version version);
 

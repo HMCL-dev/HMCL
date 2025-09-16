@@ -113,7 +113,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
     public void preExecute() throws Exception {
         // Stage #0: General Setup
         {
-            File run = repository.getRunDirectory(name);
+            Path run = repository.getRunDirectory(name);
             File json = repository.getModpackConfiguration(name);
 
             ModpackConfiguration<MultiMCInstanceConfiguration> config = null;
@@ -133,7 +133,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
             }
 
             // TODO: Optimize unbearably slow ModpackInstallTask
-            dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), Collections.singletonList(mcDirectory), any -> true, config).withStage("hmcl.modpack"));
+            dependents.add(new ModpackInstallTask<>(zipFile, run.toFile(), modpack.getEncoding(), Collections.singletonList(mcDirectory), any -> true, config).withStage("hmcl.modpack"));
             dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList(mcDirectory), manifest, MultiMCModpackProvider.INSTANCE, manifest.getName(), null, repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
         }
 

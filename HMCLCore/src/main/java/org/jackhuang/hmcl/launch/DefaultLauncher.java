@@ -436,7 +436,7 @@ public class DefaultLauncher extends Launcher {
                 pair("${version_name}", Optional.ofNullable(options.getVersionName()).orElse(version.getId())),
                 pair("${profile_name}", Optional.ofNullable(options.getProfileName()).orElse("Minecraft")),
                 pair("${version_type}", Optional.ofNullable(options.getVersionType()).orElse(version.getType().getId())),
-                pair("${game_directory}", repository.getRunDirectory(version.getId()).getAbsolutePath()),
+                pair("${game_directory}", FileUtils.getAbsolutePath(repository.getRunDirectory(version.getId()))),
                 pair("${user_type}", authInfo.getUserType()),
                 pair("${assets_index_name}", version.getAssetIndex().getId()),
                 pair("${user_properties}", authInfo.getUserProperties()),
@@ -488,17 +488,17 @@ public class DefaultLauncher extends Launcher {
         if (isUsingLog4j())
             extractLog4jConfigurationFile();
 
-        File runDirectory = repository.getRunDirectory(version.getId());
+        Path runDirectory = repository.getRunDirectory(version.getId());
 
         if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
-            ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(options.getPreLaunchCommand(), getEnvVars())).directory(runDirectory);
+            ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(options.getPreLaunchCommand(), getEnvVars())).directory(runDirectory.toFile());
             builder.environment().putAll(getEnvVars());
             SystemUtils.callExternalProcess(builder);
         }
 
         Process process;
         try {
-            ProcessBuilder builder = new ProcessBuilder(rawCommandLine).directory(runDirectory);
+            ProcessBuilder builder = new ProcessBuilder(rawCommandLine).directory(runDirectory.toFile());
             if (listener == null) {
                 builder.inheritIO();
             }
@@ -523,7 +523,7 @@ public class DefaultLauncher extends Launcher {
         env.put("INST_NAME", versionName);
         env.put("INST_ID", versionName);
         env.put("INST_DIR", repository.getVersionRoot(version.getId()).getAbsolutePath());
-        env.put("INST_MC_DIR", repository.getRunDirectory(version.getId()).getAbsolutePath());
+        env.put("INST_MC_DIR", FileUtils.getAbsolutePath(repository.getRunDirectory(version.getId())));
         env.put("INST_JAVA", options.getJava().getBinary().toString());
 
         Renderer renderer = options.getRenderer();
@@ -653,7 +653,7 @@ public class DefaultLauncher extends Launcher {
                         writer.newLine();
                     }
                     writer.write("Set-Location -Path ");
-                    writer.write(CommandBuilder.pwshString(repository.getRunDirectory(version.getId()).getAbsolutePath()));
+                    writer.write(CommandBuilder.pwshString(FileUtils.getAbsolutePath(repository.getRunDirectory(version.getId()))));
                     writer.newLine();
 
 
@@ -697,7 +697,7 @@ public class DefaultLauncher extends Launcher {
                             writer.newLine();
                         }
                         writer.newLine();
-                        writer.write(new CommandBuilder().add("cd", "/D", repository.getRunDirectory(version.getId()).getAbsolutePath()).toString());
+                        writer.write(new CommandBuilder().add("cd", "/D", FileUtils.getAbsolutePath(repository.getRunDirectory(version.getId()))).toString());
                     } else {
                         writer.write("#!/usr/bin/env bash");
                         writer.newLine();
@@ -709,7 +709,7 @@ public class DefaultLauncher extends Launcher {
                             writer.write(new CommandBuilder().add("ln", "-s", nativeFolder.toAbsolutePath().normalize().toString(), commandLine.tempNativeFolder.toString()).toString());
                             writer.newLine();
                         }
-                        writer.write(new CommandBuilder().add("cd", repository.getRunDirectory(version.getId()).getAbsolutePath()).toString());
+                        writer.write(new CommandBuilder().add("cd", FileUtils.getAbsolutePath(repository.getRunDirectory(version.getId()))).toString());
                     }
                     writer.newLine();
                     if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {

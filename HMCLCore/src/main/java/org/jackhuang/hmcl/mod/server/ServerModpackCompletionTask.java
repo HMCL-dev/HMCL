@@ -129,7 +129,7 @@ public class ServerModpackCompletionTask extends Task<Void> {
         Set<String> remoteFiles = remoteManifest.getFiles().stream().map(ModpackConfiguration.FileInformation::getPath)
                 .collect(Collectors.toSet());
 
-        Path runDirectory = repository.getRunDirectory(version).toPath().toAbsolutePath().normalize();
+        Path runDirectory = repository.getRunDirectory(version).toAbsolutePath().normalize();
         Path modsDirectory = runDirectory.resolve("mods");
 
         int total = 0;

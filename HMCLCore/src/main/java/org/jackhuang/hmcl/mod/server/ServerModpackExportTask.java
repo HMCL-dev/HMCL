@@ -63,7 +63,7 @@ public class ServerModpackExportTask extends Task<Void> {
         blackList.add(versionId + ".json");
         LOG.info("Compressing game files without some files in blacklist, including files or directories: usernamecache.json, asm, logs, backups, versions, assets, usercache.json, libraries, crash-reports, launcher_profiles.json, NVIDIA, TCNodeTracker");
         try (Zipper zip = new Zipper(modpackFile.toPath())) {
-            Path runDirectory = repository.getRunDirectory(versionId).toPath();
+            Path runDirectory = repository.getRunDirectory(versionId);
             List<ModpackConfiguration.FileInformation> files = new ArrayList<>();
             zip.putDirectory(runDirectory, "overrides", path -> {
                 if (Modpack.acceptFile(path, blackList, exportInfo.getWhitelist())) {

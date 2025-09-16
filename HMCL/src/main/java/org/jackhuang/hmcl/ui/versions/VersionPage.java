@@ -45,7 +45,6 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.File;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -158,7 +157,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     }
 
     private void onBrowse(String sub) {
-        FXUtils.openFolder(new File(getProfile().getRepository().getRunDirectory(getVersion()), sub));
+        FXUtils.openFolder(getProfile().getRepository().getRunDirectory(getVersion()).resolve(sub).toFile());
     }
 
     private void redownloadAssetIndex() {
@@ -173,7 +172,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         HMCLGameRepository baseDirectory = getProfile().getRepository();
         FileUtils.deleteDirectoryQuietly(baseDirectory.getBaseDirectory().toPath().resolve("assets"));
         if (version.get() != null) {
-            FileUtils.deleteDirectoryQuietly(baseDirectory.getRunDirectory(version.get().getVersion()).toPath().resolve("resources"));
+            FileUtils.deleteDirectoryQuietly(baseDirectory.getRunDirectory(version.get().getVersion()).resolve("resources"));
         }
     }
 

@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -50,7 +51,7 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
         this.manifest = manifest;
         this.name = name;
         this.repository = dependencyManager.getGameRepository();
-        File run = repository.getRunDirectory(name);
+        Path run = repository.getRunDirectory(name);
 
         File json = repository.getModpackConfiguration(name);
         if (repository.hasVersion(name) && !json.exists())
@@ -77,7 +78,7 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
             }
         } catch (JsonParseException | IOException ignore) {
         }
-        dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), Collections.singletonList("/overrides"), any -> true, config).withStage("hmcl.modpack"));
+        dependents.add(new ModpackInstallTask<>(zipFile, run.toFile(), modpack.getEncoding(), Collections.singletonList("/overrides"), any -> true, config).withStage("hmcl.modpack"));
         dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList("/overrides"), manifest, ServerModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
     }
 

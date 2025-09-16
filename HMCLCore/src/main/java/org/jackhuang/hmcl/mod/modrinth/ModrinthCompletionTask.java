@@ -104,7 +104,7 @@ public class ModrinthCompletionTask extends Task<Void> {
         if (manifest == null)
             return;
 
-        Path runDirectory = repository.getRunDirectory(version).toPath().toAbsolutePath().normalize();
+        Path runDirectory = FileUtils.toAbsolute(repository.getRunDirectory(version));
         Path modsDirectory = runDirectory.resolve("mods");
 
         for (ModrinthManifest.File file : manifest.getFiles()) {

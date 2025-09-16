@@ -68,7 +68,7 @@ public final class CurseInstallTask extends Task<Void> {
         this.manifest = manifest;
         this.name = name;
         this.repository = dependencyManager.getGameRepository();
-        this.run = repository.getRunDirectory(name);
+        this.run = repository.getRunDirectory(name).toFile();
 
         File json = repository.getModpackConfiguration(name);
         if (repository.hasVersion(name) && !json.exists())

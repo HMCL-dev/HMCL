@@ -86,17 +86,17 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     @Override
-    public File getRunDirectory(String id) {
+    public Path getRunDirectory(String id) {
         switch (getGameDirectoryType(id)) {
             case VERSION_FOLDER:
-                return getVersionRoot(id);
+                return getVersionRoot(id).toPath();
             case ROOT_FOLDER:
                 return super.getRunDirectory(id);
             case CUSTOM:
                 try {
-                    return Path.of(getVersionSetting(id).getGameDir()).toFile();
+                    return Path.of(getVersionSetting(id).getGameDir());
                 } catch (InvalidPathException ignored) {
-                    return getVersionRoot(id);
+                    return getVersionRoot(id).toPath();
                 }
             default:
                 throw new AssertionError("Unreachable");
@@ -144,7 +144,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     public void clean(String id) throws IOException {
         clean(getBaseDirectory().toPath());
-        clean(getRunDirectory(id).toPath());
+        clean(getRunDirectory(id));
     }
 
     public void duplicateVersion(String srcId, String dstId, boolean copySaves) throws IOException {
@@ -183,11 +183,11 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         VersionSetting newVersionSetting = initLocalVersionSetting(dstId, oldVersionSetting);
         saveVersionSetting(dstId);
 
-        File srcGameDir = getRunDirectory(srcId);
-        File dstGameDir = getRunDirectory(dstId);
+        Path srcGameDir = getRunDirectory(srcId);
+        Path dstGameDir = getRunDirectory(dstId);
 
         if (originalGameDirType != GameDirectoryType.VERSION_FOLDER)
-            FileUtils.copyDirectory(srcGameDir.toPath(), dstGameDir.toPath(), path -> Modpack.acceptFile(path, blackList, null));
+            FileUtils.copyDirectory(srcGameDir, dstGameDir, path -> Modpack.acceptFile(path, blackList, null));
     }
 
     private File getLocalVersionSettingFile(String id) {
