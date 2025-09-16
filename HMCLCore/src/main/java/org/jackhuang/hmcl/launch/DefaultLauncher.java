@@ -167,7 +167,7 @@ public class DefaultLauncher extends Launcher {
             }
 
             if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS)
-                res.addDefault("-Duser.home=", options.getGameDir().getAbsoluteFile().getParent());
+                res.addDefault("-Duser.home=", options.getGameDir().toAbsolutePath().getParent().toString());
 
             Proxy.Type proxyType = options.getProxyType();
             if (proxyType == null) {
@@ -502,8 +502,8 @@ public class DefaultLauncher extends Launcher {
             if (listener == null) {
                 builder.inheritIO();
             }
-            String appdata = options.getGameDir().getAbsoluteFile().getParent();
-            if (appdata != null) builder.environment().put("APPDATA", appdata);
+            Path appdata = options.getGameDir().toAbsolutePath().getParent();
+            if (appdata != null) builder.environment().put("APPDATA", appdata.toString());
 
             builder.environment().putAll(getEnvVars());
             process = builder.start();
@@ -640,9 +640,12 @@ public class DefaultLauncher extends Launcher {
             try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream, charset))) {
                 if (usePowerShell) {
                     if (isWindows) {
-                        writer.write("$Env:APPDATA=");
-                        writer.write(CommandBuilder.pwshString(options.getGameDir().getAbsoluteFile().getParent()));
-                        writer.newLine();
+                        Path appdata = options.getGameDir().toAbsolutePath().getParent();
+                        if (appdata != null) {
+                            writer.write("$Env:APPDATA=");
+                            writer.write(CommandBuilder.pwshString(appdata.toString()));
+                            writer.newLine();
+                        }
                     }
                     for (Map.Entry<String, String> entry : envVars.entrySet()) {
                         writer.write("$Env:" + entry.getKey() + "=");
@@ -682,8 +685,13 @@ public class DefaultLauncher extends Launcher {
                     if (isWindows) {
                         writer.write("@echo off");
                         writer.newLine();
-                        writer.write("set APPDATA=" + options.getGameDir().getAbsoluteFile().getParent());
-                        writer.newLine();
+
+                        Path appdata = options.getGameDir().toAbsolutePath().getParent();
+                        if (appdata != null) {
+                            writer.write("set APPDATA=" + appdata);
+                            writer.newLine();
+                        }
+
                         for (Map.Entry<String, String> entry : envVars.entrySet()) {
                             writer.write("set " + entry.getKey() + "=" + CommandBuilder.toBatchStringLiteral(entry.getValue()));
                             writer.newLine();
@@ -751,7 +759,7 @@ public class DefaultLauncher extends Launcher {
 
             if (StringUtils.isNotBlank(options.getPostExitCommand())) {
                 try {
-                    ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(options.getPostExitCommand(), getEnvVars())).directory(options.getGameDir());
+                    ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(options.getPostExitCommand(), getEnvVars())).directory(options.getGameDir().toFile());
                     builder.environment().putAll(getEnvVars());
                     SystemUtils.callExternalProcess(builder);
                 } catch (Throwable e) {

@@ -377,7 +377,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
         VersionSetting vs = getVersionSetting(version);
 
         LaunchOptions.Builder builder = new LaunchOptions.Builder()
-                .setGameDir(gameDir)
+                .setGameDir(gameDir.toPath())
                 .setJava(javaVersion)
                 .setVersionType(Metadata.TITLE)
                 .setVersionName(version)

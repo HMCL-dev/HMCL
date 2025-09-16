@@ -379,7 +379,7 @@ public class GameCrashWindow extends Stage {
                 TwoLineListItem gameDir = new TwoLineListItem();
                 gameDir.getStyleClass().setAll("two-line-item-second-large");
                 gameDir.setTitle(i18n("game.directory"));
-                gameDir.setSubtitle(launchOptions.getGameDir().getAbsolutePath());
+                gameDir.setSubtitle(launchOptions.getGameDir().toAbsolutePath().toString());
                 FXUtils.installFastTooltip(gameDir, i18n("game.directory"));
 
                 TwoLineListItem javaDir = new TwoLineListItem();
