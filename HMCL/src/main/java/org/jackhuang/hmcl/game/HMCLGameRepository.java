@@ -122,7 +122,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         });
 
         try {
-            Path file = getBaseDirectory().toPath().resolve("launcher_profiles.json");
+            Path file = getBaseDirectory().resolve("launcher_profiles.json");
             if (!Files.exists(file) && !versions.isEmpty()) {
                 Files.createDirectories(file.getParent());
                 Files.writeString(file, PROFILE);
@@ -143,7 +143,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     public void clean(String id) throws IOException {
-        clean(getBaseDirectory().toPath());
+        clean(getBaseDirectory());
         clean(getRunDirectory(id));
     }
 

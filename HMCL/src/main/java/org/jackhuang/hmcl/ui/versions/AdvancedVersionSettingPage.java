@@ -245,7 +245,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
                 String nativesDirName = "natives-" + Platform.SYSTEM_PLATFORM;
                 if (versionId == null) {
                     return String.format("%s/%s/%s",
-                            profile.getRepository().getBaseDirectory().toPath().resolve("versions").toAbsolutePath().normalize(),
+                            profile.getRepository().getBaseDirectory().resolve("versions").toAbsolutePath().normalize(),
                             i18n("settings.advanced.natives_directory.default.version_id"),
                             nativesDirName
                     );

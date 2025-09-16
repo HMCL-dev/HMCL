@@ -51,20 +51,24 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public class DefaultGameRepository implements GameRepository {
 
-    private File baseDirectory;
+    private Path baseDirectory;
     protected Map<String, Version> versions;
     private final ConcurrentHashMap<Path, Optional<String>> gameVersions = new ConcurrentHashMap<>();
 
-    public DefaultGameRepository(File baseDirectory) {
+    public DefaultGameRepository(Path baseDirectory) {
         this.baseDirectory = baseDirectory;
     }
 
-    public File getBaseDirectory() {
+    public DefaultGameRepository(File baseDirectory) {
+        this(baseDirectory.toPath());
+    }
+
+    public Path getBaseDirectory() {
         return baseDirectory;
     }
 
     public void setBaseDirectory(File baseDirectory) {
-        this.baseDirectory = baseDirectory;
+        this.baseDirectory = baseDirectory.toPath();
     }
 
     @Override
@@ -91,7 +95,7 @@ public class DefaultGameRepository implements GameRepository {
 
     @Override
     public Path getLibrariesDirectory(Version version) {
-        return getBaseDirectory().toPath().resolve("libraries");
+        return getBaseDirectory().resolve("libraries");
     }
 
     @Override
@@ -108,7 +112,7 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     public Path getArtifactFile(Version version, Artifact artifact) {
-        return artifact.getPath(getBaseDirectory().toPath().resolve("libraries"));
+        return artifact.getPath(getBaseDirectory().resolve("libraries"));
     }
 
     public GameDirectoryType getGameDirectoryType(String id) {
@@ -119,7 +123,7 @@ public class DefaultGameRepository implements GameRepository {
     public Path getRunDirectory(String id) {
         return switch (getGameDirectoryType(id)) {
             case VERSION_FOLDER -> getVersionRoot(id);
-            case ROOT_FOLDER -> getBaseDirectory().toPath();
+            case ROOT_FOLDER -> getBaseDirectory();
             default -> throw new IllegalStateException();
         };
     }
@@ -152,7 +156,7 @@ public class DefaultGameRepository implements GameRepository {
 
     @Override
     public Path getVersionRoot(String id) {
-        return getBaseDirectory().toPath().resolve("versions/" + id);
+        return getBaseDirectory().resolve("versions/" + id);
     }
 
     public File getVersionJson(String id) {
@@ -278,14 +282,14 @@ public class DefaultGameRepository implements GameRepository {
     protected void refreshVersionsImpl() {
         Map<String, Version> versions = new TreeMap<>();
 
-        if (ClassicVersion.hasClassicVersion(getBaseDirectory().toPath())) {
+        if (ClassicVersion.hasClassicVersion(getBaseDirectory())) {
             Version version = new ClassicVersion();
             versions.put(version.getId(), version);
         }
 
         SimpleVersionProvider provider = new SimpleVersionProvider();
 
-        File[] files = new File(getBaseDirectory(), "versions").listFiles();
+        File[] files = getBaseDirectory().resolve("versions").toFile().listFiles();
         if (files != null)
             Arrays.stream(files).parallel().filter(File::isDirectory).flatMap(dir -> {
                 String id = dir.getName();
@@ -409,7 +413,7 @@ public class DefaultGameRepository implements GameRepository {
 
     @Override
     public Path getAssetDirectory(String version, String assetId) {
-        return getBaseDirectory().toPath().resolve("assets");
+        return getBaseDirectory().resolve("assets");
     }
 
     @Override

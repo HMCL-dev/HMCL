@@ -45,7 +45,7 @@ public final class LogExporter {
 
     public static CompletableFuture<Void> exportLogs(Path zipFile, DefaultGameRepository gameRepository, String versionId, String logs, String launchScript) {
         Path runDirectory = gameRepository.getRunDirectory(versionId);
-        Path baseDirectory = gameRepository.getBaseDirectory().toPath();
+        Path baseDirectory = gameRepository.getBaseDirectory();
         List<String> versions = new ArrayList<>();
 
         String currentVersionId = versionId;

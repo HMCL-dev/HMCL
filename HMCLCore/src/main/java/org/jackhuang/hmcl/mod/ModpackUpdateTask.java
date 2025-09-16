@@ -38,7 +38,7 @@ public class ModpackUpdateTask extends Task<Void> {
         this.id = id;
         this.updateTask = updateTask;
 
-        Path backup = repository.getBaseDirectory().toPath().resolve("backup");
+        Path backup = repository.getBaseDirectory().resolve("backup");
         while (true) {
             int num = (int)(Math.random() * 10000000);
             if (!Files.exists(backup.resolve(id + "-" + num))) {

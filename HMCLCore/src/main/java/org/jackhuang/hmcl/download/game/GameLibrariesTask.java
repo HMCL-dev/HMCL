@@ -142,8 +142,7 @@ public final class GameLibrariesTask extends Task<Void> {
                     && gameRepository instanceof DefaultGameRepository defaultGameRepository) {
                 List<FMLLib> fmlLibs = getFMLLibs(library.getVersion());
                 if (fmlLibs != null) {
-                    Path libDir = defaultGameRepository.getBaseDirectory().toPath()
-                            .resolve("lib")
+                    Path libDir = defaultGameRepository.getBaseDirectory().resolve("lib")
                             .toAbsolutePath().normalize();
 
                     for (FMLLib fmlLib : fmlLibs) {
