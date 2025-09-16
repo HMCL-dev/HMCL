@@ -276,7 +276,7 @@ public class DefaultGameRepository implements GameRepository {
     protected void refreshVersionsImpl() {
         Map<String, Version> versions = new TreeMap<>();
 
-        if (ClassicVersion.hasClassicVersion(getBaseDirectory())) {
+        if (ClassicVersion.hasClassicVersion(getBaseDirectory().toPath())) {
             Version version = new ClassicVersion();
             versions.put(version.getId(), version);
         }

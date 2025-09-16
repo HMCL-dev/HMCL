@@ -17,16 +17,15 @@
  */
 package org.jackhuang.hmcl.game;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Arrays;
 
-/**
- * The Minecraft version for 1.5.x and earlier.
- *
- * @author huangyuhui
- */
-public class ClassicVersion extends Version {
+/// The Minecraft version for 1.5.x and earlier.
+///
+/// @author huangyuhui
+public final class ClassicVersion extends Version {
 
     public ClassicVersion() {
         super(true, "Classic", null, null, "${auth_player_name} ${auth_session} --workDir ${game_directory}",
@@ -44,11 +43,11 @@ public class ClassicVersion extends Version {
         }
     }
 
-    public static boolean hasClassicVersion(File baseDirectory) {
-        File bin = new File(baseDirectory, "bin");
-        return bin.exists()
-                && new File(bin, "lwjgl.jar").exists()
-                && new File(bin, "jinput.jar").exists()
-                && new File(bin, "lwjgl_util.jar").exists();
+    public static boolean hasClassicVersion(Path baseDirectory) {
+        Path bin = baseDirectory.resolve("bin");
+        return Files.isDirectory(bin)
+                && Files.exists(bin.resolve("lwjgl.jar")
+                && Files.exists(bin.resolve("jinput.jar")
+                && Files.exists(bin.resolve("lwjgl_util.jar");
     }
 }
