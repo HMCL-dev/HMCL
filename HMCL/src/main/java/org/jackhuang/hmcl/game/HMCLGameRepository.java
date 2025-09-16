@@ -274,15 +274,15 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         return Optional.empty();
     }
 
-    public void setVersionIconFile(String id, File iconFile) throws IOException {
-        String ext = FileUtils.getExtension(iconFile.getName()).toLowerCase(Locale.ROOT);
+    public void setVersionIconFile(String id, Path iconFile) throws IOException {
+        String ext = FileUtils.getExtension(iconFile).toLowerCase(Locale.ROOT);
         if (!FXUtils.IMAGE_EXTENSIONS.contains(ext)) {
             throw new IllegalArgumentException("Unsupported icon file: " + ext);
         }
 
         deleteIconFile(id);
 
-        FileUtils.copyFile(iconFile.toPath(), getVersionRoot(id).resolve("icon." + ext));
+        FileUtils.copyFile(iconFile, getVersionRoot(id).resolve("icon." + ext));
     }
 
     public void deleteIconFile(String id) {
@@ -443,7 +443,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 ModpackProvider provider = ModpackHelper.getProviderByType(modpackConfiguration.getType());
                 if (provider != null) provider.injectLaunchOptions(jsonText, builder);
             } catch (IOException | JsonParseException e) {
-                e.printStackTrace();
+                LOG.warning("Failed to parse modpack configuration file " + json, e);
             }
         }
 
