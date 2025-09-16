@@ -449,11 +449,6 @@ public final class FileUtils {
         Files.copy(srcFile, destFile, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING);
     }
 
-    public static boolean makeDirectory(File directory) {
-        directory.mkdirs();
-        return directory.isDirectory();
-    }
-
     public static List<Path> listFilesByExtension(Path file, String extension) {
         try (Stream<Path> list = Files.list(file)) {
             return list.filter(it -> Files.isRegularFile(it) && extension.equals(getExtension(it)))

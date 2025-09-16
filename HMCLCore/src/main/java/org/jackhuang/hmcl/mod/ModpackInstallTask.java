@@ -19,11 +19,9 @@ package org.jackhuang.hmcl.mod;
 
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.*;
@@ -63,8 +61,7 @@ public class ModpackInstallTask<T> extends Task<Void> {
     @Override
     public void execute() throws Exception {
         Set<String> entries = new HashSet<>();
-        if (!FileUtils.makeDirectory(dest))
-            throw new IOException("Unable to make directory " + dest);
+        Files.createDirectories(dest.toPath());
 
         HashMap<String, ModpackConfiguration.FileInformation> files = new HashMap<>();
         for (ModpackConfiguration.FileInformation file : overrides)
