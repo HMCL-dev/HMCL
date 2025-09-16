@@ -22,33 +22,11 @@ import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 
 /**
- *
  * @author huangyuhui
  */
 @Immutable
 @JsonSerializable
-public final class GameRemoteLatestVersions {
-
-    @SerializedName("snapshot")
-    private final String snapshot;
-
-    @SerializedName("release")
-    private final String release;
-
-    public GameRemoteLatestVersions() {
-        this(null, null);
-    }
-
-    public GameRemoteLatestVersions(String snapshot, String release) {
-        this.snapshot = snapshot;
-        this.release = release;
-    }
-
-    public String getRelease() {
-        return release;
-    }
-
-    public String getSnapshot() {
-        return snapshot;
-    }
+public record GameRemoteLatestVersions(
+        @SerializedName("snapshot") String snapshot,
+        @SerializedName("release") String release) {
 }

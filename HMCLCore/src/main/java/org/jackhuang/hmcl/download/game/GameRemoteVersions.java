@@ -23,7 +23,6 @@ import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.Validation;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -32,34 +31,9 @@ import java.util.List;
  */
 @Immutable
 @JsonSerializable
-public final class GameRemoteVersions implements Validation {
-
-    @SerializedName("versions")
-    private final List<GameRemoteVersionInfo> versions;
-
-    @SerializedName("latest")
-    private final GameRemoteLatestVersions latest;
-
-    /**
-     * No-arg constructor for Gson.
-     */
-    @SuppressWarnings("unused")
-    public GameRemoteVersions() {
-        this(Collections.emptyList(), null);
-    }
-
-    public GameRemoteVersions(List<GameRemoteVersionInfo> versions, GameRemoteLatestVersions latest) {
-        this.versions = versions;
-        this.latest = latest;
-    }
-
-    public GameRemoteLatestVersions getLatest() {
-        return latest;
-    }
-
-    public List<GameRemoteVersionInfo> getVersions() {
-        return versions;
-    }
+public record GameRemoteVersions(
+        @SerializedName("versions") List<GameRemoteVersionInfo> versions,
+        @SerializedName("latest") GameRemoteLatestVersions latest) implements Validation {
 
     @Override
     public void validate() throws JsonParseException {
