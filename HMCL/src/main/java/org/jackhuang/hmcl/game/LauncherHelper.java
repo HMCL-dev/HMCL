@@ -173,7 +173,7 @@ public final class LauncherHelper {
                                     String agent = file.getAbsolutePath() + "=" + renderer.name().toLowerCase(Locale.ROOT);
 
                                     if (GameLibrariesTask.shouldDownloadLibrary(repository, version.get(), lib, integrityCheck)) {
-                                        return new LibraryDownloadTask(dependencyManager, file, lib)
+                                        return new LibraryDownloadTask(dependencyManager, file.toPath(), lib)
                                                 .thenRunAsync(() -> javaAgents.add(agent));
                                     } else {
                                         javaAgents.add(agent);
