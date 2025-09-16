@@ -157,13 +157,13 @@ public class DefaultLauncher extends Launcher {
         if (!options.isNoGeneratedJVMArgs()) {
             appendJvmArgs(res);
 
-            res.addDefault("-Dminecraft.client.jar=", repository.getVersionJar(version).toAbsolutePath().normalize().toString());
+            res.addDefault("-Dminecraft.client.jar=", FileUtils.getAbsolutePath(repository.getVersionJar(version)));
 
             if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
                 res.addDefault("-Xdock:name=", "Minecraft " + version.getId());
                 repository.getAssetObject(version.getId(), version.getAssetIndex().getId(), "icons/minecraft.icns")
                         .ifPresent(minecraftIcns -> {
-                            res.addDefault("-Xdock:icon=", minecraftIcns.toAbsolutePath().toString());
+                            res.addDefault("-Xdock:icon=", FileUtils.getAbsolutePath(minecraftIcns));
                         });
             }
 
@@ -254,20 +254,20 @@ public class DefaultLauncher extends Launcher {
         Path jar = repository.getVersionJar(version);
         if (!Files.isRegularFile(jar))
             throw new IOException("Minecraft jar does not exist");
-        classpath.add(jar.toAbsolutePath().normalize().toString());
+        classpath.add(FileUtils.getAbsolutePath(jar.toAbsolutePath()));
 
         // Provided Minecraft arguments
         Path gameAssets = repository.getActualAssetDirectory(version.getId(), version.getAssetIndex().getId());
         Map<String, String> configuration = getConfigurations();
         configuration.put("${classpath}", String.join(File.pathSeparator, classpath));
-        configuration.put("${game_assets}", gameAssets.toAbsolutePath().toString());
-        configuration.put("${assets_root}", gameAssets.toAbsolutePath().toString());
+        configuration.put("${game_assets}", FileUtils.getAbsolutePath(gameAssets));
+        configuration.put("${assets_root}", FileUtils.getAbsolutePath(gameAssets));
 
         Optional<String> gameVersion = repository.getGameVersion(version);
 
         // lwjgl assumes path to native libraries encoded by ASCII.
         // Here is a workaround for this issue: https://github.com/HMCL-dev/HMCL/issues/1141.
-        String nativeFolderPath = nativeFolder.toAbsolutePath().normalize().toString();
+        String nativeFolderPath = FileUtils.getAbsolutePath(nativeFolder);
         Path tempNativeFolder = null;
         if ((OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
                 && !StringUtils.isASCII(nativeFolderPath)
@@ -445,7 +445,7 @@ public class DefaultLauncher extends Launcher {
                 pair("${resolution_height}", options.getHeight().toString()),
                 pair("${library_directory}", FileUtils.getAbsolutePath(repository.getLibrariesDirectory(version))),
                 pair("${classpath_separator}", File.pathSeparator),
-                pair("${primary_jar}", repository.getVersionJar(version).toAbsolutePath().normalize().toString()),
+                pair("${primary_jar}", FileUtils.getAbsolutePath(repository.getVersionJar(version))),
                 pair("${language}", Locale.getDefault().toLanguageTag()),
 
                 // defined by HMCL
@@ -707,7 +707,7 @@ public class DefaultLauncher extends Launcher {
                             writer.newLine();
                         }
                         if (commandLine.tempNativeFolder != null) {
-                            writer.write(new CommandBuilder().add("ln", "-s", nativeFolder.toAbsolutePath().normalize().toString(), commandLine.tempNativeFolder.toString()).toString());
+                            writer.write(new CommandBuilder().add("ln", "-s", FileUtils.getAbsolutePath(nativeFolder), commandLine.tempNativeFolder.toString()).toString());
                             writer.newLine();
                         }
                         writer.write(new CommandBuilder().add("cd", FileUtils.getAbsolutePath(repository.getRunDirectory(version.getId()))).toString());
