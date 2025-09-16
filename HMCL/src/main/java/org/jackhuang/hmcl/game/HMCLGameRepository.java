@@ -67,8 +67,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     public final EventManager<Event> onVersionIconChanged = new EventManager<>();
 
-    public HMCLGameRepository(Profile profile, File baseDirectory) {
-        super(baseDirectory.toPath());
+    public HMCLGameRepository(Profile profile, Path baseDirectory) {
+        super(baseDirectory);
         this.profile = profile;
     }
 
