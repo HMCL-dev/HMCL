@@ -378,7 +378,7 @@ public class DefaultLauncher extends Launcher {
 
     public void decompressNatives(File destination) throws NotDecompressingNativesException {
         try {
-            FileUtils.cleanDirectoryQuietly(destination);
+            FileUtils.cleanDirectoryQuietly(destination.toPath());
             for (Library library : version.getLibraries())
                 if (library.isNative())
                     new Unzipper(repository.getLibraryFile(version, library), destination)

@@ -422,9 +422,9 @@ public final class FileUtils {
         });
     }
 
-    public static boolean cleanDirectoryQuietly(File directory) {
+    public static boolean cleanDirectoryQuietly(Path directory) {
         try {
-            cleanDirectory(directory.toPath());
+            cleanDirectory(directory);
             return true;
         } catch (IOException e) {
             return false;
