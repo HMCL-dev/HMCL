@@ -85,8 +85,8 @@ public final class TypeUtils {
      */
     public static WildcardType subtypeOf(Type bound) {
         Type[] upperBounds;
-        if (bound instanceof WildcardType) {
-            upperBounds = ((WildcardType) bound).getUpperBounds();
+        if (bound instanceof WildcardType w) {
+            upperBounds = w.getUpperBounds();
         } else {
             upperBounds = new Type[]{bound};
         }
@@ -99,8 +99,8 @@ public final class TypeUtils {
      */
     public static WildcardType supertypeOf(Type bound) {
         Type[] lowerBounds;
-        if (bound instanceof WildcardType) {
-            lowerBounds = ((WildcardType) bound).getLowerBounds();
+        if (bound instanceof WildcardType w) {
+            lowerBounds = w.getLowerBounds();
         } else {
             lowerBounds = new Type[]{bound};
         }
@@ -132,9 +132,9 @@ public final class TypeUtils {
     }
 
     public static Class<?> getRawType(Type type) {
-        if (type instanceof Class<?>) {
+        if (type instanceof Class<?> clazz) {
             // type is a normal class.
-            return (Class<?>) type;
+            return clazz;
         } else if (type instanceof ParameterizedType parameterizedType) {
 
             // getRawType() returns Type instead of Class; that seems to be an API mistake,
@@ -152,8 +152,8 @@ public final class TypeUtils {
             // having a raw type that's more general than necessary is okay
             return Object.class;
 
-        } else if (type instanceof WildcardType) {
-            Type[] bounds = ((WildcardType) type).getUpperBounds();
+        } else if (type instanceof WildcardType w) {
+            Type[] bounds = w.getUpperBounds();
             // Currently the JLS only permits one bound for wildcards so using first bound is safe
             assert bounds.length == 1;
             return getRawType(bounds[0]);
@@ -223,7 +223,7 @@ public final class TypeUtils {
     }
 
     public static String typeToString(Type type) {
-        return type instanceof Class ? ((Class<?>) type).getName() : type.toString();
+        return type instanceof Class<?> clazz ? clazz.getName() : type.toString();
     }
 
     /**
@@ -273,10 +273,10 @@ public final class TypeUtils {
      * @param supertype a superclass of, or interface implemented by, this.
      */
     public static Type getSupertype(Type context, Class<?> contextRawType, Class<?> supertype) {
-        if (context instanceof WildcardType) {
+        if (context instanceof WildcardType w) {
             // Wildcards are useless for resolving supertypes. As the upper bound has the same raw type,
             // use it instead
-            Type[] bounds = ((WildcardType) context).getUpperBounds();
+            Type[] bounds = w.getUpperBounds();
             // Currently the JLS only permits one bound for wildcards so using first bound is safe
             assert bounds.length == 1;
             context = bounds[0];
@@ -292,8 +292,8 @@ public final class TypeUtils {
      * @throws ClassCastException if this type is not an array.
      */
     public static Type getArrayComponentType(Type array) {
-        return array instanceof GenericArrayType
-                ? ((GenericArrayType) array).getGenericComponentType()
+        return array instanceof GenericArrayType g
+                ? g.getGenericComponentType()
                 : ((Class<?>) array).getComponentType();
     }
 
@@ -305,8 +305,8 @@ public final class TypeUtils {
     public static Type getCollectionElementType(Type context, Class<?> contextRawType) {
         Type collectionType = getSupertype(context, contextRawType, Collection.class);
 
-        if (collectionType instanceof ParameterizedType) {
-            return ((ParameterizedType) collectionType).getActualTypeArguments()[0];
+        if (collectionType instanceof ParameterizedType p) {
+            return p.getActualTypeArguments()[0];
         }
         return Object.class;
     }
@@ -334,8 +334,7 @@ public final class TypeUtils {
     }
 
     public static Type resolve(Type context, Class<?> contextRawType, Type toResolve) {
-
-        return resolve(context, contextRawType, toResolve, new HashMap<TypeVariable<?>, Type>());
+        return resolve(context, contextRawType, toResolve, new HashMap<>());
     }
 
     private static Type resolve(
@@ -447,9 +446,9 @@ public final class TypeUtils {
         }
 
         Type declaredBy = getGenericSupertype(context, contextRawType, declaredByRaw);
-        if (declaredBy instanceof ParameterizedType) {
+        if (declaredBy instanceof ParameterizedType p) {
             int index = indexOf(declaredByRaw.getTypeParameters(), unknown);
-            return ((ParameterizedType) declaredBy).getActualTypeArguments()[index];
+            return p.getActualTypeArguments()[index];
         }
 
         return unknown;
@@ -470,11 +469,11 @@ public final class TypeUtils {
      */
     private static Class<?> declaringClassOf(TypeVariable<?> typeVariable) {
         GenericDeclaration genericDeclaration = typeVariable.getGenericDeclaration();
-        return genericDeclaration instanceof Class ? (Class<?>) genericDeclaration : null;
+        return genericDeclaration instanceof Class<?> clazz ? clazz : null;
     }
 
     static void checkNotPrimitive(Type type) {
-        checkArgument(!(type instanceof Class<?>) || !((Class<?>) type).isPrimitive());
+        checkArgument(!(type instanceof Class<?> clazz) || !clazz.isPrimitive());
     }
 
     /**
@@ -535,8 +534,7 @@ public final class TypeUtils {
 
         @Override
         public boolean equals(Object other) {
-            return other instanceof ParameterizedType
-                    && TypeUtils.equals(this, (ParameterizedType) other);
+            return other instanceof ParameterizedType p && TypeUtils.equals(this, p);
         }
 
         private static int hashCodeOrZero(Object o) {
@@ -585,7 +583,7 @@ public final class TypeUtils {
 
         @Override
         public boolean equals(Object o) {
-            return o instanceof GenericArrayType && TypeUtils.equals(this, (GenericArrayType) o);
+            return o instanceof GenericArrayType g && TypeUtils.equals(this, g);
         }
 
         @Override
@@ -643,7 +641,7 @@ public final class TypeUtils {
 
         @Override
         public boolean equals(Object other) {
-            return other instanceof WildcardType && TypeUtils.equals(this, (WildcardType) other);
+            return other instanceof WildcardType w && TypeUtils.equals(this, w);
         }
 
         @Override
