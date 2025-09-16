@@ -19,12 +19,14 @@ package org.jackhuang.hmcl.download.game;
 
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.util.Immutable;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 
 /**
  *
  * @author huangyuhui
  */
 @Immutable
+@JsonSerializable
 public final class GameRemoteLatestVersions {
 
     @SerializedName("snapshot")

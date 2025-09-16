@@ -22,6 +22,7 @@ import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.game.ReleaseType;
 import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.Validation;
 
 import java.time.Instant;
@@ -30,6 +31,7 @@ import java.time.Instant;
  *
  * @author huangyuhui
  */
+@JsonSerializable
 public final class GameRemoteVersionInfo implements Validation {
 
     @SerializedName("id")
