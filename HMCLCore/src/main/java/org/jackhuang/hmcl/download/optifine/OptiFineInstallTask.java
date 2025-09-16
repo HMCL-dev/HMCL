@@ -148,7 +148,7 @@ public final class OptiFineInstallTask extends Task<Version> {
                         "-cp",
                         dest.toString(),
                         "optifine.Patcher",
-                        gameRepository.getVersionJar(version).getAbsolutePath(),
+                        gameRepository.getVersionJar(version).toAbsolutePath().normalize().toString(),
                         dest.toString(),
                         optiFineLibraryPath.toString()
                 };

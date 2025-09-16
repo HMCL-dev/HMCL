@@ -58,7 +58,7 @@ import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
-public class HMCLGameRepository extends DefaultGameRepository {
+public final class HMCLGameRepository extends DefaultGameRepository {
     private final Profile profile;
 
     // local version settings

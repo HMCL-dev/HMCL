@@ -62,7 +62,7 @@ public final class GameVerificationFixTask extends Task<Void> {
 
     @Override
     public void execute() throws IOException {
-        Path jar = dependencyManager.getGameRepository().getVersionJar(version).toPath();
+        Path jar = dependencyManager.getGameRepository().getVersionJar(version);
         LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(version, gameVersion);
 
         if (Files.exists(jar) && GameVersionNumber.compare(gameVersion, "1.6") < 0 && analyzer.has(LibraryAnalyzer.LibraryType.FORGE)) {

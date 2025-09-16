@@ -136,7 +136,7 @@ public interface GameRepository extends VersionProvider {
      * @param version resolvedVersion
      * @return the minecraft jar
      */
-    File getVersionJar(Version version);
+    Path getVersionJar(Version version);
 
     /**
      * Detect game version.
@@ -168,7 +168,7 @@ public interface GameRepository extends VersionProvider {
      * @param version version id
      * @return the minecraft jar
      */
-    default File getVersionJar(String version) throws VersionNotFoundException {
+    default Path getVersionJar(String version) throws VersionNotFoundException {
         return getVersionJar(getVersion(version).resolve(this));
     }
 

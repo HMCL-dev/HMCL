@@ -52,7 +52,7 @@ public class DefaultGameRepository implements GameRepository {
 
     private File baseDirectory;
     protected Map<String, Version> versions;
-    private final ConcurrentHashMap<File, Optional<String>> gameVersions = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Path, Optional<String>> gameVersions = new ConcurrentHashMap<>();
 
     public DefaultGameRepository(File baseDirectory) {
         this.baseDirectory = baseDirectory;
@@ -127,10 +127,10 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     @Override
-    public File getVersionJar(Version version) {
+    public Path getVersionJar(Version version) {
         Version v = version.resolve(this);
         String id = Optional.ofNullable(v.getJar()).orElse(v.getId());
-        return new File(getVersionRoot(id), id + ".jar");
+        return getVersionRoot(id).toPath().resolve(id + ".jar");
     }
 
     @Override
@@ -139,9 +139,9 @@ public class DefaultGameRepository implements GameRepository {
         // this function, which is accepted because GameVersion::minecraftVersion should
         // be consistent.
         return gameVersions.computeIfAbsent(getVersionJar(version), versionJar -> {
-            Optional<String> gameVersion = GameVersion.minecraftVersion(versionJar.toPath());
+            Optional<String> gameVersion = GameVersion.minecraftVersion(versionJar);
             if (gameVersion.isEmpty()) {
-                LOG.warning("Cannot find out game version of " + version.getId() + ", primary jar: " + versionJar.toString() + ", jar exists: " + versionJar.exists());
+                LOG.warning("Cannot find out game version of " + version.getId() + ", primary jar: " + versionJar.toString() + ", jar exists: " + Files.exists(versionJar));
             }
             return gameVersion;
         });

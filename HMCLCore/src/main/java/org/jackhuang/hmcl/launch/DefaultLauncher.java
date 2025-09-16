@@ -156,7 +156,7 @@ public class DefaultLauncher extends Launcher {
         if (!options.isNoGeneratedJVMArgs()) {
             appendJvmArgs(res);
 
-            res.addDefault("-Dminecraft.client.jar=", repository.getVersionJar(version).toString());
+            res.addDefault("-Dminecraft.client.jar=", repository.getVersionJar(version).toAbsolutePath().normalize().toString());
 
             if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
                 res.addDefault("-Xdock:name=", "Minecraft " + version.getId());
@@ -250,10 +250,10 @@ public class DefaultLauncher extends Launcher {
             classpath.removeIf(c -> c.contains("2.9.4-nightly-20150209"));
         }
 
-        File jar = repository.getVersionJar(version);
-        if (!jar.exists() || !jar.isFile())
+        Path jar = repository.getVersionJar(version);
+        if (!Files.isRegularFile(jar))
             throw new IOException("Minecraft jar does not exist");
-        classpath.add(jar.getAbsolutePath());
+        classpath.add(jar.toAbsolutePath().normalize().toString());
 
         // Provided Minecraft arguments
         Path gameAssets = repository.getActualAssetDirectory(version.getId(), version.getAssetIndex().getId());
@@ -444,7 +444,7 @@ public class DefaultLauncher extends Launcher {
                 pair("${resolution_height}", options.getHeight().toString()),
                 pair("${library_directory}", repository.getLibrariesDirectory(version).getAbsolutePath()),
                 pair("${classpath_separator}", File.pathSeparator),
-                pair("${primary_jar}", repository.getVersionJar(version).getAbsolutePath()),
+                pair("${primary_jar}", repository.getVersionJar(version).toAbsolutePath().normalize().toString()),
                 pair("${language}", Locale.getDefault().toLanguageTag()),
 
                 // defined by HMCL
@@ -454,7 +454,7 @@ public class DefaultLauncher extends Launcher {
                 pair("${libraries_directory}", repository.getLibrariesDirectory(version).getAbsolutePath()),
                 // file_separator is used in -DignoreList
                 pair("${file_separator}", File.separator),
-                pair("${primary_jar_name}", FileUtils.getName(repository.getVersionJar(version).toPath()))
+                pair("${primary_jar_name}", FileUtils.getName(repository.getVersionJar(version)))
         );
     }
 

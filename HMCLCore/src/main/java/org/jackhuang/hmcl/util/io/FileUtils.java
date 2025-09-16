@@ -187,6 +187,18 @@ public final class FileUtils {
         return true;
     }
 
+    /// Safely get the file size. Returns `0` if the file does not exist or the size cannot be obtained.
+    public static long size(Path file) {
+        try {
+            return Files.size(file);
+        } catch (NoSuchFileException ignored) {
+            return 0L;
+        } catch (IOException e) {
+            LOG.warning("Failed to get file size of " + file, e);
+            return 0L;
+        }
+    }
+
     public static String readTextMaybeNativeEncoding(Path file) throws IOException {
         byte[] bytes = Files.readAllBytes(file);
 
