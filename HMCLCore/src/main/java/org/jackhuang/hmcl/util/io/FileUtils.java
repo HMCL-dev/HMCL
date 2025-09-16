@@ -25,7 +25,10 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.ZonedDateTime;
@@ -81,16 +84,12 @@ public final class FileUtils {
         return StringUtils.substringBeforeLast(fileName, '.');
     }
 
-    public static String getNameWithoutExtension(File file) {
-        return StringUtils.substringBeforeLast(file.getName(), '.');
-    }
-
     public static String getNameWithoutExtension(Path file) {
         return StringUtils.substringBeforeLast(getName(file), '.');
     }
 
-    public static String getExtension(File file) {
-        return getExtension(file.toPath());
+    public static String getExtension(String fileName) {
+        return StringUtils.substringAfterLast(fileName, '.');
     }
 
     public static String getExtension(Path file) {
@@ -107,11 +106,6 @@ public final class FileUtils {
     public static String getName(Path path) {
         Path fileName = path.getFileName();
         return fileName != null ? fileName.toString() : "";
-    }
-
-    public static String getName(Path path, String candidate) {
-        if (path.getFileName() == null) return candidate;
-        else return getName(path);
     }
 
     // https://learn.microsoft.com/biztalk/core/restrictions-when-configuring-the-file-adapter

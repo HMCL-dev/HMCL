@@ -596,7 +596,7 @@ public class DefaultLauncher extends Launcher {
         if (isUsingLog4j())
             extractLog4jConfigurationFile();
 
-        String scriptExtension = FileUtils.getExtension(scriptFile);
+        String scriptExtension = FileUtils.getExtension(scriptFile.getName());
         boolean usePowerShell = "ps1".equals(scriptExtension);
 
         if (!usePowerShell) {

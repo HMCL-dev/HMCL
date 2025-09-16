@@ -275,7 +275,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
     }
 
     public void setVersionIconFile(String id, File iconFile) throws IOException {
-        String ext = FileUtils.getExtension(iconFile).toLowerCase(Locale.ROOT);
+        String ext = FileUtils.getExtension(iconFile.getName()).toLowerCase(Locale.ROOT);
         if (!FXUtils.IMAGE_EXTENSIONS.contains(ext)) {
             throw new IllegalArgumentException("Unsupported icon file: " + ext);
         }

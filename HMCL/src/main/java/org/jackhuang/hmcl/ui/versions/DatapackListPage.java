@@ -50,7 +50,7 @@ public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.Da
 
         setItems(MappedObservableList.create(datapack.getInfo(), DatapackListPageSkin.DatapackInfoObject::new));
 
-        FXUtils.applyDragListener(this, it -> Objects.equals("zip", FileUtils.getExtension(it)),
+        FXUtils.applyDragListener(this, it -> Objects.equals("zip", FileUtils.getExtension(it.getName())),
                 mods -> mods.forEach(this::installSingleDatapack), this::refresh);
     }
 
