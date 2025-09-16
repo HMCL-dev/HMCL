@@ -34,8 +34,7 @@ public final class ClassicVersion extends Version {
                 null, null, null, ReleaseType.UNKNOWN, Instant.now(), Instant.now(), 0, false, false, null);
     }
 
-    private static class ClassicLibrary extends Library {
-
+    private static final class ClassicLibrary extends Library {
         public ClassicLibrary(String name) {
             super(new Artifact("", "", ""), null,
                     new LibrariesDownloadInfo(new LibraryDownloadInfo("bin/" + name + ".jar"), null),
