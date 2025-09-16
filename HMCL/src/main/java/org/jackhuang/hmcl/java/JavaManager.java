@@ -212,28 +212,28 @@ public final class JavaManager {
 
         Path relativized;
         try {
-            relativized = REPOSITORY.getPlatformRoot(java.getPlatform()).toRealPath().relativize(java.getBinary());
+            Path platformRoot = REPOSITORY.getPlatformRoot(java.getPlatform()).toRealPath();
+            if (!java.getBinary().startsWith(platformRoot))
+                return Task.completed(null);
+
+            relativized = platformRoot.relativize(java.getBinary());
+        } catch (NoSuchFileException ignored) {
+            return Task.completed(null);
         } catch (Throwable e) {
-            if (!(e instanceof NoSuchFileException)) {
-                LOG.warning("Failed to get relativize path", e);
+            LOG.warning("Failed to get relativize path", e);
+            return Task.completed(null);
+        }
+
+        FXUtils.runInFX(() -> {
+            try {
+                removeJava(java);
+            } catch (InterruptedException e) {
+                throw new AssertionError("Unreachable code", e);
             }
-            return Task.completed(null);
-        }
+        });
 
-        if (relativized.getNameCount() > 1) {
-            FXUtils.runInFX(() -> {
-                try {
-                    removeJava(java);
-                } catch (InterruptedException e) {
-                    throw new AssertionError("Unreachable code", e);
-                }
-            });
-
-            String name = relativized.getName(0).toString();
-            return REPOSITORY.getUninstallJavaTask(java.getPlatform(), name);
-        } else {
-            return Task.completed(null);
-        }
+        String name = relativized.getName(0).toString();
+        return REPOSITORY.getUninstallJavaTask(java.getPlatform(), name);
     }
 
     // FXThread
