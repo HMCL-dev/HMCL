@@ -94,8 +94,8 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
         this.dependencyManager = dependencyManager;
         this.repository = dependencyManager.getGameRepository();
 
-        File json = repository.getModpackConfiguration(name);
-        if (repository.hasVersion(name) && !json.exists())
+        Path json = repository.getModpackConfiguration(name);
+        if (repository.hasVersion(name) && Files.notExists(json))
             throw new IllegalArgumentException("Version " + name + " already exists.");
 
         onDone().register(event -> {
@@ -114,12 +114,12 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
         // Stage #0: General Setup
         {
             Path run = repository.getRunDirectory(name);
-            File json = repository.getModpackConfiguration(name);
+            Path json = repository.getModpackConfiguration(name);
 
             ModpackConfiguration<MultiMCInstanceConfiguration> config = null;
             try {
-                if (json.exists()) {
-                    config = JsonUtils.fromJsonFile(json.toPath(), ModpackConfiguration.typeOf(MultiMCInstanceConfiguration.class));
+                if (Files.exists(json)) {
+                    config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(MultiMCInstanceConfiguration.class));
 
                     if (!MultiMCModpackProvider.INSTANCE.getName().equals(config.getType()))
                         throw new IllegalArgumentException("Version " + name + " is not a MultiMC modpack. Cannot update this version.");
@@ -134,7 +134,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
 
             // TODO: Optimize unbearably slow ModpackInstallTask
             dependents.add(new ModpackInstallTask<>(zipFile, run.toFile(), modpack.getEncoding(), Collections.singletonList(mcDirectory), any -> true, config).withStage("hmcl.modpack"));
-            dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList(mcDirectory), manifest, MultiMCModpackProvider.INSTANCE, manifest.getName(), null, repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
+            dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList(mcDirectory), manifest, MultiMCModpackProvider.INSTANCE, manifest.getName(), null, repository.getModpackConfiguration(name).toFile()).withStage("hmcl.modpack"));
         }
 
         // Stage #1: Load all related Json-Patch from meta maven or local mod pack.

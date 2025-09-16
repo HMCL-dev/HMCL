@@ -435,10 +435,10 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             }
         }
 
-        File json = getModpackConfiguration(version);
-        if (json.exists()) {
+        Path json = getModpackConfiguration(version);
+        if (Files.exists(json)) {
             try {
-                String jsonText = Files.readString(json.toPath());
+                String jsonText = Files.readString(json);
                 ModpackConfiguration<?> modpackConfiguration = JsonUtils.GSON.fromJson(jsonText, ModpackConfiguration.class);
                 ModpackProvider provider = ModpackHelper.getProviderByType(modpackConfiguration.getType());
                 if (provider != null) provider.injectLaunchOptions(jsonText, builder);
@@ -454,8 +454,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     @Override
-    public File getModpackConfiguration(String version) {
-        return getVersionRoot(version).resolve("modpack.cfg").toFile();
+    public Path getModpackConfiguration(String version) {
+        return getVersionRoot(version).resolve("modpack.cfg");
     }
 
     public void markVersionAsModpack(String id) {

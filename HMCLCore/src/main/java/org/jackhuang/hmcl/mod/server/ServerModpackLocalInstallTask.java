@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -53,8 +54,8 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
         this.repository = dependencyManager.getGameRepository();
         Path run = repository.getRunDirectory(name);
 
-        File json = repository.getModpackConfiguration(name);
-        if (repository.hasVersion(name) && !json.exists())
+        Path json = repository.getModpackConfiguration(name);
+        if (repository.hasVersion(name) && Files.notExists(json))
             throw new IllegalArgumentException("Version " + name + " already exists.");
 
         GameBuilder builder = dependencyManager.gameBuilder().name(name);
@@ -70,8 +71,8 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
 
         ModpackConfiguration<ServerModpackManifest> config = null;
         try {
-            if (json.exists()) {
-                config = JsonUtils.fromJsonFile(json.toPath(), ModpackConfiguration.typeOf(ServerModpackManifest.class));
+            if (Files.exists(json)) {
+                config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(ServerModpackManifest.class));
 
                 if (!ServerModpackProvider.INSTANCE.getName().equals(config.getType()))
                     throw new IllegalArgumentException("Version " + name + " is not a Server modpack. Cannot update this version.");
@@ -79,7 +80,7 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
         } catch (JsonParseException | IOException ignore) {
         }
         dependents.add(new ModpackInstallTask<>(zipFile, run.toFile(), modpack.getEncoding(), Collections.singletonList("/overrides"), any -> true, config).withStage("hmcl.modpack"));
-        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList("/overrides"), manifest, ServerModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
+        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList("/overrides"), manifest, ServerModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getModpackConfiguration(name).toFile()).withStage("hmcl.modpack"));
     }
 
     @Override

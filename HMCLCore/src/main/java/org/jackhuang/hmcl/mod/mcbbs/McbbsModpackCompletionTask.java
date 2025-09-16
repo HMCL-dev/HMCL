@@ -73,7 +73,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
         this.repository = dependencyManager.getGameRepository();
         this.modManager = repository.getModManager(version);
         this.version = version;
-        this.configurationFile = repository.getModpackConfiguration(version);
+        this.configurationFile = repository.getModpackConfiguration(version).toFile();
         this.configuration = configuration;
 
         setStage("hmcl.modpack.download");
@@ -172,7 +172,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
                 manifest = remoteManifest.setFiles(newFiles);
                 return executor.all(tasks.stream().filter(Objects::nonNull).collect(Collectors.toList()));
             })).thenAcceptAsync(wrapConsumer(unused1 -> {
-                Path manifestFile = repository.getModpackConfiguration(version).toPath();
+                Path manifestFile = repository.getModpackConfiguration(version);
                 JsonUtils.writeToJsonFile(manifestFile,
                         new ModpackConfiguration<>(manifest, this.configuration.getType(), this.manifest.getName(), this.manifest.getVersion(),
                                 this.manifest.getFiles().stream()

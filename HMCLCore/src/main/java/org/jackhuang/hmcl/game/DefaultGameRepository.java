@@ -505,8 +505,8 @@ public class DefaultGameRepository implements GameRepository {
         return versions != null;
     }
 
-    public File getModpackConfiguration(String version) {
-        return getVersionRoot(version).resolve("modpack.json").toFile();
+    public Path getModpackConfiguration(String version) {
+        return getVersionRoot(version).resolve("modpack.json");
     }
 
     /**
@@ -520,13 +520,13 @@ public class DefaultGameRepository implements GameRepository {
     @Nullable
     public ModpackConfiguration<?> readModpackConfiguration(String version) throws IOException, VersionNotFoundException {
         if (!hasVersion(version)) throw new VersionNotFoundException(version);
-        File file = getModpackConfiguration(version);
-        if (!file.exists()) return null;
-        return JsonUtils.fromJsonFile(file.toPath(), ModpackConfiguration.class);
+        Path file = getModpackConfiguration(version);
+        if (Files.notExists(file)) return null;
+        return JsonUtils.fromJsonFile(file, ModpackConfiguration.class);
     }
 
     public boolean isModpack(String version) {
-        return getModpackConfiguration(version).exists();
+        return Files.exists(getModpackConfiguration(version));
     }
 
     public ModManager getModManager(String version) {
