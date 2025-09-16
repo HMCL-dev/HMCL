@@ -35,6 +35,7 @@ public class FileUtilsTest {
         assertTrue(FileUtils.isNameValid(os, "\uD83D\uDE00"));
         assertTrue(FileUtils.isNameValid(os, "a\uD83D\uDE00b"));
 
+        assertFalse(FileUtils.isNameValid(os, ""));
         assertFalse(FileUtils.isNameValid(os, "."));
         assertFalse(FileUtils.isNameValid(os, ".."));
         assertFalse(FileUtils.isNameValid(os, "exam\0ple"));
@@ -57,6 +58,13 @@ public class FileUtilsTest {
         boolean isNotWindows = !isWindows;
         assertEquals(isNotWindows, FileUtils.isNameValid(os, "com1"));
         assertEquals(isNotWindows, FileUtils.isNameValid(os, "com1.txt"));
-        assertEquals(isNotWindows, FileUtils.isNameValid(os, "clock$"));
+        assertEquals(isNotWindows, FileUtils.isNameValid(os, "foo."));
+        assertEquals(isNotWindows, FileUtils.isNameValid(os, "foo "));
+        assertEquals(isNotWindows, FileUtils.isNameValid(os, "f<oo"));
+        assertEquals(isNotWindows, FileUtils.isNameValid(os, "f>oo"));
+        assertEquals(isNotWindows, FileUtils.isNameValid(os, "f:oo"));
+        assertEquals(isNotWindows, FileUtils.isNameValid(os, "f?oo"));
+        assertEquals(isNotWindows, FileUtils.isNameValid(os, "f*oo"));
+        assertEquals(isNotWindows, FileUtils.isNameValid(os, "f\\oo"));
     }
 }

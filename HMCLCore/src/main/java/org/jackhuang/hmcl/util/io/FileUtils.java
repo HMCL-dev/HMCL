@@ -128,7 +128,7 @@ public final class FileUtils {
         return isNameValid(OperatingSystem.CURRENT_OS, name);
     }
 
-    /// Returns true if the given name is a valid file name on the operating system `os`,
+    /// Returns true if the given name is a valid file name on the given operating system,
     /// and `false` otherwise.
     public static boolean isNameValid(OperatingSystem os, String name) {
         // empty filename is not allowed
