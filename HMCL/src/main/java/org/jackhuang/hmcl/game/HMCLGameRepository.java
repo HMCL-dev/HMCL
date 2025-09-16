@@ -137,14 +137,14 @@ public class HMCLGameRepository extends DefaultGameRepository {
         refreshVersionsAsync().start();
     }
 
-    private void clean(File directory) throws IOException {
-        FileUtils.deleteDirectory(new File(directory, "crash-reports"));
-        FileUtils.deleteDirectory(new File(directory, "logs"));
+    private void clean(Path directory) throws IOException {
+        FileUtils.deleteDirectory(directory.resolve("crash-reports"));
+        FileUtils.deleteDirectory(directory.resolve("logs"));
     }
 
     public void clean(String id) throws IOException {
-        clean(getBaseDirectory());
-        clean(getRunDirectory(id));
+        clean(getBaseDirectory().toPath());
+        clean(getRunDirectory(id).toPath());
     }
 
     public void duplicateVersion(String srcId, String dstId, boolean copySaves) throws IOException {

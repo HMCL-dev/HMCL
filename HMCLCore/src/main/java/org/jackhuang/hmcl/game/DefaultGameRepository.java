@@ -259,7 +259,7 @@ public class DefaultGameRepository implements GameRepository {
             });
             // remove the version from version list regardless of whether the directory was removed successfully or not.
             try {
-                FileUtils.deleteDirectory(removedFile);
+                FileUtils.deleteDirectory(removedFile.toPath());
             } catch (IOException e) {
                 LOG.warning("Unable to remove version folder: " + file, e);
             }

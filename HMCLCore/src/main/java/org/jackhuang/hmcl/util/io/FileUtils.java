@@ -250,11 +250,6 @@ public final class FileUtils {
         Files.deleteIfExists(directory);
     }
 
-    public static void deleteDirectory(File directory)
-            throws IOException {
-        deleteDirectory(directory.toPath());
-    }
-
     public static boolean deleteDirectoryQuietly(Path directory) {
         try {
             deleteDirectory(directory);
@@ -437,25 +432,6 @@ public final class FileUtils {
             deleteDirectory(file);
         else
             Files.delete(file);
-    }
-
-    public static void copyFile(File srcFile, File destFile)
-            throws IOException {
-        Objects.requireNonNull(srcFile, "Source must not be null");
-        Objects.requireNonNull(destFile, "Destination must not be null");
-        if (!srcFile.exists())
-            throw new FileNotFoundException("Source '" + srcFile + "' does not exist");
-        if (srcFile.isDirectory())
-            throw new IOException("Source '" + srcFile + "' exists but is a directory");
-        if (srcFile.getCanonicalPath().equals(destFile.getCanonicalPath()))
-            throw new IOException("Source '" + srcFile + "' and destination '" + destFile + "' are the same");
-        File parentFile = destFile.getParentFile();
-        if (parentFile != null && !FileUtils.makeDirectory(parentFile))
-            throw new IOException("Destination '" + parentFile + "' directory cannot be created");
-        if (destFile.exists() && !destFile.canWrite())
-            throw new IOException("Destination '" + destFile + "' exists but is read-only");
-
-        Files.copy(srcFile.toPath(), destFile.toPath(), StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING);
     }
 
     public static void copyFile(Path srcFile, Path destFile)
