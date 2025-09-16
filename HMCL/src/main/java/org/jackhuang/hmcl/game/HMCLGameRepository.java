@@ -44,7 +44,6 @@ import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
@@ -378,11 +377,11 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             vs.setUsesGlobal(true);
     }
 
-    public LaunchOptions getLaunchOptions(String version, JavaRuntime javaVersion, File gameDir, List<String> javaAgents, List<String> javaArguments, boolean makeLaunchScript) {
+    public LaunchOptions getLaunchOptions(String version, JavaRuntime javaVersion, Path gameDir, List<String> javaAgents, List<String> javaArguments, boolean makeLaunchScript) {
         VersionSetting vs = getVersionSetting(version);
 
         LaunchOptions.Builder builder = new LaunchOptions.Builder()
-                .setGameDir(gameDir.toPath())
+                .setGameDir(gameDir)
                 .setJava(javaVersion)
                 .setVersionType(Metadata.TITLE)
                 .setVersionName(version)
