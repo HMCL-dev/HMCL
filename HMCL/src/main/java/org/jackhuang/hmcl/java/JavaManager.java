@@ -234,7 +234,7 @@ public final class JavaManager {
             String name = relativized.getName(0).toString();
             return REPOSITORY.getUninstallJavaTask(java.getPlatform(), name);
         } else {
-            return  Task.completed(null);
+            return Task.completed(null);
         }
     }
 
