@@ -114,6 +114,90 @@ public final class FileUtils {
         else return getName(path);
     }
 
+    private static final Set<String> INVALID_WINDOWS_RESOURCE_BASE_NAMES = Set.of(
+            "aux", "com1", "com2", "com3", "com4",
+            "com5", "com6", "com7", "com8", "com9", "con", "lpt1", "lpt2",
+            "lpt3", "lpt4", "lpt5", "lpt6", "lpt7", "lpt8", "lpt9", "nul", "prn"
+    );
+
+    // CLOCK$ may be used if an extension is provided
+    private static final Set<String> INVALID_WINDOWS_RESOURCE_FULL_NAMES = Set.of("clock$");
+
+    /// @see #isNameValid(OperatingSystem, String)
+    public static boolean isNameValid(String name) {
+        return isNameValid(OperatingSystem.CURRENT_OS, name);
+    }
+
+    /// Returns true if the given name is a valid file name on the operating system `os`,
+    /// and `false` otherwise.
+    public static boolean isNameValid(OperatingSystem os, String name) {
+        // empty filename is not allowed
+        if (name.isEmpty())
+            return false;
+        // '.', '..' and '~' have special meaning on all platforms
+        if (name.equals(".") || name.equals("..") || name.equals("~"))
+            return false;
+
+        for (int i = 0; i < name.length(); i++) {
+            char ch = name.charAt(i);
+            int codePoint;
+
+            if (Character.isSurrogate(ch)) {
+                if (!Character.isHighSurrogate(ch))
+                    return false;
+
+                if (i == name.length() - 1)
+                    return false;
+
+                char ch2 = name.charAt(++i);
+                if (!Character.isLowSurrogate(ch2))
+                    return false;
+
+                codePoint = Character.toCodePoint(ch, ch2);
+            } else {
+                codePoint = ch;
+            }
+
+            if (!Character.isValidCodePoint(codePoint)
+                    || Character.isISOControl(codePoint)
+                    || codePoint == '/' || codePoint == '\0'
+                    // Unicode replacement character
+                    || codePoint == 0xfffd
+                    // Not Unicode character
+                    || codePoint == 0xfffe || codePoint == 0xffff)
+                return false;
+
+            // https://learn.microsoft.com/windows/win32/fileio/naming-a-file
+            if (os == OperatingSystem.WINDOWS && (
+                    ch == '<' || ch == '>' || ch == ':' || ch == '"'
+                            || ch == '\\' || ch == '|' || ch == '?' || ch == '*'
+            )) {
+                return false;
+            }
+        }
+
+        if (os == OperatingSystem.WINDOWS) { // Windows only
+            char lastChar = name.charAt(name.length() - 1);
+            // filenames ending in dot are not valid
+            if (lastChar == '.')
+                return false;
+            // file names ending with whitespace are truncated (bug 118997)
+            if (Character.isWhitespace(lastChar))
+                return false;
+
+            String lowerName = name.toLowerCase(Locale.ROOT);
+            if (INVALID_WINDOWS_RESOURCE_FULL_NAMES.contains(lowerName))
+                return false;
+
+            // on windows, filename suffixes are not relevant to name validity
+            String lowerBasename = StringUtils.substringBeforeLast(lowerName, '.');
+            if (INVALID_WINDOWS_RESOURCE_BASE_NAMES.contains(lowerBasename))
+                return false;
+        }
+
+        return true;
+    }
+
     public static String readTextMaybeNativeEncoding(Path file) throws IOException {
         byte[] bytes = Files.readAllBytes(file);
 

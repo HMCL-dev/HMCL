@@ -489,7 +489,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
                 FORBIDDEN_VERSION_IDS.contains(id.toLowerCase(Locale.ROOT)))
             return false;
 
-        return OperatingSystem.isNameValid(id);
+        return FileUtils.isNameValid(id);
     }
 
     /**

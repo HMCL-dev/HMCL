@@ -17,9 +17,9 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.junit.jupiter.api.Test;
 
-import static org.jackhuang.hmcl.util.platform.OperatingSystem.isNameValid;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -29,27 +29,27 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public final class OperatingSystemTest {
     @Test
     public void testIsNameValid() {
-        assertTrue(isNameValid("example"));
-        assertTrue(isNameValid("example.zip"));
-        assertTrue(isNameValid("example.tar.gz"));
-        assertTrue(isNameValid("\uD83D\uDE00"));
-        assertTrue(isNameValid("a\uD83D\uDE00b"));
+        assertTrue(FileUtils.isNameValid("example"));
+        assertTrue(FileUtils.isNameValid("example.zip"));
+        assertTrue(FileUtils.isNameValid("example.tar.gz"));
+        assertTrue(FileUtils.isNameValid("\uD83D\uDE00"));
+        assertTrue(FileUtils.isNameValid("a\uD83D\uDE00b"));
 
-        assertFalse(isNameValid("."));
-        assertFalse(isNameValid(".."));
-        assertFalse(isNameValid("exam\0ple"));
-        assertFalse(isNameValid("example/0"));
+        assertFalse(FileUtils.isNameValid("."));
+        assertFalse(FileUtils.isNameValid(".."));
+        assertFalse(FileUtils.isNameValid("exam\0ple"));
+        assertFalse(FileUtils.isNameValid("example/0"));
 
         // Test for invalid surrogate pair
-        assertFalse(isNameValid("\uD83D"));
-        assertFalse(isNameValid("\uDE00"));
-        assertFalse(isNameValid("\uDE00\uD83D"));
-        assertFalse(isNameValid("\uD83D\uD83D"));
-        assertFalse(isNameValid("a\uD83D"));
-        assertFalse(isNameValid("a\uDE00"));
-        assertFalse(isNameValid("a\uDE00\uD83D"));
-        assertFalse(isNameValid("a\uD83Db"));
-        assertFalse(isNameValid("a\uDE00b"));
-        assertFalse(isNameValid("a\uDE00\uD83Db"));
+        assertFalse(FileUtils.isNameValid("\uD83D"));
+        assertFalse(FileUtils.isNameValid("\uDE00"));
+        assertFalse(FileUtils.isNameValid("\uDE00\uD83D"));
+        assertFalse(FileUtils.isNameValid("\uD83D\uD83D"));
+        assertFalse(FileUtils.isNameValid("a\uD83D"));
+        assertFalse(FileUtils.isNameValid("a\uDE00"));
+        assertFalse(FileUtils.isNameValid("a\uDE00\uD83D"));
+        assertFalse(FileUtils.isNameValid("a\uD83Db"));
+        assertFalse(FileUtils.isNameValid("a\uDE00b"));
+        assertFalse(FileUtils.isNameValid("a\uDE00\uD83Db"));
     }
 }

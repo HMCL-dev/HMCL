@@ -42,7 +42,6 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -170,7 +169,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                         return;
                     }
 
-                    if (result.contains("/") || result.contains("\\") || !OperatingSystem.isNameValid(result)) {
+                    if (result.contains("/") || result.contains("\\") || !FileUtils.isNameValid(result)) {
                         reject.accept(i18n("schematics.create_directory.failed.invalid_name"));
                         return;
                     }

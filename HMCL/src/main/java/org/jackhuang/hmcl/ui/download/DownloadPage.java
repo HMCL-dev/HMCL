@@ -52,7 +52,7 @@ import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
@@ -148,7 +148,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         Path runDirectory = profile.getRepository().hasVersion(version) ? profile.getRepository().getRunDirectory(version).toPath() : profile.getRepository().getBaseDirectory().toPath();
 
         Controllers.prompt(i18n("archive.file.name"), (result, resolve, reject) -> {
-            if (!OperatingSystem.isNameValid(result)) {
+            if (!FileUtils.isNameValid(result)) {
                 reject.accept(i18n("install.new_game.malformed"));
                 return;
             }
