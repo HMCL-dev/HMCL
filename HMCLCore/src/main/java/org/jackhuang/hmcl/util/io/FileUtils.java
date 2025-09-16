@@ -168,10 +168,8 @@ public final class FileUtils {
                 return false;
 
             // https://learn.microsoft.com/windows/win32/fileio/naming-a-file
-            if (os == OperatingSystem.WINDOWS && (
-                    ch == '<' || ch == '>' || ch == ':' || ch == '"'
-                            || ch == '\\' || ch == '|' || ch == '?' || ch == '*'
-            )) {
+            if (os == OperatingSystem.WINDOWS &&
+                    (ch == '<' || ch == '>' || ch == ':' || ch == '"' || ch == '\\' || ch == '|' || ch == '?' || ch == '*')) {
                 return false;
             }
         }
