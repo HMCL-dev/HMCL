@@ -109,6 +109,14 @@ public final class FileUtils {
         return fileName != null ? fileName.toString() : "";
     }
 
+    public static Path toAbsolute(Path path) {
+        return path.toAbsolutePath().normalize();
+    }
+
+    public static String getAbsolutePath(Path path) {
+        return path.toAbsolutePath().normalize().toString();
+    }
+
     // https://learn.microsoft.com/biztalk/core/restrictions-when-configuring-the-file-adapter
     private static final Set<String> INVALID_WINDOWS_RESOURCE_BASE_NAMES = Set.of(
             "aux", "con", "nul", "prn", "clock$",

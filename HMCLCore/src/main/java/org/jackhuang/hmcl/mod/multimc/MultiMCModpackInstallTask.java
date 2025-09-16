@@ -261,15 +261,15 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
                         Retain them will facilitate compatibility, as some embedded libraries may check where their JAR is.
                         Meanwhile, potential compatibility issue with other launcher which never supports these fields might occur.
                         Here, we make the file stored twice, to keep maximum compatibility. */
-                    Path from = repository.getLibraryFile(artifact.getVersion(), library).toPath();
-                    Path target = repository.getLibraryFile(artifact.getVersion(), library.withoutCommunityFields()).toPath();
+                    Path from = repository.getLibraryFile(artifact.getVersion(), library);
+                    Path target = repository.getLibraryFile(artifact.getVersion(), library.withoutCommunityFields());
                     Files.createDirectories(target.getParent());
                     Files.copy(from, target, StandardCopyOption.REPLACE_EXISTING);
                 }
             }
 
             try (InputStream input = MaintainTask.class.getResourceAsStream("/assets/game/HMCLMultiMCBootstrap-1.0.jar")) {
-                Path libraryPath = repository.getLibraryFile(artifact.getVersion(), MultiMCInstancePatch.BOOTSTRAP_LIBRARY).toPath();
+                Path libraryPath = repository.getLibraryFile(artifact.getVersion(), MultiMCInstancePatch.BOOTSTRAP_LIBRARY);
 
                 Files.createDirectories(libraryPath.getParent());
                 Files.copy(Objects.requireNonNull(input, "Bundled HMCLMultiMCBootstrap is missing."), libraryPath, StandardCopyOption.REPLACE_EXISTING);

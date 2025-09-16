@@ -18,10 +18,12 @@
 package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Platform;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -114,7 +116,7 @@ public interface GameRepository extends VersionProvider {
      * @param lib the library, {@link Version#getLibraries()}
      * @return the library file
      */
-    File getLibraryFile(Version version, Library lib);
+    Path getLibraryFile(Version version, Library lib);
 
     /**
      * Get the directory that native libraries will be unzipped to.
@@ -254,9 +256,9 @@ public interface GameRepository extends VersionProvider {
         Set<String> classpath = new LinkedHashSet<>();
         for (Library library : version.getLibraries())
             if (library.appliesToCurrentEnvironment() && !library.isNative()) {
-                File f = getLibraryFile(version, library);
-                if (f.exists() && f.isFile())
-                    classpath.add(f.getAbsolutePath());
+                Path f = getLibraryFile(version, library);
+                if (Files.isRegularFile(f))
+                    classpath.add(FileUtils.getAbsolutePath(f));
             }
         return classpath;
     }

@@ -280,7 +280,7 @@ public class NeoForgeOldInstallTask extends Task<Version> {
             for (Library library : profile.getLibraries()) {
                 Path file = fs.getPath("maven").resolve(library.getPath());
                 if (Files.exists(file)) {
-                    Path dest = gameRepository.getLibraryFile(version, library).toPath();
+                    Path dest = gameRepository.getLibraryFile(version, library);
                     FileUtils.copyFile(file, dest);
                 }
             }

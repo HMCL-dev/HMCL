@@ -72,7 +72,7 @@ public class ForgeOldInstallTask extends Task<Version> {
 
             // unpack the universal jar in the installer file.
             Library forgeLibrary = new Library(installProfile.getInstall().getPath());
-            Path forgeFile = dependencyManager.getGameRepository().getLibraryFile(version, forgeLibrary).toPath();
+            Path forgeFile = dependencyManager.getGameRepository().getLibraryFile(version, forgeLibrary);
             Files.createDirectories(forgeFile.getParent());
 
             ZipEntry forgeEntry = zipFile.getEntry(installProfile.getInstall().getFilePath());

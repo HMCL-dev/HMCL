@@ -135,7 +135,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                         if (GameLibrariesTask.shouldDownloadLibrary(repository, version, installer, integrityCheck)) {
                             tasks.add(installLibraryAsync(gameVersion, original, "optifine", optifinePatchVersion));
                         } else {
-                            tasks.add(OptiFineInstallTask.install(this, original, repository.getLibraryFile(version, installer).toPath()));
+                            tasks.add(OptiFineInstallTask.install(this, original, repository.getLibraryFile(version, installer)));
                         }
                     }
                 }
