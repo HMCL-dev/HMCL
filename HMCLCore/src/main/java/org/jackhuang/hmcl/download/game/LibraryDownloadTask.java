@@ -28,7 +28,6 @@ import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -43,7 +42,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class LibraryDownloadTask extends Task<Void> {
     private FileDownloadTask task;
-    protected final File jar;
+    protected final Path jar;
     protected final DefaultCacheRepository cacheRepository;
     protected final AbstractDependencyManager dependencyManager;
     protected final Library library;
@@ -51,7 +50,7 @@ public class LibraryDownloadTask extends Task<Void> {
     private final Library originalLibrary;
     private boolean cached = false;
 
-    public LibraryDownloadTask(AbstractDependencyManager dependencyManager, File file, Library library) {
+    public LibraryDownloadTask(AbstractDependencyManager dependencyManager, Path file, Library library) {
         this.dependencyManager = dependencyManager;
         this.originalLibrary = library;
 
@@ -105,7 +104,7 @@ public class LibraryDownloadTask extends Task<Void> {
         Optional<Path> libPath = cacheRepository.getLibrary(originalLibrary);
         if (libPath.isPresent()) {
             try {
-                FileUtils.copyFile(libPath.get(), jar.toPath());
+                FileUtils.copyFile(libPath.get(), jar);
                 cached = true;
                 return;
             } catch (IOException e) {
@@ -117,7 +116,7 @@ public class LibraryDownloadTask extends Task<Void> {
 
 
         List<URI> uris = dependencyManager.getDownloadProvider().injectURLWithCandidates(url);
-        task = new FileDownloadTask(uris, jar.toPath(),
+        task = new FileDownloadTask(uris, jar,
                 library.getDownload().getSha1() != null ? new IntegrityCheck("SHA-1", library.getDownload().getSha1()) : null);
         task.setCacheRepository(cacheRepository);
         task.setCaching(true);
@@ -133,7 +132,7 @@ public class LibraryDownloadTask extends Task<Void> {
     public void postExecute() throws Exception {
         if (!cached) {
             try {
-                cacheRepository.cacheLibrary(library, jar.toPath(), false);
+                cacheRepository.cacheLibrary(library, jar, false);
             } catch (IOException e) {
                 LOG.warning("Failed to cache downloaded library " + library, e);
             }

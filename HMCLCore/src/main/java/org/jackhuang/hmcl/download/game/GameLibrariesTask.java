@@ -32,7 +32,6 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
@@ -159,13 +158,13 @@ public final class GameLibrariesTask extends Task<Void> {
                 }
             }
 
-            File file = gameRepository.getLibraryFile(version, library);
-            if ("optifine".equals(library.getGroupId()) && file.exists() && GameVersionNumber.asGameVersion(gameRepository.getGameVersion(version)).compareTo("1.20.4") == 0) {
+            Path file = gameRepository.getLibraryFile(version, library).toPath();
+            if ("optifine".equals(library.getGroupId()) && Files.exists(file) && GameVersionNumber.asGameVersion(gameRepository.getGameVersion(version)).compareTo("1.20.4") == 0) {
                 String forgeVersion = LibraryAnalyzer.analyze(version, "1.20.4")
                         .getVersion(LibraryAnalyzer.LibraryType.FORGE)
                         .orElse(null);
                 if (forgeVersion != null && LibraryAnalyzer.FORGE_OPTIFINE_BROKEN_RANGE.contains(VersionNumber.asVersion(forgeVersion))) {
-                    try (FileSystem fs2 = CompressingUtils.createWritableZipFileSystem(file.toPath())) {
+                    try (FileSystem fs2 = CompressingUtils.createWritableZipFileSystem(file)) {
                         Files.deleteIfExists(fs2.getPath("/META-INF/mods.toml"));
                     } catch (IOException e) {
                         throw new IOException("Cannot fix optifine", e);
@@ -175,7 +174,7 @@ public final class GameLibrariesTask extends Task<Void> {
             if (shouldDownloadLibrary(gameRepository, version, library, integrityCheck) && (library.hasDownloadURL() || !"optifine".equals(library.getGroupId()))) {
                 dependencies.add(new LibraryDownloadTask(dependencyManager, file, library).withCounter("hmcl.install.libraries"));
             } else {
-                dependencyManager.getCacheRepository().tryCacheLibrary(library, file.toPath());
+                dependencyManager.getCacheRepository().tryCacheLibrary(library, file);
             }
 
             updateProgress(++progress, libraries.size());
