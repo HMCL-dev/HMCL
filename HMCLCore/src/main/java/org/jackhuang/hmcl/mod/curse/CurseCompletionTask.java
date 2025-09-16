@@ -31,6 +31,8 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -84,9 +86,9 @@ public final class CurseCompletionTask extends Task<Void> {
 
         if (manifest == null)
             try {
-                File manifestFile = new File(repository.getVersionRoot(version), "manifest.json");
-                if (manifestFile.exists())
-                    this.manifest = JsonUtils.fromJsonFile(manifestFile.toPath(), CurseManifest.class);
+                Path manifestFile = repository.getVersionRoot(version).resolve("manifest.json");
+                if (Files.exists(manifestFile))
+                    this.manifest = JsonUtils.fromJsonFile(manifestFile, CurseManifest.class);
             } catch (Exception e) {
                 LOG.warning("Unable to read CurseForge modpack manifest.json", e);
             }
@@ -109,7 +111,7 @@ public final class CurseCompletionTask extends Task<Void> {
         if (manifest == null)
             return;
 
-        File root = repository.getVersionRoot(version);
+        Path root = repository.getVersionRoot(version);
 
         // Because in China, Curse is too difficult to visit,
         // if failed, ignore it and retry next time.
@@ -135,17 +137,18 @@ public final class CurseCompletionTask extends Task<Void> {
                             }
                         })
                         .collect(Collectors.toList()));
-        JsonUtils.writeToJsonFile(root.toPath().resolve("manifest.json"), newManifest);
+        JsonUtils.writeToJsonFile(root.resolve("manifest.json"), newManifest);
 
-        File versionRoot = repository.getVersionRoot(modManager.getVersion());
-        File resourcePacksRoot = new File(versionRoot, "resourcepacks"), shaderPacksRoot = new File(versionRoot, "shaderpacks");
+        Path versionRoot = repository.getVersionRoot(modManager.getVersion());
+        Path resourcePacksRoot = versionRoot.resolve("resourcepacks");
+        Path shaderPacksRoot = versionRoot.resolve("shaderpacks");
         finished.set(0);
         dependencies = newManifest.getFiles()
                 .stream().parallel()
                 .filter(f -> f.getFileName() != null)
                 .flatMap(f -> {
                     try {
-                        File path = guessFilePath(f, resourcePacksRoot, shaderPacksRoot);
+                        File path = guessFilePath(f, resourcePacksRoot.toFile(), shaderPacksRoot.toFile());
                         if (path == null) {
                             return Stream.empty();
                         }
@@ -171,9 +174,10 @@ public final class CurseCompletionTask extends Task<Void> {
 
     /**
      * Guess where to store the file.
-     * @param file The file.
+     *
+     * @param file              The file.
      * @param resourcePacksRoot ./resourcepacks.
-     * @param shaderPacksRoot ./shaderpacks.
+     * @param shaderPacksRoot   ./shaderpacks.
      * @return ./resourcepacks/$filename or ./shaderpacks/$filename or ./mods/$filename if the file doesn't exist. null if the file existed.
      * @throws IOException If IOException was encountered during getting data from CurseForge.
      */

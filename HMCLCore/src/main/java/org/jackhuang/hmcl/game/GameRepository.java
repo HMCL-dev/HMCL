@@ -21,7 +21,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Platform;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -97,7 +96,7 @@ public interface GameRepository extends VersionProvider {
      * The root folders the versions must be unique.
      * For example, .minecraft/versions/&lt;version name&gt;/.
      */
-    File getVersionRoot(String id);
+    Path getVersionRoot(String id);
 
     /**
      * Gets the current running directory of the given version for game.

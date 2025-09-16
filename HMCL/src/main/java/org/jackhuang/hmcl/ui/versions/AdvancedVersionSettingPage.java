@@ -250,7 +250,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
                             nativesDirName
                     );
                 } else {
-                    return profile.getRepository().getVersionRoot(versionId).toPath()
+                    return profile.getRepository().getVersionRoot(versionId)
                             .toAbsolutePath().normalize()
                             .resolve(nativesDirName)
                             .toString();

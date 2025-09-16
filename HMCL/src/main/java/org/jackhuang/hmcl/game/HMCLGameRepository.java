@@ -89,14 +89,14 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     public Path getRunDirectory(String id) {
         switch (getGameDirectoryType(id)) {
             case VERSION_FOLDER:
-                return getVersionRoot(id).toPath();
+                return getVersionRoot(id);
             case ROOT_FOLDER:
                 return super.getRunDirectory(id);
             case CUSTOM:
                 try {
                     return Path.of(getVersionSetting(id).getGameDir());
                 } catch (InvalidPathException ignored) {
-                    return getVersionRoot(id).toPath();
+                    return getVersionRoot(id);
                 }
             default:
                 throw new AssertionError("Unreachable");
@@ -148,8 +148,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     public void duplicateVersion(String srcId, String dstId, boolean copySaves) throws IOException {
-        Path srcDir = getVersionRoot(srcId).toPath();
-        Path dstDir = getVersionRoot(dstId).toPath();
+        Path srcDir = getVersionRoot(srcId);
+        Path dstDir = getVersionRoot(dstId);
 
         Version fromVersion = getVersion(srcId);
 
@@ -191,7 +191,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     private File getLocalVersionSettingFile(String id) {
-        return new File(getVersionRoot(id), "hmclversion.cfg");
+        return getVersionRoot(id).resolve("hmclversion.cfg").toFile();
     }
 
     private void loadLocalVersionSetting(String id) {
@@ -261,12 +261,12 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             return vs;
     }
 
-    public Optional<File> getVersionIconFile(String id) {
-        File root = getVersionRoot(id);
+    public Optional<Path> getVersionIconFile(String id) {
+        Path root = getVersionRoot(id);
 
         for (String extension : FXUtils.IMAGE_EXTENSIONS) {
-            File file = new File(root, "icon." + extension);
-            if (file.exists()) {
+            Path file = root.resolve("icon." + extension);
+            if (Files.exists(file)) {
                 return Optional.of(file);
             }
         }
@@ -282,13 +282,18 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
         deleteIconFile(id);
 
-        FileUtils.copyFile(iconFile.toPath(), getVersionRoot(id).toPath().resolve("icon." + ext));
+        FileUtils.copyFile(iconFile.toPath(), getVersionRoot(id).resolve("icon." + ext));
     }
 
     public void deleteIconFile(String id) {
-        File root = getVersionRoot(id);
+        Path root = getVersionRoot(id);
         for (String extension : FXUtils.IMAGE_EXTENSIONS) {
-            new File(root, "icon." + extension).delete();
+            Path file = root.resolve("icon." + extension);
+            try {
+                Files.deleteIfExists(file);
+            } catch (IOException e) {
+                LOG.warning("Failed to delete icon file: " + file, e);
+            }
         }
     }
 
@@ -301,10 +306,10 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
         if (iconType == VersionIconType.DEFAULT) {
             Version version = getVersion(id).resolve(this);
-            Optional<File> iconFile = getVersionIconFile(id);
+            Optional<Path> iconFile = getVersionIconFile(id);
             if (iconFile.isPresent()) {
                 try {
-                    return FXUtils.loadImage(iconFile.get().toPath());
+                    return FXUtils.loadImage(iconFile.get());
                 } catch (Exception e) {
                     LOG.warning("Failed to load version icon of " + id, e);
                 }
@@ -384,7 +389,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 .setProfileName(Metadata.TITLE)
                 .setGameArguments(StringUtils.tokenize(vs.getMinecraftArgs()))
                 .setOverrideJavaArguments(StringUtils.tokenize(vs.getJavaArgs()))
-                .setMaxMemory(vs.isNoJVMArgs() && vs.isAutoMemory() ? null : (int)(getAllocatedMemory(
+                .setMaxMemory(vs.isNoJVMArgs() && vs.isAutoMemory() ? null : (int) (getAllocatedMemory(
                         vs.getMaxMemory() * 1024L * 1024L,
                         SystemInfo.getPhysicalMemoryStatus().getAvailable(),
                         vs.isAutoMemory()
@@ -450,7 +455,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     @Override
     public File getModpackConfiguration(String version) {
-        return new File(getVersionRoot(version), "modpack.cfg");
+        return getVersionRoot(version).resolve("modpack.cfg").toFile();
     }
 
     public void markVersionAsModpack(String id) {
@@ -463,16 +468,24 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
     public void markVersionLaunchedAbnormally(String id) {
         try {
-            Files.createFile(getVersionRoot(id).toPath().resolve(".abnormal"));
+            Files.createFile(getVersionRoot(id).resolve(".abnormal"));
         } catch (IOException ignored) {
         }
     }
 
     public boolean unmarkVersionLaunchedAbnormally(String id) {
-        File file = new File(getVersionRoot(id), ".abnormal");
-        boolean result = file.isFile();
-        file.delete();
-        return result;
+        Path file = getVersionRoot(id).resolve(".abnormal");
+        if (Files.isRegularFile(file)) {
+            try {
+                Files.delete(file);
+            } catch (IOException e) {
+                LOG.warning("Failed to delete abnormal mark file: " + file, e);
+            }
+
+            return true;
+        } else {
+            return false;
+        }
     }
 
     private static final Gson GSON = new GsonBuilder()

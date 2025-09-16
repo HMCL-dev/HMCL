@@ -55,7 +55,7 @@ public class ModpackUpdateTask extends Task<Void> {
 
     @Override
     public void execute() throws Exception {
-        FileUtils.copyDirectory(repository.getVersionRoot(id).toPath(), backupFolder);
+        FileUtils.copyDirectory(repository.getVersionRoot(id), backupFolder);
     }
 
     @Override
@@ -71,7 +71,7 @@ public class ModpackUpdateTask extends Task<Void> {
             // Restore backup
             repository.removeVersionFromDisk(id);
 
-            FileUtils.copyDirectory(backupFolder, repository.getVersionRoot(id).toPath());
+            FileUtils.copyDirectory(backupFolder, repository.getVersionRoot(id));
 
             repository.refreshVersionsAsync().start();
         }

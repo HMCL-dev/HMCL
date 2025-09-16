@@ -131,7 +131,7 @@ public class ModrinthInstallTask extends Task<Void> {
             }
         }
 
-        Path root = repository.getVersionRoot(name).toPath();
+        Path root = repository.getVersionRoot(name);
         Files.createDirectories(root);
         JsonUtils.writeToJsonFile(root.resolve("modrinth.index.json"), manifest);
     }

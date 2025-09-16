@@ -36,6 +36,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -149,7 +150,7 @@ public class DefaultLauncher extends Launcher {
 
         String formatMsgNoLookups = res.addDefault("-Dlog4j2.formatMsgNoLookups=", "true");
         if (!"-Dlog4j2.formatMsgNoLookups=false".equals(formatMsgNoLookups) && isUsingLog4j()) {
-            res.addDefault("-Dlog4j.configurationFile=", getLog4jConfigurationFile().getAbsolutePath());
+            res.addDefault("-Dlog4j.configurationFile=", FileUtils.getAbsolutePath(getLog4jConfigurationFile()));
         }
 
         // Default JVM Args
@@ -408,12 +409,12 @@ public class DefaultLauncher extends Launcher {
         return GameVersionNumber.compare(repository.getGameVersion(version).orElse("1.7"), "1.7") >= 0;
     }
 
-    public File getLog4jConfigurationFile() {
-        return new File(repository.getVersionRoot(version.getId()), "log4j2.xml");
+    public Path getLog4jConfigurationFile() {
+        return repository.getVersionRoot(version.getId()).resolve("log4j2.xml");
     }
 
     public void extractLog4jConfigurationFile() throws IOException {
-        File targetFile = getLog4jConfigurationFile();
+        Path targetFile = getLog4jConfigurationFile();
         InputStream source;
         if (GameVersionNumber.asGameVersion(repository.getGameVersion(version)).compareTo("1.12") < 0) {
             source = DefaultLauncher.class.getResourceAsStream("/assets/game/log4j2-1.7.xml");
@@ -421,8 +422,8 @@ public class DefaultLauncher extends Launcher {
             source = DefaultLauncher.class.getResourceAsStream("/assets/game/log4j2-1.12.xml");
         }
 
-        try (InputStream input = source; OutputStream output = new FileOutputStream(targetFile)) {
-            input.transferTo(output);
+        try (InputStream input = source) {
+            Files.copy(input, targetFile, StandardCopyOption.REPLACE_EXISTING);
         }
     }
 
@@ -522,7 +523,7 @@ public class DefaultLauncher extends Launcher {
         Map<String, String> env = new LinkedHashMap<>();
         env.put("INST_NAME", versionName);
         env.put("INST_ID", versionName);
-        env.put("INST_DIR", repository.getVersionRoot(version.getId()).getAbsolutePath());
+        env.put("INST_DIR", FileUtils.getAbsolutePath(repository.getVersionRoot(version.getId())));
         env.put("INST_MC_DIR", FileUtils.getAbsolutePath(repository.getRunDirectory(version.getId())));
         env.put("INST_JAVA", options.getJava().getBinary().toString());
 

@@ -110,7 +110,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
                     throw new IOException("Unable to parse server manifest.json from " + manifest.getFileApi(), e);
                 }
 
-                Path rootPath = repository.getVersionRoot(version).toPath();
+                Path rootPath = repository.getVersionRoot(version);
                 Files.createDirectories(rootPath);
 
                 Map<McbbsModpackManifest.File, McbbsModpackManifest.File> localFiles = manifest.getFiles().stream().collect(Collectors.toMap(Function.identity(), Function.identity()));

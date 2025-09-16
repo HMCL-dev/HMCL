@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
@@ -97,10 +98,10 @@ public class DefaultGameRepository implements GameRepository {
     public Path getLibraryFile(Version version, Library lib) {
         if ("local".equals(lib.getHint())) {
             if (lib.getFileName() != null) {
-                return getVersionRoot(version.getId()).toPath().resolve("libraries/" + lib.getFileName());
+                return getVersionRoot(version.getId()).resolve("libraries/" + lib.getFileName());
             }
 
-            return getVersionRoot(version.getId()).toPath().resolve("libraries/" + lib.getArtifact().getFileName());
+            return getVersionRoot(version.getId()).resolve("libraries/" + lib.getArtifact().getFileName());
         }
 
         return getLibrariesDirectory(version).resolve(lib.getPath());
@@ -117,7 +118,7 @@ public class DefaultGameRepository implements GameRepository {
     @Override
     public Path getRunDirectory(String id) {
         return switch (getGameDirectoryType(id)) {
-            case VERSION_FOLDER -> getVersionRoot(id).toPath();
+            case VERSION_FOLDER -> getVersionRoot(id);
             case ROOT_FOLDER -> getBaseDirectory().toPath();
             default -> throw new IllegalStateException();
         };
@@ -127,7 +128,7 @@ public class DefaultGameRepository implements GameRepository {
     public Path getVersionJar(Version version) {
         Version v = version.resolve(this);
         String id = Optional.ofNullable(v.getJar()).orElse(v.getId());
-        return getVersionRoot(id).toPath().resolve(id + ".jar");
+        return getVersionRoot(id).resolve(id + ".jar");
     }
 
     @Override
@@ -146,16 +147,16 @@ public class DefaultGameRepository implements GameRepository {
 
     @Override
     public Path getNativeDirectory(String id, Platform platform) {
-        return getVersionRoot(id).toPath().resolve("natives-" + platform);
+        return getVersionRoot(id).resolve("natives-" + platform);
     }
 
     @Override
-    public File getVersionRoot(String id) {
-        return new File(getBaseDirectory(), "versions/" + id);
+    public Path getVersionRoot(String id) {
+        return getBaseDirectory().toPath().resolve("versions/" + id);
     }
 
     public File getVersionJson(String id) {
-        return new File(getVersionRoot(id), id + ".json");
+        return getVersionRoot(id).resolve(id + ".json").toFile();
     }
 
     public Version readVersionJson(String id) throws IOException, JsonParseException {
@@ -187,8 +188,8 @@ public class DefaultGameRepository implements GameRepository {
 
         try {
             Version fromVersion = getVersion(from);
-            Path fromDir = getVersionRoot(from).toPath();
-            Path toDir = getVersionRoot(to).toPath();
+            Path fromDir = getVersionRoot(from);
+            Path toDir = getVersionRoot(to);
             Files.move(fromDir, toDir);
 
             Path fromJson = toDir.resolve(from + ".json");
@@ -232,25 +233,29 @@ public class DefaultGameRepository implements GameRepository {
         if (EventBus.EVENT_BUS.fireEvent(new RemoveVersionEvent(this, id)) == Event.Result.DENY)
             return false;
         if (!versions.containsKey(id))
-            return FileUtils.deleteDirectoryQuietly(getVersionRoot(id).toPath());
-        File file = getVersionRoot(id);
-        if (!file.exists())
+            return FileUtils.deleteDirectoryQuietly(getVersionRoot(id));
+        Path file = getVersionRoot(id);
+        if (Files.notExists(file))
             return true;
         // test if no file in this version directory is occupied.
-        File removedFile = new File(file.getAbsoluteFile().getParentFile(), file.getName() + "_removed");
-        if (!file.renameTo(removedFile))
+        Path removedFile = file.toAbsolutePath().resolveSibling(FileUtils.getName(file) + "_removed");
+        try {
+            Files.move(file, removedFile, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            LOG.warning("Failed to rename file " + file, e);
             return false;
+        }
 
         try {
             versions.remove(id);
 
-            if (FileUtils.moveToTrash(removedFile.toPath())) {
+            if (FileUtils.moveToTrash(removedFile)) {
                 return true;
             }
 
             // remove json files first to ensure HMCL will not recognize this folder as a valid version.
 
-            for (Path path : FileUtils.listFilesByExtension(removedFile.toPath(), "json")) {
+            for (Path path : FileUtils.listFilesByExtension(removedFile, "json")) {
                 try {
                     Files.delete(path);
                 } catch (IOException e) {
@@ -260,7 +265,7 @@ public class DefaultGameRepository implements GameRepository {
 
             // remove the version from version list regardless of whether the directory was removed successfully or not.
             try {
-                FileUtils.deleteDirectory(removedFile.toPath());
+                FileUtils.deleteDirectory(removedFile);
             } catch (IOException e) {
                 LOG.warning("Unable to remove version folder: " + file, e);
             }
@@ -329,8 +334,8 @@ public class DefaultGameRepository implements GameRepository {
                     try {
                         String from = id;
                         String to = version.getId();
-                        Path fromDir = getVersionRoot(from).toPath();
-                        Path toDir = getVersionRoot(to).toPath();
+                        Path fromDir = getVersionRoot(from);
+                        Path toDir = getVersionRoot(to);
                         Files.move(fromDir, toDir);
 
                         Path fromJson = toDir.resolve(from + ".json");
@@ -497,7 +502,7 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     public File getModpackConfiguration(String version) {
-        return new File(getVersionRoot(version), "modpack.json");
+        return getVersionRoot(version).resolve("modpack.json").toFile();
     }
 
     /**

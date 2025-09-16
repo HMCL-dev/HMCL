@@ -121,7 +121,7 @@ public class ServerModpackCompletionTask extends Task<Void> {
             dependencies.add(builder.buildAsync());
         }
 
-        Path rootPath = repository.getVersionRoot(version).toPath().toAbsolutePath().normalize();
+        Path rootPath = repository.getVersionRoot(version).toAbsolutePath().normalize();
         Map<String, ModpackConfiguration.FileInformation> files = manifest.getManifest().getFiles().stream()
                 .collect(Collectors.toMap(ModpackConfiguration.FileInformation::getPath,
                         Function.identity()));
