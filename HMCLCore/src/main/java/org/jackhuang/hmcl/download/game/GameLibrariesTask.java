@@ -19,18 +19,22 @@ package org.jackhuang.hmcl.download.game;
 
 import org.jackhuang.hmcl.download.AbstractDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -114,6 +118,18 @@ public final class GameLibrariesTask extends Task<Void> {
         return false;
     }
 
+    private static boolean shouldDownloadFMLLib(FMLLib fmlLib, Path file) {
+        if (!Files.isRegularFile(file))
+            return true;
+
+        try {
+            return !DigestUtils.digestToString("SHA-1", file).equalsIgnoreCase(fmlLib.sha1);
+        } catch (IOException e) {
+            LOG.warning("Unable to calc hash value of file " + file, e);
+            return true;
+        }
+    }
+
     @Override
     public void execute() throws IOException {
         int progress = 0;
@@ -121,6 +137,27 @@ public final class GameLibrariesTask extends Task<Void> {
         for (Library library : libraries) {
             if (!library.appliesToCurrentEnvironment()) {
                 continue;
+            }
+
+            // https://github.com/HMCL-dev/HMCL/issues/3975
+            if ("net.minecraftforge".equals(library.getGroupId()) && "minecraftforge".equals(library.getArtifactId())
+                    && gameRepository instanceof DefaultGameRepository defaultGameRepository) {
+                List<FMLLib> fmlLibs = getFMLLibs(library.getVersion());
+                if (fmlLibs != null) {
+                    Path libDir = defaultGameRepository.getBaseDirectory().toPath()
+                            .resolve("lib")
+                            .toAbsolutePath().normalize();
+
+                    for (FMLLib fmlLib : fmlLibs) {
+                        Path file = libDir.resolve(fmlLib.name);
+                        if (shouldDownloadFMLLib(fmlLib, file)) {
+                            List<URI> uris = dependencyManager.getDownloadProvider()
+                                    .injectURLWithCandidates(fmlLib.getDownloadURI());
+                            dependencies.add(new FileDownloadTask(uris, file)
+                                    .withCounter("hmcl.install.libraries"));
+                        }
+                    }
+                }
             }
 
             File file = gameRepository.getLibraryFile(version, library);
@@ -151,4 +188,28 @@ public final class GameLibrariesTask extends Task<Void> {
         }
     }
 
+    private static @Nullable List<FMLLib> getFMLLibs(String forgeVersion) {
+        if (forgeVersion == null)
+            return null;
+
+        // Minecraft 1.5.2
+        if (forgeVersion.startsWith("7.8.1.")) {
+            return List.of(
+                    new FMLLib("argo-small-3.2.jar", "58912ea2858d168c50781f956fa5b59f0f7c6b51"),
+                    new FMLLib("guava-14.0-rc3.jar", "931ae21fa8014c3ce686aaa621eae565fefb1a6a"),
+                    new FMLLib("asm-all-4.1.jar", "054986e962b88d8660ae4566475658469595ef58"),
+                    new FMLLib("bcprov-jdk15on-148.jar", "960dea7c9181ba0b17e8bab0c06a43f0a5f04e65"),
+                    new FMLLib("deobfuscation_data_1.5.2.zip", "446e55cd986582c70fcf12cb27bc00114c5adfd9"),
+                    new FMLLib("scala-library.jar", "458d046151ad179c85429ed7420ffb1eaf6ddf85")
+            );
+        }
+
+        return null;
+    }
+
+    private record FMLLib(String name, String sha1) {
+        public String getDownloadURI() {
+            return "https://hmcl-dev.github.io/metadata/fmllibs/" + name;
+        }
+    }
 }
