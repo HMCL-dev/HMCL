@@ -132,8 +132,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
     }
 
-    public void changeDirectory(File newDirectory) {
-        setBaseDirectory(newDirectory.toPath());
+    public void changeDirectory(Path newDirectory) {
+        setBaseDirectory(newDirectory);
         refreshVersionsAsync().start();
     }
 
@@ -190,15 +190,15 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             FileUtils.copyDirectory(srcGameDir, dstGameDir, path -> Modpack.acceptFile(path, blackList, null));
     }
 
-    private File getLocalVersionSettingFile(String id) {
-        return getVersionRoot(id).resolve("hmclversion.cfg").toFile();
+    private Path getLocalVersionSettingFile(String id) {
+        return getVersionRoot(id).resolve("hmclversion.cfg");
     }
 
     private void loadLocalVersionSetting(String id) {
-        File file = getLocalVersionSettingFile(id);
-        if (file.exists())
+        Path file = getLocalVersionSettingFile(id);
+        if (Files.exists(file))
             try {
-                VersionSetting versionSetting = GSON.fromJson(Files.readString(file.toPath()), VersionSetting.class);
+                VersionSetting versionSetting = JsonUtils.fromJsonFile(file, VersionSetting.class);
                 initLocalVersionSetting(id, versionSetting);
             } catch (Exception ex) {
                 // If [JsonParseException], [IOException] or [NullPointerException] happens, the json file is malformed and needed to be recreated.
@@ -344,7 +344,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     public void saveVersionSetting(String id) {
         if (!localVersionSettings.containsKey(id))
             return;
-        Path file = getLocalVersionSettingFile(id).toPath().toAbsolutePath().normalize();
+        Path file = getLocalVersionSettingFile(id).toAbsolutePath().normalize();
         try {
             Files.createDirectories(file.getParent());
         } catch (IOException e) {

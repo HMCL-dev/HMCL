@@ -137,7 +137,7 @@ public final class Profile implements Observable {
         this.selectedVersion.set(selectedVersion);
         this.useRelativePath.set(useRelativePath);
 
-        gameDir.addListener((a, b, newValue) -> repository.changeDirectory(newValue));
+        gameDir.addListener((a, b, newValue) -> repository.changeDirectory(newValue.toPath()));
         this.selectedVersion.addListener(o -> checkSelectedVersion());
         listenerHolder.add(EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> checkSelectedVersion(), EventPriority.HIGHEST));
 
