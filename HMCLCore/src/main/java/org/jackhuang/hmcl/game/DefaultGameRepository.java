@@ -32,7 +32,6 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
@@ -59,16 +58,12 @@ public class DefaultGameRepository implements GameRepository {
         this.baseDirectory = baseDirectory;
     }
 
-    public DefaultGameRepository(File baseDirectory) {
-        this(baseDirectory.toPath());
-    }
-
     public Path getBaseDirectory() {
         return baseDirectory;
     }
 
-    public void setBaseDirectory(File baseDirectory) {
-        this.baseDirectory = baseDirectory.toPath();
+    public void setBaseDirectory(Path baseDirectory) {
+        this.baseDirectory = baseDirectory;
     }
 
     @Override
