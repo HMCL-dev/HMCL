@@ -289,83 +289,95 @@ public class DefaultGameRepository implements GameRepository {
 
         SimpleVersionProvider provider = new SimpleVersionProvider();
 
-        File[] files = getBaseDirectory().resolve("versions").toFile().listFiles();
-        if (files != null)
-            Arrays.stream(files).parallel().filter(File::isDirectory).flatMap(dir -> {
-                String id = dir.getName();
-                File json = new File(dir, id + ".json");
+        Path versionsDir = getBaseDirectory().resolve("versions");
+        if (Files.isDirectory(versionsDir)) {
+            try (Stream<Path> stream = Files.list(versionsDir)) {
+                stream.parallel().filter(Files::isDirectory).flatMap(dir -> {
+                    String id = FileUtils.getName(dir);
+                    Path json = dir.resolve(id + ".json");
 
-                // If user renamed the json file by mistake or created the json file in a wrong name,
-                // we will find the only json and rename it to correct name.
-                if (!json.exists()) {
-                    List<Path> jsons = FileUtils.listFilesByExtension(dir.toPath(), "json");
-                    if (jsons.size() == 1) {
-                        LOG.info("Renaming json file " + jsons.get(0) + " to " + json);
-                        if (!jsons.get(0).toFile().renameTo(json)) {
-                            LOG.warning("Cannot rename json file, ignoring version " + id);
+                    // If user renamed the json file by mistake or created the json file in a wrong name,
+                    // we will find the only json and rename it to correct name.
+                    if (Files.notExists(json)) {
+                        List<Path> jsons = FileUtils.listFilesByExtension(dir, "json");
+                        if (jsons.size() == 1) {
+                            LOG.info("Renaming json file " + jsons.get(0) + " to " + json);
+
+                            try {
+                                Files.move(jsons.get(0), json);
+                            } catch (IOException e) {
+                                LOG.warning("Cannot rename json file, ignoring version " + id, e);
+                                return Stream.empty();
+                            }
+
+                            Path jar = dir.resolve(FileUtils.getNameWithoutExtension(jsons.get(0)) + ".jar");
+                            if (Files.exists(jar)) {
+                                try {
+                                    Files.move(jar, dir.resolve(id + ".jar"));
+                                } catch (IOException e) {
+                                    LOG.warning("Cannot rename jar file, ignoring version " + id, e);
+                                    return Stream.empty();
+                                }
+                            }
+                        } else {
+                            LOG.info("No available json file found, ignoring version " + id);
                             return Stream.empty();
                         }
+                    }
 
-                        File jar = new File(dir, FileUtils.getNameWithoutExtension(jsons.get(0)) + ".jar");
-                        if (jar.exists() && !jar.renameTo(new File(dir, id + ".jar"))) {
-                            LOG.warning("Cannot rename jar file, ignoring version " + id);
+                    Version version;
+                    try {
+                        version = readVersionJson(json);
+                    } catch (Exception e) {
+                        LOG.warning("Malformed version json " + id, e);
+                        // JsonSyntaxException or IOException or NullPointerException(!!)
+                        if (EventBus.EVENT_BUS.fireEvent(new GameJsonParseFailedEvent(this, json.toFile(), id)) != Event.Result.ALLOW)
                             return Stream.empty();
-                        }
-                    } else {
-                        LOG.info("No available json file found, ignoring version " + id);
-                        return Stream.empty();
-                    }
-                }
-
-                Version version;
-                try {
-                    version = readVersionJson(json.toPath());
-                } catch (Exception e) {
-                    LOG.warning("Malformed version json " + id, e);
-                    // JsonSyntaxException or IOException or NullPointerException(!!)
-                    if (EventBus.EVENT_BUS.fireEvent(new GameJsonParseFailedEvent(this, json, id)) != Event.Result.ALLOW)
-                        return Stream.empty();
-
-                    try {
-                        version = readVersionJson(json.toPath());
-                    } catch (Exception e2) {
-                        LOG.error("User corrected version json is still malformed", e2);
-                        return Stream.empty();
-                    }
-                }
-
-                if (!id.equals(version.getId())) {
-                    try {
-                        String from = id;
-                        String to = version.getId();
-                        Path fromDir = getVersionRoot(from);
-                        Path toDir = getVersionRoot(to);
-                        Files.move(fromDir, toDir);
-
-                        Path fromJson = toDir.resolve(from + ".json");
-                        Path fromJar = toDir.resolve(from + ".jar");
-                        Path toJson = toDir.resolve(to + ".json");
-                        Path toJar = toDir.resolve(to + ".jar");
 
                         try {
-                            Files.move(fromJson, toJson);
-                            if (Files.exists(fromJar))
-                                Files.move(fromJar, toJar);
-                        } catch (IOException e) {
-                            // recovery
-                            Lang.ignoringException(() -> Files.move(toJson, fromJson));
-                            Lang.ignoringException(() -> Files.move(toJar, fromJar));
-                            Lang.ignoringException(() -> Files.move(toDir, fromDir));
-                            throw e;
+                            version = readVersionJson(json);
+                        } catch (Exception e2) {
+                            LOG.error("User corrected version json is still malformed", e2);
+                            return Stream.empty();
                         }
-                    } catch (IOException e) {
-                        LOG.warning("Ignoring version " + version.getId() + " because version id does not match folder name " + id + ", and we cannot correct it.", e);
-                        return Stream.empty();
                     }
-                }
 
-                return Stream.of(version);
-            }).forEachOrdered(provider::addVersion);
+                    if (!id.equals(version.getId())) {
+                        try {
+                            String from = id;
+                            String to = version.getId();
+                            Path fromDir = getVersionRoot(from);
+                            Path toDir = getVersionRoot(to);
+                            Files.move(fromDir, toDir);
+
+                            Path fromJson = toDir.resolve(from + ".json");
+                            Path fromJar = toDir.resolve(from + ".jar");
+                            Path toJson = toDir.resolve(to + ".json");
+                            Path toJar = toDir.resolve(to + ".jar");
+
+                            try {
+                                Files.move(fromJson, toJson);
+                                if (Files.exists(fromJar))
+                                    Files.move(fromJar, toJar);
+                            } catch (IOException e) {
+                                // recovery
+                                Lang.ignoringException(() -> Files.move(toJson, fromJson));
+                                Lang.ignoringException(() -> Files.move(toJar, fromJar));
+                                Lang.ignoringException(() -> Files.move(toDir, fromDir));
+                                throw e;
+                            }
+                        } catch (IOException e) {
+                            LOG.warning("Ignoring version " + version.getId() + " because version id does not match folder name " + id + ", and we cannot correct it.", e);
+                            return Stream.empty();
+                        }
+                    }
+
+                    return Stream.of(version);
+                }).forEachOrdered(provider::addVersion);
+            } catch (IOException e) {
+                LOG.warning("Failed to load versions from " + versionsDir, e);
+            }
+        }
 
         for (Version version : provider.getVersionMap().values()) {
             try {
