@@ -181,7 +181,7 @@ public class MaintainTask extends Task<Version> {
         // we need to manually ignore ${primary_jar}.
         newIgnoreList.add("${primary_jar}");
 
-        Path libraryDirectory = repository.getLibrariesDirectory(version).toPath().toAbsolutePath();
+        Path libraryDirectory = repository.getLibrariesDirectory(version).toAbsolutePath().normalize();
 
         // The default ignoreList is too loose and may cause some problems, we replace them with the absolute version.
         // For example, if "client-extra" is in ignoreList, and game directory contains "client-extra" component, all
