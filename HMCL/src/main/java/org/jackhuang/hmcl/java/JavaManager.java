@@ -209,8 +209,16 @@ public final class JavaManager {
 
     public static Task<Void> getUninstallJavaTask(JavaRuntime java) {
         assert java.isManaged();
-        Path root = REPOSITORY.getPlatformRoot(java.getPlatform());
-        Path relativized = root.relativize(java.getBinary());
+
+        Path relativized;
+        try {
+            relativized = REPOSITORY.getPlatformRoot(java.getPlatform()).toRealPath().relativize(java.getBinary());
+        } catch (Throwable e) {
+            if (!(e instanceof NoSuchFileException)) {
+                LOG.warning("Failed to get relativize path", e);
+            }
+            return Task.completed(null);
+        }
 
         if (relativized.getNameCount() > 1) {
             FXUtils.runInFX(() -> {
