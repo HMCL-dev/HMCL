@@ -176,7 +176,7 @@ public class LibraryDownloadTask extends Task<Void> {
             boolean failed = !checksums.contains(files.get("checksums.sha1"));
             if (!failed) {
                 for (String hash : hashes) {
-                    if ((!hash.trim().isEmpty()) && (hash.contains(" "))) {
+                    if (!hash.trim().isEmpty() && hash.contains(" ")) {
                         String[] e = hash.split(" ");
                         String validChecksum = e[0];
                         String target = hash.substring(validChecksum.length() + 1);
