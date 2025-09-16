@@ -210,30 +210,32 @@ public final class JavaManager {
     public static Task<Void> getUninstallJavaTask(JavaRuntime java) {
         assert java.isManaged();
 
-        Path relativized;
+        Path platformRoot;
         try {
-            Path platformRoot = REPOSITORY.getPlatformRoot(java.getPlatform()).toRealPath();
-            if (!java.getBinary().startsWith(platformRoot))
-                return Task.completed(null);
-
-            relativized = platformRoot.relativize(java.getBinary());
-        } catch (NoSuchFileException ignored) {
-            return Task.completed(null);
-        } catch (Throwable e) {
-            LOG.warning("Failed to get relativize path", e);
+            platformRoot = REPOSITORY.getPlatformRoot(java.getPlatform()).toRealPath();
+        } catch (Throwable ignored) {
             return Task.completed(null);
         }
 
-        FXUtils.runInFX(() -> {
-            try {
-                removeJava(java);
-            } catch (InterruptedException e) {
-                throw new AssertionError("Unreachable code", e);
-            }
-        });
+        if (!java.getBinary().startsWith(platformRoot))
+            return Task.completed(null);
 
-        String name = relativized.getName(0).toString();
-        return REPOSITORY.getUninstallJavaTask(java.getPlatform(), name);
+        Path relativized = platformRoot.relativize(java.getBinary());
+
+        if (relativized.getNameCount() > 1) {
+            FXUtils.runInFX(() -> {
+                try {
+                    removeJava(java);
+                } catch (InterruptedException e) {
+                    throw new AssertionError("Unreachable code", e);
+                }
+            });
+
+            String name = relativized.getName(0).toString();
+            return REPOSITORY.getUninstallJavaTask(java.getPlatform(), name);
+        } else {
+            return  Task.completed(null);
+        }
     }
 
     // FXThread
