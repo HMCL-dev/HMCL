@@ -139,8 +139,8 @@ public class DefaultGameRepository implements GameRepository {
         // this function, which is accepted because GameVersion::minecraftVersion should
         // be consistent.
         return gameVersions.computeIfAbsent(getVersionJar(version), versionJar -> {
-            Optional<String> gameVersion = GameVersion.minecraftVersion(versionJar);
-            if (!gameVersion.isPresent()) {
+            Optional<String> gameVersion = GameVersion.minecraftVersion(versionJar.toPath());
+            if (gameVersion.isEmpty()) {
                 LOG.warning("Cannot find out game version of " + version.getId() + ", primary jar: " + versionJar.toString() + ", jar exists: " + versionJar.exists());
             }
             return gameVersion;
