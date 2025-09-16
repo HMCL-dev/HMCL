@@ -100,6 +100,17 @@ public abstract class FetchTask<T> extends Task<T> {
         int repeat = 0;
         download:
         for (URI uri : uris) {
+            if (checkETag) {
+                // Handle cache
+                try {
+                    Path cache = repository.getCachedRemoteFile(uri, true);
+                    useCachedResult(cache);
+                    LOG.info("Using cached file for " + NetworkUtils.dropQuery(uri));
+                    return;
+                } catch (IOException ignored) {
+                }
+            }
+
             for (int retryTime = 0; retryTime < retry; retryTime++) {
                 if (isCancelled()) {
                     break download;
@@ -116,18 +127,7 @@ public abstract class FetchTask<T> extends Task<T> {
                     if (conn instanceof HttpURLConnection httpConnection) {
                         httpConnection.setRequestProperty("Accept-Encoding", "gzip");
 
-                        if (checkETag) {
-                            // Handle cache
-                            try {
-                                Path cache = repository.getCachedRemoteFile(uri, true);
-                                useCachedResult(cache);
-                                LOG.info("Using cached file for " + NetworkUtils.dropQuery(uri));
-                                return;
-                            } catch (IOException ignored) {
-                            }
-
-                            repository.injectConnection(httpConnection);
-                        }
+                        if (checkETag) repository.injectConnection(httpConnection);
                         Map<String, List<String>> requestProperties = httpConnection.getRequestProperties();
 
                         bmclapiHash = httpConnection.getHeaderField("x-bmclapi-hash");
