@@ -140,14 +140,14 @@ public class LibraryDownloadTask extends Task<Void> {
         }
     }
 
-    public static boolean checksumValid(File libPath, List<String> checksums) {
+    public static boolean checksumValid(Path libPath, List<String> checksums) {
         try {
             if (checksums == null || checksums.isEmpty()) {
                 return true;
             }
-            byte[] fileData = Files.readAllBytes(libPath.toPath());
+            byte[] fileData = Files.readAllBytes(libPath);
             boolean valid = checksums.contains(DigestUtils.digestToString("SHA-1", fileData));
-            if (!valid && libPath.getName().endsWith(".jar")) {
+            if (!valid && FileUtils.getName(libPath).endsWith(".jar")) {
                 valid = validateJar(fileData, checksums);
             }
             return valid;
