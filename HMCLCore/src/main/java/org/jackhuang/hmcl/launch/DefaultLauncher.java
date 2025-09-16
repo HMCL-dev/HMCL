@@ -64,7 +64,7 @@ public class DefaultLauncher extends Launcher {
         this.analyzer = LibraryAnalyzer.analyze(version, repository.getGameVersion(version).orElse(null));
     }
 
-    private Command generateCommandLine(File nativeFolder) throws IOException {
+    private Command generateCommandLine(Path nativeFolder) throws IOException {
         CommandBuilder res = new CommandBuilder();
 
         switch (options.getProcessPriority()) {
@@ -266,7 +266,7 @@ public class DefaultLauncher extends Launcher {
 
         // lwjgl assumes path to native libraries encoded by ASCII.
         // Here is a workaround for this issue: https://github.com/HMCL-dev/HMCL/issues/1141.
-        String nativeFolderPath = nativeFolder.getAbsolutePath();
+        String nativeFolderPath = nativeFolder.toAbsolutePath().normalize().toString();
         Path tempNativeFolder = null;
         if ((OperatingSystem.CURRENT_OS == OperatingSystem.LINUX || OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
                 && !StringUtils.isASCII(nativeFolderPath)
@@ -376,12 +376,12 @@ public class DefaultLauncher extends Launcher {
     protected void appendJvmArgs(CommandBuilder result) {
     }
 
-    public void decompressNatives(File destination) throws NotDecompressingNativesException {
+    public void decompressNatives(Path destination) throws NotDecompressingNativesException {
         try {
-            FileUtils.cleanDirectoryQuietly(destination.toPath());
+            FileUtils.cleanDirectoryQuietly(destination);
             for (Library library : version.getLibraries())
                 if (library.isNative())
-                    new Unzipper(repository.getLibraryFile(version, library), destination)
+                    new Unzipper(repository.getLibraryFile(version, library).toPath(), destination)
                             .setFilter((zipEntry, isDirectory, destFile, path) -> {
                                 if (!isDirectory && Files.isRegularFile(destFile) && Files.size(destFile) == Files.size(zipEntry))
                                     return false;
@@ -460,11 +460,11 @@ public class DefaultLauncher extends Launcher {
 
     @Override
     public ManagedProcess launch() throws IOException, InterruptedException {
-        File nativeFolder;
+        Path nativeFolder;
         if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
             nativeFolder = repository.getNativeDirectory(version.getId(), options.getJava().getPlatform());
         } else {
-            nativeFolder = new File(options.getNativesDir());
+            nativeFolder = Path.of(options.getNativesDir());
         }
 
         final Command command = generateCommandLine(nativeFolder);
@@ -474,7 +474,7 @@ public class DefaultLauncher extends Launcher {
 
         if (command.tempNativeFolder != null) {
             Files.deleteIfExists(command.tempNativeFolder);
-            Files.createSymbolicLink(command.tempNativeFolder, nativeFolder.toPath().toAbsolutePath());
+            Files.createSymbolicLink(command.tempNativeFolder, nativeFolder.toAbsolutePath());
         }
 
         if (rawCommandLine.stream().anyMatch(StringUtils::isBlank)) {
@@ -582,11 +582,11 @@ public class DefaultLauncher extends Launcher {
     public void makeLaunchScript(File scriptFile) throws IOException {
         boolean isWindows = OperatingSystem.WINDOWS == OperatingSystem.CURRENT_OS;
 
-        File nativeFolder;
+        Path nativeFolder;
         if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
             nativeFolder = repository.getNativeDirectory(version.getId(), options.getJava().getPlatform());
         } else {
-            nativeFolder = new File(options.getNativesDir());
+            nativeFolder = Path.of(options.getNativesDir());
         }
 
         if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
@@ -706,7 +706,7 @@ public class DefaultLauncher extends Launcher {
                             writer.newLine();
                         }
                         if (commandLine.tempNativeFolder != null) {
-                            writer.write(new CommandBuilder().add("ln", "-s", nativeFolder.getAbsolutePath(), commandLine.tempNativeFolder.toString()).toString());
+                            writer.write(new CommandBuilder().add("ln", "-s", nativeFolder.toAbsolutePath().normalize().toString(), commandLine.tempNativeFolder.toString()).toString());
                             writer.newLine();
                         }
                         writer.write(new CommandBuilder().add("cd", repository.getRunDirectory(version.getId()).getAbsolutePath()).toString());

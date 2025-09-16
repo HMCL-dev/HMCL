@@ -128,7 +128,7 @@ public interface GameRepository extends VersionProvider {
      * @param platform the platform of native libraries
      * @return the native directory
      */
-    File getNativeDirectory(String id, Platform platform);
+    Path getNativeDirectory(String id, Platform platform);
 
     /**
      * Get minecraft jar
