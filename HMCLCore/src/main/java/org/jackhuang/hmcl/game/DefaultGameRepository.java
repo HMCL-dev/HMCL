@@ -326,7 +326,7 @@ public class DefaultGameRepository implements GameRepository {
                     } catch (Exception e) {
                         LOG.warning("Malformed version json " + id, e);
                         // JsonSyntaxException or IOException or NullPointerException(!!)
-                        if (EventBus.EVENT_BUS.fireEvent(new GameJsonParseFailedEvent(this, json.toFile(), id)) != Event.Result.ALLOW)
+                        if (EventBus.EVENT_BUS.fireEvent(new GameJsonParseFailedEvent(this, json, id)) != Event.Result.ALLOW)
                             return Stream.empty();
 
                         try {
