@@ -149,7 +149,7 @@ public final class LauncherHelper {
                             dependencyManager.checkGameCompletionAsync(version.get(), integrityCheck),
                             Task.composeAsync(() -> {
                                 try {
-                                    ModpackConfiguration<?> configuration = ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(selectedVersion).toFile());
+                                    ModpackConfiguration<?> configuration = ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(selectedVersion));
                                     ModpackProvider provider = ModpackHelper.getProviderByType(configuration.getType());
                                     if (provider == null) return null;
                                     else return provider.createCompletionTask(dependencyManager, selectedVersion);

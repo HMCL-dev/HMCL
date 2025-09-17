@@ -84,7 +84,7 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         boolean isManuallyCreated = tryCast(settings.get(LocalModpackPage.MODPACK_MANUALLY_CREATED), Boolean.class).orElse(false);
 
         if (isManuallyCreated) {
-            return ModpackHelper.getInstallManuallyCreatedModpackTask(profile, FileUtils.toFile(selected), name, charset);
+            return ModpackHelper.getInstallManuallyCreatedModpackTask(profile, selected, name, charset);
         }
 
         if ((selected == null && serverModpackManifest == null) || modpack == null || name == null) return null;
@@ -96,9 +96,9 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
             }
             try {
                 if (serverModpackManifest != null) {
-                    return ModpackHelper.getUpdateTask(profile, serverModpackManifest, modpack.getEncoding(), name, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(name).toFile()));
+                    return ModpackHelper.getUpdateTask(profile, serverModpackManifest, modpack.getEncoding(), name, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(name)));
                 } else {
-                    return ModpackHelper.getUpdateTask(profile, selected.toFile(), modpack.getEncoding(), name, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(name).toFile()));
+                    return ModpackHelper.getUpdateTask(profile, selected, modpack.getEncoding(), name, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(name)));
                 }
             } catch (UnsupportedModpackException | ManuallyCreatedModpackException e) {
                 Controllers.dialog(i18n("modpack.unsupported"), i18n("message.error"), MessageType.ERROR);
@@ -113,7 +113,7 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
                 return ModpackHelper.getInstallTask(profile, serverModpackManifest, name, modpack)
                         .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
             } else {
-                return ModpackHelper.getInstallTask(profile, selected.toFile(), name, modpack)
+                return ModpackHelper.getInstallTask(profile, selected, name, modpack)
                         .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
             }
         }
