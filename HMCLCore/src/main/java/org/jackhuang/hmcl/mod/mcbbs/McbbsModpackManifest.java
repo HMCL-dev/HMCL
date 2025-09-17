@@ -425,7 +425,7 @@ public class McbbsModpackManifest implements ModpackManifest, Validation {
         return new Modpack(name, author, version, gameVersion, description, encoding, this) {
             @Override
             public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, String name) {
-                return new McbbsModpackLocalInstallTask(dependencyManager, zipFile.toFile(), this, McbbsModpackManifest.this, name);
+                return new McbbsModpackLocalInstallTask(dependencyManager, zipFile, this, McbbsModpackManifest.this, name);
             }
         };
     }

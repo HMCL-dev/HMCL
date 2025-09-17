@@ -49,7 +49,7 @@ public final class McbbsModpackProvider implements ModpackProvider {
         if (!(modpack.getManifest() instanceof McbbsModpackManifest mcbbsModpackManifest))
             throw new MismatchedModpackTypeException(getName(), modpack.getManifest().getProvider().getName());
 
-        return new ModpackUpdateTask(dependencyManager.getGameRepository(), name, new McbbsModpackLocalInstallTask(dependencyManager, zipFile.toFile(), modpack, mcbbsModpackManifest, name));
+        return new ModpackUpdateTask(dependencyManager.getGameRepository(), name, new McbbsModpackLocalInstallTask(dependencyManager, zipFile, modpack, mcbbsModpackManifest, name));
     }
 
     @Override
