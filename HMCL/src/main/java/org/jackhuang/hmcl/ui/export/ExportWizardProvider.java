@@ -175,7 +175,7 @@ public final class ExportWizardProvider implements WizardProvider {
 
             @Override
             public void execute() {
-                dependency = new McbbsModpackExportTask(profile.getRepository(), version, exportInfo, modpackFile);
+                dependency = new McbbsModpackExportTask(profile.getRepository(), version, exportInfo, modpackFile.toPath());
             }
 
             @Override
