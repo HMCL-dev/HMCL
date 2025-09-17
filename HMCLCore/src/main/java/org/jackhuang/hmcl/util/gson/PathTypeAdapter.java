@@ -52,7 +52,7 @@ public final class PathTypeAdapter extends TypeAdapter<Path> {
                 throw new IOException("Unsupported file system: " + path.getFileSystem());
 
             String value = path.toString();
-            if (File.separatorChar == '\\')
+            if (!path.isAbsolute() && File.separatorChar == '\\')
                 value = value.replace('\\', '/');
             out.value(value);
         } else {
