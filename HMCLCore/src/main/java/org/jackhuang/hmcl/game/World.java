@@ -279,7 +279,7 @@ public final class World {
         if (isLocked()) {
             throw new WorldLockedException("The world " + getFile() + " has been locked");
         }
-        FileUtils.forceDelete(file.toFile());
+        FileUtils.forceDelete(file);
     }
 
     public CompoundTag readLevelDat() throws IOException {
