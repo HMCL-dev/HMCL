@@ -243,10 +243,10 @@ public final class ModpackHelper {
             throw new UnsupportedModpackException();
         }
         if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
-            return provider.createUpdateTask(profile.getDependency(), name, zipFile, modpack)
+            return provider.createUpdateTask(profile.getDependency(), name, zipFile.toPath(), modpack)
                     .thenComposeAsync(() -> createMultiMCPostUpdateTask(profile, (MultiMCInstanceConfiguration) modpack.getManifest(), name));
         else
-            return provider.createUpdateTask(profile.getDependency(), name, zipFile, modpack);
+            return provider.createUpdateTask(profile.getDependency(), name, zipFile.toPath(), modpack);
     }
 
     public static void toVersionSetting(MultiMCInstanceConfiguration c, VersionSetting vs) {
