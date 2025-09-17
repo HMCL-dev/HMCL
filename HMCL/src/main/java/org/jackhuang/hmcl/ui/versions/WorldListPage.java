@@ -29,7 +29,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.InvalidPathException;
@@ -54,7 +53,7 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
 
     public WorldListPage() {
         FXUtils.applyDragListener(this, it -> "zip".equals(FileUtils.getExtension(it.getName())), modpacks -> {
-            installWorld(modpacks.get(0));
+            installWorld(modpacks.get(0).toPath());
         });
 
         showAll.addListener(e -> {
@@ -112,7 +111,7 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("world.import.choose"));
         chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(i18n("world.extension"), "*.zip"));
-        List<File> res = chooser.showOpenMultipleDialog(Controllers.getStage());
+        List<Path> res = FileUtils.toPaths(chooser.showOpenMultipleDialog(Controllers.getStage()));
 
         if (res == null || res.isEmpty()) return;
         installWorld(res.get(0));
@@ -123,10 +122,10 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
         Controllers.navigate(Controllers.getDownloadPage());
     }
 
-    private void installWorld(File zipFile) {
+    private void installWorld(Path zipFile) {
         // Only accept one world file because user is required to confirm the new world name
         // Or too many input dialogs are popped.
-        Task.supplyAsync(() -> new World(zipFile.toPath()))
+        Task.supplyAsync(() -> new World(zipFile))
                 .whenComplete(Schedulers.javafx(), world -> {
                     Controllers.prompt(i18n("world.name.enter"), (name, resolve, reject) -> {
                         Task.runAsync(() -> world.install(savesDir, name))
