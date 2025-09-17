@@ -45,6 +45,7 @@ import java.io.File;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.*;
 import java.net.Proxy;
+import java.nio.file.Path;
 import java.util.*;
 
 @JsonAdapter(value = Config.Adapter.class)
@@ -55,6 +56,7 @@ public final class Config implements Observable {
 
     public static final Gson CONFIG_GSON = new GsonBuilder()
             .registerTypeAdapter(File.class, FileTypeAdapter.INSTANCE)
+            .registerTypeAdapter(Path.class, PathTypeAdapter.INSTANCE)
             .registerTypeAdapter(ObservableList.class, new ObservableListCreator())
             .registerTypeAdapter(ObservableSet.class, new ObservableSetCreator())
             .registerTypeAdapter(ObservableMap.class, new ObservableMapCreator())
