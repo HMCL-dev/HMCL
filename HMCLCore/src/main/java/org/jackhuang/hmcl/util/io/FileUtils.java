@@ -50,7 +50,8 @@ public final class FileUtils {
     public static @Nullable Path toPath(@Nullable File file) {
         try {
             return file != null ? file.toPath() : null;
-        } catch (InvalidPathException ignored) {
+        } catch (InvalidPathException e) {
+            LOG.warning("Invalid path: " + file);
             return null;
         }
     }

@@ -49,10 +49,7 @@ import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
-import javafx.stage.FileChooser;
-import javafx.stage.Screen;
-import javafx.stage.Stage;
-import javafx.stage.Window;
+import javafx.stage.*;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
@@ -87,7 +84,6 @@ import java.lang.invoke.MethodType;
 import java.lang.ref.WeakReference;
 import java.net.*;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
@@ -1451,32 +1447,6 @@ public final class FXUtils {
         int b = (int) Math.round(color.getBlue() * 255.0);
 
         return String.format("#%02x%02x%02x", r, g, b);
-    }
-
-    public static @Nullable Path showOpenDialog(FileChooser chooser, Window ownerWindow) {
-        File file = chooser.showOpenDialog(ownerWindow);
-        if (file != null) {
-            try {
-                return file.toPath();
-            } catch (InvalidPathException e) {
-                LOG.warning("Invalid path: " + file);
-                return null;
-            }
-        } else
-            return null;
-    }
-
-    public static @Nullable Path showSaveDialog(FileChooser chooser, Window ownerWindow) {
-        File file = chooser.showSaveDialog(ownerWindow);
-        if (file != null) {
-            try {
-                return file.toPath();
-            } catch (InvalidPathException e) {
-                LOG.warning("Invalid path: " + file);
-                return null;
-            }
-        } else
-            return null;
     }
 
     public static @Nullable List<Path> showOpenMultipleDialog(FileChooser chooser, Window ownerWindow) {
