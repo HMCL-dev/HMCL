@@ -58,7 +58,7 @@ public final class HMCLModpackProvider implements ModpackProvider {
 
         Profile profile = repository.getProfile();
 
-        return new ModpackUpdateTask(dependencyManager.getGameRepository(), name, new HMCLModpackInstallTask(profile, zipFile.toFile(), modpack, name));
+        return new ModpackUpdateTask(dependencyManager.getGameRepository(), name, new HMCLModpackInstallTask(profile, zipFile, modpack, name));
     }
 
     @Override
@@ -80,7 +80,7 @@ public final class HMCLModpackProvider implements ModpackProvider {
     private static class HMCLModpack extends Modpack {
         @Override
         public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, String name) {
-            return new HMCLModpackInstallTask(((HMCLGameRepository) dependencyManager.getGameRepository()).getProfile(), zipFile.toFile(), this, name);
+            return new HMCLModpackInstallTask(((HMCLGameRepository) dependencyManager.getGameRepository()).getProfile(), zipFile, this, name);
         }
     }
 
