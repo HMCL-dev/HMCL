@@ -52,7 +52,7 @@ public final class CurseModpackProvider implements ModpackProvider {
         if (!(modpack.getManifest() instanceof CurseManifest curseManifest))
             throw new MismatchedModpackTypeException(getName(), modpack.getManifest().getProvider().getName());
 
-        return new ModpackUpdateTask(dependencyManager.getGameRepository(), name, new CurseInstallTask(dependencyManager, zipFile.toFile(), modpack, curseManifest, name));
+        return new ModpackUpdateTask(dependencyManager.getGameRepository(), name, new CurseInstallTask(dependencyManager, zipFile, modpack, curseManifest, name));
     }
 
     @Override
@@ -69,7 +69,7 @@ public final class CurseModpackProvider implements ModpackProvider {
         return new Modpack(manifest.getName(), manifest.getAuthor(), manifest.getVersion(), manifest.getMinecraft().getGameVersion(), description, encoding, manifest) {
             @Override
             public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, String name) {
-                return new CurseInstallTask(dependencyManager, zipFile.toFile(), this, manifest, name);
+                return new CurseInstallTask(dependencyManager, zipFile, this, manifest, name);
             }
         };
     }
