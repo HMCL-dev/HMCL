@@ -49,11 +49,12 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -172,14 +173,14 @@ public class DownloadPage extends Control implements DecoratorPage {
         fileChooser.setTitle(i18n("button.save_as"));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("file"), "*." + extension));
         fileChooser.setInitialFileName(file.getFile().getFilename());
-        File dest = fileChooser.showSaveDialog(Controllers.getStage());
+        Path dest = FileUtils.toPath(fileChooser.showSaveDialog(Controllers.getStage()));
         if (dest == null) {
             return;
         }
 
         Controllers.taskDialog(
                 Task.composeAsync(() -> {
-                    var task = new FileDownloadTask(file.getFile().getUrl(), dest.toPath(), file.getFile().getIntegrityCheck());
+                    var task = new FileDownloadTask(file.getFile().getUrl(), dest, file.getFile().getIntegrityCheck());
                     task.setName(file.getName());
                     return task;
                 }),

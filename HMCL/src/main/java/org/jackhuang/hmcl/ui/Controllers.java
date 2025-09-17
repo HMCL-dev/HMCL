@@ -62,7 +62,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -92,7 +92,7 @@ public final class Controllers {
         gameListPage.selectedProfileProperty().bindBidirectional(Profiles.selectedProfileProperty());
         gameListPage.profilesProperty().bindContent(Profiles.profilesProperty());
         FXUtils.applyDragListener(gameListPage, ModpackHelper::isFileModpackByExtension, modpacks -> {
-            File modpack = modpacks.get(0);
+            Path modpack = modpacks.get(0);
             Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), modpack), i18n("install.modpack"));
         });
         return gameListPage;

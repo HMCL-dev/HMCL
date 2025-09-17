@@ -49,9 +49,7 @@ import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
-import javafx.stage.FileChooser;
-import javafx.stage.Screen;
-import javafx.stage.Stage;
+import javafx.stage.*;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
@@ -87,6 +85,7 @@ import java.lang.ref.WeakReference;
 import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.PathMatcher;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -96,7 +95,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
@@ -1255,14 +1253,14 @@ public final class FXUtils {
         }
     }
 
-    public static void applyDragListener(Node node, FileFilter filter, Consumer<List<File>> callback) {
+    public static void applyDragListener(Node node, PathMatcher filter, Consumer<List<Path>> callback) {
         applyDragListener(node, filter, callback, null);
     }
 
-    public static void applyDragListener(Node node, FileFilter filter, Consumer<List<File>> callback, Runnable dragDropped) {
+    public static void applyDragListener(Node node, PathMatcher filter, Consumer<List<Path>> callback, Runnable dragDropped) {
         node.setOnDragOver(event -> {
             if (event.getGestureSource() != node && event.getDragboard().hasFiles()) {
-                if (event.getDragboard().getFiles().stream().anyMatch(filter::accept))
+                if (event.getDragboard().getFiles().stream().map(File::toPath).anyMatch(filter::matches))
                     event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
             }
             event.consume();
@@ -1271,7 +1269,7 @@ public final class FXUtils {
         node.setOnDragDropped(event -> {
             List<File> files = event.getDragboard().getFiles();
             if (files != null) {
-                List<File> acceptFiles = files.stream().filter(filter::accept).collect(Collectors.toList());
+                List<Path> acceptFiles = files.stream().map(File::toPath).filter(filter::matches).toList();
                 if (!acceptFiles.isEmpty()) {
                     callback.accept(acceptFiles);
                     event.setDropCompleted(true);
@@ -1449,6 +1447,13 @@ public final class FXUtils {
         int b = (int) Math.round(color.getBlue() * 255.0);
 
         return String.format("#%02x%02x%02x", r, g, b);
+    }
+
+    public static @Nullable List<Path> showOpenMultipleDialog(FileChooser chooser, Window ownerWindow) {
+        List<File> files = chooser.showOpenMultipleDialog(ownerWindow);
+        if (files == null)
+            return null;
+        return files.stream().map(File::toPath).toList();
     }
 
     public static FileChooser.ExtensionFilter getImageExtensionFilter() {

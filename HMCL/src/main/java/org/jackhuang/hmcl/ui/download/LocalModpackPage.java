@@ -40,8 +40,8 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.File;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
 
@@ -82,15 +82,15 @@ public final class LocalModpackPage extends ModpackPage {
 
         btnDescription.setVisible(false);
 
-        File selectedFile;
-        Optional<File> filePath = tryCast(controller.getSettings().get(MODPACK_FILE), File.class);
+        Path selectedFile;
+        Optional<Path> filePath = tryCast(controller.getSettings().get(MODPACK_FILE), Path.class);
         if (filePath.isPresent()) {
             selectedFile = filePath.get();
         } else {
             FileChooser chooser = new FileChooser();
             chooser.setTitle(i18n("modpack.choose"));
             chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("modpack"), "*.zip"));
-            selectedFile = chooser.showOpenDialog(Controllers.getStage());
+            selectedFile = FileUtils.toPath(chooser.showOpenDialog(Controllers.getStage()));
             if (selectedFile == null) {
                 controller.onEnd();
                 return;
@@ -100,21 +100,21 @@ public final class LocalModpackPage extends ModpackPage {
         }
 
         showSpinner();
-        Task.supplyAsync(() -> CompressingUtils.findSuitableEncoding(selectedFile.toPath()))
+        Task.supplyAsync(() -> CompressingUtils.findSuitableEncoding(selectedFile))
                 .thenApplyAsync(encoding -> {
                     charset = encoding;
-                    manifest = ModpackHelper.readModpackManifest(selectedFile.toPath(), encoding);
+                    manifest = ModpackHelper.readModpackManifest(selectedFile, encoding);
                     return manifest;
                 })
                 .whenComplete(Schedulers.javafx(), (manifest, exception) -> {
                     if (exception instanceof ManuallyCreatedModpackException) {
                         hideSpinner();
-                        lblName.setText(selectedFile.getName());
+                        lblName.setText(FileUtils.getName(selectedFile));
                         installAsVersion.set(false);
 
-                        if (!name.isPresent()) {
+                        if (name.isEmpty()) {
                             // trim: https://github.com/HMCL-dev/HMCL/issues/962
-                            txtModpackName.setText(FileUtils.getNameWithoutExtension(selectedFile.getName()));
+                            txtModpackName.setText(FileUtils.getNameWithoutExtension(selectedFile));
                         }
 
                         Controllers.confirm(i18n("modpack.type.manual.warning"), i18n("install.modpack"), MessageDialogPane.MessageType.WARNING,
@@ -133,7 +133,7 @@ public final class LocalModpackPage extends ModpackPage {
                         lblVersion.setText(manifest.getVersion());
                         lblAuthor.setText(manifest.getAuthor());
 
-                        if (!name.isPresent()) {
+                        if (name.isEmpty()) {
                             // trim: https://github.com/HMCL-dev/HMCL/issues/962
                             txtModpackName.setText(manifest.getName().trim());
                         }

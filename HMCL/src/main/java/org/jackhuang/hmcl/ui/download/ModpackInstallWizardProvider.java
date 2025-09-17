@@ -32,26 +32,27 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
+import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.util.Map;
 
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class ModpackInstallWizardProvider implements WizardProvider {
+public final class ModpackInstallWizardProvider implements WizardProvider {
     private final Profile profile;
-    private final File file;
+    private final Path file;
     private final String updateVersion;
 
     public ModpackInstallWizardProvider(Profile profile) {
         this(profile, null, null);
     }
 
-    public ModpackInstallWizardProvider(Profile profile, File modpackFile) {
+    public ModpackInstallWizardProvider(Profile profile, Path modpackFile) {
         this(profile, modpackFile, null);
     }
 
@@ -59,7 +60,7 @@ public class ModpackInstallWizardProvider implements WizardProvider {
         this(profile, null, updateVersion);
     }
 
-    public ModpackInstallWizardProvider(Profile profile, File modpackFile, String updateVersion) {
+    public ModpackInstallWizardProvider(Profile profile, Path modpackFile, String updateVersion) {
         this.profile = profile;
         this.file = modpackFile;
         this.updateVersion = updateVersion;
@@ -75,7 +76,7 @@ public class ModpackInstallWizardProvider implements WizardProvider {
     }
 
     private Task<?> finishModpackInstallingAsync(Map<String, Object> settings) {
-        File selected = tryCast(settings.get(LocalModpackPage.MODPACK_FILE), File.class).orElse(null);
+        Path selected = tryCast(settings.get(LocalModpackPage.MODPACK_FILE), Path.class).orElse(null);
         ServerModpackManifest serverModpackManifest = tryCast(settings.get(RemoteModpackPage.MODPACK_SERVER_MANIFEST), ServerModpackManifest.class).orElse(null);
         Modpack modpack = tryCast(settings.get(LocalModpackPage.MODPACK_MANIFEST), Modpack.class).orElse(null);
         String name = tryCast(settings.get(LocalModpackPage.MODPACK_NAME), String.class).orElse(null);
@@ -83,7 +84,7 @@ public class ModpackInstallWizardProvider implements WizardProvider {
         boolean isManuallyCreated = tryCast(settings.get(LocalModpackPage.MODPACK_MANUALLY_CREATED), Boolean.class).orElse(false);
 
         if (isManuallyCreated) {
-            return ModpackHelper.getInstallManuallyCreatedModpackTask(profile, selected, name, charset);
+            return ModpackHelper.getInstallManuallyCreatedModpackTask(profile, FileUtils.toFile(selected), name, charset);
         }
 
         if ((selected == null && serverModpackManifest == null) || modpack == null || name == null) return null;
@@ -97,7 +98,7 @@ public class ModpackInstallWizardProvider implements WizardProvider {
                 if (serverModpackManifest != null) {
                     return ModpackHelper.getUpdateTask(profile, serverModpackManifest, modpack.getEncoding(), name, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(name).toFile()));
                 } else {
-                    return ModpackHelper.getUpdateTask(profile, selected, modpack.getEncoding(), name, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(name).toFile()));
+                    return ModpackHelper.getUpdateTask(profile, selected.toFile(), modpack.getEncoding(), name, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(name).toFile()));
                 }
             } catch (UnsupportedModpackException | ManuallyCreatedModpackException e) {
                 Controllers.dialog(i18n("modpack.unsupported"), i18n("message.error"), MessageType.ERROR);
@@ -112,7 +113,7 @@ public class ModpackInstallWizardProvider implements WizardProvider {
                 return ModpackHelper.getInstallTask(profile, serverModpackManifest, name, modpack)
                         .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
             } else {
-                return ModpackHelper.getInstallTask(profile, selected, name, modpack)
+                return ModpackHelper.getInstallTask(profile, selected.toFile(), name, modpack)
                         .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
             }
         }

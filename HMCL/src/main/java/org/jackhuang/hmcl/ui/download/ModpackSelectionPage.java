@@ -38,8 +38,8 @@ import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -71,14 +71,14 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
                 createButton("repository", this::onChooseRepository)
         );
 
-        Optional<File> filePath = tryCast(controller.getSettings().get(MODPACK_FILE), File.class);
+        Optional<Path> filePath = tryCast(controller.getSettings().get(MODPACK_FILE), Path.class);
         if (filePath.isPresent()) {
             controller.getSettings().put(MODPACK_FILE, filePath.get());
             Platform.runLater(controller::onNext);
         }
 
         FXUtils.applyDragListener(this, ModpackHelper::isFileModpackByExtension, modpacks -> {
-            File modpack = modpacks.get(0);
+            Path modpack = modpacks.get(0);
             controller.getSettings().put(MODPACK_FILE, modpack);
             controller.onNext();
         });
@@ -112,7 +112,7 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("modpack.choose"));
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("modpack"), "*.zip", "*.mrpack"));
-        File selectedFile = chooser.showOpenDialog(Controllers.getStage());
+        Path selectedFile = FileUtils.toPath(chooser.showOpenDialog(Controllers.getStage()));
         if (selectedFile == null) {
             Platform.runLater(controller::onEnd);
             return;
@@ -150,7 +150,7 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
                                     .whenComplete(Schedulers.javafx(), e -> {
                                         if (e == null) {
                                             resolve.run();
-                                            controller.getSettings().put(MODPACK_FILE, modpack.toFile());
+                                            controller.getSettings().put(MODPACK_FILE, modpack);
                                             controller.onNext();
                                         } else {
                                             reject.accept(e.getMessage());

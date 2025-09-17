@@ -80,8 +80,8 @@ public final class ModpackHelper {
         return providers.get(type);
     }
 
-    public static boolean isFileModpackByExtension(File file) {
-        String ext = FileUtils.getExtension(file.getName());
+    public static boolean isFileModpackByExtension(Path file) {
+        String ext = FileUtils.getExtension(file);
         return "zip".equals(ext) || "mrpack".equals(ext);
     }
 

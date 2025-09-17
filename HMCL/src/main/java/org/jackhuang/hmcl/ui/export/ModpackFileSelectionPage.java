@@ -36,7 +36,9 @@ import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +47,7 @@ import java.util.Objects;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * @author huangyuhui
@@ -61,7 +64,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         this.adviser = adviser;
 
         JFXTreeView<String> treeView = new JFXTreeView<>();
-        rootNode = getTreeItem(profile.getRepository().getRunDirectory(version).toFile(), "minecraft");
+        rootNode = getTreeItem(profile.getRepository().getRunDirectory(version), "minecraft");
         treeView.setRoot(rootNode);
         treeView.setSelectionModel(new NoneMultipleSelectionModel<>());
         this.setCenter(treeView);
@@ -80,15 +83,18 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         this.setBottom(nextPane);
     }
 
-    private CheckBoxTreeItem<String> getTreeItem(File file, String basePath) {
-        if (!file.exists())
+    private CheckBoxTreeItem<String> getTreeItem(Path file, String basePath) {
+        if (Files.notExists(file))
             return null;
+
+        boolean isDirectory = Files.isDirectory(file);
 
         ModAdviser.ModSuggestion state = ModAdviser.ModSuggestion.SUGGESTED;
         if (basePath.length() > "minecraft/".length()) {
-            state = adviser.advise(StringUtils.substringAfter(basePath, "minecraft/") + (file.isDirectory() ? "/" : ""), file.isDirectory());
-            if (file.isFile() && Objects.equals(FileUtils.getNameWithoutExtension(file.getName()), version)) state = ModAdviser.ModSuggestion.HIDDEN;
-            if (file.isDirectory() && Objects.equals(file.getName(), version + "-natives")) // Ignore <version>-natives
+            state = adviser.advise(StringUtils.substringAfter(basePath, "minecraft/") + (isDirectory ? "/" : ""), isDirectory);
+            if (!isDirectory && Objects.equals(FileUtils.getNameWithoutExtension(file), version))
+                state = ModAdviser.ModSuggestion.HIDDEN;
+            if (isDirectory && Objects.equals(FileUtils.getName(file), version + "-natives")) // Ignore <version>-natives
                 state = ModAdviser.ModSuggestion.HIDDEN;
             if (state == ModAdviser.ModSuggestion.HIDDEN)
                 return null;
@@ -98,11 +104,10 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         if (state == ModAdviser.ModSuggestion.SUGGESTED)
             node.setSelected(true);
 
-        if (file.isDirectory()) {
-            File[] files = file.listFiles();
-            if (files != null) {
-                for (File it : files) {
-                    CheckBoxTreeItem<String> subNode = getTreeItem(it, basePath + "/" + it.getName());
+        if (isDirectory) {
+            try (var stream = Files.list(file)) {
+                stream.forEach(it -> {
+                    CheckBoxTreeItem<String> subNode = getTreeItem(it, basePath + "/" + FileUtils.getName(it));
                     if (subNode != null) {
                         node.setSelected(subNode.isSelected() || node.isSelected());
                         if (!subNode.isSelected()) {
@@ -110,8 +115,11 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
                         }
                         node.getChildren().add(subNode);
                     }
-                }
+                });
+            } catch (IOException e) {
+                LOG.warning("Failed to list contents of " + file, e);
             }
+
             if (!node.isSelected()) node.setIndeterminate(false);
 
             // Empty folder need not to be displayed.

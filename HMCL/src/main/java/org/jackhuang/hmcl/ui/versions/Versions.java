@@ -44,7 +44,6 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
@@ -89,9 +88,9 @@ public final class Versions {
                         .whenComplete(Schedulers.javafx(), e -> {
                             if (e == null) {
                                 if (version != null) {
-                                    Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile, modpack.toFile(), version));
+                                    Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile, modpack, version));
                                 } else {
-                                    Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile, modpack.toFile()));
+                                    Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile, modpack));
                                 }
                             } else if (e instanceof CancellationException) {
                                 Controllers.showToast(i18n("message.cancelled"));
@@ -200,9 +199,9 @@ public final class Versions {
                     ? new FileChooser.ExtensionFilter(i18n("extension.bat"), "*.bat")
                     : new FileChooser.ExtensionFilter(i18n("extension.sh"), "*.sh"));
             chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.ps1"), "*.ps1"));
-            File file = chooser.showSaveDialog(Controllers.getStage());
+            Path file = FileUtils.toPath(chooser.showSaveDialog(Controllers.getStage()));
             if (file != null)
-                new LauncherHelper(profile, account, id).makeLaunchScript(file);
+                new LauncherHelper(profile, account, id).makeLaunchScript(file.toFile());
         });
     }
 
