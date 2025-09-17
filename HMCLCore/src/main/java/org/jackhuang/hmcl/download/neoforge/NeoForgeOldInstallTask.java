@@ -387,8 +387,8 @@ public class NeoForgeOldInstallTask extends Task<Version> {
         }
 
         vars.put("SIDE", "client");
-        vars.put("MINECRAFT_JAR", gameRepository.getVersionJar(version).toAbsolutePath().normalize().toString());
-        vars.put("MINECRAFT_VERSION", gameRepository.getVersionJar(version).toAbsolutePath().normalize().toString());
+        vars.put("MINECRAFT_JAR", FileUtils.getAbsolutePath(gameRepository.getVersionJar(version)));
+        vars.put("MINECRAFT_VERSION", FileUtils.getAbsolutePath(gameRepository.getVersionJar(version)));
         vars.put("ROOT", FileUtils.getAbsolutePath(gameRepository.getBaseDirectory()));
         vars.put("INSTALLER", installer.toAbsolutePath().toString());
         vars.put("LIBRARY_DIR", FileUtils.getAbsolutePath(gameRepository.getLibrariesDirectory(version)));
