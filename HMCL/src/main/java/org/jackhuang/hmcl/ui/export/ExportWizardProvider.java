@@ -279,16 +279,12 @@ public final class ExportWizardProvider implements WizardProvider {
 
     @Override
     public Node createPage(WizardController controller, int step, Map<String, Object> settings) {
-        switch (step) {
-            case 0:
-                return new ModpackTypeSelectionPage(controller);
-            case 1:
-                return new ModpackInfoPage(controller, profile.getRepository(), version);
-            case 2:
-                return new ModpackFileSelectionPage(controller, profile, version, ModAdviser::suggestMod);
-            default:
-                throw new IllegalArgumentException("step");
-        }
+        return switch (step) {
+            case 0 -> new ModpackTypeSelectionPage(controller);
+            case 1 -> new ModpackInfoPage(controller, profile.getRepository(), version);
+            case 2 -> new ModpackFileSelectionPage(controller, profile, version, ModAdviser::suggestMod);
+            default -> throw new IllegalArgumentException("step");
+        };
     }
 
     @Override

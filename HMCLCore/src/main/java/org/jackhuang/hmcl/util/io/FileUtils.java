@@ -56,6 +56,11 @@ public final class FileUtils {
         }
     }
 
+    public static @Nullable List<Path> toPaths(@Nullable List<File> files) {
+        if (files == null) return null;
+        return files.stream().map(FileUtils::toPath).filter(Objects::nonNull).toList();
+    }
+
     public static @Nullable File toFile(@Nullable Path file) {
         try {
             return file != null ? file.toFile() : null;

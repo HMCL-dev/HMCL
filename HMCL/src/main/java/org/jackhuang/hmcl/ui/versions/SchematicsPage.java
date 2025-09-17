@@ -45,14 +45,12 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -77,7 +75,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
     public SchematicsPage() {
         FXUtils.applyDragListener(this,
                 file -> currentDirectory != null && file.isFile() && file.getName().endsWith(".litematic"),
-                files -> addFiles(files.stream().map(File::toPath).collect(Collectors.toList()))
+                files -> addFiles(FileUtils.toPaths(files))
         );
     }
 
@@ -149,9 +147,9 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         fileChooser.setTitle(i18n("schematics.add"));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(
                 i18n("schematics"), "*.litematic"));
-        List<File> files = fileChooser.showOpenMultipleDialog(Controllers.getStage());
+        List<Path> files = FileUtils.toPaths(fileChooser.showOpenMultipleDialog(Controllers.getStage()));
         if (files != null && !files.isEmpty()) {
-            addFiles(files.stream().map(File::toPath).collect(Collectors.toList()));
+            addFiles(files);
         }
     }
 
