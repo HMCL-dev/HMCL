@@ -223,7 +223,8 @@ public class CacheRepository {
         return cacheData(connection, () -> {
             String hash = DigestUtils.digestToString(SHA1, bytes);
             Path cached = getFile(SHA1, hash);
-            FileUtils.writeBytes(cached, bytes);
+            Files.createDirectories(cached.getParent());
+            Files.write(cached, bytes);
             return new CacheResult(hash, cached);
         });
     }

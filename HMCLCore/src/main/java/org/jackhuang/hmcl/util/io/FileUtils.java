@@ -252,20 +252,6 @@ public final class FileUtils {
         Files.writeString(file, text);
     }
 
-    /**
-     * Write byte array to file.
-     * It will create the file if it does not exist, or truncate the existing file to empty for rewriting.
-     * All bytes in byte array will be written into the file in binary format. Existing data will be erased.
-     *
-     * @param file the path to the file
-     * @param data the data being written to file
-     * @throws IOException if an I/O error occurs
-     */
-    public static void writeBytes(Path file, byte[] data) throws IOException {
-        Files.createDirectories(file.getParent());
-        Files.write(file, data);
-    }
-
     public static void deleteDirectory(Path directory) throws IOException {
         if (!Files.exists(directory))
             return;
@@ -397,7 +383,8 @@ public final class FileUtils {
                     FileUtils.copyFile(file, targetFile);
                 }
 
-                FileUtils.writeText(infoFile, "[Trash Info]\nPath=" + file.toAbsolutePath().normalize() + "\nDeletionDate=" + time + "\n");
+                Files.createDirectories(infoDir);
+                Files.writeString(infoFile, "[Trash Info]\nPath=" + FileUtils.getAbsolutePath(file) + "\nDeletionDate=" + time + "\n");
                 FileUtils.forceDelete(file);
             } catch (IOException e) {
                 LOG.warning("Failed to move " + file + " to trash", e);
