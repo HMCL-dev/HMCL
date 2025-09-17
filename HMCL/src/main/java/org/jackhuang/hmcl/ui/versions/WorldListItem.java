@@ -29,8 +29,8 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.File;
 import java.nio.file.Path;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -60,12 +60,12 @@ public final class WorldListItem extends Control {
         fileChooser.setTitle(i18n("world.export.title"));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("world"), "*.zip"));
         fileChooser.setInitialFileName(world.getWorldName());
-        File file = fileChooser.showSaveDialog(Controllers.getStage());
+        Path file = FileUtils.toPath(fileChooser.showSaveDialog(Controllers.getStage()));
         if (file == null) {
             return;
         }
 
-        Controllers.getDecorator().startWizard(new SinglePageWizardProvider(controller -> new WorldExportPage(world, file.toPath(), controller::onFinish)));
+        Controllers.getDecorator().startWizard(new SinglePageWizardProvider(controller -> new WorldExportPage(world, file, controller::onFinish)));
     }
 
     public void delete() {
