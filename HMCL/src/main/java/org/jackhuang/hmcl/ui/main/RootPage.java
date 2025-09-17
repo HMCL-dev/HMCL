@@ -51,7 +51,7 @@ import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
-import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Comparator;
@@ -212,14 +212,13 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                 checkedModpack = true;
 
                 if (repository.getVersionCount() == 0) {
-                    File modpackFile = new File("modpack.zip").getAbsoluteFile();
-                    if (modpackFile.exists()) {
-                        Task.supplyAsync(() -> CompressingUtils.findSuitableEncoding(modpackFile.toPath()))
+                    Path modpackFile = Metadata.CURRENT_DIRECTORY.resolve("modpack.zip");
+                    if (Files.exists(modpackFile)) {
+                        Task.supplyAsync(() -> CompressingUtils.findSuitableEncoding(modpackFile))
                                 .thenApplyAsync(
-                                        encoding -> ModpackHelper.readModpackManifest(modpackFile.toPath(), encoding))
+                                        encoding -> ModpackHelper.readModpackManifest(modpackFile, encoding))
                                 .thenApplyAsync(modpack -> ModpackHelper
-                                        .getInstallTask(repository.getProfile(), modpackFile, modpack.getName(),
-                                                modpack)
+                                        .getInstallTask(repository.getProfile(), modpackFile.toFile(), modpack.getName(), modpack)
                                         .executor())
                                 .thenAcceptAsync(Schedulers.javafx(), executor -> {
                                     Controllers.taskDialog(executor, i18n("modpack.installing"), TaskCancellationAction.NO_CANCEL);
