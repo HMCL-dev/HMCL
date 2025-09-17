@@ -50,7 +50,7 @@ public final class ModrinthModpackProvider implements ModpackProvider {
         if (!(modpack.getManifest() instanceof ModrinthManifest modrinthManifest))
             throw new MismatchedModpackTypeException(getName(), modpack.getManifest().getProvider().getName());
 
-        return new ModpackUpdateTask(dependencyManager.getGameRepository(), name, new ModrinthInstallTask(dependencyManager, zipFile.toFile(), modpack, modrinthManifest, name));
+        return new ModpackUpdateTask(dependencyManager.getGameRepository(), name, new ModrinthInstallTask(dependencyManager, zipFile, modpack, modrinthManifest, name));
     }
 
     @Override
@@ -59,7 +59,7 @@ public final class ModrinthModpackProvider implements ModpackProvider {
         return new Modpack(manifest.getName(), "", manifest.getVersionId(), manifest.getGameVersion(), manifest.getSummary(), encoding, manifest) {
             @Override
             public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, String name) {
-                return new ModrinthInstallTask(dependencyManager, zipFile.toFile(), this, manifest, name);
+                return new ModrinthInstallTask(dependencyManager, zipFile, this, manifest, name);
             }
         };
     }

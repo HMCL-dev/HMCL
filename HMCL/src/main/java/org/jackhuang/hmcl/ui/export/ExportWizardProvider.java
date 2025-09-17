@@ -223,7 +223,7 @@ public final class ExportWizardProvider implements WizardProvider {
                                 /* overrideCommands */ true,
                                 /* overrideWindow */ true,
                                 /* iconKey */ null // TODO
-                        ), modpackFile);
+                        ), modpackFile.toPath());
             }
 
             @Override

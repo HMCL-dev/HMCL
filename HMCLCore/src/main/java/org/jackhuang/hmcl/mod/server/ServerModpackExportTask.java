@@ -56,7 +56,7 @@ public class ServerModpackExportTask extends Task<Void> {
                 try {
                     Files.deleteIfExists(modpackFile);
                 } catch (IOException e) {
-                    LOG.warning("Failed to delete modpack file: " + modpackFile);
+                    LOG.warning("Failed to delete modpack file: " + modpackFile, e);
                 }
             }
         });
