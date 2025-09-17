@@ -580,7 +580,7 @@ public class DefaultLauncher extends Launcher {
     }
 
     @Override
-    public void makeLaunchScript(File scriptFile) throws IOException {
+    public void makeLaunchScript(Path scriptFile) throws IOException {
         boolean isWindows = OperatingSystem.WINDOWS == OperatingSystem.CURRENT_OS;
 
         Path nativeFolder;
@@ -597,7 +597,7 @@ public class DefaultLauncher extends Launcher {
         if (isUsingLog4j())
             extractLog4jConfigurationFile();
 
-        String scriptExtension = FileUtils.getExtension(scriptFile.getName());
+        String scriptExtension = FileUtils.getExtension(scriptFile);
         boolean usePowerShell = "ps1".equals(scriptExtension);
 
         if (!usePowerShell) {
@@ -617,9 +617,9 @@ public class DefaultLauncher extends Launcher {
             }
         }
 
-        Files.createDirectories(scriptFile.toPath().getParent());
+        Files.createDirectories(scriptFile.getParent());
 
-        try (OutputStream outputStream = Files.newOutputStream(scriptFile.toPath())) {
+        try (OutputStream outputStream = Files.newOutputStream(scriptFile)) {
             Charset charset = StandardCharsets.UTF_8;
 
             if (isWindows) {
@@ -736,7 +736,7 @@ public class DefaultLauncher extends Launcher {
                 }
             }
         }
-        if (!scriptFile.setExecutable(true))
+        if (!scriptFile.toFile().setExecutable(true))
             throw new PermissionException();
 
         if (usePowerShell && !CommandBuilder.hasExecutionPolicy())

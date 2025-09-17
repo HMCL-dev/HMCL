@@ -201,7 +201,7 @@ public final class Versions {
             chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.ps1"), "*.ps1"));
             Path file = FileUtils.toPath(chooser.showSaveDialog(Controllers.getStage()));
             if (file != null)
-                new LauncherHelper(profile, account, id).makeLaunchScript(file.toFile());
+                new LauncherHelper(profile, account, id).makeLaunchScript(file);
         });
     }
 

@@ -49,7 +49,6 @@ import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
@@ -77,7 +76,7 @@ public final class LauncherHelper {
     private final Profile profile;
     private Account account;
     private final String selectedVersion;
-    private File scriptFile;
+    private Path scriptFile;
     private final VersionSetting setting;
     private LauncherVisibility launcherVisibility;
     private boolean showLogs;
@@ -120,9 +119,8 @@ public final class LauncherHelper {
         launch0();
     }
 
-    public void makeLaunchScript(File scriptFile) {
+    public void makeLaunchScript(Path scriptFile) {
         this.scriptFile = Objects.requireNonNull(scriptFile);
-
         launch();
     }
 
@@ -225,7 +223,7 @@ public final class LauncherHelper {
                     } else {
                         runLater(() -> {
                             launchingStepsPane.fireEvent(new DialogCloseEvent());
-                            Controllers.dialog(i18n("version.launch_script.success", scriptFile.getAbsolutePath()));
+                            Controllers.dialog(i18n("version.launch_script.success", FileUtils.getAbsolutePath(scriptFile)));
                         });
                     }
                 }).withFakeProgress(
