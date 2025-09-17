@@ -141,7 +141,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
         }
 
         controller.getSettings().put(MODPACK_INFO, exportInfo);
-        controller.getSettings().put(MODPACK_FILE, file);
+        controller.getSettings().put(MODPACK_FILE, file.toPath());
         controller.onNext();
     }
 

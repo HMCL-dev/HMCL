@@ -62,12 +62,12 @@ public final class ExportWizardProvider implements WizardProvider {
     public Object finish(Map<String, Object> settings) {
         @SuppressWarnings("unchecked")
         List<String> whitelist = (List<String>) settings.get(ModpackFileSelectionPage.MODPACK_FILE_SELECTION);
-        File modpackFile = (File) settings.get(ModpackInfoPage.MODPACK_FILE);
+        Path modpackFile = (Path) settings.get(ModpackInfoPage.MODPACK_FILE);
         ModpackExportInfo exportInfo = (ModpackExportInfo) settings.get(ModpackInfoPage.MODPACK_INFO);
         exportInfo.setWhitelist(whitelist);
         String modpackType = (String) settings.get(ModpackTypeSelectionPage.MODPACK_TYPE);
 
-        return exportWithLauncher(modpackType, exportInfo, modpackFile);
+        return exportWithLauncher(modpackType, exportInfo, modpackFile.toFile());
     }
 
     private Task<?> exportWithLauncher(String modpackType, ModpackExportInfo exportInfo, File modpackFile) {
