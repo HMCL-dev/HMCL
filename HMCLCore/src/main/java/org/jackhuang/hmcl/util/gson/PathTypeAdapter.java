@@ -24,6 +24,7 @@ import com.google.gson.stream.JsonWriter;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystems;
 import java.nio.file.Path;
 
 /// @author Glavo
@@ -41,12 +42,15 @@ public final class PathTypeAdapter extends TypeAdapter<Path> {
         String value = in.nextString();
         if (File.separatorChar == '\\')
             value = value.replace('/', '\\');
-        return Path.of(in.nextString());
+        return Path.of(value);
     }
 
     @Override
     public void write(JsonWriter out, Path path) throws IOException {
         if (path != null) {
+            if (path.getFileSystem() != FileSystems.getDefault())
+                throw new IOException("Unsupported file system: " + path.getFileSystem());
+
             String value = path.toString();
             if (File.separatorChar == '\\')
                 value = value.replace('\\', '/');
