@@ -22,6 +22,7 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 
@@ -42,9 +43,16 @@ public final class PathTypeAdapter extends TypeAdapter<Path> {
 
     @Override
     public void write(JsonWriter out, Path path) throws IOException {
-        if (path != null)
-            out.value(path.toString());
-        else
+        if (path != null) {
+            String value = path.toString();
+
+            // For all platforms, we standardize to use '/' as the separator
+            if (File.separatorChar == '\\')
+                value = value.replace('\\', '/');
+
+            out.value(value);
+        } else {
             out.nullValue();
+        }
     }
 }
