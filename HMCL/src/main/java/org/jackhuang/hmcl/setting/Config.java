@@ -41,7 +41,6 @@ import org.jackhuang.hmcl.util.javafx.DirtyTracker;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.*;
 import java.net.Proxy;
