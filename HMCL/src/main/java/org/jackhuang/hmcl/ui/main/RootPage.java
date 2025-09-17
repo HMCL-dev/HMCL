@@ -93,10 +93,10 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
         if (mainPage == null) {
             MainPage mainPage = new MainPage();
             FXUtils.applyDragListener(mainPage,
-                    file -> ModpackHelper.isFileModpackByExtension(file) || NBTFileType.isNBTFileByExtension(file.toPath()),
+                    file -> ModpackHelper.isFileModpackByExtension(file) || NBTFileType.isNBTFileByExtension(file),
                     modpacks -> {
-                        Path file = modpacks.get(0).toPath();
-                        if (ModpackHelper.isFileModpackByExtension(file.toFile())) {
+                        Path file = modpacks.get(0);
+                        if (ModpackHelper.isFileModpackByExtension(file)) {
                             Controllers.getDecorator().startWizard(
                                     new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), file),
                                     i18n("install.modpack"));

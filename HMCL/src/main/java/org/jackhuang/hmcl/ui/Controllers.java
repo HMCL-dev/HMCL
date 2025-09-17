@@ -92,7 +92,7 @@ public final class Controllers {
         gameListPage.selectedProfileProperty().bindBidirectional(Profiles.selectedProfileProperty());
         gameListPage.profilesProperty().bindContent(Profiles.profilesProperty());
         FXUtils.applyDragListener(gameListPage, ModpackHelper::isFileModpackByExtension, modpacks -> {
-            Path modpack = modpacks.get(0).toPath();
+            Path modpack = modpacks.get(0);
             Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), modpack), i18n("install.modpack"));
         });
         return gameListPage;

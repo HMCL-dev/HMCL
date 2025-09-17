@@ -74,8 +74,8 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
     public SchematicsPage() {
         FXUtils.applyDragListener(this,
-                file -> currentDirectory != null && file.isFile() && file.getName().endsWith(".litematic"),
-                files -> addFiles(FileUtils.toPaths(files))
+                file -> currentDirectory != null && Files.isRegularFile(file) && FileUtils.getName(file).endsWith(".litematic"),
+                this::addFiles
         );
     }
 

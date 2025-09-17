@@ -52,8 +52,8 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
     private String gameVersion;
 
     public WorldListPage() {
-        FXUtils.applyDragListener(this, it -> "zip".equals(FileUtils.getExtension(it.getName())), modpacks -> {
-            installWorld(modpacks.get(0).toPath());
+        FXUtils.applyDragListener(this, it -> "zip".equals(FileUtils.getExtension(it)), modpacks -> {
+            installWorld(modpacks.get(0));
         });
 
         showAll.addListener(e -> {

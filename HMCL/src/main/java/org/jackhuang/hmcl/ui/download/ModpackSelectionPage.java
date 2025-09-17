@@ -78,7 +78,7 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
         }
 
         FXUtils.applyDragListener(this, ModpackHelper::isFileModpackByExtension, modpacks -> {
-            Path modpack = modpacks.get(0).toPath();
+            Path modpack = modpacks.get(0);
             controller.getSettings().put(MODPACK_FILE, modpack);
             controller.onNext();
         });
