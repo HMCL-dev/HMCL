@@ -127,7 +127,7 @@ public class ServerModpackManifest implements ModpackManifest, Validation {
         return new Modpack(name, author, version, gameVersion, description, encoding, this) {
             @Override
             public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, String name) {
-                return new ServerModpackLocalInstallTask(dependencyManager, zipFile.toFile(), this, ServerModpackManifest.this, name);
+                return new ServerModpackLocalInstallTask(dependencyManager, zipFile, this, ServerModpackManifest.this, name);
             }
         };
     }

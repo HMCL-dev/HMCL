@@ -28,7 +28,6 @@ import org.jackhuang.hmcl.mod.ModpackInstallTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -38,7 +37,7 @@ import java.util.List;
 
 public class ServerModpackLocalInstallTask extends Task<Void> {
 
-    private final File zipFile;
+    private final Path zipFile;
     private final Modpack modpack;
     private final ServerModpackManifest manifest;
     private final String name;
@@ -46,7 +45,7 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
     private final List<Task<?>> dependencies = new ArrayList<>();
     private final List<Task<?>> dependents = new ArrayList<>(4);
 
-    public ServerModpackLocalInstallTask(DefaultDependencyManager dependencyManager, File zipFile, Modpack modpack, ServerModpackManifest manifest, String name) {
+    public ServerModpackLocalInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, Modpack modpack, ServerModpackManifest manifest, String name) {
         this.zipFile = zipFile;
         this.modpack = modpack;
         this.manifest = manifest;
@@ -79,8 +78,8 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
             }
         } catch (JsonParseException | IOException ignore) {
         }
-        dependents.add(new ModpackInstallTask<>(zipFile.toPath(), run, modpack.getEncoding(), Collections.singletonList("/overrides"), any -> true, config).withStage("hmcl.modpack"));
-        dependents.add(new MinecraftInstanceTask<>(zipFile.toPath(), modpack.getEncoding(), Collections.singletonList("/overrides"), manifest, ServerModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
+        dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), Collections.singletonList("/overrides"), any -> true, config).withStage("hmcl.modpack"));
+        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList("/overrides"), manifest, ServerModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
     }
 
     @Override
