@@ -67,7 +67,7 @@ public class McbbsModpackExportTask extends Task<Void> {
         blackList.add(version + ".json");
         LOG.info("Compressing game files without some files in blacklist, including files or directories: usernamecache.json, asm, logs, backups, versions, assets, usercache.json, libraries, crash-reports, launcher_profiles.json, NVIDIA, TCNodeTracker");
         try (Zipper zip = new Zipper(modpackFile.toPath())) {
-            Path runDirectory = repository.getRunDirectory(version).toPath();
+            Path runDirectory = repository.getRunDirectory(version);
             List<McbbsModpackManifest.File> files = new ArrayList<>();
             zip.putDirectory(runDirectory, "overrides", path -> {
                 if (Modpack.acceptFile(path, blackList, info.getWhitelist())) {

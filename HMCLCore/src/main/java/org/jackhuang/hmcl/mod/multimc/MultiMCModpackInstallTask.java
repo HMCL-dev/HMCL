@@ -94,8 +94,8 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
         this.dependencyManager = dependencyManager;
         this.repository = dependencyManager.getGameRepository();
 
-        File json = repository.getModpackConfiguration(name);
-        if (repository.hasVersion(name) && !json.exists())
+        Path json = repository.getModpackConfiguration(name);
+        if (repository.hasVersion(name) && Files.notExists(json))
             throw new IllegalArgumentException("Version " + name + " already exists.");
 
         onDone().register(event -> {
@@ -113,13 +113,13 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
     public void preExecute() throws Exception {
         // Stage #0: General Setup
         {
-            File run = repository.getRunDirectory(name);
-            File json = repository.getModpackConfiguration(name);
+            Path run = repository.getRunDirectory(name);
+            Path json = repository.getModpackConfiguration(name);
 
             ModpackConfiguration<MultiMCInstanceConfiguration> config = null;
             try {
-                if (json.exists()) {
-                    config = JsonUtils.fromJsonFile(json.toPath(), ModpackConfiguration.typeOf(MultiMCInstanceConfiguration.class));
+                if (Files.exists(json)) {
+                    config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(MultiMCInstanceConfiguration.class));
 
                     if (!MultiMCModpackProvider.INSTANCE.getName().equals(config.getType()))
                         throw new IllegalArgumentException("Version " + name + " is not a MultiMC modpack. Cannot update this version.");
@@ -133,8 +133,8 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
             }
 
             // TODO: Optimize unbearably slow ModpackInstallTask
-            dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), Collections.singletonList(mcDirectory), any -> true, config).withStage("hmcl.modpack"));
-            dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList(mcDirectory), manifest, MultiMCModpackProvider.INSTANCE, manifest.getName(), null, repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
+            dependents.add(new ModpackInstallTask<>(zipFile, run.toFile(), modpack.getEncoding(), Collections.singletonList(mcDirectory), any -> true, config).withStage("hmcl.modpack"));
+            dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList(mcDirectory), manifest, MultiMCModpackProvider.INSTANCE, manifest.getName(), null, repository.getModpackConfiguration(name).toFile()).withStage("hmcl.modpack"));
         }
 
         // Stage #1: Load all related Json-Patch from meta maven or local mod pack.
@@ -253,7 +253,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
 
             Path libraries = root.resolve("libraries");
             if (Files.exists(libraries))
-                FileUtils.copyDirectory(libraries, repository.getVersionRoot(name).toPath().resolve("libraries"));
+                FileUtils.copyDirectory(libraries, repository.getVersionRoot(name).resolve("libraries"));
 
             for (Library library : artifact.getVersion().getLibraries()) {
                 if ("local".equals(library.getHint())) {
@@ -261,15 +261,15 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
                         Retain them will facilitate compatibility, as some embedded libraries may check where their JAR is.
                         Meanwhile, potential compatibility issue with other launcher which never supports these fields might occur.
                         Here, we make the file stored twice, to keep maximum compatibility. */
-                    Path from = repository.getLibraryFile(artifact.getVersion(), library).toPath();
-                    Path target = repository.getLibraryFile(artifact.getVersion(), library.withoutCommunityFields()).toPath();
+                    Path from = repository.getLibraryFile(artifact.getVersion(), library);
+                    Path target = repository.getLibraryFile(artifact.getVersion(), library.withoutCommunityFields());
                     Files.createDirectories(target.getParent());
                     Files.copy(from, target, StandardCopyOption.REPLACE_EXISTING);
                 }
             }
 
             try (InputStream input = MaintainTask.class.getResourceAsStream("/assets/game/HMCLMultiMCBootstrap-1.0.jar")) {
-                Path libraryPath = repository.getLibraryFile(artifact.getVersion(), MultiMCInstancePatch.BOOTSTRAP_LIBRARY).toPath();
+                Path libraryPath = repository.getLibraryFile(artifact.getVersion(), MultiMCInstancePatch.BOOTSTRAP_LIBRARY);
 
                 Files.createDirectories(libraryPath.getParent());
                 Files.copy(Objects.requireNonNull(input, "Bundled HMCLMultiMCBootstrap is missing."), libraryPath, StandardCopyOption.REPLACE_EXISTING);
@@ -279,7 +279,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
             if (iconKey != null) {
                 Path iconFile = root.resolve(iconKey + ".png");
                 if (Files.exists(iconFile)) {
-                    FileUtils.copyFile(iconFile, repository.getVersionRoot(name).toPath().resolve("icon.png"));
+                    FileUtils.copyFile(iconFile, repository.getVersionRoot(name).resolve("icon.png"));
                 }
             }
         }
@@ -339,7 +339,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
             Path root = getRootPath(fs).resolve("jarmods");
 
             try (FileSystem mc = CompressingUtils.writable(
-                    repository.getVersionRoot(name).toPath().resolve(name + ".jar")
+                    repository.getVersionRoot(name).resolve(name + ".jar")
             ).setAutoDetectEncoding(true).build()) {
                 for (String fileName : files) {
                     try (FileSystem jm = CompressingUtils.readonly(root.resolve(fileName)).setAutoDetectEncoding(true).build()) {

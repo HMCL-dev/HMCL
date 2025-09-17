@@ -132,12 +132,12 @@ public final class Profile implements Observable {
     public Profile(String name, File initialGameDir, VersionSetting global, String selectedVersion, boolean useRelativePath) {
         this.name = new SimpleStringProperty(this, "name", name);
         gameDir = new SimpleObjectProperty<>(this, "gameDir", initialGameDir);
-        repository = new HMCLGameRepository(this, initialGameDir);
+        repository = new HMCLGameRepository(this, initialGameDir.toPath());
         this.global.set(global == null ? new VersionSetting() : global);
         this.selectedVersion.set(selectedVersion);
         this.useRelativePath.set(useRelativePath);
 
-        gameDir.addListener((a, b, newValue) -> repository.changeDirectory(newValue));
+        gameDir.addListener((a, b, newValue) -> repository.changeDirectory(newValue.toPath()));
         this.selectedVersion.addListener(o -> checkSelectedVersion());
         listenerHolder.add(EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> checkSelectedVersion(), EventPriority.HIGHEST));
 

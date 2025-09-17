@@ -69,7 +69,7 @@ public class MultiMCModpackExportTask extends Task<Void> {
         blackList.add(versionId + ".json");
         LOG.info("Compressing game files without some files in blacklist, including files or directories: usernamecache.json, asm, logs, backups, versions, assets, usercache.json, libraries, crash-reports, launcher_profiles.json, NVIDIA, TCNodeTracker");
         try (Zipper zip = new Zipper(output.toPath())) {
-            zip.putDirectory(repository.getRunDirectory(versionId).toPath(), ".minecraft", path -> Modpack.acceptFile(path, blackList, whitelist));
+            zip.putDirectory(repository.getRunDirectory(versionId), ".minecraft", path -> Modpack.acceptFile(path, blackList, whitelist));
 
             String gameVersion = repository.getGameVersion(versionId)
                     .orElseThrow(() -> new IOException("Cannot parse the version of " + versionId));

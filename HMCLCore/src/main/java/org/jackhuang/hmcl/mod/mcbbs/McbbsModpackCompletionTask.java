@@ -73,7 +73,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
         this.repository = dependencyManager.getGameRepository();
         this.modManager = repository.getModManager(version);
         this.version = version;
-        this.configurationFile = repository.getModpackConfiguration(version);
+        this.configurationFile = repository.getModpackConfiguration(version).toFile();
         this.configuration = configuration;
 
         setStage("hmcl.modpack.download");
@@ -110,7 +110,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
                     throw new IOException("Unable to parse server manifest.json from " + manifest.getFileApi(), e);
                 }
 
-                Path rootPath = repository.getVersionRoot(version).toPath();
+                Path rootPath = repository.getVersionRoot(version);
                 Files.createDirectories(rootPath);
 
                 Map<McbbsModpackManifest.File, McbbsModpackManifest.File> localFiles = manifest.getFiles().stream().collect(Collectors.toMap(Function.identity(), Function.identity()));
@@ -172,7 +172,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
                 manifest = remoteManifest.setFiles(newFiles);
                 return executor.all(tasks.stream().filter(Objects::nonNull).collect(Collectors.toList()));
             })).thenAcceptAsync(wrapConsumer(unused1 -> {
-                Path manifestFile = repository.getModpackConfiguration(version).toPath();
+                Path manifestFile = repository.getModpackConfiguration(version);
                 JsonUtils.writeToJsonFile(manifestFile,
                         new ModpackConfiguration<>(manifest, this.configuration.getType(), this.manifest.getName(), this.manifest.getVersion(),
                                 this.manifest.getFiles().stream()
@@ -274,7 +274,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
     @Nullable
     private Path getFilePath(McbbsModpackManifest.File file) {
         if (file instanceof McbbsModpackManifest.AddonFile) {
-            return modManager.getRepository().getRunDirectory(modManager.getVersion()).toPath().resolve(((McbbsModpackManifest.AddonFile) file).getPath());
+            return modManager.getRepository().getRunDirectory(modManager.getVersion()).resolve(((McbbsModpackManifest.AddonFile) file).getPath());
         } else if (file instanceof McbbsModpackManifest.CurseFile) {
             String fileName = ((McbbsModpackManifest.CurseFile) file).getFileName();
             if (fileName == null) return null;

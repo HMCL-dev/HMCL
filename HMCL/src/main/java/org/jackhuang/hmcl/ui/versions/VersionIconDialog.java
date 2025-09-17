@@ -78,7 +78,7 @@ public class VersionIconDialog extends DialogPane {
         File selectedFile = chooser.showOpenDialog(Controllers.getStage());
         if (selectedFile != null) {
             try {
-                profile.getRepository().setVersionIconFile(versionId, selectedFile);
+                profile.getRepository().setVersionIconFile(versionId, selectedFile.toPath());
 
                 if (vs != null) {
                     vs.setVersionIcon(VersionIconType.DEFAULT);

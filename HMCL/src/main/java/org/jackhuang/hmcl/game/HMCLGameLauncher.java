@@ -64,7 +64,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         if (config().isDisableAutoGameOptions())
             return;
 
-        Path runDir = repository.getRunDirectory(version.getId()).toPath();
+        Path runDir = repository.getRunDirectory(version.getId());
         Path optionsFile = runDir.resolve("options.txt");
         Path configFolder = runDir.resolve("config");
 

@@ -61,7 +61,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         this.adviser = adviser;
 
         JFXTreeView<String> treeView = new JFXTreeView<>();
-        rootNode = getTreeItem(profile.getRepository().getRunDirectory(version), "minecraft");
+        rootNode = getTreeItem(profile.getRepository().getRunDirectory(version).toFile(), "minecraft");
         treeView.setRoot(rootNode);
         treeView.setSelectionModel(new NoneMultipleSelectionModel<>());
         this.setCenter(treeView);

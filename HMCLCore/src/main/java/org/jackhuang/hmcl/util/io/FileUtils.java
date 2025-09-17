@@ -109,6 +109,14 @@ public final class FileUtils {
         return fileName != null ? fileName.toString() : "";
     }
 
+    public static Path toAbsolute(Path path) {
+        return path.toAbsolutePath().normalize();
+    }
+
+    public static String getAbsolutePath(Path path) {
+        return path.toAbsolutePath().normalize().toString();
+    }
+
     // https://learn.microsoft.com/biztalk/core/restrictions-when-configuring-the-file-adapter
     private static final Set<String> INVALID_WINDOWS_RESOURCE_BASE_NAMES = Set.of(
             "aux", "con", "nul", "prn", "clock$",
@@ -185,6 +193,18 @@ public final class FileUtils {
         }
 
         return true;
+    }
+
+    /// Safely get the file size. Returns `0` if the file does not exist or the size cannot be obtained.
+    public static long size(Path file) {
+        try {
+            return Files.size(file);
+        } catch (NoSuchFileException ignored) {
+            return 0L;
+        } catch (IOException e) {
+            LOG.warning("Failed to get file size of " + file, e);
+            return 0L;
+        }
     }
 
     public static String readTextMaybeNativeEncoding(Path file) throws IOException {

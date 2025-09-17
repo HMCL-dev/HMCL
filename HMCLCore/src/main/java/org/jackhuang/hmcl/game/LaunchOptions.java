@@ -20,9 +20,9 @@ package org.jackhuang.hmcl.game;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.Serializable;
 import java.net.Proxy;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -31,7 +31,7 @@ import java.util.*;
  */
 public class LaunchOptions implements Serializable {
 
-    private File gameDir;
+    private Path gameDir;
     private JavaRuntime java;
     private String versionName;
     private String versionType;
@@ -68,7 +68,7 @@ public class LaunchOptions implements Serializable {
     /**
      * The game directory
      */
-    public File getGameDir() {
+    public Path getGameDir() {
         return gameDir;
     }
 
@@ -314,7 +314,7 @@ public class LaunchOptions implements Serializable {
             return options.javaAgents;
         }
 
-        public Builder setGameDir(File gameDir) {
+        public Builder setGameDir(Path gameDir) {
             options.gameDir = gameDir;
             return this;
         }
