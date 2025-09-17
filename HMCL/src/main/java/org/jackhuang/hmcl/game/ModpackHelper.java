@@ -59,7 +59,8 @@ import static org.jackhuang.hmcl.util.Lang.toIterable;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
 public final class ModpackHelper {
-    private ModpackHelper() {}
+    private ModpackHelper() {
+    }
 
     private static final Map<String, ModpackProvider> providers = mapOf(
             pair(CurseModpackProvider.INSTANCE.getName(), CurseModpackProvider.INSTANCE),
@@ -138,14 +139,11 @@ public final class ModpackHelper {
     }
 
     public static ModpackConfiguration<?> readModpackConfiguration(Path file) throws IOException {
-        if (Files.notExists(file))
-            throw new FileNotFoundException(file.toString());
-        else
-            try {
-                return JsonUtils.fromJsonFile(file, ModpackConfiguration.class);
-            } catch (JsonParseException e) {
-                throw new IOException("Malformed modpack configuration");
-            }
+        try {
+            return JsonUtils.fromJsonFile(file, ModpackConfiguration.class);
+        } catch (JsonParseException e) {
+            throw new IOException("Malformed modpack configuration");
+        }
     }
 
     public static Task<?> getInstallTask(Profile profile, ServerModpackManifest manifest, String name, Modpack modpack) {
