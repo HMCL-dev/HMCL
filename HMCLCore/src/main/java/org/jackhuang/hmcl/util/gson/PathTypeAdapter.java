@@ -38,6 +38,9 @@ public final class PathTypeAdapter extends TypeAdapter<Path> {
             return null;
         }
 
+        String value = in.nextString();
+        if (File.separatorChar == '\\')
+            value = value.replace('/', '\\');
         return Path.of(in.nextString());
     }
 
@@ -45,11 +48,8 @@ public final class PathTypeAdapter extends TypeAdapter<Path> {
     public void write(JsonWriter out, Path path) throws IOException {
         if (path != null) {
             String value = path.toString();
-
-            // For all platforms, we standardize to use '/' as the separator
             if (File.separatorChar == '\\')
                 value = value.replace('\\', '/');
-
             out.value(value);
         } else {
             out.nullValue();
