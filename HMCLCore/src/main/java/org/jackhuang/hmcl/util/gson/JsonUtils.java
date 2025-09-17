@@ -150,7 +150,6 @@ public final class JsonUtils {
                 .setPrettyPrinting()
                 .registerTypeAdapter(Instant.class, InstantTypeAdapter.INSTANCE)
                 .registerTypeAdapter(UUID.class, UUIDTypeAdapter.INSTANCE)
-                .registerTypeAdapter(File.class, FileTypeAdapter.INSTANCE)
                 .registerTypeAdapter(Path.class, PathTypeAdapter.INSTANCE)
                 .registerTypeAdapterFactory(ValidationTypeAdapterFactory.INSTANCE)
                 .registerTypeAdapterFactory(LowerCaseEnumTypeAdapterFactory.INSTANCE)
