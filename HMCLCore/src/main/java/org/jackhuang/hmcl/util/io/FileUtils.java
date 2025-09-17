@@ -61,14 +61,6 @@ public final class FileUtils {
         return files.stream().map(FileUtils::toPath).filter(Objects::nonNull).toList();
     }
 
-    public static @Nullable File toFile(@Nullable Path file) {
-        try {
-            return file != null ? file.toFile() : null;
-        } catch (UnsupportedOperationException ignored) {
-            return null;
-        }
-    }
-
     public static boolean canCreateDirectory(String path) {
         try {
             return canCreateDirectory(Paths.get(path));
