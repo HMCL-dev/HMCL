@@ -51,12 +51,12 @@ public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.Da
         setItems(MappedObservableList.create(datapack.getInfo(), DatapackListPageSkin.DatapackInfoObject::new));
 
         FXUtils.applyDragListener(this, it -> Objects.equals("zip", FileUtils.getExtension(it.getName())),
-                mods -> mods.forEach(this::installSingleDatapack), this::refresh);
+                mods -> mods.stream().map(File::toPath).forEach(this::installSingleDatapack), this::refresh);
     }
 
-    private void installSingleDatapack(File datapack) {
+    private void installSingleDatapack(Path datapack) {
         try {
-            Datapack zip = new Datapack(datapack.toPath());
+            Datapack zip = new Datapack(datapack);
             zip.loadFromZip();
             zip.installTo(worldDir);
         } catch (IOException | IllegalArgumentException e) {
@@ -82,7 +82,7 @@ public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.Da
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("datapack.choose_datapack"));
         chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(i18n("datapack.extension"), "*.zip"));
-        List<File> res = chooser.showOpenMultipleDialog(Controllers.getStage());
+        List<Path> res = FileUtils.toPaths(chooser.showOpenMultipleDialog(Controllers.getStage()));
 
         if (res != null)
             res.forEach(this::installSingleDatapack);
