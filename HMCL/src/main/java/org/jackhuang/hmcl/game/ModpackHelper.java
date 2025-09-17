@@ -184,7 +184,7 @@ public final class ModpackHelper {
 
         return new ManuallyCreatedModpackInstallTask(profile, zipFile.toPath(), charset, name)
                 .thenAcceptAsync(Schedulers.javafx(), location -> {
-                    Profile newProfile = new Profile(name, location.toFile());
+                    Profile newProfile = new Profile(name, location);
                     newProfile.setUseRelativePath(true);
                     Profiles.getProfiles().add(newProfile);
                     Profiles.setSelectedProfile(newProfile);
