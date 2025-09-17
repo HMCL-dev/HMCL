@@ -26,10 +26,7 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.BufferedWriter;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.time.ZonedDateTime;
@@ -48,6 +45,22 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class FileUtils {
 
     private FileUtils() {
+    }
+
+    public static @Nullable Path toPath(@Nullable File file) {
+        try {
+            return file != null ? file.toPath() : null;
+        } catch (InvalidPathException ignored) {
+            return null;
+        }
+    }
+
+    public static @Nullable File toFile(@Nullable Path file) {
+        try {
+            return file != null ? file.toFile() : null;
+        } catch (UnsupportedOperationException ignored) {
+            return null;
+        }
     }
 
     public static boolean canCreateDirectory(String path) {
