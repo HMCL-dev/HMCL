@@ -50,7 +50,7 @@ public final class MultiMCModpackProvider implements ModpackProvider {
         if (!(modpack.getManifest() instanceof MultiMCInstanceConfiguration multiMCInstanceConfiguration))
             throw new MismatchedModpackTypeException(getName(), modpack.getManifest().getProvider().getName());
 
-        return new ModpackUpdateTask(dependencyManager.getGameRepository(), name, new MultiMCModpackInstallTask(dependencyManager, zipFile.toFile(), modpack, multiMCInstanceConfiguration, name));
+        return new ModpackUpdateTask(dependencyManager.getGameRepository(), name, new MultiMCModpackInstallTask(dependencyManager, zipFile, modpack, multiMCInstanceConfiguration, name));
     }
 
     private static String getRootEntryName(ZipArchiveReader file) throws IOException {
@@ -86,7 +86,7 @@ public final class MultiMCModpackProvider implements ModpackProvider {
             return new Modpack(cfg.getName(), "", "", cfg.getGameVersion(), cfg.getNotes(), encoding, cfg) {
                 @Override
                 public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, String name) {
-                    return new MultiMCModpackInstallTask(dependencyManager, zipFile.toFile(), this, cfg, name);
+                    return new MultiMCModpackInstallTask(dependencyManager, zipFile, this, cfg, name);
                 }
             };
         }
