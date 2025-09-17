@@ -267,7 +267,7 @@ public final class ExportWizardProvider implements WizardProvider {
                     profile.getRepository(),
                     version,
                     exportInfo,
-                    modpackFile
+                    modpackFile.toPath()
                 );
             }
 
