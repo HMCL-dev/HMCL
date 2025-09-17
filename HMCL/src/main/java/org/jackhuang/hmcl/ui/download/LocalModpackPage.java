@@ -114,7 +114,7 @@ public final class LocalModpackPage extends ModpackPage {
 
                         if (!name.isPresent()) {
                             // trim: https://github.com/HMCL-dev/HMCL/issues/962
-                            txtModpackName.setText(FileUtils.getNameWithoutExtension(selectedFile));
+                            txtModpackName.setText(FileUtils.getNameWithoutExtension(selectedFile.getName()));
                         }
 
                         Controllers.confirm(i18n("modpack.type.manual.warning"), i18n("install.modpack"), MessageDialogPane.MessageType.WARNING,

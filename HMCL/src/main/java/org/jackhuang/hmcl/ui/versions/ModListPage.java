@@ -59,7 +59,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     private String versionId;
 
     public ModListPage() {
-        FXUtils.applyDragListener(this, it -> Arrays.asList("jar", "zip", "litemod").contains(FileUtils.getExtension(it)), mods -> {
+        FXUtils.applyDragListener(this, it -> Arrays.asList("jar", "zip", "litemod").contains(FileUtils.getExtension(it.getName())), mods -> {
             mods.forEach(it -> {
                 try {
                     modManager.addMod(it.toPath());
@@ -175,7 +175,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     }
 
     public void openModFolder() {
-        FXUtils.openFolder(new File(profile.getRepository().getRunDirectory(versionId), "mods"));
+        FXUtils.openFolder(profile.getRepository().getRunDirectory(versionId).resolve("mods").toFile());
     }
 
     public void checkUpdates() {

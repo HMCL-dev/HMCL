@@ -143,7 +143,7 @@ public final class Versions {
     }
 
     public static void openFolder(Profile profile, String version) {
-        FXUtils.openFolder(profile.getRepository().getRunDirectory(version));
+        FXUtils.openFolder(profile.getRepository().getRunDirectory(version).toFile());
     }
 
     public static void duplicateVersion(Profile profile, String version) {
@@ -193,8 +193,8 @@ public final class Versions {
         ensureSelectedAccount(account -> {
             GameRepository repository = profile.getRepository();
             FileChooser chooser = new FileChooser();
-            if (repository.getRunDirectory(id).isDirectory())
-                chooser.setInitialDirectory(repository.getRunDirectory(id));
+            if (Files.isDirectory(repository.getRunDirectory(id)))
+                chooser.setInitialDirectory(repository.getRunDirectory(id).toFile());
             chooser.setTitle(i18n("version.launch_script.save"));
             chooser.getExtensionFilters().add(OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
                     ? new FileChooser.ExtensionFilter(i18n("extension.bat"), "*.bat")

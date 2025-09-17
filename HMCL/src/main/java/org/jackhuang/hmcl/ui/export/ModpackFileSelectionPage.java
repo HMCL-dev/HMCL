@@ -61,7 +61,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         this.adviser = adviser;
 
         JFXTreeView<String> treeView = new JFXTreeView<>();
-        rootNode = getTreeItem(profile.getRepository().getRunDirectory(version), "minecraft");
+        rootNode = getTreeItem(profile.getRepository().getRunDirectory(version).toFile(), "minecraft");
         treeView.setRoot(rootNode);
         treeView.setSelectionModel(new NoneMultipleSelectionModel<>());
         this.setCenter(treeView);
@@ -87,8 +87,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         ModAdviser.ModSuggestion state = ModAdviser.ModSuggestion.SUGGESTED;
         if (basePath.length() > "minecraft/".length()) {
             state = adviser.advise(StringUtils.substringAfter(basePath, "minecraft/") + (file.isDirectory() ? "/" : ""), file.isDirectory());
-            if (file.isFile() && Objects.equals(FileUtils.getNameWithoutExtension(file), version)) // Ignore <version>.json, <version>.jar
-                state = ModAdviser.ModSuggestion.HIDDEN;
+            if (file.isFile() && Objects.equals(FileUtils.getNameWithoutExtension(file.getName()), version)) state = ModAdviser.ModSuggestion.HIDDEN;
             if (file.isDirectory() && Objects.equals(file.getName(), version + "-natives")) // Ignore <version>-natives
                 state = ModAdviser.ModSuggestion.HIDDEN;
             if (state == ModAdviser.ModSuggestion.HIDDEN)
