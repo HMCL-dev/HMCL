@@ -104,7 +104,7 @@ public class FileItem extends BorderPane {
                     if (Files.isRegularFile(file))
                         file = file.toAbsolutePath().normalize().getParent();
                     else if (Files.isDirectory(file))
-                        file = file.toAbsolutePath().normalize().getParent();
+                        file = file.toAbsolutePath().normalize();
                     chooser.setInitialDirectory(file.toFile());
                 }
             } catch (InvalidPathException e) {
