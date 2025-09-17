@@ -736,7 +736,8 @@ public class DefaultLauncher extends Launcher {
                 }
             }
         }
-        if (!scriptFile.toFile().setExecutable(true))
+        FileUtils.setExecutable(scriptFile);
+        if (!Files.isExecutable(scriptFile))
             throw new PermissionException();
 
         if (usePowerShell && !CommandBuilder.hasExecutionPolicy())

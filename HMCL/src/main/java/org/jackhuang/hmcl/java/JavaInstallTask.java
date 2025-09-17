@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.java;
 import kala.compress.archivers.ArchiveEntry;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.tree.ArchiveFileTree;
 
@@ -100,8 +101,7 @@ public final class JavaInstallTask extends Task<JavaManifest> {
                 }
 
                 if (tree.isExecutable(entry))
-                    //noinspection ResultOfMethodCallIgnored
-                    path.toFile().setExecutable(true);
+                    FileUtils.setExecutable(path);
 
                 files.put(String.join("/", nameStack), new JavaLocalFiles.LocalFile(HexFormat.of().formatHex(messageDigest.digest()), size));
             }

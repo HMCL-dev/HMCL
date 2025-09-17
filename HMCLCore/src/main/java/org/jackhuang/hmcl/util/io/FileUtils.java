@@ -29,6 +29,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermission;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -268,6 +270,24 @@ public final class FileUtils {
             return true;
         } catch (IOException e) {
             return false;
+        }
+    }
+
+    public static void setExecutable(Path path) {
+        PosixFileAttributeView view = Files.getFileAttributeView(path, PosixFileAttributeView.class);
+        if (view != null) {
+            try {
+                Set<PosixFilePermission> oldPermissions = view.readAttributes().permissions();
+                if (oldPermissions.contains(PosixFilePermission.OWNER_EXECUTE))
+                    return;
+
+                EnumSet<PosixFilePermission> permissions = EnumSet.noneOf(PosixFilePermission.class);
+                permissions.addAll(oldPermissions);
+                permissions.add(PosixFilePermission.OWNER_EXECUTE);
+                view.setPermissions(permissions);
+            } catch (IOException e) {
+                LOG.warning("Failed to set permissions for " + path, e);
+            }
         }
     }
 
