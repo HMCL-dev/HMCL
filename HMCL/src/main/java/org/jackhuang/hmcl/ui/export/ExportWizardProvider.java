@@ -243,7 +243,7 @@ public final class ExportWizardProvider implements WizardProvider {
 
             @Override
             public void execute() {
-                dependency = new ServerModpackExportTask(profile.getRepository(), version, exportInfo, modpackFile);
+                dependency = new ServerModpackExportTask(profile.getRepository(), version, exportInfo, modpackFile.toPath());
             }
 
             @Override
