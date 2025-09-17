@@ -69,8 +69,8 @@ public final class CurseModpackProvider implements ModpackProvider {
 
         return new Modpack(manifest.getName(), manifest.getAuthor(), manifest.getVersion(), manifest.getMinecraft().getGameVersion(), description, encoding, manifest) {
             @Override
-            public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, File zipFile, String name) {
-                return new CurseInstallTask(dependencyManager, zipFile, this, manifest, name);
+            public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, String name) {
+                return new CurseInstallTask(dependencyManager, zipFile.toFile(), this, manifest, name);
             }
         };
     }

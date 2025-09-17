@@ -59,8 +59,8 @@ public final class ModrinthModpackProvider implements ModpackProvider {
         ModrinthManifest manifest = JsonUtils.fromNonNullJson(CompressingUtils.readTextZipEntry(zip, "modrinth.index.json"), ModrinthManifest.class);
         return new Modpack(manifest.getName(), "", manifest.getVersionId(), manifest.getGameVersion(), manifest.getSummary(), encoding, manifest) {
             @Override
-            public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, java.io.File zipFile, String name) {
-                return new ModrinthInstallTask(dependencyManager, zipFile, this, manifest, name);
+            public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, String name) {
+                return new ModrinthInstallTask(dependencyManager, zipFile.toFile(), this, manifest, name);
             }
         };
     }
