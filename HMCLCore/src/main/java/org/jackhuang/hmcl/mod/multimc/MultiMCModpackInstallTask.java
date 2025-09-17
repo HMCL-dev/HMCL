@@ -134,7 +134,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
 
             // TODO: Optimize unbearably slow ModpackInstallTask
             dependents.add(new ModpackInstallTask<>(zipFile, run.toFile(), modpack.getEncoding(), Collections.singletonList(mcDirectory), any -> true, config).withStage("hmcl.modpack"));
-            dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList(mcDirectory), manifest, MultiMCModpackProvider.INSTANCE, manifest.getName(), null, repository.getModpackConfiguration(name).toFile()).withStage("hmcl.modpack"));
+            dependents.add(new MinecraftInstanceTask<>(zipFile.toPath(), modpack.getEncoding(), Collections.singletonList(mcDirectory), manifest, MultiMCModpackProvider.INSTANCE, manifest.getName(), null, repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
         }
 
         // Stage #1: Load all related Json-Patch from meta maven or local mod pack.
