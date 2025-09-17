@@ -25,7 +25,6 @@ import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -35,23 +34,23 @@ public class ModrinthInstallTask extends Task<Void> {
 
     private final DefaultDependencyManager dependencyManager;
     private final DefaultGameRepository repository;
-    private final File zipFile;
+    private final Path zipFile;
     private final Modpack modpack;
     private final ModrinthManifest manifest;
     private final String name;
-    private final File run;
+    private final Path run;
     private final ModpackConfiguration<ModrinthManifest> config;
     private final List<Task<?>> dependents = new ArrayList<>(4);
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
-    public ModrinthInstallTask(DefaultDependencyManager dependencyManager, File zipFile, Modpack modpack, ModrinthManifest manifest, String name) {
+    public ModrinthInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, Modpack modpack, ModrinthManifest manifest, String name) {
         this.dependencyManager = dependencyManager;
         this.zipFile = zipFile;
         this.modpack = modpack;
         this.manifest = manifest;
         this.name = name;
         this.repository = dependencyManager.getGameRepository();
-        this.run = repository.getRunDirectory(name).toFile();
+        this.run = repository.getRunDirectory(name);
 
         Path json = repository.getModpackConfiguration(name);
         if (repository.hasVersion(name) && Files.notExists(json))
@@ -103,7 +102,7 @@ public class ModrinthInstallTask extends Task<Void> {
         this.config = config;
         List<String> subDirectories = Arrays.asList("/client-overrides", "/overrides");
         dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), subDirectories, any -> true, config).withStage("hmcl.modpack"));
-        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), subDirectories, manifest, ModrinthModpackProvider.INSTANCE, manifest.getName(), manifest.getVersionId(), repository.getModpackConfiguration(name).toFile()).withStage("hmcl.modpack"));
+        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), subDirectories, manifest, ModrinthModpackProvider.INSTANCE, manifest.getName(), manifest.getVersionId(), repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
 
         dependencies.add(new ModrinthCompletionTask(dependencyManager, name, manifest));
     }
@@ -123,7 +122,7 @@ public class ModrinthInstallTask extends Task<Void> {
         if (config != null) {
             // For update, remove mods not listed in new manifest
             for (ModrinthManifest.File oldManifestFile : config.getManifest().getFiles()) {
-                Path oldFile = run.toPath().resolve(oldManifestFile.getPath());
+                Path oldFile = run.resolve(oldManifestFile.getPath());
                 if (!Files.exists(oldFile)) continue;
                 if (manifest.getFiles().stream().noneMatch(oldManifestFile::equals)) {
                     Files.deleteIfExists(oldFile);

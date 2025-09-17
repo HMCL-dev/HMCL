@@ -29,7 +29,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -38,7 +37,7 @@ import java.util.Collections;
 import java.util.List;
 
 public final class HMCLModpackInstallTask extends Task<Void> {
-    private final File zipFile;
+    private final Path zipFile;
     private final String name;
     private final HMCLGameRepository repository;
     private final DefaultDependencyManager dependency;
@@ -46,7 +45,7 @@ public final class HMCLModpackInstallTask extends Task<Void> {
     private final List<Task<?>> dependencies = new ArrayList<>(1);
     private final List<Task<?>> dependents = new ArrayList<>(4);
 
-    public HMCLModpackInstallTask(Profile profile, File zipFile, Modpack modpack, String name) {
+    public HMCLModpackInstallTask(Profile profile, Path zipFile, Modpack modpack, String name) {
         dependency = profile.getDependency();
         repository = profile.getRepository();
         this.zipFile = zipFile;
@@ -74,8 +73,8 @@ public final class HMCLModpackInstallTask extends Task<Void> {
             }
         } catch (JsonParseException | IOException ignore) {
         }
-        dependents.add(new ModpackInstallTask<>(zipFile, run.toFile(), modpack.getEncoding(), Collections.singletonList("/minecraft"), it -> !"pack.json".equals(it), config));
-        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList("/minecraft"), modpack, HMCLModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getModpackConfiguration(name).toFile()).withStage("hmcl.modpack"));
+        dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), Collections.singletonList("/minecraft"), it -> !"pack.json".equals(it), config));
+        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList("/minecraft"), modpack, HMCLModpackProvider.INSTANCE, modpack.getName(), modpack.getVersion(), repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
     }
 
     @Override

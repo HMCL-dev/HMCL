@@ -26,7 +26,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -44,11 +43,11 @@ public final class CurseInstallTask extends Task<Void> {
 
     private final DefaultDependencyManager dependencyManager;
     private final DefaultGameRepository repository;
-    private final File zipFile;
+    private final Path zipFile;
     private final Modpack modpack;
     private final CurseManifest manifest;
     private final String name;
-    private final File run;
+    private final Path run;
     private final ModpackConfiguration<CurseManifest> config;
     private final List<Task<?>> dependents = new ArrayList<>(4);
     private final List<Task<?>> dependencies = new ArrayList<>(1);
@@ -61,14 +60,14 @@ public final class CurseInstallTask extends Task<Void> {
      * @param manifest          The manifest content of given CurseForge modpack.
      * @param name              the new version name
      */
-    public CurseInstallTask(DefaultDependencyManager dependencyManager, File zipFile, Modpack modpack, CurseManifest manifest, String name) {
+    public CurseInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, Modpack modpack, CurseManifest manifest, String name) {
         this.dependencyManager = dependencyManager;
         this.zipFile = zipFile;
         this.modpack = modpack;
         this.manifest = manifest;
         this.name = name;
         this.repository = dependencyManager.getGameRepository();
-        this.run = repository.getRunDirectory(name).toFile();
+        this.run = repository.getRunDirectory(name);
 
         Path json = repository.getModpackConfiguration(name);
         if (repository.hasVersion(name) && Files.notExists(json))
@@ -107,7 +106,7 @@ public final class CurseInstallTask extends Task<Void> {
         }
         this.config = config;
         dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), Collections.singletonList(manifest.getOverrides()), any -> true, config).withStage("hmcl.modpack"));
-        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList(manifest.getOverrides()), manifest, CurseModpackProvider.INSTANCE, manifest.getName(), manifest.getVersion(), repository.getModpackConfiguration(name).toFile()).withStage("hmcl.modpack"));
+        dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList(manifest.getOverrides()), manifest, CurseModpackProvider.INSTANCE, manifest.getName(), manifest.getVersion(), repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
 
         dependencies.add(new CurseCompletionTask(dependencyManager, name, manifest));
     }
@@ -128,11 +127,10 @@ public final class CurseInstallTask extends Task<Void> {
             // For update, remove mods not listed in new manifest
             for (CurseManifestFile oldCurseManifestFile : config.getManifest().getFiles()) {
                 if (StringUtils.isBlank(oldCurseManifestFile.getFileName())) continue;
-                File oldFile = new File(run, "mods/" + oldCurseManifestFile.getFileName());
-                if (!oldFile.exists()) continue;
+                Path oldFile = run.resolve("mods/" + oldCurseManifestFile.getFileName());
+                if (Files.notExists(oldFile)) continue;
                 if (manifest.getFiles().stream().noneMatch(oldCurseManifestFile::equals))
-                    if (!oldFile.delete())
-                        throw new IOException("Unable to delete mod file " + oldFile);
+                    Files.deleteIfExists(oldFile);
             }
         }
 

@@ -175,7 +175,7 @@ public final class ExportWizardProvider implements WizardProvider {
 
             @Override
             public void execute() {
-                dependency = new McbbsModpackExportTask(profile.getRepository(), version, exportInfo, modpackFile);
+                dependency = new McbbsModpackExportTask(profile.getRepository(), version, exportInfo, modpackFile.toPath());
             }
 
             @Override
@@ -223,7 +223,7 @@ public final class ExportWizardProvider implements WizardProvider {
                                 /* overrideCommands */ true,
                                 /* overrideWindow */ true,
                                 /* iconKey */ null // TODO
-                        ), modpackFile);
+                        ), modpackFile.toPath());
             }
 
             @Override
@@ -243,7 +243,7 @@ public final class ExportWizardProvider implements WizardProvider {
 
             @Override
             public void execute() {
-                dependency = new ServerModpackExportTask(profile.getRepository(), version, exportInfo, modpackFile);
+                dependency = new ServerModpackExportTask(profile.getRepository(), version, exportInfo, modpackFile.toPath());
             }
 
             @Override
@@ -267,7 +267,7 @@ public final class ExportWizardProvider implements WizardProvider {
                     profile.getRepository(),
                     version,
                     exportInfo,
-                    modpackFile
+                    modpackFile.toPath()
                 );
             }
 

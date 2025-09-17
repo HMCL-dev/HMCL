@@ -211,17 +211,17 @@ public final class ModpackHelper {
         };
 
         if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
-            return modpack.getInstallTask(profile.getDependency(), zipFile, name)
+            return modpack.getInstallTask(profile.getDependency(), zipFile.toPath(), name)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
                     .thenComposeAsync(createMultiMCPostInstallTask(profile, (MultiMCInstanceConfiguration) modpack.getManifest(), name))
                     .withStagesHint(List.of("hmcl.modpack", "hmcl.modpack.download"));
         else if (modpack.getManifest() instanceof McbbsModpackManifest)
-            return modpack.getInstallTask(profile.getDependency(), zipFile, name)
+            return modpack.getInstallTask(profile.getDependency(), zipFile.toPath(), name)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
                     .thenComposeAsync(createMcbbsPostInstallTask(profile, (McbbsModpackManifest) modpack.getManifest(), name))
                     .withStagesHint(List.of("hmcl.modpack", "hmcl.modpack.download"));
         else
-            return modpack.getInstallTask(profile.getDependency(), zipFile, name)
+            return modpack.getInstallTask(profile.getDependency(), zipFile.toPath(), name)
                     .whenComplete(Schedulers.javafx(), success, failure)
                     .withStagesHint(List.of("hmcl.modpack", "hmcl.modpack.download"));
     }
@@ -243,10 +243,10 @@ public final class ModpackHelper {
             throw new UnsupportedModpackException();
         }
         if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
-            return provider.createUpdateTask(profile.getDependency(), name, zipFile, modpack)
+            return provider.createUpdateTask(profile.getDependency(), name, zipFile.toPath(), modpack)
                     .thenComposeAsync(() -> createMultiMCPostUpdateTask(profile, (MultiMCInstanceConfiguration) modpack.getManifest(), name));
         else
-            return provider.createUpdateTask(profile.getDependency(), name, zipFile, modpack);
+            return provider.createUpdateTask(profile.getDependency(), name, zipFile.toPath(), modpack);
     }
 
     public static void toVersionSetting(MultiMCInstanceConfiguration c, VersionSetting vs) {

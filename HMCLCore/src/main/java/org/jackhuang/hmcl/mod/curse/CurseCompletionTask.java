@@ -28,7 +28,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -148,12 +147,12 @@ public final class CurseCompletionTask extends Task<Void> {
                 .filter(f -> f.getFileName() != null)
                 .flatMap(f -> {
                     try {
-                        File path = guessFilePath(f, resourcePacksRoot.toFile(), shaderPacksRoot.toFile());
+                        Path path = guessFilePath(f, resourcePacksRoot, shaderPacksRoot);
                         if (path == null) {
                             return Stream.empty();
                         }
 
-                        var task = new FileDownloadTask(f.getUrl(), path.toPath());
+                        var task = new FileDownloadTask(f.getUrl(), path);
                         task.setCacheRepository(dependency.getCacheRepository());
                         task.setCaching(true);
                         return Stream.of(task.withCounter("hmcl.modpack.download"));
@@ -181,23 +180,23 @@ public final class CurseCompletionTask extends Task<Void> {
      * @return ./resourcepacks/$filename or ./shaderpacks/$filename or ./mods/$filename if the file doesn't exist. null if the file existed.
      * @throws IOException If IOException was encountered during getting data from CurseForge.
      */
-    private File guessFilePath(CurseManifestFile file, File resourcePacksRoot, File shaderPacksRoot) throws IOException {
+    private Path guessFilePath(CurseManifestFile file, Path resourcePacksRoot, Path shaderPacksRoot) throws IOException {
         RemoteMod mod = CurseForgeRemoteModRepository.MODS.getModById(Integer.toString(file.getProjectID()));
         int classID = ((CurseAddon) mod.getData()).getClassId();
         String fileName = file.getFileName();
-        switch (classID) {
-            case 12: // Resource pack
-            case 6552: { // Shader pack
-                File res = new File(classID == 12 ? resourcePacksRoot : shaderPacksRoot, fileName);
-                return res.exists() ? null : res;
+        return switch (classID) {
+            case 12,       // Resource pack
+                 6552 -> { // Shader pack
+                Path res = (classID == 12 ? resourcePacksRoot : shaderPacksRoot).resolve(fileName);
+                yield Files.exists(res) ? null : res;
             }
-            default: {
+            default -> {
                 if (modManager.hasSimpleMod(fileName)) {
-                    return null;
+                    yield null;
                 }
-                return modManager.getSimpleModPath(fileName).toFile();
+                yield modManager.getSimpleModPath(fileName);
             }
-        }
+        };
     }
 
     @Override

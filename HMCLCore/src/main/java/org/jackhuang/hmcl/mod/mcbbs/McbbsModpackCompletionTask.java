@@ -32,7 +32,6 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -55,7 +54,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
     private final DefaultGameRepository repository;
     private final ModManager modManager;
     private final String version;
-    private final File configurationFile;
+    private final Path configurationFile;
     private ModpackConfiguration<McbbsModpackManifest> configuration;
     private McbbsModpackManifest manifest;
     private final List<Task<?>> dependencies = new ArrayList<>();
@@ -73,7 +72,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
         this.repository = dependencyManager.getGameRepository();
         this.modManager = repository.getModManager(version);
         this.version = version;
-        this.configurationFile = repository.getModpackConfiguration(version).toFile();
+        this.configurationFile = repository.getModpackConfiguration(version);
         this.configuration = configuration;
 
         setStage("hmcl.modpack.download");
@@ -85,7 +84,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
             if (configuration == null) {
                 // Load configuration from disk
                 try {
-                    configuration = JsonUtils.fromNonNullJson(Files.readString(configurationFile.toPath()), ModpackConfiguration.typeOf(McbbsModpackManifest.class));
+                    configuration = JsonUtils.fromNonNullJson(Files.readString(configurationFile), ModpackConfiguration.typeOf(McbbsModpackManifest.class));
                 } catch (IOException | JsonParseException e) {
                     throw new IOException("Malformed modpack configuration");
                 }
@@ -239,7 +238,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
 
                         manifest = newManifest;
                         configuration = configuration.setManifest(newManifest);
-                        JsonUtils.writeToJsonFile(configurationFile.toPath(), configuration);
+                        JsonUtils.writeToJsonFile(configurationFile, configuration);
 
                         for (McbbsModpackManifest.File file : newManifest.getFiles())
                             if (file instanceof McbbsModpackManifest.CurseFile) {
