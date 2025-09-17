@@ -29,7 +29,6 @@ import org.jackhuang.hmcl.ui.ListPageBase;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
@@ -51,7 +50,7 @@ public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.Da
         setItems(MappedObservableList.create(datapack.getInfo(), DatapackListPageSkin.DatapackInfoObject::new));
 
         FXUtils.applyDragListener(this, it -> Objects.equals("zip", FileUtils.getExtension(it.getName())),
-                mods -> mods.stream().map(File::toPath).forEach(this::installSingleDatapack), this::refresh);
+                mods -> mods.forEach(file -> installSingleDatapack(file.toPath())), this::refresh);
     }
 
     private void installSingleDatapack(Path datapack) {
