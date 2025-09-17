@@ -45,8 +45,8 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  * @author Glavo
  */
 public final class NativePatcher {
-    private NativePatcher() {
-    }
+
+    private static final String CURRENT_UNKNOWN_VERSION = "1.21.8";
 
     private static final Library NONEXISTENT_LIBRARY = new Library(null);
 
@@ -195,5 +195,86 @@ public final class NativePatcher {
         } else {
             return null;
         }
+    }
+
+    public static SupportStatus checkSupportedStatus(GameVersionNumber gameVersion, Platform platform,
+                                                     OSVersion systemVersion) {
+        if (platform.equals(Platform.WINDOWS_X86_64)) {
+            if (!systemVersion.isAtLeast(OSVersion.WINDOWS_10) && gameVersion.isAtLeast("1.20.5", "24w14a"))
+                return SupportStatus.UNSUPPORTED;
+
+            return SupportStatus.OFFICIAL_SUPPORTED;
+        }
+
+        if (platform.equals(Platform.MACOS_X86_64) || platform.equals(Platform.LINUX_X86_64))
+            return SupportStatus.OFFICIAL_SUPPORTED;
+
+
+        if (platform.equals(Platform.WINDOWS_X86) || platform.equals(Platform.LINUX_X86)) {
+            if (gameVersion.isAtLeast("1.20.5", "24w14a"))
+                return SupportStatus.UNSUPPORTED;
+            else
+                return SupportStatus.OFFICIAL_SUPPORTED;
+        }
+
+        if (platform.equals(Platform.WINDOWS_ARM64) || platform.equals(Platform.MACOS_ARM64)) {
+            if (gameVersion.compareTo("1.19") >= 0)
+                return SupportStatus.OFFICIAL_SUPPORTED;
+
+            if (platform.equals(Platform.WINDOWS_ARM64)) {
+                return gameVersion.compareTo("1.8") >= 0
+                        ? SupportStatus.LAUNCHER_SUPPORTED
+                        : SupportStatus.UNSUPPORTED;
+            } else if (platform.equals(Platform.MACOS_ARM64)) {
+                return gameVersion.compareTo("1.6") >= 0
+                        ? SupportStatus.LAUNCHER_SUPPORTED
+                        : SupportStatus.UNSUPPORTED;
+            }
+
+            return SupportStatus.UNSUPPORTED;
+        }
+
+        String minVersion = null;
+        String maxVersion = null;
+
+        if (platform.equals(Platform.FREEBSD_X86_64)) {
+            minVersion = "1.13";
+        } else if (platform.equals(Platform.LINUX_RISCV64)) {
+            minVersion = "1.8";
+        } else if (platform.equals(Platform.LINUX_LOONGARCH64)) {
+            minVersion = "1.6";
+        } else if (platform.equals(Platform.LINUX_LOONGARCH64_OW)) {
+            minVersion = "1.6";
+            maxVersion = "1.20.1";
+        } else if (platform.equals(Platform.LINUX_MIPS64EL) || platform.equals(Platform.LINUX_ARM32)) {
+            minVersion = "1.8";
+            maxVersion = "1.20.1";
+        }
+
+        if (minVersion != null) {
+            if (gameVersion.compareTo(minVersion) >= 0) {
+                if (maxVersion != null && gameVersion.compareTo(maxVersion) >= 0)
+                    return SupportStatus.UNSUPPORTED;
+
+                if (gameVersion.compareTo(CURRENT_UNKNOWN_VERSION) > 0)
+                    return SupportStatus.UNTESTED;
+
+                return SupportStatus.LAUNCHER_SUPPORTED;
+            } else {
+                return SupportStatus.UNSUPPORTED;
+            }
+        }
+
+        return SupportStatus.UNTESTED;
+    }
+
+    public enum SupportStatus {
+        OFFICIAL_SUPPORTED,
+        LAUNCHER_SUPPORTED,
+        UNTESTED,
+        UNSUPPORTED,
+    }
+
+    private NativePatcher() {
     }
 }
