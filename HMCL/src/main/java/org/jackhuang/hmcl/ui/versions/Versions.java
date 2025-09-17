@@ -89,9 +89,9 @@ public final class Versions {
                         .whenComplete(Schedulers.javafx(), e -> {
                             if (e == null) {
                                 if (version != null) {
-                                    Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile, modpack.toFile(), version));
+                                    Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile, modpack, version));
                                 } else {
-                                    Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile, modpack.toFile()));
+                                    Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile, modpack));
                                 }
                             } else if (e instanceof CancellationException) {
                                 Controllers.showToast(i18n("message.cancelled"));

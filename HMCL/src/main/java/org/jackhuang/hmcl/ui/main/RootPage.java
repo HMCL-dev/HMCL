@@ -52,6 +52,7 @@ import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
@@ -94,14 +95,14 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             FXUtils.applyDragListener(mainPage,
                     file -> ModpackHelper.isFileModpackByExtension(file) || NBTFileType.isNBTFileByExtension(file.toPath()),
                     modpacks -> {
-                        File file = modpacks.get(0);
-                        if (ModpackHelper.isFileModpackByExtension(file)) {
+                        Path file = modpacks.get(0).toPath();
+                        if (ModpackHelper.isFileModpackByExtension(file.toFile())) {
                             Controllers.getDecorator().startWizard(
                                     new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), file),
                                     i18n("install.modpack"));
-                        } else if (NBTFileType.isNBTFileByExtension(file.toPath())) {
+                        } else if (NBTFileType.isNBTFileByExtension(file)) {
                             try {
-                                Controllers.navigate(new NBTEditorPage(file.toPath()));
+                                Controllers.navigate(new NBTEditorPage(file));
                             } catch (Throwable e) {
                                 LOG.warning("Fail to open nbt file", e);
                                 Controllers.dialog(i18n("nbt.open.failed") + "\n\n" + StringUtils.getStackTrace(e),

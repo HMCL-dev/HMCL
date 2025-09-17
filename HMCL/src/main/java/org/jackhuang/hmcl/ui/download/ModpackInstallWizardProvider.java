@@ -34,7 +34,6 @@ import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -44,16 +43,16 @@ import java.util.Map;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class ModpackInstallWizardProvider implements WizardProvider {
+public final class ModpackInstallWizardProvider implements WizardProvider {
     private final Profile profile;
-    private final File file;
+    private final Path file;
     private final String updateVersion;
 
     public ModpackInstallWizardProvider(Profile profile) {
         this(profile, null, null);
     }
 
-    public ModpackInstallWizardProvider(Profile profile, File modpackFile) {
+    public ModpackInstallWizardProvider(Profile profile, Path modpackFile) {
         this(profile, modpackFile, null);
     }
 
@@ -61,7 +60,7 @@ public class ModpackInstallWizardProvider implements WizardProvider {
         this(profile, null, updateVersion);
     }
 
-    public ModpackInstallWizardProvider(Profile profile, File modpackFile, String updateVersion) {
+    public ModpackInstallWizardProvider(Profile profile, Path modpackFile, String updateVersion) {
         this.profile = profile;
         this.file = modpackFile;
         this.updateVersion = updateVersion;
@@ -70,7 +69,7 @@ public class ModpackInstallWizardProvider implements WizardProvider {
     @Override
     public void start(Map<String, Object> settings) {
         if (file != null)
-            settings.put(LocalModpackPage.MODPACK_FILE, file.toPath());
+            settings.put(LocalModpackPage.MODPACK_FILE, file);
         if (updateVersion != null)
             settings.put(LocalModpackPage.MODPACK_NAME, updateVersion);
         settings.put(PROFILE, profile);
