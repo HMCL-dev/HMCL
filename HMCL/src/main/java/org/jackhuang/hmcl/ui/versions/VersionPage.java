@@ -157,7 +157,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     }
 
     private void onBrowse(String sub) {
-        FXUtils.openFolder(getProfile().getRepository().getRunDirectory(getVersion()).resolve(sub).toFile());
+        FXUtils.openFolder(getProfile().getRepository().getRunDirectory(getVersion()).resolve(sub));
     }
 
     private void redownloadAssetIndex() {

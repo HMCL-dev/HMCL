@@ -52,7 +52,7 @@ import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 
-import java.io.*;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -111,9 +111,9 @@ public final class JavaManagementPage extends ListPageBase<JavaManagementPage.Ja
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
             chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Java", "java.exe"));
         chooser.setTitle(i18n("settings.game.java_directory.choose"));
-        File file = chooser.showOpenDialog(Controllers.getStage());
+        Path file = FileUtils.toPath(chooser.showOpenDialog(Controllers.getStage()));
         if (file != null) {
-            JavaManager.getAddJavaTask(file.toPath()).whenComplete(Schedulers.javafx(), exception -> {
+            JavaManager.getAddJavaTask(file).whenComplete(Schedulers.javafx(), exception -> {
                 if (exception != null) {
                     LOG.warning("Failed to add java", exception);
                     Controllers.dialog(i18n("java.add.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);

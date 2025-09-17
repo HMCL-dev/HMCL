@@ -77,12 +77,16 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.StringReader;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.ref.WeakReference;
 import java.net.*;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
@@ -457,22 +461,27 @@ public final class FXUtils {
         }
     }
 
-    public static void openFolder(File file) {
+    public static void openFolder(Path file) {
+        if (file.getFileSystem() != FileSystems.getDefault()) {
+            LOG.warning("Cannot open folder as the file system is not supported: " + file);
+            return;
+        }
+
         try {
-            Files.createDirectories(file.toPath());
+            Files.createDirectories(file);
         } catch (IOException e) {
             LOG.warning("Failed to create directory " + file);
             return;
         }
 
-        String path = file.getAbsolutePath();
+        String path = FileUtils.getAbsolutePath(file);
 
         String openCommand;
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
             openCommand = "explorer.exe";
         else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
             openCommand = "/usr/bin/open";
-        else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && new File("/usr/bin/xdg-open").exists())
+        else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && Files.exists(Path.of("/usr/bin/xdg-open")))
             openCommand = "/usr/bin/xdg-open";
         else
             openCommand = null;
@@ -494,7 +503,7 @@ public final class FXUtils {
 
             // Fallback to java.awt.Desktop::open
             try {
-                java.awt.Desktop.getDesktop().open(file);
+                java.awt.Desktop.getDesktop().open(file.toFile());
             } catch (Throwable e) {
                 LOG.error("Unable to open " + path + " by java.awt.Desktop.getDesktop()::open", e);
             }
@@ -537,11 +546,11 @@ public final class FXUtils {
                 }
 
                 // Fallback to open folder
-                openFolder(file.getParent().toFile());
+                openFolder(file.getParent());
             });
         } else {
             // We do not have a universal method to show file in file manager.
-            openFolder(file.getParent().toFile());
+            openFolder(file.getParent());
         }
     }
 
@@ -1447,13 +1456,6 @@ public final class FXUtils {
         int b = (int) Math.round(color.getBlue() * 255.0);
 
         return String.format("#%02x%02x%02x", r, g, b);
-    }
-
-    public static @Nullable List<Path> showOpenMultipleDialog(FileChooser chooser, Window ownerWindow) {
-        List<File> files = chooser.showOpenMultipleDialog(ownerWindow);
-        if (files == null)
-            return null;
-        return files.stream().map(File::toPath).toList();
     }
 
     public static FileChooser.ExtensionFilter getImageExtensionFilter() {
