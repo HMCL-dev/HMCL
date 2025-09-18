@@ -51,10 +51,10 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
         pane.setTitle(i18n("message.doing"));
         if (settings.containsKey("title")) {
             Object title = settings.get("title");
-            if (title instanceof StringProperty)
-                pane.titleProperty().bind((StringProperty) title);
-            else if (title instanceof String)
-                pane.setTitle((String) title);
+            if (title instanceof StringProperty titleProperty)
+                pane.titleProperty().bind(titleProperty);
+            else if (title instanceof String titleMessage)
+                pane.setTitle(titleMessage);
         }
 
         runInFX(() -> {
