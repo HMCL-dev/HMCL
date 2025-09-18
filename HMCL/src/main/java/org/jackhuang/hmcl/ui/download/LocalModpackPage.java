@@ -57,7 +57,7 @@ public final class LocalModpackPage extends ModpackPage {
     public LocalModpackPage(WizardController controller) {
         super(controller);
 
-        Profile profile = (Profile) controller.getSettings().get("PROFILE");
+        Profile profile = controller.getSettings().get(ModpackPage.PROFILE);
 
         Optional<String> name = Optional.ofNullable(controller.getSettings().get(MODPACK_NAME));
         if (name.isPresent()) {

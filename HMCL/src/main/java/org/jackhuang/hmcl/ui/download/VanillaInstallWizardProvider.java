@@ -47,7 +47,7 @@ public final class VanillaInstallWizardProvider implements WizardProvider {
 
     @Override
     public void start(SettingsMap settings) {
-        settings.put(PROFILE, profile);
+        settings.put(ModpackPage.PROFILE, profile);
     }
 
     private Task<Void> finishVersionDownloadingAsync(SettingsMap settings) {
@@ -89,6 +89,4 @@ public final class VanillaInstallWizardProvider implements WizardProvider {
     public boolean cancel() {
         return true;
     }
-
-    public static final String PROFILE = "PROFILE";
 }

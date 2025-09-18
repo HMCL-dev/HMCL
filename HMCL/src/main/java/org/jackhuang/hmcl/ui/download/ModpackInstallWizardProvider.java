@@ -39,7 +39,6 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 
-import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class ModpackInstallWizardProvider implements WizardProvider {
@@ -71,7 +70,7 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
             settings.put(LocalModpackPage.MODPACK_FILE, file);
         if (updateVersion != null)
             settings.put(LocalModpackPage.MODPACK_NAME, updateVersion);
-        settings.put(PROFILE, profile);
+        settings.put(ModpackPage.PROFILE, profile);
     }
 
     private Task<?> finishModpackInstallingAsync(SettingsMap settings) {
@@ -161,6 +160,4 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
     public boolean cancel() {
         return true;
     }
-
-    public static final String PROFILE = "PROFILE";
 }

@@ -288,7 +288,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
         @Override
         public void start(SettingsMap settings) {
-            settings.put(PROFILE, profile);
+            settings.put(ModpackPage.PROFILE, profile);
             settings.put(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId(), gameVersion);
         }
 
@@ -330,7 +330,5 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         public boolean cancel() {
             return true;
         }
-
-        public static final String PROFILE = "PROFILE";
     }
 }
