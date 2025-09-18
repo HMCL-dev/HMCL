@@ -60,7 +60,7 @@ final class WindowsGPUDetector {
                             "-Command",
                             String.join(" | ",
                                     getCimInstance + " -Class Win32_VideoController",
-                                    "Select-Object Name,AdapterCompatibility,DriverVersion,AdapterDACType",
+                                    "Select-Object Name,AdapterCompatibility,DriverVersion,AdapterDACType,Status",
                                     "Format-List"
                             )),
                     inputStream -> KeyValuePairUtils.loadList(new BufferedReader(new InputStreamReader(inputStream, OperatingSystem.NATIVE_CHARSET))));
@@ -71,14 +71,21 @@ final class WindowsGPUDetector {
                 String adapterCompatibility = videoController.get("AdapterCompatibility");
                 String driverVersion = videoController.get("DriverVersion");
                 String adapterDACType = videoController.get("AdapterDACType");
+                String status = videoController.get("Status");
 
                 if (StringUtils.isNotBlank(name)) {
-                    cards.add(GraphicsCard.builder().setName(GraphicsCard.cleanName(name))
+                    GraphicsCard.Builder builder = GraphicsCard.builder()
+                            .setName(GraphicsCard.cleanName(name))
                             .setVendor(HardwareVendor.of(adapterCompatibility))
                             .setDriverVersion(driverVersion)
-                            .setType(fromDacType(adapterDACType))
-                            .build()
-                    );
+                            .setType(fromDacType(adapterDACType));
+
+                    // 处理状态信息，提取错误代码
+                    if (StringUtils.isNotBlank(status)) {
+                        builder.setStatus(status);
+                    }
+
+                    cards.add(builder.build());
                 }
             }
 
@@ -133,13 +140,20 @@ final class WindowsGPUDetector {
 
     static @Nullable List<GraphicsCard> detect() {
         try {
+            // 优先使用PowerShell+WMI方法，因为它能获取状态信息
+            List<GraphicsCard> res = detectByCim();
+            if (res != null && !res.isEmpty())
+                return res;
+
+            // 如果PowerShell方法失败，则回退到注册表方法
             WinReg reg = WinReg.INSTANCE;
             if (reg != null) {
-                List<GraphicsCard> res = detectByRegistry(reg);
-                if (!res.isEmpty())
-                    return res;
+                List<GraphicsCard> registryRes = detectByRegistry(reg);
+                if (!registryRes.isEmpty())
+                    return registryRes;
             }
-            return detectByCim();
+
+            return null;
         } catch (Throwable e) {
             LOG.warning("Failed to get graphics cards", e);
             return null;

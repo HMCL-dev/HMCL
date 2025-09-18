@@ -58,13 +58,15 @@ public final class GraphicsCard {
     private final @Nullable Type type;
     private final @Nullable String driver;
     private final @Nullable String driverVersion;
+    private final @Nullable String status;
 
-    private GraphicsCard(String name, @Nullable HardwareVendor vendor, @Nullable Type type, @Nullable String driver, @Nullable String driverVersion) {
+    private GraphicsCard(String name, @Nullable HardwareVendor vendor, @Nullable Type type, @Nullable String driver, @Nullable String driverVersion, @Nullable String status) {
         this.name = Objects.requireNonNull(name);
         this.vendor = vendor;
         this.type = type;
         this.driver = driver;
         this.driverVersion = driverVersion;
+        this.status = status;
     }
 
     public String getName() {
@@ -87,6 +89,10 @@ public final class GraphicsCard {
             builder.append(" [").append(type).append(']');
         }
 
+        if (status != null) {
+            builder.append(" (").append(status).append(')');
+        }
+
         return builder.toString();
     }
 
@@ -101,6 +107,7 @@ public final class GraphicsCard {
         private Type type;
         private String driver;
         private String driverVersion;
+        private String status;
 
         public GraphicsCard build() {
             String name = this.name;
@@ -111,7 +118,7 @@ public final class GraphicsCard {
                     name = "Unknown";
             }
 
-            return new GraphicsCard(name, vendor, type, driver, driverVersion);
+            return new GraphicsCard(name, vendor, type, driver, driverVersion, status);
         }
 
         public String getName() {
@@ -156,6 +163,15 @@ public final class GraphicsCard {
 
         public Builder setDriverVersion(String driverVersion) {
             this.driverVersion = driverVersion;
+            return this;
+        }
+
+        public String getStatus() {
+            return status;
+        }
+
+        public Builder setStatus(String status) {
+            this.status = status;
             return this;
         }
     }
