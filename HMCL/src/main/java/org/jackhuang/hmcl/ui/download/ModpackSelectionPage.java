@@ -36,6 +36,7 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
+import org.jackhuang.hmcl.util.SettingMap;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -43,7 +44,6 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.Optional;
 
 import static org.jackhuang.hmcl.ui.download.LocalModpackPage.MODPACK_FILE;
@@ -174,7 +174,7 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
     }
 
     @Override
-    public void cleanup(Map<String, Object> settings) {
+    public void cleanup(SettingMap settings) {
     }
 
     @Override

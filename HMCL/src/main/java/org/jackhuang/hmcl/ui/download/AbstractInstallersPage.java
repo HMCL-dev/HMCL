@@ -35,8 +35,7 @@ import org.jackhuang.hmcl.ui.InstallerItem;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
-
-import java.util.Map;
+import org.jackhuang.hmcl.util.SettingMap;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -80,12 +79,12 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
     protected abstract void reload();
 
     @Override
-    public void onNavigate(Map<String, Object> settings) {
+    public void onNavigate(SettingMap settings) {
         reload();
     }
 
     @Override
-    public abstract void cleanup(Map<String, Object> settings);
+    public abstract void cleanup(SettingMap settings);
 
     protected abstract void onInstall();
 

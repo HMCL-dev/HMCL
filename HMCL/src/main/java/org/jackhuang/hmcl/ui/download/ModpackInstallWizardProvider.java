@@ -32,6 +32,7 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
+import org.jackhuang.hmcl.util.SettingMap;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -66,7 +67,7 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
     }
 
     @Override
-    public void start(Map<String, Object> settings) {
+    public void start(SettingMap settings) {
         if (file != null)
             settings.put(LocalModpackPage.MODPACK_FILE, file);
         if (updateVersion != null)
@@ -119,7 +120,7 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
     }
 
     @Override
-    public Object finish(Map<String, Object> settings) {
+    public Object finish(SettingMap settings) {
         settings.put("title", i18n("install.modpack.installation"));
         settings.put("success_message", i18n("install.success"));
         settings.put("failure_callback", new FailureCallback() {
@@ -141,7 +142,7 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
     }
 
     @Override
-    public Node createPage(WizardController controller, int step, Map<String, Object> settings) {
+    public Node createPage(WizardController controller, int step, SettingMap settings) {
         switch (step) {
             case 0:
                 return new ModpackSelectionPage(controller);

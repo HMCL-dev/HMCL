@@ -51,12 +51,12 @@ import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
+import org.jackhuang.hmcl.util.SettingMap;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
@@ -223,7 +223,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     }
 
     private static final class DownloadNavigator implements Navigation {
-        private final Map<String, Object> settings = new HashMap<>();
+        private final SettingMap settings = new SettingMap();
 
         @Override
         public void onStart() {
@@ -260,7 +260,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         }
 
         @Override
-        public Map<String, Object> getSettings() {
+        public SettingMap getSettings() {
             return settings;
         }
 
@@ -287,19 +287,19 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         }
 
         @Override
-        public void start(Map<String, Object> settings) {
+        public void start(SettingMap settings) {
             settings.put(PROFILE, profile);
             settings.put(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId(), gameVersion);
         }
 
-        private Task<Void> finishVersionDownloadingAsync(Map<String, Object> settings) {
+        private Task<Void> finishVersionDownloadingAsync(SettingMap settings) {
             GameBuilder builder = dependencyManager.gameBuilder();
 
             String name = (String) settings.get("name");
             builder.name(name);
             builder.gameVersion(((RemoteVersion) settings.get(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId())).getGameVersion());
 
-            for (Map.Entry<String, Object> entry : settings.entrySet())
+            for (Map.Entry<String, Object> entry : settings.asStringMap().entrySet())
                 if (!LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId().equals(entry.getKey()) && entry.getValue() instanceof RemoteVersion)
                     builder.version((RemoteVersion) entry.getValue());
 
@@ -308,7 +308,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         }
 
         @Override
-        public Object finish(Map<String, Object> settings) {
+        public Object finish(SettingMap settings) {
             settings.put("title", i18n("install.new_game.installation"));
             settings.put("success_message", i18n("install.success"));
             settings.put("failure_callback", (FailureCallback) (settings1, exception, next) -> UpdateInstallerWizardProvider.alertFailureMessage(exception, next));
@@ -317,7 +317,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         }
 
         @Override
-        public Node createPage(WizardController controller, int step, Map<String, Object> settings) {
+        public Node createPage(WizardController controller, int step, SettingMap settings) {
             switch (step) {
                 case 0:
                     return new InstallersPage(controller, profile.getRepository(), ((RemoteVersion) controller.getSettings().get("game")).getGameVersion(), downloadProvider);

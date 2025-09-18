@@ -33,8 +33,7 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
-
-import java.util.Map;
+import org.jackhuang.hmcl.util.SettingMap;
 
 import static org.jackhuang.hmcl.ui.export.ModpackInfoPage.MODPACK_INFO_OPTION;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -89,7 +88,7 @@ public final class ModpackTypeSelectionPage extends VBox implements WizardPage {
     }
 
     @Override
-    public void cleanup(Map<String, Object> settings) {
+    public void cleanup(SettingMap settings) {
     }
 
     @Override

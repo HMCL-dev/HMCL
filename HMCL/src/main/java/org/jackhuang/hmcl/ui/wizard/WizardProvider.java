@@ -18,15 +18,16 @@
 package org.jackhuang.hmcl.ui.wizard;
 
 import javafx.scene.Node;
+import org.jackhuang.hmcl.util.SettingMap;
 
 import java.util.Map;
 
 public interface WizardProvider {
-    void start(Map<String, Object> settings);
+    void start(SettingMap settings);
 
-    Object finish(Map<String, Object> settings);
+    Object finish(SettingMap settings);
 
-    Node createPage(WizardController controller, int step, Map<String, Object> settings);
+    Node createPage(WizardController controller, int step, SettingMap settings);
 
     boolean cancel();
 

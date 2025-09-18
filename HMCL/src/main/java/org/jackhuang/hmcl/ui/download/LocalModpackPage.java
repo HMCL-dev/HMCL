@@ -36,13 +36,13 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
+import org.jackhuang.hmcl.util.SettingMap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.nio.charset.Charset;
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.Optional;
 
 import static org.jackhuang.hmcl.util.Lang.tryCast;
@@ -144,7 +144,7 @@ public final class LocalModpackPage extends ModpackPage {
     }
 
     @Override
-    public void cleanup(Map<String, Object> settings) {
+    public void cleanup(SettingMap settings) {
         settings.remove(MODPACK_FILE);
     }
 

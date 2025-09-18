@@ -41,6 +41,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
+import org.jackhuang.hmcl.util.SettingMap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
@@ -147,7 +148,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
     }
 
     @Override
-    public void cleanup(Map<String, Object> settings) {
+    public void cleanup(SettingMap settings) {
         controller.getSettings().remove(MODPACK_INFO);
     }
 

@@ -33,6 +33,10 @@ public final class SettingMap {
     public SettingMap() {
     }
 
+    public Map<String, Object> asStringMap() {
+        return map;
+    }
+
     public boolean containsKey(@NotNull Key<?> key) {
         return map.containsKey(key.key);
     }
@@ -69,5 +73,9 @@ public final class SettingMap {
 
     public Object remove(@NotNull String key) {
         return map.remove(key);
+    }
+
+    public void clear() {
+        map.clear();
     }
 }
