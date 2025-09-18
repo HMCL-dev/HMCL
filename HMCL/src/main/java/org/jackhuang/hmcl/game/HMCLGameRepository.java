@@ -413,6 +413,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 .setPreLaunchCommand(vs.getPreLaunchCommand())
                 .setPostExitCommand(vs.getPostExitCommand())
                 .setNoGeneratedJVMArgs(vs.isNoJVMArgs())
+                .setNoGeneratedOptimizingJVMArgs(vs.isNoOptimizingJVMArgs())
                 .setNativesDirType(vs.getNativesDirType())
                 .setNativesDir(vs.getNativesDir())
                 .setProcessPriority(vs.getProcessPriority())
