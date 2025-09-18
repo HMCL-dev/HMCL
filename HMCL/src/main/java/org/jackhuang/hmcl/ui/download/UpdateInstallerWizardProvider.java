@@ -73,7 +73,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
     public Object finish(SettingsMap settings) {
         settings.put("title", i18n("install.change_version.process"));
         settings.put("success_message", i18n("install.success"));
-        settings.put("failure_callback", (FailureCallback) (settings1, exception, next) -> alertFailureMessage(exception, next));
+        settings.put(FailureCallback.KEY, (settings1, exception, next) -> alertFailureMessage(exception, next));
 
         // We remove library but not save it,
         // so if installation failed will not break down current version.

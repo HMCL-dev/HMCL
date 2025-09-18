@@ -77,8 +77,8 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
                             }
 
                             String appendix = StringUtils.getStackTrace(executor.getException());
-                            if (settings.get("failure_callback") instanceof WizardProvider.FailureCallback)
-                                ((WizardProvider.FailureCallback) settings.get("failure_callback")).onFail(settings, executor.getException(), () -> onEnd());
+                            if (settings.get(WizardProvider.FailureCallback.KEY) != null)
+                                settings.get(WizardProvider.FailureCallback.KEY).onFail(settings, executor.getException(), () -> onEnd());
                             else if (settings.get("failure_message") instanceof String)
                                 Controllers.dialog(appendix, (String) settings.get("failure_message"), MessageType.ERROR, () -> onEnd());
                             else if (!settings.containsKey("forbid_failure_message"))

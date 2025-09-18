@@ -121,18 +121,15 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
     public Object finish(SettingsMap settings) {
         settings.put("title", i18n("install.modpack.installation"));
         settings.put("success_message", i18n("install.success"));
-        settings.put("failure_callback", new FailureCallback() {
-            @Override
-            public void onFail(SettingsMap settings, Exception exception, Runnable next) {
-                if (exception instanceof ModpackCompletionException) {
-                    if (exception.getCause() instanceof FileNotFoundException) {
-                        Controllers.dialog(i18n("modpack.type.curse.not_found"), i18n("install.failed"), MessageType.ERROR, next);
-                    } else {
-                        Controllers.dialog(i18n("install.success"), i18n("install.success"), MessageType.SUCCESS, next);
-                    }
+        settings.put(FailureCallback.KEY, (settings1, exception, next) -> {
+            if (exception instanceof ModpackCompletionException) {
+                if (exception.getCause() instanceof FileNotFoundException) {
+                    Controllers.dialog(i18n("modpack.type.curse.not_found"), i18n("install.failed"), MessageType.ERROR, next);
                 } else {
-                    UpdateInstallerWizardProvider.alertFailureMessage(exception, next);
+                    Controllers.dialog(i18n("install.success"), i18n("install.success"), MessageType.SUCCESS, next);
                 }
+            } else {
+                UpdateInstallerWizardProvider.alertFailureMessage(exception, next);
             }
         });
 

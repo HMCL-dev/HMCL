@@ -311,7 +311,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         public Object finish(SettingsMap settings) {
             settings.put("title", i18n("install.new_game.installation"));
             settings.put("success_message", i18n("install.success"));
-            settings.put("failure_callback", (FailureCallback) (settings1, exception, next) -> UpdateInstallerWizardProvider.alertFailureMessage(exception, next));
+            settings.put(FailureCallback.KEY, (settings1, exception, next) -> UpdateInstallerWizardProvider.alertFailureMessage(exception, next));
 
             return finishVersionDownloadingAsync(settings);
         }

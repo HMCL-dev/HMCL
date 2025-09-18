@@ -34,6 +34,8 @@ public interface WizardProvider {
     }
 
     interface FailureCallback {
+        SettingsMap.Key<FailureCallback> KEY = new SettingsMap.Key<>("failure_callback");
+
         void onFail(SettingsMap settings, Exception exception, Runnable next);
     }
 }
