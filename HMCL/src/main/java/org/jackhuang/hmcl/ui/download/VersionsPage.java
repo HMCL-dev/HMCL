@@ -54,7 +54,7 @@ import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.Holder;
-import org.jackhuang.hmcl.util.SettingMap;
+import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -124,7 +124,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
     }
 
     @Override
-    public void cleanup(SettingMap settings) {
+    public void cleanup(SettingsMap settings) {
         settings.remove(libraryId);
     }
 

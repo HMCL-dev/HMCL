@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.ui.wizard;
 
 import javafx.scene.Node;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.util.SettingMap;
+import org.jackhuang.hmcl.util.SettingsMap;
 
 import java.util.*;
 
@@ -28,7 +28,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public class WizardController implements Navigation {
     private final WizardDisplayer displayer;
     private WizardProvider provider = null;
-    private final SettingMap settings = new SettingMap();
+    private final SettingsMap settings = new SettingsMap();
     private final Stack<Node> pages = new Stack<>();
     private boolean stopped = false;
 
@@ -37,7 +37,7 @@ public class WizardController implements Navigation {
     }
 
     @Override
-    public SettingMap getSettings() {
+    public SettingsMap getSettings() {
         return settings;
     }
 

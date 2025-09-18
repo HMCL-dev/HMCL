@@ -24,13 +24,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 /// @author Glavo
-public final class SettingMap {
+public final class SettingsMap {
     public record Key<T>(String key) {
     }
 
     private final Map<String, Object> map = new HashMap<>();
 
-    public SettingMap() {
+    public SettingsMap() {
     }
 
     public Map<String, Object> asStringMap() {

@@ -51,7 +51,7 @@ import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
-import org.jackhuang.hmcl.util.SettingMap;
+import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
@@ -223,7 +223,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     }
 
     private static final class DownloadNavigator implements Navigation {
-        private final SettingMap settings = new SettingMap();
+        private final SettingsMap settings = new SettingsMap();
 
         @Override
         public void onStart() {
@@ -260,7 +260,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         }
 
         @Override
-        public SettingMap getSettings() {
+        public SettingsMap getSettings() {
             return settings;
         }
 
@@ -287,12 +287,12 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         }
 
         @Override
-        public void start(SettingMap settings) {
+        public void start(SettingsMap settings) {
             settings.put(PROFILE, profile);
             settings.put(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId(), gameVersion);
         }
 
-        private Task<Void> finishVersionDownloadingAsync(SettingMap settings) {
+        private Task<Void> finishVersionDownloadingAsync(SettingsMap settings) {
             GameBuilder builder = dependencyManager.gameBuilder();
 
             String name = (String) settings.get("name");
@@ -308,7 +308,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         }
 
         @Override
-        public Object finish(SettingMap settings) {
+        public Object finish(SettingsMap settings) {
             settings.put("title", i18n("install.new_game.installation"));
             settings.put("success_message", i18n("install.success"));
             settings.put("failure_callback", (FailureCallback) (settings1, exception, next) -> UpdateInstallerWizardProvider.alertFailureMessage(exception, next));
@@ -317,7 +317,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         }
 
         @Override
-        public Node createPage(WizardController controller, int step, SettingMap settings) {
+        public Node createPage(WizardController controller, int step, SettingsMap settings) {
             switch (step) {
                 case 0:
                     return new InstallersPage(controller, profile.getRepository(), ((RemoteVersion) controller.getSettings().get("game")).getGameVersion(), downloadProvider);

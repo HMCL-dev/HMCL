@@ -36,7 +36,7 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
-import org.jackhuang.hmcl.util.SettingMap;
+import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -144,7 +144,7 @@ public final class LocalModpackPage extends ModpackPage {
     }
 
     @Override
-    public void cleanup(SettingMap settings) {
+    public void cleanup(SettingsMap settings) {
         settings.remove(MODPACK_FILE);
     }
 

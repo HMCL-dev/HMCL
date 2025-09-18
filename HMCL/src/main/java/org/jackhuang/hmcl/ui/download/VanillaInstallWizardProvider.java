@@ -28,7 +28,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
-import org.jackhuang.hmcl.util.SettingMap;
+import org.jackhuang.hmcl.util.SettingsMap;
 
 import java.util.Map;
 
@@ -46,18 +46,18 @@ public final class VanillaInstallWizardProvider implements WizardProvider {
     }
 
     @Override
-    public void start(SettingMap settings) {
+    public void start(SettingsMap settings) {
         settings.put(PROFILE, profile);
     }
 
-    private Task<Void> finishVersionDownloadingAsync(Map<String, Object> settings) {
+    private Task<Void> finishVersionDownloadingAsync(SettingsMap settings) {
         GameBuilder builder = dependencyManager.gameBuilder();
 
         String name = (String) settings.get("name");
         builder.name(name);
         builder.gameVersion(((RemoteVersion) settings.get("game")).getGameVersion());
 
-        for (Map.Entry<String, Object> entry : settings.entrySet())
+        for (Map.Entry<String, Object> entry : settings.asStringMap().entrySet())
             if (!"game".equals(entry.getKey()) && entry.getValue() instanceof RemoteVersion)
                 builder.version((RemoteVersion) entry.getValue());
 
@@ -66,7 +66,7 @@ public final class VanillaInstallWizardProvider implements WizardProvider {
     }
 
     @Override
-    public Object finish(SettingMap settings) {
+    public Object finish(SettingsMap settings) {
         settings.put("title", i18n("install.new_game.installation"));
         settings.put("success_message", i18n("install.success"));
         settings.put("failure_callback", (FailureCallback) (settings1, exception, next) -> UpdateInstallerWizardProvider.alertFailureMessage(exception, next));
@@ -75,7 +75,7 @@ public final class VanillaInstallWizardProvider implements WizardProvider {
     }
 
     @Override
-    public Node createPage(WizardController controller, int step, SettingMap settings) {
+    public Node createPage(WizardController controller, int step, SettingsMap settings) {
         switch (step) {
             case 0:
                 return new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer.game")), "", downloadProvider, "game",

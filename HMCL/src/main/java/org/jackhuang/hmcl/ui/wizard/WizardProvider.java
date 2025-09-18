@@ -18,16 +18,14 @@
 package org.jackhuang.hmcl.ui.wizard;
 
 import javafx.scene.Node;
-import org.jackhuang.hmcl.util.SettingMap;
-
-import java.util.Map;
+import org.jackhuang.hmcl.util.SettingsMap;
 
 public interface WizardProvider {
-    void start(SettingMap settings);
+    void start(SettingsMap settings);
 
-    Object finish(SettingMap settings);
+    Object finish(SettingsMap settings);
 
-    Node createPage(WizardController controller, int step, SettingMap settings);
+    Node createPage(WizardController controller, int step, SettingsMap settings);
 
     boolean cancel();
 
@@ -36,6 +34,6 @@ public interface WizardProvider {
     }
 
     interface FailureCallback {
-        void onFail(Map<String, Object> settings, Exception exception, Runnable next);
+        void onFail(SettingsMap settings, Exception exception, Runnable next);
     }
 }

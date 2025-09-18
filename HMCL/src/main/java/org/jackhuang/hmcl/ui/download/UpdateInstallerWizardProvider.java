@@ -30,7 +30,7 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
-import org.jackhuang.hmcl.util.SettingMap;
+import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
@@ -66,11 +66,11 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
     }
 
     @Override
-    public void start(SettingMap settings) {
+    public void start(SettingsMap settings) {
     }
 
     @Override
-    public Object finish(SettingMap settings) {
+    public Object finish(SettingsMap settings) {
         settings.put("title", i18n("install.change_version.process"));
         settings.put("success_message", i18n("install.success"));
         settings.put("failure_callback", (FailureCallback) (settings1, exception, next) -> alertFailureMessage(exception, next));
@@ -96,7 +96,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
     }
 
     @Override
-    public Node createPage(WizardController controller, int step, SettingMap settings) {
+    public Node createPage(WizardController controller, int step, SettingsMap settings) {
         switch (step) {
             case 0:
                 return new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer." + libraryId)), gameVersion, downloadProvider, libraryId, () -> {

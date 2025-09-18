@@ -32,13 +32,12 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
-import org.jackhuang.hmcl.util.SettingMap;
+import org.jackhuang.hmcl.util.SettingsMap;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
-import java.util.Map;
 
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -67,7 +66,7 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
     }
 
     @Override
-    public void start(SettingMap settings) {
+    public void start(SettingsMap settings) {
         if (file != null)
             settings.put(LocalModpackPage.MODPACK_FILE, file);
         if (updateVersion != null)
@@ -75,7 +74,7 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         settings.put(PROFILE, profile);
     }
 
-    private Task<?> finishModpackInstallingAsync(Map<String, Object> settings) {
+    private Task<?> finishModpackInstallingAsync(SettingsMap settings) {
         Path selected = tryCast(settings.get(LocalModpackPage.MODPACK_FILE), Path.class).orElse(null);
         ServerModpackManifest serverModpackManifest = tryCast(settings.get(RemoteModpackPage.MODPACK_SERVER_MANIFEST), ServerModpackManifest.class).orElse(null);
         Modpack modpack = tryCast(settings.get(LocalModpackPage.MODPACK_MANIFEST), Modpack.class).orElse(null);
@@ -120,12 +119,12 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
     }
 
     @Override
-    public Object finish(SettingMap settings) {
+    public Object finish(SettingsMap settings) {
         settings.put("title", i18n("install.modpack.installation"));
         settings.put("success_message", i18n("install.success"));
         settings.put("failure_callback", new FailureCallback() {
             @Override
-            public void onFail(Map<String, Object> settings, Exception exception, Runnable next) {
+            public void onFail(SettingsMap settings, Exception exception, Runnable next) {
                 if (exception instanceof ModpackCompletionException) {
                     if (exception.getCause() instanceof FileNotFoundException) {
                         Controllers.dialog(i18n("modpack.type.curse.not_found"), i18n("install.failed"), MessageType.ERROR, next);
@@ -142,7 +141,7 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
     }
 
     @Override
-    public Node createPage(WizardController controller, int step, SettingMap settings) {
+    public Node createPage(WizardController controller, int step, SettingsMap settings) {
         switch (step) {
             case 0:
                 return new ModpackSelectionPage(controller);

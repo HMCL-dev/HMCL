@@ -35,7 +35,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.SettingMap;
+import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
 
@@ -55,11 +55,11 @@ public final class ExportWizardProvider implements WizardProvider {
     }
 
     @Override
-    public void start(SettingMap settings) {
+    public void start(SettingsMap settings) {
     }
 
     @Override
-    public Object finish(SettingMap settings) {
+    public Object finish(SettingsMap settings) {
         @SuppressWarnings("unchecked")
         List<String> whitelist = (List<String>) settings.get(ModpackFileSelectionPage.MODPACK_FILE_SELECTION);
         Path modpackFile = (Path) settings.get(ModpackInfoPage.MODPACK_FILE);
@@ -279,7 +279,7 @@ public final class ExportWizardProvider implements WizardProvider {
     }
 
     @Override
-    public Node createPage(WizardController controller, int step, SettingMap settings) {
+    public Node createPage(WizardController controller, int step, SettingsMap settings) {
         return switch (step) {
             case 0 -> new ModpackTypeSelectionPage(controller);
             case 1 -> new ModpackInfoPage(controller, profile.getRepository(), version);

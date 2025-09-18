@@ -17,13 +17,13 @@
  */
 package org.jackhuang.hmcl.ui.wizard;
 
-import org.jackhuang.hmcl.util.SettingMap;
+import org.jackhuang.hmcl.util.SettingsMap;
 
 public interface WizardPage {
-    default void onNavigate(SettingMap settings) {
+    default void onNavigate(SettingsMap settings) {
     }
 
-    default void cleanup(SettingMap settings) {
+    default void cleanup(SettingsMap settings) {
     }
 
     String getTitle();

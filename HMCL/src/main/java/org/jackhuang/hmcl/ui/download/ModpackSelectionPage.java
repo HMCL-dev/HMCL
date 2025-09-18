@@ -36,7 +36,7 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
-import org.jackhuang.hmcl.util.SettingMap;
+import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -174,7 +174,7 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
     }
 
     @Override
-    public void cleanup(SettingMap settings) {
+    public void cleanup(SettingsMap settings) {
     }
 
     @Override
