@@ -77,6 +77,10 @@ public class AccountAdvancedListItem extends AdvancedListItem {
 
         setActionButtonVisible(false);
 
+        FXUtils.onScroll(this, Accounts.getAccounts(),
+                accounts -> accounts.indexOf(account.get()),
+                Accounts::setSelectedAccount);
+
         setOnScroll(event -> {
             double deltaY = event.getDeltaY();
             if (deltaY == 0)

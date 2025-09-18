@@ -208,20 +208,11 @@ public final class MainPage extends StackPane implements DecoratorPage {
         launchPane.getStyleClass().add("launch-pane");
         launchPane.setMaxWidth(230);
         launchPane.setMaxHeight(55);
-        launchPane.setOnScroll(event -> {
-            double deltaY = event.getDeltaY();
-            if (deltaY == 0)
-                return;
-
+        FXUtils.onScroll(launchPane, versions, list -> {
             String currentId = getCurrentGame();
-            int index = Lang.indexWhere(versions, instance -> instance.getId().equals(currentId));
-            if (index < 0) return;
-            if (deltaY > 0) // up
-                index--;
-            else // down
-                index++;
-            profile.setSelectedVersion(versions.get((index + versions.size()) % versions.size()).getId());
-        });
+            return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
+        }, it -> profile.setSelectedVersion(it.getId()));
+
         StackPane.setAlignment(launchPane, Pos.BOTTOM_RIGHT);
         {
             JFXButton launchButton = new JFXButton();
