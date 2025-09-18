@@ -55,6 +55,12 @@ public final class SettingsMap {
         return map.get(key);
     }
 
+    public <T> T getOrDefault(@NotNull Key<T> key, T defaultValue) {
+        @SuppressWarnings("unchecked")
+        T value = (T) map.get(key.key);
+        return value != null ? value : defaultValue;
+    }
+
     public <T> T put(@NotNull Key<T> key, @Nullable T value) {
         @SuppressWarnings("unchecked")
         T result = (T) map.put(key.key, value);
