@@ -49,12 +49,12 @@ import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -76,7 +76,7 @@ public final class LauncherHelper {
     private final Profile profile;
     private Account account;
     private final String selectedVersion;
-    private File scriptFile;
+    private Path scriptFile;
     private final VersionSetting setting;
     private LauncherVisibility launcherVisibility;
     private boolean showLogs;
@@ -119,9 +119,8 @@ public final class LauncherHelper {
         launch0();
     }
 
-    public void makeLaunchScript(File scriptFile) {
+    public void makeLaunchScript(Path scriptFile) {
         this.scriptFile = Objects.requireNonNull(scriptFile);
-
         launch();
     }
 
@@ -160,19 +159,17 @@ public final class LauncherHelper {
                             }),
                             Task.composeAsync(() -> {
                                 Renderer renderer = setting.getRenderer();
-                                if (renderer != Renderer.DEFAULT
-                                        && OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
-                                        && OperatingSystem.WINDOWS_VERSION != null) {
-                                    Library lib = NativePatcher.getWindowsMesaLoader(java, renderer, OperatingSystem.WINDOWS_VERSION);
+                                if (renderer != Renderer.DEFAULT && OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                                    Library lib = NativePatcher.getWindowsMesaLoader(java, renderer, OperatingSystem.SYSTEM_VERSION);
                                     if (lib == null)
                                         return null;
-                                    File file = dependencyManager.getGameRepository().getLibraryFile(version.get(), lib);
-                                    if (file.getAbsolutePath().indexOf('=') >= 0) {
+                                    Path file = dependencyManager.getGameRepository().getLibraryFile(version.get(), lib);
+                                    if (file.toAbsolutePath().toString().indexOf('=') >= 0) {
                                         LOG.warning("Invalid character '=' in the libraries directory path, unable to attach software renderer loader");
                                         return null;
                                     }
 
-                                    String agent = file.getAbsolutePath() + "=" + renderer.name().toLowerCase(Locale.ROOT);
+                                    String agent = FileUtils.getAbsolutePath(file) + "=" + renderer.name().toLowerCase(Locale.ROOT);
 
                                     if (GameLibrariesTask.shouldDownloadLibrary(repository, version.get(), lib, integrityCheck)) {
                                         return new LibraryDownloadTask(dependencyManager, file, lib)
@@ -226,7 +223,7 @@ public final class LauncherHelper {
                     } else {
                         runLater(() -> {
                             launchingStepsPane.fireEvent(new DialogCloseEvent());
-                            Controllers.dialog(i18n("version.launch_script.success", scriptFile.getAbsolutePath()));
+                            Controllers.dialog(i18n("version.launch_script.success", FileUtils.getAbsolutePath(scriptFile)));
                         });
                     }
                 }).withFakeProgress(

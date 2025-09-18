@@ -30,7 +30,6 @@ import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -61,9 +60,9 @@ public class ServerModpackCompletionTask extends Task<Void> {
 
         if (manifest == null) {
             try {
-                File manifestFile = repository.getModpackConfiguration(version);
-                if (manifestFile.exists()) {
-                    this.manifest = JsonUtils.fromJsonFile(manifestFile.toPath(), ModpackConfiguration.typeOf(ServerModpackManifest.class));
+                Path manifestFile = repository.getModpackConfiguration(version);
+                if (Files.exists(manifestFile)) {
+                    this.manifest = JsonUtils.fromJsonFile(manifestFile, ModpackConfiguration.typeOf(ServerModpackManifest.class));
                 }
             } catch (Exception e) {
                 LOG.warning("Unable to read Server modpack manifest.json", e);
@@ -121,7 +120,7 @@ public class ServerModpackCompletionTask extends Task<Void> {
             dependencies.add(builder.buildAsync());
         }
 
-        Path rootPath = repository.getVersionRoot(version).toPath().toAbsolutePath().normalize();
+        Path rootPath = repository.getVersionRoot(version).toAbsolutePath().normalize();
         Map<String, ModpackConfiguration.FileInformation> files = manifest.getManifest().getFiles().stream()
                 .collect(Collectors.toMap(ModpackConfiguration.FileInformation::getPath,
                         Function.identity()));
@@ -129,7 +128,7 @@ public class ServerModpackCompletionTask extends Task<Void> {
         Set<String> remoteFiles = remoteManifest.getFiles().stream().map(ModpackConfiguration.FileInformation::getPath)
                 .collect(Collectors.toSet());
 
-        Path runDirectory = repository.getRunDirectory(version).toPath().toAbsolutePath().normalize();
+        Path runDirectory = repository.getRunDirectory(version).toAbsolutePath().normalize();
         Path modsDirectory = runDirectory.resolve("mods");
 
         int total = 0;
@@ -189,7 +188,7 @@ public class ServerModpackCompletionTask extends Task<Void> {
     @Override
     public void postExecute() throws Exception {
         if (manifest == null || StringUtils.isBlank(manifest.getManifest().getFileApi())) return;
-        Path manifestFile = repository.getModpackConfiguration(version).toPath();
+        Path manifestFile = repository.getModpackConfiguration(version);
         Files.createDirectories(manifestFile.getParent());
         JsonUtils.writeToJsonFile(manifestFile, new ModpackConfiguration<>(remoteManifest, this.manifest.getType(), this.manifest.getName(), this.manifest.getVersion(), remoteManifest.getFiles()));
     }

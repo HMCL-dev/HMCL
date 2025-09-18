@@ -69,6 +69,7 @@ import org.jackhuang.hmcl.upgrade.RemoteVersion;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.Holder;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
@@ -79,7 +80,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
-import java.util.stream.IntStream;
 
 import static org.jackhuang.hmcl.download.RemoteVersion.Type.RELEASE;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
@@ -209,15 +209,17 @@ public final class MainPage extends StackPane implements DecoratorPage {
         launchPane.setMaxWidth(230);
         launchPane.setMaxHeight(55);
         launchPane.setOnScroll(event -> {
-            int index = IntStream.range(0, versions.size())
-                    .filter(i -> versions.get(i).getId().equals(getCurrentGame()))
-                    .findFirst().orElse(-1);
+            double deltaY = event.getDeltaY();
+            if (deltaY == 0)
+                return;
+
+            String currentId = getCurrentGame();
+            int index = Lang.indexWhere(versions, instance -> instance.getId().equals(currentId));
             if (index < 0) return;
-            if (event.getDeltaY() > 0) {
+            if (deltaY > 0) // up
                 index--;
-            } else {
+            else // down
                 index++;
-            }
             profile.setSelectedVersion(versions.get((index + versions.size()) % versions.size()).getId());
         });
         StackPane.setAlignment(launchPane, Pos.BOTTOM_RIGHT);

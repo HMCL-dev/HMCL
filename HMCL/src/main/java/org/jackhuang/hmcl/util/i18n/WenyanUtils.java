@@ -44,7 +44,7 @@ public final class WenyanUtils {
     };
 
     private static final char[] TIAN_GAN = {'甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'};
-    private static final char[] DI_ZHI = {'子', '醜', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'};
+    private static final char[] DI_ZHI = {'子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'};
 
     private static String digitToString(char digit) {
         return digit >= '0' && digit <= '9'
@@ -74,6 +74,11 @@ public final class WenyanUtils {
         builder.append(DI_ZHI[mod(yearOffset, DI_ZHI.length)]);
     }
 
+    static void appendHour(StringBuilder builder, int hour) {
+        builder.append(DI_ZHI[((hour + 1) % 24) / 2]);
+        builder.append(hour % 2 == 0 ? '正' : '初');
+    }
+
     public static String formatDateTime(TemporalAccessor time) {
         LocalDateTime localDateTime;
         if (time instanceof Instant)
@@ -92,8 +97,7 @@ public final class WenyanUtils {
 
         builder.append(' ');
 
-        builder.append(numberToString(localDateTime.getHour()));
-        builder.append('时');
+        appendHour(builder, localDateTime.getHour());
         builder.append(numberToString(localDateTime.getMinute()));
         builder.append('分');
         builder.append(numberToString(localDateTime.getSecond()));

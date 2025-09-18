@@ -1,3 +1,4 @@
+import org.jackhuang.hmcl.gradle.CheckTranslations
 import org.jackhuang.hmcl.gradle.mod.ParseModDataTask
 import java.net.URI
 import java.nio.file.FileSystems
@@ -95,8 +96,8 @@ fun attachSignature(jar: File) {
 }
 
 tasks.withType<JavaCompile> {
-    sourceCompatibility = "11"
-    targetCompatibility = "11"
+    sourceCompatibility = "17"
+    targetCompatibility = "17"
 }
 
 tasks.checkstyleMain {
@@ -330,6 +331,17 @@ tasks.register<JavaExec>("run") {
         logger.quiet("HMCL_JAVA_OPTS: {}", vmOptions)
         logger.quiet("HMCL_JAVA_HOME: {}", hmclJavaHome ?: System.getProperty("java.home"))
     }
+}
+
+// Check Translations
+
+tasks.register<CheckTranslations>("checkTranslations") {
+    val dir = layout.projectDirectory.dir("src/main/resources/assets/lang")
+
+    englishFile.set(dir.file("I18N.properties"))
+    simplifiedChineseFile.set(dir.file("I18N_zh_CN.properties"))
+    traditionalChineseFile.set(dir.file("I18N_zh.properties"))
+    classicalChineseFile.set(dir.file("I18N_lzh.properties"))
 }
 
 // mcmod data

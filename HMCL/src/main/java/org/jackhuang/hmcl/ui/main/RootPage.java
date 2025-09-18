@@ -51,7 +51,8 @@ import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
@@ -92,16 +93,16 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
         if (mainPage == null) {
             MainPage mainPage = new MainPage();
             FXUtils.applyDragListener(mainPage,
-                    file -> ModpackHelper.isFileModpackByExtension(file) || NBTFileType.isNBTFileByExtension(file.toPath()),
+                    file -> ModpackHelper.isFileModpackByExtension(file) || NBTFileType.isNBTFileByExtension(file),
                     modpacks -> {
-                        File file = modpacks.get(0);
+                        Path file = modpacks.get(0);
                         if (ModpackHelper.isFileModpackByExtension(file)) {
                             Controllers.getDecorator().startWizard(
                                     new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), file),
                                     i18n("install.modpack"));
-                        } else if (NBTFileType.isNBTFileByExtension(file.toPath())) {
+                        } else if (NBTFileType.isNBTFileByExtension(file)) {
                             try {
-                                Controllers.navigate(new NBTEditorPage(file.toPath()));
+                                Controllers.navigate(new NBTEditorPage(file));
                             } catch (Throwable e) {
                                 LOG.warning("Fail to open nbt file", e);
                                 Controllers.dialog(i18n("nbt.open.failed") + "\n\n" + StringUtils.getStackTrace(e),
@@ -211,14 +212,13 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                 checkedModpack = true;
 
                 if (repository.getVersionCount() == 0) {
-                    File modpackFile = new File("modpack.zip").getAbsoluteFile();
-                    if (modpackFile.exists()) {
-                        Task.supplyAsync(() -> CompressingUtils.findSuitableEncoding(modpackFile.toPath()))
+                    Path modpackFile = Metadata.CURRENT_DIRECTORY.resolve("modpack.zip");
+                    if (Files.exists(modpackFile)) {
+                        Task.supplyAsync(() -> CompressingUtils.findSuitableEncoding(modpackFile))
                                 .thenApplyAsync(
-                                        encoding -> ModpackHelper.readModpackManifest(modpackFile.toPath(), encoding))
+                                        encoding -> ModpackHelper.readModpackManifest(modpackFile, encoding))
                                 .thenApplyAsync(modpack -> ModpackHelper
-                                        .getInstallTask(repository.getProfile(), modpackFile, modpack.getName(),
-                                                modpack)
+                                        .getInstallTask(repository.getProfile(), modpackFile, modpack.getName(), modpack)
                                         .executor())
                                 .thenAcceptAsync(Schedulers.javafx(), executor -> {
                                     Controllers.taskDialog(executor, i18n("modpack.installing"), TaskCancellationAction.NO_CANCEL);
