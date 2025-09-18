@@ -31,9 +31,7 @@ import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.IOException;
-import java.util.Optional;
 
-import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class RemoteModpackPage extends ModpackPage {
@@ -59,9 +57,9 @@ public final class RemoteModpackPage extends ModpackPage {
         lblAuthor.setText(manifest.getAuthor());
 
         Profile profile = (Profile) controller.getSettings().get("PROFILE");
-        Optional<String> name = tryCast(controller.getSettings().get(MODPACK_NAME), String.class);
-        if (name.isPresent()) {
-            txtModpackName.setText(name.get());
+        String name = controller.getSettings().get(MODPACK_NAME);
+        if (name != null) {
+            txtModpackName.setText(name);
             txtModpackName.setDisable(true);
         } else {
             // trim: https://github.com/HMCL-dev/HMCL/issues/962
@@ -91,6 +89,6 @@ public final class RemoteModpackPage extends ModpackPage {
     }
 
     public static final SettingsMap.Key<ServerModpackManifest> MODPACK_SERVER_MANIFEST = new SettingsMap.Key<>("MODPACK_SERVER_MANIFEST");
-    public static final String MODPACK_NAME = "MODPACK_NAME";
+    public static final SettingsMap.Key<String> MODPACK_NAME = new SettingsMap.Key<>("MODPACK_NAME");
     public static final String MODPACK_MANIFEST = "MODPACK_MANIFEST";
 }
