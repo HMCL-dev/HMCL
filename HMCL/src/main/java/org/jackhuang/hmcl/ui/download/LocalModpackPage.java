@@ -59,9 +59,9 @@ public final class LocalModpackPage extends ModpackPage {
 
         Profile profile = controller.getSettings().get(ModpackPage.PROFILE);
 
-        Optional<String> name = Optional.ofNullable(controller.getSettings().get(MODPACK_NAME));
-        if (name.isPresent()) {
-            txtModpackName.setText(name.get());
+        String name = controller.getSettings().get(MODPACK_NAME);
+        if (name != null) {
+            txtModpackName.setText(name);
             txtModpackName.setDisable(true);
         } else {
             FXUtils.onChangeAndOperate(installAsVersion, installAsVersion -> {
@@ -111,7 +111,7 @@ public final class LocalModpackPage extends ModpackPage {
                         lblName.setText(FileUtils.getName(selectedFile));
                         installAsVersion.set(false);
 
-                        if (name.isEmpty()) {
+                        if (name == null) {
                             // trim: https://github.com/HMCL-dev/HMCL/issues/962
                             txtModpackName.setText(FileUtils.getNameWithoutExtension(selectedFile));
                         }
@@ -132,7 +132,7 @@ public final class LocalModpackPage extends ModpackPage {
                         lblVersion.setText(manifest.getVersion());
                         lblAuthor.setText(manifest.getAuthor());
 
-                        if (name.isEmpty()) {
+                        if (name == null) {
                             // trim: https://github.com/HMCL-dev/HMCL/issues/962
                             txtModpackName.setText(manifest.getName().trim());
                         }
