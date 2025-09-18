@@ -78,8 +78,8 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         Path selected = tryCast(settings.get(LocalModpackPage.MODPACK_FILE), Path.class).orElse(null);
         ServerModpackManifest serverModpackManifest = tryCast(settings.get(RemoteModpackPage.MODPACK_SERVER_MANIFEST), ServerModpackManifest.class).orElse(null);
         Modpack modpack = tryCast(settings.get(LocalModpackPage.MODPACK_MANIFEST), Modpack.class).orElse(null);
-        String name = tryCast(settings.get(LocalModpackPage.MODPACK_NAME), String.class).orElse(null);
-        Charset charset = tryCast(settings.get(LocalModpackPage.MODPACK_CHARSET), Charset.class).orElse(null);
+        String name = settings.get(LocalModpackPage.MODPACK_NAME);
+        Charset charset = settings.get(LocalModpackPage.MODPACK_CHARSET);
         boolean isManuallyCreated = tryCast(settings.get(LocalModpackPage.MODPACK_MANUALLY_CREATED), Boolean.class).orElse(false);
 
         if (isManuallyCreated) {
