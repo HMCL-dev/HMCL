@@ -175,7 +175,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     }
 
     public void openModFolder() {
-        FXUtils.openFolder(profile.getRepository().getRunDirectory(versionId).resolve("mods").toFile());
+        FXUtils.openFolder(profile.getRepository().getRunDirectory(versionId).resolve("mods"));
     }
 
     public void checkUpdates() {

@@ -87,7 +87,7 @@ public final class WorldListItem extends Control {
     }
 
     public void reveal() {
-        FXUtils.openFolder(world.getFile().toFile());
+        FXUtils.openFolder(world.getFile());
     }
 
     public void showManagePage() {

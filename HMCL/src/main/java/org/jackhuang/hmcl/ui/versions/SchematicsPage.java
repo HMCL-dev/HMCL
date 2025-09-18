@@ -365,7 +365,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
         @Override
         void onReveal() {
-            FXUtils.openFolder(path.toFile());
+            FXUtils.openFolder(path);
         }
 
         @Override

@@ -29,6 +29,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermission;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -236,36 +238,6 @@ public final class FileUtils {
             return new String(bytes, OperatingSystem.NATIVE_CHARSET);
     }
 
-    /**
-     * Write plain text to file. Characters are encoded into bytes using UTF-8.
-     * <p>
-     * We don't care about platform difference of line separator. Because readText accept all possibilities of line separator.
-     * It will create the file if it does not exist, or truncate the existing file to empty for rewriting.
-     * All characters in text will be written into the file in binary format. Existing data will be erased.
-     *
-     * @param file the path to the file
-     * @param text the text being written to file
-     * @throws IOException if an I/O error occurs
-     */
-    public static void writeText(Path file, String text) throws IOException {
-        Files.createDirectories(file.getParent());
-        Files.writeString(file, text);
-    }
-
-    /**
-     * Write byte array to file.
-     * It will create the file if it does not exist, or truncate the existing file to empty for rewriting.
-     * All bytes in byte array will be written into the file in binary format. Existing data will be erased.
-     *
-     * @param file the path to the file
-     * @param data the data being written to file
-     * @throws IOException if an I/O error occurs
-     */
-    public static void writeBytes(Path file, byte[] data) throws IOException {
-        Files.createDirectories(file.getParent());
-        Files.write(file, data);
-    }
-
     public static void deleteDirectory(Path directory) throws IOException {
         if (!Files.exists(directory))
             return;
@@ -282,6 +254,24 @@ public final class FileUtils {
             return true;
         } catch (IOException e) {
             return false;
+        }
+    }
+
+    public static void setExecutable(Path path) {
+        PosixFileAttributeView view = Files.getFileAttributeView(path, PosixFileAttributeView.class);
+        if (view != null) {
+            try {
+                Set<PosixFilePermission> oldPermissions = view.readAttributes().permissions();
+                if (oldPermissions.contains(PosixFilePermission.OWNER_EXECUTE))
+                    return;
+
+                EnumSet<PosixFilePermission> permissions = EnumSet.noneOf(PosixFilePermission.class);
+                permissions.addAll(oldPermissions);
+                permissions.add(PosixFilePermission.OWNER_EXECUTE);
+                view.setPermissions(permissions);
+            } catch (IOException e) {
+                LOG.warning("Failed to set permissions for " + path, e);
+            }
         }
     }
 
@@ -397,7 +387,8 @@ public final class FileUtils {
                     FileUtils.copyFile(file, targetFile);
                 }
 
-                FileUtils.writeText(infoFile, "[Trash Info]\nPath=" + file.toAbsolutePath().normalize() + "\nDeletionDate=" + time + "\n");
+                Files.createDirectories(infoDir);
+                Files.writeString(infoFile, "[Trash Info]\nPath=" + FileUtils.getAbsolutePath(file) + "\nDeletionDate=" + time + "\n");
                 FileUtils.forceDelete(file);
             } catch (IOException e) {
                 LOG.warning("Failed to move " + file + " to trash", e);

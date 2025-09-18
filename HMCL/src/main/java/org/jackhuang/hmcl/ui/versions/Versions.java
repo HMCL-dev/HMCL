@@ -142,7 +142,7 @@ public final class Versions {
     }
 
     public static void openFolder(Profile profile, String version) {
-        FXUtils.openFolder(profile.getRepository().getRunDirectory(version).toFile());
+        FXUtils.openFolder(profile.getRepository().getRunDirectory(version));
     }
 
     public static void duplicateVersion(Profile profile, String version) {

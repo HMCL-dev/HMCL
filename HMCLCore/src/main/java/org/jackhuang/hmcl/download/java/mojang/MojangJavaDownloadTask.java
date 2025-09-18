@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.UnsupportedPlatformException;
 import org.tukaani.xz.LZMAInputStream;
 
@@ -119,7 +120,7 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
 
                         Files.move(decompressed, dest, StandardCopyOption.REPLACE_EXISTING);
                         if (file.isExecutable()) {
-                            dest.toFile().setExecutable(true);
+                            FileUtils.setExecutable(dest);
                         }
                     }));
                 } else if (file.getDownloads().containsKey("raw")) {
@@ -127,7 +128,7 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
                     var task = new FileDownloadTask(downloadProvider.injectURLWithCandidates(download.getUrl()), dest, new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
                     task.setName(entry.getKey());
                     if (file.isExecutable()) {
-                        dependencies.add(task.thenRunAsync(() -> dest.toFile().setExecutable(true)));
+                        dependencies.add(task.thenRunAsync(() -> FileUtils.setExecutable(dest)));
                     } else {
                         dependencies.add(task);
                     }
