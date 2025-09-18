@@ -36,16 +36,14 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
+import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.nio.charset.Charset;
 import java.nio.file.Path;
-import java.util.Map;
-import java.util.Optional;
 
-import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -58,11 +56,11 @@ public final class LocalModpackPage extends ModpackPage {
     public LocalModpackPage(WizardController controller) {
         super(controller);
 
-        Profile profile = (Profile) controller.getSettings().get("PROFILE");
+        Profile profile = controller.getSettings().get(ModpackPage.PROFILE);
 
-        Optional<String> name = tryCast(controller.getSettings().get(MODPACK_NAME), String.class);
-        if (name.isPresent()) {
-            txtModpackName.setText(name.get());
+        String name = controller.getSettings().get(MODPACK_NAME);
+        if (name != null) {
+            txtModpackName.setText(name);
             txtModpackName.setDisable(true);
         } else {
             FXUtils.onChangeAndOperate(installAsVersion, installAsVersion -> {
@@ -83,9 +81,9 @@ public final class LocalModpackPage extends ModpackPage {
         btnDescription.setVisible(false);
 
         Path selectedFile;
-        Optional<Path> filePath = tryCast(controller.getSettings().get(MODPACK_FILE), Path.class);
-        if (filePath.isPresent()) {
-            selectedFile = filePath.get();
+        Path filePath = controller.getSettings().get(MODPACK_FILE);
+        if (filePath != null) {
+            selectedFile = filePath;
         } else {
             FileChooser chooser = new FileChooser();
             chooser.setTitle(i18n("modpack.choose"));
@@ -112,7 +110,7 @@ public final class LocalModpackPage extends ModpackPage {
                         lblName.setText(FileUtils.getName(selectedFile));
                         installAsVersion.set(false);
 
-                        if (name.isEmpty()) {
+                        if (name == null) {
                             // trim: https://github.com/HMCL-dev/HMCL/issues/962
                             txtModpackName.setText(FileUtils.getNameWithoutExtension(selectedFile));
                         }
@@ -133,7 +131,7 @@ public final class LocalModpackPage extends ModpackPage {
                         lblVersion.setText(manifest.getVersion());
                         lblAuthor.setText(manifest.getAuthor());
 
-                        if (name.isEmpty()) {
+                        if (name == null) {
                             // trim: https://github.com/HMCL-dev/HMCL/issues/962
                             txtModpackName.setText(manifest.getName().trim());
                         }
@@ -144,7 +142,7 @@ public final class LocalModpackPage extends ModpackPage {
     }
 
     @Override
-    public void cleanup(Map<String, Object> settings) {
+    public void cleanup(SettingsMap settings) {
         settings.remove(MODPACK_FILE);
     }
 
@@ -177,9 +175,9 @@ public final class LocalModpackPage extends ModpackPage {
             Controllers.navigate(new WebPage(i18n("modpack.description"), manifest.getDescription()));
     }
 
-    public static final String MODPACK_FILE = "MODPACK_FILE";
-    public static final String MODPACK_NAME = "MODPACK_NAME";
-    public static final String MODPACK_MANIFEST = "MODPACK_MANIFEST";
-    public static final String MODPACK_CHARSET = "MODPACK_CHARSET";
-    public static final String MODPACK_MANUALLY_CREATED = "MODPACK_MANUALLY_CREATED";
+    public static final SettingsMap.Key<Path> MODPACK_FILE = new SettingsMap.Key<>("MODPACK_FILE");
+    public static final SettingsMap.Key<String> MODPACK_NAME = new SettingsMap.Key<>("MODPACK_NAME");
+    public static final SettingsMap.Key<Modpack> MODPACK_MANIFEST = new SettingsMap.Key<>("MODPACK_MANIFEST");
+    public static final SettingsMap.Key<Charset> MODPACK_CHARSET = new SettingsMap.Key<>("MODPACK_CHARSET");
+    public static final SettingsMap.Key<Boolean> MODPACK_MANUALLY_CREATED = new SettingsMap.Key<>("MODPACK_MANUALLY_CREATED");
 }
