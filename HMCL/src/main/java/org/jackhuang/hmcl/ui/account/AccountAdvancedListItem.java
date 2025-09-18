@@ -21,7 +21,6 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.ObservableList;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Tooltip;
 import org.jackhuang.hmcl.auth.Account;
@@ -80,26 +79,6 @@ public class AccountAdvancedListItem extends AdvancedListItem {
         FXUtils.onScroll(this, Accounts.getAccounts(),
                 accounts -> accounts.indexOf(account.get()),
                 Accounts::setSelectedAccount);
-
-        setOnScroll(event -> {
-            double deltaY = event.getDeltaY();
-            if (deltaY == 0)
-                return;
-
-            Account current = account.get();
-            if (current == null) return;
-
-            ObservableList<Account> accounts = Accounts.getAccounts();
-            int currentIndex = accounts.indexOf(current);
-            if (currentIndex < 0) return;
-
-            if (deltaY > 0) // up
-                currentIndex--;
-            else // down
-                currentIndex++;
-
-            Accounts.setSelectedAccount(accounts.get((currentIndex + accounts.size()) % accounts.size()));
-        });
     }
 
     public ObjectProperty<Account> accountProperty() {
