@@ -238,22 +238,6 @@ public final class FileUtils {
             return new String(bytes, OperatingSystem.NATIVE_CHARSET);
     }
 
-    /**
-     * Write plain text to file. Characters are encoded into bytes using UTF-8.
-     * <p>
-     * We don't care about platform difference of line separator. Because readText accept all possibilities of line separator.
-     * It will create the file if it does not exist, or truncate the existing file to empty for rewriting.
-     * All characters in text will be written into the file in binary format. Existing data will be erased.
-     *
-     * @param file the path to the file
-     * @param text the text being written to file
-     * @throws IOException if an I/O error occurs
-     */
-    public static void writeText(Path file, String text) throws IOException {
-        Files.createDirectories(file.getParent());
-        Files.writeString(file, text);
-    }
-
     public static void deleteDirectory(Path directory) throws IOException {
         if (!Files.exists(directory))
             return;
