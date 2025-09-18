@@ -60,10 +60,9 @@ public final class ExportWizardProvider implements WizardProvider {
 
     @Override
     public Object finish(SettingsMap settings) {
-        @SuppressWarnings("unchecked")
-        List<String> whitelist = (List<String>) settings.get(ModpackFileSelectionPage.MODPACK_FILE_SELECTION);
-        Path modpackFile = (Path) settings.get(ModpackInfoPage.MODPACK_FILE);
-        ModpackExportInfo exportInfo = (ModpackExportInfo) settings.get(ModpackInfoPage.MODPACK_INFO);
+        List<String> whitelist = settings.get(ModpackFileSelectionPage.MODPACK_FILE_SELECTION);
+        Path modpackFile = settings.get(ModpackInfoPage.MODPACK_FILE);
+        ModpackExportInfo exportInfo = settings.get(ModpackInfoPage.MODPACK_INFO);
         exportInfo.setWhitelist(whitelist);
         String modpackType = settings.get(ModpackTypeSelectionPage.MODPACK_TYPE);
 

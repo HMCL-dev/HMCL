@@ -179,7 +179,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         return i18n("modpack.wizard.step.2.title");
     }
 
-    public static final String MODPACK_FILE_SELECTION = "modpack.accepted";
+    public static final SettingsMap.Key<List<String>> MODPACK_FILE_SELECTION = new SettingsMap.Key<>("modpack.accepted");
     private static final Map<String, String> TRANSLATION = mapOf(
             pair("minecraft/hmclversion.cfg", i18n("modpack.files.hmclversion_cfg")),
             pair("minecraft/servers.dat", i18n("modpack.files.servers_dat")),
