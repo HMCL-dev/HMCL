@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.download;
 
 import javafx.application.Platform;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.server.ServerModpackManifest;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -90,5 +91,5 @@ public final class RemoteModpackPage extends ModpackPage {
 
     public static final SettingsMap.Key<ServerModpackManifest> MODPACK_SERVER_MANIFEST = new SettingsMap.Key<>("MODPACK_SERVER_MANIFEST");
     public static final SettingsMap.Key<String> MODPACK_NAME = new SettingsMap.Key<>("MODPACK_NAME");
-    public static final String MODPACK_MANIFEST = "MODPACK_MANIFEST";
+    public static final SettingsMap.Key<Modpack> MODPACK_MANIFEST = new SettingsMap.Key<>("MODPACK_MANIFEST");
 }
