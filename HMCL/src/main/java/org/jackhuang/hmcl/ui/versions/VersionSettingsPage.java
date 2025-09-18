@@ -112,7 +112,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private final MultiFileItem.FileOption<GameDirectoryType> gameDirCustomOption;
     private final JFXComboBox<ProcessPriority> cboProcessPriority;
     private final OptionToggleButton showLogsPane;
-    private final OptionToggleButton useDebugLogOutputPane;
+    private final OptionToggleButton showDebugLogsPane;
     private final ImagePickerItem iconPickerItem;
 
     private final ChangeListener<Collection<JavaRuntime>> javaListChangeListener;
@@ -413,8 +413,8 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             showLogsPane = new OptionToggleButton();
             showLogsPane.setTitle(i18n("settings.show_log"));
 
-            useDebugLogOutputPane = new OptionToggleButton();
-            useDebugLogOutputPane.setTitle(i18n("settings.advanced.use_debug_log_output"));
+            showDebugLogsPane = new OptionToggleButton();
+            showDebugLogsPane.setTitle(i18n("settings.show_debug_log"));
 
             BorderPane processPriorityPane = new BorderPane();
             {
@@ -481,7 +481,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     launcherVisibilityPane,
                     dimensionPane,
                     showLogsPane,
-                    useDebugLogOutputPane,
+                    showDebugLogsPane,
                     processPriorityPane,
                     serverPane,
                     showAdvancedSettingPane
@@ -558,8 +558,8 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             FXUtils.unbind(txtServerIP, lastVersionSetting.serverIpProperty());
             chkAutoAllocate.selectedProperty().unbindBidirectional(lastVersionSetting.autoMemoryProperty());
             chkFullscreen.selectedProperty().unbindBidirectional(lastVersionSetting.fullscreenProperty());
-            useDebugLogOutputPane.selectedProperty().unbindBidirectional(versionSetting.showDebugLogsProperty());
             showLogsPane.selectedProperty().unbindBidirectional(lastVersionSetting.showLogsProperty());
+            showDebugLogsPane.selectedProperty().unbindBidirectional(lastVersionSetting.showDebugLogsProperty());
             FXUtils.unbindEnum(cboLauncherVisibility, lastVersionSetting.launcherVisibilityProperty());
             FXUtils.unbindEnum(cboProcessPriority, lastVersionSetting.processPriorityProperty());
 
@@ -594,7 +594,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         chkAutoAllocate.selectedProperty().bindBidirectional(versionSetting.autoMemoryProperty());
         chkFullscreen.selectedProperty().bindBidirectional(versionSetting.fullscreenProperty());
         showLogsPane.selectedProperty().bindBidirectional(versionSetting.showLogsProperty());
-        useDebugLogOutputPane.selectedProperty().bindBidirectional(versionSetting.showDebugLogsProperty());
+        showDebugLogsPane.selectedProperty().bindBidirectional(versionSetting.showDebugLogsProperty());
         FXUtils.bindEnum(cboLauncherVisibility, versionSetting.launcherVisibilityProperty());
         FXUtils.bindEnum(cboProcessPriority, versionSetting.processPriorityProperty());
 
