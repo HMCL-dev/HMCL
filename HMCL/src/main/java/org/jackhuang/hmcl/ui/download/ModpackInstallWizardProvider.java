@@ -75,7 +75,7 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
     }
 
     private Task<?> finishModpackInstallingAsync(SettingsMap settings) {
-        Path selected = tryCast(settings.get(LocalModpackPage.MODPACK_FILE), Path.class).orElse(null);
+        Path selected = settings.get(LocalModpackPage.MODPACK_FILE);
         ServerModpackManifest serverModpackManifest = tryCast(settings.get(RemoteModpackPage.MODPACK_SERVER_MANIFEST), ServerModpackManifest.class).orElse(null);
         Modpack modpack = tryCast(settings.get(LocalModpackPage.MODPACK_MANIFEST), Modpack.class).orElse(null);
         String name = settings.get(LocalModpackPage.MODPACK_NAME);

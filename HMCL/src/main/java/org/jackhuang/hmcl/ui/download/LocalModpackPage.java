@@ -45,7 +45,6 @@ import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Optional;
 
-import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -83,9 +82,9 @@ public final class LocalModpackPage extends ModpackPage {
         btnDescription.setVisible(false);
 
         Path selectedFile;
-        Optional<Path> filePath = tryCast(controller.getSettings().get(MODPACK_FILE), Path.class);
-        if (filePath.isPresent()) {
-            selectedFile = filePath.get();
+        Path filePath = controller.getSettings().get(MODPACK_FILE);
+        if (filePath != null) {
+            selectedFile = filePath;
         } else {
             FileChooser chooser = new FileChooser();
             chooser.setTitle(i18n("modpack.choose"));
@@ -177,7 +176,7 @@ public final class LocalModpackPage extends ModpackPage {
             Controllers.navigate(new WebPage(i18n("modpack.description"), manifest.getDescription()));
     }
 
-    public static final String MODPACK_FILE = "MODPACK_FILE";
+    public static final SettingsMap.Key<Path> MODPACK_FILE = new SettingsMap.Key<>("MODPACK_FILE");
     public static final SettingsMap.Key<String> MODPACK_NAME = new SettingsMap.Key<>("MODPACK_NAME");
     public static final String MODPACK_MANIFEST = "MODPACK_MANIFEST";
     public static final SettingsMap.Key<Charset> MODPACK_CHARSET = new SettingsMap.Key<>("MODPACK_CHARSET");

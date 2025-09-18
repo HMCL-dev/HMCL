@@ -44,12 +44,10 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Optional;
 
 import static org.jackhuang.hmcl.ui.download.LocalModpackPage.MODPACK_FILE;
 import static org.jackhuang.hmcl.ui.download.LocalModpackPage.MODPACK_NAME;
 import static org.jackhuang.hmcl.ui.download.RemoteModpackPage.MODPACK_SERVER_MANIFEST;
-import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class ModpackSelectionPage extends VBox implements WizardPage {
@@ -71,9 +69,9 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
                 createButton("repository", this::onChooseRepository)
         );
 
-        Optional<Path> filePath = tryCast(controller.getSettings().get(MODPACK_FILE), Path.class);
-        if (filePath.isPresent()) {
-            controller.getSettings().put(MODPACK_FILE, filePath.get());
+        Path filePath = controller.getSettings().get(MODPACK_FILE);
+        if (filePath != null) {
+            controller.getSettings().put(MODPACK_FILE, filePath);
             Platform.runLater(controller::onNext);
         }
 
