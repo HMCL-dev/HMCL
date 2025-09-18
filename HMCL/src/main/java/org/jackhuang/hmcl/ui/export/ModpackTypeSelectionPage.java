@@ -96,7 +96,7 @@ public final class ModpackTypeSelectionPage extends VBox implements WizardPage {
         return i18n("modpack.wizard.step.3.title");
     }
 
-    public static final String MODPACK_TYPE = "modpack.type";
+    public static final SettingsMap.Key<String> MODPACK_TYPE = new SettingsMap.Key<>("modpack.type");
 
     public static final String MODPACK_TYPE_MCBBS = "mcbbs";
     public static final String MODPACK_TYPE_MULTIMC = "multimc";

@@ -76,7 +76,7 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
 
     private Task<?> finishModpackInstallingAsync(SettingsMap settings) {
         Path selected = settings.get(LocalModpackPage.MODPACK_FILE);
-        ServerModpackManifest serverModpackManifest = tryCast(settings.get(RemoteModpackPage.MODPACK_SERVER_MANIFEST), ServerModpackManifest.class).orElse(null);
+        ServerModpackManifest serverModpackManifest = settings.get(RemoteModpackPage.MODPACK_SERVER_MANIFEST);
         Modpack modpack = settings.get(LocalModpackPage.MODPACK_MANIFEST);
         String name = settings.get(LocalModpackPage.MODPACK_NAME);
         Charset charset = settings.get(LocalModpackPage.MODPACK_CHARSET);

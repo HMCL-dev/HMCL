@@ -65,7 +65,7 @@ public final class ExportWizardProvider implements WizardProvider {
         Path modpackFile = (Path) settings.get(ModpackInfoPage.MODPACK_FILE);
         ModpackExportInfo exportInfo = (ModpackExportInfo) settings.get(ModpackInfoPage.MODPACK_INFO);
         exportInfo.setWhitelist(whitelist);
-        String modpackType = (String) settings.get(ModpackTypeSelectionPage.MODPACK_TYPE);
+        String modpackType = settings.get(ModpackTypeSelectionPage.MODPACK_TYPE);
 
         return exportWithLauncher(modpackType, exportInfo, modpackFile);
     }

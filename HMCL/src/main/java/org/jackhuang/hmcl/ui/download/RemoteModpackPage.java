@@ -42,8 +42,9 @@ public final class RemoteModpackPage extends ModpackPage {
     public RemoteModpackPage(WizardController controller) {
         super(controller);
 
-        manifest = tryCast(controller.getSettings().get(MODPACK_SERVER_MANIFEST), ServerModpackManifest.class)
-                .orElseThrow(() -> new IllegalStateException("MODPACK_SERVER_MANIFEST should exist"));
+        manifest = controller.getSettings().get(MODPACK_SERVER_MANIFEST);
+        if (manifest == null)
+            throw new IllegalStateException("MODPACK_SERVER_MANIFEST should exist");
 
         try {
             controller.getSettings().put(MODPACK_MANIFEST, manifest.toModpack(null));
@@ -89,7 +90,7 @@ public final class RemoteModpackPage extends ModpackPage {
         Controllers.navigate(new WebPage(i18n("modpack.description"), manifest.getDescription()));
     }
 
-    public static final String MODPACK_SERVER_MANIFEST = "MODPACK_SERVER_MANIFEST";
+    public static final SettingsMap.Key<ServerModpackManifest> MODPACK_SERVER_MANIFEST = new SettingsMap.Key<>("MODPACK_SERVER_MANIFEST");
     public static final String MODPACK_NAME = "MODPACK_NAME";
     public static final String MODPACK_MANIFEST = "MODPACK_MANIFEST";
 }
