@@ -34,6 +34,8 @@ import org.hildan.fxgson.creators.ObservableSetCreator;
 import org.hildan.fxgson.factories.JavaFxPropertyTypeAdapterFactory;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
+import org.jackhuang.hmcl.java.JavaRuntime;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.gson.*;
 import org.jackhuang.hmcl.util.i18n.Locales;
 import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
@@ -364,7 +366,11 @@ public final class Config implements Observable {
     }
 
     @SerializedName("animationDisabled")
-    private final BooleanProperty animationDisabled = new SimpleBooleanProperty();
+    private final BooleanProperty animationDisabled = new SimpleBooleanProperty(
+            FXUtils.REDUCED_MOTION == Boolean.TRUE
+                    || !JavaRuntime.CURRENT_JIT_ENABLED
+                    || !FXUtils.GPU_ACCELERATION_ENABLED
+    );
 
     public BooleanProperty animationDisabledProperty() {
         return animationDisabled;
