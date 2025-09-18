@@ -426,6 +426,10 @@ public final class MainPage extends StackPane implements DecoratorPage {
         return state;
     }
 
+    public Profile getProfile() {
+        return profile;
+    }
+
     public String getCurrentGame() {
         return currentGame.get();
     }
@@ -436,6 +440,10 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
     public void setCurrentGame(String currentGame) {
         this.currentGame.set(currentGame);
+    }
+
+    public ObservableList<Version> getVersions() {
+        return versions;
     }
 
     public boolean isShowUpdate() {
