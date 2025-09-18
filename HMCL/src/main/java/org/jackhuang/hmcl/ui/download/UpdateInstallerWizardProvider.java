@@ -87,8 +87,8 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
                     stages.add("hmcl.install.libraries");
                     stages.add("hmcl.install.assets");
                 }
-            } else if (value instanceof RemoveVersionAction) {
-                ret = ret.thenComposeAsync(version -> dependencyManager.removeLibraryAsync(version, ((RemoveVersionAction) value).libraryId));
+            } else if (value instanceof RemoveVersionAction removeVersionAction) {
+                ret = ret.thenComposeAsync(version -> dependencyManager.removeLibraryAsync(version, removeVersionAction.libraryId));
             }
         }
 

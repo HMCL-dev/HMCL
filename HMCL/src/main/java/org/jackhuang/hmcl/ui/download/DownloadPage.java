@@ -58,7 +58,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.Locale;
-import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
 
@@ -299,10 +298,11 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             builder.name(name);
             builder.gameVersion(((RemoteVersion) settings.get(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId())).getGameVersion());
 
-            for (Map.Entry<String, Object> entry : settings.asStringMap().entrySet())
-                if (!LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId().equals(entry.getKey())
-                        && entry.getValue() instanceof RemoteVersion remoteVersion)
+            settings.asStringMap().forEach((key, value) -> {
+                if (!LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId().equals(key)
+                        && value instanceof RemoteVersion remoteVersion)
                     builder.version(remoteVersion);
+            });
 
             return builder.buildAsync().whenComplete(any -> profile.getRepository().refreshVersions())
                     .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));

@@ -30,8 +30,6 @@ import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.SettingsMap;
 
-import java.util.Map;
-
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class VanillaInstallWizardProvider implements WizardProvider {
@@ -57,9 +55,10 @@ public final class VanillaInstallWizardProvider implements WizardProvider {
         builder.name(name);
         builder.gameVersion(((RemoteVersion) settings.get("game")).getGameVersion());
 
-        for (Map.Entry<String, Object> entry : settings.asStringMap().entrySet())
-            if (!"game".equals(entry.getKey()) && entry.getValue() instanceof RemoteVersion)
-                builder.version((RemoteVersion) entry.getValue());
+        settings.asStringMap().forEach((key, value) -> {
+            if (!"game".equals(key) && value instanceof RemoteVersion remoteVersion)
+                builder.version(remoteVersion);
+        });
 
         return builder.buildAsync().whenComplete(any -> profile.getRepository().refreshVersions())
                 .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
