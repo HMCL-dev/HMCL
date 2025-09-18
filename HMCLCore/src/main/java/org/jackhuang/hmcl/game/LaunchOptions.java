@@ -55,6 +55,7 @@ public class LaunchOptions implements Serializable {
     private String proxyUser;
     private String proxyPass;
     private boolean noGeneratedJVMArgs;
+    private boolean noGeneratedOptimizingJVMArgs;
     private String preLaunchCommand;
     private String postExitCommand;
     private NativesDirectoryType nativesDirType;
@@ -227,6 +228,13 @@ public class LaunchOptions implements Serializable {
     }
 
     /**
+     * Prevent game launcher from generating optimizing JVM arguments.
+     */
+    public boolean isNoGeneratedOptimizingJVMArgs() {
+        return noGeneratedOptimizingJVMArgs;
+    }
+
+    /**
      * Command called before game launches.
      */
     public String getPreLaunchCommand() {
@@ -281,7 +289,7 @@ public class LaunchOptions implements Serializable {
         return daemon;
     }
 
-    public static class Builder {
+    public static final class Builder {
 
         private final LaunchOptions options = new LaunchOptions();
 
@@ -436,6 +444,11 @@ public class LaunchOptions implements Serializable {
 
         public Builder setNoGeneratedJVMArgs(boolean noGeneratedJVMArgs) {
             options.noGeneratedJVMArgs = noGeneratedJVMArgs;
+            return this;
+        }
+
+        public Builder setNoGeneratedOptimizingJVMArgs(boolean noGeneratedOptimizingJVMArgs) {
+            options.noGeneratedOptimizingJVMArgs = noGeneratedOptimizingJVMArgs;
             return this;
         }
 
