@@ -63,8 +63,8 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
                 public void onStop(boolean success, TaskExecutor executor) {
                     runInFX(() -> {
                         if (success) {
-                            if (settings.containsKey("success_message") && settings.get("success_message") instanceof String)
-                                Controllers.dialog((String) settings.get("success_message"), null, MessageType.SUCCESS, () -> onEnd());
+                            if (settings.get("success_message") instanceof String successMessage)
+                                Controllers.dialog(successMessage, null, MessageType.SUCCESS, () -> onEnd());
                             else if (!settings.containsKey("forbid_success_message"))
                                 Controllers.dialog(i18n("message.success"), null, MessageType.SUCCESS, () -> onEnd());
                         } else {
@@ -79,8 +79,8 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
                             String appendix = StringUtils.getStackTrace(executor.getException());
                             if (settings.get(WizardProvider.FailureCallback.KEY) != null)
                                 settings.get(WizardProvider.FailureCallback.KEY).onFail(settings, executor.getException(), () -> onEnd());
-                            else if (settings.get("failure_message") instanceof String)
-                                Controllers.dialog(appendix, (String) settings.get("failure_message"), MessageType.ERROR, () -> onEnd());
+                            else if (settings.get("failure_message") instanceof String failureMessage)
+                                Controllers.dialog(appendix, failureMessage, MessageType.ERROR, () -> onEnd());
                             else if (!settings.containsKey("forbid_failure_message"))
                                 Controllers.dialog(appendix, i18n("wizard.failed"), MessageType.ERROR, () -> onEnd());
                         }

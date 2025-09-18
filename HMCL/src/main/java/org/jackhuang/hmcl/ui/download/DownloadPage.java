@@ -300,8 +300,9 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             builder.gameVersion(((RemoteVersion) settings.get(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId())).getGameVersion());
 
             for (Map.Entry<String, Object> entry : settings.asStringMap().entrySet())
-                if (!LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId().equals(entry.getKey()) && entry.getValue() instanceof RemoteVersion)
-                    builder.version((RemoteVersion) entry.getValue());
+                if (!LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId().equals(entry.getKey())
+                        && entry.getValue() instanceof RemoteVersion remoteVersion)
+                    builder.version(remoteVersion);
 
             return builder.buildAsync().whenComplete(any -> profile.getRepository().refreshVersions())
                     .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
