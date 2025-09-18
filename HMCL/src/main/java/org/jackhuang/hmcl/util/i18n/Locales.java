@@ -83,7 +83,12 @@ public final class Locales {
      */
     public static final SupportedLocale WENYAN = new SupportedLocale("lzh");
 
-    public static final List<SupportedLocale> LOCALES = List.of(DEFAULT, EN, ES, JA, RU, UK, ZH_HANS, ZH_HANT, WENYAN);
+    /**
+     * Martian (Martian Language)
+     */
+    public static final SupportedLocale MARTIAN = new SupportedLocale("martian");
+
+    public static final List<SupportedLocale> LOCALES = List.of(DEFAULT, EN, ES, JA, RU, UK, ZH_HANS, ZH_HANT, WENYAN, MARTIAN);
 
     public static SupportedLocale getLocaleByName(String name) {
         if (name == null) return DEFAULT;
@@ -164,6 +169,16 @@ public final class Locales {
                 return name.equals("lzh") || name.equals("Literary Chinese")
                         ? "Chinese (Classical)"
                         : name;
+            }
+
+            if (this.locale.getLanguage().equals("martian")) {
+                if (inJavaLocale.getLanguage().equals("martian"))
+                    return "焱暒妏";
+
+                String name = locale.getDisplayName(inJavaLocale);
+                return name.equals("martian") || name.equals("Martian Chinese")
+                        ? "Chinese (Martian)"
+                         : name;
             }
 
             return locale.getDisplayName(inJavaLocale);

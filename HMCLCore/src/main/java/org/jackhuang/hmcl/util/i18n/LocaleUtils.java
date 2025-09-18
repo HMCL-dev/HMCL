@@ -63,7 +63,7 @@ public final class LocaleUtils {
     public static @NotNull String getISO1Language(Locale locale) {
         String language = locale.getLanguage();
         if (language.isEmpty()) return "en";
-        return isISO3Language(language) ? toISO1Language(language) : language;
+        return toISO1Language(language);
     }
 
     /// Get the script of the locale. If the script is empty and the language is Chinese,
@@ -178,6 +178,14 @@ public final class LocaleUtils {
 
     // ---
 
+    ///  Processing custom language codes (such as dialects, which are essentially based on an official language)
+    public static String toOfficialISO1LanguageTag(String languageTag) {
+        return switch (languageTag) {
+            case "martian" -> "zh";
+            default -> languageTag;
+        };
+    }
+
     /// Try to convert ISO 639-3 language codes to ISO 639-1 language codes.
     public static String toISO1Language(String languageTag) {
         return switch (languageTag) {
@@ -188,7 +196,7 @@ public final class LocaleUtils {
             case "ukr" -> "uk";
             case "zho", "cmn", "lzh", "cdo", "cjy", "cpx", "czh",
                  "gan", "hak", "hsn", "mnp", "nan", "wuu", "yue" -> "zh";
-            default -> languageTag;
+            default -> toOfficialISO1LanguageTag(languageTag);
         };
     }
 
