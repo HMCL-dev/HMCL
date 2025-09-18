@@ -26,7 +26,7 @@ public final class JavaFXPlatform {
 
     public static final String LEGACY_JAVAFX_VERSION = "19.0.2.1";
     public static final String CLASSIC_JAVAFX_VERSION = "21.0.8";
-    public static final String MODERN_JAVAFX_VERSION = "24.0.1";
+    public static final String MODERN_JAVAFX_VERSION = "25";
 
     private static final String OFFICIAL_GROUP_ID = "org.openjfx";
     private static final String GLAVO_GROUP_ID = "org.glavo.hmcl.openjfx";

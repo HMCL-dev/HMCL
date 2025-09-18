@@ -22,7 +22,7 @@ package org.jackhuang.hmcl.gradle.javafx;
  */
 public enum JavaFXVersionType {
     CLASSIC("classic", 17),
-    MODERN("modern", 22);
+    MODERN("modern", 23);
 
     private final String name;
     private final int javaVersion;
