@@ -229,6 +229,10 @@ public class DefaultLauncher extends Launcher {
                 }
             }
 
+            if (is64bit && javaVersion == 25) {
+                res.addUnstableDefault("UseCompactObjectHeaders", true);
+            }
+
             // As 32-bit JVM allocate 320KB for stack by default rather than 64-bit version allocating 1MB,
             // causing Minecraft 1.13 crashed accounting for java.lang.StackOverflowError.
             if (!is64bit) {
