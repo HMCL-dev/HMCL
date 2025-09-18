@@ -23,7 +23,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-/// @author Glavo
+/// A wrapper for `Map<String, Object>`, supporting type-safe reading and writing of values.
+///
+///  @author Glavo
 public final class SettingsMap {
     public record Key<T>(String key) {
     }
