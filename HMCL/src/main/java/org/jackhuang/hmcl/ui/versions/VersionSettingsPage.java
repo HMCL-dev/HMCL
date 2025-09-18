@@ -558,7 +558,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             FXUtils.unbind(txtServerIP, lastVersionSetting.serverIpProperty());
             chkAutoAllocate.selectedProperty().unbindBidirectional(lastVersionSetting.autoMemoryProperty());
             chkFullscreen.selectedProperty().unbindBidirectional(lastVersionSetting.fullscreenProperty());
-            useDebugLogOutputPane.selectedProperty().unbindBidirectional(versionSetting.useDebugLogOutputProperty());
+            useDebugLogOutputPane.selectedProperty().unbindBidirectional(versionSetting.showDebugLogsProperty());
             showLogsPane.selectedProperty().unbindBidirectional(lastVersionSetting.showLogsProperty());
             FXUtils.unbindEnum(cboLauncherVisibility, lastVersionSetting.launcherVisibilityProperty());
             FXUtils.unbindEnum(cboProcessPriority, lastVersionSetting.processPriorityProperty());
@@ -594,7 +594,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         chkAutoAllocate.selectedProperty().bindBidirectional(versionSetting.autoMemoryProperty());
         chkFullscreen.selectedProperty().bindBidirectional(versionSetting.fullscreenProperty());
         showLogsPane.selectedProperty().bindBidirectional(versionSetting.showLogsProperty());
-        useDebugLogOutputPane.selectedProperty().bindBidirectional(versionSetting.useDebugLogOutputProperty());
+        useDebugLogOutputPane.selectedProperty().bindBidirectional(versionSetting.showDebugLogsProperty());
         FXUtils.bindEnum(cboLauncherVisibility, versionSetting.launcherVisibilityProperty());
         FXUtils.bindEnum(cboProcessPriority, versionSetting.processPriorityProperty());
 

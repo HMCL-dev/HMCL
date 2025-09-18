@@ -445,6 +445,20 @@ public final class VersionSetting implements Cloneable, Observable {
         showLogsProperty.set(showLogs);
     }
 
+    private final BooleanProperty showDebugLogsProperty = new SimpleBooleanProperty(this, "showDebugLogs", false);
+
+    public BooleanProperty showDebugLogsProperty() {
+        return showDebugLogsProperty;
+    }
+
+    public boolean isShowDebugLogsOutput() {
+        return showDebugLogsProperty.get();
+    }
+
+    public void setShowDebugLogs(boolean u) {
+        this.showDebugLogsProperty.set(u);
+    }
+
     // Minecraft settings.
 
     private final StringProperty serverIpProperty = new SimpleStringProperty(this, "serverIp", "");
@@ -587,20 +601,6 @@ public final class VersionSetting implements Cloneable, Observable {
 
     public void setRenderer(Renderer renderer) {
         this.rendererProperty.set(renderer);
-    }
-
-    private final BooleanProperty useDebugLogOutputProperty = new SimpleBooleanProperty(this, "useDebugLogOutput", false);
-
-    public boolean isUseDebugDebugLogOutput() {
-        return useDebugLogOutputProperty.get();
-    }
-
-    public BooleanProperty useDebugLogOutputProperty() {
-        return useDebugLogOutputProperty;
-    }
-
-    public void setUseDebugLogOutput(boolean u) {
-        this.useDebugLogOutputProperty.set(u);
     }
 
     private final BooleanProperty useNativeGLFW = new SimpleBooleanProperty(this, "nativeGLFW", false);
@@ -775,10 +775,10 @@ public final class VersionSetting implements Cloneable, Observable {
             obj.addProperty("notCheckJVM", src.isNotCheckJVM());
             obj.addProperty("notPatchNatives", src.isNotPatchNatives());
             obj.addProperty("showLogs", src.isShowLogs());
+            obj.addProperty("showDebugLogs", src.isShowDebugLogsOutput());
             obj.addProperty("gameDir", src.getGameDir());
             obj.addProperty("launcherVisibility", src.getLauncherVisibility().ordinal());
             obj.addProperty("processPriority", src.getProcessPriority().ordinal());
-            obj.addProperty("useDebugLogOutput", src.isUseDebugDebugLogOutput());
             obj.addProperty("useNativeGLFW", src.isUseNativeGLFW());
             obj.addProperty("useNativeOpenAL", src.isUseNativeOpenAL());
             obj.addProperty("gameDirType", src.getGameDirType().ordinal());
@@ -846,7 +846,7 @@ public final class VersionSetting implements Cloneable, Observable {
             vs.setNotCheckJVM(Optional.ofNullable(obj.get("notCheckJVM")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setNotPatchNatives(Optional.ofNullable(obj.get("notPatchNatives")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setShowLogs(Optional.ofNullable(obj.get("showLogs")).map(JsonElement::getAsBoolean).orElse(false));
-            vs.setUseDebugLogOutput(Optional.ofNullable(obj.get("useDebugLogOutput")).map(JsonElement::getAsBoolean).orElse(false));
+            vs.setShowDebugLogs(Optional.ofNullable(obj.get("showDebugLogs")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setLauncherVisibility(parseJsonPrimitive(obj.getAsJsonPrimitive("launcherVisibility"), LauncherVisibility.class, LauncherVisibility.HIDE));
             vs.setProcessPriority(parseJsonPrimitive(obj.getAsJsonPrimitive("processPriority"), ProcessPriority.class, ProcessPriority.NORMAL));
             vs.setUseNativeGLFW(Optional.ofNullable(obj.get("useNativeGLFW")).map(JsonElement::getAsBoolean).orElse(false));
