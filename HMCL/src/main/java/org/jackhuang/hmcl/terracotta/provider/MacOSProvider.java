@@ -17,11 +17,12 @@
  */
 package org.jackhuang.hmcl.terracotta.provider;
 
-import javafx.beans.property.DoubleProperty;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.terracotta.TerracottaNative;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
+import org.jackhuang.hmcl.util.tree.TarFileTree;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -52,41 +53,39 @@ public final class MacOSProvider implements ITerracottaProvider {
     }
 
     @Override
-    public Task<?> install(DoubleProperty progress) throws IOException {
+    public Task<?> install(Context context, @Nullable TarFileTree tree) throws IOException {
         assert installer != null && binary != null;
 
-        Task<?> installerTask = installer.create();
-        Task<?> binaryTask = binary.create();
-        progress.bind(installerTask.progressProperty().add(binaryTask.progressProperty()).multiply(0.4)); // (1 + 1) * 0.4 = 0.8
+        Task<?> installerTask = installer.install(context, tree);
+        Task<?> binaryTask = binary.install(context, tree);
+        context.bindProgress(installerTask.progressProperty().add(binaryTask.progressProperty()).multiply(0.4)); // (1 + 1) * 0.4 = 0.8
 
-        installerTask = installerTask.thenComposeAsync(() -> {
-            ManagedProcess process = new ManagedProcess(new ProcessBuilder(
-                    "osascript",
-                    "-e",
-                    String.format(
-                            "do shell script \"installer -pkg %s -target /Applications\" with prompt \"%s\" with administrator privileges",
-                            installer.getPath(),
-                            i18n("terracotta.sudo_installing")
-                    )
-            ));
-            process.pumpInputStream(SystemUtils::onLogLine);
-            process.pumpErrorStream(SystemUtils::onLogLine);
+        return Task.allOf(
+                installerTask.thenComposeAsync(() -> {
+                    ManagedProcess process = new ManagedProcess(new ProcessBuilder(
+                            "osascript",
+                            "-e",
+                            String.format(
+                                    "do shell script \"installer -pkg %s -target /Applications\" with prompt \"%s\" with administrator privileges",
+                                    installer.getPath(),
+                                    i18n("terracotta.sudo_installing")
+                            )
+                    ));
+                    process.pumpInputStream(SystemUtils::onLogLine);
+                    process.pumpErrorStream(SystemUtils::onLogLine);
 
-            return Task.fromCompletableFuture(process.getProcess().onExit());
-        });
-        binaryTask = binaryTask.thenRunAsync(() -> {
-            Files.setPosixFilePermissions(binary.getPath(), Set.of(
-                    PosixFilePermission.OWNER_READ,
-                    PosixFilePermission.OWNER_WRITE,
-                    PosixFilePermission.OWNER_EXECUTE,
-                    PosixFilePermission.GROUP_READ,
-                    PosixFilePermission.GROUP_EXECUTE,
-                    PosixFilePermission.OTHERS_READ,
-                    PosixFilePermission.OTHERS_EXECUTE
-            ));
-        });
-
-        return Task.allOf(installerTask, binaryTask);
+                    return Task.fromCompletableFuture(process.getProcess().onExit());
+                }),
+                binaryTask.thenRunAsync(() -> Files.setPosixFilePermissions(binary.getPath(), Set.of(
+                        PosixFilePermission.OWNER_READ,
+                        PosixFilePermission.OWNER_WRITE,
+                        PosixFilePermission.OWNER_EXECUTE,
+                        PosixFilePermission.GROUP_READ,
+                        PosixFilePermission.GROUP_EXECUTE,
+                        PosixFilePermission.OTHERS_READ,
+                        PosixFilePermission.OTHERS_EXECUTE
+                )))
+        );
     }
 
     @Override

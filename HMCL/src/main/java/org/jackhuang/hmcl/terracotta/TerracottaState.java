@@ -20,13 +20,17 @@ package org.jackhuang.hmcl.terracotta;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import javafx.beans.property.ReadOnlyDoubleProperty;
+import javafx.beans.property.ReadOnlyDoubleWrapper;
+import javafx.beans.value.ObservableValue;
 import org.jackhuang.hmcl.terracotta.profile.TerracottaProfile;
+import org.jackhuang.hmcl.terracotta.provider.ITerracottaProvider;
 import org.jackhuang.hmcl.util.gson.JsonSubtype;
 import org.jackhuang.hmcl.util.gson.JsonType;
 import org.jackhuang.hmcl.util.gson.TolerableValidationException;
 import org.jackhuang.hmcl.util.gson.Validation;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract sealed class TerracottaState {
     protected TerracottaState() {
@@ -59,15 +63,31 @@ public abstract sealed class TerracottaState {
         }
     }
 
-    public static final class Preparing extends TerracottaState {
-        final ReadOnlyDoubleProperty progress;
+    public static final class Preparing extends TerracottaState implements ITerracottaProvider.Context {
+        private final ReadOnlyDoubleWrapper progress;
 
-        Preparing(ReadOnlyDoubleProperty progress) {
+        private final AtomicBoolean installFence = new AtomicBoolean(false);
+
+        Preparing(ReadOnlyDoubleWrapper progress) {
             this.progress = progress;
         }
 
         public ReadOnlyDoubleProperty progressProperty() {
-            return progress;
+            return progress.getReadOnlyProperty();
+        }
+
+        @Override
+        public void bindProgress(ObservableValue<? extends Number> value) {
+            progress.bind(value);
+        }
+
+        @Override
+        public boolean requestInstallFence() {
+            return installFence.compareAndSet(false, true);
+        }
+
+        public boolean hasInstallFence() {
+            return !installFence.get();
         }
     }
 

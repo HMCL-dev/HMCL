@@ -17,8 +17,10 @@
  */
 package org.jackhuang.hmcl.terracotta.provider;
 
-import javafx.beans.property.DoubleProperty;
+import javafx.beans.value.ObservableValue;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.tree.TarFileTree;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -31,9 +33,24 @@ public interface ITerracottaProvider {
         READY
     }
 
+    interface Context {
+        void bindProgress(ObservableValue<? extends Number> value);
+
+        boolean requestInstallFence();
+    }
+
+    abstract class ProviderException extends IOException {
+    }
+
+    final class ArchiveInvalidException extends ProviderException {
+    }
+
+    final class ArchiveFileMissingException extends ProviderException {
+    }
+
     Status status() throws IOException;
 
-    Task<?> install(DoubleProperty progress) throws IOException;
+    Task<?> install(Context context, @Nullable TarFileTree tree) throws IOException;
 
     List<String> launch(Path path);
 }

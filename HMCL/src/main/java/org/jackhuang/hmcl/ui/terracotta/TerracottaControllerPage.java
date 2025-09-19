@@ -49,6 +49,7 @@ import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.terracotta.TerracottaManager;
+import org.jackhuang.hmcl.terracotta.TerracottaMetadata;
 import org.jackhuang.hmcl.terracotta.TerracottaState;
 import org.jackhuang.hmcl.terracotta.profile.TerracottaProfile;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -62,7 +63,10 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.versions.Versions;
+import org.jackhuang.hmcl.util.io.FileUtils;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -89,6 +93,45 @@ public class TerracottaControllerPage extends StackPane {
         DoubleProperty progressProperty = new SimpleDoubleProperty();
         ObservableList<Node> nodesProperty = FXCollections.observableList(new ArrayList<>());
 
+        FXUtils.applyDragListener(this, file -> {
+            TerracottaState state = UI_STATE.get();
+
+            if (state instanceof TerracottaState.Uninitialized ||
+                    state instanceof TerracottaState.Preparing preparing && preparing.hasInstallFence() ||
+                    state instanceof TerracottaState.Fatal fatal && fatal.isRecoverable()
+            ) {
+                Path path = file.toPath();
+                return Files.isReadable(path) && FileUtils.getName(path).toLowerCase(Locale.ROOT).endsWith(".tar.gz");
+            } else {
+                return false;
+            }
+        }, files -> {
+            Path path = files.get(0).toPath();
+
+            TerracottaState state = UI_STATE.get(), next;
+            if (state instanceof TerracottaState.Uninitialized || state instanceof TerracottaState.Preparing preparing && preparing.hasInstallFence()) {
+                if (state instanceof TerracottaState.Uninitialized uninitialized && !uninitialized.hasLegacy()) {
+                    Controllers.confirmActionDanger(i18n("terracotta.confirm.desc"), i18n("terracotta.confirm.title"), () -> {
+                        TerracottaState.Preparing s = TerracottaManager.install(path);
+                        if (s != null) {
+                            UI_STATE.set(s);
+                        }
+                    }, () -> {
+                    });
+                    return;
+                }
+
+                next = TerracottaManager.install(path);
+            } else if (state instanceof TerracottaState.Fatal fatal && fatal.getType() == TerracottaState.Fatal.Type.NETWORK) {
+                next = TerracottaManager.recover(path);
+            } else {
+                return;
+            }
+            if (next != null) {
+                UI_STATE.set(next);
+            }
+        });
+
         ChangeListener<TerracottaState> listener = (_uiState, legacyState, state) -> {
             if (legacyState != null && legacyState.isUIFakeState() && !state.isUIFakeState() && legacyState.getClass() == state.getClass()) {
                 return;
@@ -109,20 +152,20 @@ public class TerracottaControllerPage extends StackPane {
                 TextFlow body = FXUtils.segmentToTextFlow(i18n("terracotta.network_warning"), Controllers::onHyperlinkAction);
                 body.setLineSpacing(4);
 
-                LineButton start = LineButton.of();
-                start.setLeftImage(FXUtils.newBuiltinImage("/assets/img/icon.png"));
-                start.setTitle(i18n(String.format("terracotta.status.uninitialized.%s.title", fork)));
-                start.setSubtitle(i18n("terracotta.status.uninitialized.desc"));
-                start.setRightIcon(SVG.ARROW_FORWARD);
-                FXUtils.onClicked(start, () -> {
+                LineButton download = LineButton.of();
+                download.setLeftImage(FXUtils.newBuiltinImage("/assets/img/icon.png"));
+                download.setTitle(i18n(String.format("terracotta.status.uninitialized.%s.title", fork)));
+                download.setSubtitle(i18n("terracotta.status.uninitialized.desc"));
+                download.setRightIcon(SVG.ARROW_FORWARD);
+                FXUtils.onClicked(download, () -> {
                     if (uninitialized.hasLegacy()) {
-                        TerracottaState.Preparing s = TerracottaManager.initialize();
+                        TerracottaState.Preparing s = TerracottaManager.install(null);
                         if (s != null) {
                             UI_STATE.set(s);
                         }
                     } else {
                         Controllers.confirmActionDanger(i18n("terracotta.confirm.desc"), i18n("terracotta.confirm.title"), () -> {
-                            TerracottaState.Preparing s = TerracottaManager.initialize();
+                            TerracottaState.Preparing s = TerracottaManager.install(null);
                             if (s != null) {
                                 UI_STATE.set(s);
                             }
@@ -131,7 +174,14 @@ public class TerracottaControllerPage extends StackPane {
                     }
                 });
 
-                nodesProperty.setAll(body, start);
+                LineButton local = LineButton.of();
+                local.setLeftImage(FXUtils.newBuiltinImage("/assets/img/icon.png"));
+                local.setTitle(i18n("terracotta.from_local.title"));
+                local.setSubtitle(i18n("terracotta.status.from_local.desc"));
+                local.setRightIcon(SVG.OPEN_IN_NEW);
+                FXUtils.onClicked(local, () -> FXUtils.openLink(TerracottaMetadata.getPackageLink()));
+
+                nodesProperty.setAll(body, download, local);
             } else if (state instanceof TerracottaState.Preparing) {
                 statusProperty.set(i18n("terracotta.status.preparing"));
                 progressProperty.bind(((TerracottaState.Preparing) state).progressProperty());
@@ -366,14 +416,24 @@ public class TerracottaControllerPage extends StackPane {
                     retry.setLeftIcon(SVG.RESTORE);
                     retry.setTitle(i18n("terracotta.status.fatal.retry"));
                     retry.setSubtitle(message);
-
                     FXUtils.onClicked(retry, () -> {
-                        TerracottaState s = TerracottaManager.recover();
+                        TerracottaState s = TerracottaManager.recover(null);
                         if (s != null) {
                             UI_STATE.set(s);
                         }
                     });
-                    nodesProperty.setAll(retry);
+
+                    if (fatal.getType() == TerracottaState.Fatal.Type.NETWORK) {
+                        LineButton local = LineButton.of();
+                        local.setLeftImage(FXUtils.newBuiltinImage("/assets/img/icon.png"));
+                        local.setTitle(i18n("terracotta.from_local.title"));
+                        local.setSubtitle(i18n("terracotta.status.from_local.desc"));
+                        local.setRightIcon(SVG.OPEN_IN_NEW);
+                        FXUtils.onClicked(local, () -> FXUtils.openLink(TerracottaMetadata.getPackageLink()));
+                        nodesProperty.setAll(retry, local);
+                    } else {
+                        nodesProperty.setAll(retry);
+                    }
                 } else {
                     nodesProperty.setAll();
                 }

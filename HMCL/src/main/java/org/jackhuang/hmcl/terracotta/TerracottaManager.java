@@ -29,13 +29,17 @@ import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.terracotta.provider.ITerracottaProvider;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.InvocationDispatcher;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
+import org.jackhuang.hmcl.util.tree.TarFileTree;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URI;
@@ -75,7 +79,7 @@ public final class TerracottaManager {
                     case READY: {
                         TerracottaState.Launching launching = new TerracottaState.Launching();
                         setState(launching);
-                        launch0(launching);
+                        launch(launching);
                     }
                 }
             }
@@ -138,20 +142,45 @@ public final class TerracottaManager {
 
     }
 
-    public static TerracottaState.Preparing initialize() {
+    public static TerracottaState.Preparing install(@Nullable Path file) {
         FXUtils.checkFxUserThread();
 
         TerracottaState state = STATE_V.get();
-        if (!(state instanceof TerracottaState.Uninitialized || state instanceof TerracottaState.Fatal && ((TerracottaState.Fatal) state).isRecoverable())) {
+        if (!(state instanceof TerracottaState.Uninitialized ||
+                state instanceof TerracottaState.Preparing preparing && preparing.hasInstallFence() ||
+                state instanceof TerracottaState.Fatal && ((TerracottaState.Fatal) state).isRecoverable())
+        ) {
             return null;
         }
 
-        ReadOnlyDoubleWrapper progress = new ReadOnlyDoubleWrapper(0);
-        TerracottaState.Preparing preparing = new TerracottaState.Preparing(progress.getReadOnlyProperty());
+        TerracottaState.Preparing preparing;
+        if (state instanceof TerracottaState.Preparing it) {
+            preparing = it;
+        } else {
+            preparing = new TerracottaState.Preparing(new ReadOnlyDoubleWrapper(-1));
+        }
 
-        Task.composeAsync(Schedulers.javafx(), () ->
-                Objects.requireNonNull(TerracottaMetadata.PROVIDER).install(progress)
-        ).whenComplete(exception -> {
+        Task.composeAsync(Schedulers.javafx(), () -> {
+            TarFileTree tree;
+            if (file != null) {
+                String name = FileUtils.getName(file);
+                if (name.equalsIgnoreCase(TerracottaMetadata.PACKAGE_NAME)) {
+                    throw new ITerracottaProvider.ArchiveInvalidException();
+                }
+                tree = TarFileTree.open(file);
+            } else {
+                tree = null;
+            }
+
+            return Objects.requireNonNull(TerracottaMetadata.PROVIDER).install(preparing, tree).whenComplete(exception -> {
+                if (tree != null) {
+                    tree.close();
+                }
+                if (exception != null) {
+                    throw exception;
+                }
+            });
+        }).whenComplete(exception -> {
             if (exception == null) {
                 try {
                     TerracottaMetadata.removeLegacyVersionFiles();
@@ -161,7 +190,7 @@ public final class TerracottaManager {
 
                 TerracottaState.Launching launching = new TerracottaState.Launching();
                 if (compareAndSet(preparing, launching)) {
-                    launch0(launching);
+                    launch(launching);
                 }
             } else if (exception instanceof DownloadException) {
                 compareAndSet(preparing, new TerracottaState.Fatal(TerracottaState.Fatal.Type.NETWORK));
@@ -173,7 +202,7 @@ public final class TerracottaManager {
         return setState(preparing);
     }
 
-    public static TerracottaState recover() {
+    public static TerracottaState recover(@Nullable Path file) {
         FXUtils.checkFxUserThread();
 
         TerracottaState state = STATE_V.get();
@@ -185,12 +214,12 @@ public final class TerracottaManager {
             switch (Objects.requireNonNull(TerracottaMetadata.PROVIDER).status()) {
                 case NOT_EXIST:
                 case LEGACY_VERSION: {
-                    return initialize();
+                    return install(file);
                 }
                 case READY: {
                     TerracottaState.Launching launching = new TerracottaState.Launching();
                     setState(launching);
-                    launch0(launching);
+                    launch(launching);
                     return launching;
                 }
                 default: {
@@ -203,7 +232,7 @@ public final class TerracottaManager {
         }
     }
 
-    private static void launch0(TerracottaState.Launching state) {
+    private static void launch(TerracottaState.Launching state) {
         Task.supplyAsync(() -> {
             Path path = Files.createTempDirectory(String.format("hmcl-terracotta-%d", ThreadLocalRandom.current().nextLong())).resolve("http").toAbsolutePath();
             ManagedProcess process = new ManagedProcess(new ProcessBuilder(Objects.requireNonNull(TerracottaMetadata.PROVIDER).launch(path)));

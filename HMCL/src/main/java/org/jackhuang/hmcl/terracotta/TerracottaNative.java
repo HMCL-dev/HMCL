@@ -17,18 +17,29 @@
  */
 package org.jackhuang.hmcl.terracotta;
 
+import kala.compress.archivers.tar.TarArchiveEntry;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.terracotta.provider.ITerracottaProvider;
 import org.jackhuang.hmcl.util.DigestUtils;
+import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.logging.Logger;
+import org.jackhuang.hmcl.util.tree.TarFileTree;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
+import java.net.URLConnection;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.util.HexFormat;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 
 public final class TerracottaNative {
     private final List<URI> links;
@@ -45,8 +56,68 @@ public final class TerracottaNative {
         return path;
     }
 
-    public Task<?> create() {
-        return new FileDownloadTask(links, path, checking);
+    public Task<?> install(ITerracottaProvider.Context context, @Nullable TarFileTree tree) {
+        if (tree == null) {
+            return new FileDownloadTask(links, path, checking) {
+                @Override
+                protected Context getContext(URLConnection connection, boolean checkETag, String bmclapiHash) throws IOException {
+                    Context delegate = super.getContext(connection, checkETag, bmclapiHash);
+                    return new Context() {
+                        @Override
+                        public void write(byte[] buffer, int offset, int len) throws IOException {
+                            delegate.write(buffer, offset, len);
+                        }
+
+                        @Override
+                        public void close() throws IOException {
+                            if (!context.requestInstallFence()) {
+                                throw new CancellationException();
+                            }
+
+                            delegate.close();
+                        }
+                    };
+                }
+            };
+        }
+
+        return Task.runAsync(() -> {
+            TarArchiveEntry entry = tree.getRoot().getFiles().get(FileUtils.getName(path));
+            if (entry == null) {
+                throw new ITerracottaProvider.ArchiveFileMissingException();
+            }
+
+            if (!context.requestInstallFence()) {
+                throw new CancellationException();
+            }
+
+            Files.createDirectories(path.toAbsolutePath().getParent());
+
+            MessageDigest digest = DigestUtils.getDigest(checking.getAlgorithm());
+            try (
+                    InputStream stream = tree.getInputStream(entry);
+                    OutputStream os = Files.newOutputStream(path)
+            ) {
+                stream.transferTo(new OutputStream() {
+                    @Override
+                    public void write(int b) throws IOException {
+                        os.write(b);
+                        digest.update((byte) b);
+                    }
+
+                    @Override
+                    public void write(byte @NotNull [] buffer, int offset, int len) throws IOException {
+                        os.write(buffer, offset, len);
+                        digest.update(buffer, offset, len);
+                    }
+                });
+            }
+            String checksum = HexFormat.of().formatHex(digest.digest());
+            if (!checksum.equalsIgnoreCase(checking.getChecksum())) {
+                Files.delete(path);
+                throw new ChecksumMismatchException(checking.getAlgorithm(), checking.getChecksum(), checksum);
+            }
+        });
     }
 
     public ITerracottaProvider.Status status() throws IOException {

@@ -17,10 +17,11 @@
  */
 package org.jackhuang.hmcl.terracotta.provider;
 
-import javafx.beans.property.DoubleProperty;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.terracotta.TerracottaNative;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.tree.TarFileTree;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -42,10 +43,9 @@ public final class GeneralProvider implements ITerracottaProvider {
     }
 
     @Override
-    public Task<?> install(DoubleProperty progress) {
-        Task<?> task = target.create();
-        progress.bind(task.progressProperty());
-
+    public Task<?> install(Context context, @Nullable TarFileTree tree) throws IOException {
+        Task<?> task = target.install(context, tree);
+        context.bindProgress(task.progressProperty());
         if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
             task = task.thenRunAsync(() -> Files.setPosixFilePermissions(target.getPath(), Set.of(
                     PosixFilePermission.OWNER_READ,
@@ -57,7 +57,6 @@ public final class GeneralProvider implements ITerracottaProvider {
                     PosixFilePermission.OTHERS_EXECUTE
             )));
         }
-
         return task;
     }
 

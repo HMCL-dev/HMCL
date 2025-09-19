@@ -45,6 +45,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -59,7 +60,8 @@ public final class TerracottaMetadata {
             @SerializedName("version_latest") String latest,
 
             @SerializedName("classifiers") Map<String, String> classifiers,
-            @SerializedName("downloads") List<String> downloads
+            @SerializedName("downloads") List<String> downloads,
+            @SerializedName("links") List<String> links
     ) {
         private TerracottaNative of(String classifier) {
             List<URI> links = new ArrayList<>(this.downloads.size());
@@ -76,15 +78,17 @@ public final class TerracottaMetadata {
             return new TerracottaNative(
                     Collections.unmodifiableList(links),
                     Metadata.DEPENDENCIES_DIRECTORY.resolve(
-                            String.format("terracotta/%s/terracotta-%s", this.latest, classifier)
+                            String.format("terracotta/%s/terracotta-%s-%s", this.latest, this.latest, classifier)
                     ).toAbsolutePath(),
                     new FileDownloadTask.IntegrityCheck("SHA-256", hash)
             );
         }
-
     }
 
     public static final ITerracottaProvider PROVIDER;
+    public static final String PACKAGE_NAME;
+    private static final List<String> PACKAGE_LINKS;
+
     private static final Pattern LEGACY;
     private static final List<String> RECENT;
     private static final String LATEST;
@@ -97,13 +101,38 @@ public final class TerracottaMetadata {
             throw new ExceptionInInitializerError(e);
         }
 
-        PROVIDER = locateProvider(config);
         LEGACY = Pattern.compile(config.legacy);
         RECENT = config.recent;
         LATEST = config.latest;
+
+        ProviderContext context = locateProvider(config);
+        PROVIDER = context != null ? context.provider() : null;
+        PACKAGE_NAME = context != null ? String.format("terracotta-%s-%s.tar.gz", context.system, context.arch) : null;
+
+        if (context != null) {
+            List<String> packageLinks = new ArrayList<>(config.links.size());
+            for (String link : config.links) {
+                packageLinks.add(link.replace("${version}", LATEST)
+                        .replace("${system}", context.system)
+                        .replace("${arch}", context.arch)
+                );
+            }
+
+            PACKAGE_LINKS = Collections.unmodifiableList(packageLinks);
+        } else {
+            PACKAGE_LINKS = null;
+        }
     }
 
-    private static ITerracottaProvider locateProvider(Config config) {
+    private record ProviderContext(ITerracottaProvider provider, String system, String arch) {
+    }
+
+    public static String getPackageLink() {
+        return PACKAGE_LINKS.get(ThreadLocalRandom.current().nextInt(0, PACKAGE_LINKS.size()));
+    }
+
+    @Nullable
+    private static ProviderContext locateProvider(Config config) {
         String architecture = switch (Architecture.SYSTEM_ARCH) {
             case X86_64 -> "x86_64";
             case ARM64 -> "arm64";
@@ -116,14 +145,23 @@ public final class TerracottaMetadata {
         return switch (OperatingSystem.CURRENT_OS) {
             case WINDOWS -> {
                 if (OperatingSystem.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_8_1)) {
-                    yield new GeneralProvider(config.of(String.format("windows-%s.exe", architecture)));
+                    yield new ProviderContext(
+                            new GeneralProvider(config.of(String.format("windows-%s.exe", architecture))),
+                            "windows", architecture
+                    );
                 }
                 yield null;
             }
-            case LINUX -> new GeneralProvider(config.of(String.format("linux-%s", architecture)));
-            case MACOS -> new MacOSProvider(
-                    config.of(String.format("macos-%s.pkg", architecture)),
-                    config.of(String.format("macos-%s", architecture))
+            case LINUX -> new ProviderContext(
+                    new GeneralProvider(config.of(String.format("linux-%s", architecture))),
+                    "linux", architecture
+            );
+            case MACOS -> new ProviderContext(
+                    new MacOSProvider(
+                            config.of(String.format("macos-%s.pkg", architecture)),
+                            config.of(String.format("macos-%s", architecture))
+                    ),
+                    "macos", architecture
             );
             default -> null;
         };
