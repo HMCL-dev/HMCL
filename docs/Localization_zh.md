@@ -8,9 +8,9 @@ HMCL 为多种语言提供本地化支持。
 
 ## 支持的语言
 
-目前，HMCL 为这些语言提供主要支持：
+目前，HMCL 为这些语言提供支持:
 
-| 语言      | 语言标签      | 本地化文件后缀    | 本地化键      | 支持状态 | 志愿者                                       | 
+| 语言      | 语言标签      | 首选本地化文件后缀  | 首选本地化键    | 支持状态 | 志愿者                                       | 
 |---------|-----------|------------|-----------|------|-------------------------------------------|
 | 英语      | `en`      | (空)        | `default` | 主要   |                                           |  
 | 中文 (简体) | `zh-Hans` | `_zh`      | `zh`      | 主要   |                                           |
@@ -36,20 +36,56 @@ HMCL 会要求所有 Pull Request 在更新文档和本地化资源时同步更�
 将自己的 GitHub 用户名加入上方的志愿者列表。
 我们非常感谢你的帮助。
 
-## 本地化资源
+## 添加新的语言支持
 
-我们为每个语言分配了一个语言标签和一个本地化文档后缀。
+HMCL 欢迎任何人参与翻译和贡献。但是维护更多语言的翻译需要付出更多维护成本，
+所以我们对新增加的语言有一些要求，请在贡献前确认以下要求:
+
+- 我们优先考虑 [Minecraft 官方支持的语言](https://minecraft.wiki/w/Language)。
+  如果没有特殊理由，我们不会为 Minecraft 官方尚未支持的语言提供支持。
+- 我们希望对所有语言都提供长久的维护支持。
+  由于本项目的维护者们擅长的语言有限，为了避免对新语言的支持很快就损坏，
+  我们希望能够找到擅长该语言者帮助我们长期维护新增的本地化文件。
+  如果可能缺少长期维护者，我们会更慎重地考虑是否要加入对该语言的支持。
+
+我们建议贡献者在提供新语言翻译之前先通过 [Issue](https://github.com/HMCL-dev/HMCL/issues/new?template=feature.yml) 提出一个功能请求，
+与其他贡献者先进行讨论，确定了未来的维护方式后再进行翻译工作。
+
+### 开始翻译
+
+如果你想为 HMCL 添加新的语言支持，请从翻译 [`I18N.properties`](../HMCL/src/main/resources/assets/lang/I18N.properties) 开始。
+HMCL 的绝大多数文本都位于这个文件中，翻译此文件就能翻译整个界面。
+
+这是一个 Java Properties 文件，格式非常简单，在翻译前请先阅读该格式的介绍: [Properties 文件](https://en.wikipedia.org/wiki/.properties)。
+
+作为翻译的第一步，请从[这张表格](https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes)中查询这个语言对应的两字母或三字母语言标签。
+例如，英语的语言标签为 `en`。
+
+在确定了语言标签后，请在 [`I18N.properties` 文件旁](../HMCL/src/main/resources/assets/lang)创建 `I18N_<语言标签>.properites` (例如 `I18N_en.properties`) 文件。
+随后，你就可以开始在这个文件中进行翻译工作了。
+
+`I18N.properties` 文件会遵循[资源回退机制](#资源回退机制)查询缺失的译文。
+也就是说，你可以逐条目进行翻译，而在你尚未翻译的条目会自动回退到英语上。
+
+在翻译了一部分后，你可以[自行构建 HMCL](./README_zh.md#编译)，编译出的 HMCL 中就会包含你的译文。
+如果你的电脑默认环境不是该语言，你可以将环境变量 `HMCL_LAUNCHER` 指定为你刚刚从表格中找到的语言标签，
+HMCL 会自动切换至这个语言。
+
+到这里，你就可以提交你的文件，并向 HMCL 开启 PR 了。
+HMCL 的维护者会替你完成其他步骤。
+
+## 本地化资源
 
 所有文档和本地化资源文件的命名规则为 `<资源名><本地化文件后缀>.<扩展名>`。
 
-例如，对于 `README.md` 来说，不同语言的本地化版本命名如下：
+例如，对于 `README.md` 来说，不同语言的本地化版本命名如下:
 
 - 英语: `README.md`
 - 中文 (简体): `README_zh.md`
 - 中文 (繁体): `README_zh_Hant.md`
 - 中文 (文言): `README_lzh.md`
 
-除了本地化文件，HMCL 还支持本地化 JSON 中的部分文本字段。JSON 中的本地化文本使用以下格式：
+除了本地化文件，HMCL 还支持本地化 JSON 中的部分文本字段。JSON 中的本地化文本使用以下格式:
 
 ```json5
 {
@@ -60,7 +96,7 @@ HMCL 会要求所有 Pull Request 在更新文档和本地化资源时同步更�
 }
 ```
 
-例如，对于以下文本字段：
+例如，对于以下文本字段:
 
 ```json
 {
@@ -68,7 +104,7 @@ HMCL 会要求所有 Pull Request 在更新文档和本地化资源时同步更�
 }
 ```
 
-可以将其改写为本地化文本：
+可以将其改写为本地化文本:
 
 ```json
 {
@@ -120,39 +156,39 @@ HMCL 会要求所有 Pull Request 在更新文档和本地化资源时同步更�
 以下是几个常见中文环境对应的本地化资源搜索列表。
 
 - `zh-CN`:
-  1. `zh-Hans-CN`
-  2. `zh-Hans`
-  3. `zh-CN`
-  4. `zh`
-  5. `und`
+    1. `zh-Hans-CN`
+    2. `zh-Hans`
+    3. `zh-CN`
+    4. `zh`
+    5. `und`
 - `zh-SG`:
-  1. `zh-Hans-SG`
-  2. `zh-Hans`
-  3. `zh-SG`
-  4. `zh-CN`
-  5. `zh`
-  6. `und`
+    1. `zh-Hans-SG`
+    2. `zh-Hans`
+    3. `zh-SG`
+    4. `zh-CN`
+    5. `zh`
+    6. `und`
 - `zh-TW`:
-  1. `zh-Hant-TW`
-  2. `zh-Hant`
-  3. `zh-TW`
-  4. `zh`
-  5. `zh-CN`
-  6. `und`
+    1. `zh-Hant-TW`
+    2. `zh-Hant`
+    3. `zh-TW`
+    4. `zh`
+    5. `zh-CN`
+    6. `und`
 - `zh-HK`:
-  1. `zh-Hant-HK`
-  2. `zh-Hant`
-  3. `zh-HK`
-  4. `zh-TW`
-  5. `zh`
-  6. `zh-CN`
-  7. `und`
+    1. `zh-Hant-HK`
+    2. `zh-Hant`
+    3. `zh-HK`
+    4. `zh-TW`
+    5. `zh`
+    6. `zh-CN`
+    7. `und`
 - `lzh`:
-  1. `lzh-Hant`
-  2. `lzh`
-  3. `zh-Hant`
-  4. `zh`
-  5. `und`
+    1. `lzh-Hant`
+    2. `lzh`
+    3. `zh-Hant`
+    4. `zh`
+    5. `und`
 
 ## 自动同步文档内容
 
