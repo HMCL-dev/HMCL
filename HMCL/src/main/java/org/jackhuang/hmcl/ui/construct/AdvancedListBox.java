@@ -31,6 +31,7 @@ import java.util.function.Consumer;
 
 public class AdvancedListBox extends ScrollPane {
     private final VBox container = new VBox();
+    private ScrollBarPolicy lastVbarPolicy = null;
 
     {
         setContent(container);
@@ -40,7 +41,6 @@ public class AdvancedListBox extends ScrollPane {
         setFitToHeight(true);
         setFitToWidth(true);
         setHbarPolicy(ScrollBarPolicy.NEVER);
-        setVbarPolicy(ScrollBarPolicy.NEVER);
 
         container.getStyleClass().add("advanced-list-box-content");
         
@@ -50,10 +50,16 @@ public class AdvancedListBox extends ScrollPane {
     @Override
     protected void layoutChildren() {
         super.layoutChildren();
+        ScrollBarPolicy newPolicy;
         if (container.getHeight() > getHeight()) {
-            setVbarPolicy(ScrollBarPolicy.AS_NEEDED);
+            newPolicy = ScrollBarPolicy.AS_NEEDED;
         } else {
-            setVbarPolicy(ScrollBarPolicy.NEVER);
+            newPolicy = ScrollBarPolicy.NEVER;
+        }
+
+        if (lastVbarPolicy == null || newPolicy != lastVbarPolicy) {
+            setVbarPolicy(newPolicy);
+            lastVbarPolicy = newPolicy;
         }
     }
 
