@@ -119,49 +119,40 @@ HMCL 会要求所有 Pull Request 在更新文档和本地化资源时同步更�
 
 以下是几个常见中文环境对应的本地化资源搜索列表。
 
-`zh-CN`:
-
-1. `zh-Hans-CN`
-2. `zh-Hans`
-3. `zh-CN`
-4. `zh`
-5. `und`
-
-`zh-SG`:
-
-1. `zh-Hans-SG`
-2. `zh-Hans`
-3. `zh-SG`
-4. `zh-CN`
-5. `zh`
-6. `und`
-
-`zh-TW`:
-
-1. `zh-Hant-TW`
-2. `zh-Hant`
-3. `zh-TW`
-4. `zh`
-5. `zh-CN`
-6. `und`
-
-`zh-HK`:
-
-1. `zh-Hant-HK`
-2. `zh-Hant`
-3. `zh-HK`
-4. `zh-TW`
-5. `zh`
-6. `zh-CN`
-7. `und`
-
-`lzh`:
-
-1. `lzh-Hant`
-2. `lzh`
-3. `zh-Hant`
-4. `zh`
-5. `und`
+- `zh-CN`:
+  1. `zh-Hans-CN`
+  2. `zh-Hans`
+  3. `zh-CN`
+  4. `zh`
+  5. `und`
+- `zh-SG`:
+  1. `zh-Hans-SG`
+  2. `zh-Hans`
+  3. `zh-SG`
+  4. `zh-CN`
+  5. `zh`
+  6. `und`
+- `zh-TW`:
+  1. `zh-Hant-TW`
+  2. `zh-Hant`
+  3. `zh-TW`
+  4. `zh`
+  5. `zh-CN`
+  6. `und`
+- `zh-HK`:
+  1. `zh-Hant-HK`
+  2. `zh-Hant`
+  3. `zh-HK`
+  4. `zh-TW`
+  5. `zh`
+  6. `zh-CN`
+  7. `und`
+- `lzh`:
+  1. `lzh-Hant`
+  2. `lzh`
+  3. `zh-Hant`
+  4. `zh`
+  5. `und`
 
 ## 自动同步文档内容
 
