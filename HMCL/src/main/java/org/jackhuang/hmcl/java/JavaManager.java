@@ -272,7 +272,7 @@ public final class JavaManager {
             // Prefer the Java version that is closer to the game's recommended Java version
             return java1.getParsedVersion() < java2.getParsedVersion() ? java1 : java2;
         else
-            return java1.getVersionNumber().compareTo(java2.getVersionNumber()) > 0 ? java1 : java2;
+            return java1.getVersionNumber().compareTo(java2.getVersionNumber()) >= 0 ? java1 : java2;
     }
 
     @Nullable
