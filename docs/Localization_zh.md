@@ -1,6 +1,6 @@
 # 本地化
 
-<!-- TODO: 本文档需要进一步完善。为了便于更新，暂时不会翻译至其语言。 -->
+<!-- TODO: 本文档需要进一步完善。为了便于修改，我们暂时不将本文件翻译至其他语言，在完善后再在独立 PR 中提供其他语言的译文。 -->
 
 HMCL 为多种语言提供本地化支持。
 
@@ -16,7 +16,7 @@ HMCL 为多种语言提供本地化支持。
 | 中文 (简体) | `zh-Hans` | `_zh`      | `zh`      | 主要   |                                           |
 | 中文 (繁体) | `zh-Hant` | `_zh_Hant` | `zh-Hant` | 主要   |                                           |
 | 中文 (文言) | `lzh`     | `_lzh`     | `lzh`     | 次要   |                                           |
-| 日语      | `ja`      | `_ja`      | `ja`      | 次要   | [3gf8jv4dv](https://github.com/3gf8jv4dv) |
+| 日语      | `ja`      | `_ja`      | `ja`      | 次要   |                                           |
 | 西班牙语    | `es`      | `_es`      | `es`      | 次要   | [3gf8jv4dv](https://github.com/3gf8jv4dv) |
 | 俄语      | `ru`      | `_ru`      | `ru`      | 次要   | [3gf8jv4dv](https://github.com/3gf8jv4dv) |
 | 乌克兰语    | `uk`      | `_uk`      | `uk`      | 次要   |                                           |
@@ -38,8 +38,8 @@ HMCL 会要求所有 Pull Request 在更新文档和本地化资源时同步更�
 
 ## 添加新的语言支持
 
-HMCL 欢迎任何人参与翻译和贡献。但是维护更多语言的翻译需要付出更多维护成本，
-所以我们对新增加的语言有一些要求，请在贡献前确认以下要求:
+HMCL 欢迎任何人参与翻译和贡献。但是维护更多语言的翻译需要付出更多维护成本，所以我们对新增加的语言有一些要求。
+请在贡献前确认以下要求:
 
 - 我们优先考虑 [Minecraft 官方支持的语言](https://minecraft.wiki/w/Language)。
   如果没有特殊理由，我们不会为 Minecraft 官方尚未支持的语言提供支持。
@@ -56,7 +56,7 @@ HMCL 欢迎任何人参与翻译和贡献。但是维护更多语言的翻译需
 如果你想为 HMCL 添加新的语言支持，请从翻译 [`I18N.properties`](../HMCL/src/main/resources/assets/lang/I18N.properties) 开始。
 HMCL 的绝大多数文本都位于这个文件中，翻译此文件就能翻译整个界面。
 
-这是一个 Java Properties 文件，格式非常简单，在翻译前请先阅读该格式的介绍: [Properties 文件](https://en.wikipedia.org/wiki/.properties)。
+这是一个 Java Properties 文件，格式非常简单。在翻译前请先阅读该格式的介绍: [Properties 文件](https://en.wikipedia.org/wiki/.properties)。
 
 作为翻译的第一步，请从[这张表格](https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes)中查询这个语言对应的两字母或三字母语言标签。
 例如，英语的语言标签为 `en`。
@@ -65,13 +65,13 @@ HMCL 的绝大多数文本都位于这个文件中，翻译此文件就能翻译
 随后，你就可以开始在这个文件中进行翻译工作了。
 
 `I18N.properties` 文件会遵循[资源回退机制](#资源回退机制)查询缺失的译文。
-也就是说，你可以逐条目进行翻译，而在你尚未翻译的条目会自动回退到英语上。
+也就是说，你可以逐条目进行翻译，而你尚未翻译的条目会自动回退到英语上。
 
 在翻译了一部分后，你可以[自行构建 HMCL](./README_zh.md#编译)，编译出的 HMCL 中就会包含你的译文。
-如果你的电脑默认环境不是该语言，你可以将环境变量 `HMCL_LAUNCHER` 指定为你刚刚从表格中找到的语言标签，
+如果你的电脑默认环境不是该语言，你可以将环境变量 `HMCL_LANGUAGE` 指定为你刚刚从表格中找到的语言标签，
 HMCL 会自动切换至这个语言。
 
-到这里，你就可以提交你的文件，并向 HMCL 开启 PR 了。
+到这里，你就可以把文件推送到 GitHub上，并向 HMCL 提交 PR 了。
 HMCL 的维护者会替你完成其他步骤。
 
 ## 本地化资源
