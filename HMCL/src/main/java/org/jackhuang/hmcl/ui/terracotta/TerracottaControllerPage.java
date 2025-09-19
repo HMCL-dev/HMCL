@@ -93,20 +93,19 @@ public class TerracottaControllerPage extends StackPane {
         DoubleProperty progressProperty = new SimpleDoubleProperty();
         ObservableList<Node> nodesProperty = FXCollections.observableList(new ArrayList<>());
 
-        FXUtils.applyDragListener(this, file -> {
+        FXUtils.applyDragListener(this, path -> {
             TerracottaState state = UI_STATE.get();
 
             if (state instanceof TerracottaState.Uninitialized ||
                     state instanceof TerracottaState.Preparing preparing && preparing.hasInstallFence() ||
                     state instanceof TerracottaState.Fatal fatal && fatal.isRecoverable()
             ) {
-                Path path = file.toPath();
                 return Files.isReadable(path) && FileUtils.getName(path).toLowerCase(Locale.ROOT).endsWith(".tar.gz");
             } else {
                 return false;
             }
         }, files -> {
-            Path path = files.get(0).toPath();
+            Path path = files.get(0);
 
             TerracottaState state = UI_STATE.get(), next;
             if (state instanceof TerracottaState.Uninitialized || state instanceof TerracottaState.Preparing preparing && preparing.hasInstallFence()) {

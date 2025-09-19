@@ -49,9 +49,7 @@ import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
-import javafx.stage.FileChooser;
-import javafx.stage.Screen;
-import javafx.stage.Stage;
+import javafx.stage.*;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
@@ -79,14 +77,19 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.StringReader;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.ref.WeakReference;
 import java.net.*;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.PathMatcher;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -96,7 +99,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
@@ -108,6 +110,25 @@ public final class FXUtils {
     }
 
     public static final int JAVAFX_MAJOR_VERSION;
+
+    public static final String GRAPHICS_PIPELINE;
+    public static final boolean GPU_ACCELERATION_ENABLED;
+
+    static {
+        String pipelineName = "";
+
+        try {
+            Object pipeline = Class.forName("com.sun.prism.GraphicsPipeline").getMethod("getPipeline").invoke(null);
+            if (pipeline != null) {
+                pipelineName = pipeline.getClass().getName();
+            }
+        } catch (Throwable e) {
+            LOG.warning("Failed to get prism pipeline", e);
+        }
+
+        GRAPHICS_PIPELINE = pipelineName;
+        GPU_ACCELERATION_ENABLED = !pipelineName.endsWith(".SWPipeline");
+    }
 
     /// @see Platform.Preferences
     public static final @Nullable ObservableMap<String, Object> PREFERENCES;
@@ -440,20 +461,27 @@ public final class FXUtils {
         }
     }
 
-    public static void openFolder(File file) {
-        if (!FileUtils.makeDirectory(file)) {
-            LOG.error("Unable to make directory " + file);
+    public static void openFolder(Path file) {
+        if (file.getFileSystem() != FileSystems.getDefault()) {
+            LOG.warning("Cannot open folder as the file system is not supported: " + file);
             return;
         }
 
-        String path = file.getAbsolutePath();
+        try {
+            Files.createDirectories(file);
+        } catch (IOException e) {
+            LOG.warning("Failed to create directory " + file);
+            return;
+        }
+
+        String path = FileUtils.getAbsolutePath(file);
 
         String openCommand;
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
             openCommand = "explorer.exe";
         else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
             openCommand = "/usr/bin/open";
-        else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && new File("/usr/bin/xdg-open").exists())
+        else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && Files.exists(Path.of("/usr/bin/xdg-open")))
             openCommand = "/usr/bin/xdg-open";
         else
             openCommand = null;
@@ -475,7 +503,7 @@ public final class FXUtils {
 
             // Fallback to java.awt.Desktop::open
             try {
-                java.awt.Desktop.getDesktop().open(file);
+                java.awt.Desktop.getDesktop().open(file.toFile());
             } catch (Throwable e) {
                 LOG.error("Unable to open " + path + " by java.awt.Desktop.getDesktop()::open", e);
             }
@@ -518,11 +546,11 @@ public final class FXUtils {
                 }
 
                 // Fallback to open folder
-                openFolder(file.getParent().toFile());
+                openFolder(file.getParent());
             });
         } else {
             // We do not have a universal method to show file in file manager.
-            openFolder(file.getParent().toFile());
+            openFolder(file.getParent());
         }
     }
 
@@ -1234,14 +1262,14 @@ public final class FXUtils {
         }
     }
 
-    public static void applyDragListener(Node node, FileFilter filter, Consumer<List<File>> callback) {
+    public static void applyDragListener(Node node, PathMatcher filter, Consumer<List<Path>> callback) {
         applyDragListener(node, filter, callback, null);
     }
 
-    public static void applyDragListener(Node node, FileFilter filter, Consumer<List<File>> callback, Runnable dragDropped) {
+    public static void applyDragListener(Node node, PathMatcher filter, Consumer<List<Path>> callback, Runnable dragDropped) {
         node.setOnDragOver(event -> {
             if (event.getGestureSource() != node && event.getDragboard().hasFiles()) {
-                if (event.getDragboard().getFiles().stream().anyMatch(filter::accept))
+                if (event.getDragboard().getFiles().stream().map(File::toPath).anyMatch(filter::matches))
                     event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
             }
             event.consume();
@@ -1250,7 +1278,7 @@ public final class FXUtils {
         node.setOnDragDropped(event -> {
             List<File> files = event.getDragboard().getFiles();
             if (files != null) {
-                List<File> acceptFiles = files.stream().filter(filter::accept).collect(Collectors.toList());
+                List<Path> acceptFiles = files.stream().map(File::toPath).filter(filter::matches).toList();
                 if (!acceptFiles.isEmpty()) {
                     callback.accept(acceptFiles);
                     event.setDropCompleted(true);

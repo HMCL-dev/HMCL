@@ -76,7 +76,7 @@ public final class JavaFXUtils {
             int featureVersion = Runtime.version().feature();
 
             String version;
-            if (featureVersion >= 22)
+            if (featureVersion >= 23)
                 version = platform.getVersions().getOrDefault(JavaFXVersionType.MODERN, platform.getVersions().get(JavaFXVersionType.CLASSIC));
             else
                 version = platform.getVersions().get(JavaFXVersionType.CLASSIC);

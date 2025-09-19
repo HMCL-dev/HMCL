@@ -83,6 +83,7 @@ public final class BMCLAPIDownloadProvider implements DownloadProvider {
                 pair("https://repo1.maven.org/maven2", "https://mirrors.cloud.tencent.com/nexus/repository/maven-public"),
                 pair("https://repo.maven.apache.org/maven2", "https://mirrors.cloud.tencent.com/nexus/repository/maven-public"),
                 pair("https://hmcl-dev.github.io/metadata/cleanroom", "https://alist.8mi.tech/d/mirror/HMCL-Metadata/Auto/cleanroom"),
+                pair("https://hmcl-dev.github.io/metadata/fmllibs", "https://alist.8mi.tech/d/mirror/HMCL-Metadata/Auto/fmllibs"),
                 pair("https://zkitefly.github.io/unlisted-versions-of-minecraft", "https://alist.8mi.tech/d/mirror/unlisted-versions-of-minecraft/Auto")
 //                // https://github.com/mcmod-info-mirror/mcim-rust-api
 //                pair("https://api.modrinth.com", "https://mod.mcimirror.top/modrinth"),

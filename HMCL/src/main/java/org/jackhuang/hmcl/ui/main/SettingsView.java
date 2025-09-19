@@ -236,7 +236,7 @@ public abstract class SettingsView extends StackPane {
     }
 
     public void openLogFolder() {
-        FXUtils.openFolder(LOG.getLogFile().getParent().toFile());
+        FXUtils.openFolder(LOG.getLogFile().getParent());
     }
 
     protected abstract void onUpdate();
