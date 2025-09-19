@@ -1,7 +1,5 @@
 package org.jackhuang.hmcl.resourcepack;
 
-import com.google.gson.JsonParser;
-
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;

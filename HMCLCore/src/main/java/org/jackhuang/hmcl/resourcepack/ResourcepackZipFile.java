@@ -42,3 +42,4 @@ public class ResourcepackZipFile implements ResourcepackFile {
         return zipfs.getPath("pack.png");
     }
 }
+

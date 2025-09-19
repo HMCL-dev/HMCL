@@ -16,7 +16,6 @@ public interface ResourcepackFile {
 
     Path getIcon();
 
-
     default String parseDescriptionFromJson(String json) {
         try {
             return JsonParser.parseString(json).getAsJsonObject().getAsJsonObject("pack").get("description").getAsString();
