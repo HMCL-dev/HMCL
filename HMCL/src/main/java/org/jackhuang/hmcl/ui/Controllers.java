@@ -481,14 +481,14 @@ public final class Controllers {
     }
 
     /**
-     * reload UI controllers
+     * Reload UI controllers
      */
     public static void reload() {
         if (isStopped()) {
             throw new IllegalStateException("Application has been stopped");
         }
-        
-        // 重新初始化各个页面
+
+        // Reinitialize all pages
         rootPage = new Lazy<>(RootPage::new);
         versionPage = new Lazy<>(VersionPage::new);
         gameListPage = new Lazy<>(() -> {
@@ -510,26 +510,26 @@ public final class Controllers {
             return accountListPage;
         });
         settingsPage = new Lazy<>(LauncherSettingsPage::new);
-        
-        // 更新舞台标题
+
+        // Update window title
         if (stage != null) {
             stage.setTitle(Metadata.FULL_TITLE);
         }
-        
-        // 重新设置场景并导航回主页面
+
+        // Reset scene and navigate back to home page
         if (scene != null && decorator != null) {
             scene.setRoot(decorator.getDecorator());
             decorator.getDecorator().prefWidthProperty().bind(scene.widthProperty());
             decorator.getDecorator().prefHeightProperty().bind(scene.heightProperty());
 
-            // 清空导航栈并导航回主页面
+            // Clear navigation history and navigate back to home page
             if (decorator.getNavigator() != null) {
                 decorator.getNavigator().clear();
                 decorator.navigate(getRootPage());
             }
         }
-        
-        LOG.info("UI controllers reloaded successfully");
+
+        LOG.info("UI controllers have been successfully reloaded");
     }
 
     public static void shutdown() {

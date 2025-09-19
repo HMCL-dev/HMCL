@@ -211,12 +211,12 @@ public final class ConfigHolder {
 
     public static void reload() {
         try {
-            // 保存当前配置状态
+            // Save current configuration state
             boolean wasNewlyCreated = newlyCreated;
             boolean wasOwnerChanged = ownerChanged;
             boolean wasUnsupportedVersion = unsupportedVersion;
 
-            // 重新加载配置
+            // Reload configuration
             configInstance = loadConfig();
             if (!unsupportedVersion)
                 configInstance.addListener(source -> FileSaver.save(configLocation, configInstance.toJson()));
@@ -224,14 +224,14 @@ public final class ConfigHolder {
             globalConfigInstance = loadGlobalConfig();
             globalConfigInstance.addListener(source -> FileSaver.save(GLOBAL_CONFIG_PATH, globalConfigInstance.toJson()));
 
-            // 强制更新语言设置
+            // Force update language settings
             Locale.setDefault(config().getLocalization().getLocale());
             I18n.setLocale(configInstance.getLocalization());
 
-            // 更新日志保留策略（不重新初始化Settings以避免重复初始化）
+            // Update log retention policy (do not reinitialize Settings to avoid duplicate initialization)
             LOG.setLogRetention(globalConfig().getLogRetention());
 
-            // 恢复状态标志
+            // Restore state flags
             newlyCreated = wasNewlyCreated;
             ownerChanged = wasOwnerChanged;
             unsupportedVersion = wasUnsupportedVersion;
