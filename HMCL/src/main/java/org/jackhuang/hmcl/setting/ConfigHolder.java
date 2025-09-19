@@ -209,4 +209,36 @@ public final class ConfigHolder {
         return new GlobalConfig();
     }
 
+    public static void reload() {
+        try {
+            // 保存当前配置状态
+            boolean wasNewlyCreated = newlyCreated;
+            boolean wasOwnerChanged = ownerChanged;
+            boolean wasUnsupportedVersion = unsupportedVersion;
+
+            // 重新加载配置
+            configInstance = loadConfig();
+            if (!unsupportedVersion)
+                configInstance.addListener(source -> FileSaver.save(configLocation, configInstance.toJson()));
+
+            globalConfigInstance = loadGlobalConfig();
+            globalConfigInstance.addListener(source -> FileSaver.save(GLOBAL_CONFIG_PATH, globalConfigInstance.toJson()));
+
+            // 强制更新语言设置
+            Locale.setDefault(config().getLocalization().getLocale());
+            I18n.setLocale(configInstance.getLocalization());
+
+            // 更新日志保留策略（不重新初始化Settings以避免重复初始化）
+            LOG.setLogRetention(globalConfig().getLogRetention());
+
+            // 恢复状态标志
+            newlyCreated = wasNewlyCreated;
+            ownerChanged = wasOwnerChanged;
+            unsupportedVersion = wasUnsupportedVersion;
+
+            LOG.info("Configuration reloaded and UI refreshed");
+        } catch (IOException e) {
+            LOG.warning("Failed to reload configuration", e);
+        }
+    }
 }

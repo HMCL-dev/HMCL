@@ -480,6 +480,58 @@ public final class Controllers {
         return decorator == null;
     }
 
+    /**
+     * reload UI controllers
+     */
+    public static void reload() {
+        if (isStopped()) {
+            throw new IllegalStateException("Application has been stopped");
+        }
+        
+        // 重新初始化各个页面
+        rootPage = new Lazy<>(RootPage::new);
+        versionPage = new Lazy<>(VersionPage::new);
+        gameListPage = new Lazy<>(() -> {
+            GameListPage gameListPage = new GameListPage();
+            gameListPage.selectedProfileProperty().bindBidirectional(Profiles.selectedProfileProperty());
+            gameListPage.profilesProperty().bindContent(Profiles.profilesProperty());
+            FXUtils.applyDragListener(gameListPage, ModpackHelper::isFileModpackByExtension, modpacks -> {
+                Path modpack = modpacks.get(0);
+                Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), modpack), i18n("install.modpack"));
+            });
+            return gameListPage;
+        });
+        downloadPage = new Lazy<>(DownloadPage::new);
+        accountListPage = new Lazy<>(() -> {
+            AccountListPage accountListPage = new AccountListPage();
+            accountListPage.selectedAccountProperty().bindBidirectional(Accounts.selectedAccountProperty());
+            accountListPage.accountsProperty().bindContent(Accounts.getAccounts());
+            accountListPage.authServersProperty().bindContentBidirectional(config().getAuthlibInjectorServers());
+            return accountListPage;
+        });
+        settingsPage = new Lazy<>(LauncherSettingsPage::new);
+        
+        // 更新舞台标题
+        if (stage != null) {
+            stage.setTitle(Metadata.FULL_TITLE);
+        }
+        
+        // 重新设置场景并导航回主页面
+        if (scene != null && decorator != null) {
+            scene.setRoot(decorator.getDecorator());
+            decorator.getDecorator().prefWidthProperty().bind(scene.widthProperty());
+            decorator.getDecorator().prefHeightProperty().bind(scene.heightProperty());
+
+            // 清空导航栈并导航回主页面
+            if (decorator.getNavigator() != null) {
+                decorator.getNavigator().clear();
+                decorator.navigate(getRootPage());
+            }
+        }
+        
+        LOG.info("UI controllers reloaded successfully");
+    }
+
     public static void shutdown() {
         rootPage = null;
         versionPage = null;
