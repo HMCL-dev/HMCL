@@ -40,8 +40,21 @@ public class AdvancedListBox extends ScrollPane {
         setFitToHeight(true);
         setFitToWidth(true);
         setHbarPolicy(ScrollBarPolicy.NEVER);
+        setVbarPolicy(ScrollBarPolicy.NEVER);
 
         container.getStyleClass().add("advanced-list-box-content");
+        
+        getStyleClass().add("advanced-list-box");
+    }
+    
+    @Override
+    protected void layoutChildren() {
+        super.layoutChildren();
+        if (container.getHeight() > getHeight()) {
+            setVbarPolicy(ScrollBarPolicy.AS_NEEDED);
+        } else {
+            setVbarPolicy(ScrollBarPolicy.NEVER);
+        }
     }
 
     public AdvancedListBox add(Node child) {
