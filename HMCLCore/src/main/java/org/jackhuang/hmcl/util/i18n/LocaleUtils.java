@@ -64,18 +64,24 @@ public final class LocaleUtils {
                 : locale.stripExtensions().toLanguageTag();
     }
 
-    public static boolean isISO1Language(String language) {
-        return language.length() == 2;
-    }
-
-    public static boolean isISO3Language(String language) {
-        return language.length() == 3;
-    }
-
     public static @NotNull String getISO1Language(Locale locale) {
         String language = locale.getLanguage();
         if (language.isEmpty()) return "en";
-        return isISO3Language(language) ? toISO1Language(language) : language;
+        if (language.length() <= 2)
+            return language;
+
+        String lang = language;
+        while (lang != null) {
+            if (lang.length() <= 2)
+                return lang;
+            else {
+                String iso1 = mapToISO1Language(lang);
+                if (iso1 != null)
+                    return iso1;
+            }
+            lang = getParentLanguage(lang);
+        }
+        return language;
     }
 
     /// Get the script of the locale. If the script is empty and the language is Chinese,
@@ -288,6 +294,7 @@ public final class LocaleUtils {
 
     // ---
 
+    /// Map ISO 639-3 language codes to ISO 639-1 language codes.
     private static @Nullable String mapToISO1Language(String iso3Language) {
         return switch (iso3Language) {
             case "eng" -> "en";
@@ -307,23 +314,6 @@ public final class LocaleUtils {
             case "" -> null;
             default -> "";
         };
-    }
-
-    /// Try to convert ISO 639-3 language codes to ISO 639-1 language codes.
-    public static String toISO1Language(String languageTag) {
-        String lang = languageTag;
-        while (lang != null) {
-            if (lang.length() <= 2)
-                return lang;
-            else {
-                String iso1 = mapToISO1Language(lang);
-                if (iso1 != null)
-                    return iso1;
-            }
-            lang = getParentLanguage(lang);
-        }
-
-        return languageTag;
     }
 
     public static boolean isEnglish(Locale locale) {
