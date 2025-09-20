@@ -18,7 +18,9 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import javafx.beans.DefaultProperty;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.Node;
 
@@ -27,6 +29,7 @@ public class ComponentSublist extends ComponentList {
 
     private final ObjectProperty<Node> headerLeft = new SimpleObjectProperty<>(this, "headerLeft");
     private final ObjectProperty<Node> headerRight = new SimpleObjectProperty<>(this, "headerRight");
+    private final BooleanProperty margin = new SimpleBooleanProperty(this, "padding", true);
 
     public ComponentSublist() {
         super();
@@ -54,5 +57,17 @@ public class ComponentSublist extends ComponentList {
 
     public void setHeaderRight(Node headerRight) {
         this.headerRight.set(headerRight);
+    }
+
+    public boolean hasMargin() {
+        return margin.get();
+    }
+
+    public BooleanProperty marginProperty() {
+        return margin;
+    }
+
+    public void setMargin(boolean margin) {
+        this.margin.set(margin);
     }
 }
