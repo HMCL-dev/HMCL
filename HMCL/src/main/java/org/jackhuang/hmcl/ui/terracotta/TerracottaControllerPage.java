@@ -496,8 +496,13 @@ public class TerracottaControllerPage extends StackPane {
             Node icon = SVG.OPEN_IN_NEW.createIcon(Theme.blackFill(), 16);
             node.getChildren().setAll(description, placeholder, icon);
 
+            String url = link.link();
             RipplerContainer container = new RipplerContainer(node);
-            container.setOnMouseClicked(ev -> FXUtils.openLink(link.link()));
+            container.setOnMouseClicked(ev -> Controllers.dialog(
+                    i18n("terracotta.from_local.guide", TerracottaMetadata.PACKAGE_NAME),
+                    i18n("message.info"), MessageDialogPane.MessageType.INFO,
+                    () -> FXUtils.openLink(url)
+            ));
             container.getProperties().put("ComponentList.noPadding", true);
             locals.getContent().add(container);
         }
