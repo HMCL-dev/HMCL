@@ -129,7 +129,7 @@ final class ComponentListCell extends StackPane {
             groupNode.getChildren().add(headerRippler);
 
             VBox container = new VBox();
-            boolean hasPadding = !content.getProperties().containsKey("ComponentSubList.noPadding");
+            boolean hasPadding = !(list instanceof ComponentSublist subList) || subList.hasMargin();
             if (hasPadding) {
                 container.setPadding(new Insets(8, 16, 10, 16));
             }
@@ -151,7 +151,8 @@ final class ComponentListCell extends StackPane {
                 }
 
                 Platform.runLater(() -> {
-                    double newAnimatedHeight = (list.prefHeight(list.getWidth()) + (hasPadding ? 8 + 10 : 0)) * (expanded ? 1 : -1);
+                    // FIXME: ComponentSubList without padding must have a 4 pixel padding for displaying a border radius.
+                    double newAnimatedHeight = (list.prefHeight(list.getWidth()) + (hasPadding ? 8 + 10 : 4)) * (expanded ? 1 : -1);
                     double newHeight = expanded ? getHeight() + newAnimatedHeight : prefHeight(list.getWidth());
                     double contentHeight = expanded ? newAnimatedHeight : 0;
 

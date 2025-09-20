@@ -68,19 +68,9 @@ public final class TerracottaManager {
                 LOG.warning("Terracotta hasn't support your OS: " + org.jackhuang.hmcl.util.platform.Platform.SYSTEM_PLATFORM);
             } else {
                 switch (TerracottaMetadata.PROVIDER.status()) {
-                    case NOT_EXIST: {
-                        setState(new TerracottaState.Uninitialized(false));
-                        break;
-                    }
-                    case LEGACY_VERSION: {
-                        setState(new TerracottaState.Uninitialized(true));
-                        break;
-                    }
-                    case READY: {
-                        TerracottaState.Launching launching = new TerracottaState.Launching();
-                        setState(launching);
-                        launch(launching);
-                    }
+                    case NOT_EXIST -> setState(new TerracottaState.Uninitialized(false));
+                    case LEGACY_VERSION -> setState(new TerracottaState.Uninitialized(true));
+                    case READY -> launch(setState(new TerracottaState.Launching()));
                 }
             }
         }).whenComplete(exception -> {
@@ -110,7 +100,7 @@ public final class TerracottaManager {
                 }
 
                 int port = ((TerracottaState.PortSpecific) state).port;
-                int index = state instanceof TerracottaState.Ready ? ((TerracottaState.Ready) state).index : Integer.MIN_VALUE;
+                int index = state instanceof TerracottaState.Ready ready ? ready.index : Integer.MIN_VALUE;
 
                 TerracottaState next;
                 try {
@@ -218,21 +208,14 @@ public final class TerracottaManager {
         }
 
         try {
-            switch (Objects.requireNonNull(TerracottaMetadata.PROVIDER).status()) {
-                case NOT_EXIST:
-                case LEGACY_VERSION: {
-                    return install(file);
-                }
-                case READY: {
-                    TerracottaState.Launching launching = new TerracottaState.Launching();
-                    setState(launching);
+            return switch (Objects.requireNonNull(TerracottaMetadata.PROVIDER).status()) {
+                case NOT_EXIST, LEGACY_VERSION -> install(file);
+                case READY -> {
+                    TerracottaState.Launching launching = setState(new TerracottaState.Launching());
                     launch(launching);
-                    return launching;
+                    yield launching;
                 }
-                default: {
-                    throw new AssertionError();
-                }
-            }
+            };
         } catch (NullPointerException | IOException e) {
             LOG.warning("Cannot determine Terracotta state.", e);
             return setState(new TerracottaState.Fatal(TerracottaState.Fatal.Type.UNKNOWN));
@@ -274,8 +257,8 @@ public final class TerracottaManager {
 
     public static TerracottaState.Waiting setWaiting() {
         TerracottaState state = STATE_V.get();
-        if (state instanceof TerracottaState.PortSpecific) {
-            new GetTask(URI.create(String.format("http://127.0.0.1:%d/state/ide", ((TerracottaState.PortSpecific) state).port)))
+        if (state instanceof TerracottaState.PortSpecific portSpecific) {
+            new GetTask(URI.create(String.format("http://127.0.0.1:%d/state/ide", portSpecific.port)))
                     .setSignificance(Task.TaskSignificance.MINOR)
                     .start();
             return new TerracottaState.Waiting(-1, -1, null);
@@ -290,9 +273,9 @@ public final class TerracottaManager {
 
     public static TerracottaState.HostScanning setScanning() {
         TerracottaState state = STATE_V.get();
-        if (state instanceof TerracottaState.PortSpecific) {
+        if (state instanceof TerracottaState.PortSpecific portSpecific) {
             new GetTask(NetworkUtils.toURI(String.format(
-                    "http://127.0.0.1:%d/state/scanning?player=%s", ((TerracottaState.PortSpecific) state).port, getPlayerName()))
+                    "http://127.0.0.1:%d/state/scanning?player=%s", portSpecific.port, getPlayerName()))
             ).setSignificance(Task.TaskSignificance.MINOR).start();
 
             return new TerracottaState.HostScanning(-1, -1, null);
@@ -302,9 +285,9 @@ public final class TerracottaManager {
 
     public static Task<TerracottaState.GuestStarting> setGuesting(String room) {
         TerracottaState state = STATE_V.get();
-        if (state instanceof TerracottaState.PortSpecific) {
+        if (state instanceof TerracottaState.PortSpecific portSpecific) {
             return new GetTask(NetworkUtils.toURI(String.format(
-                    "http://127.0.0.1:%d/state/guesting?room=%s&player=%s", ((TerracottaState.PortSpecific) state).port, room, getPlayerName()
+                    "http://127.0.0.1:%d/state/guesting?room=%s&player=%s", portSpecific.port, room, getPlayerName()
             )))
                     .setSignificance(Task.TaskSignificance.MINOR)
                     .thenSupplyAsync(() -> new TerracottaState.GuestStarting(-1, -1, null))
