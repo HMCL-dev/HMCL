@@ -110,7 +110,7 @@ public final class TerracottaMetadata {
 
         ProviderContext context = locateProvider(config);
         PROVIDER = context != null ? context.provider() : null;
-        PACKAGE_NAME = context != null ? String.format("terracotta-%s-%s-%s-pkg.tar.gz", config.latest, context.system, context.arch) : null;
+        PACKAGE_NAME = context != null ? String.format("terracotta-%s-%s-pkg.tar.gz", config.latest, context.branch) : null;
 
         if (context != null) {
             List<Link> packageLinks = new ArrayList<>(config.links.size());
@@ -118,8 +118,7 @@ public final class TerracottaMetadata {
                 packageLinks.add(new Link(
                         link.description,
                         link.link.replace("${version}", LATEST)
-                                .replace("${system}", context.system)
-                                .replace("${arch}", context.arch)
+                                .replace("${classifier}", context.branch)
                 ));
             }
 
@@ -130,7 +129,10 @@ public final class TerracottaMetadata {
         }
     }
 
-    private record ProviderContext(ITerracottaProvider provider, String system, String arch) {
+    private record ProviderContext(ITerracottaProvider provider, String branch) {
+        ProviderContext(ITerracottaProvider provider, String system, String arch) {
+            this(provider, system + "-" + arch);
+        }
     }
 
     public static List<Link> getPackageLinks() {

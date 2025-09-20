@@ -63,13 +63,18 @@ public final class TerracottaNative {
                     Context delegate = super.getContext(connection, checkETag, bmclapiHash);
                     return new Context() {
                         @Override
+                        public void withResult(boolean success) {
+                            delegate.withResult(success);
+                        }
+
+                        @Override
                         public void write(byte[] buffer, int offset, int len) throws IOException {
                             delegate.write(buffer, offset, len);
                         }
 
                         @Override
                         public void close() throws IOException {
-                            if (!context.requestInstallFence()) {
+                            if (isSuccess() && !context.requestInstallFence()) {
                                 throw new CancellationException();
                             }
 
