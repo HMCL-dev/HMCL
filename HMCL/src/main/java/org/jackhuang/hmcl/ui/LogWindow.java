@@ -40,6 +40,7 @@ import javafx.stage.Stage;
 import org.jackhuang.hmcl.game.GameDumpGenerator;
 import org.jackhuang.hmcl.game.Log;
 import org.jackhuang.hmcl.setting.StyleSheets;
+import org.jackhuang.hmcl.ui.construct.NoneMultipleSelectionModel;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.CircularArrayList;
@@ -311,6 +312,7 @@ public final class LogWindow extends Stage {
                 Holder<Object> lastCell = new Holder<>();
                 listView.setCellFactory(x -> new ListCell<Log>() {
                     {
+                        x.setSelectionModel(new NoneMultipleSelectionModel<>());
                         getStyleClass().add("log-window-list-cell");
                         Region clippedContainer = (Region) listView.lookup(".clipped-container");
                         if (clippedContainer != null) {
@@ -364,6 +366,7 @@ public final class LogWindow extends Stage {
                         pseudoClassStateChanged(INFO, !empty && item.getLevel() == Log4jLevel.INFO);
                         pseudoClassStateChanged(DEBUG, !empty && item.getLevel() == Log4jLevel.DEBUG);
                         pseudoClassStateChanged(TRACE, !empty && item.getLevel() == Log4jLevel.TRACE);
+                        pseudoClassStateChanged(SELECTED, !empty && item.isSelected());
 
                         if (empty) {
                             setText(null);
