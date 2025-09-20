@@ -12,9 +12,9 @@ HMCL 为多种语言提供本地化支持。
 
 | 语言      | 语言标签      | 首选本地化文件后缀  | 首选本地化键    | 支持状态   | 志愿者                                       | 
 |---------|-----------|------------|-----------|--------|-------------------------------------------|
-| 英语      | `en`      | (空)        | `default` | **主要** | [Glavo](https://github.com/3gf8jv4dv)     |  
-| 中文 (简体) | `zh-Hans` | `_zh`      | `zh`      | **主要** | [Glavo](https://github.com/3gf8jv4dv)     |
-| 中文 (繁体) | `zh-Hant` | `_zh_Hant` | `zh-Hant` | **主要** | [Glavo](https://github.com/3gf8jv4dv)     |
+| 英语      | `en`      | (空)        | `default` | **主要** | [Glavo](https://github.com/Glavo)         |  
+| 中文 (简体) | `zh-Hans` | `_zh`      | `zh`      | **主要** | [Glavo](https://github.com/Glavo)         |
+| 中文 (繁体) | `zh-Hant` | `_zh_Hant` | `zh-Hant` | **主要** | [Glavo](https://github.com/Glavo)         |
 | 中文 (文言) | `lzh`     | `_lzh`     | `lzh`     | 次要     |                                           |
 | 日语      | `ja`      | `_ja`      | `ja`      | 次要     |                                           |
 | 西班牙语    | `es`      | `_es`      | `es`      | 次要     | [3gf8jv4dv](https://github.com/3gf8jv4dv) |
@@ -48,20 +48,24 @@ HMCL 欢迎任何人参与翻译和贡献。但是维护更多语言的翻译需
   我们希望能够找到擅长该语言者帮助我们长期维护新增的本地化文件。
   如果可能缺少长期维护者，我们会更慎重地考虑是否要加入对该语言的支持。
 
-我们建议贡献者在提供新语言翻译之前先通过 [Issue](https://github.com/HMCL-dev/HMCL/issues/new?template=feature.yml) 提出一个功能请求，
+我们建议贡献者在提供新语言翻译之前先通过 [Issue](https://github.com/HMCL-dev/HMCL/issues/new?template=feature.yml)
+提出一个功能请求，
 与其他贡献者先进行讨论，确定了未来的维护方式后再进行翻译工作。
 
 ### 开始翻译
 
-如果你想为 HMCL 添加新的语言支持，请从翻译 [`I18N.properties`](../HMCL/src/main/resources/assets/lang/I18N.properties) 开始。
+如果你想为 HMCL 添加新的语言支持，请从翻译 [`I18N.properties`](../HMCL/src/main/resources/assets/lang/I18N.properties)
+开始。
 HMCL 的绝大多数文本都位于这个文件中，翻译此文件就能翻译整个界面。
 
-这是一个 Java Properties 文件，格式非常简单。在翻译前请先阅读该格式的介绍: [Properties 文件](https://en.wikipedia.org/wiki/.properties)。
+这是一个 Java Properties
+文件，格式非常简单。在翻译前请先阅读该格式的介绍: [Properties 文件](https://en.wikipedia.org/wiki/.properties)。
 
 作为翻译的第一步，请从[这张表格](https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes)中查询这个语言对应的两字母或三字母语言标签。
 例如，英语的语言标签为 `en`。
 
-在确定了语言标签后，请在 [`I18N.properties` 文件旁](../HMCL/src/main/resources/assets/lang)创建 `I18N_<语言标签>.properites` (例如 `I18N_en.properties`) 文件。
+在确定了语言标签后，请在 [`I18N.properties` 文件旁](../HMCL/src/main/resources/assets/lang)创建
+`I18N_<语言标签>.properites` (例如 `I18N_en.properties`) 文件。
 随后，你就可以开始在这个文件中进行翻译工作了。
 
 `I18N.properties` 文件会遵循[资源回退机制](#资源回退机制)查询缺失的译文。
@@ -136,8 +140,8 @@ HMCL 的维护者会替你完成其他步骤。
 例如，如果当前环境的语言标签为 `eng-US`，那么 HMCL 会根据以下列表的顺序搜索对应的本地化资源:
 
 1. `eng-US`
-2. `eng`
-3. `en-US`
+2. `en-US`
+3. `eng`
 4. `en`
 5. `und`
 

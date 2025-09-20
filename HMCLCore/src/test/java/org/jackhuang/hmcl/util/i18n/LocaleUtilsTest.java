@@ -62,6 +62,7 @@ public final class LocaleUtilsTest {
         assertCandidateLocales("zh-Latn", List.of("zh-Latn", "zh", "zh-CN", "und"));
         assertCandidateLocales("zh-Latn-CN", List.of("zh-Latn-CN", "zh-Latn", "zh-CN", "zh", "und"));
         assertCandidateLocales("zh-pinyin", List.of("zh-Latn-pinyin", "zh-Latn", "zh-pinyin", "zh", "zh-CN", "und"));
+        assertCandidateLocales("zho", List.of("zho-Hans", "zh-Hans", "zho", "zh-CN", "zh", "und"));
         assertCandidateLocales("lzh", List.of("lzh-Hant", "lzh", "zh-Hant", "zh-TW", "zh", "zh-CN", "und"));
         assertCandidateLocales("lzh-Hant", List.of("lzh-Hant", "lzh", "zh-Hant", "zh-TW", "zh", "zh-CN", "und"));
         assertCandidateLocales("lzh-Hans", List.of("lzh-Hans", "lzh", "zh-Hans", "zh-CN", "zh", "und"));
@@ -72,12 +73,12 @@ public final class LocaleUtilsTest {
         assertCandidateLocales("ja", List.of("ja", "und"));
         assertCandidateLocales("ja-JP", List.of("ja-JP", "ja", "und"));
         assertCandidateLocales("jpa", List.of("jpa", "ja", "und"));
-        assertCandidateLocales("jpa-JP", List.of("jpa-JP", "jpa", "ja-JP", "ja", "und"));
+        assertCandidateLocales("jpa-JP", List.of("jpa-JP", "ja-JP", "jpa", "ja", "und"));
 
         assertCandidateLocales("en", List.of("en", "und"));
         assertCandidateLocales("en-US", List.of("en-US", "en", "und"));
         assertCandidateLocales("eng", List.of("eng", "en", "und"));
-        assertCandidateLocales("eng-US", List.of("eng-US", "eng", "en-US", "en", "und"));
+        assertCandidateLocales("eng-US", List.of("eng-US", "en-US", "eng", "en", "und"));
 
         assertCandidateLocales("es", List.of("es", "und"));
         assertCandidateLocales("spa", List.of("spa", "es", "und"));
