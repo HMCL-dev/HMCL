@@ -162,7 +162,7 @@ public class MicrosoftAccountChangeCapeDialog extends JFXDialogLayout {
     private Task<?> updateCapePreview() {
         CompletableFuture<Image> imageFuture = new CompletableFuture<>();
 
-        String imagePath = "/assets/img/cape/" + getCapeId(capeItem.getSelectedData().getAlias()) + ".png";;
+        String imagePath = "/assets/img/cape/" + getCapeId(capeItem.getSelectedData().getAlias()) + ".png";
         URL imageURL = MicrosoftAccountChangeCapeDialog.class.getResource(imagePath);
 
         if (imageURL != null) {
@@ -173,7 +173,7 @@ public class MicrosoftAccountChangeCapeDialog extends JFXDialogLayout {
             Task<Image> remoteImageTask = FXUtils.getRemoteImageTask(capeItem.getSelectedData().getUrl(), 0, 0, false, false);
             remoteImageTask.whenComplete(Schedulers.javafx(), (loadedImage, exception) -> {
                 if (exception != null) {
-                    LOG.warning("Cannot download cape image " + capeItem.getSelectedData().getUrl(), exception);;
+                    LOG.warning("Cannot download cape image " + capeItem.getSelectedData().getUrl(), exception);
                     imageFuture.completeExceptionally(exception);
                 } else {
                     imageFuture.complete(loadedImage);
