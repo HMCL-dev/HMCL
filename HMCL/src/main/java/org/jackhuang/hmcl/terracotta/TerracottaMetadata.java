@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.terracotta.provider.GeneralProvider;
 import org.jackhuang.hmcl.terracotta.provider.ITerracottaProvider;
 import org.jackhuang.hmcl.terracotta.provider.MacOSProvider;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OSVersion;
@@ -45,13 +46,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class TerracottaMetadata {
     private TerracottaMetadata() {
+    }
+
+    public record Link(@SerializedName("desc") LocalizedText description, String link) {
     }
 
     private record Config(
@@ -61,7 +64,7 @@ public final class TerracottaMetadata {
 
             @SerializedName("classifiers") Map<String, String> classifiers,
             @SerializedName("downloads") List<String> downloads,
-            @SerializedName("links") List<String> links
+            @SerializedName("links") List<Link> links
     ) {
         private TerracottaNative of(String classifier) {
             List<URI> links = new ArrayList<>(this.downloads.size());
@@ -87,7 +90,7 @@ public final class TerracottaMetadata {
 
     public static final ITerracottaProvider PROVIDER;
     public static final String PACKAGE_NAME;
-    private static final List<String> PACKAGE_LINKS;
+    private static final List<Link> PACKAGE_LINKS;
 
     private static final Pattern LEGACY;
     private static final List<String> RECENT;
@@ -110,12 +113,14 @@ public final class TerracottaMetadata {
         PACKAGE_NAME = context != null ? String.format("terracotta-%s-%s-%s-pkg.tar.gz", config.latest, context.system, context.arch) : null;
 
         if (context != null) {
-            List<String> packageLinks = new ArrayList<>(config.links.size());
-            for (String link : config.links) {
-                packageLinks.add(link.replace("${version}", LATEST)
-                        .replace("${system}", context.system)
-                        .replace("${arch}", context.arch)
-                );
+            List<Link> packageLinks = new ArrayList<>(config.links.size());
+            for (Link link : config.links) {
+                packageLinks.add(new Link(
+                        link.description,
+                        link.link.replace("${version}", LATEST)
+                                .replace("${system}", context.system)
+                                .replace("${arch}", context.arch)
+                ));
             }
 
             PACKAGE_LINKS = Collections.unmodifiableList(packageLinks);
@@ -127,8 +132,8 @@ public final class TerracottaMetadata {
     private record ProviderContext(ITerracottaProvider provider, String system, String arch) {
     }
 
-    public static String getPackageLink() {
-        return PACKAGE_LINKS.get(ThreadLocalRandom.current().nextInt(0, PACKAGE_LINKS.size()));
+    public static List<Link> getPackageLinks() {
+        return PACKAGE_LINKS;
     }
 
     @Nullable

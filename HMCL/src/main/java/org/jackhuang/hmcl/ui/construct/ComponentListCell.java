@@ -73,8 +73,7 @@ final class ComponentListCell extends StackPane {
 
     @SuppressWarnings("unchecked")
     private void updateLayout() {
-        if (content instanceof ComponentList) {
-            ComponentList list = (ComponentList) content;
+        if (content instanceof ComponentList list) {
             content.getStyleClass().remove("options-list");
             content.getStyleClass().add("options-sublist");
 
@@ -130,7 +129,10 @@ final class ComponentListCell extends StackPane {
             groupNode.getChildren().add(headerRippler);
 
             VBox container = new VBox();
-            container.setPadding(new Insets(8, 16, 10, 16));
+            boolean hasPadding = !content.getProperties().containsKey("ComponentSubList.noPadding");
+            if (hasPadding) {
+                container.setPadding(new Insets(8, 16, 10, 16));
+            }
             FXUtils.setLimitHeight(container, 0);
             FXUtils.setOverflowHidden(container);
             container.getChildren().setAll(content);
@@ -149,7 +151,7 @@ final class ComponentListCell extends StackPane {
                 }
 
                 Platform.runLater(() -> {
-                    double newAnimatedHeight = (list.prefHeight(list.getWidth()) + 8 + 10) * (expanded ? 1 : -1);
+                    double newAnimatedHeight = (list.prefHeight(list.getWidth()) + (hasPadding ? 8 + 10 : 0)) * (expanded ? 1 : -1);
                     double newHeight = expanded ? getHeight() + newAnimatedHeight : prefHeight(list.getWidth());
                     double contentHeight = expanded ? newAnimatedHeight : 0;
 

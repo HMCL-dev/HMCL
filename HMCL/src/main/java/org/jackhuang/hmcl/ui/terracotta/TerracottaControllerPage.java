@@ -59,10 +59,12 @@ import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
+import org.jackhuang.hmcl.ui.construct.ComponentSublist;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.versions.Versions;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.nio.file.Files;
@@ -182,14 +184,7 @@ public class TerracottaControllerPage extends StackPane {
                     }
                 });
 
-                LineButton local = LineButton.of();
-                local.setLeftImage(FXUtils.newBuiltinImage("/assets/img/icon.png"));
-                local.setTitle(i18n("terracotta.from_local.title"));
-                local.setSubtitle(i18n("terracotta.from_local.desc"));
-                local.setRightIcon(SVG.OPEN_IN_NEW);
-                FXUtils.onClicked(local, () -> FXUtils.openLink(TerracottaMetadata.getPackageLink()));
-
-                nodesProperty.setAll(body, download, local);
+                nodesProperty.setAll(body, download, getThirdPartyDownloadNodes());
             } else if (state instanceof TerracottaState.Preparing) {
                 statusProperty.set(i18n("terracotta.status.preparing"));
                 progressProperty.bind(((TerracottaState.Preparing) state).progressProperty());
@@ -432,13 +427,7 @@ public class TerracottaControllerPage extends StackPane {
                     });
 
                     if (fatal.getType() == TerracottaState.Fatal.Type.NETWORK) {
-                        LineButton local = LineButton.of();
-                        local.setLeftImage(FXUtils.newBuiltinImage("/assets/img/icon.png"));
-                        local.setTitle(i18n("terracotta.from_local.title"));
-                        local.setSubtitle(i18n("terracotta.from_local.desc"));
-                        local.setRightIcon(SVG.OPEN_IN_NEW);
-                        FXUtils.onClicked(local, () -> FXUtils.openLink(TerracottaMetadata.getPackageLink()));
-                        nodesProperty.setAll(retry, local);
+                        nodesProperty.setAll(retry, getThirdPartyDownloadNodes());
                     } else {
                         nodesProperty.setAll(retry);
                     }
@@ -486,6 +475,35 @@ public class TerracottaControllerPage extends StackPane {
         getChildren().setAll(scrollPane);
     }
 
+    private ComponentList getThirdPartyDownloadNodes() {
+        ComponentSublist locals = new ComponentSublist();
+        locals.getProperties().put("ComponentSubList.noPadding", true);
+
+        LineButton header = LineButton.of(false);
+        header.setLeftImage(FXUtils.newBuiltinImage("/assets/img/icon.png"));
+        header.setTitle(i18n("terracotta.from_local.title"));
+        header.setSubtitle(i18n("terracotta.from_local.desc"));
+        locals.setHeaderLeft(header);
+
+        for (TerracottaMetadata.Link link : TerracottaMetadata.getPackageLinks()) {
+            HBox node = new HBox();
+            node.setAlignment(Pos.CENTER_LEFT);
+            node.setPadding(new Insets(10, 16, 10, 16));
+
+            Label description = new Label(link.description().getText(I18n.getLocale().getCandidateLocales()));
+            HBox placeholder = new HBox();
+            HBox.setHgrow(placeholder, Priority.ALWAYS);
+            Node icon = SVG.OPEN_IN_NEW.createIcon(Theme.blackFill(), 16);
+            node.getChildren().setAll(description, placeholder, icon);
+
+            RipplerContainer container = new RipplerContainer(node);
+            container.setOnMouseClicked(ev -> FXUtils.openLink(link.link()));
+            container.getProperties().put("ComponentList.noPadding", true);
+            locals.getContent().add(container);
+        }
+        return locals;
+    }
+
     private static final class LineButton extends RipplerContainer {
         private final WeakListenerHolder holder = new WeakListenerHolder();
 
@@ -494,8 +512,14 @@ public class TerracottaControllerPage extends StackPane {
         private final ObjectProperty<Node> right = new SimpleObjectProperty<>();
 
         public static LineButton of() {
+            return of(true);
+        }
+
+        public static LineButton of(boolean padding) {
             HBox container = new HBox();
-            container.setPadding(new Insets(10, 16, 10, 16));
+            if (padding) {
+                container.setPadding(new Insets(10, 16, 10, 16));
+            }
             container.setAlignment(Pos.CENTER_LEFT);
             container.setCursor(Cursor.HAND);
             container.setSpacing(16);

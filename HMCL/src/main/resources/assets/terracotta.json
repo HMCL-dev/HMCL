@@ -25,6 +25,13 @@
     "https://cp.zkitefly.eu.org/https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}"
   ],
   "links": [
-    "https://github.com/burningtnt/Terracotta/releases/tag/v${version}"
+    {
+      "desc": {
+        "default": "GitHub Release",
+        "zh": "GitHub 发布页",
+        "zh-Hant": "GitHub 發布頁"
+      },
+      "link": "https://github.com/burningtnt/Terracotta/releases/tag/v${version}"
+    }
   ]
 }
