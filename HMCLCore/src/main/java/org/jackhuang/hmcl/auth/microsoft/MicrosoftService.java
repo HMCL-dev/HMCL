@@ -321,16 +321,16 @@ public class MicrosoftService {
         public static final long ADD_FAMILY = 2148916238L;
     }
 
-    public static class XBox400Exception extends AuthenticationException {
+    public final static class XBox400Exception extends AuthenticationException {
     }
 
-    public static class NoMinecraftJavaEditionProfileException extends AuthenticationException {
+    public final static class NoMinecraftJavaEditionProfileException extends AuthenticationException {
     }
 
-    public static class NoXuiException extends AuthenticationException {
+    public final static class NoXuiException extends AuthenticationException {
     }
 
-    private static class XBoxLiveAuthenticationResponseDisplayClaims {
+    private final static class XBoxLiveAuthenticationResponseDisplayClaims {
         List<Map<Object, Object>> xui;
     }
 
@@ -394,7 +394,7 @@ public class MicrosoftService {
         String signature;
     }
 
-    private static class MinecraftStoreResponse extends MinecraftErrorResponse {
+    private final static class MinecraftStoreResponse extends MinecraftErrorResponse {
         @SerializedName("items")
         List<MinecraftStoreResponseItem> items;
 
@@ -405,7 +405,7 @@ public class MicrosoftService {
         String keyId;
     }
 
-    public static class MinecraftProfileResponseSkin implements Validation {
+    public final static class MinecraftProfileResponseSkin implements Validation {
         public String id;
         public String state;
         public String url;
