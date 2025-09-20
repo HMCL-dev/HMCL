@@ -364,7 +364,6 @@ public final class LogWindow extends Stage {
                         pseudoClassStateChanged(INFO, !empty && item.getLevel() == Log4jLevel.INFO);
                         pseudoClassStateChanged(DEBUG, !empty && item.getLevel() == Log4jLevel.DEBUG);
                         pseudoClassStateChanged(TRACE, !empty && item.getLevel() == Log4jLevel.TRACE);
-                        pseudoClassStateChanged(SELECTED, !empty && item.isSelected());
 
                         if (empty) {
                             setText(null);
