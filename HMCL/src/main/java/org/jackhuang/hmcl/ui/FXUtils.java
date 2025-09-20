@@ -1212,10 +1212,15 @@ public final class FXUtils {
         return button;
     }
 
+    public static JFXButton newRaisedBorderButton(String text) {
+        JFXButton button = newBorderButton(text);
+        button.setButtonType(JFXButton.ButtonType.RAISED);
+        return button;
+    }
+
     public static JFXButton newBorderButton(String text) {
         JFXButton button = new JFXButton(text);
         button.getStyleClass().add("jfx-button-border");
-        button.setButtonType(JFXButton.ButtonType.RAISED);
         return button;
     }
 

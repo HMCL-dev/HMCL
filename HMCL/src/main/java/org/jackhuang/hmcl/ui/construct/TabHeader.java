@@ -225,7 +225,7 @@ public class TabHeader extends Control implements TabControl, PageAware {
                 }
             }
 
-            private class HeadersRegion extends StackPane {
+            private final class HeadersRegion extends StackPane {
                 private SideAction action;
                 private final ObjectProperty<Side> side = new SimpleObjectProperty<Side>() {
                     @Override
@@ -379,7 +379,7 @@ public class TabHeader extends Control implements TabControl, PageAware {
                     }
                 }
 
-                private class Top extends Horizontal {
+                private final class Top extends Horizontal {
                     @Override
                     public void layoutChildren() {
                         super.layoutChildren();
@@ -404,7 +404,7 @@ public class TabHeader extends Control implements TabControl, PageAware {
                     }
                 }
 
-                private class Bottom extends Horizontal {
+                private final class Bottom extends Horizontal {
                     @Override
                     public void layoutChildren() {
                         super.layoutChildren();
@@ -519,7 +519,7 @@ public class TabHeader extends Control implements TabControl, PageAware {
                     }
                 }
 
-                private class Left extends Vertical {
+                private final class Left extends Vertical {
                     @Override
                     public void layoutChildren() {
                         super.layoutChildren();
@@ -543,7 +543,7 @@ public class TabHeader extends Control implements TabControl, PageAware {
                     }
                 }
 
-                private class Right extends Vertical {
+                private final class Right extends Vertical {
                     @Override
                     public void layoutChildren() {
                         super.layoutChildren();

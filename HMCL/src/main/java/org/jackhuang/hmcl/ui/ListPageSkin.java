@@ -64,11 +64,9 @@ public class ListPageSkin extends SkinBase<ListPage<?>> {
                 vBox.setAlignment(Pos.BOTTOM_RIGHT);
                 vBox.setPickOnBounds(false);
 
-                JFXButton btnAdd = new JFXButton();
+                JFXButton btnAdd = FXUtils.newRaisedButton("");
                 FXUtils.setLimitWidth(btnAdd, 40);
                 FXUtils.setLimitHeight(btnAdd, 40);
-                btnAdd.getStyleClass().add("jfx-button-raised-round");
-                btnAdd.setButtonType(JFXButton.ButtonType.RAISED);
                 btnAdd.setGraphic(SVG.ADD.createIcon(Theme.whiteFill(), -1));
                 btnAdd.setOnAction(e -> skinnable.add());
 

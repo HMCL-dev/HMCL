@@ -82,8 +82,7 @@ public abstract class ModpackPage extends SpinnerPane implements WizardPage {
 
             BorderPane descriptionPane = new BorderPane();
             {
-                btnDescription = new JFXButton(i18n("modpack.description"));
-                btnDescription.getStyleClass().add("jfx-button-border");
+                btnDescription = FXUtils.newBorderButton(i18n("modpack.description"));
                 btnDescription.setOnAction(e -> onDescribe());
                 descriptionPane.setLeft(btnDescription);
 

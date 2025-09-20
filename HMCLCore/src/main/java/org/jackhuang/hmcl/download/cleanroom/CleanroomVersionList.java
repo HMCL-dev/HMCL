@@ -62,7 +62,7 @@ public final class CleanroomVersionList extends VersionList<CleanroomRemoteVersi
         });
     }
 
-    private static class ReleaseResult {
+    private final static class ReleaseResult {
         String name;
         String created_at;
     }
