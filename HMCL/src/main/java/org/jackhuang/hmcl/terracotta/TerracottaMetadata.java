@@ -123,6 +123,7 @@ public final class TerracottaMetadata {
                 ));
             }
 
+            Collections.shuffle(packageLinks);
             PACKAGE_LINKS = Collections.unmodifiableList(packageLinks);
         } else {
             PACKAGE_LINKS = null;
