@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.construct;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -31,7 +32,6 @@ import java.util.function.Consumer;
 
 public class AdvancedListBox extends ScrollPane {
     private final VBox container = new VBox();
-    private ScrollBarPolicy lastVbarPolicy = null;
 
     {
         setContent(container);
@@ -44,6 +44,11 @@ public class AdvancedListBox extends ScrollPane {
         setVbarPolicy(ScrollBarPolicy.NEVER);
 
         container.getStyleClass().add("advanced-list-box-content");
+
+        this.addEventHandler(MouseEvent.MOUSE_ENTERED,
+                event -> setVbarPolicy(ScrollBarPolicy.AS_NEEDED));
+        this.addEventFilter(MouseEvent.MOUSE_EXITED,
+                event -> setVbarPolicy(ScrollBarPolicy.NEVER));
     }
 
     public AdvancedListBox add(Node child) {
