@@ -110,7 +110,7 @@ public final class EntryPoint {
                         }
                     }
                 } else {
-                    LOG.warning("Invalid DPI scale: " + uiScale);
+                    LOG.warning("UI scale out of range: " + uiScale);
                 }
             } catch (Throwable e) {
                 LOG.warning("Invalid DPI scale: " + uiScale);
