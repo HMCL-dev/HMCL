@@ -1,21 +1,21 @@
 {
   "version_legacy": "0\\.3\\.[89]-rc.[0-9]",
   "version_recent": [
-    "0.3.9-rc.3",
     "0.3.9-rc.4",
-    "0.3.9-rc.5"
+    "0.3.9-rc.5",
+    "0.3.9-rc.6"
   ],
-  "version_latest": "0.3.9-rc.6",
+  "version_latest": "0.3.9-rc.7",
 
   "classifiers": {
-    "linux-arm64": "sha256:a47b4ae837d71206631b59fc699d02cad984d3e2eb565a4598ff6affb75d5684",
-    "linux-x86_64": "sha256:949b8fa9c31e03b3301264642d844fecd1cabbdca912fdacd20d1e8f800ed4f9",
-    "macos-arm64": "sha256:dff7c17daf1471ad55f580b91b004bb58716781b51eff283de3555112d3c8917",
-    "macos-arm64.pkg": "sha256:f377f7c776bc7995318f650e041bdd87b48eb7d87225f827b9fe1df85a3375e3",
-    "macos-x86_64": "sha256:f900c112892d548ebcab187e732d1678a3ec498c1955f95308d9e5292860d0ad",
-    "macos-x86_64.pkg": "sha256:e8c5d5fa155cdc5294fc9ea43f159cad5611b53727c3d2968e385320146c7e42",
-    "windows-arm64.exe": "sha256:1a3eddb49dfb10869a7f24019b653fb8a0d6c1d853a71d5154ab1661b120d827",
-    "windows-x86_64.exe": "sha256:df19f4b8b5af38501869bb8ba1d0dfb75dd3a637fdaa34fe2de47062f2b71241"
+    "linux-arm64": "sha256:cfd3866e4382e69710ed07a8dafb904750eb5a61d74421782efa6e3db3728696",
+    "linux-x86_64": "sha256:01c131751240376f2aa26898ad2cd981e8e9daee32727aa20737261dc76d8a51",
+    "macos-arm64": "sha256:ca1e45c72e670e2d3687f2226858bc36bf0043f322c6acbbe7f19a9955e697b1",
+    "macos-arm64.pkg": "sha256:1b042e17c56229ab530383740b0366ebf4930a2e5d4d6782ffb46adb16c5002e",
+    "macos-x86_64": "sha256:aa83509b1cb6d322c864d9b6f2642c7b4e407d6bb8fa830bf89d1a046dcb3d01",
+    "macos-x86_64.pkg": "sha256:b539a2978aaeee504203a882b90c463125d73149840b73b372d7d419b7253c4a",
+    "windows-arm64.exe": "sha256:7dc2a066168bff202245cf63ab344914d941f290a712749989db1006a42451e6",
+    "windows-x86_64.exe": "sha256:84b2ff061e0e4f7ab61e18c06dc2b07e99982f4156dd32a6c3159cff91c42090"
   },
   "downloads": [
     "https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}",
@@ -32,6 +32,14 @@
         "zh-Hant": "GitHub 發布頁"
       },
       "link": "https://github.com/burningtnt/Terracotta/releases/tag/v${version}"
+    },
+    {
+      "desc": {
+        "default": "Tencent QQ Group",
+        "zh": "QQ 群",
+        "zh-Hant": "QQ 群"
+      },
+      "link": "https://qm.qq.com/cgi-bin/qm/qr?k=nIf5u5xQ3LXEP4ZEmLQtfjtpppjgHfI5&jump_from=webapi&authKey=sXStlPuGzhD1JyAhyExd2OwjzZkRf3x7bAEb/j1xNX1wrQcDdg71qPrhumIm6pyf"
     }
   ]
 }
