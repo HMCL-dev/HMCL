@@ -163,7 +163,7 @@ public class TerracottaControllerPage extends StackPane {
                 body.setLineSpacing(4);
 
                 LineButton download = LineButton.of();
-                download.setLeftImage(FXUtils.newBuiltinImage("/assets/img/icon.png"));
+                download.setLeftImage(FXUtils.newBuiltinImage("/assets/img/terracotta.png"));
                 download.setTitle(i18n(String.format("terracotta.status.uninitialized.%s.title", fork)));
                 download.setSubtitle(i18n("terracotta.status.uninitialized.desc"));
                 download.setRightIcon(SVG.ARROW_FORWARD);
@@ -480,7 +480,7 @@ public class TerracottaControllerPage extends StackPane {
         locals.getProperties().put("ComponentSubList.noPadding", true);
 
         LineButton header = LineButton.of(false);
-        header.setLeftImage(FXUtils.newBuiltinImage("/assets/img/icon.png"));
+        header.setLeftImage(FXUtils.newBuiltinImage("/assets/img/terracotta.png"));
         header.setTitle(i18n("terracotta.from_local.title"));
         header.setSubtitle(i18n("terracotta.from_local.desc"));
         locals.setHeaderLeft(header);
