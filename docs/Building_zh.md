@@ -1,6 +1,6 @@
-# 构建 Hello Minecraft! Launcher
+# 构建指南
 
-## 需求
+## 环境需求
 
 构建 HMCL 启动器需要安装 JDK 17 (或更高版本)。你可以从此处下载它: [Download Liberica JDK](https://bell-sw.com/pages/downloads/#jdk-25-lts)。
 
@@ -8,8 +8,9 @@
 你可以这样查看 `JAVA_HOME` 指向的 JDK 版本:
 
 <details>
-<summary>Windows (PowerShell)</summary>
+<summary>Windows</summary>
 
+PowerShell:
 ```
 PS > & "$env:JAVA_HOME/bin/java.exe" -version
 openjdk version "25" 2025-09-16 LTS
