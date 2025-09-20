@@ -45,7 +45,7 @@ public class AdvancedListBox extends ScrollPane {
 
         container.getStyleClass().add("advanced-list-box-content");
 
-        this.addEventHandler(MouseEvent.MOUSE_ENTERED,
+        this.addEventFilter(MouseEvent.MOUSE_ENTERED,
                 event -> setVbarPolicy(ScrollBarPolicy.AS_NEEDED));
         this.addEventFilter(MouseEvent.MOUSE_EXITED,
                 event -> setVbarPolicy(ScrollBarPolicy.NEVER));
