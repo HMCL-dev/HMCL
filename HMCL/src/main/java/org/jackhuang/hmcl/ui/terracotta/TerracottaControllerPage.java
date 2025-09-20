@@ -188,7 +188,7 @@ public class TerracottaControllerPage extends StackPane {
             } else if (state instanceof TerracottaState.Preparing) {
                 statusProperty.set(i18n("terracotta.status.preparing"));
                 progressProperty.bind(((TerracottaState.Preparing) state).progressProperty());
-                nodesProperty.setAll();
+                nodesProperty.setAll(getThirdPartyDownloadNodes());
             } else if (state instanceof TerracottaState.Launching) {
                 statusProperty.set(i18n("terracotta.status.launching"));
                 progressProperty.set(-1);
