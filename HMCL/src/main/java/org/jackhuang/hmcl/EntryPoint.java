@@ -46,22 +46,8 @@ public final class EntryPoint {
         createHMCLDirectories();
         LOG.start(Metadata.HMCL_CURRENT_DIRECTORY.resolve("logs"));
 
-        if ("true".equalsIgnoreCase(System.getenv("HMCL_FORCE_GPU")))
-            System.getProperties().putIfAbsent("prism.forceGPU", "true");
-
-        String animationFrameRate = System.getenv("HMCL_ANIMATION_FRAME_RATE");
-        if (animationFrameRate != null) {
-            try {
-                if (Integer.parseInt(animationFrameRate) <= 0)
-                    throw new NumberFormatException(animationFrameRate);
-
-                System.getProperties().putIfAbsent("javafx.animation.pulse", animationFrameRate);
-            } catch (NumberFormatException e) {
-                LOG.warning("Invalid animation frame rate: " + animationFrameRate);
-            }
-        }
-
         checkDirectoryPath();
+        setupJavaFXVMOptions();
 
         if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
             initIcon();
@@ -78,6 +64,58 @@ public final class EntryPoint {
         FileSaver.shutdown();
         LOG.shutdown();
         System.exit(exitCode);
+    }
+
+    private static void setupJavaFXVMOptions() {
+        if ("true".equalsIgnoreCase(System.getenv("HMCL_FORCE_GPU")))
+            System.getProperties().putIfAbsent("prism.forceGPU", "true");
+
+        String animationFrameRate = System.getenv("HMCL_ANIMATION_FRAME_RATE");
+        if (animationFrameRate != null) {
+            LOG.info("HMCL_ANIMATION_FRAME_RATE: " + animationFrameRate);
+
+            try {
+                if (Integer.parseInt(animationFrameRate) <= 0)
+                    throw new NumberFormatException(animationFrameRate);
+
+                System.getProperties().putIfAbsent("javafx.animation.pulse", animationFrameRate);
+            } catch (NumberFormatException e) {
+                LOG.warning("Invalid animation frame rate: " + animationFrameRate);
+            }
+        }
+
+        String uiScale = System.getProperty("hmcl.uiScale", System.getenv("HMCL_UI_SCALE"));
+        if (uiScale != null) {
+            uiScale = uiScale.trim();
+
+            LOG.info("HMCL_UI_SCALE: " + uiScale);
+
+            try {
+                float scaleValue;
+                if (uiScale.endsWith("%")) {
+                    scaleValue = Integer.parseInt(uiScale.substring(0, uiScale.length() - 1)) / 100.0f;
+                } else if (uiScale.endsWith("dpi") || uiScale.endsWith("DPI")) {
+                    scaleValue = Integer.parseInt(uiScale.substring(0, uiScale.length() - 3)) / 96.0f;
+                } else {
+                    scaleValue = Float.parseFloat(uiScale);
+                }
+
+                // JavaFX behavior may be abnormal when the DPI scaling factor is too high
+                if (scaleValue >= 0.25 && scaleValue <= 6) {
+                    if (OperatingSystem.CURRENT_OS != OperatingSystem.MACOS) {
+                        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                            System.getProperties().putIfAbsent("glass.win.uiScale", uiScale);
+                        } else {
+                            System.getProperties().putIfAbsent("glass.gtk.uiScale", uiScale);
+                        }
+                    }
+                } else {
+                    LOG.warning("Invalid DPI scale: " + uiScale);
+                }
+            } catch (Throwable e) {
+                LOG.warning("Invalid DPI scale: " + uiScale);
+            }
+        }
     }
 
     private static void createHMCLDirectories() {
