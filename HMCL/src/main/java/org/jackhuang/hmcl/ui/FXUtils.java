@@ -1369,7 +1369,7 @@ public final class FXUtils {
 
     public static <T> void onScroll(Node node, List<T> list,
                                     ToIntFunction<List<T>> finder,
-                                    Consumer<T> changer
+                                    Consumer<T> updater
     ) {
         node.addEventHandler(ScrollEvent.SCROLL, event -> {
             double deltaY = event.getDeltaY();
@@ -1383,7 +1383,7 @@ public final class FXUtils {
             else // down
                 index++;
 
-            changer.accept(list.get((index + list.size()) % list.size()));
+            updater.accept(list.get((index + list.size()) % list.size()));
             event.consume();
         });
     }
