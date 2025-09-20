@@ -352,7 +352,7 @@ public class OAuth {
         public String foci;
     }
 
-    private static class RefreshResponse extends ErrorResponse {
+    private final static class RefreshResponse extends ErrorResponse {
         @SerializedName("expires_in")
         int expiresIn;
 
