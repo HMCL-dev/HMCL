@@ -40,12 +40,31 @@ public interface ITerracottaProvider {
     }
 
     abstract class ProviderException extends IOException {
-    }
+        public ProviderException(String message) {
+            super(message);
+        }
 
-    final class ArchiveInvalidException extends ProviderException {
+        public ProviderException(String message, Throwable cause) {
+            super(message, cause);
+        }
+
+        public ProviderException(Throwable cause) {
+            super(cause);
+        }
     }
 
     final class ArchiveFileMissingException extends ProviderException {
+        public ArchiveFileMissingException(String message) {
+            super(message);
+        }
+
+        public ArchiveFileMissingException(String message, Throwable cause) {
+            super(message, cause);
+        }
+
+        public ArchiveFileMissingException(Throwable cause) {
+            super(cause);
+        }
     }
 
     Status status() throws IOException;

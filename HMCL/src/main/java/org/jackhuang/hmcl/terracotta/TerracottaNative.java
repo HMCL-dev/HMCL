@@ -22,7 +22,6 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.terracotta.provider.ITerracottaProvider;
 import org.jackhuang.hmcl.util.DigestUtils;
-import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.tree.TarFileTree;
@@ -82,9 +81,10 @@ public final class TerracottaNative {
         }
 
         return Task.runAsync(() -> {
-            TarArchiveEntry entry = tree.getRoot().getFiles().get(FileUtils.getName(path));
+            String name = FileUtils.getName(path);
+            TarArchiveEntry entry = tree.getRoot().getFiles().get(name);
             if (entry == null) {
-                throw new ITerracottaProvider.ArchiveFileMissingException();
+                throw new ITerracottaProvider.ArchiveFileMissingException("Cannot exact entry: " + name);
             }
 
             if (!context.requestInstallFence()) {
@@ -115,7 +115,7 @@ public final class TerracottaNative {
             String checksum = HexFormat.of().formatHex(digest.digest());
             if (!checksum.equalsIgnoreCase(checking.getChecksum())) {
                 Files.delete(path);
-                throw new ChecksumMismatchException(checking.getAlgorithm(), checking.getChecksum(), checksum);
+                throw new ITerracottaProvider.ArchiveFileMissingException("Incorrect checksum (" + checking.getAlgorithm() + "), expected: " + checking.getChecksum() + ", actual: " + checksum);
             }
         });
     }

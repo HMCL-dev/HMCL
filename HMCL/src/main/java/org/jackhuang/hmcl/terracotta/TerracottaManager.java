@@ -142,6 +142,10 @@ public final class TerracottaManager {
 
     }
 
+    public static boolean validate(Path file) {
+        return FileUtils.getName(file).equalsIgnoreCase(TerracottaMetadata.PACKAGE_NAME);
+    }
+
     public static TerracottaState.Preparing install(@Nullable Path file) {
         FXUtils.checkFxUserThread();
 
@@ -150,6 +154,10 @@ public final class TerracottaManager {
                 state instanceof TerracottaState.Preparing preparing && preparing.hasInstallFence() ||
                 state instanceof TerracottaState.Fatal && ((TerracottaState.Fatal) state).isRecoverable())
         ) {
+            return null;
+        }
+
+        if (file != null && !FileUtils.getName(file).equalsIgnoreCase(TerracottaMetadata.PACKAGE_NAME)) {
             return null;
         }
 
@@ -163,10 +171,6 @@ public final class TerracottaManager {
         Task.composeAsync(Schedulers.javafx(), () -> {
             TarFileTree tree;
             if (file != null) {
-                String name = FileUtils.getName(file);
-                if (name.equalsIgnoreCase(TerracottaMetadata.PACKAGE_NAME)) {
-                    throw new ITerracottaProvider.ArchiveInvalidException();
-                }
                 tree = TarFileTree.open(file);
             } else {
                 tree = null;
@@ -192,6 +196,9 @@ public final class TerracottaManager {
                 if (compareAndSet(preparing, launching)) {
                     launch(launching);
                 }
+            } else if (exception instanceof ITerracottaProvider.ArchiveFileMissingException) {
+                LOG.warning("Cannot install terracotta from local package.", exception);
+                compareAndSet(preparing, new TerracottaState.Fatal(TerracottaState.Fatal.Type.INSTALL));
             } else if (exception instanceof DownloadException) {
                 compareAndSet(preparing, new TerracottaState.Fatal(TerracottaState.Fatal.Type.NETWORK));
             } else {

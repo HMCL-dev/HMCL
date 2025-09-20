@@ -107,7 +107,7 @@ public final class TerracottaMetadata {
 
         ProviderContext context = locateProvider(config);
         PROVIDER = context != null ? context.provider() : null;
-        PACKAGE_NAME = context != null ? String.format("terracotta-%s-%s-pkg.tar.gz", context.system, context.arch) : null;
+        PACKAGE_NAME = context != null ? String.format("terracotta-%s-%s-%s-pkg.tar.gz", config.latest, context.system, context.arch) : null;
 
         if (context != null) {
             List<String> packageLinks = new ArrayList<>(config.links.size());

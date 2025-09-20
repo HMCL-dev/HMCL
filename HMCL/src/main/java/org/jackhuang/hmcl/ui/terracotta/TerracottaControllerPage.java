@@ -98,7 +98,7 @@ public class TerracottaControllerPage extends StackPane {
 
             if (state instanceof TerracottaState.Uninitialized ||
                     state instanceof TerracottaState.Preparing preparing && preparing.hasInstallFence() ||
-                    state instanceof TerracottaState.Fatal fatal && fatal.isRecoverable()
+                    state instanceof TerracottaState.Fatal fatal && fatal.getType() == TerracottaState.Fatal.Type.NETWORK
             ) {
                 return Files.isReadable(path) && FileUtils.getName(path).toLowerCase(Locale.ROOT).endsWith(".tar.gz");
             } else {
@@ -106,6 +106,15 @@ public class TerracottaControllerPage extends StackPane {
             }
         }, files -> {
             Path path = files.get(0);
+
+            if (!TerracottaManager.validate(path)) {
+                Controllers.dialog(
+                        i18n("terracotta.from_local.file_name_mismatch", TerracottaMetadata.PACKAGE_NAME, FileUtils.getName(path)),
+                        i18n("message.error"),
+                        MessageDialogPane.MessageType.ERROR
+                );
+                return;
+            }
 
             TerracottaState state = UI_STATE.get(), next;
             if (state instanceof TerracottaState.Uninitialized || state instanceof TerracottaState.Preparing preparing && preparing.hasInstallFence()) {
@@ -176,7 +185,7 @@ public class TerracottaControllerPage extends StackPane {
                 LineButton local = LineButton.of();
                 local.setLeftImage(FXUtils.newBuiltinImage("/assets/img/icon.png"));
                 local.setTitle(i18n("terracotta.from_local.title"));
-                local.setSubtitle(i18n("terracotta.status.from_local.desc"));
+                local.setSubtitle(i18n("terracotta.from_local.desc"));
                 local.setRightIcon(SVG.OPEN_IN_NEW);
                 FXUtils.onClicked(local, () -> FXUtils.openLink(TerracottaMetadata.getPackageLink()));
 
@@ -426,7 +435,7 @@ public class TerracottaControllerPage extends StackPane {
                         LineButton local = LineButton.of();
                         local.setLeftImage(FXUtils.newBuiltinImage("/assets/img/icon.png"));
                         local.setTitle(i18n("terracotta.from_local.title"));
-                        local.setSubtitle(i18n("terracotta.status.from_local.desc"));
+                        local.setSubtitle(i18n("terracotta.from_local.desc"));
                         local.setRightIcon(SVG.OPEN_IN_NEW);
                         FXUtils.onClicked(local, () -> FXUtils.openLink(TerracottaMetadata.getPackageLink()));
                         nodesProperty.setAll(retry, local);
