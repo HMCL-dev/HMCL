@@ -162,9 +162,8 @@ public abstract class SettingsView extends StackPane {
                     ));
 
                     {
-                        JFXButton cleanButton = new JFXButton(i18n("launcher.cache_directory.clean"));
+                        JFXButton cleanButton = FXUtils.newBorderButton(i18n("launcher.cache_directory.clean"));
                         cleanButton.setOnAction(e -> clearCacheDirectory());
-                        cleanButton.getStyleClass().add("jfx-button-border");
 
                         fileCommonLocationSublist.setHeaderRight(cleanButton);
                     }
@@ -216,9 +215,8 @@ public abstract class SettingsView extends StackPane {
                     if (LOG.getLogFile() == null)
                         openLogFolderButton.setDisable(true);
 
-                    JFXButton logButton = new JFXButton(i18n("settings.launcher.launcher_log.export"));
+                    JFXButton logButton = FXUtils.newBorderButton(i18n("settings.launcher.launcher_log.export"));
                     logButton.setOnAction(e -> onExportLogs());
-                    logButton.getStyleClass().add("jfx-button-border");
 
                     HBox buttonBox = new HBox();
                     buttonBox.setSpacing(10);
