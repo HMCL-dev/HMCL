@@ -154,6 +154,10 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                     Versions.modifyGameSettings(profile, version);
                 }
             });
+            FXUtils.onScroll(gameListItem, getSkinnable().getMainPage().getVersions(), list -> {
+                String currentId = getSkinnable().getMainPage().getCurrentGame();
+                return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
+            }, it -> getSkinnable().getMainPage().getProfile().setSelectedVersion(it.getId()));
 
             // third item in left sidebar
             AdvancedListItem gameItem = new AdvancedListItem();
@@ -194,8 +198,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                     .add(downloadItem)
                     .startCategory(i18n("settings.launcher.general").toUpperCase(Locale.ROOT))
                     .add(launcherSettingsItem)
-                    .add(chatItem)
-                    ;
+                    .add(chatItem);
 
             // the root page, with the sidebar in left, navigator in center.
             setLeft(sideBar);
