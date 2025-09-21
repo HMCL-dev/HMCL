@@ -51,11 +51,12 @@ public final class LocaleUtils {
     static {
         try (InputStream input = LocaleUtils.class.getResourceAsStream("/assets/lang/sublanguages.json")) {
             if (input != null) {
-                JsonUtils.fromJsonFully(input, JsonUtils.mapTypeOf(String.class, JsonUtils.listTypeOf(String.class))).forEach((parent, subList) -> {
-                    for (String subLanguage : subList) {
-                        subLanguageToParent.put(subLanguage, parent);
-                    }
-                });
+                JsonUtils.fromJsonFully(input, JsonUtils.mapTypeOf(String.class, JsonUtils.listTypeOf(String.class)))
+                        .forEach((parent, subList) -> {
+                            for (String subLanguage : subList) {
+                                subLanguageToParent.put(subLanguage, parent);
+                            }
+                        });
             }
         } catch (IOException e) {
             LOG.warning("Failed to load sublanguages.json file", e);
