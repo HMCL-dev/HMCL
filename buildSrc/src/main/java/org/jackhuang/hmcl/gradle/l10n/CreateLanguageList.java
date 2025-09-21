@@ -98,7 +98,7 @@ public abstract class CreateLanguageList extends DefaultTask {
         Path outputFile = getOutputFile().get().getAsFile().toPath();
         Files.createDirectories(outputFile.getParent());
         Files.writeString(outputFile, locales.stream().map(locale -> '"' + locale.toLanguageTag() + '"')
-                .collect(Collectors.joining(",\n", "[\n", "\n]")));
+                .collect(Collectors.joining(", ", "[", "]")));
     }
 
     private final class LocaleComparator implements Comparator<Locale> {
