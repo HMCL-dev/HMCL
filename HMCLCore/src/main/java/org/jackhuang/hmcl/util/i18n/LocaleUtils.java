@@ -295,7 +295,7 @@ public final class LocaleUtils {
     // ---
 
     /// Map ISO 639-3 language codes to ISO 639-1 language codes.
-    private static @Nullable String mapToISO1Language(String iso3Language) {
+    public static @Nullable String mapToISO1Language(String iso3Language) {
         return switch (iso3Language) {
             case "eng" -> "en";
             case "spa" -> "es";
@@ -307,7 +307,7 @@ public final class LocaleUtils {
         };
     }
 
-    private static @Nullable String getParentLanguage(String language) {
+    public static @Nullable String getParentLanguage(String language) {
         return switch (language) {
             case "cmn", "lzh", "cdo", "cjy", "cpx", "czh",
                  "gan", "hak", "hsn", "mnp", "nan", "wuu", "yue" -> "zh";
