@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Matcher;
@@ -34,6 +35,8 @@ import java.util.regex.Pattern;
 
 /// @author Glavo
 public abstract class UpsideDownTranslate extends DefaultTask {
+
+    static final Locale EN_QABS = Locale.forLanguageTag("en-Qabs");
 
     private static final Map<String, String> PROPERTIES = Map.of(
             "datetime.format", "MMM d, yyyy, h:mm:ss a"
@@ -71,7 +74,7 @@ public abstract class UpsideDownTranslate extends DefaultTask {
         }
     }
 
-    private static final class Translator {
+    static final class Translator {
         private static final Map<Integer, Integer> MAPPER = new LinkedHashMap<>();
 
         private static void putChars(char baseChar, String upsideDownChars) {

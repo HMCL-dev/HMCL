@@ -91,6 +91,8 @@ public abstract class CreateLocaleNames extends DefaultTask {
                     .toList();
         }
 
+        UpsideDownTranslate.Translator upsideDownTranslator = new UpsideDownTranslate.Translator();
+
         SortedSet<String> languages = supportedLanguages.stream()
                 .map(Locale::getLanguage)
                 .filter(it -> !it.isBlank())
@@ -149,6 +151,10 @@ public abstract class CreateLocaleNames extends DefaultTask {
 
                         if (displayName.equals(language))
                             continue; // Skip
+
+                        if (currentLanguage.equals(UpsideDownTranslate.EN_QABS)) {
+                            displayName = upsideDownTranslator.translate(displayName);
+                        }
                     }
 
                     writer.write(language + "=" + displayName + "\n");
@@ -166,6 +172,10 @@ public abstract class CreateLocaleNames extends DefaultTask {
 
                         if (displayName.equals(script))
                             continue; // Skip
+
+                        if (currentLanguage.equals(UpsideDownTranslate.EN_QABS)) {
+                            displayName = upsideDownTranslator.translate(displayName);
+                        }
                     }
 
                     writer.write(script + "=" + displayName + "\n");
