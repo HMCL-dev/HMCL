@@ -49,6 +49,11 @@ public final class Locales {
     public static final SupportedLocale EN = new SupportedLocale("en");
 
     /**
+     * ɥsᴉꞁᵷuƎ (uʍoᗡ ǝpᴉsd∩)
+     */
+    public static final SupportedLocale EN_QABS = new SupportedLocale("en-Qabs");
+
+    /**
      * Spanish
      */
     public static final SupportedLocale ES = new SupportedLocale("es");
@@ -83,7 +88,7 @@ public final class Locales {
      */
     public static final SupportedLocale WENYAN = new SupportedLocale("lzh");
 
-    public static final List<SupportedLocale> LOCALES = List.of(DEFAULT, EN, ES, JA, RU, UK, ZH_HANS, ZH_HANT, WENYAN);
+    public static final List<SupportedLocale> LOCALES = List.of(DEFAULT, EN, EN_QABS, ES, JA, RU, UK, ZH_HANS, ZH_HANT, WENYAN);
 
     public static SupportedLocale getLocaleByName(String name) {
         if (name == null) return DEFAULT;
@@ -164,6 +169,10 @@ public final class Locales {
                 return name.equals("lzh") || name.equals("Literary Chinese")
                         ? "Chinese (Classical)"
                         : name;
+            }
+
+            if (this.locale.getLanguage().equals("en") && this.locale.getScript().equals("Qabs")) {
+                return "ɥsᴉꞁᵷuƎ (uʍoᗡ ǝpᴉsd∩)";
             }
 
             return locale.getDisplayName(inJavaLocale);
