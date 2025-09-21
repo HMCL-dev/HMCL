@@ -23,17 +23,51 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 @JsonAdapter(SupportedLocale.TypeAdapter.class)
 public final class SupportedLocale {
+    public static final SupportedLocale DEFAULT = new SupportedLocale();
+
+    private static final ConcurrentMap<Locale, SupportedLocale> LOCALES = new ConcurrentHashMap<>();
+
+    public static List<SupportedLocale> getSupportedLocales() {
+        List<SupportedLocale> list = new ArrayList<>();
+        list.add(DEFAULT);
+
+        InputStream locales = SupportedLocale.class.getResourceAsStream("/assets/lang/languages.json");
+        if (locales != null) {
+            try (locales) {
+                list.addAll(JsonUtils.fromNonNullJsonFully(locales, JsonUtils.listTypeOf(SupportedLocale.class)));
+            } catch (Throwable e) {
+                LOG.warning("Failed to load languages.json", e);
+            }
+        }
+        return List.copyOf(list);
+    }
+
+    public static SupportedLocale getLocale(Locale locale) {
+        return LOCALES.computeIfAbsent(locale, SupportedLocale::new);
+    }
+
+    public static SupportedLocale getLocaleByName(String name) {
+        if (name == null || name.isEmpty() || "def".equals(name) || "default".equals(name))
+            return DEFAULT;
+
+        return getLocale(Locale.forLanguageTag(name.trim()));
+    }
+
     private final boolean isDefault;
     private final String name;
     private final Locale locale;
@@ -224,10 +258,10 @@ public final class SupportedLocale {
         @Override
         public SupportedLocale read(JsonReader in) throws IOException {
             if (in.peek() == JsonToken.NULL)
-                return Locales.DEFAULT;
+                return DEFAULT;
 
             String language = in.nextString();
-            return Locales.getLocaleByName(switch (language) {
+            return getLocaleByName(switch (language) {
                 // TODO: Remove these compatibility codes after updating the Config format
                 case "zh_CN" -> "zh-Hans"; // For compatibility
                 case "zh" -> "zh-Hant";    // For compatibility

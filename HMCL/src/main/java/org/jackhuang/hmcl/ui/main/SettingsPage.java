@@ -33,7 +33,7 @@ import org.jackhuang.hmcl.upgrade.UpdateChannel;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.i18n.Locales;
+import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.tukaani.xz.XZInputStream;
@@ -65,7 +65,7 @@ public final class SettingsPage extends SettingsView {
         FXUtils.smoothScrolling(scroll);
 
         // ==== Languages ====
-        cboLanguage.getItems().setAll(Locales.getSupportedLocales());
+        cboLanguage.getItems().setAll(SupportedLocale.getSupportedLocales());
         selectedItemPropertyFor(cboLanguage).bindBidirectional(config().localizationProperty());
 
         disableAutoGameOptionsPane.selectedProperty().bindBidirectional(config().disableAutoGameOptionsProperty());

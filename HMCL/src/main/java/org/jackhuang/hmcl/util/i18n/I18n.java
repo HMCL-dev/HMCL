@@ -33,7 +33,7 @@ public final class I18n {
     private I18n() {
     }
 
-    private static volatile SupportedLocale locale = Locales.DEFAULT;
+    private static volatile SupportedLocale locale = SupportedLocale.DEFAULT;
 
     public static void setLocale(SupportedLocale locale) {
         I18n.locale = locale;
