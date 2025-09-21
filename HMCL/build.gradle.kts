@@ -1,4 +1,5 @@
 import org.jackhuang.hmcl.gradle.l10n.CheckTranslations
+import org.jackhuang.hmcl.gradle.l10n.CreateLocaleNames
 import org.jackhuang.hmcl.gradle.l10n.UpsideDownTranslate
 import org.jackhuang.hmcl.gradle.mod.ParseModDataTask
 import java.net.URI
@@ -205,9 +206,16 @@ tasks.shadowJar {
     }
 }
 
+val generatedDir = layout.buildDirectory.dir("generated")
+
 val upsideDownTranslate by tasks.registering(UpsideDownTranslate::class) {
     inputFile.set(layout.projectDirectory.file("src/main/resources/assets/lang/I18N.properties"))
-    outputFile.set(layout.buildDirectory.file("generated/i18n/I18N_en_Qabs.properties"))
+    outputFile.set(generatedDir.map { it.file("generated/i18n/I18N_en_Qabs.properties") })
+}
+
+val createLocaleNames by tasks.registering(CreateLocaleNames::class) {
+    languagesFile.set(layout.projectDirectory.file("src/main/resources/assets/lang/languages.json"))
+    outputDirectory.set(generatedDir.map { it.dir("generated/LocaleNames") })
 }
 
 tasks.processResources {
@@ -221,7 +229,9 @@ tasks.processResources {
 
     into("assets/lang") {
         from(upsideDownTranslate.map { it.outputFile })
+        from(createLocaleNames.map { it.outputDirectory })
     }
+
 }
 
 val makeExecutables by tasks.registering {

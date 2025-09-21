@@ -42,15 +42,18 @@ public final class Locales {
     public static final SupportedLocale DEFAULT = new SupportedLocale();
 
     public static List<SupportedLocale> getSupportedLocales() {
+        List<SupportedLocale> list = new ArrayList<>();
+        list.add(DEFAULT);
+
         InputStream locales = Locales.class.getResourceAsStream("/assets/lang/languages.json");
         if (locales != null) {
             try (locales) {
-                return JsonUtils.fromNonNullJsonFully(locales, JsonUtils.listTypeOf(SupportedLocale.class));
+                list.addAll(JsonUtils.fromNonNullJsonFully(locales, JsonUtils.listTypeOf(SupportedLocale.class)));
             } catch (Throwable e) {
                 LOG.warning("Failed to load languages.json", e);
             }
         }
-        return List.of(DEFAULT);
+        return List.copyOf(list);
     }
 
     private static final ConcurrentMap<Locale, SupportedLocale> LOCALES = new ConcurrentHashMap<>();
@@ -60,10 +63,10 @@ public final class Locales {
     }
 
     public static SupportedLocale getLocaleByName(String name) {
-        if (name == null || "def".equals(name) || "default".equals(name))
+        if (name == null || name.isEmpty() || "def".equals(name) || "default".equals(name))
             return DEFAULT;
 
-        return getLocale(Locale.forLanguageTag(name));
+        return getLocale(Locale.forLanguageTag(name.trim()));
     }
 
     @JsonAdapter(SupportedLocale.TypeAdapter.class)
