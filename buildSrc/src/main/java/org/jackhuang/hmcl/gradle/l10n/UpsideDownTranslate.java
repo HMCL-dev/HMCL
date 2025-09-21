@@ -72,11 +72,11 @@ public abstract class UpsideDownTranslate extends DefaultTask {
     }
 
     private static final class Translator {
-        private static final Map<Integer, Integer> mapper = new LinkedHashMap<>();
+        private static final Map<Integer, Integer> MAPPER = new LinkedHashMap<>();
 
         private static void putChars(char baseChar, String upsideDownChars) {
             for (int i = 0; i < upsideDownChars.length(); i++) {
-                mapper.put(baseChar + i, (int) upsideDownChars.charAt(i));
+                MAPPER.put(baseChar + i, (int) upsideDownChars.charAt(i));
             }
         }
 
@@ -86,14 +86,14 @@ public abstract class UpsideDownTranslate extends DefaultTask {
             }
 
             for (int i = 0; i < baseChars.length(); i++) {
-                mapper.put((int) baseChars.charAt(i), (int) upsideDownChars.charAt(i));
+                MAPPER.put((int) baseChars.charAt(i), (int) upsideDownChars.charAt(i));
             }
         }
 
         static {
             putChars('a', "ɐqɔpǝɟbɥıظʞןɯuuodbɹsʇnʌʍxʎz");
             putChars('A', "ⱯᗺƆᗡƎℲ⅁HIſʞꞀWNOԀὉᴚS⟘∩ΛMXʎZ");
-            putChars('0', "0ƖᄅƐㄣϛ9ㄥ86");
+            putChars('0', "0ƖᘔƐ߈ϛ9ㄥ86");
             putChars("_,;.?!/\\'", "‾'؛˙¿¡/\\,");
         }
 
@@ -132,7 +132,7 @@ public abstract class UpsideDownTranslate extends DefaultTask {
                     }
                 }
 
-                int udCh = mapper.getOrDefault(ch, ch);
+                int udCh = MAPPER.getOrDefault(ch, ch);
                 if (Character.isBmpCodePoint(udCh)) {
                     lineBuilder.insert(0, (char) udCh);
                 } else {

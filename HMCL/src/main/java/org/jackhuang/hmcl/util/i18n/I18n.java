@@ -71,6 +71,11 @@ public final class I18n {
             else
                 return WenyanUtils.translateGenericVersion(version.getSelfVersion());
         }
+
+        if (LocaleUtils.isEnglish(locale.getLocale()) && "Qabs".equals(LocaleUtils.getScript(locale.getLocale()))) {
+            return UpsideDownUtils.translate(version.getSelfVersion());
+        }
+
         return version.getSelfVersion();
     }
 
