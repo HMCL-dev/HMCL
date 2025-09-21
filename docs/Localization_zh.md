@@ -49,8 +49,7 @@ HMCL 欢迎任何人参与翻译和贡献。但是维护更多语言的翻译需
   我们希望能够找到擅长该语言者帮助我们长期维护新增的本地化文件。
   如果可能缺少长期维护者，我们会更慎重地考虑是否要加入对该语言的支持。
 
-我们建议贡献者在提供新语言翻译之前先通过 [Issue](https://github.com/HMCL-dev/HMCL/issues/new?template=feature.yml)
-提出一个功能请求，
+我们建议贡献者在提供新语言翻译之前先通过 [Issue](https://github.com/HMCL-dev/HMCL/issues/new?template=feature.yml) 提出一个功能请求，
 与其他贡献者先进行讨论，确定了未来的维护方式后再进行翻译工作。
 
 ### 开始翻译
