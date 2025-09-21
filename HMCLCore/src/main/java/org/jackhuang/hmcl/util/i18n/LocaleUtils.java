@@ -18,11 +18,13 @@
 package org.jackhuang.hmcl.util.i18n;
 
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -43,6 +45,22 @@ public final class LocaleUtils {
     public static final Locale LOCALE_ZH_HANT = Locale.forLanguageTag("zh-Hant");
 
     public static final String DEFAULT_LANGUAGE_KEY = "default";
+
+    private static final Map<String, String> subLanguageToParent = new HashMap<>();
+
+    static {
+        try (InputStream input = LocaleUtils.class.getResourceAsStream("/assets/lang/sublanguages.json")) {
+            if (input != null) {
+                JsonUtils.fromJsonFully(input, JsonUtils.mapTypeOf(String.class, JsonUtils.listTypeOf(String.class))).forEach((parent, subList) -> {
+                    for (String subLanguage : subList) {
+                        subLanguageToParent.put(subLanguage, parent);
+                    }
+                });
+            }
+        } catch (IOException e) {
+            LOG.warning("Failed to load sublanguages.json file", e);
+        }
+    }
 
     private static Locale getInstance(String language, String script, String region,
                                       String variant) {
@@ -314,12 +332,9 @@ public final class LocaleUtils {
     }
 
     public static @Nullable String getParentLanguage(String language) {
-        return switch (language) {
-            case "cmn", "lzh", "cdo", "cjy", "cpx", "czh",
-                 "gan", "hak", "hsn", "mnp", "nan", "wuu", "yue" -> "zh";
-            case "" -> null;
-            default -> "";
-        };
+        return !language.isEmpty()
+                ? subLanguageToParent.getOrDefault(language, "")
+                : null;
     }
 
     public static boolean isEnglish(Locale locale) {
