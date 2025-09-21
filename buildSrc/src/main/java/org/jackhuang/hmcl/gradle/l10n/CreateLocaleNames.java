@@ -91,6 +91,9 @@ public abstract class CreateLocaleNames extends DefaultTask {
                     .toList();
         }
 
+        if (!supportedLanguages.get(0).equals(Locale.ENGLISH))
+            throw new GradleException("The first language must be english.");
+
         // For Upside Down English
         UpsideDownTranslate.Translator upsideDownTranslator = new UpsideDownTranslate.Translator();
         Map<String, String> englishDisplayNames = new HashMap<>();
@@ -154,9 +157,9 @@ public abstract class CreateLocaleNames extends DefaultTask {
                                     .build()
                                     .getDisplayLanguage(currentLanguage);
 
-                            if (displayName.equals(language))
+                            if (displayName.equals(language)
+                                    || (!currentLanguage.equals(Locale.ENGLISH) && displayName.equals(englishDisplayNames.get(language))))
                                 continue; // Skip
-
                         }
                     }
 
@@ -179,9 +182,9 @@ public abstract class CreateLocaleNames extends DefaultTask {
                                     .build()
                                     .getDisplayScript(currentLanguage);
 
-                            if (displayName.equals(script))
+                            if (displayName.equals(script)
+                                    || (!currentLanguage.equals(Locale.ENGLISH) && displayName.equals(englishDisplayNames.get(script))))
                                 continue; // Skip
-
                         }
                     }
 
