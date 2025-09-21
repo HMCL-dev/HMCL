@@ -91,7 +91,7 @@ public abstract class UpsideDownTranslate extends DefaultTask {
         }
 
         static {
-            putChars('a', "ɐqɔpǝɟbɥıظʞןɯuuodbɹsʇnʌʍxʎz");
+            putChars('a', "ɐqɔpǝɟbɥıظʞןɯuodbɹsʇnʌʍxʎz");
             putChars('A', "ⱯᗺƆᗡƎℲ⅁HIſʞꞀWNOԀὉᴚS⟘∩ΛMXʎZ");
             putChars('0', "0ƖᘔƐ߈ϛ9ㄥ86");
             putChars("_,;.?!/\\'", "‾'؛˙¿¡/\\,");

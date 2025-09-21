@@ -217,8 +217,13 @@ public final class Locales {
         public String formatDateTime(TemporalAccessor time) {
             DateTimeFormatter formatter = dateTimeFormatter;
             if (formatter == null) {
-                if (locale.getLanguage().equals("lzh"))
+                if (LocaleUtils.isEnglish(locale) && "Qabs".equals(locale.getScript())) {
+                    return UpsideDownUtils.formatDateTime(time);
+                }
+
+                if (locale.getLanguage().equals("lzh")) {
                     return WenyanUtils.formatDateTime(time);
+                }
 
                 formatter = dateTimeFormatter = DateTimeFormatter.ofPattern(getResourceBundle().getString("datetime.format"))
                         .withZone(ZoneId.systemDefault());

@@ -17,6 +17,9 @@
  */
 package org.jackhuang.hmcl.util.i18n;
 
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAccessor;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -41,7 +44,7 @@ public final class UpsideDownUtils {
     }
 
     static {
-        putChars('a', "ɐqɔpǝɟbɥıظʞןɯuuodbɹsʇnʌʍxʎz");
+        putChars('a', "ɐqɔpǝɟbɥıظʞןɯuodbɹsʇnʌʍxʎz");
         putChars('A', "ⱯᗺƆᗡƎℲ⅁HIſʞꞀWNOԀὉᴚS⟘∩ΛMXʎZ");
         putChars('0', "0ƖᘔƐ߈ϛ9ㄥ86");
         putChars("_,;.?!/\\'", "‾'؛˙¿¡/\\,");
@@ -51,6 +54,13 @@ public final class UpsideDownUtils {
         StringBuilder builder = new StringBuilder(str.length());
         str.codePoints().forEach(ch -> builder.appendCodePoint(MAPPER.getOrDefault(ch, ch)));
         return builder.reverse().toString();
+    }
+
+    private static DateTimeFormatter BASE_FORMATTER = DateTimeFormatter.ofPattern("MMM d, yyyy, h:mm:ss a")
+            .withZone(ZoneId.systemDefault());
+
+    public static String formatDateTime(TemporalAccessor time) {
+        return translate(BASE_FORMATTER.format(time));
     }
 
     private UpsideDownUtils() {
