@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.gradle.l10n;
 
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.RegularFileProperty;
-import org.gradle.api.logging.Logging;
 import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
@@ -140,7 +139,7 @@ public abstract class UpsideDownTranslate extends DefaultTask {
             resultBuilder.setLength(0);
 
             for (int i = 0; i < input.length(); ) {
-                int idx = input.indexOf('\n');
+                int idx = input.indexOf(i, '\n');
 
                 this.lineBuilder.setLength(0);
                 appendToLineBuilder(input.substring(0, idx < 0 ? input.length() : idx));
