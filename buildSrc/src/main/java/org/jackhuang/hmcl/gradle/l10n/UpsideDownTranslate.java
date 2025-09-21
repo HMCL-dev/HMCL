@@ -35,6 +35,10 @@ import java.util.regex.Pattern;
 /// @author Glavo
 public abstract class UpsideDownTranslate extends DefaultTask {
 
+    private static final Map<String, String> PROPERTIES = Map.of(
+            "datetime.format", "MMM d, yyyy, h:mm:ss a"
+    );
+
     @InputFile
     public abstract RegularFileProperty getInputFile();
 
@@ -53,7 +57,13 @@ public abstract class UpsideDownTranslate extends DefaultTask {
 
         Properties output = new Properties();
         Translator translator = new Translator();
-        english.forEach((k, v) -> output.put(k, translator.translate(v.toString())));
+        english.forEach((k, v) -> {
+            if (PROPERTIES.containsKey(k.toString())) {
+                output.setProperty(k.toString(), PROPERTIES.get(k.toString()));
+            } else {
+                output.put(k, translator.translate(v.toString()));
+            }
+        });
 
         Files.createDirectories(outputFile.getParent());
         try (var writer = Files.newBufferedWriter(outputFile)) {
@@ -87,7 +97,7 @@ public abstract class UpsideDownTranslate extends DefaultTask {
             putChars("_,;.?!/\\'", "‾'؛˙¿¡/\\,");
         }
 
-        private static final Pattern FORMAT_PATTERN = Pattern.compile("^%(\\d\\$)?[sd]");
+        private static final Pattern FORMAT_PATTERN = Pattern.compile("^%(\\d\\$)?(\\d+)?(\\.\\d+)?([sdf])");
         private static final Pattern XML_TAG_PATTERN = Pattern.compile("^<(?<tag>[a-zA-Z]+)( href=\"[^\"]*\")?>");
 
         private final StringBuilder lineBuilder = new StringBuilder();
