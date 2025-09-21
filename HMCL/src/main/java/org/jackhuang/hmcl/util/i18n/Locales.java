@@ -42,12 +42,12 @@ public final class Locales {
     public static final SupportedLocale DEFAULT = new SupportedLocale();
 
     public static List<SupportedLocale> getSupportedLocales() {
-        InputStream locales = Locales.class.getResourceAsStream("/assets/lang/locales.json");
+        InputStream locales = Locales.class.getResourceAsStream("/assets/lang/languages.json");
         if (locales != null) {
             try (locales) {
                 return JsonUtils.fromNonNullJsonFully(locales, JsonUtils.listTypeOf(SupportedLocale.class));
             } catch (Throwable e) {
-                LOG.warning("Failed to load locales.json", e);
+                LOG.warning("Failed to load languages.json", e);
             }
         }
         return List.of(DEFAULT);

@@ -31,6 +31,7 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 
+/// @author Glavo
 public abstract class CreateLocaleNames extends DefaultTask {
 
     @OutputDirectory
