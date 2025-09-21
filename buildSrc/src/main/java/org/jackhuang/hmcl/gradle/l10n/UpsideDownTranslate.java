@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.gradle.l10n;
 
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.RegularFileProperty;
+import org.gradle.api.logging.Logging;
 import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
@@ -122,9 +123,9 @@ public abstract class UpsideDownTranslate extends DefaultTask {
                     }
                 }
 
-                Integer udCh = mapper.getOrDefault(ch, ch);
+                int udCh = mapper.getOrDefault(ch, ch);
                 if (Character.isBmpCodePoint(udCh)) {
-                    lineBuilder.insert(0, udCh);
+                    lineBuilder.insert(0, (char) udCh);
                 } else {
                     lineBuilder.insert(0, Character.toChars(udCh));
                 }
