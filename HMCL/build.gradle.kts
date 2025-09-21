@@ -1,4 +1,5 @@
 import org.jackhuang.hmcl.gradle.l10n.CheckTranslations
+import org.jackhuang.hmcl.gradle.l10n.UpsideDownTranslate
 import org.jackhuang.hmcl.gradle.mod.ParseModDataTask
 import java.net.URI
 import java.nio.file.FileSystems
@@ -204,12 +205,22 @@ tasks.shadowJar {
     }
 }
 
+val upsideDownTranslate by tasks.registering(UpsideDownTranslate::class) {
+    inputFile.set(layout.projectDirectory.file("src/main/resources/assets/lang/I18N.properties"))
+    outputFile.set(layout.buildDirectory.file("generated/i18n/I18N_en_Qabs.properties"))
+}
+
 tasks.processResources {
     dependsOn(createPropertiesFile)
+    dependsOn(upsideDownTranslate)
 
     into("assets/") {
         from(hmclPropertiesFile)
         from(embedResources)
+    }
+
+    into("assets/lang") {
+        from(upsideDownTranslate.map { it.outputFile })
     }
 }
 
