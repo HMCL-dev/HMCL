@@ -65,7 +65,7 @@ public final class SettingsPage extends SettingsView {
         FXUtils.smoothScrolling(scroll);
 
         // ==== Languages ====
-        cboLanguage.getItems().setAll(Locales.LOCALES);
+        cboLanguage.getItems().setAll(Locales.getSupportedLocales());
         selectedItemPropertyFor(cboLanguage).bindBidirectional(config().localizationProperty());
 
         disableAutoGameOptionsPane.selectedProperty().bindBidirectional(config().disableAutoGameOptionsProperty());

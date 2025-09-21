@@ -19,14 +19,19 @@ package org.jackhuang.hmcl.util.i18n;
 
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -34,71 +39,31 @@ public final class Locales {
     private Locales() {
     }
 
+    public static final SupportedLocale DEFAULT = new SupportedLocale();
 
-    public static final SupportedLocale DEFAULT;
-
-    static {
-        String language = System.getenv("HMCL_LANGUAGE");
-        DEFAULT = new SupportedLocale(true, "def",
-                StringUtils.isBlank(language) ? LocaleUtils.SYSTEM_DEFAULT : Locale.forLanguageTag(language));
+    public static List<SupportedLocale> getSupportedLocales() {
+        InputStream locales = Locales.class.getResourceAsStream("/assets/lang/locales.json");
+        if (locales != null) {
+            try (locales) {
+                return JsonUtils.fromNonNullJsonFully(locales, JsonUtils.listTypeOf(SupportedLocale.class));
+            } catch (Throwable e) {
+                LOG.warning("Failed to load locales.json", e);
+            }
+        }
+        return List.of(DEFAULT);
     }
 
-    /**
-     * English
-     */
-    public static final SupportedLocale EN = new SupportedLocale("en");
+    private static final ConcurrentMap<Locale, SupportedLocale> LOCALES = new ConcurrentHashMap<>();
 
-    /**
-     * ɥsᴉꞁᵷuƎ (uʍoᗡ ǝpᴉsd∩)
-     */
-    public static final SupportedLocale EN_QABS = new SupportedLocale("en-Qabs");
-
-    /**
-     * Spanish
-     */
-    public static final SupportedLocale ES = new SupportedLocale("es");
-
-    /**
-     * Russian
-     */
-    public static final SupportedLocale RU = new SupportedLocale("ru");
-
-    /**
-     * Ukrainian
-     */
-    public static final SupportedLocale UK = new SupportedLocale("uk");
-
-    /**
-     * Japanese
-     */
-    public static final SupportedLocale JA = new SupportedLocale("ja");
-
-    /**
-     * Chinese (Simplified)
-     */
-    public static final SupportedLocale ZH_HANS = new SupportedLocale("zh_CN", LocaleUtils.LOCALE_ZH_HANS);
-
-    /**
-     * Chinese (Traditional)
-     */
-    public static final SupportedLocale ZH_HANT = new SupportedLocale("zh", LocaleUtils.LOCALE_ZH_HANT);
-
-    /**
-     * Wenyan (Classical Chinese)
-     */
-    public static final SupportedLocale WENYAN = new SupportedLocale("lzh");
-
-    public static final List<SupportedLocale> LOCALES = List.of(DEFAULT, EN, EN_QABS, ES, JA, RU, UK, ZH_HANS, ZH_HANT, WENYAN);
+    public static SupportedLocale getLocale(Locale locale) {
+        return LOCALES.computeIfAbsent(locale, SupportedLocale::new);
+    }
 
     public static SupportedLocale getLocaleByName(String name) {
-        if (name == null) return DEFAULT;
+        if (name == null || "def".equals(name) || "default".equals(name))
+            return DEFAULT;
 
-        for (SupportedLocale locale : LOCALES) {
-            if (locale.getName().equalsIgnoreCase(name))
-                return locale;
-        }
-
-        return DEFAULT;
+        return getLocale(Locale.forLanguageTag(name));
     }
 
     @JsonAdapter(SupportedLocale.TypeAdapter.class)
@@ -107,21 +72,24 @@ public final class Locales {
         private final String name;
         private final Locale locale;
         private ResourceBundle resourceBundle;
+        private ResourceBundle localeNamesBundle;
         private DateTimeFormatter dateTimeFormatter;
         private List<Locale> candidateLocales;
 
-        SupportedLocale(boolean isDefault, String name, Locale locale) {
-            this.isDefault = isDefault;
-            this.name = name;
+        SupportedLocale() {
+            this.isDefault = true;
+            this.name = "def"; // TODO: Change to "default" after updating the Config format
+
+            String language = System.getenv("HMCL_LANGUAGE");
+            this.locale = StringUtils.isBlank(language)
+                    ? LocaleUtils.SYSTEM_DEFAULT
+                    : Locale.forLanguageTag(language);
+        }
+
+        SupportedLocale(Locale locale) {
+            this.isDefault = false;
+            this.name = locale.toLanguageTag();
             this.locale = locale;
-        }
-
-        SupportedLocale(String name) {
-            this(false, name, Locale.forLanguageTag(name));
-        }
-
-        SupportedLocale(String name, Locale locale) {
-            this(false, name, locale);
         }
 
         public boolean isDefault() {
@@ -279,7 +247,16 @@ public final class Locales {
 
             @Override
             public SupportedLocale read(JsonReader in) throws IOException {
-                return getLocaleByName(in.nextString());
+                if (in.peek() == JsonToken.NULL)
+                    return DEFAULT;
+
+                String language = in.nextString();
+                return getLocaleByName(switch (language) {
+                    // TODO: Remove these compatibility codes after updating the Config format
+                    case "zh_CN" -> "zh-Hans"; // For compatibility
+                    case "zh" -> "zh-Hant";    // For compatibility
+                    default -> language;
+                });
             }
         }
     }

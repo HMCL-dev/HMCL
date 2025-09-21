@@ -41,7 +41,7 @@ public final class MinecraftWiki {
                 translatedVersion = WenyanUtils.translateGameVersion(gameVersion);
 
             if (translatedVersion.equals(gameVersion.toString()) || gameVersion instanceof GameVersionNumber.Old) {
-                return getWikiLink(Locales.ZH_HANT, version);
+                return getWikiLink(Locales.getLocale(LocaleUtils.LOCALE_ZH_HANT), version);
             } else if (SNAPSHOT_PATTERN.matcher(wikiVersion).matches()) {
                 return locale.i18n("wiki.version.game.snapshot", translatedVersion);
             } else {
