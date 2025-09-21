@@ -193,7 +193,6 @@ public abstract class CreateLocaleNames extends DefaultTask {
 
                     writer.write(script + "=" + displayName + "\n");
                 }
-                writer.write('\n');
             }
         }
     }
