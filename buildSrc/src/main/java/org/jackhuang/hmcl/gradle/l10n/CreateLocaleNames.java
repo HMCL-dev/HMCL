@@ -91,7 +91,9 @@ public abstract class CreateLocaleNames extends DefaultTask {
                     .toList();
         }
 
+        // For Upside Down English
         UpsideDownTranslate.Translator upsideDownTranslator = new UpsideDownTranslate.Translator();
+        Map<String, String> englishDisplayNames = new HashMap<>();
 
         SortedSet<String> languages = supportedLanguages.stream()
                 .map(Locale::getLanguage)
@@ -144,18 +146,22 @@ public abstract class CreateLocaleNames extends DefaultTask {
                 for (String language : languages) {
                     String displayName = overrideProperties.getProperty(language);
                     if (displayName == null) {
-                        displayName = new Locale.Builder()
-                                .setLanguage(language)
-                                .build()
-                                .getDisplayLanguage(currentLanguage);
+                        if (currentLanguage.equals(UpsideDownTranslate.EN_QABS) && englishDisplayNames.containsKey(language)) {
+                            displayName = upsideDownTranslator.translate(englishDisplayNames.get(language));
+                        } else {
+                            displayName = new Locale.Builder()
+                                    .setLanguage(language)
+                                    .build()
+                                    .getDisplayLanguage(currentLanguage);
 
-                        if (displayName.equals(language))
-                            continue; // Skip
+                            if (displayName.equals(language))
+                                continue; // Skip
 
-                        if (currentLanguage.equals(UpsideDownTranslate.EN_QABS)) {
-                            displayName = upsideDownTranslator.translate(displayName);
                         }
                     }
+
+                    if (currentLanguage.equals(Locale.ENGLISH))
+                        englishDisplayNames.put(language, displayName);
 
                     writer.write(language + "=" + displayName + "\n");
                 }
@@ -165,18 +171,22 @@ public abstract class CreateLocaleNames extends DefaultTask {
                 for (String script : scripts) {
                     String displayName = overrideProperties.getProperty(script);
                     if (displayName == null) {
-                        displayName = new Locale.Builder()
-                                .setScript(script)
-                                .build()
-                                .getDisplayScript(currentLanguage);
+                        if (currentLanguage.equals(UpsideDownTranslate.EN_QABS) && englishDisplayNames.containsKey(script)) {
+                            displayName = upsideDownTranslator.translate(englishDisplayNames.get(script));
+                        } else {
+                            displayName = new Locale.Builder()
+                                    .setScript(script)
+                                    .build()
+                                    .getDisplayScript(currentLanguage);
 
-                        if (displayName.equals(script))
-                            continue; // Skip
+                            if (displayName.equals(script))
+                                continue; // Skip
 
-                        if (currentLanguage.equals(UpsideDownTranslate.EN_QABS)) {
-                            displayName = upsideDownTranslator.translate(displayName);
                         }
                     }
+
+                    if (currentLanguage.equals(Locale.ENGLISH))
+                        englishDisplayNames.put(script, displayName);
 
                     writer.write(script + "=" + displayName + "\n");
                 }
