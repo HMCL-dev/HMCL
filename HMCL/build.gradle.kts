@@ -1,4 +1,4 @@
-import org.jackhuang.hmcl.gradle.CheckTranslations
+import org.jackhuang.hmcl.gradle.l10n.CheckTranslations
 import org.jackhuang.hmcl.gradle.mod.ParseModDataTask
 import java.net.URI
 import java.nio.file.FileSystems

@@ -88,6 +88,12 @@ public final class LocaleUtils {
     /// the script will be inferred based on the language, the region and the variant.
     public static @NotNull String getScript(Locale locale) {
         if (locale.getScript().isEmpty()) {
+            if (isEnglish(locale)) {
+                if ("UD".equals(locale.getCountry())) {
+                    return "Qabs";
+                }
+            }
+
             if (isChinese(locale)) {
                 if (CHINESE_LATN_VARIANTS.contains(locale.getVariant()))
                     return "Latn";
