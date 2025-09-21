@@ -27,7 +27,7 @@ public final class MinecraftWiki {
 
     private static final Pattern SNAPSHOT_PATTERN = Pattern.compile("^[0-9]{2}w[0-9]{2}.+$");
 
-    public static String getWikiLink(Locales.SupportedLocale locale, GameRemoteVersion version) {
+    public static String getWikiLink(SupportedLocale locale, GameRemoteVersion version) {
         String wikiVersion = version.getSelfVersion();
         var gameVersion = GameVersionNumber.asGameVersion(wikiVersion);
 

@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.util.i18n;
 
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
-import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 

@@ -38,7 +38,7 @@ import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.gson.*;
 import org.jackhuang.hmcl.util.i18n.Locales;
-import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
+import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jackhuang.hmcl.util.javafx.DirtyTracker;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
 import org.jetbrains.annotations.Nullable;
