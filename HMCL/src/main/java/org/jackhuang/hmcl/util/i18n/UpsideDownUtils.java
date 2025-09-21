@@ -46,7 +46,7 @@ public final class UpsideDownUtils {
     static {
         putChars('a', "ɐqɔpǝɟbɥıظʞןɯuodbɹsʇnʌʍxʎz");
         putChars('A', "ⱯᗺƆᗡƎℲ⅁HIſʞꞀWNOԀὉᴚS⟘∩ΛMXʎZ");
-        putChars('0', "0ƖᘔƐ߈ϛ9ㄥ86");
+        putChars('0', "0ƖᘔƐㄣϛ9ㄥ86");
         putChars("_,;.?!/\\'", "‾'⸵˙¿¡/\\,");
     }
 
