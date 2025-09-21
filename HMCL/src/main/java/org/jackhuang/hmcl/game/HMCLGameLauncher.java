@@ -80,8 +80,6 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         }
 
         Locale locale = Locale.getDefault();
-        if (LocaleUtils.isEnglish(locale))
-            return;
 
         /*
          *  1.0         : No language option, do not set for these versions
@@ -128,6 +126,13 @@ public final class HMCLGameLauncher extends DefaultLauncher {
                     yield "zh_TW";
                 }
                 yield "zh_CN";
+            }
+            case "en" -> {
+                if ("Qabs".equals(LocaleUtils.getScript(locale)) && gameVersion.compareTo("1.16") >= 0) {
+                    yield "en_UD";
+                }
+
+                yield "";
             }
             default -> "";
         };
