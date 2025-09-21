@@ -10,16 +10,16 @@ HMCL 为多种语言提供本地化支持。
 
 目前，HMCL 为这些语言提供支持:
 
-| 语言      | 语言标签      | 首选本地化文件后缀  | 首选本地化键    | 支持状态   | 志愿者                                       | 
-|---------|-----------|------------|-----------|--------|-------------------------------------------|
-| 英语      | `en`      | (空)        | `default` | **主要** | [Glavo](https://github.com/3gf8jv4dv)     |  
-| 中文 (简体) | `zh-Hans` | `_zh`      | `zh`      | **主要** | [Glavo](https://github.com/3gf8jv4dv)     |
-| 中文 (繁体) | `zh-Hant` | `_zh_Hant` | `zh-Hant` | **主要** | [Glavo](https://github.com/3gf8jv4dv)     |
-| 中文 (文言) | `lzh`     | `_lzh`     | `lzh`     | 次要     |                                           |
-| 日语      | `ja`      | `_ja`      | `ja`      | 次要     |                                           |
-| 西班牙语    | `es`      | `_es`      | `es`      | 次要     | [3gf8jv4dv](https://github.com/3gf8jv4dv) |
-| 俄语      | `ru`      | `_ru`      | `ru`      | 次要     | [3gf8jv4dv](https://github.com/3gf8jv4dv) |
-| 乌克兰语    | `uk`      | `_uk`      | `uk`      | 次要     |                                           |
+| 语言      | 语言标签      | 首选本地化文件后缀  | 首选本地化键    | [游戏语言文件](https://minecraft.wiki/w/Language) | 支持状态   | 志愿者                                       | 
+|---------|-----------|------------|-----------|---------------------------------------------|--------|-------------------------------------------|
+| 英语      | `en`      | (空)        | `default` | `en_us`                                     | **主要** | [Glavo](https://github.com/Glavo)         |  
+| 中文 (简体) | `zh-Hans` | `_zh`      | `zh`      | `zh_cn`                                     | **主要** | [Glavo](https://github.com/Glavo)         |
+| 中文 (繁体) | `zh-Hant` | `_zh_Hant` | `zh-Hant` | `zh_tw` <br/> `zh_hk`                       | **主要** | [Glavo](https://github.com/Glavo)         |
+| 中文 (文言) | `lzh`     | `_lzh`     | `lzh`     | `lzh`                                       | 次要     |                                           |
+| 日语      | `ja`      | `_ja`      | `ja`      | `ja_jp`                                     | 次要     |                                           |
+| 西班牙语    | `es`      | `_es`      | `es`      | `es_es`                                     | 次要     | [3gf8jv4dv](https://github.com/3gf8jv4dv) |
+| 俄语      | `ru`      | `_ru`      | `ru`      | `ru_ru`                                     | 次要     | [3gf8jv4dv](https://github.com/3gf8jv4dv) |
+| 乌克兰语    | `uk`      | `_uk`      | `uk`      | `uk_ua`                                     | 次要     |                                           |
 
 HMCL 会要求所有 Pull Request 在更新文档和本地化资源时同步更新所有**主要**支持的语言对应的资源。
 如果 PR 作者对相关语言并不了解，那么可以直接在评论中提出翻译请求，
@@ -136,8 +136,8 @@ HMCL 的维护者会替你完成其他步骤。
 例如，如果当前环境的语言标签为 `eng-US`，那么 HMCL 会根据以下列表的顺序搜索对应的本地化资源:
 
 1. `eng-US`
-2. `eng`
-3. `en-US`
+2. `en-US`
+3. `eng`
 4. `en`
 5. `und`
 

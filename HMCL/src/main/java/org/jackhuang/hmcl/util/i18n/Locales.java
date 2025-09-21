@@ -142,9 +142,9 @@ public final class Locales {
             }
 
             Locale inJavaLocale = inLocale.getLocale();
-            if (LocaleUtils.isISO3Language(inJavaLocale.getLanguage())) {
+            if (inJavaLocale.getLanguage().length() > 2) {
                 String iso1 = LocaleUtils.getISO1Language(inJavaLocale);
-                if (LocaleUtils.isISO1Language(iso1)) {
+                if (iso1.length() <= 2) {
                     Locale.Builder builder = new Locale.Builder()
                             .setLocale(inJavaLocale)
                             .setLanguage(iso1);
