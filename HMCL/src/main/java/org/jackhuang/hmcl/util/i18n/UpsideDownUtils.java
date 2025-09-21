@@ -47,7 +47,7 @@ public final class UpsideDownUtils {
         putChars('a', "ɐqɔpǝɟbɥıظʞןɯuodbɹsʇnʌʍxʎz");
         putChars('A', "ⱯᗺƆᗡƎℲ⅁HIſʞꞀWNOԀὉᴚS⟘∩ΛMXʎZ");
         putChars('0', "0ƖᘔƐ߈ϛ9ㄥ86");
-        putChars("_,;.?!/\\'", "‾'؛˙¿¡/\\,");
+        putChars("_,;.?!/\\'", "‾'⸵˙¿¡/\\,");
     }
 
     public static String translate(String str) {

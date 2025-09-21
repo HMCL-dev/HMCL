@@ -94,7 +94,7 @@ public abstract class UpsideDownTranslate extends DefaultTask {
             putChars('a', "ɐqɔpǝɟbɥıظʞןɯuodbɹsʇnʌʍxʎz");
             putChars('A', "ⱯᗺƆᗡƎℲ⅁HIſʞꞀWNOԀὉᴚS⟘∩ΛMXʎZ");
             putChars('0', "0ƖᘔƐ߈ϛ9ㄥ86");
-            putChars("_,;.?!/\\'", "‾'؛˙¿¡/\\,");
+            putChars("_,;.?!/\\'", "‾'⸵˙¿¡/\\,");
         }
 
         private static final Pattern FORMAT_PATTERN = Pattern.compile("^%(\\d\\$)?(\\d+)?(\\.\\d+)?([sdf])");
