@@ -47,6 +47,9 @@ public final class Logger {
     private static volatile String[] accessTokens = new String[0];
 
     public static synchronized void registerAccessToken(String token) {
+        if (token == null || token.length() <= 1)
+            return;
+
         final String[] oldAccessTokens = accessTokens;
         final String[] newAccessTokens = Arrays.copyOf(oldAccessTokens, oldAccessTokens.length + 1);
 
