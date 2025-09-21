@@ -103,7 +103,7 @@ public abstract class UpsideDownTranslate extends DefaultTask {
         private static final Pattern FORMAT_PATTERN = Pattern.compile("^%(\\d\\$)?(\\d+)?(\\.\\d+)?([sdf])");
         private static final Pattern XML_TAG_PATTERN = Pattern.compile("^<(?<tag>[a-zA-Z]+)( href=\"[^\"]*\")?>");
 
-        private final StringBuilder lineBuilder = new StringBuilder();
+        private final StringBuilder resultBuilder = new StringBuilder();
 
         private void appendToLineBuilder(String input) {
             for (int i = 0; i < input.length(); ) {
@@ -113,7 +113,7 @@ public abstract class UpsideDownTranslate extends DefaultTask {
                     Matcher matcher = FORMAT_PATTERN.matcher(input).region(i, input.length());
                     if (matcher.find()) {
                         String formatString = matcher.group();
-                        lineBuilder.insert(0, formatString);
+                        resultBuilder.insert(0, formatString);
                         i += formatString.length();
                         continue;
                     }
@@ -125,9 +125,9 @@ public abstract class UpsideDownTranslate extends DefaultTask {
 
                         int endTagOffset = input.indexOf(endTag, i + beginTag.length());
                         if (endTagOffset > 0) {
-                            lineBuilder.insert(0, endTag);
+                            resultBuilder.insert(0, endTag);
                             appendToLineBuilder(input.substring(i + beginTag.length(), endTagOffset));
-                            lineBuilder.insert(0, beginTag);
+                            resultBuilder.insert(0, beginTag);
 
                             i = endTagOffset + endTag.length();
                             continue;
@@ -137,35 +137,18 @@ public abstract class UpsideDownTranslate extends DefaultTask {
 
                 int udCh = MAPPER.getOrDefault(ch, ch);
                 if (Character.isBmpCodePoint(udCh)) {
-                    lineBuilder.insert(0, (char) udCh);
+                    resultBuilder.insert(0, (char) udCh);
                 } else {
-                    lineBuilder.insert(0, Character.toChars(udCh));
+                    resultBuilder.insert(0, Character.toChars(udCh));
                 }
 
                 i += Character.charCount(ch);
             }
         }
 
-        private final StringBuilder resultBuilder = new StringBuilder();
-
         String translate(String input) {
             resultBuilder.setLength(0);
-
-            for (int i = 0; i < input.length(); ) {
-                int idx = input.indexOf(i, '\n');
-
-                this.lineBuilder.setLength(0);
-                appendToLineBuilder(input.substring(0, idx < 0 ? input.length() : idx));
-                resultBuilder.append(lineBuilder);
-
-                if (idx < 0) {
-                    break;
-                } else {
-                    resultBuilder.append('\n');
-                    i = idx + 1;
-                }
-            }
-
+            appendToLineBuilder(input);
             return resultBuilder.toString();
         }
     }
