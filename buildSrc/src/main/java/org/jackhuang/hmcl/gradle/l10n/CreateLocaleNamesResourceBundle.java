@@ -46,7 +46,7 @@ public abstract class CreateLocaleNamesResourceBundle extends DefaultTask {
     public abstract DirectoryProperty getOutputDirectory();
 
     private static String mapToFileName(String base, String ext, Locale locale) {
-        if (locale.getLanguage().isEmpty() || locale.equals(Locale.ENGLISH))
+        if (locale.equals(Locale.ENGLISH))
             return base + "." + ext;
         else if (locale.toLanguageTag().equals("zh-Hans"))
             return base + "_zh." + ext;
