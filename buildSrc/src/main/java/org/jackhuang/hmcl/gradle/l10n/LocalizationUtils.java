@@ -81,12 +81,16 @@ final class LocalizationUtils {
         return Integer.compare(list1.size(), list2.size());
     }
 
+    public static int compareScript(String s1, String s2) {
+        return s1.compareTo(s2);
+    }
+
     public static int compareLocale(Locale l1, Locale l2) {
         int c = compareLanguage(l1.getLanguage(), l2.getLanguage());
         if (c != 0)
             return c;
 
-        c = l1.getScript().compareTo(l2.getScript());
+        c = compareScript(l1.getScript(), l2.getScript());
         if (c != 0)
             return c;
 

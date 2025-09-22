@@ -39,7 +39,6 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /// @author Glavo
 public abstract class CreateLocaleNamesResourceBundle extends DefaultTask {
@@ -98,15 +97,17 @@ public abstract class CreateLocaleNamesResourceBundle extends DefaultTask {
         UpsideDownTranslate.Translator upsideDownTranslator = new UpsideDownTranslate.Translator();
         Map<String, String> englishDisplayNames = new HashMap<>();
 
-        SortedSet<String> languages = supportedLanguages.stream()
+        List<String> languages = supportedLanguages.stream()
                 .map(Locale::getLanguage)
                 .filter(it -> !it.isBlank())
-                .collect(Collectors.toCollection(TreeSet::new));
+                .sorted(LocalizationUtils::compareLanguage)
+                .toList();
 
-        SortedSet<String> scripts = supportedLanguages.stream()
+        List<String> scripts = supportedLanguages.stream()
                 .map(Locale::getScript)
                 .filter(it -> !it.isBlank())
-                .collect(Collectors.toCollection(TreeSet::new));
+                .sorted()
+                .toList();
 
         for (Locale currentLanguage : supportedLanguages) {
             InputStream overrideFile = CreateLocaleNamesResourceBundle.class.getResourceAsStream(
