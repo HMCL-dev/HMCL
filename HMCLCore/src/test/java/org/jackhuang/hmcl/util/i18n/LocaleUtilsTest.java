@@ -72,8 +72,8 @@ public final class LocaleUtilsTest {
 
         assertCandidateLocales("ja", List.of("ja", "und"));
         assertCandidateLocales("ja-JP", List.of("ja-JP", "ja", "und"));
-        assertCandidateLocales("jpa", List.of("jpa", "ja", "und"));
-        assertCandidateLocales("jpa-JP", List.of("jpa-JP", "ja-JP", "jpa", "ja", "und"));
+        assertCandidateLocales("jpn", List.of("jpn", "ja", "und"));
+        assertCandidateLocales("jpn-JP", List.of("jpn-JP", "ja-JP", "jpn", "ja", "und"));
 
         assertCandidateLocales("en", List.of("en", "und"));
         assertCandidateLocales("en-US", List.of("en-US", "en", "und"));
@@ -189,5 +189,22 @@ public final class LocaleUtilsTest {
                     ),
                     LocaleUtils.findAllLocalizedFiles(testDir, "meow", Set.of("json", "toml")));
         }
+    }
+
+    @Test
+    public void testMapToISO2Language() throws IOException {
+        assertEquals("en", LocaleUtils.mapToISO2Language("eng"));
+        assertEquals("es", LocaleUtils.mapToISO2Language("spa"));
+        assertEquals("ja", LocaleUtils.mapToISO2Language("jpn"));
+        assertEquals("ru", LocaleUtils.mapToISO2Language("rus"));
+        assertEquals("uk", LocaleUtils.mapToISO2Language("ukr"));
+        assertEquals("zh", LocaleUtils.mapToISO2Language("zho"));
+        assertEquals("zu", LocaleUtils.mapToISO2Language("zul"));
+
+        assertNull(LocaleUtils.mapToISO2Language(null));
+        assertNull(LocaleUtils.mapToISO2Language(""));
+        assertNull(LocaleUtils.mapToISO2Language("cmn"));
+        assertNull(LocaleUtils.mapToISO2Language("lzh"));
+        assertNull(LocaleUtils.mapToISO2Language("tlh"));
     }
 }

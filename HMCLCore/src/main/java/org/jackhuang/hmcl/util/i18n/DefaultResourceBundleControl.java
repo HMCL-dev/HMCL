@@ -30,7 +30,7 @@ import java.util.ResourceBundle;
 /// - For all Chinese locales, `zh-CN` is always added to the candidate list. If `zh-Hans` already exists in the candidate list,
 ///   `zh-CN` is inserted before `zh`; otherwise, it is inserted after `zh`.
 /// - For all Traditional Chinese locales, `zh-TW` is always added to the candidate list (before `zh`).
-/// - For all [supported][LocaleUtils#mapToISO1Language(String)] ISO 639-3 language code (such as `eng`, `zho`, `lzh`, etc.),
+/// - For all [supported][LocaleUtils#mapToISO2Language(String)] ISO 639-3 language code (such as `eng`, `zho`, `lzh`, etc.),
 ///  a candidate list with the language code replaced by the ISO 639-1 (Macro)language code is added to the end of the candidate list.
 ///
 /// @author Glavo
@@ -44,5 +44,12 @@ public class DefaultResourceBundleControl extends ResourceBundle.Control {
     @Override
     public List<Locale> getCandidateLocales(String baseName, Locale locale) {
         return LocaleUtils.getCandidateLocales(locale);
+    }
+
+    @Override
+    public Locale getFallbackLocale(String baseName, Locale locale) {
+        // By default, when only the base bundle is found, it will attempt to fall back to Locale.getDefault() for further lookup.
+        // Since we always use the base bundle as the English resource file, we want to suppress this behavior.
+        return null;
     }
 }
