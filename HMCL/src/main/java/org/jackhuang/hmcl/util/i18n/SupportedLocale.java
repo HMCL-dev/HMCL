@@ -62,7 +62,7 @@ public final class SupportedLocale {
     }
 
     public static SupportedLocale getLocaleByName(String name) {
-        if (name == null || name.isEmpty() || "def".equals(name) || "default".equals(name))
+        if (name == null || name.isBlank() || "def".equals(name) || "default".equals(name))
             return DEFAULT;
 
         return getLocale(Locale.forLanguageTag(name.trim()));
