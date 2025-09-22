@@ -29,14 +29,9 @@ import org.gradle.api.tasks.TaskAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
+import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -58,6 +53,9 @@ public abstract class CreateLocaleNamesResourceBundle extends DefaultTask {
         else
             return base + "_" + locale.toLanguageTag().replace('-', '_') + "." + ext;
     }
+
+    private static final ResourceBundle.Control CONTROL = new ResourceBundle.Control() {
+    };
 
     @TaskAction
     public void run() throws IOException {
@@ -88,111 +86,215 @@ public abstract class CreateLocaleNamesResourceBundle extends DefaultTask {
             supportedLanguages = new Gson().fromJson(reader, new TypeToken<List<String>>() {
                     }).stream()
                     .map(Locale::forLanguageTag)
+                    .sorted(LocalizationUtils::compareLocale)
                     .toList();
         }
 
         if (!supportedLanguages.contains(Locale.ENGLISH))
             throw new GradleException("Missing english in supported languages: " + supportedLanguages);
 
-        // For Upside Down English
-        UpsideDownTranslate.Translator upsideDownTranslator = new UpsideDownTranslate.Translator();
-        Map<String, String> englishDisplayNames = new HashMap<>();
-
-        SortedSet<String> languages = supportedLanguages.stream()
-                .map(Locale::getLanguage)
-                .filter(it -> !it.isBlank())
-                .collect(Collectors.toCollection(() -> new TreeSet<>(LocalizationUtils::compareLanguage)));
-
-        SortedSet<String> scripts = supportedLanguages.stream()
-                .map(Locale::getScript)
-                .filter(it -> !it.isBlank())
-                .collect(Collectors.toCollection(() -> new TreeSet<>(LocalizationUtils::compareScript)));
-
-        Map<Locale, Properties> overrides = new LinkedHashMap<>();
-        for (Locale currentLanguage : supportedLanguages) {
-            InputStream overrideFile = CreateLocaleNamesResourceBundle.class.getResourceAsStream(
-                    mapToFileName("LocaleNamesOverride", "properties", currentLanguage));
-            if (overrideFile != null) {
-                Properties overrideProperties = new Properties();
-                try (var reader = new InputStreamReader(overrideFile, StandardCharsets.UTF_8)) {
-                    overrideProperties.load(reader);
-                }
-                overrides.put(currentLanguage, overrideProperties);
-            }
+        // Ensure English is at the first position, this assumption will be used later
+        if (!supportedLanguages.get(0).equals(Locale.ENGLISH)) {
+            supportedLanguages = new ArrayList<>(supportedLanguages);
+            supportedLanguages.remove(Locale.ENGLISH);
+            supportedLanguages.add(0, Locale.ENGLISH);
         }
 
+        EnumMap<LocaleField, SortedSet<String>> names = new EnumMap<>(LocaleField.class);
+        for (LocaleField field : LocaleField.values()) {
+            names.put(field, supportedLanguages.stream()
+                    .map(field::get)
+                    .filter(it -> !it.isBlank())
+                    .collect(Collectors.toCollection(() -> new TreeSet<>(field))));
+        }
 
-
+        Map<Locale, Properties> overrides = new HashMap<>();
         for (Locale currentLanguage : supportedLanguages) {
             InputStream overrideFile = CreateLocaleNamesResourceBundle.class.getResourceAsStream(
                     mapToFileName("LocaleNamesOverride", "properties", currentLanguage));
-
             Properties overrideProperties = new Properties();
             if (overrideFile != null) {
                 try (var reader = new InputStreamReader(overrideFile, StandardCharsets.UTF_8)) {
                     overrideProperties.load(reader);
                 }
             }
+            overrides.put(currentLanguage, overrideProperties);
+        }
 
-            Path targetFile = outputDir.resolve(mapToFileName("LocaleNames", "properties", currentLanguage));
-            if (Files.exists(targetFile))
-                throw new GradleException(String.format("File %s already exists", targetFile));
+        Map<Locale, LocaleNames> allLocaleNames = new HashMap<>();
 
-            try (var writer = Files.newBufferedWriter(targetFile)) {
-                writer.write("# Languages\n");
-                for (String language : languages) {
-                    String displayName = overrideProperties.getProperty(language);
+        // For Upside Down English
+        UpsideDownTranslate.Translator upsideDownTranslator = new UpsideDownTranslate.Translator();
+        for (Locale currentLocale : supportedLanguages) {
+            Properties currentOverrides = overrides.get(currentLocale);
+            if (currentLocale.getLanguage().length() > 2 && currentOverrides.isEmpty()) {
+                // The JDK does not provide localized texts for these languages
+                continue;
+            }
+
+            LocaleNames currentDisplayNames = new LocaleNames();
+
+            for (LocaleField field : LocaleField.values()) {
+                SortedMap<String, String> nameToDisplayName = currentDisplayNames.getNameToDisplayName(field);
+
+                loop:
+                for (String name : names.get(field)) {
+                    String displayName = currentOverrides.getProperty(name);
+
+                    getDisplayName:
                     if (displayName == null) {
-                        if (currentLanguage.equals(UpsideDownTranslate.EN_QABS) && englishDisplayNames.containsKey(language)) {
-                            displayName = upsideDownTranslator.translate(englishDisplayNames.get(language));
-                        } else {
-                            displayName = new Locale.Builder()
-                                    .setLanguage(language)
-                                    .build()
-                                    .getDisplayLanguage(currentLanguage);
+                        if (currentLocale.equals(UpsideDownTranslate.EN_QABS)) {
+                            String englishDisplayName = allLocaleNames.get(Locale.ENGLISH).getNameToDisplayName(field).get(name);
+                            if (englishDisplayName != null) {
+                                displayName = upsideDownTranslator.translate(englishDisplayName);
+                                break getDisplayName;
+                            }
+                        }
 
-                            if (displayName.equals(language)
-                                    || (!currentLanguage.equals(Locale.ENGLISH) && displayName.equals(englishDisplayNames.get(language))))
-                                continue; // Skip
+                        // Although it cannot correctly handle the inheritance relationship between languages,
+                        // we will not apply this function to sublanguages.
+                        List<Locale> candidateLocales = CONTROL.getCandidateLocales("", currentLocale);
+
+
+                        for (Locale candidateLocale : candidateLocales) {
+                            Properties candidateOverride = overrides.get(candidateLocale);
+                            if (candidateOverride != null && candidateOverride.containsKey(name)) {
+                                continue loop;
+                            }
+                        }
+
+                        displayName = field.getDisplayName(name, currentLocale);
+
+                        // JDK does not have a built-in translation
+                        if (displayName.isBlank() || displayName.equals(name)) {
+                            continue loop;
+                        }
+
+                        // If it is just a duplicate of the parent content, ignored it
+                        for (Locale candidateLocale : candidateLocales) {
+                            LocaleNames candidateLocaleNames = allLocaleNames.get(candidateLocale);
+                            if (candidateLocaleNames != null) {
+                                String candidateDisplayName = candidateLocaleNames.getNameToDisplayName(field).get(name);
+                                if (displayName.equals(candidateDisplayName)) {
+                                    continue loop;
+                                }
+                                break;
+                            }
+                        }
+
+                        // Ignore it if the JDK falls back to English when querying the display name
+                        if (!currentLocale.equals(Locale.ENGLISH)
+                                && displayName.equals(allLocaleNames.get(Locale.ENGLISH).getNameToDisplayName(field).get(name))) {
+                            continue loop;
                         }
                     }
 
-                    if (currentLanguage.equals(Locale.ENGLISH))
-                        englishDisplayNames.put(language, displayName);
-
-                    writer.write(language + "=" + displayName + "\n");
+                    nameToDisplayName.put(name, displayName);
                 }
-                writer.write('\n');
+            }
 
-                writer.write("# Scripts\n");
-                for (String script : scripts) {
-                    String displayName = overrideProperties.getProperty(script);
-                    if (displayName == null) {
-                        if (currentLanguage.equals(UpsideDownTranslate.EN_QABS) && englishDisplayNames.containsKey(script)) {
-                            displayName = upsideDownTranslator.translate(englishDisplayNames.get(script));
-                        } else {
-                            displayName = new Locale.Builder()
-                                    .setScript(script)
-                                    .build()
-                                    .getDisplayScript(currentLanguage);
+            allLocaleNames.put(currentLocale, currentDisplayNames);
+        }
 
-                            if (displayName.equals(script)
-                                    || (!currentLanguage.equals(Locale.ENGLISH) && displayName.equals(englishDisplayNames.get(script))))
-                                continue; // Skip
-                        }
-                    }
 
-                    if (currentLanguage.equals(Locale.ENGLISH))
-                        englishDisplayNames.put(script, displayName);
-
-                    writer.write(script + "=" + displayName + "\n");
-                }
+        for (Map.Entry<Locale, LocaleNames> entry : allLocaleNames.entrySet()) {
+            if (!entry.getValue().isEmpty()) {
+                Path targetFile = outputDir.resolve(mapToFileName("LocaleNames", "properties", entry.getKey()));
+                entry.getValue().writeTo(targetFile);
             }
         }
     }
 
     private static final class LocaleNames {
-        final SortedMap<String, String> languageDisplayNames = new TreeMap<>(LocalizationUtils::compareLanguage);
-        final SortedMap<String, String> scriptsDisplayNames = new TreeMap<>(LocalizationUtils::compareScript);
+        private final EnumMap<LocaleField, SortedMap<String, String>> displayNames = new EnumMap<>(LocaleField.class);
+
+        LocaleNames() {
+            for (LocaleField field : LocaleField.values()) {
+                displayNames.put(field, new TreeMap<>(field));
+            }
+        }
+
+        boolean isEmpty() {
+            return displayNames.values().stream().allMatch(Map::isEmpty);
+        }
+
+        SortedMap<String, String> getNameToDisplayName(LocaleField field) {
+            return displayNames.get(field);
+        }
+
+        void writeTo(Path file) throws IOException {
+            try (var writer = Files.newBufferedWriter(file, StandardOpenOption.CREATE_NEW)) {
+                boolean firstBlock = true;
+
+                for (var entry : displayNames.entrySet()) {
+                    LocaleField field = entry.getKey();
+                    SortedMap<String, String> values = entry.getValue();
+
+                    writer.write("# " + field.blockHeader + "\n");
+
+                    if (!values.isEmpty()) {
+                        if (firstBlock)
+                            firstBlock = false;
+                        else
+                            writer.newLine();
+
+                        for (var nameToDisplay : values.entrySet()) {
+                            writer.write(nameToDisplay.getKey() + "=" + nameToDisplay.getValue() + "\n");
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private enum LocaleField implements Comparator<String> {
+        LANGUAGE("Languages") {
+            @Override
+            public String get(Locale locale) {
+                return locale.getLanguage();
+            }
+
+            @Override
+            public String getDisplayName(String fieldValue, Locale inLocale) {
+                return new Locale.Builder()
+                        .setLanguage(fieldValue)
+                        .build()
+                        .getDisplayLanguage(inLocale);
+            }
+
+            @Override
+            public int compare(String l1, String l2) {
+                return LocalizationUtils.compareLanguage(l1, l2);
+            }
+        },
+        SCRIPT("Scripts") {
+            @Override
+            public String get(Locale locale) {
+                return locale.getScript();
+            }
+
+            @Override
+            public String getDisplayName(String fieldValue, Locale inLocale) {
+                return new Locale.Builder()
+                        .setScript(fieldValue)
+                        .build()
+                        .getDisplayScript(inLocale);
+            }
+
+            @Override
+            public int compare(String s1, String s2) {
+                return LocalizationUtils.compareScript(s1, s2);
+            }
+        };
+
+        final String blockHeader;
+
+        LocaleField(String blockHeader) {
+            this.blockHeader = blockHeader;
+        }
+
+        public abstract String get(Locale locale);
+
+        public abstract String getDisplayName(String fieldValue, Locale inLocale);
     }
 }
