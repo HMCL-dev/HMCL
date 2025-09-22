@@ -230,13 +230,13 @@ public abstract class CreateLocaleNamesResourceBundle extends DefaultTask {
                     LocaleField field = entry.getKey();
                     SortedMap<String, String> values = entry.getValue();
 
-                    writer.write("# " + field.blockHeader + "\n");
-
                     if (!values.isEmpty()) {
                         if (firstBlock)
                             firstBlock = false;
                         else
                             writer.newLine();
+
+                        writer.write("# " + field.blockHeader + "\n");
 
                         for (var nameToDisplay : values.entrySet()) {
                             writer.write(nameToDisplay.getKey() + "=" + nameToDisplay.getValue() + "\n");
