@@ -124,7 +124,7 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
                 libraryPane.setVgap(16);
                 libraryPane.setHgap(16);
 
-                if (libraries.length <= 8) {
+                if (FXUtils.JAVAFX_MAJOR_VERSION < 25 && libraries.length <= 8) {
                     BorderPane.setMargin(libraryPane, new Insets(16, 0, 16, 0));
                     root.setCenter(libraryPane);
                 } else {
@@ -133,6 +133,9 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
                     scrollPane.setFitToHeight(true);
                     BorderPane.setMargin(scrollPane, new Insets(16, 0, 16, 0));
                     root.setCenter(scrollPane);
+
+                    if (libraries.length <= 8)
+                        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
                 }
             }
 
