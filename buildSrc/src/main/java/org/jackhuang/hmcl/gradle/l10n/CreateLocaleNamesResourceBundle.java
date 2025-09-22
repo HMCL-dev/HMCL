@@ -42,7 +42,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /// @author Glavo
-public abstract class CreateLocaleNames extends DefaultTask {
+public abstract class CreateLocaleNamesResourceBundle extends DefaultTask {
 
     @InputFile
     public abstract RegularFileProperty getLanguagesFile();
@@ -109,7 +109,7 @@ public abstract class CreateLocaleNames extends DefaultTask {
                 .collect(Collectors.toCollection(TreeSet::new));
 
         for (Locale currentLanguage : supportedLanguages) {
-            InputStream overrideFile = CreateLocaleNames.class.getResourceAsStream(
+            InputStream overrideFile = CreateLocaleNamesResourceBundle.class.getResourceAsStream(
                     mapToFileName("LocaleNamesOverride", "properties", currentLanguage));
 
             Properties overrideProperties = new Properties();

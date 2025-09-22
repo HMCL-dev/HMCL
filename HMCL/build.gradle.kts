@@ -1,6 +1,6 @@
 import org.jackhuang.hmcl.gradle.l10n.CheckTranslations
 import org.jackhuang.hmcl.gradle.l10n.CreateLanguageList
-import org.jackhuang.hmcl.gradle.l10n.CreateLocaleNames
+import org.jackhuang.hmcl.gradle.l10n.CreateLocaleNamesResourceBundle
 import org.jackhuang.hmcl.gradle.l10n.UpsideDownTranslate
 import org.jackhuang.hmcl.gradle.mod.ParseModDataTask
 import java.net.URI
@@ -210,7 +210,7 @@ tasks.shadowJar {
 tasks.processResources {
     dependsOn(createPropertiesFile)
     dependsOn(upsideDownTranslate)
-    dependsOn(createLocaleNames)
+    dependsOn(createLocaleNamesResourceBundle)
     dependsOn(createLanguageList)
 
     into("assets/") {
@@ -221,7 +221,7 @@ tasks.processResources {
     into("assets/lang") {
         from(createLanguageList.map { it.outputFile })
         from(upsideDownTranslate.map { it.outputFile })
-        from(createLocaleNames.map { it.outputDirectory })
+        from(createLocaleNamesResourceBundle.map { it.outputDirectory })
     }
 }
 
@@ -372,7 +372,7 @@ val createLanguageList by tasks.registering(CreateLanguageList::class) {
     outputFile.set(generatedDir.map { it.file("languages.json") })
 }
 
-val createLocaleNames by tasks.registering(CreateLocaleNames::class) {
+val createLocaleNamesResourceBundle by tasks.registering(CreateLocaleNamesResourceBundle::class) {
     dependsOn(createLanguageList)
 
     languagesFile.set(createLanguageList.flatMap { it.outputFile })
