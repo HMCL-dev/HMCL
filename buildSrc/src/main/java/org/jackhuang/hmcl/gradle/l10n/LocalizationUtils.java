@@ -17,14 +17,10 @@
  */
 package org.jackhuang.hmcl.gradle.l10n;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import org.gradle.api.GradleException;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 final class LocalizationUtils {
