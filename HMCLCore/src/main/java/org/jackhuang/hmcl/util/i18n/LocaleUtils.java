@@ -77,7 +77,10 @@ public final class LocaleUtils {
 
                 byte[] bytes = input.readAllBytes();
                 for (int offset = 0; offset < bytes.length; ) {
-                    if (offset < bytes.length - lineLength || bytes[offset + 2] != ',')
+                    if (offset > bytes.length - lineLength)
+                        break;
+
+                    if (bytes[offset + 2] != ',')
                         throw new IOException("iso_languages.csv format invalid");
 
                     String iso2 = new String(bytes, offset, 2, StandardCharsets.US_ASCII);

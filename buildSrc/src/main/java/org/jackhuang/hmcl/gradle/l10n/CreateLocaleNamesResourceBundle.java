@@ -91,8 +91,8 @@ public abstract class CreateLocaleNamesResourceBundle extends DefaultTask {
                     .toList();
         }
 
-        if (!supportedLanguages.get(0).equals(Locale.ENGLISH))
-            throw new GradleException("The first language must be english.");
+        if (!supportedLanguages.contains(Locale.ENGLISH))
+            throw new GradleException("Missing english in supported languages: " + supportedLanguages);
 
         // For Upside Down English
         UpsideDownTranslate.Translator upsideDownTranslator = new UpsideDownTranslate.Translator();
@@ -107,6 +107,21 @@ public abstract class CreateLocaleNamesResourceBundle extends DefaultTask {
                 .map(Locale::getScript)
                 .filter(it -> !it.isBlank())
                 .collect(Collectors.toCollection(() -> new TreeSet<>(LocalizationUtils::compareScript)));
+
+        Map<Locale, Properties> overrides = new LinkedHashMap<>();
+        for (Locale currentLanguage : supportedLanguages) {
+            InputStream overrideFile = CreateLocaleNamesResourceBundle.class.getResourceAsStream(
+                    mapToFileName("LocaleNamesOverride", "properties", currentLanguage));
+            if (overrideFile != null) {
+                Properties overrideProperties = new Properties();
+                try (var reader = new InputStreamReader(overrideFile, StandardCharsets.UTF_8)) {
+                    overrideProperties.load(reader);
+                }
+                overrides.put(currentLanguage, overrideProperties);
+            }
+        }
+
+
 
         for (Locale currentLanguage : supportedLanguages) {
             InputStream overrideFile = CreateLocaleNamesResourceBundle.class.getResourceAsStream(
@@ -174,5 +189,10 @@ public abstract class CreateLocaleNamesResourceBundle extends DefaultTask {
                 }
             }
         }
+    }
+
+    private static final class LocaleNames {
+        final SortedMap<String, String> languageDisplayNames = new TreeMap<>(LocalizationUtils::compareLanguage);
+        final SortedMap<String, String> scriptsDisplayNames = new TreeMap<>(LocalizationUtils::compareScript);
     }
 }
