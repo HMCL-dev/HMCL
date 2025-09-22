@@ -245,8 +245,8 @@ public final class SupportedLocale {
     }
 
     public boolean isSameLanguage(SupportedLocale other) {
-        return LocaleUtils.getISO1Language(this.getLocale())
-                .equals(LocaleUtils.getISO1Language(other.getLocale()));
+        return LocaleUtils.getISO2Language(this.getLocale())
+                .equals(LocaleUtils.getISO2Language(other.getLocale()));
     }
 
     public static final class TypeAdapter extends com.google.gson.TypeAdapter<SupportedLocale> {
