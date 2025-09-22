@@ -65,7 +65,7 @@ public final class SupportedLocale {
         if (name == null || name.isBlank() || "def".equals(name) || "default".equals(name))
             return DEFAULT;
 
-        return getLocale(Locale.forLanguageTag(name.trim()));
+        return getLocale(Locale.forLanguageTag(name.trim().replace('_', '-')));
     }
 
     private final boolean isDefault;
