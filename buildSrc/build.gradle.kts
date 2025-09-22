@@ -14,6 +14,6 @@ java {
 
 tasks.processResources {
     into("org/jackhuang/hmcl/gradle/l10n") {
-        from(file("../HMCLCore/src/main/resources/assets/lang/sublanguages.json"))
+        from(file("../HMCLCore/src/main/resources/assets/lang/sublanguages.csv"))
     }
 }

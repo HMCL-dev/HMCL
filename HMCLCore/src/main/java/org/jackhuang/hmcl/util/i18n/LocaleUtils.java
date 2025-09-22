@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.util.i18n;
 
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -49,17 +48,23 @@ public final class LocaleUtils {
     private static final Map<String, String> subLanguageToParent = new HashMap<>();
 
     static {
-        try (InputStream input = LocaleUtils.class.getResourceAsStream("/assets/lang/sublanguages.json")) {
+        try (InputStream input = LocaleUtils.class.getResourceAsStream("/assets/lang/sublanguages.csv")) {
             if (input != null) {
-                JsonUtils.fromJsonFully(input, JsonUtils.mapTypeOf(String.class, JsonUtils.listTypeOf(String.class)))
-                        .forEach((parent, subList) -> {
-                            for (String subLanguage : subList) {
-                                subLanguageToParent.put(subLanguage, parent);
+                new String(input.readAllBytes()).lines()
+                        .filter(line -> !line.startsWith("#") && !line.isBlank())
+                        .forEach(line -> {
+                            String[] languages = line.split(",");
+                            if (languages.length < 2)
+                                LOG.warning("Invalid line in sublanguages.csv: " + line);
+
+                            String parent = languages[0];
+                            for (int i = 1; i < languages.length; i++) {
+                                subLanguageToParent.put(languages[i], parent);
                             }
                         });
             }
         } catch (IOException e) {
-            LOG.warning("Failed to load sublanguages.json file", e);
+            LOG.warning("Failed to load sublanguages.csv file", e);
         }
     }
 

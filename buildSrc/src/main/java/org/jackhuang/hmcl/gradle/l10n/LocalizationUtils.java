@@ -31,23 +31,27 @@ final class LocalizationUtils {
     public static final Map<String, String> subLanguageToParent;
 
     static {
-        InputStream file = LocalizationUtils.class.getResourceAsStream("sublanguages.json");
-        if (file == null)
-            throw new GradleException("Missing sublanguages.json file");
-
+        InputStream input = LocalizationUtils.class.getResourceAsStream("sublanguages.csv");
+        if (input == null)
+            throw new GradleException("Missing sublanguages.csv file");
 
         Map<String, String> map = new HashMap<>();
-        try (var reader = new InputStreamReader(file, StandardCharsets.UTF_8)) {
-            new Gson().fromJson(reader, new TypeToken<Map<String, List<String>>>() {
-            }).forEach((parent, subList) -> {
-                for (String subLanguage : subList) {
-                    map.put(subLanguage, parent);
-                }
-            });
-        } catch (IOException e) {
-            throw new GradleException(e.getMessage(), e);
-        }
+        try (input) {
+            new String(input.readAllBytes()).lines()
+                    .filter(line -> !line.startsWith("#") && !line.isBlank())
+                    .forEach(line -> {
+                        String[] languages = line.split(",");
+                        if (languages.length < 2)
+                            throw new GradleException("Invalid line in sublanguages.csv: " + line);
 
+                        String parent = languages[0];
+                        for (int i = 1; i < languages.length; i++) {
+                            map.put(languages[i], parent);
+                        }
+                    });
+        } catch (IOException e) {
+            throw new GradleException("Failed to read sublanguages.csv", e);
+        }
         subLanguageToParent = Collections.unmodifiableMap(map);
     }
 
