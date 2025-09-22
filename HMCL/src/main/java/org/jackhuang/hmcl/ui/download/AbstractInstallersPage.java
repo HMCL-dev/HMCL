@@ -120,15 +120,20 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
             {
                 InstallerItem[] libraries = control.group.getLibraries();
 
-                FlowPane libraryPane = new FlowPane(16, 16, libraries);
-                ScrollPane scrollPane = new ScrollPane(libraryPane);
-                scrollPane.setFitToWidth(true);
-                scrollPane.setFitToHeight(true);
-                BorderPane.setMargin(scrollPane, new Insets(16, 0, 16, 0));
-                root.setCenter(scrollPane);
+                FlowPane libraryPane = new FlowPane(libraries);
+                libraryPane.setVgap(16);
+                libraryPane.setHgap(16);
 
-                if (libraries.length <= 8)
-                    scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+                if (libraries.length <= 8) {
+                    BorderPane.setMargin(libraryPane, new Insets(16, 0, 16, 0));
+                    root.setCenter(libraryPane);
+                } else {
+                    ScrollPane scrollPane = new ScrollPane(libraryPane);
+                    scrollPane.setFitToWidth(true);
+                    scrollPane.setFitToHeight(true);
+                    BorderPane.setMargin(scrollPane, new Insets(16, 0, 16, 0));
+                    root.setCenter(scrollPane);
+                }
             }
 
             {

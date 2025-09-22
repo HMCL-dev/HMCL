@@ -323,7 +323,11 @@ public class InstallerItem extends Control {
             Pane pane;
             if (control.style == Style.CARD) {
                 pane = new VBox();
-                holder = FXUtils.onWeakChangeAndOperate(pane.widthProperty(), v -> FXUtils.setLimitHeight(pane, v.doubleValue() * 0.7));
+
+                if (FXUtils.JAVAFX_MAJOR_VERSION == 8)
+                    holder = FXUtils.onWeakChange(pane.widthProperty(), v -> FXUtils.setLimitHeight(pane, v.doubleValue() * 0.7));
+                else
+                    holder = FXUtils.onWeakChangeAndOperate(pane.widthProperty(), v -> FXUtils.setLimitHeight(pane, v.doubleValue() * 0.7));
             } else {
                 pane = new HBox();
                 holder = null;
