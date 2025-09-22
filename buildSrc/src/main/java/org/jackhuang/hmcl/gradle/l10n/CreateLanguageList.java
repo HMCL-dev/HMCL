@@ -17,8 +17,6 @@
  */
 package org.jackhuang.hmcl.gradle.l10n;
 
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.DirectoryProperty;
@@ -58,7 +56,7 @@ public abstract class CreateLanguageList extends DefaultTask {
             throw new GradleException("Input directory not exists: " + inputDir);
 
 
-        SortedSet<Locale> locales = new TreeSet<>(new LocaleComparator());
+        SortedSet<Locale> locales = new TreeSet<>(LocalizationUtils::compareLocale);
         locales.addAll(getAdditionalLanguages().getOrElse(List.of()).stream()
                 .map(Locale::forLanguageTag)
                 .toList());
@@ -101,75 +99,4 @@ public abstract class CreateLanguageList extends DefaultTask {
                 .collect(Collectors.joining(", ", "[", "]")));
     }
 
-    private final class LocaleComparator implements Comparator<Locale> {
-        Map<String, String> subLanguageToParent = new HashMap<>();
-
-        {
-            Path file = getProject().getRootProject().getLayout().getProjectDirectory()
-                    .file("HMCLCore/src/main/resources/assets/lang/sublanguages.json").getAsFile().toPath();
-
-            try (var reader = Files.newBufferedReader(file)) {
-                new Gson().fromJson(reader, new TypeToken<Map<String, List<String>>>() {
-                }).forEach((parent, subList) -> {
-                    for (String subLanguage : subList) {
-                        subLanguageToParent.put(subLanguage, parent);
-                    }
-                });
-            } catch (IOException e) {
-                throw new GradleException(e.getMessage(), e);
-            }
-        }
-
-        private List<String> resolveLanguage(String language) {
-            List<String> langList = new ArrayList<>();
-
-            String lang = language;
-            while (true) {
-                langList.add(0, lang);
-
-                String parent = subLanguageToParent.get(lang);
-                if (parent != null) {
-                    lang = parent;
-                } else {
-                    return langList;
-                }
-            }
-        }
-
-        private int compareLanguage(String l1, String l2) {
-            var list1 = resolveLanguage(l1);
-            var list2 = resolveLanguage(l2);
-
-            int n = Math.min(list1.size(), list2.size());
-            for (int i = 0; i < n; i++) {
-                int c = list1.get(i).compareTo(list2.get(i));
-                if (c != 0)
-                    return c;
-            }
-
-            return Integer.compare(list1.size(), list2.size());
-        }
-
-        @Override
-        public int compare(Locale l1, Locale l2) {
-            int c = compareLanguage(l1.getLanguage(), l2.getLanguage());
-            if (c != 0)
-                return c;
-
-            c = l1.getScript().compareTo(l2.getScript());
-            if (c != 0)
-                return c;
-
-            c = l1.getCountry().compareTo(l2.getCountry());
-            if (c != 0)
-                return c;
-
-            c = l1.getVariant().compareTo(l2.getVariant());
-            if (c != 0)
-                return c;
-
-            return l1.toString().compareTo(l2.toLanguageTag());
-        }
-
-    }
 }
