@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.upgrade.UpdateChannel;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.Locales;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
@@ -67,6 +68,15 @@ public final class SettingsPage extends SettingsView {
         // ==== Languages ====
         cboLanguage.getItems().setAll(Locales.LOCALES);
         selectedItemPropertyFor(cboLanguage).bindBidirectional(config().localizationProperty());
+        selectedItemPropertyFor(cboLanguage).addListener((observableValue, oldValue, newValue) -> {
+            I18n.setLocale(newValue);
+
+            Controllers.resetAllLazyPage();
+
+            System.gc();
+
+            Controllers.getDecorator().setRootPage(Controllers.getRootPage());
+        });
 
         disableAutoGameOptionsPane.selectedProperty().bindBidirectional(config().disableAutoGameOptionsProperty());
         // ====
