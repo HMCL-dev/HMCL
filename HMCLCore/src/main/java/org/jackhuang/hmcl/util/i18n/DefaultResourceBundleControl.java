@@ -45,4 +45,11 @@ public class DefaultResourceBundleControl extends ResourceBundle.Control {
     public List<Locale> getCandidateLocales(String baseName, Locale locale) {
         return LocaleUtils.getCandidateLocales(locale);
     }
+
+    @Override
+    public Locale getFallbackLocale(String baseName, Locale locale) {
+        // By default, when only the base bundle is found, it will attempt to fall back to Locale.getDefault() for further lookup.
+        // Since we always use the base bundle as the English resource file, we want to suppress this behavior.
+        return null;
+    }
 }
