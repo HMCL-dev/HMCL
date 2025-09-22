@@ -155,7 +155,6 @@ public abstract class CreateLocaleNamesResourceBundle extends DefaultTask {
                         // we will not apply this function to sublanguages.
                         List<Locale> candidateLocales = CONTROL.getCandidateLocales("", currentLocale);
 
-
                         for (Locale candidateLocale : candidateLocales) {
                             Properties candidateOverride = overrides.get(candidateLocale);
                             if (candidateOverride != null && candidateOverride.containsKey(name)) {
@@ -195,7 +194,6 @@ public abstract class CreateLocaleNamesResourceBundle extends DefaultTask {
 
             allLocaleNames.put(currentLocale, currentDisplayNames);
         }
-
 
         for (Map.Entry<Locale, LocaleNames> entry : allLocaleNames.entrySet()) {
             if (!entry.getValue().isEmpty()) {
