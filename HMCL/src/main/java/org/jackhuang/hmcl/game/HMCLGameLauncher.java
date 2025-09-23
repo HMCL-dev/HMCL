@@ -110,7 +110,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     private static String normalizedLanguageTag(Locale locale, GameVersionNumber gameVersion) {
         String region = locale.getCountry();
 
-        return switch (LocaleUtils.getISO2Language(locale)) {
+        return switch (LocaleUtils.getRootLanguage(locale)) {
             case "es" -> "es_ES";
             case "ja" -> "ja_JP";
             case "ru" -> "ru_RU";

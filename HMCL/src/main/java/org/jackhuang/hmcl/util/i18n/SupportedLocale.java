@@ -33,6 +33,7 @@ import java.time.temporal.TemporalAccessor;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -117,11 +118,16 @@ public final class SupportedLocale {
         Locale currentLocale = this.getLocale();
 
         String language = currentLocale.getLanguage();
-        String script = currentLocale.getScript();
-
-        // Currently, HMCL does not support any locales with regions or variants, so they are not handled for now
-        // String region = currentLocale.getCountry();
-        // String variant = currentLocale.getDisplayVariant();
+        String subLanguage;
+        {
+            String parentLanguage = LocaleUtils.getParentLanguage(language);
+            if (parentLanguage != null) {
+                subLanguage = language;
+                language = parentLanguage;
+            } else {
+                subLanguage = "";
+            }
+        }
 
         ResourceBundle localeNames = inLocale.getLocaleNamesBundle();
 
@@ -132,19 +138,21 @@ public final class SupportedLocale {
             LOG.warning("Failed to get localized name for language " + language, e);
         }
 
-        if (script.isEmpty()) {
-            return languageDisplayName;
-        }
+        // Currently, HMCL does not support any locales with regions or variants, so they are not handled for now
+        List<String> subTags = Stream.of(subLanguage, currentLocale.getScript())
+                .filter(it -> !it.isEmpty())
+                .map(it -> {
+                    try {
+                        return localeNames.getString(it);
+                    } catch (Throwable e) {
+                        LOG.warning("Failed to get localized name of " + it, e);
+                    }
+                    return it;
+                }).toList();
 
-        String scriptDisplayName = script;
-
-        try {
-            scriptDisplayName = localeNames.getString(script);
-        } catch (Throwable e) {
-            LOG.warning("Failed to get localized name for script " + script, e);
-        }
-
-        return languageDisplayName + " (" + scriptDisplayName + ")";
+        return subTags.isEmpty()
+                ? languageDisplayName
+                : languageDisplayName + " (" + String.join(", ", subTags) + ")";
     }
 
     public ResourceBundle getResourceBundle() {
@@ -245,8 +253,8 @@ public final class SupportedLocale {
     }
 
     public boolean isSameLanguage(SupportedLocale other) {
-        return LocaleUtils.getISO2Language(this.getLocale())
-                .equals(LocaleUtils.getISO2Language(other.getLocale()));
+        return LocaleUtils.getRootLanguage(this.getLocale())
+                .equals(LocaleUtils.getRootLanguage(other.getLocale()));
     }
 
     public static final class TypeAdapter extends com.google.gson.TypeAdapter<SupportedLocale> {

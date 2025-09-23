@@ -62,7 +62,7 @@ public final class LocaleUtilsTest {
         assertCandidateLocales("zh-Latn", List.of("zh-Latn", "zh", "zh-CN", "und"));
         assertCandidateLocales("zh-Latn-CN", List.of("zh-Latn-CN", "zh-Latn", "zh-CN", "zh", "und"));
         assertCandidateLocales("zh-pinyin", List.of("zh-Latn-pinyin", "zh-Latn", "zh-pinyin", "zh", "zh-CN", "und"));
-        assertCandidateLocales("zho", List.of("zho-Hans", "zh-Hans", "zho", "zh-CN", "zh", "und"));
+        assertCandidateLocales("zho", List.of("zh-Hans", "zh-CN", "zh", "und"));
         assertCandidateLocales("lzh", List.of("lzh-Hant", "lzh", "zh-Hant", "zh-TW", "zh", "zh-CN", "und"));
         assertCandidateLocales("lzh-Hant", List.of("lzh-Hant", "lzh", "zh-Hant", "zh-TW", "zh", "zh-CN", "und"));
         assertCandidateLocales("lzh-Hans", List.of("lzh-Hans", "lzh", "zh-Hans", "zh-CN", "zh", "und"));
@@ -71,23 +71,23 @@ public final class LocaleUtilsTest {
         assertCandidateLocales("yue", List.of("yue-Hans", "yue", "zh-Hans", "zh-CN", "zh", "und"));
 
         assertCandidateLocales("ja", List.of("ja", "und"));
+        assertCandidateLocales("jpn", List.of("ja", "und"));
         assertCandidateLocales("ja-JP", List.of("ja-JP", "ja", "und"));
-        assertCandidateLocales("jpn", List.of("jpn", "ja", "und"));
-        assertCandidateLocales("jpn-JP", List.of("jpn-JP", "ja-JP", "jpn", "ja", "und"));
+        assertCandidateLocales("jpn-JP", List.of("ja-JP", "ja", "und"));
 
         assertCandidateLocales("en", List.of("en", "und"));
+        assertCandidateLocales("eng", List.of("en", "und"));
         assertCandidateLocales("en-US", List.of("en-US", "en", "und"));
-        assertCandidateLocales("eng", List.of("eng", "en", "und"));
-        assertCandidateLocales("eng-US", List.of("eng-US", "en-US", "eng", "en", "und"));
+        assertCandidateLocales("eng-US", List.of("en-US", "en", "und"));
 
         assertCandidateLocales("es", List.of("es", "und"));
-        assertCandidateLocales("spa", List.of("spa", "es", "und"));
+        assertCandidateLocales("spa", List.of("es", "und"));
 
         assertCandidateLocales("ru", List.of("ru", "und"));
-        assertCandidateLocales("rus", List.of("rus", "ru", "und"));
+        assertCandidateLocales("rus", List.of("ru", "und"));
 
         assertCandidateLocales("uk", List.of("uk", "und"));
-        assertCandidateLocales("ukr", List.of("ukr", "uk", "und"));
+        assertCandidateLocales("ukr", List.of("uk", "und"));
 
         assertCandidateLocales("und", List.of("en", "und"));
     }
@@ -192,7 +192,7 @@ public final class LocaleUtilsTest {
     }
 
     @Test
-    public void testMapToISO2Language() throws IOException {
+    public void testMapToISO2Language() {
         assertEquals("en", LocaleUtils.mapToISO2Language("eng"));
         assertEquals("es", LocaleUtils.mapToISO2Language("spa"));
         assertEquals("ja", LocaleUtils.mapToISO2Language("jpn"));
@@ -206,5 +206,18 @@ public final class LocaleUtilsTest {
         assertNull(LocaleUtils.mapToISO2Language("cmn"));
         assertNull(LocaleUtils.mapToISO2Language("lzh"));
         assertNull(LocaleUtils.mapToISO2Language("tlh"));
+    }
+
+    @Test
+    public void testGetParentLanguage() {
+        assertEquals("zh", LocaleUtils.getParentLanguage("cmn"));
+        assertEquals("zh", LocaleUtils.getParentLanguage("yue"));
+        assertEquals("zh", LocaleUtils.getParentLanguage("lzh"));
+
+        assertNull(LocaleUtils.getParentLanguage(""));
+        assertNull(LocaleUtils.getParentLanguage("en"));
+        assertNull(LocaleUtils.getParentLanguage("eng"));
+        assertNull(LocaleUtils.getParentLanguage("zh"));
+        assertNull(LocaleUtils.getParentLanguage("zho"));
     }
 }
