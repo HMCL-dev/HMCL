@@ -120,10 +120,11 @@ public final class LocaleUtils {
         return getRootLanguage(locale.getLanguage());
     }
 
-    /// 如果 `language` 是其他语言的子语言，那么返回其父语言；
-    /// 如果 `language` 是 ISO 639 alpha-3 语言代码，且存在对应的 ISO 639 alpha-2 语言代码，那么返回 ISO 639 alpha-2 语言代码；
-    /// 如果 `language` 为空，则返回 `en`；
-    /// 否则，返回 `language`。
+    /// - If `language` is a sublanguage of a [macrolanguage](https://en.wikipedia.org/wiki/ISO_639_macrolanguage),
+    /// return the macrolanguage;
+    /// - If `language` is an ISO 639 alpha-3 language code and there is a corresponding ISO 639 alpha-2 language code, return the ISO 639 alpha-2 code;
+    /// - If `language` is empty, return `en`;
+    /// - Otherwise, return the `language`.
     public static @NotNull String getRootLanguage(String language) {
         if (language.isEmpty()) return "en";
         if (language.length() <= 2)
@@ -354,10 +355,13 @@ public final class LocaleUtils {
     // ---
 
     /// Map ISO 639 alpha-3 language codes to ISO 639 alpha-2 language codes.
+    /// Returns `null` if there is no corresponding ISO 639 alpha-2 language code.
     public static @Nullable String mapToISO2Language(String iso3Language) {
         return iso3To2.get(iso3Language);
     }
 
+    /// If `language` is a sublanguage of a [macrolanguage](https://en.wikipedia.org/wiki/ISO_639_macrolanguage),
+    /// return the macrolanguage; otherwise, return `null`.
     public static @Nullable String getParentLanguage(String language) {
         return subLanguageToParent.get(language);
     }
