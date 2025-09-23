@@ -59,7 +59,10 @@ public final class ProxyManager {
             String password = config().getProxyPass();
 
             if (username != null || password != null)
-                return new SimpleAuthenticator(username, password.toCharArray());
+                return new SimpleAuthenticator(
+                        Lang.requireNonNullElse(username, ""),
+                        Lang.requireNonNullElse(password, "").toCharArray()
+                );
             else
                 return null;
         } else
