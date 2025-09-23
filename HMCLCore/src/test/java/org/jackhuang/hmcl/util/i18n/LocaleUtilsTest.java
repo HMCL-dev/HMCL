@@ -192,7 +192,7 @@ public final class LocaleUtilsTest {
     }
 
     @Test
-    public void testMapToISO2Language() throws IOException {
+    public void testMapToISO2Language() {
         assertEquals("en", LocaleUtils.mapToISO2Language("eng"));
         assertEquals("es", LocaleUtils.mapToISO2Language("spa"));
         assertEquals("ja", LocaleUtils.mapToISO2Language("jpn"));
@@ -206,5 +206,18 @@ public final class LocaleUtilsTest {
         assertNull(LocaleUtils.mapToISO2Language("cmn"));
         assertNull(LocaleUtils.mapToISO2Language("lzh"));
         assertNull(LocaleUtils.mapToISO2Language("tlh"));
+    }
+
+    @Test
+    public void testGetParentLanguage() {
+        assertEquals("zh", LocaleUtils.getParentLanguage("cmn"));
+        assertEquals("zh", LocaleUtils.getParentLanguage("yue"));
+        assertEquals("zh", LocaleUtils.getParentLanguage("lzh"));
+
+        assertNull(LocaleUtils.getParentLanguage(""));
+        assertNull(LocaleUtils.getParentLanguage("en"));
+        assertNull(LocaleUtils.getParentLanguage("eng"));
+        assertNull(LocaleUtils.getParentLanguage("zh"));
+        assertNull(LocaleUtils.getParentLanguage("zho"));
     }
 }
