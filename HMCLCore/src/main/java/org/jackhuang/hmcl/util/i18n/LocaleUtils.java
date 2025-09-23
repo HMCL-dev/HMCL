@@ -182,21 +182,18 @@ public final class LocaleUtils {
 
         ArrayList<Locale> result = new ArrayList<>();
         do {
-            List<String> languages;
+            String currentLanguage;
 
-            if (language.isEmpty()) {
-                result.add(Locale.ROOT);
-                break;
-            } else if (language.length() <= 2) {
-                languages = List.of(language);
+            if (language.length() <= 2) {
+                currentLanguage = language;
             } else {
                 String iso2 = mapToISO2Language(language);
-                languages = iso2 != null
-                        ? List.of(iso2)
-                        : List.of(language);
+                currentLanguage = iso2 != null
+                        ? iso2
+                        : language;
             }
 
-            addCandidateLocales(result, languages, script, region, variants);
+            addCandidateLocales(result, currentLanguage, script, region, variants);
         } while ((language = getParentLanguage(language)) != null);
 
         result.add(Locale.ROOT);
@@ -204,45 +201,33 @@ public final class LocaleUtils {
     }
 
     private static void addCandidateLocales(ArrayList<Locale> list,
-                                            List<String> languages,
+                                            String language,
                                             String script,
                                             String region,
                                             List<String> variants) {
         if (!variants.isEmpty()) {
             for (String v : variants) {
-                for (String language : languages) {
-                    list.add(getInstance(language, script, region, v));
-                }
+                list.add(getInstance(language, script, region, v));
             }
         }
         if (!region.isEmpty()) {
-            for (String language : languages) {
-                list.add(getInstance(language, script, region, ""));
-            }
+            list.add(getInstance(language, script, region, ""));
         }
         if (!script.isEmpty()) {
-            for (String language : languages) {
-                list.add(getInstance(language, script, "", ""));
-            }
+            list.add(getInstance(language, script, "", ""));
             if (!variants.isEmpty()) {
                 for (String v : variants) {
-                    for (String language : languages) {
-                        list.add(getInstance(language, "", region, v));
-                    }
+                    list.add(getInstance(language, "", region, v));
                 }
             }
             if (!region.isEmpty()) {
-                for (String language : languages) {
-                    list.add(getInstance(language, "", region, ""));
-                }
+                list.add(getInstance(language, "", region, ""));
             }
         }
 
-        for (String language : languages) {
-            list.add(getInstance(language, "", "", ""));
-        }
+        list.add(getInstance(language, "", "", ""));
 
-        if (languages.contains("zh")) {
+        if (language.equals("zh")) {
             if (list.contains(LocaleUtils.LOCALE_ZH_HANT) && !list.contains(Locale.TRADITIONAL_CHINESE)) {
                 int chineseIdx = list.indexOf(Locale.CHINESE);
                 if (chineseIdx >= 0)
