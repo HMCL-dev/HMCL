@@ -199,6 +199,7 @@ public final class LocaleUtils {
             addCandidateLocales(result, languages, script, region, variants);
         } while ((language = getParentLanguage(language)) != null);
 
+        result.add(Locale.ROOT);
         return List.copyOf(result);
     }
 
