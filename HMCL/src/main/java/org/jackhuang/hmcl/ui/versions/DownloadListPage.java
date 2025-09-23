@@ -397,14 +397,14 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
                     Holder<Runnable> changeButton = new Holder<>();
 
-                    JFXButton firstPageButton = FXUtils.newRaisedBorderButton(i18n("search.first_page"));
+                    JFXButton firstPageButton = FXUtils.newBorderButton(i18n("search.first_page"));
                     firstPageButton.setOnAction(event -> {
                         control.pageOffset.set(0);
                         searchAction.handle(event);
                         changeButton.value.run();
                     });
 
-                    JFXButton previousPageButton = FXUtils.newRaisedBorderButton(i18n("search.previous_page"));
+                    JFXButton previousPageButton = FXUtils.newBorderButton(i18n("search.previous_page"));
                     previousPageButton.setOnAction(event -> {
                         int pageOffset = control.pageOffset.get();
                         if (pageOffset > 0) {
@@ -420,7 +420,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         return i18n("search.page_n", control.pageOffset.get() + 1, pageCount == -1 ? "-" : String.valueOf(pageCount));
                     }, control.pageOffset, control.pageCount));
 
-                    JFXButton nextPageButton = FXUtils.newRaisedBorderButton(i18n("search.next_page"));
+                    JFXButton nextPageButton = FXUtils.newBorderButton(i18n("search.next_page"));
                     nextPageButton.setOnAction(event -> {
                         int nv = control.pageOffset.get() + 1;
                         if (nv < control.pageCount.get()) {
@@ -430,7 +430,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         }
                     });
 
-                    JFXButton lastPageButton = FXUtils.newRaisedBorderButton(i18n("search.last_page"));
+                    JFXButton lastPageButton = FXUtils.newBorderButton(i18n("search.last_page"));
                     lastPageButton.setOnAction(event -> {
                         control.pageOffset.set(control.pageCount.get() - 1);
                         searchAction.handle(event);
