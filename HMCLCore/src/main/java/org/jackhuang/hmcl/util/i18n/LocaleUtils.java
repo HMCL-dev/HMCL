@@ -116,24 +116,25 @@ public final class LocaleUtils {
                 : locale.stripExtensions().toLanguageTag();
     }
 
-    public static @NotNull String getISO2Language(Locale locale) {
-        String language = locale.getLanguage();
+    public static @NotNull String getRootLanguage(Locale locale) {
+        return getRootLanguage(locale.getLanguage());
+    }
+
+    /// 如果 `language` 是其他语言的子语言，那么返回其父语言；
+    /// 如果 `language` 是 ISO 639 alpha-3 语言代码，且存在对应的 ISO 639 alpha-2 语言代码，那么返回 ISO 639 alpha-2 语言代码；
+    /// 如果 `language` 为空，则返回 `en`；
+    /// 否则，返回 `language`。
+    public static @NotNull String getRootLanguage(String language) {
         if (language.isEmpty()) return "en";
         if (language.length() <= 2)
             return language;
 
-        String lang = language;
-        while (lang != null) {
-            if (lang.length() <= 2)
-                return lang;
-            else {
-                String iso1 = mapToISO2Language(lang);
-                if (iso1 != null)
-                    return iso1;
-            }
-            lang = getParentLanguage(lang);
-        }
-        return language;
+        String iso2 = mapToISO2Language(language);
+        if (iso2 != null)
+            return iso2;
+
+        String parent = getParentLanguage(language);
+        return parent != null ? parent : language;
     }
 
     /// Get the script of the locale. If the script is empty and the language is Chinese,
@@ -358,20 +359,18 @@ public final class LocaleUtils {
     }
 
     public static @Nullable String getParentLanguage(String language) {
-        return !language.isEmpty()
-                ? subLanguageToParent.getOrDefault(language, "")
-                : null;
+        return subLanguageToParent.get(language);
     }
 
     public static boolean isEnglish(Locale locale) {
-        return "en".equals(getISO2Language(locale));
+        return "en".equals(getRootLanguage(locale));
     }
 
     public static final Set<String> CHINESE_TRADITIONAL_REGIONS = Set.of("TW", "HK", "MO");
     public static final Set<String> CHINESE_LATN_VARIANTS = Set.of("pinyin", "wadegile", "tongyong");
 
     public static boolean isChinese(Locale locale) {
-        return "zh".equals(getISO2Language(locale));
+        return "zh".equals(getRootLanguage(locale));
     }
 
     private LocaleUtils() {
