@@ -190,9 +190,9 @@ public final class LocaleUtils {
             } else if (language.length() <= 2) {
                 languages = List.of(language);
             } else {
-                String iso1Language = mapToISO2Language(language);
-                languages = iso1Language != null
-                        ? List.of(language, iso1Language)
+                String iso2 = mapToISO2Language(language);
+                languages = iso2 != null
+                        ? List.of(iso2)
                         : List.of(language);
             }
 
