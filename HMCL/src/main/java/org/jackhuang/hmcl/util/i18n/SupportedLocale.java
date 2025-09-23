@@ -147,7 +147,6 @@ public final class SupportedLocale {
                     } catch (Throwable e) {
                         LOG.warning("Failed to get localized name of " + it, e);
                     }
-
                     return it;
                 }).toList();
 
