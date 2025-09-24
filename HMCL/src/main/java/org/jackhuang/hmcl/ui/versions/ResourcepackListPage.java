@@ -22,13 +22,13 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.game.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -43,7 +43,7 @@ public class ResourcepackListPage extends ListPageBase<ResourcepackListPage.Reso
     private Path resourcepackDirectory;
 
     public ResourcepackListPage() {
-        FXUtils.applyDragListener(this, file -> file.isFile() && file.getName().endsWith(".zip"), files -> addFiles(files.stream().map(File::toPath).collect(Collectors.toList())));
+        FXUtils.applyDragListener(this, file -> file.toFile().isFile() && file.toFile().getName().endsWith(".zip"), files -> addFiles(new ArrayList<>(files)));
     }
 
     private static Node createIcon(Path img) {
@@ -73,7 +73,7 @@ public class ResourcepackListPage extends ListPageBase<ResourcepackListPage.Reso
 
     @Override
     public void loadVersion(Profile profile, String version) {
-        this.resourcepackDirectory = ((DefaultGameRepository)profile.getRepository()).getResourcepacksDirectory(version);
+        this.resourcepackDirectory = profile.getRepository().getResourcepacksDirectory(version);
 
         try {
             if (!Files.exists(resourcepackDirectory)) {
@@ -168,10 +168,10 @@ public class ResourcepackListPage extends ListPageBase<ResourcepackListPage.Reso
 
         public void onDelete() {
             try {
-                if (file.getFile().isDirectory()) {
-                    FileUtils.deleteDirectory(file.getFile());
+                if (file.getPath().toFile().isDirectory()) {
+                    FileUtils.deleteDirectory(file.getPath());
                 } else {
-                    Files.delete(file.getFile().toPath());
+                    Files.delete(file.getPath());
                 }
                 ResourcepackListPage.this.refresh();
             } catch (IOException e) {
@@ -181,7 +181,7 @@ public class ResourcepackListPage extends ListPageBase<ResourcepackListPage.Reso
         }
 
         public void onReveal() {
-            FXUtils.showFileInExplorer(file.getFile().toPath());
+            FXUtils.showFileInExplorer(file.getPath());
         }
 
         public ResourcepackFile getFile() {

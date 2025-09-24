@@ -2,7 +2,6 @@ package org.jackhuang.hmcl.resourcepack;
 
 import com.google.gson.JsonParser;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -12,7 +11,7 @@ public interface ResourcepackFile {
 
     String getName();
 
-    File getFile();
+    Path getPath();
 
     Path getIcon();
 
@@ -27,9 +26,9 @@ public interface ResourcepackFile {
 
     static ResourcepackFile parse(Path path) throws IOException {
         if (Files.isRegularFile(path) && path.toString().toLowerCase().endsWith(".zip")) {
-            return new ResourcepackZipFile(path.toFile());
+            return new ResourcepackZipFile(path);
         } else if (Files.isDirectory(path) && Files.exists(path.resolve("pack.mcmeta"))) {
-            return new ResourcepackFolder(path.toFile());
+            return new ResourcepackFolder(path);
         }
         return null;
     }

@@ -2,7 +2,6 @@ package org.jackhuang.hmcl.resourcepack;
 
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
@@ -10,20 +9,20 @@ import java.nio.file.Path;
 
 public class ResourcepackZipFile implements ResourcepackFile {
     private final FileSystem zipfs;
-    private final File resourcepackfile;
+    private final Path resourcepackfile;
 
-    public ResourcepackZipFile(File resourcepackfile) throws IOException {
+    public ResourcepackZipFile(Path resourcepackfile) throws IOException {
         this.resourcepackfile = resourcepackfile;
-        this.zipfs = CompressingUtils.createReadOnlyZipFileSystem(resourcepackfile.toPath());
+        this.zipfs = CompressingUtils.createReadOnlyZipFileSystem(resourcepackfile);
     }
 
     @Override
     public String getName() {
-        return resourcepackfile.getName().replace(".zip", "");
+        return resourcepackfile.toFile().getName().replace(".zip", "");
     }
 
     @Override
-    public File getFile() {
+    public Path getPath() {
         return resourcepackfile;
     }
 
