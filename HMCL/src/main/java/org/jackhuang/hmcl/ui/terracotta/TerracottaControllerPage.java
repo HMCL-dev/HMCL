@@ -159,7 +159,7 @@ public class TerracottaControllerPage extends StackPane {
                 statusProperty.set(i18n("terracotta.status.uninitialized." + fork));
                 progressProperty.set(0);
 
-                TextFlow body = FXUtils.segmentToTextFlow(i18n("terracotta.network_warning"), Controllers::onHyperlinkAction);
+                TextFlow body = FXUtils.segmentToTextFlow(i18n("terracotta.first_time_warning"), Controllers::onHyperlinkAction);
                 body.setLineSpacing(4);
 
                 LineButton download = LineButton.of();
