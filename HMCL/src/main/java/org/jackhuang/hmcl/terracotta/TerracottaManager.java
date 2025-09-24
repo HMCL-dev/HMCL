@@ -85,21 +85,15 @@ public final class TerracottaManager {
     }
 
     static {
-        Lang.thread(new BackgroundDaemon(), "Terracotta Background Daemon", true);
-    }
-
-    private static final class BackgroundDaemon implements Runnable {
-
-        @Override
-        public void run() {
+        Lang.thread(() -> {
             while (true) {
                 TerracottaState state = STATE_V.get();
-                if (!(state instanceof TerracottaState.PortSpecific)) {
+                if (!(state instanceof TerracottaState.PortSpecific portSpecific)) {
                     LockSupport.parkNanos(500_000);
                     continue;
                 }
 
-                int port = ((TerracottaState.PortSpecific) state).port;
+                int port = portSpecific.port;
                 int index = state instanceof TerracottaState.Ready ready ? ready.index : Integer.MIN_VALUE;
 
                 TerracottaState next;
@@ -128,8 +122,7 @@ public final class TerracottaManager {
 
                 LockSupport.parkNanos(500_000);
             }
-        }
-
+        }, "Terracotta Background Daemon", true);
     }
 
     public static boolean validate(Path file) {

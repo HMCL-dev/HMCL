@@ -71,6 +71,7 @@ public final class Launcher extends Application {
     @Override
     public void start(Stage primaryStage) {
         Thread.currentThread().setUncaughtExceptionHandler(CRASH_REPORTER);
+        Thread.currentThread().setPriority(Thread.MAX_PRIORITY);
 
         CookieHandler.setDefault(COOKIE_MANAGER);
 
