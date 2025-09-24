@@ -83,7 +83,7 @@ public abstract class FetchTask<T> extends Task<T> {
 
     protected abstract EnumCheckETag shouldCheckETag();
 
-    protected abstract Context getContext(URLConnection connection, boolean checkETag, String bmclapiHash) throws IOException;
+    protected abstract Context getContextForHttp(HttpResponse<?> response, boolean checkETag, String bmclapiHash) throws IOException;
 
     private URI failedURI;
     private Exception exception;
@@ -114,8 +114,8 @@ public abstract class FetchTask<T> extends Task<T> {
                     downloadNotHttp(uri, checkETag);
                 }
             }
-        } catch (InterruptedException e) {
-
+        } catch (InterruptedException ignored) {
+            // Cancelled
         } finally {
             SEMAPHORE.release();
         }
@@ -185,8 +185,8 @@ public abstract class FetchTask<T> extends Task<T> {
                 beforeDownload(uri);
                 updateProgress(0);
 
-
                 HttpResponse<InputStream> response;
+                String bmclapiHash = null;
 
                 URI currentURI = uri;
 
@@ -200,7 +200,7 @@ public abstract class FetchTask<T> extends Task<T> {
                     headers.forEach(requestBuilder::header);
                     response = NetworkUtils.HTTP_CLIENT.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofInputStream());
 
-                    String bmclapiHash = response.headers().firstValue("x-bmclapi-hash").orElse(null);
+                    bmclapiHash = response.headers().firstValue("x-bmclapi-hash").orElse(null);
                     if (DigestUtils.isSha1Digest(bmclapiHash)) {
                         Optional<Path> cache = repository.checkExistentFile(null, "SHA-1", bmclapiHash);
                         if (cache.isPresent()) {
@@ -266,7 +266,7 @@ public abstract class FetchTask<T> extends Task<T> {
                 long contentLength = response.headers().firstValueAsLong("content-length").orElse(-1L);
                 var contentEncoding = ContentEncoding.fromResponse(response);
 
-                download(null, // TODO: context
+                download(getContextForHttp(response, checkETag, bmclapiHash),
                         response.body(),
                         contentLength,
                         contentEncoding);
@@ -299,7 +299,7 @@ public abstract class FetchTask<T> extends Task<T> {
 
                 URLConnection conn = NetworkUtils.createConnection(uri);
 
-                download(getContext(conn, checkETag, null),
+                download(getContextForHttp(null, checkETag, null), // TODO
                         conn.getInputStream(),
                         conn.getContentLengthLong(),
                         ContentEncoding.fromConnection(conn));

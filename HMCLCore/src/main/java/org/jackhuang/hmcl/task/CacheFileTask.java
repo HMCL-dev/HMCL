@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
-import java.net.URLConnection;
+import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -69,7 +69,7 @@ public final class CacheFileTask extends FetchTask<Path> {
     }
 
     @Override
-    protected Context getContext(URLConnection connection, boolean checkETag, String bmclapiHash) throws IOException {
+    protected Context getContextForHttp(HttpResponse<?> response, boolean checkETag, String bmclapiHash) throws IOException {
         assert checkETag;
 
         Path temp = Files.createTempFile("hmcl-download-", null);
@@ -99,7 +99,7 @@ public final class CacheFileTask extends FetchTask<Path> {
                 }
 
                 try {
-                    setResult(repository.cacheRemoteFile(connection, temp));
+                    setResult(repository.cacheRemoteFile(response, temp));
                 } finally {
                     try {
                         Files.deleteIfExists(temp);

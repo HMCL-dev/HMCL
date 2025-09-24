@@ -24,7 +24,7 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URLConnection;
+import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -59,9 +59,9 @@ public final class GetTask extends FetchTask<String> {
     }
 
     @Override
-    protected Context getContext(URLConnection connection, boolean checkETag, String bmclapiHash) {
-        int length = connection.getContentLength();
-        final var baos = new ByteArrayOutputStream(length <= 0 ? 8192 : length);
+    protected Context getContextForHttp(HttpResponse<?> response, boolean checkETag, String bmclapiHash) {
+        long length = response.headers().firstValueAsLong("content-length").orElse(-1L);
+        final var baos = new ByteArrayOutputStream(length <= 0 ? 8192 : (int) length);
 
         return new Context() {
             @Override
@@ -73,11 +73,11 @@ public final class GetTask extends FetchTask<String> {
             public void close() throws IOException {
                 if (!isSuccess()) return;
 
-                String result = baos.toString(NetworkUtils.getCharsetFromContentType(connection.getContentType()));
+                String result = baos.toString(NetworkUtils.getCharsetFromContentType(response.headers().firstValue("content-type").orElse(null)));
                 setResult(result);
 
                 if (checkETag) {
-                    repository.cacheText(connection, result);
+                    repository.cacheText(response, result);
                 }
             }
         };

@@ -30,6 +30,7 @@ import java.io.*;
 import java.net.URI;
 import java.net.URLConnection;
 import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
@@ -228,7 +229,7 @@ public class CacheRepository {
         //     conn.setRequestProperty("If-Modified-Since", eTagItem.getRemoteLastModified());
     }
 
-    public Path cacheRemoteFile(URLConnection connection, Path downloaded) throws IOException {
+    public Path cacheRemoteFile(HttpResponse<?> connection, Path downloaded) throws IOException {
         return cacheData(connection, () -> {
             String hash = DigestUtils.digestToString(SHA1, downloaded);
             Path cached = cacheFile(downloaded, SHA1, hash);
@@ -236,11 +237,11 @@ public class CacheRepository {
         });
     }
 
-    public Path cacheText(URLConnection connection, String text) throws IOException {
+    public Path cacheText(HttpResponse<?> connection, String text) throws IOException {
         return cacheBytes(connection, text.getBytes(UTF_8));
     }
 
-    public Path cacheBytes(URLConnection connection, byte[] bytes) throws IOException {
+    public Path cacheBytes(HttpResponse<?> connection, byte[] bytes) throws IOException {
         return cacheData(connection, () -> {
             String hash = DigestUtils.digestToString(SHA1, bytes);
             Path cached = getFile(SHA1, hash);
@@ -252,20 +253,15 @@ public class CacheRepository {
 
     private static final Pattern MAX_AGE = Pattern.compile("(s-maxage|max-age)=(?<time>[0-9]+)");
 
-    private Path cacheData(URLConnection connection, ExceptionalSupplier<CacheResult, IOException> cacheSupplier) throws IOException {
-        String eTag = connection.getHeaderField("ETag");
+    private Path cacheData(HttpResponse<?> connection, ExceptionalSupplier<CacheResult, IOException> cacheSupplier) throws IOException {
+        String eTag = connection.headers().firstValue("etag").orElse(null);
         if (StringUtils.isBlank(eTag)) return null;
-        URI uri;
-        try {
-            uri = NetworkUtils.dropQuery(NetworkUtils.toURI(connection.getURL()));
-        } catch (IllegalArgumentException e) {
-            throw new IOException(e);
-        }
+        URI uri = NetworkUtils.dropQuery(connection.uri());
         long expires = 0L;
 
         expires:
         try {
-            String cacheControl = connection.getHeaderField("Cache-Control");
+            String cacheControl = connection.headers().firstValue("cache-control").orElse(null);
             if (StringUtils.isNotBlank(cacheControl)) {
                 if (cacheControl.contains("no-store"))
                     return null;
@@ -278,7 +274,7 @@ public class CacheRepository {
                 }
             }
 
-            String expiresHeader = connection.getHeaderField("Expires");
+            String expiresHeader = connection.headers().firstValue("expires").orElse(null);
             if (StringUtils.isNotBlank(expiresHeader)) {
                 expires = ZonedDateTime.parse(expiresHeader.trim(), DateTimeFormatter.RFC_1123_DATE_TIME)
                         .toInstant().toEpochMilli();
@@ -287,7 +283,7 @@ public class CacheRepository {
             LOG.warning("Failed to parse expires time", e);
         }
 
-        String lastModified = connection.getHeaderField("Last-Modified");
+        String lastModified = connection.headers().firstValue("last-modified").orElse(null);
 
         CacheResult cacheResult = cacheSupplier.get();
         ETagItem eTagItem = new ETagItem(uri.toString(),
