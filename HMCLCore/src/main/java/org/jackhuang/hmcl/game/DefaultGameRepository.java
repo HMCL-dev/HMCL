@@ -544,6 +544,6 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     public Path getResourcepacksDirectory(String id) {
-        return getRunDirectory(id).toPath().resolve("resourcepacks");
+        return getRunDirectory(id).resolve("resourcepacks");
     }
 }
