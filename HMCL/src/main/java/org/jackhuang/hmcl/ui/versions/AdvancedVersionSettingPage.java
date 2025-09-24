@@ -43,6 +43,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
     private final JFXTextField txtPreLaunchCommand;
     private final JFXTextField txtPostExitCommand;
     private final OptionToggleButton noJVMArgsPane;
+    private final OptionToggleButton noOptimizingJVMArgsPane;
     private final OptionToggleButton noGameCheckPane;
     private final OptionToggleButton noJVMCheckPane;
     private final OptionToggleButton noNativesPatchPane;
@@ -183,6 +184,10 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
             noJVMArgsPane = new OptionToggleButton();
             noJVMArgsPane.setTitle(i18n("settings.advanced.no_jvm_args"));
 
+            noOptimizingJVMArgsPane = new OptionToggleButton();
+            noOptimizingJVMArgsPane.setTitle(i18n("settings.advanced.no_optimizing_jvm_args"));
+            noOptimizingJVMArgsPane.disableProperty().bind(noJVMArgsPane.selectedProperty());
+
             noGameCheckPane = new OptionToggleButton();
             noGameCheckPane.setTitle(i18n("settings.advanced.dont_check_game_completeness"));
 
@@ -199,7 +204,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
             useNativeOpenALPane.setTitle(i18n("settings.advanced.use_native_openal"));
 
             workaroundPane.getContent().setAll(
-                    nativesDirSublist, rendererPane, noJVMArgsPane, noGameCheckPane,
+                    nativesDirSublist, rendererPane, noJVMArgsPane, noOptimizingJVMArgsPane, noGameCheckPane,
                     noJVMCheckPane, noNativesPatchPane
             );
 
@@ -235,6 +240,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
         noGameCheckPane.selectedProperty().bindBidirectional(versionSetting.notCheckGameProperty());
         noJVMCheckPane.selectedProperty().bindBidirectional(versionSetting.notCheckJVMProperty());
         noJVMArgsPane.selectedProperty().bindBidirectional(versionSetting.noJVMArgsProperty());
+        noOptimizingJVMArgsPane.selectedProperty().bindBidirectional(versionSetting.noOptimizingJVMArgsProperty());
         noNativesPatchPane.selectedProperty().bindBidirectional(versionSetting.notPatchNativesProperty());
         useNativeGLFWPane.selectedProperty().bindBidirectional(versionSetting.useNativeGLFWProperty());
         useNativeOpenALPane.selectedProperty().bindBidirectional(versionSetting.useNativeOpenALProperty());
@@ -245,12 +251,12 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
                 String nativesDirName = "natives-" + Platform.SYSTEM_PLATFORM;
                 if (versionId == null) {
                     return String.format("%s/%s/%s",
-                            profile.getRepository().getBaseDirectory().toPath().resolve("versions").toAbsolutePath().normalize(),
+                            profile.getRepository().getBaseDirectory().resolve("versions").toAbsolutePath().normalize(),
                             i18n("settings.advanced.natives_directory.default.version_id"),
                             nativesDirName
                     );
                 } else {
-                    return profile.getRepository().getVersionRoot(versionId).toPath()
+                    return profile.getRepository().getVersionRoot(versionId)
                             .toAbsolutePath().normalize()
                             .resolve(nativesDirName)
                             .toString();
@@ -276,6 +282,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
         noGameCheckPane.selectedProperty().unbindBidirectional(versionSetting.notCheckGameProperty());
         noJVMCheckPane.selectedProperty().unbindBidirectional(versionSetting.notCheckJVMProperty());
         noJVMArgsPane.selectedProperty().unbindBidirectional(versionSetting.noJVMArgsProperty());
+        noOptimizingJVMArgsPane.selectedProperty().unbindBidirectional(versionSetting.noOptimizingJVMArgsProperty());
         noNativesPatchPane.selectedProperty().unbindBidirectional(versionSetting.notPatchNativesProperty());
         useNativeGLFWPane.selectedProperty().unbindBidirectional(versionSetting.useNativeGLFWProperty());
         useNativeOpenALPane.selectedProperty().unbindBidirectional(versionSetting.useNativeOpenALProperty());

@@ -27,8 +27,7 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
-
-import java.util.Map;
+import org.jackhuang.hmcl.util.SettingsMap;
 
 import static javafx.beans.binding.Bindings.createBooleanBinding;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -73,7 +72,7 @@ public class InstallersPage extends AbstractInstallersPage {
     }
 
     @Override
-    public void cleanup(Map<String, Object> settings) {
+    public void cleanup(SettingsMap settings) {
     }
 
     private static boolean checkName(String name) {

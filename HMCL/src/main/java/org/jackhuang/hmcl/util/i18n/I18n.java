@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.util.i18n;
 
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
-import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +33,7 @@ public final class I18n {
     private I18n() {
     }
 
-    private static volatile SupportedLocale locale = Locales.DEFAULT;
+    private static volatile SupportedLocale locale = SupportedLocale.DEFAULT;
 
     public static void setLocale(SupportedLocale locale) {
         I18n.locale = locale;
@@ -71,6 +70,11 @@ public final class I18n {
             else
                 return WenyanUtils.translateGenericVersion(version.getSelfVersion());
         }
+
+        if (LocaleUtils.isEnglish(locale.getLocale()) && "Qabs".equals(LocaleUtils.getScript(locale.getLocale()))) {
+            return UpsideDownUtils.translate(version.getSelfVersion());
+        }
+
         return version.getSelfVersion();
     }
 

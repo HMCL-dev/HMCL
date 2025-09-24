@@ -1,4 +1,7 @@
-import org.jackhuang.hmcl.gradle.CheckTranslations
+import org.jackhuang.hmcl.gradle.l10n.CheckTranslations
+import org.jackhuang.hmcl.gradle.l10n.CreateLanguageList
+import org.jackhuang.hmcl.gradle.l10n.CreateLocaleNamesResourceBundle
+import org.jackhuang.hmcl.gradle.l10n.UpsideDownTranslate
 import org.jackhuang.hmcl.gradle.mod.ParseModDataTask
 import java.net.URI
 import java.nio.file.FileSystems
@@ -206,10 +209,19 @@ tasks.shadowJar {
 
 tasks.processResources {
     dependsOn(createPropertiesFile)
+    dependsOn(upsideDownTranslate)
+    dependsOn(createLocaleNamesResourceBundle)
+    dependsOn(createLanguageList)
 
     into("assets/") {
         from(hmclPropertiesFile)
         from(embedResources)
+    }
+
+    into("assets/lang") {
+        from(createLanguageList.map { it.outputFile })
+        from(upsideDownTranslate.map { it.outputFile })
+        from(createLocaleNamesResourceBundle.map { it.outputDirectory })
     }
 }
 
@@ -342,6 +354,29 @@ tasks.register<CheckTranslations>("checkTranslations") {
     simplifiedChineseFile.set(dir.file("I18N_zh_CN.properties"))
     traditionalChineseFile.set(dir.file("I18N_zh.properties"))
     classicalChineseFile.set(dir.file("I18N_lzh.properties"))
+}
+
+// l10n
+
+val generatedDir = layout.buildDirectory.dir("generated")
+
+val upsideDownTranslate by tasks.registering(UpsideDownTranslate::class) {
+    inputFile.set(layout.projectDirectory.file("src/main/resources/assets/lang/I18N.properties"))
+    outputFile.set(generatedDir.map { it.file("generated/i18n/I18N_en_Qabs.properties") })
+}
+
+val createLanguageList by tasks.registering(CreateLanguageList::class) {
+    resourceBundleDir.set(layout.projectDirectory.dir("src/main/resources/assets/lang"))
+    resourceBundleBaseName.set("I18N")
+    additionalLanguages.set(listOf("en-Qabs"))
+    outputFile.set(generatedDir.map { it.file("languages.json") })
+}
+
+val createLocaleNamesResourceBundle by tasks.registering(CreateLocaleNamesResourceBundle::class) {
+    dependsOn(createLanguageList)
+
+    languagesFile.set(createLanguageList.flatMap { it.outputFile })
+    outputDirectory.set(generatedDir.map { it.dir("generated/LocaleNames") })
 }
 
 // mcmod data

@@ -39,7 +39,7 @@ import org.jackhuang.hmcl.ui.construct.ComponentSublist;
 import org.jackhuang.hmcl.ui.construct.MultiFileItem;
 import org.jackhuang.hmcl.ui.construct.OptionToggleButton;
 import org.jackhuang.hmcl.util.i18n.I18n;
-import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
+import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 
 import java.util.Arrays;
 
@@ -236,7 +236,7 @@ public abstract class SettingsView extends StackPane {
     }
 
     public void openLogFolder() {
-        FXUtils.openFolder(LOG.getLogFile().getParent().toFile());
+        FXUtils.openFolder(LOG.getLogFile().getParent());
     }
 
     protected abstract void onUpdate();
