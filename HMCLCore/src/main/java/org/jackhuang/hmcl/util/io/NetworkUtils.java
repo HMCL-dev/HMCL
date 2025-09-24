@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.net.*;
+import java.net.http.HttpClient;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.Map.Entry;
@@ -39,6 +40,9 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  * @author huangyuhui
  */
 public final class NetworkUtils {
+    public static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
+            .build();
+
     public static final String PARAMETER_SEPARATOR = "&";
     public static final String NAME_VALUE_SEPARATOR = "=";
     public static final int TIME_OUT = 8000;

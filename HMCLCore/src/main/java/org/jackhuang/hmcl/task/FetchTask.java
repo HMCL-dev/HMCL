@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.task;
 
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventBus;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -30,16 +31,17 @@ import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URLConnection;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.Lang.threadPool;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -58,7 +60,7 @@ public abstract class FetchTask<T> extends Task<T> {
         if (this.uris.isEmpty())
             throw new IllegalArgumentException("At least one URL is required");
 
-        setExecutor(download());
+        setExecutor(DOWNLOAD_EXECUTOR);
     }
 
     public void setRetry(int retry) {
@@ -342,39 +344,70 @@ public abstract class FetchTask<T> extends Task<T> {
     }
 
     public static int DEFAULT_CONCURRENCY = Math.min(Runtime.getRuntime().availableProcessors() * 4, 64);
+    private static final Semaphore SEMAPHORE = new Semaphore(DEFAULT_CONCURRENCY);
     private static int downloadExecutorConcurrency = DEFAULT_CONCURRENCY;
-    private static volatile ThreadPoolExecutor DOWNLOAD_EXECUTOR;
 
-    /**
-     * Get singleton instance of the thread pool for file downloading.
-     *
-     * @return Thread pool for FetchTask
-     */
-    protected static ExecutorService download() {
-        if (DOWNLOAD_EXECUTOR == null) {
-            synchronized (Schedulers.class) {
-                if (DOWNLOAD_EXECUTOR == null) {
-                    DOWNLOAD_EXECUTOR = threadPool("Download", true, downloadExecutorConcurrency, 10, TimeUnit.SECONDS);
-                }
+    protected static final ExecutorService DOWNLOAD_EXECUTOR;
+
+    static {
+        ExecutorService executorService = null;
+
+        if (JavaRuntime.CURRENT_VERSION >= 21) {
+            try {
+                MethodHandles.Lookup lookup = MethodHandles.publicLookup();
+
+                Class<?> vtBuilderCls = Class.forName("java.lang.Thread$Builder$OfVirtual");
+
+                Object virtualBuilder = lookup.findStatic(Thread.class, "ofVirtual", MethodType.methodType(vtBuilderCls)).invoke();
+                virtualBuilder = lookup.findVirtual(vtBuilderCls, "name", MethodType.methodType(vtBuilderCls, String.class, long.class))
+                        .invoke(virtualBuilder, "Download", 10L);
+
+                ThreadFactory threadFactory = (ThreadFactory) lookup.findVirtual(vtBuilderCls, "factory", MethodType.methodType(ThreadFactory.class))
+                        .invoke(virtualBuilder);
+
+                executorService = (ExecutorService)
+                        lookup.findStatic(Executors.class, "newThreadPerTaskExecutor", MethodType.methodType(ExecutorService.class, ThreadFactory.class))
+                                .invoke(threadFactory);
+            } catch (Throwable e) {
+                LOG.warning("Failed to initialize download executor", e);
             }
         }
-
-        return DOWNLOAD_EXECUTOR;
+        if (executorService == null)
+            executorService = threadPool("Download", true, downloadExecutorConcurrency, 10, TimeUnit.SECONDS);
+        DOWNLOAD_EXECUTOR = executorService;
     }
 
     public static void setDownloadExecutorConcurrency(int concurrency) {
         concurrency = Math.max(concurrency, 1);
+
         synchronized (Schedulers.class) {
+            int prevDownloadExecutorConcurrency = downloadExecutorConcurrency;
             downloadExecutorConcurrency = concurrency;
 
-            ThreadPoolExecutor downloadExecutor = DOWNLOAD_EXECUTOR;
-            if (downloadExecutor != null) {
+            int change = concurrency - prevDownloadExecutorConcurrency;
+            if (change != 0 && DOWNLOAD_EXECUTOR instanceof ThreadPoolExecutor downloadExecutor) {
                 if (downloadExecutor.getMaximumPoolSize() <= concurrency) {
                     downloadExecutor.setMaximumPoolSize(concurrency);
                     downloadExecutor.setCorePoolSize(concurrency);
                 } else {
                     downloadExecutor.setCorePoolSize(concurrency);
                     downloadExecutor.setMaximumPoolSize(concurrency);
+                }
+            }
+
+            if (change > 0) {
+                SEMAPHORE.release(change);
+            } else if (change < 0) {
+                int permits = -change;
+
+                if (!SEMAPHORE.tryAcquire(permits)) {
+                    thread(() -> {
+                        try {
+                            SEMAPHORE.acquire(permits);
+                        } catch (InterruptedException e) {
+                            throw new AssertionError(e);
+                        }
+                    }, "Semaphore Acquirer", true);
                 }
             }
         }
