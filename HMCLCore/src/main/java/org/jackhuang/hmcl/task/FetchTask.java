@@ -37,9 +37,11 @@ import java.lang.invoke.MethodType;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URLConnection;
+import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -49,6 +51,10 @@ import static org.jackhuang.hmcl.util.Lang.threadPool;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public abstract class FetchTask<T> extends Task<T> {
+    private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofMillis(NetworkUtils.TIME_OUT))
+            .build();
+
     protected static final int DEFAULT_RETRY = 3;
 
     protected final List<URI> uris;
@@ -201,7 +207,7 @@ public abstract class FetchTask<T> extends Task<T> {
                 do {
                     HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(currentURI);
                     headers.forEach(requestBuilder::header);
-                    response = NetworkUtils.HTTP_CLIENT.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofInputStream());
+                    response = HTTP_CLIENT.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofInputStream());
 
                     bmclapiHash = response.headers().firstValue("x-bmclapi-hash").orElse(null);
                     if (DigestUtils.isSha1Digest(bmclapiHash)) {
