@@ -164,7 +164,6 @@ public abstract class FetchTask<T> extends Task<T> {
 
             context.withResult(true);
         }
-
     }
 
     private boolean downloadHttp(URI uri, boolean checkETag) throws InterruptedException {
