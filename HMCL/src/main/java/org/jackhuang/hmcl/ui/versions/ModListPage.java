@@ -39,9 +39,9 @@ import org.jackhuang.hmcl.ui.construct.PageAware;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -62,7 +62,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         FXUtils.applyDragListener(this, it -> Arrays.asList("jar", "zip", "litemod").contains(FileUtils.getExtension(it)), mods -> {
             mods.forEach(it -> {
                 try {
-                    modManager.addMod(it.toPath());
+                    modManager.addMod(it);
                 } catch (IOException | IllegalArgumentException e) {
                     LOG.warning("Unable to parse mod file " + it, e);
                 }
@@ -117,7 +117,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("mods.choose_mod"));
         chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(i18n("extension.mod"), "*.jar", "*.zip", "*.litemod"));
-        List<File> res = chooser.showOpenMultipleDialog(Controllers.getStage());
+        List<Path> res = FileUtils.toPaths(chooser.showOpenMultipleDialog(Controllers.getStage()));
 
         if (res == null) return;
 
@@ -126,13 +126,13 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         List<String> failed = new ArrayList<>();
 
         Task.runAsync(() -> {
-            for (File file : res) {
+            for (Path file : res) {
                 try {
-                    modManager.addMod(file.toPath());
-                    succeeded.add(file.getName());
+                    modManager.addMod(file);
+                    succeeded.add(FileUtils.getName(file));
                 } catch (Exception e) {
                     LOG.warning("Unable to add mod " + file, e);
-                    failed.add(file.getName());
+                    failed.add(FileUtils.getName(file));
 
                     // Actually addMod will not throw exceptions because FileChooser has already filtered files.
                 }
@@ -175,7 +175,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     }
 
     public void openModFolder() {
-        FXUtils.openFolder(new File(profile.getRepository().getRunDirectory(versionId), "mods"));
+        FXUtils.openFolder(profile.getRepository().getRunDirectory(versionId).resolve("mods"));
     }
 
     public void checkUpdates() {

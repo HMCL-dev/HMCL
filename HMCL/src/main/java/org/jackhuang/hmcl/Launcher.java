@@ -75,13 +75,7 @@ public final class Launcher extends Application {
         CookieHandler.setDefault(COOKIE_MANAGER);
 
         LOG.info("JavaFX Version: " + System.getProperty("javafx.runtime.version"));
-        try {
-            Object pipeline = Class.forName("com.sun.prism.GraphicsPipeline").getMethod("getPipeline").invoke(null);
-            LOG.info("Prism pipeline: " + (pipeline == null ? "null" : pipeline.getClass().getName()));
-        } catch (Throwable e) {
-            LOG.warning("Failed to get prism pipeline", e);
-        }
-
+        LOG.info("Prism Pipeline: " + FXUtils.GRAPHICS_PIPELINE);
         LOG.info("Dark Mode: " + Optional.ofNullable(FXUtils.DARK_MODE).map(ObservableBooleanValue::get).orElse(false));
         LOG.info("Reduced Motion: " + Objects.requireNonNullElse(FXUtils.REDUCED_MOTION, false));
 
@@ -243,8 +237,8 @@ public final class Launcher extends Application {
         try {
             LOG.info("*** " + Metadata.TITLE + " ***");
             LOG.info("Operating System: " + (OperatingSystem.OS_RELEASE_PRETTY_NAME == null
-                    ? OperatingSystem.SYSTEM_NAME + ' ' + OperatingSystem.SYSTEM_VERSION
-                    : OperatingSystem.OS_RELEASE_PRETTY_NAME + " (" + OperatingSystem.SYSTEM_NAME + ' ' + OperatingSystem.SYSTEM_VERSION + ')'));
+                    ? OperatingSystem.SYSTEM_NAME + ' ' + OperatingSystem.SYSTEM_VERSION.getVersion()
+                    : OperatingSystem.OS_RELEASE_PRETTY_NAME + " (" + OperatingSystem.SYSTEM_NAME + ' ' + OperatingSystem.SYSTEM_VERSION.getVersion() + ')'));
             if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                 LOG.info("Processor Identifier: " + System.getenv("PROCESSOR_IDENTIFIER"));
             }

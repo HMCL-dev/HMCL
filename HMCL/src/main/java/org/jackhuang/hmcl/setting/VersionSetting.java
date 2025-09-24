@@ -380,6 +380,20 @@ public final class VersionSetting implements Cloneable, Observable {
         noJVMArgsProperty.set(noJVMArgs);
     }
 
+    private final BooleanProperty noOptimizingJVMArgsProperty = new SimpleBooleanProperty(this, "noOptimizingJVMArgs", false);
+
+    public BooleanProperty noOptimizingJVMArgsProperty() {
+        return noOptimizingJVMArgsProperty;
+    }
+
+    public boolean isNoOptimizingJVMArgs() {
+        return noOptimizingJVMArgsProperty.get();
+    }
+
+    public void setNoOptimizingJVMArgs(boolean noOptimizingJVMArgs) {
+        noOptimizingJVMArgsProperty.set(noOptimizingJVMArgs);
+    }
+
     private final BooleanProperty notCheckJVMProperty = new SimpleBooleanProperty(this, "notCheckJVM", false);
 
     public BooleanProperty notCheckJVMProperty() {
