@@ -29,7 +29,6 @@ public class ResourcepackZipFile implements ResourcepackFile {
 
     @Override
     public String getDescription() {
-
         try {
             return parseDescriptionFromJson(Files.readString(zipfs.getPath("pack.mcmeta")));
         } catch (Exception ignored) {
