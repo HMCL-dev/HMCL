@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.game.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -72,7 +73,7 @@ public class ResourcepackListPage extends ListPageBase<ResourcepackListPage.Reso
 
     @Override
     public void loadVersion(Profile profile, String version) {
-        this.resourcepackDirectory = profile.getRepository().getResourcepacksDirectory(version);
+        this.resourcepackDirectory = ((DefaultGameRepository)profile.getRepository()).getResourcepacksDirectory(version);
 
         try {
             if (!Files.exists(resourcepackDirectory)) {
