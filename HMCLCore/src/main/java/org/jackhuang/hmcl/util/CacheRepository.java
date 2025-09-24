@@ -23,12 +23,13 @@ import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URLConnection;
+import java.net.http.HttpRequest;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
@@ -184,15 +185,35 @@ public class CacheRepository {
         }
     }
 
-    public void injectConnection(HttpURLConnection conn) {
-        conn.setUseCaches(true);
-
-        URI uri;
+    public @NotNull Map<String, String> injectConnection(URI uri) {
         try {
-            uri = NetworkUtils.dropQuery(NetworkUtils.toURI(conn.getURL()));
+            uri = NetworkUtils.dropQuery(uri);
+        } catch (IllegalArgumentException e) {
+            return Map.of();
+        }
+
+        ETagItem eTagItem;
+        lock.readLock().lock();
+        try {
+            eTagItem = index.get(uri);
+        } finally {
+            lock.readLock().unlock();
+        }
+        if (eTagItem == null) return Map.of();
+        if (eTagItem.eTag != null)
+            return Map.of("if-none-match", eTagItem.eTag);
+        // if (eTagItem.getRemoteLastModified() != null)
+        //     conn.setRequestProperty("If-Modified-Since", eTagItem.getRemoteLastModified());
+        return Map.of();
+    }
+
+    public void injectConnection(URI uri, HttpRequest.Builder requestBuilder) {
+        try {
+            uri = NetworkUtils.dropQuery(uri);
         } catch (IllegalArgumentException e) {
             return;
         }
+
         ETagItem eTagItem;
         lock.readLock().lock();
         try {
@@ -202,7 +223,7 @@ public class CacheRepository {
         }
         if (eTagItem == null) return;
         if (eTagItem.eTag != null)
-            conn.setRequestProperty("If-None-Match", eTagItem.eTag);
+            requestBuilder.header("if-none-match", eTagItem.eTag);
         // if (eTagItem.getRemoteLastModified() != null)
         //     conn.setRequestProperty("If-Modified-Since", eTagItem.getRemoteLastModified());
     }

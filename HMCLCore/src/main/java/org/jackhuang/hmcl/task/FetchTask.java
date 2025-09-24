@@ -36,6 +36,8 @@ import java.lang.invoke.MethodType;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URLConnection;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.*;
@@ -83,10 +85,13 @@ public abstract class FetchTask<T> extends Task<T> {
 
     protected abstract Context getContext(URLConnection connection, boolean checkETag, String bmclapiHash) throws IOException;
 
+    private URI failedURI;
+    private Exception exception;
+
     @Override
     public void execute() throws Exception {
-        Exception exception = null;
-        URI failedURI = null;
+        exception = null;
+
         boolean checkETag;
         switch (shouldCheckETag()) {
             case CHECK_E_TAG:
@@ -99,163 +104,220 @@ public abstract class FetchTask<T> extends Task<T> {
                 return;
         }
 
-        int repeat = 0;
-        download:
-        for (URI uri : uris) {
-            if (checkETag) {
-                // Handle cache
-                try {
-                    Path cache = repository.getCachedRemoteFile(uri, true);
-                    useCachedResult(cache);
-                    LOG.info("Using cached file for " + NetworkUtils.dropQuery(uri));
-                    return;
-                } catch (IOException ignored) {
+        SEMAPHORE.acquire();
+
+        try {
+            for (URI uri : uris) {
+                if (NetworkUtils.isHttpUri(uri)) {
+                    downloadHttp(uri, checkETag);
+                } else {
+                    downloadNotHttp(uri, checkETag);
                 }
             }
+        } catch (InterruptedException e) {
 
-            for (int retryTime = 0; retryTime < retry; retryTime++) {
-                if (isCancelled()) {
-                    break download;
-                }
-
-                List<URI> redirects = null;
-                String bmclapiHash = null;
-                try {
-                    beforeDownload(uri);
-                    updateProgress(0);
-
-                    URLConnection conn = NetworkUtils.createConnection(uri);
-
-                    if (conn instanceof HttpURLConnection httpConnection) {
-                        httpConnection.setRequestProperty("Accept-Encoding", "gzip");
-
-                        if (checkETag) repository.injectConnection(httpConnection);
-                        Map<String, List<String>> requestProperties = httpConnection.getRequestProperties();
-
-                        bmclapiHash = httpConnection.getHeaderField("x-bmclapi-hash");
-                        if (DigestUtils.isSha1Digest(bmclapiHash)) {
-                            Optional<Path> cache = repository.checkExistentFile(null, "SHA-1", bmclapiHash);
-                            if (cache.isPresent()) {
-                                useCachedResult(cache.get());
-                                LOG.info("Using cached file for " + NetworkUtils.dropQuery(uri));
-                                return;
-                            }
-                        } else {
-                            bmclapiHash = null;
-                        }
-
-                        while (true) {
-                            int code = httpConnection.getResponseCode();
-                            if (code >= 300 && code <= 308 && code != 306 && code != 304) {
-                                if (redirects == null) {
-                                    redirects = new ArrayList<>();
-                                } else if (redirects.size() >= 20) {
-                                    httpConnection.disconnect();
-                                    throw new IOException("Too much redirects");
-                                }
-
-                                String location = httpConnection.getHeaderField("Location");
-
-                                httpConnection.disconnect();
-                                if (StringUtils.isBlank(location))
-                                    throw new IOException("Redirected to an empty location");
-
-                                URI target = NetworkUtils.toURI(httpConnection.getURL())
-                                        .resolve(NetworkUtils.toURI(location));
-                                redirects.add(target);
-
-                                if (!NetworkUtils.isHttpUri(target))
-                                    throw new IOException("Redirected to not http URI: " + target);
-
-                                HttpURLConnection redirected = NetworkUtils.createHttpConnection(target);
-                                redirected.setUseCaches(checkETag);
-                                requestProperties
-                                        .forEach((key, values) ->
-                                                values.forEach(element ->
-                                                        redirected.addRequestProperty(key, element)));
-                                httpConnection = redirected;
-                            } else {
-                                break;
-                            }
-                        }
-                        conn = httpConnection;
-                        int responseCode = ((HttpURLConnection) conn).getResponseCode();
-
-                        if (responseCode == HttpURLConnection.HTTP_NOT_MODIFIED) {
-                            // Handle cache
-                            try {
-                                Path cache = repository.getCachedRemoteFile(NetworkUtils.toURI(conn.getURL()), false);
-                                useCachedResult(cache);
-                                LOG.info("Using cached file for " + NetworkUtils.dropQuery(uri));
-                                return;
-                            } catch (CacheRepository.CacheExpiredException e) {
-                                LOG.info("Cache expired for " + NetworkUtils.dropQuery(uri));
-                            } catch (IOException e) {
-                                LOG.warning("Unable to use cached file, redownload " + NetworkUtils.dropQuery(uri), e);
-                                repository.removeRemoteEntry(conn.getURL().toURI());
-                                // Now we must reconnect the server since 304 may result in empty content,
-                                // if we want to redownload the file, we must reconnect the server without etag settings.
-                                retryTime--;
-                                continue;
-                            }
-                        } else if (responseCode / 100 == 4) {
-                            throw new FileNotFoundException(uri.toString());
-                        } else if (responseCode / 100 != 2) {
-                            throw new ResponseCodeException(uri, responseCode);
-                        }
-                    }
-
-                    long contentLength = conn.getContentLengthLong();
-                    var encoding = ContentEncoding.fromConnection(conn);
-                    try (var context = getContext(conn, checkETag, bmclapiHash);
-                         var counter = new CounterInputStream(conn.getInputStream());
-                         var input = encoding.wrap(counter)) {
-                        long lastDownloaded = 0L;
-                        byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
-                        while (true) {
-                            if (isCancelled()) break;
-
-                            int len = input.read(buffer);
-                            if (len == -1) break;
-
-                            context.write(buffer, 0, len);
-
-                            if (contentLength >= 0) {
-                                // Update progress information per second
-                                updateProgress(counter.downloaded, contentLength);
-                            }
-
-                            updateDownloadSpeed(counter.downloaded - lastDownloaded);
-                            lastDownloaded = counter.downloaded;
-                        }
-
-                        if (isCancelled()) break download;
-
-                        updateDownloadSpeed(counter.downloaded - lastDownloaded);
-
-                        if (contentLength >= 0 && counter.downloaded != contentLength)
-                            throw new IOException("Unexpected file size: " + counter.downloaded + ", expected: " + contentLength);
-
-                        context.withResult(true);
-                    }
-
-                    return;
-                } catch (FileNotFoundException ex) {
-                    failedURI = uri;
-                    exception = ex;
-                    LOG.warning("Failed to download " + uri + ", not found" + (redirects == null ? "" : ", redirects: " + redirects), ex);
-
-                    break; // we will not try this URL again
-                } catch (IOException ex) {
-                    failedURI = uri;
-                    exception = ex;
-                    LOG.warning("Failed to download " + uri + ", repeat times: " + (++repeat) + (redirects == null ? "" : ", redirects: " + redirects), ex);
-                }
-            }
+        } finally {
+            SEMAPHORE.release();
         }
 
         if (exception != null)
             throw new DownloadException(failedURI, exception);
+    }
+
+    private void download(Context context,
+                          InputStream inputStream,
+                          long contentLength,
+                          ContentEncoding contentEncoding) throws IOException, InterruptedException {
+        try (var ignored = context;
+             var counter = new CounterInputStream(inputStream);
+             var input = contentEncoding.wrap(counter)) {
+            long lastDownloaded = 0L;
+            byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
+            while (true) {
+                if (isCancelled()) break;
+
+                int len = input.read(buffer);
+                if (len == -1) break;
+
+                context.write(buffer, 0, len);
+
+                if (contentLength >= 0) {
+                    // Update progress information per second
+                    updateProgress(counter.downloaded, contentLength);
+                }
+
+                updateDownloadSpeed(counter.downloaded - lastDownloaded);
+                lastDownloaded = counter.downloaded;
+            }
+
+            if (isCancelled())
+                throw new InterruptedException();
+
+            updateDownloadSpeed(counter.downloaded - lastDownloaded);
+
+            if (contentLength >= 0 && counter.downloaded != contentLength)
+                throw new IOException("Unexpected file size: " + counter.downloaded + ", expected: " + contentLength);
+
+            context.withResult(true);
+        }
+
+    }
+
+    private boolean downloadHttp(URI uri, boolean checkETag) throws InterruptedException {
+        if (checkETag) {
+            // Handle cache
+            try {
+                Path cache = repository.getCachedRemoteFile(uri, true);
+                useCachedResult(cache);
+                LOG.info("Using cached file for " + NetworkUtils.dropQuery(uri));
+                return true;
+            } catch (IOException ignored) {
+            }
+        }
+
+        for (int retryTime = 0; retryTime < retry; retryTime++) {
+            if (isCancelled()) {
+                throw new InterruptedException();
+            }
+
+            List<URI> redirects = null;
+            try {
+                beforeDownload(uri);
+                updateProgress(0);
+
+
+                HttpResponse<InputStream> response;
+
+                URI currentURI = uri;
+
+                LinkedHashMap<String, String> headers = new LinkedHashMap<>();
+                headers.put("accept-encoding", "gzip");
+                if (checkETag)
+                    headers.putAll(repository.injectConnection(uri));
+
+                do {
+                    HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(currentURI);
+                    headers.forEach(requestBuilder::header);
+                    response = NetworkUtils.HTTP_CLIENT.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofInputStream());
+
+                    String bmclapiHash = response.headers().firstValue("x-bmclapi-hash").orElse(null);
+                    if (DigestUtils.isSha1Digest(bmclapiHash)) {
+                        Optional<Path> cache = repository.checkExistentFile(null, "SHA-1", bmclapiHash);
+                        if (cache.isPresent()) {
+                            useCachedResult(cache.get());
+                            LOG.info("Using cached file for " + NetworkUtils.dropQuery(uri));
+                            return true;
+                        }
+                    }
+
+                    int code = response.statusCode();
+                    if (code >= 300 && code <= 308 && code != 306 && code != 304) {
+                        if (redirects == null) {
+                            redirects = new ArrayList<>();
+                        } else if (redirects.size() >= 20) {
+                            throw new IOException("Too much redirects");
+                        }
+
+                        String location = response.headers().firstValue("Location").orElse(null);
+                        if (StringUtils.isBlank(location))
+                            throw new IOException("Redirected to an empty location");
+
+                        URI target = currentURI.resolve(location);
+                        redirects.add(target);
+
+                        if (!NetworkUtils.isHttpUri(target))
+                            throw new IOException("Redirected to not http URI: " + target);
+
+                        currentURI = target;
+                        IOUtils.closeQuietly(response.body());
+                    } else {
+                        break;
+                    }
+                } while (true);
+
+                int responseCode = response.statusCode();
+                if (responseCode == HttpURLConnection.HTTP_NOT_MODIFIED) {
+                    IOUtils.closeQuietly(response.body());
+                    // Handle cache
+                    try {
+                        Path cache = repository.getCachedRemoteFile(currentURI, false);
+                        useCachedResult(cache);
+                        LOG.info("Using cached file for " + NetworkUtils.dropQuery(uri));
+                        return true;
+                    } catch (CacheRepository.CacheExpiredException e) {
+                        LOG.info("Cache expired for " + NetworkUtils.dropQuery(uri));
+                    } catch (IOException e) {
+                        LOG.warning("Unable to use cached file, redownload " + NetworkUtils.dropQuery(uri), e);
+                        repository.removeRemoteEntry(currentURI);
+                        // Now we must reconnect the server since 304 may result in empty content,
+                        // if we want to redownload the file, we must reconnect the server without etag settings.
+                        retryTime--;
+                        continue;
+                    }
+                } else if (responseCode / 100 == 4) {
+                    IOUtils.closeQuietly(response.body());
+                    throw new FileNotFoundException(uri.toString());
+                } else if (responseCode / 100 != 2) {
+                    IOUtils.closeQuietly(response.body());
+                    throw new ResponseCodeException(uri, responseCode);
+                }
+
+
+                long contentLength = response.headers().firstValueAsLong("content-length").orElse(-1L);
+                var contentEncoding = ContentEncoding.fromResponse(response);
+
+                download(null, // TODO: context
+                        response.body(),
+                        contentLength,
+                        contentEncoding);
+                return true;
+            } catch (FileNotFoundException ex) {
+                failedURI = uri;
+                exception = ex;
+                LOG.warning("Failed to download " + uri + ", not found" + (redirects == null ? "" : ", redirects: " + redirects), ex);
+
+                break; // we will not try this URL again
+            } catch (IOException ex) {
+                failedURI = uri;
+                exception = ex;
+                LOG.warning("Failed to download " + uri + ", repeat times: " + retryTime + (redirects == null ? "" : ", redirects: " + redirects), ex);
+            }
+        }
+
+        return false;
+    }
+
+    private boolean downloadNotHttp(URI uri, boolean checkETag) throws InterruptedException {
+        for (int retryTime = 0; retryTime < retry; retryTime++) {
+            if (isCancelled()) {
+                throw new InterruptedException();
+            }
+
+            try {
+                beforeDownload(uri);
+                updateProgress(0);
+
+                URLConnection conn = NetworkUtils.createConnection(uri);
+
+                download(getContext(conn, checkETag, null),
+                        conn.getInputStream(),
+                        conn.getContentLengthLong(),
+                        ContentEncoding.fromConnection(conn));
+                return true;
+            } catch (FileNotFoundException ex) {
+                failedURI = uri;
+                exception = ex;
+                LOG.warning("Failed to download " + uri + ", not found", ex);
+
+                break; // we will not try this URL again
+            } catch (IOException ex) {
+                failedURI = uri;
+                exception = ex;
+                LOG.warning("Failed to download " + uri + ", repeat times: " + retryTime, ex);
+            }
+        }
+
+        return false;
     }
 
     private static final Timer timer = new Timer("DownloadSpeedRecorder", true);
