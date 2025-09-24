@@ -105,14 +105,13 @@ public abstract class FetchTask<T> extends Task<T> {
         }
 
         SEMAPHORE.acquire();
-
         try {
             for (URI uri : uris) {
-                if (NetworkUtils.isHttpUri(uri)) {
-                    downloadHttp(uri, checkETag);
-                } else {
-                    downloadNotHttp(uri, checkETag);
-                }
+                var result = NetworkUtils.isHttpUri(uri)
+                        ? downloadHttp(uri, checkETag)
+                        : downloadNotHttp(uri, checkETag);
+                if (result)
+                    return;
             }
         } catch (InterruptedException ignored) {
             // Cancelled
@@ -186,7 +185,7 @@ public abstract class FetchTask<T> extends Task<T> {
                 updateProgress(0);
 
                 HttpResponse<InputStream> response;
-                String bmclapiHash = null;
+                String bmclapiHash;
 
                 URI currentURI = uri;
 
