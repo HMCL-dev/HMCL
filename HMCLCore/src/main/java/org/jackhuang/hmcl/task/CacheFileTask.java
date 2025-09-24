@@ -45,6 +45,9 @@ public final class CacheFileTask extends FetchTask<Path> {
     public CacheFileTask(@NotNull URI uri) {
         super(List.of(uri));
         setName(uri.toString());
+
+        if (!NetworkUtils.isHttpUri(uri))
+            throw new IllegalArgumentException(uri.toString());
     }
 
     @Override
@@ -69,8 +72,9 @@ public final class CacheFileTask extends FetchTask<Path> {
     }
 
     @Override
-    protected Context getContextForHttp(HttpResponse<?> response, boolean checkETag, String bmclapiHash) throws IOException {
+    protected Context getContext(HttpResponse<?> response, boolean checkETag, String bmclapiHash) throws IOException {
         assert checkETag;
+        assert response != null;
 
         Path temp = Files.createTempFile("hmcl-download-", null);
         OutputStream fileOutput = Files.newOutputStream(temp);

@@ -28,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.URI;
-import java.net.URLConnection;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.channels.Channels;

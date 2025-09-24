@@ -64,6 +64,5 @@ public enum ContentEncoding {
         }
     }
 
-
     public abstract InputStream wrap(InputStream inputStream) throws IOException;
 }

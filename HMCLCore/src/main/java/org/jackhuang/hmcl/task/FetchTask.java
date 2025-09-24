@@ -29,6 +29,7 @@ import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.lang.invoke.MethodHandles;
@@ -83,7 +84,11 @@ public abstract class FetchTask<T> extends Task<T> {
 
     protected abstract EnumCheckETag shouldCheckETag();
 
-    protected abstract Context getContextForHttp(HttpResponse<?> response, boolean checkETag, String bmclapiHash) throws IOException;
+    private Context getContext() throws IOException {
+        return getContext(null, false, null);
+    }
+
+    protected abstract Context getContext(@Nullable HttpResponse<?> response, boolean checkETag, String bmclapiHash) throws IOException;
 
     private URI failedURI;
     private Exception exception;
@@ -109,7 +114,7 @@ public abstract class FetchTask<T> extends Task<T> {
             for (URI uri : uris) {
                 var result = NetworkUtils.isHttpUri(uri)
                         ? downloadHttp(uri, checkETag)
-                        : downloadNotHttp(uri, checkETag);
+                        : downloadNotHttp(uri);
                 if (result)
                     return;
             }
@@ -265,7 +270,7 @@ public abstract class FetchTask<T> extends Task<T> {
                 long contentLength = response.headers().firstValueAsLong("content-length").orElse(-1L);
                 var contentEncoding = ContentEncoding.fromResponse(response);
 
-                download(getContextForHttp(response, checkETag, bmclapiHash),
+                download(getContext(response, checkETag, bmclapiHash),
                         response.body(),
                         contentLength,
                         contentEncoding);
@@ -286,7 +291,7 @@ public abstract class FetchTask<T> extends Task<T> {
         return false;
     }
 
-    private boolean downloadNotHttp(URI uri, boolean checkETag) throws InterruptedException {
+    private boolean downloadNotHttp(URI uri) throws InterruptedException {
         for (int retryTime = 0; retryTime < retry; retryTime++) {
             if (isCancelled()) {
                 throw new InterruptedException();
@@ -297,8 +302,7 @@ public abstract class FetchTask<T> extends Task<T> {
                 updateProgress(0);
 
                 URLConnection conn = NetworkUtils.createConnection(uri);
-
-                download(getContextForHttp(null, checkETag, null), // TODO
+                download(getContext(),
                         conn.getInputStream(),
                         conn.getContentLengthLong(),
                         ContentEncoding.fromConnection(conn));
