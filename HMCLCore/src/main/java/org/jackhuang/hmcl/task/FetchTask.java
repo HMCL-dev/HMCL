@@ -459,7 +459,7 @@ public abstract class FetchTask<T> extends Task<T> {
 
                 Object virtualBuilder = lookup.findStatic(Thread.class, "ofVirtual", MethodType.methodType(vtBuilderCls)).invoke();
                 virtualBuilder = lookup.findVirtual(vtBuilderCls, "name", MethodType.methodType(vtBuilderCls, String.class, long.class))
-                        .invoke(virtualBuilder, "Download", 10L);
+                        .invoke(virtualBuilder, "Download", 0L);
 
                 ThreadFactory threadFactory = (ThreadFactory) lookup.findVirtual(vtBuilderCls, "factory", MethodType.methodType(ThreadFactory.class))
                         .invoke(virtualBuilder);
