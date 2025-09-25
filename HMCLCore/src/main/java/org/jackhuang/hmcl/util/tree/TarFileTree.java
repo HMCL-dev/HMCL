@@ -111,7 +111,6 @@ public final class TarFileTree extends ArchiveFileTree<TarArchiveReader, TarArch
                 source.getLastAccessTime(),
                 source.getCreationTime()
         );
-
     }
 
     @Override
