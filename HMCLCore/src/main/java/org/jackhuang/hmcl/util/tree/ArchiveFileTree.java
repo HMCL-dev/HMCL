@@ -225,6 +225,10 @@ public abstract class ArchiveFileTree<R, E extends ArchiveEntry> implements Clos
             return name;
         }
 
+        public @NotNull String getFullName() {
+            return fullName;
+        }
+
         public @Nullable E getEntry() {
             return entry;
         }
