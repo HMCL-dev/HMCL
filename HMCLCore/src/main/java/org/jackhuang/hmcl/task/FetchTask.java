@@ -207,7 +207,7 @@ public abstract class FetchTask<T> extends Task<T> {
                 do {
                     HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(currentURI);
                     headers.forEach(requestBuilder::header);
-                    response = HTTP_CLIENT.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofInputStream());
+                    response = HTTP_CLIENT.send(requestBuilder.build(), BODY_HANDLER);
 
                     bmclapiHash = response.headers().firstValue("x-bmclapi-hash").orElse(null);
                     if (DigestUtils.isSha1Digest(bmclapiHash)) {
@@ -238,7 +238,6 @@ public abstract class FetchTask<T> extends Task<T> {
                             throw new IOException("Redirected to not http URI: " + target);
 
                         currentURI = target;
-                        IOUtils.closeQuietly(response.body());
                     } else {
                         break;
                     }
@@ -246,7 +245,6 @@ public abstract class FetchTask<T> extends Task<T> {
 
                 int responseCode = response.statusCode();
                 if (responseCode == HttpURLConnection.HTTP_NOT_MODIFIED) {
-                    IOUtils.closeQuietly(response.body());
                     // Handle cache
                     try {
                         Path cache = repository.getCachedRemoteFile(currentURI, false);
@@ -264,13 +262,10 @@ public abstract class FetchTask<T> extends Task<T> {
                         continue;
                     }
                 } else if (responseCode / 100 == 4) {
-                    IOUtils.closeQuietly(response.body());
                     throw new FileNotFoundException(uri.toString());
                 } else if (responseCode / 100 != 2) {
-                    IOUtils.closeQuietly(response.body());
                     throw new ResponseCodeException(uri, responseCode);
                 }
-
 
                 long contentLength = response.headers().firstValueAsLong("content-length").orElse(-1L);
                 var contentEncoding = ContentEncoding.fromResponse(response);
@@ -412,6 +407,13 @@ public abstract class FetchTask<T> extends Task<T> {
         NOT_CHECK_E_TAG,
         CACHED
     }
+
+    private static final HttpResponse.BodyHandler<InputStream> BODY_HANDLER = responseInfo -> {
+        if (responseInfo.statusCode() / 2 == 100)
+            return HttpResponse.BodySubscribers.ofInputStream();
+        else
+            return HttpResponse.BodySubscribers.replacing(null);
+    };
 
     public static int DEFAULT_CONCURRENCY = Math.min(Runtime.getRuntime().availableProcessors() * 4, 64);
     private static final Semaphore SEMAPHORE = new Semaphore(DEFAULT_CONCURRENCY);
