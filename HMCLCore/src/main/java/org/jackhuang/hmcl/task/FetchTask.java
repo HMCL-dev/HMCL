@@ -96,13 +96,8 @@ public abstract class FetchTask<T> extends Task<T> {
 
     protected abstract Context getContext(@Nullable HttpResponse<?> response, boolean checkETag, String bmclapiHash) throws IOException;
 
-    private URI failedURI;
-    private Exception exception;
-
     @Override
     public void execute() throws Exception {
-        exception = null;
-
         boolean checkETag;
         switch (shouldCheckETag()) {
             case CHECK_E_TAG:
@@ -115,14 +110,22 @@ public abstract class FetchTask<T> extends Task<T> {
                 return;
         }
 
+        ArrayList<DownloadException> exceptions = null;
+
         SEMAPHORE.acquire();
         try {
             for (URI uri : uris) {
-                var result = NetworkUtils.isHttpUri(uri)
-                        ? downloadHttp(uri, checkETag)
-                        : downloadNotHttp(uri);
-                if (result)
+                try {
+                    if (NetworkUtils.isHttpUri(uri))
+                        downloadHttp(uri, checkETag);
+                    else
+                        downloadNotHttp(uri);
                     return;
+                } catch (DownloadException e) {
+                    if (exceptions == null)
+                        exceptions = new ArrayList<>();
+                    exceptions.add(e);
+                }
             }
         } catch (InterruptedException ignored) {
             // Cancelled
@@ -130,8 +133,13 @@ public abstract class FetchTask<T> extends Task<T> {
             SEMAPHORE.release();
         }
 
-        if (exception != null)
-            throw new DownloadException(failedURI, exception);
+        if (exceptions != null) {
+            DownloadException last = exceptions.remove(exceptions.size() - 1);
+            for (DownloadException exception : exceptions) {
+                last.addSuppressed(exception);
+            }
+            throw last;
+        }
     }
 
     private void download(Context context,
@@ -172,17 +180,19 @@ public abstract class FetchTask<T> extends Task<T> {
         }
     }
 
-    private boolean downloadHttp(URI uri, boolean checkETag) throws InterruptedException {
+    private void downloadHttp(URI uri, boolean checkETag) throws DownloadException, InterruptedException {
         if (checkETag) {
             // Handle cache
             try {
                 Path cache = repository.getCachedRemoteFile(uri, true);
                 useCachedResult(cache);
                 LOG.info("Using cached file for " + NetworkUtils.dropQuery(uri));
-                return true;
+                return;
             } catch (IOException ignored) {
             }
         }
+
+        ArrayList<IOException> exceptions = null;
 
         for (int retryTime = 0; retryTime < retry; retryTime++) {
             if (isCancelled()) {
@@ -215,7 +225,7 @@ public abstract class FetchTask<T> extends Task<T> {
                         if (cache.isPresent()) {
                             useCachedResult(cache.get());
                             LOG.info("Using cached file for " + NetworkUtils.dropQuery(uri));
-                            return true;
+                            return;
                         }
                     }
 
@@ -250,7 +260,7 @@ public abstract class FetchTask<T> extends Task<T> {
                         Path cache = repository.getCachedRemoteFile(currentURI, false);
                         useCachedResult(cache);
                         LOG.info("Using cached file for " + NetworkUtils.dropQuery(uri));
-                        return true;
+                        return;
                     } catch (CacheRepository.CacheExpiredException e) {
                         LOG.info("Cache expired for " + NetworkUtils.dropQuery(uri));
                     } catch (IOException e) {
@@ -274,24 +284,25 @@ public abstract class FetchTask<T> extends Task<T> {
                         response.body(),
                         contentLength,
                         contentEncoding);
-                return true;
+                return;
             } catch (FileNotFoundException ex) {
-                failedURI = uri;
-                exception = ex;
                 LOG.warning("Failed to download " + uri + ", not found" + (redirects == null ? "" : ", redirects: " + redirects), ex);
-
-                break; // we will not try this URL again
+                throw toDownloadException(uri, ex, exceptions); // we will not try this URL again
             } catch (IOException ex) {
-                failedURI = uri;
-                exception = ex;
+                if (exceptions == null)
+                    exceptions = new ArrayList<>();
+
+                exceptions.add(ex);
+
                 LOG.warning("Failed to download " + uri + ", repeat times: " + retryTime + (redirects == null ? "" : ", redirects: " + redirects), ex);
             }
         }
 
-        return false;
+        throw toDownloadException(uri, null, exceptions);
     }
 
-    private boolean downloadNotHttp(URI uri) throws InterruptedException {
+    private void downloadNotHttp(URI uri) throws DownloadException, InterruptedException {
+        ArrayList<IOException> exceptions = null;
         for (int retryTime = 0; retryTime < retry; retryTime++) {
             if (isCancelled()) {
                 throw new InterruptedException();
@@ -306,21 +317,37 @@ public abstract class FetchTask<T> extends Task<T> {
                         conn.getInputStream(),
                         conn.getContentLengthLong(),
                         ContentEncoding.fromConnection(conn));
-                return true;
+                return;
             } catch (FileNotFoundException ex) {
-                failedURI = uri;
-                exception = ex;
                 LOG.warning("Failed to download " + uri + ", not found", ex);
 
-                break; // we will not try this URL again
+                throw toDownloadException(uri, ex, exceptions); // we will not try this URL again
             } catch (IOException ex) {
-                failedURI = uri;
-                exception = ex;
+                if (exceptions == null)
+                    exceptions = new ArrayList<>();
+
+                exceptions.add(ex);
                 LOG.warning("Failed to download " + uri + ", repeat times: " + retryTime, ex);
             }
         }
 
-        return false;
+        throw toDownloadException(uri, null, exceptions);
+    }
+
+    private static DownloadException toDownloadException(URI uri, @Nullable IOException last, @Nullable ArrayList<IOException> exceptions) {
+        if (exceptions == null || exceptions.isEmpty()) {
+            return new DownloadException(uri, last != null
+                    ? last
+                    : new IOException("No exceptions"));
+        } else {
+            if (last == null)
+                last = exceptions.remove(exceptions.size() - 1);
+
+            for (IOException e : exceptions) {
+                last.addSuppressed(e);
+            }
+            return new DownloadException(uri, last);
+        }
     }
 
     private static final Timer timer = new Timer("DownloadSpeedRecorder", true);
@@ -486,8 +513,6 @@ public abstract class FetchTask<T> extends Task<T> {
     }
 
     public static int getDownloadExecutorConcurrency() {
-        synchronized (Schedulers.class) {
-            return downloadExecutorConcurrency;
-        }
+        return downloadExecutorConcurrency;
     }
 }
