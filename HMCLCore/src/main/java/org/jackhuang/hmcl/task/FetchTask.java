@@ -216,6 +216,7 @@ public abstract class FetchTask<T> extends Task<T> {
 
                 do {
                     HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(currentURI);
+                    requestBuilder.timeout(Duration.ofMillis(NetworkUtils.TIME_OUT));
                     headers.forEach(requestBuilder::header);
                     response = HTTP_CLIENT.send(requestBuilder.build(), BODY_HANDLER);
 
