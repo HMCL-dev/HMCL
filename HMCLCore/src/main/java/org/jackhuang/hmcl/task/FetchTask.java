@@ -51,9 +51,16 @@ import static org.jackhuang.hmcl.util.Lang.threadPool;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public abstract class FetchTask<T> extends Task<T> {
-    private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
-            .connectTimeout(Duration.ofMillis(NetworkUtils.TIME_OUT))
-            .build();
+    private static final HttpClient HTTP_CLIENT;
+
+    static {
+        boolean useHttp2 = !"false".equalsIgnoreCase(System.getProperty("hmcl.http2"));
+
+        HTTP_CLIENT = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofMillis(NetworkUtils.TIME_OUT))
+                .version(useHttp2 ? HttpClient.Version.HTTP_2 : HttpClient.Version.HTTP_1_1)
+                .build();
+    }
 
     protected static final int DEFAULT_RETRY = 3;
 
