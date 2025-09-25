@@ -225,6 +225,7 @@ public abstract class ArchiveFileTree<R, E extends ArchiveEntry> implements Clos
             return name;
         }
 
+        /// Get the normalized full path. Leading `/` and all `.` in the path will be removed.
         public @NotNull String getFullName() {
             return fullName;
         }
