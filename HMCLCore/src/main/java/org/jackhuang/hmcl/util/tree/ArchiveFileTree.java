@@ -86,7 +86,7 @@ public abstract class ArchiveFileTree<R, E extends ArchiveEntry> implements Clos
                 String item = path[i];
                 if (item.isEmpty())
                     continue;
-                dir = dir.getSubDirs().get(path[i]);
+                dir = dir.getSubDirs().get(item);
                 if (dir == null)
                     return null;
             }
@@ -120,8 +120,7 @@ public abstract class ArchiveFileTree<R, E extends ArchiveEntry> implements Clos
 
             final int nameEnd = i + 1;
             dir = dir.subDirs.computeIfAbsent(item, name ->
-                    new Dir<>(name,
-                            String.join("/", pathList.subList(0, nameEnd))));
+                    new Dir<>(name, String.join("/", pathList.subList(0, nameEnd))));
         }
 
         if (entry.isDirectory()) {
