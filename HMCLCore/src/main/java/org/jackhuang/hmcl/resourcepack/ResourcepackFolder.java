@@ -3,7 +3,7 @@ package org.jackhuang.hmcl.resourcepack;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-public class ResourcepackFolder implements ResourcepackFile {
+public final class ResourcepackFolder implements ResourcepackFile {
     private final Path folder;
 
     public ResourcepackFolder(Path folder) {
@@ -12,7 +12,7 @@ public class ResourcepackFolder implements ResourcepackFile {
 
     @Override
     public String getName() {
-        return folder.toFile().getName();
+        return folder.getFileName().toString();
     }
 
     @Override

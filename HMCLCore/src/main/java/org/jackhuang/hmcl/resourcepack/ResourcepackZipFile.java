@@ -7,18 +7,21 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-public class ResourcepackZipFile implements ResourcepackFile {
+public final class ResourcepackZipFile implements ResourcepackFile {
     private final FileSystem zipfs;
     private final Path resourcepackfile;
+    private final String name;
 
     public ResourcepackZipFile(Path resourcepackfile) throws IOException {
         this.resourcepackfile = resourcepackfile;
         this.zipfs = CompressingUtils.createReadOnlyZipFileSystem(resourcepackfile);
+        String fileName = resourcepackfile.getFileName().toString();
+        name = fileName.substring(0, fileName.length() - 4);
     }
 
     @Override
     public String getName() {
-        return resourcepackfile.toFile().getName().replace(".zip", "");
+        return name;
     }
 
     @Override

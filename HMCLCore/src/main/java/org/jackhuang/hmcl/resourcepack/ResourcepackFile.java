@@ -5,6 +5,7 @@ import com.google.gson.JsonParser;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Locale;
 
 public interface ResourcepackFile {
     String getDescription();
@@ -25,7 +26,8 @@ public interface ResourcepackFile {
     }
 
     static ResourcepackFile parse(Path path) throws IOException {
-        if (Files.isRegularFile(path) && path.toString().toLowerCase().endsWith(".zip")) {
+        String fileName = path.getFileName().toString();
+        if (Files.isRegularFile(path) && fileName.toLowerCase(Locale.ROOT).endsWith(".zip")) {
             return new ResourcepackZipFile(path);
         } else if (Files.isDirectory(path) && Files.exists(path.resolve("pack.mcmeta"))) {
             return new ResourcepackFolder(path);

@@ -7,7 +7,6 @@ import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -25,25 +24,21 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class ResourcepackListPage extends ListPageBase<ResourcepackListPage.ResourcepackItem> implements VersionPage.VersionLoadable {
+public final class ResourcepackListPage extends ListPageBase<ResourcepackListPage.ResourcepackItem> implements VersionPage.VersionLoadable {
     private Path resourcepackDirectory;
 
     public ResourcepackListPage() {
-        FXUtils.applyDragListener(this, file -> file.toFile().isFile() && file.toFile().getName().endsWith(".zip"), files -> addFiles(new ArrayList<>(files)));
+        FXUtils.applyDragListener(this, file -> file.getFileName().toString().endsWith(".zip"), this::addFiles);
     }
 
     private static Node createIcon(Path img) {
@@ -52,10 +47,11 @@ public class ResourcepackListPage extends ListPageBase<ResourcepackListPage.Reso
         imageView.setFitHeight(32);
 
         if (Files.exists(img)) {
-            try (InputStream is = Files.newInputStream(img)) {
-                Image image = new Image(is);
-                imageView.setImage(image);
-            } catch (IOException ignored) {
+
+            try {
+                imageView.setImage(FXUtils.loadImage(img));
+            } catch (Exception e) {
+                LOG.warning("Failed to load image" + img, e);
             }
         }
 
@@ -80,13 +76,34 @@ public class ResourcepackListPage extends ListPageBase<ResourcepackListPage.Reso
                 Files.createDirectories(resourcepackDirectory);
             }
         } catch (IOException e) {
-            LOG.error("Failed to create resourcepack directory", e);
+            LOG.warning("Failed to create resourcepack directory" + resourcepackDirectory, e);
         }
         refresh();
     }
 
     public void refresh() {
-        Task.runAsync(Schedulers.javafx(), this::load).whenComplete(Schedulers.javafx(), (result, exception) -> setLoading(false)).start();
+        itemsProperty().clear();
+        if (resourcepackDirectory == null || !Files.exists(resourcepackDirectory)) return;
+        Task.supplyAsync(() -> {
+                    try (Stream<Path> stream = Files.list(resourcepackDirectory)) {
+                        return stream.sorted(Comparator.comparing(item -> item.getFileName().toString())).toList();
+                    } catch (IOException e) {
+                        LOG.warning("Failed to list resourcepacks directory", e);
+                        return null;
+                    }
+                }).whenComplete(Schedulers.javafx(), ((result, exception) -> {
+                    if (result != null) {
+                        result.forEach(item -> {
+                            try {
+                                itemsProperty().add(new ResourcepackItem(ResourcepackFile.parse(item)));
+                            } catch (IOException e) {
+                                LOG.warning("Failed to load resourcepack " + item, e);
+                            }
+                        });
+                    }
+                }
+                )).whenComplete(Schedulers.javafx(), (exception) -> setLoading(false))
+                .start();
         setLoading(true);
     }
 
@@ -112,34 +129,13 @@ public class ResourcepackListPage extends ListPageBase<ResourcepackListPage.Reso
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("resourcepack"), "*.zip"));
         List<File> files = fileChooser.showOpenMultipleDialog(Controllers.getStage());
         if (files != null && !files.isEmpty()) {
-            addFiles(files.stream().map(File::toPath).collect(Collectors.toList()));
+            addFiles(FileUtils.toPaths(files));
         }
-    }
-
-    private void load() {
-        itemsProperty().clear();
-        if (resourcepackDirectory == null || !Files.exists(resourcepackDirectory)) return;
-
-        try (Stream<Path> stream = Files.list(resourcepackDirectory)) {
-            stream.forEach(path -> {
-                try {
-                    itemsProperty().add(new ResourcepackItem(ResourcepackFile.parse(path)));
-                } catch (Exception e) {
-                    LOG.warning("Failed to load resourcepacks " + path.getFileName(), e);
-                }
-            });
-        } catch (IOException e) {
-            LOG.warning("Failed to list resourcepacks directory", e);
-        }
-
-        itemsProperty().sort(Comparator.comparing(item -> item.getFile().getName()));
     }
 
     private void onDownload() {
-        runInFX(() -> {
-            Controllers.getDownloadPage().showResourcepackDownloads();
-            Controllers.navigate(Controllers.getDownloadPage());
-        });
+        Controllers.getDownloadPage().showResourcepackDownloads();
+        Controllers.navigate(Controllers.getDownloadPage());
     }
 
     private static class ResourcepackListPageSkin extends ToolbarListPageSkin<ResourcepackListPage> {
@@ -168,7 +164,7 @@ public class ResourcepackListPage extends ListPageBase<ResourcepackListPage.Reso
 
         public void onDelete() {
             try {
-                if (file.getPath().toFile().isDirectory()) {
+                if (Files.isDirectory(file.getPath())) {
                     FileUtils.deleteDirectory(file.getPath());
                 } else {
                     Files.delete(file.getPath());
@@ -189,7 +185,7 @@ public class ResourcepackListPage extends ListPageBase<ResourcepackListPage.Reso
         }
     }
 
-    private class ResourcepackItemSkin extends SkinBase<ResourcepackItem> {
+    private final class ResourcepackItemSkin extends SkinBase<ResourcepackItem> {
         public ResourcepackItemSkin(ResourcepackItem item) {
             super(item);
             BorderPane root = new BorderPane();
