@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLConnection;
+import java.net.http.HttpHeaders;
 import java.net.http.HttpResponse;
 import java.util.zip.GZIPInputStream;
 
@@ -53,8 +54,8 @@ public enum ContentEncoding {
         }
     }
 
-    public static @NotNull ContentEncoding fromResponse(HttpResponse<?> connection) throws IOException {
-        String encoding = connection.headers().firstValue("content-encoding").orElse("");
+    public static @NotNull ContentEncoding fromHeaders(HttpHeaders headers) throws IOException {
+        String encoding = headers.firstValue("content-encoding").orElse("");
         if (encoding.isEmpty() || "identity".equals(encoding)) {
             return IDENTITY;
         } else if ("gzip".equalsIgnoreCase(encoding)) {

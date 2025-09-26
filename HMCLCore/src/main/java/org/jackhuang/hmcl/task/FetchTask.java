@@ -37,7 +37,10 @@ import java.net.http.HttpResponse;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.jackhuang.hmcl.util.Lang.threadPool;
@@ -102,7 +105,7 @@ public abstract class FetchTask<T> extends Task<T> {
         switch (shouldCheckETag()) {
             case CHECK_E_TAG -> checkETag = true;
             case NOT_CHECK_E_TAG -> checkETag = false;
-            case CACHED, default -> {
+            default-> {
                 return;
             }
         }
@@ -141,8 +144,61 @@ public abstract class FetchTask<T> extends Task<T> {
         }
     }
 
+    private static final class HttpResumeContext {
+        static @Nullable FetchTask.HttpResumeContext of(HttpResponse<?> response) throws IOException {
+            boolean acceptRanges = response.headers().firstValue("accept-ranges").orElse("").equals("bytes");
+            if (!acceptRanges)
+                return null;
+
+            var contentEncoding = ContentEncoding.fromHeaders(response.headers());
+            if (contentEncoding != ContentEncoding.IDENTITY)
+                return null;
+
+            long contentLength = response.headers().firstValueAsLong("content-length").orElse(1L);
+            if (contentLength < 0)
+                return null;
+
+            String lastModified = response.headers().firstValue("last-modified").orElse("");
+            if (lastModified.isBlank())
+                return null;
+
+            return new HttpResumeContext(response.uri(), contentLength, lastModified);
+        }
+
+        private final URI uri;
+        private final long contentLength;
+        private final String lastModified;
+
+        long countUncompressed;
+
+        private HttpResumeContext(URI uri, long contentLength, String lastModified) {
+            this.uri = uri;
+            this.contentLength = contentLength;
+            this.lastModified = lastModified;
+        }
+
+        boolean canResume(HttpResponse<?> response) throws IOException {
+            var contentEncoding = ContentEncoding.fromHeaders(response.headers());
+            if (contentEncoding != ContentEncoding.IDENTITY)
+                return false;
+
+            long contentLength = response.headers().firstValueAsLong("content-length").orElse(1L);
+            if (this.contentLength != contentLength + this.countUncompressed)
+                return false;
+
+            String lastModified = response.headers().firstValue("last-modified").orElse("");
+            if (!this.lastModified.equals(lastModified))
+                return false;
+
+            // TODO: 更仔细的验证完成
+            if (!response.headers().firstValue("content-range").orElse("").startsWith("bytes "))
+                return false;
+            return true;
+        }
+    }
+
     private void download(Context context,
-                          InputStream inputStream,
+                          @Nullable FetchTask.HttpResumeContext resume, InputStream inputStream,
                           long contentLength,
                           ContentEncoding contentEncoding) throws IOException, InterruptedException {
         try (var counter = new CounterInputStream(inputStream);
@@ -155,7 +211,15 @@ public abstract class FetchTask<T> extends Task<T> {
                 int len = input.read(buffer);
                 if (len == -1) break;
 
-                context.write(buffer, 0, len);
+                try {
+                    context.write(buffer, 0, len);
+                } catch (Throwable e) {
+                    context.broken = true;
+                    throw e;
+                }
+
+                if (resume != null)
+                    resume.countUncompressed += len;
 
                 if (contentLength >= 0) {
                     // Update progress information per second
@@ -191,6 +255,8 @@ public abstract class FetchTask<T> extends Task<T> {
         }
 
         Context context = null;
+        HttpResumeContext resumeContext = null;
+
         ArrayList<IOException> exceptions = null;
 
         try {
@@ -214,7 +280,10 @@ public abstract class FetchTask<T> extends Task<T> {
                     if (checkETag)
                         headers.putAll(repository.injectConnection(uri));
 
-                    do {
+                    if (resumeContext != null)
+                        headers.put("range", "bytes=" + resumeContext.countUncompressed + "-");
+
+                    while (true) {
                         HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(currentURI);
                         requestBuilder.timeout(Duration.ofMillis(NetworkUtils.TIME_OUT));
                         headers.forEach(requestBuilder::header);
@@ -252,7 +321,7 @@ public abstract class FetchTask<T> extends Task<T> {
                         } else {
                             break;
                         }
-                    } while (true);
+                    }
 
                     int responseCode = response.statusCode();
                     if (responseCode == HttpURLConnection.HTTP_NOT_MODIFIED) {
@@ -279,17 +348,53 @@ public abstract class FetchTask<T> extends Task<T> {
                     }
 
                     long contentLength = response.headers().firstValueAsLong("content-length").orElse(-1L);
-                    var contentEncoding = ContentEncoding.fromResponse(response);
+                    var contentEncoding = ContentEncoding.fromHeaders(response.headers());
 
-                    if (context == null)
+                    if (context == null) {
                         context = getContext(NetworkUtils.getResponseInfo(response), checkETag, bmclapiHash);
-                    else
-                        context.reset();
+                        resumeContext = HttpResumeContext.of(response);
+                    } else if (resumeContext != null) {
+                        if (resumeContext.canResume(response)) {
+                            // Resume download
+                            LOG.warning("Resuming " + resumeContext.uri);
+                        } else {
+                            // Failed to resume download, so we will retry from the beginning
+                            retryTime--;
+                            resumeContext = null;
 
-                    download(context,
-                            response.body(),
-                            contentLength,
-                            contentEncoding);
+                            try {
+                                context.reset();
+                            } catch (Throwable e) {
+                                IOUtils.closeQuietly(context, e);
+                                LOG.warning("Failed to reset context for " + uri, e);
+
+                                context = null;
+                            }
+                            continue;
+                        }
+                    } else {
+                        try {
+                            context.reset();
+                        } catch (IOException e) {
+                            IOUtils.closeQuietly(context, e);
+                            LOG.warning("Failed to reset context for " + uri, e);
+
+                            context = getContext(NetworkUtils.getResponseInfo(response), checkETag, bmclapiHash);
+                        }
+                    }
+
+                    try {
+                        download(context,
+                                resumeContext, response.body(),
+                                contentLength,
+                                contentEncoding);
+                    } catch (Throwable e) {
+                        if (context.broken) {
+                            IOUtils.closeQuietly(context, e);
+                            context = null;
+                            resumeContext = null;
+                        }
+                    }
                     return;
                 } catch (FileNotFoundException ex) {
                     LOG.warning("Failed to download " + uri + ", not found" + (redirects == null ? "" : ", redirects: " + redirects), ex);
@@ -330,7 +435,7 @@ public abstract class FetchTask<T> extends Task<T> {
                 URLConnection conn = NetworkUtils.createConnection(uri);
                 try (Context context = getContext()) {
                     download(context,
-                            conn.getInputStream(),
+                            null, conn.getInputStream(),
                             conn.getContentLengthLong(),
                             ContentEncoding.fromConnection(conn));
                 }
@@ -434,6 +539,7 @@ public abstract class FetchTask<T> extends Task<T> {
 
     protected static abstract class Context implements Closeable {
         private boolean success;
+        private boolean broken;
 
         protected final boolean isSuccess() {
             return success;
