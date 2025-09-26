@@ -1,7 +1,8 @@
 package org.jackhuang.hmcl.resourcepack;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class ResourcepackFolder implements ResourcepackFile {
     private final Path folder;
@@ -23,8 +24,8 @@ public final class ResourcepackFolder implements ResourcepackFile {
     @Override
     public String getDescription() {
         try {
-            return parseDescriptionFromJson(Files.readString(folder.resolve("pack.mcmeta")));
-        } catch (Exception ignored) {
+            return parseDescriptionFromJson(folder.resolve("pack.mcmeta"));
+        } catch (Exception e) {
             return "";
         }
     }

@@ -1,11 +1,13 @@
 package org.jackhuang.hmcl.resourcepack;
 
-import com.google.gson.JsonParser;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public interface ResourcepackFile {
     String getDescription();
@@ -16,10 +18,11 @@ public interface ResourcepackFile {
 
     Path getIcon();
 
-    default String parseDescriptionFromJson(String json) {
+    default String parseDescriptionFromJson(Path json) {
         try {
-            return JsonParser.parseString(json).getAsJsonObject().getAsJsonObject("pack").get("description").getAsString();
-        } catch (Exception ignored) {
+            return JsonUtils.fromJsonFile(json, ResourcepackMeta.class).pack.description;
+        } catch (Exception e) {
+            LOG.warning("Failed to parse resourcepack meta ", e);
             return "";
         }
 

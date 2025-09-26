@@ -51,7 +51,7 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
             try {
                 imageView.setImage(FXUtils.loadImage(img));
             } catch (Exception e) {
-                LOG.warning("Failed to load image" + img, e);
+                LOG.warning("Failed to load image " + img, e);
             }
         }
 
