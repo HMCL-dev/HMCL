@@ -439,7 +439,7 @@ public abstract class FetchTask<T> extends Task<T> {
     }
 
     private static final HttpResponse.BodyHandler<InputStream> BODY_HANDLER = responseInfo -> {
-        if (responseInfo.statusCode() / 2 == 100)
+        if (responseInfo.statusCode() / 100 == 2)
             return HttpResponse.BodySubscribers.ofInputStream();
         else
             return HttpResponse.BodySubscribers.replacing(null);
