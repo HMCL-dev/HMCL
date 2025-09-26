@@ -244,7 +244,7 @@ public abstract class FetchTask<T> extends Task<T> {
                         if (StringUtils.isBlank(location))
                             throw new IOException("Redirected to an empty location");
 
-                        URI target = currentURI.resolve(location);
+                        URI target = currentURI.resolve(NetworkUtils.encodeLocation(location));
                         redirects.add(target);
 
                         if (!NetworkUtils.isHttpUri(target))
