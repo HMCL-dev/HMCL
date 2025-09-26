@@ -44,33 +44,17 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public class FileDownloadTask extends FetchTask<Void> {
 
-    public static class IntegrityCheck {
-        private final String algorithm;
-        private final String checksum;
+    public record IntegrityCheck(String algorithm, String checksum) {
+            public IntegrityCheck(String algorithm, String checksum) {
+                this.algorithm = requireNonNull(algorithm);
+                this.checksum = requireNonNull(checksum);
+            }
 
-        public IntegrityCheck(String algorithm, String checksum) {
-            this.algorithm = requireNonNull(algorithm);
-            this.checksum = requireNonNull(checksum);
+            public static IntegrityCheck of(String algorithm, String checksum) {
+                if (checksum == null) return null;
+                else return new IntegrityCheck(algorithm, checksum);
+            }
         }
-
-        public static IntegrityCheck of(String algorithm, String checksum) {
-            if (checksum == null) return null;
-            else return new IntegrityCheck(algorithm, checksum);
-        }
-
-        public String getAlgorithm() {
-            return algorithm;
-        }
-
-        public String getChecksum() {
-            return checksum;
-        }
-
-        @Override
-        public String toString() {
-            return String.format("IntegrityCheck[algorithm='%s', checksum='%s']", algorithm, checksum);
-        }
-    }
 
     private final Path file;
     private final IntegrityCheck integrityCheck;
@@ -158,7 +142,7 @@ public class FileDownloadTask extends FetchTask<Void> {
     protected EnumCheckETag shouldCheckETag() {
         // Check cache
         if (integrityCheck != null && caching) {
-            Optional<Path> cache = repository.checkExistentFile(candidate, integrityCheck.getAlgorithm(), integrityCheck.getChecksum());
+            Optional<Path> cache = repository.checkExistentFile(candidate, integrityCheck.algorithm(), integrityCheck.checksum());
             if (cache.isPresent()) {
                 try {
                     FileUtils.copyFile(cache.get(), file);
@@ -191,8 +175,8 @@ public class FileDownloadTask extends FetchTask<Void> {
         String algorithm;
         String checksum;
         if (integrityCheck != null) {
-            algorithm = integrityCheck.getAlgorithm();
-            checksum = integrityCheck.getChecksum();
+            algorithm = integrityCheck.algorithm();
+            checksum = integrityCheck.checksum();
         } else if (bmclapiHash != null) {
             algorithm = "SHA-1";
             checksum = bmclapiHash;
