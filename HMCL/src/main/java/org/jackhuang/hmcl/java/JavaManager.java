@@ -45,6 +45,7 @@ import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
 
+import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
@@ -222,7 +223,7 @@ public final class JavaManager {
 
         Path relativized = platformRoot.relativize(java.getBinary());
         if (relativized.getNameCount() > 1) {
-            FXUtils.runInFX(() -> {
+            runInFX(() -> {
                 try {
                     removeJava(java);
                 } catch (InterruptedException e) {
@@ -329,7 +330,7 @@ public final class JavaManager {
         Map<Path, JavaRuntime> allJava = searchPotentialJavaExecutables();
         JavaManager.allJava = allJava;
         LATCH.countDown();
-        FXUtils.runInFX(() -> updateAllJavaProperty(allJava));
+        runInFX(() -> updateAllJavaProperty(allJava));
     }
 
     // search java

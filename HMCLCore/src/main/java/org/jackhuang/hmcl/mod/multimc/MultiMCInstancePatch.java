@@ -51,6 +51,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+
 /**
  * @author huangyuhui
  */
@@ -443,7 +445,7 @@ public final class MultiMCInstancePatch {
             if (message.charAt(message.length() - 1) == '\n') {
                 message.setLength(message.length() - 1);
             }
-            Logger.LOG.warning("Cannot fully parse MultiMC modpack with following unsupported features: \n" + message);
+            LOG.warning("Cannot fully parse MultiMC modpack with following unsupported features: \n" + message);
         }
         return new ResolvedInstance(version, gameVersion, mainJar, jarModFileNames, mavenOnlyFiles);
     }

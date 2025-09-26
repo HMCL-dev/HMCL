@@ -432,7 +432,7 @@ public final class LauncherHelper {
                 if (java == null || !violatedMandatoryConstraints.isEmpty()) {
                     JavaRuntime suggestedJava = JavaManager.findSuitableJava(gameVersion, version);
                     if (suggestedJava != null) {
-                        FXUtils.runInFX(() -> {
+                        runInFX(() -> {
                             Controllers.confirm(i18n("launch.advice.java.auto"), i18n("message.warning"), () -> {
                                 setting.setJavaAutoSelected();
                                 future.complete(suggestedJava);
@@ -440,7 +440,7 @@ public final class LauncherHelper {
                         });
                         return result;
                     } else if (java == null) {
-                        FXUtils.runInFX(() -> Controllers.dialog(
+                        runInFX(() -> Controllers.dialog(
                                 i18n("launch.invalid_java"),
                                 i18n("message.error"),
                                 MessageType.ERROR,
@@ -459,7 +459,7 @@ public final class LauncherHelper {
                             gameJavaVersion = null;
 
                         if (gameJavaVersion != null) {
-                            FXUtils.runInFX(() -> downloadJava(gameJavaVersion, profile).whenCompleteAsync((downloadedJava, throwable) -> {
+                            runInFX(() -> downloadJava(gameJavaVersion, profile).whenCompleteAsync((downloadedJava, throwable) -> {
                                 if (throwable == null) {
                                     setting.setJavaAutoSelected();
                                     future.complete(downloadedJava);
@@ -473,7 +473,7 @@ public final class LauncherHelper {
 
                         if (violatedMandatoryConstraints.contains(JavaVersionConstraint.VANILLA_LINUX_JAVA_8)) {
                             if (setting.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
-                                FXUtils.runInFX(() -> Controllers.dialog(i18n("launch.advice.vanilla_linux_java_8"), i18n("message.error"), MessageType.ERROR, breakAction));
+                                runInFX(() -> Controllers.dialog(i18n("launch.advice.vanilla_linux_java_8"), i18n("message.error"), MessageType.ERROR, breakAction));
                                 return result;
                             } else {
                                 violatedMandatoryConstraints.remove(JavaVersionConstraint.VANILLA_LINUX_JAVA_8);
@@ -481,7 +481,7 @@ public final class LauncherHelper {
                         }
 
                         if (violatedMandatoryConstraints.contains(JavaVersionConstraint.LAUNCH_WRAPPER)) {
-                            FXUtils.runInFX(() -> Controllers.dialog(
+                            runInFX(() -> Controllers.dialog(
                                     i18n("launch.advice.java9") + "\n" + i18n("launch.advice.uncorrected"),
                                     i18n("message.error"),
                                     MessageType.ERROR,
@@ -491,7 +491,7 @@ public final class LauncherHelper {
                         }
 
                         if (!violatedMandatoryConstraints.isEmpty()) {
-                            FXUtils.runInFX(() -> Controllers.dialog(
+                            runInFX(() -> Controllers.dialog(
                                     i18n("launch.advice.unknown") + "\n" + violatedMandatoryConstraints,
                                     i18n("message.error"),
                                     MessageType.ERROR,
@@ -597,7 +597,7 @@ public final class LauncherHelper {
                         message = i18n("launch.advice.multi", suggestions.stream().map(it -> "→ " + it).collect(Collectors.joining("\n")));
                     }
 
-                    FXUtils.runInFX(() -> Controllers.confirm(
+                    runInFX(() -> Controllers.confirm(
                             message,
                             i18n("message.warning"),
                             MessageType.WARNING,

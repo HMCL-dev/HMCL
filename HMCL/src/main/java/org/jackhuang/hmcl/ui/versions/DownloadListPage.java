@@ -66,8 +66,7 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
-import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
+import static org.jackhuang.hmcl.ui.FXUtils.*;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.selectedItemPropertyFor;
 
@@ -155,7 +154,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     }
 
     public void selectVersion(String versionID) {
-        FXUtils.runInFX(() -> selectedVersion.set(versionID));
+        runInFX(() -> selectedVersion.set(versionID));
     }
 
     private void search(String userGameVersion, RemoteModRepository.Category category, int pageOffset, String searchFilter, RemoteModRepository.SortType sort) {

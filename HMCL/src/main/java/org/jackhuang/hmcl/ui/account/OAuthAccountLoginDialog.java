@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 
 import java.util.function.Consumer;
 
+import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -81,7 +82,7 @@ public class OAuthAccountLoginDialog extends DialogPane {
     }
 
     private void onGrantDeviceCode(OAuthServer.GrantDeviceCodeEvent event) {
-        FXUtils.runInFX(() -> {
+        runInFX(() -> {
             deviceCode.set(event);
         });
     }
