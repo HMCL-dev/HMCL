@@ -28,7 +28,7 @@ import java.util.function.Consumer;
 /// @author yushijinhun
 public final class InvocationDispatcher<T> implements Consumer<T> {
 
-
+    /// @param executor The executor must dispatch all tasks to a single thread.
     public static <T> InvocationDispatcher<T> runOn(Executor executor, Consumer<T> action) {
         return new InvocationDispatcher<>(executor, action);
     }
