@@ -2,8 +2,6 @@ package org.jackhuang.hmcl.resourcepack;
 
 import java.nio.file.Path;
 
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
-
 public final class ResourcepackFolder implements ResourcepackFile {
     private final Path folder;
 

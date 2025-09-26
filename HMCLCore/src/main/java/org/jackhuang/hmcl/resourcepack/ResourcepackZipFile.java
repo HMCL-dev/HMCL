@@ -4,7 +4,6 @@ import org.jackhuang.hmcl.util.io.CompressingUtils;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 public final class ResourcepackZipFile implements ResourcepackFile {

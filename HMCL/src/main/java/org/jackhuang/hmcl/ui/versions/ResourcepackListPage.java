@@ -47,7 +47,6 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
         imageView.setFitHeight(32);
 
         if (Files.exists(img)) {
-
             try {
                 imageView.setImage(FXUtils.loadImage(img));
             } catch (Exception e) {
@@ -85,25 +84,23 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
         itemsProperty().clear();
         if (resourcepackDirectory == null || !Files.exists(resourcepackDirectory)) return;
         Task.supplyAsync(() -> {
-                    try (Stream<Path> stream = Files.list(resourcepackDirectory)) {
-                        return stream.sorted(Comparator.comparing(item -> item.getFileName().toString())).toList();
+            try (Stream<Path> stream = Files.list(resourcepackDirectory)) {
+                return stream.sorted(Comparator.comparing(item -> item.getFileName().toString())).toList();
+            } catch (IOException e) {
+                LOG.warning("Failed to list resourcepacks directory", e);
+                return null;
+            }
+        }).whenComplete(Schedulers.javafx(), ((result, exception) -> {
+            if (result != null) {
+                result.forEach(item -> {
+                    try {
+                        itemsProperty().add(new ResourcepackItem(ResourcepackFile.parse(item)));
                     } catch (IOException e) {
-                        LOG.warning("Failed to list resourcepacks directory", e);
-                        return null;
+                        LOG.warning("Failed to load resourcepack " + item, e);
                     }
-                }).whenComplete(Schedulers.javafx(), ((result, exception) -> {
-                    if (result != null) {
-                        result.forEach(item -> {
-                            try {
-                                itemsProperty().add(new ResourcepackItem(ResourcepackFile.parse(item)));
-                            } catch (IOException e) {
-                                LOG.warning("Failed to load resourcepack " + item, e);
-                            }
-                        });
-                    }
-                }
-                )).whenComplete(Schedulers.javafx(), (exception) -> setLoading(false))
-                .start();
+                });
+            }
+        })).whenComplete(Schedulers.javafx(), (exception) -> setLoading(false)).start();
         setLoading(true);
     }
 
