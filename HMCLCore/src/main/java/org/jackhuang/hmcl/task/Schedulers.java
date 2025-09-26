@@ -90,6 +90,9 @@ public final class Schedulers {
         return Platform::runLater;
     }
 
+    /// Default thread pool, equivalent to [ForkJoinPool#commonPool()].
+    ///
+    /// It is recommended to perform computation tasks on this thread pool. For I/O operations, please use [#io()].
     public static Executor defaultScheduler() {
         return ForkJoinPool.commonPool();
     }
