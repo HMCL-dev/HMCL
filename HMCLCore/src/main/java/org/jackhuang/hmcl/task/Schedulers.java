@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.task;
 
 import javafx.application.Platform;
+import org.jackhuang.hmcl.util.Lang;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.invoke.MethodHandle;
@@ -26,7 +27,6 @@ import java.lang.invoke.MethodType;
 import java.util.concurrent.*;
 import java.util.function.Function;
 
-import static org.jackhuang.hmcl.util.Lang.threadPool;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// @author huangyuhui
@@ -110,7 +110,7 @@ public final class Schedulers {
             ExecutorService vtExecutor = newVirtualThreadPerTaskExecutor("IO");
             IO_EXECUTOR = vtExecutor != null
                     ? vtExecutor
-                    : threadPool("IO", true, 64, 10, TimeUnit.SECONDS);
+                    : Executors.newCachedThreadPool(Lang.counterThreadFactory("IO", true));
         }
     }
 
