@@ -20,13 +20,17 @@ package org.jackhuang.hmcl.task;
 import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.http.HttpResponse;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -72,17 +76,29 @@ public final class CacheFileTask extends FetchTask<Path> {
     }
 
     @Override
-    protected Context getContext(HttpResponse<?> response, boolean checkETag, String bmclapiHash) throws IOException {
+    protected Context getContext(HttpResponse.@Nullable ResponseInfo response, boolean checkETag, String bmclapiHash) throws IOException {
         assert checkETag;
         assert response != null;
 
-        Path temp = Files.createTempFile("hmcl-download-", null);
-        OutputStream fileOutput = Files.newOutputStream(temp);
-
         return new Context() {
+            private final Path temp = Files.createTempFile("hmcl-download-", null);
+            private final FileChannel fileOutput = FileChannel.open(temp,
+                    StandardOpenOption.WRITE,
+                    StandardOpenOption.TRUNCATE_EXISTING,
+                    StandardOpenOption.CREATE);
+
+            @Override
+            public void reset() throws IOException{
+                fileOutput.truncate(0L);
+            }
+
             @Override
             public void write(byte[] buffer, int offset, int len) throws IOException {
-                fileOutput.write(buffer, offset, len);
+                ByteBuffer byteBuffer = ByteBuffer.wrap(buffer, offset, len);
+                while (byteBuffer.hasRemaining()) {
+                    //noinspection ResultOfMethodCallIgnored
+                    fileOutput.write(byteBuffer);
+                }
             }
 
             @Override

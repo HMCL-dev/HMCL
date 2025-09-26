@@ -244,9 +244,14 @@ public class Skin {
         }
 
         @Override
-        protected Context getContext(HttpResponse<?> response, boolean checkETag, String bmclapiHash) throws IOException {
+        protected Context getContext(HttpResponse.@Nullable ResponseInfo response, boolean checkETag, String bmclapiHash) throws IOException {
             return new Context() {
                 final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+                @Override
+                public void reset() throws IOException {
+                    baos.reset();
+                }
 
                 @Override
                 public void write(byte[] buffer, int offset, int len) {

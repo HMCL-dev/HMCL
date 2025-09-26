@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -169,7 +170,7 @@ public class FileDownloadTask extends FetchTask<Void> {
     }
 
     @Override
-    protected Context getContext(HttpResponse<?> response, boolean checkETag, String bmclapiHash) throws IOException {
+    protected Context getContext(HttpResponse.@Nullable ResponseInfo response, boolean checkETag, String bmclapiHash) throws IOException {
         Path temp = Files.createTempFile(null, null);
 
         String algorithm;
@@ -189,6 +190,11 @@ public class FileDownloadTask extends FetchTask<Void> {
 
         OutputStream fileOutput = Files.newOutputStream(temp);
         return new Context() {
+            @Override
+            public void reset() throws IOException {
+                // TODO
+            }
+
             @Override
             public void write(byte[] buffer, int offset, int len) throws IOException {
                 if (digest != null) {

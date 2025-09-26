@@ -228,7 +228,7 @@ public class CacheRepository {
         //     conn.setRequestProperty("If-Modified-Since", eTagItem.getRemoteLastModified());
     }
 
-    public Path cacheRemoteFile(HttpResponse<?> response, Path downloaded) throws IOException {
+    public Path cacheRemoteFile(HttpResponse.ResponseInfo response, Path downloaded) throws IOException {
         return cacheData(response, () -> {
             String hash = DigestUtils.digestToString(SHA1, downloaded);
             Path cached = cacheFile(downloaded, SHA1, hash);
@@ -236,11 +236,11 @@ public class CacheRepository {
         });
     }
 
-    public Path cacheText(HttpResponse<?> response, String text) throws IOException {
+    public Path cacheText(HttpResponse.ResponseInfo response, String text) throws IOException {
         return cacheBytes(response, text.getBytes(UTF_8));
     }
 
-    public Path cacheBytes(HttpResponse<?> response, byte[] bytes) throws IOException {
+    public Path cacheBytes(HttpResponse.ResponseInfo response, byte[] bytes) throws IOException {
         return cacheData(response, () -> {
             String hash = DigestUtils.digestToString(SHA1, bytes);
             Path cached = getFile(SHA1, hash);
@@ -252,10 +252,10 @@ public class CacheRepository {
 
     private static final Pattern MAX_AGE = Pattern.compile("(s-maxage|max-age)=(?<time>[0-9]+)");
 
-    private Path cacheData(HttpResponse<?> response, ExceptionalSupplier<CacheResult, IOException> cacheSupplier) throws IOException {
+    private Path cacheData(HttpResponse.ResponseInfo response, ExceptionalSupplier<CacheResult, IOException> cacheSupplier) throws IOException {
         String eTag = response.headers().firstValue("etag").orElse(null);
         if (StringUtils.isBlank(eTag)) return null;
-        URI uri = NetworkUtils.dropQuery(response.uri());
+        URI uri = NetworkUtils.dropQuery(response.uri()); // TODO
         long expires = 0L;
 
         expires:

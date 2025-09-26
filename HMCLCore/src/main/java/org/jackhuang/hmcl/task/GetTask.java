@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.task;
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -61,13 +62,18 @@ public final class GetTask extends FetchTask<String> {
     }
 
     @Override
-    protected Context getContext(HttpResponse<?> response, boolean checkETag, String bmclapiHash) {
+    protected Context getContext(HttpResponse.@Nullable ResponseInfo response, boolean checkETag, String bmclapiHash) {
         long length = -1;
         if (response != null)
             length = response.headers().firstValueAsLong("content-length").orElse(-1L);
         final var baos = new ByteArrayOutputStream(length <= 0 ? 8192 : (int) length);
 
         return new Context() {
+            @Override
+            public void reset() throws IOException {
+                baos.reset();
+            }
+
             @Override
             public void write(byte[] buffer, int offset, int len) {
                 baos.write(buffer, offset, len);
