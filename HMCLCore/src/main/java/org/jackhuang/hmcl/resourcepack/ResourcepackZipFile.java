@@ -2,32 +2,49 @@ package org.jackhuang.hmcl.resourcepack;
 
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jackhuang.hmcl.util.tree.ZipFileTree;
 
 import java.io.IOException;
-import java.nio.file.FileSystem;
+import java.io.InputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class ResourcepackZipFile implements ResourcepackFile {
-    private final FileSystem zipfs;
-    private final Path resourcepackfile;
+    private final Path path;
+    private final Path iconPath;
     private final String name;
     private final String description;
 
-    public ResourcepackZipFile(Path resourcepackfile) throws IOException {
-        this.resourcepackfile = resourcepackfile;
-        this.zipfs = CompressingUtils.createReadOnlyZipFileSystem(resourcepackfile);
-        String fileName = resourcepackfile.getFileName().toString();
-        name = fileName.substring(0, fileName.length() - 4);
+    public ResourcepackZipFile(Path path) throws IOException {
+        this.path = path;
 
         String description = "";
-        try {
-            description = JsonUtils.fromJsonFile(resourcepackfile.resolve("pack.mcmeta"), ResourcepackMeta.class).pack().description();
-        } catch (Exception e) {
-            LOG.warning("Failed to parse resourcepack meta", e);
+        Path iconPath = null;
+
+        try (ZipFileTree zipFileTree = new ZipFileTree(CompressingUtils.openZipFile(path))) {
+            try {
+                description = JsonUtils.fromJsonFully(zipFileTree.getInputStream(zipFileTree.getFile().getEntry("pack.mcmeta")), ResourcepackMeta.class).pack().description();
+            } catch (Exception e) {
+                LOG.warning("Failed to parse resourcepack meta", e);
+            }
+
+            try (InputStream is = zipFileTree.getInputStream(zipFileTree.getFile().getEntry("pack.png"))) {
+                Path tempFile = Files.createTempFile("hmcl-pack-icon-", ".png");
+                Files.copy(is, tempFile, StandardCopyOption.REPLACE_EXISTING);
+                iconPath = tempFile;
+            } catch (Exception e) {
+                LOG.warning("Failed to load resourcepack icon", e);
+            }
         }
+
         this.description = description;
+        this.iconPath = iconPath;
+
+        String fileName = path.getFileName().toString();
+        name = fileName.substring(0, fileName.length() - 4);
     }
 
     @Override
@@ -37,7 +54,7 @@ public final class ResourcepackZipFile implements ResourcepackFile {
 
     @Override
     public Path getPath() {
-        return resourcepackfile;
+        return path;
     }
 
     @Override
@@ -47,7 +64,7 @@ public final class ResourcepackZipFile implements ResourcepackFile {
 
     @Override
     public Path getIcon() {
-        return zipfs.getPath("pack.png");
+        return iconPath;
     }
 }
 

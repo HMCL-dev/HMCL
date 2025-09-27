@@ -46,7 +46,7 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
         ImageView imageView = new ImageView();
         FXUtils.limitSize(imageView, 32, 32);
 
-        if (Files.exists(img)) {
+        if (img != null && Files.exists(img)) {
             try {
                 imageView.setImage(FXUtils.loadImage(img, 32, 32, true, true));
             } catch (Exception e) {
