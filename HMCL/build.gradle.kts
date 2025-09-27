@@ -1,3 +1,5 @@
+import org.jackhuang.hmcl.gradle.ci.GitHubActionUtils
+import org.jackhuang.hmcl.gradle.ci.JenkinsUtils
 import org.jackhuang.hmcl.gradle.l10n.CheckTranslations
 import org.jackhuang.hmcl.gradle.l10n.CreateLanguageList
 import org.jackhuang.hmcl.gradle.l10n.CreateLocaleNamesResourceBundle
@@ -16,17 +18,10 @@ plugins {
     alias(libs.plugins.shadow)
 }
 
-val isOfficial = System.getenv("HMCL_SIGNATURE_KEY") != null
-        || (System.getenv("GITHUB_REPOSITORY_OWNER") == "HMCL-dev" && System.getenv("GITHUB_BASE_REF")
-    .isNullOrEmpty())
+val isOfficial = JenkinsUtils.IS_ON_CI || GitHubActionUtils.IS_ON_OFFICIAL_REPO
 
-val buildNumber = System.getenv("BUILD_NUMBER")?.toInt() ?: run {
-    val shortCommit = System.getenv("GITHUB_SHA")?.lowercase()?.substring(0, 7)
-    val prefix = if (isOfficial) "dev" else "unofficial"
-    if (!shortCommit.isNullOrEmpty()) "$prefix-$shortCommit" else "SNAPSHOT"
-}
-val versionRoot = System.getenv("VERSION_ROOT") ?: "3.7"
 val versionType = System.getenv("VERSION_TYPE") ?: if (isOfficial) "nightly" else "unofficial"
+val versionRoot = System.getenv("VERSION_ROOT") ?: "3.7"
 
 val microsoftAuthId = System.getenv("MICROSOFT_AUTH_ID") ?: ""
 val microsoftAuthSecret = System.getenv("MICROSOFT_AUTH_SECRET") ?: ""
@@ -34,7 +29,23 @@ val curseForgeApiKey = System.getenv("CURSEFORGE_API_KEY") ?: ""
 
 val launcherExe = System.getenv("HMCL_LAUNCHER_EXE")
 
-version = "$versionRoot.$buildNumber"
+val buildNumber = System.getenv("BUILD_NUMBER")?.toInt()
+if (buildNumber != null) {
+    version = if (JenkinsUtils.IS_ON_CI && versionType == "dev") {
+        "$versionRoot.0.$buildNumber"
+    } else {
+        "$versionRoot.$buildNumber"
+    }
+} else {
+    val shortCommit = System.getenv("GITHUB_SHA")?.lowercase()?.substring(0, 7)
+    version = if (shortCommit.isNullOrBlank()) {
+        "$versionRoot.SNAPSHOT"
+    } else if (isOfficial) {
+        "$versionRoot.dev-$shortCommit"
+    } else {
+        "$versionRoot.unofficial-$shortCommit"
+    }
+}
 
 val embedResources by configurations.registering
 

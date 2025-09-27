@@ -1,3 +1,4 @@
+import org.jackhuang.hmcl.gradle.ci.JenkinsUtils
 import org.jackhuang.hmcl.gradle.docs.UpdateDocuments
 
 plugins {
@@ -20,7 +21,13 @@ subprojects {
             name = "libs"
             dirs = setOf(rootProject.file("lib"))
         }
-        mavenCentral()
+
+        if (JenkinsUtils.IS_ON_CI) {
+            maven(url = "https://mirrors.cloud.tencent.com/nexus/repository/maven-public")
+        } else {
+            mavenCentral()
+        }
+
         maven(url = "https://jitpack.io")
         maven(url = "https://libraries.minecraft.net")
     }
