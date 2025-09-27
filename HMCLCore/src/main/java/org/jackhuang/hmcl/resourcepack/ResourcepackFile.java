@@ -1,13 +1,9 @@
 package org.jackhuang.hmcl.resourcepack;
 
-import org.jackhuang.hmcl.util.gson.JsonUtils;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
-
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public interface ResourcepackFile {
     String getDescription();
