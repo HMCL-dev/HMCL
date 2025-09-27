@@ -31,7 +31,10 @@ import java.io.FileNotFoundException;
 import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.nio.file.AccessDeniedException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CancellationException;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
@@ -70,7 +73,7 @@ public final class DownloadProviders {
         );
 
         AdaptedDownloadProvider fileProvider = new AdaptedDownloadProvider();
-        fileProvider.setDownloadProviderCandidates(Arrays.asList(BMCLAPI, MOJANG));
+        fileProvider.setDownloadProviderCandidates(List.of(BMCLAPI, MOJANG));
         BalancedDownloadProvider balanced = new BalancedDownloadProvider(MOJANG, BMCLAPI);
 
         providersById = Map.of(
