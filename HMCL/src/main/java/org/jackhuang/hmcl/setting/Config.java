@@ -261,7 +261,7 @@ public final class Config implements Observable {
         return acceptPreviewUpdate.get();
     }
 
-    public void setAcceptPreviewUpdate(Boolean acceptPreviewUpdate) {
+    public void setAcceptPreviewUpdate(boolean acceptPreviewUpdate) {
         this.acceptPreviewUpdate.set(acceptPreviewUpdate);
     }
 
