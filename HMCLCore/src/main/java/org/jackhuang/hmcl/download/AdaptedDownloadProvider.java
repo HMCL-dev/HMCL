@@ -17,8 +17,9 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.jetbrains.annotations.Unmodifiable;
+
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,10 +30,10 @@ import java.util.stream.Collectors;
  */
 public class AdaptedDownloadProvider implements DownloadProvider {
 
-    private List<DownloadProvider> downloadProviderCandidates;
+    private @Unmodifiable List<DownloadProvider> downloadProviderCandidates;
 
     public void setDownloadProviderCandidates(List<DownloadProvider> downloadProviderCandidates) {
-        this.downloadProviderCandidates = new ArrayList<>(downloadProviderCandidates);
+        this.downloadProviderCandidates = List.copyOf(downloadProviderCandidates);
     }
 
     public DownloadProvider getPreferredDownloadProvider() {
