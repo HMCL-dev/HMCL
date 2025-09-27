@@ -33,7 +33,9 @@ public enum VersionIconType {
     FORGE("/assets/img/forge.png"),
     NEO_FORGE("/assets/img/neoforge.png"),
     FURNACE("/assets/img/furnace.png"),
-    QUILT("/assets/img/quilt.png");
+    QUILT("/assets/img/quilt.png"),
+    APRIL_FOOLS("/assets/img/april_fools.png"),
+    CLEANROOM("/assets/img/cleanroom.png");
 
     // Please append new items at last
 

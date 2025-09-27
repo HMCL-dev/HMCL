@@ -27,16 +27,22 @@ public class ModrinthModpackExportTask extends Task<Void> {
     private final DefaultGameRepository repository;
     private final String version;
     private final ModpackExportInfo info;
-    private final File modpackFile;
+    private final Path modpackFile;
 
-    public ModrinthModpackExportTask(DefaultGameRepository repository, String version, ModpackExportInfo info, File modpackFile) {
+    public ModrinthModpackExportTask(DefaultGameRepository repository, String version, ModpackExportInfo info, Path modpackFile) {
         this.repository = repository;
         this.version = version;
         this.info = info.validate();
         this.modpackFile = modpackFile;
 
         onDone().register(event -> {
-            if (event.isFailed()) modpackFile.delete();
+            if (event.isFailed()) {
+                try {
+                    Files.deleteIfExists(modpackFile);
+                } catch (IOException e) {
+                    LOG.warning("Failed to delete modpack file: " + modpackFile, e);
+                }
+            }
         });
     }
 
@@ -107,8 +113,8 @@ public class ModrinthModpackExportTask extends Task<Void> {
         blackList.add(version + ".jar");
         blackList.add(version + ".json");
         LOG.info("Compressing game files without some files in blacklist, including files or directories: usernamecache.json, asm, logs, backups, versions, assets, usercache.json, libraries, crash-reports, launcher_profiles.json, NVIDIA, TCNodeTracker");
-        try (Zipper zip = new Zipper(modpackFile.toPath())) {
-            Path runDirectory = repository.getRunDirectory(version).toPath();
+        try (var zip = new Zipper(modpackFile)) {
+            Path runDirectory = repository.getRunDirectory(version);
             List<ModrinthManifest.File> files = new ArrayList<>();
             Set<String> filesInManifest = new HashSet<>();
 
@@ -139,7 +145,7 @@ public class ModrinthModpackExportTask extends Task<Void> {
             }
 
             zip.putDirectory(runDirectory, "client-overrides", path -> {
-                String relativePath = path.toString().replace(File.separatorChar, '/');
+                String relativePath = path.replace(File.separatorChar, '/');
                 if (filesInManifest.contains(relativePath)) {
                     return false;
                 }

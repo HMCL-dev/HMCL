@@ -42,7 +42,7 @@ public final class NeoForgeBMCLVersionList extends VersionList<NeoForgeRemoteVer
 
     @Override
     public boolean hasType() {
-        return false;
+        return true;
     }
 
     @Override

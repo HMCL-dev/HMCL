@@ -122,7 +122,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
     /**
      * Remove library by library id
      *
-     * @param libraryId patch id or "forge"/"optifine"/"liteloader"/"fabric"/"quilt"/"neoforge"
+     * @param libraryId patch id or "forge"/"optifine"/"liteloader"/"fabric"/"quilt"/"neoforge"/"cleanroom"
      * @return this
      */
     public LibraryAnalyzer removeLibrary(String libraryId) {
@@ -172,6 +172,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         String mainClass = resolvedVersion.getMainClass();
         return mainClass != null && (LAUNCH_WRAPPER_MAIN.equals(mainClass)
                 || mainClass.startsWith("net.minecraftforge")
+                || mainClass.startsWith("top.outlands") //Cleanroom
                 || mainClass.startsWith("net.fabricmc")
                 || mainClass.startsWith("org.quiltmc")
                 || mainClass.startsWith("cpw.mods"));
@@ -212,6 +213,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
                 return super.matchLibrary(library, libraries);
             }
         },
+        CLEANROOM(true, "cleanroom", "com\\.cleanroommc", "cleanroom", ModLoaderType.CLEANROOM),
         NEO_FORGE(true, "neoforge", "net\\.neoforged\\.fancymodloader", "(core|loader)", ModLoaderType.NEO_FORGED) {
             private final Pattern NEO_FORGE_VERSION_MATCHER = Pattern.compile("^([0-9.]+)-(?<forge>[0-9.]+)(-([0-9.]+))?$");
 

@@ -24,7 +24,6 @@ import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.util.InvocationDispatcher;
-import org.jackhuang.hmcl.util.ReflectionHelper;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
@@ -35,10 +34,9 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.function.BooleanSupplier;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
+import java.util.function.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -1009,8 +1007,19 @@ public abstract class Task<T> {
         void execute(T result, Exception exception) throws Exception;
     }
 
+    private static final String PACKAGE_PREFIX = Task.class.getPackageName() + ".";
+    private static final Predicate<StackWalker.StackFrame> PREDICATE = stackFrame -> !stackFrame.getClassName().startsWith(PACKAGE_PREFIX);
+    private static final Function<Stream<StackWalker.StackFrame>, Optional<StackWalker.StackFrame>> FUNCTION = stream -> stream.filter(PREDICATE).findFirst();
+    private static final Function<StackWalker.StackFrame, String> FRAME_MAPPING = frame -> {
+        String fileName = frame.getFileName();
+        if (fileName != null)
+            return frame.getClassName() + '.' + frame.getMethodName() + '(' + fileName + ':' + frame.getLineNumber() + ')';
+        else
+            return frame.getClassName() + '.' + frame.getMethodName();
+    };
+
     private static String getCaller() {
-        return ReflectionHelper.getCaller(packageName -> !"org.jackhuang.hmcl.task".equals(packageName)).toString();
+        return StackWalker.getInstance().walk(FUNCTION).map(FRAME_MAPPING).orElse("Unknown");
     }
 
     private static final class SimpleTask<T> extends Task<T> {

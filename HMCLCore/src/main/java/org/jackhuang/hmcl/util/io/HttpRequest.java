@@ -57,6 +57,10 @@ public abstract class HttpRequest {
         this.method = method;
     }
 
+    public String getUrl() {
+        return url;
+    }
+
     public HttpRequest accept(String contentType) {
         return header("Accept", contentType);
     }

@@ -65,6 +65,12 @@
     "subtitleLocalized" : "about.thanks_to.mcbbs.statement"
   },
   {
+    "image" : "/assets/img/mcim.png",
+    "titleLocalized" : "about.thanks_to.mcim",
+    "subtitleLocalized" : "about.thanks_to.mcim.statement",
+    "externalLink" : "https://github.com/mcmod-info-mirror"
+  },
+  {
     "image" : "/assets/img/github.png",
     "titleLocalized" : "about.thanks_to.contributors",
     "subtitleLocalized" : "about.thanks_to.contributors.statement",

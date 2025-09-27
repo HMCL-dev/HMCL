@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.mod.modrinth;
 
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.RemoteMod;
@@ -79,7 +80,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     }
 
     @Override
-    public SearchResult search(String gameVersion, @Nullable RemoteModRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder) throws IOException {
+    public SearchResult search(DownloadProvider downloadProvider, String gameVersion, @Nullable RemoteModRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder) throws IOException {
         List<List<String>> facets = new ArrayList<>();
         facets.add(Collections.singletonList("project_type:" + projectType));
         if (StringUtils.isNotBlank(gameVersion)) {
@@ -95,7 +96,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                 pair("limit", Integer.toString(pageSize)),
                 pair("index", convertSortType(sort))
         );
-        Response<ProjectSearchResult> response = HttpRequest.GET(NetworkUtils.withQuery(PREFIX + "/v2/search", query))
+        Response<ProjectSearchResult> response = HttpRequest.GET(downloadProvider.injectURL(NetworkUtils.withQuery(PREFIX + "/v2/search", query)))
                 .getJson(Response.typeOf(ProjectSearchResult.class));
         return new SearchResult(response.getHits().stream().map(ProjectSearchResult::toMod), (int) Math.ceil((double) response.totalHits / pageSize));
     }
