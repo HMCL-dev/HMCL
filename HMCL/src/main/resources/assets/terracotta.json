@@ -1,0 +1,46 @@
+{
+  "version_legacy": "0\\.3\\.[89]-rc.[0-9]",
+  "version_recent": [
+    "0.3.9-rc.4",
+    "0.3.9-rc.5",
+    "0.3.9-rc.6"
+  ],
+  "version_latest": "0.3.9-rc.7",
+
+  "classifiers": {
+    "linux-arm64": "sha256:cfd3866e4382e69710ed07a8dafb904750eb5a61d74421782efa6e3db3728696",
+    "linux-x86_64": "sha256:01c131751240376f2aa26898ad2cd981e8e9daee32727aa20737261dc76d8a51",
+    "macos-arm64": "sha256:ca1e45c72e670e2d3687f2226858bc36bf0043f322c6acbbe7f19a9955e697b1",
+    "macos-arm64.pkg": "sha256:1b042e17c56229ab530383740b0366ebf4930a2e5d4d6782ffb46adb16c5002e",
+    "macos-x86_64": "sha256:aa83509b1cb6d322c864d9b6f2642c7b4e407d6bb8fa830bf89d1a046dcb3d01",
+    "macos-x86_64.pkg": "sha256:b539a2978aaeee504203a882b90c463125d73149840b73b372d7d419b7253c4a",
+    "windows-arm64.exe": "sha256:7dc2a066168bff202245cf63ab344914d941f290a712749989db1006a42451e6",
+    "windows-x86_64.exe": "sha256:84b2ff061e0e4f7ab61e18c06dc2b07e99982f4156dd32a6c3159cff91c42090"
+  },
+  "downloads": [
+    "https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}",
+    "https://gitee.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}",
+    "https://alist.8mi.tech/d/mirror/HMCL-Terracotta/Auto/v${version}/terracotta-${version}-${classifier}",
+    "https://ghfast.top/https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}",
+    "https://cdn.crashmc.com/https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}",
+    "https://cp.zkitefly.eu.org/https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}"
+  ],
+  "links": [
+    {
+      "desc": {
+        "default": "GitHub Release",
+        "zh": "GitHub 发布页",
+        "zh-Hant": "GitHub 發布頁"
+      },
+      "link": "https://github.com/burningtnt/Terracotta/releases/tag/v${version}"
+    },
+    {
+      "desc": {
+        "default": "Tencent QQ Group",
+        "zh": "QQ 群",
+        "zh-Hant": "QQ 群"
+      },
+      "link": "https://qm.qq.com/cgi-bin/qm/qr?k=nIf5u5xQ3LXEP4ZEmLQtfjtpppjgHfI5&jump_from=webapi&authKey=sXStlPuGzhD1JyAhyExd2OwjzZkRf3x7bAEb/j1xNX1wrQcDdg71qPrhumIm6pyf"
+    }
+  ]
+}
