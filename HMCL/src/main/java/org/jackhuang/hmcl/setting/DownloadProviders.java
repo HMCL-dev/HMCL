@@ -91,7 +91,7 @@ public final class DownloadProviders {
 
     static void init() {
         InvalidationListener onChangeDownloadSource = observable -> {
-            String versionListSource = config().getVersionListSource();
+            String versionListSource = Objects.requireNonNullElse(config().getVersionListSource(), "");
             if (config().isAutoChooseDownloadType()) {
                 DownloadProvider currentDownloadProvider = providersById.get(versionListSource);
                 if (currentDownloadProvider == null)
@@ -109,7 +109,8 @@ public final class DownloadProviders {
         onChangeDownloadSource.invalidated(null);
 
         FXUtils.onChangeAndOperate(config().downloadTypeProperty(), downloadType -> {
-            DownloadProvider primary = Objects.requireNonNullElseGet(rawProviders.get(downloadType),
+            DownloadProvider primary = Objects.requireNonNullElseGet(
+                    rawProviders.get(Objects.requireNonNullElse(downloadType, "")),
                     () -> rawProviders.get(DEFAULT_RAW_PROVIDER_ID));
 
             List<DownloadProvider> providers = new ArrayList<>(rawProviders.size());
