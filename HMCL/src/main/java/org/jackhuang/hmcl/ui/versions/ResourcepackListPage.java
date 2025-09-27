@@ -48,7 +48,7 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
 
         if (Files.exists(img)) {
             try {
-                imageView.setImage(FXUtils.loadImage(img));
+                imageView.setImage(FXUtils.loadImage(img, 32, 32, true, true));
             } catch (Exception e) {
                 LOG.warning("Failed to load image " + img, e);
             }
@@ -81,27 +81,29 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
     }
 
     public void refresh() {
-        itemsProperty().clear();
-        if (resourcepackDirectory == null || !Files.exists(resourcepackDirectory)) return;
-        Task.supplyAsync(() -> {
+        if (resourcepackDirectory == null || !Files.isDirectory(resourcepackDirectory)) return;
+        setLoading(true);
+        Task.supplyAsync(Schedulers.io(), () -> {
             try (Stream<Path> stream = Files.list(resourcepackDirectory)) {
-                return stream.sorted(Comparator.comparing(item -> item.getFileName().toString())).toList();
-            } catch (IOException e) {
-                LOG.warning("Failed to list resourcepacks directory", e);
-                return null;
+                return stream.sorted(Comparator.comparing(FileUtils::getName))
+                        .flatMap(item -> {
+                            try {
+                                return Stream.of(new ResourcepackItem(ResourcepackFile.parse(item)));
+                            } catch (IOException e) {
+                                LOG.warning("Failed to load resourcepack " + item, e);
+                                return Stream.empty();
+                            }
+                        })
+                        .toList();
             }
         }).whenComplete(Schedulers.javafx(), ((result, exception) -> {
-            if (result != null) {
-                result.forEach(item -> {
-                    try {
-                        itemsProperty().add(new ResourcepackItem(ResourcepackFile.parse(item)));
-                    } catch (IOException e) {
-                        LOG.warning("Failed to load resourcepack " + item, e);
-                    }
-                });
+            if (exception == null) {
+                itemsProperty().setAll(result);
+            } else {
+                LOG.warning("Failed to load resourcepacks", exception);
             }
-        })).whenComplete(Schedulers.javafx(), (exception) -> setLoading(false)).start();
-        setLoading(true);
+            setLoading(false);
+        })).start();
     }
 
     public void addFiles(List<Path> files) {
