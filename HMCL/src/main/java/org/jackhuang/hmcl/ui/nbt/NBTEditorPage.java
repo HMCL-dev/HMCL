@@ -33,7 +33,7 @@ import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.StringUtils;
 
-import java.io.*;
+import java.io.IOException;
 import java.nio.file.Path;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;

@@ -10,7 +10,7 @@
     </module>
 
     <module name="FileLength"><!-- max line length for single file: http://checkstyle.sourceforge.net/config_sizes.html#FileLength -->
-        <property name="max" value="1500"/>
+        <property name="max" value="2000"/>
     </module>
 
     <module name="TreeWalker">

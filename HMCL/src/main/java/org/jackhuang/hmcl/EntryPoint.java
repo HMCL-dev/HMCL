@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl;
 
 import org.jackhuang.hmcl.util.FileSaver;
-import org.jackhuang.hmcl.ui.AwtUtils;
 import org.jackhuang.hmcl.util.SelfDependencyPatcher;
 import org.jackhuang.hmcl.util.SwingUtils;
 import org.jackhuang.hmcl.java.JavaRuntime;
@@ -110,8 +109,14 @@ public final class EntryPoint {
     }
 
     private static void initIcon() {
-        java.awt.Image image = java.awt.Toolkit.getDefaultToolkit().getImage(EntryPoint.class.getResource("/assets/img/icon-mac.png"));
-        AwtUtils.setAppleIcon(image);
+        try {
+            if (java.awt.Taskbar.isTaskbarSupported()) {
+                var image = java.awt.Toolkit.getDefaultToolkit().getImage(EntryPoint.class.getResource("/assets/img/icon-mac.png"));
+                java.awt.Taskbar.getTaskbar().setIconImage(image);
+            }
+        } catch (Throwable e) {
+            LOG.warning("Failed to set application icon", e);
+        }
     }
 
     private static void checkDirectoryPath() {

@@ -209,9 +209,18 @@ public final class JavaManager {
 
     public static Task<Void> getUninstallJavaTask(JavaRuntime java) {
         assert java.isManaged();
-        Path root = REPOSITORY.getPlatformRoot(java.getPlatform());
-        Path relativized = root.relativize(java.getBinary());
 
+        Path platformRoot;
+        try {
+            platformRoot = REPOSITORY.getPlatformRoot(java.getPlatform()).toRealPath();
+        } catch (Throwable ignored) {
+            return Task.completed(null);
+        }
+
+        if (!java.getBinary().startsWith(platformRoot))
+            return Task.completed(null);
+
+        Path relativized = platformRoot.relativize(java.getBinary());
         if (relativized.getNameCount() > 1) {
             FXUtils.runInFX(() -> {
                 try {
@@ -255,16 +264,15 @@ public final class JavaManager {
         }
     }
 
-    private static int compareJavaVersion(JavaRuntime java1, JavaRuntime java2, GameJavaVersion suggestedJavaVersion) {
-        if (suggestedJavaVersion != null) {
-            boolean b1 = java1.getParsedVersion() == suggestedJavaVersion.getMajorVersion();
-            boolean b2 = java2.getParsedVersion() == suggestedJavaVersion.getMajorVersion();
+    private static JavaRuntime chooseJava(@Nullable JavaRuntime java1, JavaRuntime java2) {
+        if (java1 == null)
+            return java2;
 
-            if (b1 != b2)
-                return b1 ? 1 : -1;
-        }
-
-        return java1.getVersionNumber().compareTo(java2.getVersionNumber());
+        if (java1.getParsedVersion() != java2.getParsedVersion())
+            // Prefer the Java version that is closer to the game's recommended Java version
+            return java1.getParsedVersion() < java2.getParsedVersion() ? java1 : java2;
+        else
+            return java1.getVersionNumber().compareTo(java2.getVersionNumber()) >= 0 ? java1 : java2;
     }
 
     @Nullable
@@ -279,9 +287,6 @@ public final class JavaManager {
         boolean forceX86 = Architecture.SYSTEM_ARCH == Architecture.ARM64
                 && (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS || OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
                 && (gameVersion == null || gameVersion.compareTo("1.6") < 0);
-
-        GameJavaVersion suggestedJavaVersion =
-                (version != null && gameVersion != null && gameVersion.compareTo("1.7.10") >= 0) ? version.getJavaVersion() : null;
 
         JavaRuntime mandatory = null;
         JavaRuntime suggested = null;
@@ -310,15 +315,10 @@ public final class JavaManager {
             }
 
             if (!violationMandatory) {
-                if (mandatory == null) mandatory = java;
-                else if (compareJavaVersion(java, mandatory, suggestedJavaVersion) > 0)
-                    mandatory = java;
+                mandatory = chooseJava(mandatory, java);
 
-                if (!violationSuggested) {
-                    if (suggested == null) suggested = java;
-                    else if (compareJavaVersion(java, suggested, suggestedJavaVersion) > 0)
-                        suggested = java;
-                }
+                if (!violationSuggested)
+                    suggested = chooseJava(suggested, java);
             }
         }
 
