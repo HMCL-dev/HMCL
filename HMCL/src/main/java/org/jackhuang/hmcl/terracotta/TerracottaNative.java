@@ -32,7 +32,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
-import java.net.URLConnection;
+import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
@@ -59,8 +59,8 @@ public final class TerracottaNative {
         if (tree == null) {
             return new FileDownloadTask(links, path, checking) {
                 @Override
-                protected Context getContext(URLConnection connection, boolean checkETag, String bmclapiHash) throws IOException {
-                    Context delegate = super.getContext(connection, checkETag, bmclapiHash);
+                protected Context getContext(HttpResponse<?> response, boolean checkETag, String bmclapiHash) throws IOException {
+                    Context delegate = super.getContext(response, checkETag, bmclapiHash);
                     return new Context() {
                         @Override
                         public void withResult(boolean success) {

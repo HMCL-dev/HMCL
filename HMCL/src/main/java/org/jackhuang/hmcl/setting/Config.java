@@ -37,8 +37,7 @@ import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.gson.*;
-import org.jackhuang.hmcl.util.i18n.Locales;
-import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
+import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jackhuang.hmcl.util.javafx.DirtyTracker;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
 import org.jetbrains.annotations.Nullable;
@@ -222,7 +221,7 @@ public final class Config implements Observable {
     }
 
     @SerializedName("localization")
-    private final ObjectProperty<SupportedLocale> localization = new SimpleObjectProperty<>(Locales.DEFAULT);
+    private final ObjectProperty<SupportedLocale> localization = new SimpleObjectProperty<>(SupportedLocale.DEFAULT);
 
     public ObjectProperty<SupportedLocale> localizationProperty() {
         return localization;
