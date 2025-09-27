@@ -309,4 +309,37 @@ public final class Launcher extends Application {
     }
 
     public static final CrashReporter CRASH_REPORTER = new CrashReporter(true);
+/**
+     * Reload the application
+     */
+    public static void reloadApplication() {
+        LOG.info("Reloading application...\n");
+
+        try {
+            // Reload configuration
+            try {
+                ConfigHolder.reload();
+                LOG.info("Configuration reloaded successfully\n");
+            } catch (SambaException e) {
+                showAlert(AlertType.WARNING, i18n("fatal.samba"));
+            }
+
+            // Update UI in FX thread
+            Platform.runLater(() -> {
+                try {
+                    // Re-initialize controllers
+                    Controllers.reload();
+
+                    LOG.info("Application reloaded successfully\n");
+                } catch (Exception e) {
+                    LOG.error("Failed to reload UI", e);
+                    showAlert(AlertType.ERROR, i18n("error.reload_failed"));
+                }
+            });
+        } catch (Exception e) {
+            LOG.error("Error during application reload\n", e);
+            showAlert(AlertType.ERROR, i18n("error.reload_failed"));
+        }
+    }
+
 }
