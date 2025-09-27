@@ -29,6 +29,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -87,7 +88,7 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
                 return stream.sorted(Comparator.comparing(FileUtils::getName))
                         .flatMap(item -> {
                             try {
-                                return Stream.of(new ResourcepackItem(ResourcepackFile.parse(item)));
+                                return Stream.of(ResourcepackFile.parse(item)).filter(Objects::nonNull).map(ResourcepackItem::new);
                             } catch (IOException e) {
                                 LOG.warning("Failed to load resourcepack " + item, e);
                                 return Stream.empty();
