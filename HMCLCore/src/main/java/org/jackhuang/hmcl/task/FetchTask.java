@@ -20,10 +20,7 @@ package org.jackhuang.hmcl.task;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.util.*;
-import org.jackhuang.hmcl.util.io.ContentEncoding;
-import org.jackhuang.hmcl.util.io.IOUtils;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
-import org.jackhuang.hmcl.util.io.ResponseCodeException;
+import org.jackhuang.hmcl.util.io.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,7 +94,7 @@ public abstract class FetchTask<T> extends Task<T> {
         return getContext(null, false, null);
     }
 
-    protected abstract Context getContext(HttpResponse.@Nullable ResponseInfo response, boolean checkETag, String bmclapiHash) throws IOException;
+    protected abstract Context getContext(@Nullable HttpResponse<?> response, boolean checkETag, String bmclapiHash) throws IOException;
 
     @Override
     public void execute() throws Exception {
@@ -105,7 +102,7 @@ public abstract class FetchTask<T> extends Task<T> {
         switch (shouldCheckETag()) {
             case CHECK_E_TAG -> checkETag = true;
             case NOT_CHECK_E_TAG -> checkETag = false;
-            default-> {
+            default -> {
                 return;
             }
         }
@@ -351,7 +348,7 @@ public abstract class FetchTask<T> extends Task<T> {
                     var contentEncoding = ContentEncoding.fromHeaders(response.headers());
 
                     if (context == null) {
-                        context = getContext(NetworkUtils.getResponseInfo(response), checkETag, bmclapiHash);
+                        context = getContext(response, checkETag, bmclapiHash);
                         resumeContext = HttpResumeContext.of(response);
                     } else if (resumeContext != null) {
                         if (resumeContext.canResume(response)) {
@@ -379,7 +376,7 @@ public abstract class FetchTask<T> extends Task<T> {
                             IOUtils.closeQuietly(context, e);
                             LOG.warning("Failed to reset context for " + uri, e);
 
-                            context = getContext(NetworkUtils.getResponseInfo(response), checkETag, bmclapiHash);
+                            context = getContext(response, checkETag, bmclapiHash);
                         }
                     }
 

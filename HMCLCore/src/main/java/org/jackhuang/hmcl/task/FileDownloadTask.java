@@ -18,10 +18,7 @@
 package org.jackhuang.hmcl.task;
 
 import org.jackhuang.hmcl.util.DigestUtils;
-import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
-import org.jackhuang.hmcl.util.io.CompressingUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.io.*;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -46,16 +43,16 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public class FileDownloadTask extends FetchTask<Void> {
 
     public record IntegrityCheck(String algorithm, String checksum) {
-            public IntegrityCheck(String algorithm, String checksum) {
-                this.algorithm = requireNonNull(algorithm);
-                this.checksum = requireNonNull(checksum);
-            }
-
-            public static IntegrityCheck of(String algorithm, String checksum) {
-                if (checksum == null) return null;
-                else return new IntegrityCheck(algorithm, checksum);
-            }
+        public IntegrityCheck(String algorithm, String checksum) {
+            this.algorithm = requireNonNull(algorithm);
+            this.checksum = requireNonNull(checksum);
         }
+
+        public static IntegrityCheck of(String algorithm, String checksum) {
+            if (checksum == null) return null;
+            else return new IntegrityCheck(algorithm, checksum);
+        }
+    }
 
     private final Path file;
     private final IntegrityCheck integrityCheck;
@@ -170,7 +167,7 @@ public class FileDownloadTask extends FetchTask<Void> {
     }
 
     @Override
-    protected Context getContext(HttpResponse.@Nullable ResponseInfo response, boolean checkETag, String bmclapiHash) throws IOException {
+    protected Context getContext(@Nullable HttpResponse<?> response, boolean checkETag, String bmclapiHash) throws IOException {
         Path temp = Files.createTempFile(null, null);
 
         String algorithm;
@@ -250,7 +247,7 @@ public class FileDownloadTask extends FetchTask<Void> {
                 }
 
                 if (checkETag) {
-                    repository.cacheRemoteFile(response, file);
+                    repository.cacheRemoteFile(UrlResponseInfo.of(response), file);
                 }
             }
         };

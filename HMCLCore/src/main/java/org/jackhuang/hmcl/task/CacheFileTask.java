@@ -19,11 +19,11 @@ package org.jackhuang.hmcl.task;
 
 import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.io.UrlResponseInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.URI;
 import java.net.http.HttpResponse;
 import java.nio.ByteBuffer;
@@ -76,7 +76,7 @@ public final class CacheFileTask extends FetchTask<Path> {
     }
 
     @Override
-    protected Context getContext(HttpResponse.@Nullable ResponseInfo response, boolean checkETag, String bmclapiHash) throws IOException {
+    protected Context getContext(@Nullable HttpResponse<?> response, boolean checkETag, String bmclapiHash) throws IOException {
         assert checkETag;
         assert response != null;
 
@@ -88,7 +88,7 @@ public final class CacheFileTask extends FetchTask<Path> {
                     StandardOpenOption.CREATE);
 
             @Override
-            public void reset() throws IOException{
+            public void reset() throws IOException {
                 fileOutput.truncate(0L);
             }
 
@@ -119,7 +119,7 @@ public final class CacheFileTask extends FetchTask<Path> {
                 }
 
                 try {
-                    setResult(repository.cacheRemoteFile(response, temp));
+                    setResult(repository.cacheRemoteFile(UrlResponseInfo.of(response), temp));
                 } finally {
                     try {
                         Files.deleteIfExists(temp);

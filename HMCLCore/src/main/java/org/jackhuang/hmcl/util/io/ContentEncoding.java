@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLConnection;
 import java.net.http.HttpHeaders;
-import java.net.http.HttpResponse;
 import java.util.zip.GZIPInputStream;
 
 /**

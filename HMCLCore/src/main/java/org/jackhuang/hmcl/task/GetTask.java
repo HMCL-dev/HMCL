@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.task;
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.io.UrlResponseInfo;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
@@ -62,7 +63,7 @@ public final class GetTask extends FetchTask<String> {
     }
 
     @Override
-    protected Context getContext(HttpResponse.@Nullable ResponseInfo response, boolean checkETag, String bmclapiHash) {
+    protected Context getContext(@Nullable HttpResponse<?> response, boolean checkETag, String bmclapiHash) {
         long length = -1;
         if (response != null)
             length = response.headers().firstValueAsLong("content-length").orElse(-1L);
@@ -91,7 +92,7 @@ public final class GetTask extends FetchTask<String> {
                 setResult(result);
 
                 if (checkETag) {
-                    repository.cacheText(response, result);
+                    repository.cacheText(UrlResponseInfo.of(response), result);
                 }
             }
         };

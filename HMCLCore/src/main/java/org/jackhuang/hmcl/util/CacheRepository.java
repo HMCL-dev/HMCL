@@ -23,13 +23,13 @@ import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.io.UrlResponseInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.URI;
 import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
@@ -228,20 +228,20 @@ public class CacheRepository {
         //     conn.setRequestProperty("If-Modified-Since", eTagItem.getRemoteLastModified());
     }
 
-    public Path cacheRemoteFile(HttpResponse.ResponseInfo response, Path downloaded) throws IOException {
-        return cacheData(response, () -> {
+    public Path cacheRemoteFile(UrlResponseInfo info, Path downloaded) throws IOException {
+        return cacheData(info, () -> {
             String hash = DigestUtils.digestToString(SHA1, downloaded);
             Path cached = cacheFile(downloaded, SHA1, hash);
             return new CacheResult(hash, cached);
         });
     }
 
-    public Path cacheText(HttpResponse.ResponseInfo response, String text) throws IOException {
-        return cacheBytes(response, text.getBytes(UTF_8));
+    public Path cacheText(UrlResponseInfo info, String text) throws IOException {
+        return cacheBytes(info, text.getBytes(UTF_8));
     }
 
-    public Path cacheBytes(HttpResponse.ResponseInfo response, byte[] bytes) throws IOException {
-        return cacheData(response, () -> {
+    public Path cacheBytes(UrlResponseInfo info, byte[] bytes) throws IOException {
+        return cacheData(info, () -> {
             String hash = DigestUtils.digestToString(SHA1, bytes);
             Path cached = getFile(SHA1, hash);
             Files.createDirectories(cached.getParent());
@@ -252,15 +252,15 @@ public class CacheRepository {
 
     private static final Pattern MAX_AGE = Pattern.compile("(s-maxage|max-age)=(?<time>[0-9]+)");
 
-    private Path cacheData(HttpResponse.ResponseInfo response, ExceptionalSupplier<CacheResult, IOException> cacheSupplier) throws IOException {
-        String eTag = response.headers().firstValue("etag").orElse(null);
+    private Path cacheData(UrlResponseInfo info, ExceptionalSupplier<CacheResult, IOException> cacheSupplier) throws IOException {
+        String eTag = info.headers().firstValue("etag").orElse(null);
         if (StringUtils.isBlank(eTag)) return null;
-        URI uri = NetworkUtils.dropQuery(response.uri()); // TODO
+        URI uri = NetworkUtils.dropQuery(info.uri());
         long expires = 0L;
 
         expires:
         try {
-            String cacheControl = response.headers().firstValue("cache-control").orElse(null);
+            String cacheControl = info.headers().firstValue("cache-control").orElse(null);
             if (StringUtils.isNotBlank(cacheControl)) {
                 if (cacheControl.contains("no-store"))
                     return null;
@@ -273,7 +273,7 @@ public class CacheRepository {
                 }
             }
 
-            String expiresHeader = response.headers().firstValue("expires").orElse(null);
+            String expiresHeader = info.headers().firstValue("expires").orElse(null);
             if (StringUtils.isNotBlank(expiresHeader)) {
                 expires = ZonedDateTime.parse(expiresHeader.trim(), DateTimeFormatter.RFC_1123_DATE_TIME)
                         .toInstant().toEpochMilli();
@@ -282,7 +282,7 @@ public class CacheRepository {
             LOG.warning("Failed to parse expires time", e);
         }
 
-        String lastModified = response.headers().firstValue("last-modified").orElse(null);
+        String lastModified = info.headers().firstValue("last-modified").orElse(null);
 
         CacheResult cacheResult = cacheSupplier.get();
         ETagItem eTagItem = new ETagItem(uri.toString(),
