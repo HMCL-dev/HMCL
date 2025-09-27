@@ -33,6 +33,8 @@ val curseForgeApiKey = System.getenv("CURSEFORGE_API_KEY") ?: ""
 val launcherExe = System.getenv("HMCL_LAUNCHER_EXE") ?: ""
 
 val buildNumber = System.getenv("BUILD_NUMBER")?.toInt()
+logger.quiet($">>>>>>>>>>>>>>>>> ${buildNumber} | ${JenkinsUtils.IS_ON_CI} | ${versionType}")
+
 if (buildNumber != null) {
     version = if (JenkinsUtils.IS_ON_CI && versionType == "dev") {
         "$versionRoot.0.$buildNumber"
