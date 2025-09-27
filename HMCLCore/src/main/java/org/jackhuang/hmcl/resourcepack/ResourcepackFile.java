@@ -18,15 +18,6 @@ public interface ResourcepackFile {
 
     Path getIcon();
 
-    default String parseDescriptionFromJson(Path json) {
-        try {
-            return JsonUtils.fromJsonFile(json, ResourcepackMeta.class).pack().description();
-        } catch (Exception e) {
-            LOG.warning("Failed to parse resourcepack meta ", e);
-            return "";
-        }
-    }
-
     static ResourcepackFile parse(Path path) throws IOException {
         String fileName = path.getFileName().toString();
         if (Files.isRegularFile(path) && fileName.toLowerCase(Locale.ROOT).endsWith(".zip")) {
@@ -36,5 +27,4 @@ public interface ResourcepackFile {
         }
         return null;
     }
-
 }

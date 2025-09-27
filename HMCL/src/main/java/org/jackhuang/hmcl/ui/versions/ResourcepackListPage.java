@@ -115,11 +115,12 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
                     Files.copy(file, target);
                 }
             }
-            refresh();
         } catch (IOException e) {
             LOG.warning("Failed to add resourcepacks", e);
             Controllers.dialog(i18n("resourcepack.add.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
         }
+
+        refresh();
     }
 
     public void onAddFiles() {
