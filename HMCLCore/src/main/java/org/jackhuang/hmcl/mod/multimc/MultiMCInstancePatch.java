@@ -38,6 +38,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonMap;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.util.ArrayList;

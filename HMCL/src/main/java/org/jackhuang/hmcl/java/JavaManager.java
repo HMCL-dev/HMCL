@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.io.FileUtils;
