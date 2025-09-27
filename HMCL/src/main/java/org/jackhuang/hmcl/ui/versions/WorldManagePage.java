@@ -68,11 +68,6 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         this.state = new SimpleObjectProperty<>(State.fromTitle(i18n("world.manage.title", world.getWorldName())));
         this.header = new TabHeader(worldInfoTab, worldBackupsTab);
 
-        if (world.getGameVersion() != null && // old game will not write game version to level.dat
-                GameVersionNumber.compare(world.getGameVersion(), "1.13") >= 0) {
-            header.getTabs().add(datapackTab);
-        }
-
         worldInfoTab.setNodeSupplier(() -> new WorldInfoPage(this));
         worldBackupsTab.setNodeSupplier(() -> new WorldBackupsPage(this));
         datapackTab.setNodeSupplier(() -> new DatapackListPage(this));
@@ -90,8 +85,14 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
         AdvancedListBox sideBar = new AdvancedListBox()
                 .addNavigationDrawerTab(header, worldInfoTab, i18n("world.info"), SVG.INFO)
-                .addNavigationDrawerTab(header, worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE)
-                .addNavigationDrawerTab(header, datapackTab, i18n("world.datapack"), SVG.EXTENSION);
+                .addNavigationDrawerTab(header, worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE);
+
+        if (world.getGameVersion() != null && // old game will not write game version to level.dat
+                GameVersionNumber.asGameVersion(world.getGameVersion()).isAtLeast("1.13", "17w43a")) {
+            header.getTabs().add(datapackTab);
+            sideBar.addNavigationDrawerTab(header, datapackTab, i18n("world.datapack"), SVG.EXTENSION);
+        }
+
         left.setTop(sideBar);
 
         AdvancedListBox toolbar = new AdvancedListBox();
@@ -116,7 +117,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                                     JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT,
                                     chunkBaseMenuItem.getWidth(), 0)));
         }
-        toolbar.addNavigationDrawerItem(i18n("settings.game.exploration"), SVG.FOLDER_OPEN, () -> FXUtils.openFolder(world.getFile().toFile()), null);
+        toolbar.addNavigationDrawerItem(i18n("settings.game.exploration"), SVG.FOLDER_OPEN, () -> FXUtils.openFolder(world.getFile()), null);
 
         BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
         left.setBottom(toolbar);

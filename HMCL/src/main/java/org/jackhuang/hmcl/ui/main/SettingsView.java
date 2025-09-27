@@ -39,7 +39,7 @@ import org.jackhuang.hmcl.ui.construct.ComponentSublist;
 import org.jackhuang.hmcl.ui.construct.MultiFileItem;
 import org.jackhuang.hmcl.ui.construct.OptionToggleButton;
 import org.jackhuang.hmcl.util.i18n.I18n;
-import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
+import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 
 import java.util.Arrays;
 
@@ -50,6 +50,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public abstract class SettingsView extends StackPane {
     protected final JFXComboBox<SupportedLocale> cboLanguage;
+    protected final OptionToggleButton disableAutoGameOptionsPane;
     protected final MultiFileItem<EnumCommonDirectory> fileCommonLocation;
     protected final ComponentSublist fileCommonLocationSublist;
     protected final Label lblUpdate;
@@ -187,12 +188,28 @@ public abstract class SettingsView extends StackPane {
                     BorderPane.setAlignment(left, Pos.CENTER_LEFT);
                     languagePane.setLeft(left);
 
+                    SupportedLocale currentLocale = I18n.getLocale();
                     cboLanguage = new JFXComboBox<>();
-                    cboLanguage.setConverter(stringConverter(I18n::getName));
+                    cboLanguage.setConverter(stringConverter(locale -> {
+                        if (locale.isDefault())
+                            return locale.getDisplayName(currentLocale);
+                        else if (locale.isSameLanguage(currentLocale))
+                            return locale.getDisplayName(locale);
+                        else
+                            return locale.getDisplayName(currentLocale) + " - " + locale.getDisplayName(locale);
+                    }));
+
                     FXUtils.setLimitWidth(cboLanguage, 300);
                     languagePane.setRight(cboLanguage);
 
                     settingsPane.getContent().add(languagePane);
+                }
+
+                {
+                    disableAutoGameOptionsPane = new OptionToggleButton();
+                    disableAutoGameOptionsPane.setTitle(i18n("settings.launcher.disable_auto_game_options"));
+
+                    settingsPane.getContent().add(disableAutoGameOptionsPane);
                 }
 
                 {
@@ -228,7 +245,7 @@ public abstract class SettingsView extends StackPane {
     }
 
     public void openLogFolder() {
-        FXUtils.openFolder(LOG.getLogFile().getParent().toFile());
+        FXUtils.openFolder(LOG.getLogFile().getParent());
     }
 
     protected abstract void onUpdate();
