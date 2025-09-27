@@ -20,12 +20,11 @@ public interface ResourcepackFile {
 
     default String parseDescriptionFromJson(Path json) {
         try {
-            return JsonUtils.fromJsonFile(json, ResourcepackMeta.class).pack.description;
+            return JsonUtils.fromJsonFile(json, ResourcepackMeta.class).pack().description();
         } catch (Exception e) {
             LOG.warning("Failed to parse resourcepack meta ", e);
             return "";
         }
-
     }
 
     static ResourcepackFile parse(Path path) throws IOException {

@@ -123,7 +123,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
 
             if (!node.isSelected()) node.setIndeterminate(false);
 
-            // Empty folder need not to be displayed.
+            // Empty path need not to be displayed.
             if (node.getChildren().isEmpty()) {
                 return null;
             }

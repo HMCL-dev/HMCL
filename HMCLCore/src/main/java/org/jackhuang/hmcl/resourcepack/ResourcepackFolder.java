@@ -2,27 +2,22 @@ package org.jackhuang.hmcl.resourcepack;
 
 import java.nio.file.Path;
 
-public final class ResourcepackFolder implements ResourcepackFile {
-    private final Path folder;
-
-    public ResourcepackFolder(Path folder) {
-        this.folder = folder;
-    }
+public record ResourcepackFolder(Path path) implements ResourcepackFile {
 
     @Override
     public String getName() {
-        return folder.getFileName().toString();
+        return path.getFileName().toString();
     }
 
     @Override
     public Path getPath() {
-        return folder;
+        return path;
     }
 
     @Override
     public String getDescription() {
         try {
-            return parseDescriptionFromJson(folder.resolve("pack.mcmeta"));
+            return parseDescriptionFromJson(path.resolve("pack.mcmeta"));
         } catch (Exception e) {
             return "";
         }
@@ -30,6 +25,6 @@ public final class ResourcepackFolder implements ResourcepackFile {
 
     @Override
     public Path getIcon() {
-        return folder.resolve("pack.png");
+        return path.resolve("pack.png");
     }
 }

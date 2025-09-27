@@ -252,7 +252,7 @@ public class DefaultGameRepository implements GameRepository {
                 return true;
             }
 
-            // remove json files first to ensure HMCL will not recognize this folder as a valid version.
+            // remove json files first to ensure HMCL will not recognize this path as a valid version.
 
             for (Path path : FileUtils.listFilesByExtension(removedFile, "json")) {
                 try {
@@ -266,7 +266,7 @@ public class DefaultGameRepository implements GameRepository {
             try {
                 FileUtils.deleteDirectory(removedFile);
             } catch (IOException e) {
-                LOG.warning("Unable to remove version folder: " + file, e);
+                LOG.warning("Unable to remove version path: " + file, e);
             }
             return true;
         } finally {
@@ -362,7 +362,7 @@ public class DefaultGameRepository implements GameRepository {
                                 throw e;
                             }
                         } catch (IOException e) {
-                            LOG.warning("Ignoring version " + version.getId() + " because version id does not match folder name " + id + ", and we cannot correct it.", e);
+                            LOG.warning("Ignoring version " + version.getId() + " because version id does not match path name " + id + ", and we cannot correct it.", e);
                             return Stream.empty();
                         }
                     }

@@ -460,7 +460,7 @@ public final class FXUtils {
 
     public static void openFolder(Path file) {
         if (file.getFileSystem() != FileSystems.getDefault()) {
-            LOG.warning("Cannot open folder as the file system is not supported: " + file);
+            LOG.warning("Cannot open path as the file system is not supported: " + file);
             return;
         }
 
@@ -542,7 +542,7 @@ public final class FXUtils {
                     LOG.warning("Unable to show " + path + " in explorer", e);
                 }
 
-                // Fallback to open folder
+                // Fallback to open path
                 openFolder(file.getParent());
             });
         } else {

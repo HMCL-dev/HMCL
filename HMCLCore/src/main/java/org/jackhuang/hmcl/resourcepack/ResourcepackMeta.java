@@ -1,9 +1,11 @@
 package org.jackhuang.hmcl.resourcepack;
 
-public final class ResourcepackMeta {
-    Pack pack;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 
-    public static class Pack {
-        String description;
+@JsonSerializable
+public record ResourcepackMeta(Pack pack) {
+
+    @JsonSerializable
+    public record Pack(String description) {
     }
 }

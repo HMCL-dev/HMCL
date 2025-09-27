@@ -207,7 +207,7 @@ public class ForgeNewInstallProfile implements Validation {
          * Can be in the following formats:
          * [value]: An artifact path.
          * 'value': A string literal.
-         * value: A file in the installer package, to be extracted to a temp folder, and then have the absolute path in replacements.
+         * value: A file in the installer package, to be extracted to a temp path, and then have the absolute path in replacements.
          * @return Value to use for the client install
          */
         public String getClient() {

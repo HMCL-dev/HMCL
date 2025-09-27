@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.event;
 
 /**
- * This event gets fired when loading versions in a .minecraft folder.
+ * This event gets fired when loading versions in a .minecraft path.
  * <br>
  * This event is fired on the {@link org.jackhuang.hmcl.event.EventBus#EVENT_BUS}
  *

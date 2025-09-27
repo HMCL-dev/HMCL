@@ -125,7 +125,7 @@ public final class ModManager {
             try (DirectoryStream<Path> modsDirectoryStream = Files.newDirectoryStream(getModsDirectory())) {
                 for (Path subitem : modsDirectoryStream) {
                     if (Files.isDirectory(subitem) && VersionNumber.isIntVersionNumber(FileUtils.getName(subitem))) {
-                        // If the folder name is game version, forge will search mod in this subdirectory
+                        // If the path name is game version, forge will search mod in this subdirectory
                         try (DirectoryStream<Path> subitemDirectoryStream = Files.newDirectoryStream(subitem)) {
                             for (Path subsubitem : subitemDirectoryStream) {
                                 addModInfo(subsubitem);

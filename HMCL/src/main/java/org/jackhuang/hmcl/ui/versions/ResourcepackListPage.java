@@ -43,8 +43,7 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
 
     private static Node createIcon(Path img) {
         ImageView imageView = new ImageView();
-        imageView.setFitWidth(32);
-        imageView.setFitHeight(32);
+        FXUtils.limitSize(imageView, 32, 32);
 
         if (Files.exists(img)) {
             try {
@@ -116,9 +115,10 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
                     Files.copy(file, target);
                 }
             }
+            refresh();
         } catch (IOException e) {
-            Controllers.dialog(i18n("resourcepack.add.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
             LOG.warning("Failed to add resourcepacks", e);
+            Controllers.dialog(i18n("resourcepack.add.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
         }
     }
 
