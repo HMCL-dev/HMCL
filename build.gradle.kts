@@ -22,10 +22,11 @@ subprojects {
             dirs = setOf(rootProject.file("lib"))
         }
 
-        if (JenkinsUtils.IS_ON_CI) {
-            maven(url = "https://mirrors.cloud.tencent.com/nexus/repository/maven-public")
-        } else {
-            mavenCentral()
+        System.getenv("MAVEN_CENTRAL_REPO").let { repo ->
+            if (repo.isNullOrBlank())
+                mavenCentral()
+            else
+                maven(url = repo)
         }
 
         maven(url = "https://jitpack.io")
