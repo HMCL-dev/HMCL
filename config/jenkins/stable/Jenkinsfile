@@ -3,7 +3,6 @@ pipeline {
 
     environment {
         HMCL_CI = '1'
-        MAVEN_CENTRAL_REPO = 'https://mirrors.cloud.tencent.com/nexus/repository/maven-public'
 
         VERSION_TYPE = 'stable'
         MICROSOFT_AUTH_ID = credentials('microsoft_auth_id')

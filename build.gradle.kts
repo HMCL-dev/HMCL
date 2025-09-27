@@ -1,4 +1,3 @@
-import org.jackhuang.hmcl.gradle.ci.JenkinsUtils
 import org.jackhuang.hmcl.gradle.docs.UpdateDocuments
 
 plugins {
