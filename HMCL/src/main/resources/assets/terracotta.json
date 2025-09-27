@@ -19,6 +19,7 @@
   },
   "downloads": [
     "https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}",
+    "https://gitee.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}",
     "https://alist.8mi.tech/d/mirror/HMCL-Terracotta/Auto/v${version}/terracotta-${version}-${classifier}",
     "https://ghfast.top/https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}",
     "https://cdn.crashmc.com/https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}",
