@@ -13,7 +13,7 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                sh 'bash ./config/jenkins/confgi-jenkins.sh'
+                sh 'bash ./config/jenkins/config-jenkins.sh'
                 sh './gradlew clean build --stacktrace'
                 archiveArtifacts artifacts: 'HMCL/build/libs/*'
             }
