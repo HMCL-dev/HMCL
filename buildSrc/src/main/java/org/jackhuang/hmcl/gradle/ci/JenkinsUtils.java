@@ -17,16 +17,10 @@
  */
 package org.jackhuang.hmcl.gradle.ci;
 
-import org.gradle.api.logging.Logging;
-
 /// @author Glavo
 public final class JenkinsUtils {
 
     public static final boolean IS_ON_CI = "1".equals(System.getenv("HMCL_CI"));
-
-    static {
-        // Logging.getLogger(JenkinsUtils.class).quiet(">>>>>>>>> " + System.getenv("HMCL_CI"));
-    }
 
     private JenkinsUtils() {
     }
