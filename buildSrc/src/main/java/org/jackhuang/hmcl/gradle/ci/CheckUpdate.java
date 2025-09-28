@@ -83,7 +83,7 @@ public abstract class CheckUpdate extends DefaultTask {
 
         try (PrintWriter writer = githubEnv.isBlank()
                 ? null
-                : new PrintWriter(Files.newBufferedWriter(Path.of(githubEnv), StandardOpenOption.WRITE, StandardOpenOption.WRITE, StandardOpenOption.APPEND))) {
+                : new PrintWriter(Files.newBufferedWriter(Path.of(githubEnv), StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.APPEND))) {
 
             BiConsumer<String, String> addEnv = (name, value) -> {
                 String item = name + "=" + value;
