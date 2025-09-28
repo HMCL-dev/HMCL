@@ -98,7 +98,7 @@ public abstract class CheckUpdate extends DefaultTask {
                     .map(BuildInfo.ActionInfo::lastBuiltRevision)
                     .map(BuildInfo.ActionInfo.BuiltRevision::SHA1)
                     .findFirst()
-                    .orElseThrow(() -> new GradleException("Could not find  revision"));
+                    .orElseThrow(() -> new GradleException("Could not find revision"));
             if (revision.matches("[0-9a-z]{40}"))
                 addEnv.accept("HMCL_COMMIT_SHA", revision);
             else
