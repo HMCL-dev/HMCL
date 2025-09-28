@@ -55,7 +55,7 @@ public abstract class CheckUpdate extends DefaultTask {
         getOutputs().upToDateWhen(task -> false);
     }
 
-    private static <T> T fetch(URI uri, Class<T> clazz) throws IOException, InterruptedException {
+    private static <T> T fetch(URI uri, Class<T> type) throws IOException, InterruptedException {
         // // HttpClient implements Closeable since Java 21
         //noinspection resource
         var client = HttpClient.newBuilder()
@@ -67,7 +67,7 @@ public abstract class CheckUpdate extends DefaultTask {
             throw new IOException("Bad status code: " + response.statusCode());
         }
 
-        return new Gson().fromJson(response.body(), clazz);
+        return new Gson().fromJson(response.body(), type);
     }
 
     @TaskAction
@@ -128,7 +128,6 @@ public abstract class CheckUpdate extends DefaultTask {
 
         record ActionInfo(String _class, BuiltRevision lastBuiltRevision) {
             record BuiltRevision(String SHA1) {
-
             }
         }
     }
