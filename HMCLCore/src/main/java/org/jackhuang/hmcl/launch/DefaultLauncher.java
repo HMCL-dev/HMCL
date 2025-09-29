@@ -429,8 +429,7 @@ public class DefaultLauncher extends Launcher {
     
         StringBuilder sourcePathBuilder = new StringBuilder("/assets/game/log4j2-");
     
-        GameVersion currentVersion = GameVersionNumber.asGameVersion(repository.getGameVersion(version));
-        if (currentVersion.compareTo("1.12") < 0) {
+        if (GameVersionNumber.asGameVersion(repository.getGameVersion(version)).compareTo("1.12") < 0) {
             sourcePathBuilder.append("1.7");
         } else {
             sourcePathBuilder.append("1.12");
