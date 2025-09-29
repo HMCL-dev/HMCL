@@ -51,6 +51,7 @@ public class LaunchTipLabel extends HBox {
     private final Timeline tipTimeline;
     private static final List<String> tips;
     private static int index = 0;
+    private static final int nextTipDelay = 3000;
 
     static {
         tips = loadTipsFromJson();
@@ -70,7 +71,7 @@ public class LaunchTipLabel extends HBox {
 
         getChildren().add(tfwBottomTip);
 
-        tipTimeline = new Timeline(new KeyFrame(Duration.seconds(2), e -> nextTip()));
+        tipTimeline = new Timeline(new KeyFrame(Duration.seconds(nextTipDelay), e -> nextTip()));
         tipTimeline.setCycleCount(Animation.INDEFINITE);
         tipTimeline.play();
     }
