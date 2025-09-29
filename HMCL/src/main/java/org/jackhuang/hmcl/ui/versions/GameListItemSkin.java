@@ -35,11 +35,12 @@ import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.util.Lazy;
 
+import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameListItemSkin extends SkinBase<GameListItem> {
     private static GameListItem currentSkinnable;
-    private static Lazy<JFXPopup> popup = new Lazy<>(() -> {
+    private static final Lazy<JFXPopup> popup = new Lazy<>(() -> {
         PopupMenu menu = new PopupMenu();
         JFXPopup popup = new JFXPopup(menu);
 
@@ -99,7 +100,9 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
             JFXButton btnManage = new JFXButton();
             btnManage.setOnAction(e -> {
                 currentSkinnable = skinnable;
-                popup.get().show(root, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, 0, root.getHeight());
+
+                JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(root, popup.get());
+                popup.get().show(root, vPosition, JFXPopup.PopupHPosition.RIGHT, 0, vPosition == JFXPopup.PopupVPosition.TOP ? root.getHeight() : -root.getHeight());
             });
             btnManage.getStyleClass().add("toggle-icon4");
             BorderPane.setAlignment(btnManage, Pos.CENTER);
@@ -124,7 +127,9 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
                 }
             } else if (e.getButton() == MouseButton.SECONDARY) {
                 currentSkinnable = skinnable;
-                popup.get().show(root, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, e.getX(), e.getY());
+
+                JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(root, popup.get());
+                popup.get().show(root, vPosition, JFXPopup.PopupHPosition.LEFT, e.getX(), vPosition == JFXPopup.PopupVPosition.TOP ? e.getY() : e.getY() - root.getHeight());
             }
         });
     }

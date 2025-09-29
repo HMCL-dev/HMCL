@@ -25,7 +25,6 @@ import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
@@ -126,7 +125,7 @@ public final class ForgeOldModMetadata {
         Path mcmod = fs.getPath("mcmod.info");
         if (Files.notExists(mcmod))
             throw new IOException("File " + modFile + " is not a Forge mod.");
-        List<ForgeOldModMetadata> modList = JsonUtils.GSON.fromJson(FileUtils.readText(mcmod), listTypeOf(ForgeOldModMetadata.class));
+        List<ForgeOldModMetadata> modList = JsonUtils.fromJsonFile(mcmod, listTypeOf(ForgeOldModMetadata.class));
         if (modList == null || modList.isEmpty())
             throw new IOException("Mod " + modFile + " `mcmod.info` is malformed..");
         ForgeOldModMetadata metadata = modList.get(0);

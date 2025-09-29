@@ -21,15 +21,14 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-/**
- * When {@link #accept(T)} is called, this class invokes the handler on another thread.
- * If {@link #accept(T)} is called more than one time before the handler starts processing,
- * the handler will only be invoked once, taking the latest argument as its input.
- *
- * @author yushijinhun
- */
+/// When [#accept(T)] is called, this class invokes the handler on another thread.
+/// If [#accept(T)] is called more than one time before the handler starts processing,
+/// the handler will only be invoked once, taking the latest argument as its input.
+///
+/// @author yushijinhun
 public final class InvocationDispatcher<T> implements Consumer<T> {
 
+    /// @param executor The executor must dispatch all tasks to a single thread.
     public static <T> InvocationDispatcher<T> runOn(Executor executor, Consumer<T> action) {
         return new InvocationDispatcher<>(executor, action);
     }
@@ -47,9 +46,10 @@ public final class InvocationDispatcher<T> implements Consumer<T> {
     public void accept(T t) {
         if (pendingArg.getAndSet(new Holder<>(t)) == null) {
             executor.execute(() -> {
-                synchronized (InvocationDispatcher.this) {
-                    action.accept(pendingArg.getAndSet(null).value);
-                }
+                // If the executor supports multiple underlying threads,
+                // we need to add synchronization, but for now we can omit it :)
+                // synchronized (InvocationDispatcher.this)
+                action.accept(pendingArg.getAndSet(null).value);
             });
         }
     }

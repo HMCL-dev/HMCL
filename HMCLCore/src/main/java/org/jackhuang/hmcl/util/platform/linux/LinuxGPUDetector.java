@@ -22,7 +22,6 @@ import org.glavo.pci.ids.model.Device;
 import org.glavo.pci.ids.model.Vendor;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareVendor;
 
@@ -97,11 +96,11 @@ final class LinuxGPUDetector {
 
                 Path versionFile = deviceDir.resolve("driver/module/version");
                 if (Files.isRegularFile(versionFile)) {
-                    builder.setDriverVersion(FileUtils.readText(versionFile).trim());
+                    builder.setDriverVersion(Files.readString(versionFile).trim());
                 } else if ("zx".equals(name)) {
                     versionFile = deviceDir.resolve("zx_info/driver_version");
                     if (Files.isRegularFile(versionFile)) {
-                        builder.setDriverVersion(FileUtils.readText(versionFile).trim());
+                        builder.setDriverVersion(Files.readString(versionFile).trim());
                     }
                 }
             }
@@ -158,7 +157,7 @@ final class LinuxGPUDetector {
 
                 Path revisionFile = deviceDir.resolve("revision");
                 if (Files.isRegularFile(revisionFile)) {
-                    String revisionString = FileUtils.readText(revisionFile).trim();
+                    String revisionString = Files.readString(revisionFile).trim();
                     int revision = Integer.decode(revisionString);
                     String prefix = String.format("%X,\t%X,\t", deviceId, revision);
                     //noinspection DataFlowIssue
@@ -299,7 +298,7 @@ final class LinuxGPUDetector {
                     continue;
 
                 try {
-                    String modalias = FileUtils.readText(modaliasFile).trim();
+                    String modalias = Files.readString(modaliasFile).trim();
                     GraphicsCard graphicsCard = null;
                     if (modalias.startsWith("pci:"))
                         graphicsCard = detectPCI(deviceDir, modalias);

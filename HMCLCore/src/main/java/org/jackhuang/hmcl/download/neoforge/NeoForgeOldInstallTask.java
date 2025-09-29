@@ -26,7 +26,6 @@ import org.jackhuang.hmcl.download.game.GameLibrariesTask;
 import org.jackhuang.hmcl.download.game.VersionJsonDownloadTask;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
-import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -44,7 +43,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
+import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -274,14 +273,14 @@ public class NeoForgeOldInstallTask extends Task<Version> {
     @Override
     public void preExecute() throws Exception {
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
-            profile = JsonUtils.fromNonNullJson(FileUtils.readText(fs.getPath("install_profile.json")), ForgeNewInstallProfile.class);
+            profile = JsonUtils.fromNonNullJson(Files.readString(fs.getPath("install_profile.json")), ForgeNewInstallProfile.class);
             processors = profile.getProcessors();
-            neoForgeVersion = JsonUtils.fromNonNullJson(FileUtils.readText(fs.getPath(profile.getJson())), Version.class);
+            neoForgeVersion = JsonUtils.fromNonNullJson(Files.readString(fs.getPath(profile.getJson())), Version.class);
 
             for (Library library : profile.getLibraries()) {
                 Path file = fs.getPath("maven").resolve(library.getPath());
                 if (Files.exists(file)) {
-                    Path dest = gameRepository.getLibraryFile(version, library).toPath();
+                    Path dest = gameRepository.getLibraryFile(version, library);
                     FileUtils.copyFile(file, dest);
                 }
             }
@@ -342,12 +341,12 @@ public class NeoForgeOldInstallTask extends Task<Version> {
                         throw new Exception("client_mappings download info not found");
                     }
 
-                    List<URL> mappingsUrl = dependencyManager.getDownloadProvider()
+                    List<URI> mappingsUri = dependencyManager.getDownloadProvider()
                             .injectURLWithCandidates(mappings.getUrl());
-                    FileDownloadTask mappingsTask = new FileDownloadTask(
-                            mappingsUrl,
-                            new File(output),
-                            IntegrityCheck.of("SHA-1", mappings.getSha1()));
+                    var mappingsTask = new FileDownloadTask(
+                            mappingsUri,
+                            Path.of(output),
+                            FileDownloadTask.IntegrityCheck.of("SHA-1", mappings.getSha1()));
                     mappingsTask.setCaching(true);
                     mappingsTask.setCacheRepository(dependencyManager.getCacheRepository());
                     return mappingsTask;
@@ -388,11 +387,11 @@ public class NeoForgeOldInstallTask extends Task<Version> {
         }
 
         vars.put("SIDE", "client");
-        vars.put("MINECRAFT_JAR", gameRepository.getVersionJar(version).getAbsolutePath());
-        vars.put("MINECRAFT_VERSION", gameRepository.getVersionJar(version).getAbsolutePath());
-        vars.put("ROOT", gameRepository.getBaseDirectory().getAbsolutePath());
+        vars.put("MINECRAFT_JAR", FileUtils.getAbsolutePath(gameRepository.getVersionJar(version)));
+        vars.put("MINECRAFT_VERSION", FileUtils.getAbsolutePath(gameRepository.getVersionJar(version)));
+        vars.put("ROOT", FileUtils.getAbsolutePath(gameRepository.getBaseDirectory()));
         vars.put("INSTALLER", installer.toAbsolutePath().toString());
-        vars.put("LIBRARY_DIR", gameRepository.getLibrariesDirectory(version).getAbsolutePath());
+        vars.put("LIBRARY_DIR", FileUtils.getAbsolutePath(gameRepository.getLibrariesDirectory(version)));
 
         updateProgress(0, processors.size());
 
@@ -418,6 +417,6 @@ public class NeoForgeOldInstallTask extends Task<Version> {
 
     @Override
     public void postExecute() throws Exception {
-        FileUtils.deleteDirectory(tempDir.toFile());
+        FileUtils.deleteDirectory(tempDir);
     }
 }

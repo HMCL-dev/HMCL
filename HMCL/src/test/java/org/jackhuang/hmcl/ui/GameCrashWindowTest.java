@@ -23,7 +23,6 @@ import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.java.JavaInfo;
 import org.jackhuang.hmcl.game.Log;
 import org.jackhuang.hmcl.launch.ProcessListener;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.Platform;
@@ -31,7 +30,8 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.nio.file.Paths;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
@@ -45,15 +45,17 @@ public class GameCrashWindowTest {
 
         ManagedProcess process = new ManagedProcess(null, Arrays.asList("commands", "2"));
 
-        String logs = FileUtils.readText(new File("../HMCLCore/src/test/resources/logs/too_old_java.txt"));
+        String logs = Files.readString(new File("../HMCLCore/src/test/resources/logs/too_old_java.txt").toPath());
 
         CountDownLatch latch = new CountDownLatch(1);
         FXUtils.runInFX(() -> {
+            Path workingPath = Path.of(System.getProperty("user.dir"));
+
             GameCrashWindow window = new GameCrashWindow(process, ProcessListener.ExitType.APPLICATION_ERROR, null,
                     new ClassicVersion(),
                     new LaunchOptions.Builder()
-                            .setJava(new JavaRuntime(Paths.get("."), new JavaInfo(Platform.SYSTEM_PLATFORM, "16", null), false, false))
-                            .setGameDir(new File("."))
+                            .setJava(new JavaRuntime(workingPath, new JavaInfo(Platform.SYSTEM_PLATFORM, "16", null), false, false))
+                            .setGameDir(workingPath)
                             .create(),
                     Arrays.stream(logs.split("\\n"))
                             .map(Log::new)

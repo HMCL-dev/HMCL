@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.mod.ModAdviser;
 import org.jackhuang.hmcl.mod.ModpackExportInfo;
 import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackExportTask;
 import org.jackhuang.hmcl.mod.server.ServerModpackExportTask;
+import org.jackhuang.hmcl.mod.modrinth.ModrinthModpackExportTask;
 import org.jackhuang.hmcl.setting.Config;
 import org.jackhuang.hmcl.setting.FontManager;
 import org.jackhuang.hmcl.setting.Profile;
@@ -30,10 +31,11 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
+import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -50,27 +52,30 @@ public final class ExportWizardProvider implements WizardProvider {
     }
 
     @Override
-    public void start(Map<String, Object> settings) {
+    public void start(SettingsMap settings) {
     }
 
     @Override
-    public Object finish(Map<String, Object> settings) {
-        @SuppressWarnings("unchecked")
-        List<String> whitelist = (List<String>) settings.get(ModpackFileSelectionPage.MODPACK_FILE_SELECTION);
-        File modpackFile = (File) settings.get(ModpackInfoPage.MODPACK_FILE);
-        ModpackExportInfo exportInfo = (ModpackExportInfo) settings.get(ModpackInfoPage.MODPACK_INFO);
+    public Object finish(SettingsMap settings) {
+        List<String> whitelist = settings.get(ModpackFileSelectionPage.MODPACK_FILE_SELECTION);
+        Path modpackFile = settings.get(ModpackInfoPage.MODPACK_FILE);
+        ModpackExportInfo exportInfo = settings.get(ModpackInfoPage.MODPACK_INFO);
         exportInfo.setWhitelist(whitelist);
-        String modpackType = (String) settings.get(ModpackTypeSelectionPage.MODPACK_TYPE);
+        String modpackType = settings.get(ModpackTypeSelectionPage.MODPACK_TYPE);
 
         return exportWithLauncher(modpackType, exportInfo, modpackFile);
     }
 
-    private Task<?> exportWithLauncher(String modpackType, ModpackExportInfo exportInfo, File modpackFile) {
+    private Task<?> exportWithLauncher(String modpackType, ModpackExportInfo exportInfo, Path modpackFile) {
         Path launcherJar = JarUtils.thisJarPath();
         boolean packWithLauncher = exportInfo.isPackWithLauncher() && launcherJar != null;
-        return new Task<Object>() {
-            File tempModpack;
+        return new Task<>() {
+            Path tempModpack;
             Task<?> exportTask;
+
+            {
+                setSignificance(TaskSignificance.MODERATE);
+            }
 
             @Override
             public boolean doPreExecute() {
@@ -79,9 +84,9 @@ public final class ExportWizardProvider implements WizardProvider {
 
             @Override
             public void preExecute() throws Exception {
-                File dest;
+                Path dest;
                 if (packWithLauncher) {
-                    dest = tempModpack = Files.createTempFile("hmcl", ".zip").toFile();
+                    dest = tempModpack = Files.createTempFile("hmcl", ".zip");
                 } else {
                     dest = modpackFile;
                 }
@@ -92,6 +97,9 @@ public final class ExportWizardProvider implements WizardProvider {
                         break;
                     case ModpackTypeSelectionPage.MODPACK_TYPE_SERVER:
                         exportTask = exportAsServer(exportInfo, dest);
+                        break;
+                    case ModpackTypeSelectionPage.MODPACK_TYPE_MODRINTH:
+                        exportTask = exportAsModrinth(exportInfo, dest);
                         break;
                     default:
                         throw new IllegalStateException("Unrecognized modpack type " + modpackType);
@@ -107,7 +115,7 @@ public final class ExportWizardProvider implements WizardProvider {
             @Override
             public void execute() throws Exception {
                 if (!packWithLauncher) return;
-                try (Zipper zip = new Zipper(modpackFile.toPath())) {
+                try (Zipper zip = new Zipper(modpackFile)) {
                     Config exported = new Config();
 
                     exported.setBackgroundImageType(config().getBackgroundImageType());
@@ -150,9 +158,13 @@ public final class ExportWizardProvider implements WizardProvider {
         };
     }
 
-    private Task<?> exportAsMcbbs(ModpackExportInfo exportInfo, File modpackFile) {
+    private Task<?> exportAsMcbbs(ModpackExportInfo exportInfo, Path modpackFile) {
         return new Task<Void>() {
             Task<?> dependency = null;
+
+            {
+                setSignificance(TaskSignificance.MODERATE);
+            }
 
             @Override
             public void execute() {
@@ -166,9 +178,13 @@ public final class ExportWizardProvider implements WizardProvider {
         };
     }
 
-    private Task<?> exportAsServer(ModpackExportInfo exportInfo, File modpackFile) {
+    private Task<?> exportAsServer(ModpackExportInfo exportInfo, Path modpackFile) {
         return new Task<Void>() {
             Task<?> dependency;
+
+            {
+                setSignificance(TaskSignificance.MODERATE);
+            }
 
             @Override
             public void execute() {
@@ -182,18 +198,39 @@ public final class ExportWizardProvider implements WizardProvider {
         };
     }
 
+    private Task<?> exportAsModrinth(ModpackExportInfo exportInfo, Path modpackFile) {
+        return new Task<Void>() {
+            Task<?> dependency;
+
+            {
+                setSignificance(TaskSignificance.MODERATE);
+            }
+
+            @Override
+            public void execute() {
+                dependency = new ModrinthModpackExportTask(
+                    profile.getRepository(),
+                    version,
+                    exportInfo,
+                    modpackFile
+                );
+            }
+
+            @Override
+            public Collection<Task<?>> getDependencies() {
+                return Collections.singleton(dependency);
+            }
+        };
+    }
+
     @Override
-    public Node createPage(WizardController controller, int step, Map<String, Object> settings) {
-        switch (step) {
-            case 0:
-                return new ModpackTypeSelectionPage(controller);
-            case 1:
-                return new ModpackInfoPage(controller, profile.getRepository(), version);
-            case 2:
-                return new ModpackFileSelectionPage(controller, profile, version, ModAdviser::suggestMod);
-            default:
-                throw new IllegalArgumentException("step");
-        }
+    public Node createPage(WizardController controller, int step, SettingsMap settings) {
+        return switch (step) {
+            case 0 -> new ModpackTypeSelectionPage(controller);
+            case 1 -> new ModpackInfoPage(controller, profile.getRepository(), version);
+            case 2 -> new ModpackFileSelectionPage(controller, profile, version, ModAdviser::suggestMod);
+            default -> throw new IllegalArgumentException("step");
+        };
     }
 
     @Override

@@ -22,6 +22,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
 
@@ -159,28 +160,19 @@ public final class HTMLRenderer {
 
     private void appendImage(Node node) {
         String src = node.absUrl("src");
-        URI imageUri = null;
-        try {
-            if (!src.isEmpty())
-                imageUri = URI.create(src);
-        } catch (Exception ignored) {
-        }
-
         String alt = node.attr("alt");
 
-        if (imageUri != null) {
-            URI uri = URI.create(src);
-
+        if (StringUtils.isNotBlank(src)) {
             String widthAttr = node.attr("width");
             String heightAttr = node.attr("height");
 
-            double width = 0;
-            double height = 0;
+            int width = 0;
+            int height = 0;
 
             if (!widthAttr.isEmpty() && !heightAttr.isEmpty()) {
                 try {
-                    width = Double.parseDouble(widthAttr);
-                    height = Double.parseDouble(heightAttr);
+                    width = (int) Double.parseDouble(widthAttr);
+                    height = (int) Double.parseDouble(heightAttr);
                 } catch (NumberFormatException ignored) {
                 }
 
@@ -190,10 +182,12 @@ public final class HTMLRenderer {
                 }
             }
 
-            Image image = FXUtils.newRemoteImage(uri.toString(), width, height, true, true, false);
-            if (image.isError()) {
-                LOG.warning("Failed to load image: " + uri, image.getException());
-            } else {
+            try {
+                Image image = FXUtils.getRemoteImageTask(src, width, height, true, true)
+                        .run();
+                if (image == null)
+                    throw new AssertionError("Image loading task returned null");
+
                 ImageView imageView = new ImageView(image);
                 if (hyperlink != null) {
                     URI target = resolveLink(hyperlink);
@@ -204,6 +198,8 @@ public final class HTMLRenderer {
                 }
                 children.add(imageView);
                 return;
+            } catch (Throwable e) {
+                LOG.warning("Failed to load image: " + src, e);
             }
         }
 

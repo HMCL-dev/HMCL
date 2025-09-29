@@ -2,14 +2,13 @@ package org.jackhuang.hmcl.download.neoforge;
 
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
-import org.jackhuang.hmcl.util.io.HttpRequest;
+import org.jackhuang.hmcl.task.GetTask;
+import org.jackhuang.hmcl.task.Task;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 
-import static org.jackhuang.hmcl.util.Lang.wrap;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class NeoForgeOfficialVersionList extends VersionList<NeoForgeRemoteVersion> {
@@ -21,7 +20,7 @@ public final class NeoForgeOfficialVersionList extends VersionList<NeoForgeRemot
 
     @Override
     public boolean hasType() {
-        return false;
+        return true;
     }
 
     private static final String OLD_URL = "https://maven.neoforged.net/api/maven/versions/releases/net/neoforged/forge";
@@ -37,17 +36,17 @@ public final class NeoForgeOfficialVersionList extends VersionList<NeoForgeRemot
     }
 
     @Override
-    public CompletableFuture<?> refreshAsync() {
-        return CompletableFuture.supplyAsync(wrap(() -> new OfficialAPIResult[]{
-                HttpRequest.GET(downloadProvider.injectURL(OLD_URL)).getJson(OfficialAPIResult.class),
-                HttpRequest.GET(downloadProvider.injectURL(META_URL)).getJson(OfficialAPIResult.class)
-        })).thenAccept(results -> {
+    public Task<?> refreshAsync() {
+        return Task.allOf(
+                new GetTask(downloadProvider.injectURL(OLD_URL)).thenGetJsonAsync(OfficialAPIResult.class),
+                new GetTask(downloadProvider.injectURL(META_URL)).thenGetJsonAsync(OfficialAPIResult.class)
+        ).thenAcceptAsync(results -> {
             lock.writeLock().lock();
 
             try {
                 versions.clear();
 
-                for (String version : results[0].versions) {
+                for (String version : results.get(0).versions) {
                     versions.put("1.20.1", new NeoForgeRemoteVersion(
                             "1.20.1", NeoForgeRemoteVersion.normalize(version),
                             Collections.singletonList(
@@ -56,7 +55,7 @@ public final class NeoForgeOfficialVersionList extends VersionList<NeoForgeRemot
                     ));
                 }
 
-                for (String version : results[1].versions) {
+                for (String version : results.get(1).versions) {
                     String mcVersion;
 
                     try {

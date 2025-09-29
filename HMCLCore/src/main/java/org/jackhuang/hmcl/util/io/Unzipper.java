@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.util.io;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -41,16 +40,6 @@ public final class Unzipper {
     public Unzipper(Path zipFile, Path destDir) {
         this.zipFile = zipFile;
         this.dest = destDir;
-    }
-
-    /**
-     * Decompress the given zip file to a directory.
-     *
-     * @param zipFile the input zip file to be uncompressed
-     * @param destDir the dest directory to hold uncompressed files
-     */
-    public Unzipper(File zipFile, File destDir) {
-        this(zipFile.toPath(), destDir.toPath());
     }
 
     /**

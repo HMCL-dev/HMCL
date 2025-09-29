@@ -18,11 +18,11 @@
 package org.jackhuang.hmcl.ui.download;
 
 import javafx.scene.Node;
-import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.game.ManuallyCreatedModpackException;
-import org.jackhuang.hmcl.mod.ModpackCompletionException;
+import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.mod.MismatchedModpackTypeException;
 import org.jackhuang.hmcl.mod.Modpack;
+import org.jackhuang.hmcl.mod.ModpackCompletionException;
 import org.jackhuang.hmcl.mod.UnsupportedModpackException;
 import org.jackhuang.hmcl.mod.server.ServerModpackManifest;
 import org.jackhuang.hmcl.setting.Profile;
@@ -32,26 +32,25 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
+import org.jackhuang.hmcl.util.SettingsMap;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.Map;
+import java.nio.file.Path;
 
-import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class ModpackInstallWizardProvider implements WizardProvider {
+public final class ModpackInstallWizardProvider implements WizardProvider {
     private final Profile profile;
-    private final File file;
+    private final Path file;
     private final String updateVersion;
 
     public ModpackInstallWizardProvider(Profile profile) {
         this(profile, null, null);
     }
 
-    public ModpackInstallWizardProvider(Profile profile, File modpackFile) {
+    public ModpackInstallWizardProvider(Profile profile, Path modpackFile) {
         this(profile, modpackFile, null);
     }
 
@@ -59,28 +58,28 @@ public class ModpackInstallWizardProvider implements WizardProvider {
         this(profile, null, updateVersion);
     }
 
-    public ModpackInstallWizardProvider(Profile profile, File modpackFile, String updateVersion) {
+    public ModpackInstallWizardProvider(Profile profile, Path modpackFile, String updateVersion) {
         this.profile = profile;
         this.file = modpackFile;
         this.updateVersion = updateVersion;
     }
 
     @Override
-    public void start(Map<String, Object> settings) {
+    public void start(SettingsMap settings) {
         if (file != null)
             settings.put(LocalModpackPage.MODPACK_FILE, file);
         if (updateVersion != null)
             settings.put(LocalModpackPage.MODPACK_NAME, updateVersion);
-        settings.put(PROFILE, profile);
+        settings.put(ModpackPage.PROFILE, profile);
     }
 
-    private Task<?> finishModpackInstallingAsync(Map<String, Object> settings) {
-        File selected = tryCast(settings.get(LocalModpackPage.MODPACK_FILE), File.class).orElse(null);
-        ServerModpackManifest serverModpackManifest = tryCast(settings.get(RemoteModpackPage.MODPACK_SERVER_MANIFEST), ServerModpackManifest.class).orElse(null);
-        Modpack modpack = tryCast(settings.get(LocalModpackPage.MODPACK_MANIFEST), Modpack.class).orElse(null);
-        String name = tryCast(settings.get(LocalModpackPage.MODPACK_NAME), String.class).orElse(null);
-        Charset charset = tryCast(settings.get(LocalModpackPage.MODPACK_CHARSET), Charset.class).orElse(null);
-        boolean isManuallyCreated = tryCast(settings.get(LocalModpackPage.MODPACK_MANUALLY_CREATED), Boolean.class).orElse(false);
+    private Task<?> finishModpackInstallingAsync(SettingsMap settings) {
+        Path selected = settings.get(LocalModpackPage.MODPACK_FILE);
+        ServerModpackManifest serverModpackManifest = settings.get(RemoteModpackPage.MODPACK_SERVER_MANIFEST);
+        Modpack modpack = settings.get(LocalModpackPage.MODPACK_MANIFEST);
+        String name = settings.get(LocalModpackPage.MODPACK_NAME);
+        Charset charset = settings.get(LocalModpackPage.MODPACK_CHARSET);
+        boolean isManuallyCreated = settings.getOrDefault(LocalModpackPage.MODPACK_MANUALLY_CREATED, false);
 
         if (isManuallyCreated) {
             return ModpackHelper.getInstallManuallyCreatedModpackTask(profile, selected, name, charset);
@@ -102,7 +101,7 @@ public class ModpackInstallWizardProvider implements WizardProvider {
             } catch (UnsupportedModpackException | ManuallyCreatedModpackException e) {
                 Controllers.dialog(i18n("modpack.unsupported"), i18n("message.error"), MessageType.ERROR);
             } catch (MismatchedModpackTypeException e) {
-                Controllers.dialog(i18n("modpack.mismatched_type"), i18n("message.error"), MessageType.ERROR);
+                Controllers.dialog(i18n("modpack.mismatched_type", e.getRequired(), e.getFound()), i18n("message.error"), MessageType.ERROR);
             } catch (IOException e) {
                 Controllers.dialog(i18n("modpack.invalid"), i18n("message.error"), MessageType.ERROR);
             }
@@ -119,21 +118,18 @@ public class ModpackInstallWizardProvider implements WizardProvider {
     }
 
     @Override
-    public Object finish(Map<String, Object> settings) {
+    public Object finish(SettingsMap settings) {
         settings.put("title", i18n("install.modpack.installation"));
         settings.put("success_message", i18n("install.success"));
-        settings.put("failure_callback", new FailureCallback() {
-            @Override
-            public void onFail(Map<String, Object> settings, Exception exception, Runnable next) {
-                if (exception instanceof ModpackCompletionException) {
-                    if (exception.getCause() instanceof FileNotFoundException) {
-                        Controllers.dialog(i18n("modpack.type.curse.not_found"), i18n("install.failed"), MessageType.ERROR, next);
-                    } else {
-                        Controllers.dialog(i18n("install.success"), i18n("install.success"), MessageType.SUCCESS, next);
-                    }
+        settings.put(FailureCallback.KEY, (ignored, exception, next) -> {
+            if (exception instanceof ModpackCompletionException) {
+                if (exception.getCause() instanceof FileNotFoundException) {
+                    Controllers.dialog(i18n("modpack.type.curse.not_found"), i18n("install.failed"), MessageType.ERROR, next);
                 } else {
-                    UpdateInstallerWizardProvider.alertFailureMessage(exception, next);
+                    Controllers.dialog(i18n("install.success"), i18n("install.success"), MessageType.SUCCESS, next);
                 }
+            } else {
+                UpdateInstallerWizardProvider.alertFailureMessage(exception, next);
             }
         });
 
@@ -141,7 +137,7 @@ public class ModpackInstallWizardProvider implements WizardProvider {
     }
 
     @Override
-    public Node createPage(WizardController controller, int step, Map<String, Object> settings) {
+    public Node createPage(WizardController controller, int step, SettingsMap settings) {
         switch (step) {
             case 0:
                 return new ModpackSelectionPage(controller);
@@ -161,6 +157,4 @@ public class ModpackInstallWizardProvider implements WizardProvider {
     public boolean cancel() {
         return true;
     }
-
-    public static final String PROFILE = "PROFILE";
 }

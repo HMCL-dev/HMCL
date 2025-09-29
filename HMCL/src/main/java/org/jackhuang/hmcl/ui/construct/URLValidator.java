@@ -21,10 +21,7 @@ import com.jfoenix.validation.base.ValidatorBase;
 import javafx.beans.NamedArg;
 import javafx.scene.control.TextInputControl;
 import org.jackhuang.hmcl.util.StringUtils;
-
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -58,9 +55,9 @@ public class URLValidator extends ValidatorBase {
             hasErrors.set(!nullable);
         else {
             try {
-                new URL(textField.getText()).toURI();
+                NetworkUtils.toURI(textField.getText());
                 hasErrors.set(false);
-            } catch (IOException | URISyntaxException e) {
+            } catch (IllegalArgumentException e) {
                 hasErrors.set(true);
             }
         }

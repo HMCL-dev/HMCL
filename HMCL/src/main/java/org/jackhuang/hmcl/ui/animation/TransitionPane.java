@@ -30,8 +30,7 @@ public class TransitionPane extends StackPane implements AnimationHandler {
     private Duration duration;
     private Node previousNode, currentNode;
 
-    {
-        currentNode = getChildren().stream().findFirst().orElse(null);
+    public TransitionPane() {
         FXUtils.setOverflowHidden(this);
     }
 
@@ -91,8 +90,12 @@ public class TransitionPane extends StackPane implements AnimationHandler {
     private void updateContent(Node newView) {
         if (getWidth() > 0 && getHeight() > 0) {
             previousNode = currentNode;
-            if (previousNode == null)
-                previousNode = EMPTY_PANE;
+            if (previousNode == null) {
+                if (getChildren().isEmpty())
+                    previousNode = EMPTY_PANE;
+                else
+                    previousNode = getChildren().get(0);
+            }
         } else
             previousNode = EMPTY_PANE;
 

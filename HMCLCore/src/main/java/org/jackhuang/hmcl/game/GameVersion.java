@@ -24,9 +24,10 @@ import org.jenkinsci.constant_pool_scanner.ConstantPoolScanner;
 import org.jenkinsci.constant_pool_scanner.ConstantType;
 import org.jenkinsci.constant_pool_scanner.StringConstant;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -89,11 +90,11 @@ final class GameVersion {
         return Optional.empty();
     }
 
-    public static Optional<String> minecraftVersion(File file) {
-        if (file == null || !file.exists() || !file.isFile() || !file.canRead())
+    public static Optional<String> minecraftVersion(Path file) {
+        if (file == null || !Files.isRegularFile(file))
             return Optional.empty();
 
-        try (ZipFile gameJar = new ZipFile(file)) {
+        try (var gameJar = new ZipFile(file.toFile())) {
             ZipEntry versionJson = gameJar.getEntry("version.json");
             if (versionJson != null) {
                 Optional<String> result = getVersionFromJson(gameJar.getInputStream(versionJson));

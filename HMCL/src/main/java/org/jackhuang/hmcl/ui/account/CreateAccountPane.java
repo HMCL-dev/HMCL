@@ -267,7 +267,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                     }).executor(true);
         };
 
-        if (factory instanceof OfflineAccountFactory && username != null && !USERNAME_CHECKER_PATTERN.matcher(username).matches()) {
+        if (factory instanceof OfflineAccountFactory && username != null && (!USERNAME_CHECKER_PATTERN.matcher(username).matches() || username.length() > 16)) {
             JFXButton btnYes = new JFXButton(i18n("button.ok"));
             btnYes.getStyleClass().add("dialog-error");
             btnYes.setOnAction(e -> doCreate.run());

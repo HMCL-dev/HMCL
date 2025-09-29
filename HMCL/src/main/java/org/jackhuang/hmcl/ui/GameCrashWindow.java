@@ -127,9 +127,9 @@ public class GameCrashWindow extends Stage {
                 crashReport = CrashReportAnalyzer.extractCrashReport(rawLog);
             }
 
-            return pair(CrashReportAnalyzer.anaylze(rawLog), crashReport != null ? CrashReportAnalyzer.findKeywordsFromCrashReport(crashReport) : new HashSet<>());
+            return pair(CrashReportAnalyzer.analyze(rawLog), crashReport != null ? CrashReportAnalyzer.findKeywordsFromCrashReport(crashReport) : new HashSet<>());
         }), Task.supplyAsync(() -> {
-            Path latestLog = repository.getRunDirectory(version.getId()).toPath().resolve("logs/latest.log");
+            Path latestLog = repository.getRunDirectory(version.getId()).resolve("logs/latest.log");
             if (!Files.isReadable(latestLog)) {
                 return pair(new HashSet<CrashReportAnalyzer.Result>(), new HashSet<String>());
             }
@@ -142,7 +142,7 @@ public class GameCrashWindow extends Stage {
                 return pair(new HashSet<CrashReportAnalyzer.Result>(), new HashSet<String>());
             }
 
-            return pair(CrashReportAnalyzer.anaylze(log), CrashReportAnalyzer.findKeywordsFromCrashReport(log));
+            return pair(CrashReportAnalyzer.analyze(log), CrashReportAnalyzer.findKeywordsFromCrashReport(log));
         })).whenComplete(Schedulers.javafx(), (taskResult, exception) -> {
             loading.set(false);
 
@@ -379,7 +379,7 @@ public class GameCrashWindow extends Stage {
                 TwoLineListItem gameDir = new TwoLineListItem();
                 gameDir.getStyleClass().setAll("two-line-item-second-large");
                 gameDir.setTitle(i18n("game.directory"));
-                gameDir.setSubtitle(launchOptions.getGameDir().getAbsolutePath());
+                gameDir.setSubtitle(launchOptions.getGameDir().toAbsolutePath().toString());
                 FXUtils.installFastTooltip(gameDir, i18n("game.directory"));
 
                 TwoLineListItem javaDir = new TwoLineListItem();

@@ -20,12 +20,12 @@ package org.jackhuang.hmcl.download.liteloader;
 import org.jackhuang.hmcl.download.BMCLAPIDownloadProvider;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.VersionList;
-import org.jackhuang.hmcl.util.Pair;
-import org.jackhuang.hmcl.util.io.HttpRequest;
+import org.jackhuang.hmcl.task.GetTask;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.util.Collections;
-import java.util.concurrent.CompletableFuture;
+import java.util.Map;
 
 /**
  * @author huangyuhui
@@ -54,17 +54,15 @@ public final class LiteLoaderBMCLVersionList extends VersionList<LiteLoaderRemot
     }
 
     @Override
-    public CompletableFuture<?> refreshAsync() {
+    public Task<?> refreshAsync() {
         throw new UnsupportedOperationException();
     }
 
     @Override
-    public CompletableFuture<?> refreshAsync(String gameVersion) {
-        return HttpRequest.GET(
-                        downloadProvider.injectURL("https://bmclapi2.bangbang93.com/liteloader/list"), Pair.pair("mcversion", gameVersion)
-                )
-                .getJsonAsync(LiteLoaderBMCLVersion.class)
-                .thenAccept(v -> {
+    public Task<?> refreshAsync(String gameVersion) {
+        return new GetTask(NetworkUtils.withQuery(downloadProvider.injectURLWithCandidates("https://bmclapi2.bangbang93.com/liteloader/list"), Map.of("mcversion", gameVersion)))
+                .thenGetJsonAsync(LiteLoaderBMCLVersion.class)
+                .thenAcceptAsync(v -> {
                     lock.writeLock().lock();
                     try {
                         versions.clear();

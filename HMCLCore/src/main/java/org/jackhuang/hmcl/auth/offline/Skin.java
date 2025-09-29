@@ -27,20 +27,17 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
-import java.net.URLConnection;
+import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
@@ -168,8 +165,8 @@ public class Skin {
             case CUSTOM_SKIN_LOADER_API:
                 String realCslApi = type == Type.LITTLE_SKIN
                         ? "https://littleskin.cn/csl"
-                        : StringUtils.removeSuffix(Lang.requireNonNullElse(cslApi, ""), "/");
-                return Task.composeAsync(() -> new GetTask(new URL(String.format("%s/%s.json", realCslApi, username))))
+                        : NetworkUtils.addHttpsIfMissing(StringUtils.removeSuffix(Lang.requireNonNullElse(cslApi, ""), "/"));
+                return Task.composeAsync(() -> new GetTask(String.format("%s/%s.json", realCslApi, username)))
                         .thenComposeAsync(json -> {
                             SkinJson result = JsonUtils.GSON.fromJson(json, SkinJson.class);
 
@@ -179,8 +176,8 @@ public class Skin {
 
                             return Task.allOf(
                                     Task.supplyAsync(result::getModel),
-                                    result.getHash() == null ? Task.supplyAsync(() -> null) : new FetchBytesTask(new URL(String.format("%s/textures/%s", realCslApi, result.getHash())), 3),
-                                    result.getCapeHash() == null ? Task.supplyAsync(() -> null) : new FetchBytesTask(new URL(String.format("%s/textures/%s", realCslApi, result.getCapeHash())), 3)
+                                    result.getHash() == null ? Task.supplyAsync(() -> null) : new FetchBytesTask(String.format("%s/textures/%s", realCslApi, result.getHash())),
+                                    result.getCapeHash() == null ? Task.supplyAsync(() -> null) : new FetchBytesTask(String.format("%s/textures/%s", realCslApi, result.getCapeHash()))
                             );
                         }).thenApplyAsync(result -> {
                             if (result == null) {
@@ -232,8 +229,8 @@ public class Skin {
 
     private static class FetchBytesTask extends FetchTask<InputStream> {
 
-        public FetchBytesTask(URL url, int retry) {
-            super(Collections.singletonList(url), retry);
+        public FetchBytesTask(String uri) {
+            super(List.of(NetworkUtils.toURI(uri)));
         }
 
         @Override
@@ -247,7 +244,7 @@ public class Skin {
         }
 
         @Override
-        protected Context getContext(URLConnection conn, boolean checkETag) throws IOException {
+        protected Context getContext(HttpResponse<?> response, boolean checkETag, String bmclapiHash) throws IOException {
             return new Context() {
                 final ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
@@ -263,7 +260,7 @@ public class Skin {
                     setResult(new ByteArrayInputStream(baos.toByteArray()));
 
                     if (checkETag) {
-                        repository.cacheBytes(baos.toByteArray(), conn);
+                        repository.cacheBytes(response, baos.toByteArray());
                     }
                 }
             };

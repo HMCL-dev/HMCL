@@ -27,12 +27,11 @@ import org.jackhuang.hmcl.mod.ModpackManifest;
 import org.jackhuang.hmcl.mod.ModpackProvider;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.*;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -329,9 +328,10 @@ public class McbbsModpackManifest implements ModpackManifest, Validation {
             return fileName;
         }
 
-        public URL getUrl() {
-            return url == null ? NetworkUtils.toURL("https://www.curseforge.com/minecraft/mc-mods/" + projectID + "/download/" + fileID + "/file")
-                    : NetworkUtils.toURL(NetworkUtils.encodeLocation(url));
+        public String getUrl() {
+            return url == null
+                    ? "https://www.curseforge.com/minecraft/mc-mods/" + projectID + "/download/" + fileID + "/file"
+                    : url;
         }
 
         public CurseFile withFileName(String fileName) {
@@ -424,7 +424,7 @@ public class McbbsModpackManifest implements ModpackManifest, Validation {
                 .orElseThrow(() -> new IOException("Cannot find game version")).getVersion();
         return new Modpack(name, author, version, gameVersion, description, encoding, this) {
             @Override
-            public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, java.io.File zipFile, String name) {
+            public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, String name) {
                 return new McbbsModpackLocalInstallTask(dependencyManager, zipFile, this, McbbsModpackManifest.this, name);
             }
         };

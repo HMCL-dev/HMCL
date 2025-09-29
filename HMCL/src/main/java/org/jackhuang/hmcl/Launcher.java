@@ -19,6 +19,7 @@ package org.jackhuang.hmcl;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.beans.value.ObservableBooleanValue;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
@@ -27,6 +28,7 @@ import javafx.scene.input.DataFormat;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.SambaException;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.task.AsyncTaskExecutor;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -54,6 +56,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
@@ -71,23 +75,21 @@ public final class Launcher extends Application {
         CookieHandler.setDefault(COOKIE_MANAGER);
 
         LOG.info("JavaFX Version: " + System.getProperty("javafx.runtime.version"));
-        try {
-            Object pipeline = Class.forName("com.sun.prism.GraphicsPipeline").getMethod("getPipeline").invoke(null);
-            LOG.info("Prism pipeline: " + (pipeline == null ? "null" : pipeline.getClass().getName()));
-        } catch (Throwable e) {
-            LOG.warning("Failed to get prism pipeline", e);
-        }
+        LOG.info("Prism Pipeline: " + FXUtils.GRAPHICS_PIPELINE);
+        LOG.info("Dark Mode: " + Optional.ofNullable(FXUtils.DARK_MODE).map(ObservableBooleanValue::get).orElse(false));
+        LOG.info("Reduced Motion: " + Objects.requireNonNullElse(FXUtils.REDUCED_MOTION, false));
 
         try {
             try {
                 ConfigHolder.init();
-            } catch (SambaException ignored) {
-                Main.showWarningAndContinue(i18n("fatal.samba"));
+            } catch (SambaException e) {
+                showAlert(AlertType.WARNING, i18n("fatal.samba"));
             } catch (IOException e) {
                 LOG.error("Failed to load config", e);
                 checkConfigInTempDir();
                 checkConfigOwner();
-                Main.showErrorAndExit(i18n("fatal.config_loading_failure", ConfigHolder.configLocation().getParent()));
+                showAlert(AlertType.ERROR, i18n("fatal.config_loading_failure", ConfigHolder.configLocation().getParent()));
+                EntryPoint.exit(1);
             }
 
             // https://lapcatsoftware.com/articles/app-translocation.html
@@ -105,8 +107,12 @@ public final class Launcher extends Application {
                     return;
             }
 
+            if (ConfigHolder.isUnsupportedVersion()) {
+                showAlert(AlertType.WARNING, i18n("fatal.config_unsupported_version"));
+            }
+
             if (Metadata.HMCL_CURRENT_DIRECTORY.toString().indexOf('=') >= 0) {
-                Main.showWarningAndContinue(i18n("fatal.illegal_char"));
+                showAlert(AlertType.WARNING, i18n("fatal.illegal_char"));
             }
 
             // runLater to ensure ConfigHolder.init() finished initialization
@@ -169,7 +175,7 @@ public final class Launcher extends Application {
     private static void checkConfigInTempDir() {
         if (ConfigHolder.isNewlyCreated() && isConfigInTempDir()
                 && showAlert(AlertType.WARNING, i18n("fatal.config_in_temp_dir"), ButtonType.YES, ButtonType.NO) == ButtonType.NO) {
-            Main.exit(0);
+            EntryPoint.exit(0);
         }
     }
 
@@ -209,7 +215,7 @@ public final class Launcher extends Application {
             Clipboard.getSystemClipboard()
                     .setContent(Collections.singletonMap(DataFormat.PLAIN_TEXT, command));
         }
-        Main.exit(1);
+        EntryPoint.exit(1);
     }
 
     @Override
@@ -231,8 +237,8 @@ public final class Launcher extends Application {
         try {
             LOG.info("*** " + Metadata.TITLE + " ***");
             LOG.info("Operating System: " + (OperatingSystem.OS_RELEASE_PRETTY_NAME == null
-                    ? OperatingSystem.SYSTEM_NAME + ' ' + OperatingSystem.SYSTEM_VERSION
-                    : OperatingSystem.OS_RELEASE_PRETTY_NAME + " (" + OperatingSystem.SYSTEM_NAME + ' ' + OperatingSystem.SYSTEM_VERSION + ')'));
+                    ? OperatingSystem.SYSTEM_NAME + ' ' + OperatingSystem.SYSTEM_VERSION.getVersion()
+                    : OperatingSystem.OS_RELEASE_PRETTY_NAME + " (" + OperatingSystem.SYSTEM_NAME + ' ' + OperatingSystem.SYSTEM_VERSION.getVersion() + ')'));
             if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                 LOG.info("Processor Identifier: " + System.getenv("PROCESSOR_IDENTIFIER"));
             }

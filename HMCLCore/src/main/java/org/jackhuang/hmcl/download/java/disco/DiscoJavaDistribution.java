@@ -41,6 +41,8 @@ public enum DiscoJavaDistribution implements JavaDistribution<DiscoJavaRemoteVer
             pair(WINDOWS, EnumSet.of(X86_64, X86, ARM64)),
             pair(LINUX, EnumSet.of(X86_64, X86, ARM64, ARM32, RISCV64, PPC64, PPC64LE, S390X, SPARCV9)),
             pair(MACOS, EnumSet.of(X86_64, ARM64))),
+    // Fucking javac generates an anonymous inner class here, whose constructor takes no @SafeVarargs annotation, causing a compile-time warning.
+    @SuppressWarnings({"unchecked", "RedundantSuppression"})
     LIBERICA("BellSoft Liberica", "liberica", "BellSoft",
             EnumSet.of(JDK, JRE, JDKFX, JREFX),
             pair(WINDOWS, EnumSet.of(X86_64, X86, ARM64)),

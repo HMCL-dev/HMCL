@@ -52,43 +52,43 @@
 /*
   Colors are picked from bootstrap
 
-  https://getbootstrap.com/docs/4.1/components/alerts/
+  https://getbootstrap.com/docs/5.3/components/alerts/
  */
 
 .hint.info {
-    -fx-background-color: #cce5ff;
-    -fx-border-color: #b8daff;
+    -fx-background-color: #cfe2ff;
+    -fx-border-color: #9ec5fe;
 }
 
 .hint.info Text, .hint.info .svg {
-    -fx-fill: #004085;
+    -fx-fill: #052c65;
 }
 
 .hint.success {
-    -fx-background-color: #d4edda;
-    -fx-border-color: #c3e6cb;
+    -fx-background-color: #d1e7dd;
+    -fx-border-color: #a3cfbb;
 }
 
 .hint.success Text, .hint.success .svg {
-    -fx-fill: #155724;
+    -fx-fill: #0a3622;
 }
 
 .hint.error {
     -fx-background-color: #f8d7da;
-    -fx-border-color: #f5c6cb;
+    -fx-border-color: #f1aeb5;
 }
 
 .hint.error Text, .hint.error .svg {
-    -fx-fill: #721c24;
+    -fx-fill: #58151c;
 }
 
 .hint.warning {
     -fx-background-color: #fff3cd;
-    -fx-border-color: #ffeeba;
+    -fx-border-color: #ffe69c;
 }
 
 .hint.warning Text, .hint.warning .svg {
-    -fx-fill: #856404;
+    -fx-fill: #664d03;
 }
 
 .skin-pane .jfx-text-field {
@@ -106,12 +106,24 @@
     -fx-background-color: -fx-base-darker-color;
 }
 
+.memory-used:disabled {
+    -fx-opacity: 0.4;
+}
+
 .memory-allocate {
     -fx-background-color: derive(-fx-base-color, 100%);
 }
 
+.memory-allocate:disabled {
+    -fx-opacity: 0.4;
+}
+
 .memory-total {
     -fx-background-color: -fx-base-rippler-color;
+}
+
+.memory-total:disabled {
+    -fx-opacity: 0.4;
 }
 
 .update-label {
@@ -1076,6 +1088,23 @@
 }
 
 .toggle-icon-tiny .jfx-rippler {
+    -jfx-rippler-fill: -fx-base-check-color;
+    -jfx-mask-type: CIRCLE;
+}
+
+.announcement-close-button {
+    -fx-announcement-close-button-size: 20px;
+    -fx-pref-width: -fx-announcement-close-button-size;
+    -fx-max-width: -fx-announcement-close-button-size;
+    -fx-min-width: -fx-announcement-close-button-size;
+    -fx-pref-height: -fx-announcement-close-button-size;
+    -fx-max-height: -fx-announcement-close-button-size;
+    -fx-min-height: -fx-announcement-close-button-size;
+    -fx-background-radius: 50px;
+    -fx-background-color: transparent;
+}
+
+.announcement-close-button .jfx-rippler {
     -jfx-rippler-fill: -fx-base-check-color;
     -jfx-mask-type: CIRCLE;
 }

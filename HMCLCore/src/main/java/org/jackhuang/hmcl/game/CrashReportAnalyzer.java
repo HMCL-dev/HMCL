@@ -18,10 +18,10 @@
 package org.jackhuang.hmcl.game;
 
 import org.intellij.lang.annotations.Language;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.util.*;
@@ -90,14 +90,14 @@ public final class CrashReportAnalyzer {
         // Minecraft 1.16+Forge with crash because JDK-8273826
         // https://github.com/McModLauncher/modlauncher/issues/91
         MODLAUNCHER_8("java\\.lang\\.NoSuchMethodError: ('void sun\\.security\\.util\\.ManifestEntryVerifier\\.<init>\\(java\\.util\\.jar\\.Manifest\\)'|sun\\.security\\.util\\.ManifestEntryVerifier\\.<init>\\(Ljava/util/jar/Manifest;\\)V)"),
-        // Manually triggerd debug crash
+        // Manually triggered debug crash
         DEBUG_CRASH("Manually triggered debug crash"),
         CONFIG("Failed loading config file (?<file>.*?) of type (.*?) for modid (?<id>.*)", "id", "file"),
         // Fabric gives some warnings
         FABRIC_WARNINGS("(Warnings were found!|Incompatible mod set!|Incompatible mods found!)(.*?)[\\n\\r]+(?<reason>[^\\[]+)\\[", "reason"),
         // Game crashed when ticking entity
         ENTITY("Entity Type: (?<type>.*)[\\w\\W\\n\\r]*?Entity's Exact location: (?<location>.*)", "type", "location"),
-        // Game crashed when tesselating block model
+        // Game crashed when tessellating block model
         BLOCK("Block: (?<type>.*)[\\w\\W\\n\\r]*?Block location: (?<location>.*)", "type", "location"),
         // Cannot find native libraries
         UNSATISFIED_LINK_ERROR("java\\.lang\\.UnsatisfiedLinkError: Failed to locate library: (?<name>.*)", "name"),
@@ -209,7 +209,7 @@ public final class CrashReportAnalyzer {
         }
     }
 
-    public static Set<Result> anaylze(String log) {
+    public static Set<Result> analyze(String log) {
         Set<Result> results = new HashSet<>();
         for (Rule rule : Rule.values()) {
             Matcher matcher = rule.pattern.matcher(log);
@@ -226,7 +226,7 @@ public final class CrashReportAnalyzer {
     public static String findCrashReport(String log) throws IOException, InvalidPathException {
         Matcher matcher = CRASH_REPORT_LOCATION_PATTERN.matcher(log);
         if (matcher.find()) {
-            return FileUtils.readText(Paths.get(matcher.group("location")));
+            return Files.readString(Paths.get(matcher.group("location")));
         } else {
             return null;
         }
