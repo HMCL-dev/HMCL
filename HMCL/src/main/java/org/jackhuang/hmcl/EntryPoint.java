@@ -67,8 +67,10 @@ public final class EntryPoint {
     }
 
     private static void setupJavaFXVMOptions() {
-        if ("true".equalsIgnoreCase(System.getenv("HMCL_FORCE_GPU")))
+        if ("true".equalsIgnoreCase(System.getenv("HMCL_FORCE_GPU"))) {
+            LOG.info("HMCL_FORCE_GPU: true");
             System.getProperties().putIfAbsent("prism.forceGPU", "true");
+        }
 
         String animationFrameRate = System.getenv("HMCL_ANIMATION_FRAME_RATE");
         if (animationFrameRate != null) {
