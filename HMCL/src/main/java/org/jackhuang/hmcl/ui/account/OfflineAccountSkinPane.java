@@ -39,8 +39,9 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.UUID;
 
@@ -81,16 +82,16 @@ public class OfflineAccountSkinPane extends StackPane {
 
         canvas.addEventHandler(DragEvent.DRAG_OVER, e -> {
             if (e.getDragboard().hasFiles()) {
-                File file = e.getDragboard().getFiles().get(0);
-                if (file.getAbsolutePath().endsWith(".png"))
+                Path file = e.getDragboard().getFiles().get(0).toPath();
+                if (FileUtils.getName(file).endsWith(".png"))
                     e.acceptTransferModes(TransferMode.COPY);
             }
         });
         canvas.addEventHandler(DragEvent.DRAG_DROPPED, e -> {
             if (e.isAccepted()) {
-                File skin = e.getDragboard().getFiles().get(0);
+                Path skin = e.getDragboard().getFiles().get(0).toPath();
                 Platform.runLater(() -> {
-                    skinSelector.setValue(skin.getAbsolutePath());
+                    skinSelector.setValue(FileUtils.getAbsolutePath(skin));
                     skinItem.setSelectedData(Skin.Type.LOCAL_FILE);
                 });
             }

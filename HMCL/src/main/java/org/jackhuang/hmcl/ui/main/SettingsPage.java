@@ -35,13 +35,12 @@ import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.Restarter;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.i18n.Locales;
+import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.logging.Level;
 import org.tukaani.xz.XZInputStream;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -71,7 +70,7 @@ public final class SettingsPage extends SettingsView {
         FXUtils.smoothScrolling(scroll);
 
         // ==== Languages ====
-        cboLanguage.getItems().setAll(Locales.LOCALES);
+        cboLanguage.getItems().setAll(SupportedLocale.getSupportedLocales());
         selectedItemPropertyFor(cboLanguage).bindBidirectional(config().localizationProperty());
 
         cboLanguage.getSelectionModel().selectedItemProperty().addListener((observable, oldValue, newValue) -> {
@@ -292,6 +291,9 @@ public final class SettingsPage extends SettingsView {
 
     @Override
     protected void clearCacheDirectory() {
-        FileUtils.cleanDirectoryQuietly(new File(Settings.instance().getCommonDirectory(), "cache"));
+        String commonDirectory = Settings.instance().getCommonDirectory();
+        if (commonDirectory != null) {
+            FileUtils.cleanDirectoryQuietly(Path.of(commonDirectory, "cache"));
+        }
     }
 }

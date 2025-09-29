@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.net.*;
 import java.util.List;
+import java.util.Objects;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -70,7 +71,10 @@ public final class ProxyManager {
             String password = config().getProxyPass();
 
             if (username != null || password != null)
-                return new SimpleAuthenticator(username, password.toCharArray());
+                return new SimpleAuthenticator(
+                        Objects.requireNonNullElse(username, ""),
+                        Objects.requireNonNullElse(password, "").toCharArray()
+                );
             else
                 return null;
         } else

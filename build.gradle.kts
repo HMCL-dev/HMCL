@@ -1,3 +1,4 @@
+import org.jackhuang.hmcl.gradle.ci.CheckUpdate
 import org.jackhuang.hmcl.gradle.docs.UpdateDocuments
 
 plugins {
@@ -66,4 +67,14 @@ defaultTasks("clean", "build")
 
 tasks.register<UpdateDocuments>("updateDocuments") {
     documentsDir.set(layout.projectDirectory.dir("docs"))
+}
+
+tasks.register<CheckUpdate>("checkUpdateDev") {
+    tagPrefix.set("v")
+    api.set("https://ci.huangyuhui.net/job/HMCL/lastSuccessfulBuild/api/json")
+}
+
+tasks.register<CheckUpdate>("checkUpdateStable") {
+    tagPrefix.set("release-")
+    api.set("https://ci.huangyuhui.net/job/HMCL-stable/lastSuccessfulBuild/api/json")
 }

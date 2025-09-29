@@ -25,8 +25,9 @@ import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -46,8 +47,8 @@ public class McbbsModpackRemoteInstallTask extends Task<Void> {
         this.repository = dependencyManager.getGameRepository();
         this.manifest = manifest;
 
-        File json = repository.getModpackConfiguration(name);
-        if (repository.hasVersion(name) && !json.exists())
+        Path json = repository.getModpackConfiguration(name);
+        if (repository.hasVersion(name) && Files.notExists(json))
             throw new IllegalArgumentException("Version " + name + " already exists.");
 
         GameBuilder builder = dependencyManager.gameBuilder().name(name);
@@ -63,8 +64,8 @@ public class McbbsModpackRemoteInstallTask extends Task<Void> {
 
         ModpackConfiguration<McbbsModpackManifest> config;
         try {
-            if (json.exists()) {
-                config = JsonUtils.fromJsonFile(json.toPath(), ModpackConfiguration.typeOf(McbbsModpackManifest.class));
+            if (Files.exists(json)) {
+                config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(McbbsModpackManifest.class));
 
                 if (!MODPACK_TYPE.equals(config.getType()))
                     throw new IllegalArgumentException("Version " + name + " is not a Mcbbs modpack. Cannot update this version.");

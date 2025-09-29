@@ -31,23 +31,21 @@ import java.io.FileNotFoundException;
 import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.nio.file.AccessDeniedException;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.Objects;
 import java.util.concurrent.CancellationException;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.task.FetchTask.DEFAULT_CONCURRENCY;
-import static org.jackhuang.hmcl.util.Lang.mapOf;
-import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class DownloadProviders {
-    private DownloadProviders() {}
+    private DownloadProviders() {
+    }
 
-    private static DownloadProvider currentDownloadProvider;
+    private static final DownloadProviderWrapper provider;
 
     public static final Map<String, DownloadProvider> providersById;
     public static final Map<String, DownloadProvider> rawProviders;
@@ -59,6 +57,7 @@ public final class DownloadProviders {
     public static final String DEFAULT_PROVIDER_ID = "balanced";
     public static final String DEFAULT_RAW_PROVIDER_ID = "bmclapi";
 
+    @SuppressWarnings("unused")
     private static final InvalidationListener observer;
 
     static {
@@ -68,71 +67,68 @@ public final class DownloadProviders {
 
         MOJANG = new MojangDownloadProvider();
         BMCLAPI = new BMCLAPIDownloadProvider(bmclapiRoot);
-        rawProviders = mapOf(
-                pair("mojang", MOJANG),
-                pair("bmclapi", BMCLAPI)
+        rawProviders = Map.of(
+                "mojang", MOJANG,
+                "bmclapi", BMCLAPI
         );
 
         AdaptedDownloadProvider fileProvider = new AdaptedDownloadProvider();
-        fileProvider.setDownloadProviderCandidates(Arrays.asList(BMCLAPI, MOJANG));
+        fileProvider.setDownloadProviderCandidates(List.of(BMCLAPI, MOJANG));
         BalancedDownloadProvider balanced = new BalancedDownloadProvider(MOJANG, BMCLAPI);
 
-        providersById = mapOf(
-                pair("official", new AutoDownloadProvider(MOJANG, fileProvider)),
-                pair("balanced", new AutoDownloadProvider(balanced, fileProvider)),
-                pair("mirror", new AutoDownloadProvider(BMCLAPI, fileProvider)));
+        providersById = Map.of(
+                "official", new AutoDownloadProvider(MOJANG, fileProvider),
+                "balanced", new AutoDownloadProvider(balanced, fileProvider),
+                "mirror", new AutoDownloadProvider(BMCLAPI, fileProvider));
 
         observer = FXUtils.observeWeak(() -> {
             FetchTask.setDownloadExecutorConcurrency(
                     config().getAutoDownloadThreads() ? DEFAULT_CONCURRENCY : config().getDownloadThreads());
         }, config().autoDownloadThreadsProperty(), config().downloadThreadsProperty());
+
+        provider = new DownloadProviderWrapper(MOJANG);
     }
 
     static void init() {
-        FXUtils.onChangeAndOperate(config().versionListSourceProperty(), versionListSource -> {
-            if (!providersById.containsKey(versionListSource)) {
-                config().setVersionListSource(DEFAULT_PROVIDER_ID);
-                return;
+        InvalidationListener onChangeDownloadSource = observable -> {
+            String versionListSource = Objects.requireNonNullElse(config().getVersionListSource(), "");
+            if (config().isAutoChooseDownloadType()) {
+                DownloadProvider currentDownloadProvider = providersById.get(versionListSource);
+                if (currentDownloadProvider == null)
+                    currentDownloadProvider = Objects.requireNonNull(providersById.get(DEFAULT_PROVIDER_ID),
+                            "default provider is null");
+
+                provider.setProvider(currentDownloadProvider);
+            } else {
+                provider.setProvider(fileDownloadProvider);
             }
+        };
+        config().versionListSourceProperty().addListener(onChangeDownloadSource);
+        config().autoChooseDownloadTypeProperty().addListener(onChangeDownloadSource);
 
-            currentDownloadProvider = Optional.ofNullable(providersById.get(versionListSource))
-                    .orElse(providersById.get(DEFAULT_PROVIDER_ID));
-        });
-
-        if (!rawProviders.containsKey(config().getDownloadType())) {
-            config().setDownloadType(DEFAULT_RAW_PROVIDER_ID);
-        }
+        onChangeDownloadSource.invalidated(null);
 
         FXUtils.onChangeAndOperate(config().downloadTypeProperty(), downloadType -> {
-            DownloadProvider primary = Optional.ofNullable(rawProviders.get(downloadType))
-                    .orElse(rawProviders.get(DEFAULT_RAW_PROVIDER_ID));
-            fileDownloadProvider.setDownloadProviderCandidates(
-                    Stream.concat(
-                            Stream.of(primary),
-                            rawProviders.values().stream().filter(x -> x != primary)
-                    ).collect(Collectors.toList())
-            );
+            DownloadProvider primary = Objects.requireNonNullElseGet(
+                    rawProviders.get(Objects.requireNonNullElse(downloadType, "")),
+                    () -> rawProviders.get(DEFAULT_RAW_PROVIDER_ID));
+
+            List<DownloadProvider> providers = new ArrayList<>(rawProviders.size());
+            providers.add(primary);
+            for (DownloadProvider provider : rawProviders.values()) {
+                if (provider != primary)
+                    providers.add(provider);
+            }
+
+            fileDownloadProvider.setDownloadProviderCandidates(providers);
         });
-    }
-
-    public static String getPrimaryDownloadProviderId() {
-        String downloadType = config().getDownloadType();
-        if (providersById.containsKey(downloadType))
-            return downloadType;
-        else
-            return DEFAULT_PROVIDER_ID;
-    }
-
-    public static DownloadProvider getDownloadProviderByPrimaryId(String primaryId) {
-        return Optional.ofNullable(providersById.get(primaryId))
-                .orElse(providersById.get(DEFAULT_PROVIDER_ID));
     }
 
     /**
      * Get current primary preferred download provider
      */
     public static DownloadProvider getDownloadProvider() {
-        return config().isAutoChooseDownloadType() ? currentDownloadProvider : fileDownloadProvider;
+        return provider;
     }
 
     public static String localizeErrorMessage(Throwable exception) {

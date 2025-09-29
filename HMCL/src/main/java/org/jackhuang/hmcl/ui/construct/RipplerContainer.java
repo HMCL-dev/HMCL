@@ -191,7 +191,7 @@ public class RipplerContainer extends StackPane {
         return StyleableProperties.FACTORY.getCssMetaData();
     }
 
-    private static class StyleableProperties {
+    private final static class StyleableProperties {
         private static final StyleablePropertyFactory<RipplerContainer> FACTORY = new StyleablePropertyFactory<>(StackPane.getClassCssMetaData());
 
         private static final CssMetaData<RipplerContainer, Paint> RIPPLER_FILL = FACTORY.createPaintCssMetaData("-jfx-rippler-fill", s -> s.ripplerFill, Color.rgb(0, 200, 255));
