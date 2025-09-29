@@ -426,24 +426,24 @@ public class DefaultLauncher extends Launcher {
 
     public void extractLog4jConfigurationFile() throws IOException {
         Path targetFile = getLog4jConfigurationFile();
-
-        String sourcePath = "/assets/game/log4j2-";
-
-        if (GameVersionNumber.asGameVersion(repository.getGameVersion(version)).compareTo("1.12") < 0) {
-            sourcePath += "1.7";
+    
+        StringBuilder sourcePathBuilder = new StringBuilder("/assets/game/log4j2-");
+    
+        GameVersion currentVersion = GameVersionNumber.asGameVersion(repository.getGameVersion(version));
+        if (currentVersion.compareTo("1.12") < 0) {
+            sourcePathBuilder.append("1.7");
         } else {
-            sourcePath += "1.12";
+            sourcePathBuilder.append("1.12");
         }
-
+    
         if (options.isShowDebugLog()) {
-            sourcePath += "-debug";
+            sourcePathBuilder.append("-debug");
         }
-
-        sourcePath += ".xml";
-
-        InputStream source = DefaultLauncher.class.getResourceAsStream(sourcePath);
-
-        try (InputStream input = source) {
+    
+        sourcePathBuilder.append(".xml");
+        String sourcePath = sourcePathBuilder.toString();
+    
+        try (InputStream input = DefaultLauncher.class.getResourceAsStream(sourcePath)) {
             Files.copy(input, targetFile, StandardCopyOption.REPLACE_EXISTING);
         }
     }
