@@ -44,6 +44,7 @@ public class TaskExecutorDialogPane extends BorderPane {
 
     private final Label lblTitle;
     private final Label lblProgress;
+    private final LaunchTipLabel lblBottomTip;
     private final JFXButton btnCancel;
     private final TaskListPane taskListPane;
 
@@ -68,8 +69,12 @@ public class TaskExecutorDialogPane extends BorderPane {
         this.setBottom(bottom);
         bottom.setPadding(new Insets(0, 8, 8, 8));
         {
-            lblProgress = new Label();
+            lblProgress = new Label("0.0 B/s");  // Prevent sudden changes in layout
             bottom.setLeft(lblProgress);
+            BorderPane.setMargin(lblProgress, new Insets(0, 0, 4, 14));
+
+            lblBottomTip = new LaunchTipLabel();
+            bottom.setCenter(lblBottomTip);
 
             btnCancel = new JFXButton(i18n("button.cancel"));
             bottom.setRight(btnCancel);
