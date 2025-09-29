@@ -100,8 +100,19 @@ public final class EntryPoint {
                     scaleValue = Float.parseFloat(uiScale);
                 }
 
-                // JavaFX behavior may be abnormal when the DPI scaling factor is too high
-                if (scaleValue >= 0.20 && scaleValue <= 6) {
+                float lowerBound;
+                float upperBound;
+
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                    // JavaFX behavior may be abnormal when the DPI scaling factor is too high
+                    lowerBound = 0.25f;
+                    upperBound = 4f;
+                } else {
+                    lowerBound = 0.01f;
+                    upperBound = 10f;
+                }
+
+                if (scaleValue >= lowerBound && scaleValue <= upperBound) {
                     if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                         System.getProperties().putIfAbsent("glass.win.uiScale", uiScale);
                     } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
