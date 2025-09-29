@@ -28,14 +28,23 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.scene.text.TextFlow;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.util.i18n.I18n;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-import java.util.stream.IntStream;
+import java.lang.System.Logger.Level;
 
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.annotations.SerializedName;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 
 public class LaunchTipLabel extends HBox {
@@ -48,10 +57,7 @@ public class LaunchTipLabel extends HBox {
     private static int index = 0;
 
     static {
-        tips = IntStream.rangeClosed(1, 30)
-                .mapToObj(i -> i18n(String.format("message.tips_%s", i)))
-                .collect(ArrayList::new, ArrayList::add, ArrayList::addAll);
-
+        tips = loadTipsFromJson();
         shuffledTips = new ArrayList<>(tips);
         Collections.shuffle(shuffledTips, random);
     }
@@ -80,15 +86,6 @@ public class LaunchTipLabel extends HBox {
         Platform.runLater(() -> bottomTipText.setText(next));
     }
 
-    // They are useless now ...
-    public void stopTips() {
-        tipTimeline.stop();
-    }
-
-    public TextFlow getTipContainer() {
-        return tfwBottomTip;
-    }
-
     private static String getRandomTip() {
         if (index >= shuffledTips.size()) {
             shuffledTips.clear();
@@ -97,5 +94,38 @@ public class LaunchTipLabel extends HBox {
             index = 0;
         }
         return shuffledTips.get(index++);
+    }
+    private static List<String> loadTipsFromJson() {
+        List<String> result = new ArrayList<>();
+        String resourceName = "assets.lang.launch_tips.tips";
+
+        try {
+            java.net.URL url = I18n.getBuiltinResource(resourceName, "json");
+            LOG.log(Level.DEBUG, "Loading " + url);
+            if (url != null) {
+                Gson gson = new Gson();
+                try (InputStream inputStream = url.openStream();
+                     InputStreamReader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8)) {
+                    LaunchTipsData data = gson.fromJson(reader, LaunchTipsData.class);
+                    if (data != null && data.tips != null) {
+                        result.addAll(data.tips);
+                    }
+                }
+            }
+        } catch (IOException | JsonSyntaxException ignored) {
+            // ignored
+        }
+
+        if (result.isEmpty()) {
+            result.add("Welcome to HMCL!");
+        }
+
+        return result;
+    }
+
+
+    private static class LaunchTipsData {
+        @SerializedName("tips")
+        private List<String> tips;
     }
 }
