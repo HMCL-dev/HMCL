@@ -46,8 +46,8 @@ public final class EntryPoint {
         createHMCLDirectories();
         LOG.start(Metadata.HMCL_CURRENT_DIRECTORY.resolve("logs"));
 
-        checkDirectoryPath();
         setupJavaFXVMOptions();
+        checkDirectoryPath();
 
         if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
             initIcon();
