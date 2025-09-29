@@ -51,7 +51,7 @@ public class LaunchTipLabel extends HBox {
     private final Timeline tipTimeline;
     private static final List<String> tips;
     private static int index = 0;
-    private static final int nextTipDelay = 3000;
+    private static final int nextTipDelay = 3;
 
     static {
         tips = loadTipsFromJson();
