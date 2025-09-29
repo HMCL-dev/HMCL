@@ -102,12 +102,12 @@ public final class EntryPoint {
 
                 // JavaFX behavior may be abnormal when the DPI scaling factor is too high
                 if (scaleValue >= 0.25 && scaleValue <= 6) {
-                    if (OperatingSystem.CURRENT_OS != OperatingSystem.MACOS) {
-                        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                            System.getProperties().putIfAbsent("glass.win.uiScale", uiScale);
-                        } else {
-                            System.getProperties().putIfAbsent("glass.gtk.uiScale", uiScale);
-                        }
+                    if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                        System.getProperties().putIfAbsent("glass.win.uiScale", uiScale);
+                    } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+                        LOG.warning("macOS does not support setting UI scale, so it will be ignored");
+                    } else {
+                        System.getProperties().putIfAbsent("glass.gtk.uiScale", uiScale);
                     }
                 } else {
                     LOG.warning("UI scale out of range: " + uiScale);
