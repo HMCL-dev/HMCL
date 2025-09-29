@@ -40,6 +40,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public class TaskExecutorDialogPane extends BorderPane {
     private TaskExecutor executor;
     private TaskCancellationAction onCancel;
+    @SuppressWarnings({"unused", "FieldCanBeLocal"})
     private final Consumer<FetchTask.SpeedEvent> speedEventHandler;
 
     private final Label lblTitle;
