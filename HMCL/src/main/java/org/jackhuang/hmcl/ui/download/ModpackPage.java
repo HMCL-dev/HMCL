@@ -7,16 +7,20 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
+import org.jackhuang.hmcl.util.SettingsMap;
 
 import static javafx.beans.binding.Bindings.createBooleanBinding;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public abstract class ModpackPage extends SpinnerPane implements WizardPage {
+    public static final SettingsMap.Key<Profile> PROFILE = new SettingsMap.Key<>("PROFILE");
+
     protected final WizardController controller;
 
     protected final Label lblName;
@@ -78,8 +82,7 @@ public abstract class ModpackPage extends SpinnerPane implements WizardPage {
 
             BorderPane descriptionPane = new BorderPane();
             {
-                btnDescription = new JFXButton(i18n("modpack.description"));
-                btnDescription.getStyleClass().add("jfx-button-border");
+                btnDescription = FXUtils.newBorderButton(i18n("modpack.description"));
                 btnDescription.setOnAction(e -> onDescribe());
                 descriptionPane.setLeft(btnDescription);
 

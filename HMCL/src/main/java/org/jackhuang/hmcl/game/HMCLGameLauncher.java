@@ -21,12 +21,11 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.launch.DefaultLauncher;
 import org.jackhuang.hmcl.launch.ProcessListener;
-import org.jackhuang.hmcl.util.i18n.Locales;
+import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
@@ -64,7 +63,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         if (config().isDisableAutoGameOptions())
             return;
 
-        Path runDir = repository.getRunDirectory(version.getId()).toPath();
+        Path runDir = repository.getRunDirectory(version.getId());
         Path optionsFile = runDir.resolve("options.txt");
         Path configFolder = runDir.resolve("config");
 
@@ -81,8 +80,6 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         }
 
         Locale locale = Locale.getDefault();
-        if (Locales.isEnglish(locale))
-            return;
 
         /*
          *  1.0         : No language option, do not set for these versions
@@ -111,33 +108,34 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     }
 
     private static String normalizedLanguageTag(Locale locale, GameVersionNumber gameVersion) {
-        String language = locale.getLanguage();
         String region = locale.getCountry();
 
-        switch (language) {
-            case "zh":
-            case "cmn":
-                if (Locales.isSimplifiedChinese(locale))
-                    return "zh_CN";
-                if (gameVersion.compareTo("1.16") >= 0
-                        && (region.equals("HK") || region.equals("MO")))
-                    return "zh_HK";
-                return "zh_TW";
-            case "ru":
-                return "ru_RU";
-            case "uk":
-                return "uk_UA";
-            case "es":
-                return "es_ES";
-            case "ja":
-                return "ja_JP";
-            case "lzh":
-                return gameVersion.compareTo("1.16") >= 0
-                        ? "lzh"
-                        : "";
-            default:
-                return "";
-        }
+        return switch (LocaleUtils.getRootLanguage(locale)) {
+            case "es" -> "es_ES";
+            case "ja" -> "ja_JP";
+            case "ru" -> "ru_RU";
+            case "uk" -> "uk_UA";
+            case "zh" -> {
+                if ("lzh".equals(locale.getLanguage()) && gameVersion.compareTo("1.16") >= 0)
+                    yield "lzh";
+
+                String script = LocaleUtils.getScript(locale);
+                if ("Hant".equals(script)) {
+                    if ((region.equals("HK") || region.equals("MO") && gameVersion.compareTo("1.16") >= 0))
+                        yield "zh_HK";
+                    yield "zh_TW";
+                }
+                yield "zh_CN";
+            }
+            case "en" -> {
+                if ("Qabs".equals(LocaleUtils.getScript(locale)) && gameVersion.compareTo("1.16") >= 0) {
+                    yield "en_UD";
+                }
+
+                yield "";
+            }
+            default -> "";
+        };
     }
 
     @Override
@@ -147,7 +145,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     }
 
     @Override
-    public void makeLaunchScript(File scriptFile) throws IOException {
+    public void makeLaunchScript(Path scriptFile) throws IOException {
         generateOptionsTxt();
         super.makeLaunchScript(scriptFile);
     }

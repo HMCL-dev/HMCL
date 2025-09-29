@@ -29,17 +29,18 @@ import org.jackhuang.hmcl.mod.ModpackInstallTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-public class McbbsModpackLocalInstallTask extends Task<Void> {
+public final class McbbsModpackLocalInstallTask extends Task<Void> {
 
     private final DefaultDependencyManager dependencyManager;
-    private final File zipFile;
+    private final Path zipFile;
     private final Modpack modpack;
     private final McbbsModpackManifest manifest;
     private final String name;
@@ -49,17 +50,17 @@ public class McbbsModpackLocalInstallTask extends Task<Void> {
     private final List<Task<?>> dependencies = new ArrayList<>(2);
     private final List<Task<?>> dependents = new ArrayList<>(4);
 
-    public McbbsModpackLocalInstallTask(DefaultDependencyManager dependencyManager, File zipFile, Modpack modpack, McbbsModpackManifest manifest, String name) {
+    public McbbsModpackLocalInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, Modpack modpack, McbbsModpackManifest manifest, String name) {
         this.dependencyManager = dependencyManager;
         this.zipFile = zipFile;
         this.modpack = modpack;
         this.manifest = manifest;
         this.name = name;
         this.repository = dependencyManager.getGameRepository();
-        File run = repository.getRunDirectory(name);
+        Path run = repository.getRunDirectory(name);
 
-        File json = repository.getModpackConfiguration(name);
-        if (repository.hasVersion(name) && !json.exists())
+        Path json = repository.getModpackConfiguration(name);
+        if (repository.hasVersion(name) && Files.notExists(json))
             throw new IllegalArgumentException("Version " + name + " already exists.");
         this.update = repository.hasVersion(name);
 
@@ -77,8 +78,8 @@ public class McbbsModpackLocalInstallTask extends Task<Void> {
 
         ModpackConfiguration<McbbsModpackManifest> config = null;
         try {
-            if (json.exists()) {
-                config = JsonUtils.fromJsonFile(json.toPath(), ModpackConfiguration.typeOf(McbbsModpackManifest.class));
+            if (Files.exists(json)) {
+                config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(McbbsModpackManifest.class));
 
                 if (!McbbsModpackProvider.INSTANCE.getName().equals(config.getType()))
                     throw new IllegalArgumentException("Version " + name + " is not a Mcbbs modpack. Cannot update this version.");

@@ -27,7 +27,7 @@ public final class MinecraftWiki {
 
     private static final Pattern SNAPSHOT_PATTERN = Pattern.compile("^[0-9]{2}w[0-9]{2}.+$");
 
-    public static String getWikiLink(Locales.SupportedLocale locale, GameRemoteVersion version) {
+    public static String getWikiLink(SupportedLocale locale, GameRemoteVersion version) {
         String wikiVersion = version.getSelfVersion();
         var gameVersion = GameVersionNumber.asGameVersion(wikiVersion);
 
@@ -41,7 +41,7 @@ public final class MinecraftWiki {
                 translatedVersion = WenyanUtils.translateGameVersion(gameVersion);
 
             if (translatedVersion.equals(gameVersion.toString()) || gameVersion instanceof GameVersionNumber.Old) {
-                return getWikiLink(Locales.ZH_HANT, version);
+                return getWikiLink(SupportedLocale.getLocale(LocaleUtils.LOCALE_ZH_HANT), version);
             } else if (SNAPSHOT_PATTERN.matcher(wikiVersion).matches()) {
                 return locale.i18n("wiki.version.game.snapshot", translatedVersion);
             } else {
@@ -50,13 +50,15 @@ public final class MinecraftWiki {
         }
 
         String variantSuffix;
-        if (Locales.isChinese(locale.getLocale())) {
-            if (Locales.isSimplifiedChinese(locale.getLocale()))
+        if (LocaleUtils.isChinese(locale.getLocale())) {
+            if (!"Hant".equals(LocaleUtils.getScript(locale.getLocale()))) {
                 variantSuffix = "?variant=zh-cn";
-            else if (locale.getLocale().getCountry().equals("HK") || locale.getLocale().getCountry().equals("MO"))
-                variantSuffix = "?variant=zh-hk";
-            else
-                variantSuffix = "?variant=zh-tw";
+            } else {
+                String region = locale.getLocale().getCountry();
+                variantSuffix = region.equals("HK") || region.equals("MO")
+                        ? "?variant=zh-hk"
+                        : "?variant=zh-tw";
+            }
         } else
             variantSuffix = "";
 

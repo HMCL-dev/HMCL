@@ -28,7 +28,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class TLauncherVersion implements Validation {
+public final class TLauncherVersion implements Validation {
 
     private final String id;
     private final String minecraftArguments;
