@@ -34,20 +34,18 @@ import org.hildan.fxgson.creators.ObservableSetCreator;
 import org.hildan.fxgson.factories.JavaFxPropertyTypeAdapterFactory;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
-import org.jackhuang.hmcl.util.gson.EnumOrdinalDeserializer;
-import org.jackhuang.hmcl.util.gson.FileTypeAdapter;
-import org.jackhuang.hmcl.util.gson.ObservableField;
-import org.jackhuang.hmcl.util.gson.PaintAdapter;
-import org.jackhuang.hmcl.util.i18n.Locales;
-import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
+import org.jackhuang.hmcl.java.JavaRuntime;
+import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.gson.*;
+import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jackhuang.hmcl.util.javafx.DirtyTracker;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.*;
 import java.net.Proxy;
+import java.nio.file.Path;
 import java.util.*;
 
 @JsonAdapter(value = Config.Adapter.class)
@@ -57,7 +55,7 @@ public final class Config implements Observable {
     public static final int CURRENT_UI_VERSION = 0;
 
     public static final Gson CONFIG_GSON = new GsonBuilder()
-            .registerTypeAdapter(File.class, FileTypeAdapter.INSTANCE)
+            .registerTypeAdapter(Path.class, PathTypeAdapter.INSTANCE)
             .registerTypeAdapter(ObservableList.class, new ObservableListCreator())
             .registerTypeAdapter(ObservableSet.class, new ObservableSetCreator())
             .registerTypeAdapter(ObservableMap.class, new ObservableMapCreator())
@@ -223,7 +221,7 @@ public final class Config implements Observable {
     }
 
     @SerializedName("localization")
-    private final ObjectProperty<SupportedLocale> localization = new SimpleObjectProperty<>(Locales.DEFAULT);
+    private final ObjectProperty<SupportedLocale> localization = new SimpleObjectProperty<>(SupportedLocale.DEFAULT);
 
     public ObjectProperty<SupportedLocale> localizationProperty() {
         return localization;
@@ -260,7 +258,7 @@ public final class Config implements Observable {
     }
 
     @SerializedName("commonDirType")
-    private final ObjectProperty<EnumCommonDirectory> commonDirType = new SimpleObjectProperty<>(EnumCommonDirectory.DEFAULT);
+    private final ObjectProperty<EnumCommonDirectory> commonDirType = new RawPreservingObjectProperty<>(EnumCommonDirectory.DEFAULT);
 
     public ObjectProperty<EnumCommonDirectory> commonDirTypeProperty() {
         return commonDirType;
@@ -367,7 +365,11 @@ public final class Config implements Observable {
     }
 
     @SerializedName("animationDisabled")
-    private final BooleanProperty animationDisabled = new SimpleBooleanProperty();
+    private final BooleanProperty animationDisabled = new SimpleBooleanProperty(
+            FXUtils.REDUCED_MOTION == Boolean.TRUE
+                    || !JavaRuntime.CURRENT_JIT_ENABLED
+                    || !FXUtils.GPU_ACCELERATION_ENABLED
+    );
 
     public BooleanProperty animationDisabledProperty() {
         return animationDisabled;
@@ -397,7 +399,7 @@ public final class Config implements Observable {
     }
 
     @SerializedName("backgroundType")
-    private final ObjectProperty<EnumBackgroundImage> backgroundImageType = new SimpleObjectProperty<>(EnumBackgroundImage.DEFAULT);
+    private final ObjectProperty<EnumBackgroundImage> backgroundImageType = new RawPreservingObjectProperty<>(EnumBackgroundImage.DEFAULT);
 
     public ObjectProperty<EnumBackgroundImage> backgroundImageTypeProperty() {
         return backgroundImageType;
@@ -769,9 +771,7 @@ public final class Config implements Observable {
             for (var field : FIELDS) {
                 Observable observable = field.get(config);
                 if (config.tracker.isDirty(observable)) {
-                    JsonElement serialized = field.serialize(config, context);
-                    if (serialized != null && !serialized.isJsonNull())
-                        result.add(field.getSerializedName(), serialized);
+                    field.serialize(result, config, context);
                 }
             }
             config.unknownFields.forEach(result::add);
@@ -791,6 +791,14 @@ public final class Config implements Observable {
             var values = new LinkedHashMap<>(json.getAsJsonObject().asMap());
             for (ObservableField<Config> field : FIELDS) {
                 JsonElement value = values.remove(field.getSerializedName());
+                if (value == null) {
+                    for (String alternateName : field.getAlternateNames()) {
+                        value = values.remove(alternateName);
+                        if (value != null)
+                            break;
+                    }
+                }
+
                 if (value != null) {
                     config.tracker.markDirty(field.get(config));
                     field.deserialize(config, value, context);

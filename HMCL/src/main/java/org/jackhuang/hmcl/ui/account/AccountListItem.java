@@ -40,6 +40,15 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogController;
 
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.skin.InvalidSkinException;
+import org.jackhuang.hmcl.util.skin.NormalizedSkin;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
@@ -108,8 +117,7 @@ public class AccountListItem extends RadioButton {
     }
 
     public ObservableBooleanValue canUploadSkin() {
-        if (account instanceof AuthlibInjectorAccount) {
-            AuthlibInjectorAccount aiAccount = (AuthlibInjectorAccount) account;
+        if (account instanceof AuthlibInjectorAccount aiAccount) {
             ObjectBinding<Optional<CompleteGameProfile>> profile = aiAccount.getYggdrasilService().getProfileRepository().binding(aiAccount.getUUID());
             return createBooleanBinding(() -> {
                 Set<TextureType> uploadableTextures = profile.get()

@@ -523,9 +523,9 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
                 // ListViewBehavior would consume ESC pressed event, preventing us from handling it, so we ignore it here
                 ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
-                listView.setCellFactory(x -> new FloatListCell<RemoteMod>(listView) {
-                    TwoLineListItem content = new TwoLineListItem();
-                    ImageView imageView = new ImageView();
+                listView.setCellFactory(x -> new FloatListCell<>(listView) {
+                    private final TwoLineListItem content = new TwoLineListItem();
+                    private final ImageView imageView = new ImageView();
 
                     {
                         HBox container = new HBox(8);
@@ -542,10 +542,10 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(getSkinnable().repository.getType()).getModByCurseForgeId(dataItem.getSlug());
                         content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : dataItem.getTitle());
                         content.setSubtitle(dataItem.getDescription());
-                        content.getTags().setAll(dataItem.getCategories().stream()
+                        content.getTags().clear();
+                        dataItem.getCategories().stream()
                                 .map(category -> getSkinnable().getLocalizedCategory(category))
-                                .collect(Collectors.toList()));
-
+                                .forEach(content::addTag);
                         if (StringUtils.isNotBlank(dataItem.getIconUrl())) {
                             imageView.imageProperty().bind(FXUtils.newRemoteImage(dataItem.getIconUrl(), 40, 40, true, true));
                         }

@@ -79,7 +79,7 @@ public class ModrinthCompletionTask extends Task<Void> {
 
         if (manifest == null)
             try {
-                Path manifestFile = repository.getVersionRoot(version).toPath().resolve("modrinth.index.json");
+                Path manifestFile = repository.getVersionRoot(version).resolve("modrinth.index.json");
                 if (Files.exists(manifestFile))
                     this.manifest = JsonUtils.fromJsonFile(manifestFile, ModrinthManifest.class);
             } catch (Exception e) {
@@ -104,7 +104,7 @@ public class ModrinthCompletionTask extends Task<Void> {
         if (manifest == null)
             return;
 
-        Path runDirectory = repository.getRunDirectory(version).toPath().toAbsolutePath().normalize();
+        Path runDirectory = FileUtils.toAbsolute(repository.getRunDirectory(version));
         Path modsDirectory = runDirectory.resolve("mods");
 
         for (ModrinthManifest.File file : manifest.getFiles()) {

@@ -246,11 +246,11 @@ public class YggdrasilService {
         }
     }
 
-    private static class TextureResponse {
+    private final static class TextureResponse {
         public Map<TextureType, Texture> textures;
     }
 
-    private static class AuthenticationResponse extends ErrorResponse {
+    private final static class AuthenticationResponse extends ErrorResponse {
         public String accessToken;
         public String clientToken;
         public GameProfile selectedProfile;

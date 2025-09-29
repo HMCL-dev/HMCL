@@ -76,9 +76,9 @@ public final class WorldListItemSkin extends SkinBase<WorldListItem> {
             item.setSubtitle(i18n("world.datetime", formatDateTime(Instant.ofEpochMilli(world.getLastPlayed())), world.getGameVersion() == null ? i18n("message.unknown") : world.getGameVersion()));
 
             if (world.getGameVersion() != null)
-                item.getTags().add(world.getGameVersion());
+                item.addTag(world.getGameVersion());
             if (world.isLocked())
-                item.getTags().add(i18n("world.locked"));
+                item.addTag(i18n("world.locked"));
         }
 
         {
@@ -136,6 +136,7 @@ public final class WorldListItemSkin extends SkinBase<WorldListItem> {
         popupMenu.getContent().addAll(
                 new MenuSeparator(),
                 new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), item::export, popup),
+                new IconedMenuItem(SVG.DELETE, i18n("world.delete"), item::delete, popup),
                 new IconedMenuItem(SVG.FOLDER_OPEN, i18n("folder.world"), item::reveal, popup));
 
         JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(root, popup);

@@ -51,14 +51,13 @@ import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
+import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.Locale;
-import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
 
@@ -145,10 +144,10 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     public static void download(Profile profile, @Nullable String version, RemoteMod.Version file, String subdirectoryName) {
         if (version == null) version = profile.getSelectedVersion();
 
-        Path runDirectory = profile.getRepository().hasVersion(version) ? profile.getRepository().getRunDirectory(version).toPath() : profile.getRepository().getBaseDirectory().toPath();
+        Path runDirectory = profile.getRepository().hasVersion(version) ? profile.getRepository().getRunDirectory(version) : profile.getRepository().getBaseDirectory();
 
         Controllers.prompt(i18n("archive.file.name"), (result, resolve, reject) -> {
-            if (!OperatingSystem.isNameValid(result)) {
+            if (!FileUtils.isNameValid(result)) {
                 reject.accept(i18n("install.new_game.malformed"));
                 return;
             }
@@ -223,7 +222,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     }
 
     private static final class DownloadNavigator implements Navigation {
-        private final Map<String, Object> settings = new HashMap<>();
+        private final SettingsMap settings = new SettingsMap();
 
         @Override
         public void onStart() {
@@ -260,7 +259,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         }
 
         @Override
-        public Map<String, Object> getSettings() {
+        public SettingsMap getSettings() {
             return settings;
         }
 
@@ -287,37 +286,39 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         }
 
         @Override
-        public void start(Map<String, Object> settings) {
-            settings.put(PROFILE, profile);
+        public void start(SettingsMap settings) {
+            settings.put(ModpackPage.PROFILE, profile);
             settings.put(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId(), gameVersion);
         }
 
-        private Task<Void> finishVersionDownloadingAsync(Map<String, Object> settings) {
+        private Task<Void> finishVersionDownloadingAsync(SettingsMap settings) {
             GameBuilder builder = dependencyManager.gameBuilder();
 
             String name = (String) settings.get("name");
             builder.name(name);
             builder.gameVersion(((RemoteVersion) settings.get(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId())).getGameVersion());
 
-            for (Map.Entry<String, Object> entry : settings.entrySet())
-                if (!LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId().equals(entry.getKey()) && entry.getValue() instanceof RemoteVersion)
-                    builder.version((RemoteVersion) entry.getValue());
+            settings.asStringMap().forEach((key, value) -> {
+                if (!LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId().equals(key)
+                        && value instanceof RemoteVersion remoteVersion)
+                    builder.version(remoteVersion);
+            });
 
             return builder.buildAsync().whenComplete(any -> profile.getRepository().refreshVersions())
                     .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
         }
 
         @Override
-        public Object finish(Map<String, Object> settings) {
+        public Object finish(SettingsMap settings) {
             settings.put("title", i18n("install.new_game.installation"));
             settings.put("success_message", i18n("install.success"));
-            settings.put("failure_callback", (FailureCallback) (settings1, exception, next) -> UpdateInstallerWizardProvider.alertFailureMessage(exception, next));
+            settings.put(FailureCallback.KEY, (settings1, exception, next) -> UpdateInstallerWizardProvider.alertFailureMessage(exception, next));
 
             return finishVersionDownloadingAsync(settings);
         }
 
         @Override
-        public Node createPage(WizardController controller, int step, Map<String, Object> settings) {
+        public Node createPage(WizardController controller, int step, SettingsMap settings) {
             switch (step) {
                 case 0:
                     return new InstallersPage(controller, profile.getRepository(), ((RemoteVersion) controller.getSettings().get("game")).getGameVersion(), downloadProvider);
@@ -330,7 +331,5 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         public boolean cancel() {
             return true;
         }
-
-        public static final String PROFILE = "PROFILE";
     }
 }

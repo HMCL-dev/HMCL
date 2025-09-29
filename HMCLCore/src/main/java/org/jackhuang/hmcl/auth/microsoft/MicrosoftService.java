@@ -370,16 +370,16 @@ public class MicrosoftService {
         public static final long ADD_FAMILY = 2148916238L;
     }
 
-    public static class XBox400Exception extends AuthenticationException {
+    public final static class XBox400Exception extends AuthenticationException {
     }
 
-    public static class NoMinecraftJavaEditionProfileException extends AuthenticationException {
+    public final static class NoMinecraftJavaEditionProfileException extends AuthenticationException {
     }
 
-    public static class NoXuiException extends AuthenticationException {
+    public final static class NoXuiException extends AuthenticationException {
     }
 
-    private static class XBoxLiveAuthenticationResponseDisplayClaims {
+    private final static class XBoxLiveAuthenticationResponseDisplayClaims {
         List<Map<Object, Object>> xui;
     }
 
@@ -405,7 +405,7 @@ public class MicrosoftService {
      * XErr Candidates: 2148916233 = missing XBox account 2148916238 = child account
      * not linked to a family
      */
-    private static class XBoxLiveAuthenticationResponse extends MicrosoftErrorResponse {
+    private final static class XBoxLiveAuthenticationResponse extends MicrosoftErrorResponse {
         @SerializedName("IssueInstant")
         String issueInstant;
 
@@ -419,7 +419,7 @@ public class MicrosoftService {
         XBoxLiveAuthenticationResponseDisplayClaims displayClaims;
     }
 
-    private static class MinecraftLoginWithXBoxResponse {
+    private final static class MinecraftLoginWithXBoxResponse {
         @SerializedName("username")
         String username;
 
@@ -436,14 +436,14 @@ public class MicrosoftService {
         int expiresIn;
     }
 
-    private static class MinecraftStoreResponseItem {
+    private final static class MinecraftStoreResponseItem {
         @SerializedName("name")
         String name;
         @SerializedName("signature")
         String signature;
     }
 
-    private static class MinecraftStoreResponse extends MinecraftErrorResponse {
+    private final static class MinecraftStoreResponse extends MinecraftErrorResponse {
         @SerializedName("items")
         List<MinecraftStoreResponseItem> items;
 
@@ -454,11 +454,12 @@ public class MicrosoftService {
         String keyId;
     }
 
-    public static class MinecraftProfileResponseSkin implements Validation {
-        String id;
-        String state;
-        String url;
-        String variant; // CLASSIC, SLIM
+    public final static class MinecraftProfileResponseSkin implements Validation {
+        public String id;
+        public String state;
+        public String url;
+        public String variant; // CLASSIC, SLIM
+        public String alias;
 
         @Override
         public void validate() throws JsonParseException, TolerableValidationException {

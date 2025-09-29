@@ -13,26 +13,16 @@ jobs:
     if: ${{ github.repository_owner == 'HMCL-dev' }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '25'
       - name: Fetch tags
         run: git fetch --all --tags
-      - name: Install tools
-        run: sudo apt-get install -y jq
       - name: Fetch last version
-        run: |
-          wget -O ci.json https://ci.huangyuhui.net/job/HMCL/lastSuccessfulBuild/api/json
-          
-          export HMCL_EXE_FILE_NAME=`cat ci.json | jq -M -r '.artifacts[] | select(.fileName | endswith(".exe")) | .fileName'`
-          if [ -z `echo $HMCL_EXE_FILE_NAME | grep -E "^HMCL-[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?\.exe\$"` ]; then exit 1; fi
-          
-          export HMCL_VERSION=`echo "${HMCL_EXE_FILE_NAME%.exe}" | tail -c +6`
-          export HMCL_COMMIT_SHA=`cat ci.json | jq -M -r '.actions[] | select(._class == "hudson.plugins.git.util.BuildData") | .lastBuiltRevision.SHA1'`
-
-          if [ "${#HMCL_COMMIT_SHA}" != 40 ]; then exit 1; fi
-
-          echo "HMCL_VERSION=$HMCL_VERSION" >> $GITHUB_ENV
-          echo "HMCL_COMMIT_SHA=$HMCL_COMMIT_SHA" >> $GITHUB_ENV
-          echo "HMCL_TAG_NAME=v$HMCL_VERSION" >> $GITHUB_ENV
+        run: ./gradlew checkUpdateDev --no-daemon --info --stacktrace
       - name: Check for existing tags
         run: if [ -z "$(git tag -l "$HMCL_TAG_NAME")" ]; then echo "continue=true" >> $GITHUB_ENV; fi
       - name: Download artifacts
@@ -78,26 +68,17 @@ jobs:
     needs: dev-check-update
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '25'
       - name: Fetch tags
         run: git fetch --all --tags
-      - name: Install tools
-        run: sudo apt-get install -y jq
+
       - name: Fetch last version
-        run: |
-          wget -O ci.json https://ci.huangyuhui.net/job/HMCL-stable/lastSuccessfulBuild/api/json
-          
-          export HMCL_EXE_FILE_NAME=`cat ci.json | jq -M -r '.artifacts[] | select(.fileName | endswith(".exe")) | .fileName'`
-          if [ -z `echo $HMCL_EXE_FILE_NAME | grep -E "^HMCL-[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?\.exe\$"` ]; then exit 1; fi
-          
-          export HMCL_VERSION=`echo "${HMCL_EXE_FILE_NAME%.exe}" | tail -c +6`
-          export HMCL_COMMIT_SHA=`cat ci.json | jq -M -r '.actions[] | select(._class == "hudson.plugins.git.util.BuildData") | .lastBuiltRevision.SHA1'`
-
-          if [ "${#HMCL_COMMIT_SHA}" != 40 ]; then exit 1; fi
-
-          echo "HMCL_VERSION=$HMCL_VERSION" >> $GITHUB_ENV
-          echo "HMCL_COMMIT_SHA=$HMCL_COMMIT_SHA" >> $GITHUB_ENV
-          echo "HMCL_TAG_NAME=release-$HMCL_VERSION" >> $GITHUB_ENV
+        run: ./gradlew checkUpdateStable --no-daemon --info --stacktrace
       - name: Check for existing tags
         run: if ! git tag -l | grep -q "$HMCL_TAG_NAME"; then echo "continue=true" >> $GITHUB_ENV; fi 
       - name: Download artifacts
