@@ -99,7 +99,7 @@ public class TaskExecutorDialogPane extends BorderPane {
             String finalUnit = unit;
             Platform.runLater(() -> lblProgress.setText(String.format("%.1f %s", finalSpeed, finalUnit)));
         };
-        FileDownloadTask.speedEvent.channel(FetchTask.SpeedEvent.class).registerWeak(speedEventHandler);
+        FileDownloadTask.SPEED_EVENT.channel(FetchTask.SpeedEvent.class).registerWeak(speedEventHandler);
 
         onEscPressed(this, btnCancel::fire);
     }
