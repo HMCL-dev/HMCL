@@ -398,6 +398,21 @@ public final class Config implements Observable {
         this.titleTransparent.set(titleTransparent);
     }
 
+    @SerializedName("launchTips")
+    private final BooleanProperty launchTips = new SimpleBooleanProperty(true);
+
+    public BooleanProperty launchTipsProperty() {
+        return launchTips;
+    }
+
+    public boolean isShowLaunchTips() {
+        return launchTips.get();
+    }
+
+    public void setLaunchTipsVisible(boolean launchTips) {
+        this.launchTips.set(launchTips);
+    }
+
     @SerializedName("backgroundType")
     private final ObjectProperty<EnumBackgroundImage> backgroundImageType = new RawPreservingObjectProperty<>(EnumBackgroundImage.DEFAULT);
 

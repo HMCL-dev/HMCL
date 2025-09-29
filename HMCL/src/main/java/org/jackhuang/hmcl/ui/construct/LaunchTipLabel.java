@@ -43,7 +43,6 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.annotations.SerializedName;
 
 import org.jackhuang.hmcl.util.i18n.I18n;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 
 public class LaunchTipLabel extends HBox {
