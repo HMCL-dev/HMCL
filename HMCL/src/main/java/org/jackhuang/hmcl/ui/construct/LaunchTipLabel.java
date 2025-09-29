@@ -43,7 +43,6 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.annotations.SerializedName;
 
 import org.jackhuang.hmcl.util.i18n.I18n;
-import org.jackhuang.hmcl.util.logging.Level;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 
@@ -95,7 +94,6 @@ public class LaunchTipLabel extends HBox {
 
         try {
             java.net.URL url = I18n.getBuiltinResource(resourceName, "json");
-            LOG.log(Level.DEBUG, "Loading " + url);
             if (url != null) {
                 Gson gson = new Gson();
                 try (InputStream inputStream = url.openStream();
