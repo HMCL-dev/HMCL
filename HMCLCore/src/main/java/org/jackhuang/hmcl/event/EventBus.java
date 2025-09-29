@@ -21,11 +21,10 @@ import org.jetbrains.annotations.NotNull;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/**
- *
- * @author huangyuhui
- */
+/// @author huangyuhui
 public final class EventBus {
+
+    public static final EventBus EVENT_BUS = new EventBus();
 
     private final ClassValue<EventManager<?>> eventManagers = new ClassValue<>() {
         @Override
@@ -50,6 +49,4 @@ public final class EventBus {
         var manager = (EventManager<Event>) channel(obj.getClass());
         return manager.fireEvent(obj);
     }
-
-    public static final EventBus EVENT_BUS = new EventBus();
 }
