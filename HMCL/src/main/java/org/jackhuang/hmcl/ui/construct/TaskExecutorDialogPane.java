@@ -84,7 +84,7 @@ public class TaskExecutorDialogPane extends BorderPane {
             }
         });
 
-        speedEventHandler = speedEvent -> {
+        speedEventHandler = FileDownloadTask.SPEED_EVENT.registerWeak(speedEvent -> {
             String unit = "B/s";
             double speed = speedEvent.getSpeed();
             if (speed > 1024) {
@@ -98,8 +98,7 @@ public class TaskExecutorDialogPane extends BorderPane {
             double finalSpeed = speed;
             String finalUnit = unit;
             Platform.runLater(() -> lblProgress.setText(String.format("%.1f %s", finalSpeed, finalUnit)));
-        };
-        FileDownloadTask.SPEED_EVENT.registerWeak(speedEventHandler);
+        });
 
         onEscPressed(this, btnCancel::fire);
     }
