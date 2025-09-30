@@ -22,31 +22,27 @@ import org.jetbrains.annotations.NotNull;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// @author huangyuhui
-public final class EventBus {
+public final class EventBus extends ClassValue<EventManager<?>> {
 
     public static final EventBus EVENT_BUS = new EventBus();
-
-    private final ClassValue<EventManager<?>> eventManagers = new ClassValue<>() {
-        @Override
-        protected EventManager<?> computeValue(@NotNull Class<?> type) {
-            return new EventManager<>();
-        }
-    };
 
     private EventBus() {
     }
 
-    public <T extends Event> EventManager<T> channel(Class<T> clazz) {
-        @SuppressWarnings("unchecked")
-        var manager = (EventManager<T>) eventManagers.get(clazz);
-        return manager;
+    @Override
+    protected EventManager<?> computeValue(@NotNull Class<?> type) {
+        return new EventManager<>();
     }
 
+    @SuppressWarnings("unchecked")
+    public <T extends Event> EventManager<T> channel(Class<T> clazz) {
+        return (EventManager<T>) get(clazz);
+    }
+
+    @SuppressWarnings("unchecked")
     public Event.Result fireEvent(Event obj) {
         LOG.info(obj + " gets fired");
 
-        @SuppressWarnings("unchecked")
-        var manager = (EventManager<Event>) channel(obj.getClass());
-        return manager.fireEvent(obj);
+        return ((EventManager<Event>) channel(obj.getClass())).fireEvent(obj);
     }
 }
