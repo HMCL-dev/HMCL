@@ -271,7 +271,7 @@ public class OAuth {
         }
     }
 
-    private static class DeviceTokenResponse extends ErrorResponse {
+    private final static class DeviceTokenResponse extends ErrorResponse {
         @SerializedName("user_code")
         public String userCode;
 
@@ -291,7 +291,7 @@ public class OAuth {
         public int interval;
     }
 
-    private static class TokenResponse extends ErrorResponse {
+    private final static class TokenResponse extends ErrorResponse {
         @SerializedName("token_type")
         public String tokenType;
 
@@ -329,7 +329,7 @@ public class OAuth {
      * redirect URI used to obtain the authorization
      * code.","correlation_id":"??????"}
      */
-    public static class AuthorizationResponse extends ErrorResponse {
+    public final static class AuthorizationResponse extends ErrorResponse {
         @SerializedName("token_type")
         public String tokenType;
 
@@ -352,7 +352,7 @@ public class OAuth {
         public String foci;
     }
 
-    private static class RefreshResponse extends ErrorResponse {
+    private final static class RefreshResponse extends ErrorResponse {
         @SerializedName("expires_in")
         int expiresIn;
 

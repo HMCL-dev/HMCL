@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.util.SimpleMultimap;
 import java.lang.ref.WeakReference;
 import java.util.EnumMap;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
 /**
@@ -30,6 +31,7 @@ import java.util.function.Consumer;
  */
 public final class EventManager<T extends Event> {
 
+    private final ReentrantLock lock = new ReentrantLock();
     private final SimpleMultimap<EventPriority, Consumer<T>, CopyOnWriteArraySet<Consumer<T>>> handlers
             = new SimpleMultimap<>(() -> new EnumMap<>(EventPriority.class), CopyOnWriteArraySet::new);
 
@@ -47,9 +49,13 @@ public final class EventManager<T extends Event> {
         register(consumer, EventPriority.NORMAL);
     }
 
-    public synchronized void register(Consumer<T> consumer, EventPriority priority) {
-        if (!handlers.get(priority).contains(consumer))
-            handlers.put(priority, consumer);
+    public void register(Consumer<T> consumer, EventPriority priority) {
+        lock.lock();
+        try {
+            handlers.get(priority).add(consumer);
+        } finally {
+            lock.unlock();
+        }
     }
 
     public void register(Runnable runnable) {
@@ -60,23 +66,30 @@ public final class EventManager<T extends Event> {
         register(t -> runnable.run(), priority);
     }
 
-    public synchronized Event.Result fireEvent(T event) {
-        for (EventPriority priority : EventPriority.values()) {
-            for (Consumer<T> handler : handlers.get(priority))
-                handler.accept(event);
+    public Event.Result fireEvent(T event) {
+        lock.lock();
+        try {
+            for (EventPriority priority : EventPriority.values()) {
+                for (Consumer<T> handler : handlers.get(priority))
+                    handler.accept(event);
+            }
+        } finally {
+            lock.unlock();
         }
 
-        if (event.hasResult())
-            return event.getResult();
-        else
-            return Event.Result.DEFAULT;
+        return event.hasResult() ? event.getResult() : Event.Result.DEFAULT;
     }
 
-    public synchronized void unregister(Consumer<T> consumer) {
-        handlers.removeValue(consumer);
+    public void unregister(Consumer<T> consumer) {
+        lock.lock();
+        try {
+            handlers.removeValue(consumer);
+        } finally {
+            lock.unlock();
+        }
     }
 
-    private class WeakListener implements Consumer<T> {
+    private final class WeakListener implements Consumer<T> {
         private final WeakReference<Consumer<T>> ref;
 
         public WeakListener(Consumer<T> listener) {
