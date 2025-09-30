@@ -29,18 +29,14 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OSVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.DirectoryStream;
-import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -184,19 +180,7 @@ public final class TerracottaMetadata {
                 }
 
                 try {
-                    Files.walkFileTree(path, new SimpleFileVisitor<>() {
-                        @Override
-                        public @NotNull FileVisitResult visitFile(@NotNull Path file, @NotNull BasicFileAttributes attrs) throws IOException {
-                            Files.delete(file);
-                            return super.visitFile(file, attrs);
-                        }
-
-                        @Override
-                        public @NotNull FileVisitResult postVisitDirectory(@NotNull Path dir, @Nullable IOException exc) throws IOException {
-                            Files.delete(dir);
-                            return super.postVisitDirectory(dir, exc);
-                        }
-                    });
+                    FileUtils.deleteDirectory(path);
                 } catch (IOException e) {
                     LOG.warning(String.format("Unable to remove legacy terracotta files: %s", path), e);
                 }
