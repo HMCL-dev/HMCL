@@ -543,7 +543,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(getSkinnable().repository.getType()).getModByCurseForgeId(dataItem.getSlug());
                         content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : dataItem.getTitle());
                         content.setSubtitle(dataItem.getDescription());
-                        if (I18n.isUseChinese()){
+                        if (I18n.isUseChinese()) {
                             ModDescriptionTranslatons.translate(dataItem).whenComplete(Schedulers.javafx(), (result, exception) -> {
                                 if (exception != null) {
                                     LOG.warning("Failed to translate mod description", exception);

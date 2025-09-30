@@ -230,7 +230,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 ModTranslations.Mod mod = getSkinnable().translations.getModByCurseForgeId(getSkinnable().addon.getSlug());
                 content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : getSkinnable().addon.getTitle());
                 content.setSubtitle(getSkinnable().addon.getDescription());
-                if (I18n.isUseChinese()){
+                if (I18n.isUseChinese()) {
                     ModDescriptionTranslatons.translate(getSkinnable().addon).whenComplete(Schedulers.javafx(), (result, exception) -> {
                         if (exception != null) {
                             LOG.warning("Failed to translate mod description", exception);
