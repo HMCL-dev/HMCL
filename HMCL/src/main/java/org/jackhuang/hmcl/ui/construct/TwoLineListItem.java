@@ -129,7 +129,6 @@ public class TwoLineListItem extends VBox {
         return lblSubtitle;
     }
 
-
     @Override
     public String toString() {
         return getTitle();
