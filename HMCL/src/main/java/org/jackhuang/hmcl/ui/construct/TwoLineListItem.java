@@ -47,6 +47,9 @@ public class TwoLineListItem extends VBox {
 
     private final AggregatedObservableList<Node> firstLineChildren;
 
+    private final Label lblTitle;
+    private final Label lblSubtitle;
+
     public TwoLineListItem(String titleString, String subtitleString) {
         this();
 
@@ -60,7 +63,7 @@ public class TwoLineListItem extends VBox {
         HBox firstLine = new HBox();
         firstLine.getStyleClass().add("first-line");
 
-        Label lblTitle = new Label();
+        lblTitle = new Label();
         lblTitle.getStyleClass().add("title");
         lblTitle.textProperty().bind(title);
 
@@ -69,7 +72,7 @@ public class TwoLineListItem extends VBox {
         firstLineChildren.appendList(tags);
         Bindings.bindContent(firstLine.getChildren(), firstLineChildren.getAggregatedList());
 
-        Label lblSubtitle = new Label();
+        lblSubtitle = new Label();
         lblSubtitle.getStyleClass().add("subtitle");
         lblSubtitle.textProperty().bind(subtitle);
 
@@ -117,6 +120,15 @@ public class TwoLineListItem extends VBox {
     public ObservableList<Label> getTags() {
         return tags;
     }
+
+    public Label getTitleLabel() {
+        return lblTitle;
+    }
+
+    public Label getSubtitleLabel() {
+        return lblSubtitle;
+    }
+
 
     @Override
     public String toString() {
