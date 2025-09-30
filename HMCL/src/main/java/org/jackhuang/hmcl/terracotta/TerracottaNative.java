@@ -130,11 +130,7 @@ public final class TerracottaNative {
 
     public ITerracottaProvider.Status status() throws IOException {
         if (Files.exists(path)) {
-            String checksum;
-            try (InputStream is = Files.newInputStream(path)) {
-                checksum = DigestUtils.digestToString(checking.getAlgorithm(), is);
-            }
-            if (checksum.equalsIgnoreCase(checking.getChecksum())) {
+            if (DigestUtils.digestToString(checking.getAlgorithm(), path).equalsIgnoreCase(checking.getChecksum())) {
                 return ITerracottaProvider.Status.READY;
             }
         }

@@ -61,7 +61,7 @@ public final class GeneralProvider implements ITerracottaProvider {
     }
 
     @Override
-    public List<String> launch(Path path) {
+    public List<String> ofCommandLine(Path path) {
         return List.of(target.getPath().toString(), "--hmcl", path.toString());
     }
 }

@@ -33,6 +33,7 @@ subprojects {
     tasks.withType<Checkstyle> {
         maxHeapSize.set("2g")
     }
+
     configure<CheckstyleExtension> {
         sourceSets = setOf()
     }

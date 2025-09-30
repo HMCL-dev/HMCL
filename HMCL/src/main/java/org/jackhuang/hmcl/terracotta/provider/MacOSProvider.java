@@ -89,7 +89,7 @@ public final class MacOSProvider implements ITerracottaProvider {
     }
 
     @Override
-    public List<String> launch(Path path) {
+    public List<String> ofCommandLine(Path path) {
         assert binary != null;
 
         return List.of(binary.getPath().toString(), "--hmcl", path.toString());

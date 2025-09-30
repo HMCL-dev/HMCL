@@ -477,7 +477,7 @@ public class TerracottaControllerPage extends StackPane {
 
     private ComponentList getThirdPartyDownloadNodes() {
         ComponentSublist locals = new ComponentSublist();
-        locals.setMargin(false);
+        locals.setComponentPadding(false);
 
         LineButton header = LineButton.of(false);
         header.setLeftImage(FXUtils.newBuiltinImage("/assets/img/terracotta.png"));

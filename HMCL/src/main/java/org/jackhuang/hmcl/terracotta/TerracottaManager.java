@@ -45,7 +45,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
@@ -151,15 +150,10 @@ public final class TerracottaManager {
             preparing = new TerracottaState.Preparing(new ReadOnlyDoubleWrapper(-1));
         }
 
-        Task.composeAsync(Schedulers.javafx(), () -> {
-            TarFileTree tree;
-            if (file != null) {
-                tree = TarFileTree.open(file);
-            } else {
-                tree = null;
-            }
-
-            return Objects.requireNonNull(TerracottaMetadata.PROVIDER).install(preparing, tree).whenComplete(exception -> {
+        Task.supplyAsync(Schedulers.io(), () -> {
+            return file != null ? TarFileTree.open(file) : null;
+        }).thenComposeAsync(Schedulers.javafx(), tree -> {
+            return getProvider().install(preparing, tree).whenComplete(exception -> {
                 if (tree != null) {
                     tree.close();
                 }
@@ -192,6 +186,14 @@ public final class TerracottaManager {
         return setState(preparing);
     }
 
+    private static ITerracottaProvider getProvider() {
+        ITerracottaProvider provider = TerracottaMetadata.PROVIDER;
+        if (provider == null) {
+            throw new AssertionError("Terracotta Provider must NOT be null.");
+        }
+        return provider;
+    }
+
     public static TerracottaState recover(@Nullable Path file) {
         FXUtils.checkFxUserThread();
 
@@ -201,7 +203,7 @@ public final class TerracottaManager {
         }
 
         try {
-            return switch (Objects.requireNonNull(TerracottaMetadata.PROVIDER).status()) {
+            return switch (getProvider().status()) {
                 case NOT_EXIST, LEGACY_VERSION -> install(file);
                 case READY -> {
                     TerracottaState.Launching launching = setState(new TerracottaState.Launching());
@@ -218,7 +220,7 @@ public final class TerracottaManager {
     private static void launch(TerracottaState.Launching state) {
         Task.supplyAsync(() -> {
             Path path = Files.createTempDirectory(String.format("hmcl-terracotta-%d", ThreadLocalRandom.current().nextLong())).resolve("http").toAbsolutePath();
-            ManagedProcess process = new ManagedProcess(new ProcessBuilder(Objects.requireNonNull(TerracottaMetadata.PROVIDER).launch(path)));
+            ManagedProcess process = new ManagedProcess(new ProcessBuilder(getProvider().ofCommandLine(path)));
             process.pumpInputStream(SystemUtils::onLogLine);
             process.pumpErrorStream(SystemUtils::onLogLine);
 

@@ -129,7 +129,7 @@ final class ComponentListCell extends StackPane {
             groupNode.getChildren().add(headerRippler);
 
             VBox container = new VBox();
-            boolean hasPadding = !(list instanceof ComponentSublist subList) || subList.hasMargin();
+            boolean hasPadding = !(list instanceof ComponentSublist subList) || subList.hasComponentPadding();
             if (hasPadding) {
                 container.setPadding(new Insets(8, 16, 10, 16));
             }

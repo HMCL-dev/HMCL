@@ -29,7 +29,7 @@ public class ComponentSublist extends ComponentList {
 
     private final ObjectProperty<Node> headerLeft = new SimpleObjectProperty<>(this, "headerLeft");
     private final ObjectProperty<Node> headerRight = new SimpleObjectProperty<>(this, "headerRight");
-    private final BooleanProperty margin = new SimpleBooleanProperty(this, "padding", true);
+    private final BooleanProperty componentPadding = new SimpleBooleanProperty(this, "componentPadding", true);
 
     public ComponentSublist() {
         super();
@@ -59,15 +59,15 @@ public class ComponentSublist extends ComponentList {
         this.headerRight.set(headerRight);
     }
 
-    public boolean hasMargin() {
-        return margin.get();
+    public boolean hasComponentPadding() {
+        return componentPadding.get();
     }
 
-    public BooleanProperty marginProperty() {
-        return margin;
+    public BooleanProperty componentPaddingProperty() {
+        return componentPadding;
     }
 
-    public void setMargin(boolean margin) {
-        this.margin.set(margin);
+    public void setComponentPadding(boolean componentPadding) {
+        this.componentPadding.set(componentPadding);
     }
 }

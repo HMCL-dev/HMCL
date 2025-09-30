@@ -73,5 +73,5 @@ public interface ITerracottaProvider {
 
     Task<?> install(Context context, @Nullable TarFileTree tree) throws IOException;
 
-    List<String> launch(Path path);
+    List<String> ofCommandLine(Path path);
 }
