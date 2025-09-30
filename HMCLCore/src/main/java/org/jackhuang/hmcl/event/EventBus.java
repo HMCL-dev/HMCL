@@ -43,6 +43,6 @@ public final class EventBus extends ClassValue<EventManager<?>> {
     public Event.Result fireEvent(Event obj) {
         LOG.info(obj + " gets fired");
 
-        return ((EventManager<Event>) channel(obj.getClass())).fireEvent(obj);
+        return ((EventManager<Event>) get(obj.getClass())).fireEvent(obj);
     }
 }
