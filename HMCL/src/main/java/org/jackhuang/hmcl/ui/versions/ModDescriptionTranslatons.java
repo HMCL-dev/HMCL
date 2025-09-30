@@ -8,8 +8,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
-import java.io.IOException;
-
 public final class ModDescriptionTranslatons {
     private ModDescriptionTranslatons() {
     }
