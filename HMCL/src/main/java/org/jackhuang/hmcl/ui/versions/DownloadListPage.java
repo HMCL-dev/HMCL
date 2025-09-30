@@ -70,6 +70,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.selectedItemPropertyFor;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class DownloadListPage extends Control implements DecoratorPage, VersionPage.VersionLoadable {
     protected final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
@@ -542,6 +543,15 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(getSkinnable().repository.getType()).getModByCurseForgeId(dataItem.getSlug());
                         content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : dataItem.getTitle());
                         content.setSubtitle(dataItem.getDescription());
+                        if (I18n.isUseChinese()){
+                            ModDescriptionTranslatons.translate(dataItem).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                                if (exception != null) {
+                                    LOG.warning("Failed to translate mod description", exception);
+                                    return;
+                                }
+                                content.setSubtitle(result.translated);
+                            }).start();
+                        }
                         content.getTags().clear();
                         dataItem.getCategories().stream()
                                 .map(category -> getSkinnable().getLocalizedCategory(category))

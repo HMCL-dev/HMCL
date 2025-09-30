@@ -61,6 +61,7 @@ import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class DownloadPage extends Control implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
@@ -229,6 +230,15 @@ public class DownloadPage extends Control implements DecoratorPage {
                 ModTranslations.Mod mod = getSkinnable().translations.getModByCurseForgeId(getSkinnable().addon.getSlug());
                 content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : getSkinnable().addon.getTitle());
                 content.setSubtitle(getSkinnable().addon.getDescription());
+                if (I18n.isUseChinese()){
+                    ModDescriptionTranslatons.translate(getSkinnable().addon).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                        if (exception != null) {
+                            LOG.warning("Failed to translate mod description", exception);
+                            return;
+                        }
+                        content.setSubtitle(result.translated);
+                    }).start();
+                }
                 content.getSubtitleLabel().setWrapText(true);
                 getSkinnable().addon.getCategories().stream()
                         .map(category -> getSkinnable().page.getLocalizedCategory(category))
