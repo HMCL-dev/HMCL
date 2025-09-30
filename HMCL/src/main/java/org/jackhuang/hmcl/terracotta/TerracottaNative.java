@@ -69,6 +69,9 @@ public final class TerracottaNative {
 
                         @Override
                         public void write(byte[] buffer, int offset, int len) throws IOException {
+                            if (!context.hasInstallFence()) {
+                                throw new CancellationException("User has installed terracotta from local archives.");
+                            }
                             delegate.write(buffer, offset, len);
                         }
 

@@ -86,6 +86,7 @@ public abstract sealed class TerracottaState {
             return installFence.compareAndSet(false, true);
         }
 
+        @Override
         public boolean hasInstallFence() {
             return !installFence.get();
         }

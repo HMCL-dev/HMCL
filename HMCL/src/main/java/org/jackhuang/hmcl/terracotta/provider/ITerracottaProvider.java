@@ -37,6 +37,8 @@ public interface ITerracottaProvider {
         void bindProgress(ObservableValue<? extends Number> value);
 
         boolean requestInstallFence();
+        
+        boolean hasInstallFence();
     }
 
     abstract class ProviderException extends IOException {
