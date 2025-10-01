@@ -21,7 +21,14 @@ subprojects {
             name = "libs"
             dirs = setOf(rootProject.file("lib"))
         }
-        mavenCentral()
+
+        System.getenv("MAVEN_CENTRAL_REPO").let { repo ->
+            if (repo.isNullOrBlank())
+                mavenCentral()
+            else
+                maven(url = repo)
+        }
+
         maven(url = "https://jitpack.io")
         maven(url = "https://libraries.minecraft.net")
     }
