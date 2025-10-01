@@ -85,7 +85,7 @@ public abstract class CheckUpdate extends DefaultTask {
             if (WORKFLOW_MULTI_BRANCH_PROJECT.equals(jobType)) {
                 Pattern namePattern = Pattern.compile("release%2F3\\.\\d+");
 
-                List<BuildMetadata> metadatas = Objects.requireNonNull(helper.gson.fromJson(body.getAsJsonObject("jobs"), new TypeToken<List<SubJobInfo>>() {
+                List<BuildMetadata> metadatas = Objects.requireNonNull(helper.gson.fromJson(body.get("jobs"), new TypeToken<List<SubJobInfo>>() {
                         }), "jobs")
                         .stream()
                         .filter(it -> WORKFLOW_JOB.equals(it._class()))
@@ -174,7 +174,7 @@ public abstract class CheckUpdate extends DefaultTask {
         private <T> T fetch(URI uri, Class<T> type) throws IOException, InterruptedException {
             HttpResponse<String> response = client.send(HttpRequest.newBuilder(uri).build(), HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() / 100 != 2) {
-                throw new IOException("Bad status code: " + response.statusCode());
+                throw new IOException("Bad status code " + response.statusCode() + " for " + uri);
             }
 
             return gson.fromJson(response.body(), type);
