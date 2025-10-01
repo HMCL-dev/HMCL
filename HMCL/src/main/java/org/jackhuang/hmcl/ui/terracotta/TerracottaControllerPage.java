@@ -95,6 +95,8 @@ public class TerracottaControllerPage extends StackPane {
 
     private final WeakListenerHolder holder = new WeakListenerHolder();
 
+    /* FIXME: It's sucked to have such a long logic, containing UI for all states defined in TerracottaState, with unclear control flows.
+         Consider moving UI into multiple files for each state respectively. */
     public TerracottaControllerPage() {
         TransitionPane transition = new TransitionPane();
 
