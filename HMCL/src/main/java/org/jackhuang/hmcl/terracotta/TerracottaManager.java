@@ -252,7 +252,7 @@ public final class TerracottaManager {
 
     public static Task<String> exportLogs() {
         if (STATE_V.get() instanceof TerracottaState.PortSpecific portSpecific) {
-            return new GetTask(URI.create(String.format("http://127.0.0.1:%d/log", portSpecific.port)))
+            return new GetTask(URI.create(String.format("http://127.0.0.1:%d/log?fetch=true", portSpecific.port)))
                     .setSignificance(Task.TaskSignificance.MINOR);
         }
         return Task.completed(null);
