@@ -56,7 +56,7 @@ public final class UpsideDownUtils {
         return builder.reverse().toString();
     }
 
-    private static DateTimeFormatter BASE_FORMATTER = DateTimeFormatter.ofPattern("MMM d, yyyy, h:mm:ss a")
+    private static final DateTimeFormatter BASE_FORMATTER = DateTimeFormatter.ofPattern("MMM d, yyyy, h:mm:ss a")
             .withZone(ZoneId.systemDefault());
 
     public static String formatDateTime(TemporalAccessor time) {
