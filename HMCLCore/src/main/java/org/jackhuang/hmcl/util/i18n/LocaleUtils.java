@@ -22,12 +22,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Stream;
@@ -50,20 +59,23 @@ public final class LocaleUtils {
     private static final Map<String, String> iso3To2 = new HashMap<>();
 
     static {
-        try (InputStream input = LocaleUtils.class.getResourceAsStream("/assets/lang/sublanguages.csv")) {
-            if (input != null) {
-                new String(input.readAllBytes()).lines()
-                        .filter(line -> !line.startsWith("#") && !line.isBlank())
-                        .forEach(line -> {
-                            String[] languages = line.split(",");
-                            if (languages.length < 2)
-                                LOG.warning("Invalid line in sublanguages.csv: " + line);
+        try (BufferedReader input = new BufferedReader(new InputStreamReader(
+                Objects.requireNonNull(LocaleUtils.class.getResourceAsStream("/assets/lang/sublanguages.csv")), StandardCharsets.UTF_8
+        ))) {
+            for (String line; (line = input.readLine()) != null; ) {
+                if (line.startsWith("#") || line.isBlank()) {
+                    continue;
+                }
 
-                            String parent = languages[0];
-                            for (int i = 1; i < languages.length; i++) {
-                                subLanguageToParent.put(languages[i], parent);
-                            }
-                        });
+                String[] languages = line.split(",");
+                if (languages.length < 2) {
+                    LOG.warning("Invalid line in sublanguages.csv: " + line);
+                }
+
+                String parent = languages[0];
+                for (int i = 1; i < languages.length; i++) {
+                    subLanguageToParent.put(languages[i], parent);
+                }
             }
         } catch (Throwable e) {
             LOG.warning("Failed to load sublanguages.csv", e);
@@ -71,25 +83,16 @@ public final class LocaleUtils {
 
         // Line Format:
         // (?<iso2>[a-z]{2}),(?<iso3>[a-z]{3})
-        try (InputStream input = LocaleUtils.class.getResourceAsStream("/assets/lang/iso_languages.csv")) {
-            if (input != null) {
-                int lineLength = 2 + 1 + 3;
-
-                byte[] bytes = input.readAllBytes();
-                for (int offset = 0; offset < bytes.length; ) {
-                    if (offset > bytes.length - lineLength)
-                        break;
-
-                    if (bytes[offset + 2] != ',')
-                        throw new IOException("iso_languages.csv format invalid");
-
-                    String iso2 = new String(bytes, offset, 2, StandardCharsets.US_ASCII);
-                    String iso3 = new String(bytes, offset + 3, 3, StandardCharsets.US_ASCII);
-
-                    iso3To2.put(iso3, iso2);
-
-                    offset += (lineLength + 1);
+        try (BufferedReader input = new BufferedReader(new InputStreamReader(
+                Objects.requireNonNull(LocaleUtils.class.getResourceAsStream("/assets/lang/iso_languages.csv")), StandardCharsets.UTF_8
+        ))) {
+            for (String line; (line = input.readLine()) != null; ) {
+                String[] parts = line.split(",", 3);
+                if (parts.length != 2) {
+                    LOG.warning("Invalid line in iso_languages.csv: " + line);
                 }
+
+                iso3To2.put(parts[1], parts[0]);
             }
         } catch (Throwable e) {
             LOG.warning("Failed to load iso_languages.csv", e);
