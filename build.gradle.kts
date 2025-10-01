@@ -78,10 +78,10 @@ tasks.register<UpdateDocuments>("updateDocuments") {
 
 tasks.register<CheckUpdate>("checkUpdateDev") {
     tagPrefix.set("v")
-    api.set("https://ci.huangyuhui.net/job/HMCL/lastSuccessfulBuild/api/json")
+    uri.set("https://ci.huangyuhui.net/job/HMCL")
 }
 
 tasks.register<CheckUpdate>("checkUpdateStable") {
     tagPrefix.set("release-")
-    api.set("https://ci.huangyuhui.net/job/HMCL-stable/lastSuccessfulBuild/api/json")
+    uri.set("https://ci.huangyuhui.net/job/HMCL-stable")
 }

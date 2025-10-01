@@ -53,7 +53,7 @@ public abstract class CheckUpdate extends DefaultTask {
     private static final String FREE_STYLE_PROJECT = "hudson.model.FreeStyleProject";
 
     @Input
-    public abstract Property<String> getApi();
+    public abstract Property<String> getUri();
 
     @Input
     public abstract Property<String> getTagPrefix();
@@ -62,8 +62,7 @@ public abstract class CheckUpdate extends DefaultTask {
         getOutputs().upToDateWhen(task -> false);
     }
 
-    private static URI getLastSuccessfulBuildUri(String baseUri) {
-        String suffix = "lastSuccessfulBuild/api/json";
+    private static URI toURI(String baseUri, String suffix) {
         return URI.create(baseUri.endsWith("/")
                 ? baseUri + suffix
                 : baseUri + "/" + suffix
@@ -72,13 +71,14 @@ public abstract class CheckUpdate extends DefaultTask {
 
     @TaskAction
     public void run() throws Exception {
-        String uri = getApi().get();
-        LOGGER.info("Fetching metadata from {}", uri);
+        String uri = getUri().get();
+        URI apiUri = toURI(uri, "api/json");
+        LOGGER.quiet("Fetching metadata from {}", apiUri);
 
         BuildMetadata buildMetadata;
 
         try (var helper = new Helper()) {
-            JsonObject body = Objects.requireNonNull(helper.fetch(URI.create(uri), JsonObject.class));
+            JsonObject body = Objects.requireNonNull(helper.fetch(apiUri, JsonObject.class));
             String jobType = Objects.requireNonNull(body.getAsJsonPrimitive("_class"), "Missing _class property")
                     .getAsString();
 
@@ -93,7 +93,7 @@ public abstract class CheckUpdate extends DefaultTask {
                         .filter(it -> !it.color().equals("disabled"))
                         .map(it -> {
                             try {
-                                return fetchBuildInfo(helper, getLastSuccessfulBuildUri(it.url));
+                                return fetchBuildInfo(helper, toURI(it.url, "lastSuccessfulBuild/api/json"));
                             } catch (Throwable e) {
                                 throw new GradleException("Failed to retrieve build info from " + it.url(), e);
                             }
@@ -101,17 +101,17 @@ public abstract class CheckUpdate extends DefaultTask {
                         .toList();
 
                 if (metadatas.isEmpty())
-                    throw new GradleException("Failed to retrieve build metadata from " + uri);
+                    throw new GradleException("Failed to retrieve build metadata from " + apiUri);
 
                 buildMetadata = metadatas.get(metadatas.size() - 1);
             } else if (WORKFLOW_JOB.equals(jobType) || FREE_STYLE_PROJECT.equals(jobType)) {
-                buildMetadata = fetchBuildInfo(helper, getLastSuccessfulBuildUri(uri));
+                buildMetadata = fetchBuildInfo(helper, toURI(uri, "lastSuccessfulBuild/api/json"));
             } else {
                 throw new GradleException("Unsupported job type: " + jobType);
             }
         }
 
-        LOGGER.info("Build metadata found: {}", buildMetadata);
+        LOGGER.quiet("Build metadata found: {}", buildMetadata);
 
         String githubEnv = Objects.requireNonNullElse(System.getenv("GITHUB_ENV"), "");
         if (githubEnv.isBlank())
@@ -123,7 +123,7 @@ public abstract class CheckUpdate extends DefaultTask {
 
             BiConsumer<String, String> addEnv = (name, value) -> {
                 String item = name + "=" + value;
-                LOGGER.info(item);
+                LOGGER.quiet(item);
                 if (writer != null)
                     writer.println(item);
             };
@@ -138,7 +138,7 @@ public abstract class CheckUpdate extends DefaultTask {
     }
 
     private BuildMetadata fetchBuildInfo(Helper helper, URI uri) throws IOException, InterruptedException {
-        LOGGER.info("Fetching build info from {}", uri);
+        LOGGER.quiet("Fetching build info from {}", uri);
 
         BuildInfo buildInfo = Objects.requireNonNull(helper.fetch(uri, BuildInfo.class), "build info");
 
