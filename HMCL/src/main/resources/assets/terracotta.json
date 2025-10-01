@@ -1,5 +1,5 @@
 {
-  "version_legacy": "0\\.3\\.[89]-rc.[0-9]+",
+  "version_legacy": "0\\.3\\.[89]-rc.[0-8]",
   "version_recent": [
     "0.3.9-rc.5",
     "0.3.9-rc.6",
