@@ -102,7 +102,6 @@ public abstract class UpsideDownTranslate extends DefaultTask {
             return Collections.unmodifiableMap(map);
         }
 
-
         private static final Pattern FORMAT_PATTERN = Pattern.compile("^%(\\d\\$)?(\\d+)?(\\.\\d+)?([sdf])");
         private static final Pattern XML_TAG_PATTERN = Pattern.compile("^<(?<tag>[a-zA-Z]+)( href=\"[^\"]*\")?>");
 
