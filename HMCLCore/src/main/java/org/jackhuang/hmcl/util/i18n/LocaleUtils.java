@@ -17,15 +17,14 @@
  */
 package org.jackhuang.hmcl.util.i18n;
 
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -35,7 +34,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -59,10 +57,8 @@ public final class LocaleUtils {
     private static final Map<String, String> iso3To2 = new HashMap<>();
 
     static {
-        try (BufferedReader input = new BufferedReader(new InputStreamReader(
-                Objects.requireNonNull(LocaleUtils.class.getResourceAsStream("/assets/lang/sublanguages.csv")), StandardCharsets.UTF_8
-        ))) {
-            for (String line; (line = input.readLine()) != null; ) {
+        try {
+            for (String line : Lang.toIterable(IOUtils.readFullyAsString(LocaleUtils.class.getResourceAsStream("/assets/lang/sublanguages.csv")).lines())) {
                 if (line.startsWith("#") || line.isBlank()) {
                     continue;
                 }
@@ -77,16 +73,9 @@ public final class LocaleUtils {
                     subLanguageToParent.put(languages[i], parent);
                 }
             }
-        } catch (Throwable e) {
-            LOG.warning("Failed to load sublanguages.csv", e);
-        }
 
-        // Line Format:
-        // (?<iso2>[a-z]{2}),(?<iso3>[a-z]{3})
-        try (BufferedReader input = new BufferedReader(new InputStreamReader(
-                Objects.requireNonNull(LocaleUtils.class.getResourceAsStream("/assets/lang/iso_languages.csv")), StandardCharsets.UTF_8
-        ))) {
-            for (String line; (line = input.readLine()) != null; ) {
+            // Line Format: (?<iso2>[a-z]{2}),(?<iso3>[a-z]{3})
+            for (String line : Lang.toIterable(IOUtils.readFullyAsString(LocaleUtils.class.getResourceAsStream("/assets/lang/iso_languages.csv")).lines())) {
                 String[] parts = line.split(",", 3);
                 if (parts.length != 2) {
                     LOG.warning("Invalid line in iso_languages.csv: " + line);
