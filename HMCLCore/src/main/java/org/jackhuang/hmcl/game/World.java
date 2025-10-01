@@ -275,6 +275,13 @@ public final class World {
         }
     }
 
+    public void delete() throws IOException {
+        if (isLocked()) {
+            throw new WorldLockedException("The world " + getFile() + " has been locked");
+        }
+        FileUtils.forceDelete(file);
+    }
+
     public CompoundTag readLevelDat() throws IOException {
         if (!Files.isDirectory(file))
             throw new IOException("Not a valid world directory");

@@ -53,7 +53,7 @@ public final class GameDownloadTask extends Task<Void> {
 
     @Override
     public void execute() {
-        Path jar = dependencyManager.getGameRepository().getVersionJar(version).toPath();
+        Path jar = dependencyManager.getGameRepository().getVersionJar(version);
 
         var task = new FileDownloadTask(
                 dependencyManager.getDownloadProvider().injectURLWithCandidates(version.getDownloadInfo().getUrl()),

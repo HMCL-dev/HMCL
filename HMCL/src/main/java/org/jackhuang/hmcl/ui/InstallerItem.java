@@ -22,6 +22,7 @@ import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ChangeListener;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -318,7 +319,9 @@ public class InstallerItem extends Control {
     private static final class InstallerItemSkin extends SkinBase<InstallerItem> {
         private static final PseudoClass LIST_ITEM = PseudoClass.getPseudoClass("list-item");
         private static final PseudoClass CARD = PseudoClass.getPseudoClass("card");
-        private static final WeakListenerHolder holder = new WeakListenerHolder();
+
+        @SuppressWarnings({"FieldCanBeLocal", "unused"})
+        private final ChangeListener<Number> holder;
 
         InstallerItemSkin(InstallerItem control) {
             super(control);
@@ -326,9 +329,10 @@ public class InstallerItem extends Control {
             Pane pane;
             if (control.style == Style.CARD) {
                 pane = new VBox();
-                holder.add(FXUtils.onWeakChange(pane.widthProperty(), v -> FXUtils.setLimitHeight(pane, v.doubleValue() * 0.7)));
+                holder = FXUtils.onWeakChangeAndOperate(pane.widthProperty(), v -> FXUtils.setLimitHeight(pane, v.doubleValue() * 0.7));
             } else {
                 pane = new HBox();
+                holder = null;
             }
             pane.getStyleClass().add("installer-item");
             RipplerContainer container = new RipplerContainer(pane);

@@ -40,10 +40,10 @@ import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.export.ExportWizardProvider;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
@@ -88,9 +88,9 @@ public final class Versions {
                         .whenComplete(Schedulers.javafx(), e -> {
                             if (e == null) {
                                 if (version != null) {
-                                    Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile, modpack.toFile(), version));
+                                    Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile, modpack, version));
                                 } else {
-                                    Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile, modpack.toFile()));
+                                    Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile, modpack));
                                 }
                             } else if (e instanceof CancellationException) {
                                 Controllers.showToast(i18n("message.cancelled"));
@@ -119,7 +119,7 @@ public final class Versions {
 
     public static CompletableFuture<String> renameVersion(Profile profile, String version) {
         return Controllers.prompt(i18n("version.manage.rename.message"), (newName, resolve, reject) -> {
-            if (!OperatingSystem.isNameValid(newName)) {
+            if (!FileUtils.isNameValid(newName)) {
                 reject.accept(i18n("install.new_game.malformed"));
                 return;
             }
@@ -192,14 +192,14 @@ public final class Versions {
         ensureSelectedAccount(account -> {
             GameRepository repository = profile.getRepository();
             FileChooser chooser = new FileChooser();
-            if (repository.getRunDirectory(id).isDirectory())
-                chooser.setInitialDirectory(repository.getRunDirectory(id));
+            if (Files.isDirectory(repository.getRunDirectory(id)))
+                chooser.setInitialDirectory(repository.getRunDirectory(id).toFile());
             chooser.setTitle(i18n("version.launch_script.save"));
             chooser.getExtensionFilters().add(OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
                     ? new FileChooser.ExtensionFilter(i18n("extension.bat"), "*.bat")
                     : new FileChooser.ExtensionFilter(i18n("extension.sh"), "*.sh"));
             chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.ps1"), "*.ps1"));
-            File file = chooser.showSaveDialog(Controllers.getStage());
+            Path file = FileUtils.toPath(chooser.showSaveDialog(Controllers.getStage()));
             if (file != null)
                 new LauncherHelper(profile, account, id).makeLaunchScript(file);
         });

@@ -33,7 +33,7 @@ import org.jackhuang.hmcl.ui.download.UpdateInstallerWizardProvider;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -137,12 +137,12 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
     public void installOffline() {
         FileChooser chooser = new FileChooser();
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("install.installer.install_offline.extension"), "*.jar", "*.exe"));
-        File file = chooser.showOpenDialog(Controllers.getStage());
+        Path file = FileUtils.toPath(chooser.showOpenDialog(Controllers.getStage()));
         if (file != null) doInstallOffline(file);
     }
 
-    private void doInstallOffline(File file) {
-        Task<?> task = profile.getDependency().installLibraryAsync(version, file.toPath())
+    private void doInstallOffline(Path file) {
+        Task<?> task = profile.getDependency().installLibraryAsync(version, file)
                 .thenComposeAsync(profile.getRepository()::saveAsync)
                 .thenComposeAsync(profile.getRepository().refreshVersionsAsync());
         task.setName(i18n("install.installer.install_offline"));

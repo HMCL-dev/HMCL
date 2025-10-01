@@ -54,12 +54,12 @@ import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.Holder;
+import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.util.Locale;
-import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -124,7 +124,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
     }
 
     @Override
-    public void cleanup(Map<String, Object> settings) {
+    public void cleanup(SettingsMap settings) {
         settings.remove(libraryId);
     }
 
@@ -229,27 +229,28 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             } else {
                 twoLineListItem.setSubtitle(null);
             }
+            twoLineListItem.getTags().clear();
 
             if (remoteVersion instanceof GameRemoteVersion) {
                 RemoteVersion.Type versionType = remoteVersion.getVersionType();
                 switch (versionType) {
                     case RELEASE:
-                        twoLineListItem.getTags().setAll(i18n("version.game.release"));
+                        twoLineListItem.addTag(i18n("version.game.release"));
                         imageView.setImage(VersionIconType.GRASS.getIcon());
                         break;
                     case PENDING:
                     case SNAPSHOT:
                         if (versionType == RemoteVersion.Type.SNAPSHOT
                                 && GameVersionNumber.asGameVersion(remoteVersion.getGameVersion()).isAprilFools()) {
-                            twoLineListItem.getTags().setAll(i18n("version.game.april_fools"));
+                            twoLineListItem.addTag(i18n("version.game.april_fools"));
                             imageView.setImage(VersionIconType.APRIL_FOOLS.getIcon());
                         } else {
-                            twoLineListItem.getTags().setAll(i18n("version.game.snapshot"));
+                            twoLineListItem.addTag(i18n("version.game.snapshot"));
                             imageView.setImage(VersionIconType.COMMAND.getIcon());
                         }
                         break;
                     default:
-                        twoLineListItem.getTags().setAll(i18n("version.game.old"));
+                        twoLineListItem.addTag(i18n("version.game.old"));
                         imageView.setImage(VersionIconType.CRAFT_TABLE.getIcon());
                         break;
                 }
@@ -276,7 +277,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                 if (twoLineListItem.getSubtitle() == null)
                     twoLineListItem.setSubtitle(remoteVersion.getGameVersion());
                 else
-                    twoLineListItem.getTags().setAll(remoteVersion.getGameVersion());
+                    twoLineListItem.addTag(remoteVersion.getGameVersion());
             }
         }
     }

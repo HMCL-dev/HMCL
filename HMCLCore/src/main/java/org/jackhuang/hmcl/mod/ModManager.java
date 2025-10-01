@@ -75,7 +75,7 @@ public final class ModManager {
     }
 
     public Path getModsDirectory() {
-        return repository.getRunDirectory(id).toPath().resolve("mods");
+        return repository.getRunDirectory(id).resolve("mods");
     }
 
     public LocalMod getLocalMod(String id, ModLoaderType modLoaderType) {
