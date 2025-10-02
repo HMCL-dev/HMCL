@@ -85,7 +85,7 @@ public class TaskExecutorDialogPane extends BorderPane {
             }
         });
 
-        speedEventHandler = FileDownloadTask.SPEED_EVENT.registerWeak(speedEvent -> {
+        speedEventHandler = FetchTask.SPEED_EVENT.registerWeak(speedEvent -> {
             String unit = "B/s";
             double speed = speedEvent.getSpeed();
             if (speed > 1024) {
