@@ -24,7 +24,7 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.BiConsumer;
 
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
@@ -38,7 +38,7 @@ import javafx.beans.binding.ObjectBinding;
  */
 public final class ObservableCache<K, V, E extends Exception> {
 
-    private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
+    private final ReentrantLock lock = new ReentrantLock();
     private final ExceptionalFunction<K, V, E> source;
     private final BiConsumer<K, Throwable> exceptionHandler;
     private final V fallbackValue;
@@ -56,28 +56,28 @@ public final class ObservableCache<K, V, E extends Exception> {
     }
 
     public Optional<V> getImmediately(K key) {
-        lock.readLock().lock();
+        lock.lock();
         try {
             return Optional.ofNullable(cache.get(key));
         } finally {
-            lock.readLock().unlock();
+            lock.unlock();
         }
     }
 
     public void put(K key, V value) {
-        lock.writeLock().lock();
+        lock.lock();
         try {
             cache.put(key, value);
             invalidated.remove(key);
         } finally {
-            lock.writeLock().unlock();
+            lock.unlock();
         }
         Platform.runLater(observable::invalidate);
     }
 
     private CompletableFuture<V> query(K key, Executor executor) {
         CompletableFuture<V> future;
-        lock.writeLock().lock();
+        lock.lock();
         try {
             CompletableFuture<V> prev = pendings.get(key);
             if (prev != null) {
@@ -87,7 +87,7 @@ public final class ObservableCache<K, V, E extends Exception> {
                 pendings.put(key, future);
             }
         } finally {
-            lock.writeLock().unlock();
+            lock.unlock();
         }
 
         executor.execute(() -> {
@@ -95,24 +95,24 @@ public final class ObservableCache<K, V, E extends Exception> {
             try {
                 result = source.apply(key);
             } catch (Throwable ex) {
-                lock.writeLock().lock();
+                lock.lock();
                 try {
                     pendings.remove(key);
                 } finally {
-                    lock.writeLock().unlock();
+                    lock.unlock();
                 }
                 exceptionHandler.accept(key, ex);
                 future.completeExceptionally(ex);
                 return;
             }
 
-            lock.writeLock().lock();
+            lock.lock();
             try {
                 cache.put(key, result);
                 invalidated.remove(key);
                 pendings.remove(key, future);
             } finally {
-                lock.writeLock().unlock();
+                lock.unlock();
             }
             future.complete(result);
             Platform.runLater(observable::invalidate);
@@ -123,14 +123,14 @@ public final class ObservableCache<K, V, E extends Exception> {
 
     public V get(K key) {
         V cached;
-        lock.readLock().lock();
+        lock.lock();
         try {
             cached = cache.get(key);
             if (cached != null && !invalidated.containsKey(key)) {
                 return cached;
             }
         } finally {
-            lock.readLock().unlock();
+            lock.unlock();
         }
 
         try {
@@ -164,7 +164,7 @@ public final class ObservableCache<K, V, E extends Exception> {
             V result;
             boolean refresh;
 
-            lock.readLock().lock();
+            lock.lock();
             try {
                 result = cache.get(key);
                 if (result == null) {
@@ -174,7 +174,7 @@ public final class ObservableCache<K, V, E extends Exception> {
                     refresh = invalidated.containsKey(key);
                 }
             } finally {
-                lock.readLock().unlock();
+                lock.unlock();
             }
             if (!quiet && refresh) {
                 query(key, executor);
@@ -184,13 +184,13 @@ public final class ObservableCache<K, V, E extends Exception> {
     }
 
     public void invalidate(K key) {
-        lock.writeLock().lock();
+        lock.lock();
         try {
             if (cache.containsKey(key)) {
                 invalidated.put(key, Boolean.TRUE);
             }
         } finally {
-            lock.writeLock().unlock();
+            lock.unlock();
         }
         Platform.runLater(observable::invalidate);
     }
