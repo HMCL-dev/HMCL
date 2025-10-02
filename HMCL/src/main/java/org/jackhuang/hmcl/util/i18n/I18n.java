@@ -43,6 +43,10 @@ public final class I18n {
         return locale;
     }
 
+    public static boolean isUpsideDown() {
+        return LocaleUtils.getScript(locale.getLocale()).equals("Qabs");
+    }
+
     public static boolean isUseChinese() {
         return LocaleUtils.isChinese(locale.getLocale());
     }

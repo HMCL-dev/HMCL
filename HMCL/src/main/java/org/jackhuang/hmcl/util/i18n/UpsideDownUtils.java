@@ -17,37 +17,46 @@
  */
 package org.jackhuang.hmcl.util.i18n;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+
 /// @author Glavo
 public final class UpsideDownUtils {
-    private static final Map<Integer, Integer> MAPPER = new LinkedHashMap<>();
+    private static final Map<Integer, Integer> MAPPER = loadMap();
 
-    private static void putChars(char baseChar, String upsideDownChars) {
-        for (int i = 0; i < upsideDownChars.length(); i++) {
-            MAPPER.put(baseChar + i, (int) upsideDownChars.charAt(i));
+    private static Map<Integer, Integer> loadMap() {
+        var map = new LinkedHashMap<Integer, Integer>();
+
+        InputStream inputStream = UpsideDownUtils.class.getResourceAsStream("/assets/lang/upside_down.txt");
+        if (inputStream != null) {
+            try (inputStream) {
+                new String(inputStream.readAllBytes(), StandardCharsets.UTF_8).lines().forEach(line -> {
+                    if (line.isBlank() || line.startsWith("#"))
+                        return;
+
+                    if (line.length() != 2) {
+                        LOG.warning("Invalid line: " + line);
+                        return;
+                    }
+
+                    map.put((int) line.charAt(0), (int) line.charAt(1));
+                });
+            } catch (IOException e) {
+                LOG.warning("Failed to load upside_down.txt", e);
+            }
+        } else {
+            LOG.warning("upside_down.txt not found");
         }
-    }
-
-    private static void putChars(String baseChars, String upsideDownChars) {
-        if (baseChars.length() != upsideDownChars.length()) {
-            throw new IllegalArgumentException("baseChars and upsideDownChars must have same length");
-        }
-
-        for (int i = 0; i < baseChars.length(); i++) {
-            MAPPER.put((int) baseChars.charAt(i), (int) upsideDownChars.charAt(i));
-        }
-    }
-
-    static {
-        putChars('a', "ɐqɔpǝɟbɥıظʞןɯuodbɹsʇnʌʍxʎz");
-        putChars('A', "ⱯᗺƆᗡƎℲ⅁HIſʞꞀWNOԀὉᴚS⟘∩ΛMXʎZ");
-        putChars('0', "0ƖᘔƐㄣϛ9ㄥ86");
-        putChars("_,;.?!/\\'", "‾'⸵˙¿¡/\\,");
+        return Collections.unmodifiableMap(map);
     }
 
     public static String translate(String str) {
@@ -56,7 +65,7 @@ public final class UpsideDownUtils {
         return builder.reverse().toString();
     }
 
-    private static DateTimeFormatter BASE_FORMATTER = DateTimeFormatter.ofPattern("MMM d, yyyy, h:mm:ss a")
+    private static final DateTimeFormatter BASE_FORMATTER = DateTimeFormatter.ofPattern("MMM d, yyyy, h:mm:ss a")
             .withZone(ZoneId.systemDefault());
 
     public static String formatDateTime(TemporalAccessor time) {
