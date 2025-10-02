@@ -120,3 +120,4 @@ jobs:
           target_commitish: ${{ env.HMCL_COMMIT_SHA }}
           name: ${{ env.HMCL_TAG_NAME }}
           tag_name: ${{ env.HMCL_TAG_NAME }}
+          prerelease: true
