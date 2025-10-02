@@ -170,6 +170,12 @@ public final class Launcher extends Application {
         builder.append(" in ")
                 .append(Math.round(Math.sqrt(bounds.getWidth() * bounds.getWidth() + bounds.getHeight() * bounds.getHeight()) / dpi))
                 .append('"');
+
+        builder.append(" (").append(decimalFormat.format(bounds.getMinX()))
+                .append(", ").append(decimalFormat.format(bounds.getMinY()))
+                .append(", ").append(decimalFormat.format(bounds.getMaxX()))
+                .append(", ").append(decimalFormat.format(bounds.getMaxY()))
+                .append(")");
     }
 
     private static ButtonType showAlert(AlertType alertType, String contentText, ButtonType... buttons) {
