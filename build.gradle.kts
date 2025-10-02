@@ -77,11 +77,9 @@ tasks.register<UpdateDocuments>("updateDocuments") {
 }
 
 tasks.register<CheckUpdate>("checkUpdateDev") {
-    tagPrefix.set("v")
-    uri.set("https://ci.huangyuhui.net/job/HMCL")
+    uri.set("https://ci.huangyuhui.net/job/HMCL-nightly")
 }
 
 tasks.register<CheckUpdate>("checkUpdateStable") {
-    tagPrefix.set("release-")
     uri.set("https://ci.huangyuhui.net/job/HMCL-stable")
 }

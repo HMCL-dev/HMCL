@@ -55,9 +55,6 @@ public abstract class CheckUpdate extends DefaultTask {
     @Input
     public abstract Property<String> getUri();
 
-    @Input
-    public abstract Property<String> getTagPrefix();
-
     public CheckUpdate() {
         getOutputs().upToDateWhen(task -> false);
     }
@@ -95,13 +92,13 @@ public abstract class CheckUpdate extends DefaultTask {
                             try {
                                 return fetchBuildInfo(helper, toURI(it.url, "lastSuccessfulBuild/api/json"));
                             } catch (Throwable e) {
-                                throw new GradleException("Failed to retrieve build info from " + it.url(), e);
+                                throw new GradleException("Failed to fetch build info from " + it.url(), e);
                             }
                         }).sorted(Comparator.comparing(BuildMetadata::timestamp))
                         .toList();
 
                 if (metadatas.isEmpty())
-                    throw new GradleException("Failed to retrieve build metadata from " + apiUri);
+                    throw new GradleException("Failed to fetch build metadata from " + apiUri);
 
                 buildMetadata = metadatas.get(metadatas.size() - 1);
             } else if (WORKFLOW_JOB.equals(jobType) || FREE_STYLE_PROJECT.equals(jobType)) {
@@ -130,7 +127,7 @@ public abstract class CheckUpdate extends DefaultTask {
 
             addEnv.accept("HMCL_COMMIT_SHA", buildMetadata.revision());
             addEnv.accept("HMCL_VERSION", buildMetadata.version());
-            addEnv.accept("HMCL_TAG_NAME", getTagPrefix().get() + buildMetadata.version());
+            addEnv.accept("HMCL_TAG_NAME", "v" + buildMetadata.version());
         }
     }
 
