@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.event;
 
 import org.jackhuang.hmcl.util.SimpleMultimap;
+import org.jetbrains.annotations.Contract;
 
 import java.lang.ref.WeakReference;
 import java.util.EnumMap;
@@ -25,21 +26,20 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
-/**
- *
- * @author huangyuhui
- */
+/// @author huangyuhui
 public final class EventManager<T extends Event> {
 
     private final ReentrantLock lock = new ReentrantLock();
     private final SimpleMultimap<EventPriority, Consumer<T>, CopyOnWriteArraySet<Consumer<T>>> handlers
             = new SimpleMultimap<>(() -> new EnumMap<>(EventPriority.class), CopyOnWriteArraySet::new);
 
+    @Contract("_ -> param1")
     public Consumer<T> registerWeak(Consumer<T> consumer) {
         register(new WeakListener(consumer));
         return consumer;
     }
 
+    @Contract("_, _ -> param1")
     public Consumer<T> registerWeak(Consumer<T> consumer, EventPriority priority) {
         register(new WeakListener(consumer), priority);
         return consumer;
