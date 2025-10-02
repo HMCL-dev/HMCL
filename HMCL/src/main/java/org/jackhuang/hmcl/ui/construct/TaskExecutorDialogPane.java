@@ -96,9 +96,9 @@ public class TaskExecutorDialogPane extends BorderPane {
                 speed /= 1024;
                 unit = "MiB/s";
             }
-            double finalSpeed = speed;
-            String finalUnit = unit;
-            Platform.runLater(() -> lblProgress.setText(String.format("%.1f %s", finalSpeed, finalUnit)));
+
+            String message = String.format("%.1f %s", speed, unit);
+            Platform.runLater(() -> lblProgress.setText(message));
         });
 
         onEscPressed(this, btnCancel::fire);
