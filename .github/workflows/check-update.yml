@@ -28,14 +28,12 @@ jobs:
       - name: Download artifacts
         if: ${{ env.continue == 'true' }}
         run: |
-          wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.exe"
-          wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.exe.sha256"
-          wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.jar"
-          wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.jar.sha256"
-          wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.sh"
-          wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.sh.sha256"
-        env:
-          DOWNLOAD_BASE_URL: https://ci.huangyuhui.net/job/HMCL/lastSuccessfulBuild/artifact/HMCL/build/libs
+          wget "$HMCL_CI_DOWNLOAD_BASE_URI/HMCL-$HMCL_VERSION.exe"
+          wget "$HMCL_CI_DOWNLOAD_BASE_URI/HMCL-$HMCL_VERSION.exe.sha256"
+          wget "$HMCL_CI_DOWNLOAD_BASE_URI/HMCL-$HMCL_VERSION.jar"
+          wget "$HMCL_CI_DOWNLOAD_BASE_URI/HMCL-$HMCL_VERSION.jar.sha256"
+          wget "$HMCL_CI_DOWNLOAD_BASE_URI/HMCL-$HMCL_VERSION.sh"
+          wget "$HMCL_CI_DOWNLOAD_BASE_URI/HMCL-$HMCL_VERSION.sh.sha256"
       - name: Generate release note
         if: ${{ env.continue == 'true' }}
         run: |
@@ -84,14 +82,12 @@ jobs:
       - name: Download artifacts
         if: ${{ env.continue == 'true' }}
         run: |
-          wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.exe"
-          wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.exe.sha256"
-          wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.jar"
-          wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.jar.sha256"
-          wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.sh"
-          wget "$DOWNLOAD_BASE_URL/HMCL-$HMCL_VERSION.sh.sha256"
-        env:
-          DOWNLOAD_BASE_URL: https://ci.huangyuhui.net/job/HMCL-stable/lastSuccessfulBuild/artifact/HMCL/build/libs
+          wget "$HMCL_CI_DOWNLOAD_BASE_URI/HMCL-$HMCL_VERSION.exe"
+          wget "$HMCL_CI_DOWNLOAD_BASE_URI/HMCL-$HMCL_VERSION.exe.sha256"
+          wget "$HMCL_CI_DOWNLOAD_BASE_URI/HMCL-$HMCL_VERSION.jar"
+          wget "$HMCL_CI_DOWNLOAD_BASE_URI/HMCL-$HMCL_VERSION.jar.sha256"
+          wget "$HMCL_CI_DOWNLOAD_BASE_URI/HMCL-$HMCL_VERSION.sh"
+          wget "$HMCL_CI_DOWNLOAD_BASE_URI/HMCL-$HMCL_VERSION.sh.sha256"
       - name: Generate release note
         if: ${{ env.continue == 'true' }}
         run: |

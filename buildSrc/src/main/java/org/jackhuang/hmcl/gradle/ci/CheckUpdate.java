@@ -66,10 +66,21 @@ public abstract class CheckUpdate extends DefaultTask {
         );
     }
 
+    private static String concatUri(String base, String... others) {
+        var builder = new StringBuilder(base);
+        for (String other : others) {
+            if (builder.charAt(builder.length() - 1) != '/') {
+                builder.append('/');
+            }
+            builder.append(Objects.requireNonNull(other));
+        }
+        return builder.toString();
+    }
+
     @TaskAction
     public void run() throws Exception {
         String uri = getUri().get();
-        URI apiUri = toURI(uri, "api/json");
+        URI apiUri = URI.create(concatUri(uri, "api", "json"));
         LOGGER.quiet("Fetching metadata from {}", apiUri);
 
         BuildMetadata buildMetadata;
@@ -90,7 +101,7 @@ public abstract class CheckUpdate extends DefaultTask {
                         .filter(it -> !it.color().equals("disabled"))
                         .map(it -> {
                             try {
-                                return fetchBuildInfo(helper, toURI(it.url, "lastSuccessfulBuild/api/json"));
+                                return fetchBuildInfo(helper, it.url);
                             } catch (Throwable e) {
                                 throw new GradleException("Failed to fetch build info from " + it.url(), e);
                             }
@@ -102,7 +113,7 @@ public abstract class CheckUpdate extends DefaultTask {
 
                 buildMetadata = metadatas.get(metadatas.size() - 1);
             } else if (WORKFLOW_JOB.equals(jobType) || FREE_STYLE_PROJECT.equals(jobType)) {
-                buildMetadata = fetchBuildInfo(helper, toURI(uri, "lastSuccessfulBuild/api/json"));
+                buildMetadata = fetchBuildInfo(helper, uri);
             } else {
                 throw new GradleException("Unsupported job type: " + jobType);
             }
@@ -128,13 +139,16 @@ public abstract class CheckUpdate extends DefaultTask {
             addEnv.accept("HMCL_COMMIT_SHA", buildMetadata.revision());
             addEnv.accept("HMCL_VERSION", buildMetadata.version());
             addEnv.accept("HMCL_TAG_NAME", "v" + buildMetadata.version());
+            addEnv.accept("HMCL_CI_DOWNLOAD_BASE_URI", buildMetadata.downloadBaseUri);
         }
     }
 
-    private record BuildMetadata(String version, String revision, long timestamp) {
+    private record BuildMetadata(String version, String revision, long timestamp, String downloadBaseUri) {
     }
 
-    private BuildMetadata fetchBuildInfo(Helper helper, URI uri) throws IOException, InterruptedException {
+    private BuildMetadata fetchBuildInfo(Helper helper, String jobUri) throws IOException, InterruptedException {
+        URI uri = URI.create(concatUri(jobUri, "lastSuccessfulBuild", "api", "json"));
+
         LOGGER.quiet("Fetching build info from {}", uri);
 
         BuildInfo buildInfo = Objects.requireNonNull(helper.fetch(uri, BuildInfo.class), "build info");
@@ -150,16 +164,28 @@ public abstract class CheckUpdate extends DefaultTask {
             throw new GradleException("Invalid revision: " + revision);
 
         Pattern fileNamePattern = Pattern.compile("HMCL-(?<version>\\d+(?:\\.\\d+)+)\\.jar");
-        String version = Objects.requireNonNullElse(buildInfo.artifacts(), List.<ArtifactInfo>of())
-                .stream()
-                .map(ArtifactInfo::fileName)
-                .map(fileNamePattern::matcher)
-                .filter(Matcher::matches)
-                .map(matcher -> matcher.group("version"))
+        ArtifactInfo jarArtifact = Objects.requireNonNullElse(buildInfo.artifacts(), List.<ArtifactInfo>of()).stream()
+                .filter(it -> fileNamePattern.matcher(it.fileName()).matches())
                 .findFirst()
                 .orElseThrow(() -> new GradleException("Could not find .jar artifact"));
 
-        return new BuildMetadata(version, revision, buildInfo.timestamp());
+        String fileName = jarArtifact.fileName();
+        String relativePath = jarArtifact.relativePath();
+        if (!relativePath.endsWith("/" + fileName)) {
+            throw new GradleException("Invalid artifact relative path: " + jarArtifact);
+        }
+
+        Matcher matcher = fileNamePattern.matcher(fileName);
+        if (!matcher.matches()) {
+            throw new AssertionError("Artifact: " + jarArtifact.fileName());
+        }
+
+        String version = matcher.group("version");
+
+        String downloadBaseUrl = concatUri(buildInfo.url(), "artifact",
+                relativePath.substring(0, relativePath.length() - fileName.length()));
+
+        return new BuildMetadata(version, revision, buildInfo.timestamp(), downloadBaseUrl);
     }
 
     private static final class Helper implements AutoCloseable {
@@ -190,14 +216,15 @@ public abstract class CheckUpdate extends DefaultTask {
 
     }
 
-    private record BuildInfo(long number,
+    private record BuildInfo(String url,
+                             long number,
                              long timestamp,
                              List<ArtifactInfo> artifacts,
                              List<ActionInfo> actions
     ) {
     }
 
-    record ArtifactInfo(String fileName) {
+    record ArtifactInfo(String fileName, String relativePath) {
     }
 
     record ActionInfo(String _class, BuiltRevision lastBuiltRevision) {
