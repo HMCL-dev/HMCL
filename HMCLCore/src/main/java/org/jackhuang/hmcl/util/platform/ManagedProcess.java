@@ -150,21 +150,11 @@ public final class ManagedProcess {
     }
 
     public void pumpInputStream(Consumer<String> onLogLine) {
-        lock.lock();
-        try {
-            addRelatedThread(Lang.thread(new StreamPump(process.getInputStream(), onLogLine, OperatingSystem.NATIVE_CHARSET), "ProcessInputStreamPump", true));
-        } finally {
-            lock.unlock();
-        }
+        addRelatedThread(Lang.thread(new StreamPump(process.getInputStream(), onLogLine, OperatingSystem.NATIVE_CHARSET), "ProcessInputStreamPump", true));
     }
 
     public void pumpErrorStream(Consumer<String> onLogLine) {
-        lock.lock();
-        try {
-            addRelatedThread(Lang.thread(new StreamPump(process.getErrorStream(), onLogLine, OperatingSystem.NATIVE_CHARSET), "ProcessErrorStreamPump", true));
-        } finally {
-            lock.unlock();
-        }
+        addRelatedThread(Lang.thread(new StreamPump(process.getErrorStream(), onLogLine, OperatingSystem.NATIVE_CHARSET), "ProcessErrorStreamPump", true));
     }
 
     /**
