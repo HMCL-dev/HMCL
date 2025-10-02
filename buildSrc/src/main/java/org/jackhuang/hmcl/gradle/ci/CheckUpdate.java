@@ -183,7 +183,7 @@ public abstract class CheckUpdate extends DefaultTask {
         String version = matcher.group("version");
 
         String downloadBaseUrl = concatUri(buildInfo.url(), "artifact",
-                relativePath.substring(0, relativePath.length() - fileName.length()));
+                relativePath.substring(0, relativePath.length() - fileName.length() - 1));
 
         return new BuildMetadata(version, revision, buildInfo.timestamp(), downloadBaseUrl);
     }
