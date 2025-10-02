@@ -23,6 +23,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.net.*;
+import java.net.http.HttpClient;
+import java.net.http.HttpHeaders;
+import java.net.http.HttpResponse;
 import java.nio.charset.Charset;
 import java.util.*;
 import java.util.Map.Entry;
@@ -418,4 +421,11 @@ public final class NetworkUtils {
     }
     // ====
 
+    public static @NotNull HttpResponse.ResponseInfo getResponseInfo(@NotNull HttpResponse<?> response) {
+        record ResponseInfoImpl(int statusCode, HttpHeaders headers, HttpClient.Version version)
+                implements HttpResponse.ResponseInfo {
+        }
+
+        return new ResponseInfoImpl(response.statusCode(), response.headers(), response.version());
+    }
 }

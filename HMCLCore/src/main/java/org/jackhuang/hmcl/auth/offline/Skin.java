@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
+import org.jackhuang.hmcl.util.io.UrlResponseInfo;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
@@ -244,9 +245,14 @@ public class Skin {
         }
 
         @Override
-        protected Context getContext(HttpResponse<?> response, boolean checkETag, String bmclapiHash) throws IOException {
+        protected Context getContext(@Nullable HttpResponse<?> response, boolean checkETag, String bmclapiHash) throws IOException {
             return new Context() {
                 final ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+                @Override
+                public void reset() throws IOException {
+                    baos.reset();
+                }
 
                 @Override
                 public void write(byte[] buffer, int offset, int len) {
@@ -260,7 +266,7 @@ public class Skin {
                     setResult(new ByteArrayInputStream(baos.toByteArray()));
 
                     if (checkETag) {
-                        repository.cacheBytes(response, baos.toByteArray());
+                        repository.cacheBytes(UrlResponseInfo.of(response), baos.toByteArray());
                     }
                 }
             };

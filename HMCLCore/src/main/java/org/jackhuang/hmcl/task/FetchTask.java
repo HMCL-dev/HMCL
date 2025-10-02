@@ -21,10 +21,7 @@ import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.util.*;
-import org.jackhuang.hmcl.util.io.ContentEncoding;
-import org.jackhuang.hmcl.util.io.IOUtils;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
-import org.jackhuang.hmcl.util.io.ResponseCodeException;
+import org.jackhuang.hmcl.util.io.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +35,10 @@ import java.net.http.HttpResponse;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.jackhuang.hmcl.util.Lang.threadPool;
@@ -101,14 +101,11 @@ public abstract class FetchTask<T> extends Task<T> {
     public void execute() throws Exception {
         boolean checkETag;
         switch (shouldCheckETag()) {
-            case CHECK_E_TAG:
-                checkETag = true;
-                break;
-            case NOT_CHECK_E_TAG:
-                checkETag = false;
-                break;
-            default:
+            case CHECK_E_TAG -> checkETag = true;
+            case NOT_CHECK_E_TAG -> checkETag = false;
+            default -> {
                 return;
+            }
         }
 
         ArrayList<DownloadException> exceptions = null;
@@ -145,12 +142,64 @@ public abstract class FetchTask<T> extends Task<T> {
         }
     }
 
+    private static final class HttpResumeContext {
+        static @Nullable FetchTask.HttpResumeContext of(HttpResponse<?> response) throws IOException {
+            boolean acceptRanges = response.headers().firstValue("accept-ranges").orElse("").equals("bytes");
+            if (!acceptRanges)
+                return null;
+
+            var contentEncoding = ContentEncoding.fromHeaders(response.headers());
+            if (contentEncoding != ContentEncoding.IDENTITY)
+                return null;
+
+            long contentLength = response.headers().firstValueAsLong("content-length").orElse(1L);
+            if (contentLength < 0)
+                return null;
+
+            String lastModified = response.headers().firstValue("last-modified").orElse("");
+            if (lastModified.isBlank())
+                return null;
+
+            return new HttpResumeContext(response.uri(), contentLength, lastModified);
+        }
+
+        private final URI uri;
+        private final long contentLength;
+        private final String lastModified;
+
+        long countUncompressed;
+
+        private HttpResumeContext(URI uri, long contentLength, String lastModified) {
+            this.uri = uri;
+            this.contentLength = contentLength;
+            this.lastModified = lastModified;
+        }
+
+        boolean canResume(HttpResponse<?> response) throws IOException {
+            var contentEncoding = ContentEncoding.fromHeaders(response.headers());
+            if (contentEncoding != ContentEncoding.IDENTITY)
+                return false;
+
+            long contentLength = response.headers().firstValueAsLong("content-length").orElse(1L);
+            if (this.contentLength != contentLength + this.countUncompressed)
+                return false;
+
+            String lastModified = response.headers().firstValue("last-modified").orElse("");
+            if (!this.lastModified.equals(lastModified))
+                return false;
+
+            // TODO: 更仔细的验证完成
+            if (!response.headers().firstValue("content-range").orElse("").startsWith("bytes "))
+                return false;
+            return true;
+        }
+    }
+
     private void download(Context context,
-                          InputStream inputStream,
+                          @Nullable FetchTask.HttpResumeContext resume, InputStream inputStream,
                           long contentLength,
                           ContentEncoding contentEncoding) throws IOException, InterruptedException {
-        try (var ignored = context;
-             var counter = new CounterInputStream(inputStream);
+        try (var counter = new CounterInputStream(inputStream);
              var input = contentEncoding.wrap(counter)) {
             long lastDownloaded = 0L;
             byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
@@ -160,7 +209,15 @@ public abstract class FetchTask<T> extends Task<T> {
                 int len = input.read(buffer);
                 if (len == -1) break;
 
-                context.write(buffer, 0, len);
+                try {
+                    context.write(buffer, 0, len);
+                } catch (Throwable e) {
+                    context.broken = true;
+                    throw e;
+                }
+
+                if (resume != null)
+                    resume.countUncompressed += len;
 
                 if (contentLength >= 0) {
                     // Update progress information per second
@@ -179,7 +236,7 @@ public abstract class FetchTask<T> extends Task<T> {
             if (contentLength >= 0 && counter.downloaded != contentLength)
                 throw new IOException("Unexpected file size: " + counter.downloaded + ", expected: " + contentLength);
 
-            context.withResult(true);
+            context.markSuccess();
         }
     }
 
@@ -195,110 +252,167 @@ public abstract class FetchTask<T> extends Task<T> {
             }
         }
 
+        Context context = null;
+        HttpResumeContext resumeContext = null;
+
         ArrayList<IOException> exceptions = null;
 
-        for (int retryTime = 0; retryTime < retry; retryTime++) {
-            if (isCancelled()) {
-                throw new InterruptedException();
-            }
-
-            List<URI> redirects = null;
-            try {
-                beforeDownload(uri);
-                updateProgress(0);
-
-                HttpResponse<InputStream> response;
-                String bmclapiHash;
-
-                URI currentURI = uri;
-
-                LinkedHashMap<String, String> headers = new LinkedHashMap<>();
-                headers.put("accept-encoding", "gzip");
-                if (checkETag)
-                    headers.putAll(repository.injectConnection(uri));
-
-                do {
-                    HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(currentURI);
-                    requestBuilder.timeout(Duration.ofMillis(NetworkUtils.TIME_OUT));
-                    headers.forEach(requestBuilder::header);
-                    response = HTTP_CLIENT.send(requestBuilder.build(), BODY_HANDLER);
-
-                    bmclapiHash = response.headers().firstValue("x-bmclapi-hash").orElse(null);
-                    if (DigestUtils.isSha1Digest(bmclapiHash)) {
-                        Optional<Path> cache = repository.checkExistentFile(null, "SHA-1", bmclapiHash);
-                        if (cache.isPresent()) {
-                            useCachedResult(cache.get());
-                            LOG.info("Using cached file for " + NetworkUtils.dropQuery(uri));
-                            return;
-                        }
-                    }
-
-                    int code = response.statusCode();
-                    if (code >= 300 && code <= 308 && code != 306 && code != 304) {
-                        if (redirects == null) {
-                            redirects = new ArrayList<>();
-                        } else if (redirects.size() >= 20) {
-                            throw new IOException("Too much redirects");
-                        }
-
-                        String location = response.headers().firstValue("Location").orElse(null);
-                        if (StringUtils.isBlank(location))
-                            throw new IOException("Redirected to an empty location");
-
-                        URI target = currentURI.resolve(NetworkUtils.encodeLocation(location));
-                        redirects.add(target);
-
-                        if (!NetworkUtils.isHttpUri(target))
-                            throw new IOException("Redirected to not http URI: " + target);
-
-                        currentURI = target;
-                    } else {
-                        break;
-                    }
-                } while (true);
-
-                int responseCode = response.statusCode();
-                if (responseCode == HttpURLConnection.HTTP_NOT_MODIFIED) {
-                    // Handle cache
-                    try {
-                        Path cache = repository.getCachedRemoteFile(currentURI, false);
-                        useCachedResult(cache);
-                        LOG.info("Using cached file for " + NetworkUtils.dropQuery(uri));
-                        return;
-                    } catch (CacheRepository.CacheExpiredException e) {
-                        LOG.info("Cache expired for " + NetworkUtils.dropQuery(uri));
-                    } catch (IOException e) {
-                        LOG.warning("Unable to use cached file, redownload " + NetworkUtils.dropQuery(uri), e);
-                        repository.removeRemoteEntry(currentURI);
-                        // Now we must reconnect the server since 304 may result in empty content,
-                        // if we want to redownload the file, we must reconnect the server without etag settings.
-                        retryTime--;
-                        continue;
-                    }
-                } else if (responseCode / 100 == 4) {
-                    throw new FileNotFoundException(uri.toString());
-                } else if (responseCode / 100 != 2) {
-                    throw new ResponseCodeException(uri, responseCode);
+        try {
+            for (int retryTime = 0; retryTime < retry; retryTime++) {
+                if (isCancelled()) {
+                    throw new InterruptedException();
                 }
 
-                long contentLength = response.headers().firstValueAsLong("content-length").orElse(-1L);
-                var contentEncoding = ContentEncoding.fromResponse(response);
+                List<URI> redirects = null;
+                try {
+                    beforeDownload(uri);
+                    updateProgress(0);
 
-                download(getContext(response, checkETag, bmclapiHash),
-                        response.body(),
-                        contentLength,
-                        contentEncoding);
-                return;
-            } catch (FileNotFoundException ex) {
-                LOG.warning("Failed to download " + uri + ", not found" + (redirects == null ? "" : ", redirects: " + redirects), ex);
-                throw toDownloadException(uri, ex, exceptions); // we will not try this URL again
-            } catch (IOException ex) {
-                if (exceptions == null)
-                    exceptions = new ArrayList<>();
+                    HttpResponse<InputStream> response;
+                    String bmclapiHash;
 
-                exceptions.add(ex);
+                    URI currentURI = uri;
 
-                LOG.warning("Failed to download " + uri + ", repeat times: " + retryTime + (redirects == null ? "" : ", redirects: " + redirects), ex);
+                    LinkedHashMap<String, String> headers = new LinkedHashMap<>();
+                    headers.put("accept-encoding", "gzip");
+                    if (checkETag)
+                        headers.putAll(repository.injectConnection(uri));
+
+                    if (resumeContext != null)
+                        headers.put("range", "bytes=" + resumeContext.countUncompressed + "-");
+
+                    while (true) {
+                        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(currentURI);
+                        requestBuilder.timeout(Duration.ofMillis(NetworkUtils.TIME_OUT));
+                        headers.forEach(requestBuilder::header);
+                        response = HTTP_CLIENT.send(requestBuilder.build(), BODY_HANDLER);
+
+                        bmclapiHash = response.headers().firstValue("x-bmclapi-hash").orElse(null);
+                        if (DigestUtils.isSha1Digest(bmclapiHash)) {
+                            Optional<Path> cache = repository.checkExistentFile(null, "SHA-1", bmclapiHash);
+                            if (cache.isPresent()) {
+                                useCachedResult(cache.get());
+                                LOG.info("Using cached file for " + NetworkUtils.dropQuery(uri));
+                                return;
+                            }
+                        }
+
+                        int code = response.statusCode();
+                        if (code >= 300 && code <= 308 && code != 306 && code != 304) {
+                            if (redirects == null) {
+                                redirects = new ArrayList<>();
+                            } else if (redirects.size() >= 20) {
+                                throw new IOException("Too much redirects");
+                            }
+
+                            String location = response.headers().firstValue("Location").orElse(null);
+                            if (StringUtils.isBlank(location))
+                                throw new IOException("Redirected to an empty location");
+
+                            URI target = currentURI.resolve(NetworkUtils.encodeLocation(location));
+                            redirects.add(target);
+
+                            if (!NetworkUtils.isHttpUri(target))
+                                throw new IOException("Redirected to not http URI: " + target);
+
+                            currentURI = target;
+                        } else {
+                            break;
+                        }
+                    }
+
+                    int responseCode = response.statusCode();
+                    if (responseCode == HttpURLConnection.HTTP_NOT_MODIFIED) {
+                        // Handle cache
+                        try {
+                            Path cache = repository.getCachedRemoteFile(currentURI, false);
+                            useCachedResult(cache);
+                            LOG.info("Using cached file for " + NetworkUtils.dropQuery(uri));
+                            return;
+                        } catch (CacheRepository.CacheExpiredException e) {
+                            LOG.info("Cache expired for " + NetworkUtils.dropQuery(uri));
+                        } catch (IOException e) {
+                            LOG.warning("Unable to use cached file, redownload " + NetworkUtils.dropQuery(uri), e);
+                            repository.removeRemoteEntry(currentURI);
+                            // Now we must reconnect the server since 304 may result in empty content,
+                            // if we want to redownload the file, we must reconnect the server without etag settings.
+                            retryTime--;
+                            continue;
+                        }
+                    } else if (responseCode / 100 == 4) {
+                        throw new FileNotFoundException(uri.toString());
+                    } else if (responseCode / 100 != 2) {
+                        throw new ResponseCodeException(uri, responseCode);
+                    }
+
+                    long contentLength = response.headers().firstValueAsLong("content-length").orElse(-1L);
+                    var contentEncoding = ContentEncoding.fromHeaders(response.headers());
+
+                    if (context == null) {
+                        context = getContext(response, checkETag, bmclapiHash);
+                        resumeContext = HttpResumeContext.of(response);
+                    } else if (resumeContext != null) {
+                        if (resumeContext.canResume(response)) {
+                            // Resume download
+                            LOG.warning("Resuming " + resumeContext.uri);
+                        } else {
+                            // Failed to resume download, so we will retry from the beginning
+                            retryTime--;
+                            resumeContext = null;
+
+                            try {
+                                context.reset();
+                            } catch (Throwable e) {
+                                IOUtils.closeQuietly(context, e);
+                                LOG.warning("Failed to reset context for " + uri, e);
+
+                                context = null;
+                            }
+                            continue;
+                        }
+                    } else {
+                        try {
+                            context.reset();
+                        } catch (IOException e) {
+                            IOUtils.closeQuietly(context, e);
+                            LOG.warning("Failed to reset context for " + uri, e);
+
+                            context = getContext(response, checkETag, bmclapiHash);
+                        }
+                    }
+
+                    try {
+                        download(context,
+                                resumeContext, response.body(),
+                                contentLength,
+                                contentEncoding);
+                    } catch (Throwable e) {
+                        if (context.broken) {
+                            IOUtils.closeQuietly(context, e);
+                            context = null;
+                            resumeContext = null;
+                        }
+                    }
+                    return;
+                } catch (FileNotFoundException ex) {
+                    LOG.warning("Failed to download " + uri + ", not found" + (redirects == null ? "" : ", redirects: " + redirects), ex);
+                    throw toDownloadException(uri, ex, exceptions); // we will not try this URL again
+                } catch (IOException ex) {
+                    if (exceptions == null)
+                        exceptions = new ArrayList<>();
+
+                    exceptions.add(ex);
+
+                    LOG.warning("Failed to download " + uri + ", repeat times: " + retryTime + (redirects == null ? "" : ", redirects: " + redirects), ex);
+                }
+            }
+        } finally {
+            if (context != null) {
+                try {
+                    context.close();
+                } catch (IOException e) {
+                    LOG.warning("Failed to close context for " + NetworkUtils.dropQuery(uri), e);
+                }
             }
         }
 
@@ -317,10 +431,12 @@ public abstract class FetchTask<T> extends Task<T> {
                 updateProgress(0);
 
                 URLConnection conn = NetworkUtils.createConnection(uri);
-                download(getContext(),
-                        conn.getInputStream(),
-                        conn.getContentLengthLong(),
-                        ContentEncoding.fromConnection(conn));
+                try (Context context = getContext()) {
+                    download(context,
+                            null, conn.getInputStream(),
+                            conn.getContentLengthLong(),
+                            ContentEncoding.fromConnection(conn));
+                }
                 return;
             } catch (FileNotFoundException ex) {
                 LOG.warning("Failed to download " + uri + ", not found", ex);
@@ -421,16 +537,22 @@ public abstract class FetchTask<T> extends Task<T> {
 
     protected static abstract class Context implements Closeable {
         private boolean success;
+        private boolean broken;
+
+        protected final boolean isSuccess() {
+            return success;
+        }
+
+        private void markSuccess() {
+            success = true;
+        }
+
+        public abstract void reset() throws IOException;
 
         public abstract void write(byte[] buffer, int offset, int len) throws IOException;
 
-        public final void withResult(boolean success) {
-            this.success = success;
-        }
-
-        protected boolean isSuccess() {
-            return success;
-        }
+        @Override
+        public abstract void close() throws IOException;
     }
 
     protected enum EnumCheckETag {
