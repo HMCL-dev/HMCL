@@ -450,6 +450,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             setHeading(titleContainer);
 
             Label description = FXUtils.newSafeTruncatedLabel(modInfo.getModInfo().getDescription().toString());
+            description.setWrapText(true);
             FXUtils.copyOnDoubleClick(description);
             setBody(description);
 
