@@ -45,16 +45,6 @@ import static org.jackhuang.hmcl.util.Lang.threadPool;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public abstract class FetchTask<T> extends Task<T> {
-    private static final HttpClient HTTP_CLIENT;
-
-    static {
-        boolean useHttp2 = !"false".equalsIgnoreCase(System.getProperty("hmcl.http2"));
-
-        HTTP_CLIENT = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofMillis(NetworkUtils.TIME_OUT))
-                .version(useHttp2 ? HttpClient.Version.HTTP_2 : HttpClient.Version.HTTP_1_1)
-                .build();
-    }
 
     protected static final int DEFAULT_RETRY = 3;
 
@@ -221,7 +211,7 @@ public abstract class FetchTask<T> extends Task<T> {
                     HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(currentURI);
                     requestBuilder.timeout(Duration.ofMillis(NetworkUtils.TIME_OUT));
                     headers.forEach(requestBuilder::header);
-                    response = HTTP_CLIENT.send(requestBuilder.build(), BODY_HANDLER);
+                    response = Holder.HTTP_CLIENT.send(requestBuilder.build(), BODY_HANDLER);
 
                     bmclapiHash = response.headers().firstValue("x-bmclapi-hash").orElse(null);
                     if (DigestUtils.isSha1Digest(bmclapiHash)) {
@@ -508,5 +498,22 @@ public abstract class FetchTask<T> extends Task<T> {
 
     public static int getDownloadExecutorConcurrency() {
         return downloadExecutorConcurrency;
+    }
+
+    /// Ensure that [#HTTP_CLIENT] is initialized after ProxyManager has been initialized.
+    private static final class Holder {
+        private static final HttpClient HTTP_CLIENT;
+
+        static {
+            boolean useHttp2 = !"false".equalsIgnoreCase(System.getProperty("hmcl.http2"));
+
+            HTTP_CLIENT = HttpClient.newBuilder()
+                    .connectTimeout(Duration.ofMillis(NetworkUtils.TIME_OUT))
+                    .version(useHttp2 ? HttpClient.Version.HTTP_2 : HttpClient.Version.HTTP_1_1)
+                    .build();
+        }
+
+        private Holder() {
+        }
     }
 }
