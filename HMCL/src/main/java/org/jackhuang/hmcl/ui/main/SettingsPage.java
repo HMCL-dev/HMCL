@@ -116,7 +116,7 @@ public final class SettingsPage extends SettingsView {
         updateChannel.set(UpdateChannel.getChannel());
 
         InvalidationListener checkUpdateListener = e -> {
-            UpdateChecker.requestCheckUpdate(updateChannel.get(), config().isAcceptPreviewUpdate());
+            UpdateChecker.requestCheckUpdate(updateChannel.get(), previewPane.isSelected());
         };
         updateChannel.addListener(checkUpdateListener);
         previewPane.selectedProperty().addListener(checkUpdateListener);
