@@ -430,9 +430,6 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             if (modInfo.getMod() != null) {
                 title.addTag(modInfo.getMod().getDisplayName());
             }
-            if (StringUtils.isNotBlank(modInfo.getModInfo().getAuthors())) {
-                title.addTag(i18n("archive.author") + ": " + modInfo.getModInfo().getAuthors());
-            }
 
             List<String> subtitleParts = new ArrayList<>();
             subtitleParts.add(FileUtils.getName(modInfo.getModInfo().getFile()));
