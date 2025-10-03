@@ -39,4 +39,8 @@ public enum UpdateChannel {
             return STABLE;
         }
     }
+
+    public String getChannelName(boolean preview) {
+        return preview ? this.channelName + "-preview" : this.channelName;
+    }
 }

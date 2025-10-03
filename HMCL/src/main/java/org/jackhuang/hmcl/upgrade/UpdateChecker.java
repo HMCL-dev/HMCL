@@ -90,9 +90,7 @@ public final class UpdateChecker {
 
         var query = new LinkedHashMap<String, String>();
         query.put("version", Metadata.VERSION);
-        query.put("channel", channel.channelName);
-        if (preview)
-            query.put("preview", "true");
+        query.put("channel", channel.getChannelName(preview));
 
         String url = NetworkUtils.withQuery(Metadata.HMCL_UPDATE_URL, query);
         return RemoteVersion.fetch(channel, url);
