@@ -24,8 +24,19 @@ import java.util.Locale;
 public enum DocumentLocale {
     ENGLISH(Locale.ENGLISH, "") {
         @Override
+        public String getSubLanguageDisplayName() {
+            return "Standard";
+        }
+
+        @Override
         public List<DocumentLocale> getCandidates() {
             return List.of(ENGLISH);
+        }
+    },
+    ENGLISH_UPSIDE_DOWN(Locale.forLanguageTag("en-Qabs"), "en-Qabs") {
+        @Override
+        public String getSubLanguageDisplayName() {
+            return "uʍoᗡ ǝpᴉsd∩";
         }
     },
     SIMPLIFIED_CHINESE(Locale.forLanguageTag("zh-Hans"), "zh"),
