@@ -181,6 +181,9 @@ public final class Config implements Observable {
     @SerializedName("promptedVersion")
     private StringProperty promptedVersion = new SimpleStringProperty();
 
+    @SerializedName("acceptPreviewUpdate")
+    private BooleanProperty acceptPreviewUpdate = new SimpleBooleanProperty(false);
+
     @SerializedName("_version")
     private IntegerProperty configVersion = new SimpleIntegerProperty(0);
 
@@ -669,6 +672,18 @@ public final class Config implements Observable {
 
     public void setPromptedVersion(String promptedVersion) {
         this.promptedVersion.set(promptedVersion);
+    }
+
+    public boolean isAcceptPreviewUpdate() {
+        return acceptPreviewUpdate.get();
+    }
+
+    public BooleanProperty acceptPreviewUpdateProperty() {
+        return acceptPreviewUpdate;
+    }
+
+    public void setAcceptPreviewUpdate(boolean acceptPreviewUpdate) {
+        this.acceptPreviewUpdate.set(acceptPreviewUpdate);
     }
 
     public ObservableMap<String, Object> getShownTips() {
