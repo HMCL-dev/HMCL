@@ -10,7 +10,7 @@
 <!-- #END COPY -->
 
 <!-- #BEGIN LANGUAGE_SWITCHER -->
-[English](README.md) | 中文 ([简体](README_zh.md), [繁體](README_zh_Hant.md), [文言](README_lzh.md)) | [日本語](README_ja.md) | [español](README_es.md) | **русский** | [українська](README_uk.md)
+English ([Standard](README.md), [uʍoᗡ ǝpᴉsd∩](README_en_Qabs.md)) | 中文 ([简体](README_zh.md), [繁體](README_zh_Hant.md), [文言](README_lzh.md)) | [日本語](README_ja.md) | [español](README_es.md) | **русский** | [українська](README_uk.md)
 <!-- #END LANGUAGE_SWITCHER -->
 
 ## Введение
