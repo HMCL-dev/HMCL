@@ -27,6 +27,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.SkinBase;
 import javafx.scene.image.Image;
@@ -449,10 +450,14 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             titleContainer.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), title);
             setHeading(titleContainer);
 
-            Label description = FXUtils.newSafeTruncatedLabel(modInfo.getModInfo().getDescription().toString());
+            ScrollPane descriptionPane = new ScrollPane();
+            FXUtils.smoothScrolling(descriptionPane);
+            descriptionPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+            descriptionPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+            Label description = new Label(modInfo.getModInfo().getDescription().toString());
             description.setWrapText(true);
             FXUtils.copyOnDoubleClick(description);
-            setBody(description);
+            setBody(descriptionPane);
 
             if (StringUtils.isNotBlank(modInfo.getModInfo().getId())) {
                 for (Pair<String, ? extends RemoteModRepository> item : Arrays.asList(
