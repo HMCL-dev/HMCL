@@ -39,5 +39,4 @@ public enum UpdateChannel {
             return STABLE;
         }
     }
-
 }
