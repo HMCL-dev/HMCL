@@ -1,6 +1,6 @@
 # ɹǝɥɔunɐ˥ ¡ʇɟɐɹɔǝuᴉW ollǝH
 
-**ɥsᴉlƃuƎ** (**uʍoᗡ ǝpᴉsd∩** '[pɹɐpuɐʇS](README_en_Qabs.md))
+**ɥsᴉlƃuƎ** (**uʍoᗡ ǝpᴉsd∩** '[pɹɐpuɐʇS](README.md))
 
 ## uoᴉʇɔnpoɹʇuI
 
