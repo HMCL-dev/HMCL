@@ -251,7 +251,7 @@ public final class Config implements Observable {
     }
 
     @SerializedName("acceptPreviewUpdate")
-    private final BooleanProperty acceptPreviewUpdate = new SimpleBooleanProperty(true);
+    private final BooleanProperty acceptPreviewUpdate = new SimpleBooleanProperty(false);
 
     public BooleanProperty acceptPreviewUpdateProperty() {
         return acceptPreviewUpdate;

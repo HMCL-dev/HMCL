@@ -93,7 +93,7 @@ public final class UpdateChecker {
         query.put("channel", preview ? channel.channelName + "-preview" : channel.channelName);
 
         String url = NetworkUtils.withQuery(Metadata.HMCL_UPDATE_URL, query);
-        return RemoteVersion.fetch(channel, url);
+        return RemoteVersion.fetch(channel, preview, url);
     }
 
     private static boolean isDevelopmentVersion(String version) {

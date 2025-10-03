@@ -29,14 +29,13 @@ import java.util.Optional;
 
 public final class RemoteVersion {
 
-    public static RemoteVersion fetch(UpdateChannel channel, String url) throws IOException {
+    public static RemoteVersion fetch(UpdateChannel channel, boolean preview, String url) throws IOException {
         try {
             JsonObject response = JsonUtils.fromNonNullJson(NetworkUtils.doGet(url), JsonObject.class);
             String version = Optional.ofNullable(response.get("version")).map(JsonElement::getAsString).orElseThrow(() -> new IOException("version is missing"));
             String jarUrl = Optional.ofNullable(response.get("jar")).map(JsonElement::getAsString).orElse(null);
             String jarHash = Optional.ofNullable(response.get("jarsha1")).map(JsonElement::getAsString).orElse(null);
             boolean force = Optional.ofNullable(response.get("force")).map(JsonElement::getAsBoolean).orElse(false);
-            boolean preview = Optional.ofNullable(response.get("preview")).map(JsonElement::getAsBoolean).orElse(false);
             if (jarUrl != null && jarHash != null) {
                 return new RemoteVersion(channel, version, jarUrl, Type.JAR, new IntegrityCheck("SHA-1", jarHash), preview, force);
             } else {
