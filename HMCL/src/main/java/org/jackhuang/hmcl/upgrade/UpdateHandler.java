@@ -213,8 +213,6 @@ public final class UpdateHandler {
         return path;
     }
 
-    // ==== Preview ===
-
     // ==== support for old versions ===
     private static void performMigration() throws IOException {
         LOG.info("Migrating from old versions");
