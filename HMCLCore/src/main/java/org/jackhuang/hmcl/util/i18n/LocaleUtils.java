@@ -66,6 +66,7 @@ public final class LocaleUtils {
                 String[] languages = line.split(",");
                 if (languages.length < 2) {
                     LOG.warning("Invalid line in sublanguages.csv: " + line);
+                    continue;
                 }
 
                 String parent = languages[0];
@@ -73,12 +74,21 @@ public final class LocaleUtils {
                     subLanguageToParent.put(languages[i], parent);
                 }
             }
+        } catch (Throwable e) {
+            LOG.warning("Failed to load sublanguages.csv", e);
+        }
 
+        try {
             // Line Format: (?<iso2>[a-z]{2}),(?<iso3>[a-z]{3})
             for (String line : Lang.toIterable(IOUtils.readFullyAsString(LocaleUtils.class.getResourceAsStream("/assets/lang/iso_languages.csv")).lines())) {
+                if (line.startsWith("#") || line.isBlank()) {
+                    continue;
+                }
+
                 String[] parts = line.split(",", 3);
                 if (parts.length != 2) {
                     LOG.warning("Invalid line in iso_languages.csv: " + line);
+                    continue;
                 }
 
                 iso3To2.put(parts[1], parts[0]);
