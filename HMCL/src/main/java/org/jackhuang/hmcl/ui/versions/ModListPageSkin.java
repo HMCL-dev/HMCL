@@ -450,13 +450,16 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             titleContainer.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), title);
             setHeading(titleContainer);
 
-            ScrollPane descriptionPane = new ScrollPane();
-            FXUtils.smoothScrolling(descriptionPane);
-            descriptionPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-            descriptionPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             Label description = new Label(modInfo.getModInfo().getDescription().toString());
             description.setWrapText(true);
             FXUtils.copyOnDoubleClick(description);
+
+            ScrollPane descriptionPane = new ScrollPane(description);
+            FXUtils.smoothScrolling(descriptionPane);
+            descriptionPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+            descriptionPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+            descriptionPane.setFitToWidth(true);
+
             setBody(descriptionPane);
 
             if (StringUtils.isNotBlank(modInfo.getModInfo().getId())) {
