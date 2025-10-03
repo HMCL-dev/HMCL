@@ -250,6 +250,21 @@ public final class Config implements Observable {
         this.promptedVersion.set(promptedVersion);
     }
 
+    @SerializedName("acceptPreviewUpdate")
+    private final BooleanProperty acceptPreviewUpdate = new SimpleBooleanProperty(false);
+
+    public BooleanProperty acceptPreviewUpdateProperty() {
+        return acceptPreviewUpdate;
+    }
+
+    public boolean isAcceptPreviewUpdate() {
+        return acceptPreviewUpdate.get();
+    }
+
+    public void setAcceptPreviewUpdate(boolean acceptPreviewUpdate) {
+        this.acceptPreviewUpdate.set(acceptPreviewUpdate);
+    }
+
     @SerializedName("shownTips")
     private final ObservableMap<String, Object> shownTips = FXCollections.observableHashMap();
 

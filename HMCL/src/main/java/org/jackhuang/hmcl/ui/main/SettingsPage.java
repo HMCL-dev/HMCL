@@ -114,9 +114,12 @@ public final class SettingsPage extends SettingsView {
         chkUpdateStable.setUserData(UpdateChannel.STABLE);
         ObjectProperty<UpdateChannel> updateChannel = selectedItemPropertyFor(updateChannelGroup, UpdateChannel.class);
         updateChannel.set(UpdateChannel.getChannel());
-        updateChannel.addListener((a, b, newValue) -> {
-            UpdateChecker.requestCheckUpdate(newValue);
-        });
+
+        InvalidationListener checkUpdateListener = e -> {
+            UpdateChecker.requestCheckUpdate(updateChannel.get(), previewPane.isSelected());
+        };
+        updateChannel.addListener(checkUpdateListener);
+        previewPane.selectedProperty().addListener(checkUpdateListener);
         // ====
     }
 
