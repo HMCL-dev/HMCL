@@ -12,7 +12,7 @@
 
 ˙ǝɹoɯ puɐ 'uoᴉʇɐzᴉɯoʇsnƆ I∩ 'ƃuᴉʇɐǝɹƆ ʞɔɐdpoW '(ǝuᴉℲᴉʇdO puɐ 'ɹǝpɐo˥ǝʇᴉ˥ 'ʇlᴉnQ 'ɔᴉɹqɐℲ 'ǝƃɹoℲoǝN 'ǝƃɹoℲ) ƃuᴉllɐʇsuI ɹǝpɐo˥poW 'ƃuᴉzᴉɯoʇsnƆ ǝɯɐפ 'ʇuǝɯǝƃɐuɐW poW sʇɹoddns ʇɐɥʇ ɹǝɥɔunɐl ʇɟɐɹɔǝuᴉW ɯɹoɟʇɐld-ssoɹɔ 'ǝɔɹnos-uǝdo uɐ sᴉ ˥ƆWH
 
-## pɐoluʍop
+## pɐoluʍoᗡ
 
 ˙ǝʌoqɐ pǝʇsᴉl sǝʇᴉsqǝʍ lɐᴉɔᴉɟɟo ǝɥʇ ɯoɹɟ sǝsɐǝlǝɹ pɐoluʍop oʇ ʎluo pǝpuǝɯɯoɔǝɹ sᴉ ʇᴉ 'ʎɹɐssǝɔǝu ʇou ɥƃnoɥʇl∀
 
