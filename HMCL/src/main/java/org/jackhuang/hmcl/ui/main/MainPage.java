@@ -69,8 +69,10 @@ import org.jackhuang.hmcl.upgrade.RemoteVersion;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.Holder;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
@@ -79,7 +81,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
-import java.util.stream.IntStream;
 
 import static org.jackhuang.hmcl.download.RemoteVersion.Type.RELEASE;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
@@ -115,6 +116,10 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
         ImageView titleIcon = new ImageView(FXUtils.newBuiltinImage("/assets/img/icon-title.png"));
         Label titleLabel = new Label(Metadata.FULL_TITLE);
+        if (I18n.isUpsideDown()) {
+            titleIcon.setRotate(180);
+            titleLabel.setRotate(180);
+        }
         titleLabel.getStyleClass().add("jfx-decorator-title");
         titleNode.getChildren().setAll(titleIcon, titleLabel);
 
@@ -208,18 +213,11 @@ public final class MainPage extends StackPane implements DecoratorPage {
         launchPane.getStyleClass().add("launch-pane");
         launchPane.setMaxWidth(230);
         launchPane.setMaxHeight(55);
-        launchPane.setOnScroll(event -> {
-            int index = IntStream.range(0, versions.size())
-                    .filter(i -> versions.get(i).getId().equals(getCurrentGame()))
-                    .findFirst().orElse(-1);
-            if (index < 0) return;
-            if (event.getDeltaY() > 0) {
-                index--;
-            } else {
-                index++;
-            }
-            profile.setSelectedVersion(versions.get((index + versions.size()) % versions.size()).getId());
-        });
+        FXUtils.onScroll(launchPane, versions, list -> {
+            String currentId = getCurrentGame();
+            return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
+        }, it -> profile.setSelectedVersion(it.getId()));
+
         StackPane.setAlignment(launchPane, Pos.BOTTOM_RIGHT);
         {
             JFXButton launchButton = new JFXButton();
@@ -433,6 +431,10 @@ public final class MainPage extends StackPane implements DecoratorPage {
         return state;
     }
 
+    public Profile getProfile() {
+        return profile;
+    }
+
     public String getCurrentGame() {
         return currentGame.get();
     }
@@ -443,6 +445,10 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
     public void setCurrentGame(String currentGame) {
         this.currentGame.set(currentGame);
+    }
+
+    public ObservableList<Version> getVersions() {
+        return versions;
     }
 
     public boolean isShowUpdate() {

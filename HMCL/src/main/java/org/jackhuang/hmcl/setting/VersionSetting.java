@@ -380,6 +380,20 @@ public final class VersionSetting implements Cloneable, Observable {
         noJVMArgsProperty.set(noJVMArgs);
     }
 
+    private final BooleanProperty noOptimizingJVMArgsProperty = new SimpleBooleanProperty(this, "noOptimizingJVMArgs", false);
+
+    public BooleanProperty noOptimizingJVMArgsProperty() {
+        return noOptimizingJVMArgsProperty;
+    }
+
+    public boolean isNoOptimizingJVMArgs() {
+        return noOptimizingJVMArgsProperty.get();
+    }
+
+    public void setNoOptimizingJVMArgs(boolean noOptimizingJVMArgs) {
+        noOptimizingJVMArgsProperty.set(noOptimizingJVMArgs);
+    }
+
     private final BooleanProperty notCheckJVMProperty = new SimpleBooleanProperty(this, "notCheckJVM", false);
 
     public BooleanProperty notCheckJVMProperty() {
@@ -757,6 +771,7 @@ public final class VersionSetting implements Cloneable, Observable {
             obj.addProperty("wrapper", src.getWrapper());
             obj.addProperty("fullscreen", src.isFullscreen());
             obj.addProperty("noJVMArgs", src.isNoJVMArgs());
+            obj.addProperty("noOptimizingJVMArgs", src.isNoOptimizingJVMArgs());
             obj.addProperty("notCheckGame", src.isNotCheckGame());
             obj.addProperty("notCheckJVM", src.isNotCheckJVM());
             obj.addProperty("notPatchNatives", src.isNotPatchNatives());
@@ -827,6 +842,7 @@ public final class VersionSetting implements Cloneable, Observable {
             vs.setNativesDir(Optional.ofNullable(obj.get("nativesDir")).map(JsonElement::getAsString).orElse(""));
             vs.setFullscreen(Optional.ofNullable(obj.get("fullscreen")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setNoJVMArgs(Optional.ofNullable(obj.get("noJVMArgs")).map(JsonElement::getAsBoolean).orElse(false));
+            vs.setNoOptimizingJVMArgs(Optional.ofNullable(obj.get("noOptimizingJVMArgs")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setNotCheckGame(Optional.ofNullable(obj.get("notCheckGame")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setNotCheckJVM(Optional.ofNullable(obj.get("notCheckJVM")).map(JsonElement::getAsBoolean).orElse(false));
             vs.setNotPatchNatives(Optional.ofNullable(obj.get("notPatchNatives")).map(JsonElement::getAsBoolean).orElse(false));
