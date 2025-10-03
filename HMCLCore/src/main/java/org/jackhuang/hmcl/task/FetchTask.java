@@ -424,7 +424,7 @@ public abstract class FetchTask<T> extends Task<T> {
 
         public abstract void write(byte[] buffer, int offset, int len) throws IOException;
 
-        public final void withResult(boolean success) {
+        public void withResult(boolean success) {
             this.success = success;
         }
 
