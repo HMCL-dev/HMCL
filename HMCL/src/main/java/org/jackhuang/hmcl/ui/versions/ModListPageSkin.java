@@ -65,7 +65,7 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.ref.WeakReference;
+import java.lang.ref.SoftReference;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -367,7 +367,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         private final String message;
         private final ModTranslations.Mod mod;
 
-        private WeakReference<Image> iconCache;
+        private SoftReference<Image> iconCache;
 
         ModInfoObject(LocalModFile localModFile) {
             this.localModFile = localModFile;
@@ -603,14 +603,14 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         protected void updateControl(ModInfoObject dataItem, boolean empty) {
             if (empty) return;
 
-            WeakReference<Image> iconCache = dataItem.iconCache;
+            SoftReference<Image> iconCache = dataItem.iconCache;
             Image icon;
             if (iconCache != null && (icon = iconCache.get()) != null) {
                 imageView.setImage(icon);
             } else {
                 loadModIcon(dataItem.getModInfo(), 24)
                         .whenComplete(Schedulers.javafx(), (image, exception) -> {
-                            dataItem.iconCache = new WeakReference<>(image);
+                            dataItem.iconCache = new SoftReference<>(image);
                             imageView.setImage(image);
                         }).start();
             }
