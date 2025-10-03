@@ -65,6 +65,7 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.ref.WeakReference;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -366,12 +367,13 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         private final String message;
         private final ModTranslations.Mod mod;
 
+        private WeakReference<Image> iconCache;
+
         ModInfoObject(LocalModFile localModFile) {
             this.localModFile = localModFile;
             this.active = localModFile.activeProperty();
 
-            StringBuilder title = new StringBuilder(localModFile.getName());
-            this.title = title.toString();
+            this.title = localModFile.getName();
 
             List<String> parts = new ArrayList<>();
             if (isNotBlank(localModFile.getId())) {
@@ -383,9 +385,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             if (isNotBlank(localModFile.getGameVersion())) {
                 parts.add(i18n("game.version") + ": " + localModFile.getGameVersion());
             }
-            String message = String.join(", ", parts);
-            this.message = message.toString();
-
+            this.message = String.join(", ", parts);
             this.mod = ModTranslations.MOD.getModById(localModFile.getId());
         }
 
@@ -603,10 +603,17 @@ class ModListPageSkin extends SkinBase<ModListPage> {
         protected void updateControl(ModInfoObject dataItem, boolean empty) {
             if (empty) return;
 
-            loadModIcon(dataItem.getModInfo(), 24)
-                    .whenComplete(Schedulers.javafx(), (image, exception) -> {
-                        imageView.setImage(image);
-                    }).start();
+            WeakReference<Image> iconCache = dataItem.iconCache;
+            Image icon;
+            if (iconCache != null && (icon = iconCache.get()) != null) {
+                imageView.setImage(icon);
+            } else {
+                loadModIcon(dataItem.getModInfo(), 24)
+                        .whenComplete(Schedulers.javafx(), (image, exception) -> {
+                            dataItem.iconCache = new WeakReference<>(image);
+                            imageView.setImage(image);
+                        }).start();
+            }
 
             content.setTitle(dataItem.getTitle());
             content.getTags().clear();
