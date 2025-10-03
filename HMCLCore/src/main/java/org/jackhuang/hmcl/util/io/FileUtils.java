@@ -45,6 +45,8 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  * @author huang
  */
 public final class FileUtils {
+    private static final boolean isWindows = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS;
+    private static boolean hardLink = true;
 
     private FileUtils() {
     }
@@ -201,8 +203,7 @@ public final class FileUtils {
 
             // on windows, filename suffixes are not relevant to name validity
             String basename = StringUtils.substringBeforeLast(name, '.');
-            if (INVALID_WINDOWS_RESOURCE_BASE_NAMES.contains(basename.toLowerCase(Locale.ROOT)))
-                return false;
+            return !INVALID_WINDOWS_RESOURCE_BASE_NAMES.contains(basename.toLowerCase(Locale.ROOT));
         }
 
         return true;
@@ -452,8 +453,7 @@ public final class FileUtils {
             Files.delete(file);
     }
 
-    public static void copyFile(Path srcFile, Path destFile)
-            throws IOException {
+    private static boolean checkCopy(Path srcFile, Path destFile) throws IOException {
         Objects.requireNonNull(srcFile, "Source must not be null");
         Objects.requireNonNull(destFile, "Destination must not be null");
         if (!Files.exists(srcFile))
@@ -461,10 +461,48 @@ public final class FileUtils {
         if (Files.isDirectory(srcFile))
             throw new IOException("Source '" + srcFile + "' exists but is a directory");
         Files.createDirectories(destFile.getParent());
-        if (Files.exists(destFile) && !Files.isWritable(destFile))
+        boolean destExist = Files.exists(destFile);
+        if (destExist && !Files.isWritable(destFile))
             throw new IOException("Destination '" + destFile + "' exists but is read-only");
+        return destExist;
+    }
 
+    private static boolean isSameDisk(Path srcFile, Path destFile) {
+        if (isWindows) {
+            return srcFile.toAbsolutePath().getRoot().equals(destFile.toAbsolutePath().getRoot());
+        } else {
+            Path parent = destFile.toAbsolutePath().getParent();
+            while (!Files.exists(parent)) {
+                parent = parent.getParent();
+            }
+            try {
+                return Files.getFileStore(srcFile).equals(Files.getFileStore(parent));
+            } catch (IOException e) {
+                return true;
+            }
+        }
+    }
+
+    private static void copy(Path srcFile, Path destFile) throws IOException {
         Files.copy(srcFile, destFile, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    public static void copyFile(Path srcFile, Path destFile) throws IOException {
+        checkCopy(srcFile, destFile);
+        copy(srcFile, destFile);
+    }
+
+    public static void linkFile(Path srcFile, Path destFile) throws IOException {
+        if (!checkCopy(srcFile, destFile) && hardLink && isSameDisk(srcFile, destFile)) {
+            try {
+                Files.createLink(destFile, srcFile);
+                return;
+            } catch (Throwable e) {
+                hardLink = false;
+                LOG.warning("Failed to create hardlink : " + e);
+            }
+        }
+        copy(srcFile, destFile);
     }
 
     public static List<Path> listFilesByExtension(Path file, String extension) {
