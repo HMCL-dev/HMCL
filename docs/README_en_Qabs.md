@@ -2,7 +2,10 @@
 
 [![pɐoꞁuʍoᗡ](https://img.shields.io/github/downloads/HMCL-dev/HMCL/total?label=p%C9%90o%EA%9E%81u%CA%8Do%E1%97%A1&style=flat)](https://github.com/HMCL-dev/HMCL/releases)
 
-**ɥsᴉlƃuƎ** (**uʍoᗡ ǝpᴉsd∩** '[pɹɐpuɐʇS](README_en_Qabs.md))
+<!-- #BEGIN BLOCK -->
+<!-- #PROPERTY PROCESS_LINK=false -->
+**ɥsᴉlƃuƎ** (**uʍoᗡ ǝpᴉsd∩** '[pɹɐpuɐʇS](README.md))
+<!-- #END BLOCK -->
 
 ## uoᴉʇɔnpoɹʇuI
 
