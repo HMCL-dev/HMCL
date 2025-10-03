@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.task;
 
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventBus;
+import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.io.ContentEncoding;
 import org.jackhuang.hmcl.util.io.IOUtils;
@@ -355,13 +356,13 @@ public abstract class FetchTask<T> extends Task<T> {
 
     private static final Timer timer = new Timer("DownloadSpeedRecorder", true);
     private static final AtomicLong downloadSpeed = new AtomicLong(0L);
-    public static final EventBus speedEvent = new EventBus();
+    public static final EventManager<SpeedEvent> SPEED_EVENT = EventBus.EVENT_BUS.channel(SpeedEvent.class);
 
     static {
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                speedEvent.channel(SpeedEvent.class).fireEvent(new SpeedEvent(speedEvent, downloadSpeed.getAndSet(0)));
+                SPEED_EVENT.fireEvent(new SpeedEvent(SPEED_EVENT, downloadSpeed.getAndSet(0)));
             }
         }, 0, 1000);
     }

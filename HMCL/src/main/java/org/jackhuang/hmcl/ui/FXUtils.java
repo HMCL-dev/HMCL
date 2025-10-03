@@ -1215,7 +1215,6 @@ public final class FXUtils {
     public static JFXButton newBorderButton(String text) {
         JFXButton button = new JFXButton(text);
         button.getStyleClass().add("jfx-button-border");
-        button.setButtonType(JFXButton.ButtonType.RAISED);
         return button;
     }
 
