@@ -1,8 +1,11 @@
+import org.jackhuang.hmcl.gradle.ci.GitHubActionUtils
+import org.jackhuang.hmcl.gradle.ci.JenkinsUtils
 import org.jackhuang.hmcl.gradle.l10n.CheckTranslations
 import org.jackhuang.hmcl.gradle.l10n.CreateLanguageList
 import org.jackhuang.hmcl.gradle.l10n.CreateLocaleNamesResourceBundle
 import org.jackhuang.hmcl.gradle.l10n.UpsideDownTranslate
 import org.jackhuang.hmcl.gradle.mod.ParseModDataTask
+import org.jackhuang.hmcl.gradle.utils.PropertiesUtils
 import java.net.URI
 import java.nio.file.FileSystems
 import java.nio.file.Files
@@ -16,30 +19,36 @@ plugins {
     alias(libs.plugins.shadow)
 }
 
-val isOfficial = System.getenv("HMCL_SIGNATURE_KEY") != null
-        || (System.getenv("GITHUB_REPOSITORY_OWNER") == "HMCL-dev" && System.getenv("GITHUB_BASE_REF")
-    .isNullOrEmpty())
+val projectConfig = PropertiesUtils.load(rootProject.file("config/project.properties").toPath())
 
-val buildNumber = System.getenv("BUILD_NUMBER")?.toInt().let { number ->
-    val offset = System.getenv("BUILD_NUMBER_OFFSET")?.toInt() ?: 0
-    if (number != null) {
-        (number - offset).toString()
-    } else {
-        val shortCommit = System.getenv("GITHUB_SHA")?.lowercase()?.substring(0, 7)
-        val prefix = if (isOfficial) "dev" else "unofficial"
-        if (!shortCommit.isNullOrEmpty()) "$prefix-$shortCommit" else "SNAPSHOT"
-    }
-}
-val versionRoot = System.getenv("VERSION_ROOT") ?: "3.6"
+val isOfficial = JenkinsUtils.IS_ON_CI || GitHubActionUtils.IS_ON_OFFICIAL_REPO
+
 val versionType = System.getenv("VERSION_TYPE") ?: if (isOfficial) "nightly" else "unofficial"
+val versionRoot = System.getenv("VERSION_ROOT") ?: projectConfig.getProperty("versionRoot") ?: "3"
 
 val microsoftAuthId = System.getenv("MICROSOFT_AUTH_ID") ?: ""
 val microsoftAuthSecret = System.getenv("MICROSOFT_AUTH_SECRET") ?: ""
 val curseForgeApiKey = System.getenv("CURSEFORGE_API_KEY") ?: ""
 
-val launcherExe = System.getenv("HMCL_LAUNCHER_EXE")
+val launcherExe = System.getenv("HMCL_LAUNCHER_EXE") ?: ""
 
-version = "$versionRoot.$buildNumber"
+val buildNumber = System.getenv("BUILD_NUMBER")?.toInt()
+if (buildNumber != null) {
+    version = if (JenkinsUtils.IS_ON_CI && versionType == "dev") {
+        "$versionRoot.0.$buildNumber"
+    } else {
+        "$versionRoot.$buildNumber"
+    }
+} else {
+    val shortCommit = System.getenv("GITHUB_SHA")?.lowercase()?.substring(0, 7)
+    version = if (shortCommit.isNullOrBlank()) {
+        "$versionRoot.SNAPSHOT"
+    } else if (isOfficial) {
+        "$versionRoot.dev-$shortCommit"
+    } else {
+        "$versionRoot.unofficial-$shortCommit"
+    }
+}
 
 val embedResources by configurations.registering
 
@@ -50,7 +59,7 @@ dependencies {
     implementation(libs.twelvemonkeys.imageio.webp)
     implementation(libs.java.info)
 
-    if (launcherExe == null) {
+    if (launcherExe.isBlank()) {
         implementation(libs.hmclauncher)
     }
 
@@ -195,7 +204,7 @@ tasks.shadowJar {
         "Enable-Native-Access" to "ALL-UNNAMED"
     )
 
-    if (launcherExe != null) {
+    if (launcherExe.isNotBlank()) {
         into("assets") {
             from(file(launcherExe))
         }
