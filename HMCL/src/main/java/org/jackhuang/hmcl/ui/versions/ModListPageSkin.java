@@ -83,7 +83,7 @@ import static org.jackhuang.hmcl.util.StringUtils.isNotBlank;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-class ModListPageSkin extends SkinBase<ModListPage> {
+final class ModListPageSkin extends SkinBase<ModListPage> {
 
     private final TransitionPane toolbarPane;
     private final HBox searchBar;
@@ -449,9 +449,8 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             titleContainer.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), title);
             setHeading(titleContainer);
 
-            Label description = new Label(modInfo.getModInfo().getDescription().toString());
+            Label description = FXUtils.newSafeTruncatedLabel(modInfo.getModInfo().getDescription().toString());
             FXUtils.copyOnDoubleClick(description);
-            FXUtils.installFastTooltip(description, modInfo.getModInfo().getDescription().toString());
             setBody(description);
 
             if (StringUtils.isNotBlank(modInfo.getModInfo().getId())) {
