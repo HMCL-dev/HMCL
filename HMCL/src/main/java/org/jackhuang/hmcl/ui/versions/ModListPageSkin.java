@@ -45,6 +45,7 @@ import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -287,43 +288,43 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                 iconPaths.add(modFile.getLogoPath());
             }
 
-            iconPaths.addAll(Arrays.asList(
-                "icon.png",
-                "logo.png",
-                "mod_logo.png",
-                "pack.png",
-                "logoFile.png",
-                "assets/icon.png",
-                "assets/logo.png",
-                "assets/mod_icon.png",
-                "assets/mod_logo.png",
-                "META-INF/icon.png",
-                "META-INF/logo.png",
-                "META-INF/mod_icon.png",
-                "textures/icon.png",
-                "textures/logo.png",
-                "textures/mod_icon.png",
-                "resources/icon.png",
-                "resources/logo.png",
-                "resources/mod_icon.png"
+            iconPaths.addAll(List.of(
+                    "icon.png",
+                    "logo.png",
+                    "mod_logo.png",
+                    "pack.png",
+                    "logoFile.png",
+                    "assets/icon.png",
+                    "assets/logo.png",
+                    "assets/mod_icon.png",
+                    "assets/mod_logo.png",
+                    "META-INF/icon.png",
+                    "META-INF/logo.png",
+                    "META-INF/mod_icon.png",
+                    "textures/icon.png",
+                    "textures/logo.png",
+                    "textures/mod_icon.png",
+                    "resources/icon.png",
+                    "resources/logo.png",
+                    "resources/mod_icon.png"
             ));
 
             String modId = modFile.getId();
             if (StringUtils.isNotBlank(modId)) {
-                iconPaths.addAll(Arrays.asList(
-                    "assets/" + modId + "/icon.png",
-                    "assets/" + modId + "/logo.png",
-                    "assets/" + modId.replace("-", "") + "/icon.png",
-                    "assets/" + modId.replace("-", "") + "/logo.png",
-                    modId + ".png",
-                    modId + "-logo.png",
-                    modId + "-icon.png",
-                    modId + "_logo.png",
-                    modId + "_icon.png",
-                    "textures/" + modId + "/icon.png",
-                    "textures/" + modId + "/logo.png",
-                    "resources/" + modId + "/icon.png",
-                    "resources/" + modId + "/logo.png"
+                iconPaths.addAll(List.of(
+                        "assets/" + modId + "/icon.png",
+                        "assets/" + modId + "/logo.png",
+                        "assets/" + modId.replace("-", "") + "/icon.png",
+                        "assets/" + modId.replace("-", "") + "/logo.png",
+                        modId + ".png",
+                        modId + "-logo.png",
+                        modId + "-icon.png",
+                        modId + "_logo.png",
+                        modId + "_icon.png",
+                        "textures/" + modId + "/icon.png",
+                        "textures/" + modId + "/logo.png",
+                        "resources/" + modId + "/icon.png",
+                        "resources/" + modId + "/logo.png"
                 ));
             }
 
@@ -331,7 +332,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                 for (String path : iconPaths) {
                     Path iconPath = fs.getPath(path);
                     if (Files.exists(iconPath)) {
-                        Image image = FXUtils.loadImage(iconPath, 40, 40, true, true);
+                        Image image = FXUtils.loadImage(iconPath, size, size, true, true);
                         if (!image.isError() &&
                                 image.getWidth() > 0 &&
                                 image.getHeight() > 0 &&
@@ -344,17 +345,17 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                 LOG.warning("Failed to load mod icons", e);
             }
 
-            String defaultIcon;
-            switch (modFile.getModLoaderType()) {
-                case FORGE: defaultIcon = "/assets/img/forge.png"; break;
-                case NEO_FORGED: defaultIcon = "/assets/img/neoforge.png"; break;
-                case FABRIC: defaultIcon = "/assets/img/fabric.png"; break;
-                case QUILT: defaultIcon = "/assets/img/quilt.png"; break;
-                case LITE_LOADER: defaultIcon = "/assets/img/liteloader.png"; break;
-                default: defaultIcon = "/assets/img/command.png"; break;
-            }
+            VersionIconType defaultIcon = switch (modFile.getModLoaderType()) {
+                case FORGE -> VersionIconType.FORGE;
+                case NEO_FORGED -> VersionIconType.NEO_FORGE;
+                case FABRIC -> VersionIconType.FABRIC;
+                case QUILT -> VersionIconType.QUILT;
+                case LITE_LOADER -> VersionIconType.CHICKEN;
+                case CLEANROOM -> VersionIconType.CLEANROOM;
+                default -> VersionIconType.COMMAND;
+            };
 
-            return FXUtils.newBuiltinImage(defaultIcon, size, size, true, true);
+            return defaultIcon.getIcon(size);
         });
     }
 
@@ -417,10 +418,11 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             titleContainer.setSpacing(8);
 
             ImageView imageView = new ImageView();
+            FXUtils.limitSize(imageView, 40, 40);
             loadModIcon(modInfo.getModInfo(), 40)
-                .whenComplete(Schedulers.javafx(), (image, exception) -> {
-                    imageView.setImage(image);
-                }).start();
+                    .whenComplete(Schedulers.javafx(), (image, exception) -> {
+                        imageView.setImage(image);
+                    }).start();
 
             TwoLineListItem title = new TwoLineListItem();
             title.setTitle(modInfo.getModInfo().getName());
@@ -602,9 +604,9 @@ class ModListPageSkin extends SkinBase<ModListPage> {
             if (empty) return;
 
             loadModIcon(dataItem.getModInfo(), 24)
-                .whenComplete(Schedulers.javafx(), (image, exception) -> {
-                    imageView.setImage(image);
-                }).start();
+                    .whenComplete(Schedulers.javafx(), (image, exception) -> {
+                        imageView.setImage(image);
+                    }).start();
 
             content.setTitle(dataItem.getTitle());
             content.getTags().clear();
