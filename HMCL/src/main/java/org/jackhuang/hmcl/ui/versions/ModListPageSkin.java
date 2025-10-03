@@ -437,7 +437,7 @@ class ModListPageSkin extends SkinBase<ModListPage> {
                 subtitleParts.add(modInfo.getModInfo().getGameVersion());
             }
             if (StringUtils.isNotBlank(modInfo.getModInfo().getVersion())) {
-                subtitleParts.addTag(modInfo.getModInfo().getVersion());
+                subtitleParts.add(modInfo.getModInfo().getVersion());
             }
             if (StringUtils.isNotBlank(modInfo.getModInfo().getAuthors())) {
                 subtitleParts.add(i18n("archive.author") + ": " + modInfo.getModInfo().getAuthors());
