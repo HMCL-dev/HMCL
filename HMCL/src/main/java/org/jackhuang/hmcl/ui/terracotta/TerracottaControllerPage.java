@@ -22,6 +22,8 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.WeakChangeListener;
 import javafx.collections.FXCollections;
@@ -41,6 +43,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.setting.Profile;
@@ -80,6 +84,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class TerracottaControllerPage extends StackPane {
@@ -177,13 +182,14 @@ public class TerracottaControllerPage extends StackPane {
                 download.setSubtitle(i18n("terracotta.status.uninitialized.desc"));
                 download.setRightIcon(SVG.ARROW_FORWARD);
                 FXUtils.onClicked(download, () -> {
-                    if (uninitialized.hasLegacy()) {
+                    if (globalConfig().getTerracottaAgreementVersion() >= 1) {
                         TerracottaState.Preparing s = TerracottaManager.install(null);
                         if (s != null) {
                             UI_STATE.set(s);
                         }
                     } else {
                         Controllers.confirmActionDanger(i18n("terracotta.confirm.desc"), i18n("terracotta.confirm.title"), () -> {
+                            globalConfig().setTerracottaAgreementVersion(1);
                             TerracottaState.Preparing s = TerracottaManager.install(null);
                             if (s != null) {
                                 UI_STATE.set(s);
@@ -557,9 +563,10 @@ public class TerracottaControllerPage extends StackPane {
     private static final class LineButton extends RipplerContainer {
         private final WeakListenerHolder holder = new WeakListenerHolder();
 
-        private final TwoLineListItem middle = new TwoLineListItem();
-        private final ObjectProperty<Node> left = new SimpleObjectProperty<>();
-        private final ObjectProperty<Node> right = new SimpleObjectProperty<>();
+        private final ObjectProperty<Node> left = new SimpleObjectProperty<>(this, "left");
+        private final ObjectProperty<Node> right = new SimpleObjectProperty<>(this, "right");
+        private final StringProperty title = new SimpleStringProperty(this, "title", "");
+        private final StringProperty subTitle = new SimpleStringProperty(this, "subTitle", "");
 
         public static LineButton of() {
             return of(true);
@@ -584,7 +591,35 @@ public class TerracottaControllerPage extends StackPane {
                     nodes.add(left);
                 }
 
-                nodes.add(button.middle);
+                {
+                    // FIXME: It's sucked to have the following TwoLineListItem-liked logic whose subtitle is a TextFlow.
+                    VBox middle = new VBox();
+                    middle.getStyleClass().add("two-line-list-item");
+                    middle.setMouseTransparent(true);
+                    {
+                        HBox firstLine = new HBox();
+                        firstLine.getStyleClass().add("first-line");
+                        {
+                            Label lblTitle = new Label(button.title.get());
+                            lblTitle.getStyleClass().add("title");
+                            firstLine.getChildren().setAll(lblTitle);
+                        }
+
+                        HBox secondLine = new HBox();
+                        {
+                            Text text = new Text(button.subTitle.get());
+                            text.setFill(new Color(0, 0, 0, 0.5));
+
+                            TextFlow lblSubtitle = new TextFlow(text);
+                            lblSubtitle.getStyleClass().add("subtitle");
+                            secondLine.getChildren().setAll(lblSubtitle);
+                        }
+
+                        middle.getChildren().setAll(firstLine, secondLine);
+                    }
+                    nodes.add(middle);
+                }
+
                 nodes.add(spacing);
 
                 Node right = button.right.get();
@@ -593,7 +628,7 @@ public class TerracottaControllerPage extends StackPane {
                 }
 
                 container.getChildren().setAll(nodes);
-            }, button.middle.titleProperty(), button.middle.subtitleProperty(), button.left, button.right));
+            }, button.title, button.subTitle, button.left, button.right));
             button.getProperties().put("ComponentList.noPadding", true);
 
             return button;
@@ -604,11 +639,11 @@ public class TerracottaControllerPage extends StackPane {
         }
 
         public void setTitle(String title) {
-            this.middle.setTitle(title);
+            this.title.set(title);
         }
 
         public void setSubtitle(String subtitle) {
-            this.middle.setSubtitle(subtitle);
+            this.subTitle.set(subtitle);
         }
 
         public void setLeftImage(Image left) {
