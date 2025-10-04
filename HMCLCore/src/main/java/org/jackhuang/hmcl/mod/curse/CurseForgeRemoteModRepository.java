@@ -93,6 +93,22 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
         }
     }
 
+    private int toModsSearchModloaderField(LoaderType sort) {
+        https://docs.curseforge.com/rest-api/#tocS_MinecraftModLoaderIndex
+        switch (sort) {
+            case FORGE:
+                return 1;
+            case FABRIC:
+                return 4;
+            case QUILT:
+                return 5;
+            case NEOFORGE:
+                return 6;
+            default:
+                return 0;
+        }
+    }
+
     private String toSortOrder(SortOrder sortOrder) {
         // https://docs.curseforge.com/#tocS_SortOrder
         switch (sortOrder) {
@@ -109,21 +125,28 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     }
 
     @Override
-    public SearchResult search(DownloadProvider downloadProvider, String gameVersion, @Nullable RemoteModRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder) throws IOException {
+    public SearchResult search(DownloadProvider downloadProvider, String gameVersion, @Nullable RemoteModRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder, LoaderType loaderType) throws IOException {
         int categoryId = 0;
         if (category != null && category.getSelf() instanceof CurseAddon.Category) {
             categoryId = ((CurseAddon.Category) category.getSelf()).getId();
         }
-        Response<List<CurseAddon>> response = withApiKey(HttpRequest.GET(downloadProvider.injectURL(NetworkUtils.withQuery(PREFIX + "/v1/mods/search", mapOf(
-                pair("gameId", "432"),
-                pair("classId", Integer.toString(section)),
-                pair("categoryId", Integer.toString(categoryId)),
-                pair("gameVersion", gameVersion),
-                pair("searchFilter", searchFilter),
-                pair("sortField", Integer.toString(toModsSearchSortField(sortType))),
-                pair("sortOrder", toSortOrder(sortOrder)),
-                pair("index", Integer.toString(pageOffset * pageSize)),
-                pair("pageSize", Integer.toString(pageSize)))))))
+
+        Map<String,String> params = new HashMap<>(Map.of(
+                "gameId", "432",
+                "classId",Integer.toString(section),
+                "categoryId",Integer.toString(categoryId),
+                "gameVersion", gameVersion,
+                "searchFilter", searchFilter,
+                "sortField", Integer.toString(toModsSearchSortField(sortType)),
+                "sortOrder", toSortOrder(sortOrder),
+                "index", Integer.toString(pageOffset * pageSize),
+                "pageSize", Integer.toString(pageSize)));
+
+        if (loaderType != LoaderType.ALL) {
+            params.put("modLoaderTypes", String.format("[%s]", toModsSearchModloaderField(loaderType)));
+        }
+
+        Response<List<CurseAddon>> response = withApiKey(HttpRequest.GET(downloadProvider.injectURL(NetworkUtils.withQuery(PREFIX + "/v1/mods/search", params))))
                 .getJson(Response.typeOf(listTypeOf(CurseAddon.class)));
         if (searchFilter.isEmpty()) {
             return new SearchResult(response.getData().stream().map(CurseAddon::toMod), calculateTotalPages(response, pageSize));
