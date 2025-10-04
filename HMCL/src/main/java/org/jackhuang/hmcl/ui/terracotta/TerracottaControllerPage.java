@@ -80,6 +80,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class TerracottaControllerPage extends StackPane {
@@ -177,13 +178,14 @@ public class TerracottaControllerPage extends StackPane {
                 download.setSubtitle(i18n("terracotta.status.uninitialized.desc"));
                 download.setRightIcon(SVG.ARROW_FORWARD);
                 FXUtils.onClicked(download, () -> {
-                    if (uninitialized.hasLegacy()) {
+                    if (globalConfig().getTerracottaAgreementVersion() >= 1) {
                         TerracottaState.Preparing s = TerracottaManager.install(null);
                         if (s != null) {
                             UI_STATE.set(s);
                         }
                     } else {
                         Controllers.confirmActionDanger(i18n("terracotta.confirm.desc"), i18n("terracotta.confirm.title"), () -> {
+                            globalConfig().setTerracottaAgreementVersion(1);
                             TerracottaState.Preparing s = TerracottaManager.install(null);
                             if (s != null) {
                                 UI_STATE.set(s);
@@ -558,8 +560,8 @@ public class TerracottaControllerPage extends StackPane {
         private final WeakListenerHolder holder = new WeakListenerHolder();
 
         private final TwoLineListItem middle = new TwoLineListItem();
-        private final ObjectProperty<Node> left = new SimpleObjectProperty<>();
-        private final ObjectProperty<Node> right = new SimpleObjectProperty<>();
+        private final ObjectProperty<Node> left = new SimpleObjectProperty<>(this, "left");
+        private final ObjectProperty<Node> right = new SimpleObjectProperty<>(this, "right");
 
         public static LineButton of() {
             return of(true);
