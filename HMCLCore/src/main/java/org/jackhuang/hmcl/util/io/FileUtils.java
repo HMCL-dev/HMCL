@@ -35,6 +35,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -46,7 +47,10 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public final class FileUtils {
     private static final boolean isWindows = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS;
-    private static boolean hardLink = true;
+    private static volatile boolean hardLink = true;
+
+    private static final Object obj = new Object();
+    private static final ConcurrentHashMap<Path, Object> pathMap = new ConcurrentHashMap<>();
 
     private FileUtils() {
     }
@@ -488,21 +492,36 @@ public final class FileUtils {
     }
 
     public static void copyFile(Path srcFile, Path destFile) throws IOException {
-        checkCopy(srcFile, destFile);
-        copy(srcFile, destFile);
+        if (pathMap.putIfAbsent(destFile, obj) != null) return;
+        try {
+            checkCopy(srcFile, destFile);
+            copy(srcFile, destFile);
+        } finally {
+            pathMap.remove(destFile);
+        }
     }
 
     public static void linkFile(Path srcFile, Path destFile) throws IOException {
-        if (!checkCopy(srcFile, destFile) && hardLink && isSameDisk(srcFile, destFile)) {
-            try {
-                Files.createLink(destFile, srcFile);
-                return;
-            } catch (Throwable e) {
-                hardLink = false;
-                LOG.warning("Failed to create hardlink : " + e);
+        if (pathMap.putIfAbsent(destFile, obj) != null) return;
+        try {
+            boolean exist = checkCopy(srcFile, destFile);
+            if (hardLink && isSameDisk(srcFile, destFile)) {
+                if (exist) Files.delete(destFile);
+                try {
+                    Files.createLink(destFile, srcFile);
+                    return;
+                } catch (FileAlreadyExistsException e) {
+                    LOG.warning(e.toString());
+                    return;
+                } catch (Throwable e) {
+                    hardLink = false;
+                    LOG.warning("Failed to create hardlink : " + e);
+                }
             }
+            copy(srcFile, destFile);
+        } finally {
+            pathMap.remove(destFile);
         }
-        copy(srcFile, destFile);
     }
 
     public static List<Path> listFilesByExtension(Path file, String extension) {
