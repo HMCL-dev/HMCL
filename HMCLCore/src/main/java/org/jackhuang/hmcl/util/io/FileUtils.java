@@ -46,11 +46,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  * @author huang
  */
 public final class FileUtils {
-    private static final boolean isWindows = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS;
     private static volatile boolean hardLink = true;
-
-    private static final Object obj = new Object();
-    private static final ConcurrentHashMap<Path, Object> pathMap = new ConcurrentHashMap<>();
 
     private FileUtils() {
     }
@@ -490,36 +486,26 @@ public final class FileUtils {
     }
 
     public static void copyFile(Path srcFile, Path destFile) throws IOException {
-        if (pathMap.putIfAbsent(destFile, obj) != null) return;
-        try {
-            checkCopy(srcFile, destFile);
-            copy(srcFile, destFile);
-        } finally {
-            pathMap.remove(destFile);
-        }
+        checkCopy(srcFile, destFile);
+        copy(srcFile, destFile);
     }
 
     public static void linkFile(Path srcFile, Path destFile) throws IOException {
-        if (pathMap.putIfAbsent(destFile, obj) != null) return;
-        try {
-            boolean exist = checkCopy(srcFile, destFile);
-            if (hardLink && isSameDisk(srcFile, destFile)) {
-                if (exist) Files.delete(destFile);
-                try {
-                    Files.createLink(destFile, srcFile);
-                    return;
-                } catch (FileAlreadyExistsException e) {
-                    LOG.warning(e.toString());
-                    return;
-                } catch (Throwable e) {
-                    hardLink = false;
-                    LOG.warning("Failed to create hardlink : " + e);
-                }
+        boolean exist = checkCopy(srcFile, destFile);
+        if (hardLink && isSameDisk(srcFile, destFile)) {
+            if (exist) Files.delete(destFile);
+            try {
+                Files.createLink(destFile, srcFile);
+                return;
+            } catch (FileAlreadyExistsException e) {
+                LOG.warning("File has already been created by another thread", e);
+                return;
+            } catch (Throwable e) {
+                hardLink = false;
+                LOG.warning("Failed to create hardlink", e);
             }
-            copy(srcFile, destFile);
-        } finally {
-            pathMap.remove(destFile);
         }
+        copy(srcFile, destFile);
     }
 
     public static List<Path> listFilesByExtension(Path file, String extension) {
