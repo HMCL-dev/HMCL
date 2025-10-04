@@ -30,6 +30,7 @@ import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.SkinBase;
+import javafx.scene.control.Tooltip;
 import javafx.scene.effect.BlurType;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.input.MouseButton;
@@ -39,15 +40,21 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 
+import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import java.util.Objects;
 import org.jackhuang.hmcl.ui.animation.AnimationProducer;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class DecoratorSkin extends SkinBase<Decorator> {
     private final StackPane root, parent;
@@ -229,6 +236,27 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             buttonsContainer.setAlignment(Pos.TOP_RIGHT);
             buttonsContainer.setMaxHeight(40);
             {
+
+                JFXButton btnReload = new JFXButton();
+                btnReload.setGraphic(SVG.REFRESH.createIcon(Theme.foregroundFillBinding(), 20));
+                btnReload.getStyleClass().add("jfx-decorator-button");
+                btnReload.setTooltip(new Tooltip(i18n("button.reload")));
+                btnReload.setOnAction(e -> Launcher.reloadApplication());
+                btnReload.setVisible(false);
+                btnReload.managedProperty().bind(btnReload.visibleProperty());
+                
+                // Create a generic listener to show reload button when property value changes
+                javafx.beans.value.ChangeListener<Object> restartButtonListener = (observable, oldValue, newValue) -> {
+                    if (!Objects.equals(oldValue, newValue)) {
+                        btnReload.setVisible(true);
+                    }
+                };
+                
+                // Listen to settings that require reload to take effect
+                config().localizationProperty().addListener(restartButtonListener);
+                globalConfig().fontAntiAliasingProperty().addListener(restartButtonListener);
+                config().animationDisabledProperty().addListener(restartButtonListener);
+
                 JFXButton btnHelp = new JFXButton();
                 btnHelp.setFocusTraversable(false);
                 btnHelp.setGraphic(SVG.HELP.createIcon(Theme.foregroundFillBinding(), -1));
@@ -247,7 +275,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 btnClose.getStyleClass().add("jfx-decorator-button");
                 btnClose.setOnAction(e -> skinnable.close());
 
-                buttonsContainer.getChildren().setAll(btnHelp, btnMin, btnClose);
+                buttonsContainer.getChildren().setAll(btnReload, btnHelp, btnMin, btnClose);
             }
             AnchorPane layer = new AnchorPane();
             layer.setPickOnBounds(false);

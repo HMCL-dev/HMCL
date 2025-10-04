@@ -517,6 +517,58 @@ public final class Controllers {
         return decorator == null;
     }
 
+    /**
+     * Reload UI controllers
+     */
+    public static void reload() {
+        if (isStopped()) {
+            throw new IllegalStateException("Application has been stopped");
+        }
+
+        // Reinitialize all pages
+        rootPage = new Lazy<>(RootPage::new);
+        versionPage = new Lazy<>(VersionPage::new);
+        gameListPage = new Lazy<>(() -> {
+            GameListPage gameListPage = new GameListPage();
+            gameListPage.selectedProfileProperty().bindBidirectional(Profiles.selectedProfileProperty());
+            gameListPage.profilesProperty().bindContent(Profiles.profilesProperty());
+            FXUtils.applyDragListener(gameListPage, ModpackHelper::isFileModpackByExtension, modpacks -> {
+                Path modpack = modpacks.get(0);
+                Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), modpack), i18n("install.modpack"));
+            });
+            return gameListPage;
+        });
+        downloadPage = new Lazy<>(DownloadPage::new);
+        accountListPage = new Lazy<>(() -> {
+            AccountListPage accountListPage = new AccountListPage();
+            accountListPage.selectedAccountProperty().bindBidirectional(Accounts.selectedAccountProperty());
+            accountListPage.accountsProperty().bindContent(Accounts.getAccounts());
+            accountListPage.authServersProperty().bindContentBidirectional(config().getAuthlibInjectorServers());
+            return accountListPage;
+        });
+        settingsPage = new Lazy<>(LauncherSettingsPage::new);
+
+        // Update window title
+        if (stage != null) {
+            stage.setTitle(Metadata.FULL_TITLE);
+        }
+
+        // Reset scene and navigate back to home page
+        if (scene != null && decorator != null) {
+            scene.setRoot(decorator.getDecorator());
+            decorator.getDecorator().prefWidthProperty().bind(scene.widthProperty());
+            decorator.getDecorator().prefHeightProperty().bind(scene.heightProperty());
+
+            // Clear navigation history and navigate back to home page
+            if (decorator.getNavigator() != null) {
+                decorator.getNavigator().clear();
+                decorator.navigate(getRootPage());
+            }
+        }
+
+        LOG.info("UI controllers have been successfully reloaded");
+    }
+
     public static void shutdown() {
         rootPage = null;
         versionPage = null;
