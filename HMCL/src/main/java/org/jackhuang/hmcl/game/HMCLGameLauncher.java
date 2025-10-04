@@ -75,7 +75,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
                 if (stream.anyMatch(file -> "options.txt".equals(FileUtils.getName(file))))
                     return;
             } catch (IOException e) {
-                LOG.warning("Failed to visit config folder", e);
+                LOG.warning("Failed to visit config path", e);
             }
         }
 
