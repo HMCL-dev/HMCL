@@ -60,12 +60,14 @@ import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -542,15 +544,18 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         if (empty) return;
                         ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(getSkinnable().repository.getType()).getModByCurseForgeId(dataItem.getSlug());
                         content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : dataItem.getTitle());
-                        content.setSubtitle(dataItem.getDescription());
-                        if (I18n.isUseChinese()) {
-                            ModDescriptionTranslatons.translate(dataItem).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                        String orignalDescription = dataItem.getDescription();
+                        if (ModDescriptionTranslation.enabled()) {
+                            ModDescriptionTranslation.translate(dataItem).whenComplete(Schedulers.javafx(), (result, exception) -> {
                                 if (exception != null) {
                                     LOG.warning("Failed to translate mod description", exception);
+                                    content.setSubtitle(orignalDescription);
                                     return;
                                 }
                                 content.setSubtitle(result.translated);
                             }).start();
+                        } else {
+                            content.setSubtitle(orignalDescription);
                         }
                         content.getTags().clear();
                         dataItem.getCategories().stream()

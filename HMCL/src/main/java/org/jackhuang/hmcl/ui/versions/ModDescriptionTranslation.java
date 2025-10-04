@@ -7,9 +7,14 @@ import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.i18n.I18n;
 
-public final class ModDescriptionTranslatons {
-    private ModDescriptionTranslatons() {
+import java.util.Locale;
+
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+
+public final class ModDescriptionTranslation {
+    private ModDescriptionTranslation() {
     }
 
     public static Task<Response> translate(RemoteMod mod) {
@@ -22,6 +27,10 @@ public final class ModDescriptionTranslatons {
             url = "https://mod.mcimirror.top/translate/modrinth/" + project.getId();
         }
         return new CacheFileTask(url).thenApplyAsync(path -> JsonUtils.fromJsonFile(path, Response.class));
+    }
+
+    public static boolean enabled() {
+        return config().getmodDescriptionTranslation()  && I18n.getLocale().getLocale() == Locale.SIMPLIFIED_CHINESE;
     }
 
     @JsonSerializable
