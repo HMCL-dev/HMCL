@@ -207,7 +207,8 @@ public final class FileUtils {
 
             // on windows, filename suffixes are not relevant to name validity
             String basename = StringUtils.substringBeforeLast(name, '.');
-            return !INVALID_WINDOWS_RESOURCE_BASE_NAMES.contains(basename.toLowerCase(Locale.ROOT));
+            if (INVALID_WINDOWS_RESOURCE_BASE_NAMES.contains(basename.toLowerCase(Locale.ROOT)))
+                return false;
         }
 
         return true;
