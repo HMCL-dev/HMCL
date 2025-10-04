@@ -30,7 +30,7 @@ public final class ModDescriptionTranslation {
     }
 
     public static boolean enabled() {
-        return config().getmodDescriptionTranslation()  && I18n.getLocale().getLocale() == Locale.SIMPLIFIED_CHINESE;
+        return config().getmodDescriptionTranslation() && I18n.getLocale().getLocale() == Locale.SIMPLIFIED_CHINESE;
     }
 
     @JsonSerializable
