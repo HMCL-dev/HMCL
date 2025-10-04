@@ -29,6 +29,7 @@ import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
@@ -351,7 +352,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                     Versions.testGame(Profiles.getSelectedProfile(), versionName);
                     return;
                 }
-                Versions.launch(Profiles.getSelectedProfile(), versionName);
+                Versions.launch(Profiles.getSelectedProfile(), versionName, null);
             }
         });
         FXUtils.installFastTooltip(card, i18n("version.doubleClickToLaunch"));
