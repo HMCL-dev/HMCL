@@ -473,18 +473,15 @@ public final class FileUtils {
     }
 
     private static boolean isSameDisk(Path srcFile, Path destFile) {
-        if (isWindows) {
-            return srcFile.toAbsolutePath().getRoot().equals(destFile.toAbsolutePath().getRoot());
-        } else {
-            Path parent = destFile.toAbsolutePath().getParent();
-            while (!Files.exists(parent)) {
-                parent = parent.getParent();
-            }
-            try {
-                return Files.getFileStore(srcFile).equals(Files.getFileStore(parent));
-            } catch (IOException e) {
-                return true;
-            }
+        do {
+            destFile = destFile.getParent();
+        } while (!Files.exists(destFile));
+
+        try {
+            return Files.getFileStore(srcFile).equals(Files.getFileStore(destFile));
+        } catch (IOException e) {
+            LOG.warning(e.toString());
+            return true;
         }
     }
 
