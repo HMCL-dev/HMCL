@@ -112,6 +112,20 @@ public final class Controllers {
     private Controllers() {
     }
 
+    private static void setupFontAntialiasing() {
+        if (System.getProperty("prism.lcdtext") == null) {
+            String fontAntiAliasing = globalConfig().getFontAntiAliasing();
+            if ("lcd".equalsIgnoreCase(fontAntiAliasing)) {
+                LOG.info("Enable sub-pixel antialiasing");
+                System.getProperties().put("prism.lcdtext", "true");
+            } else if ("gray".equalsIgnoreCase(fontAntiAliasing)
+                    || OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && SCREEN.getOutputScaleX() > 1) {
+                LOG.info("Disable sub-pixel antialiasing");
+                System.getProperties().put("prism.lcdtext", "false");
+            }
+        }
+    }
+
     public static Scene getScene() {
         return scene;
     }
@@ -178,17 +192,7 @@ public final class Controllers {
     public static void initialize(Stage stage) {
         LOG.info("Start initializing application");
 
-        if (System.getProperty("prism.lcdtext") == null) {
-            String fontAntiAliasing = globalConfig().getFontAntiAliasing();
-            if ("lcd".equalsIgnoreCase(fontAntiAliasing)) {
-                LOG.info("Enable sub-pixel antialiasing");
-                System.getProperties().put("prism.lcdtext", "true");
-            } else if ("gray".equalsIgnoreCase(fontAntiAliasing)
-                    || OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && SCREEN.getOutputScaleX() > 1) {
-                LOG.info("Disable sub-pixel antialiasing");
-                System.getProperties().put("prism.lcdtext", "false");
-            }
-        }
+        setupFontAntialiasing();
 
         Controllers.stage = stage;
 
@@ -510,6 +514,9 @@ public final class Controllers {
             return accountListPage;
         });
         settingsPage = new Lazy<>(LauncherSettingsPage::new);
+
+        // Apply antialiasing settings when reloading
+        setupFontAntialiasing();
 
         // Update window title
         if (stage != null) {
