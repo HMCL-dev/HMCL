@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.decorator;
 
 import com.jfoenix.controls.JFXButton;
+import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
@@ -241,10 +242,12 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 btnReload.setGraphic(SVG.REFRESH.createIcon(Theme.foregroundFillBinding(), 20));
                 btnReload.getStyleClass().add("jfx-decorator-button");
                 btnReload.setTooltip(new Tooltip(i18n("button.reload")));
-                btnReload.setOnAction(e -> Launcher.reloadApplication());
                 btnReload.setVisible(false);
-                btnReload.managedProperty().bind(btnReload.visibleProperty());
-                
+                btnReload.setOnMouseClicked(e -> {
+                    Launcher.reloadApplication();
+                    btnReload.setVisible(false);
+                });
+
                 // Create a generic listener to show reload button when property value changes
                 javafx.beans.value.ChangeListener<Object> restartButtonListener = (observable, oldValue, newValue) -> {
                     if (!Objects.equals(oldValue, newValue)) {
@@ -256,6 +259,18 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 config().localizationProperty().addListener(restartButtonListener);
                 globalConfig().fontAntiAliasingProperty().addListener(restartButtonListener);
                 config().animationDisabledProperty().addListener(restartButtonListener);
+                
+                Launcher.setOnApplicationReloaded(() -> {
+                    Platform.runLater(() -> {
+                        config().localizationProperty().removeListener(restartButtonListener);
+                        globalConfig().fontAntiAliasingProperty().removeListener(restartButtonListener);
+                        config().animationDisabledProperty().removeListener(restartButtonListener);
+                        
+                        config().localizationProperty().addListener(restartButtonListener);
+                        globalConfig().fontAntiAliasingProperty().addListener(restartButtonListener);
+                        config().animationDisabledProperty().addListener(restartButtonListener);
+                    });
+                });
 
                 JFXButton btnHelp = new JFXButton();
                 btnHelp.setFocusTraversable(false);

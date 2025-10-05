@@ -37,14 +37,23 @@ public final class AnimationUtils {
     public static void init() {
     }
 
-    private static final boolean ENABLED = !ConfigHolder.config().isAnimationDisabled() && FXUtils.REDUCED_MOTION != Boolean.TRUE;
-    private static final boolean PLAY_WINDOW_ANIMATION = ENABLED && !OperatingSystem.CURRENT_OS.isLinuxOrBSD();
+    private static boolean enabled;
+    private static boolean playWindowAnimation;
+    
+    static {
+        updateAnimationSettings();
+    }
+    
+    public static void updateAnimationSettings() {
+        enabled = !ConfigHolder.config().isAnimationDisabled() && FXUtils.REDUCED_MOTION != Boolean.TRUE;
+        playWindowAnimation = enabled && !OperatingSystem.CURRENT_OS.isLinuxOrBSD();
+    }
 
     public static boolean isAnimationEnabled() {
-        return ENABLED;
+        return enabled;
     }
 
     public static boolean playWindowAnimation() {
-        return PLAY_WINDOW_ANIMATION;
+        return playWindowAnimation;
     }
 }

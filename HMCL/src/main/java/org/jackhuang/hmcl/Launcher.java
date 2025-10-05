@@ -42,6 +42,7 @@ import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.CommandBuilder;
 import org.jackhuang.hmcl.util.platform.NativeUtils;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 
@@ -309,7 +310,14 @@ public final class Launcher extends Application {
     }
 
     public static final CrashReporter CRASH_REPORTER = new CrashReporter(true);
-/**
+    
+    private static Runnable onApplicationReloadedCallback;
+    
+    public static void setOnApplicationReloaded(Runnable callback) {
+        onApplicationReloadedCallback = callback;
+    }
+    
+    /**
      * Reload the application
      */
     public static void reloadApplication() {
@@ -329,16 +337,24 @@ public final class Launcher extends Application {
                 try {
                     // Re-initialize controllers
                     Controllers.reload();
+                    
+                    // Update animation settings based on new configuration
+                    AnimationUtils.updateAnimationSettings();
+                    
+                    // 执行重新加载后的回调函数
+                    if (onApplicationReloadedCallback != null) {
+                        onApplicationReloadedCallback.run();
+                    }
 
                     LOG.info("Application reloaded successfully\n");
                 } catch (Exception e) {
                     LOG.error("Failed to reload UI", e);
-                    showAlert(AlertType.ERROR, i18n("error.reload_failed"));
+                    showAlert(AlertType.ERROR, i18n("launcher.reload.failed"));
                 }
             });
         } catch (Exception e) {
             LOG.error("Error during application reload\n", e);
-            showAlert(AlertType.ERROR, i18n("error.reload_failed"));
+            showAlert(AlertType.ERROR, i18n("launcher.reload.failed"));
         }
     }
 
