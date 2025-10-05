@@ -84,10 +84,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class TerracottaControllerPage extends StackPane {
+    private static final String FEEDBACK_TIP = "terracotta-feedback";
     private static final ObjectProperty<TerracottaState> UI_STATE = new SimpleObjectProperty<>();
 
     static {
@@ -186,6 +188,17 @@ public class TerracottaControllerPage extends StackPane {
                         TerracottaState.Preparing s = TerracottaManager.install(null);
                         if (s != null) {
                             UI_STATE.set(s);
+                        }
+
+                        if (uninitialized.hasLegacy()) {
+                            Object feedback = config().getShownTips().get(FEEDBACK_TIP);
+                            if (!(feedback instanceof Number number) || number.intValue() < 1) {
+                                Controllers.confirm(i18n("terracotta.feedback.desc"), i18n("terracotta.feedback.title"), () -> {
+                                    FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK);
+                                    config().getShownTips().put(FEEDBACK_TIP, 1);
+                                }, () -> {
+                                });
+                            }
                         }
                     } else {
                         Controllers.confirmActionDanger(i18n("terracotta.confirm.desc"), i18n("terracotta.confirm.title"), () -> {
@@ -536,7 +549,7 @@ public class TerracottaControllerPage extends StackPane {
         header.setSubtitle(i18n("terracotta.from_local.desc"));
         locals.setHeaderLeft(header);
 
-        for (TerracottaMetadata.Link link : TerracottaMetadata.getPackageLinks()) {
+        for (TerracottaMetadata.Link link : TerracottaMetadata.PACKAGE_LINKS) {
             HBox node = new HBox();
             node.setAlignment(Pos.CENTER_LEFT);
             node.setPadding(new Insets(10, 16, 10, 16));
