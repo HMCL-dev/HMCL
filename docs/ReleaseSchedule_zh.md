@@ -1,6 +1,7 @@
 # Hello Minecraft! Launcher 发布计划
 
 <!-- #BEGIN LANGUAGE_SWITCHER -->
+[English](ReleaseSchedule.md) | **中文**
 <!-- #END LANGUAGE_SWITCHER -->
 
 本文介绍了自 2025 年 10 月起的 HMCL 版本发布计划。
