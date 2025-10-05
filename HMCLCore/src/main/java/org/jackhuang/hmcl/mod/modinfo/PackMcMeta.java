@@ -166,8 +166,13 @@ public class PackMcMeta implements Validation {
                 parts.add(new LocalModFile.Description.Part(parseText(json)));
             } else if (json.isJsonArray()) {
                 for (JsonElement element : json.getAsJsonArray()) {
-                    JsonObject descriptionPart = element.getAsJsonObject();
-                    parts.add(new LocalModFile.Description.Part(descriptionPart.get("text").getAsString(), Optional.ofNullable(descriptionPart.get("color")).map(JsonElement::getAsString).orElse("")));
+                    if (element.isJsonPrimitive()) {
+                        parts.add(new LocalModFile.Description.Part(parseText(element)));
+                    } else {
+                        JsonObject descriptionPart = element.getAsJsonObject();
+                        parts.add(new LocalModFile.Description.Part(descriptionPart.get("text").getAsString(), Optional.ofNullable(descriptionPart.get("color")).map(JsonElement::getAsString).orElse("")));
+                    }
+
                 }
             } else {
                 throw new JsonParseException("pack.mcmeta::pack::json should be String or array of text objects with text and color fields");
