@@ -35,7 +35,6 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -46,7 +45,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  * @author huang
  */
 public final class FileUtils {
-    private static volatile boolean hardLink = true;
+    private static volatile boolean hardLink = false;
 
     private FileUtils() {
     }
@@ -452,6 +451,10 @@ public final class FileUtils {
             deleteDirectory(file);
         else
             Files.delete(file);
+    }
+
+    public static void setHardLink(boolean value) {
+        hardLink = value;
     }
 
     private static boolean checkCopy(Path srcFile, Path destFile) throws IOException {
