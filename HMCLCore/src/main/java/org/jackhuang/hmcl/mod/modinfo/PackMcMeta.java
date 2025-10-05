@@ -131,15 +131,24 @@ public class PackMcMeta implements Validation {
             throw new JsonParseException("Datapack version format must be a number or a [major, minor] array.");
         }
 
-        private void parseComponent(JsonElement element, List<LocalModFile.Description.Part> parts) throws JsonParseException {
+        private void parseComponent(JsonElement element, List<LocalModFile.Description.Part> parts, String fatherColor) throws JsonParseException {
+            if (fatherColor == null) {
+                fatherColor = "";
+            }
             if (element.isJsonPrimitive()) {
-                parts.add(new LocalModFile.Description.Part(element.getAsString()));
+                parts.add(new LocalModFile.Description.Part(element.getAsString(),fatherColor));
             } else if (element.isJsonObject()) {
                 JsonObject descriptionPart = element.getAsJsonObject();
-                parts.add(new LocalModFile.Description.Part(descriptionPart.get("text").getAsString(), Optional.ofNullable(descriptionPart.get("color")).map(JsonElement::getAsString).orElse("")));
+                String color = Optional.ofNullable(descriptionPart.get("color")).map(JsonElement::getAsString).orElse(fatherColor);
+                if (descriptionPart.get("text") != null) {
+                    parts.add(new LocalModFile.Description.Part(descriptionPart.get("text").getAsString(), color));
+                }
+                if (descriptionPart.get("extra") != null) {
+                    parseComponent(descriptionPart.get("extra"), parts, color);
+                }
             } else if (element.isJsonArray()) {
                 for (JsonElement childElement : element.getAsJsonArray()) {
-                    parseComponent(childElement, parts);
+                    parseComponent(childElement, parts, fatherColor);
                 }
             } else {
                 throw new JsonParseException("Unsupported type in description. Expected a string, object, or array, but got: " + element);
@@ -153,7 +162,7 @@ public class PackMcMeta implements Validation {
                 return parts;
             }
 
-            parseComponent(json, parts);
+            parseComponent(json, parts, "");
             return parts;
         }
 
