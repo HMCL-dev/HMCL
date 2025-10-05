@@ -38,6 +38,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+
 @Immutable
 public class PackMcMeta implements Validation {
     @SerializedName("pack")
@@ -98,7 +100,7 @@ public class PackMcMeta implements Validation {
         }
     }
 
-    public record PackVersion(int majorVersion, int minorVersion) implements Comparable<PackVersion>{
+    public record PackVersion(int majorVersion, int minorVersion) implements Comparable<PackVersion> {
 
         public static final PackVersion UNSPECIFIED = new PackVersion(0, 0);
 
@@ -136,11 +138,12 @@ public class PackMcMeta implements Validation {
                 } else if (arr.size() == 2) {
                     return new PackVersion(arr.get(0).getAsInt(), arr.get(1).getAsInt());
                 } else {
-                    throw new JsonParseException("Datapack version array must have 1 or 2 elements, but got " + arr.size());
+                    LOG.warning("Datapack version array must have 1 or 2 elements, but got " + arr.size());
                 }
             }
 
-            throw new JsonParseException("Datapack version format must be a number or a [major, minor] array.");
+            LOG.warning("Datapack version format must be a number or a [major, minor] array.");
+            return UNSPECIFIED;
         }
     }
 
@@ -165,7 +168,7 @@ public class PackMcMeta implements Validation {
                     parseComponent(childElement, parts, parentColor);
                 }
             } else {
-                throw new JsonParseException("Unsupported type in description. Expected a string, object, or array, but got: " + element);
+                LOG.warning("Unsupported type in description. Expected a string, object, or array, but got: " + element);
             }
         }
 
@@ -176,14 +179,27 @@ public class PackMcMeta implements Validation {
                 return parts;
             }
 
-            parseComponent(json, parts, "");
+            try {
+                parseComponent(json, parts, "");
+            } catch (Exception e) {
+                parts.clear();
+                parts.add(new LocalModFile.Description.Part("简介解析出错"));
+                LOG.warning("Description parsing error", e);
+            }
+
             return parts;
         }
 
         @Override
         public PackInfo deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             JsonObject packInfo = json.getAsJsonObject();
-            int packFormat = Optional.ofNullable(packInfo.get("pack_format")).map(JsonElement::getAsInt).orElse(0);
+            int packFormat;
+            try {
+                packFormat = Optional.ofNullable(packInfo.get("pack_format")).map(JsonElement::getAsInt).orElse(0);
+            } catch (NumberFormatException e) {
+                packFormat = 0;
+                LOG.warning("Pack format is not a number");
+            }
             PackVersion minVersion = PackVersion.fromJson(packInfo.get("min_format"));
             PackVersion maxVersion = PackVersion.fromJson(packInfo.get("max_format"));
 
