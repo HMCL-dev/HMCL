@@ -131,24 +131,23 @@ public class PackMcMeta implements Validation {
             throw new JsonParseException("Datapack version format must be a number or a [major, minor] array.");
         }
 
-        private void parseComponent(JsonElement element, List<LocalModFile.Description.Part> parts, String fatherColor) throws JsonParseException {
-            if (fatherColor == null) {
-                fatherColor = "";
+        private void parseComponent(JsonElement element, List<LocalModFile.Description.Part> parts, String parentColor) throws JsonParseException {
+            if (parentColor == null) {
+                parentColor = "";
             }
-            if (element.isJsonPrimitive()) {
-                parts.add(new LocalModFile.Description.Part(element.getAsString(),fatherColor));
-            } else if (element.isJsonObject()) {
-                JsonObject descriptionPart = element.getAsJsonObject();
-                String color = Optional.ofNullable(descriptionPart.get("color")).map(JsonElement::getAsString).orElse(fatherColor);
-                if (descriptionPart.get("text") != null) {
-                    parts.add(new LocalModFile.Description.Part(descriptionPart.get("text").getAsString(), color));
+            if (element instanceof JsonPrimitive primitive) {
+                parts.add(new LocalModFile.Description.Part(primitive.getAsString(), parentColor));
+            } else if (element instanceof JsonObject jsonObj) {
+                String color = jsonObj.has("color") ? jsonObj.get("color").getAsString() : parentColor;
+                if (jsonObj.has("text")) {
+                    parts.add(new LocalModFile.Description.Part(jsonObj.get("text").getAsString(), color));
                 }
-                if (descriptionPart.get("extra") != null) {
-                    parseComponent(descriptionPart.get("extra"), parts, color);
+                if (jsonObj.has("extra")) {
+                    parseComponent(jsonObj.get("extra"), parts, color);
                 }
-            } else if (element.isJsonArray()) {
-                for (JsonElement childElement : element.getAsJsonArray()) {
-                    parseComponent(childElement, parts, fatherColor);
+            } else if (element instanceof JsonArray jsonArray) {
+                for (JsonElement childElement : jsonArray) {
+                    parseComponent(childElement, parts, parentColor);
                 }
             } else {
                 throw new JsonParseException("Unsupported type in description. Expected a string, object, or array, but got: " + element);
