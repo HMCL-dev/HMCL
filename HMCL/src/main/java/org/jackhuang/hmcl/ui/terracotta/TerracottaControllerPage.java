@@ -190,7 +190,7 @@ public class TerracottaControllerPage extends StackPane {
                             UI_STATE.set(s);
                         }
 
-                        if (uninitialized.hasLegacy()) {
+                        if (uninitialized.hasLegacy() && I18n.isUseChinese()) {
                             Object feedback = config().getShownTips().get(FEEDBACK_TIP);
                             if (!(feedback instanceof Number number) || number.intValue() < 1) {
                                 Controllers.confirm(i18n("terracotta.feedback.desc"), i18n("terracotta.feedback.title"), () -> {
