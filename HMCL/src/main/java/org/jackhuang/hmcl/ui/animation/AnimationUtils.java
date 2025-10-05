@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.animation;
 
 import org.jackhuang.hmcl.setting.ConfigHolder;
-import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 /**
@@ -45,7 +44,7 @@ public final class AnimationUtils {
     }
     
     public static void updateAnimationSettings() {
-        enabled = !ConfigHolder.config().isAnimationDisabled() && FXUtils.REDUCED_MOTION != Boolean.TRUE;
+        enabled = !ConfigHolder.config().isAnimationDisabled();
         playWindowAnimation = enabled && !OperatingSystem.CURRENT_OS.isLinuxOrBSD();
     }
 

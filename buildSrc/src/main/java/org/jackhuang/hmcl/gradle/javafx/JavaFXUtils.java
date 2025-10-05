@@ -66,7 +66,7 @@ public final class JavaFXUtils {
             arch = Platform.is64Bit() ? "arm64" : "arm32";
         else if (Platform.isLoongArch() && Platform.is64Bit())
             arch = "loongarch64";
-        else if ("riscv64".equals(System.getProperty("os.arch"))) // TODO: https://github.com/java-native-access/jna/pull/1671
+        else if (Platform.isRISCV())
             arch = "riscv64";
         else
             return;

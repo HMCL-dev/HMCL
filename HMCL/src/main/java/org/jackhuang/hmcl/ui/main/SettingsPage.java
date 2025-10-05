@@ -33,7 +33,7 @@ import org.jackhuang.hmcl.upgrade.UpdateChannel;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.i18n.Locales;
+import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.tukaani.xz.XZInputStream;
@@ -65,7 +65,7 @@ public final class SettingsPage extends SettingsView {
         FXUtils.smoothScrolling(scroll);
 
         // ==== Languages ====
-        cboLanguage.getItems().setAll(Locales.LOCALES);
+        cboLanguage.getItems().setAll(SupportedLocale.getSupportedLocales());
         selectedItemPropertyFor(cboLanguage).bindBidirectional(config().localizationProperty());
 
         disableAutoGameOptionsPane.selectedProperty().bindBidirectional(config().disableAutoGameOptionsProperty());
@@ -114,9 +114,12 @@ public final class SettingsPage extends SettingsView {
         chkUpdateStable.setUserData(UpdateChannel.STABLE);
         ObjectProperty<UpdateChannel> updateChannel = selectedItemPropertyFor(updateChannelGroup, UpdateChannel.class);
         updateChannel.set(UpdateChannel.getChannel());
-        updateChannel.addListener((a, b, newValue) -> {
-            UpdateChecker.requestCheckUpdate(newValue);
-        });
+
+        InvalidationListener checkUpdateListener = e -> {
+            UpdateChecker.requestCheckUpdate(updateChannel.get(), previewPane.isSelected());
+        };
+        updateChannel.addListener(checkUpdateListener);
+        previewPane.selectedProperty().addListener(checkUpdateListener);
         // ====
     }
 

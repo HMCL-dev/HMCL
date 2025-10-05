@@ -236,14 +236,22 @@ public final class Lang {
     }
 
     public static ThreadPoolExecutor threadPool(String name, boolean daemon, int threads, long timeout, TimeUnit timeunit) {
+        ThreadPoolExecutor pool = new ThreadPoolExecutor(
+                threads, threads,
+                timeout, timeunit,
+                new LinkedBlockingQueue<>(),
+                counterThreadFactory(name, daemon));
+        pool.allowCoreThreadTimeOut(true);
+        return pool;
+    }
+
+    public static ThreadFactory counterThreadFactory(String name, boolean daemon) {
         AtomicInteger counter = new AtomicInteger(1);
-        ThreadPoolExecutor pool = new ThreadPoolExecutor(threads, threads, timeout, timeunit, new LinkedBlockingQueue<>(), r -> {
+        return r -> {
             Thread t = new Thread(r, name + "-" + counter.getAndIncrement());
             t.setDaemon(daemon);
             return t;
-        });
-        pool.allowCoreThreadTimeOut(true);
-        return pool;
+        };
     }
 
     public static int parseInt(Object string, int defaultValue) {

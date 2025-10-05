@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.gradle;
+package org.jackhuang.hmcl.gradle.l10n;
 
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;

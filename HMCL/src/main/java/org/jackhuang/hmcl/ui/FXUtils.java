@@ -93,10 +93,7 @@ import java.nio.file.PathMatcher;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.BooleanSupplier;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
+import java.util.function.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -1218,7 +1215,6 @@ public final class FXUtils {
     public static JFXButton newBorderButton(String text) {
         JFXButton button = new JFXButton(text);
         button.getStyleClass().add("jfx-button-border");
-        button.setButtonType(JFXButton.ButtonType.RAISED);
         return button;
     }
 
@@ -1367,6 +1363,27 @@ public final class FXUtils {
                 action.run();
                 e.consume();
             }
+        });
+    }
+
+    public static <T> void onScroll(Node node, List<T> list,
+                                    ToIntFunction<List<T>> finder,
+                                    Consumer<T> updater
+    ) {
+        node.addEventHandler(ScrollEvent.SCROLL, event -> {
+            double deltaY = event.getDeltaY();
+            if (deltaY == 0)
+                return;
+
+            int index = finder.applyAsInt(list);
+            if (index < 0) return;
+            if (deltaY > 0) // up
+                index--;
+            else // down
+                index++;
+
+            updater.accept(list.get((index + list.size()) % list.size()));
+            event.consume();
         });
     }
 
