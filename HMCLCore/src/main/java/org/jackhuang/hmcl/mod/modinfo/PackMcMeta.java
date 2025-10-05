@@ -155,25 +155,34 @@ public class PackMcMeta implements Validation {
             throw new JsonParseException("Datapack version format must be a number or a [major, minor] array.");
         }
 
+        private List<LocalModFile.Description.Part> parseDescription(JsonElement json) throws JsonParseException{
+            List<LocalModFile.Description.Part> parts = new ArrayList<>();
+
+            if (json == null || json.isJsonNull()) {
+                return parts;
+            }
+
+            if (json.isJsonPrimitive()) {
+                parts.add(new LocalModFile.Description.Part(parseText(json)));
+            } else if (json.isJsonArray()) {
+                for (JsonElement element : json.getAsJsonArray()) {
+                    JsonObject descriptionPart = element.getAsJsonObject();
+                    parts.add(new LocalModFile.Description.Part(descriptionPart.get("text").getAsString(), Optional.ofNullable(descriptionPart.get("color")).map(JsonElement::getAsString).orElse("")));
+                }
+            } else {
+                throw new JsonParseException("pack.mcmeta::pack::json should be String or array of text objects with text and color fields");
+            }
+            return parts;
+        }
+
         @Override
         public PackInfo deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-            List<LocalModFile.Description.Part> parts = new ArrayList<>();
             JsonObject packInfo = json.getAsJsonObject();
             int packFormat = Optional.ofNullable(packInfo.get("pack_format")).map(JsonElement::getAsInt).orElse(0);
             PackVersion minVersion = parseVersion(packInfo.get("min_format"));
             PackVersion maxVersion = parseVersion(packInfo.get("max_format"));
 
-            JsonElement description = packInfo.get("description");
-            if (description.isJsonPrimitive()) {
-                parts.add(new LocalModFile.Description.Part(parseText(description)));
-            } else if (description.isJsonArray()) {
-                for (JsonElement element : description.getAsJsonArray()) {
-                    JsonObject descriptionPart = element.getAsJsonObject();
-                    parts.add(new LocalModFile.Description.Part(descriptionPart.get("text").getAsString(), Optional.ofNullable(descriptionPart.get("color")).map(JsonElement::getAsString).orElse("")));
-                }
-            } else {
-                throw new JsonParseException("pack.mcmeta::pack::description should be String or array of text objects with text and color fields");
-            }
+            List<LocalModFile.Description.Part> parts = parseDescription(packInfo.get("description"));
             return new PackInfo(packFormat, minVersion, maxVersion, new LocalModFile.Description(parts));
         }
     }
