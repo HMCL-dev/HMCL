@@ -75,7 +75,7 @@ public class PackMcMeta implements Validation {
         private final LocalModFile.Description description;
 
         public PackInfo() {
-            this(0, new PackVersion(0, 0), new PackVersion(0, 0), new LocalModFile.Description(Collections.emptyList()));
+            this(0, PackVersion.UNSPECIFIED, PackVersion.UNSPECIFIED, new LocalModFile.Description(Collections.emptyList()));
         }
 
         public PackInfo(int packFormat, PackVersion minPackVersion, PackVersion maxPackVersion, LocalModFile.Description description) {
@@ -86,11 +86,11 @@ public class PackMcMeta implements Validation {
         }
 
         public PackVersion getEffectiveMinVersion() {
-            return minPackVersion.majorVersion != 0 ? minPackVersion : new PackVersion(packFormat, 0);
+            return !minPackVersion.isUnspecified() ? minPackVersion : new PackVersion(packFormat, 0);
         }
 
         public PackVersion getEffectiveMaxVersion() {
-            return maxPackVersion.majorVersion != 0 ? maxPackVersion : new PackVersion(packFormat, 0);
+            return !maxPackVersion.isUnspecified() ? maxPackVersion : new PackVersion(packFormat, 0);
         }
 
         public LocalModFile.Description getDescription() {
@@ -98,19 +98,31 @@ public class PackMcMeta implements Validation {
         }
     }
 
-    public record PackVersion(int majorVersion, int minorVersion) {
+    public record PackVersion(int majorVersion, int minorVersion) implements Comparable<PackVersion>{
+
+        public static final PackVersion UNSPECIFIED = new PackVersion(0, 0);
 
         @Override
         public String toString() {
-            return majorVersion + "." + minorVersion;
+            return minorVersion != 0 ? majorVersion + "." + minorVersion : String.valueOf(majorVersion);
         }
-    }
 
-    public static class PackInfoDeserializer implements JsonDeserializer<PackInfo> {
+        @Override
+        public int compareTo(PackVersion other) {
+            int majorCompare = Integer.compare(this.majorVersion, other.majorVersion);
+            if (majorCompare != 0) {
+                return majorCompare;
+            }
+            return Integer.compare(this.minorVersion, other.minorVersion);
+        }
 
-        private PackVersion parseVersion(JsonElement json) throws JsonParseException {
+        public boolean isUnspecified() {
+            return this.equals(UNSPECIFIED);
+        }
+
+        public static PackVersion fromJson(JsonElement json) throws JsonParseException {
             if (json == null || json.isJsonNull()) {
-                return new PackVersion(0, 0);
+                return UNSPECIFIED;
             }
 
             if (json.isJsonPrimitive() && json.getAsJsonPrimitive().isNumber()) {
@@ -130,6 +142,9 @@ public class PackMcMeta implements Validation {
 
             throw new JsonParseException("Datapack version format must be a number or a [major, minor] array.");
         }
+    }
+
+    public static class PackInfoDeserializer implements JsonDeserializer<PackInfo> {
 
         private void parseComponent(JsonElement element, List<LocalModFile.Description.Part> parts, String parentColor) throws JsonParseException {
             if (parentColor == null) {
@@ -169,8 +184,8 @@ public class PackMcMeta implements Validation {
         public PackInfo deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             JsonObject packInfo = json.getAsJsonObject();
             int packFormat = Optional.ofNullable(packInfo.get("pack_format")).map(JsonElement::getAsInt).orElse(0);
-            PackVersion minVersion = parseVersion(packInfo.get("min_format"));
-            PackVersion maxVersion = parseVersion(packInfo.get("max_format"));
+            PackVersion minVersion = PackVersion.fromJson(packInfo.get("min_format"));
+            PackVersion maxVersion = PackVersion.fromJson(packInfo.get("max_format"));
 
             List<LocalModFile.Description.Part> parts = parseDescription(packInfo.get("description"));
             return new PackInfo(packFormat, minVersion, maxVersion, new LocalModFile.Description(parts));
