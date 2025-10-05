@@ -57,6 +57,7 @@ public final class TerracottaMetadata {
             @SerializedName("version_legacy") String legacy,
             @SerializedName("version_recent") List<String> recent,
             @SerializedName("version_latest") String latest,
+            @SerializedName("feedback_url") String feedbackURL,
 
             @SerializedName("classifiers") Map<String, String> classifiers,
             @SerializedName("downloads") List<String> downloads,
@@ -86,7 +87,8 @@ public final class TerracottaMetadata {
 
     public static final ITerracottaProvider PROVIDER;
     public static final String PACKAGE_NAME;
-    private static final List<Link> PACKAGE_LINKS;
+    public static final List<Link> PACKAGE_LINKS;
+    public static final String FEEDBACK_LINK;
 
     private static final Pattern LEGACY;
     private static final List<String> RECENT;
@@ -103,6 +105,7 @@ public final class TerracottaMetadata {
         LEGACY = Pattern.compile(config.legacy);
         RECENT = config.recent;
         LATEST = config.latest;
+        FEEDBACK_LINK = config.feedbackURL;
 
         ProviderContext context = locateProvider(config);
         PROVIDER = context != null ? context.provider() : null;
@@ -129,10 +132,6 @@ public final class TerracottaMetadata {
         ProviderContext(ITerracottaProvider provider, String system, String arch) {
             this(provider, system + "-" + arch);
         }
-    }
-
-    public static List<Link> getPackageLinks() {
-        return PACKAGE_LINKS;
     }
 
     @Nullable
