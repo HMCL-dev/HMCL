@@ -309,7 +309,11 @@ public class TerracottaControllerPage extends StackPane {
                 nodesProperty.setAll(room);
             } else if (state instanceof TerracottaState.HostOK hostOK) {
                 if (hostOK.isForkOf(legacyState)) {
-                    ((PlayerProfileUI) nodesProperty.get(nodesProperty.size() - 1)).updateProfiles(hostOK.getProfiles());
+                    if (nodesProperty.get(nodesProperty.size() - 1) instanceof PlayerProfileUI profileUI) {
+                        profileUI.updateProfiles(hostOK.getProfiles());
+                    } else { // Should NOT happen
+                        nodesProperty.add(new PlayerProfileUI(hostOK.getProfiles()));
+                    }
                     return;
                 } else {
                     String cs = hostOK.getCode();
@@ -363,7 +367,11 @@ public class TerracottaControllerPage extends StackPane {
                         }
                     });
 
-                    nodesProperty.setAll(code, copy, back, new PlayerProfileUI(hostOK.getProfiles()));
+                    if (hostOK.getProfiles().isEmpty()) {
+                        nodesProperty.setAll(code, copy, back);
+                    } else {
+                        nodesProperty.setAll(code, copy, back, new PlayerProfileUI(hostOK.getProfiles()));
+                    }
                 }
             } else if (state instanceof TerracottaState.GuestStarting) {
                 statusProperty.set(i18n("terracotta.status.guest_starting"));
@@ -383,7 +391,11 @@ public class TerracottaControllerPage extends StackPane {
                 nodesProperty.setAll(room);
             } else if (state instanceof TerracottaState.GuestOK guestOK) {
                 if (guestOK.isForkOf(legacyState)) {
-                    ((PlayerProfileUI) nodesProperty.get(nodesProperty.size() - 1)).updateProfiles(guestOK.getProfiles());
+                    if (nodesProperty.get(nodesProperty.size() - 1) instanceof PlayerProfileUI profileUI) {
+                        profileUI.updateProfiles(guestOK.getProfiles());
+                    } else { // Should NOT happen
+                        nodesProperty.add(new PlayerProfileUI(guestOK.getProfiles()));
+                    }
                     return;
                 } else {
                     statusProperty.set(i18n("terracotta.status.guest_ok"));
@@ -404,7 +416,11 @@ public class TerracottaControllerPage extends StackPane {
                         }
                     });
 
-                    nodesProperty.setAll(tutorial, back, new PlayerProfileUI(guestOK.getProfiles()));
+                    if (guestOK.getProfiles().isEmpty()) {
+                        nodesProperty.setAll(tutorial, back);
+                    } else {
+                        nodesProperty.setAll(tutorial, back, new PlayerProfileUI(guestOK.getProfiles()));
+                    }
                 }
             } else if (state instanceof TerracottaState.Exception exception) {
                 statusProperty.set(i18n("terracotta.status.exception.desc." + exception.getType().name().toLowerCase(Locale.ROOT)));
