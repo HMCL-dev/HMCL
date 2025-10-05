@@ -154,6 +154,10 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                     Versions.modifyGameSettings(profile, version);
                 }
             });
+            FXUtils.onScroll(gameListItem, getSkinnable().getMainPage().getVersions(), list -> {
+                String currentId = getSkinnable().getMainPage().getCurrentGame();
+                return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
+            }, it -> getSkinnable().getMainPage().getProfile().setSelectedVersion(it.getId()));
 
             // third item in left sidebar
             AdvancedListItem gameItem = new AdvancedListItem();
@@ -178,11 +182,11 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             launcherSettingsItem.setOnAction(e -> Controllers.navigate(Controllers.getSettingsPage()));
 
             // sixth item in left sidebar
-            AdvancedListItem chatItem = new AdvancedListItem();
-            chatItem.setLeftGraphic(wrap(SVG.CHAT));
-            chatItem.setActionButtonVisible(false);
-            chatItem.setTitle(i18n("chat"));
-            chatItem.setOnAction(e -> FXUtils.openLink(Metadata.GROUPS_URL));
+            AdvancedListItem terracottaItem = new AdvancedListItem();
+            terracottaItem.setLeftGraphic(wrap(SVG.HOST));
+            terracottaItem.setActionButtonVisible(false);
+            terracottaItem.setTitle(i18n("terracotta"));
+            terracottaItem.setOnAction(e -> Controllers.navigate(Controllers.getTerracottaPage()));
 
             // the left sidebar
             AdvancedListBox sideBar = new AdvancedListBox()
@@ -194,8 +198,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                     .add(downloadItem)
                     .startCategory(i18n("settings.launcher.general").toUpperCase(Locale.ROOT))
                     .add(launcherSettingsItem)
-                    .add(chatItem)
-                    ;
+                    .add(terracottaItem);
 
             // the root page, with the sidebar in left, navigator in center.
             setLeft(sideBar);

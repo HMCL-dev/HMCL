@@ -17,7 +17,9 @@
  */
 package org.jackhuang.hmcl.util.i18n;
 
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -25,7 +27,16 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -42,6 +53,61 @@ public final class LocaleUtils {
 
     public static final String DEFAULT_LANGUAGE_KEY = "default";
 
+    private static final Map<String, String> subLanguageToParent = new HashMap<>();
+    private static final Map<String, String> iso3To2 = new HashMap<>();
+
+    static {
+        try {
+            for (String line : Lang.toIterable(IOUtils.readFullyAsString(LocaleUtils.class.getResourceAsStream("/assets/lang/sublanguages.csv")).lines())) {
+                if (line.startsWith("#") || line.isBlank()) {
+                    continue;
+                }
+
+                String[] languages = line.split(",");
+                if (languages.length < 2) {
+                    LOG.warning("Invalid line in sublanguages.csv: " + line);
+                    continue;
+                }
+
+                String parent = languages[0];
+                for (int i = 1; i < languages.length; i++) {
+                    subLanguageToParent.put(languages[i], parent);
+                }
+            }
+        } catch (Throwable e) {
+            LOG.warning("Failed to load sublanguages.csv", e);
+        }
+
+        try {
+            // Line Format: (?<iso2>[a-z]{2}),(?<iso3>[a-z]{3})
+            for (String line : Lang.toIterable(IOUtils.readFullyAsString(LocaleUtils.class.getResourceAsStream("/assets/lang/iso_languages.csv")).lines())) {
+                if (line.startsWith("#") || line.isBlank()) {
+                    continue;
+                }
+
+                String[] parts = line.split(",", 3);
+                if (parts.length != 2) {
+                    LOG.warning("Invalid line in iso_languages.csv: " + line);
+                    continue;
+                }
+
+                iso3To2.put(parts[1], parts[0]);
+            }
+        } catch (Throwable e) {
+            LOG.warning("Failed to load iso_languages.csv", e);
+        }
+    }
+
+    private static Locale getInstance(String language, String script, String region,
+                                      String variant) {
+        Locale.Builder builder = new Locale.Builder();
+        if (!language.isEmpty()) builder.setLanguage(language);
+        if (!script.isEmpty()) builder.setScript(script);
+        if (!region.isEmpty()) builder.setRegion(region);
+        if (!variant.isEmpty()) builder.setVariant(variant);
+        return builder.build();
+    }
+
     /// Convert a locale to the language key.
     ///
     /// The language key is in the format of BCP 47 language tag.
@@ -52,24 +118,38 @@ public final class LocaleUtils {
                 : locale.stripExtensions().toLanguageTag();
     }
 
-    public static boolean isISO1Language(String language) {
-        return language.length() == 2;
+    public static @NotNull String getRootLanguage(Locale locale) {
+        return getRootLanguage(locale.getLanguage());
     }
 
-    public static boolean isISO3Language(String language) {
-        return language.length() == 3;
-    }
-
-    public static @NotNull String getISO1Language(Locale locale) {
-        String language = locale.getLanguage();
+    /// - If `language` is a sublanguage of a [macrolanguage](https://en.wikipedia.org/wiki/ISO_639_macrolanguage),
+    /// return the macrolanguage;
+    /// - If `language` is an ISO 639 alpha-3 language code and there is a corresponding ISO 639 alpha-2 language code, return the ISO 639 alpha-2 code;
+    /// - If `language` is empty, return `en`;
+    /// - Otherwise, return the `language`.
+    public static @NotNull String getRootLanguage(String language) {
         if (language.isEmpty()) return "en";
-        return isISO3Language(language) ? toISO1Language(language) : language;
+        if (language.length() <= 2)
+            return language;
+
+        String iso2 = mapToISO2Language(language);
+        if (iso2 != null)
+            return iso2;
+
+        String parent = getParentLanguage(language);
+        return parent != null ? parent : language;
     }
 
     /// Get the script of the locale. If the script is empty and the language is Chinese,
     /// the script will be inferred based on the language, the region and the variant.
     public static @NotNull String getScript(Locale locale) {
         if (locale.getScript().isEmpty()) {
+            if (isEnglish(locale)) {
+                if ("UD".equals(locale.getCountry())) {
+                    return "Qabs";
+                }
+            }
+
             if (isChinese(locale)) {
                 if (CHINESE_LATN_VARIANTS.contains(locale.getVariant()))
                     return "Latn";
@@ -83,9 +163,93 @@ public final class LocaleUtils {
         return locale.getScript();
     }
 
+    private static final ConcurrentMap<Locale, List<Locale>> CANDIDATE_LOCALES = new ConcurrentHashMap<>();
+
     public static @NotNull List<Locale> getCandidateLocales(Locale locale) {
-        return DefaultResourceBundleControl.INSTANCE.getCandidateLocales("", locale);
+        return CANDIDATE_LOCALES.computeIfAbsent(locale, LocaleUtils::createCandidateLocaleList);
     }
+
+    // -------------
+
+    private static List<Locale> createCandidateLocaleList(Locale locale) {
+        String language = locale.getLanguage();
+        if (language.isEmpty())
+            return List.of(Locale.ENGLISH, Locale.ROOT);
+
+        String script = getScript(locale);
+        String region = locale.getCountry();
+        List<String> variants = locale.getVariant().isEmpty()
+                ? List.of()
+                : List.of(locale.getVariant().split("[_\\-]"));
+
+        ArrayList<Locale> result = new ArrayList<>();
+        do {
+            String currentLanguage;
+
+            if (language.length() <= 2) {
+                currentLanguage = language;
+            } else {
+                String iso2 = mapToISO2Language(language);
+                currentLanguage = iso2 != null
+                        ? iso2
+                        : language;
+            }
+
+            addCandidateLocales(result, currentLanguage, script, region, variants);
+        } while ((language = getParentLanguage(language)) != null);
+
+        result.add(Locale.ROOT);
+        return List.copyOf(result);
+    }
+
+    private static void addCandidateLocales(ArrayList<Locale> list,
+                                            String language,
+                                            String script,
+                                            String region,
+                                            List<String> variants) {
+        if (!variants.isEmpty()) {
+            for (String v : variants) {
+                list.add(getInstance(language, script, region, v));
+            }
+        }
+        if (!region.isEmpty()) {
+            list.add(getInstance(language, script, region, ""));
+        }
+        if (!script.isEmpty()) {
+            list.add(getInstance(language, script, "", ""));
+            if (!variants.isEmpty()) {
+                for (String v : variants) {
+                    list.add(getInstance(language, "", region, v));
+                }
+            }
+            if (!region.isEmpty()) {
+                list.add(getInstance(language, "", region, ""));
+            }
+        }
+
+        list.add(getInstance(language, "", "", ""));
+
+        if (language.equals("zh")) {
+            if (list.contains(LocaleUtils.LOCALE_ZH_HANT) && !list.contains(Locale.TRADITIONAL_CHINESE)) {
+                int chineseIdx = list.indexOf(Locale.CHINESE);
+                if (chineseIdx >= 0)
+                    list.add(chineseIdx, Locale.TRADITIONAL_CHINESE);
+            }
+
+            if (!list.contains(Locale.SIMPLIFIED_CHINESE)) {
+                int chineseIdx = list.indexOf(Locale.CHINESE);
+
+                if (chineseIdx >= 0) {
+                    if (list.contains(LocaleUtils.LOCALE_ZH_HANS))
+                        list.add(chineseIdx, Locale.SIMPLIFIED_CHINESE);
+                    else
+                        list.add(chineseIdx + 1, Locale.SIMPLIFIED_CHINESE);
+                }
+            }
+        }
+    }
+
+    // -------------
 
     public static <T> @Nullable T getByCandidateLocales(Map<String, T> map, List<Locale> candidateLocales) {
         for (Locale locale : candidateLocales) {
@@ -178,29 +342,27 @@ public final class LocaleUtils {
 
     // ---
 
-    /// Try to convert ISO 639-3 language codes to ISO 639-1 language codes.
-    public static String toISO1Language(String languageTag) {
-        return switch (languageTag) {
-            case "eng" -> "en";
-            case "spa" -> "es";
-            case "jpa" -> "ja";
-            case "rus" -> "ru";
-            case "ukr" -> "uk";
-            case "zho", "cmn", "lzh", "cdo", "cjy", "cpx", "czh",
-                 "gan", "hak", "hsn", "mnp", "nan", "wuu", "yue" -> "zh";
-            default -> languageTag;
-        };
+    /// Map ISO 639 alpha-3 language codes to ISO 639 alpha-2 language codes.
+    /// Returns `null` if there is no corresponding ISO 639 alpha-2 language code.
+    public static @Nullable String mapToISO2Language(String iso3Language) {
+        return iso3To2.get(iso3Language);
+    }
+
+    /// If `language` is a sublanguage of a [macrolanguage](https://en.wikipedia.org/wiki/ISO_639_macrolanguage),
+    /// return the macrolanguage; otherwise, return `null`.
+    public static @Nullable String getParentLanguage(String language) {
+        return subLanguageToParent.get(language);
     }
 
     public static boolean isEnglish(Locale locale) {
-        return "en".equals(getISO1Language(locale));
+        return "en".equals(getRootLanguage(locale));
     }
 
     public static final Set<String> CHINESE_TRADITIONAL_REGIONS = Set.of("TW", "HK", "MO");
     public static final Set<String> CHINESE_LATN_VARIANTS = Set.of("pinyin", "wadegile", "tongyong");
 
     public static boolean isChinese(Locale locale) {
-        return "zh".equals(getISO1Language(locale));
+        return "zh".equals(getRootLanguage(locale));
     }
 
     private LocaleUtils() {

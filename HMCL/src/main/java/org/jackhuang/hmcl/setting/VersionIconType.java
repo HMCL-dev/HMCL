@@ -48,4 +48,8 @@ public enum VersionIconType {
     public Image getIcon() {
         return FXUtils.newBuiltinImage(resourceUrl);
     }
+
+    public Image getIcon(int size) {
+        return FXUtils.newBuiltinImage(resourceUrl, size, size, true, true);
+    }
 }

@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
-import java.net.URLConnection;
+import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -45,6 +45,9 @@ public final class CacheFileTask extends FetchTask<Path> {
     public CacheFileTask(@NotNull URI uri) {
         super(List.of(uri));
         setName(uri.toString());
+
+        if (!NetworkUtils.isHttpUri(uri))
+            throw new IllegalArgumentException(uri.toString());
     }
 
     @Override
@@ -69,8 +72,9 @@ public final class CacheFileTask extends FetchTask<Path> {
     }
 
     @Override
-    protected Context getContext(URLConnection connection, boolean checkETag, String bmclapiHash) throws IOException {
+    protected Context getContext(HttpResponse<?> response, boolean checkETag, String bmclapiHash) throws IOException {
         assert checkETag;
+        assert response != null;
 
         Path temp = Files.createTempFile("hmcl-download-", null);
         OutputStream fileOutput = Files.newOutputStream(temp);
@@ -99,7 +103,7 @@ public final class CacheFileTask extends FetchTask<Path> {
                 }
 
                 try {
-                    setResult(repository.cacheRemoteFile(connection, temp));
+                    setResult(repository.cacheRemoteFile(response, temp));
                 } finally {
                     try {
                         Files.deleteIfExists(temp);
