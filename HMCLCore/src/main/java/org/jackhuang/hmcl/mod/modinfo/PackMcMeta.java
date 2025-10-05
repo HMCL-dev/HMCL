@@ -108,30 +108,6 @@ public class PackMcMeta implements Validation {
 
     public static class PackInfoDeserializer implements JsonDeserializer<PackInfo> {
 
-        private String parseText(JsonElement json) throws JsonParseException {
-            if (json.isJsonPrimitive()) {
-                JsonPrimitive primitive = json.getAsJsonPrimitive();
-                if (primitive.isBoolean()) {
-                    return Boolean.toString(primitive.getAsBoolean());
-                } else if (primitive.isNumber()) {
-                    return primitive.getAsNumber().toString();
-                } else if (primitive.isString()) {
-                    return primitive.getAsString();
-                } else {
-                    throw new JsonParseException("pack.mcmeta text not boolean nor number nor string???");
-                }
-            } else if (json.isJsonArray()) {
-                JsonArray arr = json.getAsJsonArray();
-                if (arr.size() == 0) {
-                    return "";
-                } else {
-                    return parseText(arr.get(0));
-                }
-            } else {
-                throw new JsonParseException("pack.mcmeta text should be a string, a boolean, a number or a list of raw JSON text components");
-            }
-        }
-
         private PackVersion parseVersion(JsonElement json) throws JsonParseException {
             if (json == null || json.isJsonNull()) {
                 return new PackVersion(0, 0);
@@ -155,6 +131,21 @@ public class PackMcMeta implements Validation {
             throw new JsonParseException("Datapack version format must be a number or a [major, minor] array.");
         }
 
+        private void parseComponent(JsonElement element, List<LocalModFile.Description.Part> parts) throws JsonParseException {
+            if (element.isJsonPrimitive()) {
+                parts.add(new LocalModFile.Description.Part(element.getAsString()));
+            } else if (element.isJsonObject()) {
+                JsonObject descriptionPart = element.getAsJsonObject();
+                parts.add(new LocalModFile.Description.Part(descriptionPart.get("text").getAsString(), Optional.ofNullable(descriptionPart.get("color")).map(JsonElement::getAsString).orElse("")));
+            } else if (element.isJsonArray()) {
+                for (JsonElement childElement : element.getAsJsonArray()) {
+                    parseComponent(childElement, parts);
+                }
+            } else {
+                throw new JsonParseException("Unsupported type in description. Expected a string, object, or array, but got: " + element);
+            }
+        }
+
         private List<LocalModFile.Description.Part> parseDescription(JsonElement json) throws JsonParseException{
             List<LocalModFile.Description.Part> parts = new ArrayList<>();
 
@@ -162,21 +153,7 @@ public class PackMcMeta implements Validation {
                 return parts;
             }
 
-            if (json.isJsonPrimitive()) {
-                parts.add(new LocalModFile.Description.Part(parseText(json)));
-            } else if (json.isJsonArray()) {
-                for (JsonElement element : json.getAsJsonArray()) {
-                    if (element.isJsonPrimitive()) {
-                        parts.add(new LocalModFile.Description.Part(parseText(element)));
-                    } else {
-                        JsonObject descriptionPart = element.getAsJsonObject();
-                        parts.add(new LocalModFile.Description.Part(descriptionPart.get("text").getAsString(), Optional.ofNullable(descriptionPart.get("color")).map(JsonElement::getAsString).orElse("")));
-                    }
-
-                }
-            } else {
-                throw new JsonParseException("pack.mcmeta::pack::json should be String or array of text objects with text and color fields");
-            }
+            parseComponent(json, parts);
             return parts;
         }
 
