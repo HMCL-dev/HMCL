@@ -75,10 +75,10 @@ public class PackMcMeta implements Validation {
         private final LocalModFile.Description description;
 
         public PackInfo() {
-            this(0, new PackVersion(0,0), new PackVersion(0,0), new LocalModFile.Description(Collections.emptyList()));
+            this(0, new PackVersion(0, 0), new PackVersion(0, 0), new LocalModFile.Description(Collections.emptyList()));
         }
 
-        public PackInfo(int packFormat,PackVersion minPackVersion,PackVersion maxPackVersion, LocalModFile.Description description) {
+        public PackInfo(int packFormat, PackVersion minPackVersion, PackVersion maxPackVersion, LocalModFile.Description description) {
             this.packFormat = packFormat;
             this.minPackVersion = minPackVersion;
             this.maxPackVersion = maxPackVersion;
@@ -86,11 +86,11 @@ public class PackMcMeta implements Validation {
         }
 
         public PackVersion getEffectiveMinVersion() {
-            return minPackVersion.majorVersion != 0 ? minPackVersion : new PackVersion(packFormat,0);
+            return minPackVersion.majorVersion != 0 ? minPackVersion : new PackVersion(packFormat, 0);
         }
 
         public PackVersion getEffectiveMaxVersion() {
-            return maxPackVersion.majorVersion != 0 ? maxPackVersion : new PackVersion(packFormat,0);
+            return maxPackVersion.majorVersion != 0 ? maxPackVersion : new PackVersion(packFormat, 0);
         }
 
         public LocalModFile.Description getDescription() {
@@ -101,7 +101,7 @@ public class PackMcMeta implements Validation {
     public record PackVersion(int majorVersion, int minorVersion) {
 
         @Override
-        public String toString(){
+        public String toString() {
             return majorVersion + "." + minorVersion;
         }
     }
@@ -146,7 +146,7 @@ public class PackMcMeta implements Validation {
             }
         }
 
-        private List<LocalModFile.Description.Part> parseDescription(JsonElement json) throws JsonParseException{
+        private List<LocalModFile.Description.Part> parseDescription(JsonElement json) throws JsonParseException {
             List<LocalModFile.Description.Part> parts = new ArrayList<>();
 
             if (json == null || json.isJsonNull()) {
