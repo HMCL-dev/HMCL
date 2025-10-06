@@ -24,6 +24,8 @@ import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.util.Immutable;
+import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -149,23 +151,38 @@ public class PackMcMeta implements Validation {
 
     public static class PackInfoDeserializer implements JsonDeserializer<PackInfo> {
 
+        private List<LocalModFile.Description.Part> pairToPart(List<Pair<String, String>> lists) {
+            List<LocalModFile.Description.Part> parts = new ArrayList<>();
+            for (Pair<String, String> list : lists) {
+                parts.add(new LocalModFile.Description.Part(list.getKey(), list.getValue()));
+            }
+            return parts;
+        }
+
         private void parseComponent(JsonElement element, List<LocalModFile.Description.Part> parts, String parentColor) throws JsonParseException {
             if (parentColor == null) {
                 parentColor = "";
             }
+            String color = parentColor;
             if (element instanceof JsonPrimitive primitive) {
-                parts.add(new LocalModFile.Description.Part(primitive.getAsString(), parentColor));
+                parts.addAll(pairToPart(StringUtils.parseMinecraftColorCodes(primitive.getAsString())));
             } else if (element instanceof JsonObject jsonObj) {
-                String color = jsonObj.has("color") ? jsonObj.get("color").getAsString() : parentColor;
-                if (jsonObj.has("text")) {
-                    parts.add(new LocalModFile.Description.Part(jsonObj.get("text").getAsString(), color));
+                if (jsonObj.get("color") instanceof JsonPrimitive primitive) {
+                    color = primitive.getAsString();
                 }
-                if (jsonObj.has("extra")) {
-                    parseComponent(jsonObj.get("extra"), parts, color);
+                if (jsonObj.get("text") instanceof JsonPrimitive primitive) {
+                    parts.add(new LocalModFile.Description.Part(primitive.getAsString(), color));
+                }
+                if (jsonObj.get("extra") instanceof JsonArray jsonArray) {
+                    parseComponent(jsonArray, parts, color);
                 }
             } else if (element instanceof JsonArray jsonArray) {
+                if (jsonArray.get(0) instanceof JsonObject jsonObj && jsonObj.get("color") instanceof JsonPrimitive primitive) {
+                    color = primitive.getAsString();
+                }
+
                 for (JsonElement childElement : jsonArray) {
-                    parseComponent(childElement, parts, parentColor);
+                    parseComponent(childElement, parts, color);
                 }
             } else {
                 LOG.warning("Unsupported type in description. Expected a string, object, or array, but got: " + element);

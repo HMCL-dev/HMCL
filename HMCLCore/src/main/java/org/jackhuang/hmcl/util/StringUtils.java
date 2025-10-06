@@ -20,6 +20,8 @@ package org.jackhuang.hmcl.util;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author huangyuhui
@@ -87,7 +89,7 @@ public final class StringUtils {
                         builder.append(str, start, i);
                     }
                     builder.append(' ');
-                    i = whitespaceEnd ;
+                    i = whitespaceEnd;
                     continue;
                 }
             }
@@ -396,7 +398,65 @@ public final class StringUtils {
         if (original.indexOf('\u00A7') < 0)
             return original;
 
-        return original.replaceAll("\u00A7[0-9a-gklmnor]", "");
+        return original.replaceAll("\u00A7[0-9a-fk-or]", "");
+    }
+
+    public static final Pattern COLOR_CODE_PATTERN = Pattern.compile("§([0-9a-fk-or])");
+
+    public static List<Pair<String, String>> parseMinecraftColorCodes(String original) {
+        List<Pair<String, String>> parts = new ArrayList<>();
+        if (isBlank(original)) {
+            return parts;
+        }
+        Matcher matcher = COLOR_CODE_PATTERN.matcher(original);
+        String currentColor = "";
+        int lastIndex = 0;
+
+        while (matcher.find()) {
+            String text = original.substring(lastIndex, matcher.start());
+            if (!text.isEmpty()) {
+                parts.add(new Pair<>(text, currentColor));
+            }
+
+            char code = matcher.group(1).charAt(0);
+            String newColor = getColorNameFromChar(code);
+
+            if (newColor != null && !"format_code".equals(newColor)) {
+                currentColor = newColor;
+            }
+
+            lastIndex = matcher.end();
+        }
+
+        if (lastIndex < original.length()) {
+            String remainingText = original.substring(lastIndex);
+            parts.add(new Pair<>(remainingText, currentColor));
+        }
+        return parts;
+    }
+
+    private static String getColorNameFromChar(char code) {
+        return switch (code) {
+            case '0' -> "black";
+            case '1' -> "dark_blue";
+            case '2' -> "dark_green";
+            case '3' -> "dark_aqua";
+            case '4' -> "dark_red";
+            case '5' -> "dark_purple";
+            case '6' -> "gold";
+            case '7' -> "gray";
+            case '8' -> "dark_gray";
+            case '9' -> "blue";
+            case 'a' -> "green";
+            case 'b' -> "aqua";
+            case 'c' -> "red";
+            case 'd' -> "light_purple";
+            case 'e' -> "yellow";
+            case 'f' -> "white";
+            case 'k', 'l', 'm', 'n', 'o' -> "format_code";
+            case 'r' -> "";
+            default -> null;
+        };
     }
 
     public static String parseEscapeSequence(String str) {
