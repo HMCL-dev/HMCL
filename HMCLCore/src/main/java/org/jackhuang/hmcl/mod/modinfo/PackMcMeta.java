@@ -151,10 +151,10 @@ public class PackMcMeta implements Validation {
 
     public static class PackInfoDeserializer implements JsonDeserializer<PackInfo> {
 
-        private List<LocalModFile.Description.Part> pairToPart(List<Pair<String, String>> lists) {
+        private List<LocalModFile.Description.Part> pairToPart(List<Pair<String, String>> lists, String color) {
             List<LocalModFile.Description.Part> parts = new ArrayList<>();
             for (Pair<String, String> list : lists) {
-                parts.add(new LocalModFile.Description.Part(list.getKey(), list.getValue()));
+                parts.add(new LocalModFile.Description.Part(list.getKey(), list.getValue().isEmpty() ? color : list.getValue()));
             }
             return parts;
         }
@@ -165,13 +165,13 @@ public class PackMcMeta implements Validation {
             }
             String color = parentColor;
             if (element instanceof JsonPrimitive primitive) {
-                parts.addAll(pairToPart(StringUtils.parseMinecraftColorCodes(primitive.getAsString())));
+                parts.addAll(pairToPart(StringUtils.parseMinecraftColorCodes(primitive.getAsString()), color));
             } else if (element instanceof JsonObject jsonObj) {
                 if (jsonObj.get("color") instanceof JsonPrimitive primitive) {
                     color = primitive.getAsString();
                 }
                 if (jsonObj.get("text") instanceof JsonPrimitive primitive) {
-                    parts.add(new LocalModFile.Description.Part(primitive.getAsString(), color));
+                    parts.addAll(pairToPart(StringUtils.parseMinecraftColorCodes(primitive.getAsString()), color));
                 }
                 if (jsonObj.get("extra") instanceof JsonArray jsonArray) {
                     parseComponent(jsonArray, parts, color);
@@ -200,7 +200,6 @@ public class PackMcMeta implements Validation {
                 parseComponent(json, parts, "");
             } catch (Exception e) {
                 parts.clear();
-                parts.add(new LocalModFile.Description.Part("简介解析出错"));
                 LOG.warning("Description parsing error", e);
             }
 
