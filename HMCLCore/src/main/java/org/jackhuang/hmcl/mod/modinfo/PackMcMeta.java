@@ -132,10 +132,10 @@ public class PackMcMeta implements Validation {
             try {
                 if (element instanceof JsonPrimitive primitive && primitive.isNumber()) {
                     return new PackVersion(element.getAsInt(), 0);
-                }else if (element instanceof JsonArray jsonArray) {
-                    if (jsonArray.size() == 1) {
+                } else if (element instanceof JsonArray jsonArray) {
+                    if (jsonArray.size() == 1 && jsonArray.get(0) instanceof JsonPrimitive) {
                         return new PackVersion(jsonArray.get(0).getAsInt(), 0);
-                    } else if (jsonArray.size() == 2) {
+                    } else if (jsonArray.size() == 2 && jsonArray.get(0) instanceof JsonPrimitive && jsonArray.get(1) instanceof JsonPrimitive) {
                         return new PackVersion(jsonArray.get(0).getAsInt(), jsonArray.get(1).getAsInt());
                     } else {
                         LOG.warning("Datapack version array must have 1 or 2 elements, but got " + jsonArray.size());
@@ -177,7 +177,7 @@ public class PackMcMeta implements Validation {
                     parseComponent(jsonArray, parts, color);
                 }
             } else if (element instanceof JsonArray jsonArray) {
-                if (jsonArray.get(0) instanceof JsonObject jsonObj && jsonObj.get("color") instanceof JsonPrimitive primitive) {
+                if (!jsonArray.isEmpty() && jsonArray.get(0) instanceof JsonObject jsonObj && jsonObj.get("color") instanceof JsonPrimitive primitive) {
                     color = primitive.getAsString();
                 }
 
@@ -198,7 +198,7 @@ public class PackMcMeta implements Validation {
 
             try {
                 parseComponent(json, parts, "");
-            } catch (Exception e) {
+            } catch (JsonParseException | IllegalStateException e) {
                 parts.clear();
                 LOG.warning("An unexpected error occurred while parsing a description component. The description may be incomplete.", e);
             }
@@ -210,11 +210,10 @@ public class PackMcMeta implements Validation {
         public PackInfo deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             JsonObject packInfo = json.getAsJsonObject();
             int packFormat;
-            try {
-                packFormat = Optional.ofNullable(packInfo.get("pack_format")).map(JsonElement::getAsInt).orElse(0);
-            } catch (NumberFormatException e) {
+            if (packInfo.get("pack_format") instanceof JsonPrimitive primitive && primitive.isNumber()) {
+                packFormat = primitive.getAsInt();
+            } else {
                 packFormat = 0;
-                LOG.warning("Failed to parse 'pack_format' as a number. Defaulting to 0.");
             }
             PackVersion minVersion = PackVersion.fromJson(packInfo.get("min_format"));
             PackVersion maxVersion = PackVersion.fromJson(packInfo.get("max_format"));
