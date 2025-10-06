@@ -386,7 +386,8 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
         @Override
         public int compareTo(@NotNull ModListPageSkin.ModInfoObject o) {
-            return localModFile.getFileName().toLowerCase().compareTo(o.localModFile.getFileName().toLowerCase());
+            return localModFile.getFileName().toLowerCase(Locale.ROOT)
+                    .compareTo(o.localModFile.getFileName().toLowerCase(Locale.ROOT));
         }
     }
 
