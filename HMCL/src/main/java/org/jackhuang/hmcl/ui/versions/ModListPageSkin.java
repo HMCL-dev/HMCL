@@ -37,6 +37,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
@@ -418,6 +419,9 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             HBox titleContainer = new HBox();
             titleContainer.setSpacing(8);
 
+            Stage stage = Controllers.getStage();
+            maxWidthProperty().bind(stage.widthProperty().multiply(0.7));
+
             ImageView imageView = new ImageView();
             FXUtils.limitSize(imageView, 40, 40);
             loadModIcon(modInfo.getModInfo(), 40)
@@ -456,6 +460,11 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             descriptionPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             descriptionPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             descriptionPane.setFitToWidth(true);
+            description.heightProperty().addListener((obs, oldVal, newVal) -> {
+                double maxHeight = stage.getHeight() * 0.5;
+                double targetHeight = Math.min(newVal.doubleValue(), maxHeight);
+                descriptionPane.setPrefViewportHeight(targetHeight);
+            });
 
             setBody(descriptionPane);
 
