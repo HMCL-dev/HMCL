@@ -107,7 +107,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
         }
 
         String getSubtitle() {
-            return StringUtils.parseColorEscapes(packInfo.getDescription().toString());
+            return packInfo.getDescription().toString();
         }
 
         Datapack.Pack getPackInfo() {

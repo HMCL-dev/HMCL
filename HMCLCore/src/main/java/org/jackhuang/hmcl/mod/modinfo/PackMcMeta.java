@@ -124,27 +124,27 @@ public class PackMcMeta implements Validation {
             return this.equals(UNSPECIFIED);
         }
 
-        public static PackVersion fromJson(JsonElement json) throws JsonParseException {
-            if (json == null || json.isJsonNull()) {
+        public static PackVersion fromJson(JsonElement element) throws JsonParseException {
+            if (element == null || element.isJsonNull()) {
                 return UNSPECIFIED;
             }
 
-            if (json.isJsonPrimitive() && json.getAsJsonPrimitive().isNumber()) {
-                return new PackVersion(json.getAsInt(), 0);
-            }
-
-            if (json.isJsonArray()) {
-                JsonArray arr = json.getAsJsonArray();
-                if (arr.size() == 1) {
-                    return new PackVersion(arr.get(0).getAsInt(), 0);
-                } else if (arr.size() == 2) {
-                    return new PackVersion(arr.get(0).getAsInt(), arr.get(1).getAsInt());
-                } else {
-                    LOG.warning("Datapack version array must have 1 or 2 elements, but got " + arr.size());
+            try {
+                if (element instanceof JsonPrimitive primitive && primitive.isNumber()) {
+                    return new PackVersion(element.getAsInt(), 0);
+                }else if (element instanceof JsonArray jsonArray) {
+                    if (jsonArray.size() == 1) {
+                        return new PackVersion(jsonArray.get(0).getAsInt(), 0);
+                    } else if (jsonArray.size() == 2) {
+                        return new PackVersion(jsonArray.get(0).getAsInt(), jsonArray.get(1).getAsInt());
+                    } else {
+                        LOG.warning("Datapack version array must have 1 or 2 elements, but got " + jsonArray.size());
+                    }
                 }
+            } catch (NumberFormatException e) {
+                LOG.warning("Failed to parse datapack version component as a number. Value: " + element, e);
             }
 
-            LOG.warning("Datapack version format must be a number or a [major, minor] array.");
             return UNSPECIFIED;
         }
     }
@@ -185,7 +185,7 @@ public class PackMcMeta implements Validation {
                     parseComponent(childElement, parts, color);
                 }
             } else {
-                LOG.warning("Unsupported type in description. Expected a string, object, or array, but got: " + element);
+                LOG.warning("Skipping unsupported element in description. Expected a string, object, or array, but got type " + element.getClass().getSimpleName() + ". Value: " + element);
             }
         }
 
@@ -200,7 +200,7 @@ public class PackMcMeta implements Validation {
                 parseComponent(json, parts, "");
             } catch (Exception e) {
                 parts.clear();
-                LOG.warning("Description parsing error", e);
+                LOG.warning("An unexpected error occurred while parsing a description component. The description may be incomplete.", e);
             }
 
             return parts;
@@ -214,7 +214,7 @@ public class PackMcMeta implements Validation {
                 packFormat = Optional.ofNullable(packInfo.get("pack_format")).map(JsonElement::getAsInt).orElse(0);
             } catch (NumberFormatException e) {
                 packFormat = 0;
-                LOG.warning("Pack format is not a number");
+                LOG.warning("Failed to parse 'pack_format' as a number. Defaulting to 0.");
             }
             PackVersion minVersion = PackVersion.fromJson(packInfo.get("min_format"));
             PackVersion maxVersion = PackVersion.fromJson(packInfo.get("max_format"));

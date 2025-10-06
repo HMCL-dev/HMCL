@@ -401,7 +401,7 @@ public final class StringUtils {
         return original.replaceAll("\u00A7[0-9a-fk-or]", "");
     }
 
-    public static final Pattern COLOR_CODE_PATTERN = Pattern.compile("§([0-9a-fk-or])");
+    public static final Pattern COLOR_CODE_PATTERN = Pattern.compile("\u00A7([0-9a-fk-or])");
 
     public static List<Pair<String, String>> parseMinecraftColorCodes(String original) {
         List<Pair<String, String>> parts = new ArrayList<>();
