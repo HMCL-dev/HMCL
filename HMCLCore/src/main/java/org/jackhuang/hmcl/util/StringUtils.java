@@ -401,12 +401,13 @@ public final class StringUtils {
         return original.replaceAll("\u00A7[0-9a-fk-or]", "");
     }
 
-    public static final Pattern COLOR_CODE_PATTERN = Pattern.compile("\u00A7([0-9a-fk-or])");
+    private static final Pattern COLOR_CODE_PATTERN = Pattern.compile("\u00A7([0-9a-fk-or])");
+    private static final String FORMAT_CODE = "format_code";
 
     public static List<Pair<String, String>> parseMinecraftColorCodes(String original) {
-        List<Pair<String, String>> parts = new ArrayList<>();
+        List<Pair<String, String>> pairs = new ArrayList<>();
         if (isBlank(original)) {
-            return parts;
+            return pairs;
         }
         Matcher matcher = COLOR_CODE_PATTERN.matcher(original);
         String currentColor = "";
@@ -415,13 +416,13 @@ public final class StringUtils {
         while (matcher.find()) {
             String text = original.substring(lastIndex, matcher.start());
             if (!text.isEmpty()) {
-                parts.add(new Pair<>(text, currentColor));
+                pairs.add(new Pair<>(text, currentColor));
             }
 
             char code = matcher.group(1).charAt(0);
             String newColor = getColorNameFromChar(code);
 
-            if (newColor != null && !"format_code".equals(newColor)) {
+            if (newColor != null && !newColor.equals(FORMAT_CODE)) {
                 currentColor = newColor;
             }
 
@@ -430,9 +431,9 @@ public final class StringUtils {
 
         if (lastIndex < original.length()) {
             String remainingText = original.substring(lastIndex);
-            parts.add(new Pair<>(remainingText, currentColor));
+            pairs.add(new Pair<>(remainingText, currentColor));
         }
-        return parts;
+        return pairs;
     }
 
     private static String getColorNameFromChar(char code) {
@@ -453,7 +454,7 @@ public final class StringUtils {
             case 'd' -> "light_purple";
             case 'e' -> "yellow";
             case 'f' -> "white";
-            case 'k', 'l', 'm', 'n', 'o' -> "format_code";
+            case 'k', 'l', 'm', 'n', 'o' -> FORMAT_CODE;
             case 'r' -> "";
             default -> null;
         };
