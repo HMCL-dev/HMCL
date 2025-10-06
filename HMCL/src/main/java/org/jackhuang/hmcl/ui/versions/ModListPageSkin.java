@@ -81,7 +81,6 @@ import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
-import static org.jackhuang.hmcl.util.StringUtils.isNotBlank;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -597,46 +596,48 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
             content.getTags().clear();
 
+            LocalModFile modInfo = dataItem.getModInfo();
+            ModTranslations.Mod modTranslations = dataItem.getModTranslations();
+
             SoftReference<Image> iconCache = dataItem.iconCache;
             Image icon;
             if (iconCache != null && (icon = iconCache.get()) != null) {
                 imageView.setImage(icon);
             } else {
-                loadModIcon(dataItem.getModInfo(), 24)
+                loadModIcon(modInfo, 24)
                         .whenComplete(Schedulers.javafx(), (image, exception) -> {
                             dataItem.iconCache = new SoftReference<>(image);
                             imageView.setImage(image);
                         }).start();
             }
 
-            if (dataItem.getModTranslations() != null && I18n.isUseChinese()) {
-                content.setTitle(dataItem.getModTranslations().getDisplayName());
-            } else {
-                content.setTitle(dataItem.getModInfo().getName());
-            }
+            if (modTranslations != null && I18n.isUseChinese())
+                content.setTitle(modTranslations.getDisplayName());
+            else
+                content.setTitle(modInfo.getName());
 
-            content.setSubtitle(FileUtils.getName(dataItem.getModInfo().getFile()));
+            content.setSubtitle(FileUtils.getName(modInfo.getFile()));
 
-            if (StringUtils.isNotBlank(dataItem.getModInfo().getVersion())) {
-                content.addTag(dataItem.getModInfo().getVersion());
+            if (StringUtils.isNotBlank(modInfo.getVersion())) {
+                content.addTag(modInfo.getVersion());
             }
 
             if (booleanProperty != null) {
                 checkBox.selectedProperty().unbindBidirectional(booleanProperty);
             }
             checkBox.selectedProperty().bindBidirectional(booleanProperty = dataItem.active);
-            restoreButton.setVisible(!dataItem.getModInfo().getMod().getOldFiles().isEmpty());
+            restoreButton.setVisible(!modInfo.getMod().getOldFiles().isEmpty());
             restoreButton.setOnAction(e -> {
-                menu.get().getContent().setAll(dataItem.getModInfo().getMod().getOldFiles().stream()
+                menu.get().getContent().setAll(modInfo.getMod().getOldFiles().stream()
                         .map(localModFile -> new IconedMenuItem(null, localModFile.getVersion(),
-                                () -> getSkinnable().rollback(dataItem.getModInfo(), localModFile),
+                                () -> getSkinnable().rollback(modInfo, localModFile),
                                 popup.get()))
                         .collect(Collectors.toList())
                 );
 
                 popup.get().show(restoreButton, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, 0, restoreButton.getHeight());
             });
-            revealButton.setOnAction(e -> FXUtils.showFileInExplorer(dataItem.getModInfo().getFile()));
+            revealButton.setOnAction(e -> FXUtils.showFileInExplorer(modInfo.getFile()));
             infoButton.setOnAction(e -> Controllers.dialog(new ModInfoDialog(dataItem)));
         }
     }
