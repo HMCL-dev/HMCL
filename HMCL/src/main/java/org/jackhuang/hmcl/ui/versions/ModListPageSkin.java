@@ -420,7 +420,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             titleContainer.setSpacing(8);
 
             Stage stage = Controllers.getStage();
-            maxWidthProperty().bind(stage.widthProperty().multiply(0.5));
+            maxWidthProperty().bind(stage.widthProperty().multiply(0.7));
 
             ImageView imageView = new ImageView();
             FXUtils.limitSize(imageView, 40, 40);
@@ -461,9 +461,9 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             descriptionPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             descriptionPane.setFitToWidth(true);
             description.heightProperty().addListener((obs, oldVal, newVal) -> {
-                double maxHeight = stage.getHeight() * 0.3;
+                double maxHeight = stage.getHeight() * 0.5;
                 double targetHeight = Math.min(newVal.doubleValue(), maxHeight);
-                descriptionPane.setPrefHeight(targetHeight);
+                descriptionPane.setPrefViewportHeight(targetHeight);
             });
 
             setBody(descriptionPane);
