@@ -39,6 +39,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.RemoteMod;
@@ -617,6 +618,30 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                 content.setTitle(modInfo.getName());
 
             content.setSubtitle(FileUtils.getName(modInfo.getFile()));
+
+            LibraryAnalyzer libraryAnalyzer = modInfo.getModManager().getLibraryAnalyzer();
+            if (libraryAnalyzer != null && !libraryAnalyzer.getModLoaders().contains(modInfo.getModLoaderType())) {
+                switch (dataItem.getModInfo().getModLoaderType()) {
+                    case FORGE:
+                        content.addTagWarning(i18n("install.installer.forge"));
+                        break;
+                    case CLEANROOM:
+                        content.addTagWarning(i18n("install.installer.cleanroom"));
+                        break;
+                    case NEO_FORGED:
+                        content.addTagWarning(i18n("install.installer.neoforge"));
+                        break;
+                    case FABRIC:
+                        content.addTagWarning(i18n("install.installer.fabric"));
+                        break;
+                    case LITE_LOADER:
+                        content.addTagWarning(i18n("install.installer.liteloader"));
+                        break;
+                    case QUILT:
+                        content.addTagWarning(i18n("install.installer.quilt"));
+                        break;
+                }
+            }
 
             if (StringUtils.isNotBlank(modInfo.getVersion())) {
                 content.addTag(modInfo.getVersion());

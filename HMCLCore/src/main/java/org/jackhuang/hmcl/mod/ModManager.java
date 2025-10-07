@@ -84,6 +84,10 @@ public final class ModManager {
         return repository.getModsDirectory(id);
     }
 
+    public LibraryAnalyzer getLibraryAnalyzer() {
+        return analyzer;
+    }
+
     public LocalMod getLocalMod(String id, ModLoaderType modLoaderType) {
         return localMods.computeIfAbsent(new LocalMod(id, modLoaderType), x -> x);
     }

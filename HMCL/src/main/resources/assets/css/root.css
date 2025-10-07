@@ -294,8 +294,8 @@
 }
 
 .two-line-list-item > .first-line > .tag-warning {
-    -fx-text-fill: #red;
-    -fx-background-color: -fx-base-rippler-color;
+    -fx-text-fill: #D34336;;
+    -fx-background-color: #F8D7DA;
     -fx-padding: 2;
     -fx-font-weight: normal;
     -fx-font-size: 12px;
