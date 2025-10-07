@@ -408,23 +408,23 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                     }).start();
 
             TwoLineListItem title = new TwoLineListItem();
-            title.setTitle(modInfo.getModInfo().getName());
-            if (modInfo.getModTranslations() != null) {
-                title.addTag(modInfo.getModTranslations().getDisplayName());
-            }
+            if (modInfo.getModTranslations() != null && I18n.isUseChinese())
+                title.setTitle(modInfo.getModTranslations().getDisplayName());
+            else
+                title.setTitle(modInfo.getModInfo().getName());
 
-            List<String> subtitleParts = new ArrayList<>();
-            subtitleParts.add(FileUtils.getName(modInfo.getModInfo().getFile()));
+            StringJoiner subtitle = new StringJoiner(" | ");
+            subtitle.add(FileUtils.getName(modInfo.getModInfo().getFile()));
             if (StringUtils.isNotBlank(modInfo.getModInfo().getGameVersion())) {
-                subtitleParts.add(modInfo.getModInfo().getGameVersion());
+                subtitle.add(modInfo.getModInfo().getGameVersion());
             }
             if (StringUtils.isNotBlank(modInfo.getModInfo().getVersion())) {
-                subtitleParts.add(modInfo.getModInfo().getVersion());
+                subtitle.add(modInfo.getModInfo().getVersion());
             }
             if (StringUtils.isNotBlank(modInfo.getModInfo().getAuthors())) {
-                subtitleParts.add(i18n("archive.author") + ": " + modInfo.getModInfo().getAuthors());
+                subtitle.add(i18n("archive.author") + ": " + modInfo.getModInfo().getAuthors());
             }
-            title.setSubtitle(String.join(", ", subtitleParts));
+            title.setSubtitle(subtitle.toString());
 
             titleContainer.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), title);
             setHeading(titleContainer);
