@@ -622,14 +622,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             if (StringUtils.isNotBlank(modInfo.getId()))
                 joiner.add(modInfo.getId());
 
-            String fileName = FileUtils.getName(modInfo.getFile());
-            if (StringUtils.isNotBlank(modInfo.getFileName())) {
-                if (!fileName.startsWith(modInfo.getFileName())) {
-                    joiner.add(modInfo.getFileName());
-                }
-            }
-
-            joiner.add(fileName);
+            joiner.add(FileUtils.getName(modInfo.getFile()));
 
             content.setSubtitle(joiner.toString());
 
