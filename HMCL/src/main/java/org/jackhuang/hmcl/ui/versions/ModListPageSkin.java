@@ -632,11 +632,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             content.setSubtitle(joiner.toString());
 
             ModLoaderType modLoaderType = modInfo.getModLoaderType();
-            LibraryAnalyzer libraryAnalyzer = modInfo.getModManager().getLibraryAnalyzer();
-            if (libraryAnalyzer != null && modLoaderType != null
-                    && !libraryAnalyzer.getModLoaders().contains(modLoaderType)
-                    && !(modLoaderType == ModLoaderType.FORGE && libraryAnalyzer.getModLoaders().contains(ModLoaderType.CLEANROOM))
-            ) {
+            if (ModListPageSkin.this.getSkinnable().supportedLoaders.contains(modLoaderType)) {
                 pseudoClassStateChanged(WARNING, true);
                 switch (dataItem.getModInfo().getModLoaderType()) {
                     case FORGE:

@@ -59,7 +59,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     private String versionId;
     private LibraryAnalyzer libraryAnalyzer;
 
-    private final EnumSet<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
+    final EnumSet<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
 
     public ModListPage() {
         FXUtils.applyDragListener(this, it -> Arrays.asList("jar", "zip", "litemod").contains(FileUtils.getExtension(it)), mods -> {
@@ -131,7 +131,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                 LOG.warning("Failed to load mods", exception);
                 getItems().clear();
             }
-            loadingProperty().set(false);
+            setLoading(false);
         }, Schedulers.javafx());
     }
 

@@ -63,7 +63,7 @@ public final class ModManager {
     private final GameRepository repository;
     private final String id;
     private final TreeSet<LocalModFile> localModFiles = new TreeSet<>();
-    private final HashMap<LocalMod, LocalMod> localMods = new HashMap<>();
+    private final HashMap<Pair<String, ModLoaderType>, LocalMod> localMods = new HashMap<>();
     private LibraryAnalyzer analyzer;
 
     private boolean loaded = false;
@@ -89,8 +89,13 @@ public final class ModManager {
         return analyzer;
     }
 
-    public LocalMod getLocalMod(String id, ModLoaderType modLoaderType) {
-        return localMods.computeIfAbsent(new LocalMod(id, modLoaderType), x -> x);
+    public LocalMod getLocalMod(String modId, ModLoaderType modLoaderType) {
+        return localMods.computeIfAbsent(pair(modId, modLoaderType),
+                x -> new LocalMod(x.getKey(), x.getValue()));
+    }
+
+    public boolean hasMod(String modId, ModLoaderType modLoaderType) {
+        return localMods.containsKey(pair(modId, modLoaderType));
     }
 
     private void addModInfo(Path file) {
