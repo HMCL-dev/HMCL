@@ -617,7 +617,21 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             else
                 content.setTitle(modInfo.getName());
 
-            content.setSubtitle(FileUtils.getName(modInfo.getFile()));
+            StringJoiner joiner = new StringJoiner(" | ");
+
+            if (StringUtils.isNotBlank(modInfo.getId()))
+                joiner.add(modInfo.getId());
+
+            String fileName = FileUtils.getName(modInfo.getFile());
+            if (StringUtils.isNotBlank(modInfo.getFileName())) {
+                if (!fileName.startsWith(modInfo.getFileName())) {
+                    joiner.add(modInfo.getFileName());
+                }
+            }
+
+            joiner.add(fileName);
+
+            content.setSubtitle(joiner.toString());
 
             ModLoaderType modLoaderType = modInfo.getModLoaderType();
             LibraryAnalyzer libraryAnalyzer = modInfo.getModManager().getLibraryAnalyzer();
