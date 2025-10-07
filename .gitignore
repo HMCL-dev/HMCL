@@ -16,6 +16,8 @@ NVIDIA
 minecraft-exported-crash-info*
 hmcl-exported-logs-*
 /.java/
+/.local/
+/.cache/
 
 # gradle build
 /build/
