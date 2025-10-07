@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.ObservableList;
@@ -27,6 +26,7 @@ import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.mod.LocalModFile;
+import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -44,19 +44,22 @@ import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
+import java.util.concurrent.locks.ReentrantLock;
 
-import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObject> implements VersionPage.VersionLoadable, PageAware {
     private final BooleanProperty modded = new SimpleBooleanProperty(this, "modded", false);
 
+    private final ReentrantLock lock = new ReentrantLock();
+
     private ModManager modManager;
-    private LibraryAnalyzer libraryAnalyzer;
     private Profile profile;
     private String versionId;
+    private LibraryAnalyzer libraryAnalyzer;
+
+    private final EnumSet<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
 
     public ModListPage() {
         FXUtils.applyDragListener(this, it -> Arrays.asList("jar", "zip", "litemod").contains(FileUtils.getExtension(it)), mods -> {
@@ -92,25 +95,44 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         loadMods(profile.getRepository().getModManager(id));
     }
 
-    private CompletableFuture<?> loadMods(ModManager modManager) {
+    private void loadMods(ModManager modManager) {
+        setLoading(true);
+
         this.modManager = modManager;
-        return CompletableFuture.supplyAsync(() -> {
+        CompletableFuture.supplyAsync(() -> {
+            lock.lock();
             try {
-                synchronized (ModListPage.this) {
-                    runInFX(() -> loadingProperty().set(true));
-                    modManager.refreshMods();
-                    return new ArrayList<>(modManager.getMods());
-                }
+                modManager.refreshMods();
+                return modManager.getMods();
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
+            } finally {
+                lock.unlock();
             }
-        }, Schedulers.defaultScheduler()).whenCompleteAsync((list, exception) -> {
+        }, Schedulers.io()).whenCompleteAsync((list, exception) -> {
+            supportedLoaders.clear();
+
+            LibraryAnalyzer analyzer = modManager.getLibraryAnalyzer();
+            for (LibraryAnalyzer.LibraryType type : LibraryAnalyzer.LibraryType.values()) {
+                if (type.isModLoader() && analyzer.has(type)) {
+                    ModLoaderType modLoaderType = type.getModLoaderType();
+                    if (modLoaderType != null) {
+                        supportedLoaders.add(modLoaderType);
+
+                        if (modLoaderType == ModLoaderType.CLEANROOM)
+                            supportedLoaders.add(ModLoaderType.FORGE);
+                    }
+                }
+            }
+
+            if (exception == null) {
+                getItems().setAll(list.stream().map(ModListPageSkin.ModInfoObject::new).toList());
+            } else {
+                LOG.warning("Failed to load mods", exception);
+                getItems().clear();
+            }
             loadingProperty().set(false);
-            if (exception == null)
-                itemsProperty().setAll(list.stream().map(ModListPageSkin.ModInfoObject::new).sorted().collect(Collectors.toList()));
-            else
-                getProperties().remove(ModListPage.class);
-        }, Platform::runLater);
+        }, Schedulers.javafx());
     }
 
     public void add() {

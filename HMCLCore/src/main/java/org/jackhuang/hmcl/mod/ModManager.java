@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -188,10 +189,10 @@ public final class ModManager {
         loaded = true;
     }
 
-    public Collection<LocalModFile> getMods() throws IOException {
+    public @Unmodifiable List<LocalModFile> getMods() throws IOException {
         if (!loaded)
             refreshMods();
-        return localModFiles;
+        return List.copyOf(localModFiles);
     }
 
     public void addMod(Path file) throws IOException {
