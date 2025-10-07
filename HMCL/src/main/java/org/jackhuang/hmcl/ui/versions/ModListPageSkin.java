@@ -647,8 +647,9 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                 }
             }
 
-            if (StringUtils.isNotBlank(modInfo.getVersion())) {
-                content.addTag(modInfo.getVersion());
+            String modVersion = modInfo.getVersion();
+            if (StringUtils.isNotBlank(modVersion) && !"${version}".equals(modVersion)) {
+                content.addTag(modVersion);
             }
 
             if (booleanProperty != null) {
