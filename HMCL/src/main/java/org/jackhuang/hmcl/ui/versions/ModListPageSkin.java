@@ -619,8 +619,12 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
             content.setSubtitle(FileUtils.getName(modInfo.getFile()));
 
+            ModLoaderType modLoaderType = modInfo.getModLoaderType();
             LibraryAnalyzer libraryAnalyzer = modInfo.getModManager().getLibraryAnalyzer();
-            if (libraryAnalyzer != null && !libraryAnalyzer.getModLoaders().contains(modInfo.getModLoaderType())) {
+            if (libraryAnalyzer != null && modLoaderType != null
+                    && !libraryAnalyzer.getModLoaders().contains(modLoaderType)
+                    && !(modLoaderType == ModLoaderType.FORGE && libraryAnalyzer.getModLoaders().contains(ModLoaderType.CLEANROOM))
+            ) {
                 switch (dataItem.getModInfo().getModLoaderType()) {
                     case FORGE:
                         content.addTagWarning(i18n("install.installer.forge"));
