@@ -57,7 +57,6 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     private ModManager modManager;
     private Profile profile;
     private String versionId;
-    private LibraryAnalyzer libraryAnalyzer;
 
     final EnumSet<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
 
@@ -90,8 +89,8 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
 
         HMCLGameRepository repository = profile.getRepository();
         Version resolved = repository.getResolvedPreservingPatchesVersion(id);
-        libraryAnalyzer = LibraryAnalyzer.analyze(resolved, repository.getGameVersion(resolved).orElse(null));
-        modded.set(libraryAnalyzer.hasModLoader());
+        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolved, repository.getGameVersion(resolved).orElse(null));
+        modded.set(analyzer.hasModLoader());
         loadMods(profile.getRepository().getModManager(id));
     }
 
@@ -123,6 +122,11 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                             supportedLoaders.add(ModLoaderType.FORGE);
                     }
                 }
+            }
+
+            if (analyzer.has(LibraryAnalyzer.LibraryType.FABRIC) && modManager.hasMod("kilt", ModLoaderType.FABRIC)) {
+                supportedLoaders.add(ModLoaderType.FORGE);
+                supportedLoaders.add(ModLoaderType.NEO_FORGED);
             }
 
             if (exception == null) {

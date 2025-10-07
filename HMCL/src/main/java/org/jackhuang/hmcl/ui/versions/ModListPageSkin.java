@@ -600,6 +600,8 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         protected void updateControl(ModInfoObject dataItem, boolean empty) {
             if (empty) return;
 
+            boolean warning = false;
+
             content.getTags().clear();
 
             LocalModFile modInfo = dataItem.getModInfo();
@@ -632,8 +634,8 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             content.setSubtitle(joiner.toString());
 
             ModLoaderType modLoaderType = modInfo.getModLoaderType();
-            if (ModListPageSkin.this.getSkinnable().supportedLoaders.contains(modLoaderType)) {
-                pseudoClassStateChanged(WARNING, true);
+            if (!ModListPageSkin.this.getSkinnable().supportedLoaders.contains(modLoaderType)) {
+                warning = true;
                 switch (dataItem.getModInfo().getModLoaderType()) {
                     case FORGE:
                         content.addTagWarning(i18n("install.installer.forge"));
@@ -654,8 +656,6 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                         content.addTagWarning(i18n("install.installer.quilt"));
                         break;
                 }
-            } else {
-                pseudoClassStateChanged(WARNING, false);
             }
 
             String modVersion = modInfo.getVersion();
@@ -680,6 +680,8 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             });
             revealButton.setOnAction(e -> FXUtils.showFileInExplorer(modInfo.getFile()));
             infoButton.setOnAction(e -> Controllers.dialog(new ModInfoDialog(dataItem)));
+
+            pseudoClassStateChanged(WARNING, warning);
         }
     }
 }
