@@ -83,6 +83,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
@@ -284,14 +285,18 @@ public class TerracottaControllerPage extends StackPane {
                     });
                 });
 
-                LineButton feedback = LineButton.of();
-                feedback.setLeftIcon(SVG.FEEDBACK);
-                feedback.setTitle(i18n("terracotta.feedback.title"));
-                feedback.setSubtitle(i18n("terracotta.feedback.desc"));
-                feedback.setRightIcon(SVG.OPEN_IN_NEW);
-                FXUtils.onClicked(feedback, () -> FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK));
+                if (ThreadLocalRandom.current().nextDouble() < 0.02D) {
+                    LineButton feedback = LineButton.of();
+                    feedback.setLeftIcon(SVG.FEEDBACK);
+                    feedback.setTitle(i18n("terracotta.feedback.title"));
+                    feedback.setSubtitle(i18n("terracotta.feedback.desc"));
+                    feedback.setRightIcon(SVG.OPEN_IN_NEW);
+                    FXUtils.onClicked(feedback, () -> FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK));
 
-                nodesProperty.setAll(flow, host, guest, feedback);
+                    nodesProperty.setAll(flow, host, guest, feedback);
+                } else {
+                    nodesProperty.setAll(flow, host, guest);
+                }
             } else if (state instanceof TerracottaState.HostScanning) {
                 statusProperty.set(i18n("terracotta.status.scanning"));
                 progressProperty.set(-1);

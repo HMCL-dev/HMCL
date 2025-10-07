@@ -4,7 +4,6 @@
     "0.3.9-rc.10"
   ],
   "version_latest": "0.3.10",
-  "feedback_url": "https://f.kdocs.cn/ksform/w/write/njMwdtgD?channel=n4awqa",
   "classifiers": {
     "linux-arm64": "sha256:001b6b1e220e98dffd84198a3e16855644cad27900562c78d610b0bf50138d17",
     "linux-x86_64": "sha256:b133ddb796ff52879fb0c38e68ef7ea968d3eaec77f27ea274c701888e795782",
