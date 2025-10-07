@@ -284,7 +284,14 @@ public class TerracottaControllerPage extends StackPane {
                     });
                 });
 
-                nodesProperty.setAll(flow, host, guest);
+                LineButton feedback = LineButton.of();
+                feedback.setLeftIcon(SVG.FEEDBACK);
+                feedback.setTitle(i18n("terracotta.feedback.title"));
+                feedback.setSubtitle(i18n("terracotta.feedback.desc"));
+                feedback.setRightIcon(SVG.OPEN_IN_NEW);
+                FXUtils.onClicked(feedback, () -> FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK));
+
+                nodesProperty.setAll(flow, host, guest, feedback);
             } else if (state instanceof TerracottaState.HostScanning) {
                 statusProperty.set(i18n("terracotta.status.scanning"));
                 progressProperty.set(-1);
