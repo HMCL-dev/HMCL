@@ -420,7 +420,27 @@ public final class StringUtils {
             }
 
             char code = matcher.group(1).charAt(0);
-            String newColor = getColorNameFromChar(code);
+            String newColor = switch (code) {
+                case '0' -> "black";
+                case '1' -> "dark_blue";
+                case '2' -> "dark_green";
+                case '3' -> "dark_aqua";
+                case '4' -> "dark_red";
+                case '5' -> "dark_purple";
+                case '6' -> "gold";
+                case '7' -> "gray";
+                case '8' -> "dark_gray";
+                case '9' -> "blue";
+                case 'a' -> "green";
+                case 'b' -> "aqua";
+                case 'c' -> "red";
+                case 'd' -> "light_purple";
+                case 'e' -> "yellow";
+                case 'f' -> "white";
+                case 'k', 'l', 'm', 'n', 'o' -> FORMAT_CODE;
+                case 'r' -> "";
+                default -> null;
+            };
 
             if (newColor != null && !newColor.equals(FORMAT_CODE)) {
                 currentColor = newColor;
@@ -434,30 +454,6 @@ public final class StringUtils {
             pairs.add(new Pair<>(remainingText, currentColor));
         }
         return pairs;
-    }
-
-    private static String getColorNameFromChar(char code) {
-        return switch (code) {
-            case '0' -> "black";
-            case '1' -> "dark_blue";
-            case '2' -> "dark_green";
-            case '3' -> "dark_aqua";
-            case '4' -> "dark_red";
-            case '5' -> "dark_purple";
-            case '6' -> "gold";
-            case '7' -> "gray";
-            case '8' -> "dark_gray";
-            case '9' -> "blue";
-            case 'a' -> "green";
-            case 'b' -> "aqua";
-            case 'c' -> "red";
-            case 'd' -> "light_purple";
-            case 'e' -> "yellow";
-            case 'f' -> "white";
-            case 'k', 'l', 'm', 'n', 'o' -> FORMAT_CODE;
-            case 'r' -> "";
-            default -> null;
-        };
     }
 
     public static String parseEscapeSequence(String str) {
