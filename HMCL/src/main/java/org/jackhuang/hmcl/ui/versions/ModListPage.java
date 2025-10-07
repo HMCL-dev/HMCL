@@ -109,25 +109,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                 lock.unlock();
             }
         }, Schedulers.io()).whenCompleteAsync((list, exception) -> {
-            supportedLoaders.clear();
-
-            LibraryAnalyzer analyzer = modManager.getLibraryAnalyzer();
-            for (LibraryAnalyzer.LibraryType type : LibraryAnalyzer.LibraryType.values()) {
-                if (type.isModLoader() && analyzer.has(type)) {
-                    ModLoaderType modLoaderType = type.getModLoaderType();
-                    if (modLoaderType != null) {
-                        supportedLoaders.add(modLoaderType);
-
-                        if (modLoaderType == ModLoaderType.CLEANROOM)
-                            supportedLoaders.add(ModLoaderType.FORGE);
-                    }
-                }
-            }
-
-            if (analyzer.has(LibraryAnalyzer.LibraryType.FABRIC) && modManager.hasMod("kilt", ModLoaderType.FABRIC)) {
-                supportedLoaders.add(ModLoaderType.FORGE);
-                supportedLoaders.add(ModLoaderType.NEO_FORGED);
-            }
+            updateSupportedLoaders(modManager);
 
             if (exception == null) {
                 getItems().setAll(list.stream().map(ModListPageSkin.ModInfoObject::new).toList());
@@ -137,6 +119,33 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
             }
             setLoading(false);
         }, Schedulers.javafx());
+    }
+
+    private void updateSupportedLoaders(ModManager modManager) {
+        supportedLoaders.clear();
+
+        LibraryAnalyzer analyzer = modManager.getLibraryAnalyzer();
+        if (analyzer == null) {
+            Collections.addAll(supportedLoaders, ModLoaderType.values());
+            return;
+        }
+
+        for (LibraryAnalyzer.LibraryType type : LibraryAnalyzer.LibraryType.values()) {
+            if (type.isModLoader() && analyzer.has(type)) {
+                ModLoaderType modLoaderType = type.getModLoaderType();
+                if (modLoaderType != null) {
+                    supportedLoaders.add(modLoaderType);
+
+                    if (modLoaderType == ModLoaderType.CLEANROOM)
+                        supportedLoaders.add(ModLoaderType.FORGE);
+                }
+            }
+        }
+
+        if (analyzer.has(LibraryAnalyzer.LibraryType.FABRIC) && modManager.hasMod("kilt", ModLoaderType.FABRIC)) {
+            supportedLoaders.add(ModLoaderType.FORGE);
+            supportedLoaders.add(ModLoaderType.NEO_FORGED);
+        }
     }
 
     public void add() {

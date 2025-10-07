@@ -598,9 +598,11 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
         @Override
         protected void updateControl(ModInfoObject dataItem, boolean empty) {
+            pseudoClassStateChanged(WARNING, false);
+
             if (empty) return;
 
-            boolean warning = false;
+            List<String> warning = new ArrayList<>();
 
             content.getTags().clear();
 
@@ -619,9 +621,20 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                         }).start();
             }
 
-            if (modTranslations != null && I18n.isUseChinese())
-                content.setTitle(modTranslations.getDisplayName());
-            else
+            if (modTranslations != null && I18n.isUseChinese()) {
+                StringBuilder builder = new StringBuilder();
+                builder.append(modInfo.getName());
+
+                builder.append(" (");
+
+                if (StringUtils.isNotBlank(modTranslations.getAbbr())) {
+                    builder.append("[").append(modTranslations.getAbbr().trim()).append("] ");
+                }
+                builder.append(modTranslations.getName());
+                builder.append(")");
+
+                content.setTitle(builder.toString());
+            } else
                 content.setTitle(modInfo.getName());
 
             StringJoiner joiner = new StringJoiner(" | ");
@@ -635,7 +648,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
             ModLoaderType modLoaderType = modInfo.getModLoaderType();
             if (!ModListPageSkin.this.getSkinnable().supportedLoaders.contains(modLoaderType)) {
-                warning = true;
+                warning.add(""); // TODO
                 switch (dataItem.getModInfo().getModLoaderType()) {
                     case FORGE:
                         content.addTagWarning(i18n("install.installer.forge"));
@@ -673,7 +686,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                         .map(localModFile -> new IconedMenuItem(null, localModFile.getVersion(),
                                 () -> getSkinnable().rollback(modInfo, localModFile),
                                 popup.get()))
-                        .collect(Collectors.toList())
+                        .toList()
                 );
 
                 popup.get().show(restoreButton, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, 0, restoreButton.getHeight());
@@ -681,7 +694,9 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             revealButton.setOnAction(e -> FXUtils.showFileInExplorer(modInfo.getFile()));
             infoButton.setOnAction(e -> Controllers.dialog(new ModInfoDialog(dataItem)));
 
-            pseudoClassStateChanged(WARNING, warning);
+            if (!warning.isEmpty()) {
+                pseudoClassStateChanged(WARNING, true);
+            }
         }
     }
 }
