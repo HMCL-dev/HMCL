@@ -23,6 +23,7 @@ import javafx.animation.PauseTransition;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.collections.ListChangeListener;
+import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -551,6 +552,8 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
     private static final Lazy<JFXPopup> popup = new Lazy<>(() -> new JFXPopup(menu.get()));
 
     final class ModInfoListCell extends MDListCell<ModInfoObject> {
+        private static final PseudoClass WARNING = PseudoClass.getPseudoClass("warning");
+
         JFXCheckBox checkBox = new JFXCheckBox();
         ImageView imageView = new ImageView();
         TwoLineListItem content = new TwoLineListItem();
@@ -561,6 +564,8 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
         ModInfoListCell(JFXListView<ModInfoObject> listView, Holder<Object> lastCell) {
             super(listView, lastCell);
+
+            this.getStyleClass().add("mod-info-list-cell");
 
             HBox container = new HBox(8);
             container.setPickOnBounds(false);
@@ -632,6 +637,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                     && !libraryAnalyzer.getModLoaders().contains(modLoaderType)
                     && !(modLoaderType == ModLoaderType.FORGE && libraryAnalyzer.getModLoaders().contains(ModLoaderType.CLEANROOM))
             ) {
+                pseudoClassStateChanged(WARNING, true);
                 switch (dataItem.getModInfo().getModLoaderType()) {
                     case FORGE:
                         content.addTagWarning(i18n("install.installer.forge"));
@@ -652,6 +658,8 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                         content.addTagWarning(i18n("install.installer.quilt"));
                         break;
                 }
+            } else {
+                pseudoClassStateChanged(WARNING, false);
             }
 
             String modVersion = modInfo.getVersion();
