@@ -70,12 +70,12 @@ public final class ModManager {
         return repository;
     }
 
-    public String getVersion() {
+    public String getInstanceId() {
         return id;
     }
 
     public Path getModsDirectory() {
-        return repository.getRunDirectory(id).resolve("mods");
+        return repository.getModsDirectory(id);
     }
 
     public LocalMod getLocalMod(String id, ModLoaderType modLoaderType) {
