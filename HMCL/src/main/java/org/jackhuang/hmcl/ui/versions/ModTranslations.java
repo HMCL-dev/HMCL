@@ -70,7 +70,7 @@ public enum ModTranslations {
     private volatile Map<String, Mod> modIdMap; // mod id -> mod
     private volatile Map<String, Mod> curseForgeMap; // curseforge id -> mod
     private volatile List<Pair<String, Mod>> keywords;
-    private int maxKeywordLength = -1;
+    private volatile int maxKeywordLength = -1;
 
     ModTranslations(String resourceName) {
         this.resourceName = resourceName;
@@ -160,7 +160,7 @@ public enum ModTranslations {
             List<Mod> mods = getMods();
 
             keywords = new ArrayList<>();
-            maxKeywordLength = -1;
+            int maxKeywordLength = -1;
             for (Mod mod : mods) {
                 if (StringUtils.isNotBlank(mod.getName())) {
                     keywords.add(pair(mod.getName(), mod));
@@ -176,6 +176,7 @@ public enum ModTranslations {
                 }
             }
 
+            this.maxKeywordLength = maxKeywordLength;
             return this.keywords = keywords;
         }
     }
