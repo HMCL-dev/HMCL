@@ -24,9 +24,13 @@ import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.i18n.translator.Translator;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
@@ -76,6 +80,7 @@ public final class SupportedLocale {
     private ResourceBundle localeNamesBundle;
     private DateTimeFormatter dateTimeFormatter;
     private List<Locale> candidateLocales;
+    private Translator translator;
 
     SupportedLocale() {
         this.isDefault = true;
@@ -250,6 +255,31 @@ public final class SupportedLocale {
         }
 
         return region.isEmpty() ? language : language + "-" + region;
+    }
+
+    public Translator getTranslator() {
+        Translator translator = this.translator;
+        if (translator != null)
+            return translator;
+
+        List<Locale> candidateLocales = getCandidateLocales();
+
+        for (Locale candidateLocale : candidateLocales) {
+            String className = DefaultResourceBundleControl.INSTANCE.toBundleName(Translator.class.getSimpleName(), candidateLocale);
+            if (Translator.class.getResource(className + ".class") != null) {
+                try {
+                    Class<?> clazz = Class.forName(Translator.class.getPackageName() + "." + className);
+
+                    MethodHandle constructor = MethodHandles.publicLookup()
+                            .findConstructor(clazz, MethodType.methodType(void.class, SupportedLocale.class));
+
+                    return this.translator = (Translator) constructor.invoke(this);
+                } catch (Throwable e) {
+                    LOG.warning("Failed to create instance for " + className, e);
+                }
+            }
+        }
+        return this.translator = new Translator(this);
     }
 
     public boolean isSameLanguage(SupportedLocale other) {
