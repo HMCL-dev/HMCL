@@ -181,6 +181,16 @@ public enum ModTranslations {
         }
     }
 
+    private int getMaxKeywordLength() {
+        int maxKeywordLength = this.maxKeywordLength;
+        if (maxKeywordLength >= 0)
+            return maxKeywordLength;
+
+        // Ensure maxKeywordLength is initialized
+        getKeywords();
+        return this.maxKeywordLength;
+    }
+
     @Nullable
     public Mod getModByCurseForgeId(String id) {
         if (StringUtils.isBlank(id)) return null;
@@ -203,7 +213,7 @@ public enum ModTranslations {
                 .collect(StringBuilder::new, (sb, value) -> sb.append((char) value), StringBuilder::append);
         query = newQuery.toString();
 
-        StringUtils.LongestCommonSubsequence lcs = new StringUtils.LongestCommonSubsequence(query.length(), maxKeywordLength);
+        StringUtils.LongestCommonSubsequence lcs = new StringUtils.LongestCommonSubsequence(query.length(), getMaxKeywordLength());
         List<Pair<Integer, Mod>> modList = new ArrayList<>();
         for (Pair<String, Mod> keyword : getKeywords()) {
             int value = lcs.calc(query, keyword.getKey());
