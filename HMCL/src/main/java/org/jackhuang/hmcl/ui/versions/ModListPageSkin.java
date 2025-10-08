@@ -371,7 +371,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             this.localModFile = localModFile;
             this.active = localModFile.activeProperty();
 
-            this.modTranslations = ModTranslations.MOD.getModById(localModFile.getId());
+            this.modTranslations = ModTranslations.MOD.getMod(localModFile.getId(), localModFile.getName());
         }
 
         LocalModFile getModInfo() {
