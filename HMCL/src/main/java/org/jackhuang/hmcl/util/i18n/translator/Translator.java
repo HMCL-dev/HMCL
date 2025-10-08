@@ -18,10 +18,7 @@
 package org.jackhuang.hmcl.util.i18n.translator;
 
 import org.jackhuang.hmcl.download.RemoteVersion;
-import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
-import org.jackhuang.hmcl.util.i18n.UpsideDownUtils;
-import org.jackhuang.hmcl.util.i18n.WenyanUtils;
 
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -40,6 +37,10 @@ public class Translator {
 
     public final SupportedLocale getSupportedLocale() {
         return supportedLocale;
+    }
+
+    public final Locale getLocale() {
+        return locale;
     }
 
     public String getDisplayVersion(RemoteVersion remoteVersion) {
