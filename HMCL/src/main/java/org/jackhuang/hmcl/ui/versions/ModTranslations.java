@@ -250,7 +250,7 @@ public enum ModTranslations {
                 return mod;
         }
 
-        if (StringUtils.isBlank(id))
+        if (StringUtils.isNotBlank(id))
             return getModIdMap().get(id);
 
         return null;
