@@ -157,6 +157,8 @@ public enum ModTranslations {
             if (keywords != null)
                 return keywords;
 
+            List<Mod> mods = getMods();
+
             keywords = new ArrayList<>();
             maxKeywordLength = -1;
             for (Mod mod : mods) {
