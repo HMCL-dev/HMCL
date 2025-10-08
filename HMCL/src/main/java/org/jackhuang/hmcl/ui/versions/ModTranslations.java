@@ -64,6 +64,7 @@ public enum ModTranslations {
         };
     }
 
+    @SuppressWarnings("StatementWithEmptyBody")
     private static String cleanSubname(String subname) {
         if (StringUtils.isBlank(subname))
             return "";
@@ -78,7 +79,6 @@ public enum ModTranslations {
                     || "':_-/&()[]{}|,!?~•".indexOf(ch) >= 0
                     || ch >= 0x1F300 && ch <= 0x1FAFF) {
                 // Remove these unnecessary characters from subname
-                continue;
             } else {
                 // The subname contains unsupported characters, so we do not use this subname to match the mod
                 return "";
