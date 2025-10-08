@@ -69,17 +69,20 @@ public enum ModTranslations {
             return "";
 
         StringBuilder builder = new StringBuilder(subname.length());
-        for (int i = 0; i < subname.length(); i++) {
-            char ch = subname.charAt(i);
+        for (int i = 0; i < subname.length(); ) {
+            int ch = subname.codePointAt(i);
             if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9')
                     || ".+\\".indexOf(ch) >= 0) {
-                builder.append(ch);
-            } else if (Character.isWhitespace(ch) || "':_-/&()[]{}|,!?~•".indexOf(ch) >= 0) {
+                builder.appendCodePoint(ch);
+            } else if (Character.isWhitespace(ch)
+                    || "':_-/&()[]{}|,!?~•".indexOf(ch) >= 0
+                    || ch >= 0x1F300 && ch <= 0x1FAFF) {
                 // Remove these unnecessary characters from subname
                 continue;
             } else
                 // The subname contains unsupported characters, so we do not use this subname to match the mod
                 return "";
+            i += Character.charCount(ch);
         }
         return builder.length() == subname.length() ? subname : builder.toString();
     }
