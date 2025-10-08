@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.util.i18n;
+package org.jackhuang.hmcl.util.i18n.translator;
 
 import org.junit.jupiter.api.Test;
 
@@ -26,11 +26,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /**
  * @author Glavo
  */
-public final class WenyanUtilsTest {
+public final class Translator_lzhTest {
 
     private static void assertYearToString(String value, int year) {
         StringBuilder builder = new StringBuilder(2);
-        WenyanUtils.appendYear(builder, year);
+        Translator_lzh.appendYear(builder, year);
         assertEquals(value, builder.toString());
     }
 
@@ -51,7 +51,7 @@ public final class WenyanUtilsTest {
         );
         for (int hour = 0; hour < list.size(); hour++) {
             StringBuilder builder = new StringBuilder(2);
-            WenyanUtils.appendHour(builder, hour);
+            Translator_lzh.appendHour(builder, hour);
             assertEquals(list.get(hour), builder.toString());
         }
     }
