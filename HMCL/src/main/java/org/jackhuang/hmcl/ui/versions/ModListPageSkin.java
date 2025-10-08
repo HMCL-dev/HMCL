@@ -388,7 +388,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                 parts.add(i18n("game.version") + ": " + localModFile.getGameVersion());
             }
             this.message = String.join(", ", parts);
-            this.mod = ModTranslations.MOD.getModById(localModFile.getId());
+            this.mod = ModTranslations.MOD.getMod(localModFile.getId(), localModFile.getName());
         }
 
         String getTitle() {

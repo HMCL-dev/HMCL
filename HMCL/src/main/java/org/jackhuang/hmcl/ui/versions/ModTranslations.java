@@ -64,9 +64,34 @@ public enum ModTranslations {
         };
     }
 
+    @SuppressWarnings("StatementWithEmptyBody")
+    private static String cleanSubname(String subname) {
+        if (StringUtils.isBlank(subname))
+            return "";
+
+        StringBuilder builder = new StringBuilder(subname.length());
+        for (int i = 0; i < subname.length(); ) {
+            int ch = subname.codePointAt(i);
+            if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9')
+                    || ".+\\".indexOf(ch) >= 0) {
+                builder.appendCodePoint(ch);
+            } else if (Character.isWhitespace(ch)
+                    || "':_-/&()[]{}|,!?~•".indexOf(ch) >= 0
+                    || ch >= 0x1F300 && ch <= 0x1FAFF) {
+                // Remove these unnecessary characters from subname
+            } else {
+                // The subname contains unsupported characters, so we do not use this subname to match the mod
+                return "";
+            }
+            i += Character.charCount(ch);
+        }
+        return builder.length() == subname.length() ? subname : builder.toString();
+    }
+
     private final String resourceName;
     private volatile List<Mod> mods;
     private volatile Map<String, Mod> modIdMap; // mod id -> mod
+    private volatile Map<String, Mod> subnameMap;
     private volatile Map<String, Mod> curseForgeMap; // curseforge id -> mod
     private volatile List<Pair<String, Mod>> keywords;
     private volatile int maxKeywordLength = -1;
@@ -75,7 +100,7 @@ public enum ModTranslations {
         this.resourceName = resourceName;
     }
 
-    private @NotNull List<Mod> getMods() {
+    public @NotNull List<Mod> getMods() {
         List<Mod> mods = this.mods;
         if (mods != null)
             return mods;
@@ -121,6 +146,29 @@ public enum ModTranslations {
             }
 
             return this.modIdMap = modIdMap;
+        }
+    }
+
+    private @NotNull Map<String, Mod> getSubnameMap() {
+        Map<String, Mod> subnameMap = this.subnameMap;
+        if (subnameMap != null)
+            return subnameMap;
+        synchronized (this) {
+            subnameMap = this.subnameMap;
+            if (subnameMap != null)
+                return subnameMap;
+
+            subnameMap = new HashMap<>();
+
+            List<Mod> mods = getMods();
+            for (Mod mod : mods) {
+                String subname = cleanSubname(mod.getSubname());
+                if (StringUtils.isNotBlank(subname)) {
+                    subnameMap.put(subname, mod);
+                }
+            }
+
+            return this.subnameMap = subnameMap;
         }
     }
 
@@ -198,10 +246,18 @@ public enum ModTranslations {
     }
 
     @Nullable
-    public Mod getModById(String id) {
-        if (StringUtils.isBlank(id)) return null;
+    public Mod getMod(String id, String subname) {
+        subname = cleanSubname(subname);
+        if (StringUtils.isNotBlank(subname)) {
+            Mod mod = getSubnameMap().get(subname);
+            if (mod != null)
+                return mod;
+        }
 
-        return getModIdMap().get(id);
+        if (StringUtils.isNotBlank(id))
+            return getModIdMap().get(id);
+
+        return null;
     }
 
     public abstract String getMcmodUrl(Mod mod);
