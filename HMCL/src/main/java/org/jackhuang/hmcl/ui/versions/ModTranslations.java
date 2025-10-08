@@ -214,7 +214,7 @@ public enum ModTranslations {
         return modList.stream()
                 .sorted((a, b) -> -a.getKey().compareTo(b.getKey()))
                 .map(Pair::getValue)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     public static final class Mod {
