@@ -79,9 +79,10 @@ public enum ModTranslations {
                     || ch >= 0x1F300 && ch <= 0x1FAFF) {
                 // Remove these unnecessary characters from subname
                 continue;
-            } else
+            } else {
                 // The subname contains unsupported characters, so we do not use this subname to match the mod
                 return "";
+            }
             i += Character.charCount(ch);
         }
         return builder.length() == subname.length() ? subname : builder.toString();
