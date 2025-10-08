@@ -31,7 +31,6 @@ import java.io.InputStream;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -76,7 +75,6 @@ public final class SupportedLocale {
     private final Locale locale;
     private ResourceBundle resourceBundle;
     private ResourceBundle localeNamesBundle;
-    private DateTimeFormatter dateTimeFormatter;
     private List<Locale> candidateLocales;
     private Translator translator;
 
