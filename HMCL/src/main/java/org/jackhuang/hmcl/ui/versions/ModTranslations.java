@@ -113,7 +113,7 @@ public enum ModTranslations {
 
             List<Mod> mods = getMods();
             modIdMap = new HashMap<>(mods.size());
-            for (Mod mod : getMods()) {
+            for (Mod mod : mods) {
                 for (String id : mod.getModIds()) {
                     if (StringUtils.isNotBlank(id) && !"examplemod".equals(id)) {
                         modIdMap.put(id, mod);
