@@ -56,7 +56,8 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
 
     private ModManager modManager;
     private Profile profile;
-    private String versionId;
+    private String instanceId;
+    private String gameVersion;
 
     final EnumSet<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
 
@@ -85,11 +86,12 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     @Override
     public void loadVersion(Profile profile, String id) {
         this.profile = profile;
-        this.versionId = id;
+        this.instanceId = id;
 
         HMCLGameRepository repository = profile.getRepository();
         Version resolved = repository.getResolvedPreservingPatchesVersion(id);
-        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolved, repository.getGameVersion(resolved).orElse(null));
+        this.gameVersion = repository.getGameVersion(resolved).orElse(null);
+        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolved, gameVersion);
         modded.set(analyzer.hasModLoader());
         loadMods(profile.getRepository().getModManager(id));
     }
@@ -142,6 +144,10 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
             }
         }
 
+        if (analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE) && "1.20.1".equals(gameVersion)) {
+            supportedLoaders.add(ModLoaderType.FORGE);
+        }
+
         if (analyzer.has(LibraryAnalyzer.LibraryType.QUILT)) {
             supportedLoaders.add(ModLoaderType.FABRIC);
         }
@@ -187,7 +193,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         }).start();
     }
 
-    public void removeSelected(ObservableList<ModListPageSkin.ModInfoObject> selectedItems) {
+    void removeSelected(ObservableList<ModListPageSkin.ModInfoObject> selectedItems) {
         try {
             modManager.removeMods(selectedItems.stream()
                     .filter(Objects::nonNull)
@@ -199,14 +205,14 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         }
     }
 
-    public void enableSelected(ObservableList<ModListPageSkin.ModInfoObject> selectedItems) {
+    void enableSelected(ObservableList<ModListPageSkin.ModInfoObject> selectedItems) {
         selectedItems.stream()
                 .filter(Objects::nonNull)
                 .map(ModListPageSkin.ModInfoObject::getModInfo)
                 .forEach(info -> info.setActive(true));
     }
 
-    public void disableSelected(ObservableList<ModListPageSkin.ModInfoObject> selectedItems) {
+    void disableSelected(ObservableList<ModListPageSkin.ModInfoObject> selectedItems) {
         selectedItems.stream()
                 .filter(Objects::nonNull)
                 .map(ModListPageSkin.ModInfoObject::getModInfo)
@@ -214,13 +220,13 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     }
 
     public void openModFolder() {
-        FXUtils.openFolder(profile.getRepository().getRunDirectory(versionId).resolve("mods"));
+        FXUtils.openFolder(profile.getRepository().getRunDirectory(instanceId).resolve("mods"));
     }
 
     public void checkUpdates() {
         Runnable action = () -> Controllers.taskDialog(Task
                         .composeAsync(() -> {
-                            Optional<String> gameVersion = profile.getRepository().getGameVersion(versionId);
+                            Optional<String> gameVersion = profile.getRepository().getGameVersion(instanceId);
                             if (gameVersion.isPresent()) {
                                 return new ModCheckUpdatesTask(gameVersion.get(), modManager.getMods());
                             }
@@ -238,7 +244,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                         .withStagesHint(Collections.singletonList("mods.check_updates")),
                 i18n("update.checking"), TaskCancellationAction.NORMAL);
 
-        if (profile.getRepository().isModpack(versionId)) {
+        if (profile.getRepository().isModpack(instanceId)) {
             Controllers.confirm(
                     i18n("mods.update_modpack_mod.warning"), null,
                     MessageDialogPane.MessageType.WARNING,
@@ -249,7 +255,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     }
 
     public void download() {
-        Controllers.getDownloadPage().showModDownloads().selectVersion(versionId);
+        Controllers.getDownloadPage().showModDownloads().selectVersion(instanceId);
         Controllers.navigate(Controllers.getDownloadPage());
     }
 
@@ -278,7 +284,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         return this.profile;
     }
 
-    public String getVersionId() {
-        return this.versionId;
+    public String getInstanceId() {
+        return this.instanceId;
     }
 }
