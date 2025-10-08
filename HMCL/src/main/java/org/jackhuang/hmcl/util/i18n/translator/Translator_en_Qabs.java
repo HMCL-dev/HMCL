@@ -19,23 +19,69 @@ package org.jackhuang.hmcl.util.i18n.translator;
 
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
-import org.jackhuang.hmcl.util.i18n.UpsideDownUtils;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// @author Glavo
 public class Translator_en_Qabs extends Translator {
+    private static final DateTimeFormatter BASE_FORMATTER = DateTimeFormatter.ofPattern("MMM d, yyyy, h:mm:ss a")
+            .withZone(ZoneId.systemDefault());
+
+    private static final Map<Integer, Integer> MAPPER = loadMap();
+
+    private static Map<Integer, Integer> loadMap() {
+        var map = new LinkedHashMap<Integer, Integer>();
+
+        InputStream inputStream = Translator_en_Qabs.class.getResourceAsStream("/assets/lang/upside_down.txt");
+        if (inputStream != null) {
+            try (inputStream) {
+                new String(inputStream.readAllBytes(), StandardCharsets.UTF_8).lines().forEach(line -> {
+                    if (line.isBlank() || line.startsWith("#"))
+                        return;
+
+                    if (line.length() != 2) {
+                        LOG.warning("Invalid line: " + line);
+                        return;
+                    }
+
+                    map.put((int) line.charAt(0), (int) line.charAt(1));
+                });
+            } catch (IOException e) {
+                LOG.warning("Failed to load upside_down.txt", e);
+            }
+        } else {
+            LOG.warning("upside_down.txt not found");
+        }
+        return Collections.unmodifiableMap(map);
+    }
+
+    public static String translate(String str) {
+        StringBuilder builder = new StringBuilder(str.length());
+        str.codePoints().forEach(ch -> builder.appendCodePoint(MAPPER.getOrDefault(ch, ch)));
+        return builder.reverse().toString();
+    }
+
     public Translator_en_Qabs(SupportedLocale locale) {
         super(locale);
     }
 
     @Override
     public String getDisplayVersion(RemoteVersion remoteVersion) {
-        return UpsideDownUtils.translate(remoteVersion.getSelfVersion());
+        return translate(remoteVersion.getSelfVersion());
     }
 
     @Override
     public String formatDateTime(TemporalAccessor time) {
-        return UpsideDownUtils.formatDateTime(time);
+        return translate(BASE_FORMATTER.format(time));
     }
 }
