@@ -242,12 +242,18 @@ public enum ModTranslations {
     }
 
     @Nullable
-    public Mod getModById(String id) {
-        getSubnameMap();
+    public Mod getMod(String id, String subname) {
+        subname = cleanSubname(subname);
+        if (StringUtils.isNotBlank(subname)) {
+            Mod mod = getSubnameMap().get(subname);
+            if (mod != null)
+                return mod;
+        }
 
-        if (StringUtils.isBlank(id)) return null;
+        if (StringUtils.isBlank(id))
+            return getModIdMap().get(id);
 
-        return getModIdMap().get(id);
+        return null;
     }
 
     public abstract String getMcmodUrl(Mod mod);
