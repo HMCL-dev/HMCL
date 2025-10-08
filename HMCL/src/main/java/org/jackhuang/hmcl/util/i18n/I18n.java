@@ -68,7 +68,7 @@ public final class I18n {
     }
 
     public static String formatDateTime(TemporalAccessor time) {
-        return locale.formatDateTime(time);
+        return getTranslator().formatDateTime(time);
     }
 
     public static String getDisplaySelfVersion(RemoteVersion version) {

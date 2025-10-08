@@ -18,21 +18,44 @@
 package org.jackhuang.hmcl.util.i18n.translator;
 
 import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
+import org.jackhuang.hmcl.util.i18n.UpsideDownUtils;
+import org.jackhuang.hmcl.util.i18n.WenyanUtils;
+
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAccessor;
+import java.util.Locale;
 
 /// @author Glavo
 public class Translator {
-    protected final SupportedLocale locale;
+    protected final SupportedLocale supportedLocale;
+    protected final Locale locale;
 
-    public Translator(SupportedLocale locale) {
-        this.locale = locale;
+    public Translator(SupportedLocale supportedLocale) {
+        this.supportedLocale = supportedLocale;
+        this.locale = supportedLocale.getLocale();
     }
 
-    public final SupportedLocale getLocale() {
-        return locale;
+    public final SupportedLocale getSupportedLocale() {
+        return supportedLocale;
     }
 
     public String getDisplayVersion(RemoteVersion remoteVersion) {
         return remoteVersion.getSelfVersion();
     }
+
+    /// @see [#formatDateTime(TemporalAccessor)]
+    protected DateTimeFormatter dateTimeFormatter;
+
+    public String formatDateTime(TemporalAccessor time) {
+        DateTimeFormatter formatter = dateTimeFormatter;
+        if (formatter == null) {
+            formatter = dateTimeFormatter = DateTimeFormatter.ofPattern(supportedLocale.getResourceBundle().getString("datetime.format"))
+                    .withZone(ZoneId.systemDefault());
+        }
+        return formatter.format(time);
+    }
+
 }

@@ -21,6 +21,8 @@ import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jackhuang.hmcl.util.i18n.UpsideDownUtils;
 
+import java.time.temporal.TemporalAccessor;
+
 /// @author Glavo
 public class Translator_en_Qabs extends Translator {
     public Translator_en_Qabs(SupportedLocale locale) {
@@ -30,5 +32,10 @@ public class Translator_en_Qabs extends Translator {
     @Override
     public String getDisplayVersion(RemoteVersion remoteVersion) {
         return UpsideDownUtils.translate(remoteVersion.getSelfVersion());
+    }
+
+    @Override
+    public String formatDateTime(TemporalAccessor time) {
+        return UpsideDownUtils.formatDateTime(time);
     }
 }

@@ -23,6 +23,8 @@ import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jackhuang.hmcl.util.i18n.WenyanUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
+import java.time.temporal.TemporalAccessor;
+
 /// @author Glavo
 public class Translator_lzh extends Translator {
     public Translator_lzh(SupportedLocale locale) {
@@ -35,5 +37,10 @@ public class Translator_lzh extends Translator {
             return WenyanUtils.translateGameVersion(GameVersionNumber.asGameVersion(remoteVersion.getSelfVersion()));
         else
             return WenyanUtils.translateGenericVersion(remoteVersion.getSelfVersion());
+    }
+
+    @Override
+    public String formatDateTime(TemporalAccessor time) {
+        return WenyanUtils.formatDateTime(time);
     }
 }

@@ -31,9 +31,7 @@ import java.io.InputStream;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAccessor;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -203,23 +201,6 @@ public final class SupportedLocale {
             LOG.error("Cannot find key " + key + " in resource bundle", e);
             return key;
         }
-    }
-
-    public String formatDateTime(TemporalAccessor time) {
-        DateTimeFormatter formatter = dateTimeFormatter;
-        if (formatter == null) {
-            if (LocaleUtils.isEnglish(locale) && "Qabs".equals(locale.getScript())) {
-                return UpsideDownUtils.formatDateTime(time);
-            }
-
-            if (locale.getLanguage().equals("lzh")) {
-                return WenyanUtils.formatDateTime(time);
-            }
-
-            formatter = dateTimeFormatter = DateTimeFormatter.ofPattern(getResourceBundle().getString("datetime.format"))
-                    .withZone(ZoneId.systemDefault());
-        }
-        return formatter.format(time);
     }
 
     public String getFcMatchPattern() {
