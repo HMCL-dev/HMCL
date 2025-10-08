@@ -363,7 +363,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
     static class ModInfoObject extends RecursiveTreeObject<ModInfoObject> implements Comparable<ModInfoObject> {
         private final BooleanProperty active;
         private final LocalModFile localModFile;
-        private final ModTranslations.Mod modTranslations;
+        private final @Nullable ModTranslations.Mod modTranslations;
 
         private SoftReference<Image> iconCache;
 
@@ -378,7 +378,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             return localModFile;
         }
 
-        public ModTranslations.Mod getModTranslations() {
+        public @Nullable ModTranslations.Mod getModTranslations() {
             return modTranslations;
         }
 
@@ -624,20 +624,9 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                         }).start();
             }
 
-            if (modTranslations != null && I18n.isUseChinese()) {
-                StringBuilder builder = new StringBuilder();
-                builder.append(modInfo.getName());
-
-                builder.append(" (");
-
-                if (StringUtils.isNotBlank(modTranslations.getAbbr())) {
-                    builder.append("[").append(modTranslations.getAbbr().trim()).append("] ");
-                }
-                builder.append(modTranslations.getName());
-                builder.append(")");
-
-                content.setTitle(builder.toString());
-            } else
+            if (modTranslations != null && I18n.isUseChinese() && !modInfo.getName().equals(modTranslations.getName()))
+                content.setTitle(modInfo.getName() + " (" + modTranslations.getName() + ")");
+            else
                 content.setTitle(modInfo.getName());
 
             StringJoiner joiner = new StringJoiner(" | ");
