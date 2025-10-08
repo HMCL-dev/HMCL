@@ -19,20 +19,16 @@ package org.jackhuang.hmcl.util.i18n.translator;
 
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
+import org.jackhuang.hmcl.util.i18n.UpsideDownUtils;
 
 /// @author Glavo
-public class Translator {
-    protected final SupportedLocale locale;
-
-    public Translator(SupportedLocale locale) {
-        this.locale = locale;
+public class Translator_en_Qabs extends Translator {
+    public Translator_en_Qabs(SupportedLocale locale) {
+        super(locale);
     }
 
-    public final SupportedLocale getLocale() {
-        return locale;
-    }
-
+    @Override
     public String getDisplayVersion(RemoteVersion remoteVersion) {
-        return remoteVersion.getSelfVersion();
+        return UpsideDownUtils.translate(remoteVersion.getSelfVersion());
     }
 }
