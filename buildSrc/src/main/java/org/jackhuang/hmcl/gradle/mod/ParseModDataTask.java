@@ -29,6 +29,7 @@ import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 
+import javax.swing.plaf.SeparatorUI;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -93,13 +94,43 @@ public abstract class ParseModDataTask extends DefaultTask {
     }
 
     private static String cleanChineseName(String chineseName) {
-        chineseName = chineseName.trim();
-        if (chineseName.isEmpty())
+        if (chineseName == null || chineseName.isBlank())
             return "";
 
+        chineseName = chineseName.trim();
 
+        StringBuilder builder = new StringBuilder(chineseName.length());
+        int[] codePoints = chineseName.codePoints().toArray();
+        for (int i = 0; i < codePoints.length; i++) {
+            int ch = codePoints[i];
+            int prev = i > 0 ? codePoints[i - 1] : 0;
+            int next = i < (codePoints.length - 1) ? codePoints[i + 1] : 0;
 
-        return chineseName; // TODO
+            switch (ch) {
+                case '（' -> {
+                    if (Character.isWhitespace(prev))
+                        builder.append('(');
+                    else
+                        builder.append(" (");
+                }
+                case '）' -> builder.append(')');
+                case '，' -> {
+                    if (next == 0 || Character.isWhitespace(next))
+                        builder.append(',');
+                    else
+                        builder.append(", ");
+                }
+                default -> {
+                    //noinspection StatementWithEmptyBody
+                    if (ch >= 0x1F300 && ch <= 0x1FAFF) {
+                        // Skip Emoji
+                    } else {
+                        builder.appendCodePoint(ch);
+                    }
+                }
+            }
+        }
+        return builder.toString();
     }
 
     private static final Set<String> SKIP = Set.of(
@@ -132,8 +163,7 @@ public abstract class ParseModDataTask extends DefaultTask {
                 String subName = mod.name.sub;
                 String abbr = mod.name.abbr;
 
-                if (chineseName == null)
-                    chineseName = "";
+                chineseName = chineseName == null ? "" : cleanChineseName(chineseName);
                 if (subName == null)
                     subName = "";
                 if (abbr == null)
