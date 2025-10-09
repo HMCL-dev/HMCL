@@ -292,7 +292,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         }
     }
 
-    private static CompletableFuture<Image> loadModIcon(LocalModFile modFile, int size) {
+    private static CompletableFuture<Image> loadModIcon(LocalModFile modFile) {
         return CompletableFuture.supplyAsync(() -> {
             List<String> iconPaths = new ArrayList<>();
 
@@ -344,7 +344,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                 for (String path : iconPaths) {
                     Path iconPath = fs.getPath(path);
                     if (Files.exists(iconPath)) {
-                        Image image = FXUtils.loadImage(iconPath, size, size, true, true);
+                        Image image = FXUtils.loadImage(iconPath, 80, 80, true, true);
                         if (!image.isError() &&
                                 image.getWidth() > 0 &&
                                 image.getHeight() > 0 &&
@@ -357,17 +357,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                 LOG.warning("Failed to load mod icons", e);
             }
 
-            VersionIconType defaultIcon = switch (modFile.getModLoaderType()) {
-                case FORGE -> VersionIconType.FORGE;
-                case NEO_FORGED -> VersionIconType.NEO_FORGE;
-                case FABRIC -> VersionIconType.FABRIC;
-                case QUILT -> VersionIconType.QUILT;
-                case LITE_LOADER -> VersionIconType.CHICKEN;
-                case CLEANROOM -> VersionIconType.CLEANROOM;
-                default -> VersionIconType.COMMAND;
-            };
-
-            return defaultIcon.getIcon(size);
+            return VersionIconType.getIconType(modFile.getModLoaderType()).getIcon();
         }, Schedulers.javafx());
     }
 
@@ -403,9 +393,10 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                     return;
                 }
             } else {
-                imageFuture = loadModIcon(localModFile, 80);
+                imageFuture = loadModIcon(localModFile);
                 this.iconCache = new SoftReference<>(imageFuture);
             }
+            imageView.setImage(VersionIconType.getIconType(localModFile.getModLoaderType()).getIcon());
             imageFuture.thenAcceptAsync(image -> {
                 if (current != null) {
                     ObjectProperty<ModInfoObject> infoObjectProperty = current.get();
