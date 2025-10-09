@@ -22,6 +22,7 @@ import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import javafx.animation.PauseTransition;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.collections.ListChangeListener;
 import javafx.css.PseudoClass;
@@ -67,10 +68,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
+import java.lang.ref.WeakReference;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
@@ -289,8 +292,8 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         }
     }
 
-    private static Task<Image> loadModIcon(LocalModFile modFile, int size) {
-        return Task.supplyAsync(() -> {
+    private static CompletableFuture<Image> loadModIcon(LocalModFile modFile, int size) {
+        return CompletableFuture.supplyAsync(() -> {
             List<String> iconPaths = new ArrayList<>();
 
             if (StringUtils.isNotBlank(modFile.getLogoPath())) {
@@ -365,15 +368,15 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             };
 
             return defaultIcon.getIcon(size);
-        });
+        }, Schedulers.javafx());
     }
 
-    static class ModInfoObject extends RecursiveTreeObject<ModInfoObject> implements Comparable<ModInfoObject> {
+    static final class ModInfoObject extends RecursiveTreeObject<ModInfoObject> implements Comparable<ModInfoObject> {
         private final BooleanProperty active;
         private final LocalModFile localModFile;
         private final @Nullable ModTranslations.Mod modTranslations;
 
-        private SoftReference<Image> iconCache;
+        private SoftReference<CompletableFuture<Image>> iconCache;
 
         ModInfoObject(LocalModFile localModFile) {
             this.localModFile = localModFile;
@@ -390,6 +393,32 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             return modTranslations;
         }
 
+        public void loadIcon(ImageView imageView, @Nullable WeakReference<ObjectProperty<ModInfoObject>> current) {
+            SoftReference<CompletableFuture<Image>> iconCache = this.iconCache;
+            CompletableFuture<Image> imageFuture;
+            if (iconCache != null && (imageFuture = iconCache.get()) != null) {
+                Image image = imageFuture.getNow(null);
+                if (image != null) {
+                    imageView.setImage(image);
+                    return;
+                }
+            } else {
+                imageFuture = loadModIcon(localModFile, 80);
+                this.iconCache = new SoftReference<>(imageFuture);
+            }
+            imageFuture.thenAcceptAsync(image -> {
+                if (current != null) {
+                    ObjectProperty<ModInfoObject> infoObjectProperty = current.get();
+                    if (infoObjectProperty == null || infoObjectProperty.get() != this) {
+                        // The current ListCell has already switched to another object
+                        return;
+                    }
+                }
+
+                imageView.setImage(image);
+            }, Schedulers.javafx());
+        }
+
         @Override
         public int compareTo(@NotNull ModListPageSkin.ModInfoObject o) {
             return localModFile.getFileName().toLowerCase(Locale.ROOT)
@@ -397,7 +426,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         }
     }
 
-    class ModInfoDialog extends JFXDialogLayout {
+    final class ModInfoDialog extends JFXDialogLayout {
 
         ModInfoDialog(ModInfoObject modInfo) {
             HBox titleContainer = new HBox();
@@ -408,10 +437,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
             ImageView imageView = new ImageView();
             FXUtils.limitSize(imageView, 40, 40);
-            loadModIcon(modInfo.getModInfo(), 40)
-                    .whenComplete(Schedulers.javafx(), (image, exception) -> {
-                        imageView.setImage(image);
-                    }).start();
+            modInfo.loadIcon(imageView, null);
 
             TwoLineListItem title = new TwoLineListItem();
             if (modInfo.getModTranslations() != null && I18n.isUseChinese())
@@ -620,18 +646,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             LocalModFile modInfo = dataItem.getModInfo();
             ModTranslations.Mod modTranslations = dataItem.getModTranslations();
 
-            SoftReference<Image> iconCache = dataItem.iconCache;
-            Image icon;
-            if (iconCache != null && (icon = iconCache.get()) != null) {
-                imageView.setImage(icon);
-            } else {
-                loadModIcon(modInfo, 48)
-                        .whenComplete(Schedulers.javafx(), (image, exception) -> {
-                            dataItem.iconCache = new SoftReference<>(image);
-                            imageView.setImage(image);
-                        }).start();
-            }
-
+            dataItem.loadIcon(imageView, new WeakReference<>(this.itemProperty()));
 
             String displayName = modInfo.getName();
             if (modTranslations != null && I18n.isUseChinese()) {
