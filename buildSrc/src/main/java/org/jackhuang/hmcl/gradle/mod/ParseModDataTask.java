@@ -92,6 +92,16 @@ public abstract class ParseModDataTask extends DefaultTask {
         return "";
     }
 
+    private static String cleanChineseName(String chineseName) {
+        chineseName = chineseName.trim();
+        if (chineseName.isEmpty())
+            return "";
+
+
+
+        return chineseName; // TODO
+    }
+
     private static final Set<String> SKIP = Set.of(
             "Minecraft",
             "The Building Game"
@@ -103,7 +113,6 @@ public abstract class ParseModDataTask extends DefaultTask {
         Path outputFile = getOutputFile().get().getAsFile().toPath().toAbsolutePath();
 
         Files.createDirectories(outputFile.getParent());
-
 
         List<ModData> modDatas;
         try (BufferedReader reader = Files.newBufferedReader(inputFile)) {
@@ -205,7 +214,6 @@ public abstract class ParseModDataTask extends DefaultTask {
         public static final class Links {
             public Map<String, List<Link>> list;
         }
-
 
         public static final class ModIdDeserializer implements JsonDeserializer<List<String>> {
             private static final Type STRING_LIST = TypeToken.getParameterized(List.class, String.class).getType();
