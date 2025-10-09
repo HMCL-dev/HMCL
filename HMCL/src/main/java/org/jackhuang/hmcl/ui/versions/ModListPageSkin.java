@@ -595,7 +595,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             imageView.setFitWidth(24);
             imageView.setFitHeight(24);
             imageView.setPreserveRatio(true);
-            imageView.setImage(FXUtils.newBuiltinImage("/assets/img/command.png"));
+            imageView.setImage(VersionIconType.COMMAND.getIcon());
 
             restoreButton.getStyleClass().add("toggle-icon4");
             restoreButton.setGraphic(FXUtils.limitingSize(SVG.RESTORE.createIcon(Theme.blackFill(), 24), 24, 24));
