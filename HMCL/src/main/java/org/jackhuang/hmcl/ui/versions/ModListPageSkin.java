@@ -584,7 +584,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             imageView.setFitWidth(24);
             imageView.setFitHeight(24);
             imageView.setPreserveRatio(true);
-            imageView.setImage(FXUtils.newBuiltinImage("/assets/img/command.png", 24, 24, true, true));
+            imageView.setImage(FXUtils.newBuiltinImage("/assets/img/command.png"));
 
             restoreButton.getStyleClass().add("toggle-icon4");
             restoreButton.setGraphic(FXUtils.limitingSize(SVG.RESTORE.createIcon(Theme.blackFill(), 24), 24, 24));
@@ -625,7 +625,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             if (iconCache != null && (icon = iconCache.get()) != null) {
                 imageView.setImage(icon);
             } else {
-                loadModIcon(modInfo, 24)
+                loadModIcon(modInfo, 48)
                         .whenComplete(Schedulers.javafx(), (image, exception) -> {
                             dataItem.iconCache = new SoftReference<>(image);
                             imageView.setImage(image);
