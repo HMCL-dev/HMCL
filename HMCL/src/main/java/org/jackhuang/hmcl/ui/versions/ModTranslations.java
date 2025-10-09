@@ -250,7 +250,7 @@ public enum ModTranslations {
         subname = cleanSubname(subname);
         if (StringUtils.isNotBlank(subname)) {
             Mod mod = getSubnameMap().get(subname);
-            if (mod != null)
+            if (mod != null && (StringUtils.isBlank(id) || mod.getModIds().contains(id)))
                 return mod;
         }
 
