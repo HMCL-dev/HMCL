@@ -106,7 +106,7 @@ public abstract class ParseModDataTask extends DefaultTask {
 
             switch (ch) {
                 case '（' -> {
-                    if (Character.isWhitespace(prev))
+                    if (Character.isWhitespace(prev) || prev == '！' || prev == '。')
                         builder.append('(');
                     else
                         builder.append(" (");

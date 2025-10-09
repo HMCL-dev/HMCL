@@ -9235,7 +9235,7 @@ cute-hermit-crabs;9466;cutehermitcrabs;Cute Hermit Crabs;;
 ;9467;ulib;uLib;;
 receiver-mod;9468;rm;Receiver Gun Mod;;
 chargepads;9469;ChargePads;充电座;ChargePads;
-snow-real-magic-potato-edition;9470;;雪！真实的魔法！ (土豆版);Snow Real Magic Potato Edition;
+snow-real-magic-potato-edition;9470;;雪！真实的魔法！(土豆版);Snow Real Magic Potato Edition;
 ;9471;depthstrider;Depth Strider;;
 ravenous-void;9472;rv;Ravenous Void;;
 immersive-engineering-blueprint-tweaker;9473;iebpt;Immersive Engineering Blueprint Tweaker;;IEBPT
@@ -18132,7 +18132,7 @@ deimos-fabric-forge-neoforge;18436;deimos;Deimos;;
 excavation;18438;excavation;挖掘;Excavation;
 basic-end-ores;18439;beo;基础末地矿石;Basic End Ores;BEO
 ;18440;portable_crafting;Portable Crafting;;
-;18441;gofish;一起钓鱼吧！ (Forge 版);Go Fish Forge;
+;18441;gofish;一起钓鱼吧！(Forge 版);Go Fish Forge;
 simple-bbq-unofficial;18442;simplebbq;简易烧烤非官方版;Simple BBQ Unofficial;
 ;18443;carystanley_extremefarming;Extreme Farming;;
 eggy-goodness;18444;EggyGoodness;Eggy Goodness;;
