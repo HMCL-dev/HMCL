@@ -632,10 +632,28 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                         }).start();
             }
 
-            if (modTranslations != null && I18n.isUseChinese() && !modInfo.getName().equals(modTranslations.getName()))
-                content.setTitle(modInfo.getName() + " (" + modTranslations.getName() + ")");
-            else
-                content.setTitle(modInfo.getName());
+
+            String displayName = modInfo.getName();
+            if (modTranslations != null && I18n.isUseChinese()) {
+                String chineseName = modTranslations.getName();
+                if (StringUtils.containsChinese(chineseName)) {
+                    if (StringUtils.containsEmoji(chineseName)) {
+                        StringBuilder builder = new StringBuilder();
+
+                        chineseName.codePoints().forEach(ch -> {
+                            if (ch < 0x1F300 || ch > 0x1FAFF)
+                                builder.appendCodePoint(ch);
+                        });
+
+                        chineseName = builder.toString().trim();
+                    }
+
+                    if (StringUtils.isNotBlank(chineseName) && !displayName.equalsIgnoreCase(chineseName)) {
+                        displayName = displayName + " (" + chineseName + ")";
+                    }
+                }
+            }
+            content.setTitle(displayName);
 
             StringJoiner joiner = new StringJoiner(" | ");
 
