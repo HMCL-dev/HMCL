@@ -56,10 +56,7 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.Holder;
-import org.jackhuang.hmcl.util.Lazy;
-import org.jackhuang.hmcl.util.Pair;
-import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -292,12 +289,34 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         }
     }
 
-    private static CompletableFuture<Image> loadModIcon(LocalModFile modFile) {
-        return CompletableFuture.supplyAsync(() -> {
+    static final class ModInfoObject extends RecursiveTreeObject<ModInfoObject> implements Comparable<ModInfoObject> {
+        private final BooleanProperty active;
+        private final LocalModFile localModFile;
+        private final @Nullable ModTranslations.Mod modTranslations;
+
+        private SoftReference<CompletableFuture<Image>> iconCache;
+
+        ModInfoObject(LocalModFile localModFile) {
+            this.localModFile = localModFile;
+            this.active = localModFile.activeProperty();
+
+            this.modTranslations = ModTranslations.MOD.getMod(localModFile.getId(), localModFile.getName());
+        }
+
+        LocalModFile getModInfo() {
+            return localModFile;
+        }
+
+        public @Nullable ModTranslations.Mod getModTranslations() {
+            return modTranslations;
+        }
+
+        @FXThread
+        private Image loadIcon() {
             List<String> iconPaths = new ArrayList<>();
 
-            if (StringUtils.isNotBlank(modFile.getLogoPath())) {
-                iconPaths.add(modFile.getLogoPath());
+            if (StringUtils.isNotBlank(this.localModFile.getLogoPath())) {
+                iconPaths.add(this.localModFile.getLogoPath());
             }
 
             iconPaths.addAll(List.of(
@@ -321,7 +340,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                     "resources/mod_icon.png"
             ));
 
-            String modId = modFile.getId();
+            String modId = this.localModFile.getId();
             if (StringUtils.isNotBlank(modId)) {
                 iconPaths.addAll(List.of(
                         "assets/" + modId + "/icon.png",
@@ -340,14 +359,12 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                 ));
             }
 
-            try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(modFile.getFile())) {
+            try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(this.localModFile.getFile())) {
                 for (String path : iconPaths) {
                     Path iconPath = fs.getPath(path);
                     if (Files.exists(iconPath)) {
                         Image image = FXUtils.loadImage(iconPath, 80, 80, true, true);
-                        if (!image.isError() &&
-                                image.getWidth() > 0 &&
-                                image.getHeight() > 0 &&
+                        if (!image.isError() && image.getWidth() > 0 && image.getHeight() > 0 &&
                                 Math.abs(image.getWidth() - image.getHeight()) < 1) {
                             return image;
                         }
@@ -357,30 +374,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                 LOG.warning("Failed to load mod icons", e);
             }
 
-            return VersionIconType.getIconType(modFile.getModLoaderType()).getIcon();
-        }, Schedulers.javafx());
-    }
-
-    static final class ModInfoObject extends RecursiveTreeObject<ModInfoObject> implements Comparable<ModInfoObject> {
-        private final BooleanProperty active;
-        private final LocalModFile localModFile;
-        private final @Nullable ModTranslations.Mod modTranslations;
-
-        private SoftReference<CompletableFuture<Image>> iconCache;
-
-        ModInfoObject(LocalModFile localModFile) {
-            this.localModFile = localModFile;
-            this.active = localModFile.activeProperty();
-
-            this.modTranslations = ModTranslations.MOD.getMod(localModFile.getId(), localModFile.getName());
-        }
-
-        LocalModFile getModInfo() {
-            return localModFile;
-        }
-
-        public @Nullable ModTranslations.Mod getModTranslations() {
-            return modTranslations;
+            return VersionIconType.getIconType(this.localModFile.getModLoaderType()).getIcon();
         }
 
         public void loadIcon(ImageView imageView, @Nullable WeakReference<ObjectProperty<ModInfoObject>> current) {
@@ -393,7 +387,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                     return;
                 }
             } else {
-                imageFuture = loadModIcon(localModFile);
+                imageFuture = CompletableFuture.supplyAsync(this::loadIcon, Schedulers.io());
                 this.iconCache = new SoftReference<>(imageFuture);
             }
             imageView.setImage(VersionIconType.getIconType(localModFile.getModLoaderType()).getIcon());
