@@ -29,7 +29,6 @@ import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 
-import javax.swing.plaf.SeparatorUI;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
