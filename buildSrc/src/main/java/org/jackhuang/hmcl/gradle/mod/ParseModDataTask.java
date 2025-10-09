@@ -112,14 +112,7 @@ public abstract class ParseModDataTask extends DefaultTask {
                         builder.append(" (");
                 }
                 case '）' -> builder.append(')');
-                default -> {
-                    //noinspection StatementWithEmptyBody
-                    if (ch >= 0x1F300 && ch <= 0x1FAFF) {
-                        // Skip Emoji
-                    } else {
-                        builder.appendCodePoint(ch);
-                    }
-                }
+                default -> builder.appendCodePoint(ch);
             }
         }
         return builder.toString().trim();
