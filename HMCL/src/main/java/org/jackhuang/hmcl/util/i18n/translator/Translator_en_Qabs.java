@@ -15,7 +15,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.util.i18n;
+package org.jackhuang.hmcl.util.i18n.translator;
+
+import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,13 +33,16 @@ import java.util.Map;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// @author Glavo
-public final class UpsideDownUtils {
+public class Translator_en_Qabs extends Translator {
+    private static final DateTimeFormatter BASE_FORMATTER = DateTimeFormatter.ofPattern("MMM d, yyyy, h:mm:ss a")
+            .withZone(ZoneId.systemDefault());
+
     private static final Map<Integer, Integer> MAPPER = loadMap();
 
     private static Map<Integer, Integer> loadMap() {
         var map = new LinkedHashMap<Integer, Integer>();
 
-        InputStream inputStream = UpsideDownUtils.class.getResourceAsStream("/assets/lang/upside_down.txt");
+        InputStream inputStream = Translator_en_Qabs.class.getResourceAsStream("/assets/lang/upside_down.txt");
         if (inputStream != null) {
             try (inputStream) {
                 new String(inputStream.readAllBytes(), StandardCharsets.UTF_8).lines().forEach(line -> {
@@ -65,13 +71,17 @@ public final class UpsideDownUtils {
         return builder.reverse().toString();
     }
 
-    private static final DateTimeFormatter BASE_FORMATTER = DateTimeFormatter.ofPattern("MMM d, yyyy, h:mm:ss a")
-            .withZone(ZoneId.systemDefault());
-
-    public static String formatDateTime(TemporalAccessor time) {
-        return translate(BASE_FORMATTER.format(time));
+    public Translator_en_Qabs(SupportedLocale locale) {
+        super(locale);
     }
 
-    private UpsideDownUtils() {
+    @Override
+    public String getDisplayVersion(RemoteVersion remoteVersion) {
+        return translate(remoteVersion.getSelfVersion());
+    }
+
+    @Override
+    public String formatDateTime(TemporalAccessor time) {
+        return translate(BASE_FORMATTER.format(time));
     }
 }

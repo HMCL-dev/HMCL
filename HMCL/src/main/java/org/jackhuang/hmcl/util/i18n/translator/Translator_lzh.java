@@ -15,8 +15,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.util.i18n;
+package org.jackhuang.hmcl.util.i18n.translator;
 
+import org.jackhuang.hmcl.download.RemoteVersion;
+import org.jackhuang.hmcl.download.game.GameRemoteVersion;
+import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.time.Instant;
@@ -27,10 +30,8 @@ import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author Glavo
- */
-public final class WenyanUtils {
+/// @author Glavo
+public class Translator_lzh extends Translator {
     private static final String DOT = "點";
 
     private static final String[] NUMBERS = {
@@ -79,37 +80,8 @@ public final class WenyanUtils {
         builder.append(hour % 2 == 0 ? '正' : '初');
     }
 
-    public static String formatDateTime(TemporalAccessor time) {
-        LocalDateTime localDateTime;
-        if (time instanceof Instant)
-            localDateTime = ((Instant) time).atZone(ZoneId.systemDefault()).toLocalDateTime();
-        else
-            localDateTime = LocalDateTime.from(time);
-
-        StringBuilder builder = new StringBuilder(16);
-
-        appendYear(builder, localDateTime.getYear());
-        builder.append('年');
-        builder.append(numberToString(localDateTime.getMonthValue()));
-        builder.append('月');
-        builder.append(numberToString(localDateTime.getDayOfMonth()));
-        builder.append('日');
-
-        builder.append(' ');
-
-        appendHour(builder, localDateTime.getHour());
-        builder.append(numberToString(localDateTime.getMinute()));
-        builder.append('分');
-        builder.append(numberToString(localDateTime.getSecond()));
-        builder.append('秒');
-
-        return builder.toString();
-    }
-
     public static String translateGameVersion(GameVersionNumber gameVersion) {
-        if (gameVersion instanceof GameVersionNumber.Release) {
-            var release = (GameVersionNumber.Release) gameVersion;
-
+        if (gameVersion instanceof GameVersionNumber.Release release) {
             StringBuilder builder = new StringBuilder();
             appendDigitByDigit(builder, String.valueOf(release.getMajor()));
             builder.append(DOT);
@@ -120,6 +92,7 @@ public final class WenyanUtils {
                 appendDigitByDigit(builder, String.valueOf(release.getPatch()));
             }
 
+            //noinspection StatementWithEmptyBody
             if (release.getEaType() == GameVersionNumber.Release.TYPE_GA) {
                 // do nothing
             } else if (release.getEaType() == GameVersionNumber.Release.TYPE_PRE) {
@@ -134,9 +107,7 @@ public final class WenyanUtils {
             }
 
             return builder.toString();
-        } else if (gameVersion instanceof GameVersionNumber.Snapshot) {
-            var snapshot = (GameVersionNumber.Snapshot) gameVersion;
-
+        } else if (gameVersion instanceof GameVersionNumber.Snapshot snapshot) {
             StringBuilder builder = new StringBuilder();
 
             appendDigitByDigit(builder, String.valueOf(snapshot.getYear()));
@@ -152,35 +123,20 @@ public final class WenyanUtils {
             return builder.toString();
         } else if (gameVersion instanceof GameVersionNumber.Special) {
             String version = gameVersion.toString();
-            switch (version.toLowerCase(Locale.ROOT)) {
-                case "2.0":
-                    return "二點〇";
-                case "2.0_blue":
-                    return "二點〇藍";
-                case "2.0_red":
-                    return "二點〇赤";
-                case "2.0_purple":
-                    return "二點〇紫";
-                case "1.rv-pre1":
-                    return "一點真視之預一";
-                case "3d shareware v1.34":
-                    return "躍然享件一點三四";
-                case "20w14infinite":
-                case "20w14~":
-                case "20w14∞":
-                    return "二〇週一四宇";
-                case "22w13oneblockatatime":
-                    return "二二週一三典";
-                case "23w13a_or_b":
-                    return "二三週一三暨";
-                case "24w14potato":
-                    return "二四週一四芋";
-                case "25w14craftmine":
-                    return "二五週一四礦";
-                default:
-                    return version;
-            }
-
+            return switch (version.toLowerCase(Locale.ROOT)) {
+                case "2.0" -> "二點〇";
+                case "2.0_blue" -> "二點〇藍";
+                case "2.0_red" -> "二點〇赤";
+                case "2.0_purple" -> "二點〇紫";
+                case "1.rv-pre1" -> "一點真視之預一";
+                case "3d shareware v1.34" -> "躍然享件一點三四";
+                case "20w14infinite", "20w14~", "20w14∞" -> "二〇週一四宇";
+                case "22w13oneblockatatime" -> "二二週一三典";
+                case "23w13a_or_b" -> "二三週一三暨";
+                case "24w14potato" -> "二四週一四芋";
+                case "25w14craftmine" -> "二五週一四礦";
+                default -> version;
+            };
         } else {
             return gameVersion.toString();
         }
@@ -211,6 +167,43 @@ public final class WenyanUtils {
         return version;
     }
 
-    private WenyanUtils() {
+    public Translator_lzh(SupportedLocale locale) {
+        super(locale);
+    }
+
+    @Override
+    public String getDisplayVersion(RemoteVersion remoteVersion) {
+        if (remoteVersion instanceof GameRemoteVersion)
+            return translateGameVersion(GameVersionNumber.asGameVersion(remoteVersion.getSelfVersion()));
+        else
+            return translateGenericVersion(remoteVersion.getSelfVersion());
+    }
+
+    @Override
+    public String formatDateTime(TemporalAccessor time) {
+        LocalDateTime localDateTime;
+        if (time instanceof Instant instant)
+            localDateTime = instant.atZone(ZoneId.systemDefault()).toLocalDateTime();
+        else
+            localDateTime = LocalDateTime.from(time);
+
+        StringBuilder builder = new StringBuilder(16);
+
+        appendYear(builder, localDateTime.getYear());
+        builder.append('年');
+        builder.append(numberToString(localDateTime.getMonthValue()));
+        builder.append('月');
+        builder.append(numberToString(localDateTime.getDayOfMonth()));
+        builder.append('日');
+
+        builder.append(' ');
+
+        appendHour(builder, localDateTime.getHour());
+        builder.append(numberToString(localDateTime.getMinute()));
+        builder.append('分');
+        builder.append(numberToString(localDateTime.getSecond()));
+        builder.append('秒');
+
+        return builder.toString();
     }
 }
