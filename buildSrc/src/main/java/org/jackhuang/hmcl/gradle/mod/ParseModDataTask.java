@@ -52,8 +52,6 @@ public abstract class ParseModDataTask extends DefaultTask {
     @OutputFile
     public abstract RegularFileProperty getOutputFile();
 
-    // ---
-
     private static final Logger LOGGER = Logging.getLogger(ParseModDataTask.class);
 
     private static final String S = ";";
@@ -94,7 +92,7 @@ public abstract class ParseModDataTask extends DefaultTask {
         return "";
     }
 
-    private static final Set<String> skip = Set.of(
+    private static final Set<String> SKIP = Set.of(
             "Minecraft",
             "The Building Game"
     );
@@ -132,7 +130,7 @@ public abstract class ParseModDataTask extends DefaultTask {
                 if (abbr == null)
                     abbr = "";
 
-                if (skip.contains(subName)) {
+                if (SKIP.contains(subName)) {
                     continue;
                 }
 
