@@ -22,14 +22,13 @@ import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import javafx.animation.PauseTransition;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.value.ChangeListener;
 import javafx.collections.ListChangeListener;
+import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
-import javafx.scene.control.SelectionMode;
-import javafx.scene.control.SkinBase;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
@@ -74,14 +73,12 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
-import static org.jackhuang.hmcl.util.StringUtils.isNotBlank;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -98,6 +95,9 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
     // FXThread
     private boolean isSearching = false;
 
+    @SuppressWarnings({"FieldCanBeLocal", "unused"})
+    private final ChangeListener<Boolean> holder;
+
     ModListPageSkin(ModListPage skinnable) {
         super(skinnable);
 
@@ -108,6 +108,12 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         ComponentList root = new ComponentList();
         root.getStyleClass().add("no-padding");
         listView = new JFXListView<>();
+
+        this.holder = FXUtils.onWeakChange(skinnable.loadingProperty(), loading -> {
+            if (!loading) {
+                listView.scrollTo(0);
+            }
+        });
 
         {
             toolbarPane = new TransitionPane();
@@ -276,7 +282,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                         || predicate.test(modInfo.getGameVersion())
                         || predicate.test(modInfo.getId())
                         || predicate.test(Objects.toString(modInfo.getModLoaderType()))
-                        || predicate.test((item.getMod() != null ? item.getMod().getDisplayName() : null))) {
+                        || predicate.test((item.getModTranslations() != null ? item.getModTranslations().getDisplayName() : null))) {
                     listView.getItems().add(item);
                 }
             }
@@ -365,9 +371,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
     static class ModInfoObject extends RecursiveTreeObject<ModInfoObject> implements Comparable<ModInfoObject> {
         private final BooleanProperty active;
         private final LocalModFile localModFile;
-        private final String title;
-        private final String message;
-        private final ModTranslations.Mod mod;
+        private final @Nullable ModTranslations.Mod modTranslations;
 
         private SoftReference<Image> iconCache;
 
@@ -375,36 +379,15 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             this.localModFile = localModFile;
             this.active = localModFile.activeProperty();
 
-            this.title = localModFile.getName();
-
-            List<String> parts = new ArrayList<>();
-            if (isNotBlank(localModFile.getId())) {
-                parts.add(localModFile.getId());
-            }
-            if (isNotBlank(localModFile.getVersion())) {
-                parts.add(localModFile.getVersion());
-            }
-            if (isNotBlank(localModFile.getGameVersion())) {
-                parts.add(i18n("game.version") + ": " + localModFile.getGameVersion());
-            }
-            this.message = String.join(", ", parts);
-            this.mod = ModTranslations.MOD.getMod(localModFile.getId(), localModFile.getName());
-        }
-
-        String getTitle() {
-            return title;
-        }
-
-        String getSubtitle() {
-            return message;
+            this.modTranslations = ModTranslations.MOD.getMod(localModFile.getId(), localModFile.getName());
         }
 
         LocalModFile getModInfo() {
             return localModFile;
         }
 
-        public ModTranslations.Mod getMod() {
-            return mod;
+        public @Nullable ModTranslations.Mod getModTranslations() {
+            return modTranslations;
         }
 
         @Override
@@ -431,23 +414,23 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                     }).start();
 
             TwoLineListItem title = new TwoLineListItem();
-            title.setTitle(modInfo.getModInfo().getName());
-            if (modInfo.getMod() != null) {
-                title.addTag(modInfo.getMod().getDisplayName());
-            }
+            if (modInfo.getModTranslations() != null && I18n.isUseChinese())
+                title.setTitle(modInfo.getModTranslations().getDisplayName());
+            else
+                title.setTitle(modInfo.getModInfo().getName());
 
-            List<String> subtitleParts = new ArrayList<>();
-            subtitleParts.add(FileUtils.getName(modInfo.getModInfo().getFile()));
+            StringJoiner subtitle = new StringJoiner(" | ");
+            subtitle.add(FileUtils.getName(modInfo.getModInfo().getFile()));
             if (StringUtils.isNotBlank(modInfo.getModInfo().getGameVersion())) {
-                subtitleParts.add(modInfo.getModInfo().getGameVersion());
+                subtitle.add(modInfo.getModInfo().getGameVersion());
             }
             if (StringUtils.isNotBlank(modInfo.getModInfo().getVersion())) {
-                subtitleParts.add(modInfo.getModInfo().getVersion());
+                subtitle.add(modInfo.getModInfo().getVersion());
             }
             if (StringUtils.isNotBlank(modInfo.getModInfo().getAuthors())) {
-                subtitleParts.add(i18n("archive.author") + ": " + modInfo.getModInfo().getAuthors());
+                subtitle.add(i18n("archive.author") + ": " + modInfo.getModInfo().getAuthors());
             }
-            title.setSubtitle(String.join(", ", subtitleParts));
+            title.setSubtitle(subtitle.toString());
 
             titleContainer.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), title);
             setHeading(titleContainer);
@@ -517,7 +500,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                                     Controllers.navigate(new DownloadPage(
                                             repository instanceof CurseForgeRemoteModRepository ? HMCLLocalizedDownloadListPage.ofCurseForgeMod(null, false) : HMCLLocalizedDownloadListPage.ofModrinthMod(null, false),
                                             remoteMod,
-                                            new Profile.ProfileVersion(ModListPageSkin.this.getSkinnable().getProfile(), ModListPageSkin.this.getSkinnable().getVersionId()),
+                                            new Profile.ProfileVersion(ModListPageSkin.this.getSkinnable().getProfile(), ModListPageSkin.this.getSkinnable().getInstanceId()),
                                             (profile, version, file) -> org.jackhuang.hmcl.ui.download.DownloadPage.download(profile, version, file, "mods")
                                     ));
                                 });
@@ -540,7 +523,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                 getActions().add(officialPageButton);
             }
 
-            if (modInfo.getMod() == null || StringUtils.isBlank(modInfo.getMod().getMcmod())) {
+            if (modInfo.getModTranslations() == null || StringUtils.isBlank(modInfo.getModTranslations().getMcmod())) {
                 JFXHyperlink searchButton = new JFXHyperlink(i18n("mods.mcmod.search"));
                 searchButton.setOnAction(e -> {
                     fireEvent(new DialogCloseEvent());
@@ -555,7 +538,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                 JFXHyperlink mcmodButton = new JFXHyperlink(i18n("mods.mcmod.page"));
                 mcmodButton.setOnAction(e -> {
                     fireEvent(new DialogCloseEvent());
-                    FXUtils.openLink(ModTranslations.MOD.getMcmodUrl(modInfo.getMod()));
+                    FXUtils.openLink(ModTranslations.MOD.getMcmodUrl(modInfo.getModTranslations()));
                 });
                 getActions().add(mcmodButton);
             }
@@ -574,6 +557,8 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
     private static final Lazy<JFXPopup> popup = new Lazy<>(() -> new JFXPopup(menu.get()));
 
     final class ModInfoListCell extends MDListCell<ModInfoObject> {
+        private static final PseudoClass WARNING = PseudoClass.getPseudoClass("warning");
+
         JFXCheckBox checkBox = new JFXCheckBox();
         ImageView imageView = new ImageView();
         TwoLineListItem content = new TwoLineListItem();
@@ -582,8 +567,12 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         JFXButton revealButton = new JFXButton();
         BooleanProperty booleanProperty;
 
+        Tooltip warningTooltip;
+
         ModInfoListCell(JFXListView<ModInfoObject> listView, Holder<Object> lastCell) {
             super(listView, lastCell);
+
+            this.getStyleClass().add("mod-info-list-cell");
 
             HBox container = new HBox(8);
             container.setPickOnBounds(false);
@@ -616,68 +605,104 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
         @Override
         protected void updateControl(ModInfoObject dataItem, boolean empty) {
+            pseudoClassStateChanged(WARNING, false);
+            if (warningTooltip != null) {
+                Tooltip.uninstall(this, warningTooltip);
+                warningTooltip = null;
+            }
+
             if (empty) return;
+
+            List<String> warning = new ArrayList<>();
+
+            content.getTags().clear();
+
+            LocalModFile modInfo = dataItem.getModInfo();
+            ModTranslations.Mod modTranslations = dataItem.getModTranslations();
 
             SoftReference<Image> iconCache = dataItem.iconCache;
             Image icon;
             if (iconCache != null && (icon = iconCache.get()) != null) {
                 imageView.setImage(icon);
             } else {
-                loadModIcon(dataItem.getModInfo(), 24)
+                loadModIcon(modInfo, 24)
                         .whenComplete(Schedulers.javafx(), (image, exception) -> {
                             dataItem.iconCache = new SoftReference<>(image);
                             imageView.setImage(image);
                         }).start();
             }
 
-            content.setTitle(dataItem.getTitle());
-            content.getTags().clear();
-            switch (dataItem.getModInfo().getModLoaderType()) {
-                case FORGE:
-                    content.addTag(i18n("install.installer.forge"));
-                    break;
-                case CLEANROOM:
-                    content.addTag(i18n("install.installer.cleanroom"));
-                    break;
-                case NEO_FORGED:
-                    content.addTag(i18n("install.installer.neoforge"));
-                    break;
-                case FABRIC:
-                    content.addTag(i18n("install.installer.fabric"));
-                    break;
-                case LITE_LOADER:
-                    content.addTag(i18n("install.installer.liteloader"));
-                    break;
-                case QUILT:
-                    content.addTag(i18n("install.installer.quilt"));
-                    break;
-            }
-            if (dataItem.getMod() != null && I18n.isUseChinese()) {
-                if (isNotBlank(dataItem.getSubtitle())) {
-                    content.setSubtitle(dataItem.getSubtitle() + ", " + dataItem.getMod().getDisplayName());
-                } else {
-                    content.setSubtitle(dataItem.getMod().getDisplayName());
+            if (modTranslations != null && I18n.isUseChinese() && !modInfo.getName().equals(modTranslations.getName()))
+                content.setTitle(modInfo.getName() + " (" + modTranslations.getName() + ")");
+            else
+                content.setTitle(modInfo.getName());
+
+            StringJoiner joiner = new StringJoiner(" | ");
+
+            if (StringUtils.isNotBlank(modInfo.getId()))
+                joiner.add(modInfo.getId());
+
+            joiner.add(FileUtils.getName(modInfo.getFile()));
+
+            content.setSubtitle(joiner.toString());
+
+            ModLoaderType modLoaderType = modInfo.getModLoaderType();
+            if (!ModListPageSkin.this.getSkinnable().supportedLoaders.contains(modLoaderType)) {
+                warning.add(i18n("mods.warning.loader_mismatch"));
+                switch (dataItem.getModInfo().getModLoaderType()) {
+                    case FORGE:
+                        content.addTagWarning(i18n("install.installer.forge"));
+                        break;
+                    case CLEANROOM:
+                        content.addTagWarning(i18n("install.installer.cleanroom"));
+                        break;
+                    case NEO_FORGED:
+                        content.addTagWarning(i18n("install.installer.neoforge"));
+                        break;
+                    case FABRIC:
+                        content.addTagWarning(i18n("install.installer.fabric"));
+                        break;
+                    case LITE_LOADER:
+                        content.addTagWarning(i18n("install.installer.liteloader"));
+                        break;
+                    case QUILT:
+                        content.addTagWarning(i18n("install.installer.quilt"));
+                        break;
                 }
-            } else {
-                content.setSubtitle(dataItem.getSubtitle());
             }
+
+            String modVersion = modInfo.getVersion();
+            if (StringUtils.isNotBlank(modVersion) && !"${version}".equals(modVersion)) {
+                content.addTag(modVersion);
+            }
+
             if (booleanProperty != null) {
                 checkBox.selectedProperty().unbindBidirectional(booleanProperty);
             }
             checkBox.selectedProperty().bindBidirectional(booleanProperty = dataItem.active);
-            restoreButton.setVisible(!dataItem.getModInfo().getMod().getOldFiles().isEmpty());
+            restoreButton.setVisible(!modInfo.getMod().getOldFiles().isEmpty());
             restoreButton.setOnAction(e -> {
-                menu.get().getContent().setAll(dataItem.getModInfo().getMod().getOldFiles().stream()
+                menu.get().getContent().setAll(modInfo.getMod().getOldFiles().stream()
                         .map(localModFile -> new IconedMenuItem(null, localModFile.getVersion(),
-                                () -> getSkinnable().rollback(dataItem.getModInfo(), localModFile),
+                                () -> getSkinnable().rollback(modInfo, localModFile),
                                 popup.get()))
-                        .collect(Collectors.toList())
+                        .toList()
                 );
 
                 popup.get().show(restoreButton, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, 0, restoreButton.getHeight());
             });
-            revealButton.setOnAction(e -> FXUtils.showFileInExplorer(dataItem.getModInfo().getFile()));
+            revealButton.setOnAction(e -> FXUtils.showFileInExplorer(modInfo.getFile()));
             infoButton.setOnAction(e -> Controllers.dialog(new ModInfoDialog(dataItem)));
+
+            if (!warning.isEmpty()) {
+                pseudoClassStateChanged(WARNING, true);
+
+                //noinspection ConstantValue
+                this.warningTooltip = warning.size() == 1
+                        ? new Tooltip(warning.get(0))
+                        : new Tooltip(String.join("\n", warning));
+                FXUtils.installFastTooltip(this, warningTooltip);
+            }
         }
     }
 }

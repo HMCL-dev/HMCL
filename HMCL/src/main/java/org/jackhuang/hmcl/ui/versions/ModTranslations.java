@@ -139,8 +139,8 @@ public enum ModTranslations {
             modIdMap = new HashMap<>(mods.size());
             for (Mod mod : mods) {
                 for (String id : mod.getModIds()) {
-                    if (StringUtils.isNotBlank(id) && !"examplemod".equals(id)) {
-                        modIdMap.put(id, mod);
+                    if (StringUtils.isNotBlank(id)) {
+                        modIdMap.putIfAbsent(id, mod);
                     }
                 }
             }
@@ -164,7 +164,7 @@ public enum ModTranslations {
             for (Mod mod : mods) {
                 String subname = cleanSubname(mod.getSubname());
                 if (StringUtils.isNotBlank(subname)) {
-                    subnameMap.put(subname, mod);
+                    subnameMap.putIfAbsent(subname, mod);
                 }
             }
 
@@ -186,7 +186,7 @@ public enum ModTranslations {
             curseForgeMap = new HashMap<>(mods.size());
             for (Mod mod : mods) {
                 if (StringUtils.isNotBlank(mod.getCurseforge())) {
-                    curseForgeMap.put(mod.getCurseforge(), mod);
+                    curseForgeMap.putIfAbsent(mod.getCurseforge(), mod);
                 }
             }
 

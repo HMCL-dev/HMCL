@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -62,7 +63,7 @@ public final class ModManager {
     private final GameRepository repository;
     private final String id;
     private final TreeSet<LocalModFile> localModFiles = new TreeSet<>();
-    private final HashMap<LocalMod, LocalMod> localMods = new HashMap<>();
+    private final HashMap<Pair<String, ModLoaderType>, LocalMod> localMods = new HashMap<>();
     private LibraryAnalyzer analyzer;
 
     private boolean loaded = false;
@@ -84,8 +85,17 @@ public final class ModManager {
         return repository.getModsDirectory(id);
     }
 
-    public LocalMod getLocalMod(String id, ModLoaderType modLoaderType) {
-        return localMods.computeIfAbsent(new LocalMod(id, modLoaderType), x -> x);
+    public LibraryAnalyzer getLibraryAnalyzer() {
+        return analyzer;
+    }
+
+    public LocalMod getLocalMod(String modId, ModLoaderType modLoaderType) {
+        return localMods.computeIfAbsent(pair(modId, modLoaderType),
+                x -> new LocalMod(x.getKey(), x.getValue()));
+    }
+
+    public boolean hasMod(String modId, ModLoaderType modLoaderType) {
+        return localMods.containsKey(pair(modId, modLoaderType));
     }
 
     private void addModInfo(Path file) {
@@ -184,10 +194,10 @@ public final class ModManager {
         loaded = true;
     }
 
-    public Collection<LocalModFile> getMods() throws IOException {
+    public @Unmodifiable List<LocalModFile> getMods() throws IOException {
         if (!loaded)
             refreshMods();
-        return localModFiles;
+        return List.copyOf(localModFiles);
     }
 
     public void addMod(Path file) throws IOException {
