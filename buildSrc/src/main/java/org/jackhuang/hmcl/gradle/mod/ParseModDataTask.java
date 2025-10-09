@@ -130,7 +130,7 @@ public abstract class ParseModDataTask extends DefaultTask {
                 }
             }
         }
-        return builder.toString();
+        return builder.toString().trim();
     }
 
     private static final Set<String> SKIP = Set.of(
