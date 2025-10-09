@@ -23,6 +23,7 @@ import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
+import org.jackhuang.hmcl.gradle.utils.PropertiesUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -53,10 +54,7 @@ public abstract class UpsideDownTranslate extends DefaultTask {
         Path inputFile = getInputFile().get().getAsFile().toPath();
         Path outputFile = getOutputFile().get().getAsFile().toPath();
 
-        Properties english = new Properties();
-        try (var reader = Files.newBufferedReader(inputFile)) {
-            english.load(reader);
-        }
+        Properties english = PropertiesUtils.load(inputFile);
 
         Properties output = new Properties();
         Translator translator = new Translator();
