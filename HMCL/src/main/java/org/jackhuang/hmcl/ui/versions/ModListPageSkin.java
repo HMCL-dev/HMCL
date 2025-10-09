@@ -559,6 +559,11 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
     final class ModInfoListCell extends MDListCell<ModInfoObject> {
         private static final PseudoClass WARNING = PseudoClass.getPseudoClass("warning");
 
+        private static final String MOD_LOADERS = "Fabric|Forge|NeoForge|Quilt";
+        private static final Pattern CHINESE_NAME_LOADER_SUFFIX = Pattern.compile(
+                "(?:%1$s)(?:/%1$s)?(?: 版)?".formatted(MOD_LOADERS)
+        );
+
         JFXCheckBox checkBox = new JFXCheckBox();
         ImageView imageView = new ImageView();
         TwoLineListItem content = new TwoLineListItem();
@@ -632,10 +637,40 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                         }).start();
             }
 
-            if (modTranslations != null && I18n.isUseChinese() && !modInfo.getName().equals(modTranslations.getName()))
-                content.setTitle(modInfo.getName() + " (" + modTranslations.getName() + ")");
-            else
-                content.setTitle(modInfo.getName());
+
+            String displayName = modInfo.getName();
+            if (modTranslations != null && I18n.isUseChinese()) {
+                String chineseName = modTranslations.getName();
+                if (StringUtils.containsChinese(chineseName)) {
+
+                    // Remove ModLoader suffix
+                    int bracketIndex;
+                    if (chineseName.endsWith(")") && (bracketIndex = chineseName.lastIndexOf('(')) >= 0) {
+                        if (CHINESE_NAME_LOADER_SUFFIX
+                                .matcher(chineseName)
+                                .region(bracketIndex + 1, chineseName.length() - 1)
+                                .matches()) {
+                            chineseName = chineseName.substring(0, bracketIndex).trim();
+                        }
+                    }
+
+                    if (StringUtils.containsEmoji(chineseName)) {
+                        StringBuilder builder = new StringBuilder();
+
+                        chineseName.codePoints().forEach(ch -> {
+                            if (ch < 0x1F300 || ch > 0x1FAFF)
+                                builder.appendCodePoint(ch);
+                        });
+
+                        chineseName = builder.toString().trim();
+                    }
+
+                    if (StringUtils.isNotBlank(chineseName) && !displayName.equalsIgnoreCase(chineseName)) {
+                        displayName = displayName + " (" + chineseName + ")";
+                    }
+                }
+            }
+            content.setTitle(displayName);
 
             StringJoiner joiner = new StringJoiner(" | ");
 
