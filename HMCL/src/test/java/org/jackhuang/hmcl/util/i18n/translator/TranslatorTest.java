@@ -26,25 +26,26 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /**
  * @author Glavo
  */
-public final class Translator_lzhTest {
+public final class TranslatorTest {
 
-    private static void assertYearToString(String value, int year) {
+    //region lzh
+
+    private static void assertYearToLZH(String value, int year) {
         StringBuilder builder = new StringBuilder(2);
         Translator_lzh.appendYear(builder, year);
         assertEquals(value, builder.toString());
     }
 
     @Test
-    public void testYearToString() {
-        assertYearToString("甲子", 1984);
-        assertYearToString("乙巳", 2025);
-        assertYearToString("甲子", -2996);
-        assertYearToString("庚子", 1000);
+    public void testYearToLZH() {
+        assertYearToLZH("甲子", 1984);
+        assertYearToLZH("乙巳", 2025);
+        assertYearToLZH("甲子", -2996);
+        assertYearToLZH("庚子", 1000);
     }
 
     @Test
-    public void testHourToString() {
-
+    public void testHourToLZH() {
         List<String> list = List.of(
                 "子正", "丑初", "丑正", "寅初", "寅正", "卯初", "卯正", "辰初", "辰正", "巳初", "巳正", "午初",
                 "午正", "未初", "未正", "申初", "申正", "酉初", "酉正", "戌初", "戌正", "亥初", "亥正", "子初"
@@ -55,4 +56,6 @@ public final class Translator_lzhTest {
             assertEquals(list.get(hour), builder.toString());
         }
     }
+
+    //endregion
 }
