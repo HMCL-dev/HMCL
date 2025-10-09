@@ -104,7 +104,6 @@ public abstract class ParseModDataTask extends DefaultTask {
         for (int i = 0; i < codePoints.length; i++) {
             int ch = codePoints[i];
             int prev = i > 0 ? codePoints[i - 1] : 0;
-            int next = i < (codePoints.length - 1) ? codePoints[i + 1] : 0;
 
             switch (ch) {
                 case '（' -> {
@@ -114,12 +113,6 @@ public abstract class ParseModDataTask extends DefaultTask {
                         builder.append(" (");
                 }
                 case '）' -> builder.append(')');
-                case '，' -> {
-                    if (next == 0 || Character.isWhitespace(next))
-                        builder.append(',');
-                    else
-                        builder.append(", ");
-                }
                 default -> {
                     //noinspection StatementWithEmptyBody
                     if (ch >= 0x1F300 && ch <= 0x1FAFF) {
