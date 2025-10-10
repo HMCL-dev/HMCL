@@ -28,10 +28,6 @@ public record Platform(OperatingSystem os, Architecture arch) {
         return Architecture.SYSTEM_ARCH.isX86() || SYSTEM_PLATFORM == MACOS_ARM64 || SYSTEM_PLATFORM == WINDOWS_ARM64;
     }
 
-    public static Platform getPlatform() {
-        return CURRENT_PLATFORM;
-    }
-
     public static Platform getPlatform(OperatingSystem os, Architecture arch) {
         if (os == OperatingSystem.UNKNOWN && arch == Architecture.UNKNOWN) {
             return UNKNOWN;
