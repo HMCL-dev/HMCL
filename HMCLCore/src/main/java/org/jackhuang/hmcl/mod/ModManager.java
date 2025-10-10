@@ -115,8 +115,7 @@ public final class ModManager {
         var unsupportedReaders = new ArrayList<ModMetadataReader>();
 
         for (Pair<ModMetadataReader, ModLoaderType> reader : readersMap) {
-            boolean supported = modLoaderTypes.contains(reader.getValue());
-            if (supported) {
+            if (modLoaderTypes.contains(reader.getValue())) {
                 supportedReaders.add(reader.getKey());
             } else {
                 unsupportedReaders.add(reader.getKey());
