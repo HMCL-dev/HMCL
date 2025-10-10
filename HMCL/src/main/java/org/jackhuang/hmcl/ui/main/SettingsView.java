@@ -151,6 +151,7 @@ public abstract class SettingsView extends StackPane {
                     previewPane = new OptionToggleButton();
                     previewPane.setTitle(i18n("update.preview"));
                     previewPane.selectedProperty().bindBidirectional(config().acceptPreviewUpdateProperty());
+                    FXUtils.installFastTooltip(previewPane, i18n("update.preview.tooltip"));
 
                     settingsPane.getContent().add(previewPane);
                 }
