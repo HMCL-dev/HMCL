@@ -237,6 +237,8 @@ public final class NativePatcher {
 
         if (platform.equals(Platform.FREEBSD_X86_64)) {
             minVersion = "1.13";
+        } else if (platform.equals(Platform.LINUX_ARM64)) {
+            minVersion = "1.6";
         } else if (platform.equals(Platform.LINUX_RISCV64)) {
             minVersion = "1.8";
         } else if (platform.equals(Platform.LINUX_LOONGARCH64)) {
