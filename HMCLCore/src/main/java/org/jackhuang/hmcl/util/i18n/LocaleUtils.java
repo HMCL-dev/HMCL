@@ -99,7 +99,7 @@ public final class LocaleUtils {
                 rtl.add(line.trim());
             }
         } catch (Throwable e) {
-            LOG.warning("Failed to load iso_languages.csv", e);
+            LOG.warning("Failed to load rtl.txt", e);
         }
     }
 
