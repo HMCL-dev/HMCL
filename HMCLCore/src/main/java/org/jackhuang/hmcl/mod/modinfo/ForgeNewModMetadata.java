@@ -145,7 +145,7 @@ public final class ForgeNewModMetadata {
 
     private static LocalModFile fromFile0(
             String tomlPath,
-            ModLoaderType defaultLoader,
+            ModLoaderType modLoaderType,
             ModManager modManager,
             Path modFile,
             FileSystem fs) throws IOException, JsonParseException {
@@ -168,7 +168,7 @@ public final class ForgeNewModMetadata {
             }
         }
 
-        ModLoaderType type = analyzeLoader(toml, mod.getModId(), defaultLoader);
+        ModLoaderType type = analyzeLoader(toml, mod.getModId(), modLoaderType);
 
         return new LocalModFile(modManager, modManager.getLocalMod(mod.getModId(), type), modFile, mod.getDisplayName(), new LocalModFile.Description(mod.getDescription()),
                 mod.getAuthors(), jarVersion == null ? mod.getVersion() : mod.getVersion().replace("${file.jarVersion}", jarVersion), "",
