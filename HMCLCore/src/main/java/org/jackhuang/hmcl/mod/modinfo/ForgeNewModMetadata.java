@@ -123,16 +123,16 @@ public final class ForgeNewModMetadata {
             throw new IOException("Invalid mod loader: " + modLoaderType);
         }
 
-        try {
-            return fromFile0("META-INF/mods.toml", modLoaderType, modManager, modFile, fs);
-        } catch (Exception ignored) {
-        }
-
         if (modLoaderType == ModLoaderType.NEO_FORGED) {
             try {
                 return fromFile0("META-INF/neoforge.mods.toml", modLoaderType, modManager, modFile, fs);
             } catch (Exception ignored) {
             }
+        }
+
+        try {
+            return fromFile0("META-INF/mods.toml", modLoaderType, modManager, modFile, fs);
+        } catch (Exception ignored) {
         }
 
         try {
