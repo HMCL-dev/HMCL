@@ -151,7 +151,6 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
     private enum VersionTypeFilter {
         ALL,
-        SUPPORTED,
         RELEASE,
         SNAPSHOTS,
         APRIL_FOOLS,
