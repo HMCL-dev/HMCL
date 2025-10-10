@@ -25,7 +25,7 @@ public record Platform(OperatingSystem os, Architecture arch) {
     public static final Platform SYSTEM_PLATFORM = Platform.getPlatform(OperatingSystem.CURRENT_OS, Architecture.SYSTEM_ARCH);
 
     public static boolean isCompatibleWithX86Java() {
-        return Architecture.SYSTEM_ARCH.isX86() || SYSTEM_PLATFORM == MACOS_ARM64 || SYSTEM_PLATFORM == WINDOWS_ARM64;
+        return Architecture.SYSTEM_ARCH.isX86() || SYSTEM_PLATFORM.equals(MACOS_ARM64) || SYSTEM_PLATFORM.equals(WINDOWS_ARM64);
     }
 
     public static Platform getPlatform(OperatingSystem os, Architecture arch) {
