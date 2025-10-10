@@ -235,7 +235,7 @@ public final class ForgeNewModMetadata {
         if (result == loader)
             return result;
         else if (result != null)
-            throw new IOException("Loader " + result + " is incompatible with " + loader);
+            throw new IOException("Loader mismatch");
         else {
             LOG.warning("Cannot determine the mod loader for mod " + modID + ", expected " + loader);
             return loader;
