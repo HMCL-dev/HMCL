@@ -27,14 +27,7 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Stream;
@@ -55,6 +48,7 @@ public final class LocaleUtils {
 
     private static final Map<String, String> subLanguageToParent = new HashMap<>();
     private static final Map<String, String> iso3To2 = new HashMap<>();
+    private static final Set<String> rtl = new HashSet<>();
 
     static {
         try {
@@ -95,6 +89,17 @@ public final class LocaleUtils {
             }
         } catch (Throwable e) {
             LOG.warning("Failed to load iso_languages.csv", e);
+        }
+
+        try {
+            for (String line : Lang.toIterable(IOUtils.readFullyAsString(LocaleUtils.class.getResourceAsStream("/assets/lang/rtl.txt")).lines())) {
+                if (line.startsWith("#") || line.isBlank()) {
+                    continue;
+                }
+                rtl.add(line.trim());
+            }
+        } catch (Throwable e) {
+            LOG.warning("Failed to load rtl.txt", e);
         }
     }
 
@@ -161,6 +166,21 @@ public final class LocaleUtils {
         }
 
         return locale.getScript();
+    }
+
+    public static @NotNull TextDirection getTextDirection(Locale locale) {
+        TextDirection direction = rtl.contains(getRootLanguage(locale))
+                ? TextDirection.RIGHT_TO_LEFT
+                : TextDirection.LEFT_TO_RIGHT;
+
+        if ("Qabs".equals(getScript(locale))) {
+            direction = switch (direction) {
+                case RIGHT_TO_LEFT -> TextDirection.LEFT_TO_RIGHT;
+                case LEFT_TO_RIGHT -> TextDirection.RIGHT_TO_LEFT;
+            };
+        }
+
+        return direction;
     }
 
     private static final ConcurrentMap<Locale, List<Locale>> CANDIDATE_LOCALES = new ConcurrentHashMap<>();

@@ -220,4 +220,18 @@ public final class LocaleUtilsTest {
         assertNull(LocaleUtils.getParentLanguage("zh"));
         assertNull(LocaleUtils.getParentLanguage("zho"));
     }
+
+    @Test
+    public void testGetTextDirection() {
+        assertEquals(TextDirection.LEFT_TO_RIGHT, LocaleUtils.getTextDirection(Locale.forLanguageTag("en")));
+        assertEquals(TextDirection.LEFT_TO_RIGHT, LocaleUtils.getTextDirection(Locale.forLanguageTag("en-US")));
+        assertEquals(TextDirection.LEFT_TO_RIGHT, LocaleUtils.getTextDirection(Locale.forLanguageTag("zh")));
+        assertEquals(TextDirection.LEFT_TO_RIGHT, LocaleUtils.getTextDirection(Locale.forLanguageTag("zh-Hans")));
+        assertEquals(TextDirection.LEFT_TO_RIGHT, LocaleUtils.getTextDirection(Locale.forLanguageTag("zh-CN")));
+        assertEquals(TextDirection.LEFT_TO_RIGHT, LocaleUtils.getTextDirection(Locale.forLanguageTag("ar-Qabs")));
+
+        assertEquals(TextDirection.RIGHT_TO_LEFT, LocaleUtils.getTextDirection(Locale.forLanguageTag("en-Qabs")));
+        assertEquals(TextDirection.RIGHT_TO_LEFT, LocaleUtils.getTextDirection(Locale.forLanguageTag("ar")));
+        assertEquals(TextDirection.RIGHT_TO_LEFT, LocaleUtils.getTextDirection(Locale.forLanguageTag("ara")));
+    }
 }

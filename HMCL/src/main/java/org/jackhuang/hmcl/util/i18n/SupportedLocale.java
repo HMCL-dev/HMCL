@@ -15,7 +15,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
 package org.jackhuang.hmcl.util.i18n;
 
 import com.google.gson.annotations.JsonAdapter;
@@ -73,6 +72,8 @@ public final class SupportedLocale {
     private final boolean isDefault;
     private final String name;
     private final Locale locale;
+    private final TextDirection textDirection;
+
     private ResourceBundle resourceBundle;
     private ResourceBundle localeNamesBundle;
     private List<Locale> candidateLocales;
@@ -86,12 +87,14 @@ public final class SupportedLocale {
         this.locale = StringUtils.isBlank(language)
                 ? LocaleUtils.SYSTEM_DEFAULT
                 : Locale.forLanguageTag(language);
+        this.textDirection = LocaleUtils.getTextDirection(locale);
     }
 
     SupportedLocale(Locale locale) {
         this.isDefault = false;
         this.name = locale.toLanguageTag();
         this.locale = locale;
+        this.textDirection = LocaleUtils.getTextDirection(locale);
     }
 
     public boolean isDefault() {
@@ -104,6 +107,10 @@ public final class SupportedLocale {
 
     public Locale getLocale() {
         return locale;
+    }
+
+    public TextDirection getTextDirection() {
+        return textDirection;
     }
 
     public String getDisplayName(SupportedLocale inLocale) {
