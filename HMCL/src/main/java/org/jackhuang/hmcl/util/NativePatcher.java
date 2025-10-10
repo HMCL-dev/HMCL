@@ -46,8 +46,6 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public final class NativePatcher {
 
-    private static final String CURRENT_UNKNOWN_VERSION = "1.21.8";
-
     private static final Library NONEXISTENT_LIBRARY = new Library(null);
 
     private static final Map<Platform, Map<String, Library>> natives = new HashMap<>();
@@ -256,9 +254,10 @@ public final class NativePatcher {
                 if (maxVersion != null && gameVersion.compareTo(maxVersion) >= 0)
                     return SupportStatus.UNSUPPORTED;
 
-                if (gameVersion.compareTo(CURRENT_UNKNOWN_VERSION) > 0)
+                String[] defaultGameVersions = GameVersionNumber.getDefaultGameVersions();
+                if (defaultGameVersions.length > 0 && gameVersion.compareTo(defaultGameVersions[0]) > 0) {
                     return SupportStatus.UNTESTED;
-
+                }
                 return SupportStatus.LAUNCHER_SUPPORTED;
             } else {
                 return SupportStatus.UNSUPPORTED;
