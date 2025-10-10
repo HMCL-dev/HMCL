@@ -242,11 +242,4 @@ public final class ForgeNewModMetadata {
         }
     }
 
-    private static ModLoaderType checkLoader(ModLoaderType target, ModLoaderType res) throws IOException {
-        if (target != res) {
-            return res;
-        } else {
-            throw new IOException("Mismatched loader.");
-        }
-    }
 }
