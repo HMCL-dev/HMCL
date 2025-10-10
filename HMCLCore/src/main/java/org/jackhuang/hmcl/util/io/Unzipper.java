@@ -64,7 +64,7 @@ public final class Unzipper {
      * Will only uncompress files in the "subDirectory", their path will be also affected.
      *
      * For example, if you set subDirectory to /META-INF, files in /META-INF/ will be
-     * uncompressed to the destination directory without creating META-INF path.
+     * uncompressed to the destination directory without creating META-INF folder.
      *
      * Default value: "/"
      */

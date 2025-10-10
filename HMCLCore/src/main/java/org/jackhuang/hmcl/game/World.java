@@ -223,7 +223,7 @@ public final class World {
         data.put(new StringTag("LevelName", newName));
         writeLevelDat(nbt);
 
-        // then change the path's name
+        // then change the folder's name
         Files.move(file, file.resolveSibling(newName));
     }
 
