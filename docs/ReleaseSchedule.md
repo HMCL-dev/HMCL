@@ -42,7 +42,7 @@ HMCL has two main release channels: **Stable Channel** and **Development Channel
 They are used to release the HMCL stable and development versions, respectively.
 
 To test HMCL versions before official release, we will push updates to some users in advance.
-Users can enable the "Preview HMCL versions in advance" option on the "Settings > General" page to receive preview updates from the corresponding channel.
+Users can enable the "Preview HMCL releases early" option on the "Settings > General" page to receive preview updates from the corresponding channel.
 
 ## Release Model
 
