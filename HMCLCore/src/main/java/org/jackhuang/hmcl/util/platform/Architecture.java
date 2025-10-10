@@ -20,7 +20,8 @@ package org.jackhuang.hmcl.util.platform;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
@@ -218,7 +219,7 @@ public enum Architecture {
                     "/bin/uname",
                     "/usr/bin/uname"
             }) {
-                if (new File(uname).exists()) {
+                if (Files.exists(Path.of(uname))) {
                     try {
                         Process process = Runtime.getRuntime().exec(new String[]{uname, "-m"});
                         if (process.waitFor(3, TimeUnit.SECONDS) && process.exitValue() == 0) {

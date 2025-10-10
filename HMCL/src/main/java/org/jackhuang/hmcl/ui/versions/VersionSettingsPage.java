@@ -56,7 +56,6 @@ import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.hardware.PhysicalMemoryStatus;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -199,7 +198,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     copyGlobalPane.setLeft(label);
                     BorderPane.setAlignment(label, Pos.CENTER_LEFT);
 
-                    JFXButton copyAll = new JFXButton(i18n("settings.game.copy_global.copy_all"));
+                    JFXButton copyAll = FXUtils.newBorderButton(i18n("settings.game.copy_global.copy_all"));
                     copyAll.disableProperty().bind(modpack);
                     copyGlobalPane.setRight(copyAll);
                     copyAll.setOnAction(e -> Controllers.confirm(i18n("settings.game.copy_global.copy_all.confirm"), null, () -> {
@@ -210,7 +209,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
                         PropertyUtils.copyProperties(profile.getGlobal(), lastVersionSetting, name -> !ignored.contains(name));
                     }, null));
-                    copyAll.getStyleClass().add("jfx-button-border");
                     BorderPane.setAlignment(copyAll, Pos.CENTER_RIGHT);
                 }
 
@@ -457,7 +455,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 showAdvancedSettingPane.setLeft(label);
                 BorderPane.setAlignment(label, Pos.CENTER_LEFT);
 
-                JFXButton button = new JFXButton(i18n("settings.advanced.modify"));
+                JFXButton button = FXUtils.newBorderButton(i18n("settings.advanced.modify"));
                 button.setOnAction(e -> {
                     if (lastVersionSetting != null) {
                         if (advancedVersionSettingPage == null)
@@ -466,7 +464,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                         Controllers.navigate(advancedVersionSettingPage);
                     }
                 });
-                button.getStyleClass().add("jfx-button-border");
                 showAdvancedSettingPane.setRight(button);
             }
 
@@ -635,7 +632,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         versionSetting.javaVersionProperty().addListener(javaListener);
 
         gameDirItem.selectedDataProperty().bindBidirectional(versionSetting.gameDirTypeProperty());
-        gameDirSublist.subtitleProperty().bind(Bindings.createStringBinding(() -> Paths.get(profile.getRepository().getRunDirectory(versionId).getAbsolutePath()).normalize().toString(),
+        gameDirSublist.subtitleProperty().bind(Bindings.createStringBinding(() -> profile.getRepository().getRunDirectory(versionId).toAbsolutePath().normalize().toString(),
                 versionSetting.gameDirProperty(), versionSetting.gameDirTypeProperty()));
 
         lastVersionSetting = versionSetting;

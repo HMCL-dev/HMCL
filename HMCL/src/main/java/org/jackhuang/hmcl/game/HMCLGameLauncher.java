@@ -26,7 +26,6 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
@@ -64,7 +63,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         if (config().isDisableAutoGameOptions())
             return;
 
-        Path runDir = repository.getRunDirectory(version.getId()).toPath();
+        Path runDir = repository.getRunDirectory(version.getId());
         Path optionsFile = runDir.resolve("options.txt");
         Path configFolder = runDir.resolve("config");
 
@@ -81,8 +80,6 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         }
 
         Locale locale = Locale.getDefault();
-        if (LocaleUtils.isEnglish(locale))
-            return;
 
         /*
          *  1.0         : No language option, do not set for these versions
@@ -113,7 +110,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     private static String normalizedLanguageTag(Locale locale, GameVersionNumber gameVersion) {
         String region = locale.getCountry();
 
-        return switch (LocaleUtils.getISO1Language(locale)) {
+        return switch (LocaleUtils.getRootLanguage(locale)) {
             case "es" -> "es_ES";
             case "ja" -> "ja_JP";
             case "ru" -> "ru_RU";
@@ -130,6 +127,13 @@ public final class HMCLGameLauncher extends DefaultLauncher {
                 }
                 yield "zh_CN";
             }
+            case "en" -> {
+                if ("Qabs".equals(LocaleUtils.getScript(locale)) && gameVersion.compareTo("1.16") >= 0) {
+                    yield "en_UD";
+                }
+
+                yield "";
+            }
             default -> "";
         };
     }
@@ -141,7 +145,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     }
 
     @Override
-    public void makeLaunchScript(File scriptFile) throws IOException {
+    public void makeLaunchScript(Path scriptFile) throws IOException {
         generateOptionsTxt();
         super.makeLaunchScript(scriptFile);
     }

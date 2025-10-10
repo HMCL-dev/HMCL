@@ -87,7 +87,7 @@ public final class StringUtils {
                         builder.append(str, start, i);
                     }
                     builder.append(' ');
-                    i = whitespaceEnd ;
+                    i = whitespaceEnd;
                     continue;
                 }
             }
@@ -258,6 +258,19 @@ public final class StringUtils {
             if (ch >= '\u4e00' && ch <= '\u9fa5')
                 return true;
         }
+        return false;
+    }
+
+    public static boolean containsEmoji(String str) {
+        for (int i = 0; i < str.length(); ) {
+            int ch = str.codePointAt(i);
+
+            if (ch >= 0x1F300 && ch <= 0x1FAFF)
+                return true;
+
+            i += Character.charCount(ch);
+        }
+
         return false;
     }
 

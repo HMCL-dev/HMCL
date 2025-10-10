@@ -35,7 +35,6 @@ import org.jenkinsci.constant_pool_scanner.ConstantPoolScanner;
 import org.jenkinsci.constant_pool_scanner.ConstantType;
 import org.jenkinsci.constant_pool_scanner.Utf8Constant;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
@@ -131,7 +130,7 @@ public final class OptiFineInstallTask extends Task<Version> {
         List<Library> libraries = new ArrayList<>(4);
         libraries.add(optiFineLibrary);
 
-        Path optiFineInstallerLibraryPath = gameRepository.getLibraryFile(version, optiFineInstallerLibrary).toPath();
+        Path optiFineInstallerLibraryPath = gameRepository.getLibraryFile(version, optiFineInstallerLibrary);
         FileUtils.copyFile(dest, optiFineInstallerLibraryPath);
 
         try (FileSystem fs2 = CompressingUtils.createWritableZipFileSystem(optiFineInstallerLibraryPath)) {
@@ -141,14 +140,14 @@ public final class OptiFineInstallTask extends Task<Version> {
         // Install launch wrapper modified by OptiFine
         boolean hasLaunchWrapper = false;
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(dest)) {
-            Path optiFineLibraryPath = gameRepository.getLibraryFile(version, optiFineLibrary).toPath();
+            Path optiFineLibraryPath = gameRepository.getLibraryFile(version, optiFineLibrary);
             if (Files.exists(fs.getPath("optifine/Patcher.class"))) {
                 String[] command = {
                         JavaRuntime.getDefault().getBinary().toString(),
                         "-cp",
                         dest.toString(),
                         "optifine.Patcher",
-                        gameRepository.getVersionJar(version).getAbsolutePath(),
+                        gameRepository.getVersionJar(version).toAbsolutePath().normalize().toString(),
                         dest.toString(),
                         optiFineLibraryPath.toString()
                 };
@@ -166,9 +165,9 @@ public final class OptiFineInstallTask extends Task<Version> {
             Path launchWrapper2 = fs.getPath("launchwrapper-2.0.jar");
             if (Files.exists(launchWrapper2)) {
                 Library launchWrapper = new Library(new Artifact("optifine", "launchwrapper", "2.0"));
-                File launchWrapperFile = gameRepository.getLibraryFile(version, launchWrapper);
-                FileUtils.makeDirectory(launchWrapperFile.getAbsoluteFile().getParentFile());
-                FileUtils.copyFile(launchWrapper2, launchWrapperFile.toPath());
+                Path launchWrapperFile = gameRepository.getLibraryFile(version, launchWrapper);
+                Files.createDirectories(launchWrapperFile.toAbsolutePath().getParent());
+                FileUtils.copyFile(launchWrapper2, launchWrapperFile);
                 hasLaunchWrapper = true;
                 libraries.add(launchWrapper);
             }
@@ -181,9 +180,9 @@ public final class OptiFineInstallTask extends Task<Version> {
                 Library launchWrapper = new Library(new Artifact("optifine", "launchwrapper-of", launchWrapperVersion));
 
                 if (Files.exists(launchWrapperJar)) {
-                    File launchWrapperFile = gameRepository.getLibraryFile(version, launchWrapper);
-                    FileUtils.makeDirectory(launchWrapperFile.getAbsoluteFile().getParentFile());
-                    FileUtils.copyFile(launchWrapperJar, launchWrapperFile.toPath());
+                    Path launchWrapperFile = gameRepository.getLibraryFile(version, launchWrapper);
+                    Files.createDirectories(launchWrapperFile.toAbsolutePath().getParent());
+                    FileUtils.copyFile(launchWrapperJar, launchWrapperFile);
 
                     hasLaunchWrapper = true;
                     libraries.add(launchWrapper);
