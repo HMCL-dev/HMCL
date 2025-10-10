@@ -6,12 +6,11 @@ import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.util.Immutable;
+import org.jackhuang.hmcl.util.io.CompressingUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.jar.Attributes;
@@ -126,10 +125,20 @@ public final class ForgeNewModMetadata {
         } catch (Exception ignored) {
         }
 
+        try {
+            return fromEmbeddedMod(modManager, modFile, fs);
+        } catch (Exception ignored) {
+        }
+
         throw new IOException("File " + modFile + " is not a Forge 1.13+ or NeoForge mod.");
     }
 
-    private static LocalModFile fromFile0(String tomlPath, int loaderACC, ModLoaderType defaultLoader, ModManager modManager, Path modFile, FileSystem fs) throws IOException, JsonParseException {
+    private static LocalModFile fromFile0(
+            String tomlPath, int loaderACC,
+            ModLoaderType defaultLoader,
+            ModManager modManager,
+            Path modFile,
+            FileSystem fs) throws IOException, JsonParseException {
         Path modToml = fs.getPath(tomlPath);
         if (Files.notExists(modToml))
             throw new IOException("File " + modFile + " is not a Forge 1.13+ or NeoForge mod.");
@@ -157,6 +166,40 @@ public final class ForgeNewModMetadata {
                 metadata.getLogoFile());
     }
 
+    private static LocalModFile fromEmbeddedMod(ModManager modManager, Path modFile, FileSystem fs) throws IOException {
+        Path manifestFile = fs.getPath("META-INF/MANIFEST.MF");
+        if (!Files.isRegularFile(manifestFile))
+            throw new IOException("Missing  MANIFEST.MF in file " + manifestFile);
+
+        Manifest manifest;
+        try (InputStream input = Files.newInputStream(manifestFile)) {
+            manifest = new Manifest(input);
+        }
+
+        String embeddedDependenciesMod = manifest.getMainAttributes().getValue("Embedded-Dependencies-Mod");
+        if (embeddedDependenciesMod == null)
+            throw new IOException("Embedded-Dependencies-Mod attribute is missing");
+
+        Path embeddedModFile = fs.getPath(embeddedDependenciesMod);
+        if (!Files.isRegularFile(embeddedModFile)) {
+            LOG.warning("Missing embedded-dependencies-mod: " + embeddedModFile);
+            throw new IOException();
+        }
+
+        Path tempFile = Files.createTempFile("hmcl-", ".zip");
+        try {
+            Files.copy(embeddedModFile, tempFile, StandardCopyOption.REPLACE_EXISTING);
+            try (FileSystem embeddedFs = CompressingUtils.createReadOnlyZipFileSystem(tempFile)) {
+                return fromFile(modManager, modFile, embeddedFs);
+            }
+        } catch (IOException e) {
+            LOG.warning("Failed to read embedded-dependencies-mod: " + embeddedModFile, e);
+            throw e;
+        } finally {
+            Files.deleteIfExists(tempFile);
+        }
+    }
+
     private static ModLoaderType analyzeLoader(Toml toml, String modID, int loaderACC, ModLoaderType defaultLoader) throws IOException {
         List<HashMap<String, Object>> dependencies = toml.getList("dependencies." + modID);
         if (dependencies == null) {
@@ -168,8 +211,10 @@ public final class ForgeNewModMetadata {
 
         for (HashMap<String, Object> dependency : dependencies) {
             switch ((String) dependency.get("modId")) {
-                case "forge": return checkLoaderACC(loaderACC, ACC_FORGE, ModLoaderType.FORGE);
-                case "neoforge": return checkLoaderACC(loaderACC, ACC_NEO_FORGED, ModLoaderType.NEO_FORGED);
+                case "forge":
+                    return checkLoaderACC(loaderACC, ACC_FORGE, ModLoaderType.FORGE);
+                case "neoforge":
+                    return checkLoaderACC(loaderACC, ACC_NEO_FORGED, ModLoaderType.NEO_FORGED);
             }
         }
 
