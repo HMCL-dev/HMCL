@@ -110,23 +110,33 @@ public final class ForgeNewModMetadata {
         }
     }
 
-    private static final int ACC_FORGE = 0x01;
+    public static LocalModFile fromForgeFile(ModManager modManager, Path modFile, FileSystem fs) throws IOException {
+        return fromFile(modManager, modFile, fs, ModLoaderType.FORGE);
+    }
 
-    private static final int ACC_NEO_FORGED = 0x02;
+    public static LocalModFile fromNeoForgeFile(ModManager modManager, Path modFile, FileSystem fs) throws IOException {
+        return fromFile(modManager, modFile, fs, ModLoaderType.NEO_FORGED);
+    }
 
-    public static LocalModFile fromFile(ModManager modManager, Path modFile, FileSystem fs) throws IOException, JsonParseException {
+    private static LocalModFile fromFile(ModManager modManager, Path modFile, FileSystem fs, ModLoaderType modLoaderType) throws IOException {
+        if (modLoaderType != ModLoaderType.FORGE && modLoaderType != ModLoaderType.NEO_FORGED) {
+            throw new IOException("Invalid mod loader: " + modLoaderType);
+        }
+
+        if (modLoaderType == ModLoaderType.NEO_FORGED) {
+            try {
+                return fromFile0("META-INF/neoforge.mods.toml", modLoaderType, modManager, modFile, fs);
+            } catch (Exception ignored) {
+            }
+        }
+
         try {
-            return fromFile0("META-INF/mods.toml", ACC_FORGE | ACC_NEO_FORGED, ModLoaderType.FORGE, modManager, modFile, fs);
+            return fromFile0("META-INF/mods.toml", modLoaderType, modManager, modFile, fs);
         } catch (Exception ignored) {
         }
 
         try {
-            return fromFile0("META-INF/neoforge.mods.toml", ACC_NEO_FORGED, ModLoaderType.NEO_FORGED, modManager, modFile, fs);
-        } catch (Exception ignored) {
-        }
-
-        try {
-            return fromEmbeddedMod(modManager, modFile, fs);
+            return fromEmbeddedMod(modManager, modFile, fs, modLoaderType);
         } catch (Exception ignored) {
         }
 
@@ -134,8 +144,8 @@ public final class ForgeNewModMetadata {
     }
 
     private static LocalModFile fromFile0(
-            String tomlPath, int loaderACC,
-            ModLoaderType defaultLoader,
+            String tomlPath,
+            ModLoaderType modLoaderType,
             ModManager modManager,
             Path modFile,
             FileSystem fs) throws IOException, JsonParseException {
@@ -158,7 +168,7 @@ public final class ForgeNewModMetadata {
             }
         }
 
-        ModLoaderType type = analyzeLoader(toml, mod.getModId(), loaderACC, defaultLoader);
+        ModLoaderType type = analyzeLoader(toml, mod.getModId(), modLoaderType);
 
         return new LocalModFile(modManager, modManager.getLocalMod(mod.getModId(), type), modFile, mod.getDisplayName(), new LocalModFile.Description(mod.getDescription()),
                 mod.getAuthors(), jarVersion == null ? mod.getVersion() : mod.getVersion().replace("${file.jarVersion}", jarVersion), "",
@@ -166,7 +176,7 @@ public final class ForgeNewModMetadata {
                 metadata.getLogoFile());
     }
 
-    private static LocalModFile fromEmbeddedMod(ModManager modManager, Path modFile, FileSystem fs) throws IOException {
+    private static LocalModFile fromEmbeddedMod(ModManager modManager, Path modFile, FileSystem fs, ModLoaderType modLoaderType) throws IOException {
         Path manifestFile = fs.getPath("META-INF/MANIFEST.MF");
         if (!Files.isRegularFile(manifestFile))
             throw new IOException("Missing  MANIFEST.MF in file " + manifestFile);
@@ -190,7 +200,7 @@ public final class ForgeNewModMetadata {
         try {
             Files.copy(embeddedModFile, tempFile, StandardCopyOption.REPLACE_EXISTING);
             try (FileSystem embeddedFs = CompressingUtils.createReadOnlyZipFileSystem(tempFile)) {
-                return fromFile(modManager, modFile, embeddedFs);
+                return fromFile(modManager, modFile, embeddedFs, modLoaderType);
             }
         } catch (IOException e) {
             LOG.warning("Failed to read embedded-dependencies-mod: " + embeddedModFile, e);
@@ -200,33 +210,36 @@ public final class ForgeNewModMetadata {
         }
     }
 
-    private static ModLoaderType analyzeLoader(Toml toml, String modID, int loaderACC, ModLoaderType defaultLoader) throws IOException {
+    private static ModLoaderType analyzeLoader(Toml toml, String modID, ModLoaderType loader) throws IOException {
         List<HashMap<String, Object>> dependencies = toml.getList("dependencies." + modID);
         if (dependencies == null) {
             dependencies = toml.getList("dependencies"); // ??? I have no idea why some of the Forge mods use [[dependencies]]
             if (dependencies == null) {
-                return defaultLoader;
+                return loader;
             }
         }
 
+        ModLoaderType result = null;
+        loop:
         for (HashMap<String, Object> dependency : dependencies) {
             switch ((String) dependency.get("modId")) {
                 case "forge":
-                    return checkLoaderACC(loaderACC, ACC_FORGE, ModLoaderType.FORGE);
+                    result = ModLoaderType.FORGE;
+                    break loop;
                 case "neoforge":
-                    return checkLoaderACC(loaderACC, ACC_NEO_FORGED, ModLoaderType.NEO_FORGED);
+                    result = ModLoaderType.NEO_FORGED;
+                    break loop;
             }
         }
 
-        // ??? I have no idea why some of the Forge mods doesn't provide this key.
-        return defaultLoader;
-    }
-
-    private static ModLoaderType checkLoaderACC(int current, int target, ModLoaderType res) throws IOException {
-        if ((target & current) != 0) {
-            return res;
-        } else {
-            throw new IOException("Mismatched loader.");
+        if (result == loader)
+            return result;
+        else if (result != null)
+            throw new IOException("Loader mismatch");
+        else {
+            LOG.warning("Cannot determine the mod loader for mod " + modID + ", expected " + loader);
+            return loader;
         }
     }
+
 }
