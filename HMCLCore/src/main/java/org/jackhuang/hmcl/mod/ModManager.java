@@ -41,21 +41,22 @@ public final class ModManager {
         LocalModFile fromFile(ModManager modManager, Path modFile, FileSystem fs) throws IOException, JsonParseException;
     }
 
-    private static final Map<String, List<Pair<ModMetadataReader, Set<ModLoaderType>>>> READERS;
+    private static final Map<String, List<Pair<ModMetadataReader, ModLoaderType>>> READERS;
 
     static {
-        var map = new HashMap<String, List<Pair<ModMetadataReader, Set<ModLoaderType>>>>();
-        var zipReaders = List.<Pair<ModMetadataReader, Set<ModLoaderType>>>of(
-                pair(ForgeNewModMetadata::fromFile, EnumSet.of(ModLoaderType.FORGE, ModLoaderType.NEO_FORGED)),
-                pair(ForgeOldModMetadata::fromFile, EnumSet.of(ModLoaderType.FORGE)),
-                pair(FabricModMetadata::fromFile, EnumSet.of(ModLoaderType.FABRIC)),
-                pair(QuiltModMetadata::fromFile, EnumSet.of(ModLoaderType.QUILT)),
-                pair(PackMcMeta::fromFile, EnumSet.of(ModLoaderType.PACK))
+        var map = new HashMap<String, List<Pair<ModMetadataReader, ModLoaderType>>>();
+        var zipReaders = List.<Pair<ModMetadataReader, ModLoaderType>>of(
+                pair(ForgeNewModMetadata::fromForgeFile, ModLoaderType.FORGE),
+                pair(ForgeNewModMetadata::fromNeoForgeFile, ModLoaderType.NEO_FORGED),
+                pair(ForgeOldModMetadata::fromFile, ModLoaderType.FORGE),
+                pair(FabricModMetadata::fromFile, ModLoaderType.FABRIC),
+                pair(QuiltModMetadata::fromFile, ModLoaderType.QUILT),
+                pair(PackMcMeta::fromFile, ModLoaderType.PACK)
         );
 
         map.put("zip", zipReaders);
         map.put("jar", zipReaders);
-        map.put("litemod", List.of(pair(LiteModMetadata::fromFile, EnumSet.of(ModLoaderType.LITE_LOADER))));
+        map.put("litemod", List.of(pair(LiteModMetadata::fromFile, ModLoaderType.LITE_LOADER)));
 
         READERS = map;
     }
@@ -102,7 +103,7 @@ public final class ModManager {
         String fileName = StringUtils.removeSuffix(FileUtils.getName(file), DISABLED_EXTENSION, OLD_EXTENSION);
         String extension = fileName.substring(fileName.lastIndexOf(".") + 1);
 
-        List<Pair<ModMetadataReader, Set<ModLoaderType>>> readersMap = READERS.get(extension);
+        List<Pair<ModMetadataReader, ModLoaderType>> readersMap = READERS.get(extension);
         if (readersMap == null) {
             // Is not a mod file.
             return;
@@ -113,15 +114,8 @@ public final class ModManager {
         var supportedReaders = new ArrayList<ModMetadataReader>();
         var unsupportedReaders = new ArrayList<ModMetadataReader>();
 
-        for (Pair<ModMetadataReader, Set<ModLoaderType>> reader : readersMap) {
-            boolean supported = false;
-            for (ModLoaderType type : reader.getValue()) {
-                if (modLoaderTypes.contains(type)) {
-                    supported = true;
-                    break;
-                }
-            }
-
+        for (Pair<ModMetadataReader, ModLoaderType> reader : readersMap) {
+            boolean supported = modLoaderTypes.contains(reader.getValue());
             if (supported) {
                 supportedReaders.add(reader.getKey());
             } else {

@@ -114,19 +114,33 @@ public final class ForgeNewModMetadata {
 
     private static final int ACC_NEO_FORGED = 0x02;
 
-    public static LocalModFile fromFile(ModManager modManager, Path modFile, FileSystem fs) throws IOException, JsonParseException {
-        try {
-            return fromFile0("META-INF/mods.toml", ACC_FORGE | ACC_NEO_FORGED, ModLoaderType.FORGE, modManager, modFile, fs);
-        } catch (Exception ignored) {
+    public static LocalModFile fromForgeFile(ModManager modManager, Path modFile, FileSystem fs) throws IOException {
+        return fromFile(modManager, modFile, fs, ModLoaderType.FORGE);
+    }
+
+    public static LocalModFile fromNeoForgeFile(ModManager modManager, Path modFile, FileSystem fs) throws IOException {
+        return fromFile(modManager, modFile, fs, ModLoaderType.NEO_FORGED);
+    }
+
+    private static LocalModFile fromFile(ModManager modManager, Path modFile, FileSystem fs, ModLoaderType modLoaderType) throws IOException {
+        if (modLoaderType != ModLoaderType.FORGE && modLoaderType != ModLoaderType.NEO_FORGED) {
+            throw new IOException("Invalid mod loader: " + modLoaderType);
         }
 
         try {
-            return fromFile0("META-INF/neoforge.mods.toml", ACC_NEO_FORGED, ModLoaderType.NEO_FORGED, modManager, modFile, fs);
+            return fromFile0("META-INF/mods.toml", ACC_FORGE | ACC_NEO_FORGED, modLoaderType, modManager, modFile, fs);
         } catch (Exception ignored) {
         }
 
+        if (modLoaderType == ModLoaderType.NEO_FORGED) {
+            try {
+                return fromFile0("META-INF/neoforge.mods.toml", ACC_NEO_FORGED, modLoaderType, modManager, modFile, fs);
+            } catch (Exception ignored) {
+            }
+        }
+
         try {
-            return fromEmbeddedMod(modManager, modFile, fs);
+            return fromEmbeddedMod(modManager, modFile, fs, modLoaderType);
         } catch (Exception ignored) {
         }
 
@@ -166,7 +180,7 @@ public final class ForgeNewModMetadata {
                 metadata.getLogoFile());
     }
 
-    private static LocalModFile fromEmbeddedMod(ModManager modManager, Path modFile, FileSystem fs) throws IOException {
+    private static LocalModFile fromEmbeddedMod(ModManager modManager, Path modFile, FileSystem fs, ModLoaderType modLoaderType) throws IOException {
         Path manifestFile = fs.getPath("META-INF/MANIFEST.MF");
         if (!Files.isRegularFile(manifestFile))
             throw new IOException("Missing  MANIFEST.MF in file " + manifestFile);
@@ -190,7 +204,7 @@ public final class ForgeNewModMetadata {
         try {
             Files.copy(embeddedModFile, tempFile, StandardCopyOption.REPLACE_EXISTING);
             try (FileSystem embeddedFs = CompressingUtils.createReadOnlyZipFileSystem(tempFile)) {
-                return fromFile(modManager, modFile, embeddedFs);
+                return fromFile(modManager, modFile, embeddedFs, modLoaderType);
             }
         } catch (IOException e) {
             LOG.warning("Failed to read embedded-dependencies-mod: " + embeddedModFile, e);
