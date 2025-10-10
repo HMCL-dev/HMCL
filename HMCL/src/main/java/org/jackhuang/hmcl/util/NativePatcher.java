@@ -207,7 +207,6 @@ public final class NativePatcher {
         if (platform.equals(Platform.MACOS_X86_64) || platform.equals(Platform.LINUX_X86_64))
             return SupportStatus.OFFICIAL_SUPPORTED;
 
-
         if (platform.equals(Platform.WINDOWS_X86) || platform.equals(Platform.LINUX_X86)) {
             if (gameVersion.isAtLeast("1.20.5", "24w14a"))
                 return SupportStatus.UNSUPPORTED;
@@ -222,11 +221,11 @@ public final class NativePatcher {
             if (platform.equals(Platform.WINDOWS_ARM64)) {
                 return gameVersion.compareTo("1.8") >= 0
                         ? SupportStatus.LAUNCHER_SUPPORTED
-                        : SupportStatus.UNSUPPORTED;
+                        : SupportStatus.TRANSLATION_SUPPORTED;
             } else if (platform.equals(Platform.MACOS_ARM64)) {
                 return gameVersion.compareTo("1.6") >= 0
                         ? SupportStatus.LAUNCHER_SUPPORTED
-                        : SupportStatus.UNSUPPORTED;
+                        : SupportStatus.TRANSLATION_SUPPORTED;
             }
 
             return SupportStatus.UNSUPPORTED;
@@ -272,6 +271,7 @@ public final class NativePatcher {
     public enum SupportStatus {
         OFFICIAL_SUPPORTED,
         LAUNCHER_SUPPORTED,
+        TRANSLATION_SUPPORTED,
         UNTESTED,
         UNSUPPORTED,
     }
