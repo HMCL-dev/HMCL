@@ -203,11 +203,7 @@ public final class ForgeNewModMetadata {
         } else {
             Path jarInJarMetadata = fs.getPath("META-INF/jarjar/metadata.json");
             if (Files.isRegularFile(jarInJarMetadata)) {
-                JarInJarMetadata metadata;
-                try (var reader = Files.newBufferedReader(jarInJarMetadata)) {
-                    metadata = JsonUtils.GSON.fromJson(reader, JarInJarMetadata.class);
-                }
-
+                JarInJarMetadata metadata = JsonUtils.fromJsonFile(jarInJarMetadata, JarInJarMetadata.class);
                 if (metadata == null)
                     throw new IOException("Invalid metadata file: " + jarInJarMetadata);
 
@@ -233,7 +229,7 @@ public final class ForgeNewModMetadata {
                 Files.copy(embeddedModFile, tempFile, StandardCopyOption.REPLACE_EXISTING);
                 try (FileSystem embeddedFs = CompressingUtils.createReadOnlyZipFileSystem(tempFile)) {
                     return fromFile(modManager, modFile, embeddedFs, modLoaderType);
-                } catch (IOException ignored) {
+                } catch (Exception ignored) {
                 }
             }
         } finally {
@@ -288,37 +284,13 @@ public final class ForgeNewModMetadata {
 
     @JsonSerializable
     private record EmbeddedJarMetadata(
-            EmbeddedJarIdentifier identifier,
-            EmbeddedJarVersion version,
             String path,
             boolean isObfuscated
     ) implements Validation {
         @Override
         public void validate() throws JsonParseException {
-            Validation.requireNonNull(identifier, "identifier");
-            Validation.requireNonNull(version, "version");
             Validation.requireNonNull(path, "path");
-
-            identifier.validate();
-            version.validate();
         }
     }
 
-    @JsonSerializable
-    private record EmbeddedJarIdentifier(String group, String artifact) implements Validation {
-        @Override
-        public void validate() throws JsonParseException {
-            Validation.requireNonNull(group, "group");
-            Validation.requireNonNull(artifact, "artifact");
-        }
-    }
-
-    @JsonSerializable
-    private record EmbeddedJarVersion(String range, String artifactVersion) implements Validation {
-        @Override
-        public void validate() throws JsonParseException {
-            Validation.requireNonNull(range, "range");
-            Validation.requireNonNull(artifactVersion, "artifactVersion");
-        }
-    }
 }
