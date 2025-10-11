@@ -188,6 +188,10 @@ public class DecoratorController {
         return decorator;
     }
 
+    public Navigator getNavigator() {
+        return navigator;
+    }
+
     // ==== Background ====
 
     //FXThread
