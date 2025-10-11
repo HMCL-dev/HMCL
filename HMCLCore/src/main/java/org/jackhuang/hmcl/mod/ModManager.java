@@ -124,12 +124,14 @@ public final class ModManager {
 
         LocalModFile modInfo = null;
 
+        List<Exception> exceptions = new ArrayList<>();
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(file)) {
             for (ModMetadataReader reader : supportedReaders) {
                 try {
                     modInfo = reader.fromFile(this, file, fs);
                     break;
-                } catch (Exception ignore) {
+                } catch (Exception e) {
+                    exceptions.add(e);
                 }
             }
 
@@ -138,7 +140,7 @@ public final class ModManager {
                     try {
                         modInfo = reader.fromFile(this, file, fs);
                         break;
-                    } catch (Exception ignore) {
+                    } catch (Exception ignored) {
                     }
                 }
             }
@@ -147,6 +149,12 @@ public final class ModManager {
         }
 
         if (modInfo == null) {
+            Exception exception = new Exception("Failed to read mod metadata");
+            for (Exception e : exceptions) {
+                exception.addSuppressed(e);
+            }
+            LOG.warning("Failed to read mod metadata", exception);
+
             String fileNameWithoutExtension = FileUtils.getNameWithoutExtension(file);
 
             modInfo = new LocalModFile(this,

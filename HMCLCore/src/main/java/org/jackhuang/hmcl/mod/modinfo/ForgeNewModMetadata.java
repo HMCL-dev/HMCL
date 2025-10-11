@@ -244,7 +244,19 @@ public final class ForgeNewModMetadata {
     private static ModLoaderType analyzeLoader(Toml toml, String modID, ModLoaderType loader) throws IOException {
         List<HashMap<String, Object>> dependencies = toml.getList("dependencies." + modID);
         if (dependencies == null) {
-            dependencies = toml.getList("dependencies"); // ??? I have no idea why some of the Forge mods use [[dependencies]]
+            try {
+                dependencies = toml.getList("dependencies"); // ??? I have no idea why some of the Forge mods use [[dependencies]]
+            } catch (ClassCastException e) {
+                try {
+                    Toml table = toml.getTable("dependencies");
+                    if (table == null)
+                        return loader;
+
+                    dependencies = table.getList(modID);
+                } catch (Throwable ignored) {
+                }
+            }
+
             if (dependencies == null) {
                 return loader;
             }
