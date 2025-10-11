@@ -6,11 +6,15 @@ import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.util.Immutable;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.*;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.jar.Attributes;
@@ -186,28 +190,57 @@ public final class ForgeNewModMetadata {
             manifest = new Manifest(input);
         }
 
-        String embeddedDependenciesMod = manifest.getMainAttributes().getValue("Embedded-Dependencies-Mod");
-        if (embeddedDependenciesMod == null)
-            throw new IOException("Embedded-Dependencies-Mod attribute is missing");
+        List<Path> embeddedModFiles = List.of();
 
-        Path embeddedModFile = fs.getPath(embeddedDependenciesMod);
-        if (!Files.isRegularFile(embeddedModFile)) {
-            LOG.warning("Missing embedded-dependencies-mod: " + embeddedModFile);
-            throw new IOException();
+        String embeddedDependenciesMod = manifest.getMainAttributes().getValue("Embedded-Dependencies-Mod");
+        if (embeddedDependenciesMod != null) {
+            Path embeddedModFile = fs.getPath(embeddedDependenciesMod);
+            if (!Files.isRegularFile(embeddedModFile)) {
+                LOG.warning("Missing embedded-dependencies-mod: " + embeddedModFile);
+                throw new IOException();
+            }
+            embeddedModFiles = List.of(embeddedModFile);
+        } else {
+            Path jarInJarMetadata = fs.getPath("META-INF/jarjar/metadata.json");
+            if (Files.isRegularFile(jarInJarMetadata)) {
+                JarInJarMetadata metadata;
+                try (var reader = Files.newBufferedReader(jarInJarMetadata)) {
+                    metadata = JsonUtils.GSON.fromJson(reader, JarInJarMetadata.class);
+                }
+
+                if (metadata == null)
+                    throw new IOException("Invalid metadata file: " + jarInJarMetadata);
+
+                metadata.validate();
+
+                embeddedModFiles = new ArrayList<>();
+                for (EmbeddedJarMetadata jar : metadata.jars) {
+                    Path path = Path.of(jar.path);
+                    if (Files.isRegularFile(path)) {
+                        embeddedModFiles.add(path);
+                    }
+                }
+            }
+        }
+
+        if (embeddedModFiles.isEmpty()) {
+            throw new IOException("Missing embedded mods");
         }
 
         Path tempFile = Files.createTempFile("hmcl-", ".zip");
         try {
-            Files.copy(embeddedModFile, tempFile, StandardCopyOption.REPLACE_EXISTING);
-            try (FileSystem embeddedFs = CompressingUtils.createReadOnlyZipFileSystem(tempFile)) {
-                return fromFile(modManager, modFile, embeddedFs, modLoaderType);
+            for (Path embeddedModFile : embeddedModFiles) {
+                Files.copy(embeddedModFile, tempFile, StandardCopyOption.REPLACE_EXISTING);
+                try (FileSystem embeddedFs = CompressingUtils.createReadOnlyZipFileSystem(tempFile)) {
+                    return fromFile(modManager, modFile, embeddedFs, modLoaderType);
+                } catch (IOException ignored) {
+                }
             }
-        } catch (IOException e) {
-            LOG.warning("Failed to read embedded-dependencies-mod: " + embeddedModFile, e);
-            throw e;
         } finally {
             Files.deleteIfExists(tempFile);
         }
+
+        throw new IOException();
     }
 
     private static ModLoaderType analyzeLoader(Toml toml, String modID, ModLoaderType loader) throws IOException {
@@ -242,4 +275,50 @@ public final class ForgeNewModMetadata {
         }
     }
 
+    @JsonSerializable
+    private record JarInJarMetadata(List<EmbeddedJarMetadata> jars) implements Validation {
+        @Override
+        public void validate() throws JsonParseException {
+            Validation.requireNonNull(jars, "jars");
+            for (EmbeddedJarMetadata jar : jars) {
+                jar.validate();
+            }
+        }
+    }
+
+    @JsonSerializable
+    private record EmbeddedJarMetadata(
+            EmbeddedJarIdentifier identifier,
+            EmbeddedJarVersion version,
+            String path,
+            boolean isObfuscated
+    ) implements Validation {
+        @Override
+        public void validate() throws JsonParseException {
+            Validation.requireNonNull(identifier, "identifier");
+            Validation.requireNonNull(version, "version");
+            Validation.requireNonNull(path, "path");
+
+            identifier.validate();
+            version.validate();
+        }
+    }
+
+    @JsonSerializable
+    private record EmbeddedJarIdentifier(String group, String artifact) implements Validation {
+        @Override
+        public void validate() throws JsonParseException {
+            Validation.requireNonNull(group, "group");
+            Validation.requireNonNull(artifact, "artifact");
+        }
+    }
+
+    @JsonSerializable
+    private record EmbeddedJarVersion(String range, String artifactVersion) implements Validation {
+        @Override
+        public void validate() throws JsonParseException {
+            Validation.requireNonNull(range, "range");
+            Validation.requireNonNull(artifactVersion, "artifactVersion");
+        }
+    }
 }
