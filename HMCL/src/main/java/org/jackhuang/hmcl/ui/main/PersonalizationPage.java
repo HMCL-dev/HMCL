@@ -112,6 +112,12 @@ public class PersonalizationPage extends StackPane {
             animationButton.selectedProperty().bindBidirectional(config().animationDisabledProperty());
             animationButton.setTitle(i18n("settings.launcher.turn_off_animations"));
         }
+        {
+            OptionToggleButton launchTipsButton = new OptionToggleButton();
+            themeList.getContent().add(launchTipsButton);
+            launchTipsButton.selectedProperty().bindBidirectional(config().launchTipsProperty());
+            launchTipsButton.setTitle(i18n("settings.launcher.turn_on_launch_tips"));
+        }
         content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.appearance")), themeList);
 
         {
