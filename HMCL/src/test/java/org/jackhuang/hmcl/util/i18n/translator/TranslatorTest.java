@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.util.i18n;
+package org.jackhuang.hmcl.util.i18n.translator;
 
 import org.junit.jupiter.api.Test;
 
@@ -26,33 +26,36 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /**
  * @author Glavo
  */
-public final class WenyanUtilsTest {
+public final class TranslatorTest {
 
-    private static void assertYearToString(String value, int year) {
+    //region lzh
+
+    private static void assertYearToLZH(String value, int year) {
         StringBuilder builder = new StringBuilder(2);
-        WenyanUtils.appendYear(builder, year);
+        Translator_lzh.appendYear(builder, year);
         assertEquals(value, builder.toString());
     }
 
     @Test
-    public void testYearToString() {
-        assertYearToString("甲子", 1984);
-        assertYearToString("乙巳", 2025);
-        assertYearToString("甲子", -2996);
-        assertYearToString("庚子", 1000);
+    public void testYearToLZH() {
+        assertYearToLZH("甲子", 1984);
+        assertYearToLZH("乙巳", 2025);
+        assertYearToLZH("甲子", -2996);
+        assertYearToLZH("庚子", 1000);
     }
 
     @Test
-    public void testHourToString() {
-
+    public void testHourToLZH() {
         List<String> list = List.of(
                 "子正", "丑初", "丑正", "寅初", "寅正", "卯初", "卯正", "辰初", "辰正", "巳初", "巳正", "午初",
                 "午正", "未初", "未正", "申初", "申正", "酉初", "酉正", "戌初", "戌正", "亥初", "亥正", "子初"
         );
         for (int hour = 0; hour < list.size(); hour++) {
             StringBuilder builder = new StringBuilder(2);
-            WenyanUtils.appendHour(builder, hour);
+            Translator_lzh.appendHour(builder, hour);
             assertEquals(list.get(hour), builder.toString());
         }
     }
+
+    //endregion
 }

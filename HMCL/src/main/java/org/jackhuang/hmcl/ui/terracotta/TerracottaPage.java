@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.terracotta;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.terracotta.TerracottaMetadata;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
@@ -52,6 +53,12 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
             transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE);
         });
 
+        AdvancedListItem feedback = new AdvancedListItem();
+        feedback.setLeftGraphic(wrap(SVG.FEEDBACK));
+        feedback.setActionButtonVisible(false);
+        feedback.setTitle(i18n("terracotta.feedback.title"));
+        feedback.setOnAction(e -> FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK));
+
         AdvancedListItem chatItem = new AdvancedListItem();
         chatItem.setLeftGraphic(wrap(SVG.CHAT));
         chatItem.setActionButtonVisible(false);
@@ -67,6 +74,7 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
         AdvancedListBox sideBar = new AdvancedListBox()
                 .addNavigationDrawerTab(tab, statusPage, i18n("terracotta.status"), SVG.TUNE)
                 .startCategory(i18n("help").toUpperCase(Locale.ROOT))
+                .add(feedback)
                 .add(chatItem)
                 .add(easytierItem);
         FXUtils.setLimitWidth(sideBar, 200);

@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.terracotta.provider.MacOSProvider;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OSVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -86,7 +87,11 @@ public final class TerracottaMetadata {
 
     public static final ITerracottaProvider PROVIDER;
     public static final String PACKAGE_NAME;
-    private static final List<Link> PACKAGE_LINKS;
+    public static final List<Link> PACKAGE_LINKS;
+    public static final String FEEDBACK_LINK = NetworkUtils.withQuery("https://docs.hmcl.net/multiplayer/feedback.html", Map.of(
+            "v", "v1",
+            "launcher_version", Metadata.VERSION
+    ));
 
     private static final Pattern LEGACY;
     private static final List<String> RECENT;
@@ -129,10 +134,6 @@ public final class TerracottaMetadata {
         ProviderContext(ITerracottaProvider provider, String system, String arch) {
             this(provider, system + "-" + arch);
         }
-    }
-
-    public static List<Link> getPackageLinks() {
-        return PACKAGE_LINKS;
     }
 
     @Nullable

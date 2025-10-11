@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.util.i18n;
 
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
-import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jackhuang.hmcl.util.i18n.translator.Translator;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -55,6 +55,10 @@ public final class I18n {
         return locale.getResourceBundle();
     }
 
+    public static Translator getTranslator() {
+        return locale.getTranslator();
+    }
+
     public static String i18n(String key, Object... formatArgs) {
         return locale.i18n(key, formatArgs);
     }
@@ -64,22 +68,11 @@ public final class I18n {
     }
 
     public static String formatDateTime(TemporalAccessor time) {
-        return locale.formatDateTime(time);
+        return getTranslator().formatDateTime(time);
     }
 
     public static String getDisplaySelfVersion(RemoteVersion version) {
-        if (locale.getLocale().getLanguage().equals("lzh")) {
-            if (version instanceof GameRemoteVersion)
-                return WenyanUtils.translateGameVersion(GameVersionNumber.asGameVersion(version.getSelfVersion()));
-            else
-                return WenyanUtils.translateGenericVersion(version.getSelfVersion());
-        }
-
-        if (LocaleUtils.isEnglish(locale.getLocale()) && "Qabs".equals(LocaleUtils.getScript(locale.getLocale()))) {
-            return UpsideDownUtils.translate(version.getSelfVersion());
-        }
-
-        return version.getSelfVersion();
+        return getTranslator().getDisplayVersion(version);
     }
 
     /// Find the builtin localized resource with given name and suffix.
