@@ -140,8 +140,7 @@ public final class ModManager {
                     try {
                         modInfo = reader.fromFile(this, file, fs);
                         break;
-                    } catch (Exception e) {
-                        exceptions.add(e);
+                    } catch (Exception ignored) {
                     }
                 }
             }
@@ -150,13 +149,11 @@ public final class ModManager {
         }
 
         if (modInfo == null) {
-            if (!exceptions.isEmpty()) {
-                Exception exception = new Exception("Failed to read mod metadata");
-                for (Exception e : exceptions) {
-                    exception.addSuppressed(e);
-                }
-                LOG.warning("Failed to read mod metadata", exception);
+            Exception exception = new Exception("Failed to read mod metadata");
+            for (Exception e : exceptions) {
+                exception.addSuppressed(e);
             }
+            LOG.warning("Failed to read mod metadata", exception);
 
             String fileNameWithoutExtension = FileUtils.getNameWithoutExtension(file);
 
