@@ -214,6 +214,8 @@ public final class ForgeNewModMetadata {
                     Path path = Path.of(jar.path);
                     if (Files.isRegularFile(path)) {
                         embeddedModFiles.add(path);
+                    } else {
+                        LOG.warning("Missing embedded-dependencies-mod: " + path);
                     }
                 }
             }
