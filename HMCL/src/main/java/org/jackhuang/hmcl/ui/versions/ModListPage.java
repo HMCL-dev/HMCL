@@ -156,6 +156,11 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
             supportedLoaders.add(ModLoaderType.FORGE);
             supportedLoaders.add(ModLoaderType.NEO_FORGED);
         }
+
+        // Sinytra Connector
+        if (analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE) && modManager.hasMod("connectormod", ModLoaderType.NEO_FORGED)) {
+            supportedLoaders.add(ModLoaderType.FABRIC);
+        }
     }
 
     public void add() {
