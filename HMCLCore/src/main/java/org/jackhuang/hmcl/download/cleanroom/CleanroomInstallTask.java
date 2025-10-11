@@ -52,7 +52,6 @@ public final class CleanroomInstallTask extends Task<Version> {
         this.dependencyManager = dependencyManager;
         this.version = version;
         this.remote = remoteVersion;
-        this.installer = null;
 
         setSignificance(TaskSignificance.MODERATE);
     }
