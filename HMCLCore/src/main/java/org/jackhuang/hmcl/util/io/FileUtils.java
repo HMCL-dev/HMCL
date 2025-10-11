@@ -45,6 +45,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  * @author huang
  */
 public final class FileUtils {
+    private static volatile boolean hardLink = false;
 
     private FileUtils() {
     }
@@ -452,8 +453,11 @@ public final class FileUtils {
             Files.delete(file);
     }
 
-    public static void copyFile(Path srcFile, Path destFile)
-            throws IOException {
+    public static void setHardLink(boolean value) {
+        hardLink = value;
+    }
+
+    private static boolean checkCopy(Path srcFile, Path destFile) throws IOException {
         Objects.requireNonNull(srcFile, "Source must not be null");
         Objects.requireNonNull(destFile, "Destination must not be null");
         if (!Files.exists(srcFile))
@@ -461,10 +465,50 @@ public final class FileUtils {
         if (Files.isDirectory(srcFile))
             throw new IOException("Source '" + srcFile + "' exists but is a directory");
         Files.createDirectories(destFile.getParent());
-        if (Files.exists(destFile) && !Files.isWritable(destFile))
+        boolean destExist = Files.exists(destFile);
+        if (destExist && !Files.isWritable(destFile))
             throw new IOException("Destination '" + destFile + "' exists but is read-only");
+        return destExist;
+    }
 
+    private static boolean isSameDisk(Path srcFile, Path destFile) {
+        do {
+            destFile = destFile.getParent();
+        } while (!Files.exists(destFile));
+
+        try {
+            return Files.getFileStore(srcFile).equals(Files.getFileStore(destFile));
+        } catch (IOException e) {
+            LOG.warning(e.toString());
+            return true;
+        }
+    }
+
+    private static void copy(Path srcFile, Path destFile) throws IOException {
         Files.copy(srcFile, destFile, StandardCopyOption.COPY_ATTRIBUTES, StandardCopyOption.REPLACE_EXISTING);
+    }
+
+    public static void copyFile(Path srcFile, Path destFile) throws IOException {
+        checkCopy(srcFile, destFile);
+        copy(srcFile, destFile);
+    }
+
+    public static void linkFile(Path srcFile, Path destFile) throws IOException {
+        boolean exist = checkCopy(srcFile, destFile);
+        if (hardLink && isSameDisk(srcFile, destFile)) {
+            if (exist) Files.delete(destFile);
+            try {
+                Files.createLink(destFile, srcFile);
+                return;
+            } catch (FileAlreadyExistsException e) {
+                LOG.warning("File has already been created by another thread", e);
+                return;
+            } catch (Throwable e) {
+                hardLink = false;
+                LOG.warning("Failed to create hardlink", e);
+            }
+        }
+        copy(srcFile, destFile);
     }
 
     public static List<Path> listFilesByExtension(Path file, String extension) {
