@@ -158,8 +158,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         }
 
         // Sinytra Connector
-        if ((analyzer.has(LibraryAnalyzer.LibraryType.FORGE) && modManager.hasMod("connectormod", ModLoaderType.FORGE))
-                || (analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE) && modManager.hasMod("connectormod", ModLoaderType.NEO_FORGED))) {
+        if (analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE) && modManager.hasMod("connectormod", ModLoaderType.NEO_FORGED)) {
             supportedLoaders.add(ModLoaderType.FABRIC);
         }
     }
