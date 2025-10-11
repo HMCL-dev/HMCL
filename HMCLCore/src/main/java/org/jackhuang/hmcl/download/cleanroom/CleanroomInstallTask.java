@@ -42,8 +42,8 @@ public final class CleanroomInstallTask extends Task<Version> {
 
     private final DefaultDependencyManager dependencyManager;
     private final Version version;
+    private final CleanroomRemoteVersion remote;
     private Path installer;
-    private CleanroomRemoteVersion remote;
     private FileDownloadTask dependent;
     private Task<Version> task;
     private String selfVersion;
@@ -52,6 +52,8 @@ public final class CleanroomInstallTask extends Task<Version> {
         this.dependencyManager = dependencyManager;
         this.version = version;
         this.remote = remoteVersion;
+        this.installer = null;
+
         setSignificance(TaskSignificance.MODERATE);
     }
 
@@ -59,6 +61,7 @@ public final class CleanroomInstallTask extends Task<Version> {
         this.dependencyManager = dependencyManager;
         this.version = version;
         this.selfVersion = selfVersion;
+        this.remote = null;
         this.installer = installer;
 
         setSignificance(TaskSignificance.MODERATE);
@@ -81,7 +84,6 @@ public final class CleanroomInstallTask extends Task<Version> {
             dependent.setCaching(true);
             dependent.addIntegrityCheckHandler(FileDownloadTask.ZIP_INTEGRITY_CHECK_HANDLER);
         }
-
     }
 
     @Override
@@ -116,7 +118,7 @@ public final class CleanroomInstallTask extends Task<Version> {
 
     public static Task<Version> install(DefaultDependencyManager dependencyManager, Version version, Path installer) throws IOException, VersionMismatchException {
         Optional<String> gameVersion = dependencyManager.getGameRepository().getGameVersion(version);
-        if (!gameVersion.isPresent()) throw new IOException();
+        if (gameVersion.isEmpty()) throw new IOException();
         try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(installer)) {
             String installProfileText = Files.readString(fs.getPath("install_profile.json"));
             Map<?, ?> installProfile = JsonUtils.fromNonNullJson(installProfileText, Map.class);
