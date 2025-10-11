@@ -211,7 +211,7 @@ public final class ForgeNewModMetadata {
 
                 embeddedModFiles = new ArrayList<>();
                 for (EmbeddedJarMetadata jar : metadata.jars) {
-                    Path path = Path.of(jar.path);
+                    Path path = fs.getPath(jar.path);
                     if (Files.isRegularFile(path)) {
                         embeddedModFiles.add(path);
                     } else {
