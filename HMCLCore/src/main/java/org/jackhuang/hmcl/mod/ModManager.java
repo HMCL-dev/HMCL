@@ -129,7 +129,8 @@ public final class ModManager {
                 try {
                     modInfo = reader.fromFile(this, file, fs);
                     break;
-                } catch (Exception ignore) {
+                } catch (Exception e) {
+                    LOG.warning("Failed to load mod info from " + file, e);
                 }
             }
 
