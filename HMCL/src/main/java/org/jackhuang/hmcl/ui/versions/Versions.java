@@ -112,7 +112,14 @@ public final class Versions {
 
         JFXButton deleteButton = new JFXButton(i18n("button.delete"));
         deleteButton.getStyleClass().add("dialog-error");
-        deleteButton.setOnAction(e -> profile.getRepository().removeVersionFromDisk(version));
+        deleteButton.setOnAction(e -> {
+            Task.supplyAsync(Schedulers.io(), () -> profile.getRepository().removeVersionFromDisk(version))
+                    .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                        if (exception != null || !Boolean.TRUE.equals(result)) {
+                            Controllers.dialog(i18n("version.manage.remove.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                        }
+                    }).start();
+        });
 
         Controllers.confirmAction(message, i18n("message.warning"), MessageDialogPane.MessageType.WARNING, deleteButton);
     }
