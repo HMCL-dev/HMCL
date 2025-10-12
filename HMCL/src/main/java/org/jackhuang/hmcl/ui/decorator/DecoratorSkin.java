@@ -21,11 +21,14 @@ import com.jfoenix.controls.JFXButton;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
+import javafx.beans.value.ObservableBooleanValue;
 import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -34,11 +37,14 @@ import javafx.scene.effect.BlurType;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.*;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
-
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -48,6 +54,10 @@ import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+
+import java.util.Objects;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class DecoratorSkin extends SkinBase<Decorator> {
     private final StackPane root, parent;
@@ -60,6 +70,8 @@ public class DecoratorSkin extends SkinBase<Decorator> {
     private final EventHandler<MouseEvent> onTitleBarDoubleClick;
 
     private double mouseInitX, mouseInitY, stageInitX, stageInitY, stageInitWidth, stageInitHeight;
+    private final ObservableBooleanValue isDisplayScalingUniform;
+    private Rectangle2D currentMouseVisualBounds;
 
     /**
      * Constructor for all SkinBase instances.
@@ -88,6 +100,12 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         parent.setClip(clip);
 
         skinnable.getSnackbar().registerSnackbarContainer(parent);
+
+        ObservableList<Screen> screens = Screen.getScreens();
+        isDisplayScalingUniform = Bindings.createBooleanBinding(() -> {
+            Screen firstScreen = screens.get(0);
+            return screens.stream().allMatch(screen -> Objects.equals(firstScreen.getOutputScaleX(), screen.getOutputScaleX()) && Objects.equals(firstScreen.getOutputScaleY(), screen.getOutputScaleY()));
+        }, screens);
 
         EventHandler<MouseEvent> onMouseReleased = this::onMouseReleased;
         EventHandler<MouseEvent> onMouseDragged = this::onMouseDragged;
@@ -453,8 +471,19 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         Cursor cursor = root.getCursor();
         if (getSkinnable().isAllowMove()) {
             if (cursor == Cursor.DEFAULT) {
-                primaryStage.setX(stageInitX + dx);
-                primaryStage.setY(stageInitY + dy);
+                if (!isDisplayScalingUniform.get()) {
+                    primaryStage.setX(stageInitX + dx);
+                    primaryStage.setY(stageInitY + dy);
+                } else {
+                    if (currentMouseVisualBounds == null || !currentMouseVisualBounds.contains(mouseEvent.getScreenX(), mouseEvent.getScreenY())) {
+                        currentMouseVisualBounds = Screen.getScreensForRectangle(new Rectangle2D(mouseEvent.getScreenX(), mouseEvent.getScreenY(), 1, 1)).get(0).getVisualBounds();
+                    }
+                    primaryStage.setX(stageInitX + dx);
+                    primaryStage.setY(Math.max(Math.min(stageInitY + dy, currentMouseVisualBounds.getMaxY() - titleContainer.getHeight()), currentMouseVisualBounds.getMinY() - titleContainer.getHeight()));
+
+                }
+                LOG.trace("Mouse position:[" + mouseEvent.getScreenX() + "," + mouseEvent.getScreenY() + "]");
+
                 mouseEvent.consume();
             }
         }
