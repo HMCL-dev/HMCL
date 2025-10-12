@@ -284,6 +284,7 @@ public class GameCrashWindow extends Stage {
 
                     alert.setTitle(i18n("settings.launcher.launcher_log.export"));
                     alert.showAndWait();
+
                     return null;
                 }, Schedulers.javafx());
     }
