@@ -139,7 +139,7 @@ public final class ForgeOldModMetadata {
             else if (firstToken == JsonToken.BEGIN_OBJECT) {
                 ForgeOldModMetadataLst list = JsonUtils.GSON.fromJson(jsonReader, ForgeOldModMetadataLst.class);
                 if (list == null)
-                    throw new IOException("Mod " + modFile + " `mcmod.info` is malformed..");
+                    throw new IOException("Mod " + modFile + " `mcmod.info` is malformed");
                 modList = list.modList();
             } else {
                 throw new JsonParseException("Unexpected first token: " + firstToken);
@@ -147,7 +147,7 @@ public final class ForgeOldModMetadata {
         }
 
         if (modList == null || modList.isEmpty())
-            throw new IOException("Mod " + modFile + " `mcmod.info` is malformed..");
+            throw new IOException("Mod " + modFile + " `mcmod.info` is malformed");
         ForgeOldModMetadata metadata = modList.get(0);
         String authors = metadata.getAuthor();
         if (StringUtils.isBlank(authors) && metadata.getAuthors().length > 0)
