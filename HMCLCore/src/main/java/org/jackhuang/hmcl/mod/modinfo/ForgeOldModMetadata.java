@@ -146,7 +146,6 @@ public final class ForgeOldModMetadata {
             }
         }
 
-
         if (modList == null || modList.isEmpty())
             throw new IOException("Mod " + modFile + " `mcmod.info` is malformed..");
         ForgeOldModMetadata metadata = modList.get(0);
