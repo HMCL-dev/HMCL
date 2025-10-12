@@ -28,12 +28,12 @@ public final class ResourcepackZipFile implements ResourcepackFile {
 
         try (ZipFileTree zipFileTree = new ZipFileTree(CompressingUtils.openZipFile(path))) {
             try {
-                description = JsonUtils.fromJsonFully(zipFileTree.getInputStream(zipFileTree.getFile().getEntry("pack.mcmeta")), PackMcMeta.class).getPackInfo().getDescription();
+                description = JsonUtils.fromJsonFully(zipFileTree.getInputStream(zipFileTree.getEntry("pack.mcmeta")), PackMcMeta.class).getPackInfo().getDescription();
             } catch (Exception e) {
                 LOG.warning("Failed to parse resourcepack meta", e);
             }
 
-            try (InputStream is = zipFileTree.getInputStream(zipFileTree.getFile().getEntry("pack.png"))) {
+            try (InputStream is = zipFileTree.getInputStream(zipFileTree.getEntry("pack.png"))) {
                 Path tempFile = Files.createTempFile("hmcl-pack-icon-", ".png");
                 Files.copy(is, tempFile, StandardCopyOption.REPLACE_EXISTING);
                 iconPath = tempFile;
