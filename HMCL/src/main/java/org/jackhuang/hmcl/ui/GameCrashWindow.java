@@ -272,23 +272,20 @@ public class GameCrashWindow extends Stage {
                 .thenComposeAsync(logs ->
                         LogExporter.exportLogs(logFile, repository, launchOptions.getVersionName(), logs, new CommandBuilder().addAll(managedProcess.getCommands()).toString()))
                 .handleAsync((result, exception) -> {
-                    FXUtils.runInFX(() -> {
-                        Alert alert;
+                    Alert alert;
 
-                        if (exception == null) {
-                            FXUtils.showFileInExplorer(logFile);
-                            alert = new Alert(Alert.AlertType.INFORMATION, i18n("settings.launcher.launcher_log.export.success", logFile));
-                        } else {
-                            LOG.warning("Failed to export game crash info", exception);
-                            alert = new Alert(Alert.AlertType.WARNING, i18n("settings.launcher.launcher_log.export.failed") + "\n" + StringUtils.getStackTrace(exception));
-                        }
+                    if (exception == null) {
+                        FXUtils.showFileInExplorer(logFile);
+                        alert = new Alert(Alert.AlertType.INFORMATION, i18n("settings.launcher.launcher_log.export.success", logFile));
+                    } else {
+                        LOG.warning("Failed to export game crash info", exception);
+                        alert = new Alert(Alert.AlertType.WARNING, i18n("settings.launcher.launcher_log.export.failed") + "\n" + StringUtils.getStackTrace(exception));
+                    }
 
-
-                        alert.setTitle(i18n("settings.launcher.launcher_log.export"));
-                        alert.showAndWait();
-                    });
+                    alert.setTitle(i18n("settings.launcher.launcher_log.export"));
+                    alert.showAndWait();
                     return null;
-                });
+                }, Schedulers.javafx());
     }
 
     private final class View extends VBox {
