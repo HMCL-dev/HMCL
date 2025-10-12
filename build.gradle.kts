@@ -1,3 +1,4 @@
+import org.jackhuang.hmcl.gradle.ci.CheckUpdate
 import org.jackhuang.hmcl.gradle.docs.UpdateDocuments
 
 plugins {
@@ -20,13 +21,25 @@ subprojects {
             name = "libs"
             dirs = setOf(rootProject.file("lib"))
         }
-        mavenCentral()
+
+        System.getenv("MAVEN_CENTRAL_REPO").let { repo ->
+            if (repo.isNullOrBlank())
+                mavenCentral()
+            else
+                maven(url = repo)
+        }
+
         maven(url = "https://jitpack.io")
         maven(url = "https://libraries.minecraft.net")
     }
 
     tasks.withType<JavaCompile> {
         options.encoding = "UTF-8"
+    }
+
+    @Suppress("UnstableApiUsage")
+    tasks.withType<Checkstyle> {
+        maxHeapSize.set("2g")
     }
 
     configure<CheckstyleExtension> {
@@ -66,4 +79,12 @@ defaultTasks("clean", "build")
 
 tasks.register<UpdateDocuments>("updateDocuments") {
     documentsDir.set(layout.projectDirectory.dir("docs"))
+}
+
+tasks.register<CheckUpdate>("checkUpdateDev") {
+    uri.set("https://ci.huangyuhui.net/job/HMCL-nightly")
+}
+
+tasks.register<CheckUpdate>("checkUpdateStable") {
+    uri.set("https://ci.huangyuhui.net/job/HMCL-stable")
 }

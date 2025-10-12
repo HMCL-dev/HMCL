@@ -33,9 +33,8 @@ import org.jackhuang.hmcl.util.AggregatedObservableList;
 public class TwoLineListItem extends VBox {
     private static final String DEFAULT_STYLE_CLASS = "two-line-list-item";
 
-    public static Label createTagLabel(String tag) {
+    private static Label createTagLabel(String tag) {
         Label tagLabel = new Label();
-        tagLabel.getStyleClass().add("tag");
         tagLabel.setText(tag);
         HBox.setMargin(tagLabel, new Insets(0, 8, 0, 0));
         return tagLabel;
@@ -111,7 +110,15 @@ public class TwoLineListItem extends VBox {
     }
 
     public void addTag(String tag) {
-        getTags().add(createTagLabel(tag));
+        Label tagLabel = createTagLabel(tag);
+        tagLabel.getStyleClass().add("tag");
+        getTags().add(tagLabel);
+    }
+
+    public void addTagWarning(String tag) {
+        Label tagLabel = createTagLabel(tag);
+        tagLabel.getStyleClass().add("tag-warning");
+        getTags().add(tagLabel);
     }
 
     public ObservableList<Label> getTags() {

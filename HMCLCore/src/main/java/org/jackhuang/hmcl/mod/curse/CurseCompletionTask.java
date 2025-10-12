@@ -138,7 +138,7 @@ public final class CurseCompletionTask extends Task<Void> {
                         .collect(Collectors.toList()));
         JsonUtils.writeToJsonFile(root.resolve("manifest.json"), newManifest);
 
-        Path versionRoot = repository.getVersionRoot(modManager.getVersion());
+        Path versionRoot = repository.getVersionRoot(modManager.getInstanceId());
         Path resourcePacksRoot = versionRoot.resolve("resourcepacks");
         Path shaderPacksRoot = versionRoot.resolve("shaderpacks");
         finished.set(0);

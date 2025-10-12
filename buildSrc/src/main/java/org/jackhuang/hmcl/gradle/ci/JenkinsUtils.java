@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2025 huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,33 +15,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.event;
+package org.jackhuang.hmcl.gradle.ci;
 
-/**
- *
- * @author huang
- */
-public class FailedEvent<T> extends Event {
+/// @author Glavo
+public final class JenkinsUtils {
 
-    private final int failedTime;
-    private T newResult;
+    public static final boolean IS_ON_CI = "1".equals(System.getenv("HMCL_CI"));
 
-    public FailedEvent(Object source, int failedTime, T newResult) {
-        super(source);
-        this.failedTime = failedTime;
-        this.newResult = newResult;
+    private JenkinsUtils() {
     }
-
-    public int getFailedTime() {
-        return failedTime;
-    }
-
-    public T getNewResult() {
-        return newResult;
-    }
-
-    public void setNewResult(T newResult) {
-        this.newResult = newResult;
-    }
-
 }
