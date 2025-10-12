@@ -205,7 +205,7 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
             TwoLineListItem center = new TwoLineListItem();
 //            center.setPadding(new Insets(0, 0, 0, 8));
             center.setTitle(item.getFile().getName());
-            center.setSubtitle(item.getFile().getDescription());
+            center.setSubtitle(item.getFile().getDescription().toString());
             root.setCenter(center);
 
             HBox right = new HBox(8);

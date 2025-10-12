@@ -1,5 +1,7 @@
 package org.jackhuang.hmcl.resourcepack;
 
+import org.jackhuang.hmcl.mod.LocalModFile;
+import org.jackhuang.hmcl.mod.modinfo.PackMcMeta;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.tree.ZipFileTree;
@@ -16,17 +18,17 @@ public final class ResourcepackZipFile implements ResourcepackFile {
     private final Path path;
     private final Path iconPath;
     private final String name;
-    private final String description;
+    private final LocalModFile.Description description;
 
     public ResourcepackZipFile(Path path) throws IOException {
         this.path = path;
 
-        String description = "";
+        LocalModFile.Description description = null;
         Path iconPath = null;
 
         try (ZipFileTree zipFileTree = new ZipFileTree(CompressingUtils.openZipFile(path))) {
             try {
-                description = JsonUtils.fromJsonFully(zipFileTree.getInputStream(zipFileTree.getFile().getEntry("pack.mcmeta")), ResourcepackMeta.class).pack().description();
+                description = JsonUtils.fromJsonFully(zipFileTree.getInputStream(zipFileTree.getFile().getEntry("pack.mcmeta")), PackMcMeta.class).getPackInfo().getDescription();
             } catch (Exception e) {
                 LOG.warning("Failed to parse resourcepack meta", e);
             }
@@ -58,7 +60,7 @@ public final class ResourcepackZipFile implements ResourcepackFile {
     }
 
     @Override
-    public String getDescription() {
+    public LocalModFile.Description getDescription() {
         return description;
     }
 

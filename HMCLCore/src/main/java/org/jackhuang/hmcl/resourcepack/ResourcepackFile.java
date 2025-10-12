@@ -1,12 +1,14 @@
 package org.jackhuang.hmcl.resourcepack;
 
+import org.jackhuang.hmcl.mod.LocalModFile;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
 
 public interface ResourcepackFile {
-    String getDescription();
+    LocalModFile.Description getDescription();
 
     String getName();
 
