@@ -631,6 +631,8 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             LocalModFile modInfo = dataItem.getModInfo();
             ModTranslations.Mod modTranslations = dataItem.getModTranslations();
 
+            ModLoaderType modLoaderType = modInfo.getModLoaderType();
+
             dataItem.loadIcon(imageView, new WeakReference<>(this.itemProperty()));
 
             String displayName = modInfo.getName();
@@ -656,15 +658,13 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             content.setTitle(displayName);
 
             StringJoiner joiner = new StringJoiner(" | ");
-
-            if (StringUtils.isNotBlank(modInfo.getId()))
+            if (modLoaderType != ModLoaderType.UNKNOWN && StringUtils.isNotBlank(modInfo.getId()))
                 joiner.add(modInfo.getId());
 
             joiner.add(FileUtils.getName(modInfo.getFile()));
 
             content.setSubtitle(joiner.toString());
 
-            ModLoaderType modLoaderType = modInfo.getModLoaderType();
             if (modLoaderType == ModLoaderType.UNKNOWN) {
                 content.addTagWarning(i18n("mods.unknown"));
             } else if (!ModListPageSkin.this.getSkinnable().supportedLoaders.contains(modLoaderType)) {
