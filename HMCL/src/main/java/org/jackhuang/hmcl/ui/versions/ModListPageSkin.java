@@ -665,7 +665,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             content.setSubtitle(joiner.toString());
 
             ModLoaderType modLoaderType = modInfo.getModLoaderType();
-            if (modLoaderType != ModLoaderType.UNKNOWN) {
+            if (modLoaderType == ModLoaderType.UNKNOWN) {
                 content.addTagWarning(i18n("mods.unknown"));
             } else if (!ModListPageSkin.this.getSkinnable().supportedLoaders.contains(modLoaderType)) {
                 warning.add(i18n("mods.warning.loader_mismatch"));
