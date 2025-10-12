@@ -1,6 +1,7 @@
 package org.jackhuang.hmcl.resourcepack;
 
 import org.jackhuang.hmcl.mod.LocalModFile;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -8,12 +9,14 @@ import java.nio.file.Path;
 import java.util.Locale;
 
 public interface ResourcepackFile {
+    @Nullable
     LocalModFile.Description getDescription();
 
     String getName();
 
     Path getPath();
 
+    @Nullable
     Path getIcon();
 
     static ResourcepackFile parse(Path path) throws IOException {

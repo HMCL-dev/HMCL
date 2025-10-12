@@ -11,6 +11,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.resourcepack.ResourcepackFile;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Theme;
@@ -205,7 +206,8 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
             TwoLineListItem center = new TwoLineListItem();
 //            center.setPadding(new Insets(0, 0, 0, 8));
             center.setTitle(item.getFile().getName());
-            center.setSubtitle(item.getFile().getDescription().toString());
+            LocalModFile.Description description = item.getFile().getDescription();
+            center.setSubtitle(description != null ? description.toString() : "");
             root.setCenter(center);
 
             HBox right = new HBox(8);
