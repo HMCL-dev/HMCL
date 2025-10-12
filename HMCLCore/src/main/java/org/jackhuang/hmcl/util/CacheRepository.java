@@ -231,7 +231,7 @@ public class CacheRepository {
         String url = conn.getURL().toString();
         String lastModified = conn.getHeaderField("Last-Modified");
         CacheResult cacheResult = cacheSupplier.get();
-        ETagItem eTagItem = new ETagItem(url, eTag, cacheResult.hash, Files.getLastModifiedTime(cacheResult.cachedFile).toMillis(), lastModified);
+        ETagItem eTagItem = new ETagItem(url, eTag, cacheResult.hash, Files.getLastModifiedTime(cacheResult.cachedFile).toMillis(), lastModified, 0L);
         Lock writeLock = lock.writeLock();
         writeLock.lock();
         try {
@@ -325,19 +325,24 @@ public class CacheRepository {
         @SerializedName("remote")
         private final String remoteLastModified;
 
+        // The `expires` field is not used in HMCL 3.6.x, but will be used in HMCL 3.7.x.
+        // We backported this field to 3.6.x to avoid breaking the etag.json file created by newer HMCL versions.
+        private final long expires;
+
         /**
          * For Gson.
          */
         public ETagItem() {
-            this(null, null, null, 0, null);
+            this(null, null, null, 0, null, 0L);
         }
 
-        public ETagItem(String url, String eTag, String hash, long localLastModified, String remoteLastModified) {
+        public ETagItem(String url, String eTag, String hash, long localLastModified, String remoteLastModified, long expires) {
             this.url = url;
             this.eTag = eTag;
             this.hash = hash;
             this.localLastModified = localLastModified;
             this.remoteLastModified = remoteLastModified;
+            this.expires = expires;
         }
 
         public int compareTo(ETagItem other) {
@@ -361,12 +366,13 @@ public class CacheRepository {
                     Objects.equals(url, eTagItem.url) &&
                     Objects.equals(eTag, eTagItem.eTag) &&
                     Objects.equals(hash, eTagItem.hash) &&
-                    Objects.equals(remoteLastModified, eTagItem.remoteLastModified);
+                    Objects.equals(remoteLastModified, eTagItem.remoteLastModified) &&
+                    Objects.equals(expires, eTagItem.expires);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(url, eTag, hash, localLastModified, remoteLastModified);
+            return Objects.hash(url, eTag, hash, localLastModified, remoteLastModified, expires);
         }
     }
 
