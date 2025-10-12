@@ -367,7 +367,7 @@ public class CacheRepository {
                     Objects.equals(eTag, eTagItem.eTag) &&
                     Objects.equals(hash, eTagItem.hash) &&
                     Objects.equals(remoteLastModified, eTagItem.remoteLastModified) &&
-                    Objects.equals(expires, eTagItem.expires);
+                    expires == eTagItem.expires;
         }
 
         @Override
