@@ -57,8 +57,6 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.util.Objects;
 
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
-
 public class DecoratorSkin extends SkinBase<Decorator> {
     private final StackPane root, parent;
     private final StackPane titleContainer;
@@ -482,8 +480,6 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                     primaryStage.setY(Math.max(Math.min(stageInitY + dy, currentMouseVisualBounds.getMaxY() - titleContainer.getHeight()), currentMouseVisualBounds.getMinY() - titleContainer.getHeight()));
 
                 }
-                LOG.trace("Mouse position:[" + mouseEvent.getScreenX() + "," + mouseEvent.getScreenY() + "]");
-
                 mouseEvent.consume();
             }
         }
