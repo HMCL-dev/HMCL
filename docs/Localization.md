@@ -110,7 +110,7 @@ You can then start translating in this file.
 The `I18N.properties` file follows the [resource fallback mechanism](#resource-fallback-mechanism) to look up missing translations.
 This means you can translate entry by entry, and any untranslated entries will automatically fall back to English.
 
-After translating part of the file, you can [build HMCL yourself](./README_zh.md#编译), and your translations will be included in the compiled HMCL.
+After translating part of the file, you can [build HMCL yourself](./README.md#compilation), and your translations will be included in the compiled HMCL.
 If your computer's default environment is not this language, you can set the environment variable `HMCL_LANGUAGE` to the language tag you just found,
 and HMCL will automatically switch to that language.
 
@@ -245,8 +245,7 @@ For example, to create links for switching between different language versions o
 After running `./gradlew updateDocuments`, these two lines will be automatically replaced with language switcher links like this:
 
 ```markdown
-**English** |
-中文 ([简体](README_zh.md), [繁體](README_zh.md), [文言](README_zh.md)) | [日本語](README_zh.md) | [español](README_zh.md) | [русский](README_zh.md) | [українська](README_zh.md)
+**English** (**Standard**, [uʍoᗡ ǝpᴉsd∩](README_en_Qabs.md)) | 中文 ([简体](README_zh.md), [繁體](README_zh_Hant.md), [文言](README_lzh.md)) | [日本語](README_ja.md) | [español](README_es.md) | [русский](README_ru.md) | [українська](README_uk.md)
 ```
 
 For more about macros, see [MacroProcessor.java](../buildSrc/src/main/java/org/jackhuang/hmcl/gradle/docs/MacroProcessor.java).
