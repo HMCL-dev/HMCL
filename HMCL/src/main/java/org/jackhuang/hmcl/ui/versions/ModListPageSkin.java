@@ -289,7 +289,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         }
     }
 
-    static final class ModInfoObject extends RecursiveTreeObject<ModInfoObject> implements Comparable<ModInfoObject> {
+    static final class ModInfoObject {
         private final BooleanProperty active;
         private final LocalModFile localModFile;
         private final @Nullable ModTranslations.Mod modTranslations;
@@ -402,12 +402,6 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
                 imageView.setImage(image);
             }, Schedulers.javafx());
-        }
-
-        @Override
-        public int compareTo(@NotNull ModListPageSkin.ModInfoObject o) {
-            return localModFile.getFileName().toLowerCase(Locale.ROOT)
-                    .compareTo(o.localModFile.getFileName().toLowerCase(Locale.ROOT));
         }
     }
 
