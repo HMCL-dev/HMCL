@@ -104,7 +104,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
             lock.lock();
             try {
                 modManager.refreshMods();
-                return modManager.getMods();
+                return modManager.getMods().stream().map(ModListPageSkin.ModInfoObject::new).toList();
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             } finally {
@@ -114,7 +114,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
             updateSupportedLoaders(modManager);
 
             if (exception == null) {
-                getItems().setAll(list.stream().map(ModListPageSkin.ModInfoObject::new).toList());
+                getItems().setAll(list);
             } else {
                 LOG.warning("Failed to load mods", exception);
                 getItems().clear();
