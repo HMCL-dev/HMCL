@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.*;
-import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import javafx.animation.PauseTransition;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
@@ -61,7 +60,6 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
@@ -289,7 +287,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         }
     }
 
-    static final class ModInfoObject extends RecursiveTreeObject<ModInfoObject> implements Comparable<ModInfoObject> {
+    static final class ModInfoObject {
         private final BooleanProperty active;
         private final LocalModFile localModFile;
         private final @Nullable ModTranslations.Mod modTranslations;
@@ -402,12 +400,6 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
                 imageView.setImage(image);
             }, Schedulers.javafx());
-        }
-
-        @Override
-        public int compareTo(@NotNull ModListPageSkin.ModInfoObject o) {
-            return localModFile.getFileName().toLowerCase(Locale.ROOT)
-                    .compareTo(o.localModFile.getFileName().toLowerCase(Locale.ROOT));
         }
     }
 
