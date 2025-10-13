@@ -21,14 +21,13 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
-import org.jackhuang.hmcl.util.Pack200Utils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.IOException;
 import java.util.Optional;
 
-public class RemoteVersion {
+public final class RemoteVersion {
 
     public static RemoteVersion fetch(UpdateChannel channel, String url) throws IOException {
         try {
@@ -36,12 +35,8 @@ public class RemoteVersion {
             String version = Optional.ofNullable(response.get("version")).map(JsonElement::getAsString).orElseThrow(() -> new IOException("version is missing"));
             String jarUrl = Optional.ofNullable(response.get("jar")).map(JsonElement::getAsString).orElse(null);
             String jarHash = Optional.ofNullable(response.get("jarsha1")).map(JsonElement::getAsString).orElse(null);
-            String packXZUrl = Optional.ofNullable(response.get("packxz")).map(JsonElement::getAsString).orElse(null);
-            String packXZHash = Optional.ofNullable(response.get("packxzsha1")).map(JsonElement::getAsString).orElse(null);
             boolean force = Optional.ofNullable(response.get("force")).map(JsonElement::getAsBoolean).orElse(false);
-            if (Pack200Utils.isSupported() && packXZUrl != null && packXZHash != null) {
-                return new RemoteVersion(channel, version, packXZUrl, Type.PACK_XZ, new IntegrityCheck("SHA-1", packXZHash), force);
-            } else if (jarUrl != null && jarHash != null) {
+            if (jarUrl != null && jarHash != null) {
                 return new RemoteVersion(channel, version, jarUrl, Type.JAR, new IntegrityCheck("SHA-1", jarHash), force);
             } else {
                 throw new IOException("No download url is available");
@@ -97,7 +92,6 @@ public class RemoteVersion {
     }
 
     public enum Type {
-        PACK_XZ,
         JAR
     }
 }
