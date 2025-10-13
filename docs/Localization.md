@@ -130,10 +130,10 @@ For example, for `README.md`, the localized versions for different languages are
 
 ```json5
 {
-    "<本地化键 1>": "<本地化文本 1>",
-    "<本地化键 2>": "<本地化文本 2>",
+    "<Localization Key 1>": "<Localized Text 1>",
+    "<Localization Key 2>": "<Localized Text 2>",
     // ...
-    "<本地化键 N>": "<本地化文本 N>"
+    "<Localization Key N>": "<Localized Text N>"
 }
 ```
 
