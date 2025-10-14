@@ -24,6 +24,7 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.SkinBase;
 import javafx.scene.input.KeyCode;
@@ -33,7 +34,10 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.mod.Datapack;
 import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
+import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -43,6 +47,11 @@ import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
+
+    private final TransitionPane toolbarPane;
+    private final HBox searchBar;
+    private final HBox toolbarNormal;
+    private final HBox toolbarSelecting;
 
     DatapackListPageSkin(DatapackListPage skinnable) {
         super(skinnable);
@@ -56,19 +65,41 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
         JFXListView<DatapackInfoObject> listView = new JFXListView<>();
 
         {
-            HBox toolbar = new HBox();
-            toolbar.getChildren().add(createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh));
-            toolbar.getChildren().add(createToolbarButton2(i18n("datapack.add"), SVG.ADD, skinnable::add));
-            toolbar.getChildren().add(createToolbarButton2(i18n("button.remove"), SVG.DELETE, () -> {
-                Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
-                    skinnable.removeSelected(listView.getSelectionModel().getSelectedItems());
-                }, null);
-            }));
-            toolbar.getChildren().add(createToolbarButton2(i18n("mods.enable"), SVG.CHECK, () ->
-                    skinnable.enableSelected(listView.getSelectionModel().getSelectedItems())));
-            toolbar.getChildren().add(createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () ->
-                    skinnable.disableSelected(listView.getSelectionModel().getSelectedItems())));
-            root.getContent().add(toolbar);
+            toolbarPane = new TransitionPane();
+            searchBar = new HBox();
+            toolbarNormal = new HBox();
+            toolbarSelecting = new HBox();
+
+            toolbarNormal.getChildren().addAll(
+                    createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
+                    createToolbarButton2(i18n("datapack.add"), SVG.ADD, skinnable::add),
+                    createToolbarButton2(i18n("folder.datapack"), SVG.FOLDER_OPEN, skinnable::openDataPackFolder)
+            );
+
+            toolbarSelecting.getChildren().addAll(
+                    createToolbarButton2(i18n("button.remove"), SVG.DELETE, () -> {
+                        Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
+                            skinnable.removeSelected(listView.getSelectionModel().getSelectedItems());
+                        }, null);
+                    }),
+                    createToolbarButton2(i18n("mods.enable"), SVG.CHECK, () ->
+                            skinnable.enableSelected(listView.getSelectionModel().getSelectedItems())),
+                    createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () ->
+                            skinnable.disableSelected(listView.getSelectionModel().getSelectedItems())),
+                    createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () ->
+                            listView.getSelectionModel().selectAll()),
+                    createToolbarButton2(i18n("button.cancel"), SVG.CANCEL, () ->
+                            listView.getSelectionModel().clearSelection())
+            );
+
+            FXUtils.onChangeAndOperate(listView.getSelectionModel().selectedItemProperty(),
+                    selectedItem -> {
+                        if (selectedItem == null)
+                            changeToolbar(toolbarNormal);
+                        else
+                            changeToolbar(toolbarSelecting);
+                    });
+            root.getContent().add(toolbarPane);
         }
 
         {
@@ -91,6 +122,16 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
 
         pane.getChildren().setAll(root);
         getChildren().setAll(pane);
+    }
+
+    private void changeToolbar(HBox newToolbar) {
+        Node oldToolbar = toolbarPane.getCurrentNode();
+        if (newToolbar != oldToolbar) {
+            toolbarPane.setContent(newToolbar, ContainerAnimations.FADE);
+            if (newToolbar == searchBar) {
+                //searchField.requestFocus();
+            }
+        }
     }
 
     static class DatapackInfoObject extends RecursiveTreeObject<DatapackInfoObject> {

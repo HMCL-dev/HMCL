@@ -113,4 +113,8 @@ public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.Da
                 .map(DatapackListPageSkin.DatapackInfoObject::getPackInfo)
                 .forEach(info -> info.setActive(false));
     }
+
+    void openDataPackFolder() {
+        FXUtils.openFolder(datapack.getPath());
+    }
 }
