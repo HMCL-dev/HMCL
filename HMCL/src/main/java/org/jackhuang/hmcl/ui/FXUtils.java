@@ -36,6 +36,7 @@ import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -1385,6 +1386,16 @@ public final class FXUtils {
             updater.accept(list.get((index + list.size()) % list.size()));
             event.consume();
         });
+    }
+
+    public static void clearFocus(Node node) {
+        Scene scene = node.getScene();
+        if (scene != null) {
+            Parent root = scene.getRoot();
+            if (root != null) {
+                root.requestFocus();
+            }
+        }
     }
 
     public static void copyOnDoubleClick(Labeled label) {

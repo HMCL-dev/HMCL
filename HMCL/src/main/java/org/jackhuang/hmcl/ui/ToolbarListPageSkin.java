@@ -102,7 +102,7 @@ public abstract class ToolbarListPageSkin<T extends ListPageBase<? extends Node>
         ret.setText(text);
         ret.setOnAction(e -> {
             onClick.run();
-            ret.getScene().getRoot().requestFocus();
+            FXUtils.clearFocus(ret);
         });
         return ret;
     }
