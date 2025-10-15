@@ -52,7 +52,7 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
         }
 
         for (Item item : items) {
-
+            String type = item.firstValueOrThrow("Type");
         }
     }
 
@@ -69,6 +69,10 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
 
         public @Nullable String firstValueOrNull(String name) {
             return firstValue(name).orElse(null);
+        }
+
+        public @NotNull String firstValueOrThrow(String name) {
+            return firstValue(name).orElseThrow(() -> new IllegalStateException("No value found for " + name + " in " + this));
         }
 
         public void put(String name, String value) {
@@ -103,6 +107,25 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
             }
         }
 
+        private void updateItems() throws IOException {
+            updateCurrent();
+
+            if (current.values.isEmpty())
+                return;
+
+            if (current.firstValue("Type").isEmpty()) {
+                if (current.firstValue("File-Date").isPresent()) {
+                    current.values.clear();
+                    return;
+                } else {
+                    throw new IOException("Invalid item: " + current);
+                }
+            }
+
+            items.add(current);
+            current = new Item();
+        }
+
         void parse(BufferedReader reader) throws IOException {
             Pattern linePattern = Pattern.compile("^(?<name>[A-Za-z\\-]+): (?<value>.*)$");
 
@@ -111,10 +134,7 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
                 if (line.isBlank()) {
                     continue;
                 } else if (line.equals("%%")) {
-                    updateCurrent();
-
-                    items.add(current);
-                    current = new Item();
+                    updateItems();
                 } else if (line.startsWith("  ")) {
                     if (currentValue != null) {
                         currentValue = currentValue + " " + line;
@@ -134,11 +154,7 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
                 }
             }
 
-            updateCurrent();
-            if (!current.values.isEmpty()) {
-                items.add(current);
-                current = new Item();
-            }
+            updateItems();
         }
     }
 
