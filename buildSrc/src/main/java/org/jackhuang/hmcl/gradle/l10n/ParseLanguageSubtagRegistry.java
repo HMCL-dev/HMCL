@@ -25,6 +25,7 @@ import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.TaskAction;
 import org.gradle.internal.impldep.org.apache.commons.lang3.text.StrBuilder;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -50,8 +51,9 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
             items = builder.items;
         }
 
-        // TODO
+        for (Item item : items) {
 
+        }
     }
 
     private static final class Item {
@@ -63,6 +65,10 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
 
         public @NotNull Optional<String> firstValue(String name) {
             return Optional.ofNullable(values.get(name)).map(it -> it.get(0));
+        }
+
+        public @Nullable String firstValueOrNull(String name) {
+            return firstValue(name).orElse(null);
         }
 
         public void put(String name, String value) {
