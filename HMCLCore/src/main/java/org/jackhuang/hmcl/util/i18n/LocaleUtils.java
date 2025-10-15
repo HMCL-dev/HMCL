@@ -17,14 +17,14 @@
  */
 package org.jackhuang.hmcl.util.i18n;
 
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -46,60 +46,59 @@ public final class LocaleUtils {
 
     public static final String DEFAULT_LANGUAGE_KEY = "default";
 
-    private static final Map<String, String> subLanguageToParent = new HashMap<>();
-    private static final Map<String, String> iso3To2 = new HashMap<>();
-    private static final Set<String> rtl = new HashSet<>();
+    private static final Map<String, String> subLanguageToParent = loadCSV("sublanguages.csv");
+    private static final Map<String, String> iso3To2 = loadCSV("iso_languages.csv");
+    private static final Set<String> rtl = Set.copyOf(loadList("rtl.txt"));
 
-    static {
-        try {
-            for (String line : Lang.toIterable(IOUtils.readFullyAsString(LocaleUtils.class.getResourceAsStream("/assets/lang/sublanguages.csv")).lines())) {
-                if (line.startsWith("#") || line.isBlank()) {
-                    continue;
-                }
+    /// Load CSV files located in `/assets/lang/`.
+    /// Each line in these files contains at least two elements.
+    ///
+    /// For example, if a file contains `value0,value1,value2`, the return value will be `{value1=value0, value2=value0}`.
+    private static Map<String, String> loadCSV(String fileName) {
+        InputStream resource = LocaleUtils.class.getResourceAsStream("/assets/lang/" + fileName);
+        if (resource == null) {
+            LOG.warning("Can't find file: " + fileName);
+            return Map.of();
+        }
+
+        HashMap<String, String> result = new HashMap<>();
+        try (resource) {
+            new String(resource.readAllBytes(), StandardCharsets.UTF_8).lines().forEach(line -> {
+                if (line.startsWith("#") || line.isBlank())
+                    return;
 
                 String[] languages = line.split(",");
                 if (languages.length < 2) {
-                    LOG.warning("Invalid line in sublanguages.csv: " + line);
-                    continue;
+                    LOG.warning("Invalid line in " + fileName + ": " + line);
+                    return;
                 }
 
                 String parent = languages[0];
                 for (int i = 1; i < languages.length; i++) {
-                    subLanguageToParent.put(languages[i], parent);
+                    result.put(languages[i], parent);
                 }
-            }
+            });
         } catch (Throwable e) {
-            LOG.warning("Failed to load sublanguages.csv", e);
+            LOG.warning("Failed to load " + fileName, e);
         }
 
-        try {
-            // Line Format: (?<iso2>[a-z]{2}),(?<iso3>[a-z]{3})
-            for (String line : Lang.toIterable(IOUtils.readFullyAsString(LocaleUtils.class.getResourceAsStream("/assets/lang/iso_languages.csv")).lines())) {
-                if (line.startsWith("#") || line.isBlank()) {
-                    continue;
-                }
+        return Map.copyOf(result);
+    }
 
-                String[] parts = line.split(",", 3);
-                if (parts.length != 2) {
-                    LOG.warning("Invalid line in iso_languages.csv: " + line);
-                    continue;
-                }
-
-                iso3To2.put(parts[1], parts[0]);
-            }
-        } catch (Throwable e) {
-            LOG.warning("Failed to load iso_languages.csv", e);
+    private static List<String> loadList(String fileName) {
+        InputStream resource = LocaleUtils.class.getResourceAsStream("/assets/lang/" + fileName);
+        if (resource == null) {
+            LOG.warning("Can't find file: " + fileName);
+            return List.of();
         }
 
-        try {
-            for (String line : Lang.toIterable(IOUtils.readFullyAsString(LocaleUtils.class.getResourceAsStream("/assets/lang/rtl.txt")).lines())) {
-                if (line.startsWith("#") || line.isBlank()) {
-                    continue;
-                }
-                rtl.add(line.trim());
-            }
+        try (resource) {
+            return new String(resource.readAllBytes(), StandardCharsets.UTF_8).lines()
+                    .filter(line -> !line.startsWith("#") && !line.isBlank())
+                    .toList();
         } catch (Throwable e) {
-            LOG.warning("Failed to load rtl.txt", e);
+            LOG.warning("Failed to load " + fileName, e);
+            return List.of();
         }
     }
 
