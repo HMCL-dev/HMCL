@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.gradle.l10n;
 
 import org.gradle.api.DefaultTask;
+import org.gradle.api.GradleException;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
@@ -53,9 +54,22 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
             items = builder.items;
         }
 
+        Set<String> set = new HashSet<>();
+
         for (Item item : items) {
             String type = item.firstValueOrThrow("Type");
+
+            switch (type) {
+
+
+                case "grandfathered", "redundant" -> {
+                    // ignored
+                }
+                default -> throw new GradleException(String.format("Unknown subtag type: %s", type));
+            }
         }
+
+        LOGGER.quiet(">>> " + set);
     }
 
     private static final class Item {
@@ -74,7 +88,7 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
         }
 
         public @NotNull String firstValueOrThrow(String name) {
-            return firstValue(name).orElseThrow(() -> new IllegalStateException("No value found for " + name + " in " + this));
+            return firstValue(name).orElseThrow(() -> new GradleException("No value found for " + name + " in " + this));
         }
 
         public void put(String name, String value) {
@@ -120,7 +134,7 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
                     current.values.clear();
                     return;
                 } else {
-                    throw new IOException("Invalid item: " + current);
+                    throw new GradleException("Invalid item: " + current);
                 }
             }
 
@@ -141,7 +155,7 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
                     if (currentValue != null) {
                         currentValue = currentValue + " " + line;
                     } else {
-                        throw new IOException("Invalid line: " + line);
+                        throw new GradleException("Invalid line: " + line);
                     }
                 } else {
                     updateCurrent();
@@ -151,7 +165,7 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
                         currentName = matcher.group("name");
                         currentValue = matcher.group("value");
                     } else {
-                        throw new IOException("Invalid line: " + line);
+                        throw new GradleException("Invalid line: " + line);
                     }
                 }
             }
