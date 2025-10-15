@@ -58,7 +58,8 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
 
         for (Item item : items) {
             String type = item.firstValueOrThrow("Type");
-            if (type.equals("grandfathered") || type.equals("redundant"))
+            if (type.equals("grandfathered") || type.equals("redundant")
+                    || !item.allValues("Deprecated").isEmpty())
                 continue;
 
             String subtag = item.firstValueOrThrow("Subtag");
