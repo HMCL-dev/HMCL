@@ -54,23 +54,46 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
             items = builder.items;
         }
 
-        Set<String> set = new HashSet<>();
+        Map<String, String> variantToScript = new LinkedHashMap<>();
 
         for (Item item : items) {
             String type = item.firstValueOrThrow("Type");
+            String subtag = item.firstValueOrThrow("Subtag");
 
+            mainSwitch:
             switch (type) {
                 case "language", "extlang" -> {
 
                 }
-                case "grandfathered", "redundant", "region", "script", "variant" -> {
+                case "variant" -> {
+                    List<String> prefixes = item.allValues("Prefix");
+                    String defaultScript = null;
+                    for (String prefix : prefixes) {
+                        String script = Locale.forLanguageTag(prefix).getScript();
+                        if (script.isEmpty()) {
+                            break mainSwitch;
+                        }
+
+                        if (defaultScript == null) {
+                            defaultScript = script;
+                        } else {
+                            if (!defaultScript.equals(script)) {
+                                break mainSwitch;
+                            }
+                        }
+                    }
+
+                    if (defaultScript != null) {
+                        variantToScript.put(subtag, defaultScript);
+                    }
+                }
+                case "grandfathered", "redundant", "region", "script" -> {
                     // ignored
                 }
                 default -> throw new GradleException(String.format("Unknown subtag type: %s", type));
             }
         }
 
-        LOGGER.quiet(">>> " + set);
     }
 
     private static final class Item {
