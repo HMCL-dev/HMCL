@@ -181,7 +181,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     JFXButton wikiButton = newToggleButton4(SVG.GLOBE_BOOK);
                     wikiButton.setOnAction(event -> {
                         onOpenWiki();
-                        wikiButton.getScene().getRoot().requestFocus();
+                        FXUtils.clearFocus(wikiButton);
                     });
                     FXUtils.installFastTooltip(wikiButton, i18n("wiki.tooltip"));
                     actions.getChildren().add(wikiButton);
