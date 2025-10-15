@@ -55,7 +55,7 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
         }
 
         Map<String, List<String>> scriptToVariants = new LinkedHashMap<>();
-        Map<String, List<String>> langToMarcoLang = new LinkedHashMap<>();
+        Map<String, List<String>> macroLangToLangs = new LinkedHashMap<>();
 
         for (Item item : items) {
             String type = item.firstValueOrThrow("Type");
@@ -69,7 +69,7 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
             switch (type) {
                 case "language", "extlang" -> {
                     item.firstValue("Macrolanguage").ifPresent(macroLang ->
-                            langToMarcoLang.computeIfAbsent(macroLang, k -> new ArrayList<>())
+                            macroLangToLangs.computeIfAbsent(macroLang, k -> new ArrayList<>())
                                     .add(subtag));
                 }
                 case "variant" -> {
