@@ -60,9 +60,10 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
             String type = item.firstValueOrThrow("Type");
 
             switch (type) {
+                case "language", "extlang" -> {
 
-
-                case "grandfathered", "redundant" -> {
+                }
+                case "grandfathered", "redundant", "region", "script", "variant" -> {
                     // ignored
                 }
                 default -> throw new GradleException(String.format("Unknown subtag type: %s", type));
