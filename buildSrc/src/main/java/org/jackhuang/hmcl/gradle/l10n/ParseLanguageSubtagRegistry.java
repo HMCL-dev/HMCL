@@ -18,8 +18,122 @@
 package org.jackhuang.hmcl.gradle.l10n;
 
 import org.gradle.api.DefaultTask;
+import org.gradle.api.file.RegularFileProperty;
+import org.gradle.api.logging.Logger;
+import org.gradle.api.logging.Logging;
+import org.gradle.api.tasks.InputFile;
+import org.gradle.api.tasks.TaskAction;
+import org.gradle.internal.impldep.org.apache.commons.lang3.text.StrBuilder;
+import org.jetbrains.annotations.NotNull;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /// @author Glavo
 /// @see [language-subtag-registry](https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry)
 public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
+
+    @InputFile
+    public abstract RegularFileProperty getLanguageSubtagRegistryFile();
+
+    @TaskAction
+    public void run() throws IOException {
+        List<Item> items;
+
+        try (var reader = Files.newBufferedReader(getLanguageSubtagRegistryFile().getAsFile().get().toPath())) {
+            var builder = new ItemsBuilder();
+            builder.parse(reader);
+            items = builder.items;
+        }
+
+        // TODO
+
+    }
+
+    private static final class Item {
+        final Map<String, List<String>> values = new LinkedHashMap<>();
+
+        public @NotNull List<String> allValues(String name) {
+            return values.getOrDefault(name, List.of());
+        }
+
+        public @NotNull Optional<String> firstValue(String name) {
+            return Optional.ofNullable(values.get(name)).map(it -> it.get(0));
+        }
+
+        public void put(String name, String value) {
+            values.computeIfAbsent(name, ignored -> new ArrayList<>(1)).add(value);
+        }
+
+        @Override
+        public String toString() {
+            StringJoiner joiner = new StringJoiner("\n");
+
+            values.forEach((name, values) -> {
+                for (String value : values) {
+                    joiner.add(name + ": " + value);
+                }
+            });
+
+            return joiner.toString();
+        }
+    }
+
+    private static final class ItemsBuilder {
+        private final List<Item> items = new ArrayList<>(1024);
+        private Item current = new Item();
+        private String currentName = null;
+        private String currentValue = null;
+
+        private void updateCurrent() {
+            if (currentName != null) {
+                current.put(currentName, currentValue);
+                currentName = null;
+                currentValue = null;
+            }
+        }
+
+        void parse(BufferedReader reader) throws IOException {
+            Pattern linePattern = Pattern.compile("^(?<name>[A-Za-z\\-]+): (?<value>.*)$");
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.isBlank()) {
+                    continue;
+                } else if (line.equals("%%")) {
+                    updateCurrent();
+
+                    items.add(current);
+                    current = new Item();
+                } else if (line.startsWith("  ")) {
+                    if (currentValue != null) {
+                        currentValue = currentValue + " " + line;
+                    } else {
+                        throw new IOException("Invalid line: " + line);
+                    }
+                } else {
+                    updateCurrent();
+
+                    Matcher matcher = linePattern.matcher(line);
+                    if (matcher.matches()) {
+                        currentName = matcher.group("name");
+                        currentValue = matcher.group("value");
+                    } else {
+                        throw new IOException("Invalid line: " + line);
+                    }
+                }
+            }
+
+            updateCurrent();
+            if (!current.values.isEmpty()) {
+                items.add(current);
+                current = new Item();
+            }
+        }
+    }
+
 }

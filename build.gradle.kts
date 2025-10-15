@@ -1,5 +1,6 @@
 import org.jackhuang.hmcl.gradle.ci.CheckUpdate
 import org.jackhuang.hmcl.gradle.docs.UpdateDocuments
+import org.jackhuang.hmcl.gradle.l10n.ParseLanguageSubtagRegistry
 
 plugins {
     id("checkstyle")
@@ -76,6 +77,9 @@ org.jackhuang.hmcl.gradle.javafx.JavaFXUtils.register(rootProject)
 
 defaultTasks("clean", "build")
 
+tasks.register<ParseLanguageSubtagRegistry>("parseLanguageSubtagRegistry") {
+    languageSubtagRegistryFile.set(layout.projectDirectory.file("language-subtag-registry"))
+}
 
 tasks.register<UpdateDocuments>("updateDocuments") {
     documentsDir.set(layout.projectDirectory.dir("docs"))
