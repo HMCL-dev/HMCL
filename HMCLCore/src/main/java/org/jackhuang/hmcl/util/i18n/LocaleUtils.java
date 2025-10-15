@@ -48,6 +48,7 @@ public final class LocaleUtils {
 
     private static final Map<String, String> subLanguageToParent = loadCSV("sublanguages.csv");
     private static final Map<String, String> iso3To2 = loadCSV("iso_languages.csv");
+    private static final Map<String, String> variantToScript = loadCSV("variant_to_script.csv");
     private static final Set<String> rtl = Set.copyOf(loadList("rtl.txt"));
 
     /// Load CSV files located in `/assets/lang/`.
@@ -148,6 +149,12 @@ public final class LocaleUtils {
     /// the script will be inferred based on the language, the region and the variant.
     public static @NotNull String getScript(Locale locale) {
         if (locale.getScript().isEmpty()) {
+            if (!locale.getVariant().isEmpty()) {
+                String script = variantToScript.get(locale.getVariant());
+                if (script != null)
+                    return script;
+            }
+
             if (isEnglish(locale)) {
                 if ("UD".equals(locale.getCountry())) {
                     return "Qabs";
@@ -155,8 +162,6 @@ public final class LocaleUtils {
             }
 
             if (isChinese(locale)) {
-                if (CHINESE_LATN_VARIANTS.contains(locale.getVariant()))
-                    return "Latn";
                 if (locale.getLanguage().equals("lzh") || CHINESE_TRADITIONAL_REGIONS.contains(locale.getCountry()))
                     return "Hant";
                 else
@@ -378,7 +383,6 @@ public final class LocaleUtils {
     }
 
     public static final Set<String> CHINESE_TRADITIONAL_REGIONS = Set.of("TW", "HK", "MO");
-    public static final Set<String> CHINESE_LATN_VARIANTS = Set.of("pinyin", "wadegile", "tongyong");
 
     public static boolean isChinese(Locale locale) {
         return "zh".equals(getRootLanguage(locale));
