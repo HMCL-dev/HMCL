@@ -54,7 +54,7 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
             items = builder.items;
         }
 
-        Map<String, String> variantToScript = new LinkedHashMap<>();
+        Map<String, List<String>> scriptToVariants = new LinkedHashMap<>();
 
         for (Item item : items) {
             String type = item.firstValueOrThrow("Type");
@@ -87,10 +87,11 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
                     }
 
                     if (defaultScript != null) {
-                        variantToScript.put(subtag, defaultScript);
+                        scriptToVariants.computeIfAbsent(defaultScript, k -> new ArrayList<>(1))
+                                .add(subtag);
                     }
                 }
-                case "grandfathered", "redundant", "region", "script" -> {
+                case "region", "script" -> {
                     // ignored
                 }
                 default -> throw new GradleException(String.format("Unknown subtag type: %s", type));
