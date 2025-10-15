@@ -23,14 +23,16 @@ import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.gradle.api.tasks.InputFile;
+import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
-import org.gradle.internal.impldep.org.apache.commons.lang3.text.StrBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -44,6 +46,13 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
     @InputFile
     public abstract RegularFileProperty getLanguageSubtagRegistryFile();
 
+    @OutputFile
+    public abstract RegularFileProperty getSublanguagesFile();
+
+    /// CSV file storing the mapping from variants to their default scripts.
+    @OutputFile
+    public abstract RegularFileProperty getVariantToScriptFile();
+
     @TaskAction
     public void run() throws IOException {
         List<Item> items;
@@ -54,8 +63,8 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
             items = builder.items;
         }
 
-        Map<String, List<String>> scriptToVariants = new LinkedHashMap<>();
-        Map<String, List<String>> macroLangToLangs = new LinkedHashMap<>();
+        Map<String, Set<String>> scriptToVariants = new TreeMap<>();
+        Map<String, Set<String>> macroLangToLangs = new TreeMap<>();
 
         for (Item item : items) {
             String type = item.firstValueOrThrow("Type");
@@ -69,7 +78,7 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
             switch (type) {
                 case "language", "extlang" -> {
                     item.firstValue("Macrolanguage").ifPresent(macroLang ->
-                            macroLangToLangs.computeIfAbsent(macroLang, k -> new ArrayList<>())
+                            macroLangToLangs.computeIfAbsent(macroLang, k -> new TreeSet<>())
                                     .add(subtag));
                 }
                 case "variant" -> {
@@ -91,7 +100,7 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
                     }
 
                     if (defaultScript != null) {
-                        scriptToVariants.computeIfAbsent(defaultScript, k -> new ArrayList<>())
+                        scriptToVariants.computeIfAbsent(defaultScript, k -> new TreeSet<>())
                                 .add(subtag);
                     }
                 }
@@ -102,6 +111,27 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
             }
         }
 
+        try (var writer = new PrintWriter(Files.newBufferedWriter(getSublanguagesFile().getAsFile().get().toPath(),
+                StandardOpenOption.CREATE,
+                StandardOpenOption.TRUNCATE_EXISTING))) {
+            macroLangToLangs.forEach((k, v) -> {
+                writer.println(k + "," + String.join(",", v));
+            });
+
+            if (writer.checkError())
+                throw new GradleException();
+        }
+
+        try (var writer = new PrintWriter(Files.newBufferedWriter(getVariantToScriptFile().getAsFile().get().toPath(),
+                StandardOpenOption.CREATE,
+                StandardOpenOption.TRUNCATE_EXISTING))) {
+            scriptToVariants.forEach((k, v) -> {
+                writer.println(k + "," + String.join(",", v));
+            });
+
+            if (writer.checkError())
+                throw new GradleException();
+        }
     }
 
     private static final class Item {

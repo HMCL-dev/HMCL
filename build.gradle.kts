@@ -79,6 +79,9 @@ defaultTasks("clean", "build")
 
 tasks.register<ParseLanguageSubtagRegistry>("parseLanguageSubtagRegistry") {
     languageSubtagRegistryFile.set(layout.projectDirectory.file("language-subtag-registry"))
+
+    sublanguagesFile.set(layout.projectDirectory.file("HMCLCore/src/main/resources/assets/lang/sublanguages.csv"))
+    variantToScriptFile.set(layout.projectDirectory.file("HMCLCore/src/main/resources/assets/lang/variant_to_script.csv"))
 }
 
 tasks.register<UpdateDocuments>("updateDocuments") {
