@@ -20,8 +20,6 @@ package org.jackhuang.hmcl.gradle.l10n;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
 import org.gradle.api.file.RegularFileProperty;
-import org.gradle.api.logging.Logger;
-import org.gradle.api.logging.Logging;
 import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
@@ -40,8 +38,6 @@ import java.util.regex.Pattern;
 /// @author Glavo
 /// @see [language-subtag-registry](https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry)
 public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
-
-    private static final Logger LOGGER = Logging.getLogger(ParseLanguageSubtagRegistry.class);
 
     @InputFile
     public abstract RegularFileProperty getLanguageSubtagRegistryFile();
@@ -64,7 +60,7 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
         }
 
         Map<String, Set<String>> scriptToVariants = new TreeMap<>();
-        Map<String, Set<String>> macroLangToLangs = new TreeMap<>(LANGUGAE_TAG_COMPARATOR);
+        Map<String, Set<String>> macroLangToLangs = new TreeMap<>(LANGUAGE_TAG_COMPARATOR);
 
         for (Item item : items) {
             String type = item.firstValueOrThrow("Type");
@@ -78,7 +74,7 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
             switch (type) {
                 case "language", "extlang" -> {
                     item.firstValue("Macrolanguage").ifPresent(macroLang ->
-                            macroLangToLangs.computeIfAbsent(macroLang, k -> new TreeSet<>(LANGUGAE_TAG_COMPARATOR))
+                            macroLangToLangs.computeIfAbsent(macroLang, k -> new TreeSet<>(LANGUAGE_TAG_COMPARATOR))
                                     .add(subtag));
                 }
                 case "variant" -> {
@@ -236,7 +232,7 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
         }
     }
 
-    private static final Comparator<String> LANGUGAE_TAG_COMPARATOR = (lang1, lang2) -> {
+    private static final Comparator<String> LANGUAGE_TAG_COMPARATOR = (lang1, lang2) -> {
         if (lang1.length() != lang2.length())
             return Integer.compare(lang1.length(), lang2.length());
         else

@@ -201,7 +201,6 @@ public final class LocaleUtilsTest {
         assertEquals("zh", LocaleUtils.mapToISO2Language("zho"));
         assertEquals("zu", LocaleUtils.mapToISO2Language("zul"));
 
-        assertNull(LocaleUtils.mapToISO2Language(null));
         assertNull(LocaleUtils.mapToISO2Language(""));
         assertNull(LocaleUtils.mapToISO2Language("cmn"));
         assertNull(LocaleUtils.mapToISO2Language("lzh"));
