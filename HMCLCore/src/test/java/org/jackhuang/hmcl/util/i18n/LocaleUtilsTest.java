@@ -135,6 +135,7 @@ public final class LocaleUtilsTest {
         assertEquals("Hant", LocaleUtils.getScript(Locale.forLanguageTag("lzh-CN")));
 
         assertEquals("Latn", LocaleUtils.getScript(Locale.forLanguageTag("zh-pinyin")));
+        assertEquals("Latn", LocaleUtils.getScript(Locale.forLanguageTag("ja-hepburn")));
     }
 
     @Test
