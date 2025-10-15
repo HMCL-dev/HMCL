@@ -38,6 +38,8 @@ import java.util.regex.Pattern;
 /// @see [language-subtag-registry](https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry)
 public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
 
+    private static final Logger LOGGER = Logging.getLogger(ParseLanguageSubtagRegistry.class);
+
     @InputFile
     public abstract RegularFileProperty getLanguageSubtagRegistryFile();
 
