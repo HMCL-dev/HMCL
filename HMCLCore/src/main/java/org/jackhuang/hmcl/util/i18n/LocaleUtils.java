@@ -51,7 +51,6 @@ public final class LocaleUtils {
     private static final Map<String, String> DEFAULT_SCRIPT = loadCSV("default_script.csv");
     private static final Map<String, String> PREFERRED_LANGUAGE = Map.of("zh", "cmn");
     private static final Set<String> RTL_SCRIPTS = Set.of("Qabs", "Arab", "Hebr");
-
     private static final Set<String> CHINESE_TRADITIONAL_REGIONS = Set.of("TW", "HK", "MO");
 
     /// Load CSV files located in `/assets/lang/`.
