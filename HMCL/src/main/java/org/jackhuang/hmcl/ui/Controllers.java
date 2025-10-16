@@ -40,8 +40,10 @@ import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.java.JavaManager;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
@@ -54,14 +56,16 @@ import org.jackhuang.hmcl.ui.download.DownloadPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.main.LauncherSettingsPage;
 import org.jackhuang.hmcl.ui.main.RootPage;
+import org.jackhuang.hmcl.ui.terracotta.TerracottaPage;
 import org.jackhuang.hmcl.ui.versions.GameListPage;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
+import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -71,6 +75,8 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class Controllers {
     public static final String JAVA_VERSION_TIP = "javaVersion";
+    public static final String JAVA_INTERPRETED_MODE_TIP = "javaInterpretedMode";
+    public static final String SOFTWARE_RENDERING = "softwareRendering";
 
     public static final int MIN_WIDTH = 800 + 2 + 16; // bg width + border width*2 + shadow width*2
     public static final int MIN_HEIGHT = 450 + 2 + 40 + 16; // bg height + border width*2 + toolbar height + shadow width*2
@@ -89,7 +95,7 @@ public final class Controllers {
         gameListPage.selectedProfileProperty().bindBidirectional(Profiles.selectedProfileProperty());
         gameListPage.profilesProperty().bindContent(Profiles.profilesProperty());
         FXUtils.applyDragListener(gameListPage, ModpackHelper::isFileModpackByExtension, modpacks -> {
-            File modpack = modpacks.get(0);
+            Path modpack = modpacks.get(0);
             Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), modpack), i18n("install.modpack"));
         });
         return gameListPage;
@@ -105,6 +111,7 @@ public final class Controllers {
         return accountListPage;
     });
     private static Lazy<LauncherSettingsPage> settingsPage = new Lazy<>(LauncherSettingsPage::new);
+    private static Lazy<TerracottaPage> terracottaPage = new Lazy<>(TerracottaPage::new);
 
     private Controllers() {
     }
@@ -145,6 +152,11 @@ public final class Controllers {
     // FXThread
     public static DownloadPage getDownloadPage() {
         return downloadPage.get();
+    }
+
+    // FXThread
+    public static Node getTerracottaPage() {
+        return terracottaPage.get();
     }
 
     // FXThread
@@ -216,7 +228,11 @@ public final class Controllers {
 
             if (targetProperty != null
                     && Controllers.stage != null
-                    && !Controllers.stage.isIconified()) {
+                    && !Controllers.stage.isIconified()
+                    // https://github.com/HMCL-dev/HMCL/issues/4290
+                    && (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS ||
+                    !Controllers.stage.isFullScreen() && !Controllers.stage.isMaximized())
+            ) {
                 targetProperty.set(sourceProperty.get());
             }
         };
@@ -321,6 +337,45 @@ public final class Controllers {
             }
         }
 
+        if (JavaRuntime.CURRENT_VERSION < Metadata.MINIMUM_SUPPORTED_JAVA_VERSION) {
+            Number shownTipVersion = null;
+            try {
+                shownTipVersion = (Number) config().getShownTips().get(JAVA_VERSION_TIP);
+            } catch (ClassCastException e) {
+                LOG.warning("Invalid type for shown tips key: " + JAVA_VERSION_TIP, e);
+            }
+            if (shownTipVersion == null || shownTipVersion.intValue() < Metadata.MINIMUM_SUPPORTED_JAVA_VERSION) {
+                MessageDialogPane.Builder builder = new MessageDialogPane.Builder(i18n("fatal.deprecated_java_version"), null, MessageType.WARNING);
+                String downloadLink = Metadata.getSuggestedJavaDownloadLink();
+                if (downloadLink != null)
+                    builder.addHyperLink(
+                            i18n("fatal.deprecated_java_version.download_link", Metadata.RECOMMENDED_JAVA_VERSION),
+                            downloadLink
+                    );
+                Controllers.dialog(builder
+                        .ok(() -> config().getShownTips().put(JAVA_VERSION_TIP, Metadata.MINIMUM_SUPPORTED_JAVA_VERSION))
+                        .build());
+            }
+        }
+
+        // Check whether JIT is enabled in the current environment
+        if (!JavaRuntime.CURRENT_JIT_ENABLED && !Boolean.TRUE.equals(config().getShownTips().get(JAVA_INTERPRETED_MODE_TIP))) {
+            Controllers.dialog(new MessageDialogPane.Builder(i18n("warning.java_interpreted_mode"), i18n("message.warning"), MessageType.WARNING)
+                    .ok(null)
+                    .addCancel(i18n("button.do_not_show_again"), () ->
+                            config().getShownTips().put(JAVA_INTERPRETED_MODE_TIP, true))
+                    .build());
+        }
+
+        // Check whether hardware acceleration is enabled
+        if (!FXUtils.GPU_ACCELERATION_ENABLED && !Boolean.TRUE.equals(config().getShownTips().get(SOFTWARE_RENDERING))) {
+            Controllers.dialog(new MessageDialogPane.Builder(i18n("warning.software_rendering"), i18n("message.warning"), MessageType.WARNING)
+                    .ok(null)
+                    .addCancel(i18n("button.do_not_show_again"), () ->
+                            config().getShownTips().put(SOFTWARE_RENDERING, true))
+                    .build());
+        }
+
         if (globalConfig().getAgreementVersion() < 1) {
             JFXDialogLayout agreementPane = new JFXDialogLayout();
             agreementPane.setHeading(new Label(i18n("launcher.agreement")));
@@ -378,6 +433,30 @@ public final class Controllers {
         dialog(new MessageDialogPane.Builder(text, title, type).actionOrCancel(actionButton, cancel).build());
     }
 
+    public static void confirmActionDanger(String text, String title, Runnable resolve, Runnable cancel) {
+        JFXButton btnYes = new JFXButton(i18n("button.ok"));
+        btnYes.getStyleClass().add("dialog-error");
+        btnYes.setOnAction(e -> resolve.run());
+        btnYes.setDisable(true);
+
+        int countdown = 10;
+        KeyFrame[] keyFrames = new KeyFrame[countdown + 1];
+        for (int i = 0; i < countdown; i++) {
+            keyFrames[i] = new KeyFrame(Duration.seconds(i),
+                    new KeyValue(btnYes.textProperty(), i18n("button.ok.countdown", countdown - i)));
+        }
+        keyFrames[countdown] = new KeyFrame(Duration.seconds(countdown),
+                new KeyValue(btnYes.textProperty(), i18n("button.ok")),
+                new KeyValue(btnYes.disableProperty(), false));
+
+        Timeline timeline = new Timeline(keyFrames);
+        confirmAction(text, title, MessageType.WARNING, btnYes, () -> {
+            timeline.stop();
+            cancel.run();
+        });
+        timeline.play();
+    }
+
     public static CompletableFuture<String> prompt(String title, FutureCallback<String> onResult) {
         return prompt(title, onResult, "");
     }
@@ -423,6 +502,10 @@ public final class Controllers {
                 case "hmcl://settings/feedback":
                     Controllers.getSettingsPage().showFeedback();
                     Controllers.navigate(Controllers.getSettingsPage());
+                    break;
+                case "hmcl://game/launch":
+                    Profile profile = Profiles.getSelectedProfile();
+                    Versions.launch(profile, profile.getSelectedVersion(), LauncherHelper::setKeep);
                     break;
             }
         } else {

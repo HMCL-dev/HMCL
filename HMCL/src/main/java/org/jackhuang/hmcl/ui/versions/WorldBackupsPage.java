@@ -147,7 +147,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                 WorldBackupsPage.this.getItems().sort(Comparator.naturalOrder());
                 Controllers.dialog(i18n("world.backup.create.success", result.getKey()), null, MessageDialogPane.MessageType.INFO);
             } else if (exception instanceof WorldLockedException) {
-                Controllers.dialog(i18n("world.backup.create.locked"), null, MessageDialogPane.MessageType.WARNING);
+                Controllers.dialog(i18n("world.locked.failed"), null, MessageDialogPane.MessageType.WARNING);
             } else {
                 LOG.warning("Failed to create backup", exception);
                 Controllers.dialog(i18n("world.backup.create.failed", StringUtils.getStackTrace(exception)), null, MessageDialogPane.MessageType.WARNING);
@@ -245,7 +245,8 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                     item.setTitle(parseColorEscapes(skinnable.getBackupWorld().getWorldName()));
                 item.setSubtitle(formatDateTime(skinnable.getBackupTime()) + (skinnable.count == 0 ? "" : " (" + skinnable.count + ")"));
 
-                if (world.getGameVersion() != null) item.getTags().add(world.getGameVersion());
+                if (world.getGameVersion() != null)
+                    item.addTag(world.getGameVersion());
             }
 
             {

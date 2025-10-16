@@ -21,9 +21,9 @@ import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * This task is to save the version json.
@@ -51,7 +51,8 @@ public final class VersionJsonSaveTask extends Task<Version> {
 
     @Override
     public void execute() throws Exception {
-        File json = repository.getVersionJson(version.getId()).getAbsoluteFile();
-        FileUtils.writeText(json, JsonUtils.GSON.toJson(version));
+        Path json = repository.getVersionJson(version.getId()).toAbsolutePath();
+        Files.createDirectories(json.getParent());
+        JsonUtils.writeToJsonFile(json, version);
     }
 }

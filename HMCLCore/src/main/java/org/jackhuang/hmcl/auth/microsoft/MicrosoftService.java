@@ -34,7 +34,7 @@ import org.jackhuang.hmcl.util.javafx.ObservableOptionalCache;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.net.URL;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -164,7 +164,7 @@ public class MicrosoftService {
                 .accept("application/json").createConnection();
 
         if (request.getResponseCode() != 200) {
-            throw new ResponseCodeException(new URL("https://api.minecraftservices.com/entitlements/mcstore"), request.getResponseCode());
+            throw new ResponseCodeException("https://api.minecraftservices.com/entitlements/mcstore", request.getResponseCode());
         }
 
         // Get Minecraft Account UUID
@@ -247,22 +247,22 @@ public class MicrosoftService {
         if (responseCode == HTTP_NOT_FOUND) {
             throw new NoMinecraftJavaEditionProfileException();
         } else if (responseCode != 200) {
-            throw new ResponseCodeException(new URL("https://api.minecraftservices.com/minecraft/profile"), responseCode);
+            throw new ResponseCodeException("https://api.minecraftservices.com/minecraft/profile", responseCode);
         }
 
-        String result = NetworkUtils.readData(conn);
+        String result = NetworkUtils.readFullyAsString(conn);
         return JsonUtils.fromNonNullJson(result, MinecraftProfileResponse.class);
     }
 
     public Optional<CompleteGameProfile> getCompleteGameProfile(UUID uuid) throws AuthenticationException {
         Objects.requireNonNull(uuid);
 
-        return Optional.ofNullable(GSON.fromJson(request(NetworkUtils.toURL("https://sessionserver.mojang.com/session/minecraft/profile/" + UUIDTypeAdapter.fromUUID(uuid)), null), CompleteGameProfile.class));
+        return Optional.ofNullable(GSON.fromJson(request("https://sessionserver.mojang.com/session/minecraft/profile/" + UUIDTypeAdapter.fromUUID(uuid), null), CompleteGameProfile.class));
     }
 
     public void uploadSkin(String accessToken, boolean isSlim, Path file) throws AuthenticationException, UnsupportedOperationException {
         try {
-            HttpURLConnection con = NetworkUtils.createHttpConnection(NetworkUtils.toURL("https://api.minecraftservices.com/minecraft/profile/skins"));
+            HttpURLConnection con = NetworkUtils.createHttpConnection("https://api.minecraftservices.com/minecraft/profile/skins");
             con.setRequestMethod("POST");
             con.setRequestProperty("Authorization", "Bearer " + accessToken);
             con.setDoOutput(true);
@@ -273,26 +273,26 @@ public class MicrosoftService {
                 }
             }
 
-            String response = NetworkUtils.readData(con);
+            String response = NetworkUtils.readFullyAsString(con);
             if (StringUtils.isBlank(response)) {
                 if (con.getResponseCode() / 100 != 2)
-                    throw new ResponseCodeException(con.getURL(), con.getResponseCode());
+                    throw new ResponseCodeException(con.getURL().toURI(), con.getResponseCode());
             } else {
                 MinecraftErrorResponse profileResponse = GSON.fromJson(response, MinecraftErrorResponse.class);
                 if (StringUtils.isNotBlank(profileResponse.errorMessage) || con.getResponseCode() / 100 != 2)
                     throw new AuthenticationException("Failed to upload skin, response code: " + con.getResponseCode() + ", response: " + response);
             }
-        } catch (IOException | JsonParseException e) {
+        } catch (IOException | JsonParseException | URISyntaxException e) {
             throw new AuthenticationException(e);
         }
     }
 
-    private static String request(URL url, Object payload) throws AuthenticationException {
+    private static String request(String url, Object payload) throws AuthenticationException {
         try {
             if (payload == null)
                 return NetworkUtils.doGet(url);
             else
-                return NetworkUtils.doPost(url, payload instanceof String ? (String) payload : GSON.toJson(payload), "application/json");
+                return NetworkUtils.doPost(NetworkUtils.toURI(url), payload instanceof String ? (String) payload : GSON.toJson(payload), "application/json");
         } catch (IOException e) {
             throw new ServerDisconnectException(e);
         }
@@ -321,16 +321,16 @@ public class MicrosoftService {
         public static final long ADD_FAMILY = 2148916238L;
     }
 
-    public static class XBox400Exception extends AuthenticationException {
+    public final static class XBox400Exception extends AuthenticationException {
     }
 
-    public static class NoMinecraftJavaEditionProfileException extends AuthenticationException {
+    public final static class NoMinecraftJavaEditionProfileException extends AuthenticationException {
     }
 
-    public static class NoXuiException extends AuthenticationException {
+    public final static class NoXuiException extends AuthenticationException {
     }
 
-    private static class XBoxLiveAuthenticationResponseDisplayClaims {
+    private final static class XBoxLiveAuthenticationResponseDisplayClaims {
         List<Map<Object, Object>> xui;
     }
 
@@ -356,7 +356,7 @@ public class MicrosoftService {
      * XErr Candidates: 2148916233 = missing XBox account 2148916238 = child account
      * not linked to a family
      */
-    private static class XBoxLiveAuthenticationResponse extends MicrosoftErrorResponse {
+    private final static class XBoxLiveAuthenticationResponse extends MicrosoftErrorResponse {
         @SerializedName("IssueInstant")
         String issueInstant;
 
@@ -370,7 +370,7 @@ public class MicrosoftService {
         XBoxLiveAuthenticationResponseDisplayClaims displayClaims;
     }
 
-    private static class MinecraftLoginWithXBoxResponse {
+    private final static class MinecraftLoginWithXBoxResponse {
         @SerializedName("username")
         String username;
 
@@ -387,14 +387,14 @@ public class MicrosoftService {
         int expiresIn;
     }
 
-    private static class MinecraftStoreResponseItem {
+    private final static class MinecraftStoreResponseItem {
         @SerializedName("name")
         String name;
         @SerializedName("signature")
         String signature;
     }
 
-    private static class MinecraftStoreResponse extends MinecraftErrorResponse {
+    private final static class MinecraftStoreResponse extends MinecraftErrorResponse {
         @SerializedName("items")
         List<MinecraftStoreResponseItem> items;
 
@@ -405,7 +405,7 @@ public class MicrosoftService {
         String keyId;
     }
 
-    public static class MinecraftProfileResponseSkin implements Validation {
+    public final static class MinecraftProfileResponseSkin implements Validation {
         public String id;
         public String state;
         public String url;

@@ -23,10 +23,10 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -48,6 +48,9 @@ public final class WinRegTest {
     };
 
     private static final byte[] TEST_DATA = new byte[128];
+    private static final String[] TEST_STRING_ARRAY = {
+            "str0", "str1", "str2"
+    };
 
     static {
         for (int i = 0; i < TEST_DATA.length; i++) {
@@ -65,6 +68,8 @@ public final class WinRegTest {
         Advapi32Util.registrySetStringValue(ROOT_KEY, key, "SZ", "Hello World!");
         Advapi32Util.registrySetIntValue(ROOT_KEY, key, "DWORD", 0xCAFEBABE);
         Advapi32Util.registrySetLongValue(ROOT_KEY, key, "QWORD", 0xCAFEBABEL);
+        Advapi32Util.registrySetStringArray(ROOT_KEY, key, "REG_MULTI_SZ", TEST_STRING_ARRAY);
+        Advapi32Util.registrySetStringArray(ROOT_KEY, key, "REG_MULTI_SZ_EMPTY", new String[0]);
 
         for (String subkey : SUBKEYS) {
             if (!Advapi32Util.registryCreateKey(ROOT_KEY, key, subkey))
@@ -94,6 +99,9 @@ public final class WinRegTest {
         assertEquals("Hello World!", reg.queryValue(hkey, key, "SZ"));
         assertEquals(0xCAFEBABE, reg.queryValue(hkey, key, "DWORD"));
         assertEquals(0xCAFEBABEL, reg.queryValue(hkey, key, "QWORD"));
+        assertArrayEquals(TEST_STRING_ARRAY, (Object[]) reg.queryValue(hkey, key, "REG_MULTI_SZ"));
+        assertArrayEquals(new String[0], (Object[]) reg.queryValue(hkey, key, "REG_MULTI_SZ_EMPTY"));
+
         assertNull(reg.queryValue(hkey, key, "UNKNOWN"));
         assertNull(reg.queryValue(hkey, KEY_BASE + "\\" + "NOT_EXIST", "UNKNOWN"));
     }
@@ -103,7 +111,7 @@ public final class WinRegTest {
         WinReg.HKEY hkey = WinReg.HKEY.HKEY_CURRENT_USER;
         WinReg reg = WinReg.INSTANCE;
 
-        assertEquals(Arrays.asList(SUBKEYS).stream().map(it -> key + "\\" + it).collect(Collectors.toList()),
+        assertEquals(Stream.of(SUBKEYS).map(it -> key + "\\" + it).collect(Collectors.toList()),
                 reg.querySubKeys(hkey, key).stream().sorted().collect(Collectors.toList()));
         for (String subkey : SUBKEYS) {
             assertEquals(Collections.emptyList(), reg.querySubKeys(hkey, key + "\\" + subkey));

@@ -41,11 +41,13 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
+import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -53,9 +55,9 @@ import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.jfxListCellFactory;
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.ui.export.ModpackTypeSelectionPage.MODPACK_TYPE;
+import static org.jackhuang.hmcl.ui.export.ModpackTypeSelectionPage.MODPACK_TYPE_MODRINTH;
 import static org.jackhuang.hmcl.ui.export.ModpackTypeSelectionPage.MODPACK_TYPE_SERVER;
 import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
-import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class ModpackInfoPage extends Control implements WizardPage {
@@ -80,13 +82,17 @@ public final class ModpackInfoPage extends Control implements WizardPage {
     private final SimpleStringProperty launchArguments = new SimpleStringProperty("");
     private final SimpleStringProperty javaArguments = new SimpleStringProperty("");
     private final SimpleStringProperty mcbbsThreadId = new SimpleStringProperty("");
+    private final SimpleBooleanProperty noCreateRemoteFiles = new SimpleBooleanProperty();
+    private final SimpleBooleanProperty skipCurseForgeRemoteFiles = new SimpleBooleanProperty();
 
     public ModpackInfoPage(WizardController controller, HMCLGameRepository gameRepository, String version) {
         this.controller = controller;
         this.gameRepository = gameRepository;
-        this.options = tryCast(controller.getSettings().get(MODPACK_INFO_OPTION), ModpackExportInfo.Options.class)
-                .orElseThrow(() -> new IllegalArgumentException("Settings.MODPACK_INFO_OPTION is required"));
+        this.options = controller.getSettings().get(MODPACK_INFO_OPTION);
         this.versionName = version;
+
+        if (this.options == null)
+            throw new IllegalArgumentException("Settings.MODPACK_INFO_OPTION is required");
 
         name.set(version);
         author.set(Optional.ofNullable(Accounts.getSelectedAccount()).map(Account::getUsername).orElse(""));
@@ -102,8 +108,14 @@ public final class ModpackInfoPage extends Control implements WizardPage {
     private void onNext() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle(i18n("modpack.wizard.step.initialization.save"));
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("modpack"), "*.zip"));
-        File file = fileChooser.showSaveDialog(Controllers.getStage());
+        if (controller.getSettings().get(MODPACK_TYPE) == ModpackTypeSelectionPage.MODPACK_TYPE_MODRINTH) {
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("modpack"), "*.mrpack"));
+            fileChooser.setInitialFileName(name.get() + ".mrpack");
+        } else {
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("modpack"), "*.zip"));
+            fileChooser.setInitialFileName(name.get() + ".zip");
+        }
+        Path file = FileUtils.toPath(fileChooser.showSaveDialog(Controllers.getStage()));
         if (file == null) {
             controller.onEnd();
             return;
@@ -122,6 +134,8 @@ public final class ModpackInfoPage extends Control implements WizardPage {
         exportInfo.setLaunchArguments(launchArguments.get());
         exportInfo.setJavaArguments(javaArguments.get());
         exportInfo.setAuthlibInjectorServer(authlibInjectorServer.get());
+        exportInfo.setNoCreateRemoteFiles(noCreateRemoteFiles.get());
+        exportInfo.setSkipCurseForgeRemoteFiles(skipCurseForgeRemoteFiles.get());
 
         if (StringUtils.isNotBlank(mcbbsThreadId.get())) {
             exportInfo.setOrigins(Collections.singletonList(new McbbsModpackManifest.Origin(
@@ -135,7 +149,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
     }
 
     @Override
-    public void cleanup(Map<String, Object> settings) {
+    public void cleanup(SettingsMap settings) {
         controller.getSettings().remove(MODPACK_INFO);
     }
 
@@ -149,9 +163,9 @@ public final class ModpackInfoPage extends Control implements WizardPage {
         return new ModpackInfoPageSkin(this);
     }
 
-    public static final String MODPACK_INFO = "modpack.info";
-    public static final String MODPACK_FILE = "modpack.file";
-    public static final String MODPACK_INFO_OPTION = "modpack.info.option";
+    public static final SettingsMap.Key<ModpackExportInfo> MODPACK_INFO = new SettingsMap.Key<>("modpack.info");
+    public static final SettingsMap.Key<Path> MODPACK_FILE = new SettingsMap.Key<>("modpack.file");
+    public static final SettingsMap.Key<ModpackExportInfo.Options> MODPACK_INFO_OPTION = new SettingsMap.Key<>("modpack.info.option");
 
     public static class ModpackInfoPageSkin extends SkinBase<ModpackInfoPage> {
         private ObservableList<Node> originList;
@@ -178,6 +192,11 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                     Hyperlink hyperlink = new Hyperlink(i18n("modpack.wizard.step.initialization.server"));
                     hyperlink.setOnAction(e -> FXUtils.openLink(Metadata.DOCS_URL + "/modpack/serverpack.html"));
                     borderPane.setTop(hyperlink);
+                }
+                if (skinnable.controller.getSettings().get(MODPACK_TYPE) == MODPACK_TYPE_MODRINTH) {
+                    HintPane pane = new HintPane(MessageDialogPane.MessageType.INFO);
+                    pane.setText(i18n("modpack.wizard.step.initialization.modrinth.info"));
+                    borderPane.setTop(pane);
                 } else {
                     HintPane pane = new HintPane(MessageDialogPane.MessageType.INFO);
                     pane.setText(i18n("modpack.wizard.step.initialization.warning"));
@@ -365,6 +384,32 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                         button.setMinHeight(16);
                         button.setMaxHeight(16);
                         pane.setRight(button);
+                    }
+
+                    if (skinnable.options.isRequireNoCreateRemoteFiles()) {
+                        BorderPane noCreateRemoteFiles = new BorderPane();
+                        noCreateRemoteFiles.setLeft(new Label(i18n("modpack.wizard.step.initialization.no_create_remote_files")));
+                        list.getContent().add(noCreateRemoteFiles);
+
+                        JFXToggleButton noCreateRemoteFilesButton = new JFXToggleButton();
+                        noCreateRemoteFilesButton.selectedProperty().bindBidirectional(skinnable.noCreateRemoteFiles);
+                        noCreateRemoteFilesButton.setSize(8);
+                        noCreateRemoteFilesButton.setMinHeight(16);
+                        noCreateRemoteFilesButton.setMaxHeight(16);
+                        noCreateRemoteFiles.setRight(noCreateRemoteFilesButton);
+                    }
+
+                    if (skinnable.options.isRequireSkipCurseForgeRemoteFiles()) {
+                        BorderPane skipCurseForgeRemoteFiles = new BorderPane();
+                        skipCurseForgeRemoteFiles.setLeft(new Label(i18n("modpack.wizard.step.initialization.skip_curseforge_remote_files")));
+                        list.getContent().add(skipCurseForgeRemoteFiles);
+
+                        JFXToggleButton skipCurseForgeRemoteFilesButton = new JFXToggleButton();
+                        skipCurseForgeRemoteFilesButton.selectedProperty().bindBidirectional(skinnable.skipCurseForgeRemoteFiles);
+                        skipCurseForgeRemoteFilesButton.setSize(8);
+                        skipCurseForgeRemoteFilesButton.setMinHeight(16);
+                        skipCurseForgeRemoteFilesButton.setMaxHeight(16);
+                        skipCurseForgeRemoteFiles.setRight(skipCurseForgeRemoteFilesButton);
                     }
                 }
 

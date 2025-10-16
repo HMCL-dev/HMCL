@@ -52,8 +52,9 @@ import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
@@ -340,8 +341,8 @@ public final class JavaDownloadDialog extends StackPane {
                         if (StringUtils.isBlank(fileInfo.getDirectDownloadUri()))
                             throw new IOException("Missing download URI: " + json);
 
-                        File targetFile = File.createTempFile("hmcl-java-", "." + version.getArchiveType());
-                        targetFile.deleteOnExit();
+                        Path targetFile = Files.createTempFile("hmcl-java-", "." + version.getArchiveType());
+                        targetFile.toFile().deleteOnExit();
 
                         Task<FileDownloadTask.IntegrityCheck> getIntegrityCheck;
                         if (StringUtils.isNotBlank(fileInfo.getChecksum()))
@@ -364,7 +365,7 @@ public final class JavaDownloadDialog extends StackPane {
                                 .thenComposeAsync(integrityCheck ->
                                         new FileDownloadTask(downloadProvider.injectURLWithCandidates(fileInfo.getDirectDownloadUri()),
                                                 targetFile, integrityCheck).setName(fileInfo.getFileName()))
-                                .thenSupplyAsync(targetFile::toPath);
+                                .thenSupplyAsync(() -> targetFile);
                     })
                     .whenComplete(Schedulers.javafx(), ((result, exception) -> {
                         if (exception == null) {

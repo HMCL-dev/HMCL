@@ -30,23 +30,22 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public final class MinecraftInstanceTask<T> extends Task<ModpackConfiguration<T>> {
 
-    private final File zipFile;
+    private final Path zipFile;
     private final Charset encoding;
     private final List<String> subDirectories;
-    private final File jsonFile;
+    private final Path jsonFile;
     private final T manifest;
     private final String type;
     private final String name;
     private final String version;
 
-    public MinecraftInstanceTask(File zipFile, Charset encoding, List<String> subDirectories, T manifest, ModpackProvider modpackProvider, String name, String version, File jsonFile) {
+    public MinecraftInstanceTask(Path zipFile, Charset encoding, List<String> subDirectories, T manifest, ModpackProvider modpackProvider, String name, String version, Path jsonFile) {
         this.zipFile = zipFile;
         this.encoding = encoding;
-        this.subDirectories = subDirectories.stream().map(FileUtils::normalizePath).collect(Collectors.toList());
+        this.subDirectories = subDirectories.stream().map(FileUtils::normalizePath).toList();
         this.manifest = manifest;
         this.jsonFile = jsonFile;
         this.type = modpackProvider.getName();
@@ -58,12 +57,12 @@ public final class MinecraftInstanceTask<T> extends Task<ModpackConfiguration<T>
     public void execute() throws Exception {
         List<ModpackConfiguration.FileInformation> overrides = new ArrayList<>();
 
-        try (FileSystem fs = CompressingUtils.readonly(zipFile.toPath()).setEncoding(encoding).build()) {
+        try (FileSystem fs = CompressingUtils.readonly(zipFile).setEncoding(encoding).build()) {
             for (String subDirectory : subDirectories) {
                 Path root = fs.getPath(subDirectory);
 
                 if (Files.exists(root))
-                    Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
+                    Files.walkFileTree(root, new SimpleFileVisitor<>() {
                         @Override
                         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                             String relativePath = root.relativize(file).normalize().toString().replace(File.separatorChar, '/');
@@ -75,7 +74,8 @@ public final class MinecraftInstanceTask<T> extends Task<ModpackConfiguration<T>
         }
 
         ModpackConfiguration<T> configuration = new ModpackConfiguration<>(manifest, type, name, version, overrides);
-        FileUtils.writeText(jsonFile, JsonUtils.GSON.toJson(configuration));
+        Files.createDirectories(jsonFile.getParent());
+        JsonUtils.writeToJsonFile(jsonFile, configuration);
         setResult(configuration);
     }
 }

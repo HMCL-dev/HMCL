@@ -34,7 +34,7 @@ import org.jackhuang.hmcl.util.javafx.ObservableOptionalCache;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-import java.net.URL;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -160,7 +160,7 @@ public class YggdrasilService {
                     request.file("file", FileUtils.getName(file), "image/" + FileUtils.getExtension(file), fis);
                 }
             }
-            requireEmpty(NetworkUtils.readData(con));
+            requireEmpty(NetworkUtils.readFullyAsString(con));
         } catch (IOException e) {
             throw new AuthenticationException(e);
         }
@@ -227,12 +227,12 @@ public class YggdrasilService {
         }
     }
 
-    private static String request(URL url, Object payload) throws AuthenticationException {
+    private static String request(URI uri, Object payload) throws AuthenticationException {
         try {
             if (payload == null)
-                return NetworkUtils.doGet(url);
+                return NetworkUtils.doGet(uri);
             else
-                return NetworkUtils.doPost(url, payload instanceof String ? (String) payload : GSON.toJson(payload), "application/json");
+                return NetworkUtils.doPost(uri, payload instanceof String ? (String) payload : GSON.toJson(payload), "application/json");
         } catch (IOException e) {
             throw new ServerDisconnectException(e);
         }
@@ -246,11 +246,11 @@ public class YggdrasilService {
         }
     }
 
-    private static class TextureResponse {
+    private final static class TextureResponse {
         public Map<TextureType, Texture> textures;
     }
 
-    private static class AuthenticationResponse extends ErrorResponse {
+    private final static class AuthenticationResponse extends ErrorResponse {
         public String accessToken;
         public String clientToken;
         public GameProfile selectedProfile;

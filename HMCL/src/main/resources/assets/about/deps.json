@@ -63,5 +63,20 @@
     "title" : "Java Native Access",
     "subtitle" : "Licensed under the LGPL 2.1 License or the Apache 2.0 License.",
     "externalLink" : "https://github.com/java-native-access/jna"
+  },
+  {
+    "title" : "Java Animated PNG",
+    "subtitle" : "Copyright (C) 2015 Andrew Ellerton.\nLicensed under the Apache 2.0 License.",
+    "externalLink" : "https://github.com/aellerton/japng"
+  },
+  {
+    "title": "Terracotta",
+    "subtitle": "Copyright (C) 2025 Burning_TNT.\nAll rights reserved.",
+    "externalLink": "https://github.com/burningtnt/Terracotta"
+  },
+  {
+    "title": "EasyTier",
+    "subtitle": "Copyright 2024-present Easytier Programme within The Commons Conservancy",
+    "externalLink": "https://github.com/EasyTier/EasyTier"
   }
 ]

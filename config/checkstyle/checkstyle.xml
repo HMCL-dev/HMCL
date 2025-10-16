@@ -10,7 +10,7 @@
     </module>
 
     <module name="FileLength"><!-- max line length for single file: http://checkstyle.sourceforge.net/config_sizes.html#FileLength -->
-        <property name="max" value="1500"/>
+        <property name="max" value="2000"/>
     </module>
 
     <module name="TreeWalker">
@@ -75,7 +75,7 @@
         <module name="FallThrough"/> <!-- switch fallthrough with statement not allowed http://checkstyle.sourceforge.net/config_coding.html#FallThrough -->
         <module name="IllegalInstantiation"/> <!-- Must not use const of certain types (Activity, Fragment): http://checkstyle.sourceforge.net/config_coding.html#IllegalInstantiation -->
 
-        <!-- Size Limitiations -->
+        <!-- Size Limitations -->
         <module name="ParameterNumber"><!-- max params for method http://checkstyle.sourceforge.net/config_sizes.html#ParameterNumber -->
             <property name="max" value="10"/>
             <property name="ignoreOverriddenMethods" value="true"/>
@@ -104,5 +104,17 @@
         <module name="RedundantImport"/> <!-- e.g. double import statements: http://checkstyle.sourceforge.net/config_imports.html#RedundantImport -->
         <module name="UnusedImports"/> <!-- http://checkstyle.sourceforge.net/config_imports.html#UnusedImports -->
         <module name="IllegalImport"/> <!-- checks if import sun.* is used http://checkstyle.sourceforge.net/config_imports.html#IllegalImport -->
+
+        <!--  Custom -->
+        <module name="RegexpSinglelineJava">
+            <property name="format" value="\.toLowerCase\(\)"/>
+            <property name="ignoreComments" value="true"/>
+            <property name="message" value="Should not use String#toLowerCase(), use String#toLowerCase(Locale.ROOT) instead."/>
+        </module>
+        <module name="RegexpSinglelineJava">
+            <property name="format" value="\.toUpperCase\(\)"/>
+            <property name="ignoreComments" value="true"/>
+            <property name="message" value="Should not use String#toUpperCase(), use String#toUpperCase(Locale.ROOT) instead."/>
+        </module>
     </module>
 </module>

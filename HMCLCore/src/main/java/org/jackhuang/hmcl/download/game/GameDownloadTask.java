@@ -20,11 +20,10 @@ package org.jackhuang.hmcl.download.game;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.FileDownloadTask;
-import org.jackhuang.hmcl.task.FileDownloadTask.IntegrityCheck;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.CacheRepository;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -54,12 +53,12 @@ public final class GameDownloadTask extends Task<Void> {
 
     @Override
     public void execute() {
-        File jar = dependencyManager.getGameRepository().getVersionJar(version);
+        Path jar = dependencyManager.getGameRepository().getVersionJar(version);
 
-        FileDownloadTask task = new FileDownloadTask(
+        var task = new FileDownloadTask(
                 dependencyManager.getDownloadProvider().injectURLWithCandidates(version.getDownloadInfo().getUrl()),
                 jar,
-                IntegrityCheck.of(CacheRepository.SHA1, version.getDownloadInfo().getSha1()));
+                FileDownloadTask.IntegrityCheck.of(CacheRepository.SHA1, version.getDownloadInfo().getSha1()));
         task.setCaching(true);
         task.setCacheRepository(dependencyManager.getCacheRepository());
 

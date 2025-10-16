@@ -29,6 +29,9 @@ public class ModpackExportInfo {
 
     private List<McbbsModpackManifest.Origin> origins = new ArrayList<>();
 
+    private boolean noCreateRemoteFiles;
+    private boolean skipCurseForgeRemoteFiles;
+
     public ModpackExportInfo() {}
 
     public List<String> getWhitelist() {
@@ -186,6 +189,22 @@ public class ModpackExportInfo {
         return this;
     }
 
+    public boolean isNoCreateRemoteFiles() {
+        return noCreateRemoteFiles;
+    }
+
+    public void setNoCreateRemoteFiles(boolean noCreateRemoteFiles) {
+        this.noCreateRemoteFiles = noCreateRemoteFiles;
+    }
+
+    public boolean isSkipCurseForgeRemoteFiles() {
+        return skipCurseForgeRemoteFiles;
+    }
+
+    public void setSkipCurseForgeRemoteFiles(boolean skipCurseForgeRemoteFiles) {
+        this.skipCurseForgeRemoteFiles = skipCurseForgeRemoteFiles;
+    }
+
     public ModpackExportInfo validate() throws NullPointerException {
         return this;
     }
@@ -200,6 +219,8 @@ public class ModpackExportInfo {
         private boolean requireLaunchArguments;
         private boolean requireJavaArguments;
         private boolean requireOrigins;
+        private boolean requireNoCreateRemoteFiles;
+        private boolean requireSkipCurseForgeRemoteFiles;
 
         public Options() {
         }
@@ -238,6 +259,14 @@ public class ModpackExportInfo {
 
         public boolean isRequireOrigins() {
             return requireOrigins;
+        }
+
+        public boolean isRequireNoCreateRemoteFiles() {
+            return requireNoCreateRemoteFiles;
+        }
+
+        public boolean isRequireSkipCurseForgeRemoteFiles() {
+            return requireSkipCurseForgeRemoteFiles;
         }
 
         public Options requireUrl() {
@@ -281,5 +310,14 @@ public class ModpackExportInfo {
             return this;
         }
 
+        public Options requireNoCreateRemoteFiles() {
+            requireNoCreateRemoteFiles = true;
+            return this;
+        }
+
+        public Options requireSkipCurseForgeRemoteFiles() {
+            requireSkipCurseForgeRemoteFiles = true;
+            return this;
+        }
     }
 }

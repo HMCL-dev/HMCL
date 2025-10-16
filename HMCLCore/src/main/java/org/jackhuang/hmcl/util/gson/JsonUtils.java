@@ -23,11 +23,12 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -64,6 +65,16 @@ public final class JsonUtils {
 
     public static <K, V> TypeToken<Map<K, V>> mapTypeOf(Class<K> keyType, TypeToken<V> valueType) {
         return (TypeToken<Map<K, V>>) TypeToken.getParameterized(Map.class, keyType, valueType.getType());
+    }
+
+    public static <T> T fromJsonFile(Path file, Class<T> classOfT) throws IOException {
+        return fromJsonFile(file, TypeToken.get(classOfT));
+    }
+
+    public static <T> T fromJsonFile(Path file, TypeToken<T> type) throws IOException {
+        try (var reader = Files.newBufferedReader(file)) {
+            return GSON.fromJson(reader, type.getType());
+        }
     }
 
     public static <T> T fromJsonFully(InputStream json, Class<T> classOfT) throws IOException, JsonParseException {
@@ -126,13 +137,19 @@ public final class JsonUtils {
         }
     }
 
+    public static void writeToJsonFile(Path file, Object value) throws IOException {
+        try (var writer = Files.newBufferedWriter(file)) {
+            GSON.toJson(value, writer);
+        }
+    }
+
     public static GsonBuilder defaultGsonBuilder() {
         return new GsonBuilder()
                 .enableComplexMapKeySerialization()
                 .setPrettyPrinting()
                 .registerTypeAdapter(Instant.class, InstantTypeAdapter.INSTANCE)
                 .registerTypeAdapter(UUID.class, UUIDTypeAdapter.INSTANCE)
-                .registerTypeAdapter(File.class, FileTypeAdapter.INSTANCE)
+                .registerTypeAdapter(Path.class, PathTypeAdapter.INSTANCE)
                 .registerTypeAdapterFactory(ValidationTypeAdapterFactory.INSTANCE)
                 .registerTypeAdapterFactory(LowerCaseEnumTypeAdapterFactory.INSTANCE)
                 .registerTypeAdapterFactory(JsonTypeAdapterFactory.INSTANCE);

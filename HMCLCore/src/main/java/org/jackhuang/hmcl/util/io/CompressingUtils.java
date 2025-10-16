@@ -22,7 +22,6 @@ import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -66,7 +65,7 @@ public final class CompressingUtils {
 
             cd.reset();
             byte[] ba = entry.getRawName();
-            int clen = (int)(ba.length * cd.maxCharsPerByte());
+            int clen = (int) (ba.length * cd.maxCharsPerByte());
             if (clen == 0) continue;
             if (clen <= cb.capacity())
                 cb.clear();
@@ -129,7 +128,19 @@ public final class CompressingUtils {
     }
 
     public static ZipArchiveReader openZipFile(Path zipFile) throws IOException {
-        return new ZipArchiveReader(Files.newByteChannel(zipFile));
+        ZipArchiveReader zipReader = new ZipArchiveReader(Files.newByteChannel(zipFile));
+        Charset suitableEncoding;
+        try {
+            suitableEncoding = findSuitableEncoding(zipReader);
+            if (suitableEncoding == StandardCharsets.UTF_8)
+                return zipReader;
+        } catch (Throwable e) {
+            IOUtils.closeQuietly(zipReader, e);
+            throw e;
+        }
+
+        zipReader.close();
+        return new ZipArchiveReader(Files.newByteChannel(zipFile), suitableEncoding);
     }
 
     public static ZipArchiveReader openZipFile(Path zipFile, Charset charset) throws IOException {
@@ -221,12 +232,12 @@ public final class CompressingUtils {
      * Read the text content of a file in zip.
      *
      * @param zipFile the zip file
-     * @param name the location of the text in zip file, something like A/B/C/D.txt
-     * @throws IOException if the file is not a valid zip file.
+     * @param name    the location of the text in zip file, something like A/B/C/D.txt
      * @return the plain text content of given file.
+     * @throws IOException if the file is not a valid zip file.
      */
-    public static String readTextZipEntry(File zipFile, String name) throws IOException {
-        try (ZipArchiveReader s = new ZipArchiveReader(zipFile.toPath())) {
+    public static String readTextZipEntry(Path zipFile, String name) throws IOException {
+        try (ZipArchiveReader s = new ZipArchiveReader(zipFile)) {
             return readTextZipEntry(s, name);
         }
     }
@@ -235,9 +246,9 @@ public final class CompressingUtils {
      * Read the text content of a file in zip.
      *
      * @param zipFile the zip file
-     * @param name the location of the text in zip file, something like A/B/C/D.txt
-     * @throws IOException if the file is not a valid zip file.
+     * @param name    the location of the text in zip file, something like A/B/C/D.txt
      * @return the plain text content of given file.
+     * @throws IOException if the file is not a valid zip file.
      */
     public static String readTextZipEntry(ZipArchiveReader zipFile, String name) throws IOException {
         return IOUtils.readFullyAsString(zipFile.getInputStream(zipFile.getEntry(name)));
@@ -247,28 +258,13 @@ public final class CompressingUtils {
      * Read the text content of a file in zip.
      *
      * @param zipFile the zip file
-     * @param name the location of the text in zip file, something like A/B/C/D.txt
-     * @throws IOException if the file is not a valid zip file.
+     * @param name    the location of the text in zip file, something like A/B/C/D.txt
      * @return the plain text content of given file.
+     * @throws IOException if the file is not a valid zip file.
      */
     public static String readTextZipEntry(Path zipFile, String name, Charset encoding) throws IOException {
         try (ZipArchiveReader s = openZipFile(zipFile, encoding)) {
             return IOUtils.readFullyAsString(s.getInputStream(s.getEntry(name)));
-        }
-    }
-
-    /**
-     * Read the text content of a file in zip.
-     *
-     * @param file the zip file
-     * @param name the location of the text in zip file, something like A/B/C/D.txt
-     * @return the plain text content of given file.
-     */
-    public static Optional<String> readTextZipEntryQuietly(File file, String name) {
-        try {
-            return Optional.of(readTextZipEntry(file, name));
-        } catch (IOException | NullPointerException e) {
-            return Optional.empty();
         }
     }
 
