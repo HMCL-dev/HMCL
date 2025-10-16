@@ -194,33 +194,33 @@ public final class JavaManager {
 
                 final var binaryList = new ArrayList<JavaRuntime>();
                 final var queue = new ArrayDeque<Path>(64);
-                try(final var subDirs = Files.list(dir)) {
+                try (final var subDirs = Files.list(dir)) {
                     subDirs.filter(Files::isDirectory).filter(Files::isReadable).forEach(queue::add);
                 }
                 final var relative = Paths.get("bin", OperatingSystem.CURRENT_OS.getJavaExecutable());
                 queue.add(relative); // relative also as a sign of the end of the layer
                 int depth = 1;
-                while(!queue.isEmpty()) {
+                while (!queue.isEmpty()) {
                     final Path directory = queue.poll();
-                    if(directory == relative) {
+                    if (directory == relative) {
                         depth++;
-                        if(!queue.isEmpty() && depth < maxDepth)
+                        if (!queue.isEmpty() && depth < maxDepth)
                             queue.add(relative);
                         continue;
                     }
-                    if(isCancelled())
+                    if (isCancelled())
                         throw new CancellationException("Cancelled by user");
                     var binary = directory.resolve(relative);
-                    if(Files.exists(binary)) {
+                    if (Files.exists(binary)) {
                         var java = JavaManager.getJava(binary);
-                        if(java.getParsedVersion() <= 8 && java.isJDK()) {
+                        if (java.getParsedVersion() <= 8 && java.isJDK()) {
                             binary = directory.resolve("jre").resolve(relative);
-                            if(Files.exists(binary))
+                            if (Files.exists(binary))
                                 java = JavaManager.getJava(binary);
                         }
                         binaryList.add(java);
-                    } else if(depth < maxDepth)
-                        try(final var subDirs = Files.list(directory)) {
+                    } else if (depth < maxDepth)
+                        try (final var subDirs = Files.list(directory)) {
                             subDirs.filter(Files::isDirectory).filter(Files::isReadable).forEach(queue::add);
                         }
                 }
@@ -228,17 +228,17 @@ public final class JavaManager {
             }
         }.thenApplyAsync("Add Java", Schedulers.javafx(), javaRuntimes -> {
             final var failedJavaRuntimes = new ArrayList<JavaRuntime>();
-            for(JavaRuntime javaRuntime: javaRuntimes) {
-                if(!JavaManager.isCompatible(javaRuntime.getPlatform()))
+            for (JavaRuntime javaRuntime: javaRuntimes) {
+                if (!JavaManager.isCompatible(javaRuntime.getPlatform()))
                     failedJavaRuntimes.add(javaRuntime);
                 String pathString = javaRuntime.getBinary().toString();
                 ConfigHolder.globalConfig().getDisabledJava().remove(pathString);
-                if(ConfigHolder.globalConfig().getUserJava().add(pathString))
+                if (ConfigHolder.globalConfig().getUserJava().add(pathString))
                     addJava(javaRuntime);
             }
-            if(!failedJavaRuntimes.isEmpty()) {
+            if (!failedJavaRuntimes.isEmpty()) {
                 StringBuilder sb = new StringBuilder("Incompatible platform: ");
-                for(JavaRuntime javaRuntime :javaRuntimes)
+                for (JavaRuntime javaRuntime :javaRuntimes)
                     sb.append('\n').append(javaRuntime.getPlatform()).append(": ").append(javaRuntime.getBinary());
                 throw new UnsupportedPlatformException(sb.toString());
             }
