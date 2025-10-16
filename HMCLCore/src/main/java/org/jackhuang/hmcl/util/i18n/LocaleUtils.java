@@ -50,6 +50,7 @@ public final class LocaleUtils {
     private static final Map<String, String> languageAliases = loadCSV("language_aliases.csv");
     private static final Map<String, String> defaultScript = loadCSV("default_script.csv");
     private static final Set<String> rtl = Set.copyOf(loadList("rtl.txt"));
+    private static final Set<String> CHINESE_TRADITIONAL_REGIONS = Set.of("TW", "HK", "MO");
 
     /// Load CSV files located in `/assets/lang/`.
     /// Each line in these files contains at least two elements.
@@ -121,6 +122,30 @@ public final class LocaleUtils {
         return locale.getLanguage().isEmpty()
                 ? DEFAULT_LANGUAGE_KEY
                 : locale.stripExtensions().toLanguageTag();
+    }
+
+    public static boolean isEnglish(Locale locale) {
+        return "en".equals(getRootLanguage(locale));
+    }
+
+    public static boolean isChinese(Locale locale) {
+        return "zh".equals(getRootLanguage(locale));
+    }
+
+    // ---
+
+    /// Normalize the language code to the code in the IANA Language Subtag Registry.
+    /// Typically, it normalizes ISO 639 alpha-3 codes to ISO 639 alpha-2 codes.
+    public static @NotNull String normalizeLanguage(String language) {
+        return language.isEmpty()
+                ? "en"
+                : languageAliases.getOrDefault(language, language);
+    }
+
+    /// If `language` is a sublanguage of a [macrolanguage](https://en.wikipedia.org/wiki/ISO_639_macrolanguage),
+    /// return the macrolanguage; otherwise, return `null`.
+    public static @Nullable String getParentLanguage(String language) {
+        return subLanguageToParent.get(language);
     }
 
     public static @NotNull String getRootLanguage(Locale locale) {
@@ -352,29 +377,6 @@ public final class LocaleUtils {
 
     // ---
 
-    /// Normalize the language code to the code in the IANA Language Subtag Registry.
-    /// Typically, it normalizes ISO 639 alpha-3 codes to ISO 639 alpha-2 codes.
-    public static @NotNull String normalizeLanguage(String language) {
-        return language.isEmpty()
-                ? "en"
-                : languageAliases.getOrDefault(language, language);
-    }
-
-    /// If `language` is a sublanguage of a [macrolanguage](https://en.wikipedia.org/wiki/ISO_639_macrolanguage),
-    /// return the macrolanguage; otherwise, return `null`.
-    public static @Nullable String getParentLanguage(String language) {
-        return subLanguageToParent.get(language);
-    }
-
-    public static boolean isEnglish(Locale locale) {
-        return "en".equals(getRootLanguage(locale));
-    }
-
-    public static final Set<String> CHINESE_TRADITIONAL_REGIONS = Set.of("TW", "HK", "MO");
-
-    public static boolean isChinese(Locale locale) {
-        return "zh".equals(getRootLanguage(locale));
-    }
 
     private LocaleUtils() {
     }
