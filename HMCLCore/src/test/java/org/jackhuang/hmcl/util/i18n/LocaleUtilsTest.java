@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -41,55 +40,78 @@ public final class LocaleUtilsTest {
                 LocaleUtils.getCandidateLocales(Locale.forLanguageTag(languageTag))
                         .stream()
                         .map(Locale::toLanguageTag)
-                        .collect(Collectors.toList()));
+                        .toList());
+    }
+
+    private static void assertCandidateLocalesEquals(String l1, String l2) {
+        assertEquals(
+                LocaleUtils.getCandidateLocales(Locale.forLanguageTag(l1)),
+                LocaleUtils.getCandidateLocales(Locale.forLanguageTag(l2))
+        );
     }
 
     @Test
     public void testGetCandidateLocales() {
-        assertCandidateLocales("zh", List.of("zh-Hans", "zh-CN", "zh", "und"));
-        assertCandidateLocales("zh-CN", List.of("zh-Hans-CN", "zh-Hans", "zh-CN", "zh", "und"));
-        assertCandidateLocales("zh-SG", List.of("zh-Hans-SG", "zh-Hans", "zh-SG", "zh-CN", "zh", "und"));
-        assertCandidateLocales("zh-MY", List.of("zh-Hans-MY", "zh-Hans", "zh-MY", "zh-CN", "zh", "und"));
-        assertCandidateLocales("zh-US", List.of("zh-Hans-US", "zh-Hans", "zh-US", "zh-CN", "zh", "und"));
-        assertCandidateLocales("zh-TW", List.of("zh-Hant-TW", "zh-Hant", "zh-TW", "zh", "zh-CN", "und"));
-        assertCandidateLocales("zh-HK", List.of("zh-Hant-HK", "zh-Hant", "zh-HK", "zh-TW", "zh", "zh-CN", "und"));
-        assertCandidateLocales("zh-MO", List.of("zh-Hant-MO", "zh-Hant", "zh-MO", "zh-TW", "zh", "zh-CN", "und"));
-        assertCandidateLocales("zh-Hans", List.of("zh-Hans", "zh-CN", "zh", "und"));
-        assertCandidateLocales("zh-Hant", List.of("zh-Hant", "zh-TW", "zh", "zh-CN", "und"));
-        assertCandidateLocales("zh-Hans-US", List.of("zh-Hans-US", "zh-Hans", "zh-US", "zh-CN", "zh", "und"));
-        assertCandidateLocales("zh-Hant-CN", List.of("zh-Hant-CN", "zh-Hant", "zh-CN", "zh-TW", "zh", "und"));
-        assertCandidateLocales("zh-Hans-TW", List.of("zh-Hans-TW", "zh-Hans", "zh-TW", "zh-CN", "zh", "und"));
-        assertCandidateLocales("zh-Latn", List.of("zh-Latn", "zh", "zh-CN", "und"));
-        assertCandidateLocales("zh-Latn-CN", List.of("zh-Latn-CN", "zh-Latn", "zh-CN", "zh", "und"));
-        assertCandidateLocales("zh-pinyin", List.of("zh-Latn-pinyin", "zh-Latn", "zh-pinyin", "zh", "zh-CN", "und"));
-        assertCandidateLocales("zho", List.of("zh-Hans", "zh-CN", "zh", "und"));
+        // English
+
+        assertCandidateLocales("en", List.of("en-Latn", "en", "und"));
+        assertCandidateLocales("en-US", List.of("en-Latn-US", "en-Latn", "en-US", "en", "und"));
+        assertCandidateLocalesEquals("en", "eng");
+        assertCandidateLocalesEquals("en-US", "eng-US");
+        assertCandidateLocalesEquals("und", "en");
+
+        // Spanish
+
+        assertCandidateLocales("es", List.of("es-Latn", "es", "und"));
+        assertCandidateLocalesEquals("es", "spa");
+
+        // Japanese
+
+        assertCandidateLocales("ja", List.of("ja-Jpan", "ja", "und"));
+        assertCandidateLocales("ja-JP", List.of("ja-Jpan-JP", "ja-Jpan", "ja-JP", "ja", "und"));
+        assertCandidateLocalesEquals("ja", "jpn");
+        assertCandidateLocalesEquals("ja-JP", "jpn-JP");
+
+        // Russian
+
+        assertCandidateLocales("ru", List.of("ru-Cyrl", "ru", "und"));
+        assertCandidateLocalesEquals("ru", "rus");
+
+        // Ukrainian
+
+        assertCandidateLocales("uk", List.of("uk-Cyrl", "uk", "und"));
+        assertCandidateLocalesEquals("uk", "ukr");
+
+        // Chinese
+
+        assertCandidateLocales("zh", List.of("cmn-Hans", "cmn", "zh-Hans", "zh-CN", "zh", "und"));
+        assertCandidateLocales("zh-CN", List.of("cmn-Hans-CN", "cmn-Hans", "cmn-CN", "cmn", "zh-Hans-CN", "zh-Hans", "zh-CN", "zh", "und"));
+        assertCandidateLocales("zh-SG", List.of("cmn-Hans-SG", "cmn-Hans", "cmn-SG", "cmn", "zh-Hans-SG", "zh-Hans", "zh-SG", "zh-CN", "zh", "und"));
+
+        assertCandidateLocales("zh-TW", List.of("cmn-Hant-TW", "cmn-Hant", "cmn-TW", "cmn", "zh-Hant-TW", "zh-Hant", "zh-TW", "zh", "zh-CN", "und"));
+        assertCandidateLocales("zh-HK", List.of("cmn-Hant-HK", "cmn-Hant", "cmn-HK", "cmn", "zh-Hant-HK", "zh-Hant", "zh-HK", "zh-TW", "zh", "zh-CN", "und"));
+        assertCandidateLocales("zh-Hant-CN", List.of("cmn-Hant-CN", "cmn-Hant", "cmn-CN", "cmn", "zh-Hant-CN", "zh-Hant", "zh-CN", "zh-TW", "zh", "und"));
+
+        assertCandidateLocales("zh-pinyin", List.of("cmn-Latn-pinyin", "cmn-Latn", "cmn-pinyin", "cmn", "zh-Latn-pinyin", "zh-Latn", "zh-pinyin", "zh", "zh-CN", "und"));
+
         assertCandidateLocales("lzh", List.of("lzh-Hant", "lzh", "zh-Hant", "zh-TW", "zh", "zh-CN", "und"));
-        assertCandidateLocales("lzh-Hant", List.of("lzh-Hant", "lzh", "zh-Hant", "zh-TW", "zh", "zh-CN", "und"));
-        assertCandidateLocales("lzh-Hans", List.of("lzh-Hans", "lzh", "zh-Hans", "zh-CN", "zh", "und"));
-        assertCandidateLocales("cmn", List.of("cmn-Hans", "cmn", "zh-Hans", "zh-CN", "zh", "und"));
-        assertCandidateLocales("cmn-Hans", List.of("cmn-Hans", "cmn", "zh-Hans", "zh-CN", "zh", "und"));
         assertCandidateLocales("yue", List.of("yue-Hans", "yue", "zh-Hans", "zh-CN", "zh", "und"));
 
-        assertCandidateLocales("ja", List.of("ja", "und"));
-        assertCandidateLocales("jpn", List.of("ja", "und"));
-        assertCandidateLocales("ja-JP", List.of("ja-JP", "ja", "und"));
-        assertCandidateLocales("jpn-JP", List.of("ja-JP", "ja", "und"));
+        assertCandidateLocalesEquals("zh", "cmn-Hans");
+        assertCandidateLocalesEquals("zh-CN", "cmn-Hans-CN");
+        assertCandidateLocalesEquals("zh-SG", "cmn-Hans-SG");
+        assertCandidateLocalesEquals("zh-MY", "cmn-Hans-MY");
+        assertCandidateLocalesEquals("zh-TW", "cmn-Hant-TW");
+        assertCandidateLocalesEquals("zh-HK", "cmn-Hant-HK");
+        assertCandidateLocalesEquals("zh-Hans", "cmn-Hans");
+        assertCandidateLocalesEquals("zh-Hant", "cmn-Hant");
+        assertCandidateLocalesEquals("zh-Hant-CN", "cmn-Hant-CN");
+        assertCandidateLocalesEquals("zh-Hant-SG", "cmn-Hant-SG");
+        assertCandidateLocalesEquals("zh-Latn", "cmn-Latn");
+        assertCandidateLocalesEquals("zh-pinyin", "cmn-Latn-pinyin");
+        assertCandidateLocalesEquals("zho", "zh");
 
-        assertCandidateLocales("en", List.of("en", "und"));
-        assertCandidateLocales("eng", List.of("en", "und"));
-        assertCandidateLocales("en-US", List.of("en-US", "en", "und"));
-        assertCandidateLocales("eng-US", List.of("en-US", "en", "und"));
 
-        assertCandidateLocales("es", List.of("es", "und"));
-        assertCandidateLocales("spa", List.of("es", "und"));
-
-        assertCandidateLocales("ru", List.of("ru", "und"));
-        assertCandidateLocales("rus", List.of("ru", "und"));
-
-        assertCandidateLocales("uk", List.of("uk", "und"));
-        assertCandidateLocales("ukr", List.of("uk", "und"));
-
-        assertCandidateLocales("und", List.of("en", "und"));
     }
 
     @Test
@@ -134,6 +156,7 @@ public final class LocaleUtilsTest {
         assertEquals("Hant", LocaleUtils.getScript(Locale.forLanguageTag("lzh-Hant")));
         assertEquals("Hant", LocaleUtils.getScript(Locale.forLanguageTag("lzh-CN")));
 
+        assertEquals("Latn", LocaleUtils.getScript(Locale.forLanguageTag("en")));
         assertEquals("Latn", LocaleUtils.getScript(Locale.forLanguageTag("zh-pinyin")));
         assertEquals("Latn", LocaleUtils.getScript(Locale.forLanguageTag("ja-hepburn")));
     }
@@ -194,6 +217,7 @@ public final class LocaleUtilsTest {
 
     @Test
     public void testNormalizeLanguage() {
+        assertEquals("en", LocaleUtils.normalizeLanguage(""));
         assertEquals("en", LocaleUtils.normalizeLanguage("eng"));
         assertEquals("es", LocaleUtils.normalizeLanguage("spa"));
         assertEquals("ja", LocaleUtils.normalizeLanguage("jpn"));
@@ -201,11 +225,8 @@ public final class LocaleUtilsTest {
         assertEquals("uk", LocaleUtils.normalizeLanguage("ukr"));
         assertEquals("zh", LocaleUtils.normalizeLanguage("zho"));
         assertEquals("zu", LocaleUtils.normalizeLanguage("zul"));
-
-        assertNull(LocaleUtils.normalizeLanguage(""));
-        assertNull(LocaleUtils.normalizeLanguage("cmn"));
-        assertNull(LocaleUtils.normalizeLanguage("lzh"));
-        assertNull(LocaleUtils.normalizeLanguage("tlh"));
+        assertEquals("en", LocaleUtils.normalizeLanguage(""));
+        assertEquals("cmn", LocaleUtils.normalizeLanguage("cmn"));
     }
 
     @Test

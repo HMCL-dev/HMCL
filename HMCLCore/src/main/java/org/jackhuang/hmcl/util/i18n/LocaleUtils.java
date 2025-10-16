@@ -187,12 +187,11 @@ public final class LocaleUtils {
                     return script;
             }
 
-            String rootLanguage = getRootLanguage(locale.getLanguage());
-            if ("en".equals(rootLanguage) && "UD".equals(locale.getCountry())) {
+            if ("UD".equals(locale.getCountry())) {
                 return "Qabs";
             }
 
-            String script = DEFAULT_SCRIPT.get(rootLanguage);
+            String script = DEFAULT_SCRIPT.get(normalizeLanguage(locale.getLanguage()));
             if (script != null)
                 return script;
 
