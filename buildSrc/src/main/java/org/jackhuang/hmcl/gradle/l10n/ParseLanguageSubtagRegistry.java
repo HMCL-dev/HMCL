@@ -44,9 +44,9 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
     @OutputFile
     public abstract RegularFileProperty getSublanguagesFile();
 
-    /// CSV file storing the mapping from variants to their default scripts.
+    /// CSV file storing the mapping from subtag to their default scripts.
     @OutputFile
-    public abstract RegularFileProperty getVariantToScriptFile();
+    public abstract RegularFileProperty getDefaultScriptFile();
 
     @TaskAction
     public void run() throws IOException {
@@ -58,9 +58,11 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
             items = builder.items;
         }
 
-        Map<String, Set<String>> scriptToVariants = new TreeMap<>();
-        Map<String, Set<String>> scriptToLanguages = new TreeMap<>();
-        Map<String, Set<String>> languageToSub = new TreeMap<>(LANGUAGE_TAG_COMPARATOR);
+        MultiMap scriptToSubtag = new MultiMap();
+        MultiMap languageToSub = new MultiMap();
+
+        // Classical Chinese should use Traditional Chinese characters by default
+        scriptToSubtag.add("Hant", "lzh");
 
         for (Item item : items) {
             String type = item.firstValueOrThrow("Type");
@@ -73,14 +75,11 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
             mainSwitch:
             switch (type) {
                 case "language", "extlang" -> {
-                    item.firstValue("Macrolanguage").ifPresent(macroLang ->
-                            languageToSub.computeIfAbsent(macroLang, k -> new TreeSet<>(LANGUAGE_TAG_COMPARATOR))
-                                    .add(subtag));
+                    item.firstValue("Macrolanguage")
+                            .ifPresent(macroLang -> languageToSub.add(macroLang, subtag));
 
-                    item.firstValue("Suppress-Script").ifPresent(script -> {
-                        scriptToLanguages.computeIfAbsent(script, k -> new TreeSet<>(LANGUAGE_TAG_COMPARATOR))
-                                .add(subtag);
-                    });
+                    item.firstValue("Suppress-Script")
+                            .ifPresent(script -> scriptToSubtag.add(script, subtag));
                 }
                 case "variant" -> {
                     List<String> prefixes = item.allValues("Prefix");
@@ -101,8 +100,7 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
                     }
 
                     if (defaultScript != null) {
-                        scriptToVariants.computeIfAbsent(defaultScript, k -> new TreeSet<>())
-                                .add(subtag);
+                        scriptToSubtag.add(defaultScript, subtag);
                     }
                 }
                 case "region", "script" -> {
@@ -112,27 +110,35 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
             }
         }
 
-        saveToCSV(languageToSub, getSublanguagesFile());
-        saveToCSV(scriptToVariants, getVariantToScriptFile());
+        languageToSub.saveToCSV(getSublanguagesFile());
+        scriptToSubtag.saveToCSV(getDefaultScriptFile());
     }
 
-    private static void saveToCSV(Map<String, Set<String>> allValues, RegularFileProperty csvFile) throws IOException {
-        try (var writer = Files.newBufferedWriter(csvFile.getAsFile().get().toPath(),
-                StandardOpenOption.CREATE,
-                StandardOpenOption.TRUNCATE_EXISTING)) {
+    private static final class MultiMap {
+        private final TreeMap<String, Set<String>> allValues = new TreeMap<>(TAG_COMPARATOR);
 
-            for (Map.Entry<String, Set<String>> entry : allValues.entrySet()) {
-                String key = entry.getKey();
-                Set<String> values = entry.getValue();
+        void add(String key, String value) {
+            allValues.computeIfAbsent(key, k -> new TreeSet<>(TAG_COMPARATOR)).add(value);
+        }
 
-                writer.write(key);
+        void saveToCSV(RegularFileProperty csvFile) throws IOException {
+            try (var writer = Files.newBufferedWriter(csvFile.getAsFile().get().toPath(),
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.TRUNCATE_EXISTING)) {
 
-                for (String value : values) {
-                    writer.write(',');
-                    writer.write(value);
+                for (Map.Entry<String, Set<String>> entry : allValues.entrySet()) {
+                    String key = entry.getKey();
+                    Set<String> values = entry.getValue();
+
+                    writer.write(key);
+
+                    for (String value : values) {
+                        writer.write(',');
+                        writer.write(value);
+                    }
+
+                    writer.newLine();
                 }
-
-                writer.newLine();
             }
         }
     }
@@ -239,7 +245,7 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
         }
     }
 
-    private static final Comparator<String> LANGUAGE_TAG_COMPARATOR = (lang1, lang2) -> {
+    private static final Comparator<String> TAG_COMPARATOR = (lang1, lang2) -> {
         if (lang1.length() != lang2.length())
             return Integer.compare(lang1.length(), lang2.length());
         else

@@ -48,7 +48,7 @@ public final class LocaleUtils {
 
     private static final Map<String, String> subLanguageToParent = loadCSV("sublanguages.csv");
     private static final Map<String, String> languageAliases = loadCSV("language_aliases.csv");
-    private static final Map<String, String> variantToScript = loadCSV("variant_to_script.csv");
+    private static final Map<String, String> defaultScript = loadCSV("default_script.csv");
     private static final Set<String> rtl = Set.copyOf(loadList("rtl.txt"));
 
     /// Load CSV files located in `/assets/lang/`.
@@ -144,23 +144,27 @@ public final class LocaleUtils {
     public static @NotNull String getScript(Locale locale) {
         if (locale.getScript().isEmpty()) {
             if (!locale.getVariant().isEmpty()) {
-                String script = variantToScript.get(locale.getVariant());
+                String script = defaultScript.get(locale.getVariant());
                 if (script != null)
                     return script;
             }
 
-            if (isEnglish(locale)) {
-                if ("UD".equals(locale.getCountry())) {
-                    return "Qabs";
-                }
+            String rootLanguage = getRootLanguage(locale.getLanguage());
+            if ("en".equals(rootLanguage) && "UD".equals(locale.getCountry())) {
+                return "Qabs";
             }
 
+            String script = defaultScript.get(rootLanguage);
+            if (script != null)
+                return script;
+
             if (isChinese(locale)) {
-                if (locale.getLanguage().equals("lzh") || CHINESE_TRADITIONAL_REGIONS.contains(locale.getCountry()))
-                    return "Hant";
-                else
-                    return "Hans";
+                return CHINESE_TRADITIONAL_REGIONS.contains(locale.getCountry())
+                        ? "Hant"
+                        : "Hans";
             }
+
+            return "";
         }
 
         return locale.getScript();
