@@ -28,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
@@ -60,7 +59,8 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
         }
 
         Map<String, Set<String>> scriptToVariants = new TreeMap<>();
-        Map<String, Set<String>> macroLangToLangs = new TreeMap<>(LANGUAGE_TAG_COMPARATOR);
+        Map<String, Set<String>> scriptToLanguages = new TreeMap<>();
+        Map<String, Set<String>> languageToSub = new TreeMap<>(LANGUAGE_TAG_COMPARATOR);
 
         for (Item item : items) {
             String type = item.firstValueOrThrow("Type");
@@ -74,8 +74,13 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
             switch (type) {
                 case "language", "extlang" -> {
                     item.firstValue("Macrolanguage").ifPresent(macroLang ->
-                            macroLangToLangs.computeIfAbsent(macroLang, k -> new TreeSet<>(LANGUAGE_TAG_COMPARATOR))
+                            languageToSub.computeIfAbsent(macroLang, k -> new TreeSet<>(LANGUAGE_TAG_COMPARATOR))
                                     .add(subtag));
+
+                    item.firstValue("Suppress-Script").ifPresent(script -> {
+                        scriptToLanguages.computeIfAbsent(script, k -> new TreeSet<>(LANGUAGE_TAG_COMPARATOR))
+                                .add(subtag);
+                    });
                 }
                 case "variant" -> {
                     List<String> prefixes = item.allValues("Prefix");
@@ -107,26 +112,28 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
             }
         }
 
-        try (var writer = new PrintWriter(Files.newBufferedWriter(getSublanguagesFile().getAsFile().get().toPath(),
+        saveToCSV(languageToSub, getSublanguagesFile());
+        saveToCSV(scriptToVariants, getVariantToScriptFile());
+    }
+
+    private static void saveToCSV(Map<String, Set<String>> allValues, RegularFileProperty csvFile) throws IOException {
+        try (var writer = Files.newBufferedWriter(csvFile.getAsFile().get().toPath(),
                 StandardOpenOption.CREATE,
-                StandardOpenOption.TRUNCATE_EXISTING))) {
-            macroLangToLangs.forEach((k, v) -> {
-                writer.println(k + "," + String.join(",", v));
-            });
+                StandardOpenOption.TRUNCATE_EXISTING)) {
 
-            if (writer.checkError())
-                throw new GradleException();
-        }
+            for (Map.Entry<String, Set<String>> entry : allValues.entrySet()) {
+                String key = entry.getKey();
+                Set<String> values = entry.getValue();
 
-        try (var writer = new PrintWriter(Files.newBufferedWriter(getVariantToScriptFile().getAsFile().get().toPath(),
-                StandardOpenOption.CREATE,
-                StandardOpenOption.TRUNCATE_EXISTING))) {
-            scriptToVariants.forEach((k, v) -> {
-                writer.println(k + "," + String.join(",", v));
-            });
+                writer.write(key);
 
-            if (writer.checkError())
-                throw new GradleException();
+                for (String value : values) {
+                    writer.write(',');
+                    writer.write(value);
+                }
+
+                writer.newLine();
+            }
         }
     }
 
