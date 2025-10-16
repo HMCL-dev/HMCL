@@ -19,36 +19,42 @@ package org.jackhuang.hmcl.gradle.l10n;
 
 import org.gradle.api.GradleException;
 
-import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 final class LocalizationUtils {
-    public static final Map<String, String> subLanguageToParent;
+    public static final Map<String, String> subLanguageToParent = loadCSV("sublanguages.csv");
 
-    static {
-        InputStream input = LocalizationUtils.class.getResourceAsStream("sublanguages.csv");
-        if (input == null)
-            throw new GradleException("Missing sublanguages.csv file");
-
-        Map<String, String> map = new HashMap<>();
-        try (input) {
-            new String(input.readAllBytes()).lines()
-                    .filter(line -> !line.startsWith("#") && !line.isBlank())
-                    .forEach(line -> {
-                        String[] languages = line.split(",");
-                        if (languages.length < 2)
-                            throw new GradleException("Invalid line in sublanguages.csv: " + line);
-
-                        String parent = languages[0];
-                        for (int i = 1; i < languages.length; i++) {
-                            map.put(languages[i], parent);
-                        }
-                    });
-        } catch (IOException e) {
-            throw new GradleException("Failed to read sublanguages.csv", e);
+    private static Map<String, String> loadCSV(String fileName) {
+        InputStream resource = LocalizationUtils.class.getResourceAsStream(fileName);
+        if (resource == null) {
+            throw new GradleException("Resource not found: " + fileName);
         }
-        subLanguageToParent = Collections.unmodifiableMap(map);
+
+        HashMap<String, String> result = new HashMap<>();
+        try (resource) {
+            new String(resource.readAllBytes(), StandardCharsets.UTF_8).lines().forEach(line -> {
+                if (line.startsWith("#") || line.isBlank())
+                    return;
+
+                String[] items = line.split(",");
+                if (items.length < 2) {
+                    throw new GradleException("Invalid line in sublanguages.csv: " + line);
+                }
+
+                String parent = items[0];
+                for (int i = 1; i < items.length; i++) {
+                    result.put(items[i], parent);
+                }
+            });
+        } catch (RuntimeException | Error e) {
+            throw e;
+        } catch (Throwable e) {
+            throw new GradleException("Failed to load " + fileName, e);
+        }
+
+        return Map.copyOf(result);
     }
 
     private static List<String> resolveLanguage(String language) {

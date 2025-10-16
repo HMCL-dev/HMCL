@@ -68,15 +68,15 @@ public final class LocaleUtils {
                 if (line.startsWith("#") || line.isBlank())
                     return;
 
-                String[] languages = line.split(",");
-                if (languages.length < 2) {
+                String[] items = line.split(",");
+                if (items.length < 2) {
                     LOG.warning("Invalid line in " + fileName + ": " + line);
                     return;
                 }
 
-                String parent = languages[0];
-                for (int i = 1; i < languages.length; i++) {
-                    result.put(languages[i], parent);
+                String parent = items[0];
+                for (int i = 1; i < items.length; i++) {
+                    result.put(items[i], parent);
                 }
             });
         } catch (Throwable e) {
@@ -351,9 +351,9 @@ public final class LocaleUtils {
     /// Normalize the language code to the code in the IANA Language Subtag Registry.
     /// Typically, it normalizes ISO 639 alpha-3 codes to ISO 639 alpha-2 codes.
     public static @NotNull String normalizeLanguage(String language) {
-        if (language.isEmpty())
-            return "en";
-        return languageAliases.getOrDefault(language, language);
+        return language.isEmpty()
+                ? "en"
+                : languageAliases.getOrDefault(language, language);
     }
 
     /// If `language` is a sublanguage of a [macrolanguage](https://en.wikipedia.org/wiki/ISO_639_macrolanguage),
