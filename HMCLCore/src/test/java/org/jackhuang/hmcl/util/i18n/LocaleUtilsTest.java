@@ -193,19 +193,19 @@ public final class LocaleUtilsTest {
     }
 
     @Test
-    public void testMapToISO2Language() {
-        assertEquals("en", LocaleUtils.mapToISO2Language("eng"));
-        assertEquals("es", LocaleUtils.mapToISO2Language("spa"));
-        assertEquals("ja", LocaleUtils.mapToISO2Language("jpn"));
-        assertEquals("ru", LocaleUtils.mapToISO2Language("rus"));
-        assertEquals("uk", LocaleUtils.mapToISO2Language("ukr"));
-        assertEquals("zh", LocaleUtils.mapToISO2Language("zho"));
-        assertEquals("zu", LocaleUtils.mapToISO2Language("zul"));
+    public void testNormalizeLanguage() {
+        assertEquals("en", LocaleUtils.normalizeLanguage("eng"));
+        assertEquals("es", LocaleUtils.normalizeLanguage("spa"));
+        assertEquals("ja", LocaleUtils.normalizeLanguage("jpn"));
+        assertEquals("ru", LocaleUtils.normalizeLanguage("rus"));
+        assertEquals("uk", LocaleUtils.normalizeLanguage("ukr"));
+        assertEquals("zh", LocaleUtils.normalizeLanguage("zho"));
+        assertEquals("zu", LocaleUtils.normalizeLanguage("zul"));
 
-        assertNull(LocaleUtils.mapToISO2Language(""));
-        assertNull(LocaleUtils.mapToISO2Language("cmn"));
-        assertNull(LocaleUtils.mapToISO2Language("lzh"));
-        assertNull(LocaleUtils.mapToISO2Language("tlh"));
+        assertNull(LocaleUtils.normalizeLanguage(""));
+        assertNull(LocaleUtils.normalizeLanguage("cmn"));
+        assertNull(LocaleUtils.normalizeLanguage("lzh"));
+        assertNull(LocaleUtils.normalizeLanguage("tlh"));
     }
 
     @Test

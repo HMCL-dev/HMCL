@@ -47,7 +47,7 @@ public final class LocaleUtils {
     public static final String DEFAULT_LANGUAGE_KEY = "default";
 
     private static final Map<String, String> subLanguageToParent = loadCSV("sublanguages.csv");
-    private static final Map<String, String> iso3To2 = loadCSV("iso_languages.csv");
+    private static final Map<String, String> languageAliases = loadCSV("language_aliases.csv");
     private static final Map<String, String> variantToScript = loadCSV("variant_to_script.csv");
     private static final Set<String> rtl = Set.copyOf(loadList("rtl.txt"));
 
@@ -133,13 +133,7 @@ public final class LocaleUtils {
     /// - If `language` is empty, return `en`;
     /// - Otherwise, return the `language`.
     public static @NotNull String getRootLanguage(String language) {
-        if (language.isEmpty()) return "en";
-        if (language.length() <= 2)
-            return language;
-
-        String iso2 = mapToISO2Language(language);
-        if (iso2 != null)
-            return iso2;
+        language = normalizeLanguage(language);
 
         String parent = getParentLanguage(language);
         return parent != null ? parent : language;
@@ -193,8 +187,6 @@ public final class LocaleUtils {
         return CANDIDATE_LOCALES.computeIfAbsent(locale, LocaleUtils::createCandidateLocaleList);
     }
 
-    // -------------
-
     private static List<Locale> createCandidateLocaleList(Locale locale) {
         String language = locale.getLanguage();
         if (language.isEmpty())
@@ -208,17 +200,7 @@ public final class LocaleUtils {
 
         ArrayList<Locale> result = new ArrayList<>();
         do {
-            String currentLanguage;
-
-            if (language.length() <= 2) {
-                currentLanguage = language;
-            } else {
-                String iso2 = mapToISO2Language(language);
-                currentLanguage = iso2 != null
-                        ? iso2
-                        : language;
-            }
-
+            String currentLanguage = normalizeLanguage(language);
             addCandidateLocales(result, currentLanguage, script, region, variants);
         } while ((language = getParentLanguage(language)) != null);
 
@@ -366,10 +348,12 @@ public final class LocaleUtils {
 
     // ---
 
-    /// Map ISO 639 alpha-3 language codes to ISO 639 alpha-2 language codes.
-    /// Returns `null` if there is no corresponding ISO 639 alpha-2 language code.
-    public static @Nullable String mapToISO2Language(String iso3Language) {
-        return iso3To2.get(iso3Language);
+    /// Normalize the language code to the code in the IANA Language Subtag Registry.
+    /// Typically, it normalizes ISO 639 alpha-3 codes to ISO 639 alpha-2 codes.
+    public static @NotNull String normalizeLanguage(String language) {
+        if (language.isEmpty())
+            return "en";
+        return languageAliases.getOrDefault(language, language);
     }
 
     /// If `language` is a sublanguage of a [macrolanguage](https://en.wikipedia.org/wiki/ISO_639_macrolanguage),
