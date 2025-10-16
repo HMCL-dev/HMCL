@@ -49,11 +49,9 @@ public final class LocaleUtils {
     private static final Map<String, String> PARENT_LANGUAGE = loadCSV("sublanguages.csv");
     private static final Map<String, String> NORMALIZED_TAG = loadCSV("language_aliases.csv");
     private static final Map<String, String> DEFAULT_SCRIPT = loadCSV("default_script.csv");
-    private static final Map<String, String> PREFERRED_LANGUAGE = Map.of(
-            "zh", "cmn"
-    );
+    private static final Map<String, String> PREFERRED_LANGUAGE = Map.of("zh", "cmn");
+    private static final Set<String> RTL_SCRIPTS = Set.of("Qabs", "Arab", "Hebr");
 
-    private static final Set<String> RTL_LANGUAGES = Set.copyOf(loadList("rtl.txt"));
     private static final Set<String> CHINESE_TRADITIONAL_REGIONS = Set.of("TW", "HK", "MO");
 
     /// Load CSV files located in `/assets/lang/`.
@@ -89,23 +87,6 @@ public final class LocaleUtils {
         }
 
         return Map.copyOf(result);
-    }
-
-    private static List<String> loadList(String fileName) {
-        InputStream resource = LocaleUtils.class.getResourceAsStream("/assets/lang/" + fileName);
-        if (resource == null) {
-            LOG.warning("Can't find file: " + fileName);
-            return List.of();
-        }
-
-        try (resource) {
-            return new String(resource.readAllBytes(), StandardCharsets.UTF_8).lines()
-                    .filter(line -> !line.startsWith("#") && !line.isBlank())
-                    .toList();
-        } catch (Throwable e) {
-            LOG.warning("Failed to load " + fileName, e);
-            return List.of();
-        }
     }
 
     private static Locale getInstance(String language, String script, String region,
@@ -208,18 +189,9 @@ public final class LocaleUtils {
     }
 
     public static @NotNull TextDirection getTextDirection(Locale locale) {
-        TextDirection direction = RTL_LANGUAGES.contains(getRootLanguage(locale))
+        return RTL_SCRIPTS.contains(getScript(locale))
                 ? TextDirection.RIGHT_TO_LEFT
                 : TextDirection.LEFT_TO_RIGHT;
-
-        if ("Qabs".equals(getScript(locale))) {
-            direction = switch (direction) {
-                case RIGHT_TO_LEFT -> TextDirection.LEFT_TO_RIGHT;
-                case LEFT_TO_RIGHT -> TextDirection.RIGHT_TO_LEFT;
-            };
-        }
-
-        return direction;
     }
 
     private static final ConcurrentMap<Locale, List<Locale>> CANDIDATE_LOCALES = new ConcurrentHashMap<>();

@@ -249,10 +249,11 @@ public final class LocaleUtilsTest {
         assertEquals(TextDirection.LEFT_TO_RIGHT, LocaleUtils.getTextDirection(Locale.forLanguageTag("zh")));
         assertEquals(TextDirection.LEFT_TO_RIGHT, LocaleUtils.getTextDirection(Locale.forLanguageTag("zh-Hans")));
         assertEquals(TextDirection.LEFT_TO_RIGHT, LocaleUtils.getTextDirection(Locale.forLanguageTag("zh-CN")));
-        assertEquals(TextDirection.LEFT_TO_RIGHT, LocaleUtils.getTextDirection(Locale.forLanguageTag("ar-Qabs")));
 
         assertEquals(TextDirection.RIGHT_TO_LEFT, LocaleUtils.getTextDirection(Locale.forLanguageTag("en-Qabs")));
         assertEquals(TextDirection.RIGHT_TO_LEFT, LocaleUtils.getTextDirection(Locale.forLanguageTag("ar")));
         assertEquals(TextDirection.RIGHT_TO_LEFT, LocaleUtils.getTextDirection(Locale.forLanguageTag("ara")));
+        assertEquals(TextDirection.RIGHT_TO_LEFT, LocaleUtils.getTextDirection(Locale.forLanguageTag("he")));
+        assertEquals(TextDirection.RIGHT_TO_LEFT, LocaleUtils.getTextDirection(Locale.forLanguageTag("heb")));
     }
 }
