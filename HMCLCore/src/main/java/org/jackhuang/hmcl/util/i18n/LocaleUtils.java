@@ -383,9 +383,6 @@ public final class LocaleUtils {
         return Map.of();
     }
 
-    // ---
-
-
     private LocaleUtils() {
     }
 }
