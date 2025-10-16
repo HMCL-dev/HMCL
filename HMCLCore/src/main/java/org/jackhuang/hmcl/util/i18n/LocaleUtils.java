@@ -46,10 +46,14 @@ public final class LocaleUtils {
 
     public static final String DEFAULT_LANGUAGE_KEY = "default";
 
-    private static final Map<String, String> subLanguageToParent = loadCSV("sublanguages.csv");
-    private static final Map<String, String> languageAliases = loadCSV("language_aliases.csv");
-    private static final Map<String, String> defaultScript = loadCSV("default_script.csv");
-    private static final Set<String> rtl = Set.copyOf(loadList("rtl.txt"));
+    private static final Map<String, String> PARENT_LANGUAGE = loadCSV("sublanguages.csv");
+    private static final Map<String, String> NORMALIZED_TAG = loadCSV("language_aliases.csv");
+    private static final Map<String, String> DEFAULT_SCRIPT = loadCSV("default_script.csv");
+    private static final Map<String, String> PREFERRED_LANGUAGE = Map.of(
+            "zh", "cmn"
+    );
+
+    private static final Set<String> RTL_LANGUAGES = Set.copyOf(loadList("rtl.txt"));
     private static final Set<String> CHINESE_TRADITIONAL_REGIONS = Set.of("TW", "HK", "MO");
 
     /// Load CSV files located in `/assets/lang/`.
@@ -139,15 +143,16 @@ public final class LocaleUtils {
     public static @NotNull String normalizeLanguage(String language) {
         return language.isEmpty()
                 ? "en"
-                : languageAliases.getOrDefault(language, language);
+                : NORMALIZED_TAG.getOrDefault(language, language);
     }
 
     /// If `language` is a sublanguage of a [macrolanguage](https://en.wikipedia.org/wiki/ISO_639_macrolanguage),
     /// return the macrolanguage; otherwise, return `null`.
     public static @Nullable String getParentLanguage(String language) {
-        return subLanguageToParent.get(language);
+        return PARENT_LANGUAGE.get(language);
     }
 
+    /// @see #getRootLanguage(String)
     public static @NotNull String getRootLanguage(Locale locale) {
         return getRootLanguage(locale.getLanguage());
     }
@@ -164,12 +169,20 @@ public final class LocaleUtils {
         return parent != null ? parent : language;
     }
 
+    /// If `language` is a macrolanguage, try to map it to the most commonly used individual language.
+    ///
+    /// For example, if `language` is `zh`, this method will return `cmn`.
+    public static @NotNull String getPreferredLanguage(String language) {
+        language = normalizeLanguage(language);
+        return PREFERRED_LANGUAGE.getOrDefault(language, language);
+    }
+
     /// Get the script of the locale. If the script is empty and the language is Chinese,
     /// the script will be inferred based on the language, the region and the variant.
     public static @NotNull String getScript(Locale locale) {
         if (locale.getScript().isEmpty()) {
             if (!locale.getVariant().isEmpty()) {
-                String script = defaultScript.get(locale.getVariant());
+                String script = DEFAULT_SCRIPT.get(locale.getVariant());
                 if (script != null)
                     return script;
             }
@@ -179,7 +192,7 @@ public final class LocaleUtils {
                 return "Qabs";
             }
 
-            String script = defaultScript.get(rootLanguage);
+            String script = DEFAULT_SCRIPT.get(rootLanguage);
             if (script != null)
                 return script;
 
@@ -196,7 +209,7 @@ public final class LocaleUtils {
     }
 
     public static @NotNull TextDirection getTextDirection(Locale locale) {
-        TextDirection direction = rtl.contains(getRootLanguage(locale))
+        TextDirection direction = RTL_LANGUAGES.contains(getRootLanguage(locale))
                 ? TextDirection.RIGHT_TO_LEFT
                 : TextDirection.LEFT_TO_RIGHT;
 
@@ -217,10 +230,7 @@ public final class LocaleUtils {
     }
 
     private static List<Locale> createCandidateLocaleList(Locale locale) {
-        String language = locale.getLanguage();
-        if (language.isEmpty())
-            return List.of(Locale.ENGLISH, Locale.ROOT);
-
+        String language = getPreferredLanguage(locale.getLanguage());
         String script = getScript(locale);
         String region = locale.getCountry();
         List<String> variants = locale.getVariant().isEmpty()
@@ -229,8 +239,7 @@ public final class LocaleUtils {
 
         ArrayList<Locale> result = new ArrayList<>();
         do {
-            String currentLanguage = normalizeLanguage(language);
-            addCandidateLocales(result, currentLanguage, script, region, variants);
+            addCandidateLocales(result, language, script, region, variants);
         } while ((language = getParentLanguage(language)) != null);
 
         result.add(Locale.ROOT);
