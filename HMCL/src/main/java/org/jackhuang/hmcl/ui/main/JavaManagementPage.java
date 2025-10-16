@@ -107,21 +107,20 @@ public final class JavaManagementPage extends ListPageBase<JavaManagementPage.Ja
     }
 
     void onAddJava() {
-        final DirectoryChooser chooser = new DirectoryChooser();
+        final var chooser = new DirectoryChooser();
         chooser.setTitle(i18n("settings.game.java_directory.choose"));
-        File dir = chooser.showDialog(Controllers.getStage());
+        final var dir = FileUtils.toPath(chooser.showDialog(Controllers.getStage()));
         if(dir == null) return;
-        Path directory = dir.toPath();
 
-        Path file = directory.resolve(OperatingSystem.CURRENT_OS.getJavaExecutable());
+        var file = dir.resolve(OperatingSystem.CURRENT_OS.getJavaExecutable());
         file = Files.exists(file)? file
-                : directory.resolve("bin").resolve(OperatingSystem.CURRENT_OS.getJavaExecutable());
+                : dir.resolve("bin").resolve(OperatingSystem.CURRENT_OS.getJavaExecutable());
         if(Files.exists(file)) {
             onAddJavaBinary(file);
             return;
         }
 
-        onSearchAndAddJavaBinary(directory);
+        onSearchAndAddJavaBinary(dir);
     }
 
     void onShowRestoreJavaPage() {
@@ -129,16 +128,16 @@ public final class JavaManagementPage extends ListPageBase<JavaManagementPage.Ja
     }
 
     private void onSearchAndAddJavaBinary(Path directory) {
-        Task<Void> task = JavaManager.getSearchAndAddJavaTask(directory).thenAcceptAsync(Schedulers.javafx(), javaRuntimes -> {
-            if(javaRuntimes.isEmpty())
-                Controllers.dialog(i18n("java.add.not_found"), i18n("message.warning"), MessageDialogPane.MessageType.WARNING);
-        }).whenComplete(Schedulers.javafx(), exception -> {
-            if(exception instanceof UnsupportedPlatformException) {
-                LOG.warning("Failed to add java", exception);
-                Controllers.dialog(i18n("java.add.failed.some"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
-            } else if(exception != null) LOG.warning("Other exception when add java", exception);
-        });
-        Controllers.taskDialog(task, i18n("java.add"), TaskCancellationAction.NORMAL);
+        Controllers.taskDialog(
+            JavaManager.getSearchAndAddJavaTask(directory).thenAcceptAsync(Schedulers.javafx(), javaRuntimes -> {
+                if(javaRuntimes.isEmpty())
+                    Controllers.dialog(i18n("java.add.not_found"), i18n("message.warning"), MessageDialogPane.MessageType.WARNING);
+            }).whenComplete(Schedulers.javafx(), exception -> {
+                if(exception instanceof UnsupportedPlatformException) {
+                    LOG.warning("Failed to add java", exception);
+                    Controllers.dialog(i18n("java.add.failed.some"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                } else if(exception != null) LOG.warning("Other exception when add java", exception);
+            }), i18n("java.add"), TaskCancellationAction.NORMAL);
     }
 
     private void onAddJavaBinary(Path file) {
