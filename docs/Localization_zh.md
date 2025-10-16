@@ -29,7 +29,7 @@ HMCL 使用符合 IETF BCP 47 规范的语言标签。
 
 在选择语言标签时，我们会遵循以下原则:
 
-1. 对于 ISO 639 标准中定义的语言，如果已经在 [IANA 语言子标签注册表](https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry)中注册，我们总是用是使用经过注册的标签。
+1. 对于 ISO 639 标准中定义的语言，如果已经在 [IANA 语言子标签注册表](https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry)中注册，我们总是使用经过注册的标签。
 
    例如，对于英语，我们使用 `en` 而不是 `eng` 作为语言代码。
 
