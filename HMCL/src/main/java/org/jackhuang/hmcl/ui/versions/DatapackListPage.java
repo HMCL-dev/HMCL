@@ -47,7 +47,7 @@ public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.Da
         datapack = new Datapack(worldDir.resolve("datapacks"));
         datapack.loadFromDir();
 
-        setItems(MappedObservableList.create(datapack.getInfo(), DatapackListPageSkin.DatapackInfoObject::new));
+        setItems(MappedObservableList.create(datapack.getPacks(), DatapackListPageSkin.DatapackInfoObject::new));
 
         FXUtils.applyDragListener(this, it -> Objects.equals("zip", FileUtils.getExtension(it)),
                 mods -> mods.forEach(this::installSingleDatapack), this::refresh);
@@ -55,9 +55,7 @@ public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.Da
 
     private void installSingleDatapack(Path datapack) {
         try {
-            Datapack zip = new Datapack(datapack);
-            zip.loadFromZip();
-            zip.installTo(worldDir);
+            this.datapack.installPack(datapack);
         } catch (IOException | IllegalArgumentException e) {
             LOG.warning("Unable to parse datapack file " + datapack, e);
         }
