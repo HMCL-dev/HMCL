@@ -110,8 +110,6 @@ public final class LocaleUtilsTest {
         assertCandidateLocalesEquals("zh-Latn", "cmn-Latn");
         assertCandidateLocalesEquals("zh-pinyin", "cmn-Latn-pinyin");
         assertCandidateLocalesEquals("zho", "zh");
-
-
     }
 
     @Test
