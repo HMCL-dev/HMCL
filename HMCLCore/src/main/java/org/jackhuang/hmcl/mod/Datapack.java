@@ -34,10 +34,13 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class Datapack {
+    private static final String DISABLED_EXT = "disabled";
+
     private final Path path;
     private final ObservableList<Pack> packs = FXCollections.observableArrayList();
 
@@ -57,7 +60,7 @@ public class Datapack {
         boolean isMultiple = false;
         try (FileSystem fs = CompressingUtils.readonly(packSourcePath).setAutoDetectEncoding(true).build()) {
             Path datapacks = fs.getPath("/datapacks");
-            Path mcmeta = fs.getPath("pack.mcmeta");
+            Path mcmeta = fs.getPath("/pack.mcmeta");
 
             if (Files.exists(datapacks)) {
                 isMultiple = true;
@@ -68,7 +71,9 @@ public class Datapack {
             }
             Set<String> packs;
             if (isMultiple) {
-                packs = Files.list(datapacks).map(FileUtils::getNameWithoutExtension).collect(Collectors.toSet());
+                try(Stream<Path> s = Files.list(datapacks)) {
+                    packs = s.map(FileUtils::getNameWithoutExtension).collect(Collectors.toSet());
+                }
             } else {
                 packs = new HashSet<>();
                 packs.add(FileUtils.getNameWithoutExtension(packSourcePath));
@@ -76,11 +81,11 @@ public class Datapack {
 
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(targetDatapackDirectory)) {
                 for (Path d : stream) {
-                    String name;
-                    if (FileUtils.getExtension(d).equals(".disabled")) {
-                        name = FileUtils.getNameWithoutExtension(d);
+                    String name = d.getFileName().toString();
+                    if (FileUtils.getExtension(d).equals(DISABLED_EXT)) {
+                        name = StringUtils.removeSuffix(d.getFileName().toString(), DISABLED_EXT);
                     }
-                    name = FileUtils.getNameWithoutExtension(d);
+                    name = FileUtils.getNameWithoutExtension(name);
                     if (packs.contains(name)) {
                         if (Files.isDirectory(d)) {
                             FileUtils.deleteDirectory(d);
@@ -104,7 +109,6 @@ public class Datapack {
                 if (Files.isRegularFile(resourcesZip)) {
                     Path temp = Files.createTempFile("hmcl", ".zip");
                     Files.copy(resourcesZip, temp, StandardCopyOption.REPLACE_EXISTING);
-                    FileUtils.copyDirectory(resourcesZip, dest.getPath("/"));
                     try (FileSystem resources = CompressingUtils.createReadOnlyZipFileSystem(temp)) {
                         FileUtils.copyDirectory(resources.getPath("/"), dest.getPath("/"));
                     }
@@ -225,7 +229,7 @@ public class Datapack {
                 file = path;
             }
 
-            active = new SimpleBooleanProperty(this, "active", !DISABLED_EXT.equals(FileUtils.getExtension(file))) {
+            active = new SimpleBooleanProperty(this, "active", !(FileUtils.getExtension(file).equals(DISABLED_EXT))) {
                 @Override
                 protected void invalidated() {
                     Path newFile = file, newPath = path;
@@ -234,7 +238,7 @@ public class Datapack {
                         if (!isDirectory) {
                             newPath = newFile;
                         }
-                    } else if (!this.get()) {
+                    } else if (!DISABLED_EXT.equals(FileUtils.getExtension(file)) && !this.get()) {
                         newFile = file.getParent().resolve(FileUtils.getName(file) + "." + DISABLED_EXT);
                         if (!isDirectory) {
                             newPath = newFile;
@@ -286,6 +290,4 @@ public class Datapack {
         }
     }
 
-
-    private static final String DISABLED_EXT = "disabled";
 }
