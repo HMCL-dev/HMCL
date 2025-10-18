@@ -34,11 +34,8 @@ import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.Clipboard;
-import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
@@ -342,6 +339,7 @@ public class TerracottaControllerPage extends StackPane {
                     return;
                 } else {
                     String cs = hostOK.getCode();
+                    FXUtils.copyText(cs);
 
                     statusProperty.set(i18n("terracotta.status.host_ok"));
                     progressProperty.set(1);
@@ -350,30 +348,20 @@ public class TerracottaControllerPage extends StackPane {
                     code.setAlignment(Pos.CENTER);
                     {
                         Label desc = new Label(i18n("terracotta.status.host_ok.code"));
-                        {
-                            ClipboardContent cp = new ClipboardContent();
-                            cp.putString(cs);
-                            Clipboard.getSystemClipboard().setContent(cp);
-                        }
 
-                        // FIXME: The implementation to display Room Code is ambiguous. Consider using a clearer JavaFX Element in the future.
-                        TextField label = new TextField(cs);
-                        label.setEditable(false);
-                        label.setFocusTraversable(false);
+                        Label label = new Label(cs);
                         label.setAlignment(Pos.CENTER);
-                        label.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
                         VBox.setMargin(label, new Insets(10, 0, 10, 0));
                         label.setScaleX(1.8);
                         label.setScaleY(1.8);
-                        holder.add(FXUtils.onWeakChange(label.selectedTextProperty(), string -> {
-                            if (string != null && !string.isEmpty() && !cs.equals(string)) {
-                                label.selectAll();
-                            }
-                        }));
+                        FXUtils.copyOnDoubleClick(label);
 
                         code.getChildren().setAll(desc, label);
                     }
-                    FXUtils.onClicked(code, () -> FXUtils.copyText(cs));
+                    code.setOnMouseClicked(event -> {
+                        FXUtils.copyText(cs);
+                        event.consume();
+                    });
 
                     LineButton copy = LineButton.of();
                     copy.setLeftIcon(SVG.CONTENT_COPY);
