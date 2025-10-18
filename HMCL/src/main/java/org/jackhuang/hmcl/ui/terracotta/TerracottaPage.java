@@ -60,7 +60,7 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
 
         AdvancedListBox sideBar = new AdvancedListBox()
                 .addNavigationDrawerTab(tab, statusPage, i18n("terracotta.status"), SVG.TUNE);
-        // left.setTop(sideBar);
+        left.setTop(sideBar);
 
         AdvancedListBox toolbar = new AdvancedListBox()
                 .addNavigationDrawerItem(i18n("terracotta.feedback.title"), SVG.FEEDBACK, () -> FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK))
