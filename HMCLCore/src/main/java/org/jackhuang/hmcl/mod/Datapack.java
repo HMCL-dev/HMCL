@@ -229,7 +229,7 @@ public class Datapack {
             this.description = description;
             this.parentDatapack = parentDatapack;
 
-            this.statusFile = initializeStatusFile(path,isDirectory);
+            this.statusFile = initializeStatusFile(path, isDirectory);
             this.activeProperty = initializeActiveProperty();
         }
 
