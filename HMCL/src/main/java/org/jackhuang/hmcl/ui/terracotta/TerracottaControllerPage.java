@@ -36,7 +36,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseButton;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
@@ -357,12 +356,7 @@ public class TerracottaControllerPage extends StackPane {
 
                         code.getChildren().setAll(desc, label);
                     }
-                    code.setOnMouseClicked(event -> {
-                        if (event.getClickCount() == 1 && (event.getButton() == MouseButton.PRIMARY || event.getButton() == MouseButton.SECONDARY)) {
-                            FXUtils.copyText(cs);
-                            event.consume();
-                        }
-                    });
+                    FXUtils.onClicked(code, () -> FXUtils.copyText(cs));
 
                     LineButton copy = LineButton.of();
                     copy.setLeftIcon(SVG.CONTENT_COPY);
