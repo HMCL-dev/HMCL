@@ -24,7 +24,6 @@ import javafx.beans.property.*;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -242,10 +241,6 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
             super(control);
 
             {
-                BorderPane left = new BorderPane();
-                FXUtils.setLimitWidth(left, 200);
-                setLeft(left);
-
                 AdvancedListItem versionSettingsItem = new AdvancedListItem();
                 versionSettingsItem.getStyleClass().add("navigation-drawer-item");
                 versionSettingsItem.setTitle(i18n("settings.game"));
