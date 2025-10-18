@@ -222,9 +222,14 @@ public final class Versions {
 
     private static boolean checkVersionForLaunching(Profile profile, String id) {
         if (id == null || !profile.getRepository().isLoaded() || !profile.getRepository().hasVersion(id)) {
-            Controllers.dialog(i18n("version.empty.launch"), i18n("launch.failed"), MessageDialogPane.MessageType.ERROR, () -> {
-                Controllers.navigate(Controllers.getDownloadPage());
-            });
+            JFXButton gotoDownload = new JFXButton(i18n("version.empty.launch.goto_download"));
+            gotoDownload.getStyleClass().add("dialog-accept");
+            gotoDownload.setOnAction(e -> Controllers.navigate(Controllers.getDownloadPage()));
+
+            Controllers.confirmAction(i18n("version.empty.launch"), i18n("launch.failed"),
+                    MessageDialogPane.MessageType.ERROR,
+                    gotoDownload,
+                    null);
             return false;
         } else {
             return true;
