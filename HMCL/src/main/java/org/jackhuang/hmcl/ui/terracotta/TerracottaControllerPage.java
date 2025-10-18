@@ -339,7 +339,7 @@ public class TerracottaControllerPage extends StackPane {
                     return;
                 } else {
                     String cs = hostOK.getCode();
-                    FXUtils.copyText(cs);
+                    copyCode(cs);
 
                     statusProperty.set(i18n("terracotta.status.host_ok"));
                     progressProperty.set(1);
@@ -359,13 +359,13 @@ public class TerracottaControllerPage extends StackPane {
                         code.getChildren().setAll(desc, label);
                     }
                     code.setCursor(Cursor.HAND);
-                    FXUtils.onClicked(code, () -> FXUtils.copyText(cs));
+                    FXUtils.onClicked(code, () -> copyCode(cs));
 
                     LineButton copy = LineButton.of();
                     copy.setLeftIcon(SVG.CONTENT_COPY);
                     copy.setTitle(i18n("terracotta.status.host_ok.code.copy"));
                     copy.setSubtitle(i18n("terracotta.status.host_ok.code.desc"));
-                    FXUtils.onClicked(copy, () -> FXUtils.copyText(cs));
+                    FXUtils.onClicked(copy, () -> copyCode(cs));
 
                     LineButton back = LineButton.of();
                     back.setLeftIcon(SVG.ARROW_BACK);
@@ -585,6 +585,10 @@ public class TerracottaControllerPage extends StackPane {
             locals.getContent().add(container);
         }
         return locals;
+    }
+
+    private void copyCode(String code) {
+        FXUtils.copyText(code, i18n("terracotta.status.host_ok.code.copy.toast"));
     }
 
     private static final class LineButton extends RipplerContainer {
