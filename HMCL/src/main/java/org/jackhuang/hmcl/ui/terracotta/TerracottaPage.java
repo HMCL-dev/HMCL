@@ -19,22 +19,26 @@ package org.jackhuang.hmcl.ui.terracotta;
 
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.geometry.Insets;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.game.LauncherHelper;
+import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.terracotta.TerracottaMetadata;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
-import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.ui.construct.PageAware;
 import org.jackhuang.hmcl.ui.construct.TabHeader;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.ui.versions.Versions;
 
-import java.util.Locale;
-
-import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPage, PageAware {
@@ -53,32 +57,25 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
             transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE);
         });
 
-        AdvancedListItem feedback = new AdvancedListItem();
-        feedback.setLeftGraphic(wrap(SVG.FEEDBACK));
-        feedback.setActionButtonVisible(false);
-        feedback.setTitle(i18n("terracotta.feedback.title"));
-        feedback.setOnAction(e -> FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK));
-
-        AdvancedListItem chatItem = new AdvancedListItem();
-        chatItem.setLeftGraphic(wrap(SVG.CHAT));
-        chatItem.setActionButtonVisible(false);
-        chatItem.setTitle(i18n("chat"));
-        chatItem.setOnAction(e -> FXUtils.openLink(Metadata.GROUPS_URL));
-
-        AdvancedListItem easytierItem = new AdvancedListItem();
-        easytierItem.setLeftGraphic(wrap(SVG.HOST));
-        easytierItem.setActionButtonVisible(false);
-        easytierItem.setTitle(i18n("terracotta.easytier"));
-        easytierItem.setOnAction(e -> FXUtils.openLink("https://easytier.cn/"));
+        BorderPane left = new BorderPane();
+        FXUtils.setLimitWidth(left, 200);
+        VBox.setVgrow(left, Priority.ALWAYS);
+        setLeft(left);
 
         AdvancedListBox sideBar = new AdvancedListBox()
-                .addNavigationDrawerTab(tab, statusPage, i18n("terracotta.status"), SVG.TUNE)
-                .startCategory(i18n("help").toUpperCase(Locale.ROOT))
-                .add(feedback)
-                .add(chatItem)
-                .add(easytierItem);
-        FXUtils.setLimitWidth(sideBar, 200);
-        setLeft(sideBar);
+                .addNavigationDrawerTab(tab, statusPage, i18n("terracotta.status"), SVG.TUNE);
+        left.setTop(sideBar);
+
+        AdvancedListBox toolbar = new AdvancedListBox()
+                .addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, () -> {
+                    Profile profile = Profiles.getSelectedProfile();
+                    Versions.launch(profile, profile.getSelectedVersion(), LauncherHelper::setKeep);
+                })
+                .addNavigationDrawerItem(i18n("terracotta.feedback.title"), SVG.FEEDBACK, () -> FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK))
+                .addNavigationDrawerItem(i18n("terracotta.easytier"), SVG.HOST, () -> FXUtils.openLink("https://easytier.cn/"))
+                .addNavigationDrawerItem(i18n("chat"), SVG.CHAT, () -> FXUtils.openLink(Metadata.GROUPS_URL));
+        BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
+        left.setBottom(toolbar);
 
         setCenter(transitionPane);
     }
