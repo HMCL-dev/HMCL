@@ -153,14 +153,14 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
     }
 
     static class DatapackInfoObject extends RecursiveTreeObject<DatapackInfoObject> {
-        private final BooleanProperty active;
+        private final BooleanProperty activeProperty;
         private final Datapack.Pack packInfo;
 
         private SoftReference<CompletableFuture<Image>> iconCache;
 
         DatapackInfoObject(Datapack.Pack packInfo) {
             this.packInfo = packInfo;
-            this.active = packInfo.activeProperty();
+            this.activeProperty = packInfo.activeProperty();
         }
 
         String getTitle() {
@@ -269,7 +269,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             if (booleanProperty != null) {
                 checkBox.selectedProperty().unbindBidirectional(booleanProperty);
             }
-            checkBox.selectedProperty().bindBidirectional(booleanProperty = dataItem.active);
+            checkBox.selectedProperty().bindBidirectional(booleanProperty = dataItem.activeProperty);
             dataItem.loadIcon(imageView, new WeakReference<>(this.itemProperty()));
         }
     }

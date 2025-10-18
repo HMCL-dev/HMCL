@@ -40,6 +40,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class Datapack {
     private static final String DISABLED_EXT = "disabled";
+    private static final String ZIP_EXT = "zip";
 
     private final Path path;
     private final ObservableList<Pack> packs = FXCollections.observableArrayList();
@@ -56,64 +57,64 @@ public class Datapack {
         return packs;
     }
 
-    public static void installPack(Path packSourcePath, Path targetDatapackDirectory) throws IOException {
-        boolean isMultiple = false;
-        try (FileSystem fs = CompressingUtils.readonly(packSourcePath).setAutoDetectEncoding(true).build()) {
-            Path datapacks = fs.getPath("/datapacks");
-            Path mcmeta = fs.getPath("/pack.mcmeta");
+    public static void installPack(Path sourceDatapackPath, Path targetDatapackDirectory) throws IOException {
+        boolean containsMultiplePacks = false;
+        try (FileSystem fs = CompressingUtils.readonly(sourceDatapackPath).setAutoDetectEncoding(true).build()) {
+            Path datapacks = fs.getPath("datapacks");
+            Path mcmeta = fs.getPath("pack.mcmeta");
 
             if (Files.exists(datapacks)) {
-                isMultiple = true;
+                containsMultiplePacks = true;
             } else if (Files.exists(mcmeta)) {
-                isMultiple = false;
+                containsMultiplePacks = false;
             } else {
                 throw new IOException("Malformed datapack zip");
             }
             Set<String> packs;
-            if (isMultiple) {
+            if (containsMultiplePacks) {
                 try(Stream<Path> s = Files.list(datapacks)) {
                     packs = s.map(FileUtils::getNameWithoutExtension).collect(Collectors.toSet());
                 }
             } else {
                 packs = new HashSet<>();
-                packs.add(FileUtils.getNameWithoutExtension(packSourcePath));
+                packs.add(FileUtils.getNameWithoutExtension(sourceDatapackPath));
             }
 
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(targetDatapackDirectory)) {
-                for (Path d : stream) {
-                    String name = d.getFileName().toString();
-                    if (FileUtils.getExtension(d).equals(DISABLED_EXT)) {
-                        name = StringUtils.removeSuffix(d.getFileName().toString(), DISABLED_EXT);
+                for (Path dir : stream) {
+                    String packName = FileUtils.getName(dir);
+                    if (FileUtils.getExtension(dir).equals(DISABLED_EXT)) {
+                        packName = StringUtils.removeSuffix(packName,"." + DISABLED_EXT);
                     }
-                    name = FileUtils.getNameWithoutExtension(name);
-                    if (packs.contains(name)) {
-                        if (Files.isDirectory(d)) {
-                            FileUtils.deleteDirectory(d);
-                        } else if (Files.isRegularFile(d)) {
-                            Files.delete(d);
+                    packName = FileUtils.getNameWithoutExtension(packName);
+                    if (packs.contains(packName)) {
+                        if (Files.isDirectory(dir)) {
+                            FileUtils.deleteDirectory(dir);
+                        } else if (Files.isRegularFile(dir)) {
+                            Files.delete(dir);
                         }
                     }
                 }
             }
         }
 
-        if (isMultiple) {
-            new Unzipper(packSourcePath, targetDatapackDirectory)
+        if (containsMultiplePacks) {
+            new Unzipper(sourceDatapackPath, targetDatapackDirectory)
                     .setReplaceExistentFile(true)
                     .setSubDirectory("/datapacks/")
                     .unzip();
 
-            try (FileSystem dest = CompressingUtils.createWritableZipFileSystem(targetDatapackDirectory.getParent().resolve("resources.zip"));
-                 FileSystem zip = CompressingUtils.createReadOnlyZipFileSystem(packSourcePath)) {
-                Path resourcesZip = zip.getPath("resources.zip");
+            try (FileSystem outputResourcesZipFS = CompressingUtils.createWritableZipFileSystem(targetDatapackDirectory.getParent().resolve("resources.zip"));
+                 FileSystem inputPackZipFS = CompressingUtils.createReadOnlyZipFileSystem(sourceDatapackPath)) {
+                Path resourcesZip = inputPackZipFS.getPath("resources.zip");
                 if (Files.isRegularFile(resourcesZip)) {
-                    Path temp = Files.createTempFile("hmcl", ".zip");
-                    Files.copy(resourcesZip, temp, StandardCopyOption.REPLACE_EXISTING);
-                    try (FileSystem resources = CompressingUtils.createReadOnlyZipFileSystem(temp)) {
-                        FileUtils.copyDirectory(resources.getPath("/"), dest.getPath("/"));
+                    Path tempResourcesFile = Files.createTempFile("hmcl", ".zip");
+                    Files.copy(resourcesZip, tempResourcesFile, StandardCopyOption.REPLACE_EXISTING);
+                    try (FileSystem resources = CompressingUtils.createReadOnlyZipFileSystem(tempResourcesFile)) {
+                        FileUtils.copyDirectory(resources.getPath("/"), outputResourcesZipFS.getPath("/"));
                     }
                 }
-                Path packMcMeta = dest.getPath("pack.mcmeta");
+                Path packMcMeta = outputResourcesZipFS.getPath("pack.mcmeta");
                 Files.write(packMcMeta, Arrays.asList("{",
                         "\t\"pack\": {",
                         "\t\t\"pack_format\": 4,",
@@ -121,29 +122,29 @@ public class Datapack {
                         "\t}",
                         "}"), StandardOpenOption.CREATE);
 
-                Path packPng = dest.getPath("pack.png");
+                Path packPng = outputResourcesZipFS.getPath("pack.png");
                 if (Files.isRegularFile(packPng))
                     Files.delete(packPng);
             }
         } else {
-            FileUtils.copyFile(packSourcePath, targetDatapackDirectory.resolve(FileUtils.getName(packSourcePath)));
+            FileUtils.copyFile(sourceDatapackPath, targetDatapackDirectory.resolve(FileUtils.getName(sourceDatapackPath)));
         }
 
     }
 
-    public void installPack(Path packSourcePath) throws IOException {
-        installPack(packSourcePath, path);
+    public void installPack(Path sourcePackPath) throws IOException {
+        installPack(sourcePackPath, path);
         loadFromDir();
     }
 
-    public void deletePack(Pack pack) throws IOException {
-        Path subPath = pack.path;
-        if (Files.isDirectory(subPath))
-            FileUtils.deleteDirectory(subPath);
-        else if (Files.isRegularFile(subPath))
-            Files.delete(subPath);
+    public void deletePack(Pack packToDelete) throws IOException {
+        Path pathToDelete = packToDelete.path;
+        if (Files.isDirectory(pathToDelete))
+            FileUtils.deleteDirectory(pathToDelete);
+        else if (Files.isRegularFile(pathToDelete))
+            Files.delete(pathToDelete);
 
-        Platform.runLater(() -> packs.removeIf(p -> p.getId().equals(pack.getId())));
+        Platform.runLater(() -> packs.removeIf(p -> p.getId().equals(packToDelete.getId())));
     }
 
     public void loadFromDir() {
@@ -155,7 +156,7 @@ public class Datapack {
     }
 
     private void loadFromDir(Path dir) throws IOException {
-        List<Pack> info = new ArrayList<>();
+        List<Pack> discoveredPacks = new ArrayList<>();
 
         if (Files.isDirectory(dir)) {
             try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(dir)) {
@@ -172,7 +173,7 @@ public class Datapack {
                         try {
                             PackMcMeta packMcMeta = enabled ? JsonUtils.fromNonNullJson(Files.readString(mcmeta), PackMcMeta.class)
                                     : JsonUtils.fromNonNullJson(Files.readString(mcmetaDisabled), PackMcMeta.class);
-                            info.add(new Pack(subDir, true, FileUtils.getName(subDir), packMcMeta.getPackInfo().getDescription(), this));
+                            discoveredPacks.add(new Pack(subDir, true, FileUtils.getName(subDir), packMcMeta.getPackInfo().getDescription(), this));
                         } catch (IOException | JsonParseException e) {
                             LOG.warning("Failed to read datapack " + subDir, e);
                         }
@@ -184,17 +185,17 @@ public class Datapack {
                                 continue;
                             }
 
-                            String name = FileUtils.getName(subDir);
-                            if (name.endsWith(".disabled")) {
-                                name = StringUtils.removeSuffix(name, ".disabled");
+                            String packName = FileUtils.getName(subDir);
+                            if (FileUtils.getExtension(subDir).equals(DISABLED_EXT)) {
+                                packName = FileUtils.getNameWithoutExtension(packName);
                             }
-                            if (!name.endsWith(".zip")) {
+                            if (!FileUtils.getExtension(packName).equals(ZIP_EXT)) {
                                 continue;
                             }
-                            name = StringUtils.removeSuffix(name, ".zip");
+                            packName = FileUtils.getNameWithoutExtension(packName);
 
                             PackMcMeta packMcMeta = JsonUtils.fromNonNullJson(Files.readString(mcmeta), PackMcMeta.class);
-                            info.add(new Pack(subDir, false, name, packMcMeta.getPackInfo().getDescription(), this));
+                            discoveredPacks.add(new Pack(subDir, false, packName, packMcMeta.getPackInfo().getDescription(), this));
                         } catch (IOException | JsonParseException e) {
                             LOG.warning("Failed to read datapack " + subDir, e);
                         }
@@ -203,54 +204,53 @@ public class Datapack {
             }
         }
 
-        Platform.runLater(() -> this.packs.setAll(info));
+        Platform.runLater(() -> this.packs.setAll(discoveredPacks));
     }
 
     public static class Pack {
         private Path path;
-        private boolean isDirectory;
-        private Path file;
-        private final BooleanProperty active;
+        private final boolean isDirectory;
+        private Path statusFile;
+        private final BooleanProperty activeProperty;
         private final String id;
         private final LocalModFile.Description description;
-        private final Datapack datapack;
+        private final Datapack parentDatapack;
 
-        public Pack(Path path, boolean isDirectory, String id, LocalModFile.Description description, Datapack datapack) {
+        public Pack(Path path, boolean isDirectory, String id, LocalModFile.Description description, Datapack parentDatapack) {
             this.path = path;
             this.isDirectory = isDirectory;
-
             this.id = id;
             this.description = description;
-            this.datapack = datapack;
+            this.parentDatapack = parentDatapack;
 
             if (isDirectory) {
-                file = Files.exists(path.resolve("pack.mcmeta")) ? path.resolve("pack.mcmeta") : path.resolve("pack.mcmeta.disabled");
+                statusFile = Files.exists(path.resolve("pack.mcmeta")) ? path.resolve("pack.mcmeta") : path.resolve("pack.mcmeta.disabled");
             } else {
-                file = path;
+                statusFile = path;
             }
 
-            active = new SimpleBooleanProperty(this, "active", !(FileUtils.getExtension(file).equals(DISABLED_EXT))) {
+            activeProperty = new SimpleBooleanProperty(this, "active", !(FileUtils.getExtension(statusFile).equals(DISABLED_EXT))) {
                 @Override
                 protected void invalidated() {
-                    Path newFile = file, newPath = path;
-                    if (DISABLED_EXT.equals(FileUtils.getExtension(file)) && this.get()) {
-                        newFile = file.getParent().resolve(FileUtils.getNameWithoutExtension(file));
+                    Path newStatusFile = statusFile, newPath = path;
+                    if (DISABLED_EXT.equals(FileUtils.getExtension(statusFile)) && this.get()) {
+                        newStatusFile = statusFile.getParent().resolve(FileUtils.getNameWithoutExtension(statusFile));
                         if (!isDirectory) {
-                            newPath = newFile;
+                            newPath = newStatusFile;
                         }
-                    } else if (!DISABLED_EXT.equals(FileUtils.getExtension(file)) && !this.get()) {
-                        newFile = file.getParent().resolve(FileUtils.getName(file) + "." + DISABLED_EXT);
+                    } else if (!DISABLED_EXT.equals(FileUtils.getExtension(statusFile)) && !this.get()) {
+                        newStatusFile = statusFile.getParent().resolve(FileUtils.getName(statusFile) + "." + DISABLED_EXT);
                         if (!isDirectory) {
-                            newPath = newFile;
+                            newPath = newStatusFile;
                         }
                     }
                     try {
-                        Files.move(file, newFile);
-                        Pack.this.file = newFile;
+                        Files.move(statusFile, newStatusFile);
+                        Pack.this.statusFile = newStatusFile;
                         Pack.this.path = newPath;
                     } catch (IOException e) {
-                        // Mod file is occupied.
-                        LOG.warning("Unable to rename file " + file + " to " + newFile);
+                        // Mod statusFile is occupied.
+                        LOG.warning("Unable to rename statusFile " + statusFile + " to " + newStatusFile);
                     }
 
                 }
@@ -265,20 +265,20 @@ public class Datapack {
             return description;
         }
 
-        public Datapack getDatapack() {
-            return datapack;
+        public Datapack getParentDatapack() {
+            return parentDatapack;
         }
 
         public BooleanProperty activeProperty() {
-            return active;
+            return activeProperty;
         }
 
         public boolean isActive() {
-            return active.get();
+            return activeProperty.get();
         }
 
         public void setActive(boolean active) {
-            this.active.set(active);
+            this.activeProperty.set(active);
         }
 
         public Path getPath() {
