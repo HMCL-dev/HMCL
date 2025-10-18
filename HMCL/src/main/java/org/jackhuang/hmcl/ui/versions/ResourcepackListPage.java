@@ -27,7 +27,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -223,7 +222,9 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
             JFXButton btnDelete = new JFXButton();
             btnDelete.getStyleClass().add("toggle-icon4");
             btnDelete.setGraphic(SVG.DELETE_FOREVER.createIcon(Theme.blackFill(), -1));
-            btnDelete.setOnAction(event -> Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), item::onDelete, null));
+            btnDelete.setOnAction(event ->
+                    Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"),
+                            item::onDelete, null));
 
             HBox right = new HBox(8);
             right.setAlignment(Pos.CENTER_RIGHT);
