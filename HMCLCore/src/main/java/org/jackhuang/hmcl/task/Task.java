@@ -23,14 +23,13 @@ import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import org.jackhuang.hmcl.event.EventManager;
+import org.jackhuang.hmcl.util.InvocationDispatcher;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
@@ -319,24 +318,9 @@ public abstract class Task<T> {
         return 1000L;
     }
 
+    private long lastTime = Long.MIN_VALUE;
     private final ReadOnlyDoubleWrapper progress = new ReadOnlyDoubleWrapper(this, "progress", -1);
-
-    private long lastUpdateProgressTime = Long.MIN_VALUE;
-
-    private static final double EMPTY_PENDING_PROGRESS = Double.NEGATIVE_INFINITY;
-
-    @SuppressWarnings("FieldMayBeFinal")
-    private volatile double pendingProgress = EMPTY_PENDING_PROGRESS;
-    private static final VarHandle PENDING_PROGRESS_HANDLE;
-
-    static {
-        try {
-            PENDING_PROGRESS_HANDLE = MethodHandles.lookup()
-                    .findVarHandle(Task.class, "pendingProgress", double.class);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            throw new ExceptionInInitializerError(e);
-        }
-    }
+    private final InvocationDispatcher<Double> progressUpdate = InvocationDispatcher.runOn(Platform::runLater, progress::set);
 
     public ReadOnlyDoubleProperty progressProperty() {
         return progress.getReadOnlyProperty();
@@ -350,17 +334,14 @@ public abstract class Task<T> {
         if (progress < 0 || progress > 1.0)
             throw new IllegalArgumentException("Progress is must between 0 and 1.");
         long now = System.currentTimeMillis();
-        if (lastUpdateProgressTime == Long.MIN_VALUE || now - lastUpdateProgressTime >= getProgressInterval()) {
+        if (lastTime == Long.MIN_VALUE || now - lastTime >= getProgressInterval()) {
             updateProgressImmediately(progress);
-            lastUpdateProgressTime = now;
+            lastTime = now;
         }
     }
 
     protected void updateProgressImmediately(double progress) {
-        if (((double) PENDING_PROGRESS_HANDLE.getAndSet(this, progress)) == EMPTY_PENDING_PROGRESS) {
-            Platform.runLater(() -> this.progress.set(
-                    (double) PENDING_PROGRESS_HANDLE.getAndSet(this, EMPTY_PENDING_PROGRESS)));
-        }
+        progressUpdate.accept(progress);
     }
 
     private final ReadOnlyStringWrapper message = new ReadOnlyStringWrapper(this, "message", null);
