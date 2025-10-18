@@ -348,14 +348,17 @@ public class TerracottaControllerPage extends StackPane {
                     code.setAlignment(Pos.CENTER);
                     {
                         Label desc = new Label(i18n("terracotta.status.host_ok.code"));
+                        desc.setMouseTransparent(true);
 
                         Label label = new Label(cs);
+                        label.setMouseTransparent(true);
                         label.setStyle("-fx-font-size: 24");
                         label.setAlignment(Pos.CENTER);
                         VBox.setMargin(label, new Insets(10, 0, 10, 0));
 
                         code.getChildren().setAll(desc, label);
                     }
+                    code.setCursor(Cursor.HAND);
                     FXUtils.onClicked(code, () -> FXUtils.copyText(cs));
 
                     LineButton copy = LineButton.of();
