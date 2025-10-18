@@ -1,6 +1,8 @@
 # 本地化
 
-<!-- TODO: 本文档需要进一步完善。为了便于修改，我们暂时不将本文件翻译至其他语言，在完善后再在独立 PR 中提供其他语言的译文。 -->
+<!-- #BEGIN LANGUAGE_SWITCHER -->
+[English](Localization.md) | **中文**
+<!-- #END LANGUAGE_SWITCHER -->
 
 HMCL 为多种语言提供本地化支持。
 
@@ -13,7 +15,7 @@ HMCL 为多种语言提供本地化支持。
 | 语言      | 语言标签      | 首选本地化键    | 首选本地化文件后缀  | [游戏语言文件](https://minecraft.wiki/w/Language) | 支持状态   | 志愿者                                       | 
 |---------|-----------|-----------|------------|---------------------------------------------|--------|-------------------------------------------|
 | 英语      | `en`      | `default` | (空)        | `en_us`                                     | **主要** | [Glavo](https://github.com/Glavo)         |  
-| 英语 (颠倒) | `en-Qabs` | `en-Qabs` | `en_Qabs`  | `en_ud`                                     | 自动     |                                           |  
+| 英语 (颠倒) | `en-Qabs` | `en-Qabs` | `en_Qabs`  | `en_ud`                                     | 自动生成   |                                           |  
 | 中文 (简体) | `zh-Hans` | `zh`      | `_zh`      | `zh_cn`                                     | **主要** | [Glavo](https://github.com/Glavo)         |
 | 中文 (繁体) | `zh-Hant` | `zh-Hant` | `_zh_Hant` | `zh_tw` <br/> `zh_hk`                       | **主要** | [Glavo](https://github.com/Glavo)         |
 | 中文 (文言) | `lzh`     | `lzh`     | `_lzh`     | `lzh`                                       | 次要     |                                           |
@@ -25,21 +27,22 @@ HMCL 为多种语言提供本地化支持。
 <details>
 <summary>关于语言标签</summary>
 
-HMCL 使用符合 IETF BCP 47 规范的语言标签。
+HMCL 使用符合 IETF BCP 47 规范的语言标签。此外，我们在选择语言标签时遵循以下原则:
 
-对于 ISO 639 标准中定义的语言，如果同时存在两字母语言代码和三字母语言代码，那么应当优先选择两字母语言代码。
+* 对于 ISO 639 标准中定义的语言，如果同时存在两字母语言代码和三字母语言代码，那么应当优先选择两字母语言代码。
 
-例如，对于英语，我们使用 `en` 而不是 `eng` 作为语言代码。
+  例如，对于英语，我们使用 `en` 而不是 `eng` 作为语言代码。
 
-对于 Minecraft 所定义的非标准语言，应当优先使用语言文件的 `language.code` 中定义的代码，而非游戏语言文件的名称
-(但对于存在两字母代码的语言，应当将三字母语言代码替换为对应的两字母语言代码)。
-这是因为 Minecraft 有时候会用现实中实际存在的国家/地区代码来表示虚构语言 (比如说海盗英语的语言文件为 `en_pt`，但 `PT` 其实是葡萄牙的国家代码)。
+* 对于 Minecraft 所定义的非标准语言，应当优先使用语言文件的 `language.code` 中定义的代码，而非游戏语言文件的名称
+  (但对于存在两字母代码的语言，应当将三字母语言代码替换为对应的两字母语言代码)。
 
-例如，对于颠倒的英语，我们使用 `en-Qabs` 作为语言代码，而不是 `en-UD`。
+  这是因为 Minecraft 有时候会用现实中实际存在的国家/地区代码来表示虚构语言 (比如说海盗英语的语言文件为 `en_pt`，但 `PT` 其实是葡萄牙的国家代码)。
 
-此外，语言代码中应当尽可能选择地区中立的语言标签。
+  例如，对于颠倒的英语，我们使用 `en-Qabs` 作为语言代码，而不是 `en-UD`。
 
-例如，对于简体中文和繁体中文，我们使用 `zh-Hans`和 `zh-Hant` 作为语言代码，而不是 `zh-CN` 和 `zh-TW`。
+* 此外，语言代码中应当尽可能选择地区中立的语言标签。
+
+  例如，对于简体中文和繁体中文，我们使用 `zh-Hans`和 `zh-Hant` 作为语言代码，而不是 `zh-CN` 和 `zh-TW`。
 
 </details>
 
@@ -247,14 +250,14 @@ HMCL 的维护者会替你完成其他步骤。
 
 ```markdown
 <!-- #BEGIN LANGUAGE_SWITCHER -->
+[English](Localization.md) | **中文**
 <!-- #END LANGUAGE_SWITCHER -->
 ```
 
 随后执行 `./gradlew updateDocuments`，这两行内容会被自动替换为类似这样的跳转链接:
 
 ```markdown
-**English** |
-中文 ([简体](README_zh.md), [繁體](README_zh.md), [文言](README_zh.md)) | [日本語](README_zh.md) | [español](README_zh.md) | [русский](README_zh.md) | [українська](README_zh.md)
+**English** (**Standard**, [uʍoᗡ ǝpᴉsd∩](README_en_Qabs.md)) | 中文 ([简体](README_zh.md), [繁體](README_zh_Hant.md), [文言](README_lzh.md)) | [日本語](README_ja.md) | [español](README_es.md) | [русский](README_ru.md) | [українська](README_uk.md)
 ```
 
 关于宏的更多内容，请见 [MacroProcessor.java](../buildSrc/src/main/java/org/jackhuang/hmcl/gradle/docs/MacroProcessor.java)。
