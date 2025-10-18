@@ -19,6 +19,8 @@ package org.jackhuang.hmcl.ui.terracotta;
 
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.terracotta.TerracottaMetadata;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -53,33 +55,16 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
             transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE);
         });
 
-        AdvancedListItem feedback = new AdvancedListItem();
-        feedback.setLeftGraphic(wrap(SVG.FEEDBACK));
-        feedback.setActionButtonVisible(false);
-        feedback.setTitle(i18n("terracotta.feedback.title"));
-        feedback.setOnAction(e -> FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK));
-
-        AdvancedListItem chatItem = new AdvancedListItem();
-        chatItem.setLeftGraphic(wrap(SVG.CHAT));
-        chatItem.setActionButtonVisible(false);
-        chatItem.setTitle(i18n("chat"));
-        chatItem.setOnAction(e -> FXUtils.openLink(Metadata.GROUPS_URL));
-
-        AdvancedListItem easytierItem = new AdvancedListItem();
-        easytierItem.setLeftGraphic(wrap(SVG.HOST));
-        easytierItem.setActionButtonVisible(false);
-        easytierItem.setTitle(i18n("terracotta.easytier"));
-        easytierItem.setOnAction(e -> FXUtils.openLink("https://easytier.cn/"));
-
         AdvancedListBox sideBar = new AdvancedListBox()
-                .addNavigationDrawerTab(tab, statusPage, i18n("terracotta.status"), SVG.TUNE)
-                .startCategory(i18n("help").toUpperCase(Locale.ROOT))
-                .add(feedback)
-                .add(chatItem)
-                .add(easytierItem);
-        FXUtils.setLimitWidth(sideBar, 200);
-        setLeft(sideBar);
+                .addNavigationDrawerTab(tab, statusPage, i18n("terracotta.status"), SVG.TUNE);
+        VBox.setVgrow(sideBar, Priority.ALWAYS);
 
+        AdvancedListBox toolbar = new AdvancedListBox()
+                .addNavigationDrawerItem(i18n("terracotta.feedback.title"), SVG.FEEDBACK, () -> FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK))
+                .addNavigationDrawerItem(i18n("chat"), SVG.CHAT, () -> FXUtils.openLink(Metadata.GROUPS_URL))
+                .addNavigationDrawerItem(i18n("terracotta.easytier"), SVG.HOST, () -> FXUtils.openLink("https://easytier.cn/"));
+
+        setLeft(sideBar, toolbar);
         setCenter(transitionPane);
     }
 
