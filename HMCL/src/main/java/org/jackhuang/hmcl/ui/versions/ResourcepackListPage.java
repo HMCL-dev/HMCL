@@ -49,7 +49,7 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
 
         if (img != null && Files.exists(img)) {
             try {
-                imageView.setImage(FXUtils.loadImage(img, 32, 32, true, true));
+                imageView.setImage(FXUtils.loadImage(img, 64, 64, true, true));
             } catch (Exception e) {
                 LOG.warning("Failed to load image " + img, e);
             }
@@ -140,14 +140,18 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
         Controllers.navigate(Controllers.getDownloadPage());
     }
 
-    private static class ResourcepackListPageSkin extends ToolbarListPageSkin<ResourcepackListPage> {
-        protected ResourcepackListPageSkin(ResourcepackListPage control) {
+    private static final class ResourcepackListPageSkin extends ToolbarListPageSkin<ResourcepackListPage> {
+        private ResourcepackListPageSkin(ResourcepackListPage control) {
             super(control);
         }
 
         @Override
         protected List<Node> initializeToolbar(ResourcepackListPage skinnable) {
-            return Arrays.asList(createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh), createToolbarButton2(i18n("resourcepack.add"), SVG.ADD, skinnable::onAddFiles), createToolbarButton2(i18n("resourcepack.download"), SVG.DOWNLOAD, skinnable::onDownload));
+            return List.of(
+                    createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
+                    createToolbarButton2(i18n("resourcepack.add"), SVG.ADD, skinnable::onAddFiles),
+                    createToolbarButton2(i18n("resourcepack.download"), SVG.DOWNLOAD, skinnable::onDownload)
+            );
         }
     }
 
@@ -210,8 +214,6 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
             center.setSubtitle(description != null ? description.toString() : "");
             root.setCenter(center);
 
-            HBox right = new HBox(8);
-            right.setAlignment(Pos.CENTER_RIGHT);
             JFXButton btnReveal = new JFXButton();
             FXUtils.installFastTooltip(btnReveal, i18n("reveal.in_file_manager"));
             btnReveal.getStyleClass().add("toggle-icon4");
@@ -222,6 +224,9 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
             btnDelete.getStyleClass().add("toggle-icon4");
             btnDelete.setGraphic(SVG.DELETE_FOREVER.createIcon(Theme.blackFill(), -1));
             btnDelete.setOnAction(event -> Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), item::onDelete, null));
+
+            HBox right = new HBox(8);
+            right.setAlignment(Pos.CENTER_RIGHT);
             right.getChildren().setAll(btnReveal, btnDelete);
             root.setRight(right);
 
