@@ -442,7 +442,7 @@ public final class Controllers {
         JFXButton btnOk = new JFXButton(i18n("button.ok"));
         btnOk.getStyleClass().add(messageType == MessageType.WARNING || messageType == MessageType.ERROR
                 ? "dialog-error"
-                : "dialog-warning");
+                : "dialog-accept");
 
         if (ok != null)
             btnOk.setOnAction(e -> ok.run());
