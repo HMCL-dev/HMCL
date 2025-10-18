@@ -19,6 +19,8 @@ package org.jackhuang.hmcl.ui.terracotta;
 
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.geometry.Insets;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.Metadata;
@@ -51,16 +53,22 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
             transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE);
         });
 
+        BorderPane left = new BorderPane();
+        FXUtils.setLimitWidth(left, 200);
+        VBox.setVgrow(left, Priority.ALWAYS);
+        setLeft(left);
+
         AdvancedListBox sideBar = new AdvancedListBox()
                 .addNavigationDrawerTab(tab, statusPage, i18n("terracotta.status"), SVG.TUNE);
-        VBox.setVgrow(sideBar, Priority.ALWAYS);
+        left.setTop(sideBar);
 
         AdvancedListBox toolbar = new AdvancedListBox()
                 .addNavigationDrawerItem(i18n("terracotta.feedback.title"), SVG.FEEDBACK, () -> FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK))
                 .addNavigationDrawerItem(i18n("chat"), SVG.CHAT, () -> FXUtils.openLink(Metadata.GROUPS_URL))
                 .addNavigationDrawerItem(i18n("terracotta.easytier"), SVG.HOST, () -> FXUtils.openLink("https://easytier.cn/"));
+        BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
+        left.setBottom(toolbar);
 
-        setLeft(sideBar, toolbar);
         setCenter(transitionPane);
     }
 
