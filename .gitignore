@@ -19,6 +19,9 @@ hmcl-exported-logs-*
 /.local/
 /.cache/
 
+# IANA Language Subtag Registry
+language-subtag-registry
+
 # gradle build
 /build/
 /HMCL/build/
