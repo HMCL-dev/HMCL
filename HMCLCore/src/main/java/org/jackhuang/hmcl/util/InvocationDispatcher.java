@@ -46,6 +46,9 @@ public final class InvocationDispatcher<T> implements Consumer<T> {
 
     private final Executor executor;
     private final Consumer<T> action;
+
+    /// @see #PENDING_ARG_HANDLE
+    @SuppressWarnings("unused")
     private volatile Holder<T> pendingArg;
 
     private InvocationDispatcher(Executor executor, Consumer<T> action) {
