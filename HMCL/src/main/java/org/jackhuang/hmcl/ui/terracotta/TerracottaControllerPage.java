@@ -36,6 +36,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
@@ -350,16 +351,17 @@ public class TerracottaControllerPage extends StackPane {
                         Label desc = new Label(i18n("terracotta.status.host_ok.code"));
 
                         Label label = new Label(cs);
+                        label.setStyle("-fx-font-size: 24");
                         label.setAlignment(Pos.CENTER);
                         VBox.setMargin(label, new Insets(10, 0, 10, 0));
-                        label.setScaleX(1.8);
-                        label.setScaleY(1.8);
 
                         code.getChildren().setAll(desc, label);
                     }
                     code.setOnMouseClicked(event -> {
-                        FXUtils.copyText(cs);
-                        event.consume();
+                        if (event.getClickCount() == 1 && (event.getButton() == MouseButton.PRIMARY || event.getButton() == MouseButton.SECONDARY)) {
+                            FXUtils.copyText(cs);
+                            event.consume();
+                        }
                     });
 
                     LineButton copy = LineButton.of();
