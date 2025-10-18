@@ -354,7 +354,6 @@ public class TerracottaControllerPage extends StackPane {
                         VBox.setMargin(label, new Insets(10, 0, 10, 0));
                         label.setScaleX(1.8);
                         label.setScaleY(1.8);
-                        FXUtils.copyOnDoubleClick(label);
 
                         code.getChildren().setAll(desc, label);
                     }
