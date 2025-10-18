@@ -23,7 +23,6 @@ import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.beans.property.ReadOnlyStringProperty;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import org.jackhuang.hmcl.event.EventManager;
-import org.jackhuang.hmcl.util.ReflectionUtils;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
@@ -322,14 +321,22 @@ public abstract class Task<T> {
 
     private final ReadOnlyDoubleWrapper progress = new ReadOnlyDoubleWrapper(this, "progress", -1);
 
-    private static final VarHandle PENDING_PROGRESS_HANDLE = ReflectionUtils
-            .findVarHandle(MethodHandles.lookup(), Task.class, "pendingProgress", double.class);
-
-    /// @see #PENDING_PROGRESS_HANDLE
-    @SuppressWarnings("ALL")
-    private volatile double pendingProgress = Double.NEGATIVE_INFINITY;
-
     private long lastUpdateProgressTime = Long.MIN_VALUE;
+
+    private static final double EMPTY_PENDING_PROGRESS = Double.NEGATIVE_INFINITY;
+
+    @SuppressWarnings("FieldMayBeFinal")
+    private volatile double pendingProgress = EMPTY_PENDING_PROGRESS;
+    private static final VarHandle PENDING_PROGRESS_HANDLE;
+
+    static {
+        try {
+            PENDING_PROGRESS_HANDLE = MethodHandles.lookup()
+                    .findVarHandle(Task.class, "pendingProgress", double.class);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new ExceptionInInitializerError(e);
+        }
+    }
 
     public ReadOnlyDoubleProperty progressProperty() {
         return progress.getReadOnlyProperty();
@@ -350,8 +357,9 @@ public abstract class Task<T> {
     }
 
     protected void updateProgressImmediately(double progress) {
-        if (((double) PENDING_PROGRESS_HANDLE.getAndSet(progress)) == Double.NEGATIVE_INFINITY) {
-            Platform.runLater(() -> this.progress.set((double) PENDING_PROGRESS_HANDLE.getAndSet(Double.NEGATIVE_INFINITY)));
+        if (((double) PENDING_PROGRESS_HANDLE.getAndSet(this, progress)) == EMPTY_PENDING_PROGRESS) {
+            Platform.runLater(() -> this.progress.set(
+                    (double) PENDING_PROGRESS_HANDLE.getAndSet(this, EMPTY_PENDING_PROGRESS)));
         }
     }
 
