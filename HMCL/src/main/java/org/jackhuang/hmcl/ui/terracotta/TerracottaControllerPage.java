@@ -138,13 +138,13 @@ public class TerracottaControllerPage extends StackPane {
             TerracottaState state = UI_STATE.get(), next;
             if (state instanceof TerracottaState.Uninitialized || state instanceof TerracottaState.Preparing preparing && preparing.hasInstallFence()) {
                 if (state instanceof TerracottaState.Uninitialized uninitialized && !uninitialized.hasLegacy()) {
-                    Controllers.confirmActionDanger(i18n("terracotta.confirm.desc"), i18n("terracotta.confirm.title"), () -> {
-                        TerracottaState.Preparing s = TerracottaManager.install(path);
-                        if (s != null) {
-                            UI_STATE.set(s);
-                        }
-                    }, () -> {
-                    });
+                    Controllers.confirmWithCountdown(i18n("terracotta.confirm.desc"), i18n("terracotta.confirm.title"), 5,
+                            MessageDialogPane.MessageType.INFO, () -> {
+                                TerracottaState.Preparing s = TerracottaManager.install(path);
+                                if (s != null) {
+                                    UI_STATE.set(s);
+                                }
+                            }, null);
                     return;
                 }
 
@@ -202,7 +202,7 @@ public class TerracottaControllerPage extends StackPane {
                             }
                         }
                     } else {
-                        Controllers.confirmActionDanger(i18n("terracotta.confirm.desc"), i18n("terracotta.confirm.title"), () -> {
+                        Controllers.confirmWithCountdown(i18n("terracotta.confirm.desc"), i18n("terracotta.confirm.title"), 5, MessageDialogPane.MessageType.INFO, () -> {
                             globalConfig().setTerracottaAgreementVersion(1);
                             TerracottaState.Preparing s = TerracottaManager.install(null);
                             if (s != null) {
