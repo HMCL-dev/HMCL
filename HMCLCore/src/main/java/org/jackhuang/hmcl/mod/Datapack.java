@@ -58,7 +58,8 @@ public class Datapack {
     }
 
     public static void installPack(Path sourceDatapackPath, Path targetDatapackDirectory) throws IOException {
-        boolean containsMultiplePacks = false;
+        boolean containsMultiplePacks;
+        Set<String> packs = new HashSet<>();
         try (FileSystem fs = CompressingUtils.readonly(sourceDatapackPath).setAutoDetectEncoding(true).build()) {
             Path datapacks = fs.getPath("datapacks");
             Path mcmeta = fs.getPath("pack.mcmeta");
@@ -70,13 +71,12 @@ public class Datapack {
             } else {
                 throw new IOException("Malformed datapack zip");
             }
-            Set<String> packs;
+
             if (containsMultiplePacks) {
-                try(Stream<Path> s = Files.list(datapacks)) {
+                try (Stream<Path> s = Files.list(datapacks)) {
                     packs = s.map(FileUtils::getNameWithoutExtension).collect(Collectors.toSet());
                 }
             } else {
-                packs = new HashSet<>();
                 packs.add(FileUtils.getNameWithoutExtension(sourceDatapackPath));
             }
 
@@ -84,7 +84,7 @@ public class Datapack {
                 for (Path dir : stream) {
                     String packName = FileUtils.getName(dir);
                     if (FileUtils.getExtension(dir).equals(DISABLED_EXT)) {
-                        packName = StringUtils.removeSuffix(packName,"." + DISABLED_EXT);
+                        packName = StringUtils.removeSuffix(packName, "." + DISABLED_EXT);
                     }
                     packName = FileUtils.getNameWithoutExtension(packName);
                     if (packs.contains(packName)) {
@@ -98,7 +98,9 @@ public class Datapack {
             }
         }
 
-        if (containsMultiplePacks) {
+        if (!containsMultiplePacks) {
+            FileUtils.copyFile(sourceDatapackPath, targetDatapackDirectory.resolve(FileUtils.getName(sourceDatapackPath)));
+        } else {
             new Unzipper(sourceDatapackPath, targetDatapackDirectory)
                     .setReplaceExistentFile(true)
                     .setSubDirectory("/datapacks/")
@@ -115,21 +117,21 @@ public class Datapack {
                     }
                 }
                 Path packMcMeta = outputResourcesZipFS.getPath("pack.mcmeta");
-                Files.write(packMcMeta, Arrays.asList("{",
-                        "\t\"pack\": {",
-                        "\t\t\"pack_format\": 4,",
-                        "\t\t\"description\": \"Modified by HMCL.\"",
-                        "\t}",
-                        "}"), StandardOpenOption.CREATE);
+                String metaContent = """
+                        {
+                            "pack": {
+                                "pack_format": 4,
+                                "description": "Modified by HMCL."
+                            }
+                        }
+                        """;
+                Files.writeString(packMcMeta, metaContent, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 
                 Path packPng = outputResourcesZipFS.getPath("pack.png");
                 if (Files.isRegularFile(packPng))
                     Files.delete(packPng);
             }
-        } else {
-            FileUtils.copyFile(sourceDatapackPath, targetDatapackDirectory.resolve(FileUtils.getName(sourceDatapackPath)));
         }
-
     }
 
     public void installPack(Path sourcePackPath) throws IOException {
@@ -156,55 +158,59 @@ public class Datapack {
     }
 
     private void loadFromDir(Path dir) throws IOException {
-        List<Pack> discoveredPacks = new ArrayList<>();
+        List<Pack> discoveredPacks;
+        try (Stream<Path> stream = Files.list(dir)) {
+            discoveredPacks = stream
+                    .map(this::loadSinglePackFromPath)
+                    .flatMap(Optional::stream)
+                    .sorted(Comparator.comparing(Pack::getId))
+                    .collect(Collectors.toList());
+        }
+        Platform.runLater(() -> this.packs.setAll(discoveredPacks));
+    }
 
-        if (Files.isDirectory(dir)) {
-            try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(dir)) {
-                for (Path subDir : directoryStream) {
-                    if (Files.isDirectory(subDir)) {
-                        Path mcmeta = subDir.resolve("pack.mcmeta");
-                        Path mcmetaDisabled = subDir.resolve("pack.mcmeta.disabled");
+    private Optional<Pack> loadSinglePackFromPath(Path path) {
+        if (Files.isDirectory(path)) {
+            Path mcmeta = path.resolve("pack.mcmeta");
+            Path mcmetaDisabled = path.resolve("pack.mcmeta.disabled");
 
-                        if (!Files.exists(mcmeta) && !Files.exists(mcmetaDisabled))
-                            continue;
+            if (!Files.exists(mcmeta) && !Files.exists(mcmetaDisabled))
+                return Optional.empty();
 
-                        boolean enabled = Files.exists(mcmeta);
+            boolean enabled = Files.exists(mcmeta);
+            Path targetPath = enabled ? mcmeta : mcmetaDisabled;
+            try {
+                PackMcMeta packMcMeta = JsonUtils.fromNonNullJson(Files.readString(targetPath), PackMcMeta.class);
+                return Optional.of(new Pack(path, true, FileUtils.getName(path), packMcMeta.getPackInfo().getDescription(), this));
+            } catch (IOException | JsonParseException e) {
+                LOG.warning("Failed to read datapack " + path, e);
+                return Optional.empty();
+            }
+        } else if (Files.isRegularFile(path)) {
+            try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(path)) {
+                Path mcmeta = fs.getPath("pack.mcmeta");
 
-                        try {
-                            PackMcMeta packMcMeta = enabled ? JsonUtils.fromNonNullJson(Files.readString(mcmeta), PackMcMeta.class)
-                                    : JsonUtils.fromNonNullJson(Files.readString(mcmetaDisabled), PackMcMeta.class);
-                            discoveredPacks.add(new Pack(subDir, true, FileUtils.getName(subDir), packMcMeta.getPackInfo().getDescription(), this));
-                        } catch (IOException | JsonParseException e) {
-                            LOG.warning("Failed to read datapack " + subDir, e);
-                        }
-                    } else if (Files.isRegularFile(subDir)) {
-                        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(subDir)) {
-                            Path mcmeta = fs.getPath("pack.mcmeta");
-
-                            if (!Files.exists(mcmeta)) {
-                                continue;
-                            }
-
-                            String packName = FileUtils.getName(subDir);
-                            if (FileUtils.getExtension(subDir).equals(DISABLED_EXT)) {
-                                packName = FileUtils.getNameWithoutExtension(packName);
-                            }
-                            if (!FileUtils.getExtension(packName).equals(ZIP_EXT)) {
-                                continue;
-                            }
-                            packName = FileUtils.getNameWithoutExtension(packName);
-
-                            PackMcMeta packMcMeta = JsonUtils.fromNonNullJson(Files.readString(mcmeta), PackMcMeta.class);
-                            discoveredPacks.add(new Pack(subDir, false, packName, packMcMeta.getPackInfo().getDescription(), this));
-                        } catch (IOException | JsonParseException e) {
-                            LOG.warning("Failed to read datapack " + subDir, e);
-                        }
-                    }
+                if (!Files.exists(mcmeta)) {
+                    return Optional.empty();
                 }
+
+                String packName = FileUtils.getName(path);
+                if (FileUtils.getExtension(path).equals(DISABLED_EXT)) {
+                    packName = FileUtils.getNameWithoutExtension(packName);
+                }
+                if (!FileUtils.getExtension(packName).equals(ZIP_EXT)) {
+                    return Optional.empty();
+                }
+                packName = FileUtils.getNameWithoutExtension(packName);
+
+                PackMcMeta packMcMeta = JsonUtils.fromNonNullJson(Files.readString(mcmeta), PackMcMeta.class);
+                return Optional.of(new Pack(path, false, packName, packMcMeta.getPackInfo().getDescription(), this));
+            } catch (IOException | JsonParseException e) {
+                LOG.warning("Failed to read datapack " + path, e);
             }
         }
 
-        Platform.runLater(() -> this.packs.setAll(discoveredPacks));
+        return Optional.empty();
     }
 
     public static class Pack {
@@ -223,38 +229,52 @@ public class Datapack {
             this.description = description;
             this.parentDatapack = parentDatapack;
 
+            this.statusFile = initializeStatusFile(path,isDirectory);
+            this.activeProperty = initializeActiveProperty();
+        }
+
+        private Path initializeStatusFile(Path path, boolean isDirectory) {
             if (isDirectory) {
-                statusFile = Files.exists(path.resolve("pack.mcmeta")) ? path.resolve("pack.mcmeta") : path.resolve("pack.mcmeta.disabled");
-            } else {
-                statusFile = path;
+                Path mcmeta = path.resolve("pack.mcmeta");
+                return Files.exists(mcmeta) ? mcmeta : path.resolve("pack.mcmeta.disabled");
             }
+            return path;
+        }
 
-            activeProperty = new SimpleBooleanProperty(this, "active", !(FileUtils.getExtension(statusFile).equals(DISABLED_EXT))) {
-                @Override
-                protected void invalidated() {
-                    Path newStatusFile = statusFile, newPath = path;
-                    if (DISABLED_EXT.equals(FileUtils.getExtension(statusFile)) && this.get()) {
-                        newStatusFile = statusFile.getParent().resolve(FileUtils.getNameWithoutExtension(statusFile));
-                        if (!isDirectory) {
-                            newPath = newStatusFile;
-                        }
-                    } else if (!DISABLED_EXT.equals(FileUtils.getExtension(statusFile)) && !this.get()) {
-                        newStatusFile = statusFile.getParent().resolve(FileUtils.getName(statusFile) + "." + DISABLED_EXT);
-                        if (!isDirectory) {
-                            newPath = newStatusFile;
-                        }
-                    }
-                    try {
-                        Files.move(statusFile, newStatusFile);
-                        Pack.this.statusFile = newStatusFile;
-                        Pack.this.path = newPath;
-                    } catch (IOException e) {
-                        // Mod statusFile is occupied.
-                        LOG.warning("Unable to rename statusFile " + statusFile + " to " + newStatusFile);
-                    }
-
+        private BooleanProperty initializeActiveProperty() {
+            BooleanProperty property = new SimpleBooleanProperty(this, "active", !FileUtils.getExtension(this.statusFile).equals(DISABLED_EXT));
+            property.addListener((obs, wasActive, isNowActive) -> {
+                if (wasActive != isNowActive) {
+                    handleFileRename(isNowActive);
                 }
-            };
+            });
+            return property;
+        }
+
+        private void handleFileRename(boolean isNowActive) {
+            Path newStatusFile = calculateNewStatusFilePath(isNowActive);
+            if (statusFile.equals(newStatusFile)) {
+                return;
+            }
+            try {
+                Files.move(this.statusFile, newStatusFile);
+                this.statusFile = newStatusFile;
+                if (!this.isDirectory) {
+                    this.path = newStatusFile;
+                }
+            } catch (IOException e) {
+                LOG.warning("Unable to rename file from " + this.statusFile + " to " + newStatusFile, e);
+            }
+        }
+
+        private Path calculateNewStatusFilePath(boolean isActive) {
+            boolean isFileDisabled = DISABLED_EXT.equals(FileUtils.getExtension(this.statusFile));
+            if (isActive && isFileDisabled) {
+                return this.statusFile.getParent().resolve(FileUtils.getNameWithoutExtension(this.statusFile));
+            } else if (!isActive && !isFileDisabled) {
+                return this.statusFile.getParent().resolve(FileUtils.getName(this.statusFile) + "." + DISABLED_EXT);
+            }
+            return this.statusFile;
         }
 
         public String getId() {

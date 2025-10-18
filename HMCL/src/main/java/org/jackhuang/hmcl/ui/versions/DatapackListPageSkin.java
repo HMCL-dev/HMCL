@@ -66,7 +66,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
@@ -157,13 +156,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             });
 
             FXUtils.onChangeAndOperate(listView.getSelectionModel().selectedItemProperty(),
-                    selectedItem -> {
-                        if (selectedItem == null) {
-                            isSelecting.set(false);
-                        } else {
-                            isSelecting.set(true);
-                        }
-                    });
+                    selectedItem -> isSelecting.set(selectedItem != null));
             root.getContent().add(toolbarPane);
 
             InvalidationListener changeStatueListener = observable -> {
@@ -274,8 +267,6 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             Path imagePath;
             if (this.getPackInfo().isDirectory()) {
                 imagePath = getPackInfo().getPath().resolve("pack.png");
-                //will be deleted after feature development is completed
-                LOG.debug("Datapack Path: " + this.getPackInfo().getPath());
                 try {
                     image = FXUtils.loadImage(imagePath, 24, 24, true, true);
                 } catch (Exception e) {
@@ -284,8 +275,6 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             } else {
                 try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(getPackInfo().getPath())) {
                     imagePath = fs.getPath("/pack.png");
-                    //will be deleted after feature development is completed
-                    LOG.debug("Datapack(zip) path: " + packInfo.getPath() + "\nfs path: " + fs + "\nimage path: " + FileUtils.getAbsolutePath(imagePath) + "\nimage url: " + imagePath.toUri());
                     if (Files.exists(imagePath)) {
                         image = FXUtils.loadImage(imagePath, 24, 24, true, true);
                     }
