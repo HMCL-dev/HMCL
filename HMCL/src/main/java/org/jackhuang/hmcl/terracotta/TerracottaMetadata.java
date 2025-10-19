@@ -68,7 +68,9 @@ public final class TerracottaMetadata {
     ) {
         private TerracottaNative of(String classifier) {
             List<URI> links = new ArrayList<>(this.downloads.size() + this.downloadsCN.size());
-            for (String download : LocaleUtils.IS_CHINA_MAINLAND ? Lang.merge(this.downloadsCN, this.downloads) : Lang.merge(this.downloads, this.downloadsCN)) {
+            for (String download : LocaleUtils.IS_CHINA_MAINLAND
+                    ? Lang.merge(this.downloadsCN, this.downloads)
+                    : Lang.merge(this.downloads, this.downloadsCN)) {
                 links.add(URI.create(download.replace("${version}", this.latest).replace("${classifier}", classifier)));
             }
 
