@@ -15,12 +15,12 @@
     "windows-x86_64.exe": "sha256:de518b2b4e60336fd272092326799966efc4e72acd65576d83e61d4d242fd61d"
   },
   "downloads": [
-    "https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}",
+    "https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}"
+  ],
+  "downloads_CN": [
     "https://gitee.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}",
-    "https://alist.8mi.tech/d/mirror/HMCL-Terracotta/Auto/v${version}/terracotta-${version}-${classifier}",
-    "https://ghfast.top/https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}",
-    "https://cdn.crashmc.com/https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}",
-    "https://cp.zkitefly.eu.org/https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}"
+    "https://cnb.cool/HMCL-Terracotta/Terracotta/-/releases/download/v${version}/terracotta-${version}-${classifier}",
+    "https://alist.8mi.tech/d/mirror/HMCL-Terracotta/Auto/v${version}/terracotta-${version}-${classifier}"
   ],
   "links": [
     {
