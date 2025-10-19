@@ -23,6 +23,7 @@ import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import javafx.animation.PauseTransition;
+import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
@@ -81,8 +82,9 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
 
     private final JFXListView<DatapackInfoObject> listView;
 
-    BooleanProperty isSearching = new SimpleBooleanProperty(false);
-    BooleanProperty isSelecting = new SimpleBooleanProperty(false);
+    private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
+    private final BooleanProperty isSelecting = new SimpleBooleanProperty(false);
+    private final InvalidationListener updateBarByStateWeakListener;
     private final JFXTextField searchField;
 
     DatapackListPageSkin(DatapackListPage skinnable) {
@@ -145,12 +147,9 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             FXUtils.onEscPressed(searchField, closeSearchBar::fire);
             searchBar.getChildren().addAll(searchField, closeSearchBar);
 
-            root.addEventHandler(KeyEvent.KEY_PRESSED, e -> {
-                if (e.getCode() == KeyCode.ESCAPE) {
-                    if (listView.getSelectionModel().getSelectedItem() != null) {
-                        listView.getSelectionModel().clearSelection();
-                        e.consume();
-                    }
+            FXUtils.onEscPressed(root, () -> {
+                if (listView.getSelectionModel().getSelectedItem() != null) {
+                    listView.getSelectionModel().clearSelection();
                 }
             });
 
@@ -158,7 +157,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
                     selectedItem -> isSelecting.set(selectedItem != null));
             root.getContent().add(toolbarPane);
 
-            InvalidationListener changeStatueListener = observable -> {
+            this.updateBarByStateWeakListener = FXUtils.observeWeak(() -> {
                 if (isSelecting.get()) {
                     changeToolbar(selectingToolbar);
                 } else if (!isSelecting.get() && !isSearching.get()) {
@@ -166,10 +165,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
                 } else {
                     changeToolbar(searchBar);
                 }
-            };
-            isSearching.addListener(changeStatueListener);
-            isSelecting.addListener(changeStatueListener);
-            changeToolbar(normalToolbar);
+            }, isSearching, isSelecting);
         }
 
         {
@@ -199,9 +195,9 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
         if (newToolbar != oldToolbar) {
             toolbarPane.setContent(newToolbar, ContainerAnimations.FADE);
             if (newToolbar == searchBar) {
-                PauseTransition focusRequester = new PauseTransition(Duration.millis(200));
-                focusRequester.setOnFinished(event -> searchField.requestFocus());
-                focusRequester.play();
+                // search button click will get focus while searchField request focus, this cause conflict.
+                // Defer focus request to next pulse avoids this conflict.
+                Platform.runLater(searchField::requestFocus);
             }
         }
     }
@@ -267,7 +263,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             if (this.getPackInfo().isDirectory()) {
                 imagePath = getPackInfo().getPath().resolve("pack.png");
                 try {
-                    image = FXUtils.loadImage(imagePath, 24, 24, true, true);
+                    image = FXUtils.loadImage(imagePath, 48, 48, true, true);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
@@ -275,7 +271,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
                 try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(getPackInfo().getPath())) {
                     imagePath = fs.getPath("/pack.png");
                     if (Files.exists(imagePath)) {
-                        image = FXUtils.loadImage(imagePath, 24, 24, true, true);
+                        image = FXUtils.loadImage(imagePath, 48, 48, true, true);
                     }
                 } catch (Exception e) {
                     throw new RuntimeException(e);
