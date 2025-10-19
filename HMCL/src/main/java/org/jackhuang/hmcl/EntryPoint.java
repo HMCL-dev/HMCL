@@ -49,7 +49,7 @@ public final class EntryPoint {
         setupJavaFXVMOptions();
         checkDirectoryPath();
 
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && "true".equalsIgnoreCase(System.getenv().getOrDefault("HMCL_MACOS_SET_ICON", "true")))
             initIcon();
 
         checkJavaFX();
