@@ -20,6 +20,10 @@ package org.jackhuang.hmcl.util.i18n;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
+import org.jackhuang.hmcl.util.platform.NativeUtils;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.windows.Kernel32;
+import org.jackhuang.hmcl.util.platform.windows.WinConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -27,6 +31,9 @@ import org.jetbrains.annotations.Unmodifiable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -383,6 +390,29 @@ public final class LocaleUtils {
 
     public static boolean isChinese(Locale locale) {
         return "zh".equals(getRootLanguage(locale));
+    }
+
+    public static final boolean IS_CHINA_MAINLAND = isChinaMainland();
+
+    private static boolean isChinaMainland() {
+        if ("Asia/Shanghai".equals(ZoneId.systemDefault().getId()))
+            return true;
+
+        // Check if the time zone is UTC+8
+        if (ZonedDateTime.now().getOffset().getTotalSeconds() == Duration.ofHours(8).toSeconds()) {
+            if ("CN".equals(LocaleUtils.SYSTEM_DEFAULT.getCountry()))
+                return true;
+
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && NativeUtils.USE_JNA) {
+                Kernel32 kernel32 = Kernel32.INSTANCE;
+
+                // https://learn.microsoft.com/windows/win32/intl/table-of-geographical-locations
+                if (kernel32 != null && kernel32.GetUserGeoID(WinConstants.GEOCLASS_NATION) == 45) // China
+                    return true;
+            }
+        }
+
+        return false;
     }
 
     private LocaleUtils() {
