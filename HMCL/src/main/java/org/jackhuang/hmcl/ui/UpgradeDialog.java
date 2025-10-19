@@ -80,8 +80,9 @@ public final class UpgradeDialog extends JFXDialogLayout {
         Task.supplyAsync(Schedulers.io(), () -> {
             VersionNumber targetVersion = VersionNumber.asVersion(remoteVersion.getVersion());
             VersionNumber currentVersion = VersionNumber.asVersion(Metadata.VERSION);
-            if (targetVersion.compareTo(currentVersion) <= 0)
-                throw new IOException("Downgrade update from " + currentVersion + " to " + targetVersion);
+            if (targetVersion.compareTo(currentVersion) <= 0) {
+                return null;
+            }
 
             Document document = Jsoup.parse(new URL(url), 30 * 1000);
             String id = null;
@@ -102,8 +103,10 @@ public final class UpgradeDialog extends JFXDialogLayout {
             if (changelogVersion == null)
                 throw new IOException("Cannot find current changelog in document. The node: " + node);
 
-            if (!targetVersion.equals(changelogVersion))
-                throw new IOException("The changelog has not been updated yet. Expected: " + targetVersion + ", Actual: " + changelogVersion);
+            if (!targetVersion.equals(changelogVersion)) {
+                LOG.warning("The changelog has not been updated yet. Expected: " + targetVersion + ", Actual: " + changelogVersion);
+                return null;
+            }
 
             HTMLRenderer renderer = new HTMLRenderer(uri -> {
                 LOG.info("Open link: " + uri);
@@ -125,10 +128,14 @@ public final class UpgradeDialog extends JFXDialogLayout {
             return renderer.render();
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
-                ScrollPane scrollPane = new ScrollPane(result);
-                scrollPane.setFitToWidth(true);
-                FXUtils.smoothScrolling(scrollPane);
-                setBody(scrollPane);
+                if (result != null) {
+                    ScrollPane scrollPane = new ScrollPane(result);
+                    scrollPane.setFitToWidth(true);
+                    FXUtils.smoothScrolling(scrollPane);
+                    setBody(scrollPane);
+                } else {
+                    setBody();
+                }
             } else {
                 LOG.warning("Failed to load update log, trying to open it in browser");
                 FXUtils.openLink(url);
