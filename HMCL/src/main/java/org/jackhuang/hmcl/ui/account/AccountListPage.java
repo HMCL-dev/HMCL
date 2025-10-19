@@ -67,7 +67,7 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
         String property = System.getProperty("hmcl.offline.auth.restricted", "auto");
 
         if ("false".equals(property)
-                || "auto".equals(property) && LocaleUtils.isChina()
+                || "auto".equals(property) && LocaleUtils.IS_CHINA_MAINLAND
                 || globalConfig().isEnableOfflineAccount())
             RESTRICTED.set(false);
         else

@@ -392,7 +392,9 @@ public final class LocaleUtils {
         return "zh".equals(getRootLanguage(locale));
     }
 
-    public static boolean isChina() {
+    public static final boolean IS_CHINA_MAINLAND = isChinaMainland();
+
+    private static boolean isChinaMainland() {
         if ("Asia/Shanghai".equals(ZoneId.systemDefault().getId()))
             return true;
 
