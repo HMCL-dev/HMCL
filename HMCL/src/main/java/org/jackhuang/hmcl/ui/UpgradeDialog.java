@@ -72,11 +72,11 @@ public final class UpgradeDialog extends JFXDialogLayout {
         maxHeightProperty().bind(Controllers.getScene().heightProperty().multiply(0.7));
 
         setHeading(new Label(i18n("update.changelog")));
+        setBody(new ProgressIndicator());
 
         String url = CHANGELOG_URL + remoteVersion.getChannel().channelName + ".html";
         boolean isPreview = remoteVersion.isPreview();
 
-        setBody(new ProgressIndicator());
         Task.supplyAsync(Schedulers.io(), () -> {
             VersionNumber targetVersion = VersionNumber.asVersion(remoteVersion.getVersion());
             VersionNumber currentVersion = VersionNumber.asVersion(Metadata.VERSION);
