@@ -49,7 +49,7 @@ public final class EntryPoint {
         setupJavaFXVMOptions();
         checkDirectoryPath();
 
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && "true".equalsIgnoreCase(System.getenv().getOrDefault("HMCL_MACOS_SET_ICON", "true")))
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && isMacDockIconEnabled())
             initIcon();
 
         checkJavaFX();
@@ -157,6 +157,11 @@ public final class EntryPoint {
                 LOG.warning("Failed to create HMCL global directory " + Metadata.HMCL_GLOBAL_DIRECTORY, e);
             }
         }
+    }
+
+    private static boolean isMacDockIconEnabled() {
+        String v = System.getenv("HMCL_MACOS_SET_ICON");
+        return v == null || Boolean.parseBoolean(v);
     }
 
     private static void initIcon() {
