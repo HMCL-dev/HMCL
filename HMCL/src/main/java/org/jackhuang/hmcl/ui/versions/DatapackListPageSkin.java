@@ -25,10 +25,10 @@ import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
-import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -57,6 +57,7 @@ import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
@@ -71,7 +72,6 @@ import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
 
@@ -81,6 +81,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
     private final HBox selectingToolbar;
 
     private final JFXListView<DatapackInfoObject> listView;
+    private final FilteredList<DatapackInfoObject> filteredList;
 
     private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
     private final BooleanProperty isSelecting = new SimpleBooleanProperty(false);
@@ -97,6 +98,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
         ComponentList root = new ComponentList();
         root.getStyleClass().add("no-padding");
         listView = new JFXListView<>();
+        filteredList = new FilteredList<>(skinnable.getItems());
 
         {
             toolbarPane = new TransitionPane();
@@ -133,7 +135,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             searchField.setPromptText(i18n("search"));
             HBox.setHgrow(searchField, Priority.ALWAYS);
             PauseTransition pause = new PauseTransition(Duration.millis(100));
-            pause.setOnFinished(e -> search());
+            pause.setOnFinished(e -> filteredList.setPredicate(updateSearchPredicate(searchField.getText())));
             searchField.textProperty().addListener((observable, oldValue, newValue) -> {
                 pause.setRate(1);
                 pause.playFromStart();
@@ -142,7 +144,6 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
                     () -> {
                         isSearching.set(false);
                         searchField.clear();
-                        Bindings.bindContent(listView.getItems(), getSkinnable().getItems());
                     });
             FXUtils.onEscPressed(searchField, closeSearchBar::fire);
             searchBar.getChildren().addAll(searchField, closeSearchBar);
@@ -177,7 +178,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             Holder<Object> lastCell = new Holder<>();
             listView.setCellFactory(x -> new DatapackInfoListCell(listView, lastCell));
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-            Bindings.bindContent(listView.getItems(), skinnable.getItems());
+            this.listView.setItems(filteredList);
 
             // ListViewBehavior would consume ESC pressed event, preventing us from handling it, so we ignore it here
             FXUtils.ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
@@ -202,35 +203,29 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
         }
     }
 
-    private void search() {
-        Bindings.unbindContent(listView.getItems(), getSkinnable().getItems());
-
-        String queryString = searchField.getText();
-        if (StringUtils.isBlank(queryString)) {
-            listView.getItems().setAll(getSkinnable().getItems());
-        } else {
-            listView.getItems().clear();
-
-            Predicate<@Nullable String> predicate;
-            if (queryString.startsWith("regex:")) {
-                try {
-                    Pattern pattern = Pattern.compile(queryString.substring("regex:".length()));
-                    predicate = s -> s != null && pattern.matcher(s).find();
-                } catch (Throwable e) {
-                    LOG.warning("Illegal regular expression", e);
-                    return;
-                }
-            } else {
-                String lowerQueryString = queryString.toLowerCase(Locale.ROOT);
-                predicate = s -> s != null && s.toLowerCase(Locale.ROOT).contains(lowerQueryString);
-            }
-
-            for (DatapackInfoObject item : getSkinnable().getItems()) {
-                if (predicate.test(item.getPackInfo().getId()) || predicate.test(item.getPackInfo().getDescription().toString())) {
-                    listView.getItems().add(item);
-                }
-            }
+    private @NotNull Predicate<DatapackListPageSkin.DatapackInfoObject> updateSearchPredicate(String queryString) {
+        if (queryString.isBlank()) {
+            return dataPack -> true;
         }
+
+        final Predicate<String> stringPredicate;
+        if (queryString.startsWith("regex:")) {
+            try {
+                Pattern pattern = Pattern.compile(queryString.substring("regex:".length()));
+                stringPredicate = s -> s != null && pattern.matcher(s).find();
+            } catch (Exception e) {
+                return dataPack -> false;
+            }
+        } else {
+            String lowerCaseFilter = queryString.toLowerCase(Locale.ROOT);
+            stringPredicate = s -> s != null && s.toLowerCase(Locale.ROOT).contains(lowerCaseFilter);
+        }
+
+        return dataPack -> {
+            String id = dataPack.getPackInfo().getId();
+            String description = dataPack.getPackInfo().getDescription().toString();
+            return stringPredicate.test(id) || stringPredicate.test(description);
+        };
     }
 
     static class DatapackInfoObject extends RecursiveTreeObject<DatapackInfoObject> {
