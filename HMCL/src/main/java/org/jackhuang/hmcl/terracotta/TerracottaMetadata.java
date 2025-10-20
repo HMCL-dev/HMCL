@@ -23,7 +23,9 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.terracotta.provider.GeneralProvider;
 import org.jackhuang.hmcl.terracotta.provider.ITerracottaProvider;
 import org.jackhuang.hmcl.terracotta.provider.MacOSProvider;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -61,11 +63,14 @@ public final class TerracottaMetadata {
 
             @SerializedName("classifiers") Map<String, String> classifiers,
             @SerializedName("downloads") List<String> downloads,
+            @SerializedName("downloads_CN") List<String> downloadsCN,
             @SerializedName("links") List<Link> links
     ) {
         private TerracottaNative of(String classifier) {
-            List<URI> links = new ArrayList<>(this.downloads.size());
-            for (String download : this.downloads) {
+            List<URI> links = new ArrayList<>(this.downloads.size() + this.downloadsCN.size());
+            for (String download : LocaleUtils.IS_CHINA_MAINLAND
+                    ? Lang.merge(this.downloadsCN, this.downloads)
+                    : Lang.merge(this.downloads, this.downloadsCN)) {
                 links.add(URI.create(download.replace("${version}", this.latest).replace("${classifier}", classifier)));
             }
 

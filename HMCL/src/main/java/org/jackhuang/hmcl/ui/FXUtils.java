@@ -1411,12 +1411,16 @@ public final class FXUtils {
     }
 
     public static void copyText(String text) {
+        copyText(text, i18n("message.copied"));
+    }
+
+    public static void copyText(String text, @Nullable String toastMessage) {
         ClipboardContent content = new ClipboardContent();
         content.putString(text);
         Clipboard.getSystemClipboard().setContent(content);
 
-        if (!Controllers.isStopped()) {
-            Controllers.showToast(i18n("message.copied"));
+        if (toastMessage != null && !Controllers.isStopped()) {
+            Controllers.showToast(toastMessage);
         }
     }
 
