@@ -59,6 +59,7 @@ public abstract class SettingsView extends StackPane {
     protected final JFXRadioButton chkUpdateDev;
     protected final JFXButton btnUpdate;
     protected final OptionToggleButton previewPane;
+    protected final OptionToggleButton disableStartupUpdateNotificationPane;
     protected final ScrollPane scroll;
 
     public SettingsView() {
@@ -155,6 +156,13 @@ public abstract class SettingsView extends StackPane {
                     FXUtils.installFastTooltip(previewPane, i18n("update.preview.tooltip"));
 
                     settingsPane.getContent().add(previewPane);
+                }
+
+                {
+                    disableStartupUpdateNotificationPane = new OptionToggleButton();
+                    disableStartupUpdateNotificationPane.setTitle(i18n("update.disable_startup_update_dialog"));
+
+                    settingsPane.getContent().add(disableStartupUpdateNotificationPane);
                 }
 
                 {
