@@ -47,12 +47,11 @@ import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.ui.construct.ClassTitle;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
-
-import java.util.Locale;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
@@ -178,7 +177,7 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                     });
                     Bindings.bindContent(boxAuthServers.getChildren(), authServerItems);
 
-                    ClassTitle title = new ClassTitle(i18n("account.create").toUpperCase(Locale.ROOT));
+                    ClassTitle title = new ClassTitle(I18n.toCategoryCase(i18n("account.create")));
                     if (RESTRICTED.get()) {
                         VBox wrapper = new VBox(offlineItem, boxAuthServers);
                         wrapper.setPadding(Insets.EMPTY);

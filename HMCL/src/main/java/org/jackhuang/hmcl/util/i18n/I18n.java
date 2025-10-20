@@ -67,6 +67,10 @@ public final class I18n {
         return locale.i18n(key);
     }
 
+    public static String toCategoryCase(String category) {
+        return getTranslator().toCategoryCase(category);
+    }
+
     public static String formatDateTime(TemporalAccessor time) {
         return getTranslator().formatDateTime(time);
     }

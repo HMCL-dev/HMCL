@@ -62,12 +62,12 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.upgrade.IntegrityChecker;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
@@ -643,7 +643,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             StackPane.setAlignment(cancel, Pos.BOTTOM_RIGHT);
             cancel.setOnAction(e -> latch.countDown());
 
-            listBox.startCategory(i18n("account.choose").toUpperCase(Locale.ROOT));
+            listBox.startCategory(I18n.toCategoryCase(i18n("account.choose")));
 
             setCenter(listBox);
 

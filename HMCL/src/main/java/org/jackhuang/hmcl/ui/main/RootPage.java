@@ -48,6 +48,7 @@ import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
@@ -56,7 +57,6 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
@@ -190,13 +190,13 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
 
             // the left sidebar
             AdvancedListBox sideBar = new AdvancedListBox()
-                    .startCategory(i18n("account").toUpperCase(Locale.ROOT))
+                    .startCategory(I18n.toCategoryCase(i18n("account")))
                     .add(accountListItem)
-                    .startCategory(i18n("version").toUpperCase(Locale.ROOT))
+                    .startCategory(I18n.toCategoryCase(i18n("version")))
                     .add(gameListItem)
                     .add(gameItem)
                     .add(downloadItem)
-                    .startCategory(i18n("settings.launcher.general").toUpperCase(Locale.ROOT))
+                    .startCategory(I18n.toCategoryCase(i18n("settings.launcher.general")))
                     .add(launcherSettingsItem)
                     .add(terracottaItem);
 

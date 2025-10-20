@@ -43,6 +43,10 @@ public class Translator {
         return locale;
     }
 
+    public String toCategoryCase(String category) {
+        return category;
+    }
+
     public String getDisplayVersion(RemoteVersion remoteVersion) {
         return remoteVersion.getSelfVersion();
     }

@@ -53,11 +53,11 @@ import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.Locale;
 import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
 
@@ -110,10 +110,10 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         });
 
         AdvancedListBox sideBar = new AdvancedListBox()
-                .startCategory(i18n("download.game").toUpperCase(Locale.ROOT))
+                .startCategory(I18n.toCategoryCase(i18n("download.game")))
                 .addNavigationDrawerTab(tab, newGameTab, i18n("game"), SVG.STADIA_CONTROLLER)
                 .addNavigationDrawerTab(tab, modpackTab, i18n("modpack"), SVG.PACKAGE2)
-                .startCategory(i18n("download.content").toUpperCase(Locale.ROOT))
+                .startCategory(I18n.toCategoryCase(i18n("download.content")))
                 .addNavigationDrawerTab(tab, modTab, i18n("mods"), SVG.EXTENSION)
                 .addNavigationDrawerTab(tab, resourcePackTab, i18n("resourcepack"), SVG.TEXTURE)
                 .addNavigationDrawerTab(tab, shaderTab, i18n("download.shader"), SVG.WB_SUNNY)

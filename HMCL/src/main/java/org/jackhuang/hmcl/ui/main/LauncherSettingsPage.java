@@ -29,8 +29,7 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.versions.VersionSettingsPage;
-
-import java.util.Locale;
+import org.jackhuang.hmcl.util.i18n.I18n;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -68,11 +67,11 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
         AdvancedListBox sideBar = new AdvancedListBox()
                 .addNavigationDrawerTab(tab, gameTab, i18n("settings.type.global.manage"), SVG.STADIA_CONTROLLER)
                 .addNavigationDrawerTab(tab, javaManagementTab, i18n("java.management"), SVG.LOCAL_CAFE)
-                .startCategory(i18n("launcher").toUpperCase(Locale.ROOT))
+                .startCategory(I18n.toCategoryCase(i18n("launcher")))
                 .addNavigationDrawerTab(tab, settingsTab, i18n("settings.launcher.general"), SVG.TUNE)
                 .addNavigationDrawerTab(tab, personalizationTab, i18n("settings.launcher.appearance"), SVG.STYLE)
                 .addNavigationDrawerTab(tab, downloadTab, i18n("download"), SVG.DOWNLOAD)
-                .startCategory(i18n("help").toUpperCase(Locale.ROOT))
+                .startCategory(I18n.toCategoryCase(i18n("help")))
                 .addNavigationDrawerTab(tab, helpTab, i18n("help"), SVG.HELP)
                 .addNavigationDrawerTab(tab, feedbackTab, i18n("feedback"), SVG.FEEDBACK)
                 .addNavigationDrawerTab(tab, aboutTab, i18n("about"), SVG.INFO);

@@ -33,7 +33,7 @@ import java.util.Map;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// @author Glavo
-public class Translator_en_Qabs extends Translator {
+public class Translator_en_Qabs extends Translator_en {
     private static final DateTimeFormatter BASE_FORMATTER = DateTimeFormatter.ofPattern("MMM d, yyyy, h:mm:ss a")
             .withZone(ZoneId.systemDefault());
 
