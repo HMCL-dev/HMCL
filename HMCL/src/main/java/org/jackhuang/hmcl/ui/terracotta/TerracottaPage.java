@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.terracotta;
 
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.value.ChangeListener;
 import javafx.geometry.Insets;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
@@ -38,6 +39,7 @@ import org.jackhuang.hmcl.ui.construct.TabHeader;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.versions.Versions;
+import org.jackhuang.hmcl.util.StringUtils;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -46,6 +48,9 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
     private final TabHeader tab;
     private final TabHeader.Tab<TerracottaControllerPage> statusPage = new TabHeader.Tab<>("statusPage");
     private final TransitionPane transitionPane = new TransitionPane();
+
+    @SuppressWarnings("unused")
+    private ChangeListener<String> instanceChangeListenerHolder;
 
     public TerracottaPage() {
         statusPage.setNodeSupplier(TerracottaControllerPage::new);
@@ -70,6 +75,10 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
                 .addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, () -> {
                     Profile profile = Profiles.getSelectedProfile();
                     Versions.launch(profile, profile.getSelectedVersion(), LauncherHelper::setKeep);
+                }, item -> {
+                    instanceChangeListenerHolder = FXUtils.onWeakChangeAndOperate(Profiles.selectedVersionProperty(),
+                            instanceName -> item.setSubtitle(StringUtils.isNotBlank(instanceName) ? instanceName : i18n("version.empty"))
+                    );
                 })
                 .addNavigationDrawerItem(i18n("terracotta.feedback.title"), SVG.FEEDBACK, () -> FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK))
                 .addNavigationDrawerItem(i18n("terracotta.easytier"), SVG.HOST, () -> FXUtils.openLink("https://easytier.cn/"))
