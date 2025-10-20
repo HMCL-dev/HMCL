@@ -57,7 +57,6 @@ import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
@@ -65,10 +64,7 @@ import java.lang.ref.WeakReference;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Predicate;
-import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -135,7 +131,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             searchField.setPromptText(i18n("search"));
             HBox.setHgrow(searchField, Priority.ALWAYS);
             PauseTransition pause = new PauseTransition(Duration.millis(100));
-            pause.setOnFinished(e -> filteredList.setPredicate(updateSearchPredicate(searchField.getText())));
+            pause.setOnFinished(e -> filteredList.setPredicate(skinnable.updateSearchPredicate(searchField.getText())));
             searchField.textProperty().addListener((observable, oldValue, newValue) -> {
                 pause.setRate(1);
                 pause.playFromStart();
@@ -201,31 +197,6 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
                 Platform.runLater(searchField::requestFocus);
             }
         }
-    }
-
-    private @NotNull Predicate<DatapackListPageSkin.DatapackInfoObject> updateSearchPredicate(String queryString) {
-        if (queryString.isBlank()) {
-            return dataPack -> true;
-        }
-
-        final Predicate<String> stringPredicate;
-        if (queryString.startsWith("regex:")) {
-            try {
-                Pattern pattern = Pattern.compile(queryString.substring("regex:".length()));
-                stringPredicate = s -> s != null && pattern.matcher(s).find();
-            } catch (Exception e) {
-                return dataPack -> false;
-            }
-        } else {
-            String lowerCaseFilter = queryString.toLowerCase(Locale.ROOT);
-            stringPredicate = s -> s != null && s.toLowerCase(Locale.ROOT).contains(lowerCaseFilter);
-        }
-
-        return dataPack -> {
-            String id = dataPack.getPackInfo().getId();
-            String description = dataPack.getPackInfo().getDescription().toString();
-            return stringPredicate.test(id) || stringPredicate.test(description);
-        };
     }
 
     static class DatapackInfoObject extends RecursiveTreeObject<DatapackInfoObject> {
