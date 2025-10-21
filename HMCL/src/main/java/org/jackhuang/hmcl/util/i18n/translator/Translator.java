@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.util.i18n.translator;
 
 import org.jackhuang.hmcl.download.RemoteVersion;
-import org.jackhuang.hmcl.util.DataSizeUnit;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 
 import java.time.ZoneId;
