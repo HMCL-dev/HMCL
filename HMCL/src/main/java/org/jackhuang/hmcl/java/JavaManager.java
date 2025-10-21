@@ -55,6 +55,16 @@ public final class JavaManager {
     private JavaManager() {
     }
 
+    private static final String[] KNOWN_VENDOR_DIRECTORIES = {
+            "Java",
+            "BellSoft",
+            "AdoptOpenJDK",
+            "Zulu",
+            "Microsoft",
+            "Eclipse Foundation",
+            "Semeru"
+    };
+
     public static final HMCLJavaRepository REPOSITORY = new HMCLJavaRepository(Metadata.HMCL_GLOBAL_DIRECTORY.resolve("java"));
     public static final HMCLJavaRepository LOCAL_REPOSITORY = new HMCLJavaRepository(Metadata.HMCL_CURRENT_DIRECTORY.resolve("java"));
 
@@ -461,7 +471,7 @@ public final class JavaManager {
 
         return searcher.javaRuntimes;
     }
-    
+
     private static final class Searcher {
         final Map<Path, JavaRuntime> javaRuntimes = new HashMap<>();
 
@@ -639,7 +649,7 @@ public final class JavaManager {
                 return;
             }
 
-            for (String vendor : new String[]{"Java", "BellSoft", "AdoptOpenJDK", "Zulu", "Microsoft", "Eclipse Foundation", "Semeru"}) {
+            for (String vendor : KNOWN_VENDOR_DIRECTORIES) {
                 searchAllJavaInDirectory(path.resolve(vendor));
             }
         }
