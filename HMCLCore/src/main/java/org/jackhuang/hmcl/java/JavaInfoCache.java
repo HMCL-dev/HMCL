@@ -27,17 +27,14 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.LinkedHashMap;
 import java.util.List;
-
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 @JsonSerializable
 @JsonAdapter(JavaInfoCache.Serializer.class)
 public record JavaInfoCache(String realPath, String cacheKey, JavaInfo javaInfo) {
     public static final long FORMAT_VERSION = 0L;
 
-    public static LinkedHashMap<Path, JavaInfoCache> loadCacheMap(Path cacheFile) throws IOException {
+    public static List<JavaInfoCache> loadCacheMap(Path cacheFile) throws IOException {
         if (Files.notExists(cacheFile))
             throw new FileNotFoundException("Cache file does not exist: " + cacheFile);
 
@@ -51,20 +48,9 @@ public record JavaInfoCache(String realPath, String cacheKey, JavaInfo javaInfo)
         if (version != FORMAT_VERSION)
             throw new IOException("Unsupported cache file, version: %d".formatted(version));
 
-        List<JavaInfoCache> caches = JsonUtils.GSON.fromJson(
+        return JsonUtils.GSON.fromJson(
                 jsonObject.getAsJsonArray("cache"),
                 JsonUtils.listTypeOf(JavaInfoCache.class));
-
-        LinkedHashMap<Path, JavaInfoCache> result = new LinkedHashMap<>();
-        for (JavaInfoCache item : caches) {
-            try {
-                Path path = Path.of(item.realPath);
-                result.put(path, item);
-            } catch (Exception e) {
-                LOG.warning("Java info cache invalid: " + item.realPath, e);
-            }
-        }
-        return result;
     }
 
     public static final class Serializer implements JsonSerializer<JavaInfoCache>, JsonDeserializer<JavaInfoCache> {
