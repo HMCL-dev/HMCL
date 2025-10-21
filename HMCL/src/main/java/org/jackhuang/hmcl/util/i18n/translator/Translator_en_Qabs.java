@@ -84,4 +84,9 @@ public class Translator_en_Qabs extends Translator {
     public String formatDateTime(TemporalAccessor time) {
         return translate(BASE_FORMATTER.format(time));
     }
+
+    @Override
+    public String formatSpeed(long bytes) {
+        return translate(super.formatSpeed(bytes));
+    }
 }
