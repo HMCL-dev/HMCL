@@ -61,7 +61,7 @@ public class Translator {
 
     public String formatSpeed(long bytes) {
         if (bytes < 1024) {
-            return supportedLocale.i18n("download.speed.byte_per_second", (double) bytes);
+            return supportedLocale.i18n("download.speed.byte_per_second", bytes);
         } else if (bytes < 1024 * 1024) {
             return supportedLocale.i18n("download.speed.kibibyte_per_second", (double) bytes / 1024);
         } else {
