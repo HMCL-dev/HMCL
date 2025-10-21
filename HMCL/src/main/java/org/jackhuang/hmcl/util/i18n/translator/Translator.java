@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.util.i18n.translator;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 
+import java.text.DecimalFormat;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
@@ -57,6 +58,21 @@ public class Translator {
                     .withZone(ZoneId.systemDefault());
         }
         return formatter.format(time);
+    }
+
+    public String formatSpeed(long bytes) {
+        double speed = bytes;
+        String unit = "B/s";
+        if (speed > 1024) {
+            speed /= 1024;
+            unit = "KiB/s";
+        }
+        if (speed > 1024) {
+            speed /= 1024;
+            unit = "MiB/s";
+        }
+
+        return String.format("%.1f %s", speed, unit);
     }
 
 }

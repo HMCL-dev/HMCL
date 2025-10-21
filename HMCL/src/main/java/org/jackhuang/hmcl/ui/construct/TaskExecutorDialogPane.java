@@ -28,6 +28,7 @@ import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
@@ -86,18 +87,7 @@ public class TaskExecutorDialogPane extends BorderPane {
         });
 
         speedEventHandler = FetchTask.SPEED_EVENT.registerWeak(speedEvent -> {
-            String unit = "B/s";
-            double speed = speedEvent.getSpeed();
-            if (speed > 1024) {
-                speed /= 1024;
-                unit = "KiB/s";
-            }
-            if (speed > 1024) {
-                speed /= 1024;
-                unit = "MiB/s";
-            }
-
-            String message = String.format("%.1f %s", speed, unit);
+            String message = I18n.formatSpeed(speedEvent.getSpeed());
             Platform.runLater(() -> lblProgress.setText(message));
         });
 
