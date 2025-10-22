@@ -293,6 +293,14 @@
     -fx-font-size: 12px;
 }
 
+.two-line-list-item > .first-line > .tag-warning {
+    -fx-text-fill: #d34336;;
+    -fx-background-color: #f1aeb5;
+    -fx-padding: 2;
+    -fx-font-weight: normal;
+    -fx-font-size: 12px;
+}
+
 .two-line-item-second-large {
 
 }
@@ -916,6 +924,10 @@
 
 .md-list-cell:selected {
     -fx-background-color: derive(-fx-base-color, 60%);
+}
+
+.mod-info-list-cell:warning {
+    -fx-background-color: #F8D7DA;
 }
 
 .options-sublist {

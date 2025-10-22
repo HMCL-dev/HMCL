@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.gradle;
+package org.jackhuang.hmcl.gradle.l10n;
 
 import org.gradle.api.DefaultTask;
 import org.gradle.api.GradleException;
@@ -63,6 +63,14 @@ public abstract class CheckTranslations extends DefaultTask {
 
             checker.checkMisspelled(simplifiedChinese, key, value, "账户", "帐户");
             checker.checkMisspelled(simplifiedChinese, key, value, "其他", "其它");
+
+            checker.checkMisspelled(simplifiedChinese, key, value, "(", "（");
+            checker.checkMisspelled(simplifiedChinese, key, value, ")", "）");
+        });
+
+        traditionalChinese.forEach((key, value) -> {
+            checker.checkMisspelled(traditionalChinese, key, value, "(", "（");
+            checker.checkMisspelled(traditionalChinese, key, value, ")", "）");
         });
 
         classicalChinese.forEach((key, value) -> {

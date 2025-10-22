@@ -36,6 +36,7 @@ import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -93,10 +94,7 @@ import java.nio.file.PathMatcher;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.BooleanSupplier;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
+import java.util.function.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -1218,7 +1216,6 @@ public final class FXUtils {
     public static JFXButton newBorderButton(String text) {
         JFXButton button = new JFXButton(text);
         button.getStyleClass().add("jfx-button-border");
-        button.setButtonType(JFXButton.ButtonType.RAISED);
         return button;
     }
 
@@ -1370,6 +1367,37 @@ public final class FXUtils {
         });
     }
 
+    public static <T> void onScroll(Node node, List<T> list,
+                                    ToIntFunction<List<T>> finder,
+                                    Consumer<T> updater
+    ) {
+        node.addEventHandler(ScrollEvent.SCROLL, event -> {
+            double deltaY = event.getDeltaY();
+            if (deltaY == 0)
+                return;
+
+            int index = finder.applyAsInt(list);
+            if (index < 0) return;
+            if (deltaY > 0) // up
+                index--;
+            else // down
+                index++;
+
+            updater.accept(list.get((index + list.size()) % list.size()));
+            event.consume();
+        });
+    }
+
+    public static void clearFocus(Node node) {
+        Scene scene = node.getScene();
+        if (scene != null) {
+            Parent root = scene.getRoot();
+            if (root != null) {
+                root.requestFocus();
+            }
+        }
+    }
+
     public static void copyOnDoubleClick(Labeled label) {
         label.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
             if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 2) {
@@ -1383,12 +1411,16 @@ public final class FXUtils {
     }
 
     public static void copyText(String text) {
+        copyText(text, i18n("message.copied"));
+    }
+
+    public static void copyText(String text, @Nullable String toastMessage) {
         ClipboardContent content = new ClipboardContent();
         content.putString(text);
         Clipboard.getSystemClipboard().setContent(content);
 
-        if (!Controllers.isStopped()) {
-            Controllers.showToast(i18n("message.copied"));
+        if (toastMessage != null && !Controllers.isStopped()) {
+            Controllers.showToast(toastMessage);
         }
     }
 

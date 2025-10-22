@@ -40,6 +40,7 @@ import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.java.JavaRuntime;
@@ -55,12 +56,15 @@ import org.jackhuang.hmcl.ui.download.DownloadPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.main.LauncherSettingsPage;
 import org.jackhuang.hmcl.ui.main.RootPage;
+import org.jackhuang.hmcl.ui.terracotta.TerracottaPage;
 import org.jackhuang.hmcl.ui.versions.GameListPage;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
+import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -108,6 +112,7 @@ public final class Controllers {
         return accountListPage;
     });
     private static Lazy<LauncherSettingsPage> settingsPage = new Lazy<>(LauncherSettingsPage::new);
+    private static Lazy<TerracottaPage> terracottaPage = new Lazy<>(TerracottaPage::new);
 
     private Controllers() {
     }
@@ -148,6 +153,11 @@ public final class Controllers {
     // FXThread
     public static DownloadPage getDownloadPage() {
         return downloadPage.get();
+    }
+
+    // FXThread
+    public static Node getTerracottaPage() {
+        return terracottaPage.get();
     }
 
     // FXThread
@@ -424,6 +434,38 @@ public final class Controllers {
         dialog(new MessageDialogPane.Builder(text, title, type).actionOrCancel(actionButton, cancel).build());
     }
 
+    public static void confirmWithCountdown(String text, String title, int seconds, MessageType messageType,
+                                            @Nullable Runnable ok, @Nullable Runnable cancel) {
+        if (seconds <= 0)
+            throw new IllegalArgumentException("Seconds must be greater than 0");
+
+        JFXButton btnOk = new JFXButton(i18n("button.ok"));
+        btnOk.getStyleClass().add(messageType == MessageType.WARNING || messageType == MessageType.ERROR
+                ? "dialog-error"
+                : "dialog-accept");
+
+        if (ok != null)
+            btnOk.setOnAction(e -> ok.run());
+        btnOk.setDisable(true);
+
+        KeyFrame[] keyFrames = new KeyFrame[seconds + 1];
+        for (int i = 0; i < seconds; i++) {
+            keyFrames[i] = new KeyFrame(Duration.seconds(i),
+                    new KeyValue(btnOk.textProperty(), i18n("button.ok.countdown", seconds - i)));
+        }
+        keyFrames[seconds] = new KeyFrame(Duration.seconds(seconds),
+                new KeyValue(btnOk.textProperty(), i18n("button.ok")),
+                new KeyValue(btnOk.disableProperty(), false));
+
+        Timeline timeline = new Timeline(keyFrames);
+        confirmAction(text, title, messageType, btnOk, () -> {
+            timeline.stop();
+            if (cancel != null)
+                cancel.run();
+        });
+        timeline.play();
+    }
+
     public static CompletableFuture<String> prompt(String title, FutureCallback<String> onResult) {
         return prompt(title, onResult, "");
     }
@@ -469,6 +511,10 @@ public final class Controllers {
                 case "hmcl://settings/feedback":
                     Controllers.getSettingsPage().showFeedback();
                     Controllers.navigate(Controllers.getSettingsPage());
+                    break;
+                case "hmcl://game/launch":
+                    Profile profile = Profiles.getSelectedProfile();
+                    Versions.launch(profile, profile.getSelectedVersion(), LauncherHelper::setKeep);
                     break;
             }
         } else {

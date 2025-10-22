@@ -34,9 +34,10 @@ import org.hildan.fxgson.creators.ObservableSetCreator;
 import org.hildan.fxgson.factories.JavaFxPropertyTypeAdapterFactory;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
+import org.jackhuang.hmcl.java.JavaRuntime;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.gson.*;
-import org.jackhuang.hmcl.util.i18n.Locales;
-import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
+import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jackhuang.hmcl.util.javafx.DirtyTracker;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
 import org.jetbrains.annotations.Nullable;
@@ -220,7 +221,7 @@ public final class Config implements Observable {
     }
 
     @SerializedName("localization")
-    private final ObjectProperty<SupportedLocale> localization = new SimpleObjectProperty<>(Locales.DEFAULT);
+    private final ObjectProperty<SupportedLocale> localization = new SimpleObjectProperty<>(SupportedLocale.DEFAULT);
 
     public ObjectProperty<SupportedLocale> localizationProperty() {
         return localization;
@@ -247,6 +248,21 @@ public final class Config implements Observable {
 
     public void setPromptedVersion(String promptedVersion) {
         this.promptedVersion.set(promptedVersion);
+    }
+
+    @SerializedName("acceptPreviewUpdate")
+    private final BooleanProperty acceptPreviewUpdate = new SimpleBooleanProperty(false);
+
+    public BooleanProperty acceptPreviewUpdateProperty() {
+        return acceptPreviewUpdate;
+    }
+
+    public boolean isAcceptPreviewUpdate() {
+        return acceptPreviewUpdate.get();
+    }
+
+    public void setAcceptPreviewUpdate(boolean acceptPreviewUpdate) {
+        this.acceptPreviewUpdate.set(acceptPreviewUpdate);
     }
 
     @SerializedName("shownTips")
@@ -364,7 +380,11 @@ public final class Config implements Observable {
     }
 
     @SerializedName("animationDisabled")
-    private final BooleanProperty animationDisabled = new SimpleBooleanProperty();
+    private final BooleanProperty animationDisabled = new SimpleBooleanProperty(
+            FXUtils.REDUCED_MOTION == Boolean.TRUE
+                    || !JavaRuntime.CURRENT_JIT_ENABLED
+                    || !FXUtils.GPU_ACCELERATION_ENABLED
+    );
 
     public BooleanProperty animationDisabledProperty() {
         return animationDisabled;

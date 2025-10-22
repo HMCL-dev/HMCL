@@ -150,6 +150,11 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     @Override
+    public Path getModsDirectory(String id) {
+        return getRunDirectory(id).resolve("mods");
+    }
+
+    @Override
     public Path getVersionRoot(String id) {
         return getBaseDirectory().resolve("versions/" + id);
     }
