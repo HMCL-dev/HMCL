@@ -11,6 +11,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
@@ -113,7 +114,17 @@ public class IconedTwoLineListItem extends HBox {
             externalLinkButton.getStyleClass().add("toggle-icon4");
             externalLinkButton.setGraphic(SVG.OPEN_IN_NEW.createIcon(Theme.blackFill(), -1));
             externalLinkButton.setOnAction(e -> FXUtils.openLink(externalLink.get()));
-            FXUtils.installFastTooltip(externalLinkButton, externalLink.get());
+
+            Tooltip tooltip = new Tooltip();
+            FXUtils.onChangeAndOperate(externalLink, link -> {
+                if (StringUtils.isBlank(link)) {
+                    tooltip.setText("");
+                    Tooltip.uninstall(externalLinkButton, tooltip);
+                } else {
+                    tooltip.setText(link);
+                    FXUtils.installFastTooltip(externalLinkButton, tooltip);
+                }
+            });
         }
         return externalLinkButton;
     }
