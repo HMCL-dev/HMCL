@@ -51,7 +51,6 @@ import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.io.JarUtils;
-import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
@@ -282,7 +281,7 @@ public class GameCrashWindow extends Stage {
             crashReportFile = Files.createTempFile("hmcl-game-crash-report-", ".log");
         } catch (IOException e) {
             LOG.warning("Failed to create temporary crash report file, using run directory instead", e);
-            crashReportFile = repository.getRunDirectory(version.getId()).toPath().resolve("hmcl-game-crash-report.txt");
+            crashReportFile = repository.getRunDirectory(version.getId()).resolve("hmcl-game-crash-report.txt");
         }
 
         Path finalCrashReportFile = crashReportFile;
@@ -435,17 +434,17 @@ public class GameCrashWindow extends Stage {
                 report.write("\n\n");
 
                 report.write("\n== Game Resourcepacks Directory Structure ==\n");
-                report.write(FileUtils.printFileStructure(Paths.get(repository.getRunDirectory(version.getId()).getAbsolutePath()).resolve("resourcepacks"), 10));
+                report.write(FileUtils.printFileStructure(repository.getRunDirectory(version.getId()).resolve("resourcepacks").toAbsolutePath(), 10));
 
                 report.write("\n\n");
 
                 report.write("\n== Game Shaderpacks Directory Structure ==\n");
-                report.write(FileUtils.printFileStructure(Paths.get(repository.getRunDirectory(version.getId()).getAbsolutePath()).resolve("shaderpacks"), 10));
+                report.write(FileUtils.printFileStructure(repository.getRunDirectory(version.getId()).resolve("shaderpacks").toAbsolutePath(), 10));
 
                 report.write("\n\n");
 
                 report.write("\n== Game Config Directory Structure ==\n");
-                report.write(FileUtils.printFileStructure(Paths.get(repository.getRunDirectory(version.getId()).getAbsolutePath()).resolve("config"), 10));
+                report.write(FileUtils.printFileStructure(repository.getRunDirectory(version.getId()).resolve("config").toAbsolutePath(), 10));
 
                 report.flush();
             } catch (IOException e) {
@@ -465,9 +464,8 @@ public class GameCrashWindow extends Stage {
 
             alert.setTitle(i18n("settings.launcher.launcher_log.export"));
             alert.showAndWait();
-
-                    return null;
-                }, Schedulers.javafx());
+            return null;
+        }, Schedulers.javafx());
     }
 
     private final class View extends VBox {
