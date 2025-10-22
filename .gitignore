@@ -16,6 +16,11 @@ NVIDIA
 minecraft-exported-crash-info*
 hmcl-exported-logs-*
 /.java/
+/.local/
+/.cache/
+
+# IANA Language Subtag Registry
+language-subtag-registry
 
 # gradle build
 /build/

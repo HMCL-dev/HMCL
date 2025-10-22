@@ -1,0 +1,43 @@
+{
+  "version_legacy": "0\\.3\\.([89]-rc\\.([0-9]|10)|10)",
+  "version_recent": [
+    "0.3.10"
+  ],
+  "version_latest": "0.3.11",
+  "classifiers": {
+    "linux-arm64": "sha256:cd321f22b200b212ba21eb7582bfe0e1bcadb528d19c70307a2aea9596118d33",
+    "linux-x86_64": "sha256:d4b15ec7cba7c9332b84f6acbf247e779543f958f9b240e9707bd6f37973e12a",
+    "macos-arm64": "sha256:8456ad2c016e7c5c6f5814d98203a89ec38d13cdaafe94d328e313404ea16a2f",
+    "macos-arm64.pkg": "sha256:f85f86c563d4460ba97ed048fee22fa0e1398454443576c56b0afeebb98e8691",
+    "macos-x86_64": "sha256:cb1f7f5d5876a9177c426bece5ad0845e1b25d3430533646b2b9c93d97d37d79",
+    "macos-x86_64.pkg": "sha256:e54bc35be7c8c543362b1b428e7d40d2116f1a4e57ade1c09cbef6239efb67ae",
+    "windows-arm64.exe": "sha256:40c628bafb48d51c90f47037f8c4caedfadb52421e64b70011f448d1d2f553a3",
+    "windows-x86_64.exe": "sha256:de518b2b4e60336fd272092326799966efc4e72acd65576d83e61d4d242fd61d"
+  },
+  "downloads": [
+    "https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}"
+  ],
+  "downloads_CN": [
+    "https://gitee.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}",
+    "https://cnb.cool/HMCL-Terracotta/Terracotta/-/releases/download/v${version}/terracotta-${version}-${classifier}",
+    "https://alist.8mi.tech/d/mirror/HMCL-Terracotta/Auto/v${version}/terracotta-${version}-${classifier}"
+  ],
+  "links": [
+    {
+      "desc": {
+        "default": "GitHub Release",
+        "zh": "GitHub 发布页",
+        "zh-Hant": "GitHub 發布頁"
+      },
+      "link": "https://github.com/burningtnt/Terracotta/releases/tag/v${version}"
+    },
+    {
+      "desc": {
+        "default": "Tencent QQ Group",
+        "zh": "QQ 群",
+        "zh-Hant": "QQ 群"
+      },
+      "link": "https://qm.qq.com/cgi-bin/qm/qr?k=nIf5u5xQ3LXEP4ZEmLQtfjtpppjgHfI5&jump_from=webapi&authKey=sXStlPuGzhD1JyAhyExd2OwjzZkRf3x7bAEb/j1xNX1wrQcDdg71qPrhumIm6pyf"
+    }
+  ]
+}

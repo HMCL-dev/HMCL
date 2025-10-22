@@ -41,9 +41,12 @@ import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
-import org.jackhuang.hmcl.util.*;
-import org.jackhuang.hmcl.util.logging.Logger;
+import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.Log4jLevel;
+import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.platform.*;
 
 import java.io.IOException;
@@ -59,9 +62,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class GameCrashWindow extends Stage {
     private final Version version;
@@ -283,7 +286,7 @@ public class GameCrashWindow extends Stage {
                     alert.showAndWait();
 
                     return null;
-                });
+                }, Schedulers.javafx());
     }
 
     private final class View extends VBox {
