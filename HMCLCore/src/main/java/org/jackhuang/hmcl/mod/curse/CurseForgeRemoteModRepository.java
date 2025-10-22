@@ -45,7 +45,7 @@ import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
 public final class CurseForgeRemoteModRepository implements RemoteModRepository {
 
     private static final String PREFIX = "https://api.curseforge.com";
-    private static final String apiKey = System.getProperty("hmcl.curseforge.apikey", JarUtils.getManifestAttribute("CurseForge-Api-Key", ""));
+    private static final String apiKey = System.getProperty("hmcl.curseforge.apikey", JarUtils.getAttribute("hmcl.curseforge.apikey", ""));
 
     private static final int WORD_PERFECT_MATCH_WEIGHT = 5;
 
@@ -139,7 +139,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
         StringUtils.LevCalculator levCalculator = new StringUtils.LevCalculator();
 
         return new SearchResult(response.getData().stream().map(CurseAddon::toMod).map(remoteMod -> {
-            String lowerCaseResult = remoteMod.getTitle().toLowerCase();
+            String lowerCaseResult = remoteMod.getTitle().toLowerCase(Locale.ROOT);
             int diff = levCalculator.calc(lowerCaseSearchFilter, lowerCaseResult);
 
             for (String s : StringUtils.tokenize(lowerCaseResult)) {

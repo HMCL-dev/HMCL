@@ -70,7 +70,6 @@ import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.selectedItemPropertyFor;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class DownloadListPage extends Control implements DecoratorPage, VersionPage.VersionLoadable {
     protected final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
@@ -524,14 +523,17 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
                 // ListViewBehavior would consume ESC pressed event, preventing us from handling it, so we ignore it here
                 ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
-                listView.setCellFactory(x -> new FloatListCell<RemoteMod>(listView) {
-                    TwoLineListItem content = new TwoLineListItem();
-                    ImageView imageView = new ImageView();
+                listView.setCellFactory(x -> new FloatListCell<>(listView) {
+                    private final TwoLineListItem content = new TwoLineListItem();
+                    private final ImageView imageView = new ImageView();
 
                     {
                         HBox container = new HBox(8);
                         container.setAlignment(Pos.CENTER_LEFT);
                         pane.getChildren().add(container);
+
+                        imageView.setFitWidth(40);
+                        imageView.setFitHeight(40);
 
                         container.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), content);
                         HBox.setHgrow(content, Priority.ALWAYS);
@@ -543,13 +545,12 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(getSkinnable().repository.getType()).getModByCurseForgeId(dataItem.getSlug());
                         content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : dataItem.getTitle());
                         content.setSubtitle(dataItem.getDescription());
-                        content.getTags().setAll(dataItem.getCategories().stream()
+                        content.getTags().clear();
+                        dataItem.getCategories().stream()
                                 .map(category -> getSkinnable().getLocalizedCategory(category))
-                                .collect(Collectors.toList()));
-
+                                .forEach(content::addTag);
                         if (StringUtils.isNotBlank(dataItem.getIconUrl())) {
-                            LOG.debug("Icon: " + dataItem.getIconUrl());
-                            imageView.imageProperty().bind(FXUtils.newRemoteImage(dataItem.getIconUrl(), 40, 40, true, true));
+                            imageView.imageProperty().bind(FXUtils.newRemoteImage(dataItem.getIconUrl(), 80, 80, true, true));
                         }
                     }
                 });

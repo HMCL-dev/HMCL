@@ -20,9 +20,9 @@ package org.jackhuang.hmcl.game;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.Serializable;
 import java.net.Proxy;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -31,7 +31,7 @@ import java.util.*;
  */
 public class LaunchOptions implements Serializable {
 
-    private File gameDir;
+    private Path gameDir;
     private JavaRuntime java;
     private String versionName;
     private String versionType;
@@ -55,6 +55,7 @@ public class LaunchOptions implements Serializable {
     private String proxyUser;
     private String proxyPass;
     private boolean noGeneratedJVMArgs;
+    private boolean noGeneratedOptimizingJVMArgs;
     private String preLaunchCommand;
     private String postExitCommand;
     private NativesDirectoryType nativesDirType;
@@ -68,7 +69,7 @@ public class LaunchOptions implements Serializable {
     /**
      * The game directory
      */
-    public File getGameDir() {
+    public Path getGameDir() {
         return gameDir;
     }
 
@@ -227,6 +228,13 @@ public class LaunchOptions implements Serializable {
     }
 
     /**
+     * Prevent game launcher from generating optimizing JVM arguments.
+     */
+    public boolean isNoGeneratedOptimizingJVMArgs() {
+        return noGeneratedOptimizingJVMArgs;
+    }
+
+    /**
      * Command called before game launches.
      */
     public String getPreLaunchCommand() {
@@ -281,7 +289,7 @@ public class LaunchOptions implements Serializable {
         return daemon;
     }
 
-    public static class Builder {
+    public static final class Builder {
 
         private final LaunchOptions options = new LaunchOptions();
 
@@ -314,7 +322,7 @@ public class LaunchOptions implements Serializable {
             return options.javaAgents;
         }
 
-        public Builder setGameDir(File gameDir) {
+        public Builder setGameDir(Path gameDir) {
             options.gameDir = gameDir;
             return this;
         }
@@ -436,6 +444,11 @@ public class LaunchOptions implements Serializable {
 
         public Builder setNoGeneratedJVMArgs(boolean noGeneratedJVMArgs) {
             options.noGeneratedJVMArgs = noGeneratedJVMArgs;
+            return this;
+        }
+
+        public Builder setNoGeneratedOptimizingJVMArgs(boolean noGeneratedOptimizingJVMArgs) {
+            options.noGeneratedOptimizingJVMArgs = noGeneratedOptimizingJVMArgs;
             return this;
         }
 

@@ -22,4 +22,4 @@ jobs:
           java-version: '17'
           java-package: 'jdk+fx'
       - name: Check Codes
-        run: ./gradlew checkstyle checkTranslations --no-daemon --parallel
+        run: ./gradlew checkstyle checkTranslations --no-daemon --parallel --stacktrace

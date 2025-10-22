@@ -23,8 +23,8 @@ import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 /**
  *
@@ -59,7 +59,7 @@ public abstract class Launcher {
     /**
      * @param file the file path.
      */
-    public abstract void makeLaunchScript(File file) throws IOException;
+    public abstract void makeLaunchScript(Path file) throws IOException;
 
     public abstract ManagedProcess launch() throws IOException, InterruptedException;
 

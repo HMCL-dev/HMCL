@@ -24,7 +24,6 @@ import javafx.beans.property.*;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -45,7 +44,6 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.File;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -158,7 +156,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     }
 
     private void onBrowse(String sub) {
-        FXUtils.openFolder(new File(getProfile().getRepository().getRunDirectory(getVersion()), sub));
+        FXUtils.openFolder(getProfile().getRepository().getRunDirectory(getVersion()).resolve(sub));
     }
 
     private void redownloadAssetIndex() {
@@ -166,14 +164,14 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     }
 
     private void clearLibraries() {
-        FileUtils.deleteDirectoryQuietly(new File(getProfile().getRepository().getBaseDirectory(), "libraries"));
+        FileUtils.deleteDirectoryQuietly(getProfile().getRepository().getBaseDirectory().resolve("libraries"));
     }
 
     private void clearAssets() {
         HMCLGameRepository baseDirectory = getProfile().getRepository();
-        FileUtils.deleteDirectoryQuietly(new File(baseDirectory.getBaseDirectory(), "assets"));
+        FileUtils.deleteDirectoryQuietly(baseDirectory.getBaseDirectory().resolve("assets"));
         if (version.get() != null) {
-            FileUtils.deleteDirectoryQuietly(new File(baseDirectory.getRunDirectory(version.get().getVersion()), "resources"));
+            FileUtils.deleteDirectoryQuietly(baseDirectory.getRunDirectory(version.get().getVersion()).resolve("resources"));
         }
     }
 
@@ -239,10 +237,6 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
             super(control);
 
             {
-                BorderPane left = new BorderPane();
-                FXUtils.setLimitWidth(left, 200);
-                setLeft(left);
-
                 AdvancedListItem versionSettingsItem = new AdvancedListItem();
                 versionSettingsItem.getStyleClass().add("navigation-drawer-item");
                 versionSettingsItem.setTitle(i18n("settings.game"));

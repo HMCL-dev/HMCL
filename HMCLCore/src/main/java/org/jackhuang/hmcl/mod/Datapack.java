@@ -63,7 +63,7 @@ public class Datapack {
             try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(datapacks)) {
                 for (Path datapack : directoryStream) {
                     if (Files.isDirectory(datapack) && packs.contains(FileUtils.getName(datapack)))
-                        FileUtils.deleteDirectory(datapack.toFile());
+                        FileUtils.deleteDirectory(datapack);
                     else if (Files.isRegularFile(datapack) && packs.contains(FileUtils.getNameWithoutExtension(datapack)))
                         Files.delete(datapack);
                 }
@@ -106,14 +106,14 @@ public class Datapack {
                     Files.delete(packPng);
             }
         } else {
-            FileUtils.copyFile(path.toFile(), datapacks.resolve(FileUtils.getName(path)).toFile());
+            FileUtils.copyFile(path, datapacks.resolve(FileUtils.getName(path)));
         }
     }
 
     public void deletePack(Pack pack) throws IOException {
         Path subPath = pack.file;
         if (Files.isDirectory(subPath))
-            FileUtils.deleteDirectory(subPath.toFile());
+            FileUtils.deleteDirectory(subPath);
         else if (Files.isRegularFile(subPath))
             Files.delete(subPath);
 
