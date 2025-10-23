@@ -28,6 +28,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.CancellationException;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -49,7 +50,7 @@ public final class EntryPoint {
         setupJavaFXVMOptions();
         checkDirectoryPath();
 
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && isMacDockIconEnabled())
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && !isMacDockIconDisabled())
             initIcon();
 
         checkJavaFX();
@@ -159,9 +160,14 @@ public final class EntryPoint {
         }
     }
 
-    private static boolean isMacDockIconEnabled() {
-        String v = System.getenv("HMCL_MACOS_SET_ICON");
-        return v == null || Boolean.parseBoolean(v);
+    private static boolean isMacDockIconDisabled() {
+        Path directory = Metadata.HMCL_CURRENT_DIRECTORY;
+        for (int i = 1; i < directory.getNameCount(); i++) {
+            if ("Contents".equals(directory.getName(i).toString()) && directory.getName(i - 1).toString().endsWith(".app")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static void initIcon() {
