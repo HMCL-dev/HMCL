@@ -3,6 +3,7 @@
 <!-- #BEGIN LANGUAGE_SWITCHER -->
 **English** | [中文](Localization_zh.md)
 <!-- #END LANGUAGE_SWITCHER -->
+
 HMCL provides localization support for multiple languages.
 
 This document describes HMCL's support status for these languages and provides a guide for contributors who want to help with HMCL localization.
@@ -14,10 +15,10 @@ Currently, HMCL supports the following languages:
 | Language              | Language Tag | Preferred Localization Key | Preferred Localization File Suffix | [Game Language Files](https://minecraft.wiki/w/Language) | Support Status | Volunteers                                |
 |-----------------------|--------------|----------------------------|------------------------------------|----------------------------------------------------------|----------------|-------------------------------------------|
 | English               | `en`         | `default`                  | (empty)                            | `en_us`                                                  | **Primary**    | [Glavo](https://github.com/Glavo)         |
-| English (Upside-down) | `en-Qabs`    | `en-Qabs`                  | `en_Qabs`                          | `en_ud`                                                  | Automatic      |                                           |
+| English (Upside Down) | `en-Qabs`    | `en-Qabs`                  | `en_Qabs`                          | `en_ud`                                                  | Automatic      |                                           |
 | Chinese (Simplified)  | `zh-Hans`    | `zh`                       | `_zh`                              | `zh_cn`                                                  | **Primary**    | [Glavo](https://github.com/Glavo)         |
 | Chinese (Traditional) | `zh-Hant`    | `zh-Hant`                  | `_zh_Hant`                         | `zh_tw` <br/> `zh_hk`                                    | **Primary**    | [Glavo](https://github.com/Glavo)         |
-| Classical Chinese     | `lzh`        | `lzh`                      | `_lzh`                             | `lzh`                                                    | Secondary      |                                           |
+| Chinese (Classical)   | `lzh`        | `lzh`                      | `_lzh`                             | `lzh`                                                    | Secondary      |                                           |
 | Japanese              | `ja`         | `ja`                       | `_ja`                              | `ja_jp`                                                  | Secondary      |                                           |
 | Spanish               | `es`         | `es`                       | `_es`                              | `es_es`                                                  | Secondary      | [3gf8jv4dv](https://github.com/3gf8jv4dv) |
 | Russian               | `ru`         | `ru`                       | `_ru`                              | `ru_ru`                                                  | Secondary      | [3gf8jv4dv](https://github.com/3gf8jv4dv) |
@@ -30,15 +31,17 @@ HMCL uses language tags that conform to the IETF BCP 47 standard.
 
 When choosing language tags, we follow these principles:
 
-1. For languages defined in the ISO 639 standard, if a tag has already been registered in the [IANA Language Subtag Registry](https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry), we always use the registered tag.
+1. For languages defined in the ISO 639 standard, if a tag has already been registered in the [IANA Language Subtag Registry](https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry),
+   we always use the registered tag.
 
    For example, for English, we use `en` instead of `eng` as the language code.
 
 2. For non-standard languages defined by Minecraft, the code defined in the language file's `language.code` should be preferred over the game language file's name.
 
-   This is because Minecraft sometimes uses real-world country/region codes to represent fictional languages (for example, Pirate English uses the language file `en_pt`, but `PT` is actually the country code for Portugal).
+   This is because Minecraft sometimes uses real-world country/region codes to represent joke languages 
+   (for example, Pirate English uses the language file `en_pt`, but `PT` is actually the country code for Portugal).
 
-   For example, for Upside-down English, we use `en-Qabs` as the language code instead of `en-UD`.
+   For example, for Upside down English, we use `en-Qabs` as the language code instead of `en-UD`.
 
 </details>
 
@@ -52,22 +55,27 @@ Generally, the localization key is the language code for the resource, and the l
 As a special case, for default resources, the localization key is `default` and the file suffix is empty.
 
 Due to the existence of the [resource fallback mechanism](#resource-fallback-mechanism),
-if there is no resource that exactly matches the current locale, HMCL will derive a search list from the current language tag and search for resources in order.
+if there is no resource that exactly matches the current locale, 
+HMCL will derive a search list from the current language tag and search for resources in order.
 
 We recommend always providing a default resource (with the `default` key and empty file suffix) when providing localization resources,
 to ensure all users can load resources properly.
 
-We also recommend using broader language tags for localization resources whenever possible, so users are less likely to fall back to the default resource.
+We also recommend using broader language tags for localization resources whenever possible,
+so users are less likely to fall back to the default resource.
 
-For example, if you provide a Simplified Chinese localization resource, we recommend using `zh` as the localization key instead of the more specific `zh-Hans`,
+For example, if you provide a Simplified Chinese localization resource, 
+we recommend using `zh` as the localization key instead of the more specific `zh-Hans`,
 so it will apply to all Chinese users and avoid falling back to the default resource for them.
 
-If you want to provide both Simplified and Traditional Chinese resources, it is recommended to use the broader `zh` as the key for the resource with more users (as the default Chinese resource),
+If you want to provide both Simplified and Traditional Chinese resources, 
+it is recommended to use the broader `zh` as the key for the resource with more users (as the default Chinese resource),
 and use the more specific `zh-Hans`/`zh-Hant` as the key for the resource with fewer users.
 
 </details>
 
-HMCL requires all pull requests that update documentation and localization resources to also update the resources for all **primary** supported languages.
+HMCL requires all pull requests that update documentation and localization resources to also update the resources
+for all **primary** supported languages.
 If the PR author is not familiar with the relevant languages, they can request translation help in the comments,
 and maintainers will help translate these texts before merging the PR.
 
@@ -84,7 +92,8 @@ We greatly appreciate your help.
 
 ## Adding Support for a New Language
 
-HMCL welcomes anyone to participate in translation and contribution. However, maintaining translations for more languages requires more maintenance effort, so we have some requirements for newly added languages.
+HMCL welcomes anyone to participate in translation and contribution. 
+However, maintaining translations for more languages requires more maintenance effort, so we have some requirements for newly added languages.
 Please confirm the following requirements before contributing:
 
 - We prioritize [languages officially supported by Minecraft](https://minecraft.wiki/w/Language).
@@ -282,6 +291,8 @@ Below are the localization resource search lists for several common Chinese envi
 
 ## Automatic Synchronization of Documentation Content
 
+<!-- #BEGIN BLOCK -->
+<!-- #DEFINE PROCESS_LINK=false -->
 To simplify documentation maintenance, HMCL uses a macro mechanism to automatically maintain parts of the documentation content. Run the following command in the terminal:
 
 ```bash
@@ -305,3 +316,4 @@ After running `./gradlew updateDocuments`, these two lines will be automatically
 ```
 
 For more about macros, see [MacroProcessor.java](../buildSrc/src/main/java/org/jackhuang/hmcl/gradle/docs/MacroProcessor.java).
+<!-- #END BLOCK -->
