@@ -1,6 +1,8 @@
 # 本地化
 
-<!-- TODO: 本文档需要进一步完善。为了便于修改，我们暂时不将本文件翻译至其他语言，在完善后再在独立 PR 中提供其他语言的译文。 -->
+<!-- #BEGIN LANGUAGE_SWITCHER -->
+[English](Localization.md) | **中文**
+<!-- #END LANGUAGE_SWITCHER -->
 
 HMCL 为多种语言提供本地化支持。
 
@@ -299,14 +301,14 @@ HMCL 总是会将 `zh-CN` 加入所有中文环境的搜索列表中，将 `zh-T
 
 ```markdown
 <!-- #BEGIN LANGUAGE_SWITCHER -->
+[English](Localization.md) | **中文**
 <!-- #END LANGUAGE_SWITCHER -->
 ```
 
 随后执行 `./gradlew updateDocuments`，这两行内容会被自动替换为类似这样的跳转链接:
 
 ```markdown
-**English** |
-中文 ([简体](README_zh.md), [繁體](README_zh.md), [文言](README_zh.md)) | [日本語](README_zh.md) | [español](README_zh.md) | [русский](README_zh.md) | [українська](README_zh.md)
+**English** (**Standard**, [uʍoᗡ ǝpᴉsd∩](README_en_Qabs.md)) | 中文 ([简体](README_zh.md), [繁體](README_zh_Hant.md), [文言](README_lzh.md)) | [日本語](README_ja.md) | [español](README_es.md) | [русский](README_ru.md) | [українська](README_uk.md)
 ```
 
 关于宏的更多内容，请见 [MacroProcessor.java](../buildSrc/src/main/java/org/jackhuang/hmcl/gradle/docs/MacroProcessor.java)。
