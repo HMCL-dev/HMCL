@@ -64,6 +64,7 @@ import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -433,26 +434,34 @@ public final class Controllers {
         dialog(new MessageDialogPane.Builder(text, title, type).actionOrCancel(actionButton, cancel).build());
     }
 
-    public static void confirmActionDanger(String text, String title, Runnable resolve, Runnable cancel) {
-        JFXButton btnYes = new JFXButton(i18n("button.ok"));
-        btnYes.getStyleClass().add("dialog-error");
-        btnYes.setOnAction(e -> resolve.run());
-        btnYes.setDisable(true);
+    public static void confirmWithCountdown(String text, String title, int seconds, MessageType messageType,
+                                            @Nullable Runnable ok, @Nullable Runnable cancel) {
+        if (seconds <= 0)
+            throw new IllegalArgumentException("Seconds must be greater than 0");
 
-        int countdown = 10;
-        KeyFrame[] keyFrames = new KeyFrame[countdown + 1];
-        for (int i = 0; i < countdown; i++) {
+        JFXButton btnOk = new JFXButton(i18n("button.ok"));
+        btnOk.getStyleClass().add(messageType == MessageType.WARNING || messageType == MessageType.ERROR
+                ? "dialog-error"
+                : "dialog-accept");
+
+        if (ok != null)
+            btnOk.setOnAction(e -> ok.run());
+        btnOk.setDisable(true);
+
+        KeyFrame[] keyFrames = new KeyFrame[seconds + 1];
+        for (int i = 0; i < seconds; i++) {
             keyFrames[i] = new KeyFrame(Duration.seconds(i),
-                    new KeyValue(btnYes.textProperty(), i18n("button.ok.countdown", countdown - i)));
+                    new KeyValue(btnOk.textProperty(), i18n("button.ok.countdown", seconds - i)));
         }
-        keyFrames[countdown] = new KeyFrame(Duration.seconds(countdown),
-                new KeyValue(btnYes.textProperty(), i18n("button.ok")),
-                new KeyValue(btnYes.disableProperty(), false));
+        keyFrames[seconds] = new KeyFrame(Duration.seconds(seconds),
+                new KeyValue(btnOk.textProperty(), i18n("button.ok")),
+                new KeyValue(btnOk.disableProperty(), false));
 
         Timeline timeline = new Timeline(keyFrames);
-        confirmAction(text, title, MessageType.WARNING, btnYes, () -> {
+        confirmAction(text, title, messageType, btnOk, () -> {
             timeline.stop();
-            cancel.run();
+            if (cancel != null)
+                cancel.run();
         });
         timeline.play();
     }

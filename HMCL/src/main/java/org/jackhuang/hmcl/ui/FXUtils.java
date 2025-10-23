@@ -36,6 +36,7 @@ import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -1387,6 +1388,16 @@ public final class FXUtils {
         });
     }
 
+    public static void clearFocus(Node node) {
+        Scene scene = node.getScene();
+        if (scene != null) {
+            Parent root = scene.getRoot();
+            if (root != null) {
+                root.requestFocus();
+            }
+        }
+    }
+
     public static void copyOnDoubleClick(Labeled label) {
         label.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
             if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 2) {
@@ -1400,12 +1411,16 @@ public final class FXUtils {
     }
 
     public static void copyText(String text) {
+        copyText(text, i18n("message.copied"));
+    }
+
+    public static void copyText(String text, @Nullable String toastMessage) {
         ClipboardContent content = new ClipboardContent();
         content.putString(text);
         Clipboard.getSystemClipboard().setContent(content);
 
-        if (!Controllers.isStopped()) {
-            Controllers.showToast(i18n("message.copied"));
+        if (toastMessage != null && !Controllers.isStopped()) {
+            Controllers.showToast(toastMessage);
         }
     }
 
