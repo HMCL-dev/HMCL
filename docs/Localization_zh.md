@@ -109,7 +109,7 @@ HMCL 的绝大多数文本都位于这个文件中，翻译此文件就能翻译
 作为翻译的第一步，请从[这张表格](https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry)中查询这个语言对应的两字母或三字母语言标签。
 例如，英语的语言标签为 `en`。
 
-在确定了语言标签后，请在 [`I18N.properties` 文件旁](../HMCL/src/main/resources/assets/lang)创建 `I18N_<本地化文件后缀>.properites` (例如 `I18N_en.properties`) 文件。
+在确定了语言标签后，请在 [`I18N.properties` 文件旁](../HMCL/src/main/resources/assets/lang)创建 `I18N_<本地化文件后缀>.properties` (例如 `I18N_en.properties`) 文件。
 随后，你就可以开始在这个文件中进行翻译工作了。
 
 `I18N.properties` 文件会遵循[资源回退机制](#资源回退机制)查询缺失的译文。
