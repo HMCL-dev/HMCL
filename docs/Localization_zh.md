@@ -290,7 +290,7 @@ HMCL 总是会将 `zh-CN` 加入所有中文环境的搜索列表中，将 `zh-T
 ## 自动同步文档内容
 
 <!-- #BEGIN BLOCK -->
-<!-- #DEFINE PROCESS_LINK=false -->
+<!-- #PROPERTY PROCESS_LINK=false -->
 为了简化文档的维护，HMCL 使用了一套宏机制自动维护文档的部分内容。在命令行中执行
 
 ```bash

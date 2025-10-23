@@ -309,7 +309,7 @@ Below are the localization resource search lists for several common Chinese envi
 ## Automatic Synchronization of Documentation Content
 
 <!-- #BEGIN BLOCK -->
-<!-- #DEFINE PROCESS_LINK=false -->
+<!-- #PROPERTY PROCESS_LINK=false -->
 To simplify documentation maintenance, HMCL uses a macro mechanism to automatically maintain parts of the documentation content.
 Run the following command in the terminal:
 
