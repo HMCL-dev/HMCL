@@ -97,9 +97,12 @@ However, maintaining translations for more languages requires more maintenance e
 Please confirm the following requirements before contributing:
 
 - We prioritize [languages officially supported by Minecraft](https://minecraft.wiki/w/Language).
+
   Unless there are special reasons, we do not provide support for languages not yet supported by Minecraft.
 - We hope to provide long-term maintenance support for all languages.
-  Since the maintainers of this project are proficient in only a limited number of languages, to avoid support for new languages quickly becoming outdated due to lack of maintainers,
+
+  Since the maintainers of this project are proficient in only a limited number of languages, 
+  to avoid support for new languages quickly becoming outdated due to lack of maintainers,
   we hope to find people proficient in the language to help us maintain the newly added localization files in the long term.
   If there may be a lack of long-term maintainers, we will be more cautious about adding support for that language.
 
@@ -117,14 +120,16 @@ Before translating, please read the introduction to this format: [Properties fil
 As the first step of translation, please look up the two- or three-letter language tag for your language in [this table](https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry).
 For example, the language tag for English is `en`.
 
-After determining the language tag, please create a file named `I18N_<language tag>.properties` (e.g., `I18N_en.properties`) next to the [`I18N.properties` file](../HMCL/src/main/resources/assets/lang).
+After determining the language tag, please create a file named `I18N_<localization file suffix>.properties` (e.g., `I18N_en.properties`) next to the [`I18N.properties` file](../HMCL/src/main/resources/assets/lang).
 Then you can start translating in this file.
 
-The `I18N.properties` file follows the [resource fallback mechanism](#资源回退机制) to look up missing translations.
+The `I18N.properties` file follows the [resource fallback mechanism](#resource-fallback-mechanism) to look up missing translations.
 That is, you can translate entry by entry, and any untranslated entries will automatically fall back to English.
 
-After translating part of the file, you can [build HMCL yourself](./README_zh.md#编译), and your translations will be included in the compiled HMCL.
-If your computer's default environment is not the target language, you can set the environment variable `HMCL_LANGUAGE` to the language tag you just found from the table,
+After translating part of the file, you can [build HMCL yourself](./README.md#compilation), 
+and your translations will be included in the compiled HMCL.
+If your computer's default environment is not the target language,
+you can set the environment variable `HMCL_LANGUAGE` to the language tag you just found from the table,
 and HMCL will automatically switch to that language.
 
 At this point, you can push the file to GitHub and submit a PR to HMCL.
@@ -139,7 +144,7 @@ For example, for `README.md`, the localized versions in different languages are 
 - English: `README.md`
 - Chinese (Simplified): `README_zh.md`
 - Chinese (Traditional): `README_zh_Hant.md`
-- Classical Chinese: `README_lzh.md`
+- Chinese (Classical): `README_lzh.md`
 
 In addition to localized files, HMCL also supports localizing certain text fields in JSON. Localized text in JSON uses the following format:
 
@@ -174,19 +179,22 @@ It can be rewritten as localized text:
 
 ## Resource Fallback Mechanism
 
-For missing resources in a certain language, HMCL supports a resource fallback mechanism, which derives a search list based on different language tags and searches for resources in order according to this list.
+For missing resources in a certain language, HMCL supports a resource fallback mechanism,
+which derives a search list based on different language tags and searches for resources in order according to this list.
 
 Before searching, we first refine the language tag through the following steps.
 
 1. Normalize Language Codes
 
-   If the language code subtag in the current language tag is not registered in the IANA Language Subtag Registry, HMCL will try to map it to a registered tag.
+   If the language code subtag in the current language tag is not registered in the IANA Language Subtag Registry, 
+   HMCL will try to map it to a registered tag.
 
    For example, HMCL will replace the language code `eng` with `en`.
 
 2. Map Macrolanguages to Individual Languages
 
-   If the current language code is an [ISO 639 macrolanguage](https://en.wikipedia.org/wiki/ISO_639_macrolanguage), and the macrolanguage usually refers to a specific individual language, HMCL will replace it with that individual language.
+   If the current language code is an [ISO 639 macrolanguage](https://en.wikipedia.org/wiki/ISO_639_macrolanguage), 
+   and the macrolanguage usually refers to a specific individual language, HMCL will replace it with that individual language.
 
    For example, `zh` (Chinese) usually actually refers to `cmn` (Mandarin), so we replace the language code `zh` with `cmn`.
 
@@ -194,17 +202,21 @@ Before searching, we first refine the language tag through the following steps.
 
    If the current language tag does not specify a script, HMCL will try to derive the script according to the following rules in order:
 
-    1. If the current language tag specifies a variant, and the variant is registered in the IANA Language Subtag Registry, and all its `Prefix` entries in the registry contain the same script, then set the current script to that script.
+    1. If the current language tag specifies a variant, and the variant is registered in the IANA Language Subtag Registry, 
+       and all its `Prefix` entries in the registry contain the same script, then set the current script to that script.
 
        For example, if the current variant is `pinyin` (Chinese Pinyin), the script will be set to `Latn` (Latin).
 
     2. If the current language code is assigned a `Suppress-Script` in the IANA Language Subtag Registry, set the current script to that script.
 
-       For example, if the current language code is `en` (English), the script will be set to `Latn` (Latin); if the code is `ru` (Russian), the script will be set to `Cyrl` (Cyrillic).
+       For example, if the current language code is `en` (English), the script will be set to `Latn` (Latin); 
+       if the code is `ru` (Russian), the script will be set to `Cyrl` (Cyrillic).
 
-    3. If the current language code is `lzh` (Classical Chinese), set the script to `Hant` (Traditional Chinese).
+    3. If the current language code is `lzh` (Classical Chinese), set the script to `Hant` (Traditional Chinese Characters).
 
-    4. If the current language code is `zh` or a sublanguage of `zh`, check if the current region code is one of `TW`, `HK`, or `MO`. If true, set the script to `Hant` (Traditional Chinese); otherwise, set it to `Hans` (Simplified Chinese).
+    4. If the current language code is `zh` or a sublanguage of `zh`, check if the current region code is one of `TW`, `HK`, or `MO`. 
+       If true, set the script to `Hant` (Traditional Chinese Characters);
+       otherwise, set it to `Hans` (Simplified Chinese Characters).
 
 After refining the language code, HMCL will derive a list of language tags based on this language tag.
 
@@ -228,15 +240,20 @@ For the language tag `zh-CN`, HMCL will refine it to `cmn-Hans-CN` and derive th
 8. `zh`
 9. `und`
 
-For resources that can be merged (such as `.properties` files), HMCL will merge resources according to the priority of this list; for resources that are difficult to merge (such as font files), HMCL will load the highest-priority resource found in this list.
+For resources that can be merged (such as `.properties` files), 
+HMCL will merge resources according to the priority of this list; for resources that are difficult to merge (such as font files), 
+HMCL will load the highest-priority resource found in this list.
 
-If the current language uses a three-letter ISO 639 code, but there is also a corresponding two-letter code, HMCL will map it to the two-letter code before searching for resources.
+If the current language uses a three-letter ISO 639 code, but there is also a corresponding two-letter code, 
+HMCL will map it to the two-letter code before searching for resources.
 
-For example, if the current environment's language tag is `eng-US`, HMCL will map it to `en-US` and then search for localization resources according to the above rules.
+For example, if the current environment's language tag is `eng-US`, 
+HMCL will map it to `en-US` and then search for localization resources according to the above rules.
 
 ### Additional Rules for Chinese
 
-HMCL always adds `zh-CN` to the search list for all Chinese environments, and adds `zh-TW` to the search list for all Traditional Chinese environments.
+HMCL always adds `zh-CN` to the search list for all Chinese environments, 
+and adds `zh-TW` to the search list for all Traditional Chinese environments.
 
 Below are the localization resource search lists for several common Chinese environments.
 
@@ -293,7 +310,8 @@ Below are the localization resource search lists for several common Chinese envi
 
 <!-- #BEGIN BLOCK -->
 <!-- #DEFINE PROCESS_LINK=false -->
-To simplify documentation maintenance, HMCL uses a macro mechanism to automatically maintain parts of the documentation content. Run the following command in the terminal:
+To simplify documentation maintenance, HMCL uses a macro mechanism to automatically maintain parts of the documentation content.
+Run the following command in the terminal:
 
 ```bash
 ./gradlew updateDocuments
@@ -301,11 +319,11 @@ To simplify documentation maintenance, HMCL uses a macro mechanism to automatica
 
 This will automatically update all documentation content.
 
-For example, to create links for switching between different language versions of the same document, add the following content under the document title:
+For example, to create links for switching between different language versions of the same document, 
+add the following content under the document title:
 
 ```markdown
 <!-- #BEGIN LANGUAGE_SWITCHER -->
-**English** | [中文](Localization_zh.md)
 <!-- #END LANGUAGE_SWITCHER -->
 ```
 
