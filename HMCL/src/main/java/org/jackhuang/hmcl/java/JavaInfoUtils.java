@@ -27,7 +27,6 @@ import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 /**
@@ -37,22 +36,6 @@ import java.nio.file.Path;
 public final class JavaInfoUtils {
 
     private JavaInfoUtils() {
-    }
-
-    private static Path tryFindReleaseFile(Path executable) {
-        Path parent = executable.getParent();
-        if (parent != null && parent.getFileName() != null && parent.getFileName().toString().equals("bin")) {
-            Path javaHome = parent.getParent();
-            if (javaHome != null && javaHome.getFileName() != null) {
-                Path releaseFile = javaHome.resolve("release");
-                String javaHomeName = javaHome.getFileName().toString();
-                if ((javaHomeName.contains("jre") || javaHomeName.contains("jdk") || javaHomeName.contains("openj9"))
-                        && Files.isRegularFile(releaseFile)) {
-                    return releaseFile;
-                }
-            }
-        }
-        return null;
     }
 
     public static @NotNull JavaInfo fromExecutable(Path executable) throws IOException {

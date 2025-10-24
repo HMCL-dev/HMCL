@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.CacheRepository;
+import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -49,7 +50,6 @@ import java.io.OutputStreamWriter;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributeView;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -487,7 +487,7 @@ public final class JavaManager {
         private final Path cacheFile;
         final Map<Path, JavaRuntime> javaRuntimes = new HashMap<>();
         private final LinkedHashMap<Path, JavaInfoCache> caches = new LinkedHashMap<>();
-        private final Set<Path> failed =  new HashSet<>();
+        private final Set<Path> failed = new HashSet<>();
         private boolean needRefreshCache = false;
 
         Searcher(Path cacheFile) {
@@ -527,6 +527,7 @@ public final class JavaManager {
             if (!needRefreshCache)
                 return;
 
+            needRefreshCache = false;
             try {
                 FileUtils.saveSafely(cacheFile, output -> {
                     try (var writer = new JsonWriter(new OutputStreamWriter(output, StandardCharsets.UTF_8))) {
@@ -558,17 +559,69 @@ public final class JavaManager {
             }
         }
 
-        private static String getCacheKey(Path realPath) throws IOException {
-            StringBuilder builder = new StringBuilder();
+        private static @Nullable String createCacheKey(Path realPath) {
+            Path binDir = realPath.getParent();
+            if (binDir == null || !FileUtils.getName(binDir).equals("bin"))
+                return null;
+
+            if (Files.isRegularFile(realPath.resolveSibling("ikvm.properties")))
+                return null;
+
+            Path javaHome = binDir.getParent();
+            if (javaHome == null)
+                return null;
+
+            String javaHomeName = javaHome.getFileName().toString();
+            if (!javaHomeName.contains("java")
+                    && !javaHomeName.contains("jre")
+                    && !javaHomeName.contains("jdk")
+                    && !javaHomeName.contains("openj9"))
+                return null;
+
+            Path libDir = javaHome.resolve("lib");
+            if (!Files.isDirectory(libDir))
+                return null;
 
 
+            BasicFileAttributes launcherAttributes;
+            String releaseHash = null;
+            BasicFileAttributes coreLibsAttributes = null;
 
-            BasicFileAttributes attributes = Files.getFileAttributeView(realPath, BasicFileAttributeView.class).readAttributes();
+            try {
+                launcherAttributes = Files.readAttributes(realPath, BasicFileAttributes.class);
 
+                Path releaseFile = libDir.resolve("release");
+                if (Files.exists(releaseFile)) {
+                    releaseHash = DigestUtils.digestToString("SHA-1", releaseFile);
+                } else {
+                    Path coreLibsFile = libDir.resolve("rt.jar");
+                    if (!Files.isRegularFile(coreLibsFile)) {
+                        coreLibsFile = javaHome.resolve("jre/lib/rt.jar");
+                        if (!Files.isRegularFile(coreLibsFile))
+                            return null;
 
+                        coreLibsAttributes = Files.readAttributes(coreLibsFile, BasicFileAttributes.class);
+                    }
+                }
+            } catch (Exception e) {
+                LOG.warning("Failed to create cache key for " + realPath, e);
+                return null;
+            }
 
+            StringJoiner joiner = new StringJoiner(",");
 
-            return builder.toString(); // TODO
+            joiner.add("sz:" + launcherAttributes.size());
+            joiner.add("lm:" + launcherAttributes.lastModifiedTime().toMillis());
+
+            if (releaseHash != null)
+                joiner.add(releaseHash);
+
+            if (coreLibsAttributes != null) {
+                joiner.add("rsz:" + coreLibsAttributes.size());
+                joiner.add("rlm:" + coreLibsAttributes.lastModifiedTime().toMillis());
+            }
+
+            return joiner.toString();
         }
 
         private boolean loadFromCache(Path realPath) {
@@ -576,9 +629,10 @@ public final class JavaManager {
             if (cache == null)
                 return false;
 
-            try {
-                getCacheKey(realPath);
-            } catch (Exception e) {
+            String cacheKey = createCacheKey(realPath);
+            if (cacheKey != null && cacheKey.equals(cache.cacheKey())) {
+                javaRuntimes.put(realPath, JavaRuntime.of(realPath, cache.javaInfo, false));
+                return true;
             }
 
             caches.remove(realPath);
@@ -612,21 +666,10 @@ public final class JavaManager {
 
             JavaInfo info = null;
 
-            Path releaseFile = javaHome.resolve("release");
-            if (Files.exists(releaseFile)) {
-                try {
-                    info = JavaInfo.fromReleaseFile(releaseFile);
-                } catch (IOException e) {
-                    LOG.warning("Failed to read release file " + releaseFile, e);
-                }
-            }
-
-            if (info == null) {
-                try {
-                    info = JavaInfoUtils.fromExecutable(executable);
-                } catch (IOException e) {
-                    LOG.warning("Failed to lookup Java executable at " + executable, e);
-                }
+            try {
+                info = JavaInfoUtils.fromExecutable(executable);
+            } catch (IOException e) {
+                LOG.warning("Failed to lookup Java executable at " + executable, e);
             }
 
             if (info != null && isCompatible(info.getPlatform()))
@@ -798,10 +841,9 @@ public final class JavaManager {
             for (String java : reg.querySubKeys(hkey, location)) {
                 if (!reg.querySubKeys(hkey, java).contains(java + "\\MSI"))
                     continue;
-                Object home = reg.queryValue(hkey, java, "JavaHome");
-                if (home instanceof String) {
+                if (reg.queryValue(hkey, java, "JavaHome") instanceof String home) {
                     try {
-                        tryAddJavaHome(Path.of((String) home));
+                        tryAddJavaHome(Path.of(home));
                     } catch (InvalidPathException e) {
                         LOG.warning("Invalid Java path in system registry: " + home);
                     }
