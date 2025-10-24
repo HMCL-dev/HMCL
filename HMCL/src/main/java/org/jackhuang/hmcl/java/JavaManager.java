@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.java;
 
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.stream.JsonWriter;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import org.jackhuang.hmcl.Metadata;
@@ -44,7 +45,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -350,7 +353,7 @@ public final class JavaManager {
     // search java
 
     private static Map<Path, JavaRuntime> searchPotentialJavaExecutables() {
-        Searcher searcher = new Searcher();
+        Searcher searcher = new Searcher(Metadata.HMCL_GLOBAL_DIRECTORY.resolve("javaCache.json"));
         searcher.searchAllJavaInRepository(Platform.SYSTEM_PLATFORM);
         switch (OperatingSystem.CURRENT_OS) {
             case WINDOWS:
@@ -465,6 +468,8 @@ public final class JavaManager {
             searcher.javaRuntimes.put(currentJava.getBinary(), currentJava);
         }
 
+        searcher.saveCache();
+
         LOG.trace(searcher.javaRuntimes.values().stream().sorted()
                 .map(it -> String.format(" - %s %s (%s, %s): %s",
                         it.isJDK() ? "JDK" : "JRE",
@@ -473,19 +478,20 @@ public final class JavaManager {
                         Lang.requireNonNullElse(it.getVendor(), "Unknown"),
                         it.getBinary()))
                 .collect(Collectors.joining("\n", "Finished Java lookup, found " + searcher.javaRuntimes.size() + "\n", "")));
-
         return searcher.javaRuntimes;
     }
 
     private static final class Searcher {
+        private final Path cacheFile;
         final Map<Path, JavaRuntime> javaRuntimes = new HashMap<>();
         private final LinkedHashMap<Path, JavaInfoCache> caches = new LinkedHashMap<>();
         private boolean needRefreshCache = false;
 
-        void loadCache(Path cacheFile) {
-            if (Files.notExists(cacheFile)) {
+        Searcher(Path cacheFile) {
+            this.cacheFile = cacheFile;
+
+            if (Files.notExists(cacheFile))
                 return;
-            }
 
             try {
                 JsonObject jsonObject = JsonUtils.fromJsonFile(cacheFile, JsonObject.class);
@@ -498,7 +504,7 @@ public final class JavaManager {
                     throw new IOException("Unsupported cache file, version: %d".formatted(version));
 
                 for (JavaInfoCache cache : JsonUtils.GSON.fromJson(
-                        jsonObject.getAsJsonArray("cache"),
+                        jsonObject.getAsJsonArray("caches"),
                         JsonUtils.listTypeOf(JavaInfoCache.class))) {
                     try {
                         Path realPath = Path.of(cache.realPath).toRealPath();
@@ -511,6 +517,41 @@ public final class JavaManager {
             } catch (Exception ex) {
                 LOG.warning("Failed to load cache file: " + cacheFile);
                 needRefreshCache = true;
+            }
+        }
+
+        void saveCache() {
+            if (!needRefreshCache)
+                return;
+
+            try {
+                FileUtils.saveSafely(cacheFile, output -> {
+                    try (var writer = new JsonWriter(new OutputStreamWriter(output, StandardCharsets.UTF_8))) {
+                        writer.beginObject();
+
+                        writer.name("version").value(JavaInfoCache.FORMAT_VERSION);
+
+                        writer.name("caches");
+                        writer.beginArray();
+                        for (Map.Entry<Path, JavaInfoCache> entry : caches.entrySet()) {
+                            Path realPath = entry.getKey();
+                            JavaInfoCache cache = entry.getValue();
+
+                            writer.beginObject();
+
+                            writer.name("realPath").value(realPath.toString());
+                            writer.name("cacheKey").value(cache.cacheKey());
+                            writer.name("javaInfo").jsonValue(JsonUtils.GSON.toJson(cache.javaInfo().toString()));
+
+                            writer.endObject();
+                        }
+                        writer.endArray();
+
+                        writer.endObject();
+                    }
+                });
+            } catch (Exception e) {
+                LOG.warning("Failed to save cache file: " + cacheFile);
             }
         }
 
