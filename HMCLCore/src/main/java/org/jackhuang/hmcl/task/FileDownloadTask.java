@@ -161,7 +161,7 @@ public class FileDownloadTask extends FetchTask<Void> {
             Optional<Path> cache = repository.checkExistentFile(candidate, integrityCheck.getAlgorithm(), integrityCheck.getChecksum());
             if (cache.isPresent()) {
                 try {
-                    FileUtils.copyFile(cache.get(), file);
+                    FileUtils.linkFile(cache.get(), file);
                     LOG.trace("Successfully verified file " + file + " from " + uris.get(0));
                     return EnumCheckETag.CACHED;
                 } catch (IOException e) {
@@ -181,7 +181,7 @@ public class FileDownloadTask extends FetchTask<Void> {
 
     @Override
     protected void useCachedResult(Path cache) throws IOException {
-        FileUtils.copyFile(cache, file);
+        FileUtils.linkFile(cache, file);
     }
 
     @Override
