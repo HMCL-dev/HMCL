@@ -55,19 +55,10 @@ public final class JavaInfoUtils {
         return null;
     }
 
-    public static @NotNull JavaInfo fromExecutable(Path executable, boolean tryFindReleaseFile) throws IOException {
+    public static @NotNull JavaInfo fromExecutable(Path executable) throws IOException {
         assert executable.isAbsolute();
 
-        Path releaseFile;
-        if (tryFindReleaseFile && (releaseFile = tryFindReleaseFile(executable)) != null) {
-            try {
-                return JavaInfo.fromReleaseFile(releaseFile);
-            } catch (IOException ignored) {
-            }
-        }
-
         Path thisPath = JarUtils.thisJarPath();
-
         if (thisPath == null) {
             throw new IOException("Failed to find current HMCL location");
         }

@@ -163,7 +163,7 @@ public final class HMCLJavaRepository implements JavaRepository {
 
             JavaInfo info;
             if (JavaManager.isCompatible(platform))
-                info = JavaInfoUtils.fromExecutable(executable, false);
+                info = JavaInfoUtils.fromExecutable(executable);
             else
                 info = new JavaInfo(platform, result.download.getVersion().getName(), null);
 

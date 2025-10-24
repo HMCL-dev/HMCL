@@ -49,6 +49,8 @@ import java.io.OutputStreamWriter;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributeView;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.stream.Collectors;
@@ -178,7 +180,7 @@ public final class JavaManager {
             return javaRuntime;
         }
 
-        JavaInfo info = JavaInfoUtils.fromExecutable(executable, true);
+        JavaInfo info = JavaInfoUtils.fromExecutable(executable);
         return JavaRuntime.of(executable, info, false);
     }
 
@@ -485,6 +487,7 @@ public final class JavaManager {
         private final Path cacheFile;
         final Map<Path, JavaRuntime> javaRuntimes = new HashMap<>();
         private final LinkedHashMap<Path, JavaInfoCache> caches = new LinkedHashMap<>();
+        private final Set<Path> failed =  new HashSet<>();
         private boolean needRefreshCache = false;
 
         Searcher(Path cacheFile) {
@@ -555,12 +558,32 @@ public final class JavaManager {
             }
         }
 
+        private static String getCacheKey(Path realPath) throws IOException {
+            StringBuilder builder = new StringBuilder();
+
+
+
+            BasicFileAttributes attributes = Files.getFileAttributeView(realPath, BasicFileAttributeView.class).readAttributes();
+
+
+
+
+            return builder.toString(); // TODO
+        }
+
         private boolean loadFromCache(Path realPath) {
             JavaInfoCache cache = caches.get(realPath);
             if (cache == null)
                 return false;
 
-            return false; // TODO
+            try {
+                getCacheKey(realPath);
+            } catch (Exception e) {
+            }
+
+            caches.remove(realPath);
+            needRefreshCache = true;
+            return false;
         }
 
         void addResult(Path realPath, JavaRuntime javaRuntime) {
@@ -581,6 +604,7 @@ public final class JavaManager {
             }
 
             if (javaRuntimes.containsKey(executable)
+                    || failed.contains(executable)
                     || ConfigHolder.globalConfig().getDisabledJava().contains(executable.toString())
                     || loadFromCache(executable)) {
                 return;
@@ -599,7 +623,7 @@ public final class JavaManager {
 
             if (info == null) {
                 try {
-                    info = JavaInfoUtils.fromExecutable(executable, false);
+                    info = JavaInfoUtils.fromExecutable(executable);
                 } catch (IOException e) {
                     LOG.warning("Failed to lookup Java executable at " + executable, e);
                 }
@@ -617,6 +641,7 @@ public final class JavaManager {
             }
 
             if (javaRuntimes.containsKey(executable)
+                    || failed.contains(executable)
                     || ConfigHolder.globalConfig().getDisabledJava().contains(executable.toString())
                     || loadFromCache(executable)) {
                 return;
@@ -624,7 +649,7 @@ public final class JavaManager {
 
             JavaInfo info = null;
             try {
-                info = JavaInfoUtils.fromExecutable(executable, true);
+                info = JavaInfoUtils.fromExecutable(executable);
             } catch (IOException e) {
                 LOG.warning("Failed to lookup Java executable at " + executable, e);
             }
