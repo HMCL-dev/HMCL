@@ -68,7 +68,6 @@ public final class JavaInfoUtils {
                             ? architecture
                             : Architecture.SYSTEM_ARCH);
 
-
             return new JavaInfo(platform, result.javaVersion, result.javaVendor);
         } catch (IOException e) {
             throw e;

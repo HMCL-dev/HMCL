@@ -547,12 +547,12 @@ public final class JavaManager {
                         writer.name("caches");
                         writer.beginArray();
                         for (Map.Entry<Path, JavaInfoCache> entry : caches.entrySet()) {
-                            Path realPath = entry.getKey();
+                            Path path = entry.getKey();
                             JavaInfoCache cache = entry.getValue();
 
                             writer.beginObject();
 
-                            writer.name("realPath").value(realPath.toString());
+                            writer.name("path").value(path.toString());
                             writer.name("key").value(cache.key());
                             writer.name("info").jsonValue(JsonUtils.GSON.toJson(cache.info().toString()));
 
@@ -590,7 +590,6 @@ public final class JavaManager {
             Path libDir = javaHome.resolve("lib");
             if (!Files.isDirectory(libDir))
                 return null;
-
 
             BasicFileAttributes launcherAttributes;
             String releaseHash = null;
@@ -658,7 +657,7 @@ public final class JavaManager {
             if (cacheKey != null) {
                 JavaInfoCache cache = caches.get(executable);
                 if (cache != null) {
-                    if (cacheKey.equals(cache.key())) {
+                    if (isCompatible(cache.info().getPlatform()) && cacheKey.equals(cache.key())) {
                         javaRuntimes.put(executable, JavaRuntime.of(executable, cache.info(), false));
                         return;
                     } else {
@@ -675,9 +674,10 @@ public final class JavaManager {
                 info = JavaInfoUtils.fromExecutable(executable);
             } catch (IOException e) {
                 LOG.warning("Failed to lookup Java executable at " + executable, e);
+                failed.add(executable);
             }
 
-            if (info != null && isCompatible(info.getPlatform())) {
+            if (info != null) {
                 javaRuntimes.put(executable, JavaRuntime.of(executable, info, false));
             }
         }
