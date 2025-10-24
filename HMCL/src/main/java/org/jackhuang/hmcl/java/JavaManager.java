@@ -555,6 +555,10 @@ public final class JavaManager {
             }
         }
 
+        private boolean loadFromCache(Path realPath) {
+            return false; // TODO
+        }
+
         void tryAddJavaHome(Path javaHome) {
             Path executable = getExecutable(javaHome);
             if (!Files.isRegularFile(executable)) {
@@ -568,7 +572,9 @@ public final class JavaManager {
                 return;
             }
 
-            if (javaRuntimes.containsKey(executable) || ConfigHolder.globalConfig().getDisabledJava().contains(executable.toString())) {
+            if (javaRuntimes.containsKey(executable)
+                    || ConfigHolder.globalConfig().getDisabledJava().contains(executable.toString())
+                    || loadFromCache(executable)) {
                 return;
             }
 
@@ -602,7 +608,9 @@ public final class JavaManager {
                 return;
             }
 
-            if (javaRuntimes.containsKey(executable) || ConfigHolder.globalConfig().getDisabledJava().contains(executable.toString())) {
+            if (javaRuntimes.containsKey(executable)
+                    || ConfigHolder.globalConfig().getDisabledJava().contains(executable.toString())
+                    || loadFromCache(executable)) {
                 return;
             }
 
