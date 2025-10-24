@@ -465,7 +465,7 @@ public final class JavaManager {
         if (currentJava != null
                 && !searcher.javaRuntimes.containsKey(currentJava.getBinary())
                 && !ConfigHolder.globalConfig().getDisabledJava().contains(currentJava.getBinary().toString())) {
-            searcher.javaRuntimes.put(currentJava.getBinary(), currentJava);
+            searcher.addResult(currentJava.getBinary(), currentJava);
         }
 
         searcher.saveCache();
@@ -556,7 +556,15 @@ public final class JavaManager {
         }
 
         private boolean loadFromCache(Path realPath) {
+            JavaInfoCache cache = caches.get(realPath);
+            if (cache == null)
+                return false;
+
             return false; // TODO
+        }
+
+        void addResult(Path realPath, JavaRuntime javaRuntime) {
+            javaRuntimes.put(realPath, javaRuntime);
         }
 
         void tryAddJavaHome(Path javaHome) {
@@ -598,7 +606,7 @@ public final class JavaManager {
             }
 
             if (info != null && isCompatible(info.getPlatform()))
-                javaRuntimes.put(executable, JavaRuntime.of(executable, info, false));
+                addResult(executable, JavaRuntime.of(executable, info, false));
         }
 
         void tryAddJavaExecutable(Path executable) {
@@ -622,7 +630,7 @@ public final class JavaManager {
             }
 
             if (info != null && isCompatible(info.getPlatform())) {
-                javaRuntimes.put(executable, JavaRuntime.of(executable, info, false));
+                addResult(executable, JavaRuntime.of(executable, info, false));
             }
         }
 
@@ -669,11 +677,11 @@ public final class JavaManager {
 
         void searchAllJavaInRepository(Platform platform) {
             for (JavaRuntime java : REPOSITORY.getAllJava(platform)) {
-                javaRuntimes.put(java.getBinary(), java);
+                addResult(java.getBinary(), java);
             }
 
             for (JavaRuntime java : LOCAL_REPOSITORY.getAllJava(platform)) {
-                javaRuntimes.put(java.getBinary(), java);
+                addResult(java.getBinary(), java);
             }
         }
 
