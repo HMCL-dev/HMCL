@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.java;
 
+import com.google.gson.*;
+import com.google.gson.annotations.JsonAdapter;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import org.jackhuang.hmcl.Metadata;
@@ -31,6 +33,8 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.platform.windows.WinReg;
@@ -40,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.nio.file.*;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
@@ -474,6 +479,40 @@ public final class JavaManager {
 
     private static final class Searcher {
         final Map<Path, JavaRuntime> javaRuntimes = new HashMap<>();
+        private final LinkedHashMap<Path, JavaInfoCache> caches = new LinkedHashMap<>();
+        private boolean needRefreshCache = false;
+
+        void loadCache(Path cacheFile) {
+            if (Files.notExists(cacheFile)) {
+                return;
+            }
+
+            try {
+                JsonObject jsonObject = JsonUtils.fromJsonFile(cacheFile, JsonObject.class);
+                JsonElement fileVersion = jsonObject.get("version");
+                if (!(fileVersion instanceof JsonPrimitive))
+                    throw new IOException("Invalid version JSON: " + fileVersion);
+
+                int version = fileVersion.getAsJsonPrimitive().getAsInt();
+                if (version != JavaInfoCache.FORMAT_VERSION)
+                    throw new IOException("Unsupported cache file, version: %d".formatted(version));
+
+                for (JavaInfoCache cache : JsonUtils.GSON.fromJson(
+                        jsonObject.getAsJsonArray("cache"),
+                        JsonUtils.listTypeOf(JavaInfoCache.class))) {
+                    try {
+                        Path realPath = Path.of(cache.realPath).toRealPath();
+                        caches.put(realPath, cache);
+                    } catch (Exception e) {
+                        LOG.warning("Invalid cache: " + cache);
+                        needRefreshCache = true;
+                    }
+                }
+            } catch (Exception ex) {
+                LOG.warning("Failed to load cache file: " + cacheFile);
+                needRefreshCache = true;
+            }
+        }
 
         void tryAddJavaHome(Path javaHome) {
             Path executable = getExecutable(javaHome);
@@ -689,4 +728,24 @@ public final class JavaManager {
         }
 
     }
+
+    @JsonSerializable
+    @JsonAdapter(JavaInfoCache.Serializer.class)
+    private record JavaInfoCache(String realPath, String cacheKey, JavaInfo javaInfo) {
+        public static final long FORMAT_VERSION = 0L;
+
+        public static final class Serializer implements JsonSerializer<JavaInfoCache>, JsonDeserializer<JavaInfoCache> {
+
+            @Override
+            public JavaInfoCache deserialize(JsonElement jsonElement, Type type, JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
+                return null;
+            }
+
+            @Override
+            public JsonElement serialize(JavaInfoCache javaInfoCache, Type type, JsonSerializationContext jsonSerializationContext) {
+                return null;
+            }
+        }
+    }
+
 }
