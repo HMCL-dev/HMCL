@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.java;
 
 import com.google.gson.*;
-import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.stream.JsonWriter;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -35,7 +34,6 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.CacheRepository;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.*;
@@ -47,7 +45,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -492,7 +489,14 @@ public final class JavaManager {
 
         Searcher(Path cacheFile) {
             this.cacheFile = cacheFile;
+        }
 
+        private static final long CACHE_VERSION = 0L;
+
+        private record JavaInfoCache(String key, JavaInfo info) {
+        }
+
+        void loadCache() {
             if (Files.notExists(cacheFile))
                 return;
 
@@ -503,17 +507,22 @@ public final class JavaManager {
                     throw new IOException("Invalid version JSON: " + fileVersion);
 
                 int version = fileVersion.getAsJsonPrimitive().getAsInt();
-                if (version != JavaInfoCache.FORMAT_VERSION)
+                if (version != CACHE_VERSION)
                     throw new IOException("Unsupported cache file, version: %d".formatted(version));
 
-                for (JavaInfoCache cache : JsonUtils.GSON.fromJson(
-                        jsonObject.getAsJsonArray("caches"),
-                        JsonUtils.listTypeOf(JavaInfoCache.class))) {
+                JsonArray cachesArray = jsonObject.getAsJsonArray("caches");
+
+                for (JsonElement element : cachesArray) {
                     try {
-                        Path realPath = Path.of(cache.realPath).toRealPath();
-                        caches.put(realPath, cache);
+                        var obj = (JsonObject) element;
+
+                        Path realPath = Path.of(obj.getAsJsonPrimitive("path").getAsString()).toRealPath();
+                        String key = obj.getAsJsonPrimitive("key").getAsString();
+                        JavaInfo info = JsonUtils.GSON.fromJson(obj.getAsJsonObject("info"), JavaInfo.class);
+
+                        caches.put(realPath, new JavaInfoCache(key, info));
                     } catch (Exception e) {
-                        LOG.warning("Invalid cache: " + cache);
+                        LOG.warning("Invalid cache: " + element);
                         needRefreshCache = true;
                     }
                 }
@@ -533,7 +542,7 @@ public final class JavaManager {
                     try (var writer = new JsonWriter(new OutputStreamWriter(output, StandardCharsets.UTF_8))) {
                         writer.beginObject();
 
-                        writer.name("version").value(JavaInfoCache.FORMAT_VERSION);
+                        writer.name("version").value(CACHE_VERSION);
 
                         writer.name("caches");
                         writer.beginArray();
@@ -544,8 +553,8 @@ public final class JavaManager {
                             writer.beginObject();
 
                             writer.name("realPath").value(realPath.toString());
-                            writer.name("cacheKey").value(cache.cacheKey());
-                            writer.name("javaInfo").jsonValue(JsonUtils.GSON.toJson(cache.javaInfo().toString()));
+                            writer.name("key").value(cache.key());
+                            writer.name("info").jsonValue(JsonUtils.GSON.toJson(cache.info().toString()));
 
                             writer.endObject();
                         }
@@ -624,56 +633,12 @@ public final class JavaManager {
             return joiner.toString();
         }
 
-        private boolean loadFromCache(Path realPath) {
-            JavaInfoCache cache = caches.get(realPath);
-            if (cache == null)
-                return false;
-
-            String cacheKey = createCacheKey(realPath);
-            if (cacheKey != null && cacheKey.equals(cache.cacheKey())) {
-                javaRuntimes.put(realPath, JavaRuntime.of(realPath, cache.javaInfo, false));
-                return true;
-            }
-
-            caches.remove(realPath);
-            needRefreshCache = true;
-            return false;
-        }
-
         void addResult(Path realPath, JavaRuntime javaRuntime) {
             javaRuntimes.put(realPath, javaRuntime);
         }
 
         void tryAddJavaHome(Path javaHome) {
-            Path executable = getExecutable(javaHome);
-            if (!Files.isRegularFile(executable)) {
-                return;
-            }
-
-            try {
-                executable = executable.toRealPath();
-            } catch (IOException e) {
-                LOG.warning("Failed to resolve path " + executable, e);
-                return;
-            }
-
-            if (javaRuntimes.containsKey(executable)
-                    || failed.contains(executable)
-                    || ConfigHolder.globalConfig().getDisabledJava().contains(executable.toString())
-                    || loadFromCache(executable)) {
-                return;
-            }
-
-            JavaInfo info = null;
-
-            try {
-                info = JavaInfoUtils.fromExecutable(executable);
-            } catch (IOException e) {
-                LOG.warning("Failed to lookup Java executable at " + executable, e);
-            }
-
-            if (info != null && isCompatible(info.getPlatform()))
-                addResult(executable, JavaRuntime.of(executable, info, false));
+            tryAddJavaExecutable(getExecutable(javaHome));
         }
 
         void tryAddJavaExecutable(Path executable) {
@@ -685,9 +650,24 @@ public final class JavaManager {
 
             if (javaRuntimes.containsKey(executable)
                     || failed.contains(executable)
-                    || ConfigHolder.globalConfig().getDisabledJava().contains(executable.toString())
-                    || loadFromCache(executable)) {
+                    || ConfigHolder.globalConfig().getDisabledJava().contains(executable.toString())) {
                 return;
+            }
+
+            String cacheKey = createCacheKey(executable);
+            if (cacheKey != null) {
+                JavaInfoCache cache = caches.get(executable);
+                if (cache != null) {
+                    if (cacheKey.equals(cache.key())) {
+                        javaRuntimes.put(executable, JavaRuntime.of(executable, cache.info(), false));
+                        return;
+                    } else {
+                        caches.remove(executable);
+                        needRefreshCache = true;
+                    }
+                }
+            } else if (caches.remove(executable) != null) {
+                needRefreshCache = true;
             }
 
             JavaInfo info = null;
@@ -698,7 +678,7 @@ public final class JavaManager {
             }
 
             if (info != null && isCompatible(info.getPlatform())) {
-                addResult(executable, JavaRuntime.of(executable, info, false));
+                javaRuntimes.put(executable, JavaRuntime.of(executable, info, false));
             }
         }
 
@@ -852,24 +832,4 @@ public final class JavaManager {
         }
 
     }
-
-    @JsonSerializable
-    @JsonAdapter(JavaInfoCache.Serializer.class)
-    private record JavaInfoCache(String realPath, String cacheKey, JavaInfo javaInfo) {
-        public static final long FORMAT_VERSION = 0L;
-
-        public static final class Serializer implements JsonSerializer<JavaInfoCache>, JsonDeserializer<JavaInfoCache> {
-
-            @Override
-            public JavaInfoCache deserialize(JsonElement jsonElement, Type type, JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
-                return null;
-            }
-
-            @Override
-            public JsonElement serialize(JavaInfoCache javaInfoCache, Type type, JsonSerializationContext jsonSerializationContext) {
-                return null;
-            }
-        }
-    }
-
 }
