@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.SelfDependencyPatcher;
 import org.jackhuang.hmcl.util.SwingUtils;
 import org.jackhuang.hmcl.java.JavaRuntime;
+import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
@@ -161,9 +162,16 @@ public final class EntryPoint {
     }
 
     private static boolean isMacDockIconDisabled() {
-        Path directory = Metadata.HMCL_CURRENT_DIRECTORY;
+        Path directory = JarUtils.thisJarPath();
+        if (directory == null)
+            return false;
+
         for (int i = 1; i < directory.getNameCount(); i++) {
-            if ("Contents".equals(directory.getName(i).toString()) && directory.getName(i - 1).toString().endsWith(".app")) {
+            Path subpath = directory.getRoot().resolve(directory.subpath(0, i));
+            if ("Contents".equals(subpath.getFileName().toString())
+                    && subpath.getParent().getFileName().toString().endsWith(".app")
+                    && Files.exists(subpath.resolve("Info.plist"))
+            ) {
                 return true;
             }
         }
