@@ -162,18 +162,18 @@ public final class EntryPoint {
     }
 
     private static boolean isMacDockIconDisabled() {
-        Path directory = JarUtils.thisJarPath();
-        if (directory == null)
+        Path jarPath = JarUtils.thisJarPath();
+        if (jarPath == null)
             return false;
 
-        for (int i = 1; i < directory.getNameCount(); i++) {
-            Path subpath = directory.getRoot().resolve(directory.subpath(0, i));
-            if ("Contents".equals(subpath.getFileName().toString())
-                    && subpath.getParent().getFileName().toString().endsWith(".app")
-                    && Files.exists(subpath.resolve("Info.plist"))
+        while (jarPath != null && jarPath.getParent() != null) {
+            if ("Contents".equals(jarPath.getFileName().toString())
+                    && jarPath.getParent().getFileName().toString().endsWith(".app")
+                    && Files.exists(jarPath.resolve("Info.plist"))
             ) {
                 return true;
             }
+            jarPath = jarPath.getParent();
         }
         return false;
     }
