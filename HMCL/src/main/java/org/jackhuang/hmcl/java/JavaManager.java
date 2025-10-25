@@ -21,6 +21,7 @@ import com.google.gson.*;
 import com.google.gson.stream.JsonWriter;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.css.Match;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
@@ -50,6 +51,8 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -494,7 +497,9 @@ public final class JavaManager {
             this.cacheFile = cacheFile;
         }
 
-        private static final long CACHE_VERSION = 0L;
+        private static final Pattern CACHE_VERSION_PATTERN = Pattern.compile("(?<major>\\d+)(?:\\.(?<minor>\\d+))?");
+        private static final int CACHE_MAJOR_VERSION = 0;
+        private static final int CACHE_MINOR_VERSION = 0;
 
         private record JavaInfoCache(String key, JavaInfo info) {
         }
@@ -504,16 +509,23 @@ public final class JavaManager {
                 return;
 
             try {
-                JsonObject jsonObject = JsonUtils.fromJsonFile(cacheFile, JsonObject.class);
-                JsonElement fileVersion = jsonObject.get("version");
-                if (!(fileVersion instanceof JsonPrimitive))
+                JsonObject jsonFile = JsonUtils.fromJsonFile(cacheFile, JsonObject.class);
+                JsonElement fileVersion = jsonFile.get("version");
+
+                Matcher matcher;
+                if (jsonFile.get("version") instanceof JsonPrimitive version
+                        && (matcher = CACHE_VERSION_PATTERN.matcher(version.getAsString())).matches()) {
+                    int major = Integer.parseInt(matcher.group("major"));
+
+                    String minorString = matcher.group("minor");
+                    int minor = minorString != null ? Integer.parseInt(minorString) : 0;
+
+                    if (major != CACHE_MAJOR_VERSION || minor < CACHE_MINOR_VERSION)
+                        throw new IOException("Unsupported cache file, version: %s".formatted(version.getAsString()));
+                } else
                     throw new IOException("Invalid version JSON: " + fileVersion);
 
-                int version = fileVersion.getAsJsonPrimitive().getAsInt();
-                if (version != CACHE_VERSION)
-                    throw new IOException("Unsupported cache file, version: %d".formatted(version));
-
-                JsonArray cachesArray = jsonObject.getAsJsonArray("caches");
+                JsonArray cachesArray = jsonFile.getAsJsonArray("caches");
 
                 for (JsonElement element : cachesArray) {
                     try {
@@ -521,9 +533,17 @@ public final class JavaManager {
 
                         Path realPath = Path.of(obj.getAsJsonPrimitive("path").getAsString()).toRealPath();
                         String key = obj.getAsJsonPrimitive("key").getAsString();
-                        JavaInfo info = JsonUtils.GSON.fromJson(obj.getAsJsonObject("info"), JavaInfo.class);
 
-                        caches.put(realPath, new JavaInfoCache(key, info));
+                        OperatingSystem osName = OperatingSystem.parseOSName(obj.getAsJsonPrimitive("os.name").getAsString());
+                        Architecture osArch = Architecture.parseArchName(obj.getAsJsonPrimitive("os.arch").getAsString());
+                        String javaVersion = obj.getAsJsonPrimitive("java.version").getAsString();
+
+                        JavaInfo.Builder infoBuilder = JavaInfo.newBuilder(Platform.getPlatform(osName, osArch), javaVersion);
+
+                        if (obj.get("java.vendor") instanceof JsonPrimitive vendor)
+                            infoBuilder.setVendor(vendor.getAsString());
+
+                        caches.put(realPath, new JavaInfoCache(key, infoBuilder.build()));
                     } catch (Exception e) {
                         LOG.warning("Invalid cache: " + element);
                         needRefreshCache = true;
@@ -545,7 +565,7 @@ public final class JavaManager {
                     try (var writer = new JsonWriter(new OutputStreamWriter(output, StandardCharsets.UTF_8))) {
                         writer.beginObject();
 
-                        writer.name("version").value(CACHE_VERSION);
+                        writer.name("version").value(CACHE_MAJOR_VERSION);
 
                         writer.name("caches");
                         writer.beginArray();

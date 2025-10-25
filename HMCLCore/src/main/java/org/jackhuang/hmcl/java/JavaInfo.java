@@ -25,6 +25,8 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.tree.ArchiveFileTree;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
@@ -117,6 +119,31 @@ public final class JavaInfo {
             case "Amazon.com Inc." -> "Amazon";
             default -> vendor;
         };
+    }
+
+    public static final class Builder {
+        private final Platform platform;
+        private final String version;
+        private @Nullable String vendor;
+
+        public Builder(Platform platform, String version) {
+            this.platform = platform;
+            this.version = version;
+        }
+
+        @Contract("_ -> this")
+        public Builder setVendor(@Nullable String vendor) {
+            this.vendor = vendor;
+            return this;
+        }
+
+        public JavaInfo build() {
+            return new JavaInfo(platform, version, vendor);
+        }
+    }
+
+    public static Builder newBuilder(@NotNull Platform platform, @NotNull String version) {
+        return new Builder(platform, version);
     }
 
     public static final JavaInfo CURRENT_ENVIRONMENT = new JavaInfo(Platform.CURRENT_PLATFORM, System.getProperty("java.version"), System.getProperty("java.vendor"));
