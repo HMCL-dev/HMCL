@@ -572,12 +572,18 @@ public final class JavaManager {
                         for (Map.Entry<Path, JavaInfoCache> entry : caches.entrySet()) {
                             Path path = entry.getKey();
                             JavaInfoCache cache = entry.getValue();
+                            JavaInfo info = cache.info();
 
                             writer.beginObject();
 
                             writer.name("path").value(path.toString());
                             writer.name("key").value(cache.key());
-                            writer.name("info").jsonValue(JsonUtils.GSON.toJson(cache.info().toString()));
+
+                            writer.name("os.name").value(info.getPlatform().os().getCheckedName());
+                            writer.name("os.arch").value(info.getPlatform().arch().getCheckedName());
+                            writer.name("java.version").value(info.getVersion());
+                            if (info.getVendor() != null)
+                                writer.name("java.vendor").value(info.getVendor());
 
                             writer.endObject();
                         }
@@ -664,6 +670,10 @@ public final class JavaManager {
         }
 
         void tryAddJavaExecutable(Path executable) {
+            tryAddJavaExecutable(executable, false);
+        }
+
+        void tryAddJavaExecutable(Path executable, boolean isManaged) {
             try {
                 executable = executable.toRealPath();
             } catch (IOException e) {
@@ -747,12 +757,18 @@ public final class JavaManager {
         }
 
         void searchAllJavaInRepository(Platform platform) {
-            for (JavaRuntime java : REPOSITORY.getAllJava(platform)) {
-                addResult(java.getBinary(), java);
+            for (Path java : REPOSITORY.getAllJava(platform)) {
+                tryAddJavaExecutable(java, true);
             }
 
-            for (JavaRuntime java : LOCAL_REPOSITORY.getAllJava(platform)) {
-                addResult(java.getBinary(), java);
+            for (Path java : LOCAL_REPOSITORY.getAllJava(platform)) {
+                tryAddJavaExecutable(java, true);
+            }
+
+            if (platform.os() == OperatingSystem.MACOS) {
+                // In the past, we used 'osx' as the checked name for macOS
+                Path platformRoot = REPOSITORY.getPlatformRoot(platform).resolveSibling("osx-" + platform.getArchitecture().getCheckedName());
+                searchAllJavaInDirectory(platformRoot);
             }
         }
 

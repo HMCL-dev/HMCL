@@ -97,7 +97,7 @@ public final class HMCLJavaRepository implements JavaRepository {
         return getJavaExecutable(platform, MOJANG_JAVA_PREFIX + gameJavaVersion.getComponent());
     }
 
-    private static void getAllJava(List<JavaRuntime> list, Platform platform, Path platformRoot, boolean isManaged) {
+    private static void getAllJava(List<Path> list, Platform platform, Path platformRoot) {
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(platformRoot)) {
             for (Path file : stream) {
                 try {
@@ -115,8 +115,7 @@ public final class HMCLJavaRepository implements JavaRepository {
                         }
 
                         if (Files.isDirectory(javaDir)) {
-                            JavaManifest manifest = JsonUtils.fromJsonFile(file, JavaManifest.class);
-                            list.add(JavaRuntime.of(executable, manifest.getInfo(), isManaged));
+                            list.add(executable);
                         }
                     }
                 } catch (Throwable e) {
@@ -129,20 +128,14 @@ public final class HMCLJavaRepository implements JavaRepository {
     }
 
     @Override
-    public Collection<JavaRuntime> getAllJava(Platform platform) {
+    public Collection<Path> getAllJava(Platform platform) {
         Path platformRoot = getPlatformRoot(platform);
         if (!Files.isDirectory(platformRoot))
             return Collections.emptyList();
 
-        ArrayList<JavaRuntime> list = new ArrayList<>();
+        ArrayList<Path> list = new ArrayList<>();
 
-        getAllJava(list, platform, platformRoot, true);
-        if (platform.getOperatingSystem() == OperatingSystem.MACOS) {
-            platformRoot = root.resolve(platform.getOperatingSystem().getMojangName() + "-" + platform.getArchitecture().getCheckedName());
-            if (Files.isDirectory(platformRoot))
-                getAllJava(list, platform, platformRoot, false);
-        }
-
+        getAllJava(list, platform, platformRoot);
         return list;
     }
 
