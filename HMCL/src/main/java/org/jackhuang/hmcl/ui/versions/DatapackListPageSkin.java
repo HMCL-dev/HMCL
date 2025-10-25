@@ -38,6 +38,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
@@ -144,9 +145,12 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             FXUtils.onEscPressed(searchField, closeSearchBar::fire);
             searchBar.getChildren().addAll(searchField, closeSearchBar);
 
-            FXUtils.onEscPressed(root, () -> {
-                if (listView.getSelectionModel().getSelectedItem() != null) {
-                    listView.getSelectionModel().clearSelection();
+            root.addEventHandler(KeyEvent.KEY_PRESSED, e -> {
+                if (e.getCode() == KeyCode.ESCAPE) {
+                    if (listView.getSelectionModel().getSelectedItem() != null) {
+                        listView.getSelectionModel().clearSelection();
+                        e.consume();
+                    }
                 }
             });
 
@@ -172,7 +176,23 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             center.loadingProperty().bind(skinnable.loadingProperty());
 
             Holder<Object> lastCell = new Holder<>();
-            listView.setCellFactory(x -> new DatapackInfoListCell(listView, lastCell));
+            listView.setCellFactory(x -> {
+                DatapackInfoListCell datapackInfoListCell = new DatapackInfoListCell(listView, lastCell);
+                datapackInfoListCell.addEventFilter(MouseEvent.MOUSE_PRESSED, mouseEvent -> {
+                    if (datapackInfoListCell.isEmpty()) {
+                        mouseEvent.consume();
+                        return;
+                    }
+                    if (datapackInfoListCell.isSelected()) {
+                        listView.getSelectionModel().clearSelection(datapackInfoListCell.getIndex());
+                    } else {
+                        listView.getSelectionModel().select(datapackInfoListCell.getIndex());
+                    }
+                    datapackInfoListCell.requestFocus();
+                    mouseEvent.consume();
+                });
+                return datapackInfoListCell;
+            });
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
             this.listView.setItems(filteredList);
 
