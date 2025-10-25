@@ -691,7 +691,7 @@ public final class JavaManager {
                 JavaInfoCache cache = caches.get(executable);
                 if (cache != null) {
                     if (isCompatible(cache.info().getPlatform()) && cacheKey.equals(cache.key())) {
-                        javaRuntimes.put(executable, JavaRuntime.of(executable, cache.info(), false));
+                        javaRuntimes.put(executable, JavaRuntime.of(executable, cache.info(), isManaged));
                         return;
                     } else {
                         caches.remove(executable);
@@ -711,7 +711,12 @@ public final class JavaManager {
             }
 
             if (info != null) {
-                javaRuntimes.put(executable, JavaRuntime.of(executable, info, false));
+                if (cacheKey != null) {
+                    caches.put(executable, new JavaInfoCache(cacheKey, info));
+                    needRefreshCache = true;
+                }
+
+                javaRuntimes.put(executable, JavaRuntime.of(executable, info, isManaged));
             }
         }
 
