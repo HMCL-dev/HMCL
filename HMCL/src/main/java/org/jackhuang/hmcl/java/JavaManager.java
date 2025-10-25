@@ -182,7 +182,7 @@ public final class JavaManager {
     }
 
     public static void refresh() {
-        Task.supplyAsync(JavaManager::searchPotentialJavaExecutables).whenComplete(Schedulers.javafx(), (result, exception) -> {
+        Task.supplyAsync(() -> searchPotentialJavaExecutables(false)).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (result != null) {
                 LATCH.await();
                 allJava = result;
@@ -343,7 +343,7 @@ public final class JavaManager {
     }
 
     public static void initialize() {
-        Map<Path, JavaRuntime> allJava = searchPotentialJavaExecutables();
+        Map<Path, JavaRuntime> allJava = searchPotentialJavaExecutables(true);
         JavaManager.allJava = allJava;
         LATCH.countDown();
         FXUtils.runInFX(() -> updateAllJavaProperty(allJava));
@@ -351,8 +351,11 @@ public final class JavaManager {
 
     // search java
 
-    private static Map<Path, JavaRuntime> searchPotentialJavaExecutables() {
+    private static Map<Path, JavaRuntime> searchPotentialJavaExecutables(boolean useCache) {
         Searcher searcher = new Searcher(Metadata.HMCL_GLOBAL_DIRECTORY.resolve("javaCache.json"));
+        if (useCache)
+            searcher.loadCache();
+
         searcher.searchAllJavaInRepository(Platform.SYSTEM_PLATFORM);
         switch (OperatingSystem.CURRENT_OS) {
             case WINDOWS:
