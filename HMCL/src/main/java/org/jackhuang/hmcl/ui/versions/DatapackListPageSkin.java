@@ -120,7 +120,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
                     createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () ->
                             skinnable.disableSelected(listView.getSelectionModel().getSelectedItems())),
                     createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () ->
-                            listView.getSelectionModel().selectAll()),
+                            listView.getSelectionModel().selectRange(0, listView.getItems().size())),//reason for not using selectAll() is that selectAll() first clears all selected then selects all, causing the toolbar to flicker
                     createToolbarButton2(i18n("button.cancel"), SVG.CANCEL, () ->
                             listView.getSelectionModel().clearSelection())
             );
