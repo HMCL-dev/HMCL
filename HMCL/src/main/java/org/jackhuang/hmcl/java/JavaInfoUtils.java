@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.java;
 
 import com.google.gson.annotations.SerializedName;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
@@ -76,14 +77,9 @@ public final class JavaInfoUtils {
         }
     }
 
-    private static final class Result {
-        @SerializedName("os.name")
-        public String osName;
-        @SerializedName("os.arch")
-        public String osArch;
-        @SerializedName("java.version")
-        public String javaVersion;
-        @SerializedName("java.vendor")
-        public String javaVendor;
+    @JsonSerializable
+    private record Result(@SerializedName("os.name") String osName, @SerializedName("os.arch") String osArch,
+                          @SerializedName("java.version") String javaVersion,
+                          @SerializedName("java.vendor") String javaVendor) {
     }
 }

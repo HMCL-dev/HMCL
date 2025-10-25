@@ -701,22 +701,21 @@ public final class JavaManager {
                 needRefreshCache = true;
             }
 
-            JavaInfo info = null;
+            JavaInfo info;
             try {
                 info = JavaInfoUtils.fromExecutable(executable);
             } catch (IOException e) {
                 LOG.warning("Failed to lookup Java executable at " + executable, e);
                 failed.add(executable);
+                return;
             }
 
-            if (info != null) {
-                if (cacheKey != null) {
-                    caches.put(executable, new JavaInfoCache(cacheKey, info));
-                    needRefreshCache = true;
-                }
-
-                javaRuntimes.put(executable, JavaRuntime.of(executable, info, isManaged));
+            if (cacheKey != null) {
+                caches.put(executable, new JavaInfoCache(cacheKey, info));
+                needRefreshCache = true;
             }
+
+            javaRuntimes.put(executable, JavaRuntime.of(executable, info, isManaged));
         }
 
         void tryAddJavaInComponentDir(String platform, Path component, boolean verify) {
