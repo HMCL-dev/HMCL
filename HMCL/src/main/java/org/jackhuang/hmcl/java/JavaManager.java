@@ -619,7 +619,7 @@ public final class JavaManager {
             try {
                 launcherAttributes = Files.readAttributes(realPath, BasicFileAttributes.class);
 
-                Path releaseFile = libDir.resolve("release");
+                Path releaseFile = javaHome.resolve("release");
                 if (Files.exists(releaseFile)) {
                     releaseHash = DigestUtils.digestToString("SHA-1", releaseFile);
                 } else {
