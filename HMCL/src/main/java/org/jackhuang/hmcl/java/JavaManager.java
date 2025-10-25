@@ -608,13 +608,6 @@ public final class JavaManager {
             if (javaHome == null)
                 return null;
 
-            String javaHomeName = javaHome.getFileName().toString();
-            if (!javaHomeName.contains("java")
-                    && !javaHomeName.contains("jre")
-                    && !javaHomeName.contains("jdk")
-                    && !javaHomeName.contains("openj9"))
-                return null;
-
             Path libDir = javaHome.resolve("lib");
             if (!Files.isDirectory(libDir))
                 return null;
