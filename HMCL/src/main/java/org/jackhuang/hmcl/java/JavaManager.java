@@ -564,7 +564,7 @@ public final class JavaManager {
                     try (var writer = new JsonWriter(new OutputStreamWriter(output, StandardCharsets.UTF_8))) {
                         writer.beginObject();
 
-                        writer.name("version").value(CACHE_MAJOR_VERSION);
+                        writer.name("version").value("%d.%d".formatted(CACHE_MAJOR_VERSION, CACHE_MINOR_VERSION));
 
                         writer.name("caches");
                         writer.beginArray();
