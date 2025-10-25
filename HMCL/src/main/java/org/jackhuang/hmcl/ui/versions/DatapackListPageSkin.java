@@ -249,7 +249,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             if (this.getPackInfo().isDirectory()) {
                 imagePath = getPackInfo().getPath().resolve("pack.png");
                 try {
-                    image = FXUtils.loadImage(imagePath, 48, 48, true, true);
+                    image = FXUtils.loadImage(imagePath, 64, 64, true, true);
                 } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
@@ -257,7 +257,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
                 try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(getPackInfo().getPath())) {
                     imagePath = fs.getPath("/pack.png");
                     if (Files.exists(imagePath)) {
-                        image = FXUtils.loadImage(imagePath, 48, 48, true, true);
+                        image = FXUtils.loadImage(imagePath, 64, 64, true, true);
                     }
                 } catch (Exception e) {
                     throw new RuntimeException(e);
@@ -316,8 +316,8 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             content.setMouseTransparent(true);
             setSelectable();
 
-            imageView.setFitWidth(24);
-            imageView.setFitHeight(24);
+            imageView.setFitWidth(32);
+            imageView.setFitHeight(32);
             imageView.setPreserveRatio(true);
             imageView.setImage(FXUtils.newBuiltinImage("/assets/img/unknown_pack.png"));
 
