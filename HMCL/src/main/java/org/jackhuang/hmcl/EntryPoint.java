@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.SelfDependencyPatcher;
 import org.jackhuang.hmcl.util.SwingUtils;
 import org.jackhuang.hmcl.java.JavaRuntime;
+import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
@@ -28,6 +29,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.CancellationException;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -49,7 +51,7 @@ public final class EntryPoint {
         setupJavaFXVMOptions();
         checkDirectoryPath();
 
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && !isMacDockIconDisabled())
             initIcon();
 
         checkJavaFX();
@@ -157,6 +159,23 @@ public final class EntryPoint {
                 LOG.warning("Failed to create HMCL global directory " + Metadata.HMCL_GLOBAL_DIRECTORY, e);
             }
         }
+    }
+
+    private static boolean isMacDockIconDisabled() {
+        Path jarPath = JarUtils.thisJarPath();
+        if (jarPath == null)
+            return false;
+
+        while (jarPath != null && jarPath.getParent() != null) {
+            if ("Contents".equals(jarPath.getFileName().toString())
+                    && jarPath.getParent().getFileName().toString().endsWith(".app")
+                    && Files.exists(jarPath.resolve("Info.plist"))
+            ) {
+                return true;
+            }
+            jarPath = jarPath.getParent();
+        }
+        return false;
     }
 
     private static void initIcon() {
