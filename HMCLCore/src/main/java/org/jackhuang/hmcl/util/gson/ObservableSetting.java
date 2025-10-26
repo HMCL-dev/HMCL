@@ -60,7 +60,7 @@ public abstract class ObservableSetting implements Observable {
     private static final ClassValue<List<? extends ObservableField<?>>> FIELDS = new ClassValue<>() {
         @Override
         protected List<? extends ObservableField<?>> computeValue(@NotNull Class<?> type) {
-            if (type.isAssignableFrom(ObservableSetting.class))
+            if (ObservableSetting.class.isAssignableFrom(type))
                 throw new AssertionError("Type: " + type);
 
             try {
