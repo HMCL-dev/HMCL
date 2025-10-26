@@ -64,6 +64,16 @@ public abstract class ObservableSetting implements Observable {
 
     protected abstract List<? extends ObservableField<?>> getFields();
 
+    protected final void register() {
+        @SuppressWarnings("unchecked")
+        var fields = (List<ObservableField<ObservableSetting>>) getFields();
+        for (var field : fields) {
+            Observable observable = field.get(this);
+            tracker.track(observable);
+            observable.addListener(helper);
+        }
+    }
+
     @Override
     public void addListener(InvalidationListener listener) {
         helper.addListener(listener);

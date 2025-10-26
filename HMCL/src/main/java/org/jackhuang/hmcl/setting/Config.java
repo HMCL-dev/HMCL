@@ -71,17 +71,9 @@ public final class Config extends ObservableSetting {
     }
 
     public Config() {
-        var shouldBeWrite = Collections.<Observable>newSetFromMap(new IdentityHashMap<>());
-        Collections.addAll(shouldBeWrite, configVersion, uiVersion);
-
-        for (var field : FIELDS) {
-            Observable observable = field.get(this);
-            if (shouldBeWrite.contains(observable))
-                tracker.markDirty(observable);
-            else
-                tracker.track(observable);
-            observable.addListener(helper);
-        }
+        tracker.markDirty(configVersion);
+        tracker.markDirty(uiVersion);
+        register();
     }
 
     @Override
