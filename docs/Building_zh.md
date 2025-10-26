@@ -1,5 +1,9 @@
 # 构建指南
 
+<!-- #BEGIN LANGUAGE_SWITCHER -->
+[English](Building.md) | **中文**
+<!-- #END LANGUAGE_SWITCHER -->
+
 ## 环境需求
 
 构建 HMCL 启动器需要安装 JDK 17 (或更高版本)。你可以从此处下载它: [Download Liberica JDK](https://bell-sw.com/pages/downloads/#jdk-25-lts)。

@@ -1,5 +1,9 @@
 # Build Guide
 
+<!-- #BEGIN LANGUAGE_SWITCHER -->
+**English** | [中文](Building_zh.md)
+<!-- #END LANGUAGE_SWITCHER -->
+
 ## Requirements
 
 To build the HMCL launcher, you need to install JDK 17 (or higher). You can download it here: [Download Liberica JDK](https://bell-sw.com/pages/downloads/#jdk-25-lts).
