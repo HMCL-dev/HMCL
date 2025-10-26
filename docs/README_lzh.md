@@ -43,13 +43,7 @@ HMCL 跨域甚廣。無論 Windows、Linux、macOS、FreeBSD 諸常見械綱，�
 
 ### 編造
 
-於項目之根目錄，執下列令：
-
-```bash
-./gradlew clean build
-```
-
-務必保汝已安裝爪哇十七或更高者。
+請觀[編造指南](./Building_zh.md)。
 
 ## 爪哇虛機之通弦（以資勘誤）
 

@@ -43,13 +43,7 @@ Si deseas enviar un pull request, aquí tienes algunos requisitos:
 
 ### Compilación
 
-Simplemente ejecuta el siguiente comando en el directorio raíz del proyecto:
-
-```bash
-./gradlew clean build
-```
-
-Asegúrate de tener instalado Java 17 o una versión posterior.
+Consulta la página de la [Guía de compilación](./Building.md).
 
 ## Opciones de JVM (para depuración)
 

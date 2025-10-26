@@ -50,13 +50,7 @@ If you want to submit a pull request, here are some requirements:
 
 ### Compilation
 
-Simply execute the following command in the project root directory:
-
-```bash
-./gradlew clean build
-```
-
-Make sure you have Java 17 or later installed.
+See the [Build Guide](./Building.md) page.
 
 ## JVM Options (for debugging)
 
