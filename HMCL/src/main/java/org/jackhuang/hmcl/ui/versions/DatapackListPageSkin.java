@@ -66,6 +66,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -84,6 +85,8 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
     private final BooleanProperty isSelecting = new SimpleBooleanProperty(false);
     private final InvalidationListener updateBarByStateWeakListener;
     private final JFXTextField searchField;
+
+    private static final AtomicInteger lastShiftClick = new AtomicInteger(-1);
 
     DatapackListPageSkin(DatapackListPage skinnable) {
         super(skinnable);
@@ -176,23 +179,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             center.loadingProperty().bind(skinnable.loadingProperty());
 
             Holder<Object> lastCell = new Holder<>();
-            listView.setCellFactory(x -> {
-                DatapackInfoListCell datapackInfoListCell = new DatapackInfoListCell(listView, lastCell);
-                datapackInfoListCell.addEventFilter(MouseEvent.MOUSE_PRESSED, mouseEvent -> {
-                    if (datapackInfoListCell.isEmpty()) {
-                        mouseEvent.consume();
-                        return;
-                    }
-                    if (datapackInfoListCell.isSelected()) {
-                        listView.getSelectionModel().clearSelection(datapackInfoListCell.getIndex());
-                    } else {
-                        listView.getSelectionModel().select(datapackInfoListCell.getIndex());
-                    }
-                    datapackInfoListCell.requestFocus();
-                    mouseEvent.consume();
-                });
-                return datapackInfoListCell;
-            });
+            listView.setCellFactory(x -> new DatapackInfoListCell(listView, lastCell));
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
             this.listView.setItems(filteredList);
 
@@ -324,6 +311,49 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             StackPane.setMargin(container, new Insets(8));
             container.getChildren().setAll(checkBox, imageView, content);
             getContainer().getChildren().setAll(container);
+
+            getContainer().getParent().addEventHandler(MouseEvent.MOUSE_PRESSED, mouseEvent -> {
+                if (this.isEmpty()) {
+                    mouseEvent.consume();
+                    return;
+                }
+
+                if (mouseEvent.isShiftDown()) {
+                    int currentIndex = this.getIndex();
+                    if (lastShiftClick.get() == -1) {
+                        lastShiftClick.set(currentIndex);
+                        if (this.isSelected()) {
+                            listView.getSelectionModel().clearSelection(this.getIndex());
+                        } else {
+                            listView.getSelectionModel().select(this.getIndex());
+                        }
+                    } else if (listView.getItems().size() >= lastShiftClick.get() && !(lastShiftClick.get() < -1)) {
+                        if (this.isSelected()) {
+                            boolean asc = lastShiftClick.get() < currentIndex;
+                            int low = asc ? lastShiftClick.get() : currentIndex;
+                            int high = asc ? currentIndex : lastShiftClick.get();
+                            for (int i = low; i <= high; i++) {
+                                listView.getSelectionModel().clearSelection(i);
+                            }
+                        } else {
+                            listView.getSelectionModel().selectRange(lastShiftClick.get(), currentIndex);
+                            listView.getSelectionModel().select(currentIndex);
+                        }
+                        lastShiftClick.set(-1);
+                    } else {
+                        lastShiftClick.set(currentIndex);
+                        listView.getSelectionModel().select(currentIndex);
+                    }
+                } else {
+                    if (this.isSelected()) {
+                        listView.getSelectionModel().clearSelection(this.getIndex());
+                    } else {
+                        listView.getSelectionModel().select(this.getIndex());
+                    }
+                }
+                this.requestFocus();
+                mouseEvent.consume();
+            });
         }
 
         @Override
