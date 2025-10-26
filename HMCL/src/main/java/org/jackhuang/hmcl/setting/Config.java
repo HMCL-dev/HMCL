@@ -63,8 +63,6 @@ public final class Config extends ObservableSetting {
             .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
             .create();
 
-    private static final List<ObservableField<Config>> FIELDS = ObservableSetting.findFields(Config.class);
-
     @Nullable
     public static Config fromJson(String json) throws JsonParseException {
         return CONFIG_GSON.fromJson(json, Config.class);
@@ -74,11 +72,6 @@ public final class Config extends ObservableSetting {
         tracker.markDirty(configVersion);
         tracker.markDirty(uiVersion);
         register();
-    }
-
-    @Override
-    protected List<ObservableField<Config>> getFields() {
-        return FIELDS;
     }
 
     public String toJson() {
