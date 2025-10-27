@@ -26,6 +26,7 @@ import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.AggregatedObservableList;
@@ -34,7 +35,7 @@ public class TwoLineListItem extends VBox {
     private static final String DEFAULT_STYLE_CLASS = "two-line-list-item";
 
     private static Label createTagLabel(String tag) {
-        Label tagLabel = new Label();
+        Label tagLabel = FXUtils.newSafeTruncatedLabel(tag);
         tagLabel.setText(tag);
         HBox.setMargin(tagLabel, new Insets(0, 8, 0, 0));
         return tagLabel;
@@ -54,7 +55,6 @@ public class TwoLineListItem extends VBox {
     }
 
     public TwoLineListItem() {
-        setMouseTransparent(true);
 
         HBox firstLine = new HBox();
         firstLine.getStyleClass().add("first-line");
@@ -62,6 +62,7 @@ public class TwoLineListItem extends VBox {
         Label lblTitle = new Label();
         lblTitle.getStyleClass().add("title");
         lblTitle.textProperty().bind(title);
+        FXUtils.showTooltipWhenTruncated(lblTitle);
 
         firstLineChildren = new AggregatedObservableList<>();
         firstLineChildren.appendList(FXCollections.singletonObservableList(lblTitle));
@@ -71,6 +72,7 @@ public class TwoLineListItem extends VBox {
         Label lblSubtitle = new Label();
         lblSubtitle.getStyleClass().add("subtitle");
         lblSubtitle.textProperty().bind(subtitle);
+        FXUtils.showTooltipWhenTruncated(lblSubtitle);
 
         HBox secondLine = new HBox();
         secondLine.getChildren().setAll(lblSubtitle);
