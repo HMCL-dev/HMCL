@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.SelfDependencyPatcher;
 import org.jackhuang.hmcl.util.SwingUtils;
 import org.jackhuang.hmcl.java.JavaRuntime;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
@@ -51,7 +52,7 @@ public final class EntryPoint {
         setupJavaFXVMOptions();
         checkDirectoryPath();
 
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && !isMacDockIconDisabled())
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && !isInsideMacAppBundle())
             initIcon();
 
         checkJavaFX();
@@ -161,19 +162,21 @@ public final class EntryPoint {
         }
     }
 
-    private static boolean isMacDockIconDisabled() {
-        Path jarPath = JarUtils.thisJarPath();
-        if (jarPath == null)
+    private static boolean isInsideMacAppBundle() {
+        Path thisJar = JarUtils.thisJarPath();
+        if (thisJar == null)
             return false;
 
-        while (jarPath != null && jarPath.getParent() != null) {
-            if ("Contents".equals(jarPath.getFileName().toString())
-                    && jarPath.getParent().getFileName().toString().endsWith(".app")
-                    && Files.exists(jarPath.resolve("Info.plist"))
+        for (Path current = thisJar.getParent();
+             current != null && current.getParent() != null;
+             current = current.getParent()
+        ) {
+            if ("Contents".equals(FileUtils.getName(current))
+                    && FileUtils.getName(current.getParent()).endsWith(".app")
+                    && Files.exists(current.resolve("Info.plist"))
             ) {
                 return true;
             }
-            jarPath = jarPath.getParent();
         }
         return false;
     }
