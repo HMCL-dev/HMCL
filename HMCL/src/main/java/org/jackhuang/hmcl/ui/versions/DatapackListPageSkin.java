@@ -67,6 +67,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
+import java.util.stream.IntStream;
 
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -86,7 +88,8 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
     private final InvalidationListener updateBarByStateWeakListener;
     private final JFXTextField searchField;
 
-    private static final AtomicInteger lastShiftClick = new AtomicInteger(-1);
+    private static final AtomicInteger lastShiftClickIndex = new AtomicInteger(-1);
+    final Consumer<Integer> toggleSelect;
 
     DatapackListPageSkin(DatapackListPage skinnable) {
         super(skinnable);
@@ -190,6 +193,16 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             root.getContent().add(center);
         }
 
+        {
+            toggleSelect = i -> {
+                if (listView.getSelectionModel().isSelected(i)) {
+                    listView.getSelectionModel().clearSelection(i);
+                } else {
+                    listView.getSelectionModel().select(i);
+                }
+            };
+        }
+
         pane.getChildren().setAll(root);
         getChildren().setAll(pane);
     }
@@ -287,7 +300,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
         }
     }
 
-    private static final class DatapackInfoListCell extends MDListCell<DatapackInfoObject> {
+    private final class DatapackInfoListCell extends MDListCell<DatapackInfoObject> {
         final JFXCheckBox checkBox = new JFXCheckBox();
         ImageView imageView = new ImageView();
         final TwoLineListItem content = new TwoLineListItem();
@@ -312,48 +325,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             container.getChildren().setAll(checkBox, imageView, content);
             getContainer().getChildren().setAll(container);
 
-            getContainer().getParent().addEventHandler(MouseEvent.MOUSE_PRESSED, mouseEvent -> {
-                if (this.isEmpty()) {
-                    mouseEvent.consume();
-                    return;
-                }
-
-                if (mouseEvent.isShiftDown()) {
-                    int currentIndex = this.getIndex();
-                    if (lastShiftClick.get() == -1) {
-                        lastShiftClick.set(currentIndex);
-                        if (this.isSelected()) {
-                            listView.getSelectionModel().clearSelection(this.getIndex());
-                        } else {
-                            listView.getSelectionModel().select(this.getIndex());
-                        }
-                    } else if (listView.getItems().size() >= lastShiftClick.get() && !(lastShiftClick.get() < -1)) {
-                        if (this.isSelected()) {
-                            boolean asc = lastShiftClick.get() < currentIndex;
-                            int low = asc ? lastShiftClick.get() : currentIndex;
-                            int high = asc ? currentIndex : lastShiftClick.get();
-                            for (int i = low; i <= high; i++) {
-                                listView.getSelectionModel().clearSelection(i);
-                            }
-                        } else {
-                            listView.getSelectionModel().selectRange(lastShiftClick.get(), currentIndex);
-                            listView.getSelectionModel().select(currentIndex);
-                        }
-                        lastShiftClick.set(-1);
-                    } else {
-                        lastShiftClick.set(currentIndex);
-                        listView.getSelectionModel().select(currentIndex);
-                    }
-                } else {
-                    if (this.isSelected()) {
-                        listView.getSelectionModel().clearSelection(this.getIndex());
-                    } else {
-                        listView.getSelectionModel().select(this.getIndex());
-                    }
-                }
-                this.requestFocus();
-                mouseEvent.consume();
-            });
+            getContainer().getParent().addEventHandler(MouseEvent.MOUSE_PRESSED, mouseEvent -> handleSelect(this,mouseEvent));
         }
 
         @Override
@@ -367,5 +339,38 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             checkBox.selectedProperty().bindBidirectional(booleanProperty = dataItem.activeProperty);
             dataItem.loadIcon(imageView, new WeakReference<>(this.itemProperty()));
         }
+    }
+
+    public void handleSelect(DatapackInfoListCell cell,MouseEvent mouseEvent) {
+        if (cell.isEmpty()) {
+            mouseEvent.consume();
+            return;
+        }
+
+        if (mouseEvent.isShiftDown()) {
+            int currentIndex = cell.getIndex();
+            if (lastShiftClickIndex.get() == -1) {
+                lastShiftClickIndex.set(currentIndex);
+                toggleSelect.accept(cell.getIndex());
+            } else if (listView.getItems().size() >= lastShiftClickIndex.get() && !(lastShiftClickIndex.get() < -1)) {
+                if (cell.isSelected()) {
+                    IntStream.rangeClosed(
+                                    Math.min(lastShiftClickIndex.get(), currentIndex),
+                                    Math.max(lastShiftClickIndex.get(), currentIndex))
+                            .forEach(listView.getSelectionModel()::clearSelection);
+                } else {
+                    listView.getSelectionModel().selectRange(lastShiftClickIndex.get(), currentIndex);
+                    listView.getSelectionModel().select(currentIndex);
+                }
+                lastShiftClickIndex.set(-1);
+            } else {
+                lastShiftClickIndex.set(currentIndex);
+                listView.getSelectionModel().select(currentIndex);
+            }
+        } else {
+            toggleSelect.accept(cell.getIndex());
+        }
+        cell.requestFocus();
+        mouseEvent.consume();
     }
 }
