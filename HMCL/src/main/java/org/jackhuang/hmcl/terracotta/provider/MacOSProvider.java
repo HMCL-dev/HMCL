@@ -67,14 +67,22 @@ public final class MacOSProvider implements ITerracottaProvider {
                             "-e",
                             String.format(
                                     "do shell script \"installer -pkg %s -target /\" with prompt \"%s\" with administrator privileges",
-                                    installer.getPath(),
+                                    installer.getPath().toAbsolutePath(),
                                     i18n("terracotta.sudo_installing")
                             )
                     ));
                     process.pumpInputStream(SystemUtils::onLogLine);
                     process.pumpErrorStream(SystemUtils::onLogLine);
 
-                    return Task.fromCompletableFuture(process.getProcess().onExit());
+                    return Task.fromCompletableFuture(process.getProcess().onExit()).thenRunAsync(() -> {
+                        if (process.getExitCode() != 0) {
+                            throw new IllegalStateException(String.format(
+                                    "Cannot install Terracotta %s: system installer exited with code %d",
+                                    installer.getPath().toAbsolutePath(),
+                                    process.getExitCode()
+                            ));
+                        }
+                    });
                 }),
                 binaryTask.thenRunAsync(() -> Files.setPosixFilePermissions(binary.getPath(), Set.of(
                         PosixFilePermission.OWNER_READ,
