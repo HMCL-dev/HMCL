@@ -65,10 +65,10 @@ public final class Zipper implements Closeable {
         if (entryNames == null || entryNames.add(name))
             return new ZipEntry(name);
 
-        for (int i = 1; i <= 10; i++) {
-            String newPath = name + "." + i;
-            if (entryNames.add(newPath)) {
-                return new ZipEntry(newPath);
+        for (int i = 1; i < 10; i++) {
+            String newName = name + "." + i;
+            if (entryNames.add(newName)) {
+                return new ZipEntry(newName);
             }
         }
 
