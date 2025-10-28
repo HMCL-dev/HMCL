@@ -183,7 +183,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
 
             // sixth item in left sidebar
             AdvancedListItem terracottaItem = new AdvancedListItem();
-            terracottaItem.setLeftGraphic(wrap(SVG.HOST));
+            terracottaItem.setLeftGraphic(wrap(SVG.GRAPH2));
             terracottaItem.setActionButtonVisible(false);
             terracottaItem.setTitle(i18n("terracotta"));
             terracottaItem.setOnAction(e -> Controllers.navigate(Controllers.getTerracottaPage()));
@@ -198,7 +198,8 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                     .add(downloadItem)
                     .startCategory(i18n("settings.launcher.general").toUpperCase(Locale.ROOT))
                     .add(launcherSettingsItem)
-                    .add(terracottaItem);
+                    .add(terracottaItem)
+                    .addNavigationDrawerItem(i18n("chat"), SVG.CHAT, () -> FXUtils.openLink(Metadata.GROUPS_URL));
 
             // the root page, with the sidebar in left, navigator in center.
             setLeft(sideBar);
