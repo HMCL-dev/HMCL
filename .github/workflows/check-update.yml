@@ -10,6 +10,7 @@ permissions:
 
 jobs:
   check-update:
+    if: ${{ github.repository_owner == 'HMCL-dev' }}
     strategy:
       fail-fast: false
       max-parallel: 1
@@ -48,7 +49,7 @@ jobs:
       - name: Generate release note
         if: ${{ env.continue == 'true' }}
         run: |
-          if [ "${{ matrix.channel == 'stable' }}" ]; then
+          if [ "${{ matrix.channel }}" = "stable" ]; then
             echo "**This version is a stable version.**" >> RELEASE_NOTE
             echo "" >> RELEASE_NOTE
           fi
