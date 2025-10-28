@@ -25,6 +25,7 @@ import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -85,7 +86,6 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
 
     private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
     private final BooleanProperty isSelecting = new SimpleBooleanProperty(false);
-    private final InvalidationListener updateBarByStateWeakListener;
     private final JFXTextField searchField;
 
     private static final AtomicInteger lastShiftClickIndex = new AtomicInteger(-1);
@@ -164,7 +164,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
                     selectedItem -> isSelecting.set(selectedItem != null));
             root.getContent().add(toolbarPane);
 
-            this.updateBarByStateWeakListener = FXUtils.observeWeak(() -> {
+            InvalidationListener updateBarByStateWeakListener = FXUtils.observeWeak(() -> {
                 if (isSelecting.get()) {
                     changeToolbar(selectingToolbar);
                 } else if (!isSelecting.get() && !isSearching.get()) {
@@ -193,15 +193,13 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             root.getContent().add(center);
         }
 
-        {
-            toggleSelect = i -> {
-                if (listView.getSelectionModel().isSelected(i)) {
-                    listView.getSelectionModel().clearSelection(i);
-                } else {
-                    listView.getSelectionModel().select(i);
-                }
-            };
-        }
+        toggleSelect = i -> {
+            if (listView.getSelectionModel().isSelected(i)) {
+                listView.getSelectionModel().clearSelection(i);
+            } else {
+                listView.getSelectionModel().select(i);
+            }
+        };
 
         pane.getChildren().setAll(root);
         getChildren().setAll(pane);
@@ -325,7 +323,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             container.getChildren().setAll(checkBox, imageView, content);
             getContainer().getChildren().setAll(container);
 
-            getContainer().getParent().addEventHandler(MouseEvent.MOUSE_PRESSED, mouseEvent -> handleSelect(this,mouseEvent));
+            getContainer().getParent().addEventHandler(MouseEvent.MOUSE_PRESSED, mouseEvent -> handleSelect(this, mouseEvent));
         }
 
         @Override
@@ -341,7 +339,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
         }
     }
 
-    public void handleSelect(DatapackInfoListCell cell,MouseEvent mouseEvent) {
+    public void handleSelect(DatapackInfoListCell cell, MouseEvent mouseEvent) {
         if (cell.isEmpty()) {
             mouseEvent.consume();
             return;
