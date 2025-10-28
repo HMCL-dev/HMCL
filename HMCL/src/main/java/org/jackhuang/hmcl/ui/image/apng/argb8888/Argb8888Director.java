@@ -3,6 +3,7 @@
 
 package org.jackhuang.hmcl.ui.image.apng.argb8888;
 
+import org.jackhuang.hmcl.ui.image.apng.Png;
 import org.jackhuang.hmcl.ui.image.apng.PngScanlineBuffer;
 import org.jackhuang.hmcl.ui.image.apng.chunks.PngAnimationControl;
 import org.jackhuang.hmcl.ui.image.apng.chunks.PngFrameControl;
@@ -41,7 +42,7 @@ public interface Argb8888Director<ResultT> {
 
     Argb8888ScanlineProcessor receiveFrameControl(PngFrameControl control);
 
-    void receiveFrameImage(Argb8888Bitmap bitmap);
+    void receiveFrameImage(Argb8888Bitmap bitmap) throws PngException;
 
     ResultT getResult();
 }
