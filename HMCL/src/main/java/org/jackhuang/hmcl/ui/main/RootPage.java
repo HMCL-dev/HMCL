@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.terracotta.TerracottaMetadata;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -186,7 +187,12 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             terracottaItem.setLeftGraphic(wrap(SVG.GRAPH2));
             terracottaItem.setActionButtonVisible(false);
             terracottaItem.setTitle(i18n("terracotta"));
-            terracottaItem.setOnAction(e -> Controllers.navigate(Controllers.getTerracottaPage()));
+            if (TerracottaMetadata.PROVIDER != null) {
+                terracottaItem.setOnAction(e -> Controllers.navigate(Controllers.getTerracottaPage()));
+            } else {
+                terracottaItem.setDisable(true);
+                FXUtils.installFastTooltip(terracottaItem, i18n("terracotta.unsupported_platform"));
+            }
 
             // the left sidebar
             AdvancedListBox sideBar = new AdvancedListBox()
