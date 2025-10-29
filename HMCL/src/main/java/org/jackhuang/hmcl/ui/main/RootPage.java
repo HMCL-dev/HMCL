@@ -187,12 +187,14 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             terracottaItem.setLeftGraphic(wrap(SVG.GRAPH2));
             terracottaItem.setActionButtonVisible(false);
             terracottaItem.setTitle(i18n("terracotta"));
-            if (TerracottaMetadata.PROVIDER != null) {
-                terracottaItem.setOnAction(e -> Controllers.navigate(Controllers.getTerracottaPage()));
-            } else {
-                terracottaItem.setDisable(true);
-                FXUtils.installFastTooltip(terracottaItem, i18n("terracotta.unsupported_platform"));
-            }
+
+            terracottaItem.setOnAction(e -> {
+                if (TerracottaMetadata.PROVIDER != null) {
+                    Controllers.navigate(Controllers.getTerracottaPage());
+                } else {
+                    Controllers.dialog(i18n("terracotta.unsupported_platform"), null, MessageDialogPane.MessageType.WARNING);
+                }
+            });
 
             // the left sidebar
             AdvancedListBox sideBar = new AdvancedListBox()
