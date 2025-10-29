@@ -61,22 +61,20 @@ public final class TerracottaManager {
     private static final InvocationDispatcher<TerracottaState> STATE_D = InvocationDispatcher.runOn(Platform::runLater, STATE::set);
 
     static {
-        Task.runAsync(() -> {
-            if (TerracottaMetadata.PROVIDER == null) {
-                setState(new TerracottaState.Fatal(TerracottaState.Fatal.Type.OS));
-                LOG.warning("Terracotta hasn't support your OS: " + org.jackhuang.hmcl.util.platform.Platform.SYSTEM_PLATFORM);
-            } else {
+        Schedulers.io().execute(() -> {
+            try {
+                if (TerracottaMetadata.PROVIDER == null)
+                    throw new IOException("Unsupported platform: " + org.jackhuang.hmcl.util.platform.Platform.CURRENT_PLATFORM);
+
                 switch (TerracottaMetadata.PROVIDER.status()) {
                     case NOT_EXIST -> setState(new TerracottaState.Uninitialized(false));
                     case LEGACY_VERSION -> setState(new TerracottaState.Uninitialized(true));
                     case READY -> launch(setState(new TerracottaState.Launching()));
                 }
-            }
-        }).whenComplete(exception -> {
-            if (exception != null) {
+            } catch (Exception e) {
                 compareAndSet(TerracottaState.Bootstrap.INSTANCE, new TerracottaState.Fatal(TerracottaState.Fatal.Type.UNKNOWN));
             }
-        }).start();
+        });
     }
 
     public static ReadOnlyObjectProperty<TerracottaState> stateProperty() {

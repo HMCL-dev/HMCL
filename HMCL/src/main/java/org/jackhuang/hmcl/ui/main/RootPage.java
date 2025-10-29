@@ -50,10 +50,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
-import org.jackhuang.hmcl.util.platform.Architecture;
-import org.jackhuang.hmcl.util.platform.Bits;
-import org.jackhuang.hmcl.util.platform.OSVersion;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.nio.file.Files;
@@ -198,12 +195,14 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                 } else {
                     String message;
                     if (Architecture.SYSTEM_ARCH.getBits() == Bits.BIT_32)
-                        message = i18n("terracotta.unsupported_platform.32bit");
+                        message = i18n("terracotta.unsupported.arch.32bit");
                     else if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
                             && !OperatingSystem.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_10))
-                        message = i18n("terracotta.unsupported_platform.windows.old");
+                        message = i18n("terracotta.unsupported.os.windows.old");
+                    else if (Platform.SYSTEM_PLATFORM.equals(OperatingSystem.LINUX, Architecture.LOONGARCH64_OW))
+                        message = i18n("terracotta.unsupported.arch.loongarch64_ow");
                     else
-                        message = i18n("terracotta.unsupported_platform");
+                        message = i18n("terracotta.unsupported");
 
                     Controllers.dialog(message, null, MessageDialogPane.MessageType.WARNING);
                 }
