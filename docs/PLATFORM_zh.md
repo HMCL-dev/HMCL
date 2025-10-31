@@ -33,11 +33,11 @@
     <tr>
       <td>x86</td>
       <td>
-        🟡 有限支持 (Windows 7 ~ Windows 10)
+        🟨 有限支持 (Windows 7 ~ Windows 10)
         <br>
         🕰️ <a href="https://github.com/HMCL-dev/HMCL/releases?q=3.6">HMCL 3.6</a>   (Windows XP/Vista)
       </td>
-      <td>🟡 有限支持</td>
+      <td>🟨 有限支持</td>
       <td>/</td>
       <td>/</td>
     </tr>
@@ -51,14 +51,14 @@
     <tr>
       <td>ARM32</td>
       <td>/️</td>
-      <td>🟡 有限支持</td>
+      <td>🟨 有限支持</td>
       <td>/</td>
       <td>/</td>
     </tr>
     <tr>
       <td>MIPS64el</td>
       <td>/</td>
-      <td>🟡 有限支持</td>
+      <td>🟨 有限支持</td>
       <td>/</td>
       <td>/</td>
     </tr>
@@ -79,7 +79,7 @@
     <tr>
       <td>LoongArch64 (旧世界)</td>
       <td>/</td>
-      <td>🟡 有限支持</td>
+      <td>🟨 有限支持</td>
       <td>/</td>
       <td>/</td>
     </tr>
@@ -92,7 +92,7 @@
 
   受到完整支持的平台。HMCL 会尽可能为此平台提供支持。
 
-* 🟡 有限支持
+* 🟨 有限支持
 
   HMCL 可以在这些平台上工作，但部分功能可能无法使用。
 
