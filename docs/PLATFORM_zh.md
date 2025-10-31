@@ -22,9 +22,9 @@
         <br>
         ✅️ 完整支持 (Windows Server 2008 R2 ~ 2025)
         <br>
-        🕰️ <a href="https://github.com/HMCL-dev/HMCL/releases?q=3.6">HMCL 3.6</a> (Windows Vista)
+        🟦 <a href="https://github.com/HMCL-dev/HMCL/releases?q=3.6">HMCL 3.6</a> (Windows Vista)
         <br>
-        🕰️ <a href="https://github.com/HMCL-dev/HMCL/releases?q=3.6">HMCL 3.6</a>  (Windows Server 2003 ~ 2008) 
+        🟦 <a href="https://github.com/HMCL-dev/HMCL/releases?q=3.6">HMCL 3.6</a>  (Windows Server 2003 ~ 2008) 
       </td>
       <td>✅️ 完整支持</td>
       <td>✅️ 完整支持</td>
@@ -35,7 +35,7 @@
       <td>
         🟨 有限支持 (Windows 7 ~ Windows 10)
         <br>
-        🕰️ <a href="https://github.com/HMCL-dev/HMCL/releases?q=3.6">HMCL 3.6</a>   (Windows XP/Vista)
+        🟦 <a href="https://github.com/HMCL-dev/HMCL/releases?q=3.6">HMCL 3.6</a>   (Windows XP/Vista)
       </td>
       <td>🟨 有限支持</td>
       <td>/</td>
@@ -98,7 +98,7 @@
 
   HMCL 可能会为了降低维护成本而放弃为此平台提供部分功能。
 
-* 🕰️ 长期支持
+* 🟦 长期支持
 
   这些平台通常是旧设备。
 
