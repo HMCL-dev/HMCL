@@ -17,8 +17,10 @@
  */
 package org.jackhuang.hmcl.terracotta.provider;
 
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.terracotta.TerracottaNative;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jackhuang.hmcl.util.tree.TarFileTree;
@@ -27,11 +29,13 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.List;
 import java.util.Set;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class MacOSProvider implements ITerracottaProvider {
     public final TerracottaNative installer, binary;
@@ -62,23 +66,35 @@ public final class MacOSProvider implements ITerracottaProvider {
 
         return Task.allOf(
                 installerTask.thenComposeAsync(() -> {
+                    Path osascript = SystemUtils.which("osascript");
+                    if (osascript == null) {
+                        throw new IllegalStateException("Cannot locate 'osascript' system executable on MacOS for installing Terracotta.");
+                    }
+
+                    Path pkg = Files.createTempDirectory(Metadata.HMCL_GLOBAL_DIRECTORY, "terracotta-pkg")
+                            .toRealPath()
+                            .resolve(FileUtils.getName(installer.getPath()));
+                    Files.copy(installer.getPath(), pkg, StandardCopyOption.REPLACE_EXISTING);
+
                     ManagedProcess process = new ManagedProcess(new ProcessBuilder(
-                            "osascript",
-                            "-e",
-                            String.format(
-                                    "do shell script \"installer -pkg %s -target /\" with prompt \"%s\" with administrator privileges",
-                                    installer.getPath().toAbsolutePath(),
-                                    i18n("terracotta.sudo_installing")
-                            )
-                    ));
+                            osascript.toString(), "-e", String.format(
+                            "do shell script \"installer -pkg '%s' -target /\" with prompt \"%s\" with administrator privileges",
+                            pkg, i18n("terracotta.sudo_installing")
+                    )));
                     process.pumpInputStream(SystemUtils::onLogLine);
                     process.pumpErrorStream(SystemUtils::onLogLine);
 
                     return Task.fromCompletableFuture(process.getProcess().onExit()).thenRunAsync(() -> {
+                        try {
+                            FileUtils.cleanDirectory(pkg.getParent());
+                        } catch (IOException e) {
+                            LOG.warning("Cannot remove temporary Terraotta package file.", e);
+                        }
+
                         if (process.getExitCode() != 0) {
                             throw new IllegalStateException(String.format(
                                     "Cannot install Terracotta %s: system installer exited with code %d",
-                                    installer.getPath().toAbsolutePath(),
+                                    pkg,
                                     process.getExitCode()
                             ));
                         }
