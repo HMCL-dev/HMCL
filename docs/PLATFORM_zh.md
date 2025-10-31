@@ -22,9 +22,9 @@
         <br>
         ✅️ 完整支持 (Windows Server 2008 R2 ~ 2025)
         <br>
-        🟦 <a href="https://github.com/HMCL-dev/HMCL/releases?q=3.6">HMCL 3.6</a> (Windows Vista)
+        🕰️ <a href="https://github.com/HMCL-dev/HMCL/releases?q=3.6">HMCL 3.6</a> (Windows Vista)
         <br>
-        🟦 <a href="https://github.com/HMCL-dev/HMCL/releases?q=3.6">HMCL 3.6</a>  (Windows Server 2003 ~ 2008) 
+        🕰️ <a href="https://github.com/HMCL-dev/HMCL/releases?q=3.6">HMCL 3.6</a>  (Windows Server 2003 ~ 2008) 
       </td>
       <td>✅️ 完整支持</td>
       <td>✅️ 完整支持</td>
@@ -33,11 +33,11 @@
     <tr>
       <td>x86</td>
       <td>
-        🟨 有限支持 (Windows 7 ~ Windows 10)
+        🕰️ 有限支持 (Windows 7 ~ Windows 10)
         <br>
-        🟦 <a href="https://github.com/HMCL-dev/HMCL/releases?q=3.6">HMCL 3.6</a>   (Windows XP/Vista)
+        🕰️ <a href="https://github.com/HMCL-dev/HMCL/releases?q=3.6">HMCL 3.6</a>   (Windows XP/Vista)
       </td>
-      <td>🟨 有限支持</td>
+      <td>🕰️ 有限支持</td>
       <td>/</td>
       <td>/</td>
     </tr>
@@ -51,14 +51,14 @@
     <tr>
       <td>ARM32</td>
       <td>/️</td>
-      <td>🟨 有限支持</td>
+      <td>🕰️ 有限支持</td>
       <td>/</td>
       <td>/</td>
     </tr>
     <tr>
       <td>MIPS64el</td>
       <td>/</td>
-      <td>🟨 有限支持</td>
+      <td>🕰️ 有限支持</td>
       <td>/</td>
       <td>/</td>
     </tr>
@@ -79,7 +79,7 @@
     <tr>
       <td>LoongArch64 (旧世界)</td>
       <td>/</td>
-      <td>🟨 有限支持</td>
+      <td>🕰️ 有限支持</td>
       <td>/</td>
       <td>/</td>
     </tr>
@@ -92,21 +92,22 @@
 
   受到完整支持的平台。HMCL 会尽可能为此平台提供支持。
 
-* 🟨 有限支持
+* 🕰️ 有限支持
+
+  这些平台通常是老旧的遗留平台。
 
   HMCL 可以在这些平台上工作，但部分功能可能无法使用。
+ 
+  我们可能会为了降低维护成本而放弃为此平台提供部分功能。
 
-  HMCL 可能会为了降低维护成本而放弃为此平台提供部分功能。
-
-* 🟦 长期支持
-
-  这些平台通常是旧设备。
-
-  HMCL 通过 LTS 分支为此平台长期提供安全补丁和错误修复，但在此平台上将无法接受到功能更新。
+  其中一部分平台不再受 HMCL 主线支持，我们通过 LTS 分支为这些平台长期提供安全补丁和错误修复，
+  但在此平台上将无法接受到功能更新。
   
+  其对应的 LTS 分支已在表格中标注。
+
   此平台上自动更新功能可能不可用，用户需要手动下载更新以接受安全补丁和错误修复。
 
-  我们建议此平台的用户尽快迁移到新平台。
+  我们建议此平台的用户迁移到新平台。
 
 * / (不受支持)
 
