@@ -159,6 +159,8 @@
 
 ## 陶瓦联机兼容性
 
+<!-- #BEGIN COPY -->
+<!-- #PROPERTY NAME=TERRACOTTA_COMPATIBILITY -->
 <table>
   <thead>
     <tr>
@@ -220,12 +222,13 @@
       <td>LoongArch64</td>
       <td>/</td>
       <td>
-        ✅️ (新世界)
+        ✅️ (Linux Kernel 5.19+)
         <br>
-        ❌ (旧世界，内核版本 4.19)
+        ❌ (Linux Kernel 4.19)
       </td>
       <td>/</td>
       <td>/</td>
     </tr>
   </tbody>
 </table>
+<!-- #END COPY -->

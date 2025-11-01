@@ -156,3 +156,79 @@
 
   我們目前還沒有打算支援這些平臺，主要是因為我們沒有測試這些平臺的裝置。  
   如果你能幫助我們進行測試，請透過提交 Issue 提出支援請求。
+
+## 陶瓦聯機相容性
+
+<!-- #BEGIN COPY -->
+<!-- #PROPERTY NAME=TERRACOTTA_COMPATIBILITY -->
+<table>
+  <thead>
+    <tr>
+      <th></th>
+      <th>Windows</th>
+      <th>Linux</th>
+      <th>macOS</th>
+      <th>FreeBSD</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>x86-64</td>
+      <td>
+        ✅️ (Windows 10 ~ Windows 11)
+        <br>
+        ✅️ (Windows Server 2016 ~ 2025)
+      </td>
+      <td>✅️</td>
+      <td>✅️</td>
+      <td>/</td>
+    </tr>
+    <tr>
+      <td>x86</td>
+      <td>/</td>
+      <td>/</td>
+      <td>/</td>
+      <td>/</td>
+    </tr>
+    <tr>
+      <td>ARM64</td>
+      <td>✅️</td>
+      <td>✅️</td>
+      <td>✅️</td>
+      <td>/</td>
+    </tr>
+    <tr>
+      <td>ARM32</td>
+      <td>/️</td>
+      <td>/</td>
+      <td>/</td>
+      <td>/</td>
+    </tr>
+    <tr>
+      <td>MIPS64el</td>
+      <td>/</td>
+      <td>/</td>
+      <td>/</td>
+      <td>/</td>
+    </tr>
+    <tr>
+      <td>RISC-V 64</td>
+      <td>/</td>
+      <td>❔</td>
+      <td>/</td>
+      <td>/</td>
+    </tr>
+    <tr>
+      <td>LoongArch64</td>
+      <td>/</td>
+      <td>
+        ✅️ (Linux Kernel 5.19+)
+        <br>
+        ❌ (Linux Kernel 4.19)
+      </td>
+      <td>/</td>
+      <td>/</td>
+    </tr>
+  </tbody>
+</table>
+<!-- #END COPY -->

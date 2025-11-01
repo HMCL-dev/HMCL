@@ -152,3 +152,79 @@ Legend:
 
   We have no plans to support these platforms at this time, mainly because we do not have the equipment to test them.  
   If you can help us adapt, please file a support request via GitHub Issue.
+
+## Terracotta Compatibility
+
+<!-- #BEGIN BLOCK -->
+<!-- #PROPERTY NAME=TERRACOTTA_COMPATIBILITY -->
+<table>
+  <thead>
+    <tr>
+      <th></th>
+      <th>Windows</th>
+      <th>Linux</th>
+      <th>macOS</th>
+      <th>FreeBSD</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>x86-64</td>
+      <td>
+        ✅️ (Windows 10 ~ Windows 11)
+        <br>
+        ✅️ (Windows Server 2016 ~ 2025)
+      </td>
+      <td>✅️</td>
+      <td>✅️</td>
+      <td>/</td>
+    </tr>
+    <tr>
+      <td>x86</td>
+      <td>/</td>
+      <td>/</td>
+      <td>/</td>
+      <td>/</td>
+    </tr>
+    <tr>
+      <td>ARM64</td>
+      <td>✅️</td>
+      <td>✅️</td>
+      <td>✅️</td>
+      <td>/</td>
+    </tr>
+    <tr>
+      <td>ARM32</td>
+      <td>/️</td>
+      <td>/</td>
+      <td>/</td>
+      <td>/</td>
+    </tr>
+    <tr>
+      <td>MIPS64el</td>
+      <td>/</td>
+      <td>/</td>
+      <td>/</td>
+      <td>/</td>
+    </tr>
+    <tr>
+      <td>RISC-V 64</td>
+      <td>/</td>
+      <td>❔</td>
+      <td>/</td>
+      <td>/</td>
+    </tr>
+    <tr>
+      <td>LoongArch64</td>
+      <td>/</td>
+      <td>
+        ✅️ (Linux Kernel 5.19+)
+        <br>
+        ❌ (Linux Kernel 4.19)
+      </td>
+      <td>/</td>
+      <td>/</td>
+    </tr>
+  </tbody>
+</table>
+<!-- #END BLOCK -->
