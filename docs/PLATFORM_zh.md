@@ -10,6 +10,8 @@
 <!-- #PROPERTY NAME=LAUNCHER_COMPATIBILITY -->
 <!-- #PROPERTY REPLACE="Fully supported" "完整支持" -->
 <!-- #PROPERTY REPLACE="Limited support" "有限支持" -->
+<!-- #PROPERTY REPLACE="Old World" "旧世界" -->
+<!-- #PROPERTY REPLACE="New World" "新世界" -->
 <table>
   <thead>
     <tr>
@@ -79,9 +81,9 @@
       <td>LoongArch64</td>
       <td>/</td>
       <td>
-        ✅️ 完整支持 (Linux Kernel 5.19+)
+        ✅️ 完整支持 (新世界[^1])
         <br>
-        🕰️ 完整支持 (Linux Kernel 4.19)
+        🕰️ 完整支持 (旧世界[^1])
       </td>
       <td>/</td>
       <td>/</td>
@@ -162,6 +164,8 @@
 
 <!-- #BEGIN COPY -->
 <!-- #PROPERTY NAME=TERRACOTTA_COMPATIBILITY -->
+<!-- #PROPERTY REPLACE="Old World" "旧世界" -->
+<!-- #PROPERTY REPLACE="New World" "新世界" -->
 <table>
   <thead>
     <tr>
@@ -223,9 +227,9 @@
       <td>LoongArch64</td>
       <td>/</td>
       <td>
-        ✅️ (Linux Kernel 5.19+)
+        ✅️ (新世界[^1])
         <br>
-        ❌ (Linux Kernel 4.19)
+        ❌ (旧世界[^1])
       </td>
       <td>/</td>
       <td>/</td>

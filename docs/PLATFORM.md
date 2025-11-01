@@ -77,9 +77,9 @@
       <td>LoongArch64</td>
       <td>/</td>
       <td>
-        ✅️ Fully supported (Linux Kernel 5.19+)
+        ✅️ Fully supported (New World[^1])
         <br>
-        🕰️ Fully supported (Linux Kernel 4.19)
+        🕰️ Fully supported (Old World[^1])
       </td>
       <td>/</td>
       <td>/</td>
@@ -218,9 +218,9 @@ Legend:
       <td>LoongArch64</td>
       <td>/</td>
       <td>
-        ✅️ (Linux Kernel 5.19+)
+        ✅️ (New World[^1])
         <br>
-        ❌ (Linux Kernel 4.19)
+        ❌ (Old World[^1])
       </td>
       <td>/</td>
       <td>/</td>
