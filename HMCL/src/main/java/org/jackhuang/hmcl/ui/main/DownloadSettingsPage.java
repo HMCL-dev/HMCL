@@ -105,63 +105,90 @@ public class DownloadSettingsPage extends StackPane {
             content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.download_source")), downloadSource);
         }
 
+        ComponentList downloadList = new ComponentList();
         {
-            VBox downloadThreads = new VBox(16);
-            downloadThreads.getStyleClass().add("card-non-transparent");
             {
+                VBox downloadThreads = new VBox(16);
+                downloadList.getContent().add(downloadThreads);
                 {
-                    JFXCheckBox chkAutoDownloadThreads = new JFXCheckBox(i18n("settings.launcher.download.threads.auto"));
-                    VBox.setMargin(chkAutoDownloadThreads, new Insets(8, 0, 0, 0));
-                    chkAutoDownloadThreads.selectedProperty().bindBidirectional(config().autoDownloadThreadsProperty());
-                    downloadThreads.getChildren().add(chkAutoDownloadThreads);
+                    {
+                        JFXCheckBox chkAutoDownloadThreads = new JFXCheckBox(i18n("settings.launcher.download.threads.auto"));
+                        VBox.setMargin(chkAutoDownloadThreads, new Insets(8, 0, 0, 0));
+                        chkAutoDownloadThreads.selectedProperty().bindBidirectional(config().autoDownloadThreadsProperty());
+                        downloadThreads.getChildren().add(chkAutoDownloadThreads);
 
-                    chkAutoDownloadThreads.selectedProperty().addListener((a, b, newValue) -> {
-                        if (newValue) {
-                            config().downloadThreadsProperty().set(FetchTask.DEFAULT_CONCURRENCY);
-                        }
-                    });
+                        chkAutoDownloadThreads.selectedProperty().addListener((a, b, newValue) -> {
+                            if (newValue) {
+                                config().downloadThreadsProperty().set(FetchTask.DEFAULT_CONCURRENCY);
+                            }
+                        });
+                    }
+
+                    {
+                        HBox hbox = new HBox(8);
+                        hbox.setStyle("-fx-view-order: -1;"); // prevent the indicator from being covered by the hint
+                        hbox.setAlignment(Pos.CENTER);
+                        hbox.setPadding(new Insets(0, 0, 0, 30));
+                        hbox.disableProperty().bind(config().autoDownloadThreadsProperty());
+                        Label label = new Label(i18n("settings.launcher.download.threads"));
+
+                        JFXSlider slider = new JFXSlider(1, 256, 64);
+                        HBox.setHgrow(slider, Priority.ALWAYS);
+
+                        JFXTextField threadsField = new JFXTextField();
+                        FXUtils.setLimitWidth(threadsField, 60);
+                        FXUtils.bindInt(threadsField, config().downloadThreadsProperty());
+
+                        AtomicBoolean changedByTextField = new AtomicBoolean(false);
+                        FXUtils.onChangeAndOperate(config().downloadThreadsProperty(), value -> {
+                            changedByTextField.set(true);
+                            slider.setValue(value.intValue());
+                            changedByTextField.set(false);
+                        });
+                        slider.valueProperty().addListener((value, oldVal, newVal) -> {
+                            if (changedByTextField.get()) return;
+                            config().downloadThreadsProperty().set(value.getValue().intValue());
+                        });
+
+                        hbox.getChildren().setAll(label, slider, threadsField);
+                        downloadThreads.getChildren().add(hbox);
+                    }
+
+                    {
+                        HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
+                        VBox.setMargin(hintPane, new Insets(0, 0, 0, 30));
+                        hintPane.disableProperty().bind(config().autoDownloadThreadsProperty());
+                        hintPane.setText(i18n("settings.launcher.download.threads.hint"));
+                        downloadThreads.getChildren().add(hintPane);
+                    }
                 }
-
+            }
+            {
+                VBox hardLink = new VBox(16);
+                downloadList.getContent().add(hardLink);
                 {
-                    HBox hbox = new HBox(8);
-                    hbox.setStyle("-fx-view-order: -1;"); // prevent the indicator from being covered by the hint
-                    hbox.setAlignment(Pos.CENTER);
-                    hbox.setPadding(new Insets(0, 0, 0, 30));
-                    hbox.disableProperty().bind(config().autoDownloadThreadsProperty());
-                    Label label = new Label(i18n("settings.launcher.download.threads"));
-
-                    JFXSlider slider = new JFXSlider(1, 256, 64);
-                    HBox.setHgrow(slider, Priority.ALWAYS);
-
-                    JFXTextField threadsField = new JFXTextField();
-                    FXUtils.setLimitWidth(threadsField, 60);
-                    FXUtils.bindInt(threadsField, config().downloadThreadsProperty());
-
-                    AtomicBoolean changedByTextField = new AtomicBoolean(false);
-                    FXUtils.onChangeAndOperate(config().downloadThreadsProperty(), value -> {
-                        changedByTextField.set(true);
-                        slider.setValue(value.intValue());
-                        changedByTextField.set(false);
-                    });
-                    slider.valueProperty().addListener((value, oldVal, newVal) -> {
-                        if (changedByTextField.get()) return;
-                        config().downloadThreadsProperty().set(value.getValue().intValue());
-                    });
-
-                    hbox.getChildren().setAll(label, slider, threadsField);
-                    downloadThreads.getChildren().add(hbox);
+                    JFXCheckBox chkHardLink = new JFXCheckBox(i18n("settings.launcher.download.hardlink"));
+                    hardLink.getChildren().add(chkHardLink);
+                    VBox.setMargin(chkHardLink, new Insets(8, 0, 0, 0));
+                    chkHardLink.selectedProperty().bindBidirectional(config().hardlinkProperty());
                 }
 
                 {
                     HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
+                    hardLink.getChildren().add(hintPane);
                     VBox.setMargin(hintPane, new Insets(0, 0, 0, 30));
-                    hintPane.disableProperty().bind(config().autoDownloadThreadsProperty());
-                    hintPane.setText(i18n("settings.launcher.download.threads.hint"));
-                    downloadThreads.getChildren().add(hintPane);
+                    hintPane.setText(i18n("settings.launcher.download.hardlink.hint"));
+                }
+
+                {
+                    HintPane hintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
+                    hardLink.getChildren().add(hintPane);
+                    VBox.setMargin(hintPane, new Insets(0, 0, 0, 30));
+                    hintPane.setText(i18n("settings.launcher.download.hardlink.note"));
                 }
             }
 
-            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("download")), downloadThreads);
+            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("download")), downloadList);
         }
 
         {
