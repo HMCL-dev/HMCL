@@ -77,9 +77,9 @@
       <td>LoongArch64</td>
       <td>/</td>
       <td>
-        ✅️ Fully supported (New World[^1])
+        ✅️ Fully supported (New World)
         <br>
-        🕰️ Fully supported (Old World[^1])
+        🕰️ Fully supported (Old World)
       </td>
       <td>/</td>
       <td>/</td>
@@ -125,8 +125,8 @@ Legend:
 | ARM32                       | /️                                                | 👌 (Minecraft 1.8~1.20.1)  | /                                                                       | /                           |
 | MIPS64el                    | /                                                 | 👌 (Minecraft 1.8~1.20.1)  | /                                                                       | /                           |
 | RISC-V 64                   | /                                                 | 👌 (Minecraft 1.13~1.21.5) | /                                                                       | /                           |
-| LoongArch64 (New World[^1]) | /                                                 | 👌 (Minecraft 1.6~1.21.10) | /                                                                       | /                           |
-| LoongArch64 (Old World[^1]) | /                                                 | 👌 (Minecraft 1.6~1.20.1)  | /                                                                       | /                           |
+| LoongArch64 (New World) | /                                                 | 👌 (Minecraft 1.6~1.21.10) | /                                                                       | /                           |
+| LoongArch64 (Old World) | /                                                 | 👌 (Minecraft 1.6~1.20.1)  | /                                                                       | /                           |
 | PowerPC-64 (Little-Endian)  | /                                                 | ❔                          | /                                                                       | /                           |
 | S390x                       | /                                                 | ❔                          | /                                                                       | /                           |
 <!-- #END BLOCK -->
@@ -218,9 +218,9 @@ Legend:
       <td>LoongArch64</td>
       <td>/</td>
       <td>
-        ✅️ (New World[^1])
+        ✅️ (New World)
         <br>
-        ❌ (Old World[^1])
+        ❌ (Old World)
       </td>
       <td>/</td>
       <td>/</td>
@@ -228,5 +228,3 @@ Legend:
   </tbody>
 </table>
 <!-- #END BLOCK -->
-
-[^1]: [Old World and New World](https://areweloongyet.com/en/docs/old-and-new-worlds/)
