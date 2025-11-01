@@ -4,6 +4,119 @@
 [English](PLATFORM.md) | **中文** ([简体](PLATFORM_zh.md), **繁體**)
 <!-- #END LANGUAGE_SWITCHER -->
 
+## 啟動器相容性
+
+<!-- #BEGIN COPY -->
+<!-- #PROPERTY NAME=LAUNCHER_COMPATIBILITY -->
+<!-- #PROPERTY REPLACE="Fully supported" "完整支援" -->
+<!-- #PROPERTY REPLACE="Limited support" "有限支援" -->
+<table>
+  <thead>
+    <tr>
+      <th></th>
+      <th>Windows</th>
+      <th>Linux</th>
+      <th>macOS</th>
+      <th>FreeBSD</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>x86-64</td>
+      <td>
+        ✅️ 完整支援 (Windows 7 ~ Windows 11)
+        <br>
+        ✅️ 完整支援 (Windows Server 2008 R2 ~ 2025)
+        <br>
+        🕰️ <a href="https://github.com/HMCL-dev/HMCL/releases?q=3.6">HMCL 3.6</a> (Windows Vista)
+        <br>
+        🕰️ <a href="https://github.com/HMCL-dev/HMCL/releases?q=3.6">HMCL 3.6</a> (Windows Server 2003 ~ 2008) 
+      </td>
+      <td>✅️ 完整支援</td>
+      <td>✅️ 完整支援</td>
+      <td>✅ 完整支援</td>
+    </tr>
+    <tr>
+      <td>x86</td>
+      <td>
+        🕰️ 有限支援 (Windows 7 ~ Windows 10)
+        <br>
+        🕰️ <a href="https://github.com/HMCL-dev/HMCL/releases?q=3.6">HMCL 3.6</a> (Windows XP/Vista)
+      </td>
+      <td>🕰️ 有限支援</td>
+      <td>/</td>
+      <td>/</td>
+    </tr>
+    <tr>
+      <td>ARM64</td>
+      <td>✅️ 完整支援</td>
+      <td>✅️ 完整支援</td>
+      <td>✅️ 完整支援</td>
+      <td>/</td>
+    </tr>
+    <tr>
+      <td>ARM32</td>
+      <td>/️</td>
+      <td>🕰️ 有限支援</td>
+      <td>/</td>
+      <td>/</td>
+    </tr>
+    <tr>
+      <td>MIPS64el</td>
+      <td>/</td>
+      <td>🕰️ 有限支援</td>
+      <td>/</td>
+      <td>/</td>
+    </tr>
+    <tr>
+      <td>RISC-V 64</td>
+      <td>/</td>
+      <td>✅️ 完整支援</td>
+      <td>/</td>
+      <td>/</td>
+    </tr>
+    <tr>
+      <td>LoongArch64</td>
+      <td>/</td>
+      <td>
+        ✅️ 完整支援 (Linux Kernel 5.19+)
+        <br>
+        🕰️ 完整支援 (Linux Kernel 4.19)
+      </td>
+      <td>/</td>
+      <td>/</td>
+    </tr>
+  </tbody>
+</table>
+<!-- #END COPY -->
+
+圖例：
+
+* ✅️ 完整支援
+
+  受到完整支援的平臺。HMCL 會盡可能為此平臺提供支援。
+
+* 🕰️ 有限支援
+
+  這些平臺通常是老舊的遺留平臺。
+
+  HMCL 可以在這些平臺上運作，但部分功能可能無法使用。
+
+  我們可能會為了降低維護成本而放棄為此平臺提供部分功能。
+
+* 🕰️ HMCL 3.6（有限支援）
+
+  HMCL 主分支不再支援此平臺。
+
+  我們透過 HMCL 3.6 LTS 分支繼續為該平臺提供安全修補與錯誤修復，
+  但此平臺上將無法獲得功能更新。
+
+* /（不支援）
+
+  HMCL 尚未支援此平臺。我們未來可能會支援此平臺。
+
+## 遊戲相容性
+
 <!-- #BEGIN COPY -->
 <!-- #PROPERTY NAME=PLATFORM_TABLE -->
 <!-- #PROPERTY REPLACE="\\(Old World\\)" "(舊世界)" -->

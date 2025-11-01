@@ -4,6 +4,117 @@
 **English** | 中文 ([简体](PLATFORM_zh.md), [繁體](PLATFORM_zh_Hant.md))
 <!-- #END LANGUAGE_SWITCHER -->
 
+## Launcher Compatibility
+
+<!-- #BEGIN BLOCK -->
+<!-- #PROPERTY NAME=LAUNCHER_COMPATIBILITY -->
+<table>
+  <thead>
+    <tr>
+      <th></th>
+      <th>Windows</th>
+      <th>Linux</th>
+      <th>macOS</th>
+      <th>FreeBSD</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>x86-64</td>
+      <td>
+        ✅️ Fully supported (Windows 7 ~ Windows 11)
+        <br>
+        ✅️ Fully supported (Windows Server 2008 R2 ~ 2025)
+        <br>
+        🕰️ <a href="https://github.com/HMCL-dev/HMCL/releases?q=3.6">HMCL 3.6</a> (Windows Vista)
+        <br>
+        🕰️ <a href="https://github.com/HMCL-dev/HMCL/releases?q=3.6">HMCL 3.6</a> (Windows Server 2003 ~ 2008) 
+      </td>
+      <td>✅️ Fully supported</td>
+      <td>✅️ Fully supported</td>
+      <td>✅ Fully supported</td>
+    </tr>
+    <tr>
+      <td>x86</td>
+      <td>
+        🕰️ Limited support (Windows 7 ~ Windows 10)
+        <br>
+        🕰️ <a href="https://github.com/HMCL-dev/HMCL/releases?q=3.6">HMCL 3.6</a> (Windows XP/Vista)
+      </td>
+      <td>🕰️ Limited support</td>
+      <td>/</td>
+      <td>/</td>
+    </tr>
+    <tr>
+      <td>ARM64</td>
+      <td>✅️ Fully supported</td>
+      <td>✅️ Fully supported</td>
+      <td>✅️ Fully supported</td>
+      <td>/</td>
+    </tr>
+    <tr>
+      <td>ARM32</td>
+      <td>/️</td>
+      <td>🕰️ Limited support</td>
+      <td>/</td>
+      <td>/</td>
+    </tr>
+    <tr>
+      <td>MIPS64el</td>
+      <td>/</td>
+      <td>🕰️ Limited support</td>
+      <td>/</td>
+      <td>/</td>
+    </tr>
+    <tr>
+      <td>RISC-V 64</td>
+      <td>/</td>
+      <td>✅️ Fully supported</td>
+      <td>/</td>
+      <td>/</td>
+    </tr>
+    <tr>
+      <td>LoongArch64</td>
+      <td>/</td>
+      <td>
+        ✅️ Fully supported (Linux Kernel 5.19+)
+        <br>
+        🕰️ Fully supported (Linux Kernel 4.19)
+      </td>
+      <td>/</td>
+      <td>/</td>
+    </tr>
+  </tbody>
+</table>
+<!-- #END BLOCK -->
+
+Legend:
+
+* ✅️ Fully supported
+
+  Platforms that are fully supported. HMCL will provide support for these platforms as much as possible.
+
+* 🕰️ Limited support
+
+  These platforms are usually legacy platforms.
+
+  HMCL can work on these platforms, but some features may not be available.
+
+  We may drop some features for these platforms to reduce maintenance costs.
+
+* 🕰️ HMCL 3.6 (Limited support)
+
+  The main branch of HMCL no longer supports these platforms.
+
+  We continue to provide security patches and bug fixes for these platforms through the HMCL 3.6 LTS branch,
+  but no feature updates will be available.
+
+* / (Not supported)
+
+  HMCL does not support these platforms yet. We may support them in the future.
+
+## Game Compatibility
+
 <!-- #BEGIN BLOCK -->
 <!-- #PROPERTY NAME=PLATFORM_TABLE -->
 |                            | Windows                                           | Linux                      | macOS                                                                   | FreeBSD                     |
