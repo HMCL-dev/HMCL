@@ -24,7 +24,7 @@
         <br>
         🕰️ <a href="https://github.com/HMCL-dev/HMCL/releases?q=3.6">HMCL 3.6</a> (Windows Vista)
         <br>
-        🕰️ <a href="https://github.com/HMCL-dev/HMCL/releases?q=3.6">HMCL 3.6</a>  (Windows Server 2003 ~ 2008) 
+        🕰️ <a href="https://github.com/HMCL-dev/HMCL/releases?q=3.6">HMCL 3.6</a> (Windows Server 2003 ~ 2008) 
       </td>
       <td>✅️ 完整支持</td>
       <td>✅️ 完整支持</td>
@@ -35,7 +35,7 @@
       <td>
         🕰️ 有限支持 (Windows 7 ~ Windows 10)
         <br>
-        🕰️ <a href="https://github.com/HMCL-dev/HMCL/releases?q=3.6">HMCL 3.6</a>   (Windows XP/Vista)
+        🕰️ <a href="https://github.com/HMCL-dev/HMCL/releases?q=3.6">HMCL 3.6</a> (Windows XP/Vista)
       </td>
       <td>🕰️ 有限支持</td>
       <td>/</td>
@@ -100,14 +100,12 @@
  
   我们可能会为了降低维护成本而放弃为此平台提供部分功能。
 
-  其中一部分平台不再受 HMCL 主线支持，我们通过 LTS 分支为这些平台长期提供安全补丁和错误修复，
-  但在此平台上将无法接受到功能更新。
+* 🕰️ HMCL 3.6 (有限支持)
+
+  HMCL 主分支不再支持此平台。
   
-  其对应的 LTS 分支已在表格中标注。
-
-  此平台上自动更新功能可能不可用，用户需要手动下载更新以接受安全补丁和错误修复。
-
-  我们建议此平台的用户迁移到新平台。
+  我们通过 HMCL 3.6 LTS 分支继续为该平台提供安全补丁和错误修复，
+  但此平台上将无法接受到功能更新。
 
 * / (不受支持)
 
