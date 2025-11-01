@@ -22,6 +22,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import org.jetbrains.annotations.Nullable;
 
 /// @author Glavo
+/// @see ObservableSetting
 public class RawPreservingObjectProperty<T> extends SimpleObjectProperty<T> implements RawPreservingProperty<T> {
     private JsonElement rawJson;
 
