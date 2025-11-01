@@ -4,6 +4,8 @@
 [English](PLATFORM.md) | **中文** (**简体**, [繁體](PLATFORM_zh_Hant.md))
 <!-- #END LANGUAGE_SWITCHER -->
 
+## 启动器兼容性
+
 <table>
   <thead>
     <tr>
@@ -75,7 +77,7 @@
       <td>
         ✅️ 完整支持 (新世界)
         <br>
-        🕰️ 完整支持 (旧世界，内核版本 4.x)
+        🕰️ 完整支持 (旧世界，内核版本 4.19)
       </td>
       <td>/</td>
       <td>/</td>
@@ -94,13 +96,13 @@
   这些平台通常是老旧的遗留平台。
 
   HMCL 可以在这些平台上工作，但部分功能可能无法使用。
- 
+
   我们可能会为了降低维护成本而放弃为此平台提供部分功能。
 
 * 🕰️ HMCL 3.6 (有限支持)
 
   HMCL 主分支不再支持此平台。
-  
+
   我们通过 HMCL 3.6 LTS 分支继续为该平台提供安全补丁和错误修复，
   但此平台上将无法接受到功能更新。
 
@@ -114,6 +116,7 @@
 <!-- #PROPERTY NAME=PLATFORM_TABLE -->
 <!-- #PROPERTY REPLACE="\\(Old World\\)" "(旧世界)" -->
 <!-- #PROPERTY REPLACE="\\(use Rosetta 2\\)" "(使用 Rosetta 2)" -->
+
 |                            | Windows                                           | Linux                      | macOS                                                                  | FreeBSD                     |
 |----------------------------|:--------------------------------------------------|:---------------------------|:-----------------------------------------------------------------------|:----------------------------|
 | x86-64                     | ✅️                                                | ✅️                         | ✅️                                                                     | 👌 (Minecraft 1.13~1.21.10) |
@@ -126,6 +129,7 @@
 | LoongArch64 (旧世界)          | /                                                 | 👌 (Minecraft 1.6~1.20.1)  | /                                                                      | /                           |
 | PowerPC-64 (Little-Endian) | /                                                 | ❔                          | /                                                                      | /                           |
 | S390x                      | /                                                 | ❔                          | /                                                                      | /                           |
+
 <!-- #END COPY -->
 
 图例：
@@ -150,4 +154,75 @@
   我们目前还没有打算支持这些平台，主要是因为我们没有测试这些平台的设备。  
   如果你能帮助我们进行测试，请通过提交 Issue 提出支持请求。
 
+## 陶瓦联机兼容性
 
+<table>
+  <thead>
+    <tr>
+      <th></th>
+      <th>Windows</th>
+      <th>Linux</th>
+      <th>macOS</th>
+      <th>FreeBSD</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>x86-64</td>
+      <td>
+        ✅️ (Windows 10 ~ Windows 11)
+        <br>
+        ✅️ (Windows Server 2016 ~ 2025)
+      </td>
+      <td>✅️</td>
+      <td>✅️</td>
+      <td>/</td>
+    </tr>
+    <tr>
+      <td>x86</td>
+      <td>/</td>
+      <td>/</td>
+      <td>/</td>
+      <td>/</td>
+    </tr>
+    <tr>
+      <td>ARM64</td>
+      <td>✅️</td>
+      <td>✅️</td>
+      <td>✅️</td>
+      <td>/</td>
+    </tr>
+    <tr>
+      <td>ARM32</td>
+      <td>/️</td>
+      <td>/</td>
+      <td>/</td>
+      <td>/</td>
+    </tr>
+    <tr>
+      <td>MIPS64el</td>
+      <td>/</td>
+      <td>/</td>
+      <td>/</td>
+      <td>/</td>
+    </tr>
+    <tr>
+      <td>RISC-V 64</td>
+      <td>/</td>
+      <td>❔ </td>
+      <td>/</td>
+      <td>/</td>
+    </tr>
+    <tr>
+      <td>LoongArch64</td>
+      <td>/</td>
+      <td>
+        ✅️ (新世界)
+        <br>
+        ❌ (旧世界，内核版本 4.19)
+      </td>
+      <td>/</td>
+      <td>/</td>
+    </tr>
+  </tbody>
+</table>
