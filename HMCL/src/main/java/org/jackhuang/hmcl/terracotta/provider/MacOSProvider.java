@@ -88,7 +88,7 @@ public final class MacOSProvider implements ITerracottaProvider {
                         try {
                             FileUtils.cleanDirectory(pkg.getParent());
                         } catch (IOException e) {
-                            LOG.warning("Cannot remove temporary Terraotta package file.", e);
+                            LOG.warning("Cannot remove temporary Terracotta package file.", e);
                         }
 
                         if (process.getExitCode() != 0) {
