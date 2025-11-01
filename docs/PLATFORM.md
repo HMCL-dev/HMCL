@@ -79,7 +79,7 @@
       <td>
         ✅️ Fully supported (New World)
         <br>
-        🕰️ Fully supported (Old World)
+        🕰️ Limited support (Old World)
       </td>
       <td>/</td>
       <td>/</td>
