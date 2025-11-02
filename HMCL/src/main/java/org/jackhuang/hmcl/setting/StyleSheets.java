@@ -123,7 +123,7 @@ public final class StyleSheets {
 
         builder.append('}');
 
-        return toStyleSheetUri(builder.toString(), fontFamily);
+        return toStyleSheetUri(builder.toString(), defaultCss);
     }
 
     private static String rgba(Color color, double opacity) {
