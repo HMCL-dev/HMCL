@@ -1,6 +1,8 @@
 # 本地化
 
-<!-- TODO: 本文档需要进一步完善。为了便于修改，我们暂时不将本文件翻译至其他语言，在完善后再在独立 PR 中提供其他语言的译文。 -->
+<!-- #BEGIN LANGUAGE_SWITCHER -->
+[English](Localization.md) | **中文**
+<!-- #END LANGUAGE_SWITCHER -->
 
 HMCL 为多种语言提供本地化支持。
 
@@ -27,19 +29,17 @@ HMCL 为多种语言提供本地化支持。
 
 HMCL 使用符合 IETF BCP 47 规范的语言标签。
 
-对于 ISO 639 标准中定义的语言，如果同时存在两字母语言代码和三字母语言代码，那么应当优先选择两字母语言代码。
+在选择语言标签时，我们会遵循以下原则:
 
-例如，对于英语，我们使用 `en` 而不是 `eng` 作为语言代码。
+1. 对于 ISO 639 标准中定义的语言，如果已经在 [IANA 语言子标签注册表](https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry)中注册，我们总是使用经过注册的标签。
 
-对于 Minecraft 所定义的非标准语言，应当优先使用语言文件的 `language.code` 中定义的代码，而非游戏语言文件的名称
-(但对于存在两字母代码的语言，应当将三字母语言代码替换为对应的两字母语言代码)。
-这是因为 Minecraft 有时候会用现实中实际存在的国家/地区代码来表示虚构语言 (比如说海盗英语的语言文件为 `en_pt`，但 `PT` 其实是葡萄牙的国家代码)。
+   例如，对于英语，我们使用 `en` 而不是 `eng` 作为语言代码。
 
-例如，对于颠倒的英语，我们使用 `en-Qabs` 作为语言代码，而不是 `en-UD`。
+2. 对于 Minecraft 所定义的非标准语言，应当优先使用语言文件的 `language.code` 中定义的代码，而非游戏语言文件的名称。
 
-此外，语言代码中应当尽可能选择地区中立的语言标签。
+   这是因为 Minecraft 有时候会用现实中实际存在的国家/地区代码来表示虚构语言 (比如说海盗英语的语言文件为 `en_pt`，但 `PT` 其实是葡萄牙的国家代码)。
 
-例如，对于简体中文和繁体中文，我们使用 `zh-Hans`和 `zh-Hant` 作为语言代码，而不是 `zh-CN` 和 `zh-TW`。
+   例如，对于颠倒的英语，我们使用 `en-Qabs` 作为语言代码，而不是 `en-UD`。
 
 </details>
 
@@ -106,10 +106,10 @@ HMCL 的绝大多数文本都位于这个文件中，翻译此文件就能翻译
 这是一个 Java Properties 文件，格式非常简单。
 在翻译前请先阅读该格式的介绍: [Properties 文件](https://en.wikipedia.org/wiki/.properties)。
 
-作为翻译的第一步，请从[这张表格](https://en.wikipedia.org/wiki/List_of_ISO_639_language_codes)中查询这个语言对应的两字母或三字母语言标签。
+作为翻译的第一步，请从[这张表格](https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry)中查询这个语言对应的两字母或三字母语言标签。
 例如，英语的语言标签为 `en`。
 
-在确定了语言标签后，请在 [`I18N.properties` 文件旁](../HMCL/src/main/resources/assets/lang)创建 `I18N_<语言标签>.properites` (例如 `I18N_en.properties`) 文件。
+在确定了语言标签后，请在 [`I18N.properties` 文件旁](../HMCL/src/main/resources/assets/lang)创建 `I18N_<本地化文件后缀>.properties` (例如 `I18N_en.properties`) 文件。
 随后，你就可以开始在这个文件中进行翻译工作了。
 
 `I18N.properties` 文件会遵循[资源回退机制](#资源回退机制)查询缺失的译文。
@@ -169,11 +169,61 @@ HMCL 的维护者会替你完成其他步骤。
 对于某个语言下的缺失的资源，HMCL 支持一套资源回退机制，会根据不同的语言标签推导出一个搜索列表，
 根据该列表依次搜索资源。
 
-例如，如果当前环境的语言标签为 `en-US`，那么 HMCL 会根据以下列表的顺序搜索对应的本地化资源:
+在搜索前，我们会先通过以下步骤对语言标签进行细化推导。
 
-1. `en-US`
+1. 归一化语言代码
+
+   如果当前语言标签中的语言代码子标签未在 IANA 语言子标签注册表中进行注册，HMCL 会先尝试将其映射为注册表中已注册的标签。
+
+   例如，HMCL会将语言代码 `eng` 替换为 `en`。
+
+2. 映射宏语言至子语言
+
+   如果当前语言代码是一个 [ISO 639 宏语言](https://en.wikipedia.org/wiki/ISO_639_macrolanguage)，
+   且该宏语言通常指代某个个体语言，HMCL 会将其替换为该个体语言。
+
+   例如 `zh` (中文) 通常实际指代 `cmn` (官话)，所以我们会将语言代码 `zh` 替换为 `cmn`。
+
+3. 推导拼写脚本
+
+   如果当前语言标签中未指定拼写脚本，HMCL 会依次根据以下规则尝试推导拼写脚本:
+
+   1. 如果当前语言标签指定了语言变体，该语言变体已在 IANA 语言子标签注册表中，
+      且注册表中其所有 `Prefix` 都包含相同的拼写脚本，则将当前拼写脚本指定为该脚本。
+
+      例如，如果当前语言变体为 `pinyin` (汉语拼音)，则当前拼写脚本会被指定为 `Latn` (拉丁文)。
+
+   2. 如果当前语言代码在 IANA 语言子标签注册表中被指定了 `Suppress-Script`，则将当前拼写脚本指定为该脚本。
+
+      例如，如果当前语言代码为 `en` (英语)，则当前拼写脚本会被指定为 `Latn` (拉丁文);
+      如果当前语言代码为 `ru` (俄语)，则当前拼写脚本会被指定为 `Cyrl` (西里尔文)。
+
+   3. 如果当前语言代码是 `lzh` (文言)，则将当前拼写脚本指定为 `Hant` (繁体汉字)。
+
+   4. 如果当前语言代码是 `zh` 或 `zh` 的子语言，则检查当前国家/地区代码是否为 `TW`、`HK`、`MO` 之一。
+      如果结果为真，则将当前拼写脚本指定为 `Hant` (繁体汉字)；否则将当前拼写脚本指定为 `Hans` (简体汉字)。
+
+在对语言代码细化推导完成后，HMCL 会开始根据此语言标签推导出一个语言标签列表。
+
+例如，对于语言标签 `en-US`，HMCL 会将其细化为 `en-Latn-US`，并据此推导出以下搜索列表:
+
+1. `en-Latn-US`
+2. `en-Latn`
+3. `en-US`
 2. `en`
 3. `und`
+
+对于语言标签 `zh-CN`，HMCL 会将其细化为 `cmn-Hans-CN`，并据此推导出以下搜索列表:
+
+1. `cmn-Hans-CN`
+2. `cmn-Hans`
+3. `cmn-CN`
+4. `cmn`
+5. `zh-Hans-CN`
+6. `zh-Hans`
+7. `zh-CN`
+8. `zh`
+9. `und`
 
 对于能够混合的资源 (例如 `.properties` 文件)，HMCL 会根据此列表的优先级混合资源；
 对于难以混合的资源 (例如字体文件)，HMCL 会根据此列表加载找到的最高优先级的资源。
@@ -182,35 +232,33 @@ HMCL 的维护者会替你完成其他步骤。
 
 例如，如果当前环境的语言标签为 `eng-US`，那么 HMCL 会将其映射至 `en-US` 后再根据上述规则搜索本地化资源。
 
-如果当前语言是一个 [ISO 639 宏语言](https://en.wikipedia.org/wiki/ISO_639_macrolanguage)的子语言，那么 HMCL 也会搜索宏语言对应的资源。
-
 ### 对于中文的额外规则
 
-对于中文 (以及其子语言标签，例如文言文 (`lzh`)、普通话 (`cmn`)、粤语 (`yue`) 等等)，HMCL 有着额外的支持。
-
-如果当前环境的语言为中文 (及其子语言)，且未指定书写脚本，那么 HMCL 会根据语言和地区标签推导出默认的书写脚本。
-
-对于语言为 `lzh` 或地区为 `TW`、`HK`、`MO` 的情况，默认书写脚本为繁体中文 (`Hant`)；
-而对于其他语言和地区，默认书写脚本为简体中文 (`Hans`)。
-
-此外，HMCL 会将 `zh-CN` 加入所有中文环境的搜索列表中，将 `zh-TW` 加入所有繁体中文环境的搜索列表中，
-从而适应更多场景。
+HMCL 总是会将 `zh-CN` 加入所有中文环境的搜索列表中，将 `zh-TW` 加入所有繁体中文环境的搜索列表中。
 
 以下是几个常见中文环境对应的本地化资源搜索列表。
 
 - `zh-CN`:
-    1. `zh-Hans-CN`
-    2. `zh-Hans`
-    3. `zh-CN`
-    4. `zh`
-    5. `und`
+    1. `cmn-Hans-CN`
+    2. `cmn-Hans`
+    3. `cmn-CN`
+    4. `cmn`
+    5. `zh-Hans-CN`
+    6. `zh-Hans`
+    7. `zh-CN`
+    8. `zh`
+    9. `und`
 - `zh-SG`:
-    1. `zh-Hans-SG`
-    2. `zh-Hans`
-    3. `zh-SG`
-    4. `zh-CN`
-    5. `zh`
-    6. `und`
+    1.  `cmn-Hans-SG`
+    2.  `cmn-Hans`
+    3.  `cmn-SG`
+    4.  `cmn`
+    5.  `zh-Hans-SG`
+    6.  `zh-Hans`
+    7.  `zh-SG`
+    8.  `zh-CN`
+    9.  `zh`
+    10. `und`
 - `zh-TW`:
     1. `zh-Hant-TW`
     2. `zh-Hant`
@@ -219,22 +267,30 @@ HMCL 的维护者会替你完成其他步骤。
     5. `zh-CN`
     6. `und`
 - `zh-HK`:
-    1. `zh-Hant-HK`
-    2. `zh-Hant`
-    3. `zh-HK`
-    4. `zh-TW`
-    5. `zh`
-    6. `zh-CN`
-    7. `und`
+    1.  `cmn-Hant-HK`
+    2.  `cmn-Hant`
+    3.  `cmn-HK`
+    4.  `cmn`
+    5.  `zh-Hant-HK`
+    6.  `zh-Hant`
+    7.  `zh-HK`
+    8.  `zh-TW`
+    9.  `zh`
+    10. `zh-CN`
+    11. `und`
 - `lzh`:
     1. `lzh-Hant`
     2. `lzh`
     3. `zh-Hant`
-    4. `zh`
-    5. `und`
+    4. `zh-TW`
+    5. `zh`
+    6. `zh-CN`
+    7. `und`
 
 ## 自动同步文档内容
 
+<!-- #BEGIN BLOCK -->
+<!-- #PROPERTY PROCESS_LINK=false -->
 为了简化文档的维护，HMCL 使用了一套宏机制自动维护文档的部分内容。在命令行中执行
 
 ```bash
@@ -253,8 +309,8 @@ HMCL 的维护者会替你完成其他步骤。
 随后执行 `./gradlew updateDocuments`，这两行内容会被自动替换为类似这样的跳转链接:
 
 ```markdown
-**English** |
-中文 ([简体](README_zh.md), [繁體](README_zh.md), [文言](README_zh.md)) | [日本語](README_zh.md) | [español](README_zh.md) | [русский](README_zh.md) | [українська](README_zh.md)
+**English** (**Standard**, [uʍoᗡ ǝpᴉsd∩](README_en_Qabs.md)) | 中文 ([简体](README_zh.md), [繁體](README_zh_Hant.md), [文言](README_lzh.md)) | [日本語](README_ja.md) | [español](README_es.md) | [русский](README_ru.md) | [українська](README_uk.md)
 ```
 
 关于宏的更多内容，请见 [MacroProcessor.java](../buildSrc/src/main/java/org/jackhuang/hmcl/gradle/docs/MacroProcessor.java)。
+<!-- #END BLOCK -->

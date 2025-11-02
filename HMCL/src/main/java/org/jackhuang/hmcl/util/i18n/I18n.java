@@ -71,6 +71,10 @@ public final class I18n {
         return getTranslator().formatDateTime(time);
     }
 
+    public static String formatSpeed(long bytes) {
+        return getTranslator().formatSpeed(bytes);
+    }
+
     public static String getDisplaySelfVersion(RemoteVersion version) {
         return getTranslator().getDisplayVersion(version);
     }
