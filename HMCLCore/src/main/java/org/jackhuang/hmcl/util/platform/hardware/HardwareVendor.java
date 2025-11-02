@@ -60,8 +60,8 @@ public final class HardwareVendor {
         if (lower.startsWith("intel") || lower.startsWith("genuineintel")) return INTEL;
         if (lower.startsWith("nvidia")) return NVIDIA;
         if (lower.startsWith("advanced micro devices")
-            || lower.startsWith("authenticamd")
-            || (lower.startsWith("amd") && !(lower.length() > 3 && Character.isAlphabetic(lower.charAt(3)))))
+                || lower.startsWith("authenticamd")
+                || (lower.startsWith("amd") && !(lower.length() > 3 && Character.isAlphabetic(lower.charAt(3)))))
             return AMD;
         if (lower.equals("brcm") || lower.startsWith("broadcom")) return BROADCOM;
         if (lower.startsWith("mediatek")) return MTK;
@@ -99,8 +99,7 @@ public final class HardwareVendor {
         // https://devicehunt.com/all-pci-vendors
         return switch (vendorId) {
             case 0x106b -> APPLE; // AMD Pensando Systems
-            case 0x1002, 0x1022, 0x1dd8, 0x1924 -> // AMD Solarflare
-                    AMD;
+            case 0x1002, 0x1022, 0x1dd8, 0x1924 -> AMD; // AMD Solarflare
             case 0x8086, 0x8087, 0x03e7 -> INTEL;
             case 0x0955, 0x10de, 0x12d2 -> NVIDIA;
             case 0x1ed5 -> MOORE_THREADS;

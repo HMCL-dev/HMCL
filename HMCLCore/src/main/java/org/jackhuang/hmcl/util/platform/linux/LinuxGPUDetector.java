@@ -25,7 +25,9 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.platform.hardware.GraphicsCard;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareVendor;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.ref.SoftReference;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -203,12 +205,9 @@ final class LinuxGPUDetector {
 
         if (builder.getName() == null) {
             String subclassStr = switch (subclassId) {
-                case 0 -> // PCI_CLASS_DISPLAY_VGA
-                        " (VGA compatible)";
-                case 1 -> // PCI_CLASS_DISPLAY_XGA
-                        " (XGA compatible)";
-                case 2 -> // PCI_CLASS_DISPLAY_3D
-                        " (3D)";
+                case 0 -> " (VGA compatible)"; // PCI_CLASS_DISPLAY_VGA
+                case 1 -> " (XGA compatible)"; // PCI_CLASS_DISPLAY_XGA
+                case 2 -> " (3D)"; // PCI_CLASS_DISPLAY_3D
                 default -> "";
             };
 
