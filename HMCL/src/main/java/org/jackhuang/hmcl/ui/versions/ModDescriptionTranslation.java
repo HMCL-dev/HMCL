@@ -9,8 +9,6 @@ import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 
-import java.util.Locale;
-
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 
 public final class ModDescriptionTranslation {
