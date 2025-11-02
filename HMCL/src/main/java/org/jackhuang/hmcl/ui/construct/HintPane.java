@@ -46,26 +46,14 @@ public class HintPane extends VBox {
         setFillWidth(true);
         getStyleClass().addAll("hint", type.name().toLowerCase(Locale.ROOT));
 
-        SVG svg;
-        switch (type) {
-            case INFO:
-                svg = SVG.INFO;
-                break;
-            case ERROR:
-                svg = SVG.ERROR;
-                break;
-            case SUCCESS:
-                svg = SVG.CHECK_CIRCLE;
-                break;
-            case WARNING:
-                svg = SVG.WARNING;
-                break;
-            case QUESTION:
-                svg = SVG.HELP;
-                break;
-            default:
-                throw new IllegalArgumentException("Unrecognized message box message type " + type);
-        }
+        SVG svg = switch (type) {
+            case INFO -> SVG.INFO;
+            case ERROR -> SVG.ERROR;
+            case SUCCESS -> SVG.CHECK_CIRCLE;
+            case WARNING -> SVG.WARNING;
+            case QUESTION -> SVG.HELP;
+            default -> throw new IllegalArgumentException("Unrecognized message box message type " + type);
+        };
 
         HBox hbox = new HBox(svg.createIcon(Theme.blackFill(), 16), new Text(type.getDisplayName()));
         hbox.setAlignment(Pos.CENTER_LEFT);

@@ -36,13 +36,8 @@ final class HMCLDownloadTask extends FileDownloadTask {
         super.execute();
 
         try {
-            Path target = getPath();
-            switch (archiveFormat) {
-                case JAR:
-                    break;
-                default:
-                    throw new IllegalArgumentException("Unknown format: " + archiveFormat);
-            }
+            if (archiveFormat != RemoteVersion.Type.JAR)
+                throw new IllegalArgumentException("Unknown format: " + archiveFormat);
         } catch (Throwable e) {
             try {
                 Files.deleteIfExists(getPath());

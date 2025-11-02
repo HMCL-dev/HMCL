@@ -75,33 +75,23 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
 
     private int toModsSearchSortField(SortType sort) {
         // https://docs.curseforge.com/#tocS_ModsSearchSortField
-        switch (sort) {
-            case DATE_CREATED:
-                return 1;
-            case POPULARITY:
-                return 2;
-            case LAST_UPDATED:
-                return 3;
-            case NAME:
-                return 4;
-            case AUTHOR:
-                return 5;
-            case TOTAL_DOWNLOADS:
-                return 6;
-            default:
-                return 8;
-        }
+        return switch (sort) {
+            case DATE_CREATED -> 1;
+            case POPULARITY -> 2;
+            case LAST_UPDATED -> 3;
+            case NAME -> 4;
+            case AUTHOR -> 5;
+            case TOTAL_DOWNLOADS -> 6;
+            default -> 8;
+        };
     }
 
     private String toSortOrder(SortOrder sortOrder) {
         // https://docs.curseforge.com/#tocS_SortOrder
-        switch (sortOrder) {
-            case ASC:
-                return "asc";
-            case DESC:
-                return "desc";
-        }
-        return "asc";
+        return switch (sortOrder) {
+            case ASC -> "asc";
+            case DESC -> "desc";
+        };
     }
 
     private int calculateTotalPages(Response<List<CurseAddon>> response, int pageSize) {

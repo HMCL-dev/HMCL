@@ -66,16 +66,11 @@ final class ScrollUtils {
      * @see ScrollEvent#getDeltaY()
      */
     public static boolean isTrackPad(ScrollEvent event, ScrollDirection scrollDirection) {
-        switch (scrollDirection) {
-            case UP:
-            case DOWN:
-                return Math.abs(event.getDeltaY()) < 10;
-            case LEFT:
-            case RIGHT:
-                return Math.abs(event.getDeltaX()) < 10;
-            default:
-                return false;
-        }
+        return switch (scrollDirection) {
+            case UP, DOWN -> Math.abs(event.getDeltaY()) < 10;
+            case LEFT, RIGHT -> Math.abs(event.getDeltaX()) < 10;
+            default -> false;
+        };
     }
 
     /**

@@ -67,13 +67,10 @@ public final class Settings {
     }
 
     public String getCommonDirectory() {
-        switch (config().getCommonDirType()) {
-            case DEFAULT:
-                return getDefaultCommonDirectory();
-            case CUSTOM:
-                return config().getCommonDirectory();
-            default:
-                return null;
-        }
+        return switch (config().getCommonDirType()) {
+            case DEFAULT -> getDefaultCommonDirectory();
+            case CUSTOM -> config().getCommonDirectory();
+            default -> null;
+        };
     }
 }

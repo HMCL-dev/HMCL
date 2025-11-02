@@ -62,38 +62,23 @@ public class Skin {
         YGGDRASIL_API;
 
         public static Type fromStorage(String type) {
-            switch (type) {
-                case "default":
-                    return DEFAULT;
-                case "alex":
-                    return ALEX;
-                case "ari":
-                    return ARI;
-                case "efe":
-                    return EFE;
-                case "kai":
-                    return KAI;
-                case "makena":
-                    return MAKENA;
-                case "noor":
-                    return NOOR;
-                case "steve":
-                    return STEVE;
-                case "sunny":
-                    return SUNNY;
-                case "zuri":
-                    return ZURI;
-                case "local_file":
-                    return LOCAL_FILE;
-                case "little_skin":
-                    return LITTLE_SKIN;
-                case "custom_skin_loader_api":
-                    return CUSTOM_SKIN_LOADER_API;
-                case "yggdrasil_api":
-                    return YGGDRASIL_API;
-                default:
-                    return null;
-            }
+            return switch (type) {
+                case "default" -> DEFAULT;
+                case "alex" -> ALEX;
+                case "ari" -> ARI;
+                case "efe" -> EFE;
+                case "kai" -> KAI;
+                case "makena" -> MAKENA;
+                case "noor" -> NOOR;
+                case "steve" -> STEVE;
+                case "sunny" -> SUNNY;
+                case "zuri" -> ZURI;
+                case "local_file" -> LOCAL_FILE;
+                case "little_skin" -> LITTLE_SKIN;
+                case "custom_skin_loader_api" -> CUSTOM_SKIN_LOADER_API;
+                case "yggdrasil_api" -> YGGDRASIL_API;
+                default -> null;
+            };
         }
     }
 

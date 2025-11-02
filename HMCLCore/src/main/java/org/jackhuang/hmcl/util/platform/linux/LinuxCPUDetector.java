@@ -57,39 +57,23 @@ final class LinuxCPUDetector {
 
     // https://asahilinux.org/docs/hw/soc/soc-codenames/
     private static String appleCodeToName(int code) {
-        switch (code) {
-            case 8103:
-                return "Apple M1";
-            case 6000:
-                return "Apple M1 Pro";
-            case 6001:
-                return "Apple M1 Max";
-            case 6002:
-                return "Apple M1 Ultra";
-            case 8112:
-                return "Apple M2";
-            case 6020:
-                return "Apple M2 Pro";
-            case 6021:
-                return "Apple M2 Max";
-            case 6022:
-                return "Apple M2 Ultra";
-            case 8122:
-                return "Apple M3";
-            case 6030:
-                return "Apple M3 Pro";
-            case 6031:
-            case 6034:
-                return "Apple M3 Max";
-            case 8132:
-                return "Apple M4";
-            case 6040:
-                return "Apple M4 Pro";
-            case 6041:
-                return "Apple M4 Max";
-            default:
-                return null;
-        }
+        return switch (code) {
+            case 8103 -> "Apple M1";
+            case 6000 -> "Apple M1 Pro";
+            case 6001 -> "Apple M1 Max";
+            case 6002 -> "Apple M1 Ultra";
+            case 8112 -> "Apple M2";
+            case 6020 -> "Apple M2 Pro";
+            case 6021 -> "Apple M2 Max";
+            case 6022 -> "Apple M2 Ultra";
+            case 8122 -> "Apple M3";
+            case 6030 -> "Apple M3 Pro";
+            case 6031, 6034 -> "Apple M3 Max";
+            case 8132 -> "Apple M4";
+            case 6040 -> "Apple M4 Pro";
+            case 6041 -> "Apple M4 Max";
+            default -> null;
+        };
     }
 
     private static void detectName(CentralProcessor.Builder builder, TreeMap<Integer, Map<String, String>> cpuInfo) {

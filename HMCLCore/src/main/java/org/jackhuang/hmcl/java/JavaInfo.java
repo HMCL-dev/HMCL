@@ -116,24 +116,15 @@ public final class JavaInfo {
         if (vendor == null)
             return null;
 
-        switch (vendor) {
-            case "N/A":
-                return null;
-            case "Oracle Corporation":
-                return "Oracle";
-            case "Azul Systems, Inc.":
-                return "Azul";
-            case "IBM Corporation":
-            case "International Business Machines Corporation":
-            case "Eclipse OpenJ9":
-                return "IBM";
-            case "Eclipse Adoptium":
-                return "Adoptium";
-            case "Amazon.com Inc.":
-                return "Amazon";
-            default:
-                return vendor;
-        }
+        return switch (vendor) {
+            case "N/A" -> null;
+            case "Oracle Corporation" -> "Oracle";
+            case "Azul Systems, Inc." -> "Azul";
+            case "IBM Corporation", "International Business Machines Corporation", "Eclipse OpenJ9" -> "IBM";
+            case "Eclipse Adoptium" -> "Adoptium";
+            case "Amazon.com Inc." -> "Amazon";
+            default -> vendor;
+        };
     }
 
     public static final JavaInfo CURRENT_ENVIRONMENT = new JavaInfo(Platform.CURRENT_PLATFORM, System.getProperty("java.version"), System.getProperty("java.vendor"));

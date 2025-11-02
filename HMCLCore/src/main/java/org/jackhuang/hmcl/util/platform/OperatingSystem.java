@@ -252,18 +252,15 @@ public enum OperatingSystem {
 
     public static Path getWorkingDirectory(String folder) {
         String home = System.getProperty("user.home", ".");
-        switch (OperatingSystem.CURRENT_OS) {
-            case LINUX:
-            case FREEBSD:
-                return Paths.get(home, "." + folder).toAbsolutePath();
-            case WINDOWS:
+        return switch (OperatingSystem.CURRENT_OS) {
+            case LINUX, FREEBSD -> Paths.get(home, "." + folder).toAbsolutePath();
+            case WINDOWS -> {
                 String appdata = System.getenv("APPDATA");
-                return Paths.get(appdata == null ? home : appdata, "." + folder).toAbsolutePath();
-            case MACOS:
-                return Paths.get(home, "Library", "Application Support", folder).toAbsolutePath();
-            default:
-                return Paths.get(home, folder).toAbsolutePath();
-        }
+                yield Paths.get(appdata == null ? home : appdata, "." + folder).toAbsolutePath();
+            }
+            case MACOS -> Paths.get(home, "Library", "Application Support", folder).toAbsolutePath();
+            default -> Paths.get(home, folder).toAbsolutePath();
+        };
     }
 
 }

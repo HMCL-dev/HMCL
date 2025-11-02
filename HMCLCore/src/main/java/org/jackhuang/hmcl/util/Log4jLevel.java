@@ -92,14 +92,11 @@ public enum Log4jLevel {
             if (m2.find()) {
                 String level2Str = m2.group("category");
                 if (null != level2Str)
-                    switch (level2Str) {
-                        case "STDOUT":
-                            level = INFO;
-                            break;
-                        case "STDERR":
-                            level = ERROR;
-                            break;
-                    }
+                    level = switch (level2Str) {
+                        case "STDOUT" -> INFO;
+                        case "STDERR" -> ERROR;
+                        default -> level;
+                    };
             }
 
             if (line.contains("STDERR]") || line.contains("[STDERR/]")) {
