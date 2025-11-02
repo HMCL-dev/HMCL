@@ -22,7 +22,7 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v5
         with:
-          cache-disabled: true
+          cache-cleanup: never
           cache-read-only: false
       - name: Build with Gradle
         run: ./gradlew --no-daemon build
