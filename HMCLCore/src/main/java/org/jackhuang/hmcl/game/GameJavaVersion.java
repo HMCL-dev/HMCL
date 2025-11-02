@@ -45,18 +45,13 @@ public final class GameJavaVersion {
     }
 
     public static GameJavaVersion get(int major) {
-        switch (major) {
-            case 8:
-                return JAVA_8;
-            case 16:
-                return JAVA_16;
-            case 17:
-                return JAVA_17;
-            case 21:
-                return JAVA_21;
-            default:
-                return null;
-        }
+        return switch (major) {
+            case 8 -> JAVA_8;
+            case 16 -> JAVA_16;
+            case 17 -> JAVA_17;
+            case 21 -> JAVA_21;
+            default -> null;
+        };
     }
 
     public static List<GameJavaVersion> getSupportedVersions(Platform platform) {

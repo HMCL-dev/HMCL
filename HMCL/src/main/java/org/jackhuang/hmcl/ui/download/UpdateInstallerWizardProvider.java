@@ -97,22 +97,20 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
 
     @Override
     public Node createPage(WizardController controller, int step, SettingsMap settings) {
-        switch (step) {
-            case 0:
-                return new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer." + libraryId)), gameVersion, downloadProvider, libraryId, () -> {
-                    if (oldLibraryVersion == null) {
-                        controller.onFinish();
-                    } else if ("game".equals(libraryId)) {
-                        String newGameVersion = ((RemoteVersion) settings.get(libraryId)).getSelfVersion();
-                        controller.onNext(new AdditionalInstallersPage(newGameVersion, version, controller, profile.getRepository(), downloadProvider));
-                    } else {
-                        Controllers.confirm(i18n("install.change_version.confirm", i18n("install.installer." + libraryId), oldLibraryVersion, ((RemoteVersion) settings.get(libraryId)).getSelfVersion()),
-                                i18n("install.change_version"), controller::onFinish, controller::onCancel);
-                    }
-                });
-            default:
-                throw new IllegalStateException();
+        if (step == 0) {
+            return new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer." + libraryId)), gameVersion, downloadProvider, libraryId, () -> {
+                if (oldLibraryVersion == null) {
+                    controller.onFinish();
+                } else if ("game".equals(libraryId)) {
+                    String newGameVersion = ((RemoteVersion) settings.get(libraryId)).getSelfVersion();
+                    controller.onNext(new AdditionalInstallersPage(newGameVersion, version, controller, profile.getRepository(), downloadProvider));
+                } else {
+                    Controllers.confirm(i18n("install.change_version.confirm", i18n("install.installer." + libraryId), oldLibraryVersion, ((RemoteVersion) settings.get(libraryId)).getSelfVersion()),
+                            i18n("install.change_version"), controller::onFinish, controller::onCancel);
+                }
+            });
         }
+        throw new IllegalStateException();
     }
 
     @Override

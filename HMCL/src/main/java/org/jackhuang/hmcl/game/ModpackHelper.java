@@ -224,13 +224,11 @@ public final class ModpackHelper {
     }
 
     public static Task<Void> getUpdateTask(Profile profile, ServerModpackManifest manifest, Charset charset, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException {
-        switch (configuration.getType()) {
-            case ServerModpackRemoteInstallTask.MODPACK_TYPE:
-                return new ModpackUpdateTask(profile.getRepository(), name, new ServerModpackRemoteInstallTask(profile.getDependency(), manifest, name))
-                        .withStagesHint(Arrays.asList("hmcl.modpack", "hmcl.modpack.download"));
-            default:
-                throw new UnsupportedModpackException();
+        if (configuration.getType().equals(ServerModpackRemoteInstallTask.MODPACK_TYPE)) {
+            return new ModpackUpdateTask(profile.getRepository(), name, new ServerModpackRemoteInstallTask(profile.getDependency(), manifest, name))
+                    .withStagesHint(Arrays.asList("hmcl.modpack", "hmcl.modpack.download"));
         }
+        throw new UnsupportedModpackException();
     }
 
     public static Task<?> getUpdateTask(Profile profile, Path zipFile, Charset charset, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException, ManuallyCreatedModpackException, MismatchedModpackTypeException {

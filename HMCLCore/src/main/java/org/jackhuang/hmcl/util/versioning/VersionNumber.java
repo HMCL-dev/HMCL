@@ -131,22 +131,18 @@ public final class VersionNumber implements Comparable<VersionNumber> {
                 return value == 0L ? 0 : 1; // 1.0 == 1, 1.1 > 1
             }
 
-            switch (item.getType()) {
-                case LONG_ITEM:
+            return switch (item.getType()) {
+                case LONG_ITEM -> {
                     long itemValue = ((LongItem) item).value;
-                    return Long.compare(value, itemValue);
-                case BIGINTEGER_ITEM:
-                    return -1;
+                    yield Long.compare(value, itemValue);
+                }
+                case BIGINTEGER_ITEM -> -1;
+                case STRING_ITEM -> 1; // 1.1 > 1-sp
 
-                case STRING_ITEM:
-                    return 1; // 1.1 > 1-sp
+                case LIST_ITEM -> 1; // 1.1 > 1-1
 
-                case LIST_ITEM:
-                    return 1; // 1.1 > 1-1
-
-                default:
-                    throw new AssertionError("invalid item: " + item.getClass());
-            }
+                default -> throw new AssertionError("invalid item: " + item.getClass());
+            };
         }
 
         @Override
@@ -185,21 +181,15 @@ public final class VersionNumber implements Comparable<VersionNumber> {
                 return 1;
             }
 
-            switch (item.getType()) {
-                case LONG_ITEM:
-                    return 1;
-                case BIGINTEGER_ITEM:
-                    return value.compareTo(((BigIntegerItem) item).value);
+            return switch (item.getType()) {
+                case LONG_ITEM -> 1;
+                case BIGINTEGER_ITEM -> value.compareTo(((BigIntegerItem) item).value);
+                case STRING_ITEM -> 1; // 1.1 > 1-sp
 
-                case STRING_ITEM:
-                    return 1; // 1.1 > 1-sp
+                case LIST_ITEM -> 1; // 1.1 > 1-1
 
-                case LIST_ITEM:
-                    return 1; // 1.1 > 1-1
-
-                default:
-                    throw new AssertionError("invalid item: " + item.getClass());
-            }
+                default -> throw new AssertionError("invalid item: " + item.getClass());
+            };
         }
 
         @Override
@@ -243,20 +233,14 @@ public final class VersionNumber implements Comparable<VersionNumber> {
                 // 1-beta < 1 < 1-string
                 return pre ? -1 : 1;
             }
-            switch (item.getType()) {
-                case LONG_ITEM:
-                case BIGINTEGER_ITEM:
-                    return -1; // 1.any < 1.1 ?
+            return switch (item.getType()) {
+                case LONG_ITEM, BIGINTEGER_ITEM -> -1; // 1.any < 1.1 ?
 
-                case STRING_ITEM:
-                    return value.compareTo(((StringItem) item).value);
+                case STRING_ITEM -> value.compareTo(((StringItem) item).value);
+                case LIST_ITEM -> -1; // 1.any < 1-1
 
-                case LIST_ITEM:
-                    return -1; // 1.any < 1-1
-
-                default:
-                    throw new AssertionError("invalid item: " + item.getClass());
-            }
+                default -> throw new AssertionError("invalid item: " + item.getClass());
+            };
         }
 
         @Override

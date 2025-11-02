@@ -228,16 +228,12 @@ public class GameCrashWindow extends Stage {
     private static final Pattern FABRIC_MOD_ID = Pattern.compile("\\{(?<modid>.*?) @ (?<version>.*?)}");
 
     private String translateFabricModId(String modName) {
-        switch (modName) {
-            case "fabricloader":
-                return "Fabric";
-            case "fabric":
-                return "Fabric API";
-            case "minecraft":
-                return "Minecraft";
-            default:
-                return modName;
-        }
+        return switch (modName) {
+            case "fabricloader" -> "Fabric";
+            case "fabric" -> "Fabric API";
+            case "minecraft" -> "Minecraft";
+            default -> modName;
+        };
     }
 
     private String parseFabricModId(String modName) {

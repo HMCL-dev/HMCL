@@ -522,31 +522,20 @@ public final class WorldInfoPage extends SpinnerPane {
 
         static Dimension of(Tag tag) {
             if (tag instanceof IntTag) {
-                switch (((IntTag) tag).getValue()) {
-                    case 0:
-                        return OVERWORLD;
-                    case 1:
-                        return THE_NETHER;
-                    case 2:
-                        return THE_END;
-                    default:
-                        return null;
-                }
+                return switch (((IntTag) tag).getValue()) {
+                    case 0 -> OVERWORLD;
+                    case 1 -> THE_NETHER;
+                    case 2 -> THE_END;
+                    default -> null;
+                };
             } else if (tag instanceof StringTag) {
                 String id = ((StringTag) tag).getValue();
-                switch (id) {
-                    case "overworld":
-                    case "minecraft:overworld":
-                        return OVERWORLD;
-                    case "the_nether":
-                    case "minecraft:the_nether":
-                        return THE_NETHER;
-                    case "the_end":
-                    case "minecraft:the_end":
-                        return THE_END;
-                    default:
-                        return new Dimension(id);
-                }
+                return switch (id) {
+                    case "overworld", "minecraft:overworld" -> OVERWORLD;
+                    case "the_nether", "minecraft:the_nether" -> THE_NETHER;
+                    case "the_end", "minecraft:the_end" -> THE_END;
+                    default -> new Dimension(id);
+                };
             } else {
                 return null;
             }
