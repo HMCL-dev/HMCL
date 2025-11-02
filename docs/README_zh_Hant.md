@@ -49,13 +49,7 @@ HMCL 有著強大的跨平臺能力。它不僅支援 Windows、Linux、macOS、
 
 ### 編譯
 
-於項目根目錄執行以下指令：
-
-```bash
-./gradlew clean build
-```
-
-請確保你至少安裝了 JDK 17 或更高版本。
+參閱[構建指南](./Building_zh.md)頁面。
 
 ## JVM 選項 (用於除錯)
 
