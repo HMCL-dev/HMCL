@@ -1,6 +1,7 @@
 name: Check Codes
 
 on:
+  workflow_dispatch:
   push:
     paths:
       - '**.java'
