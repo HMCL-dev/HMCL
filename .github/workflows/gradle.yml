@@ -25,7 +25,7 @@ jobs:
           cache-cleanup: never
           cache-read-only: false
       - name: Build with Gradle
-        run: ./gradlew --no-daemon -x test build
+        run: ./gradlew --no-daemon build
         env:
           MICROSOFT_AUTH_ID: ${{ secrets.MICROSOFT_AUTH_ID }}
           MICROSOFT_AUTH_SECRET: ${{ secrets.MICROSOFT_AUTH_SECRET }}
