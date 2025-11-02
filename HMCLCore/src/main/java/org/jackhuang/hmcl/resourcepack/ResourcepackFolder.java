@@ -4,6 +4,8 @@ import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.modinfo.PackMcMeta;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -11,6 +13,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class ResourcepackFolder implements ResourcepackFile {
     private final Path path;
     private final LocalModFile.Description description;
+    private final byte[] icon;
 
     public ResourcepackFolder(Path path) {
         this.path = path;
@@ -21,6 +24,14 @@ public final class ResourcepackFolder implements ResourcepackFile {
         } catch (Exception e) {
             LOG.warning("Failed to parse resourcepack meta", e);
         }
+
+        byte[] icon = new byte[0];
+        try {
+            icon = Files.readAllBytes(path.resolve("pack.png"));
+        } catch (IOException e) {
+            LOG.warning("Failed to read resourcepack icon", e);
+        }
+        this.icon = icon;
 
         this.description = description;
     }
@@ -41,7 +52,7 @@ public final class ResourcepackFolder implements ResourcepackFile {
     }
 
     @Override
-    public Path getIcon() {
-        return path.resolve("pack.png");
+    public byte[] getIcon() {
+        return icon;
     }
 }

@@ -7,23 +7,21 @@ import org.jackhuang.hmcl.util.tree.ZipFileTree;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class ResourcepackZipFile implements ResourcepackFile {
     private final Path path;
-    private final Path iconPath;
+    private final byte[] icon;
     private final String name;
     private final LocalModFile.Description description;
 
     public ResourcepackZipFile(Path path) throws IOException {
         this.path = path;
-
         LocalModFile.Description description = null;
-        Path iconPath = null;
+
+        byte[] icon = new byte[0];
 
         try (var zipFileTree = ZipFileTree.open(path)) {
             try {
@@ -33,16 +31,14 @@ public final class ResourcepackZipFile implements ResourcepackFile {
             }
 
             try (InputStream is = zipFileTree.getInputStream("/pack.png")) {
-                Path tempFile = Files.createTempFile("hmcl-pack-icon-", ".png");
-                Files.copy(is, tempFile, StandardCopyOption.REPLACE_EXISTING);
-                iconPath = tempFile;
+                icon = is.readAllBytes();
             } catch (Exception e) {
                 LOG.warning("Failed to load resourcepack icon", e);
             }
         }
 
+        this.icon = icon;
         this.description = description;
-        this.iconPath = iconPath;
 
         String fileName = path.getFileName().toString();
         name = fileName.substring(0, fileName.length() - 4);
@@ -64,8 +60,8 @@ public final class ResourcepackZipFile implements ResourcepackFile {
     }
 
     @Override
-    public Path getIcon() {
-        return iconPath;
+    public byte[] getIcon() {
+        return icon;
     }
 }
 
