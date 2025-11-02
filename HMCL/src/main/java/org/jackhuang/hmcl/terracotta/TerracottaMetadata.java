@@ -23,7 +23,9 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.terracotta.provider.GeneralProvider;
 import org.jackhuang.hmcl.terracotta.provider.ITerracottaProvider;
 import org.jackhuang.hmcl.terracotta.provider.MacOSProvider;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -42,7 +44,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -61,19 +62,24 @@ public final class TerracottaMetadata {
 
             @SerializedName("classifiers") Map<String, String> classifiers,
             @SerializedName("downloads") List<String> downloads,
+            @SerializedName("downloads_CN") List<String> downloadsCN,
             @SerializedName("links") List<Link> links
     ) {
-        private TerracottaNative of(String classifier) {
-            List<URI> links = new ArrayList<>(this.downloads.size());
-            for (String download : this.downloads) {
+        private @Nullable TerracottaNative of(String classifier) {
+            String hash = this.classifiers.get(classifier);
+            if (hash == null)
+                return null;
+
+            if (!hash.startsWith("sha256:"))
+                throw new IllegalArgumentException(String.format("Invalid hash value %s for classifier %s.", hash, classifier));
+            hash = hash.substring("sha256:".length());
+
+            List<URI> links = new ArrayList<>(this.downloads.size() + this.downloadsCN.size());
+            for (String download : LocaleUtils.IS_CHINA_MAINLAND
+                    ? Lang.merge(this.downloadsCN, this.downloads)
+                    : Lang.merge(this.downloads, this.downloadsCN)) {
                 links.add(URI.create(download.replace("${version}", this.latest).replace("${classifier}", classifier)));
             }
-
-            String hash = Objects.requireNonNull(this.classifiers.get(classifier), String.format("Classifier %s doesn't exist.", classifier));
-            if (!hash.startsWith("sha256:")) {
-                throw new IllegalArgumentException(String.format("Invalid hash value %s for classifier %s.", hash, classifier));
-            }
-            hash = hash.substring("sha256:".length());
 
             return new TerracottaNative(
                     Collections.unmodifiableList(links),
@@ -138,36 +144,31 @@ public final class TerracottaMetadata {
 
     @Nullable
     private static ProviderContext locateProvider(Config config) {
-        String architecture = switch (Architecture.SYSTEM_ARCH) {
-            case X86_64 -> "x86_64";
-            case ARM64 -> "arm64";
-            default -> null;
-        };
-        if (architecture == null) {
-            return null;
-        }
-
+        String arch = Architecture.SYSTEM_ARCH.getCheckedName();
         return switch (OperatingSystem.CURRENT_OS) {
             case WINDOWS -> {
-                if (OperatingSystem.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_8_1)) {
-                    yield new ProviderContext(
-                            new GeneralProvider(config.of(String.format("windows-%s.exe", architecture))),
-                            "windows", architecture
-                    );
-                }
-                yield null;
+                if (!OperatingSystem.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_8_1))
+                    yield null;
+
+                TerracottaNative target = config.of("windows-%s.exe".formatted(arch));
+                yield target != null
+                        ? new ProviderContext(new GeneralProvider(target), "windows", arch)
+                        : null;
             }
-            case LINUX -> new ProviderContext(
-                    new GeneralProvider(config.of(String.format("linux-%s", architecture))),
-                    "linux", architecture
-            );
-            case MACOS -> new ProviderContext(
-                    new MacOSProvider(
-                            config.of(String.format("macos-%s.pkg", architecture)),
-                            config.of(String.format("macos-%s", architecture))
-                    ),
-                    "macos", architecture
-            );
+            case LINUX -> {
+                TerracottaNative target = config.of("linux-%s".formatted(arch));
+                yield target != null
+                        ? new ProviderContext(new GeneralProvider(target), "linux", arch)
+                        : null;
+            }
+            case MACOS -> {
+                TerracottaNative installer = config.of("macos-%s.pkg".formatted(arch));
+                TerracottaNative binary = config.of("macos-%s".formatted(arch));
+
+                yield installer != null && binary != null
+                        ? new ProviderContext(new MacOSProvider(installer, binary), "macos", arch)
+                        : null;
+            }
             default -> null;
         };
     }
