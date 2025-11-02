@@ -186,7 +186,7 @@
       </td>
       <td>✅️</td>
       <td>✅️</td>
-      <td>/</td>
+      <td>✅️</td>
     </tr>
     <tr>
       <td>x86</td>
