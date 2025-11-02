@@ -21,5 +21,9 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
           java-package: 'jdk+fx'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          cache-read-only: false
       - name: Check Codes
-        run: ./gradlew checkstyle checkTranslations --no-daemon --parallel --stacktrace
+        run: ./gradlew checkstyle checkTranslations --no-daemon --stacktrace
