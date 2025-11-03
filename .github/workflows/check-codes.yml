@@ -23,8 +23,5 @@ jobs:
           java-package: 'jdk+fx'
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v5
-        with:
-          cache-cleanup: never
-          cache-read-only: false
       - name: Check Codes
         run: ./gradlew checkstyle checkTranslations --no-daemon --stacktrace
