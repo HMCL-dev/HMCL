@@ -18,7 +18,6 @@ import javafx.scene.layout.Priority;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 
 public class IconedTwoLineListItem extends HBox {
