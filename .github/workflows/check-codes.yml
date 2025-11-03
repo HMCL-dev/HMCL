@@ -24,4 +24,4 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v5
       - name: Check Codes
-        run: ./gradlew checkstyle checkTranslations --no-daemon --stacktrace
+        run: ./gradlew checkstyle checkTranslations --no-daemon --stacktrace --parallel
