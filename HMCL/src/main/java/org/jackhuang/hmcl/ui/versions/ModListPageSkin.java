@@ -618,7 +618,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
             List<String> warning = new ArrayList<>();
 
-            content.getTags().clear();
+            content.clearTags();
 
             LocalModFile modInfo = dataItem.getModInfo();
             ModTranslations.Mod modTranslations = dataItem.getModTranslations();

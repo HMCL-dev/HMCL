@@ -239,7 +239,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             } else {
                 twoLineListItem.setSubtitle(null);
             }
-            twoLineListItem.getTags().clear();
+            twoLineListItem.clearTags();
 
             if (remoteVersion instanceof GameRemoteVersion) {
                 RemoteVersion.Type versionType = remoteVersion.getVersionType();
