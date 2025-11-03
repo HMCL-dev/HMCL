@@ -298,7 +298,7 @@ public abstract sealed class TerracottaState {
         }
 
         public boolean isRecoverable() {
-            return this.type != Type.OS && this.type != Type.UNKNOWN;
+            return this.type != Type.UNKNOWN;
         }
     }
 }
