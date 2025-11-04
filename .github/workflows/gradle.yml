@@ -21,6 +21,8 @@ jobs:
         java-package: 'jdk+fx'
     - name: Setup Gradle
       uses: gradle/actions/setup-gradle@v5
+      with:
+        cache-cleanup: never
     - name: Build with Gradle
       run: ./gradlew build --no-daemon --build-cache --parallel
       env:
