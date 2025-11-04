@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.util.platform;
 import org.jackhuang.hmcl.util.KeyValuePairUtils;
 import org.jackhuang.hmcl.util.platform.windows.Kernel32;
 import org.jackhuang.hmcl.util.platform.windows.WinReg;
+import org.jackhuang.hmcl.util.platform.windows.WinTypes;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -153,28 +154,12 @@ public enum OperatingSystem {
             WinReg reg = WinReg.INSTANCE;
 
             // Get Windows version number
-            if (reg != null) {
-                Object currentVersion = reg.queryValue(WinReg.HKEY.HKEY_LOCAL_MACHINE,
-                        "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "CurrentVersion");
-                Object currentBuild = reg.queryValue(WinReg.HKEY.HKEY_LOCAL_MACHINE,
-                        "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "CurrentBuild");
-
-                if (currentVersion instanceof String currentVersionStr) {
-                    windowsVersion = OSVersion.Windows.parse(currentVersionStr);
-
-                    try {
-                        if (currentBuild instanceof String currentBuildStr) {
-                            int builderNumber = Integer.parseInt(currentBuildStr);
-
-                            windowsVersion = new OSVersion.Windows(
-                                    windowsVersion.major(), windowsVersion.minor(),
-                                    builderNumber, windowsVersion.revision());
-                        }
-                    } catch (NumberFormatException e) {
-                        System.err.println("Failed to parse the current build number: " + currentBuild);
-                        e.printStackTrace(System.err);
-                    }
-                }
+            if (kernel32 != null) {
+                WinTypes.OSVERSIONINFOEXW osVersionInfo = new WinTypes.OSVERSIONINFOEXW();
+                if (kernel32.GetVersionExW(osVersionInfo)) {
+                    windowsVersion = new OSVersion.Windows(osVersionInfo.dwMajorVersion, osVersionInfo.dwMinorVersion, osVersionInfo.dwBuildNumber);
+                } else
+                    System.err.println("Failed to obtain OS version number (" + kernel32.GetLastError() + ")");
             }
 
             if (windowsVersion == null) {
