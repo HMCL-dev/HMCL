@@ -54,7 +54,6 @@ import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.MDListCell;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
-import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
@@ -72,6 +71,7 @@ import java.util.stream.IntStream;
 
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
 
@@ -239,7 +239,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             return packInfo;
         }
 
-        @FXThread
+
         Image loadIcon() {
             Image image = null;
             Path imagePath;
@@ -248,7 +248,8 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
                 try {
                     image = FXUtils.loadImage(imagePath, 64, 64, true, true);
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    LOG.warning("fail to load image, datapack path: " + getPackInfo().getPath(), e);
+                    return FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
                 }
             } else {
                 try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(getPackInfo().getPath())) {
@@ -257,7 +258,8 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
                         image = FXUtils.loadImage(imagePath, 64, 64, true, true);
                     }
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    LOG.warning("fail to load image, datapack path: " + getPackInfo().getPath(), e);
+                    return FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
                 }
             }
 

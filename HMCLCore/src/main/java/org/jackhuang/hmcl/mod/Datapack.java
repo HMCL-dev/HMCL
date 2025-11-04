@@ -111,9 +111,13 @@ public class Datapack {
                 Path resourcesZip = inputPackZipFS.getPath("resources.zip");
                 if (Files.isRegularFile(resourcesZip)) {
                     Path tempResourcesFile = Files.createTempFile("hmcl", ".zip");
-                    Files.copy(resourcesZip, tempResourcesFile, StandardCopyOption.REPLACE_EXISTING);
-                    try (FileSystem resources = CompressingUtils.createReadOnlyZipFileSystem(tempResourcesFile)) {
-                        FileUtils.copyDirectory(resources.getPath("/"), outputResourcesZipFS.getPath("/"));
+                    try {
+                        Files.copy(resourcesZip, tempResourcesFile, StandardCopyOption.REPLACE_EXISTING);
+                        try (FileSystem resources = CompressingUtils.createReadOnlyZipFileSystem(tempResourcesFile)) {
+                            FileUtils.copyDirectory(resources.getPath("/"), outputResourcesZipFS.getPath("/"));
+                        }
+                    } finally {
+                        Files.deleteIfExists(tempResourcesFile);
                     }
                 }
                 Path packMcMeta = outputResourcesZipFS.getPath("pack.mcmeta");

@@ -101,7 +101,7 @@ public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.Da
                         datapack.deletePack(pack);
                     } catch (IOException e) {
                         // Fail to remove mods if the game is running or the datapack is absent.
-                        LOG.warning("Failed to delete datapack " + pack, e);
+                        LOG.warning("Failed to delete datapack \"" + pack.getId() + "\"", e);
                     }
                 });
     }
