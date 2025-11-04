@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.util.platform;
 import org.jackhuang.hmcl.util.KeyValuePairUtils;
 import org.jackhuang.hmcl.util.platform.windows.Kernel32;
 import org.jackhuang.hmcl.util.platform.windows.WinReg;
-import org.jackhuang.hmcl.util.platform.windows.WinTypes;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -154,12 +153,18 @@ public enum OperatingSystem {
             WinReg reg = WinReg.INSTANCE;
 
             // Get Windows version number
-            if (kernel32 != null) {
-                WinTypes.OSVERSIONINFOEXW osVersionInfo = new WinTypes.OSVERSIONINFOEXW();
-                if (kernel32.GetVersionExW(osVersionInfo)) {
-                    windowsVersion = new OSVersion.Windows(osVersionInfo.dwMajorVersion, osVersionInfo.dwMinorVersion, osVersionInfo.dwBuildNumber);
-                } else
-                    System.err.println("Failed to obtain OS version number (" + kernel32.GetLastError() + ")");
+            if (reg != null) {
+                Object currentBuild = reg.queryValue(WinReg.HKEY.HKEY_LOCAL_MACHINE,
+                        "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "CurrentBuild");
+                if (currentBuild instanceof String currentBuildStr) {
+                    try {
+                        int builderNumber = Integer.parseInt(currentBuildStr);
+                        var baseVersion = OSVersion.Windows.parse(System.getProperty("os.version"));
+                        windowsVersion = new OSVersion.Windows(baseVersion.major(), baseVersion.minor(), builderNumber);
+                    } catch (NumberFormatException e) {
+                        System.err.println("Invalid Windows build number: " + currentBuildStr);
+                    }
+                }
             }
 
             if (windowsVersion == null) {
