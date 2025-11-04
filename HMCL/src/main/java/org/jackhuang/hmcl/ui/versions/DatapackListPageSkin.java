@@ -239,7 +239,6 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             return packInfo;
         }
 
-
         Image loadIcon() {
             Image image = null;
             Path imagePath;
