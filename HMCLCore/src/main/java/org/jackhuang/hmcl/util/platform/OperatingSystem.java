@@ -170,7 +170,7 @@ public enum OperatingSystem {
                     }
                 }
 
-                if (minorVersion >= 10) {
+                if (majorVersion >= 10) {
                     Object ubr = reg.queryValue(WinReg.HKEY.HKEY_LOCAL_MACHINE,
                             "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "UBR");
 
