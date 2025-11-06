@@ -165,9 +165,10 @@ public class Datapack {
         List<Pack> discoveredPacks;
         try (Stream<Path> stream = Files.list(dir)) {
             discoveredPacks = stream
+                    .parallel()
                     .map(this::loadSinglePackFromPath)
                     .flatMap(Optional::stream)
-                    .sorted(Comparator.comparing(Pack::getId))
+                    .sorted(Comparator.comparing(Pack::getId, String.CASE_INSENSITIVE_ORDER))
                     .collect(Collectors.toList());
         }
         Platform.runLater(() -> this.packs.setAll(discoveredPacks));
@@ -175,45 +176,55 @@ public class Datapack {
 
     private Optional<Pack> loadSinglePackFromPath(Path path) {
         if (Files.isDirectory(path)) {
-            Path mcmeta = path.resolve("pack.mcmeta");
-            Path mcmetaDisabled = path.resolve("pack.mcmeta.disabled");
-
-            if (!Files.exists(mcmeta) && !Files.exists(mcmetaDisabled))
-                return Optional.empty();
-
-            boolean enabled = Files.exists(mcmeta);
-            Path targetPath = enabled ? mcmeta : mcmetaDisabled;
-            try {
-                PackMcMeta packMcMeta = JsonUtils.fromNonNullJson(Files.readString(targetPath), PackMcMeta.class);
-                return Optional.of(new Pack(path, true, FileUtils.getName(path), packMcMeta.getPackInfo().getDescription(), this));
-            } catch (IOException | JsonParseException e) {
-                LOG.warning("Failed to read datapack " + path, e);
-                return Optional.empty();
-            }
+            return loadSinglePackFromDirectory(path);
         } else if (Files.isRegularFile(path)) {
-            try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(path)) {
-                Path mcmeta = fs.getPath("pack.mcmeta");
+            return loadSinglePackFromZipFile(path);
+        }
+        return Optional.empty();
+    }
 
-                if (!Files.exists(mcmeta)) {
-                    return Optional.empty();
-                }
+    private Optional<Pack> loadSinglePackFromDirectory(Path path) {
+        Path mcmeta = path.resolve("pack.mcmeta");
+        Path mcmetaDisabled = path.resolve("pack.mcmeta.disabled");
 
-                String packName = FileUtils.getName(path);
-                if (FileUtils.getExtension(path).equals(DISABLED_EXT)) {
-                    packName = FileUtils.getNameWithoutExtension(packName);
-                }
-                if (!FileUtils.getExtension(packName).equals(ZIP_EXT)) {
-                    return Optional.empty();
-                }
-                packName = FileUtils.getNameWithoutExtension(packName);
-
-                PackMcMeta packMcMeta = JsonUtils.fromNonNullJson(Files.readString(mcmeta), PackMcMeta.class);
-                return Optional.of(new Pack(path, false, packName, packMcMeta.getPackInfo().getDescription(), this));
-            } catch (IOException | JsonParseException e) {
-                LOG.warning("Failed to read datapack " + path, e);
-            }
+        if (!Files.exists(mcmeta) && !Files.exists(mcmetaDisabled)) {
+            return Optional.empty();
         }
 
+        Path targetPath = Files.exists(mcmeta) ? mcmeta : mcmetaDisabled;
+        return parsePack(path, true, FileUtils.getNameWithoutExtension(path), targetPath);
+    }
+
+    private Optional<Pack> loadSinglePackFromZipFile(Path path) {
+        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(path)) {
+            Path mcmeta = fs.getPath("pack.mcmeta");
+
+            if (!Files.exists(mcmeta)) {
+                return Optional.empty();
+            }
+
+            String packName = FileUtils.getName(path);
+            if (FileUtils.getExtension(path).equals(DISABLED_EXT)) {
+                packName = FileUtils.getNameWithoutExtension(packName);
+            }
+            packName = FileUtils.getNameWithoutExtension(packName);
+
+            return parsePack(path, false, packName, mcmeta);
+        } catch (IOException e) {
+            LOG.warning("IO error reading " + path, e);
+            return Optional.empty();
+        }
+    }
+
+    private Optional<Pack> parsePack(Path datapackPath, boolean isDirectory, String name, Path mcmetaPath) {
+        try {
+            PackMcMeta mcMeta = JsonUtils.fromNonNullJson(Files.readString(mcmetaPath), PackMcMeta.class);
+            return Optional.of(new Pack(datapackPath, isDirectory, name, mcMeta.getPackInfo().getDescription(), this));
+        } catch (JsonParseException e) {
+            LOG.warning("Invalid pack.mcmeta format in " + datapackPath, e);
+        } catch (IOException e) {
+            LOG.warning("IO error reading " + datapackPath, e);
+        }
         return Optional.empty();
     }
 

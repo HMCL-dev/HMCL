@@ -79,6 +79,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
     private final HBox searchBar;
     private final HBox normalToolbar;
     private final HBox selectingToolbar;
+    InvalidationListener updateBarByStateWeakListener;
 
     private final JFXListView<DatapackInfoObject> listView;
     private final FilteredList<DatapackInfoObject> filteredList;
@@ -163,7 +164,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
                     selectedItem -> isSelecting.set(selectedItem != null));
             root.getContent().add(toolbarPane);
 
-            InvalidationListener updateBarByStateWeakListener = FXUtils.observeWeak(() -> {
+            updateBarByStateWeakListener = FXUtils.observeWeak(() -> {
                 if (isSelecting.get()) {
                     changeToolbar(selectingToolbar);
                 } else if (!isSelecting.get() && !isSearching.get()) {
