@@ -154,17 +154,31 @@ public enum OperatingSystem {
 
             // Get Windows version number
             if (reg != null) {
+                var baseVersion = OSVersion.Windows.parse(System.getProperty("os.version"));
+                int majorVersion = baseVersion.major();
+                int minorVersion = baseVersion.minor();
+                int buildNumber = baseVersion.build();
+                int revision = baseVersion.revision();
+
                 Object currentBuild = reg.queryValue(WinReg.HKEY.HKEY_LOCAL_MACHINE,
                         "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "CurrentBuild");
                 if (currentBuild instanceof String currentBuildStr) {
                     try {
-                        int builderNumber = Integer.parseInt(currentBuildStr);
-                        var baseVersion = OSVersion.Windows.parse(System.getProperty("os.version"));
-                        windowsVersion = new OSVersion.Windows(baseVersion.major(), baseVersion.minor(), builderNumber);
+                        buildNumber = Integer.parseInt(currentBuildStr);
                     } catch (NumberFormatException e) {
                         System.err.println("Invalid Windows build number: " + currentBuildStr);
                     }
                 }
+
+                if (minorVersion >= 10) {
+                    Object ubr = reg.queryValue(WinReg.HKEY.HKEY_LOCAL_MACHINE,
+                            "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "UBR");
+
+                    if (ubr instanceof Integer ubrValue)
+                        revision = ubrValue;
+                }
+
+                windowsVersion = new OSVersion.Windows(majorVersion, minorVersion, buildNumber, revision);
             }
 
             if (windowsVersion == null) {
