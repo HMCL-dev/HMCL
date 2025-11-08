@@ -58,6 +58,7 @@ public abstract class SettingsView extends StackPane {
     protected final JFXRadioButton chkUpdateStable;
     protected final JFXRadioButton chkUpdateDev;
     protected final JFXButton btnUpdate;
+    protected final OptionToggleButton previewPane;
     protected final ScrollPane scroll;
 
     public SettingsView() {
@@ -145,6 +146,15 @@ public abstract class SettingsView extends StackPane {
                         updatePane.getContent().add(content);
                     }
                     settingsPane.getContent().add(updatePane);
+                }
+
+                {
+                    previewPane = new OptionToggleButton();
+                    previewPane.setTitle(i18n("update.preview"));
+                    previewPane.selectedProperty().bindBidirectional(config().acceptPreviewUpdateProperty());
+                    FXUtils.installFastTooltip(previewPane, i18n("update.preview.tooltip"));
+
+                    settingsPane.getContent().add(previewPane);
                 }
 
                 {

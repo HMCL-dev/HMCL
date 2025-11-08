@@ -58,6 +58,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 import java.lang.ref.WeakReference;
 
@@ -190,7 +191,7 @@ public final class LauncherHelper {
                     LaunchOptions launchOptions = repository.getLaunchOptions(
                             selectedVersion, javaVersionRef.get(), profile.getGameDir(), javaAgents, javaArguments, scriptFile != null);
 
-                    LOG.info("Here's the structure of game mod directory:\n" + FileUtils.printFileStructure(repository.getModManager(selectedVersion).getModsDirectory(), 10));
+                    LOG.info("Here's the structure of game mod directory:\n" + FileUtils.printFileStructure(repository.getModsDirectory(selectedVersion), 10));
 
                     return new HMCLGameLauncher(
                             repository,
@@ -706,6 +707,7 @@ public final class LauncherHelper {
      */
     private final class HMCLProcessListener implements ProcessListener {
 
+        private final ReentrantLock lock = new ReentrantLock();
         private final HMCLGameRepository repository;
         private final Version version;
         private final LaunchOptions launchOptions;
@@ -849,21 +851,27 @@ public final class LauncherHelper {
                     level = Lang.requireNonNullElse(Log4jLevel.guessLevel(log), Log4jLevel.INFO);
                 logBuffer.add(new Log(log, level));
             } else {
-                synchronized (this) {
+                lock.lock();
+                try {
                     logs.addLast(new Log(log, level));
                     if (logs.size() > Log.getLogLines())
                         logs.removeFirst();
+                } finally {
+                    lock.unlock();
                 }
             }
 
             if (!lwjgl) {
                 String lowerCaseLog = log.toLowerCase(Locale.ROOT);
                 if (!detectWindow || lowerCaseLog.contains("lwjgl version") || lowerCaseLog.contains("lwjgl openal")) {
-                    synchronized (this) {
+                    lock.lock();
+                    try {
                         if (!lwjgl) {
                             lwjgl = true;
                             finishLaunch();
                         }
+                    } finally {
+                        lock.unlock();
                     }
                 }
             }
@@ -888,9 +896,12 @@ public final class LauncherHelper {
 
             // Game crashed before opening the game window.
             if (!lwjgl) {
-                synchronized (this) {
+                lock.lock();
+                try {
                     if (!lwjgl)
                         finishLaunch();
+                } finally {
+                    lock.unlock();
                 }
             }
 
@@ -904,7 +915,15 @@ public final class LauncherHelper {
 
     }
 
-    public static final Queue<WeakReference<ManagedProcess>> PROCESSES = new ConcurrentLinkedQueue<>();
+    private static final Queue<WeakReference<ManagedProcess>> PROCESSES = new ConcurrentLinkedQueue<>();
+
+    public static int countMangedProcesses() {
+        PROCESSES.removeIf(it -> {
+            ManagedProcess process = it.get();
+            return process == null || !process.isRunning();
+        });
+        return PROCESSES.size();
+    }
 
     public static void stopManagedProcesses() {
         while (!PROCESSES.isEmpty())

@@ -63,6 +63,14 @@ public abstract class CheckTranslations extends DefaultTask {
 
             checker.checkMisspelled(simplifiedChinese, key, value, "账户", "帐户");
             checker.checkMisspelled(simplifiedChinese, key, value, "其他", "其它");
+
+            checker.checkMisspelled(simplifiedChinese, key, value, "(", "（");
+            checker.checkMisspelled(simplifiedChinese, key, value, ")", "）");
+        });
+
+        traditionalChinese.forEach((key, value) -> {
+            checker.checkMisspelled(traditionalChinese, key, value, "(", "（");
+            checker.checkMisspelled(traditionalChinese, key, value, ")", "）");
         });
 
         classicalChinese.forEach((key, value) -> {

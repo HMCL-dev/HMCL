@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.util.i18n;
 
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
+import org.jackhuang.hmcl.util.i18n.translator.Translator_lzh;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.util.Locale;
@@ -36,9 +37,9 @@ public final class MinecraftWiki {
             if (wikiVersion.startsWith("2.0"))
                 translatedVersion = "二點〇";
             else if (wikiVersion.startsWith("1.0.0-rc2"))
-                translatedVersion = WenyanUtils.translateGameVersion(GameVersionNumber.asGameVersion("1.0.0-rc2"));
+                translatedVersion = Translator_lzh.translateGameVersion(GameVersionNumber.asGameVersion("1.0.0-rc2"));
             else
-                translatedVersion = WenyanUtils.translateGameVersion(gameVersion);
+                translatedVersion = Translator_lzh.translateGameVersion(gameVersion);
 
             if (translatedVersion.equals(gameVersion.toString()) || gameVersion instanceof GameVersionNumber.Old) {
                 return getWikiLink(SupportedLocale.getLocale(LocaleUtils.LOCALE_ZH_HANT), version);

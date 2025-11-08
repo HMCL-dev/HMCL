@@ -131,6 +131,12 @@ public interface GameRepository extends VersionProvider {
      */
     Path getNativeDirectory(String id, Platform platform);
 
+    /// Get the directory for placing mod files.
+    ///
+    /// @param id instance id
+    /// @return the mods directory
+    Path getModsDirectory(String id);
+
     /**
      * Get minecraft jar
      *

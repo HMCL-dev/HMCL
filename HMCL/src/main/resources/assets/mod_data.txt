@@ -100,7 +100,7 @@ craftguide;106;craftguide;G键合成表;CraftGuide;
 ;107;mobdictionary;生物图鉴;Mob Dictionary;
 biomes-o-plenty;108;biomesoplenty;超多生物群系;Biomes O' Plenty;BOP
 ;109;BambooMod;竹;Bamboo;
-;110;tdmg;立体机动装置（Ibemu版）;立体機動装置MOD / Three-Dimensional Maneuver Gear;TDMG
+;110;tdmg;立体机动装置 (Ibemu版);立体機動装置MOD / Three-Dimensional Maneuver Gear;TDMG
 enhanced-portals-3;111;enhancedportals;增强传送门3;Enhanced Portals 3;
 compact-solars;112;compactsolars,CompactSolars;压缩太阳能阵列;CompactSolars / Compact Solar Arrays;
 bibliocraft;113;BiblioCraft,bibliocraft;收藏馆;BiblioCraft;
@@ -662,7 +662,7 @@ compact-machines;712;compactmachines3,cm2,compactmachines,CompactMachines;更多
 ex-nihilo-omnia;714;exnihiloomnia;无中生有-世间万物;Ex Nihilo Omnia;
 last-sword-you-will-ever-need-mo;715;theonlychaosmodforyou;最终之剑;The Last Sword You Will Ever Need Mod;
 the-last-sword-you-will-ever-need-reboot;716;tlsywen;最终之剑：重生;The Last Sword You Will Ever Need Reboot;
-ftb-library-legacy-forge;718;ftblib,FTBL,ftbl;FTB Library（旧版）;FTB Library (Forge) (Legacy);FTBL
+ftb-library-legacy-forge;718;ftblib,FTBL,ftbl;FTB Library (旧版);FTB Library (Forge) (Legacy);FTBL
 ;719;InventoryScan;库存扫描;InventoryScan;IS
 ;720;godzillamod;哥斯拉;Godzilla;
 thaumic-potatoes-2;721;thaumicpotatoes;神秘土豆2;Thaumic Potatoes 2;TP2
@@ -684,7 +684,7 @@ aether-aspects;737;AetherAspects;天境要素扫描;Aether Aspects;
 arcane-arteries;738;arcanearteries;奥法献祭学;Arcane Arteries;
 thaumic-palmistry;739;thaumicpalmistry;Thaumic Palmistry;;
 one-click-crafting;740;oneclickcrafting;一键合成;One click crafting;OCC
-essential-thaumaturgy-unofficial;741;;源质神秘学（非官方版）;Essential Thaumaturgy Unofficial;
+essential-thaumaturgy-unofficial;741;;源质神秘学 (非官方版);Essential Thaumaturgy Unofficial;
 wireless-crafting-terminal;742;wct,ae2wct;无线合成终端;Wireless Crafting Terminal;WCT
 waila-plugins;743;wailaplugins;Waila 插件;Waila Plugins;WP
 appleskin;744;appleskin;苹果皮;AppleSkin;AS
@@ -704,7 +704,7 @@ hammer-lib;756;hammercore,hammerlib;锤子核心;Hammer Core/Hammer Lib;
 thermal-casting;758;ThermalCasting;热力铸造室;Thermal Casting;
 thermal-smeltery-redux;759;;热力冶炼厂重置版;Thermal Smeltery Redux;
 brcore;760;BRCore;BRCore;;
-industrial-expansion-te-addon;761;industrialexpansion;工业扩充（TE附属）;Industrial Expansion [TE Addon];
+industrial-expansion-te-addon;761;industrialexpansion;工业扩充 (TE附属);Industrial Expansion [TE Addon];
 ;762;gtveinlocator,detravscannermod;格雷科技矿脉定位器;GTVeinLocator;
 ;763;gtneioreplugin;格雷矿物NEI插件;GTNEIOrePlugin;GTNOP
 spmodapi;764;spmodapi;SpmodAPI;;
@@ -2219,7 +2219,7 @@ lollipop;2328;lollipop;棒棒糖;Lollipop;
 enemyz;2329;enemyz;敌意显示;Enemyz;
 thaumic-restoration;2330;thaumicrestoration;神秘复辟;Thaumic Restoration;
 ;2331;vimi;连锁矿工数据包;Vein Miner Datapack;
-;2332;;快速落叶（伪）;Fast Leaf Decay;
+;2332;;快速落叶 (伪);Fast Leaf Decay;
 primal-boat;2333;primalboat;原始船舶;Primal Boat;
 eyes-in-the-darkness;2334;eyesinthedarkness;Eyes in the Darkness;;
 thaumic-augmentation;2335;thaumicaugmentation;神秘进阶;Thaumic Augmentation;TA
@@ -2910,7 +2910,7 @@ riddle-chests;3041;riddlechests;谜题箱;Riddle Chests;
 ;3042;cinfinitelib;CinfiniteLib;;CiL
 totem-plus;3043;;图腾增强;Totem Plus;
 blockmeterfabric;3044;blockmeter;方块计量表;Block Meter Fabric;
-;3045;kamenrider3dmod;假面骑士（3D版）;KamenRider3D;KR3D
+;3045;kamenrider3dmod;假面骑士 (3D版);KamenRider3D;KR3D
 fluid-drawers;3046;fluiddrawers;储液抽屉;Fluid Drawers;
 creepypastacraft-reborn;3047;creepypastacraft;蠕动意面重置版;CreepyPastaCraft Reborn;
 itemzoom;3048;itemzoom;物品缩放;ItemZoom;
@@ -3324,7 +3324,7 @@ eidolon;3469;eidolon;幻梦;Eidolon;
 rats-ratlantis;3470;ratlantis;老鼠：鼠西洲;Rats: Ratlantis;
 wthit;3471;wthit;What The Hell Is That;;WTHIT
 modern-industrialization;3472;modern_industrialization;现代工业化;Modern Industrialization;MI
-chunk-pregenerator-fabric;3473;chunkpregen;区块预生成器（Fabric）;Fabric Chunk Pregenerator;
+chunk-pregenerator-fabric;3473;chunkpregen;区块预生成器 (Fabric);Fabric Chunk Pregenerator;
 jumploader;3474;jumploader;Jumploader;;
 unloader;3475;unloader;Unloader;;
 better-animal-models;3476;betteranimals;更真实的动物;Better animal models;
@@ -3920,7 +3920,7 @@ gender;4082;gender;Gender & Age Mod;;
 ;4083;mtm;Magical Talismans Mod;;
 ticktock;4084;servertick;Server Tick;;
 ;4085;synthesis_formula_added;行尸走肉弹夹合成配方添加;;
-fps-reducre-for-fabric;4086;;FPS减速器（Fabric）;FPS Reducer (For Fabric);
+fps-reducre-for-fabric;4086;;FPS减速器 (Fabric);FPS Reducer (For Fabric);
 art-artillery;4087;art_artillery,aa2;艺术？火炮！;Art? Artillery!;AA
 minemenufabric;4088;modmenu;我的菜单Fabric版;MineMenuFabric;
 ;4089;tabtps-fabric;TabTPS;;
@@ -4061,7 +4061,7 @@ firmalife;4226;firmalife;FirmaLife;;
 supermartijn642s-core-lib;4227;supermartijn642corelib;SuperMartijn642's Core Lib;;
 cherished-worlds;4228;cherishedworlds;存档置顶;Cherished Worlds;
 ironfist;4229;IronFist;铁拳;Ironfist;
-;4230;mining_dimension_cave_version;挖矿维度（矿洞版）;Mining dimension(cave version);
+;4230;mining_dimension_cave_version;挖矿维度 (矿洞版);Mining dimension(cave version);
 simply-acceleration;4231;simplyacceleration;简单加速;Simply Acceleration;
 creeper-habitats;4232;creeperhabitats;Creeper Habitats;;
 husbandry;4233;husbandry;Husbandry;;
@@ -4269,9 +4269,9 @@ dungeons-mobs;4436;dungeons_mobs;地下城生物;Dungeons Mobs;
 ;4439;meteorrandomidea;流年年的随想作;MeteorRandomIdea;
 ;4440;fortyyears;四十年;Miyazaki Hayao Forty Years;
 ;4441;flycycle;Flycycle;;
-;4442;civilizationswars;三体工业（TeaCon预览版）;Civilizations Wars;
+;4442;civilizationswars;三体工业 (TeaCon预览版);Civilizations Wars;
 ;4443;king_and_knight;明日方舟;King and knight;
-;4444;ashihara;苇原（芝之章~百里乡野行纪）;Ashihara;ASHR
+;4444;ashihara;苇原 (芝之章~百里乡野行纪);Ashihara;ASHR
 uusi-aurinko;4445;uusi-aurinko;新日;Uusi Aurinko;
 ;4446;serializableconsciousness;Serializable Consciousness;;SeriCons
 ;4448;elytra_booster;推进鞘翅;Elytra Booster;
@@ -4332,7 +4332,7 @@ capsule;4503;capsule;Capsule;;
 isometric-renders;4504;isometric-renders;等轴渲染;Isometric Renders;IR
 ;4505;;Abstract's Recraft;;
 enchanting-secretaire;4506;enchantnote;附魔记录;Enchanting Secretaire;
-sync-fabric;4507;sync;克隆（Fabric）;Sync (Fabric);
+sync-fabric;4507;sync;克隆 (Fabric);Sync (Fabric);
 tale-of-kingdoms-a-new-conquest;4508;taleofkingdoms;王国：新征程;Tale of Kingdoms: A new Conquest;
 ;4509;networktitle;网络窗口标题;NetworkTitle;
 schwarz;4510;schwarz;黑;Schwarz;
@@ -6502,7 +6502,7 @@ uncle-js;6698;;Uncle J's;;
 wither-bones;6699;wither_bones;凋灵之骨;Wither Bones;
 sleep-warp;6700;sleepwarp;SleepWarp;;
 diagonal-fences;6701;diagonalfences;Diagonal Fences;;DF
-jumpy-boats-fabric;6702;jumpyboat;跳跃的船（Fabric/Quilt）;Jumpy Boats(Fabric/Quilt);
+jumpy-boats-fabric;6702;jumpyboat;跳跃的船 (Fabric/Quilt);Jumpy Boats(Fabric/Quilt);
 dyeable-redstone-signal;6703;dyeable_redstone_signal;染色红石信号;Dyeable Redstone Signal;DRS
 velocity-based-damage;6704;veldmg;Velocity Based Damage;;
 no-telemetry;6705;no-telemetry;No Telemetry;;
@@ -7925,8 +7925,8 @@ fallout-wastelands;8133;fallout_wastelands;Fallout Wastelands;;
 ;8136;letitsnow;Let It Snow;;
 dons-lightning-rod-mod;8137;dlr;Don's Lightning Rod;;
 rainglow;8138;rainglow;Rainglow;;
-nethers-delight-fabric;8139;nethersdelight;下界乐事（Fabric 版）;Nether's Delight (Fabric);
-quicksand-neoforge;8140;quicksand;流沙（NeoForge）;Quicksand (NeoForge);
+nethers-delight-fabric;8139;nethersdelight;下界乐事 (Fabric 版);Nether's Delight (Fabric);
+quicksand-neoforge;8140;quicksand;流沙 (NeoForge);Quicksand (NeoForge);
 axolotl-bucket-fix-forge;8141;axolotlbucketfix;美西螈桶修复 Forge 版;Axolotl Bucket Fix (Forge);
 scape-and-run-parasites-survival-addon-by-nocube;8142;nocubessrpsurvival;Scape and Run: Parasites Survival Addon;;
 scape-and-run-parasites-nests-addon-by-nocube;8143;nocubessrpnests;Scape and Run: Parasites Nests Addon;;
@@ -8587,7 +8587,7 @@ vanity-metallurgical;8803;vanity_metallurgical;Vanity: Metallurgical;;
 minespaceex;8804;minespaceex;MineSpaceEX;;MSEX
 gregious-maximus;8805;gregiousmaximus;Gregious Maximus;;
 shut-up-model-loader;8806;shutupmodelloader;Shut Up, Model Loader!;;SUML
-cultural-delights-fabric;8807;culturaldelights;多元乐事（Fabric 版）;Cultural Delights [Fabric];
+cultural-delights-fabric;8807;culturaldelights;多元乐事 (Fabric 版);Cultural Delights [Fabric];
 collectors-reap;8808;collectorsreap;Collector's Reap;;
 bones-and-swords;8809;bonesandswords;Bones And Swords;;
 vanity-shedds-mystical-toolsets-pack;8810;sheddmersopal;Vanity: Shedd's Mystical Toolsets Pack;;
@@ -8669,7 +8669,7 @@ waymaker;8888;waymaker;Waystone Waypoint Maker;;
 ;8889;mixingasm;Mixingasm;;
 dmod;8890;dmod;D-Mod;;
 extra-redstone-craft;8891;extracraft;更多红石合成;Extra Redstone Craft;EXRS
-farmers-respite-fabric;8892;farmersrespite;农夫暇事（Fabric 版）;Farmer's Respite (Fabric);
+farmers-respite-fabric;8892;farmersrespite;农夫暇事 (Fabric 版);Farmer's Respite (Fabric);
 wizards;8893;wizards;魔法师;Wizards;
 basketcase;8894;basketcase;Basketcase;;
 primal-lib;8895;primallib;Primal Lib;;
@@ -9027,7 +9027,7 @@ universal-enchants-forge;9252;universalenchants;通用附魔;Universal Enchants;
 aa-farmer-compat;9253;farmeradditions;AA Farmer Compat;;
 ;9254;sctz_ywsj;只要听话就不会死！;;
 ;9255;configurable-firework-explosion;可配置的烟花爆炸;Configurable Firework Explosion;CFE
-;9256;;内修炼体（属性加点）;;
+;9256;;内修炼体 (属性加点);;
 better-crates;9257;bettercrates;Better Crates;;
 vanillaicecreamfix;9259;vanillaicecreamfix;VanillaIcecreamFix;;
 actually-unbreaking-forge;9260;actuallyunbreaking;Actually Unbreaking;;
@@ -9235,7 +9235,7 @@ cute-hermit-crabs;9466;cutehermitcrabs;Cute Hermit Crabs;;
 ;9467;ulib;uLib;;
 receiver-mod;9468;rm;Receiver Gun Mod;;
 chargepads;9469;ChargePads;充电座;ChargePads;
-snow-real-magic-potato-edition;9470;;雪！真实的魔法！（土豆版）;Snow Real Magic Potato Edition;
+snow-real-magic-potato-edition;9470;;雪！真实的魔法！(土豆版);Snow Real Magic Potato Edition;
 ;9471;depthstrider;Depth Strider;;
 ravenous-void;9472;rv;Ravenous Void;;
 immersive-engineering-blueprint-tweaker;9473;iebpt;Immersive Engineering Blueprint Tweaker;;IEBPT
@@ -9434,7 +9434,7 @@ splatcraft;9665;splatcraft;斯普拉遁;Splatcraft;
 beneath-the-snow;9666;beneath_thesnow_mr;Beneath The Snow;;
 sea-creeps;9667;aquacreepermod;Sea Creeps;;
 skills-v;9668;skillsvanilla;技能：香草;Skills: Vanilla;
-;9669;teleportation;瞬身术（Fabric）;Teleportation (Fabric);
+;9669;teleportation;瞬身术 (Fabric);Teleportation (Fabric);
 flower-foxes;9670;flower_foxes;Flower Foxes!;;
 pack-it-up;9671;pack_it_up;Pack It Up!;;
 mine-trading-cards-open-source-edition;9672;is_mtc;Mine Trading Cards Open Source Edition;;
@@ -11746,7 +11746,7 @@ stairdoors-extended;11999;stairdoors;StairDoors Extended;;
 into-the-rend;12000;therenddimension;Into The Rendv / The Rend Dimension;;
 buff-frog-mod;12001;buff_frog_mod;Buff Frogs;;
 asphere;12002;asphere;Asphere;;
-autoclick-machine;12003;clickmachine;自动连点器（Fabric）;Click Machine (Fabric);
+autoclick-machine;12003;clickmachine;自动连点器 (Fabric);Click Machine (Fabric);
 harvestcraft-tweaker;12004;harvestcrafttweaker;HarvestCraft Tweaker;;
 the-legend-of-the-mudman;12005;legend_of_the_mudman;The Legend of the Mudman;;
 mutagenesis;12006;mutagenesis;Mutagenesis;;
@@ -11842,7 +11842,7 @@ the-digimod-beta;12095;thedigimod;方块数码宝贝;The Digimod;
 ex-deorum;12096;exdeorum;无中生有：神赐;Ex Deorum;
 entity-detectors;12097;entitydetectors;Entity Detectors;;
 ;12098;horsearmorstandmod;Horse Armor Stand;;
-decorative-blocks-fork;12099;decorative_blocks;装饰方块（分支版）;Decorative Blocks (Fork);
+decorative-blocks-fork;12099;decorative_blocks;装饰方块 (分支版);Decorative Blocks (Fork);
 above-and-below;12100;above_and_below;Above and Below;;
 ;12101;ppcore;PPcore;;
 freeze-it-and-heat-it;12102;fiahi;冷汗：食物冷冻与加热;Freeze It, and Heat It!;FIAHI
@@ -11974,10 +11974,10 @@ rustic-furniture-compat;12227;rusticcompat;Rustic Furniture Compat;;
 ;12228;norealmsbutton;Realms按钮移除;No Realms Button;
 ;12229;benchantments;BEnchantments;;
 epic-fight-indestructible;12230;indestructible;坚不可摧;Epic Fight - Indestructible;
-;12231;set_bonus;Set Bonus（TeamPancake）;;
-;12232;chat_bar_time_display;聊天栏时间显示（TeamPancake 版）;When Was That Again（TeamPancke）;
+;12231;set_bonus;Set Bonus (TeamPancake);;
+;12232;chat_bar_time_display;聊天栏时间显示 (TeamPancake 版);When Was That Again（TeamPancke）;
 ;12233;;逃离塔块夫-重铸;Escape From Tarcraft Reforged;EFTR
-;12234;;右键文本清除（TeamPancake 版）;Right Click Clear（TeamPancake）;
+;12234;;右键文本清除 (TeamPancake 版);Right Click Clear（TeamPancake）;
 catwalks-llc;12235;catwalksinc;Catwalks LLC.;;
 divine-quest-rpg;12236;tales_of_sunnrya,divine_quest;Tales of Sunnrya / Divine Quest RPG;;
 ;12237;carpet-org-addition;Carpet Org Addition;;
@@ -12021,7 +12021,7 @@ rusticwitchcraft;12274;rusticwitchcraft;Rustic Witchcraft;;
 ;12275;unif.logger;UniF-Logger;;
 sterling-and-black;12276;sterlingblack;Sterling and Black;;
 the-devourer-of-skulls-datapack;12277;;The Devourer of Skulls 『𝔹𝕠𝕤𝕤 𝔽𝕚𝕘𝕙𝕥』;;
-;12278;birds_nests;鸟巢（TeamPancake 版）;Birds Nests(Team Pancake);
+;12278;birds_nests;鸟巢 (TeamPancake 版);Birds Nests(Team Pancake);
 boss-and-magic-raid-compat;12279;;Boss And Magic: Raid Compat;;
 animated-mobs;12280;animatedmobsmod;Boss And Magic / AME's Mobs / Animated Mobs;;
 ;12281;GTQTCore;量子跃迁：纠缠核心;GTQTcore;GTC
@@ -13701,12 +13701,12 @@ the-super-god-road;13962;TheSuperGodRoad;超神之路;TheSuperGodRoad;SGR
 ;13965;exblades;ExBlades;;
 storage-delight-forge;13966;storagedelight;存储乐事;Storage Delight;
 lightshield;13967;lightshield;光之护盾;LightShield;LShield
-sophisticated-core-unofficial-fabric-port;13968;;精妙核心（非官方 Fabric 移植）;Sophisticated Core (Unofficial Fabric port);
-sophisticated-backpacks-unofficial-fabric-port;13969;;精妙背包（非官方 Fabric 分支）;Sophisticated Backpacks (Unofficial Fabric port);
+sophisticated-core-unofficial-fabric-port;13968;;精妙核心 (非官方 Fabric 移植);Sophisticated Core (Unofficial Fabric port);
+sophisticated-backpacks-unofficial-fabric-port;13969;;精妙背包 (非官方 Fabric 分支);Sophisticated Backpacks (Unofficial Fabric port);
 red-power;13970;red_power;Red Power;;
 ;13971;hdykwd;你怎么知道我做了什么;How do you know what I done;HDYKWD
 ;13972;minihudextra;MiniHUD Extra;;MHEx
-sophisticated-storage-unofficial-fabric-port;13973;;精妙存储（非官方 Fabric 分支）;Sophisticated Storage (Unofficial Fabric port);
+sophisticated-storage-unofficial-fabric-port;13973;;精妙存储 (非官方 Fabric 分支);Sophisticated Storage (Unofficial Fabric port);
 ;13974;oldblockdrops,oldoredropsforge;Old Ore Drops;;
 rage-mod;13975;rage;兴怒;Rage Mod;
 ;13976;disableallstructers;Disable All Structures;;
@@ -14500,7 +14500,7 @@ the-rings-of-power;14766;trop;力量之戒/魔戒众戒;The Rings of Power;TRoP
 suspicious-zombification;14770;suszombification;Suspicious Zombification;;
 ;14771;wmis;Where Is My Stuff-Forge;;WIMSF
 ivtoolkit-arcana-rpg-continuation-edition;14772;IvToolkit;IvToolkit：延续;IvToolkit Arcana Rpg Continuation Edition;
-farmer-s-delight-bedrock-unofficial;14773;FarmersDelightBedrockUnofficial;农夫乐事基岩版（Unofficial）;Farmer's Delight Bedrock (Unofficial);
+farmer-s-delight-bedrock-unofficial;14773;FarmersDelightBedrockUnofficial;农夫乐事基岩版 (Unofficial);Farmer's Delight Bedrock (Unofficial);
 ;14774;byzh-picgen;byzh's 麦块画图;BYZH's Picgen;
 tropicraft-continuation;14775;tropicraft;热带世界：延续;Tropicraft Continuation;
 battle-tower-continuation;14776;AS_BattleTowers;战斗高塔：延续;Battle Tower Continuation;
@@ -14676,9 +14676,9 @@ skeletalband;14947;skeletalband;骷髅乐队乐谱;SkeletalBand;
 alexs-caves-entropy;14948;entropy;Alex 的洞穴：熵;Alex's Caves:Entropy;ACE
 mekanism-explosives;14949;mekanismexplosives;通用机械：炸药;Mekanism Explosives;
 ;14950;minimalcoordshud;Minimal Coords HUD;;
-;14951;;存储乐事基岩版（Unofficial）;Storage Delight Bedrock (Unofficial);
-;14952;;蟹农乐事基岩版（Unofficial）;Crabber's Delight Bedrock (Unofficial);
-;14953;;末地乐事基岩版（Unofficial）;End's Delight Bedrock (Unofficial);
+;14951;;存储乐事基岩版 (Unofficial);Storage Delight Bedrock (Unofficial);
+;14952;;蟹农乐事基岩版 (Unofficial);Crabber's Delight Bedrock (Unofficial);
+;14953;;末地乐事基岩版 (Unofficial);End's Delight Bedrock (Unofficial);
 avaritiareborn;14954;avaritia;无尽贪婪：复兴;AvaritiaReborn;
 cherry-shrimp;14955;cherry_shrimp;Cherry Shrimp;;
 pick-command;14956;pickcommand;俺拾的指令;Pick Command;PiC
@@ -18132,7 +18132,7 @@ deimos-fabric-forge-neoforge;18436;deimos;Deimos;;
 excavation;18438;excavation;挖掘;Excavation;
 basic-end-ores;18439;beo;基础末地矿石;Basic End Ores;BEO
 ;18440;portable_crafting;Portable Crafting;;
-;18441;gofish;一起钓鱼吧！（Forge 版）;Go Fish Forge;
+;18441;gofish;一起钓鱼吧！(Forge 版);Go Fish Forge;
 simple-bbq-unofficial;18442;simplebbq;简易烧烤非官方版;Simple BBQ Unofficial;
 ;18443;carystanley_extremefarming;Extreme Farming;;
 eggy-goodness;18444;EggyGoodness;Eggy Goodness;;
@@ -18332,7 +18332,7 @@ auto-pillar-generator;18637;apg;一键柱子生成;Auto Pillar Generator;APG
 vanilla-delight;18638;vanilladelight;Vanilla Delight;;
 jade-vs;18639;jade_vs;Jade VS;;
 ;18640;custom_ender_dragon;Draconic Ascension - Custom Ender Dragon Fight;;
-vics-modern-warfare-patched;18641;;维克的现代战争（修复版）;Vic's Modern Warfare (Patched);VMW
+vics-modern-warfare-patched;18641;;维克的现代战争 (修复版);Vic's Modern Warfare (Patched);VMW
 waterframesbackported;18642;waterframes;WaterFramesBackported;;
 ;18643;sihywtcamc-unofficial-port;So I heard you were talking crap about Minecraft's combat? - 非官方移植;sihywtcamc unofficial port;sihywtcamc
 tweakeroo-update-port;18644;tweakeroo;Tweakeroo Update Port;;
@@ -18777,8 +18777,8 @@ exporbrecall;19084;exporbrecall;经验球召回;ExpOrbRecall;
 functional-economy;19085;functional_economy;功能性钱币;FunctionalEconomy;FE
 ranckors-rings-of-power;19086;the_rings_of_power;Ranckor的力量之戒;Ranckor's Rings of Power;
 lotr-improvements-lite;19087;lotrimprovementslite;魔戒改进：轻量版;LOTR Improvements Lite;
-;19088;;海洋乐事基岩版（Unofficial）;Ocean's Delight Bedrock (Unofficial);
-;19089;;幽匿乐事基岩版（unofficial）;Silent's Delight Bedrock (Unofficial);
+;19088;;海洋乐事基岩版 (Unofficial);Ocean's Delight Bedrock (Unofficial);
+;19089;;幽匿乐事基岩版 (unofficial);Silent's Delight Bedrock (Unofficial);
 astounding;19090;astounding;Astounding;;AUD
 carpets-core;19091;carpetscore;Carpets Core;;
 carpet-variants;19092;carpetvariants;Carpet Variants;;
@@ -19206,7 +19206,7 @@ baublesreforked;19516;baublesreforked;饰品重铸;BaublesReforked;
 tmrv;19518;tmrv;TooManyRecipeViewers;;TMRV
 ;19519;codmodern;COD击杀信息显示;COD Modern Warfare Information;CMW
 twilight-treehouses;19520;twilight_treehouses;Twilight Treehouses;;
-improved-rails;19521;irails;更好的铁轨（可转弯の动力铁轨！）;Improved Rail (TURNABLE POWERED RAILS);IRail
+improved-rails;19521;irails;更好的铁轨 (可转弯の动力铁轨！);Improved Rail (TURNABLE POWERED RAILS);IRail
 redstone-signal-bind-wand;19522;wlrt;非Create版无线红石;Redstone Signal Bind Wand;RSBW
 ;19523;mr_custom_packetaggregates;定制数据包集合体;Custom packet aggregates;CPA
 ;19524;trator;游戏内聊天翻译;In game Translator;IGTL
