@@ -26,4 +26,4 @@ jobs:
         with:
           cache-cleanup: never
       - name: Check Codes
-        run: ./gradlew checkstyle checkTranslations --no-daemon --stacktrace --parallel
+        run: ./gradlew checkstyle checkTranslations --no-daemon --parallel --stacktrace
