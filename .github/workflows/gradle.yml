@@ -24,7 +24,7 @@ jobs:
       with:
         cache-cleanup: never
     - name: Build with Gradle
-      run: ./gradlew build --no-daemon --build-cache --parallel
+      run: ./gradlew build --no-daemon --parallel
       env:
         MICROSOFT_AUTH_ID: ${{ secrets.MICROSOFT_AUTH_ID }}
         MICROSOFT_AUTH_SECRET: ${{ secrets.MICROSOFT_AUTH_SECRET }}
