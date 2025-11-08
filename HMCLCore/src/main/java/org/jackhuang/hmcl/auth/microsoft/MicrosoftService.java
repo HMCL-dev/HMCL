@@ -481,7 +481,6 @@ public class MicrosoftService {
     public record MinecraftProfileResponseCape(String id, String state, String url, String alias) {
     }
 
-
     public static class MinecraftProfileResponse extends MinecraftErrorResponse implements Validation {
         @SerializedName("id")
         UUID id;
