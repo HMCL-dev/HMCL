@@ -230,8 +230,7 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
             ResourcepackFile file = item.getFile();
 
             byte[] icon = file.getIcon();
-
-            if (icon.length > 0) {
+            if (icon != null) {
                 try (ByteArrayInputStream inputStream = new ByteArrayInputStream(icon)) {
                     imageView.setImage(ImageUtils.DEFAULT.load(inputStream, 64, 64, true, true));
                 } catch (Exception e) {
