@@ -121,6 +121,7 @@ public final class GameVersionNumberTest {
         assertFalse(isAprilFools("25w21a"));
         assertFalse(isAprilFools("13w12~"));
         assertFalse(isAprilFools("15w14b"));
+        assertFalse(isAprilFools("25w45a_unobfuscated"));
     }
 
     @Test
@@ -272,6 +273,8 @@ public final class GameVersionNumberTest {
                 "24w13a",
                 "24w14potato",
                 "24w14a",
+                "25w45a",
+                "25w45a_unobfuscated",
                 "Unknown",
                 "100.0"
         );
