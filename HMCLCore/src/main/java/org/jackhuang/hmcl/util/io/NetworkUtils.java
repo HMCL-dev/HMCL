@@ -144,8 +144,7 @@ public final class NetworkUtils {
         }
         connection.setConnectTimeout(TIME_OUT);
         connection.setReadTimeout(TIME_OUT);
-        if (connection instanceof HttpURLConnection) {
-            var httpConnection = (HttpURLConnection) connection;
+        if (connection instanceof HttpURLConnection httpConnection) {
             httpConnection.setRequestProperty("Accept-Language", Locale.getDefault().toLanguageTag());
             httpConnection.setInstanceFollowRedirects(false);
         }
@@ -276,7 +275,11 @@ public final class NetworkUtils {
     }
 
     public static String doGet(URI uri) throws IOException {
-        return readFullyAsString(resolveConnection(createHttpConnection(uri)));
+        URLConnection connection = createConnection(uri);
+        if (connection instanceof HttpURLConnection httpURLConnection) {
+            connection = resolveConnection(httpURLConnection);
+        }
+        return readFullyAsString(connection);
     }
 
     public static String doGet(List<URI> uris) throws IOException {
