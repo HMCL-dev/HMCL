@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.util.logging.Logger;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
@@ -89,12 +90,12 @@ public class MicrosoftAccountChangeCapeDialog extends JFXDialogLayout {
         saveButton.getStyleClass().add("dialog-accept");
 
         saveButton.setOnAction(e -> {
-            String cape = capeItem.getSelectedData().getId();
+            String cape = capeItem.getSelectedData().id();
 
             Task<?> updateCapeTask;
             if ("empty".equals(cape) && currentCape != null) {
                 updateCapeTask = Task.runAsync(account::hideCape);
-            } else if (currentCape != null && cape.equals(currentCape.getId())) {
+            } else if (currentCape != null && cape.equals(currentCape.id())) {
                 updateCapeTask = null;
             } else {
                 updateCapeTask = Task.runAsync(() -> account.changeCape(cape));
@@ -138,19 +139,19 @@ public class MicrosoftAccountChangeCapeDialog extends JFXDialogLayout {
         options.add(new MultiFileItem.Option<>(i18n("account.cape.none"), null));
 
         for (MicrosoftService.MinecraftProfileResponseCape cape : capes) {
-            String key = "account.cape.name." + getCapeId(cape.getAlias());
+            String key = "account.cape.name." + getCapeId(cape.alias());
             String displayName;
 
             if (I18n.hasKey(key)) {
                 displayName = i18n(key);
             } else {
                 LOG.warning("Cannot find key " + key + " in resource bundle");
-                displayName = cape.getAlias();
+                displayName = cape.alias();
             }
 
             MultiFileItem.Option<MicrosoftService.MinecraftProfileResponseCape> option = new MultiFileItem.Option<>(displayName, cape);
             options.add(option);
-            if (Objects.equals(cape.getState(), "ACTIVE")) {
+            if (Objects.equals(cape.state(), "ACTIVE")) {
                 currentCape = cape;
             }
         }
@@ -162,7 +163,7 @@ public class MicrosoftAccountChangeCapeDialog extends JFXDialogLayout {
     private Task<?> updateCapePreview() {
         CompletableFuture<Image> imageFuture = new CompletableFuture<>();
 
-        String imagePath = "/assets/img/cape/" + getCapeId(capeItem.getSelectedData().getAlias()) + ".png";
+        String imagePath = "/assets/img/cape/" + getCapeId(capeItem.getSelectedData().alias()) + ".png";
         URL imageURL = MicrosoftAccountChangeCapeDialog.class.getResource(imagePath);
 
         if (imageURL != null) {
@@ -170,10 +171,10 @@ public class MicrosoftAccountChangeCapeDialog extends JFXDialogLayout {
             imageFuture.complete(builtinImage);
         } else {
             capePreviewSpinner.showSpinner();
-            Task<Image> remoteImageTask = FXUtils.getRemoteImageTask(capeItem.getSelectedData().getUrl(), 0, 0, false, false);
+            Task<Image> remoteImageTask = FXUtils.getRemoteImageTask(capeItem.getSelectedData().url(), 0, 0, false, false);
             remoteImageTask.whenComplete(Schedulers.javafx(), (loadedImage, exception) -> {
                 if (exception != null) {
-                    LOG.warning("Cannot download cape image " + capeItem.getSelectedData().getUrl(), exception);
+                    LOG.warning("Cannot download cape image " + capeItem.getSelectedData().url(), exception);
                     imageFuture.completeExceptionally(exception);
                 } else {
                     imageFuture.complete(loadedImage);
@@ -193,6 +194,6 @@ public class MicrosoftAccountChangeCapeDialog extends JFXDialogLayout {
     }
 
     private String getCapeId(String alias) {
-        return alias.toLowerCase().replace(" ", "_").replace("'", "_").replace("-", "_");
+        return alias.toLowerCase(Locale.ROOT).replace(" ", "_").replace("'", "_").replace("-", "_");
     }
 }

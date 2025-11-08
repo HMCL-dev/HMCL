@@ -25,7 +25,10 @@ import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.OAuth;
 import org.jackhuang.hmcl.auth.ServerDisconnectException;
 import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
-import org.jackhuang.hmcl.auth.yggdrasil.*;
+import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
+import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
+import org.jackhuang.hmcl.auth.yggdrasil.Texture;
+import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.*;
 import org.jackhuang.hmcl.util.io.*;
@@ -34,8 +37,9 @@ import org.jackhuang.hmcl.util.javafx.ObservableOptionalCache;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
-import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -474,28 +478,9 @@ public class MicrosoftService {
         }
     }
 
-    public static class MinecraftProfileResponseCape {
-        String id;
-        String state;
-        String url;
-        String alias;
-
-        public String getState() {
-            return state;
-        }
-
-        public String getUrl() {
-            return url;
-        }
-
-        public String getAlias() {
-            return alias;
-        }
-
-        public String getId() {
-            return id;
-        }
+    public record MinecraftProfileResponseCape(String id, String state, String url, String alias) {
     }
+
 
     public static class MinecraftProfileResponse extends MinecraftErrorResponse implements Validation {
         @SerializedName("id")
