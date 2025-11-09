@@ -108,6 +108,11 @@ final class GameVersion {
                     Optional<String> result = getVersionOfClassMinecraft(is);
                     if (result.isPresent()) {
                         String version = result.get();
+                        if (version.equals("RC1")) {
+                            // RC versions of Minecraft 1.0
+                            return Optional.empty();
+                        }
+
                         if (version.startsWith("Beta ")) {
                             result = Optional.of("b" + version.substring("Beta ".length()));
                         }
