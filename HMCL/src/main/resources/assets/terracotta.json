@@ -1,26 +1,29 @@
 {
-  "version_legacy": "0\\.3\\.[89]-rc\\.([0-9]|10)",
+  "version_legacy": "0\\.3\\.([89]-rc\\.([0-9]|10)|10|11|12)",
   "version_recent": [
-    "0.3.9-rc.10"
+    "0.3.12"
   ],
-  "version_latest": "0.3.10",
+  "version_latest": "0.3.13",
   "classifiers": {
-    "linux-arm64": "sha256:001b6b1e220e98dffd84198a3e16855644cad27900562c78d610b0bf50138d17",
-    "linux-x86_64": "sha256:b133ddb796ff52879fb0c38e68ef7ea968d3eaec77f27ea274c701888e795782",
-    "macos-arm64": "sha256:4bb2eb432ea0ee3e3dca6b1019d8864aa14bedfe20b3d804865e216e36e856df",
-    "macos-arm64.pkg": "sha256:e4bf3d2014e417565e3ab0df579f4280e0af42bc28516f640067a52dca77098f",
-    "macos-x86_64": "sha256:17a2cc46d884951a88da6f3f0725e38ffca6fdfd1da021807121c29b944bd830",
-    "macos-x86_64.pkg": "sha256:a4f08a706605262485c1889dfae00554fba753141f6d6ada76e29bfc3e0338aa",
-    "windows-arm64.exe": "sha256:245e0faf2ee1cdc5e430b5c18fbab4c4e5e3f333f0de51a621ae772db3a16924",
-    "windows-x86_64.exe": "sha256:ab99ddb729860c939b2085d8852fd62007b86d97568b687cf2a7147718b64eea"
+    "freebsd-x86_64": "sha256:0713e54ee552496416bda9d9e814e33a8950ca8f321f5b3c6dd2e07e79b0e3af",
+    "linux-arm64": "sha256:61affc46035337c182adeca3671b4cf4cc59c7b4e73039899f35416f7d00ad94",
+    "linux-x86_64": "sha256:9399e1627b77d518950e66d944c9a4b70c20d2e13ca2c0e2fed0ded637e7ae06",
+    "linux-loongarch64": "sha256:f3eb4c40dfccc25b5b355298c776abe3d399afb57a2af38803dd78089f0c182e",
+    "linux-riscv64": "sha256:26f95f8b5f83746c9cf9a8362ce0ef793ede8515897a1ba15e5e6f93c3d39533",
+    "macos-arm64": "sha256:35ba271c7dc924e91c2fdd8c1cabeff2ce3d060836748a7a07162b0a5900e8d5",
+    "macos-arm64.pkg": "sha256:90a613ec69f28713fe06188247c57b7cc91743c95112de5aed85ea252103beaa",
+    "macos-x86_64": "sha256:45b420b15a32d5450794a9776cf45a217871cf4333b29b65a35d7358c806b5b1",
+    "macos-x86_64.pkg": "sha256:587623becb3593ccb5fe542a201a67ab3a4029dfa847fcef758faff7ba6d38d5",
+    "windows-arm64.exe": "sha256:bd4e1acf2f304761cdabddd9ade94d046534f4c024bc3026ac98e6be58c2bc22",
+    "windows-x86_64.exe": "sha256:b89599bbcc92b00222cfc6f2e5ef636b7daf192c96efba1049a892e6cb59ee70"
   },
   "downloads": [
-    "https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}",
+    "https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}"
+  ],
+  "downloads_CN": [
     "https://gitee.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}",
-    "https://alist.8mi.tech/d/mirror/HMCL-Terracotta/Auto/v${version}/terracotta-${version}-${classifier}",
-    "https://ghfast.top/https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}",
-    "https://cdn.crashmc.com/https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}",
-    "https://cp.zkitefly.eu.org/https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}"
+    "https://cnb.cool/HMCL-Terracotta/Terracotta/-/releases/download/v${version}/terracotta-${version}-${classifier}",
+    "https://alist.8mi.tech/d/mirror/HMCL-Terracotta/Auto/v${version}/terracotta-${version}-${classifier}"
   ],
   "links": [
     {

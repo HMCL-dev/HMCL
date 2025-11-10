@@ -532,6 +532,9 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         container.setAlignment(Pos.CENTER_LEFT);
                         pane.getChildren().add(container);
 
+                        imageView.setFitWidth(40);
+                        imageView.setFitHeight(40);
+
                         container.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), content);
                         HBox.setHgrow(content, Priority.ALWAYS);
                     }
@@ -547,7 +550,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                                 .map(category -> getSkinnable().getLocalizedCategory(category))
                                 .forEach(content::addTag);
                         if (StringUtils.isNotBlank(dataItem.getIconUrl())) {
-                            imageView.imageProperty().bind(FXUtils.newRemoteImage(dataItem.getIconUrl(), 40, 40, true, true));
+                            imageView.imageProperty().bind(FXUtils.newRemoteImage(dataItem.getIconUrl(), 80, 80, true, true));
                         }
                     }
                 });

@@ -263,6 +263,19 @@ public final class StringUtils {
         return false;
     }
 
+    public static boolean containsEmoji(String str) {
+        for (int i = 0; i < str.length(); ) {
+            int ch = str.codePointAt(i);
+
+            if (ch >= 0x1F300 && ch <= 0x1FAFF)
+                return true;
+
+            i += Character.charCount(ch);
+        }
+
+        return false;
+    }
+
     private static boolean isVarNameStart(char ch) {
         return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || ch == '_';
     }

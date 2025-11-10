@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.jackhuang.hmcl.download.cleanroom.CleanroomInstallTask;
 import org.jackhuang.hmcl.download.forge.ForgeInstallTask;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
@@ -182,6 +183,11 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
 
         return Task
                 .composeAsync(() -> {
+                    try {
+                        return CleanroomInstallTask.install(this, oldVersion, installer);
+                    } catch (IOException ignore) {
+                    }
+
                     try {
                         return NeoForgeInstallTask.install(this, oldVersion, installer);
                     } catch (IOException ignore) {

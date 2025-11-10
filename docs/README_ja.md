@@ -14,7 +14,7 @@ English ([Standard](README.md), [uʍoᗡ ǝpᴉsd∩](README_en_Qabs.md)) | 中�
 
 ## 紹介
 
-HMCLはオープンソースでクロスプラットフォーム対応のMinecraftランチャーです。Mod管理、ゲームカスタマイズ、Modローダーのインストール（Forge、NeoForge、Fabric、Quilt、LiteLoader、OptiFine）、Modパック作成、UIカスタマイズなど、さまざまな機能をサポートしています。
+HMCLはオープンソースでクロスプラットフォーム対応のMinecraftランチャーです。Mod管理、ゲームカスタマイズ、Modローダーのインストール（Forge、NeoForge、Cleanroom、Fabric、Quilt、LiteLoader、OptiFine）、Modパック作成、UIカスタマイズなど、さまざまな機能をサポートしています。
 
 HMCLは優れたクロスプラットフォーム性能を持っています。Windows、Linux、macOS、FreeBSDなどの異なるオペレーティングシステムだけでなく、x86、ARM、RISC-V、MIPS、LoongArchなどのさまざまなCPUアーキテクチャにも対応しています。HMCLを使えば、さまざまなプラットフォームでMinecraftを簡単に楽しむことができます。
 
@@ -41,13 +41,7 @@ HMCLが対応しているシステムやCPUアーキテクチャについては�
 
 ### コンパイル方法
 
-プロジェクトのルートディレクトリで次のコマンドを実行してください。
-
-```bash
-./gradlew clean build
-```
-
-Java 17以上がインストールされていることを確認してください。
+ビルド方法については、[ビルドガイド](./Building.md)ページをご覧ください。
 
 ## JVMオプション（デバッグ用）
 

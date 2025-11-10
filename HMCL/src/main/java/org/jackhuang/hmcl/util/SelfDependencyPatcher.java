@@ -101,14 +101,14 @@ public final class SelfDependencyPatcher {
 
     private static final class DependencyDescriptor {
         private static final String DEPENDENCIES_LIST_FILE = "/assets/openjfx-dependencies.json";
-        private static final Path DEPENDENCIES_DIR_PATH = Metadata.DEPENDENCIES_DIRECTORY.resolve(Platform.getPlatform().toString()).resolve("openjfx");
+        private static final Path DEPENDENCIES_DIR_PATH = Metadata.DEPENDENCIES_DIRECTORY.resolve(Platform.CURRENT_PLATFORM.toString()).resolve("openjfx");
 
         static List<DependencyDescriptor> readDependencies() {
             //noinspection ConstantConditions
             try (Reader reader = new InputStreamReader(SelfDependencyPatcher.class.getResourceAsStream(DEPENDENCIES_LIST_FILE), UTF_8)) {
                 Map<String, Map<String, List<DependencyDescriptor>>> allDependencies =
                         JsonUtils.GSON.fromJson(reader, mapTypeOf(String.class, mapTypeOf(String.class, listTypeOf(DependencyDescriptor.class))));
-                Map<String, List<DependencyDescriptor>> platform = allDependencies.get(Platform.getPlatform().toString());
+                Map<String, List<DependencyDescriptor>> platform = allDependencies.get(Platform.CURRENT_PLATFORM.toString());
                 if (platform == null)
                     return null;
 

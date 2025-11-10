@@ -15,7 +15,7 @@ English ([Standard](README.md), [uʍoᗡ ǝpᴉsd∩](README_en_Qabs.md)) | 中�
 
 ## Introducción
 
-HMCL es un lanzador de Minecraft de código abierto y multiplataforma que admite la gestión de mods, personalización del juego, instalación de ModLoaders (Forge, NeoForge, Fabric, Quilt, LiteLoader y OptiFine), creación de modpacks, personalización de la interfaz de usuario y más.
+HMCL es un lanzador de Minecraft de código abierto y multiplataforma que admite la gestión de mods, personalización del juego, instalación de ModLoaders (Forge, NeoForge, Cleanroom, Fabric, Quilt, LiteLoader y OptiFine), creación de modpacks, personalización de la interfaz de usuario y más.
 
 HMCL tiene increíbles capacidades multiplataforma. No solo funciona en diferentes sistemas operativos como Windows, Linux, macOS y FreeBSD, sino que también es compatible con varias arquitecturas de CPU como x86, ARM, RISC-V, MIPS y LoongArch. Puedes disfrutar fácilmente de Minecraft en diferentes plataformas a través de HMCL.
 
@@ -42,13 +42,7 @@ Si deseas enviar un pull request, aquí tienes algunos requisitos:
 
 ### Compilación
 
-Simplemente ejecuta el siguiente comando en el directorio raíz del proyecto:
-
-```bash
-./gradlew clean build
-```
-
-Asegúrate de tener instalado Java 17 o una versión posterior.
+Consulta la página de la [Guía de compilación](./Building.md).
 
 ## Opciones de JVM (para depuración)
 

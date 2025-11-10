@@ -15,7 +15,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
 package org.jackhuang.hmcl.util.i18n;
 
 import com.google.gson.annotations.JsonAdapter;
@@ -24,12 +23,13 @@ import com.google.gson.stream.JsonToken;
 import com.google.gson.stream.JsonWriter;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.i18n.translator.Translator;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.TemporalAccessor;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -72,10 +72,12 @@ public final class SupportedLocale {
     private final boolean isDefault;
     private final String name;
     private final Locale locale;
+    private final TextDirection textDirection;
+
     private ResourceBundle resourceBundle;
     private ResourceBundle localeNamesBundle;
-    private DateTimeFormatter dateTimeFormatter;
     private List<Locale> candidateLocales;
+    private Translator translator;
 
     SupportedLocale() {
         this.isDefault = true;
@@ -85,12 +87,14 @@ public final class SupportedLocale {
         this.locale = StringUtils.isBlank(language)
                 ? LocaleUtils.SYSTEM_DEFAULT
                 : Locale.forLanguageTag(language);
+        this.textDirection = LocaleUtils.getTextDirection(locale);
     }
 
     SupportedLocale(Locale locale) {
         this.isDefault = false;
         this.name = locale.toLanguageTag();
         this.locale = locale;
+        this.textDirection = LocaleUtils.getTextDirection(locale);
     }
 
     public boolean isDefault() {
@@ -103,6 +107,10 @@ public final class SupportedLocale {
 
     public Locale getLocale() {
         return locale;
+    }
+
+    public TextDirection getTextDirection() {
+        return textDirection;
     }
 
     public String getDisplayName(SupportedLocale inLocale) {
@@ -200,23 +208,6 @@ public final class SupportedLocale {
         }
     }
 
-    public String formatDateTime(TemporalAccessor time) {
-        DateTimeFormatter formatter = dateTimeFormatter;
-        if (formatter == null) {
-            if (LocaleUtils.isEnglish(locale) && "Qabs".equals(locale.getScript())) {
-                return UpsideDownUtils.formatDateTime(time);
-            }
-
-            if (locale.getLanguage().equals("lzh")) {
-                return WenyanUtils.formatDateTime(time);
-            }
-
-            formatter = dateTimeFormatter = DateTimeFormatter.ofPattern(getResourceBundle().getString("datetime.format"))
-                    .withZone(ZoneId.systemDefault());
-        }
-        return formatter.format(time);
-    }
-
     public String getFcMatchPattern() {
         String language = locale.getLanguage();
         String region = locale.getCountry();
@@ -250,6 +241,31 @@ public final class SupportedLocale {
         }
 
         return region.isEmpty() ? language : language + "-" + region;
+    }
+
+    public Translator getTranslator() {
+        Translator translator = this.translator;
+        if (translator != null)
+            return translator;
+
+        List<Locale> candidateLocales = getCandidateLocales();
+
+        for (Locale candidateLocale : candidateLocales) {
+            String className = DefaultResourceBundleControl.INSTANCE.toBundleName(Translator.class.getSimpleName(), candidateLocale);
+            if (Translator.class.getResource(className + ".class") != null) {
+                try {
+                    Class<?> clazz = Class.forName(Translator.class.getPackageName() + "." + className);
+
+                    MethodHandle constructor = MethodHandles.publicLookup()
+                            .findConstructor(clazz, MethodType.methodType(void.class, SupportedLocale.class));
+
+                    return this.translator = (Translator) constructor.invoke(this);
+                } catch (Throwable e) {
+                    LOG.warning("Failed to create instance for " + className, e);
+                }
+            }
+        }
+        return this.translator = new Translator(this);
     }
 
     public boolean isSameLanguage(SupportedLocale other) {
