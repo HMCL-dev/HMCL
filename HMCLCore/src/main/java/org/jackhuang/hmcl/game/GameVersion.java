@@ -50,6 +50,10 @@ final class GameVersion {
     // it is difficult to obtain the game version from the JAR.
     // For these versions, we get the version number based on their SHA-1 hash.
     private static final Map<String, String> KNOWN_VERSIONS = Map.<String, String>ofEntries(
+            Map.entry("4df7880d26414b400640f0b8e54344df2b66c51a", "1.0.0-rc1"),
+            Map.entry("9e04e60eef3fb4657b406dcb3ad5e3a675ecf6af", "1.0.0-rc2-1"),
+            Map.entry("6a6b67d34149afc47cf9608b3967582639097df9", "1.0.0-rc2-2"),
+            Map.entry("6e54fbe19b7797f3e3a2cb9feb5da41a40926db8", "1.0.0-rc2-3"),
             Map.entry("fe189e91a3e7166d46fad8ce53ba0ce34b4c5f97", "a1.0.5"),
             Map.entry("73f569bf5556580979606049204835ae1a54f04d", "a1.0.5_01"),
             Map.entry("e5838277b3bb193e58408713f1fc6e005c5f3c0c", "a1.0.4"),
@@ -217,7 +221,10 @@ final class GameVersion {
                     return getVersionFromClassMinecraftServer(is);
                 }
             }
+        } catch (IOException ignored) {
+        }
 
+        try {
             String digest = DigestUtils.digestToString("SHA-1", file);
             return Optional.ofNullable(KNOWN_VERSIONS.get(digest));
         } catch (IOException e) {
