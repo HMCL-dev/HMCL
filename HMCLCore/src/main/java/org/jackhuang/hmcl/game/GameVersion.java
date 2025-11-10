@@ -18,12 +18,15 @@
 package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
+import org.jackhuang.hmcl.util.DigestUtils;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jenkinsci.constant_pool_scanner.ConstantPool;
 import org.jenkinsci.constant_pool_scanner.ConstantPoolScanner;
 import org.jenkinsci.constant_pool_scanner.ConstantType;
 import org.jenkinsci.constant_pool_scanner.StringConstant;
 
+import javax.security.auth.login.CredentialNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -31,6 +34,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import java.util.zip.ZipEntry;
@@ -44,6 +48,11 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 final class GameVersion {
     private GameVersion() {
     }
+
+    // 对于 Minecrafty 1.0 rc
+    private static final Map<String, String> KNOWN_VERSIONS = Map.of(
+
+    );
 
     private static Optional<String> getVersionFromJson(InputStream versionJson) {
         try {
@@ -59,13 +68,15 @@ final class GameVersion {
     }
 
     private static Optional<String> getVersionOfClassMinecraft(InputStream bytecode) throws IOException {
+        final String constantPrefix = "Minecraft Minecraft ";
         ConstantPool pool = ConstantPoolScanner.parse(bytecode, ConstantType.STRING);
-
-        return StreamSupport.stream(pool.list(StringConstant.class).spliterator(), false)
-                .map(StringConstant::get)
-                .filter(s -> s.startsWith("Minecraft Minecraft "))
-                .map(s -> s.substring("Minecraft Minecraft ".length()))
-                .findFirst();
+        for (StringConstant constant : pool.list(StringConstant.class)) {
+            String value = constant.get();
+            if (value.startsWith(constantPrefix)) {
+                return Optional.of(value.substring(constantPrefix.length()));
+            }
+        }
+        return Optional.empty();
     }
 
     private static Optional<String> getVersionFromClassMinecraftServer(InputStream bytecode) throws IOException {
@@ -73,7 +84,7 @@ final class GameVersion {
 
         List<String> list = StreamSupport.stream(pool.list(StringConstant.class).spliterator(), false)
                 .map(StringConstant::get)
-                .collect(Collectors.toList());
+                .toList();
 
         int idx = -1;
 
@@ -83,8 +94,9 @@ final class GameVersion {
                 break;
             }
 
+        Pattern pattern = Pattern.compile(".*[0-9].*");
         for (int i = idx - 1; i >= 0; --i)
-            if (list.get(i).matches(".*[0-9].*"))
+            if (pattern.matcher(list.get(i)).matches())
                 return Optional.of(list.get(i));
 
         return Optional.empty();
@@ -108,15 +120,15 @@ final class GameVersion {
                     Optional<String> result = getVersionOfClassMinecraft(is);
                     if (result.isPresent()) {
                         String version = result.get();
-                        if (version.equals("RC1")) {
-                            // RC versions of Minecraft 1.0
-                            return Optional.empty();
+                        // For Minecraft 1.0 rc1/rc2-1/rc2-2/rc2-3, this value is always "RC1"
+                        if (!version.equals("RC1")) {
+                            if (version.startsWith("Beta ")) {
+                                result = Optional.of("b" + version.substring("Beta ".length()));
+                            } else if (version.startsWith("Alpha v")) {
+                                result = Optional.of("a" + version.substring("Alpha v".length()));
+                            }
+                            return result;
                         }
-
-                        if (version.startsWith("Beta ")) {
-                            result = Optional.of("b" + version.substring("Beta ".length()));
-                        }
-                        return result;
                     }
                 }
             }
@@ -127,7 +139,9 @@ final class GameVersion {
                     return getVersionFromClassMinecraftServer(is);
                 }
             }
-            return Optional.empty();
+
+            String digest = DigestUtils.digestToString("SHA-1", file);
+            return Optional.ofNullable(KNOWN_VERSIONS.get(digest));
         } catch (IOException e) {
             return Optional.empty();
         }
