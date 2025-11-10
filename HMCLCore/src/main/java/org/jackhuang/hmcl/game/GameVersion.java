@@ -46,7 +46,7 @@ final class GameVersion {
     private GameVersion() {
     }
 
-    // For Minecraft 1.0 rc or versions earlier than Alpha 1.6,
+    // For Minecraft 1.0 rc versions and versions earlier than Alpha 1.0.6,
     // it is difficult to obtain the game version from the JAR.
     // For these versions, we get the version number based on their SHA-1 hash.
     private static final Map<String, String> KNOWN_VERSIONS = Map.<String, String>ofEntries(
