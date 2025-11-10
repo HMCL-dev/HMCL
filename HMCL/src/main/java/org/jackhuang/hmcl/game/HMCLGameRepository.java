@@ -41,7 +41,6 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
-import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Nullable;
 
@@ -319,32 +318,23 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version, null);
                 if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FABRIC))
                     return VersionIconType.FABRIC.getIcon();
-                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.QUILT))
-                    return VersionIconType.QUILT.getIcon();
-                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE))
-                    return VersionIconType.NEO_FORGE.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FORGE))
                     return VersionIconType.FORGE.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM))
                     return VersionIconType.CLEANROOM.getIcon();
-                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.LITELOADER))
-                    return VersionIconType.CHICKEN.getIcon();
+                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE))
+                    return VersionIconType.NEO_FORGE.getIcon();
+                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.QUILT))
+                    return VersionIconType.QUILT.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.OPTIFINE))
                     return VersionIconType.OPTIFINE.getIcon();
+                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.LITELOADER))
+                    return VersionIconType.CHICKEN.getIcon();
+                else
+                    return VersionIconType.FURNACE.getIcon();
             }
 
-            String gameVersion = getGameVersion(version).orElse(null);
-            if (gameVersion != null) {
-                GameVersionNumber versionNumber = GameVersionNumber.asGameVersion(gameVersion);
-                if (versionNumber.isAprilFools()) {
-                    return VersionIconType.APRIL_FOOLS.getIcon();
-                } else if (versionNumber instanceof GameVersionNumber.Snapshot) {
-                    return VersionIconType.COMMAND.getIcon();
-                } else if (versionNumber instanceof GameVersionNumber.Old) {
-                    return VersionIconType.CRAFT_TABLE.getIcon();
-                }
-            }
-            return VersionIconType.GRASS.getIcon();
+            return VersionIconType.DEFAULT.getIcon();
         } else {
             return iconType.getIcon();
         }
