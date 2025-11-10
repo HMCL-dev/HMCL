@@ -202,8 +202,9 @@ final class GameVersion {
                     Optional<String> result = getVersionOfClassMinecraft(is);
                     if (result.isPresent()) {
                         String version = result.get();
-                        // For Minecraft 1.0 rc1/rc2-1/rc2-2/rc2-3, this value is always "RC1"
-                        if (!version.equals("RC1")) {
+                        // For Minecraft 1.0 rc1/rc2-1/rc2-2, this value is "RC1"
+                        // For Minecraft 1.0 rc2-3, this value is "RC2"
+                        if (!version.equals("RC1") && !version.equals("RC2")) {
                             if (version.startsWith("Beta ")) {
                                 result = Optional.of("b" + version.substring("Beta ".length()));
                             } else if (version.startsWith("Alpha v")) {
