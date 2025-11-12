@@ -103,7 +103,7 @@ public final class Controllers {
     });
     private static Lazy<RootPage> rootPage = new Lazy<>(RootPage::new);
     private static DecoratorController decorator;
-    private static Lazy<DownloadPage> downloadPage = new Lazy<>(DownloadPage::new);
+    private static DownloadPage downloadPage;
     private static Lazy<AccountListPage> accountListPage = new Lazy<>(() -> {
         AccountListPage accountListPage = new AccountListPage();
         accountListPage.selectedAccountProperty().bindBidirectional(Accounts.selectedAccountProperty());
@@ -150,7 +150,7 @@ public final class Controllers {
 
     @FXThread
     public static void prepareSettingsPage() {
-        if (settingsPage == null && AnimationUtils.isAnimationEnabled()) {
+        if (settingsPage == null) {
             LOG.info("Prepare the settings page");
             settingsPage = FXUtils.prepareNode(new LauncherSettingsPage());
         }
@@ -163,7 +163,18 @@ public final class Controllers {
 
     // FXThread
     public static DownloadPage getDownloadPage() {
-        return downloadPage.get();
+        if (downloadPage == null) {
+            downloadPage = new DownloadPage();
+        }
+        return downloadPage;
+    }
+
+    @FXThread
+    public static void prepareDownloadPage() {
+        if (downloadPage == null) {
+            LOG.info("Prepare the download page");
+            downloadPage = FXUtils.prepareNode(new DownloadPage());
+        }
     }
 
     // FXThread
@@ -544,6 +555,7 @@ public final class Controllers {
         downloadPage = null;
         accountListPage = null;
         settingsPage = null;
+        terracottaPage = null;
         decorator = null;
         stage = null;
         scene = null;
