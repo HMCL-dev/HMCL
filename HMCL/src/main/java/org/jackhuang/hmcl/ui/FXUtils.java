@@ -30,6 +30,7 @@ import javafx.beans.value.*;
 import javafx.collections.ObservableMap;
 import javafx.event.Event;
 import javafx.event.EventDispatcher;
+import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.geometry.Bounds;
 import javafx.geometry.Pos;
@@ -54,6 +55,7 @@ import javafx.stage.*;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
+import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -1363,6 +1365,24 @@ public final class FXUtils {
             if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 1) {
                 action.run();
                 e.consume();
+            }
+        });
+    }
+
+    public static <N extends Parent> N prepareNode(N node) {
+        Scene dummyScene = new Scene(node);
+        StyleSheets.init(dummyScene);
+        node.applyCss();
+        node.layout();
+        return node;
+    }
+
+    public static void prepareOnMouseEnter(Node node, Runnable action) {
+        node.addEventFilter(MouseEvent.MOUSE_ENTERED, new EventHandler<>() {
+            @Override
+            public void handle(MouseEvent e) {
+                node.removeEventFilter(MouseEvent.MOUSE_ENTERED, this);
+                action.run();
             }
         });
     }

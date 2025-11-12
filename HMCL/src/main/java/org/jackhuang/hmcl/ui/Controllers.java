@@ -111,7 +111,7 @@ public final class Controllers {
         accountListPage.authServersProperty().bindContentBidirectional(config().getAuthlibInjectorServers());
         return accountListPage;
     });
-    private static Lazy<LauncherSettingsPage> settingsPage = new Lazy<>(LauncherSettingsPage::new);
+    private static LauncherSettingsPage settingsPage;
     private static Lazy<TerracottaPage> terracottaPage = new Lazy<>(TerracottaPage::new);
 
     private Controllers() {
@@ -142,7 +142,18 @@ public final class Controllers {
 
     // FXThread
     public static LauncherSettingsPage getSettingsPage() {
-        return settingsPage.get();
+        if (settingsPage == null) {
+            settingsPage = new LauncherSettingsPage();
+        }
+        return settingsPage;
+    }
+
+    @FXThread
+    public static void prepareSettingsPage() {
+        if (settingsPage == null && AnimationUtils.isAnimationEnabled()) {
+            LOG.info("Prepare the settings page");
+            settingsPage = FXUtils.prepareNode(new LauncherSettingsPage());
+        }
     }
 
     // FXThread

@@ -182,6 +182,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             launcherSettingsItem.setActionButtonVisible(false);
             launcherSettingsItem.setTitle(i18n("settings"));
             launcherSettingsItem.setOnAction(e -> Controllers.navigate(Controllers.getSettingsPage()));
+            FXUtils.prepareOnMouseEnter(launcherSettingsItem, Controllers::prepareSettingsPage);
 
             // sixth item in left sidebar
             AdvancedListItem terracottaItem = new AdvancedListItem();
