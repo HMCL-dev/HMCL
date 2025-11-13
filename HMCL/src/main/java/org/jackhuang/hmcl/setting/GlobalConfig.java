@@ -90,7 +90,7 @@ public final class GlobalConfig extends ObservableSetting {
     }
 
     @SerializedName("logRetention")
-    private final IntegerProperty logRetention = new SimpleIntegerProperty();
+    private final IntegerProperty logRetention = new SimpleIntegerProperty(20);
 
     public IntegerProperty logRetentionProperty() {
         return logRetention;
