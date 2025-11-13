@@ -29,7 +29,7 @@ val versionRoot = System.getenv("VERSION_ROOT") ?: projectConfig.getProperty("ve
 val microsoftAuthId = System.getenv("MICROSOFT_AUTH_ID") ?: ""
 val microsoftAuthSecret = System.getenv("MICROSOFT_AUTH_SECRET") ?: ""
 val curseForgeApiKey = System.getenv("CURSEFORGE_API_KEY") ?: ""
-val littleSkinClientId = System.getenv("LITTLE_SKIN_CLIENT_ID") ?: "866" // TODO
+val littleSkinClientId = System.getenv("LITTLE_SKIN_CLIENT_ID") ?: "866"
 
 val launcherExe = System.getenv("HMCL_LAUNCHER_EXE") ?: ""
 
