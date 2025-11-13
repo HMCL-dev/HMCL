@@ -42,8 +42,9 @@ import org.jackhuang.hmcl.ui.construct.OptionToggleButton;
 import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.Optional;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -61,12 +62,14 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
      * @param profile null if creating a new profile.
      */
     public ProfilePage(Profile profile) {
+        getStyleClass().add("gray-background");
+
         this.profile = profile;
         String profileDisplayName = Optional.ofNullable(profile).map(Profiles::getProfileDisplayName).orElse("");
 
         state.set(State.fromTitle(profile == null ? i18n("profile.new") : i18n("profile") + " - " + profileDisplayName));
         location = new SimpleStringProperty(this, "location",
-                Optional.ofNullable(profile).map(Profile::getGameDir).map(File::getAbsolutePath).orElse(".minecraft"));
+                Optional.ofNullable(profile).map(Profile::getGameDir).map(FileUtils::getAbsolutePath).orElse(".minecraft"));
 
         ScrollPane scroll = new ScrollPane();
         this.setCenter(scroll);
@@ -151,13 +154,13 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
             profile.setName(txtProfileName.getText());
             profile.setUseRelativePath(toggleUseRelativePath.isSelected());
             if (StringUtils.isNotBlank(getLocation())) {
-                profile.setGameDir(new File(getLocation()));
+                profile.setGameDir(Path.of(getLocation()));
             }
         } else {
             if (StringUtils.isBlank(getLocation())) {
                 gameDir.onExplore();
             }
-            Profile newProfile = new Profile(txtProfileName.getText(), new File(getLocation()));
+            Profile newProfile = new Profile(txtProfileName.getText(), Path.of(getLocation()));
             newProfile.setUseRelativePath(toggleUseRelativePath.isSelected());
             Profiles.getProfiles().add(newProfile);
         }

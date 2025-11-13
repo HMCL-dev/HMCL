@@ -37,15 +37,17 @@ public final class WorldBackupTask extends Task<Path> {
 
     private final World world;
     private final Path backupsDir;
+    private final boolean needLock;
 
-    public WorldBackupTask(World world, Path backupsDir) {
+    public WorldBackupTask(World world, Path backupsDir, boolean needLock) {
         this.world = world;
         this.backupsDir = backupsDir;
+        this.needLock = needLock;
     }
 
     @Override
     public void execute() throws Exception {
-        try (FileChannel lockChannel = world.lock()) {
+        try (FileChannel lockChannel = needLock ? world.lock() : null) {
             Files.createDirectories(backupsDir);
             String time = LocalDateTime.now().format(WorldBackupsPage.TIME_FORMATTER);
             String baseName = time + "_" + world.getFileName();

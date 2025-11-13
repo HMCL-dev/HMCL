@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.mod;
 
+import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -83,7 +84,7 @@ public interface RemoteModRepository {
         }
     }
 
-    SearchResult search(String gameVersion, @Nullable Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder)
+    SearchResult search(DownloadProvider downloadProvider, String gameVersion, @Nullable Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder)
             throws IOException;
 
     Optional<RemoteMod.Version> getRemoteVersionByLocalFile(LocalModFile localModFile, Path file) throws IOException;

@@ -1,6 +1,13 @@
 {
   "versions": [
     {
+      "id": "25w45a_unobfuscated",
+      "type" : "unobfuscated",
+      "url": "https://piston-meta.mojang.com/v1/packages/7a3c149f148b6aa5ac3af48c4f701adea7e5b615/25w45a_unobfuscated.json",
+      "time" : "2025-11-04T14:07:08+00:00",
+      "releaseTime" : "2025-11-04T14:07:08+00:00"
+    },
+    {
       "id": "1.19_deep_dark_experimental_snapshot-1",
       "type": "pending",
       "url": "https://zkitefly.github.io/unlisted-versions-of-minecraft/files/1_19_deep_dark_experimental_snapshot-1/1_19_deep_dark_experimental_snapshot-1.json",

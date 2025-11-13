@@ -28,9 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import static org.jackhuang.hmcl.util.io.NetworkUtils.encodeLocation;
-
-public class RemoteMod {
+public final class RemoteMod {
 
     public static final RemoteMod BROKEN = new RemoteMod("", "", "RemoteMod.BROKEN", "", Collections.emptyList(), "", "", new RemoteMod.IMod() {
         @Override
@@ -302,18 +300,20 @@ public class RemoteMod {
 
         public FileDownloadTask.IntegrityCheck getIntegrityCheck() {
             if (hashes.containsKey("md5")) {
-                return new FileDownloadTask.IntegrityCheck("MD5", hashes.get("sha1"));
+                return new FileDownloadTask.IntegrityCheck("MD5", hashes.get("md5"));
             } else if (hashes.containsKey("sha1")) {
                 return new FileDownloadTask.IntegrityCheck("SHA-1", hashes.get("sha1"));
+            } else if (hashes.containsKey("sha256")) {
+                return new FileDownloadTask.IntegrityCheck("SHA-256", hashes.get("sha256"));
             } else if (hashes.containsKey("sha512")) {
-                return new FileDownloadTask.IntegrityCheck("SHA-256", hashes.get("sha1"));
+                return new FileDownloadTask.IntegrityCheck("SHA-512", hashes.get("sha512"));
             } else {
                 return null;
             }
         }
 
         public String getUrl() {
-            return encodeLocation(url);
+            return url;
         }
 
         public String getFilename() {

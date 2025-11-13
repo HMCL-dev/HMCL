@@ -40,6 +40,7 @@ import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.java.JavaRuntime;
@@ -55,15 +56,17 @@ import org.jackhuang.hmcl.ui.download.DownloadPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.main.LauncherSettingsPage;
 import org.jackhuang.hmcl.ui.main.RootPage;
+import org.jackhuang.hmcl.ui.terracotta.TerracottaPage;
 import org.jackhuang.hmcl.ui.versions.GameListPage;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
+import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.util.EnumSet;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -73,6 +76,8 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class Controllers {
     public static final String JAVA_VERSION_TIP = "javaVersion";
+    public static final String JAVA_INTERPRETED_MODE_TIP = "javaInterpretedMode";
+    public static final String SOFTWARE_RENDERING = "softwareRendering";
 
     public static final int MIN_WIDTH = 800 + 2 + 16; // bg width + border width*2 + shadow width*2
     public static final int MIN_HEIGHT = 450 + 2 + 40 + 16; // bg height + border width*2 + toolbar height + shadow width*2
@@ -91,14 +96,14 @@ public final class Controllers {
         gameListPage.selectedProfileProperty().bindBidirectional(Profiles.selectedProfileProperty());
         gameListPage.profilesProperty().bindContent(Profiles.profilesProperty());
         FXUtils.applyDragListener(gameListPage, ModpackHelper::isFileModpackByExtension, modpacks -> {
-            File modpack = modpacks.get(0);
+            Path modpack = modpacks.get(0);
             Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(Profiles.getSelectedProfile(), modpack), i18n("install.modpack"));
         });
         return gameListPage;
     });
     private static Lazy<RootPage> rootPage = new Lazy<>(RootPage::new);
     private static DecoratorController decorator;
-    private static Lazy<DownloadPage> downloadPage = new Lazy<>(DownloadPage::new);
+    private static DownloadPage downloadPage;
     private static Lazy<AccountListPage> accountListPage = new Lazy<>(() -> {
         AccountListPage accountListPage = new AccountListPage();
         accountListPage.selectedAccountProperty().bindBidirectional(Accounts.selectedAccountProperty());
@@ -106,7 +111,8 @@ public final class Controllers {
         accountListPage.authServersProperty().bindContentBidirectional(config().getAuthlibInjectorServers());
         return accountListPage;
     });
-    private static Lazy<LauncherSettingsPage> settingsPage = new Lazy<>(LauncherSettingsPage::new);
+    private static LauncherSettingsPage settingsPage;
+    private static Lazy<TerracottaPage> terracottaPage = new Lazy<>(TerracottaPage::new);
 
     private Controllers() {
     }
@@ -136,7 +142,18 @@ public final class Controllers {
 
     // FXThread
     public static LauncherSettingsPage getSettingsPage() {
-        return settingsPage.get();
+        if (settingsPage == null) {
+            settingsPage = new LauncherSettingsPage();
+        }
+        return settingsPage;
+    }
+
+    @FXThread
+    public static void prepareSettingsPage() {
+        if (settingsPage == null) {
+            LOG.info("Prepare the settings page");
+            settingsPage = FXUtils.prepareNode(new LauncherSettingsPage());
+        }
     }
 
     // FXThread
@@ -146,7 +163,23 @@ public final class Controllers {
 
     // FXThread
     public static DownloadPage getDownloadPage() {
-        return downloadPage.get();
+        if (downloadPage == null) {
+            downloadPage = new DownloadPage();
+        }
+        return downloadPage;
+    }
+
+    @FXThread
+    public static void prepareDownloadPage() {
+        if (downloadPage == null) {
+            LOG.info("Prepare the download page");
+            downloadPage = FXUtils.prepareNode(new DownloadPage());
+        }
+    }
+
+    // FXThread
+    public static Node getTerracottaPage() {
+        return terracottaPage.get();
     }
 
     // FXThread
@@ -177,6 +210,18 @@ public final class Controllers {
     public static void initialize(Stage stage) {
         LOG.info("Start initializing application");
 
+        if (System.getProperty("prism.lcdtext") == null) {
+            String fontAntiAliasing = globalConfig().getFontAntiAliasing();
+            if ("lcd".equalsIgnoreCase(fontAntiAliasing)) {
+                LOG.info("Enable sub-pixel antialiasing");
+                System.getProperties().put("prism.lcdtext", "true");
+            } else if ("gray".equalsIgnoreCase(fontAntiAliasing)
+                    || OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && SCREEN.getOutputScaleX() > 1) {
+                LOG.info("Disable sub-pixel antialiasing");
+                System.getProperties().put("prism.lcdtext", "false");
+            }
+        }
+
         Controllers.stage = stage;
 
         stageSizeChangeListener = o -> {
@@ -206,7 +251,11 @@ public final class Controllers {
 
             if (targetProperty != null
                     && Controllers.stage != null
-                    && !Controllers.stage.isIconified()) {
+                    && !Controllers.stage.isIconified()
+                    // https://github.com/HMCL-dev/HMCL/issues/4290
+                    && (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS ||
+                    !Controllers.stage.isFullScreen() && !Controllers.stage.isMaximized())
+            ) {
                 targetProperty.set(sourceProperty.get());
             }
         };
@@ -311,50 +360,43 @@ public final class Controllers {
             }
         }
 
-        if (JavaRuntime.CURRENT_VERSION < 10) {
-            Integer shownTipVersion = null;
-
+        if (JavaRuntime.CURRENT_VERSION < Metadata.MINIMUM_SUPPORTED_JAVA_VERSION) {
+            Number shownTipVersion = null;
             try {
-                shownTipVersion = (Integer) config().getShownTips().get(JAVA_VERSION_TIP);
+                shownTipVersion = (Number) config().getShownTips().get(JAVA_VERSION_TIP);
             } catch (ClassCastException e) {
                 LOG.warning("Invalid type for shown tips key: " + JAVA_VERSION_TIP, e);
             }
-
-            if (shownTipVersion == null || shownTipVersion < 11) {
-                String downloadLink = null;
-
-                if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX && Architecture.SYSTEM_ARCH == Architecture.LOONGARCH64_OW)
-                    downloadLink = "https://www.loongnix.cn/zh/api/java/downloads-jdk21/index.html";
-                else {
-
-                    EnumSet<Architecture> supportedArchitectures;
-                    if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
-                        supportedArchitectures = EnumSet.of(Architecture.X86_64, Architecture.X86, Architecture.ARM64);
-                    else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX)
-                        supportedArchitectures = EnumSet.of(
-                                Architecture.X86_64, Architecture.X86,
-                                Architecture.ARM64, Architecture.ARM32,
-                                Architecture.RISCV64, Architecture.LOONGARCH64
-                        );
-                    else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
-                        supportedArchitectures = EnumSet.of(Architecture.X86_64, Architecture.ARM64);
-                    else
-                        supportedArchitectures = EnumSet.noneOf(Architecture.class);
-
-                    if (supportedArchitectures.contains(Architecture.SYSTEM_ARCH))
-                        downloadLink = String.format("https://docs.hmcl.net/downloads/%s/%s.html",
-                                OperatingSystem.CURRENT_OS.getCheckedName(),
-                                Architecture.SYSTEM_ARCH.getCheckedName()
-                        );
-                }
-
+            if (shownTipVersion == null || shownTipVersion.intValue() < Metadata.MINIMUM_SUPPORTED_JAVA_VERSION) {
                 MessageDialogPane.Builder builder = new MessageDialogPane.Builder(i18n("fatal.deprecated_java_version"), null, MessageType.WARNING);
+                String downloadLink = Metadata.getSuggestedJavaDownloadLink();
                 if (downloadLink != null)
-                    builder.addHyperLink(i18n("fatal.deprecated_java_version.download_link", 21), downloadLink);
+                    builder.addHyperLink(
+                            i18n("fatal.deprecated_java_version.download_link", Metadata.RECOMMENDED_JAVA_VERSION),
+                            downloadLink
+                    );
                 Controllers.dialog(builder
-                        .ok(() -> config().getShownTips().put(JAVA_VERSION_TIP, 11))
+                        .ok(() -> config().getShownTips().put(JAVA_VERSION_TIP, Metadata.MINIMUM_SUPPORTED_JAVA_VERSION))
                         .build());
             }
+        }
+
+        // Check whether JIT is enabled in the current environment
+        if (!JavaRuntime.CURRENT_JIT_ENABLED && !Boolean.TRUE.equals(config().getShownTips().get(JAVA_INTERPRETED_MODE_TIP))) {
+            Controllers.dialog(new MessageDialogPane.Builder(i18n("warning.java_interpreted_mode"), i18n("message.warning"), MessageType.WARNING)
+                    .ok(null)
+                    .addCancel(i18n("button.do_not_show_again"), () ->
+                            config().getShownTips().put(JAVA_INTERPRETED_MODE_TIP, true))
+                    .build());
+        }
+
+        // Check whether hardware acceleration is enabled
+        if (!FXUtils.GPU_ACCELERATION_ENABLED && !Boolean.TRUE.equals(config().getShownTips().get(SOFTWARE_RENDERING))) {
+            Controllers.dialog(new MessageDialogPane.Builder(i18n("warning.software_rendering"), i18n("message.warning"), MessageType.WARNING)
+                    .ok(null)
+                    .addCancel(i18n("button.do_not_show_again"), () ->
+                            config().getShownTips().put(SOFTWARE_RENDERING, true))
+                    .build());
         }
 
         if (globalConfig().getAgreementVersion() < 1) {
@@ -414,6 +456,38 @@ public final class Controllers {
         dialog(new MessageDialogPane.Builder(text, title, type).actionOrCancel(actionButton, cancel).build());
     }
 
+    public static void confirmWithCountdown(String text, String title, int seconds, MessageType messageType,
+                                            @Nullable Runnable ok, @Nullable Runnable cancel) {
+        if (seconds <= 0)
+            throw new IllegalArgumentException("Seconds must be greater than 0");
+
+        JFXButton btnOk = new JFXButton(i18n("button.ok"));
+        btnOk.getStyleClass().add(messageType == MessageType.WARNING || messageType == MessageType.ERROR
+                ? "dialog-error"
+                : "dialog-accept");
+
+        if (ok != null)
+            btnOk.setOnAction(e -> ok.run());
+        btnOk.setDisable(true);
+
+        KeyFrame[] keyFrames = new KeyFrame[seconds + 1];
+        for (int i = 0; i < seconds; i++) {
+            keyFrames[i] = new KeyFrame(Duration.seconds(i),
+                    new KeyValue(btnOk.textProperty(), i18n("button.ok.countdown", seconds - i)));
+        }
+        keyFrames[seconds] = new KeyFrame(Duration.seconds(seconds),
+                new KeyValue(btnOk.textProperty(), i18n("button.ok")),
+                new KeyValue(btnOk.disableProperty(), false));
+
+        Timeline timeline = new Timeline(keyFrames);
+        confirmAction(text, title, messageType, btnOk, () -> {
+            timeline.stop();
+            if (cancel != null)
+                cancel.run();
+        });
+        timeline.play();
+    }
+
     public static CompletableFuture<String> prompt(String title, FutureCallback<String> onResult) {
         return prompt(title, onResult, "");
     }
@@ -460,6 +534,10 @@ public final class Controllers {
                     Controllers.getSettingsPage().showFeedback();
                     Controllers.navigate(Controllers.getSettingsPage());
                     break;
+                case "hmcl://game/launch":
+                    Profile profile = Profiles.getSelectedProfile();
+                    Versions.launch(profile, profile.getSelectedVersion(), LauncherHelper::setKeep);
+                    break;
             }
         } else {
             FXUtils.openLink(href);
@@ -477,6 +555,7 @@ public final class Controllers {
         downloadPage = null;
         accountListPage = null;
         settingsPage = null;
+        terracottaPage = null;
         decorator = null;
         stage = null;
         scene = null;

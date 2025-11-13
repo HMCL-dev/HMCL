@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.util.platform.linux;
 
 import org.jackhuang.hmcl.util.KeyValuePairUtils;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.hardware.CentralProcessor;
 import org.jackhuang.hmcl.util.platform.hardware.HardwareVendor;
 import org.jetbrains.annotations.Nullable;
@@ -119,7 +118,7 @@ final class LinuxCPUDetector {
             Path compatiblePath = Paths.get("/proc/device-tree/compatible");
             if (Files.isRegularFile(compatiblePath)) {
                 // device-vendor,device-model\0soc-vendor,soc-model\0
-                String[] data = FileUtils.readText(compatiblePath).split("\0");
+                String[] data = Files.readString(compatiblePath).split("\0");
 
                 for (int i = data.length - 1; i >= 0; i--) {
                     String device = data[i];
@@ -207,10 +206,10 @@ final class LinuxCPUDetector {
                     if (!dirNamePattern.matcher(cpuDir.getFileName().toString()).matches() || !Files.isDirectory(cpuDir))
                         continue;
 
-                    physicalPackageIds.add(Integer.parseInt(FileUtils.readText(cpuDir.resolve("topology/physical_package_id")).trim()));
+                    physicalPackageIds.add(Integer.parseInt(Files.readString(cpuDir.resolve("topology/physical_package_id")).trim()));
 
                     boolean shouldCount = false;
-                    for (String item : FileUtils.readText(cpuDir.resolve("topology/core_cpus_list")).trim().split(",")) {
+                    for (String item : Files.readString(cpuDir.resolve("topology/core_cpus_list")).trim().split(",")) {
                         String range = item.trim();
                         int idx = range.indexOf('-');
                         if (idx < 0)

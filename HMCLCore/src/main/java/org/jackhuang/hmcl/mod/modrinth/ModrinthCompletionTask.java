@@ -25,8 +25,8 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -36,6 +36,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -78,9 +79,9 @@ public class ModrinthCompletionTask extends Task<Void> {
 
         if (manifest == null)
             try {
-                File manifestFile = new File(repository.getVersionRoot(version), "modrinth.index.json");
-                if (manifestFile.exists())
-                    this.manifest = JsonUtils.GSON.fromJson(FileUtils.readText(manifestFile), ModrinthManifest.class);
+                Path manifestFile = repository.getVersionRoot(version).resolve("modrinth.index.json");
+                if (Files.exists(manifestFile))
+                    this.manifest = JsonUtils.fromJsonFile(manifestFile, ModrinthManifest.class);
             } catch (Exception e) {
                 LOG.warning("Unable to read Modrinth modpack manifest.json", e);
             }
@@ -103,7 +104,7 @@ public class ModrinthCompletionTask extends Task<Void> {
         if (manifest == null)
             return;
 
-        Path runDirectory = repository.getRunDirectory(version).toPath().toAbsolutePath().normalize();
+        Path runDirectory = FileUtils.toAbsolute(repository.getRunDirectory(version));
         Path modsDirectory = runDirectory.resolve("mods");
 
         for (ModrinthManifest.File file : manifest.getFiles()) {
@@ -121,7 +122,9 @@ public class ModrinthCompletionTask extends Task<Void> {
             if (modsDirectory.equals(filePath.getParent()) && this.modManager.hasSimpleMod(FileUtils.getName(filePath)))
                 continue;
 
-            FileDownloadTask task = new FileDownloadTask(file.getDownloads(), filePath.toFile());
+            var task = new FileDownloadTask(
+                    file.getDownloads().stream().map(NetworkUtils::toURI).collect(Collectors.toList()),
+                    filePath);
             task.setCacheRepository(dependency.getCacheRepository());
             task.setCaching(true);
             dependencies.add(task.withCounter("hmcl.modpack.download"));

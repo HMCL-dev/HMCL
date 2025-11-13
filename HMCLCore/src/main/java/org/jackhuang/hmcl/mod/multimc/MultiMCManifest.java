@@ -86,7 +86,7 @@ public final class MultiMCManifest {
             return equalsVersion;
         }
 
-        public String getUid() {
+        public String getID() {
             return uid;
         }
 

@@ -22,9 +22,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Scene;
 import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -69,7 +67,7 @@ public final class StyleSheets {
                 Path temp = Files.createTempFile("hmcl", ".css");
                 // For JavaFX 17 or earlier, CssParser uses the default charset
                 // https://bugs.openjdk.org/browse/JDK-8279328
-                FileUtils.writeText(temp, styleSheet, Charset.defaultCharset());
+                Files.writeString(temp, styleSheet, Charset.defaultCharset());
                 temp.toFile().deleteOnExit();
                 return temp.toUri().toString();
             } catch (IOException | NullPointerException e) {
@@ -80,9 +78,9 @@ public final class StyleSheets {
 
     private static String getFontStyleSheet() {
         final String defaultCss = "/assets/css/font.css";
-        final Font font = FontManager.getFont();
+        final FontManager.FontReference font = FontManager.getFont();
 
-        if (font == null || font == Font.getDefault())
+        if (font == null || "System".equals(font.getFamily()))
             return defaultCss;
 
         String fontFamily = font.getFamily();
@@ -115,11 +113,7 @@ public final class StyleSheets {
 
         StringBuilder builder = new StringBuilder();
         builder.append(".root {");
-        if (fontFamily == null)
-            // https://github.com/HMCL-dev/HMCL/pull/3423
-            builder.append("-fx-font-family: -fx-base-font-family;");
-        else
-            builder.append("-fx-font-family:\"").append(fontFamily).append("\";");
+        builder.append("-fx-font-family:\"").append(fontFamily).append("\";");
 
         if (weight != null)
             builder.append("-fx-font-weight:").append(weight).append(";");
@@ -129,7 +123,7 @@ public final class StyleSheets {
 
         builder.append('}');
 
-        return toStyleSheetUri(builder.toString(), fontFamily);
+        return toStyleSheetUri(builder.toString(), defaultCss);
     }
 
     private static String rgba(Color color, double opacity) {

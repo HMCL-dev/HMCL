@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.download.fabric;
 
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.VersionList;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.Nullable;
@@ -26,10 +27,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import static org.jackhuang.hmcl.util.Lang.wrap;
 import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
 
 public final class FabricVersionList extends VersionList<FabricRemoteVersion> {
@@ -45,8 +44,8 @@ public final class FabricVersionList extends VersionList<FabricRemoteVersion> {
     }
 
     @Override
-    public CompletableFuture<?> refreshAsync() {
-        return CompletableFuture.runAsync(wrap(() -> {
+    public Task<?> refreshAsync() {
+        return Task.runAsync(() -> {
             List<String> gameVersions = getGameVersions(GAME_META_URL);
             List<String> loaderVersions = getGameVersions(LOADER_META_URL);
 
@@ -60,7 +59,7 @@ public final class FabricVersionList extends VersionList<FabricRemoteVersion> {
             } finally {
                 lock.writeLock().unlock();
             }
-        }));
+        });
     }
 
     private static final String LOADER_META_URL = "https://meta.fabricmc.net/v2/versions/loader";

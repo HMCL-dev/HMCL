@@ -28,10 +28,7 @@ import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.setting.*;
-import org.jackhuang.hmcl.task.FileDownloadTask;
-import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.task.TaskExecutor;
+import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.account.CreateAccountPane;
@@ -44,11 +41,11 @@ import org.jackhuang.hmcl.ui.export.ExportWizardProvider;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.CancellationException;
@@ -76,24 +73,24 @@ public final class Versions {
 
     public static void downloadModpackImpl(Profile profile, String version, RemoteMod.Version file) {
         Path modpack;
-        URL downloadURL;
+        URI downloadURL;
         try {
+            downloadURL = NetworkUtils.toURI(file.getFile().getUrl());
             modpack = Files.createTempFile("modpack", ".zip");
-            downloadURL = new URL(file.getFile().getUrl());
-        } catch (IOException e) {
+        } catch (IOException | IllegalArgumentException e) {
             Controllers.dialog(
                     i18n("install.failed.downloading.detail", file.getFile().getUrl()) + "\n" + StringUtils.getStackTrace(e),
                     i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);
             return;
         }
         Controllers.taskDialog(
-                new FileDownloadTask(downloadURL, modpack.toFile())
+                new FileDownloadTask(downloadURL, modpack)
                         .whenComplete(Schedulers.javafx(), e -> {
                             if (e == null) {
                                 if (version != null) {
-                                    Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile, modpack.toFile(), version));
+                                    Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile, modpack, version));
                                 } else {
-                                    Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile, modpack.toFile()));
+                                    Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile, modpack));
                                 }
                             } else if (e instanceof CancellationException) {
                                 Controllers.showToast(i18n("message.cancelled"));
@@ -110,21 +107,26 @@ public final class Versions {
 
     public static void deleteVersion(Profile profile, String version) {
         boolean isIndependent = profile.getVersionSetting(version).getGameDirType() == GameDirectoryType.VERSION_FOLDER;
-        boolean isMovingToTrashSupported = FileUtils.isMovingToTrashSupported();
         String message = isIndependent ? i18n("version.manage.remove.confirm.independent", version) :
-                isMovingToTrashSupported ? i18n("version.manage.remove.confirm.trash", version, version + "_removed") :
-                        i18n("version.manage.remove.confirm", version);
+                i18n("version.manage.remove.confirm.trash", version, version + "_removed");
 
         JFXButton deleteButton = new JFXButton(i18n("button.delete"));
         deleteButton.getStyleClass().add("dialog-error");
-        deleteButton.setOnAction(e -> profile.getRepository().removeVersionFromDisk(version));
+        deleteButton.setOnAction(e -> {
+            Task.supplyAsync(Schedulers.io(), () -> profile.getRepository().removeVersionFromDisk(version))
+                    .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                        if (exception != null || !Boolean.TRUE.equals(result)) {
+                            Controllers.dialog(i18n("version.manage.remove.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                        }
+                    }).start();
+        });
 
         Controllers.confirmAction(message, i18n("message.warning"), MessageDialogPane.MessageType.WARNING, deleteButton);
     }
 
     public static CompletableFuture<String> renameVersion(Profile profile, String version) {
         return Controllers.prompt(i18n("version.manage.rename.message"), (newName, resolve, reject) -> {
-            if (!OperatingSystem.isNameValid(newName)) {
+            if (!FileUtils.isNameValid(newName)) {
                 reject.accept(i18n("install.new_game.malformed"));
                 return;
             }
@@ -197,25 +199,17 @@ public final class Versions {
         ensureSelectedAccount(account -> {
             GameRepository repository = profile.getRepository();
             FileChooser chooser = new FileChooser();
-            if (repository.getRunDirectory(id).isDirectory())
-                chooser.setInitialDirectory(repository.getRunDirectory(id));
+            if (Files.isDirectory(repository.getRunDirectory(id)))
+                chooser.setInitialDirectory(repository.getRunDirectory(id).toFile());
             chooser.setTitle(i18n("version.launch_script.save"));
             chooser.getExtensionFilters().add(OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
                     ? new FileChooser.ExtensionFilter(i18n("extension.bat"), "*.bat")
                     : new FileChooser.ExtensionFilter(i18n("extension.sh"), "*.sh"));
             chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.ps1"), "*.ps1"));
-            File file = chooser.showSaveDialog(Controllers.getStage());
+            Path file = FileUtils.toPath(chooser.showSaveDialog(Controllers.getStage()));
             if (file != null)
                 new LauncherHelper(profile, account, id).makeLaunchScript(file);
         });
-    }
-
-    public static void launch(Profile profile) {
-        launch(profile, profile.getSelectedVersion());
-    }
-
-    public static void launch(Profile profile, String id) {
-        launch(profile, id, null);
     }
 
     public static void launch(Profile profile, String id, Consumer<LauncherHelper> injecter) {
@@ -235,9 +229,14 @@ public final class Versions {
 
     private static boolean checkVersionForLaunching(Profile profile, String id) {
         if (id == null || !profile.getRepository().isLoaded() || !profile.getRepository().hasVersion(id)) {
-            Controllers.dialog(i18n("version.empty.launch"), i18n("launch.failed"), MessageDialogPane.MessageType.ERROR, () -> {
-                Controllers.navigate(Controllers.getDownloadPage());
-            });
+            JFXButton gotoDownload = new JFXButton(i18n("version.empty.launch.goto_download"));
+            gotoDownload.getStyleClass().add("dialog-accept");
+            gotoDownload.setOnAction(e -> Controllers.navigate(Controllers.getDownloadPage()));
+
+            Controllers.confirmAction(i18n("version.empty.launch"), i18n("launch.failed"),
+                    MessageDialogPane.MessageType.ERROR,
+                    gotoDownload,
+                    null);
             return false;
         } else {
             return true;

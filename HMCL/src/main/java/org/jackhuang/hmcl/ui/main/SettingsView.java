@@ -37,8 +37,9 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.ComponentSublist;
 import org.jackhuang.hmcl.ui.construct.MultiFileItem;
+import org.jackhuang.hmcl.ui.construct.OptionToggleButton;
 import org.jackhuang.hmcl.util.i18n.I18n;
-import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
+import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 
 import java.util.Arrays;
 
@@ -49,6 +50,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public abstract class SettingsView extends StackPane {
     protected final JFXComboBox<SupportedLocale> cboLanguage;
+    protected final OptionToggleButton disableAutoGameOptionsPane;
     protected final MultiFileItem<EnumCommonDirectory> fileCommonLocation;
     protected final ComponentSublist fileCommonLocationSublist;
     protected final Label lblUpdate;
@@ -56,6 +58,7 @@ public abstract class SettingsView extends StackPane {
     protected final JFXRadioButton chkUpdateStable;
     protected final JFXRadioButton chkUpdateDev;
     protected final JFXButton btnUpdate;
+    protected final OptionToggleButton previewPane;
     protected final ScrollPane scroll;
 
     public SettingsView() {
@@ -146,6 +149,15 @@ public abstract class SettingsView extends StackPane {
                 }
 
                 {
+                    previewPane = new OptionToggleButton();
+                    previewPane.setTitle(i18n("update.preview"));
+                    previewPane.selectedProperty().bindBidirectional(config().acceptPreviewUpdateProperty());
+                    FXUtils.installFastTooltip(previewPane, i18n("update.preview.tooltip"));
+
+                    settingsPane.getContent().add(previewPane);
+                }
+
+                {
                     fileCommonLocation = new MultiFileItem<>();
                     fileCommonLocationSublist = new ComponentSublist();
                     fileCommonLocationSublist.getContent().add(fileCommonLocation);
@@ -160,9 +172,8 @@ public abstract class SettingsView extends StackPane {
                     ));
 
                     {
-                        JFXButton cleanButton = new JFXButton(i18n("launcher.cache_directory.clean"));
+                        JFXButton cleanButton = FXUtils.newBorderButton(i18n("launcher.cache_directory.clean"));
                         cleanButton.setOnAction(e -> clearCacheDirectory());
-                        cleanButton.getStyleClass().add("jfx-button-border");
 
                         fileCommonLocationSublist.setHeaderRight(cleanButton);
                     }
@@ -177,12 +188,28 @@ public abstract class SettingsView extends StackPane {
                     BorderPane.setAlignment(left, Pos.CENTER_LEFT);
                     languagePane.setLeft(left);
 
+                    SupportedLocale currentLocale = I18n.getLocale();
                     cboLanguage = new JFXComboBox<>();
-                    cboLanguage.setConverter(stringConverter(I18n::getName));
+                    cboLanguage.setConverter(stringConverter(locale -> {
+                        if (locale.isDefault())
+                            return locale.getDisplayName(currentLocale);
+                        else if (locale.isSameLanguage(currentLocale))
+                            return locale.getDisplayName(locale);
+                        else
+                            return locale.getDisplayName(currentLocale) + " - " + locale.getDisplayName(locale);
+                    }));
+
                     FXUtils.setLimitWidth(cboLanguage, 300);
                     languagePane.setRight(cboLanguage);
 
                     settingsPane.getContent().add(languagePane);
+                }
+
+                {
+                    disableAutoGameOptionsPane = new OptionToggleButton();
+                    disableAutoGameOptionsPane.setTitle(i18n("settings.launcher.disable_auto_game_options"));
+
+                    settingsPane.getContent().add(disableAutoGameOptionsPane);
                 }
 
                 {
@@ -198,9 +225,8 @@ public abstract class SettingsView extends StackPane {
                     if (LOG.getLogFile() == null)
                         openLogFolderButton.setDisable(true);
 
-                    JFXButton logButton = new JFXButton(i18n("settings.launcher.launcher_log.export"));
+                    JFXButton logButton = FXUtils.newBorderButton(i18n("settings.launcher.launcher_log.export"));
                     logButton.setOnAction(e -> onExportLogs());
-                    logButton.getStyleClass().add("jfx-button-border");
 
                     HBox buttonBox = new HBox();
                     buttonBox.setSpacing(10);
@@ -218,7 +244,7 @@ public abstract class SettingsView extends StackPane {
     }
 
     public void openLogFolder() {
-        FXUtils.openFolder(LOG.getLogFile().getParent().toFile());
+        FXUtils.openFolder(LOG.getLogFile().getParent());
     }
 
     protected abstract void onUpdate();

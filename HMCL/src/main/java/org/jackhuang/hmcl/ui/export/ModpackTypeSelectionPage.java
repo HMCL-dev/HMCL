@@ -28,12 +28,12 @@ import org.jackhuang.hmcl.mod.ModpackExportInfo;
 import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackExportTask;
 import org.jackhuang.hmcl.mod.multimc.MultiMCModpackExportTask;
 import org.jackhuang.hmcl.mod.server.ServerModpackExportTask;
+import org.jackhuang.hmcl.mod.modrinth.ModrinthModpackExportTask;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
-
-import java.util.Map;
+import org.jackhuang.hmcl.util.SettingsMap;
 
 import static org.jackhuang.hmcl.ui.export.ModpackInfoPage.MODPACK_INFO_OPTION;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -56,7 +56,8 @@ public final class ModpackTypeSelectionPage extends VBox implements WizardPage {
                 title,
                 createButton(MODPACK_TYPE_MCBBS, McbbsModpackExportTask.OPTION),
                 createButton(MODPACK_TYPE_MULTIMC, MultiMCModpackExportTask.OPTION),
-                createButton(MODPACK_TYPE_SERVER, ServerModpackExportTask.OPTION)
+                createButton(MODPACK_TYPE_SERVER, ServerModpackExportTask.OPTION),
+                createButton(MODPACK_TYPE_MODRINTH, ModrinthModpackExportTask.OPTION)
         );
     }
 
@@ -87,7 +88,7 @@ public final class ModpackTypeSelectionPage extends VBox implements WizardPage {
     }
 
     @Override
-    public void cleanup(Map<String, Object> settings) {
+    public void cleanup(SettingsMap settings) {
     }
 
     @Override
@@ -95,9 +96,10 @@ public final class ModpackTypeSelectionPage extends VBox implements WizardPage {
         return i18n("modpack.wizard.step.3.title");
     }
 
-    public static final String MODPACK_TYPE = "modpack.type";
+    public static final SettingsMap.Key<String> MODPACK_TYPE = new SettingsMap.Key<>("modpack.type");
 
     public static final String MODPACK_TYPE_MCBBS = "mcbbs";
     public static final String MODPACK_TYPE_MULTIMC = "multimc";
     public static final String MODPACK_TYPE_SERVER = "server";
+    public static final String MODPACK_TYPE_MODRINTH = "modrinth";
 }

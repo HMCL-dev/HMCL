@@ -19,11 +19,13 @@ package org.jackhuang.hmcl.game;
 
 import com.google.gson.JsonParseException;
 import kala.compress.archivers.zip.ZipArchiveReader;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.mod.curse.CurseModpackProvider;
 import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackManifest;
 import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackProvider;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthModpackProvider;
+import org.jackhuang.hmcl.mod.multimc.MultiMCComponents;
 import org.jackhuang.hmcl.mod.multimc.MultiMCInstanceConfiguration;
 import org.jackhuang.hmcl.mod.multimc.MultiMCModpackProvider;
 import org.jackhuang.hmcl.mod.server.ServerModpackManifest;
@@ -42,7 +44,6 @@ import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -50,10 +51,7 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
@@ -61,7 +59,8 @@ import static org.jackhuang.hmcl.util.Lang.toIterable;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
 public final class ModpackHelper {
-    private ModpackHelper() {}
+    private ModpackHelper() {
+    }
 
     private static final Map<String, ModpackProvider> providers = mapOf(
             pair(CurseModpackProvider.INSTANCE.getName(), CurseModpackProvider.INSTANCE),
@@ -72,12 +71,16 @@ public final class ModpackHelper {
             pair(HMCLModpackProvider.INSTANCE.getName(), HMCLModpackProvider.INSTANCE)
     );
 
+    static {
+        MultiMCComponents.setImplementation(Metadata.FULL_TITLE);
+    }
+
     @Nullable
     public static ModpackProvider getProviderByType(String type) {
         return providers.get(type);
     }
 
-    public static boolean isFileModpackByExtension(File file) {
+    public static boolean isFileModpackByExtension(Path file) {
         String ext = FileUtils.getExtension(file);
         return "zip".equals(ext) || "mrpack".equals(ext);
     }
@@ -135,15 +138,12 @@ public final class ModpackHelper {
                 (path.getFileName() == null || ".minecraft".equals(FileUtils.getName(path)));
     }
 
-    public static ModpackConfiguration<?> readModpackConfiguration(File file) throws IOException {
-        if (!file.exists())
-            throw new FileNotFoundException(file.getPath());
-        else
-            try {
-                return JsonUtils.GSON.fromJson(FileUtils.readText(file), ModpackConfiguration.class);
-            } catch (JsonParseException e) {
-                throw new IOException("Malformed modpack configuration");
-            }
+    public static ModpackConfiguration<?> readModpackConfiguration(Path file) throws IOException {
+        try {
+            return JsonUtils.fromJsonFile(file, ModpackConfiguration.class);
+        } catch (JsonParseException e) {
+            throw new IOException("Malformed modpack configuration");
+        }
     }
 
     public static Task<?> getInstallTask(Profile profile, ServerModpackManifest manifest, String name, Modpack modpack) {
@@ -174,21 +174,21 @@ public final class ModpackHelper {
         return Files.exists(Paths.get("externalgames").resolve(name));
     }
 
-    public static Task<?> getInstallManuallyCreatedModpackTask(Profile profile, File zipFile, String name, Charset charset) {
+    public static Task<?> getInstallManuallyCreatedModpackTask(Profile profile, Path zipFile, String name, Charset charset) {
         if (isExternalGameNameConflicts(name)) {
             throw new IllegalArgumentException("name existing");
         }
 
-        return new ManuallyCreatedModpackInstallTask(profile, zipFile.toPath(), charset, name)
+        return new ManuallyCreatedModpackInstallTask(profile, zipFile, charset, name)
                 .thenAcceptAsync(Schedulers.javafx(), location -> {
-                    Profile newProfile = new Profile(name, location.toFile());
+                    Profile newProfile = new Profile(name, location);
                     newProfile.setUseRelativePath(true);
                     Profiles.getProfiles().add(newProfile);
                     Profiles.setSelectedProfile(newProfile);
                 });
     }
 
-    public static Task<?> getInstallTask(Profile profile, File zipFile, String name, Modpack modpack) {
+    public static Task<?> getInstallTask(Profile profile, Path zipFile, String name, Modpack modpack) {
         profile.getRepository().markVersionAsModpack(name);
 
         ExceptionalRunnable<?> success = () -> {
@@ -210,14 +210,17 @@ public final class ModpackHelper {
         if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
             return modpack.getInstallTask(profile.getDependency(), zipFile, name)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
-                    .thenComposeAsync(createMultiMCPostInstallTask(profile, (MultiMCInstanceConfiguration) modpack.getManifest(), name));
+                    .thenComposeAsync(createMultiMCPostInstallTask(profile, (MultiMCInstanceConfiguration) modpack.getManifest(), name))
+                    .withStagesHint(List.of("hmcl.modpack", "hmcl.modpack.download"));
         else if (modpack.getManifest() instanceof McbbsModpackManifest)
             return modpack.getInstallTask(profile.getDependency(), zipFile, name)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
-                    .thenComposeAsync(createMcbbsPostInstallTask(profile, (McbbsModpackManifest) modpack.getManifest(), name));
+                    .thenComposeAsync(createMcbbsPostInstallTask(profile, (McbbsModpackManifest) modpack.getManifest(), name))
+                    .withStagesHint(List.of("hmcl.modpack", "hmcl.modpack.download"));
         else
             return modpack.getInstallTask(profile.getDependency(), zipFile, name)
-                    .whenComplete(Schedulers.javafx(), success, failure);
+                    .whenComplete(Schedulers.javafx(), success, failure)
+                    .withStagesHint(List.of("hmcl.modpack", "hmcl.modpack.download"));
     }
 
     public static Task<Void> getUpdateTask(Profile profile, ServerModpackManifest manifest, Charset charset, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException {
@@ -230,13 +233,17 @@ public final class ModpackHelper {
         }
     }
 
-    public static Task<?> getUpdateTask(Profile profile, File zipFile, Charset charset, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException, ManuallyCreatedModpackException, MismatchedModpackTypeException {
-        Modpack modpack = ModpackHelper.readModpackManifest(zipFile.toPath(), charset);
+    public static Task<?> getUpdateTask(Profile profile, Path zipFile, Charset charset, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException, ManuallyCreatedModpackException, MismatchedModpackTypeException {
+        Modpack modpack = ModpackHelper.readModpackManifest(zipFile, charset);
         ModpackProvider provider = getProviderByType(configuration.getType());
         if (provider == null) {
             throw new UnsupportedModpackException();
         }
-        return provider.createUpdateTask(profile.getDependency(), name, zipFile, modpack);
+        if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
+            return provider.createUpdateTask(profile.getDependency(), name, zipFile, modpack)
+                    .thenComposeAsync(() -> createMultiMCPostUpdateTask(profile, (MultiMCInstanceConfiguration) modpack.getManifest(), name));
+        else
+            return provider.createUpdateTask(profile.getDependency(), name, zipFile, modpack);
     }
 
     public static void toVersionSetting(MultiMCInstanceConfiguration c, VersionSetting vs) {
@@ -274,6 +281,24 @@ public final class ModpackHelper {
             if (c.getHeight() != null)
                 vs.setHeight(c.getHeight());
         }
+    }
+
+    private static void applyCommandAndJvmSettings(MultiMCInstanceConfiguration c, VersionSetting vs) {
+        if (c.isOverrideCommands()) {
+            vs.setWrapper(Lang.nonNull(c.getWrapperCommand(), ""));
+            vs.setPreLaunchCommand(Lang.nonNull(c.getPreLaunchCommand(), ""));
+        }
+
+        if (c.isOverrideJavaArgs()) {
+            vs.setJavaArgs(Lang.nonNull(c.getJvmArgs(), ""));
+        }
+    }
+
+    private static Task<Void> createMultiMCPostUpdateTask(Profile profile, MultiMCInstanceConfiguration manifest, String version) {
+        return Task.runAsync(Schedulers.javafx(), () -> {
+            VersionSetting vs = Objects.requireNonNull(profile.getRepository().specializeVersionSetting(version));
+            ModpackHelper.applyCommandAndJvmSettings(manifest, vs);
+        });
     }
 
     private static Task<Void> createMultiMCPostInstallTask(Profile profile, MultiMCInstanceConfiguration manifest, String version) {

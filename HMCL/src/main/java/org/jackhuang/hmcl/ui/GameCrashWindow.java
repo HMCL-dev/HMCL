@@ -41,9 +41,12 @@ import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
-import org.jackhuang.hmcl.util.*;
-import org.jackhuang.hmcl.util.logging.Logger;
+import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.Log4jLevel;
+import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.platform.*;
 
 import java.io.IOException;
@@ -59,9 +62,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class GameCrashWindow extends Stage {
     private final Version version;
@@ -127,9 +130,9 @@ public class GameCrashWindow extends Stage {
                 crashReport = CrashReportAnalyzer.extractCrashReport(rawLog);
             }
 
-            return pair(CrashReportAnalyzer.anaylze(rawLog), crashReport != null ? CrashReportAnalyzer.findKeywordsFromCrashReport(crashReport) : new HashSet<>());
+            return pair(CrashReportAnalyzer.analyze(rawLog), crashReport != null ? CrashReportAnalyzer.findKeywordsFromCrashReport(crashReport) : new HashSet<>());
         }), Task.supplyAsync(() -> {
-            Path latestLog = repository.getRunDirectory(version.getId()).toPath().resolve("logs/latest.log");
+            Path latestLog = repository.getRunDirectory(version.getId()).resolve("logs/latest.log");
             if (!Files.isReadable(latestLog)) {
                 return pair(new HashSet<CrashReportAnalyzer.Result>(), new HashSet<String>());
             }
@@ -142,7 +145,7 @@ public class GameCrashWindow extends Stage {
                 return pair(new HashSet<CrashReportAnalyzer.Result>(), new HashSet<String>());
             }
 
-            return pair(CrashReportAnalyzer.anaylze(log), CrashReportAnalyzer.findKeywordsFromCrashReport(log));
+            return pair(CrashReportAnalyzer.analyze(log), CrashReportAnalyzer.findKeywordsFromCrashReport(log));
         })).whenComplete(Schedulers.javafx(), (taskResult, exception) -> {
             loading.set(false);
 
@@ -283,7 +286,7 @@ public class GameCrashWindow extends Stage {
                     alert.showAndWait();
 
                     return null;
-                });
+                }, Schedulers.javafx());
     }
 
     private final class View extends VBox {
@@ -379,7 +382,7 @@ public class GameCrashWindow extends Stage {
                 TwoLineListItem gameDir = new TwoLineListItem();
                 gameDir.getStyleClass().setAll("two-line-item-second-large");
                 gameDir.setTitle(i18n("game.directory"));
-                gameDir.setSubtitle(launchOptions.getGameDir().getAbsolutePath());
+                gameDir.setSubtitle(launchOptions.getGameDir().toAbsolutePath().toString());
                 FXUtils.installFastTooltip(gameDir, i18n("game.directory"));
 
                 TwoLineListItem javaDir = new TwoLineListItem();

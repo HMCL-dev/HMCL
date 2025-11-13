@@ -184,6 +184,16 @@ public final class Lang {
         return list == null ? null : list.isEmpty() ? null : new ArrayList<>(list);
     }
 
+    public static <T> int indexWhere(List<T> list, Predicate<T> predicate) {
+        int idx = 0;
+        for (T value : list) {
+            if (predicate.test(value))
+                return idx;
+            idx++;
+        }
+        return -1;
+    }
+
     public static void executeDelayed(Runnable runnable, TimeUnit timeUnit, long timeout, boolean isDaemon) {
         thread(() -> {
             try {
@@ -235,14 +245,22 @@ public final class Lang {
     }
 
     public static ThreadPoolExecutor threadPool(String name, boolean daemon, int threads, long timeout, TimeUnit timeunit) {
+        ThreadPoolExecutor pool = new ThreadPoolExecutor(
+                threads, threads,
+                timeout, timeunit,
+                new LinkedBlockingQueue<>(),
+                counterThreadFactory(name, daemon));
+        pool.allowCoreThreadTimeOut(true);
+        return pool;
+    }
+
+    public static ThreadFactory counterThreadFactory(String name, boolean daemon) {
         AtomicInteger counter = new AtomicInteger(1);
-        ThreadPoolExecutor pool = new ThreadPoolExecutor(threads, threads, timeout, timeunit, new LinkedBlockingQueue<>(), r -> {
+        return r -> {
             Thread t = new Thread(r, name + "-" + counter.getAndIncrement());
             t.setDaemon(daemon);
             return t;
-        });
-        pool.allowCoreThreadTimeOut(true);
-        return pool;
+        };
     }
 
     public static int parseInt(Object string, int defaultValue) {

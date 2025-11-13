@@ -17,8 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
@@ -28,47 +26,41 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.ListPageBase;
-import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class DatapackListPage extends ListPageBase<DatapackListPageSkin.DatapackInfoObject> implements DecoratorPage {
-    private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
+public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.DatapackInfoObject> {
     private final Path worldDir;
     private final Datapack datapack;
 
-    // Strongly referencing items, preventing GC collection
-    @SuppressWarnings("FieldCanBeLocal")
-    private final ObservableList<DatapackListPageSkin.DatapackInfoObject> items;
-
-    public DatapackListPage(String worldName, Path worldDir) {
-        this.worldDir = worldDir;
-
-        state.set(State.fromTitle(i18n("datapack.title", worldName)));
+    public DatapackListPage(WorldManagePage worldManagePage) {
+        this.worldDir = worldManagePage.getWorld().getFile();
 
         datapack = new Datapack(worldDir.resolve("datapacks"));
         datapack.loadFromDir();
 
-        setItems(items = MappedObservableList.create(datapack.getInfo(), DatapackListPageSkin.DatapackInfoObject::new));
+        setItems(MappedObservableList.create(datapack.getPacks(), DatapackListPageSkin.DatapackInfoObject::new));
 
         FXUtils.applyDragListener(this, it -> Objects.equals("zip", FileUtils.getExtension(it)),
                 mods -> mods.forEach(this::installSingleDatapack), this::refresh);
     }
 
-    private void installSingleDatapack(File datapack) {
+    private void installSingleDatapack(Path datapack) {
         try {
-            Datapack zip = new Datapack(datapack.toPath());
-            zip.loadFromZip();
-            zip.installTo(worldDir);
+            this.datapack.installPack(datapack);
         } catch (IOException | IllegalArgumentException e) {
             LOG.warning("Unable to parse datapack file " + datapack, e);
         }
@@ -84,26 +76,19 @@ public class DatapackListPage extends ListPageBase<DatapackListPageSkin.Datapack
         Task.runAsync(datapack::loadFromDir)
                 .withRunAsync(Schedulers.javafx(), () -> {
                     setLoading(false);
-
-                    // https://github.com/HMCL-dev/HMCL/issues/938
-                    System.gc();
                 })
                 .start();
-    }
-
-    @Override
-    public ReadOnlyObjectProperty<State> stateProperty() {
-        return state.getReadOnlyProperty();
     }
 
     public void add() {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("datapack.choose_datapack"));
         chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(i18n("datapack.extension"), "*.zip"));
-        List<File> res = chooser.showOpenMultipleDialog(Controllers.getStage());
+        List<Path> res = FileUtils.toPaths(chooser.showOpenMultipleDialog(Controllers.getStage()));
 
-        if (res != null)
+        if (res != null) {
             res.forEach(this::installSingleDatapack);
+        }
 
         datapack.loadFromDir();
     }
@@ -116,7 +101,7 @@ public class DatapackListPage extends ListPageBase<DatapackListPageSkin.Datapack
                         datapack.deletePack(pack);
                     } catch (IOException e) {
                         // Fail to remove mods if the game is running or the datapack is absent.
-                        LOG.warning("Failed to delete datapack " + pack);
+                        LOG.warning("Failed to delete datapack \"" + pack.getId() + "\"", e);
                     }
                 });
     }
@@ -124,12 +109,41 @@ public class DatapackListPage extends ListPageBase<DatapackListPageSkin.Datapack
     void enableSelected(ObservableList<DatapackListPageSkin.DatapackInfoObject> selectedItems) {
         selectedItems.stream()
                 .map(DatapackListPageSkin.DatapackInfoObject::getPackInfo)
-                .forEach(info -> info.setActive(true));
+                .forEach(pack -> pack.setActive(true));
     }
 
     void disableSelected(ObservableList<DatapackListPageSkin.DatapackInfoObject> selectedItems) {
         selectedItems.stream()
                 .map(DatapackListPageSkin.DatapackInfoObject::getPackInfo)
-                .forEach(info -> info.setActive(false));
+                .forEach(pack -> pack.setActive(false));
+    }
+
+    void openDataPackFolder() {
+        FXUtils.openFolder(datapack.getPath());
+    }
+
+    @NotNull Predicate<DatapackListPageSkin.DatapackInfoObject> updateSearchPredicate(String queryString) {
+        if (queryString.isBlank()) {
+            return dataPack -> true;
+        }
+
+        final Predicate<String> stringPredicate;
+        if (queryString.startsWith("regex:")) {
+            try {
+                Pattern pattern = Pattern.compile(StringUtils.substringAfter(queryString, "regex:"));
+                stringPredicate = s -> s != null && pattern.matcher(s).find();
+            } catch (Exception e) {
+                return dataPack -> false;
+            }
+        } else {
+            String lowerCaseFilter = queryString.toLowerCase(Locale.ROOT);
+            stringPredicate = s -> s != null && s.toLowerCase(Locale.ROOT).contains(lowerCaseFilter);
+        }
+
+        return dataPack -> {
+            String id = dataPack.getPackInfo().getId();
+            String description = dataPack.getPackInfo().getDescription().toString();
+            return stringPredicate.test(id) || stringPredicate.test(description);
+        };
     }
 }

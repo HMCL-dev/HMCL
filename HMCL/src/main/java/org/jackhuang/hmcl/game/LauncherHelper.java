@@ -49,16 +49,18 @@ import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
-import java.net.URL;
+import java.net.URI;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
+import java.lang.ref.WeakReference;
 
 import static javafx.application.Platform.runLater;
 import static javafx.application.Platform.setImplicitExit;
@@ -75,7 +77,7 @@ public final class LauncherHelper {
     private final Profile profile;
     private Account account;
     private final String selectedVersion;
-    private File scriptFile;
+    private Path scriptFile;
     private final VersionSetting setting;
     private LauncherVisibility launcherVisibility;
     private boolean showLogs;
@@ -118,13 +120,15 @@ public final class LauncherHelper {
         launch0();
     }
 
-    public void makeLaunchScript(File scriptFile) {
+    public void makeLaunchScript(Path scriptFile) {
         this.scriptFile = Objects.requireNonNull(scriptFile);
-
         launch();
     }
 
     private void launch0() {
+        // https://github.com/HMCL-dev/HMCL/pull/4121
+        PROCESSES.removeIf(it -> it.get() == null);
+
         HMCLGameRepository repository = profile.getRepository();
         DefaultDependencyManager dependencyManager = profile.getDependency();
         AtomicReference<Version> version = new AtomicReference<>(MaintainTask.maintain(repository, repository.getResolvedVersion(selectedVersion)));
@@ -157,16 +161,16 @@ public final class LauncherHelper {
                             Task.composeAsync(() -> {
                                 Renderer renderer = setting.getRenderer();
                                 if (renderer != Renderer.DEFAULT && OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                                    Library lib = NativePatcher.getMesaLoader(java);
+                                    Library lib = NativePatcher.getWindowsMesaLoader(java, renderer, OperatingSystem.SYSTEM_VERSION);
                                     if (lib == null)
                                         return null;
-                                    File file = dependencyManager.getGameRepository().getLibraryFile(version.get(), lib);
-                                    if (file.getAbsolutePath().indexOf('=') >= 0) {
+                                    Path file = dependencyManager.getGameRepository().getLibraryFile(version.get(), lib);
+                                    if (file.toAbsolutePath().toString().indexOf('=') >= 0) {
                                         LOG.warning("Invalid character '=' in the libraries directory path, unable to attach software renderer loader");
                                         return null;
                                     }
 
-                                    String agent = file.getAbsolutePath() + "=" + renderer.name().toLowerCase(Locale.ROOT);
+                                    String agent = FileUtils.getAbsolutePath(file) + "=" + renderer.name().toLowerCase(Locale.ROOT);
 
                                     if (GameLibrariesTask.shouldDownloadLibrary(repository, version.get(), lib, integrityCheck)) {
                                         return new LibraryDownloadTask(dependencyManager, file, lib)
@@ -187,7 +191,7 @@ public final class LauncherHelper {
                     LaunchOptions launchOptions = repository.getLaunchOptions(
                             selectedVersion, javaVersionRef.get(), profile.getGameDir(), javaAgents, javaArguments, scriptFile != null);
 
-                    LOG.info("Here's the structure of game mod directory:\n" + FileUtils.printFileStructure(repository.getModManager(selectedVersion).getModsDirectory(), 10));
+                    LOG.info("Here's the structure of game mod directory:\n" + FileUtils.printFileStructure(repository.getModsDirectory(selectedVersion), 10));
 
                     return new HMCLGameLauncher(
                             repository,
@@ -209,7 +213,7 @@ public final class LauncherHelper {
                     }
                 }).thenAcceptAsync(process -> { // process is LaunchTask's result
                     if (scriptFile == null) {
-                        PROCESSES.add(process);
+                        PROCESSES.add(new WeakReference<>(process));
                         if (launcherVisibility == LauncherVisibility.CLOSE)
                             Launcher.stopApplication();
                         else
@@ -220,7 +224,7 @@ public final class LauncherHelper {
                     } else {
                         runLater(() -> {
                             launchingStepsPane.fireEvent(new DialogCloseEvent());
-                            Controllers.dialog(i18n("version.launch_script.success", scriptFile.getAbsolutePath()));
+                            Controllers.dialog(i18n("version.launch_script.success", FileUtils.getAbsolutePath(scriptFile)));
                         });
                     }
                 }).withFakeProgress(
@@ -263,27 +267,27 @@ public final class LauncherHelper {
                                     if (ex.getCause() instanceof ResponseCodeException) {
                                         ResponseCodeException rce = (ResponseCodeException) ex.getCause();
                                         int responseCode = rce.getResponseCode();
-                                        URL url = rce.getUrl();
+                                        String uri = rce.getUri();
                                         if (responseCode == 404)
-                                            message += i18n("download.code.404", url);
+                                            message += i18n("download.code.404", uri);
                                         else
-                                            message += i18n("download.failed", url, responseCode);
+                                            message += i18n("download.failed", uri, responseCode);
                                     } else {
                                         message += StringUtils.getStackTrace(ex.getCause());
                                     }
                                 } else if (ex instanceof DownloadException) {
-                                    URL url = ((DownloadException) ex).getUrl();
+                                    URI uri = ((DownloadException) ex).getUri();
                                     if (ex.getCause() instanceof SocketTimeoutException) {
-                                        message = i18n("install.failed.downloading.timeout", url);
+                                        message = i18n("install.failed.downloading.timeout", uri);
                                     } else if (ex.getCause() instanceof ResponseCodeException) {
                                         ResponseCodeException responseCodeException = (ResponseCodeException) ex.getCause();
                                         if (I18n.hasKey("download.code." + responseCodeException.getResponseCode())) {
-                                            message = i18n("download.code." + responseCodeException.getResponseCode(), url);
+                                            message = i18n("download.code." + responseCodeException.getResponseCode(), uri);
                                         } else {
-                                            message = i18n("install.failed.downloading.detail", url) + "\n" + StringUtils.getStackTrace(ex.getCause());
+                                            message = i18n("install.failed.downloading.detail", uri) + "\n" + StringUtils.getStackTrace(ex.getCause());
                                         }
                                     } else {
-                                        message = i18n("install.failed.downloading.detail", url) + "\n" + StringUtils.getStackTrace(ex.getCause());
+                                        message = i18n("install.failed.downloading.detail", uri) + "\n" + StringUtils.getStackTrace(ex.getCause());
                                     }
                                 } else if (ex instanceof GameAssetIndexDownloadTask.GameAssetIndexMalformedException) {
                                     message = i18n("assets.index.malformed");
@@ -294,11 +298,11 @@ public final class LauncherHelper {
                                 } else if (ex instanceof ResponseCodeException) {
                                     ResponseCodeException rce = (ResponseCodeException) ex;
                                     int responseCode = rce.getResponseCode();
-                                    URL url = rce.getUrl();
+                                    String uri = rce.getUri();
                                     if (responseCode == 404)
-                                        message = i18n("download.code.404", url);
+                                        message = i18n("download.code.404", uri);
                                     else
-                                        message = i18n("download.failed", url, responseCode);
+                                        message = i18n("download.failed", uri, responseCode);
                                 } else if (ex instanceof CommandTooLongException) {
                                     message = i18n("launch.failed.command_too_long");
                                 } else if (ex instanceof ExecutionPolicyLimitException) {
@@ -446,7 +450,9 @@ public final class LauncherHelper {
                         return result;
                     } else {
                         GameJavaVersion gameJavaVersion;
-                        if (violatedMandatoryConstraints.contains(JavaVersionConstraint.GAME_JSON))
+                        if (violatedMandatoryConstraints.contains(JavaVersionConstraint.CLEANROOM_JAVA_21))
+                            gameJavaVersion = GameJavaVersion.JAVA_21;
+                        else if (violatedMandatoryConstraints.contains(JavaVersionConstraint.GAME_JSON))
                             gameJavaVersion = version.getJavaVersion();
                         else if (violatedMandatoryConstraints.contains(JavaVersionConstraint.VANILLA))
                             gameJavaVersion = GameJavaVersion.getMinimumJavaVersion(gameVersion);
@@ -535,6 +541,9 @@ public final class LauncherHelper {
                             break;
                         case MODDED_JAVA_21:
                             suggestions.add(i18n("launch.advice.modded_java", 21, gameVersion));
+                            break;
+                        case CLEANROOM_JAVA_21:
+                            suggestions.add(i18n("launch.advice.cleanroom"));
                             break;
                         case VANILLA_JAVA_8_51:
                             suggestions.add(i18n("launch.advice.java8_51_1_13"));
@@ -698,6 +707,7 @@ public final class LauncherHelper {
      */
     private final class HMCLProcessListener implements ProcessListener {
 
+        private final ReentrantLock lock = new ReentrantLock();
         private final HMCLGameRepository repository;
         private final Version version;
         private final LaunchOptions launchOptions;
@@ -841,21 +851,27 @@ public final class LauncherHelper {
                     level = Lang.requireNonNullElse(Log4jLevel.guessLevel(log), Log4jLevel.INFO);
                 logBuffer.add(new Log(log, level));
             } else {
-                synchronized (this) {
+                lock.lock();
+                try {
                     logs.addLast(new Log(log, level));
                     if (logs.size() > Log.getLogLines())
                         logs.removeFirst();
+                } finally {
+                    lock.unlock();
                 }
             }
 
             if (!lwjgl) {
                 String lowerCaseLog = log.toLowerCase(Locale.ROOT);
                 if (!detectWindow || lowerCaseLog.contains("lwjgl version") || lowerCaseLog.contains("lwjgl openal")) {
-                    synchronized (this) {
+                    lock.lock();
+                    try {
                         if (!lwjgl) {
                             lwjgl = true;
                             finishLaunch();
                         }
+                    } finally {
+                        lock.unlock();
                     }
                 }
             }
@@ -880,9 +896,12 @@ public final class LauncherHelper {
 
             // Game crashed before opening the game window.
             if (!lwjgl) {
-                synchronized (this) {
+                lock.lock();
+                try {
                     if (!lwjgl)
                         finishLaunch();
+                } finally {
+                    lock.unlock();
                 }
             }
 
@@ -896,10 +915,18 @@ public final class LauncherHelper {
 
     }
 
-    public static final Queue<ManagedProcess> PROCESSES = new ConcurrentLinkedQueue<>();
+    private static final Queue<WeakReference<ManagedProcess>> PROCESSES = new ConcurrentLinkedQueue<>();
+
+    public static int countMangedProcesses() {
+        PROCESSES.removeIf(it -> {
+            ManagedProcess process = it.get();
+            return process == null || !process.isRunning();
+        });
+        return PROCESSES.size();
+    }
 
     public static void stopManagedProcesses() {
         while (!PROCESSES.isEmpty())
-            Optional.ofNullable(PROCESSES.poll()).ifPresent(ManagedProcess::stop);
+            Optional.ofNullable(PROCESSES.poll()).map(WeakReference::get).ifPresent(ManagedProcess::stop);
     }
 }

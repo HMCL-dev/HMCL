@@ -35,8 +35,8 @@ import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.javafx.ObservableHelper;
 
-import java.io.File;
 import java.lang.reflect.Type;
+import java.nio.file.Path;
 import java.util.Optional;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
@@ -65,17 +65,17 @@ public final class Profile implements Observable {
         this.selectedVersion.set(selectedVersion);
     }
 
-    private final ObjectProperty<File> gameDir;
+    private final ObjectProperty<Path> gameDir;
 
-    public ObjectProperty<File> gameDirProperty() {
+    public ObjectProperty<Path> gameDirProperty() {
         return gameDir;
     }
 
-    public File getGameDir() {
+    public Path getGameDir() {
         return gameDir.get();
     }
 
-    public void setGameDir(File gameDir) {
+    public void setGameDir(Path gameDir) {
         this.gameDir.set(gameDir);
     }
 
@@ -103,7 +103,7 @@ public final class Profile implements Observable {
         this.name.set(name);
     }
 
-    private BooleanProperty useRelativePath = new SimpleBooleanProperty(this, "useRelativePath", false);
+    private final BooleanProperty useRelativePath = new SimpleBooleanProperty(this, "useRelativePath", false);
 
     public BooleanProperty useRelativePathProperty() {
         return useRelativePath;
@@ -118,18 +118,18 @@ public final class Profile implements Observable {
     }
 
     public Profile(String name) {
-        this(name, new File(".minecraft"));
+        this(name, Path.of(".minecraft"));
     }
 
-    public Profile(String name, File initialGameDir) {
+    public Profile(String name, Path initialGameDir) {
         this(name, initialGameDir, new VersionSetting());
     }
 
-    public Profile(String name, File initialGameDir, VersionSetting global) {
+    public Profile(String name, Path initialGameDir, VersionSetting global) {
         this(name, initialGameDir, global, null, false);
     }
 
-    public Profile(String name, File initialGameDir, VersionSetting global, String selectedVersion, boolean useRelativePath) {
+    public Profile(String name, Path initialGameDir, VersionSetting global, String selectedVersion, boolean useRelativePath) {
         this.name = new SimpleStringProperty(this, "name", name);
         gameDir = new SimpleObjectProperty<>(this, "gameDir", initialGameDir);
         repository = new HMCLGameRepository(this, initialGameDir);
@@ -234,7 +234,7 @@ public final class Profile implements Observable {
 
             JsonObject jsonObject = new JsonObject();
             jsonObject.add("global", context.serialize(src.getGlobal()));
-            jsonObject.addProperty("gameDir", src.getGameDir().getPath());
+            jsonObject.addProperty("gameDir", src.getGameDir().toString());
             jsonObject.addProperty("useRelativePath", src.isUseRelativePath());
             jsonObject.addProperty("selectedMinecraftVersion", src.getSelectedVersion());
 
@@ -243,12 +243,11 @@ public final class Profile implements Observable {
 
         @Override
         public Profile deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-            if (json == JsonNull.INSTANCE || !(json instanceof JsonObject)) return null;
-            JsonObject obj = (JsonObject) json;
+            if (!(json instanceof JsonObject obj)) return null;
             String gameDir = Optional.ofNullable(obj.get("gameDir")).map(JsonElement::getAsString).orElse("");
 
             return new Profile("Default",
-                    new File(gameDir),
+                    Path.of(gameDir),
                     context.deserialize(obj.get("global"), VersionSetting.class),
                     Optional.ofNullable(obj.get("selectedMinecraftVersion")).map(JsonElement::getAsString).orElse(""),
                     Optional.ofNullable(obj.get("useRelativePath")).map(JsonElement::getAsBoolean).orElse(false));

@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
+import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
@@ -37,10 +38,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.SocketTimeoutException;
-import java.net.URL;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.zip.ZipException;
 
@@ -66,29 +66,29 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
     }
 
     @Override
-    public void start(Map<String, Object> settings) {
+    public void start(SettingsMap settings) {
     }
 
     @Override
-    public Object finish(Map<String, Object> settings) {
+    public Object finish(SettingsMap settings) {
         settings.put("title", i18n("install.change_version.process"));
         settings.put("success_message", i18n("install.success"));
-        settings.put("failure_callback", (FailureCallback) (settings1, exception, next) -> alertFailureMessage(exception, next));
+        settings.put(FailureCallback.KEY, (settings1, exception, next) -> alertFailureMessage(exception, next));
 
         // We remove library but not save it,
         // so if installation failed will not break down current version.
         Task<Version> ret = Task.supplyAsync(() -> version);
         List<String> stages = new ArrayList<>();
-        for (Object value : settings.values()) {
-            if (value instanceof RemoteVersion) {
-                RemoteVersion remoteVersion = (RemoteVersion) value;
+        for (Object value : settings.asStringMap().values()) {
+            if (value instanceof RemoteVersion remoteVersion) {
                 ret = ret.thenComposeAsync(version -> dependencyManager.installLibraryAsync(version, remoteVersion));
                 stages.add(String.format("hmcl.install.%s:%s", remoteVersion.getLibraryId(), remoteVersion.getSelfVersion()));
                 if ("game".equals(remoteVersion.getLibraryId())) {
+                    stages.add("hmcl.install.libraries");
                     stages.add("hmcl.install.assets");
                 }
-            } else if (value instanceof RemoveVersionAction) {
-                ret = ret.thenComposeAsync(version -> dependencyManager.removeLibraryAsync(version, ((RemoveVersionAction) value).libraryId));
+            } else if (value instanceof RemoveVersionAction removeVersionAction) {
+                ret = ret.thenComposeAsync(version -> dependencyManager.removeLibraryAsync(version, removeVersionAction.libraryId));
             }
         }
 
@@ -96,7 +96,7 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
     }
 
     @Override
-    public Node createPage(WizardController controller, int step, Map<String, Object> settings) {
+    public Node createPage(WizardController controller, int step, SettingsMap settings) {
         switch (step) {
             case 0:
                 return new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer." + libraryId)), gameVersion, downloadProvider, libraryId, () -> {
@@ -133,28 +133,28 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
             if (exception.getCause() instanceof ResponseCodeException) {
                 ResponseCodeException rce = (ResponseCodeException) exception.getCause();
                 int responseCode = rce.getResponseCode();
-                URL url = rce.getUrl();
+                String uri = rce.getUri();
                 if (responseCode == 404)
-                    message += i18n("download.code.404", url);
+                    message += i18n("download.code.404", uri);
                 else
-                    message += i18n("download.failed", url, responseCode);
+                    message += i18n("download.failed", uri, responseCode);
             } else {
                 message += StringUtils.getStackTrace(exception.getCause());
             }
             Controllers.dialog(message, i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
         } else if (exception instanceof DownloadException) {
-            URL url = ((DownloadException) exception).getUrl();
+            URI uri = ((DownloadException) exception).getUri();
             if (exception.getCause() instanceof SocketTimeoutException) {
-                Controllers.dialog(i18n("install.failed.downloading.timeout", url), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
+                Controllers.dialog(i18n("install.failed.downloading.timeout", uri), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
             } else if (exception.getCause() instanceof ResponseCodeException) {
                 ResponseCodeException responseCodeException = (ResponseCodeException) exception.getCause();
                 if (I18n.hasKey("download.code." + responseCodeException.getResponseCode())) {
-                    Controllers.dialog(i18n("download.code." + responseCodeException.getResponseCode(), url), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
+                    Controllers.dialog(i18n("download.code." + responseCodeException.getResponseCode(), uri), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
                 } else {
-                    Controllers.dialog(i18n("install.failed.downloading.detail", url) + "\n" + StringUtils.getStackTrace(exception.getCause()), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
+                    Controllers.dialog(i18n("install.failed.downloading.detail", uri) + "\n" + StringUtils.getStackTrace(exception.getCause()), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
                 }
             } else {
-                Controllers.dialog(i18n("install.failed.downloading.detail", url) + "\n" + StringUtils.getStackTrace(exception.getCause()), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
+                Controllers.dialog(i18n("install.failed.downloading.detail", uri) + "\n" + StringUtils.getStackTrace(exception.getCause()), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR, next);
             }
         } else if (exception instanceof UnsupportedInstallationException) {
             switch (((UnsupportedInstallationException) exception).getReason()) {

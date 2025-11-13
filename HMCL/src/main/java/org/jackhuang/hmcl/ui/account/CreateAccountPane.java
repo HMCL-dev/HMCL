@@ -19,9 +19,6 @@ package org.jackhuang.hmcl.ui.account;
 
 import com.jfoenix.controls.*;
 import com.jfoenix.validation.base.ValidatorBase;
-import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
-import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.NamedArg;
 import javafx.beans.binding.BooleanBinding;
@@ -39,7 +36,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.layout.*;
 
-import javafx.util.Duration;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.CharacterSelector;
@@ -267,34 +263,13 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                     }).executor(true);
         };
 
-        if (factory instanceof OfflineAccountFactory && username != null && !USERNAME_CHECKER_PATTERN.matcher(username).matches()) {
-            JFXButton btnYes = new JFXButton(i18n("button.ok"));
-            btnYes.getStyleClass().add("dialog-error");
-            btnYes.setOnAction(e -> doCreate.run());
-            btnYes.setDisable(true);
-
-            int countdown = 10;
-            KeyFrame[] keyFrames = new KeyFrame[countdown + 1];
-            for (int i = 0; i < countdown; i++) {
-                keyFrames[i] = new KeyFrame(Duration.seconds(i),
-                        new KeyValue(btnYes.textProperty(), i18n("button.ok.countdown", countdown - i)));
-            }
-            keyFrames[countdown] = new KeyFrame(Duration.seconds(countdown),
-                    new KeyValue(btnYes.textProperty(), i18n("button.ok")),
-                    new KeyValue(btnYes.disableProperty(), false));
-
-            Timeline timeline = new Timeline(keyFrames);
-            Controllers.confirmAction(
-                    i18n("account.methods.offline.name.invalid"), i18n("message.warning"),
+        if (factory instanceof OfflineAccountFactory && username != null && (!USERNAME_CHECKER_PATTERN.matcher(username).matches() || username.length() > 16)) {
+            Controllers.confirmWithCountdown(i18n("account.methods.offline.name.invalid"), i18n("message.warning"), 10,
                     MessageDialogPane.MessageType.WARNING,
-                    btnYes,
-                    () -> {
-                        timeline.stop();
+                    doCreate, () -> {
                         body.setDisable(false);
                         spinner.hideSpinner();
-                    }
-            );
-            timeline.play();
+                    });
         } else {
             doCreate.run();
         }

@@ -20,12 +20,13 @@ package org.jackhuang.hmcl.util.tree;
 
 import kala.compress.archivers.tar.TarArchiveEntry;
 import kala.compress.archivers.tar.TarArchiveReader;
-import org.jackhuang.hmcl.util.io.IOUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.nio.file.attribute.BasicFileAttributeView;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -42,7 +43,7 @@ public final class TarFileTree extends ArchiveFileTree<TarArchiveReader, TarArch
             try (GZIPInputStream input = new GZIPInputStream(Files.newInputStream(file));
                  OutputStream output = Files.newOutputStream(tempFile, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)
             ) {
-                IOUtils.copyTo(input, output);
+                input.transferTo(output);
                 tarFile = new TarArchiveReader(tempFile);
             } catch (Throwable e) {
                 try {
@@ -100,8 +101,21 @@ public final class TarFileTree extends ArchiveFileTree<TarArchiveReader, TarArch
     }
 
     @Override
+    protected void copyAttributes(@NotNull TarArchiveEntry source, @NotNull Path targetFile) throws IOException {
+        var fileAttributeView = Files.getFileAttributeView(targetFile, BasicFileAttributeView.class);
+        if (fileAttributeView == null)
+            return;
+
+        fileAttributeView.setTimes(
+                source.getLastModifiedTime(),
+                source.getLastAccessTime(),
+                source.getCreationTime()
+        );
+    }
+
+    @Override
     public InputStream getInputStream(TarArchiveEntry entry) throws IOException {
-        return file.getInputStream(entry);
+        return reader.getInputStream(entry);
     }
 
     @Override
@@ -122,7 +136,7 @@ public final class TarFileTree extends ArchiveFileTree<TarArchiveReader, TarArch
     @Override
     public void close() throws IOException {
         try {
-            file.close();
+            reader.close();
         } finally {
             if (tempFile != null) {
                 Runtime.getRuntime().removeShutdownHook(shutdownHook);

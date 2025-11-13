@@ -19,13 +19,14 @@ package org.jackhuang.hmcl.mod.modinfo;
 
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
@@ -126,9 +127,27 @@ public final class ForgeOldModMetadata {
         Path mcmod = fs.getPath("mcmod.info");
         if (Files.notExists(mcmod))
             throw new IOException("File " + modFile + " is not a Forge mod.");
-        List<ForgeOldModMetadata> modList = JsonUtils.GSON.fromJson(FileUtils.readText(mcmod), listTypeOf(ForgeOldModMetadata.class));
+
+        List<ForgeOldModMetadata> modList;
+
+        try (var reader = Files.newBufferedReader(mcmod);
+             var jsonReader = new JsonReader(reader)) {
+            JsonToken firstToken = jsonReader.peek();
+
+            if (firstToken == JsonToken.BEGIN_ARRAY)
+                modList = JsonUtils.GSON.fromJson(jsonReader, listTypeOf(ForgeOldModMetadata.class));
+            else if (firstToken == JsonToken.BEGIN_OBJECT) {
+                ForgeOldModMetadataLst list = JsonUtils.GSON.fromJson(jsonReader, ForgeOldModMetadataLst.class);
+                if (list == null)
+                    throw new IOException("Mod " + modFile + " `mcmod.info` is malformed");
+                modList = list.modList();
+            } else {
+                throw new JsonParseException("Unexpected first token: " + firstToken);
+            }
+        }
+
         if (modList == null || modList.isEmpty())
-            throw new IOException("Mod " + modFile + " `mcmod.info` is malformed..");
+            throw new IOException("Mod " + modFile + " `mcmod.info` is malformed");
         ForgeOldModMetadata metadata = modList.get(0);
         String authors = metadata.getAuthor();
         if (StringUtils.isBlank(authors) && metadata.getAuthors().length > 0)

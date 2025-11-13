@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.util.platform;
 
-import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
@@ -110,10 +109,10 @@ public final class SystemUtils {
     }
 
     public static boolean supportJVMAttachment() {
-        return JavaRuntime.CURRENT_VERSION >= 9 && Thread.currentThread().getContextClassLoader().getResource("com/sun/tools/attach/VirtualMachine.class") != null;
+        return Thread.currentThread().getContextClassLoader().getResource("com/sun/tools/attach/VirtualMachine.class") != null;
     }
 
-    private static void onLogLine(String log) {
+    public static void onLogLine(String log) {
         LOG.info(log);
     }
 }

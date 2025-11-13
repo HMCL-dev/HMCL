@@ -64,7 +64,7 @@ final class ExecutableHeaderHelper {
             ZipEntry entry = zip.getEntry(location);
             if (entry != null && !entry.isDirectory()) {
                 try (InputStream in = zip.getInputStream(entry)) {
-                    return Optional.of(IOUtils.readFullyAsByteArray(in));
+                    return Optional.of(IOUtils.readFully(in));
                 }
             }
         }

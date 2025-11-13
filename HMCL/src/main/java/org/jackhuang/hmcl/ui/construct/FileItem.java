@@ -27,17 +27,19 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 
-import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class FileItem extends BorderPane {
     private final Label lblPath = new Label();
@@ -77,14 +79,14 @@ public class FileItem extends BorderPane {
     private String processPath(String path) {
         Path given;
         try {
-            given = Paths.get(path).toAbsolutePath();
+            given = Path.of(path).toAbsolutePath().normalize();
         } catch (IllegalArgumentException e) {
             return path;
         }
 
         if (isConvertToRelativePath()) {
             try {
-                return Paths.get(".").normalize().toAbsolutePath().relativize(given).normalize().toString();
+                return Metadata.CURRENT_DIRECTORY.relativize(given).normalize().toString();
             } catch (IllegalArgumentException e) {
                 // the given path can't be relativized against current path
             }
@@ -95,17 +97,22 @@ public class FileItem extends BorderPane {
     public void onExplore() {
         DirectoryChooser chooser = new DirectoryChooser();
         if (path.get() != null) {
-            File file = new File(path.get());
-            if (file.exists()) {
-                if (file.isFile())
-                    file = file.getAbsoluteFile().getParentFile();
-                else if (file.isDirectory())
-                    file = file.getAbsoluteFile();
-                chooser.setInitialDirectory(file);
+            Path file;
+            try {
+                file = Path.of(path.get());
+                if (Files.exists(file)) {
+                    if (Files.isRegularFile(file))
+                        file = file.toAbsolutePath().normalize().getParent();
+                    else if (Files.isDirectory(file))
+                        file = file.toAbsolutePath().normalize();
+                    chooser.setInitialDirectory(file.toFile());
+                }
+            } catch (InvalidPathException e) {
+                LOG.warning("Failed to resolve path: " + path.get());
             }
         }
         chooser.titleProperty().bind(titleProperty());
-        File selectedDir = chooser.showDialog(Controllers.getStage());
+        var selectedDir = chooser.showDialog(Controllers.getStage());
         if (selectedDir != null) {
             path.set(processPath(selectedDir.toString()));
         }

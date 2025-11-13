@@ -2,6 +2,7 @@
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
+*.hprof
 
 .gradle
 
@@ -13,13 +14,21 @@ hs_err_pid*
 /externalgames
 NVIDIA
 minecraft-exported-crash-info*
+hmcl-exported-logs-*
+/.java/
+/.local/
+/.cache/
+
+# IANA Language Subtag Registry
+language-subtag-registry
 
 # gradle build
 /build/
 /HMCL/build/
 /HMCLCore/build/
-/HMCLTransformerDiscoveryService/build/
+/HMCLBoot/build/
 /minecraft/libraries/HMCLTransformerDiscoveryService/build/
+/minecraft/libraries/HMCLMultiMCBootstrap/build/
 /buildSrc/build/
 
 # idea
@@ -28,12 +37,14 @@ minecraft-exported-crash-info*
 /HMCL/out/
 /HMCLCore/out/
 /minecraft/libraries/HMCLTransformerDiscoveryService/out/
+/minecraft/libraries/HMCLMultiMCBootstrap/out/
 
 # eclipse
 /bin/
 /HMCL/bin/
 /HMCLCore/bin/
 /minecraft/libraries/HMCLTransformerDiscoveryService/bin/
+/minecraft/libraries/HMCLMultiMCBootstrap/bin/
 .classpath
 .project
 .settings

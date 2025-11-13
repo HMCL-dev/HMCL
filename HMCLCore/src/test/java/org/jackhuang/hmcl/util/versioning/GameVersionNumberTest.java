@@ -26,6 +26,7 @@ import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
+import static org.jackhuang.hmcl.util.versioning.GameVersionNumber.asGameVersion;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -66,8 +67,8 @@ public final class GameVersionNumberTest {
     }
 
     private static void assertGameVersionEquals(String version1, String version2) {
-        assertEquals(0, GameVersionNumber.asGameVersion(version1).compareTo(version2), errorMessage(version1, version2));
-        assertEquals(GameVersionNumber.asGameVersion(version1), GameVersionNumber.asGameVersion(version2), errorMessage(version1, version2));
+        assertEquals(0, asGameVersion(version1).compareTo(version2), errorMessage(version1, version2));
+        assertEquals(asGameVersion(version1), asGameVersion(version2), errorMessage(version1, version2));
     }
 
     private static String toString(GameVersionNumber gameVersionNumber) {
@@ -76,12 +77,12 @@ public final class GameVersionNumberTest {
 
     private static void assertOrder(String... versions) {
         for (int i = 0; i < versions.length - 1; i++) {
-            GameVersionNumber version1 = GameVersionNumber.asGameVersion(versions[i]);
+            GameVersionNumber version1 = asGameVersion(versions[i]);
 
             assertGameVersionEquals(versions[i]);
 
             for (int j = i + 1; j < versions.length; j++) {
-                GameVersionNumber version2 = GameVersionNumber.asGameVersion(versions[j]);
+                GameVersionNumber version2 = asGameVersion(versions[j]);
 
                 assertEquals(-1, version1.compareTo(version2), String.format("version1=%s (%s), version2=%s (%s)", versions[i], toString(version1), versions[j], toString(version2)));
                 assertEquals(1, version2.compareTo(version1), String.format("version1=%s (%s), version2=%s (%s)", versions[i], toString(version1), versions[j], toString(version2)));
@@ -92,16 +93,42 @@ public final class GameVersionNumberTest {
     }
 
     private void assertOldVersion(String oldVersion, GameVersionNumber.Type type, String versionNumber) {
-        GameVersionNumber version = GameVersionNumber.asGameVersion(oldVersion);
+        GameVersionNumber version = asGameVersion(oldVersion);
         assertInstanceOf(GameVersionNumber.Old.class, version);
         GameVersionNumber.Old old = (GameVersionNumber.Old) version;
         assertSame(type, old.type);
         assertEquals(VersionNumber.asVersion(versionNumber), old.versionNumber);
     }
 
+    private static boolean isAprilFools(String version) {
+        return asGameVersion(version).isAprilFools();
+    }
+
+    @Test
+    public void testIsAprilFools() {
+        assertTrue(isAprilFools("15w14a"));
+        assertTrue(isAprilFools("1.RV-Pre1"));
+        assertTrue(isAprilFools("3D Shareware v1.34"));
+        assertTrue(isAprilFools("2.0"));
+        assertTrue(isAprilFools("20w14infinite"));
+        assertTrue(isAprilFools("22w13oneBlockAtATime"));
+        assertTrue(isAprilFools("23w13a_or_b"));
+        assertTrue(isAprilFools("24w14potato"));
+        assertTrue(isAprilFools("25w14craftmine"));
+
+        assertFalse(isAprilFools("1.21.8"));
+        assertFalse(isAprilFools("1.21.8-rc1"));
+        assertFalse(isAprilFools("25w21a"));
+        assertFalse(isAprilFools("13w12~"));
+        assertFalse(isAprilFools("15w14b"));
+        assertFalse(isAprilFools("25w45a_unobfuscated"));
+    }
+
     @Test
     public void testParseOld() {
         assertOldVersion("rd-132211", GameVersionNumber.Type.PRE_CLASSIC, "132211");
+        assertOldVersion("in-20100223", GameVersionNumber.Type.INDEV, "20100223");
+        assertOldVersion("in-20100212-2", GameVersionNumber.Type.INDEV, "20100212-2");
         assertOldVersion("inf-20100618", GameVersionNumber.Type.INFDEV, "20100618");
         assertOldVersion("inf-20100330-1", GameVersionNumber.Type.INFDEV, "20100330-1");
         assertOldVersion("a1.0.6", GameVersionNumber.Type.ALPHA, "1.0.6");
@@ -117,8 +144,34 @@ public final class GameVersionNumberTest {
     public void testParseNew() {
         List<String> versions = readVersions();
         for (String version : versions) {
-            assertFalse(GameVersionNumber.asGameVersion(version) instanceof GameVersionNumber.Old, "version=" + version);
+            assertFalse(asGameVersion(version) instanceof GameVersionNumber.Old, "version=" + version);
         }
+    }
+
+    private static void assertSimpleReleaseVersion(String simpleReleaseVersion, int minor, int patch) {
+        GameVersionNumber.Release release = GameVersionNumber.Release.parseSimple(simpleReleaseVersion);
+        assertAll("Assert Simple Release Version " + simpleReleaseVersion,
+                () -> assertEquals(1, release.getMajor()),
+                () -> assertEquals(minor, release.getMinor()),
+                () -> assertEquals(patch, release.getPatch()),
+                () -> assertEquals(GameVersionNumber.Release.TYPE_UNKNOWN, release.getEaType()),
+                () -> assertEquals(VersionNumber.ZERO, release.getEaVersion())
+        );
+    }
+
+    @Test
+    public void testParseSimpleRelease() {
+        assertSimpleReleaseVersion("1.0", 0, 0);
+        assertSimpleReleaseVersion("1.13", 13, 0);
+        assertSimpleReleaseVersion("1.21.8", 21, 8);
+
+        assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Release.parseSimple("2.0"));
+        assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Release.parseSimple("1..0"));
+        assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Release.parseSimple("1.0."));
+        assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Release.parseSimple("1.a"));
+        assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Release.parseSimple("1.1a"));
+        assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Release.parseSimple("1.0a"));
+        assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Release.parseSimple("1.0.0.0"));
     }
 
     @Test
@@ -220,6 +273,8 @@ public final class GameVersionNumberTest {
                 "24w13a",
                 "24w14potato",
                 "24w14a",
+                "25w45a",
+                "25w45a_unobfuscated",
                 "Unknown",
                 "100.0"
         );
@@ -255,5 +310,28 @@ public final class GameVersionNumberTest {
                 "11w47a",
                 "1.1"
         );
+    }
+
+    @Test
+    public void isAtLeast() {
+        assertTrue(asGameVersion("1.13").isAtLeast("1.13", "17w43a"));
+        assertTrue(asGameVersion("1.13.1").isAtLeast("1.13", "17w43a"));
+        assertTrue(asGameVersion("1.14").isAtLeast("1.13", "17w43a"));
+        assertTrue(asGameVersion("1.13-rc1").isAtLeast("1.13", "17w43a"));
+        assertTrue(asGameVersion("1.13-pre1").isAtLeast("1.13", "17w43a"));
+        assertTrue(asGameVersion("17w43a").isAtLeast("1.13", "17w43a"));
+        assertTrue(asGameVersion("17w43b").isAtLeast("1.13", "17w43a"));
+        assertTrue(asGameVersion("17w45a").isAtLeast("1.13", "17w43a"));
+
+        assertFalse(asGameVersion("17w31a").isAtLeast("1.13", "17w43a"));
+        assertFalse(asGameVersion("1.12").isAtLeast("1.13", "17w43a"));
+        assertFalse(asGameVersion("1.12.2").isAtLeast("1.13", "17w43a"));
+        assertFalse(asGameVersion("1.12.2-pre1").isAtLeast("1.13", "17w43a"));
+        assertFalse(asGameVersion("rd-132211").isAtLeast("1.13", "17w43a"));
+        assertFalse(asGameVersion("a1.0.6").isAtLeast("1.13", "17w43a"));
+
+        assertThrows(IllegalArgumentException.class, () -> asGameVersion("1.13").isAtLeast("17w43a", "17w43a"));
+        assertThrows(IllegalArgumentException.class, () -> asGameVersion("17w43a").isAtLeast("1.13", "1.13"));
+        assertThrows(IllegalArgumentException.class, () -> asGameVersion("17w43a").isAtLeast("1.13", "22w13oneblockatatime"));
     }
 }

@@ -1,3 +1,20 @@
+/*
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2025 huangyuhui <huanghongxun2008@126.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package org.jackhuang.hmcl.gradle.mod;
 
 import com.google.gson.*;
@@ -24,6 +41,9 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * @author Glavo
+ */
 public abstract class ParseModDataTask extends DefaultTask {
 
     @InputFile
@@ -32,27 +52,26 @@ public abstract class ParseModDataTask extends DefaultTask {
     @OutputFile
     public abstract RegularFileProperty getOutputFile();
 
-    // ---
-
     private static final Logger LOGGER = Logging.getLogger(ParseModDataTask.class);
 
     private static final String S = ";";
     private static final String MOD_SEPARATOR = ",";
 
     private static final Pattern[] CURSEFORGE_PATTERNS = {
-            Pattern.compile("^/(minecraft|Minecraft|minecraft-bedrock)/(mc-mods|data-packs|modpacks|customization|mc-addons|texture-packs|customization/configuration|addons)/+(?<modid>[\\w-]+)(/(.*?))?$"),
+            Pattern.compile("^/(minecraft|Minecraft|minecraft-bedrock)/(mc-mods|data-packs|modpacks|customization|mc-addons|texture-packs|customization/configuration|addons|scripts)/+(?<modid>[\\w-]+)(/(.*?))?$"),
             Pattern.compile("^/projects/(?<modid>[\\w-]+)(/(.*?))?$"),
             Pattern.compile("^/mc-mods/minecraft/(?<modid>[\\w-]+)(/(.*?))?$"),
             Pattern.compile("^/legacy/mc-mods/minecraft/(\\d+)-(?<modid>[\\w-]+)"),
-            Pattern.compile("^//minecraft/mc-mods/(?<modid>eyes-mod)$") // Workaround for Eye Blocks
     };
 
     private static String parseCurseforge(String url) {
-        URI res = URI.create(url);
+        URI res = URI.create(url.replace(" ", "%20"));
 
-        if (!"http".equals(res.getScheme())
-                && !"https".equals(res.getScheme())
-                && !"www.curseforge.com".equals(res.getHost())) { // Workaround for DakerACG
+        if (!"http".equals(res.getScheme()) && !"https".equals(res.getScheme())) {
+            return "";
+        }
+
+        if ("edge.forgecdn.net".equals(res.getHost())) {
             return "";
         }
 
@@ -77,10 +96,36 @@ public abstract class ParseModDataTask extends DefaultTask {
         return "";
     }
 
-    private static final Set<String> skip = new HashSet<>(Arrays.asList(
+    private static String cleanChineseName(String chineseName) {
+        if (chineseName == null || chineseName.isBlank())
+            return "";
+
+        chineseName = chineseName.trim();
+
+        StringBuilder builder = new StringBuilder(chineseName.length());
+        int[] codePoints = chineseName.codePoints().toArray();
+        for (int i = 0; i < codePoints.length; i++) {
+            int ch = codePoints[i];
+            int prev = i > 0 ? codePoints[i - 1] : 0;
+
+            switch (ch) {
+                case '（' -> {
+                    if (Character.isWhitespace(prev) || prev == '！' || prev == '。')
+                        builder.append('(');
+                    else
+                        builder.append(" (");
+                }
+                case '）' -> builder.append(')');
+                default -> builder.appendCodePoint(ch);
+            }
+        }
+        return builder.toString().trim();
+    }
+
+    private static final Set<String> SKIP = Set.of(
             "Minecraft",
             "The Building Game"
-    ));
+    );
 
     @TaskAction
     public void run() throws IOException {
@@ -88,7 +133,6 @@ public abstract class ParseModDataTask extends DefaultTask {
         Path outputFile = getOutputFile().get().getAsFile().toPath().toAbsolutePath();
 
         Files.createDirectories(outputFile.getParent());
-
 
         List<ModData> modDatas;
         try (BufferedReader reader = Files.newBufferedReader(inputFile)) {
@@ -108,14 +152,13 @@ public abstract class ParseModDataTask extends DefaultTask {
                 String subName = mod.name.sub;
                 String abbr = mod.name.abbr;
 
-                if (chineseName == null)
-                    chineseName = "";
+                chineseName = chineseName == null ? "" : cleanChineseName(chineseName);
                 if (subName == null)
                     subName = "";
                 if (abbr == null)
                     abbr = "";
 
-                if (skip.contains(subName)) {
+                if (SKIP.contains(subName)) {
                     continue;
                 }
 
@@ -190,7 +233,6 @@ public abstract class ParseModDataTask extends DefaultTask {
         public static final class Links {
             public Map<String, List<Link>> list;
         }
-
 
         public static final class ModIdDeserializer implements JsonDeserializer<List<String>> {
             private static final Type STRING_LIST = TypeToken.getParameterized(List.class, String.class).getType();

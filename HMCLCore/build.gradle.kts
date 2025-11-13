@@ -2,6 +2,15 @@ plugins {
     `java-library`
 }
 
+tasks.withType<JavaCompile> {
+    sourceCompatibility = "17"
+    targetCompatibility = "17"
+}
+
+tasks.compileJava {
+    options.compilerArgs.add("--add-exports=jdk.attach/sun.tools.attach=ALL-UNNAMED")
+}
+
 dependencies {
     api(libs.kala.compress.zip)
     api(libs.kala.compress.tar)
@@ -21,4 +30,18 @@ dependencies {
     compileOnlyApi(libs.jetbrains.annotations)
 
     testImplementation(libs.jna.platform)
+    testImplementation(libs.jimfs)
+}
+
+tasks.processResources {
+    listOf(
+        "HMCLTransformerDiscoveryService",
+        "HMCLMultiMCBootstrap"
+    ).map { project(":$it").tasks["jar"] as Jar }.forEach { task ->
+        dependsOn(task)
+
+        into("assets/game") {
+            from(task.outputs.files)
+        }
+    }
 }

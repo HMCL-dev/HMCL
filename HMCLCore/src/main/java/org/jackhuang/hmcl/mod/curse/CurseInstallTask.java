@@ -25,10 +25,10 @@ import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -43,11 +43,11 @@ public final class CurseInstallTask extends Task<Void> {
 
     private final DefaultDependencyManager dependencyManager;
     private final DefaultGameRepository repository;
-    private final File zipFile;
+    private final Path zipFile;
     private final Modpack modpack;
     private final CurseManifest manifest;
     private final String name;
-    private final File run;
+    private final Path run;
     private final ModpackConfiguration<CurseManifest> config;
     private final List<Task<?>> dependents = new ArrayList<>(4);
     private final List<Task<?>> dependencies = new ArrayList<>(1);
@@ -59,9 +59,8 @@ public final class CurseInstallTask extends Task<Void> {
      * @param zipFile           the CurseForge modpack file.
      * @param manifest          The manifest content of given CurseForge modpack.
      * @param name              the new version name
-     * @see CurseManifest#readCurseForgeModpackManifest
      */
-    public CurseInstallTask(DefaultDependencyManager dependencyManager, File zipFile, Modpack modpack, CurseManifest manifest, String name) {
+    public CurseInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, Modpack modpack, CurseManifest manifest, String name) {
         this.dependencyManager = dependencyManager;
         this.zipFile = zipFile;
         this.modpack = modpack;
@@ -70,8 +69,8 @@ public final class CurseInstallTask extends Task<Void> {
         this.repository = dependencyManager.getGameRepository();
         this.run = repository.getRunDirectory(name);
 
-        File json = repository.getModpackConfiguration(name);
-        if (repository.hasVersion(name) && !json.exists())
+        Path json = repository.getModpackConfiguration(name);
+        if (repository.hasVersion(name) && Files.notExists(json))
             throw new IllegalArgumentException("Version " + name + " already exists.");
 
         GameBuilder builder = dependencyManager.gameBuilder().name(name).gameVersion(manifest.getMinecraft().getGameVersion());
@@ -97,8 +96,8 @@ public final class CurseInstallTask extends Task<Void> {
 
         ModpackConfiguration<CurseManifest> config = null;
         try {
-            if (json.exists()) {
-                config = JsonUtils.GSON.fromJson(FileUtils.readText(json), ModpackConfiguration.typeOf(CurseManifest.class));
+            if (Files.exists(json)) {
+                config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(CurseManifest.class));
 
                 if (!CurseModpackProvider.INSTANCE.getName().equals(config.getType()))
                     throw new IllegalArgumentException("Version " + name + " is not a Curse modpack. Cannot update this version.");
@@ -128,15 +127,15 @@ public final class CurseInstallTask extends Task<Void> {
             // For update, remove mods not listed in new manifest
             for (CurseManifestFile oldCurseManifestFile : config.getManifest().getFiles()) {
                 if (StringUtils.isBlank(oldCurseManifestFile.getFileName())) continue;
-                File oldFile = new File(run, "mods/" + oldCurseManifestFile.getFileName());
-                if (!oldFile.exists()) continue;
+                Path oldFile = run.resolve("mods/" + oldCurseManifestFile.getFileName());
+                if (Files.notExists(oldFile)) continue;
                 if (manifest.getFiles().stream().noneMatch(oldCurseManifestFile::equals))
-                    if (!oldFile.delete())
-                        throw new IOException("Unable to delete mod file " + oldFile);
+                    Files.deleteIfExists(oldFile);
             }
         }
 
-        File root = repository.getVersionRoot(name);
-        FileUtils.writeText(new File(root, "manifest.json"), JsonUtils.GSON.toJson(manifest));
+        Path root = repository.getVersionRoot(name);
+        Files.createDirectories(root);
+        JsonUtils.writeToJsonFile(root.resolve("manifest.json"), manifest);
     }
 }

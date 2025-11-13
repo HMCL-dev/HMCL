@@ -53,7 +53,8 @@ public class Library implements Comparable<Library>, Validation {
                 "",
                 Architecture.SYSTEM_ARCH.name().toLowerCase(Locale.ROOT),
                 Architecture.SYSTEM_ARCH.getBits().getBit()
-        }, variants = {"", "native", "natives"};
+        };
+        String[] variants = {"", "native", "natives"};
 
         POSSIBLE_NATIVE_DESCRIPTORS = new String[keys.length * variants.length];
         StringBuilder builder = new StringBuilder();
@@ -238,6 +239,10 @@ public class Library implements Comparable<Library>, Validation {
     @Nullable
     public String getHint() {
         return hint;
+    }
+
+    public Library withoutCommunityFields() {
+        return new Library(artifact, url, downloads, checksums, extract, natives, rules, null, null);
     }
 
     /**
