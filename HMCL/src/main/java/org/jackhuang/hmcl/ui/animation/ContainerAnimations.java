@@ -78,8 +78,8 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
                 Pane container, Node previousNode, Node nextNode,
                 Duration duration, Interpolator interpolator) {
             return new Timeline(new KeyFrame(Duration.ZERO,
-                            new KeyValue(previousNode.opacityProperty(), 1, interpolator),
-                            new KeyValue(nextNode.opacityProperty(), 0, interpolator)),
+                    new KeyValue(previousNode.opacityProperty(), 1, interpolator),
+                    new KeyValue(nextNode.opacityProperty(), 0, interpolator)),
                     new KeyFrame(duration,
                             new KeyValue(previousNode.opacityProperty(), 0, interpolator),
                             new KeyValue(nextNode.opacityProperty(), 1, interpolator)));
@@ -91,81 +91,6 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
         }
     },
 
-    /**
-     * A zoom effect
-     */
-    ZOOM_IN {
-        @Override
-        public void init(TransitionPane container, Node previousNode, Node nextNode) {
-            previousNode.setTranslateX(0);
-            previousNode.setTranslateY(0);
-            previousNode.setScaleX(1);
-            previousNode.setScaleY(1);
-            previousNode.setOpacity(1);
-            nextNode.setTranslateX(0);
-            nextNode.setTranslateY(0);
-            nextNode.setScaleX(1);
-            nextNode.setScaleY(1);
-            nextNode.setOpacity(1);
-        }
-
-        @Override
-        public Timeline animate(
-                Pane container, Node previousNode, Node nextNode,
-                Duration duration, Interpolator interpolator) {
-            return new Timeline(new KeyFrame(Duration.ZERO,
-                            new KeyValue(previousNode.scaleXProperty(), 1, interpolator),
-                            new KeyValue(previousNode.scaleYProperty(), 1, interpolator),
-                            new KeyValue(previousNode.opacityProperty(), 1, interpolator)),
-                    new KeyFrame(duration,
-                            new KeyValue(previousNode.scaleXProperty(), 4, interpolator),
-                            new KeyValue(previousNode.scaleYProperty(), 4, interpolator),
-                            new KeyValue(previousNode.opacityProperty(), 0, interpolator)));
-
-        }
-
-        @Override
-        public TransitionPane.AnimationProducer opposite() {
-            return ZOOM_OUT;
-        }
-    },
-    /**
-     * A zoom effect
-     */
-    ZOOM_OUT {
-        @Override
-        public void init(TransitionPane container, Node previousNode, Node nextNode) {
-            previousNode.setTranslateX(0);
-            previousNode.setTranslateY(0);
-            previousNode.setScaleX(1);
-            previousNode.setScaleY(1);
-            previousNode.setOpacity(1);
-            nextNode.setTranslateX(0);
-            nextNode.setTranslateY(0);
-            nextNode.setScaleX(1);
-            nextNode.setScaleY(1);
-            nextNode.setOpacity(1);
-        }
-
-        @Override
-        public Timeline animate(
-                Pane container, Node previousNode, Node nextNode,
-                Duration duration, Interpolator interpolator) {
-            return new Timeline(new KeyFrame(Duration.ZERO,
-                            new KeyValue(previousNode.scaleXProperty(), 1, interpolator),
-                            new KeyValue(previousNode.scaleYProperty(), 1, interpolator),
-                            new KeyValue(previousNode.opacityProperty(), 1, interpolator)),
-                    new KeyFrame(duration,
-                            new KeyValue(previousNode.scaleXProperty(), 0, interpolator),
-                            new KeyValue(previousNode.scaleYProperty(), 0, interpolator),
-                            new KeyValue(previousNode.opacityProperty(), 0, interpolator)));
-        }
-
-        @Override
-        public TransitionPane.AnimationProducer opposite() {
-            return ZOOM_IN;
-        }
-    },
     /**
      * A swipe effect
      */
@@ -187,8 +112,8 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
                 Pane container, Node previousNode, Node nextNode,
                 Duration duration, Interpolator interpolator) {
             return new Timeline(new KeyFrame(Duration.ZERO,
-                            new KeyValue(nextNode.translateXProperty(), container.getWidth(), interpolator),
-                            new KeyValue(previousNode.translateXProperty(), 0, interpolator)),
+                    new KeyValue(nextNode.translateXProperty(), container.getWidth(), interpolator),
+                    new KeyValue(previousNode.translateXProperty(), 0, interpolator)),
                     new KeyFrame(duration,
                             new KeyValue(nextNode.translateXProperty(), 0, interpolator),
                             new KeyValue(previousNode.translateXProperty(), -container.getWidth(), interpolator)));
@@ -221,8 +146,8 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
                 Pane container, Node previousNode, Node nextNode,
                 Duration duration, Interpolator interpolator) {
             return new Timeline(new KeyFrame(Duration.ZERO,
-                            new KeyValue(nextNode.translateXProperty(), -container.getWidth(), interpolator),
-                            new KeyValue(previousNode.translateXProperty(), 0, interpolator)),
+                    new KeyValue(nextNode.translateXProperty(), -container.getWidth(), interpolator),
+                    new KeyValue(previousNode.translateXProperty(), 0, interpolator)),
                     new KeyFrame(duration,
                             new KeyValue(nextNode.translateXProperty(), 0, interpolator),
                             new KeyValue(previousNode.translateXProperty(), container.getWidth(), interpolator)));
@@ -316,6 +241,7 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
         }
     },
 
+    /// Imitates the animation when switching tabs in the Windows 11 Settings interface
     SLIDE_UP_FADE_IN {
         @Override
         public void init(TransitionPane container, Node previousNode, Node nextNode) {
@@ -349,5 +275,5 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
                             new KeyValue(nextNode.translateYProperty(), 0, interpolator))
             );
         }
-    };
+    },
 }
