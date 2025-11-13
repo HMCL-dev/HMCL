@@ -437,28 +437,12 @@ public final class FXUtils {
         installSlowTooltip(node, new Tooltip(tooltip));
     }
 
-    public static void playAnimation(Node node, String animationKey, Timeline timeline) {
-        animationKey = "FXUTILS.ANIMATION." + animationKey;
+    public static void playAnimation(Node node, String animationKey, Animation timeline) {
+        animationKey = "hmcl.animations." + animationKey;
         Object oldTimeline = node.getProperties().get(animationKey);
 //        if (oldTimeline instanceof Timeline) ((Timeline) oldTimeline).stop();
         if (timeline != null) timeline.play();
         node.getProperties().put(animationKey, timeline);
-    }
-
-    public static <T> Animation playAnimation(Node node, String animationKey, Duration duration, WritableValue<T> property, T from, T to, Interpolator interpolator) {
-        if (from == null) from = property.getValue();
-        if (duration == null || Objects.equals(duration, Duration.ZERO) || Objects.equals(from, to)) {
-            playAnimation(node, animationKey, null);
-            property.setValue(to);
-            return null;
-        } else {
-            Timeline timeline = new Timeline(
-                    new KeyFrame(Duration.ZERO, new KeyValue(property, from, interpolator)),
-                    new KeyFrame(duration, new KeyValue(property, to, interpolator))
-            );
-            playAnimation(node, animationKey, timeline);
-            return timeline;
-        }
     }
 
     public static void openFolder(Path file) {
@@ -1348,8 +1332,6 @@ public final class FXUtils {
             return "Interpolator.SINE";
         }
     };
-
-    public static final Interpolator EASE = Interpolator.SPLINE(0.25, 0.1, 0.25, 1);
 
     public static void onEscPressed(Node node, Runnable action) {
         node.addEventHandler(KeyEvent.KEY_PRESSED, e -> {
