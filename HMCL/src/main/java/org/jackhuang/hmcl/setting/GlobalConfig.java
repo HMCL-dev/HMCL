@@ -156,7 +156,7 @@ public final class GlobalConfig extends ObservableSetting {
         return disabledJava;
     }
 
-    public static final class Adapter extends ObservableSetting.Adapter<GlobalConfig> {
+    static final class Adapter extends ObservableSetting.Adapter<GlobalConfig> {
         @Override
         protected GlobalConfig createInstance() {
             return new GlobalConfig();
