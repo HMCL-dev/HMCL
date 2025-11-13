@@ -42,6 +42,7 @@ import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 public class Decorator extends Control {
     private final ListProperty<Node> drawer = new SimpleListProperty<>(FXCollections.observableArrayList());
@@ -273,7 +274,7 @@ public class Decorator extends Control {
     }
 
     public void minimize() {
-        if (AnimationUtils.playWindowAnimation()) {
+        if (AnimationUtils.playWindowAnimation() && OperatingSystem.CURRENT_OS != OperatingSystem.MACOS) {
             playRestoreMinimizeAnimation = true;
             Timeline timeline = new Timeline(
                     new KeyFrame(Duration.millis(0),
