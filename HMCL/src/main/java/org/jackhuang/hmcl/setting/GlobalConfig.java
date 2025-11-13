@@ -24,7 +24,6 @@ import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableSet;
 import org.jackhuang.hmcl.util.gson.ObservableSetting;
-import org.jackhuang.hmcl.util.javafx.PropertyUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -34,14 +33,7 @@ public final class GlobalConfig extends ObservableSetting {
 
     @Nullable
     public static GlobalConfig fromJson(String json) throws JsonParseException {
-        GlobalConfig loaded = Config.CONFIG_GSON.fromJson(json, GlobalConfig.class);
-        if (loaded == null) {
-            return null;
-        }
-        GlobalConfig instance = new GlobalConfig();
-        PropertyUtils.copyProperties(loaded, instance);
-        instance.unknownFields.putAll(loaded.unknownFields);
-        return instance;
+        return Config.CONFIG_GSON.fromJson(json, GlobalConfig.class);
     }
 
     public GlobalConfig() {
