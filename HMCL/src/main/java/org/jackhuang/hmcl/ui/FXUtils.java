@@ -437,12 +437,12 @@ public final class FXUtils {
         installSlowTooltip(node, new Tooltip(tooltip));
     }
 
-    public static void playAnimation(Node node, String animationKey, Animation timeline) {
+    public static void playAnimation(Node node, String animationKey, Animation animation) {
         animationKey = "hmcl.animations." + animationKey;
-        Object oldTimeline = node.getProperties().get(animationKey);
-//        if (oldTimeline instanceof Timeline) ((Timeline) oldTimeline).stop();
-        if (timeline != null) timeline.play();
-        node.getProperties().put(animationKey, timeline);
+        if (node.getProperties().get(animationKey) instanceof Animation oldAnimation)
+            oldAnimation.stop();
+        animation.play();
+        node.getProperties().put(animationKey, animation);
     }
 
     public static void openFolder(Path file) {

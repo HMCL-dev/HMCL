@@ -28,21 +28,6 @@ import javafx.util.Duration;
 public enum ContainerAnimations implements TransitionPane.AnimationProducer {
     NONE {
         @Override
-        public void init(TransitionPane container, Node previousNode, Node nextNode) {
-            previousNode.setTranslateX(0);
-            previousNode.setTranslateY(0);
-            previousNode.setScaleX(1);
-            previousNode.setScaleY(1);
-            previousNode.setOpacity(1);
-
-            nextNode.setTranslateX(0);
-            nextNode.setTranslateY(0);
-            nextNode.setScaleX(1);
-            nextNode.setScaleY(1);
-            nextNode.setOpacity(1);
-        }
-
-        @Override
         public Timeline animate(
                 Pane container, Node previousNode, Node nextNode,
                 Duration duration, Interpolator interpolator) {
@@ -59,20 +44,6 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
      * A fade between the old and new view
      */
     FADE {
-        @Override
-        public void init(TransitionPane container, Node previousNode, Node nextNode) {
-            previousNode.setTranslateX(0);
-            previousNode.setTranslateY(0);
-            previousNode.setScaleX(1);
-            previousNode.setScaleY(1);
-            previousNode.setOpacity(1);
-            nextNode.setTranslateX(0);
-            nextNode.setTranslateY(0);
-            nextNode.setScaleX(1);
-            nextNode.setScaleY(1);
-            nextNode.setOpacity(0);
-        }
-
         @Override
         public Timeline animate(
                 Pane container, Node previousNode, Node nextNode,
@@ -97,13 +68,7 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
     SWIPE_LEFT {
         @Override
         public void init(TransitionPane container, Node previousNode, Node nextNode) {
-            previousNode.setScaleX(1);
-            previousNode.setScaleY(1);
-            previousNode.setOpacity(0);
-            previousNode.setTranslateX(0);
-            nextNode.setScaleX(1);
-            nextNode.setScaleY(1);
-            nextNode.setOpacity(1);
+            super.init(container, previousNode, nextNode);
             nextNode.setTranslateX(container.getWidth());
         }
 
@@ -131,13 +96,7 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
     SWIPE_RIGHT {
         @Override
         public void init(TransitionPane container, Node previousNode, Node nextNode) {
-            previousNode.setScaleX(1);
-            previousNode.setScaleY(1);
-            previousNode.setOpacity(0);
-            previousNode.setTranslateX(0);
-            nextNode.setScaleX(1);
-            nextNode.setScaleY(1);
-            nextNode.setOpacity(1);
+            super.init(container, previousNode, nextNode);
             nextNode.setTranslateX(-container.getWidth());
         }
 
@@ -162,18 +121,6 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
     /// @see <a href="https://m3.material.io/styles/motion/transitions/transition-patterns">Transitions - Material Design 3</a>
     FORWARD {
         @Override
-        public void init(TransitionPane container, Node previousNode, Node nextNode) {
-            previousNode.setScaleX(1);
-            previousNode.setScaleY(1);
-            previousNode.setOpacity(1);
-            previousNode.setTranslateX(0);
-            nextNode.setScaleX(1);
-            nextNode.setScaleY(1);
-            nextNode.setOpacity(0);
-            nextNode.setTranslateX(0);
-        }
-
-        @Override
         public Timeline animate(
                 Pane container, Node previousNode, Node nextNode,
                 Duration duration, Interpolator interpolator) {
@@ -181,7 +128,8 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
             return new Timeline(
                     new KeyFrame(Duration.ZERO,
                             new KeyValue(previousNode.translateXProperty(), 0, interpolator),
-                            new KeyValue(previousNode.opacityProperty(), 1, interpolator)),
+                            new KeyValue(previousNode.opacityProperty(), 1, interpolator),
+                            new KeyValue(nextNode.opacityProperty(), 0, interpolator)),
                     new KeyFrame(duration.multiply(0.5),
                             new KeyValue(previousNode.translateXProperty(), -offset, interpolator),
                             new KeyValue(previousNode.opacityProperty(), 0, interpolator),
@@ -203,18 +151,6 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
     /// @see <a href="https://m3.material.io/styles/motion/transitions/transition-patterns">Transitions - Material Design 3</a>
     BACKWARD {
         @Override
-        public void init(TransitionPane container, Node previousNode, Node nextNode) {
-            previousNode.setScaleX(1);
-            previousNode.setScaleY(1);
-            previousNode.setOpacity(1);
-            previousNode.setTranslateX(0);
-            nextNode.setScaleX(1);
-            nextNode.setScaleY(1);
-            nextNode.setOpacity(0);
-            nextNode.setTranslateX(0);
-        }
-
-        @Override
         public Timeline animate(
                 Pane container, Node previousNode, Node nextNode,
                 Duration duration, Interpolator interpolator) {
@@ -222,7 +158,8 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
             return new Timeline(
                     new KeyFrame(Duration.ZERO,
                             new KeyValue(previousNode.translateXProperty(), 0, interpolator),
-                            new KeyValue(previousNode.opacityProperty(), 1, interpolator)),
+                            new KeyValue(previousNode.opacityProperty(), 1, interpolator),
+                            new KeyValue(nextNode.opacityProperty(), 0, interpolator)),
                     new KeyFrame(duration.multiply(0.5),
                             new KeyValue(previousNode.translateXProperty(), offset, interpolator),
                             new KeyValue(previousNode.opacityProperty(), 0, interpolator),
@@ -244,20 +181,6 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
     /// Imitates the animation when switching tabs in the Windows 11 Settings interface
     SLIDE_UP_FADE_IN {
         @Override
-        public void init(TransitionPane container, Node previousNode, Node nextNode) {
-            previousNode.setScaleX(1);
-            previousNode.setScaleY(1);
-            previousNode.setOpacity(1);
-            previousNode.setTranslateX(0);
-            previousNode.setTranslateY(0);
-            nextNode.setScaleX(1);
-            nextNode.setScaleY(1);
-            nextNode.setOpacity(0);
-            nextNode.setTranslateX(0);
-            nextNode.setTranslateY(0);
-        }
-
-        @Override
         public Timeline animate(
                 Pane container, Node previousNode, Node nextNode,
                 Duration duration, Interpolator interpolator) {
@@ -276,4 +199,19 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
             );
         }
     },
+    ;
+
+    protected static void reset(Node node) {
+        node.setTranslateX(0);
+        node.setTranslateY(0);
+        node.setScaleX(1);
+        node.setScaleY(1);
+        node.setOpacity(1);
+    }
+
+    @Override
+    public void init(TransitionPane container, Node previousNode, Node nextNode) {
+        reset(previousNode);
+        reset(nextNode);
+    }
 }
