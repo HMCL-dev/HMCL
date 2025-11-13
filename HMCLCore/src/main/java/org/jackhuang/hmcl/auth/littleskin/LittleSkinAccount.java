@@ -52,7 +52,7 @@ public final class LittleSkinAccount extends OAuthAccount {
     LittleSkinAccount(LittleSkinService service, LittleSkinSession session) {
         this.service = service;
         this.session = session;
-        this.characterUUID = session.getIdToken().getSelectedProfile().getId();
+        this.characterUUID = session.getIdToken().selectedProfile().getId();
     }
 
     @Override
@@ -62,7 +62,7 @@ public final class LittleSkinAccount extends OAuthAccount {
                 authenticated = true;
             } else {
                 LittleSkinSession acquiredSession = service.refresh(session);
-                if (!Objects.equals(acquiredSession.getIdToken().getSelectedProfile().getId(), characterUUID)) {
+                if (!Objects.equals(acquiredSession.getIdToken().selectedProfile().getId(), characterUUID)) {
                     throw new ServerResponseMalformedException("Selected profile changed");
                 }
 
@@ -93,7 +93,7 @@ public final class LittleSkinAccount extends OAuthAccount {
 
     @Override
     public String getCharacter() {
-        return session.getIdToken().getSelectedProfile().getName();
+        return session.getIdToken().selectedProfile().getName();
     }
 
     @Override

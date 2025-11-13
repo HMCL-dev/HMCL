@@ -78,7 +78,7 @@ public final class LittleSkinService extends OAuthService {
     public boolean validate(LittleSkinSession session) throws AuthenticationException {
         requireNonNull(session);
 
-        if (System.currentTimeMillis() > session.getIdToken().getExpirationTime()) {
+        if (System.currentTimeMillis() > session.getIdToken().expirationTime()) {
             return false;
         }
 

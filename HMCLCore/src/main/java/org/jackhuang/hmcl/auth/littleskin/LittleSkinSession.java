@@ -61,7 +61,7 @@ public final class LittleSkinSession {
         String refreshToken = getOrThrow(storage, "refreshToken", String.class);
         LittleSkinIdToken idToken = tryCast(storage.get("idToken"), Map.class)
                 .map(it -> GSON.fromJson(GSON.toJsonTree(it), LittleSkinIdToken.class))
-                .orElseThrow(() -> new IllegalArgumentException("refreshToken is missing"));
+                .orElseThrow(() -> new IllegalArgumentException("idToken is missing"));
         idToken.validate();
         return new LittleSkinSession(accessToken, refreshToken, idToken);
     }
@@ -77,7 +77,7 @@ public final class LittleSkinSession {
 
     public AuthInfo toAuthInfo() {
         Objects.requireNonNull(idToken);
-        CompleteGameProfile selectedProfile = idToken.getSelectedProfile();
+        CompleteGameProfile selectedProfile = idToken.selectedProfile();
         selectedProfile.validate();
 
         return new AuthInfo(selectedProfile.getName(), selectedProfile.getId(), accessToken, AuthInfo.USER_TYPE_MSA, "{}");
