@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.util.javafx.ObservableOptionalCache;
 
 import java.nio.file.Path;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static java.util.Objects.requireNonNull;
 
@@ -78,7 +79,7 @@ public final class LittleSkinService extends OAuthService {
     public boolean validate(LittleSkinSession session) throws AuthenticationException {
         requireNonNull(session);
 
-        if (System.currentTimeMillis() > session.getIdToken().expirationTime()) {
+        if (System.currentTimeMillis() > TimeUnit.SECONDS.toMillis(session.getIdToken().expirationTime())) {
             return false;
         }
 
