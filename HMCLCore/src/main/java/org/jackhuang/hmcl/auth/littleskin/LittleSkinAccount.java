@@ -102,6 +102,11 @@ public final class LittleSkinAccount extends OAuthAccount {
     }
 
     @Override
+    public String getIdentifier() {
+        return "littleskin:" + getUUID();
+    }
+
+    @Override
     public AuthInfo playOffline() {
         return session.toAuthInfo();
     }
@@ -132,10 +137,5 @@ public final class LittleSkinAccount extends OAuthAccount {
     @Override
     public Map<Object, Object> toStorage() {
         return session.toStorage();
-    }
-
-    @Override
-    public String getIdentifier() {
-        return "";
     }
 }
