@@ -40,7 +40,6 @@ import org.jackhuang.hmcl.game.OAuthServer;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.FileSaver;
-import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.skin.InvalidSkinException;
 
 import javax.net.ssl.SSLException;
@@ -73,7 +72,18 @@ public final class Accounts {
 
     private static final AuthlibInjectorArtifactProvider AUTHLIB_INJECTOR_DOWNLOADER = createAuthlibInjectorArtifactProvider();
 
-    public static final OAuthServer.Factory OAUTH_CALLBACK = new OAuthServer.Factory();
+    public static final OAuthServer.Factory MICROSOFT_OAUTH_CALLBACK = new OAuthServer.Factory(
+            System.getProperty("hmcl.microsoft.auth.id",
+                    JarUtils.getAttribute("hmcl.microsoft.auth.id", "")),
+            System.getProperty("hmcl.microsoft.auth.secret",
+                    JarUtils.getAttribute("hmcl.microsoft.auth.secret", ""))
+    );
+
+    public static final OAuthServer.Factory LITTLE_SKIN_CALLBACK = new OAuthServer.Factory(
+            System.getProperty("hmcl.littleskin.auth.id",
+                    JarUtils.getAttribute("hmcl.littleskin.auth.id", "")
+            ), ""
+    );
 
     public static final OfflineAccountFactory FACTORY_OFFLINE = new OfflineAccountFactory(AUTHLIB_INJECTOR_DOWNLOADER);
     public static final AuthlibInjectorAccountFactory FACTORY_AUTHLIB_INJECTOR = new AuthlibInjectorAccountFactory(AUTHLIB_INJECTOR_DOWNLOADER, Accounts::getOrCreateAuthlibInjectorServer);

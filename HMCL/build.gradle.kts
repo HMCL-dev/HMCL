@@ -149,7 +149,7 @@ val hmclProperties = buildList {
     add("hmcl.microsoft.auth.secret" to microsoftAuthSecret)
     add("hmcl.curseforge.apikey" to curseForgeApiKey)
     add("hmcl.authlib-injector.version" to libs.authlib.injector.get().version!!)
-    add("hmcl.littelskin.auth.id" to littleSkinClientId)
+    add("hmcl.littleskin.auth.id" to littleSkinClientId)
 }
 
 val hmclPropertiesFile = layout.buildDirectory.file("hmcl.properties")

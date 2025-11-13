@@ -129,7 +129,7 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         JFXButton btnRefresh = new JFXButton();
         SpinnerPane spinnerRefresh = new SpinnerPane();
         spinnerRefresh.getStyleClass().setAll("small-spinner-pane");
-        if (skinnable.getAccount() instanceof MicrosoftAccount && Accounts.OAUTH_CALLBACK.getClientId().isEmpty()) {
+        if (skinnable.getAccount() instanceof MicrosoftAccount && Accounts.MICROSOFT_OAUTH_CALLBACK.getClientId().isEmpty()) {
             btnRefresh.setDisable(true);
             FXUtils.installFastTooltip(spinnerRefresh, i18n("account.methods.microsoft.snapshot"));
         }
