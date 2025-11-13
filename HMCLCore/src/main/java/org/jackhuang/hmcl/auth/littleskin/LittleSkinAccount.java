@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.OAuthAccount;
 import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
+import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.Texture;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
@@ -137,5 +138,22 @@ public final class LittleSkinAccount extends OAuthAccount {
     @Override
     public Map<Object, Object> toStorage() {
         return session.toStorage();
+    }
+
+    @Override
+    public String toString() {
+        return "LittleSkinAccount[uuid=" + characterUUID + ", name=" + getCharacter() + "]";
+    }
+
+    @Override
+    public int hashCode() {
+        return characterUUID.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return this == o || o instanceof LittleSkinAccount that
+                && this.isPortable() == that.isPortable()
+                && characterUUID.equals(that.characterUUID);
     }
 }
