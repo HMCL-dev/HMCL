@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.*;
 import javafx.animation.PauseTransition;
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
@@ -241,7 +242,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         if (newToolbar != oldToolbar) {
             toolbarPane.setContent(newToolbar, ContainerAnimations.FADE);
             if (newToolbar == searchBar) {
-                searchField.requestFocus();
+                Platform.runLater(searchField::requestFocus);
             }
         }
     }
