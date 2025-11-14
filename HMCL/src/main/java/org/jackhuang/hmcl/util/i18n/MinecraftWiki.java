@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.util.i18n;
 
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.translator.Translator_lzh;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
@@ -79,6 +80,8 @@ public final class MinecraftWiki {
                 if (SNAPSHOT_PATTERN.matcher(wikiVersion).matches()) {
                     if (wikiVersion.equals("22w13oneblockatatime"))
                         wikiVersion = "22w13oneBlockAtATime";
+                    else
+                        wikiVersion = StringUtils.removeSuffix(wikiVersion, "_unobfuscated");
                     return locale.i18n("wiki.version.game.snapshot", wikiVersion) + variantSuffix;
                 }
             }

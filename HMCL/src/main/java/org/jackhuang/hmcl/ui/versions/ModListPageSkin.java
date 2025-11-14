@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.*;
 import javafx.animation.PauseTransition;
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
@@ -150,7 +151,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             toolbarNormal.getChildren().setAll(
                     createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
                     createToolbarButton2(i18n("mods.add"), SVG.ADD, skinnable::add),
-                    createToolbarButton2(i18n("folder.mod"), SVG.FOLDER_OPEN, skinnable::openModFolder),
+                    createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, skinnable::openModFolder),
                     createToolbarButton2(i18n("mods.check_updates"), SVG.UPDATE, skinnable::checkUpdates),
                     createToolbarButton2(i18n("download"), SVG.DOWNLOAD, skinnable::download),
                     createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar))
@@ -241,7 +242,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         if (newToolbar != oldToolbar) {
             toolbarPane.setContent(newToolbar, ContainerAnimations.FADE);
             if (newToolbar == searchBar) {
-                searchField.requestFocus();
+                Platform.runLater(searchField::requestFocus);
             }
         }
     }
