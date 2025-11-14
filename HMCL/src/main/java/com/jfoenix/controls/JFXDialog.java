@@ -359,21 +359,25 @@ public class JFXDialog extends StackPane {
     }
 
     private final class HideTransition extends CachedTransition {
-        private static final Interpolator INTERPOLATOR = Motion.EASE;
+        private static final Interpolator INTERPOLATOR = Motion.EMPHASIZED_ACCELERATE;
 
         public HideTransition() {
             super(contentHolder, new Timeline(
                     new KeyFrame(Duration.ZERO,
-                            new KeyValue(contentHolder.opacityProperty(), 1, INTERPOLATOR),
+                            new KeyValue(contentHolder.scaleXProperty(), 1, INTERPOLATOR),
+                            new KeyValue(contentHolder.scaleYProperty(), 1, INTERPOLATOR),
+                            new KeyValue(JFXDialog.this.opacityProperty(), 1, INTERPOLATOR),
                             new KeyValue(JFXDialog.this.visibleProperty(), true, Motion.LINEAR)
                     ),
-                    new KeyFrame(Motion.MEDIUM4,
-                            new KeyValue(JFXDialog.this.visibleProperty(), true, Motion.LINEAR),
+                    new KeyFrame(Motion.LONG2.subtract(Duration.millis(10)),
+                            new KeyValue(JFXDialog.this.visibleProperty(), false, Motion.LINEAR),
                             new KeyValue(JFXDialog.this.opacityProperty(), 0, INTERPOLATOR)
                     ),
-                    // Wait 10 milliseconds before calling closeDialog
-                    new KeyFrame(Motion.MEDIUM4.add(Duration.millis(10)))
-            ));
+                    new KeyFrame(Motion.LONG2,
+                            new KeyValue(contentHolder.scaleXProperty(), INITIAL_SCALE, INTERPOLATOR),
+                            new KeyValue(contentHolder.scaleYProperty(), INITIAL_SCALE, INTERPOLATOR)
+                    ))
+            );
             // reduce the number to increase the shifting , increase number to reduce shifting
             setCycleDuration(Duration.seconds(0.4));
             setDelay(Duration.ZERO);
@@ -381,7 +385,7 @@ public class JFXDialog extends StackPane {
     }
 
     private final class CenterTransition extends CachedTransition {
-        private static final Interpolator INTERPOLATOR = Motion.EASE_IN_OUT_CUBIC_EMPHASIZED;
+        private static final Interpolator INTERPOLATOR = Motion.EMPHASIZED_DECELERATE;
 
         CenterTransition() {
             super(contentHolder, new Timeline(
@@ -405,7 +409,6 @@ public class JFXDialog extends StackPane {
             setDelay(Duration.ZERO);
         }
     }
-
 
     /***************************************************************************
      *                                                                         *
