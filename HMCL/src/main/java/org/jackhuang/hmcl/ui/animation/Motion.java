@@ -20,6 +20,8 @@ package org.jackhuang.hmcl.ui.animation;
 import javafx.animation.Interpolator;
 import javafx.util.Duration;
 
+import java.util.Objects;
+
 /// @author Glavo
 /// @see <a href="https://api.flutter.dev/flutter/animation/Curves-class.html">Flutter Curves</a>
 public final class Motion {
@@ -34,6 +36,70 @@ public final class Motion {
     ///
     /// @see <a href="https://flutter.github.io/assets-for-api-docs/assets/animation/curve_linear.mp4">curve_linear.mp4</a>
     public static final Interpolator LINEAR = Interpolator.LINEAR;
+
+    /// The emphasizedAccelerate easing curve in the Material specification.
+    ///
+    /// See also:
+    ///
+    /// * [M3 guidelines: Easing tokens](https://m3.material.io/styles/motion/easing-and-duration/tokens-specs#433b1153-2ea3-4fe2-9748-803a47bc97ee)
+    /// * [M3 guidelines: Applying easing and duration](https://m3.material.io/styles/motion/easing-and-duration/applying-easing-and-duration)
+    public static final Interpolator EMPHASIZED_ACCELERATE = new Cubic(0.3, 0.0, 0.8, 0.15);
+
+    /// The emphasizedDecelerate easing curve in the Material specification.
+    ///
+    /// See also:
+    ///
+    /// * [M3 guidelines: Easing tokens](https://m3.material.io/styles/motion/easing-and-duration/tokens-specs#433b1153-2ea3-4fe2-9748-803a47bc97ee)
+    /// * [M3 guidelines: Applying easing and duration](https://m3.material.io/styles/motion/easing-and-duration/applying-easing-and-duration)
+    public static final Interpolator EMPHASIZED_DECELERATE = new Cubic(0.05, 0.7, 0.1, 1.0);
+
+    /// The standard easing curve in the Material specification.
+    ///
+    /// See also:
+    ///
+    /// * [M3 guidelines: Easing tokens](https://m3.material.io/styles/motion/easing-and-duration/tokens-specs#433b1153-2ea3-4fe2-9748-803a47bc97ee)
+    /// * [M3 guidelines: Applying easing and duration](https://m3.material.io/styles/motion/easing-and-duration/applying-easing-and-duration)
+    public static final Interpolator STANDARD = new Cubic(0.2, 0.0, 0.0, 1.0);
+
+    /// The standardAccelerate easing curve in the Material specification.
+    ///
+    /// See also:
+    ///
+    /// * [M3 guidelines: Easing tokens](https://m3.material.io/styles/motion/easing-and-duration/tokens-specs#433b1153-2ea3-4fe2-9748-803a47bc97ee)
+    /// * [M3 guidelines: Applying easing and duration](https://m3.material.io/styles/motion/easing-and-duration/applying-easing-and-duration)
+    public static final Interpolator STANDARD_ACCELERATE = new Cubic(0.3, 0.0, 1.0, 1.0);
+
+    /// The standardDecelerate easing curve in the Material specification.
+    ///
+    /// See also:
+    ///
+    /// * [M3 guidelines: Easing tokens](https://m3.material.io/styles/motion/easing-and-duration/tokens-specs#433b1153-2ea3-4fe2-9748-803a47bc97ee)
+    /// * [M3 guidelines: Applying easing and duration](https://m3.material.io/styles/motion/easing-and-duration/applying-easing-and-duration)
+    public static Interpolator STANDARD_DECELERATE = new Cubic(0.0, 0.0, 0.0, 1.0);
+
+    /// The legacyDecelerate easing curve in the Material specification.
+    ///
+    /// See also:
+    ///
+    /// * [M3 guidelines: Easing tokens](https://m3.material.io/styles/motion/easing-and-duration/tokens-specs#433b1153-2ea3-4fe2-9748-803a47bc97ee)
+    /// * [M3 guidelines: Applying easing and duration](https://m3.material.io/styles/motion/easing-and-duration/applying-easing-and-duration)
+    public static Interpolator LEGACY_DECELERATE = new Cubic(0.0, 0.0, 0.2, 1.0);
+
+    /// The legacyAccelerate easing curve in the Material specification.
+    ///
+    /// See also:
+    ///
+    /// * [M3 guidelines: Easing tokens](https://m3.material.io/styles/motion/easing-and-duration/tokens-specs#433b1153-2ea3-4fe2-9748-803a47bc97ee)
+    /// * [M3 guidelines: Applying easing and duration](https://m3.material.io/styles/motion/easing-and-duration/applying-easing-and-duration)
+    public static Interpolator LEGACY_ACCELERATE = new Cubic(0.4, 0.0, 1.0, 1.0);
+
+    /// The legacy easing curve in the Material specification.
+    ///
+    /// See also:
+    ///
+    /// * [M3 guidelines: Easing tokens](https://m3.material.io/styles/motion/easing-and-duration/tokens-specs#433b1153-2ea3-4fe2-9748-803a47bc97ee)
+    /// * [M3 guidelines: Applying easing and duration](https://m3.material.io/styles/motion/easing-and-duration/applying-easing-and-duration)
+    public static Interpolator LEGACY = new Cubic(0.4, 0.0, 0.2, 1.0);
 
     /// A cubic animation curve that speeds up quickly and ends slowly.
     ///
@@ -342,7 +408,6 @@ public final class Motion {
     /// @see <a href="https://flutter.github.io/assets-for-api-docs/assets/animation/curve_ease_in_out_circ.mp4">curve_ease_in_out_circ.mp4</a>
     public static final Interpolator EASE_IN_OUT_CIRC = new Cubic(0.785, 0.135, 0.15, 0.86);
 
-
     /// A cubic animation curve that starts slowly, speeds up shortly thereafter,
     /// and then ends slowly. This curve can be imagined as a steeper version of
     /// [#EASE_IN_OUT_CUBIC].
@@ -537,6 +602,25 @@ public final class Motion {
                 }
             }
         }
+
+        @Override
+        public boolean equals(Object o) {
+            return o instanceof Cubic cubic
+                    && this.a == cubic.a
+                    && this.b == cubic.b
+                    && this.c == cubic.c
+                    && this.d == cubic.d;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(a, b, c, d);
+        }
+
+        @Override
+        public String toString() {
+            return "Cubic[a=%s, b=%s, c=%s, d=%s]".formatted(a, b, c, d);
+        }
     }
 
     private record Offset(double dx, double dy) {
@@ -615,6 +699,26 @@ public final class Motion {
                         scaleY +
                         midpoint.dy;
             }
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return o instanceof ThreePointCubic that
+                    && a1.equals(that.a1)
+                    && b1.equals(that.b1)
+                    && midpoint.equals(that.midpoint)
+                    && a2.equals(that.a2)
+                    && b2.equals(that.b2);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(a1, b1, midpoint, a2, b2);
+        }
+
+        @Override
+        public String toString() {
+            return "ThreePointCubic[a1=%s, b1=%s, midpoint=%s, a2=%s, b2=%s]".formatted(a1, b1, midpoint, a2, b2);
         }
     }
 
