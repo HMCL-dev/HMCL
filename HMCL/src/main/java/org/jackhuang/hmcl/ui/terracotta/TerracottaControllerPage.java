@@ -535,7 +535,7 @@ public class TerracottaControllerPage extends StackPane {
                 children.addAll(nodesProperty);
             }
 
-            transition.setContent(components, ContainerAnimations.SWIPE_LEFT_FADE_SHORT);
+            transition.setContent(components, ContainerAnimations.SLIDE_UP_FADE_IN);
         };
         listener.changed(UI_STATE, null, UI_STATE.get());
         holder.add(listener);
@@ -718,7 +718,7 @@ public class TerracottaControllerPage extends StackPane {
                 pane.getChildren().add(item);
             }
 
-            this.transition.setContent(pane, ContainerAnimations.SWIPE_LEFT_FADE_SHORT);
+            this.transition.setContent(pane, ContainerAnimations.SLIDE_UP_FADE_IN);
         }
     }
 }

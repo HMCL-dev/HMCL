@@ -30,10 +30,12 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.terracotta.TerracottaMetadata;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.account.AccountAdvancedListItem;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
@@ -49,6 +51,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.nio.file.Files;
@@ -173,6 +176,9 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             downloadItem.setTitle(i18n("download"));
             downloadItem.setOnAction(e -> Controllers.navigate(Controllers.getDownloadPage()));
             FXUtils.installFastTooltip(downloadItem, i18n("download.hint"));
+            if (AnimationUtils.isAnimationEnabled()) {
+                FXUtils.prepareOnMouseEnter(downloadItem, Controllers::prepareDownloadPage);
+            }
 
             // fifth item in left sidebar
             AdvancedListItem launcherSettingsItem = new AdvancedListItem();
@@ -180,13 +186,33 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             launcherSettingsItem.setActionButtonVisible(false);
             launcherSettingsItem.setTitle(i18n("settings"));
             launcherSettingsItem.setOnAction(e -> Controllers.navigate(Controllers.getSettingsPage()));
+            if (AnimationUtils.isAnimationEnabled()) {
+                FXUtils.prepareOnMouseEnter(launcherSettingsItem, Controllers::prepareSettingsPage);
+            }
 
             // sixth item in left sidebar
             AdvancedListItem terracottaItem = new AdvancedListItem();
-            terracottaItem.setLeftGraphic(wrap(SVG.HOST));
+            terracottaItem.setLeftGraphic(wrap(SVG.GRAPH2));
             terracottaItem.setActionButtonVisible(false);
             terracottaItem.setTitle(i18n("terracotta"));
-            terracottaItem.setOnAction(e -> Controllers.navigate(Controllers.getTerracottaPage()));
+            terracottaItem.setOnAction(e -> {
+                if (TerracottaMetadata.PROVIDER != null) {
+                    Controllers.navigate(Controllers.getTerracottaPage());
+                } else {
+                    String message;
+                    if (Architecture.SYSTEM_ARCH.getBits() == Bits.BIT_32)
+                        message = i18n("terracotta.unsupported.arch.32bit");
+                    else if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
+                            && !OperatingSystem.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_10))
+                        message = i18n("terracotta.unsupported.os.windows.old");
+                    else if (Platform.SYSTEM_PLATFORM.equals(OperatingSystem.LINUX, Architecture.LOONGARCH64_OW))
+                        message = i18n("terracotta.unsupported.arch.loongarch64_ow");
+                    else
+                        message = i18n("terracotta.unsupported");
+
+                    Controllers.dialog(message, null, MessageDialogPane.MessageType.WARNING);
+                }
+            });
 
             // the left sidebar
             AdvancedListBox sideBar = new AdvancedListBox()
@@ -198,7 +224,8 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                     .add(downloadItem)
                     .startCategory(i18n("settings.launcher.general").toUpperCase(Locale.ROOT))
                     .add(launcherSettingsItem)
-                    .add(terracottaItem);
+                    .add(terracottaItem)
+                    .addNavigationDrawerItem(i18n("chat"), SVG.CHAT, () -> FXUtils.openLink(Metadata.GROUPS_URL));
 
             // the root page, with the sidebar in left, navigator in center.
             setLeft(sideBar);

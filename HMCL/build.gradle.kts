@@ -335,7 +335,7 @@ tasks.register<JavaExec>("run") {
     classpath = files(jarPath)
     workingDir = rootProject.rootDir
 
-    val vmOptions = parseToolOptions(System.getenv("HMCL_JAVA_OPTS"))
+    val vmOptions = parseToolOptions(System.getenv("HMCL_JAVA_OPTS") ?: "-Xmx1g")
     if (vmOptions.none { it.startsWith("-Dhmcl.offline.auth.restricted=") })
         vmOptions += "-Dhmcl.offline.auth.restricted=false"
 
