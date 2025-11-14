@@ -17,13 +17,10 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.*;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
@@ -41,20 +38,12 @@ public class TwoLineListItem extends VBox {
     private static final String DEFAULT_STYLE_CLASS = "two-line-list-item";
     private static final int UNLIMITED_TAGS = -1;
 
-    private static Label createTagLabel(String tag, String StyleClass) {
-        Label tagLabel = FXUtils.newSafeTruncatedLabel(tag);
-        HBox.setMargin(tagLabel, new Insets(0, 6, 0, 0));
-        tagLabel.getStyleClass().add(StyleClass);
-        return tagLabel;
-    }
-
     private final StringProperty title = new SimpleStringProperty(this, "title");
-    private final ObservableList<Label> allTags = FXCollections.observableArrayList();
+    private final ReadOnlyListWrapper<Tag> allTags = new ReadOnlyListWrapper<>(this, "allTags", FXCollections.observableArrayList());
     private final ObservableList<Label> shownTags = FXCollections.observableArrayList();
     private final StringProperty subtitle = new SimpleStringProperty(this, "subtitle");
 
-    private IntegerProperty maxShownTags = new SimpleIntegerProperty(UNLIMITED_TAGS);
-    private boolean updateScheduled = false;
+    private final IntegerProperty maxShownTags = new SimpleIntegerProperty(UNLIMITED_TAGS);
 
     private final AggregatedObservableList<Node> firstLineChildren;
 
@@ -80,8 +69,8 @@ public class TwoLineListItem extends VBox {
         firstLineChildren = new AggregatedObservableList<>();
         firstLineChildren.appendList(FXCollections.singletonObservableList(lblTitle));
         firstLineChildren.appendList(shownTags);
-        allTags.addListener((InvalidationListener) observable -> updateShownTags());
-        maxShownTags.addListener(observable -> updateShownTags());
+        allTags.addListener((ListChangeListener<? super Tag>) this::updateShownTags);
+        maxShownTags.addListener(observable -> reBuiltShownTags());
 
         Bindings.bindContent(firstLine.getChildren(), firstLineChildren.getAggregatedList());
 
@@ -103,17 +92,49 @@ public class TwoLineListItem extends VBox {
         getStyleClass().add(DEFAULT_STYLE_CLASS);
     }
 
-    private void updateShownTags() {
-        shownTags.clear();
-        if (maxShownTags.get() == UNLIMITED_TAGS || allTags.size() <= maxShownTags.get()) {
-            shownTags.addAll(allTags);
-        } else {
-            shownTags.addAll(allTags.subList(0, maxShownTags.get()));
-            FXUtils.installFastTooltip(overflowLabel, allTags.stream().skip(maxShownTags.get())
-                    .map(Label::getText).collect(Collectors.joining("\n")));
-            overflowLabel.setText(i18n("tag.overflow", (allTags.size() - maxShownTags.get())));
-            shownTags.add(overflowLabel);
+    private void updateShownTags(ListChangeListener.Change<? extends Tag> c) {
+        if (maxShownTags.get() == UNLIMITED_TAGS || shownTags.size() < maxShownTags.get()) {
+            while (c.next()) {
+                if (c.wasAdded()) {
+                    for (Tag tag : c.getAddedSubList()) {
+                        if (maxShownTags.get() != UNLIMITED_TAGS && shownTags.size() > maxShownTags.get()) {
+                            break;
+                        }
+                        shownTags.add(createTagLabel(tag.text, tag.styleClass));
+                    }
+                }
+            }
         }
+        setOverflowTag();
+    }
+
+    private void reBuiltShownTags() {
+        shownTags.clear();
+        for (Tag allTag : allTags) {
+            if (maxShownTags.get() != UNLIMITED_TAGS && shownTags.size() > maxShownTags.get()) {
+                break;
+            }
+            shownTags.add(createTagLabel(allTag.text, allTag.styleClass));
+        }
+        setOverflowTag();
+    }
+
+    private void setOverflowTag() {
+        if (maxShownTags.get() != UNLIMITED_TAGS && allTags.size() > maxShownTags.get()) {
+            FXUtils.installFastTooltip(overflowLabel, allTags.stream().skip(maxShownTags.get())
+                    .map(Tag::text).collect(Collectors.joining("\n")));
+            overflowLabel.setText(i18n("tag.overflow", (allTags.size() - maxShownTags.get())));
+            if (!shownTags.contains(overflowLabel)) {
+                shownTags.add(overflowLabel);
+            }
+        }
+    }
+
+    private static Label createTagLabel(String tag, String StyleClass) {
+        Label tagLabel = FXUtils.newSafeTruncatedLabel(tag);
+        HBox.setMargin(tagLabel, new Insets(0, 6, 0, 0));
+        tagLabel.getStyleClass().add(StyleClass);
+        return tagLabel;
     }
 
     public String getTitle() {
@@ -141,15 +162,15 @@ public class TwoLineListItem extends VBox {
     }
 
     public void addTag(String tag) {
-        getTags().add(createTagLabel(tag, "tag"));
+        allTags.add(new Tag(tag, "tag"));
     }
 
     public void addTagWarning(String tag) {
-        getTags().add(createTagLabel(tag, "tag-warning"));
+        allTags.add(new Tag(tag, "tag-warning"));
     }
 
-    public ObservableList<Label> getTags() {
-        return allTags;
+    public ReadOnlyListProperty<Tag> getTags() {
+        return allTags.getReadOnlyProperty();
     }
 
     public void setMaxShownTags(int maxShownTags) {
@@ -164,10 +185,14 @@ public class TwoLineListItem extends VBox {
 
     public void clearTags() {
         allTags.clear();
+        shownTags.clear();
     }
 
     @Override
     public String toString() {
         return getTitle();
+    }
+
+    public record Tag(String text, String styleClass) {
     }
 }
