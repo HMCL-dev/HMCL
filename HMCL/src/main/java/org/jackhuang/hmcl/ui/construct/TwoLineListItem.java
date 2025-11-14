@@ -39,14 +39,11 @@ public class TwoLineListItem extends VBox {
     private static final int UNLIMITED_TAGS = -1;
 
     private final StringProperty title = new SimpleStringProperty(this, "title");
+    private final StringProperty subtitle = new SimpleStringProperty(this, "subtitle");
     private final ReadOnlyListWrapper<Tag> allTags = new ReadOnlyListWrapper<>(this, "allTags", FXCollections.observableArrayList());
     private final ObservableList<Label> shownTags = FXCollections.observableArrayList();
-    private final StringProperty subtitle = new SimpleStringProperty(this, "subtitle");
 
     private final IntegerProperty maxShownTags = new SimpleIntegerProperty(UNLIMITED_TAGS);
-
-    private final AggregatedObservableList<Node> firstLineChildren;
-
     private final Label overflowLabel = createTagLabel("", "tag-overflow");
 
     public TwoLineListItem(String titleString, String subtitleString) {
@@ -66,11 +63,11 @@ public class TwoLineListItem extends VBox {
         lblTitle.textProperty().bind(title);
         FXUtils.showTooltipWhenTruncated(lblTitle);
 
-        firstLineChildren = new AggregatedObservableList<>();
+        AggregatedObservableList<Node> firstLineChildren = new AggregatedObservableList<>();
         firstLineChildren.appendList(FXCollections.singletonObservableList(lblTitle));
         firstLineChildren.appendList(shownTags);
         allTags.addListener((ListChangeListener<? super Tag>) this::updateShownTags);
-        maxShownTags.addListener(observable -> reBuiltShownTags());
+        maxShownTags.addListener(observable -> refreshShownTags());
 
         Bindings.bindContent(firstLine.getChildren(), firstLineChildren.getAggregatedList());
 
@@ -108,7 +105,7 @@ public class TwoLineListItem extends VBox {
         setOverflowTag();
     }
 
-    private void reBuiltShownTags() {
+    private void refreshShownTags() {
         shownTags.clear();
         for (Tag allTag : allTags) {
             if (maxShownTags.get() != UNLIMITED_TAGS && shownTags.size() > maxShownTags.get()) {
