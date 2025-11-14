@@ -31,7 +31,6 @@ import org.jackhuang.hmcl.terracotta.TerracottaMetadata;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.PageAware;
@@ -58,11 +57,7 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
         statusPage.setNodeSupplier(TerracottaControllerPage::new);
         tab = new TabHeader(statusPage);
         tab.select(statusPage);
-
-        transitionPane.setContent(statusPage.getNode(), ContainerAnimations.NONE);
-        FXUtils.onChange(tab.getSelectionModel().selectedItemProperty(), newValue -> {
-            transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE);
-        });
+        transitionPane.bindTabHeader(tab);
 
         BorderPane left = new BorderPane();
         FXUtils.setLimitWidth(left, 200);

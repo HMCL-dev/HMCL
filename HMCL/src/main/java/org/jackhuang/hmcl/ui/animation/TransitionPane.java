@@ -17,77 +17,51 @@
  */
 package org.jackhuang.hmcl.ui.animation;
 
-import javafx.animation.Timeline;
+import javafx.animation.Animation;
+import javafx.animation.Interpolator;
 import javafx.application.Platform;
 import javafx.scene.Node;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.construct.TabHeader;
+import org.jetbrains.annotations.Nullable;
 
-public class TransitionPane extends StackPane implements AnimationHandler {
-    private static final Duration DEFAULT_DURATION = Duration.millis(200);
+public class TransitionPane extends StackPane {
 
-    private Duration duration;
-    private Node previousNode, currentNode;
+    private Node currentNode;
 
     public TransitionPane() {
         FXUtils.setOverflowHidden(this);
     }
 
-    @Override
-    public Node getPreviousNode() {
-        return previousNode;
-    }
-
-    @Override
     public Node getCurrentNode() {
         return currentNode;
     }
 
-    @Override
-    public StackPane getCurrentRoot() {
-        return this;
+    public void bindTabHeader(TabHeader tabHeader) {
+        this.setContent(tabHeader.getSelectionModel().getSelectedItem().getNode(), ContainerAnimations.NONE);
+        FXUtils.onChange(tabHeader.getSelectionModel().selectedItemProperty(), newValue -> {
+            this.setContent(newValue.getNode(),
+                    ContainerAnimations.SLIDE_UP_FADE_IN,
+                    Motion.MEDIUM4,
+                    Motion.EASE_IN_OUT_CUBIC_EMPHASIZED
+            );
+        });
     }
 
-    @Override
-    public Duration getDuration() {
-        return duration;
+    public final void setContent(Node newView, AnimationProducer transition) {
+        setContent(newView, transition, Motion.SHORT4);
     }
 
-    public void setContent(Node newView, AnimationProducer transition) {
-        setContent(newView, transition, DEFAULT_DURATION);
+    public final void setContent(Node newView, AnimationProducer transition, Duration duration) {
+        setContent(newView, transition, duration, Motion.EASE);
     }
 
-    public void setContent(Node newView, AnimationProducer transition, Duration duration) {
-        this.duration = duration;
-
-        updateContent(newView);
-
-        if (previousNode == EMPTY_PANE) {
-            getChildren().setAll(newView);
-            return;
-        }
-
-        if (AnimationUtils.isAnimationEnabled() && transition != ContainerAnimations.NONE) {
-            setMouseTransparent(true);
-            transition.init(this);
-
-            // runLater or "init" will not work
-            Platform.runLater(() -> {
-                Timeline newAnimation = new Timeline();
-                newAnimation.getKeyFrames().setAll(transition.animate(this));
-                newAnimation.setOnFinished(e -> {
-                    setMouseTransparent(false);
-                    getChildren().remove(previousNode);
-                });
-                FXUtils.playAnimation(this, "transition_pane", newAnimation);
-            });
-        } else {
-            getChildren().remove(previousNode);
-        }
-    }
-
-    private void updateContent(Node newView) {
+    public void setContent(Node newView, AnimationProducer transition,
+                           Duration duration, Interpolator interpolator) {
+        Node previousNode;
         if (getWidth() > 0 && getHeight() > 0) {
             previousNode = currentNode;
             if (previousNode == null) {
@@ -105,10 +79,49 @@ public class TransitionPane extends StackPane implements AnimationHandler {
         currentNode = newView;
 
         getChildren().setAll(previousNode, currentNode);
+
+        if (previousNode == EMPTY_PANE) {
+            getChildren().setAll(newView);
+            return;
+        }
+
+        if (AnimationUtils.isAnimationEnabled() && transition != ContainerAnimations.NONE) {
+            setMouseTransparent(true);
+            transition.init(this, previousNode, getCurrentNode());
+
+            Node finalPreviousNode = previousNode;
+            // runLater or "init" will not work
+            Platform.runLater(() -> {
+                Animation newAnimation = transition.animate(
+                        this,
+                        finalPreviousNode,
+                        getCurrentNode(),
+                        duration, interpolator);
+                newAnimation.setOnFinished(e -> {
+                    setMouseTransparent(false);
+                    getChildren().remove(finalPreviousNode);
+                });
+                FXUtils.playAnimation(this, "transition_pane", newAnimation);
+            });
+        } else {
+            getChildren().remove(previousNode);
+        }
     }
 
     private final EmptyPane EMPTY_PANE = new EmptyPane();
 
     public static class EmptyPane extends StackPane {
+    }
+
+    public interface AnimationProducer {
+        default void init(TransitionPane container, Node previousNode, Node nextNode) {
+        }
+
+        Animation animate(Pane container, Node previousNode, Node nextNode,
+                          Duration duration, Interpolator interpolator);
+
+        default @Nullable TransitionPane.AnimationProducer opposite() {
+            return null;
+        }
     }
 }

@@ -49,6 +49,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.account.AccountListPage;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
+import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.decorator.DecoratorController;
@@ -328,16 +329,16 @@ public final class Controllers {
         if (AnimationUtils.playWindowAnimation()) {
             Timeline timeline = new Timeline(
                     new KeyFrame(Duration.millis(0),
-                            new KeyValue(decorator.getDecorator().opacityProperty(), 0, FXUtils.EASE),
-                            new KeyValue(decorator.getDecorator().scaleXProperty(), 0.8, FXUtils.EASE),
-                            new KeyValue(decorator.getDecorator().scaleYProperty(), 0.8, FXUtils.EASE),
-                            new KeyValue(decorator.getDecorator().scaleZProperty(), 0.8, FXUtils.EASE)
+                            new KeyValue(decorator.getDecorator().opacityProperty(), 0, Motion.EASE),
+                            new KeyValue(decorator.getDecorator().scaleXProperty(), 0.8, Motion.EASE),
+                            new KeyValue(decorator.getDecorator().scaleYProperty(), 0.8, Motion.EASE),
+                            new KeyValue(decorator.getDecorator().scaleZProperty(), 0.8, Motion.EASE)
                     ),
                     new KeyFrame(Duration.millis(600),
-                            new KeyValue(decorator.getDecorator().opacityProperty(), 1, FXUtils.EASE),
-                            new KeyValue(decorator.getDecorator().scaleXProperty(), 1, FXUtils.EASE),
-                            new KeyValue(decorator.getDecorator().scaleYProperty(), 1, FXUtils.EASE),
-                            new KeyValue(decorator.getDecorator().scaleZProperty(), 1, FXUtils.EASE)
+                            new KeyValue(decorator.getDecorator().opacityProperty(), 1, Motion.EASE),
+                            new KeyValue(decorator.getDecorator().scaleXProperty(), 1, Motion.EASE),
+                            new KeyValue(decorator.getDecorator().scaleYProperty(), 1, Motion.EASE),
+                            new KeyValue(decorator.getDecorator().scaleZProperty(), 1, Motion.EASE)
                     )
             );
             timeline.play();
