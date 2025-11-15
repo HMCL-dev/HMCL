@@ -55,7 +55,6 @@ import org.jackhuang.hmcl.ui.construct.MDListCell;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.Holder;
-import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -233,7 +232,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
         }
 
         String getSubtitle() {
-            return StringUtils.parseColorEscapes(packInfo.getDescription().toString());
+            return packInfo.getDescription().toString();
         }
 
         Datapack.Pack getPackInfo() {

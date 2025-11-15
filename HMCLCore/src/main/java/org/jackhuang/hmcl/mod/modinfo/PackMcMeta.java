@@ -24,6 +24,8 @@ import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.util.Immutable;
+import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -36,6 +38,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 @Immutable
 public class PackMcMeta implements Validation {
@@ -65,20 +69,31 @@ public class PackMcMeta implements Validation {
         @SerializedName("pack_format")
         private final int packFormat;
 
+        @SerializedName("min_format")
+        private final PackVersion minPackVersion;
+        @SerializedName("max_format")
+        private final PackVersion maxPackVersion;
+
         @SerializedName("description")
         private final LocalModFile.Description description;
 
         public PackInfo() {
-            this(0, new LocalModFile.Description(Collections.emptyList()));
+            this(0, PackVersion.UNSPECIFIED, PackVersion.UNSPECIFIED, new LocalModFile.Description(Collections.emptyList()));
         }
 
-        public PackInfo(int packFormat, LocalModFile.Description description) {
+        public PackInfo(int packFormat, PackVersion minPackVersion, PackVersion maxPackVersion, LocalModFile.Description description) {
             this.packFormat = packFormat;
+            this.minPackVersion = minPackVersion;
+            this.maxPackVersion = maxPackVersion;
             this.description = description;
         }
 
-        public int getPackFormat() {
-            return packFormat;
+        public PackVersion getEffectiveMinVersion() {
+            return !minPackVersion.isUnspecified() ? minPackVersion : new PackVersion(packFormat, 0);
+        }
+
+        public PackVersion getEffectiveMaxVersion() {
+            return !maxPackVersion.isUnspecified() ? maxPackVersion : new PackVersion(packFormat, 0);
         }
 
         public LocalModFile.Description getDescription() {
@@ -86,61 +101,124 @@ public class PackMcMeta implements Validation {
         }
     }
 
+    public record PackVersion(int majorVersion, int minorVersion) implements Comparable<PackVersion> {
+
+        public static final PackVersion UNSPECIFIED = new PackVersion(0, 0);
+
+        @Override
+        public String toString() {
+            return minorVersion != 0 ? majorVersion + "." + minorVersion : String.valueOf(majorVersion);
+        }
+
+        @Override
+        public int compareTo(PackVersion other) {
+            int majorCompare = Integer.compare(this.majorVersion, other.majorVersion);
+            if (majorCompare != 0) {
+                return majorCompare;
+            }
+            return Integer.compare(this.minorVersion, other.minorVersion);
+        }
+
+        public boolean isUnspecified() {
+            return this.equals(UNSPECIFIED);
+        }
+
+        public static PackVersion fromJson(JsonElement element) throws JsonParseException {
+            if (element == null || element.isJsonNull()) {
+                return UNSPECIFIED;
+            }
+
+            try {
+                if (element instanceof JsonPrimitive primitive && primitive.isNumber()) {
+                    return new PackVersion(element.getAsInt(), 0);
+                } else if (element instanceof JsonArray jsonArray) {
+                    if (jsonArray.size() == 1 && jsonArray.get(0) instanceof JsonPrimitive) {
+                        return new PackVersion(jsonArray.get(0).getAsInt(), 0);
+                    } else if (jsonArray.size() == 2 && jsonArray.get(0) instanceof JsonPrimitive && jsonArray.get(1) instanceof JsonPrimitive) {
+                        return new PackVersion(jsonArray.get(0).getAsInt(), jsonArray.get(1).getAsInt());
+                    } else {
+                        LOG.warning("Datapack version array must have 1 or 2 elements, but got " + jsonArray.size());
+                    }
+                }
+            } catch (NumberFormatException e) {
+                LOG.warning("Failed to parse datapack version component as a number. Value: " + element, e);
+            }
+
+            return UNSPECIFIED;
+        }
+    }
+
     public static class PackInfoDeserializer implements JsonDeserializer<PackInfo> {
 
-        private String parseText(JsonElement json) throws JsonParseException {
-            if (json.isJsonPrimitive()) {
-                JsonPrimitive primitive = json.getAsJsonPrimitive();
-                if (primitive.isBoolean()) {
-                    return Boolean.toString(primitive.getAsBoolean());
-                } else if (primitive.isNumber()) {
-                    return primitive.getAsNumber().toString();
-                } else if (primitive.isString()) {
-                    return primitive.getAsString();
-                } else {
-                    throw new JsonParseException("pack.mcmeta text not boolean nor number nor string???");
+        private List<LocalModFile.Description.Part> pairToPart(List<Pair<String, String>> lists, String color) {
+            List<LocalModFile.Description.Part> parts = new ArrayList<>();
+            for (Pair<String, String> list : lists) {
+                parts.add(new LocalModFile.Description.Part(list.getKey(), list.getValue().isEmpty() ? color : list.getValue()));
+            }
+            return parts;
+        }
+
+        private void parseComponent(JsonElement element, List<LocalModFile.Description.Part> parts, String parentColor) throws JsonParseException {
+            if (parentColor == null) {
+                parentColor = "";
+            }
+            String color = parentColor;
+            if (element instanceof JsonPrimitive primitive) {
+                parts.addAll(pairToPart(StringUtils.parseMinecraftColorCodes(primitive.getAsString()), color));
+            } else if (element instanceof JsonObject jsonObj) {
+                if (jsonObj.get("color") instanceof JsonPrimitive primitive) {
+                    color = primitive.getAsString();
                 }
-            } else if (json.isJsonArray()) {
-                JsonArray arr = json.getAsJsonArray();
-                if (arr.size() == 0) {
-                    return "";
-                } else {
-                    return parseText(arr.get(0));
+                if (jsonObj.get("text") instanceof JsonPrimitive primitive) {
+                    parts.addAll(pairToPart(StringUtils.parseMinecraftColorCodes(primitive.getAsString()), color));
+                }
+                if (jsonObj.get("extra") instanceof JsonArray jsonArray) {
+                    parseComponent(jsonArray, parts, color);
+                }
+            } else if (element instanceof JsonArray jsonArray) {
+                if (!jsonArray.isEmpty() && jsonArray.get(0) instanceof JsonObject jsonObj && jsonObj.get("color") instanceof JsonPrimitive primitive) {
+                    color = primitive.getAsString();
+                }
+
+                for (JsonElement childElement : jsonArray) {
+                    parseComponent(childElement, parts, color);
                 }
             } else {
-                throw new JsonParseException("pack.mcmeta text should be a string, a boolean, a number or a list of raw JSON text components");
+                LOG.warning("Skipping unsupported element in description. Expected a string, object, or array, but got type " + element.getClass().getSimpleName() + ". Value: " + element);
             }
         }
 
-        public LocalModFile.Description.Part deserialize(JsonElement json, JsonDeserializationContext context) throws JsonParseException {
-            if (json.isJsonPrimitive()) {
-                return new LocalModFile.Description.Part(parseText(json));
-            } else if (json.isJsonObject()) {
-                JsonObject obj = json.getAsJsonObject();
-                String text = parseText(obj.get("text"));
-                return new LocalModFile.Description.Part(text);
-            } else {
-                throw new JsonParseException("pack.mcmeta Raw JSON text should be string or an object");
+        private List<LocalModFile.Description.Part> parseDescription(JsonElement json) throws JsonParseException {
+            List<LocalModFile.Description.Part> parts = new ArrayList<>();
+
+            if (json == null || json.isJsonNull()) {
+                return parts;
             }
+
+            try {
+                parseComponent(json, parts, "");
+            } catch (JsonParseException | IllegalStateException e) {
+                parts.clear();
+                LOG.warning("An unexpected error occurred while parsing a description component. The description may be incomplete.", e);
+            }
+
+            return parts;
         }
 
         @Override
         public PackInfo deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-            List<LocalModFile.Description.Part> parts = new ArrayList<>();
             JsonObject packInfo = json.getAsJsonObject();
-            int packFormat = packInfo.get("pack_format").getAsInt();
-            JsonElement description = packInfo.get("description");
-            if (description.isJsonPrimitive()) {
-                parts.add(new LocalModFile.Description.Part(parseText(description)));
-            } else if (description.isJsonArray()) {
-                for (JsonElement element : description.getAsJsonArray()) {
-                    JsonObject descriptionPart = element.getAsJsonObject();
-                    parts.add(new LocalModFile.Description.Part(descriptionPart.get("text").getAsString(), descriptionPart.get("color").getAsString()));
-                }
+            int packFormat;
+            if (packInfo.get("pack_format") instanceof JsonPrimitive primitive && primitive.isNumber()) {
+                packFormat = primitive.getAsInt();
             } else {
-                throw new JsonParseException("pack.mcmeta::pack::description should be String or array of text objects with text and color fields");
+                packFormat = 0;
             }
-            return new PackInfo(packFormat, new LocalModFile.Description(parts));
+            PackVersion minVersion = PackVersion.fromJson(packInfo.get("min_format"));
+            PackVersion maxVersion = PackVersion.fromJson(packInfo.get("max_format"));
+
+            List<LocalModFile.Description.Part> parts = parseDescription(packInfo.get("description"));
+            return new PackInfo(packFormat, minVersion, maxVersion, new LocalModFile.Description(parts));
         }
     }
 
