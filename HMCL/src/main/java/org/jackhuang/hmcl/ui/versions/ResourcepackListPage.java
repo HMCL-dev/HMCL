@@ -233,7 +233,6 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
         }
     }
 
-
     private static final class ResourcepackListCell extends MDListCell<ResourcepackInfoObject> {
         private final ImageView imageView = new ImageView();
         private final TwoLineListItem content = new TwoLineListItem();
