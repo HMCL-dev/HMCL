@@ -539,7 +539,7 @@ public class DecoratorController {
         FXUtils.checkFxUserThread();
 
         navigator.navigate(new DecoratorWizardDisplayer(wizardProvider, category),
-                ContainerAnimations.FORWARD, Motion.SHORT4, Motion.EASE_IN_OUT_CUBIC_EMPHASIZED);
+                ContainerAnimations.FORWARD, Motion.SHORT4, Motion.EASE);
     }
 
     // ==== Authlib Injector DnD ====
