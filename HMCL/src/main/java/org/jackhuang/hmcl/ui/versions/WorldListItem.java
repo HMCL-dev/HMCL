@@ -91,6 +91,6 @@ public final class WorldListItem extends Control {
     }
 
     public void showManagePage() {
-        Controllers.navigate(new WorldManagePage(world, backupsDir));
+        Controllers.navigateForward(new WorldManagePage(world, backupsDir));
     }
 }
