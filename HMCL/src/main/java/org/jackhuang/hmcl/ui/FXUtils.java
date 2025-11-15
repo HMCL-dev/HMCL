@@ -30,12 +30,14 @@ import javafx.beans.value.*;
 import javafx.collections.ObservableMap;
 import javafx.event.Event;
 import javafx.event.EventDispatcher;
+import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.geometry.Bounds;
 import javafx.geometry.Pos;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -53,6 +55,7 @@ import javafx.stage.*;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
+import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -434,28 +437,12 @@ public final class FXUtils {
         installSlowTooltip(node, new Tooltip(tooltip));
     }
 
-    public static void playAnimation(Node node, String animationKey, Timeline timeline) {
-        animationKey = "FXUTILS.ANIMATION." + animationKey;
-        Object oldTimeline = node.getProperties().get(animationKey);
-//        if (oldTimeline instanceof Timeline) ((Timeline) oldTimeline).stop();
-        if (timeline != null) timeline.play();
-        node.getProperties().put(animationKey, timeline);
-    }
-
-    public static <T> Animation playAnimation(Node node, String animationKey, Duration duration, WritableValue<T> property, T from, T to, Interpolator interpolator) {
-        if (from == null) from = property.getValue();
-        if (duration == null || Objects.equals(duration, Duration.ZERO) || Objects.equals(from, to)) {
-            playAnimation(node, animationKey, null);
-            property.setValue(to);
-            return null;
-        } else {
-            Timeline timeline = new Timeline(
-                    new KeyFrame(Duration.ZERO, new KeyValue(property, from, interpolator)),
-                    new KeyFrame(duration, new KeyValue(property, to, interpolator))
-            );
-            playAnimation(node, animationKey, timeline);
-            return timeline;
-        }
+    public static void playAnimation(Node node, String animationKey, Animation animation) {
+        animationKey = "hmcl.animations." + animationKey;
+        if (node.getProperties().get(animationKey) instanceof Animation oldAnimation)
+            oldAnimation.stop();
+        animation.play();
+        node.getProperties().put(animationKey, animation);
     }
 
     public static void openFolder(Path file) {
@@ -1346,8 +1333,6 @@ public final class FXUtils {
         }
     };
 
-    public static final Interpolator EASE = Interpolator.SPLINE(0.25, 0.1, 0.25, 1);
-
     public static void onEscPressed(Node node, Runnable action) {
         node.addEventHandler(KeyEvent.KEY_PRESSED, e -> {
             if (e.getCode() == KeyCode.ESCAPE) {
@@ -1362,6 +1347,24 @@ public final class FXUtils {
             if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 1) {
                 action.run();
                 e.consume();
+            }
+        });
+    }
+
+    public static <N extends Parent> N prepareNode(N node) {
+        Scene dummyScene = new Scene(node);
+        StyleSheets.init(dummyScene);
+        node.applyCss();
+        node.layout();
+        return node;
+    }
+
+    public static void prepareOnMouseEnter(Node node, Runnable action) {
+        node.addEventFilter(MouseEvent.MOUSE_ENTERED, new EventHandler<>() {
+            @Override
+            public void handle(MouseEvent e) {
+                node.removeEventFilter(MouseEvent.MOUSE_ENTERED, this);
+                action.run();
             }
         });
     }
@@ -1387,6 +1390,16 @@ public final class FXUtils {
         });
     }
 
+    public static void clearFocus(Node node) {
+        Scene scene = node.getScene();
+        if (scene != null) {
+            Parent root = scene.getRoot();
+            if (root != null) {
+                root.requestFocus();
+            }
+        }
+    }
+
     public static void copyOnDoubleClick(Labeled label) {
         label.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
             if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 2) {
@@ -1400,12 +1413,16 @@ public final class FXUtils {
     }
 
     public static void copyText(String text) {
+        copyText(text, i18n("message.copied"));
+    }
+
+    public static void copyText(String text, @Nullable String toastMessage) {
         ClipboardContent content = new ClipboardContent();
         content.putString(text);
         Clipboard.getSystemClipboard().setContent(content);
 
-        if (!Controllers.isStopped()) {
-            Controllers.showToast(i18n("message.copied"));
+        if (toastMessage != null && !Controllers.isStopped()) {
+            Controllers.showToast(toastMessage);
         }
     }
 

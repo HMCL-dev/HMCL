@@ -228,7 +228,7 @@
 
 .class-title {
     -fx-font-size: 12px;
-    -fx-padding: 16 16 8 16;
+    -fx-padding: 8 16 8 16;
 }
 
 .advanced-list-box-item {
@@ -288,6 +288,14 @@
 .two-line-list-item > .first-line > .tag {
     -fx-text-fill: -fx-base-color;
     -fx-background-color: -fx-base-rippler-color;
+    -fx-padding: 2;
+    -fx-font-weight: normal;
+    -fx-font-size: 12px;
+}
+
+.two-line-list-item > .first-line > .tag-warning {
+    -fx-text-fill: #d34336;;
+    -fx-background-color: #f1aeb5;
     -fx-padding: 2;
     -fx-font-weight: normal;
     -fx-font-size: 12px;
@@ -916,6 +924,10 @@
 
 .md-list-cell:selected {
     -fx-background-color: derive(-fx-base-color, 60%);
+}
+
+.mod-info-list-cell:warning {
+    -fx-background-color: #F8D7DA;
 }
 
 .options-sublist {

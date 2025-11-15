@@ -138,8 +138,11 @@ public final class AboutPage extends StackPane {
                 else if (obj.has("subtitleLocalized"))
                     item.setSubtitle(i18n(obj.get("subtitleLocalized").getAsString()));
 
-                if (obj.has("externalLink"))
-                    item.setExternalLink(obj.get("externalLink").getAsString());
+                if (obj.has("externalLink")) {
+                    String link = obj.get("externalLink").getAsString();
+                    item.setExternalLink(link);
+                    FXUtils.installFastTooltip(item.getExternalLinkButton(), link);
+                }
 
                 componentList.getContent().add(item);
             }

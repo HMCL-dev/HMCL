@@ -1,5 +1,5 @@
 [versions]
-hmclauncher = "3.7.0.0"
+hmclauncher = "3.7.0.1"
 jetbrains-annotations = "26.0.1"
 kala-compress = "1.27.1-1"
 simple-png-javafx = "0.3.0"
@@ -16,7 +16,7 @@ twelvemonkeys = "3.12.0"
 jna = "5.18.0"
 pci-ids = "0.4.0"
 java-info = "1.0"
-authlib-injector = "1.2.5"
+authlib-injector = "1.2.6"
 
 # testing
 junit = "5.13.4"

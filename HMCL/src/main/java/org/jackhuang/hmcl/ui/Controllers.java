@@ -40,6 +40,7 @@ import javafx.stage.StageStyle;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.java.JavaRuntime;
@@ -48,6 +49,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.account.AccountListPage;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
+import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.decorator.DecoratorController;
@@ -55,12 +57,15 @@ import org.jackhuang.hmcl.ui.download.DownloadPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.main.LauncherSettingsPage;
 import org.jackhuang.hmcl.ui.main.RootPage;
+import org.jackhuang.hmcl.ui.terracotta.TerracottaPage;
 import org.jackhuang.hmcl.ui.versions.GameListPage;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
+import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -99,7 +104,7 @@ public final class Controllers {
     });
     private static Lazy<RootPage> rootPage = new Lazy<>(RootPage::new);
     private static DecoratorController decorator;
-    private static Lazy<DownloadPage> downloadPage = new Lazy<>(DownloadPage::new);
+    private static DownloadPage downloadPage;
     private static Lazy<AccountListPage> accountListPage = new Lazy<>(() -> {
         AccountListPage accountListPage = new AccountListPage();
         accountListPage.selectedAccountProperty().bindBidirectional(Accounts.selectedAccountProperty());
@@ -107,7 +112,8 @@ public final class Controllers {
         accountListPage.authServersProperty().bindContentBidirectional(config().getAuthlibInjectorServers());
         return accountListPage;
     });
-    private static Lazy<LauncherSettingsPage> settingsPage = new Lazy<>(LauncherSettingsPage::new);
+    private static LauncherSettingsPage settingsPage;
+    private static Lazy<TerracottaPage> terracottaPage = new Lazy<>(TerracottaPage::new);
 
     private Controllers() {
     }
@@ -137,7 +143,18 @@ public final class Controllers {
 
     // FXThread
     public static LauncherSettingsPage getSettingsPage() {
-        return settingsPage.get();
+        if (settingsPage == null) {
+            settingsPage = new LauncherSettingsPage();
+        }
+        return settingsPage;
+    }
+
+    @FXThread
+    public static void prepareSettingsPage() {
+        if (settingsPage == null) {
+            LOG.info("Prepare the settings page");
+            settingsPage = FXUtils.prepareNode(new LauncherSettingsPage());
+        }
     }
 
     // FXThread
@@ -147,7 +164,23 @@ public final class Controllers {
 
     // FXThread
     public static DownloadPage getDownloadPage() {
-        return downloadPage.get();
+        if (downloadPage == null) {
+            downloadPage = new DownloadPage();
+        }
+        return downloadPage;
+    }
+
+    @FXThread
+    public static void prepareDownloadPage() {
+        if (downloadPage == null) {
+            LOG.info("Prepare the download page");
+            downloadPage = FXUtils.prepareNode(new DownloadPage());
+        }
+    }
+
+    // FXThread
+    public static Node getTerracottaPage() {
+        return terracottaPage.get();
     }
 
     // FXThread
@@ -296,16 +329,16 @@ public final class Controllers {
         if (AnimationUtils.playWindowAnimation()) {
             Timeline timeline = new Timeline(
                     new KeyFrame(Duration.millis(0),
-                            new KeyValue(decorator.getDecorator().opacityProperty(), 0, FXUtils.EASE),
-                            new KeyValue(decorator.getDecorator().scaleXProperty(), 0.8, FXUtils.EASE),
-                            new KeyValue(decorator.getDecorator().scaleYProperty(), 0.8, FXUtils.EASE),
-                            new KeyValue(decorator.getDecorator().scaleZProperty(), 0.8, FXUtils.EASE)
+                            new KeyValue(decorator.getDecorator().opacityProperty(), 0, Motion.EASE),
+                            new KeyValue(decorator.getDecorator().scaleXProperty(), 0.8, Motion.EASE),
+                            new KeyValue(decorator.getDecorator().scaleYProperty(), 0.8, Motion.EASE),
+                            new KeyValue(decorator.getDecorator().scaleZProperty(), 0.8, Motion.EASE)
                     ),
                     new KeyFrame(Duration.millis(600),
-                            new KeyValue(decorator.getDecorator().opacityProperty(), 1, FXUtils.EASE),
-                            new KeyValue(decorator.getDecorator().scaleXProperty(), 1, FXUtils.EASE),
-                            new KeyValue(decorator.getDecorator().scaleYProperty(), 1, FXUtils.EASE),
-                            new KeyValue(decorator.getDecorator().scaleZProperty(), 1, FXUtils.EASE)
+                            new KeyValue(decorator.getDecorator().opacityProperty(), 1, Motion.EASE),
+                            new KeyValue(decorator.getDecorator().scaleXProperty(), 1, Motion.EASE),
+                            new KeyValue(decorator.getDecorator().scaleYProperty(), 1, Motion.EASE),
+                            new KeyValue(decorator.getDecorator().scaleZProperty(), 1, Motion.EASE)
                     )
             );
             timeline.play();
@@ -424,6 +457,38 @@ public final class Controllers {
         dialog(new MessageDialogPane.Builder(text, title, type).actionOrCancel(actionButton, cancel).build());
     }
 
+    public static void confirmWithCountdown(String text, String title, int seconds, MessageType messageType,
+                                            @Nullable Runnable ok, @Nullable Runnable cancel) {
+        if (seconds <= 0)
+            throw new IllegalArgumentException("Seconds must be greater than 0");
+
+        JFXButton btnOk = new JFXButton(i18n("button.ok"));
+        btnOk.getStyleClass().add(messageType == MessageType.WARNING || messageType == MessageType.ERROR
+                ? "dialog-error"
+                : "dialog-accept");
+
+        if (ok != null)
+            btnOk.setOnAction(e -> ok.run());
+        btnOk.setDisable(true);
+
+        KeyFrame[] keyFrames = new KeyFrame[seconds + 1];
+        for (int i = 0; i < seconds; i++) {
+            keyFrames[i] = new KeyFrame(Duration.seconds(i),
+                    new KeyValue(btnOk.textProperty(), i18n("button.ok.countdown", seconds - i)));
+        }
+        keyFrames[seconds] = new KeyFrame(Duration.seconds(seconds),
+                new KeyValue(btnOk.textProperty(), i18n("button.ok")),
+                new KeyValue(btnOk.disableProperty(), false));
+
+        Timeline timeline = new Timeline(keyFrames);
+        confirmAction(text, title, messageType, btnOk, () -> {
+            timeline.stop();
+            if (cancel != null)
+                cancel.run();
+        });
+        timeline.play();
+    }
+
     public static CompletableFuture<String> prompt(String title, FutureCallback<String> onResult) {
         return prompt(title, onResult, "");
     }
@@ -470,6 +535,10 @@ public final class Controllers {
                     Controllers.getSettingsPage().showFeedback();
                     Controllers.navigate(Controllers.getSettingsPage());
                     break;
+                case "hmcl://game/launch":
+                    Profile profile = Profiles.getSelectedProfile();
+                    Versions.launch(profile, profile.getSelectedVersion(), LauncherHelper::setKeep);
+                    break;
             }
         } else {
             FXUtils.openLink(href);
@@ -487,6 +556,7 @@ public final class Controllers {
         downloadPage = null;
         accountListPage = null;
         settingsPage = null;
+        terracottaPage = null;
         decorator = null;
         stage = null;
         scene = null;

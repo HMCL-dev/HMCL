@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.task;
 
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventBus;
+import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.io.ContentEncoding;
 import org.jackhuang.hmcl.util.io.IOUtils;
@@ -44,16 +45,6 @@ import static org.jackhuang.hmcl.util.Lang.threadPool;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public abstract class FetchTask<T> extends Task<T> {
-    private static final HttpClient HTTP_CLIENT;
-
-    static {
-        boolean useHttp2 = !"false".equalsIgnoreCase(System.getProperty("hmcl.http2"));
-
-        HTTP_CLIENT = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofMillis(NetworkUtils.TIME_OUT))
-                .version(useHttp2 ? HttpClient.Version.HTTP_2 : HttpClient.Version.HTTP_1_1)
-                .build();
-    }
 
     protected static final int DEFAULT_RETRY = 3;
 
@@ -220,7 +211,7 @@ public abstract class FetchTask<T> extends Task<T> {
                     HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(currentURI);
                     requestBuilder.timeout(Duration.ofMillis(NetworkUtils.TIME_OUT));
                     headers.forEach(requestBuilder::header);
-                    response = HTTP_CLIENT.send(requestBuilder.build(), BODY_HANDLER);
+                    response = Holder.HTTP_CLIENT.send(requestBuilder.build(), BODY_HANDLER);
 
                     bmclapiHash = response.headers().firstValue("x-bmclapi-hash").orElse(null);
                     if (DigestUtils.isSha1Digest(bmclapiHash)) {
@@ -355,13 +346,13 @@ public abstract class FetchTask<T> extends Task<T> {
 
     private static final Timer timer = new Timer("DownloadSpeedRecorder", true);
     private static final AtomicLong downloadSpeed = new AtomicLong(0L);
-    public static final EventBus speedEvent = new EventBus();
+    public static final EventManager<SpeedEvent> SPEED_EVENT = EventBus.EVENT_BUS.channel(SpeedEvent.class);
 
     static {
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                speedEvent.channel(SpeedEvent.class).fireEvent(new SpeedEvent(speedEvent, downloadSpeed.getAndSet(0)));
+                SPEED_EVENT.fireEvent(new SpeedEvent(SPEED_EVENT, downloadSpeed.getAndSet(0)));
             }
         }, 0, 1000);
     }
@@ -423,7 +414,7 @@ public abstract class FetchTask<T> extends Task<T> {
 
         public abstract void write(byte[] buffer, int offset, int len) throws IOException;
 
-        public final void withResult(boolean success) {
+        public void withResult(boolean success) {
             this.success = success;
         }
 
@@ -507,5 +498,22 @@ public abstract class FetchTask<T> extends Task<T> {
 
     public static int getDownloadExecutorConcurrency() {
         return downloadExecutorConcurrency;
+    }
+
+    /// Ensure that [#HTTP_CLIENT] is initialized after ProxyManager has been initialized.
+    private static final class Holder {
+        private static final HttpClient HTTP_CLIENT;
+
+        static {
+            boolean useHttp2 = !"false".equalsIgnoreCase(System.getProperty("hmcl.http2"));
+
+            HTTP_CLIENT = HttpClient.newBuilder()
+                    .connectTimeout(Duration.ofMillis(NetworkUtils.TIME_OUT))
+                    .version(useHttp2 ? HttpClient.Version.HTTP_2 : HttpClient.Version.HTTP_1_1)
+                    .build();
+        }
+
+        private Holder() {
+        }
     }
 }

@@ -104,5 +104,17 @@
         <module name="RedundantImport"/> <!-- e.g. double import statements: http://checkstyle.sourceforge.net/config_imports.html#RedundantImport -->
         <module name="UnusedImports"/> <!-- http://checkstyle.sourceforge.net/config_imports.html#UnusedImports -->
         <module name="IllegalImport"/> <!-- checks if import sun.* is used http://checkstyle.sourceforge.net/config_imports.html#IllegalImport -->
+
+        <!--  Custom -->
+        <module name="RegexpSinglelineJava">
+            <property name="format" value="\.toLowerCase\(\)"/>
+            <property name="ignoreComments" value="true"/>
+            <property name="message" value="Should not use String#toLowerCase(), use String#toLowerCase(Locale.ROOT) instead."/>
+        </module>
+        <module name="RegexpSinglelineJava">
+            <property name="format" value="\.toUpperCase\(\)"/>
+            <property name="ignoreComments" value="true"/>
+            <property name="message" value="Should not use String#toUpperCase(), use String#toUpperCase(Locale.ROOT) instead."/>
+        </module>
     </module>
 </module>

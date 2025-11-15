@@ -219,8 +219,10 @@ public class DownloadPage extends Control implements DecoratorPage {
             BorderPane.setMargin(descriptionPane, new Insets(11, 11, 0, 11));
             {
                 ImageView imageView = new ImageView();
+                imageView.setFitWidth(40);
+                imageView.setFitHeight(40);
                 if (StringUtils.isNotBlank(getSkinnable().addon.getIconUrl())) {
-                    imageView.imageProperty().bind(FXUtils.newRemoteImage(getSkinnable().addon.getIconUrl(), 40, 40, true, true));
+                    imageView.imageProperty().bind(FXUtils.newRemoteImage(getSkinnable().addon.getIconUrl(), 80, 80, true, true));
                 }
                 descriptionPane.getChildren().add(FXUtils.limitingSize(imageView, 40, 40));
 
@@ -341,6 +343,8 @@ public class DownloadPage extends Control implements DecoratorPage {
             TwoLineListItem content = new TwoLineListItem();
             HBox.setHgrow(content, Priority.ALWAYS);
             ImageView imageView = new ImageView();
+            imageView.setFitWidth(40);
+            imageView.setFitHeight(40);
             pane.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), content);
 
             RipplerContainer container = new RipplerContainer(pane);
@@ -358,12 +362,12 @@ public class DownloadPage extends Control implements DecoratorPage {
                         .map(page::getLocalizedCategory)
                         .forEach(content::addTag);
                 if (StringUtils.isNotBlank(addon.getIconUrl())) {
-                    imageView.imageProperty().bind(FXUtils.newRemoteImage(addon.getIconUrl(), 40, 40, true, true));
+                    imageView.imageProperty().bind(FXUtils.newRemoteImage(addon.getIconUrl(), 80, 80, true, true));
                 }
             } else {
                 content.setTitle(i18n("mods.broken_dependency.title"));
                 content.setSubtitle(i18n("mods.broken_dependency.desc"));
-                imageView.setImage(FXUtils.newBuiltinImage("/assets/img/icon@8x.png", 40, 40, true, true));
+                imageView.setImage(FXUtils.newBuiltinImage("/assets/img/icon@4x.png"));
             }
         }
     }

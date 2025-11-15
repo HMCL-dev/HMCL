@@ -2,20 +2,19 @@
 
 <!-- #BEGIN COPY -->
 <!-- #PROPERTY NAME=BADGES -->
-[![Build Status](https://ci.huangyuhui.net/job/HMCL/badge/icon?.svg)](https://ci.huangyuhui.net/job/HMCL)
-![Downloads](https://img.shields.io/github/downloads/HMCL-dev/HMCL/total?style=flat)
+[![Downloads](https://img.shields.io/github/downloads/HMCL-dev/HMCL/total?label=Downloads&style=flat)](https://github.com/HMCL-dev/HMCL/releases)
 ![Stars](https://img.shields.io/github/stars/HMCL-dev/HMCL?style=flat)
 [![Discord](https://img.shields.io/discord/995291757799538688.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/jVvC7HfM6U)
 [![QQ Group](https://img.shields.io/badge/QQ-HMCL-bright?label=&logo=qq&logoColor=ffffff&color=1EBAFC&labelColor=1DB0EF&logoSize=auto)](https://docs.hmcl.net/groups.html)
 <!-- #END COPY -->
 
 <!-- #BEGIN LANGUAGE_SWITCHER -->
-[English](README.md) | 中文 ([简体](README_zh.md), [繁體](README_zh_Hant.md), [文言](README_lzh.md)) | **日本語** | [español](README_es.md) | [русский](README_ru.md) | [українська](README_uk.md)
+English ([Standard](README.md), [uʍoᗡ ǝpᴉsd∩](README_en_Qabs.md)) | 中文 ([简体](README_zh.md), [繁體](README_zh_Hant.md), [文言](README_lzh.md)) | **日本語** | [español](README_es.md) | [русский](README_ru.md) | [українська](README_uk.md)
 <!-- #END LANGUAGE_SWITCHER -->
 
 ## 紹介
 
-HMCLはオープンソースでクロスプラットフォーム対応のMinecraftランチャーです。Mod管理、ゲームカスタマイズ、Modローダーのインストール（Forge、NeoForge、Fabric、Quilt、LiteLoader、OptiFine）、Modパック作成、UIカスタマイズなど、さまざまな機能をサポートしています。
+HMCLはオープンソースでクロスプラットフォーム対応のMinecraftランチャーです。Mod管理、ゲームカスタマイズ、Modローダーのインストール（Forge、NeoForge、Cleanroom、Fabric、Quilt、LiteLoader、OptiFine）、Modパック作成、UIカスタマイズなど、さまざまな機能をサポートしています。
 
 HMCLは優れたクロスプラットフォーム性能を持っています。Windows、Linux、macOS、FreeBSDなどの異なるオペレーティングシステムだけでなく、x86、ARM、RISC-V、MIPS、LoongArchなどのさまざまなCPUアーキテクチャにも対応しています。HMCLを使えば、さまざまなプラットフォームでMinecraftを簡単に楽しむことができます。
 
@@ -42,13 +41,7 @@ HMCLが対応しているシステムやCPUアーキテクチャについては�
 
 ### コンパイル方法
 
-プロジェクトのルートディレクトリで次のコマンドを実行してください。
-
-```bash
-./gradlew clean build
-```
-
-Java 17以上がインストールされていることを確認してください。
+ビルド方法については、[ビルドガイド](./Building.md)ページをご覧ください。
 
 ## JVMオプション（デバッグ用）
 

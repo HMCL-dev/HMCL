@@ -28,6 +28,7 @@ import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
@@ -40,6 +41,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public class TaskExecutorDialogPane extends BorderPane {
     private TaskExecutor executor;
     private TaskCancellationAction onCancel;
+    @SuppressWarnings({"unused", "FieldCanBeLocal"})
     private final Consumer<FetchTask.SpeedEvent> speedEventHandler;
 
     private final Label lblTitle;
@@ -84,22 +86,10 @@ public class TaskExecutorDialogPane extends BorderPane {
             }
         });
 
-        speedEventHandler = speedEvent -> {
-            String unit = "B/s";
-            double speed = speedEvent.getSpeed();
-            if (speed > 1024) {
-                speed /= 1024;
-                unit = "KiB/s";
-            }
-            if (speed > 1024) {
-                speed /= 1024;
-                unit = "MiB/s";
-            }
-            double finalSpeed = speed;
-            String finalUnit = unit;
-            Platform.runLater(() -> lblProgress.setText(String.format("%.1f %s", finalSpeed, finalUnit)));
-        };
-        FileDownloadTask.speedEvent.channel(FetchTask.SpeedEvent.class).registerWeak(speedEventHandler);
+        speedEventHandler = FetchTask.SPEED_EVENT.registerWeak(speedEvent -> {
+            String message = I18n.formatSpeed(speedEvent.getSpeed());
+            Platform.runLater(() -> lblProgress.setText(message));
+        });
 
         onEscPressed(this, btnCancel::fire);
     }

@@ -2,20 +2,19 @@
 
 <!-- #BEGIN COPY -->
 <!-- #PROPERTY NAME=BADGES -->
-[![Build Status](https://ci.huangyuhui.net/job/HMCL/badge/icon?.svg)](https://ci.huangyuhui.net/job/HMCL)
-![Downloads](https://img.shields.io/github/downloads/HMCL-dev/HMCL/total?style=flat)
+[![Downloads](https://img.shields.io/github/downloads/HMCL-dev/HMCL/total?label=Downloads&style=flat)](https://github.com/HMCL-dev/HMCL/releases)
 ![Stars](https://img.shields.io/github/stars/HMCL-dev/HMCL?style=flat)
 [![Discord](https://img.shields.io/discord/995291757799538688.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/jVvC7HfM6U)
 [![QQ Group](https://img.shields.io/badge/QQ-HMCL-bright?label=&logo=qq&logoColor=ffffff&color=1EBAFC&labelColor=1DB0EF&logoSize=auto)](https://docs.hmcl.net/groups.html)
 <!-- #END COPY -->
 
 <!-- #BEGIN LANGUAGE_SWITCHER -->
-[English](README.md) | **中文** ([简体](README_zh.md), **繁體**, [文言](README_lzh.md)) | [日本語](README_ja.md) | [español](README_es.md) | [русский](README_ru.md) | [українська](README_uk.md)
+English ([Standard](README.md), [uʍoᗡ ǝpᴉsd∩](README_en_Qabs.md)) | **中文** ([简体](README_zh.md), **繁體**, [文言](README_lzh.md)) | [日本語](README_ja.md) | [español](README_es.md) | [русский](README_ru.md) | [українська](README_uk.md)
 <!-- #END LANGUAGE_SWITCHER -->
 
 ## 簡介
 
-HMCL 是一款開源、跨平臺的 Minecraft 啟動器，支援模組管理、遊戲客製化、遊戲自動安裝 (Forge、NeoForge、Fabric、Quilt、LiteLoader 和 OptiFine)、模組包建立、介面客製化等功能。
+HMCL 是一款開源、跨平臺的 Minecraft 啟動器，支援模組管理、遊戲客製化、遊戲自動安裝 (Forge、NeoForge、Cleanroom、Fabric、Quilt、LiteLoader 和 OptiFine)、模組包建立、介面客製化等功能。
 
 HMCL 有著強大的跨平臺能力。它不僅支援 Windows、Linux、macOS、FreeBSD 等常見的作業系統，同時也支援 x86、ARM、RISC-V、MIPS、LoongArch 等不同的 CPU 架構。你可以使用 HMCL 在不同平臺上輕鬆地遊玩 Minecraft。
 
@@ -50,13 +49,7 @@ HMCL 有著強大的跨平臺能力。它不僅支援 Windows、Linux、macOS、
 
 ### 編譯
 
-於項目根目錄執行以下指令：
-
-```bash
-./gradlew clean build
-```
-
-請確保你至少安裝了 JDK 17 或更高版本。
+參閱[構建指南](./Building_zh.md)頁面。
 
 ## JVM 選項 (用於除錯)
 

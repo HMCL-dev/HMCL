@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.download;
 import org.intellij.lang.annotations.Language;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.mod.ModLoaderType;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionRange;
@@ -172,6 +171,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         String mainClass = resolvedVersion.getMainClass();
         return mainClass != null && (LAUNCH_WRAPPER_MAIN.equals(mainClass)
                 || mainClass.startsWith("net.minecraftforge")
+                || mainClass.startsWith("net.neoforged")
                 || mainClass.startsWith("top.outlands") //Cleanroom
                 || mainClass.startsWith("net.fabricmc")
                 || mainClass.startsWith("org.quiltmc")
@@ -361,14 +361,16 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
     public static final String MOD_LAUNCHER_MAIN = "cpw.mods.modlauncher.Launcher";
     public static final String BOOTSTRAP_LAUNCHER_MAIN = "cpw.mods.bootstraplauncher.BootstrapLauncher";
     public static final String FORGE_BOOTSTRAP_MAIN = "net.minecraftforge.bootstrap.ForgeBootstrap";
+    public static final String NEO_FORGED_BOOTSTRAP_MAIN = "net.neoforged.fml.startup.Client";
 
-    public static final Set<String> FORGE_OPTIFINE_MAIN = new HashSet<>(Lang.immutableListOf(
+    public static final Set<String> FORGE_OPTIFINE_MAIN = Set.of(
             LibraryAnalyzer.VANILLA_MAIN,
             LibraryAnalyzer.LAUNCH_WRAPPER_MAIN,
             LibraryAnalyzer.MOD_LAUNCHER_MAIN,
             LibraryAnalyzer.BOOTSTRAP_LAUNCHER_MAIN,
-            LibraryAnalyzer.FORGE_BOOTSTRAP_MAIN
-    ));
+            LibraryAnalyzer.FORGE_BOOTSTRAP_MAIN,
+            LibraryAnalyzer.NEO_FORGED_BOOTSTRAP_MAIN
+    );
 
     public static final VersionRange<VersionNumber> FORGE_OPTIFINE_BROKEN_RANGE = VersionNumber.between("48.0.0", "49.0.50");
 

@@ -100,7 +100,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
     }
 
     public boolean isAprilFools() {
-        if (this instanceof Special)
+        if (this instanceof Special && !value.endsWith("_unobfuscated"))
             return true;
 
         if (this instanceof Snapshot snapshot) {
