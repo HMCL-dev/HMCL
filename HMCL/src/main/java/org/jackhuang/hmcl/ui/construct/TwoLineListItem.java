@@ -44,7 +44,7 @@ public class TwoLineListItem extends VBox {
     private final ObservableList<Label> visibleTagLabels = FXCollections.observableArrayList();
 
     private final IntegerProperty visibleTagLimit = new SimpleIntegerProperty(UNLIMITED_TAGS);
-    private final Label overflowLabel = createTagLabel("", "tag-overflow");
+    private final Label overflowLabel = createTagLabel("", "tag-overflow", false);
 
     public TwoLineListItem(String titleString, String subtitleString) {
         this();
@@ -97,7 +97,7 @@ public class TwoLineListItem extends VBox {
                         if (visibleTagLimit.get() != UNLIMITED_TAGS && visibleTagLabels.size() > visibleTagLimit.get()) {
                             break;
                         }
-                        visibleTagLabels.add(createTagLabel(tag.text, tag.styleClass));
+                        visibleTagLabels.add(createTagLabel(tag.text, tag.styleClass, true));
                     }
                 }
             }
@@ -111,7 +111,7 @@ public class TwoLineListItem extends VBox {
             if (visibleTagLimit.get() != UNLIMITED_TAGS && visibleTagLabels.size() > visibleTagLimit.get()) {
                 break;
             }
-            visibleTagLabels.add(createTagLabel(allTag.text, allTag.styleClass));
+            visibleTagLabels.add(createTagLabel(allTag.text, allTag.styleClass, true));
         }
         updateOverflowTag();
     }
@@ -127,8 +127,11 @@ public class TwoLineListItem extends VBox {
         }
     }
 
-    private static Label createTagLabel(String tag, String StyleClass) {
-        Label tagLabel = FXUtils.newSafeTruncatedLabel(tag);
+    private static Label createTagLabel(String tag, String StyleClass, Boolean showToolTipIfTruncated) {
+        Label tagLabel = new Label(tag);
+        if (showToolTipIfTruncated) {
+            FXUtils.showTooltipWhenTruncated(tagLabel);
+        }
         HBox.setMargin(tagLabel, new Insets(0, 6, 0, 0));
         tagLabel.getStyleClass().add(StyleClass);
         return tagLabel;
