@@ -228,6 +228,8 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
                         new KeyValue(center.translateXProperty(), 30, interpolator)));
             }
 
+            timeline.getKeyFrames().add(new KeyFrame(Duration.ZERO,
+                    new KeyValue(nextNode.opacityProperty(), 0, interpolator)));
             timeline.getKeyFrames().add(new KeyFrame(halfDuration,
                     new KeyValue(nextNode.opacityProperty(), 0, interpolator)));
             timeline.getKeyFrames().add(new KeyFrame(duration,
