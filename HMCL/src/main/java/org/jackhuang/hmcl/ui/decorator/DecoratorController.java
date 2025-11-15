@@ -365,12 +365,8 @@ public class DecoratorController {
 
     // ==== Navigation ====
 
-    public void navigate(Node node) {
-        navigator.navigate(node, ContainerAnimations.NAVIGATION);
-    }
-
     public void navigate(Node node, AnimationProducer animationProducer, Duration duration, Interpolator interpolator) {
-        navigator.navigate(node, animationProducer, Motion.SHORT4, Motion.EASE);
+        navigator.navigate(node, animationProducer, duration, interpolator);
     }
 
     private void close() {

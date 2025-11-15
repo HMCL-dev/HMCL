@@ -23,9 +23,6 @@ import javafx.scene.layout.Pane;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public enum ContainerAnimations implements TransitionPane.AnimationProducer {
     NONE {
         @Override
@@ -203,6 +200,10 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
 
     NAVIGATION {
         @Override
+        public void init(TransitionPane container, Node previousNode, Node nextNode) {
+        }
+
+        @Override
         public Animation animate(Pane container, Node previousNode, Node nextNode, Duration duration, Interpolator interpolator) {
             Timeline timeline = new Timeline();
             if (previousNode instanceof TransitionPane.EmptyPane) {
@@ -243,7 +244,6 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
                         new KeyValue(center.translateXProperty(), 0, interpolator)));
             }
 
-            timeline.getKeyFrames().setAll(timeline.getKeyFrames());
             return timeline;
         }
     }

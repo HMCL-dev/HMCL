@@ -49,6 +49,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.account.AccountListPage;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
+import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
@@ -521,7 +522,11 @@ public final class Controllers {
     }
 
     public static void navigate(Node node) {
-        decorator.navigate(node);
+        decorator.navigate(node, ContainerAnimations.NAVIGATION, Motion.SHORT4, Motion.EASE);
+    }
+
+    public static void navigateForward(Node node) {
+        decorator.navigate(node, ContainerAnimations.FORWARD, Motion.SHORT4, Motion.EASE_IN_OUT_CUBIC_EMPHASIZED);
     }
 
     public static void showToast(String content) {

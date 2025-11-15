@@ -244,7 +244,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                             } else if (result.isEmpty()) {
                                 Controllers.dialog(i18n("mods.check_updates.empty"));
                             } else {
-                                Controllers.navigate(new ModUpdatesPage(modManager, result));
+                                Controllers.navigateForward(new ModUpdatesPage(modManager, result));
                             }
                         })
                         .withStagesHint(Collections.singletonList("mods.check_updates")),
