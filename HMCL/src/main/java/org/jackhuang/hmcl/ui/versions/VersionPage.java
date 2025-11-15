@@ -37,7 +37,6 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
-import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
@@ -79,10 +78,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
 
         tab.select(versionSettingsTab);
-        transitionPane.setContent(versionSettingsTab.getNode(), ContainerAnimations.NONE);
-        FXUtils.onChange(tab.getSelectionModel().selectedItemProperty(), newValue -> {
-            transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE);
-        });
+        transitionPane.bindTabHeader(tab);
 
         listenerHolder.add(EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> checkSelectedVersion(), EventPriority.HIGHEST));
     }

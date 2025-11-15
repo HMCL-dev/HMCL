@@ -36,7 +36,6 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
-import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
@@ -105,9 +104,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         Profiles.registerVersionsListener(this::loadVersions);
 
         tab.select(newGameTab);
-        FXUtils.onChangeAndOperate(tab.getSelectionModel().selectedItemProperty(), newValue -> {
-            transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE);
-        });
+        transitionPane.bindTabHeader(tab);
 
         AdvancedListBox sideBar = new AdvancedListBox()
                 .startCategory(i18n("download.game").toUpperCase(Locale.ROOT))

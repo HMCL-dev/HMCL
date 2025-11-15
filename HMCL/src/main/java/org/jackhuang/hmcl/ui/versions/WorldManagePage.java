@@ -28,7 +28,6 @@ import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
@@ -73,9 +72,8 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         datapackTab.setNodeSupplier(() -> new DatapackListPage(this));
 
         header.select(worldInfoTab);
-        transitionPane.setContent(worldInfoTab.getNode(), ContainerAnimations.NONE);
-        FXUtils.onChange(header.getSelectionModel().selectedItemProperty(), newValue ->
-                transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE));
+        transitionPane.bindTabHeader(header);
+
         setCenter(transitionPane);
 
         BorderPane left = new BorderPane();
