@@ -305,6 +305,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                         hintPane.setSegment(i18n("account.methods.microsoft.hint"));
                     }
                 });
+                lblErrorMessage.setVisible(false);
                 lblErrorMessage.textProperty().addListener((observable, oldValue, newValue) -> {
                     errHintPane.setVisible(!newValue.isEmpty());
                     errHintPane.setManaged(!newValue.isEmpty());
