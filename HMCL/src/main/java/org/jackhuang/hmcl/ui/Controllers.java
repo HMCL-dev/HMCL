@@ -537,7 +537,7 @@ public final class Controllers {
     }
 
     public static void navigateForward(Node node) {
-        decorator.navigate(node, ContainerAnimations.FORWARD, Motion.SHORT4, Motion.EASE_IN_OUT_CUBIC_EMPHASIZED);
+        decorator.navigate(node, ContainerAnimations.FORWARD, Motion.SHORT4, Motion.EASE);
     }
 
     public static void showToast(String content) {
