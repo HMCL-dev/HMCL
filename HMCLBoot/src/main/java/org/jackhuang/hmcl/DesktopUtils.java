@@ -94,4 +94,6 @@ public final class DesktopUtils {
         }
     }
 
+    private DesktopUtils() {
+    }
 }

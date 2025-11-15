@@ -21,7 +21,6 @@ import org.jackhuang.hmcl.util.SwingUtils;
 
 import javax.swing.*;
 import java.awt.*;
-import java.net.URI;
 
 /**
  * @author Glavo
