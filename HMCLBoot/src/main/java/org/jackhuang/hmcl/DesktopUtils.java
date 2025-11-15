@@ -56,7 +56,6 @@ public final class DesktopUtils {
         return null;
     }
 
-
     public static void openLink(String link) {
         String osName = System.getProperty("os.name").toLowerCase(Locale.ROOT);
 
