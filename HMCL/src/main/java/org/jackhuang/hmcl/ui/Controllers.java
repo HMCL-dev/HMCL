@@ -92,7 +92,7 @@ public final class Controllers {
 
     private static Scene scene;
     private static Stage stage;
-    private static Lazy<VersionPage> versionPage = new Lazy<>(VersionPage::new);
+    private static VersionPage versionPage;
     private static Lazy<GameListPage> gameListPage = new Lazy<>(() -> {
         GameListPage gameListPage = new GameListPage();
         gameListPage.selectedProfileProperty().bindBidirectional(Profiles.selectedProfileProperty());
@@ -129,7 +129,18 @@ public final class Controllers {
 
     // FXThread
     public static VersionPage getVersionPage() {
-        return versionPage.get();
+        if (versionPage == null) {
+            versionPage = new VersionPage();
+        }
+        return versionPage;
+    }
+
+    @FXThread
+    public static void prepareVersionPage() {
+        if (versionPage == null) {
+            LOG.info("Prepare the version page");
+            versionPage = new VersionPage();
+        }
     }
 
     // FXThread
