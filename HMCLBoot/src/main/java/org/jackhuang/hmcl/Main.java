@@ -19,11 +19,16 @@ package org.jackhuang.hmcl;
 
 import org.jackhuang.hmcl.util.SwingUtils;
 
+import javax.swing.*;
+import java.awt.*;
+import java.net.URI;
+
 /**
  * @author Glavo
  */
 public final class Main {
     private static final int MINIMUM_JAVA_VERSION = 17;
+    private static final String DOWNLOAD_PAGE = "https://hmcl.huangyuhui.net/download/";
 
     private Main() {
     }
@@ -76,6 +81,20 @@ public final class Main {
     public static void main(String[] args) throws Throwable {
         if (getJavaFeatureVersion(System.getProperty("java.version")) >= MINIMUM_JAVA_VERSION) {
             EntryPoint.main(args);
+        } else if (args.length > 0 && args[0].equals("--apply-to")) {
+            String errorMessage = BootProperties.getResourceBundle().getString("boot.manual_update");
+            System.err.println(errorMessage);
+            SwingUtils.initLookAndFeel();
+
+            int result = JOptionPane.showOptionDialog(null, errorMessage, "Error", JOptionPane.YES_NO_OPTION,
+                    JOptionPane.ERROR_MESSAGE, null, null, null);
+
+            if (result == JOptionPane.YES_OPTION) {
+                System.out.println("Open " + DOWNLOAD_PAGE);
+                DesktopUtils.openLink(DOWNLOAD_PAGE);
+            }
+
+            System.exit(1);
         } else {
             String errorMessage = BootProperties.getResourceBundle().getString("boot.unsupported_java_version");
             System.err.println(errorMessage);
