@@ -51,6 +51,7 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.account.AddAuthlibInjectorServerPane;
 import org.jackhuang.hmcl.ui.animation.*;
+import org.jackhuang.hmcl.ui.animation.TransitionPane.AnimationProducer;
 import org.jackhuang.hmcl.ui.construct.DialogAware;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.Navigator;
@@ -364,57 +365,12 @@ public class DecoratorController {
 
     // ==== Navigation ====
 
-    private static final TransitionPane.AnimationProducer ANIMATION = (Pane container,
-                                                                       Node previousNode, Node nextNode,
-                                                                       Duration duration,
-                                                                       Interpolator interpolator) -> {
-        Timeline timeline = new Timeline();
-        if (previousNode instanceof TransitionPane.EmptyPane) {
-            return timeline;
-        }
-
-        Duration halfDuration = duration.divide(2);
-
-        List<KeyFrame> keyFrames = new ArrayList<>();
-
-        keyFrames.add(new KeyFrame(Duration.ZERO,
-                new KeyValue(previousNode.opacityProperty(), 1, interpolator)));
-        keyFrames.add(new KeyFrame(halfDuration,
-                new KeyValue(previousNode.opacityProperty(), 0, interpolator)));
-        if (previousNode instanceof DecoratorAnimatedPage prevPage) {
-            Node left = prevPage.getLeft();
-            Node center = prevPage.getCenter();
-
-            keyFrames.add(new KeyFrame(Duration.ZERO,
-                    new KeyValue(left.translateXProperty(), 0, interpolator),
-                    new KeyValue(center.translateXProperty(), 0, interpolator)));
-            keyFrames.add(new KeyFrame(halfDuration,
-                    new KeyValue(left.translateXProperty(), -30, interpolator),
-                    new KeyValue(center.translateXProperty(), 30, interpolator)));
-        }
-
-        keyFrames.add(new KeyFrame(halfDuration,
-                new KeyValue(nextNode.opacityProperty(), 0, interpolator)));
-        keyFrames.add(new KeyFrame(duration,
-                new KeyValue(nextNode.opacityProperty(), 1, interpolator)));
-        if (nextNode instanceof DecoratorAnimatedPage nextPage) {
-            Node left = nextPage.getLeft();
-            Node center = nextPage.getCenter();
-
-            keyFrames.add(new KeyFrame(halfDuration,
-                    new KeyValue(left.translateXProperty(), -30, interpolator),
-                    new KeyValue(center.translateXProperty(), 30, interpolator)));
-            keyFrames.add(new KeyFrame(duration,
-                    new KeyValue(left.translateXProperty(), 0, interpolator),
-                    new KeyValue(center.translateXProperty(), 0, interpolator)));
-        }
-
-        timeline.getKeyFrames().setAll(keyFrames);
-        return timeline;
-    };
-
     public void navigate(Node node) {
-        navigator.navigate(node, ANIMATION);
+        navigator.navigate(node, ContainerAnimations.NAVIGATION);
+    }
+
+    public void navigate(Node node, AnimationProducer animationProducer, Duration duration, Interpolator interpolator) {
+        navigator.navigate(node, animationProducer, Motion.SHORT4, Motion.EASE);
     }
 
     private void close() {

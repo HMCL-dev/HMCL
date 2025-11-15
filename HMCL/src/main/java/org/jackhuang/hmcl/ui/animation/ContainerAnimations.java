@@ -17,13 +17,14 @@
  */
 package org.jackhuang.hmcl.ui.animation;
 
-import javafx.animation.Interpolator;
-import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
-import javafx.animation.Timeline;
+import javafx.animation.*;
 import javafx.scene.Node;
 import javafx.scene.layout.Pane;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public enum ContainerAnimations implements TransitionPane.AnimationProducer {
     NONE {
@@ -199,6 +200,53 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
             );
         }
     },
+
+    NAVIGATION {
+        @Override
+        public Animation animate(Pane container, Node previousNode, Node nextNode, Duration duration, Interpolator interpolator) {
+            Timeline timeline = new Timeline();
+            if (previousNode instanceof TransitionPane.EmptyPane) {
+                return timeline;
+            }
+
+            Duration halfDuration = duration.divide(2);
+
+            timeline.getKeyFrames().add(new KeyFrame(Duration.ZERO,
+                    new KeyValue(previousNode.opacityProperty(), 1, interpolator)));
+            timeline.getKeyFrames().add(new KeyFrame(halfDuration,
+                    new KeyValue(previousNode.opacityProperty(), 0, interpolator)));
+            if (previousNode instanceof DecoratorAnimatedPage prevPage) {
+                Node left = prevPage.getLeft();
+                Node center = prevPage.getCenter();
+
+                timeline.getKeyFrames().add(new KeyFrame(Duration.ZERO,
+                        new KeyValue(left.translateXProperty(), 0, interpolator),
+                        new KeyValue(center.translateXProperty(), 0, interpolator)));
+                timeline.getKeyFrames().add(new KeyFrame(halfDuration,
+                        new KeyValue(left.translateXProperty(), -30, interpolator),
+                        new KeyValue(center.translateXProperty(), 30, interpolator)));
+            }
+
+            timeline.getKeyFrames().add(new KeyFrame(halfDuration,
+                    new KeyValue(nextNode.opacityProperty(), 0, interpolator)));
+            timeline.getKeyFrames().add(new KeyFrame(duration,
+                    new KeyValue(nextNode.opacityProperty(), 1, interpolator)));
+            if (nextNode instanceof DecoratorAnimatedPage nextPage) {
+                Node left = nextPage.getLeft();
+                Node center = nextPage.getCenter();
+
+                timeline.getKeyFrames().add(new KeyFrame(halfDuration,
+                        new KeyValue(left.translateXProperty(), -30, interpolator),
+                        new KeyValue(center.translateXProperty(), 30, interpolator)));
+                timeline.getKeyFrames().add(new KeyFrame(duration,
+                        new KeyValue(left.translateXProperty(), 0, interpolator),
+                        new KeyValue(center.translateXProperty(), 0, interpolator)));
+            }
+
+            timeline.getKeyFrames().setAll(timeline.getKeyFrames());
+            return timeline;
+        }
+    }
     ;
 
     protected static void reset(Node node) {
