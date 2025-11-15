@@ -35,8 +35,6 @@ import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.layout.*;
-
-import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.CharacterSelector;
 import org.jackhuang.hmcl.auth.NoSelectedCharacterException;
@@ -65,11 +63,7 @@ import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.regex.Pattern;
 
@@ -287,11 +281,22 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             btnAccept.disableProperty().unbind();
             detailsContainer.getChildren().remove(detailsPane);
             lblErrorMessage.setText("");
+            lblErrorMessage.setVisible(true);
         }
         if (factory == Accounts.FACTORY_MICROSOFT) {
             VBox vbox = new VBox(8);
+
+            if (!IntegrityChecker.isOfficial()) {
+                HintPane hintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
+                hintPane.setSegment(Accounts.OAUTH_CALLBACK.getClientId().isEmpty() ? i18n("account.methods.microsoft.snapshot") : i18n("unofficial.hint"));
+                vbox.getChildren().add(hintPane);
+            }
+
             if (!Accounts.OAUTH_CALLBACK.getClientId().isEmpty()) {
                 HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
+                HintPane errHintPane = new HintPane(MessageDialogPane.MessageType.ERROR);
+                errHintPane.setVisible(false);
+                errHintPane.setManaged(false);
                 FXUtils.onChangeAndOperate(deviceCode, deviceCode -> {
                     if (deviceCode != null) {
                         FXUtils.copyText(deviceCode.getUserCode());
@@ -300,6 +305,14 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                         hintPane.setSegment(i18n("account.methods.microsoft.hint"));
                     }
                 });
+                lblErrorMessage.textProperty().addListener((observable, oldValue, newValue) -> {
+                    errHintPane.setVisible(!newValue.isEmpty());
+                    errHintPane.setManaged(!newValue.isEmpty());
+                    hintPane.setVisible(newValue.isEmpty());
+                    hintPane.setManaged(newValue.isEmpty());
+                    errHintPane.setSegment(newValue);
+                });
+
                 FXUtils.onClicked(hintPane, () -> {
                     if (deviceCode.get() != null) {
                         FXUtils.copyText(deviceCode.get().getUserCode());
@@ -311,8 +324,6 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 }));
                 FlowPane box = new FlowPane();
                 box.setHgap(8);
-                JFXHyperlink birthLink = new JFXHyperlink(i18n("account.methods.microsoft.birth"));
-                birthLink.setExternalLink("https://support.microsoft.com/account-billing/837badbc-999e-54d2-2617-d19206b9540a");
                 JFXHyperlink profileLink = new JFXHyperlink(i18n("account.methods.microsoft.profile"));
                 profileLink.setExternalLink("https://account.live.com/editprof.aspx");
                 JFXHyperlink purchaseLink = new JFXHyperlink(i18n("account.methods.microsoft.purchase"));
@@ -321,31 +332,12 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 deauthorizeLink.setExternalLink("https://account.live.com/consent/Edit?client_id=000000004C794E0A");
                 JFXHyperlink forgotpasswordLink = new JFXHyperlink(i18n("account.methods.forgot_password"));
                 forgotpasswordLink.setExternalLink("https://account.live.com/ResetPassword.aspx");
-                JFXHyperlink createProfileLink = new JFXHyperlink(i18n("account.methods.microsoft.makegameidsettings"));
-                createProfileLink.setExternalLink("https://www.minecraft.net/msaprofile/mygames/editprofile");
-                JFXHyperlink bannedQueryLink = new JFXHyperlink(i18n("account.methods.ban_query"));
-                bannedQueryLink.setExternalLink("https://enforcement.xbox.com/enforcement/showenforcementhistory");
-                box.getChildren().setAll(profileLink, birthLink, purchaseLink, deauthorizeLink, forgotpasswordLink, createProfileLink, bannedQueryLink);
+                box.getChildren().setAll(profileLink, purchaseLink, deauthorizeLink, forgotpasswordLink);
                 GridPane.setColumnSpan(box, 2);
 
-                if (!IntegrityChecker.isOfficial()) {
-                    HintPane unofficialHint = new HintPane(MessageDialogPane.MessageType.WARNING);
-                    unofficialHint.setText(i18n("unofficial.hint"));
-                    vbox.getChildren().add(unofficialHint);
-                }
-
-                vbox.getChildren().addAll(hintPane, box);
+                vbox.getChildren().addAll(hintPane, errHintPane, box);
 
                 btnAccept.setDisable(false);
-            } else {
-                HintPane hintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
-                hintPane.setSegment(i18n("account.methods.microsoft.snapshot"));
-
-                JFXHyperlink officialWebsite = new JFXHyperlink(i18n("account.methods.microsoft.snapshot.website"));
-                officialWebsite.setExternalLink(Metadata.PUBLISH_URL);
-
-                vbox.getChildren().setAll(hintPane, officialWebsite);
-                btnAccept.setDisable(true);
             }
 
             detailsPane = vbox;
