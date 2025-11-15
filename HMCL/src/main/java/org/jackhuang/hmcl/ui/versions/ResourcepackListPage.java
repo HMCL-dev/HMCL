@@ -3,10 +3,12 @@ package org.jackhuang.hmcl.ui.versions;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXListView;
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.ObjectProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -27,22 +29,26 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.image.ImageUtils;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.lang.ref.SoftReference;
+import java.lang.ref.WeakReference;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class ResourcepackListPage extends ListPageBase<ResourcepackListPage.ResourcepackItem> implements VersionPage.VersionLoadable {
+public final class ResourcepackListPage extends ListPageBase<ResourcepackListPage.ResourcepackInfoObject> implements VersionPage.VersionLoadable {
     private Path resourcepackDirectory;
 
     public ResourcepackListPage() {
@@ -76,7 +82,7 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
                 return stream.sorted(Comparator.comparing(FileUtils::getName))
                         .flatMap(item -> {
                             try {
-                                return Stream.of(ResourcepackFile.parse(item)).filter(Objects::nonNull).map(ResourcepackItem::new);
+                                return Stream.of(ResourcepackFile.parse(item)).filter(Objects::nonNull).map(ResourcepackInfoObject::new);
                             } catch (IOException e) {
                                 LOG.warning("Failed to load resourcepack " + item, e);
                                 return Stream.empty();
@@ -128,7 +134,7 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
     }
 
     private static final class ResourcepackListPageSkin extends SkinBase<ResourcepackListPage> {
-        private final JFXListView<ResourcepackItem> listView;
+        private final JFXListView<ResourcepackInfoObject> listView;
 
         private ResourcepackListPageSkin(ResourcepackListPage control) {
             super(control);
@@ -168,26 +174,74 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
         }
     }
 
-    public static class ResourcepackItem {
+    public static class ResourcepackInfoObject {
         private final ResourcepackFile file;
+        private SoftReference<CompletableFuture<Image>> iconCache;
 
-        public ResourcepackItem(ResourcepackFile file) {
+        public ResourcepackInfoObject(ResourcepackFile file) {
             this.file = file;
         }
 
         public ResourcepackFile getFile() {
             return file;
         }
+
+        Image loadIcon() {
+            Image image = null;
+            byte[] icon = file.getIcon();
+            if (icon != null) {
+                try (ByteArrayInputStream inputStream = new ByteArrayInputStream(icon)) {
+                    image = ImageUtils.DEFAULT.load(inputStream, 64, 64, true, true);
+                } catch (Exception e) {
+                    LOG.warning("Failed to load resourcepack icon " + file.getPath(), e);
+                }
+            }
+
+            if (image != null && !image.isError() && image.getWidth() > 0 && image.getHeight() > 0 &&
+                    Math.abs(image.getWidth() - image.getHeight()) < 1) {
+                return image;
+            } else {
+                return FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
+            }
+        }
+
+        public void loadIcon(ImageView imageView, @Nullable WeakReference<ObjectProperty<ResourcepackInfoObject>> current) {
+            SoftReference<CompletableFuture<Image>> iconCache = this.iconCache;
+            CompletableFuture<Image> imageFuture;
+            if (iconCache != null && (imageFuture = iconCache.get()) != null) {
+                Image image = imageFuture.getNow(null);
+                if (image != null) {
+                    imageView.setImage(image);
+                    return;
+                }
+            } else {
+                imageFuture = CompletableFuture.supplyAsync(this::loadIcon, Schedulers.io());
+                this.iconCache = new SoftReference<>(imageFuture);
+            }
+
+            imageFuture.thenAcceptAsync(image -> {
+                if (current != null) {
+                    ObjectProperty<ResourcepackInfoObject> infoObjectProperty = current.get();
+                    if (infoObjectProperty == null || infoObjectProperty.get() != this) {
+                        // The current ListCell has already switched to another object
+                        return;
+                    }
+                }
+
+                imageView.setImage(image);
+            }, Schedulers.javafx());
+        }
     }
 
-    private static final class ResourcepackListCell extends MDListCell<ResourcepackItem> {
+
+    private static final class ResourcepackListCell extends MDListCell<ResourcepackInfoObject> {
         private final ImageView imageView = new ImageView();
         private final TwoLineListItem content = new TwoLineListItem();
         private final JFXButton btnReveal = new JFXButton();
         private final JFXButton btnDelete = new JFXButton();
         private final ResourcepackListPage page;
 
-        public ResourcepackListCell(JFXListView<ResourcepackItem> listView, Holder<Object> lastCell, ResourcepackListPage page) {
+        public ResourcepackListCell(JFXListView<ResourcepackInfoObject> listView, Holder<Object> lastCell, ResourcepackListPage page) {
             super(listView, lastCell);
 
             this.page = page;
@@ -222,24 +276,14 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
         }
 
         @Override
-        protected void updateControl(ResourcepackItem item, boolean empty) {
+        protected void updateControl(ResourcepackListPage.ResourcepackInfoObject item, boolean empty) {
             if (empty || item == null) {
                 return;
             }
 
             ResourcepackFile file = item.getFile();
 
-            byte[] icon = file.getIcon();
-            if (icon != null) {
-                try (ByteArrayInputStream inputStream = new ByteArrayInputStream(icon)) {
-                    imageView.setImage(ImageUtils.DEFAULT.load(inputStream, 64, 64, true, true));
-                } catch (Exception e) {
-                    LOG.warning("Failed to load resourcepack icon " + item.getFile(), e);
-                    imageView.setImage(FXUtils.newBuiltinImage("/assets/img/unknown_pack.png"));
-                }
-            } else {
-                imageView.setImage(FXUtils.newBuiltinImage("/assets/img/unknown_pack.png"));
-            }
+            item.loadIcon(imageView, new WeakReference<>(this.itemProperty()));
 
             content.setTitle(file.getName());
             LocalModFile.Description description = file.getDescription();
