@@ -139,7 +139,7 @@ public final class Controllers {
     public static void prepareVersionPage() {
         if (versionPage == null) {
             LOG.info("Prepare the version page");
-            versionPage = new VersionPage();
+            versionPage = FXUtils.prepareNode(new VersionPage());
         }
     }
 
