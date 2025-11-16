@@ -11,8 +11,8 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.game.NativesDirectoryType;
-import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.game.Renderer;
+import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.FileSystems;
 import java.util.Arrays;
 import java.util.Locale;
 
@@ -250,9 +251,12 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
             if (versionSetting.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
                 String nativesDirName = "natives-" + Platform.SYSTEM_PLATFORM;
                 if (versionId == null) {
-                    return String.format("%s/%s/%s",
+                    String separator = FileSystems.getDefault().getSeparator();
+                    return String.format("%s%s%s%s%s",
                             profile.getRepository().getBaseDirectory().resolve("versions").toAbsolutePath().normalize(),
+                            separator,
                             i18n("settings.advanced.natives_directory.default.version_id"),
+                            separator,
                             nativesDirName
                     );
                 } else {
