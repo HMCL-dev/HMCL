@@ -50,7 +50,7 @@ public class Navigator extends TransitionPane {
     public void init(Node init) {
         stack.push(init);
         backable.set(canGoBack());
-        getChildren().setAll(init);
+        setContent(init);
 
         fireEvent(new NavigationEvent(this, init, Navigation.NavigationDirection.START, NavigationEvent.NAVIGATED));
         if (init instanceof PageAware) ((PageAware) init).onPageShown();

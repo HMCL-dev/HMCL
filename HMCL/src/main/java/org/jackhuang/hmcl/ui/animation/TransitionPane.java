@@ -51,6 +51,10 @@ public class TransitionPane extends StackPane {
         });
     }
 
+    public final void setContent(Node node) {
+        setContent(node, ContainerAnimations.NONE, Duration.ZERO, Interpolator.LINEAR);
+    }
+
     public final void setContent(Node newView, AnimationProducer transition) {
         setContent(newView, transition, Motion.SHORT4);
     }
