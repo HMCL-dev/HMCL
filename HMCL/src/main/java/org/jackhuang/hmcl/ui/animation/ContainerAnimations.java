@@ -211,10 +211,6 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
         @Override
         public Animation animate(Pane container, Node previousNode, Node nextNode, Duration duration, Interpolator interpolator) {
             Timeline timeline = new Timeline();
-            if (previousNode instanceof TransitionPane.EmptyPane) {
-                return timeline;
-            }
-
             Duration halfDuration = duration.divide(2);
 
             timeline.getKeyFrames().add(new KeyFrame(Duration.ZERO,
