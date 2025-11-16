@@ -26,10 +26,16 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.event.EventHandler;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.util.Holder;
+
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * Utility class for ScrollPanes.
@@ -139,6 +145,10 @@ final class ScrollUtils {
         smoothScroll(scrollPane, speed, trackPadAdjustment);
     }
 
+    public static void addSmoothScrolling(VirtualFlow<?> virtualFlow, double speed, double trackPadAdjustment) {
+        smoothScroll(virtualFlow, speed, trackPadAdjustment);
+    }
+
     private static final double[] FRICTIONS = {0.99, 0.1, 0.05, 0.04, 0.03, 0.02, 0.01, 0.04, 0.01, 0.008, 0.008, 0.008, 0.008, 0.0006, 0.0005, 0.00003, 0.00001};
     private static final Duration DURATION = Duration.millis(3);
 
@@ -207,4 +217,53 @@ final class ScrollUtils {
         timeline.setCycleCount(Animation.INDEFINITE);
     }
 
+    private static void smoothScroll(VirtualFlow<?> virtualFlow, double speed, double trackPadAdjustment) {
+        if (!virtualFlow.isVertical())
+            return;
+
+        final double[] derivatives = new double[FRICTIONS.length];
+
+        Timeline timeline = new Timeline();
+        final EventHandler<MouseEvent> mouseHandler = event -> timeline.stop();
+        final EventHandler<ScrollEvent> scrollHandler = event -> {
+            if (event.getEventType() == ScrollEvent.SCROLL) {
+                ScrollDirection scrollDirection = determineScrollDirection(event);
+                if (scrollDirection == ScrollDirection.LEFT || scrollDirection == ScrollDirection.RIGHT) {
+                    return;
+                }
+
+                double currentSpeed = isTrackPad(event, scrollDirection) ? speed / trackPadAdjustment : speed;
+
+                derivatives[0] += scrollDirection.intDirection * currentSpeed;
+                if (timeline.getStatus() == Status.STOPPED) {
+                    timeline.play();
+                }
+                event.consume();
+            }
+        };
+        virtualFlow.addEventHandler(MouseEvent.MOUSE_PRESSED, mouseHandler);
+        virtualFlow.addEventFilter(ScrollEvent.ANY, scrollHandler);
+
+        timeline.getKeyFrames().add(new KeyFrame(DURATION, event -> {
+            for (int i = 0; i < derivatives.length; i++) {
+                derivatives[i] *= FRICTIONS[i];
+            }
+            for (int i = 1; i < derivatives.length; i++) {
+                derivatives[i] += derivatives[i - 1];
+            }
+
+            double dy = derivatives[derivatives.length - 1];
+
+            int cellCount = virtualFlow.getCellCount();
+            double cellHeight = virtualFlow.getFirstVisibleCell().getHeight();
+            double size = cellHeight * cellCount;
+
+            virtualFlow.setPosition(Math.min(Math.max(virtualFlow.getPosition() + dy / size, 0), 1));
+
+            if (Math.abs(dy) < 0.001) {
+                timeline.stop();
+            }
+        }));
+        timeline.setCycleCount(Animation.INDEFINITE);
+    }
 }

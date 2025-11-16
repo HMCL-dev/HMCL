@@ -42,6 +42,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.*;
+import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.*;
@@ -392,6 +393,11 @@ public final class FXUtils {
     public static void smoothScrolling(ScrollPane scrollPane) {
         if (AnimationUtils.isAnimationEnabled())
             ScrollUtils.addSmoothScrolling(scrollPane);
+    }
+
+    public static void smoothScrolling(VirtualFlow<?> virtualFlow) {
+        if (AnimationUtils.isAnimationEnabled())
+            ScrollUtils.addSmoothScrolling(virtualFlow, 1, 7);
     }
 
     /// If the current environment is JavaFX 23 or higher, this method returns [Labeled#textTruncatedProperty()];
