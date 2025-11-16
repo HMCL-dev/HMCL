@@ -234,11 +234,11 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
 
             {
                 AdvancedListBox sideBar = new AdvancedListBox()
-                        .addNavigationDrawerTab(control.tab, control.versionSettingsTab, i18n("settings.game"), SVG.SETTINGS)
-                        .addNavigationDrawerTab(control.tab, control.installerListTab, i18n("settings.tabs.installers"), SVG.DEPLOYED_CODE)
+                        .addNavigationDrawerTab(control.tab, control.versionSettingsTab, i18n("settings.game"), SVG.SETTINGS, SVG.SETTINGS_FILL)
+                        .addNavigationDrawerTab(control.tab, control.installerListTab, i18n("settings.tabs.installers"), SVG.DEPLOYED_CODE, SVG.DEPLOYED_CODE_FILL)
                         .addNavigationDrawerTab(control.tab, control.modListTab, i18n("mods.manage"), SVG.EXTENSION, SVG.EXTENSION_FILL)
                         .addNavigationDrawerTab(control.tab, control.worldListTab, i18n("world.manage"), SVG.PUBLIC)
-                        .addNavigationDrawerTab(control.tab, control.schematicsTab, i18n("schematics.manage"), SVG.SCHEMA);
+                        .addNavigationDrawerTab(control.tab, control.schematicsTab, i18n("schematics.manage"), SVG.SCHEMA, SVG.SCHEMA_FILL);
                 VBox.setVgrow(sideBar, Priority.ALWAYS);
 
                 PopupMenu browseList = new PopupMenu();
