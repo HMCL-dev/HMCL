@@ -146,7 +146,6 @@ final class ScrollUtils {
         addSmoothScrolling(virtualFlow, 1);
     }
 
-
     /// @author Glavo
     public static void addSmoothScrolling(VirtualFlow<?> virtualFlow, double speed) {
         addSmoothScrolling(virtualFlow, speed, 7);
