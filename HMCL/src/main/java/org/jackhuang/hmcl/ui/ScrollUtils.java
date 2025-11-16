@@ -25,6 +25,7 @@ import javafx.animation.Animation.Status;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.event.EventHandler;
+import javafx.scene.control.IndexedCell;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.input.MouseEvent;
@@ -145,6 +146,18 @@ final class ScrollUtils {
         smoothScroll(scrollPane, speed, trackPadAdjustment);
     }
 
+    /// @author Glavo
+    public static void addSmoothScrolling(VirtualFlow<?> virtualFlow) {
+        addSmoothScrolling(virtualFlow, 1);
+    }
+
+
+    /// @author Glavo
+    public static void addSmoothScrolling(VirtualFlow<?> virtualFlow, double speed) {
+        addSmoothScrolling(virtualFlow, speed, 7);
+    }
+
+    /// @author Glavo
     public static void addSmoothScrolling(VirtualFlow<?> virtualFlow, double speed, double trackPadAdjustment) {
         smoothScroll(virtualFlow, speed, trackPadAdjustment);
     }
@@ -217,6 +230,7 @@ final class ScrollUtils {
         timeline.setCycleCount(Animation.INDEFINITE);
     }
 
+    /// @author Glavo
     private static void smoothScroll(VirtualFlow<?> virtualFlow, double speed, double trackPadAdjustment) {
         if (!virtualFlow.isVertical())
             return;
@@ -224,6 +238,7 @@ final class ScrollUtils {
         final double[] derivatives = new double[FRICTIONS.length];
 
         Timeline timeline = new Timeline();
+        Holder<ScrollDirection> scrollDirectionHolder = new Holder<>();
         final EventHandler<MouseEvent> mouseHandler = event -> timeline.stop();
         final EventHandler<ScrollEvent> scrollHandler = event -> {
             if (event.getEventType() == ScrollEvent.SCROLL) {
@@ -231,7 +246,7 @@ final class ScrollUtils {
                 if (scrollDirection == ScrollDirection.LEFT || scrollDirection == ScrollDirection.RIGHT) {
                     return;
                 }
-
+                scrollDirectionHolder.value = scrollDirection;
                 double currentSpeed = isTrackPad(event, scrollDirection) ? speed / trackPadAdjustment : speed;
 
                 derivatives[0] += scrollDirection.intDirection * currentSpeed;
@@ -255,10 +270,13 @@ final class ScrollUtils {
             double dy = derivatives[derivatives.length - 1];
 
             int cellCount = virtualFlow.getCellCount();
-            double cellHeight = virtualFlow.getFirstVisibleCell().getHeight();
-            double size = cellHeight * cellCount;
+            IndexedCell<?> firstVisibleCell = virtualFlow.getFirstVisibleCell();
+            double height = firstVisibleCell != null ? firstVisibleCell.getHeight() * cellCount : 0.0;
 
-            virtualFlow.setPosition(Math.min(Math.max(virtualFlow.getPosition() + dy / size, 0), 1));
+            double delta = height > 0.0
+                    ? dy / height
+                    : (scrollDirectionHolder.value == ScrollDirection.DOWN ? 0.001 : -0.001);
+            virtualFlow.setPosition(Math.min(Math.max(virtualFlow.getPosition() + delta, 0), 1));
 
             if (Math.abs(dy) < 0.001) {
                 timeline.stop();
