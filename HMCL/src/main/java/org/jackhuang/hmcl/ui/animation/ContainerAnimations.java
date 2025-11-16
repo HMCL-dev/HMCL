@@ -26,6 +26,12 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 public enum ContainerAnimations implements TransitionPane.AnimationProducer {
     NONE {
         @Override
+        public void init(TransitionPane container, Node previousNode, Node nextNode) {
+            AnimationUtils.reset(previousNode, false);
+            AnimationUtils.reset(nextNode, true);
+        }
+
+        @Override
         public Timeline animate(
                 Pane container, Node previousNode, Node nextNode,
                 Duration duration, Interpolator interpolator) {
@@ -46,9 +52,10 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
         public Timeline animate(
                 Pane container, Node previousNode, Node nextNode,
                 Duration duration, Interpolator interpolator) {
-            return new Timeline(new KeyFrame(Duration.ZERO,
-                    new KeyValue(previousNode.opacityProperty(), 1, interpolator),
-                    new KeyValue(nextNode.opacityProperty(), 0, interpolator)),
+            return new Timeline(
+                    new KeyFrame(Duration.ZERO,
+                            new KeyValue(previousNode.opacityProperty(), 1, interpolator),
+                            new KeyValue(nextNode.opacityProperty(), 0, interpolator)),
                     new KeyFrame(duration,
                             new KeyValue(previousNode.opacityProperty(), 0, interpolator),
                             new KeyValue(nextNode.opacityProperty(), 1, interpolator)));
@@ -66,7 +73,8 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
     SWIPE_LEFT {
         @Override
         public void init(TransitionPane container, Node previousNode, Node nextNode) {
-            super.init(container, previousNode, nextNode);
+            AnimationUtils.reset(previousNode, true);
+            AnimationUtils.reset(nextNode, true);
             nextNode.setTranslateX(container.getWidth());
         }
 
@@ -94,7 +102,8 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
     SWIPE_RIGHT {
         @Override
         public void init(TransitionPane container, Node previousNode, Node nextNode) {
-            super.init(container, previousNode, nextNode);
+            AnimationUtils.reset(previousNode, true);
+            AnimationUtils.reset(nextNode, true);
             nextNode.setTranslateX(-container.getWidth());
         }
 
@@ -200,10 +209,6 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
 
     NAVIGATION {
         @Override
-        public void init(TransitionPane container, Node previousNode, Node nextNode) {
-        }
-
-        @Override
         public Animation animate(Pane container, Node previousNode, Node nextNode, Duration duration, Interpolator interpolator) {
             Timeline timeline = new Timeline();
             if (previousNode instanceof TransitionPane.EmptyPane) {
@@ -248,20 +253,6 @@ public enum ContainerAnimations implements TransitionPane.AnimationProducer {
 
             return timeline;
         }
-    }
+    },
     ;
-
-    protected static void reset(Node node) {
-        node.setTranslateX(0);
-        node.setTranslateY(0);
-        node.setScaleX(1);
-        node.setScaleY(1);
-        node.setOpacity(1);
-    }
-
-    @Override
-    public void init(TransitionPane container, Node previousNode, Node nextNode) {
-        reset(previousNode);
-        reset(nextNode);
-    }
 }

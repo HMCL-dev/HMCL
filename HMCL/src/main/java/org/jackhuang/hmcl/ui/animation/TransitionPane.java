@@ -115,6 +115,8 @@ public class TransitionPane extends StackPane {
 
     public interface AnimationProducer {
         default void init(TransitionPane container, Node previousNode, Node nextNode) {
+            AnimationUtils.reset(previousNode, true);
+            AnimationUtils.reset(nextNode, false);
         }
 
         Animation animate(Pane container, Node previousNode, Node nextNode,
