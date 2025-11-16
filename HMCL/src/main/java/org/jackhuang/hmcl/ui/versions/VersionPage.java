@@ -233,52 +233,12 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
             super(control);
 
             {
-                AdvancedListItem versionSettingsItem = new AdvancedListItem();
-                versionSettingsItem.getStyleClass().add("navigation-drawer-item");
-                versionSettingsItem.setTitle(i18n("settings.game"));
-                versionSettingsItem.setLeftGraphic(wrap(SVG.SETTINGS));
-                versionSettingsItem.setActionButtonVisible(false);
-                versionSettingsItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.versionSettingsTab));
-                versionSettingsItem.setOnAction(e -> control.tab.select(control.versionSettingsTab));
-
-                AdvancedListItem installerListItem = new AdvancedListItem();
-                installerListItem.getStyleClass().add("navigation-drawer-item");
-                installerListItem.setTitle(i18n("settings.tabs.installers"));
-                installerListItem.setLeftGraphic(wrap(SVG.DEPLOYED_CODE));
-                installerListItem.setActionButtonVisible(false);
-                installerListItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.installerListTab));
-                installerListItem.setOnAction(e -> control.tab.select(control.installerListTab));
-
-                AdvancedListItem modListItem = new AdvancedListItem();
-                modListItem.getStyleClass().add("navigation-drawer-item");
-                modListItem.setTitle(i18n("mods.manage"));
-                modListItem.setLeftGraphic(wrap(SVG.EXTENSION));
-                modListItem.setActionButtonVisible(false);
-                modListItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.modListTab));
-                modListItem.setOnAction(e -> control.tab.select(control.modListTab));
-
-                AdvancedListItem worldListItem = new AdvancedListItem();
-                worldListItem.getStyleClass().add("navigation-drawer-item");
-                worldListItem.setTitle(i18n("world.manage"));
-                worldListItem.setLeftGraphic(wrap(SVG.PUBLIC));
-                worldListItem.setActionButtonVisible(false);
-                worldListItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.worldListTab));
-                worldListItem.setOnAction(e -> control.tab.select(control.worldListTab));
-
-                AdvancedListItem schematicsListItem = new AdvancedListItem();
-                schematicsListItem.getStyleClass().add("navigation-drawer-item");
-                schematicsListItem.setTitle(i18n("schematics.manage"));
-                schematicsListItem.setLeftGraphic(wrap(SVG.SCHEMA));
-                schematicsListItem.setActionButtonVisible(false);
-                schematicsListItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.schematicsTab));
-                schematicsListItem.setOnAction(e -> control.tab.select(control.schematicsTab));
-
                 AdvancedListBox sideBar = new AdvancedListBox()
-                        .add(versionSettingsItem)
-                        .add(installerListItem)
-                        .add(modListItem)
-                        .add(worldListItem)
-                        .add(schematicsListItem);
+                        .addNavigationDrawerTab(control.tab, control.versionSettingsTab, i18n("settings.game"), SVG.SETTINGS)
+                        .addNavigationDrawerTab(control.tab, control.installerListTab, i18n("settings.tabs.installers"), SVG.DEPLOYED_CODE)
+                        .addNavigationDrawerTab(control.tab, control.modListTab, i18n("mods.manage"), SVG.EXTENSION, SVG.EXTENSION_FILL)
+                        .addNavigationDrawerTab(control.tab, control.worldListTab, i18n("world.manage"), SVG.PUBLIC)
+                        .addNavigationDrawerTab(control.tab, control.schematicsTab, i18n("schematics.manage"), SVG.SCHEMA);
                 VBox.setVgrow(sideBar, Priority.ALWAYS);
 
                 PopupMenu browseList = new PopupMenu();
