@@ -397,7 +397,7 @@ public final class FXUtils {
 
     public static void smoothScrolling(VirtualFlow<?> virtualFlow) {
         if (AnimationUtils.isAnimationEnabled())
-            ScrollUtils.addSmoothScrolling(virtualFlow, 1, 7);
+            ScrollUtils.addSmoothScrolling(virtualFlow);
     }
 
     /// If the current environment is JavaFX 23 or higher, this method returns [Labeled#textTruncatedProperty()];
