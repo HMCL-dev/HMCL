@@ -33,11 +33,6 @@ import javafx.scene.input.ScrollEvent;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.util.Holder;
 
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.VarHandle;
-
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
-
 /**
  * Utility class for ScrollPanes.
  */
