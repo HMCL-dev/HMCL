@@ -116,10 +116,12 @@ public class AdvancedListBox extends ScrollPane {
         leftGraphic.setAlignment(Pos.CENTER);
         FXUtils.setLimitWidth(leftGraphic, 30);
         FXUtils.setLimitHeight(leftGraphic, 20);
-        leftGraphic.setPadding(new Insets(0, 0, 0, 0));
+        leftGraphic.setPadding(Insets.EMPTY);
         leftGraphic.setContent(item.isActive() ? selectedIcon : unselectedIcon, ContainerAnimations.NONE);
         FXUtils.onChange(item.activeProperty(), active ->
                 leftGraphic.setContent(active ? selectedIcon : unselectedIcon, ContainerAnimations.FADE));
+
+        item.setLeftGraphic(leftGraphic);
         return add(item);
     }
 
