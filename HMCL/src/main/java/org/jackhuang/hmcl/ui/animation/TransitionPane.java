@@ -72,14 +72,14 @@ public class TransitionPane extends StackPane {
         getChildren().setAll(previousNode, newView);
 
         setMouseTransparent(true);
-        transition.init(this, previousNode, getCurrentNode());
+        transition.init(this, previousNode, newView);
 
         // runLater or "init" will not work
         Platform.runLater(() -> {
             Animation newAnimation = transition.animate(
                     this,
                     previousNode,
-                    getCurrentNode(),
+                    newView,
                     duration, interpolator);
             newAnimation.setOnFinished(e -> {
                 setMouseTransparent(false);
