@@ -29,7 +29,10 @@ import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
+import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
+import org.jackhuang.hmcl.ui.construct.PopupMenu;
+import org.jackhuang.hmcl.ui.construct.TabHeader;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.ChunkBaseApp;
@@ -53,6 +56,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
     private final TabHeader header;
     private final TabHeader.Tab<WorldInfoPage> worldInfoTab = new TabHeader.Tab<>("worldInfoPage");
+    private final TabHeader.Tab<GameRulePage> gameRuleTab = new TabHeader.Tab<>("gameRulePage");
     private final TabHeader.Tab<WorldBackupsPage> worldBackupsTab = new TabHeader.Tab<>("worldBackupsPage");
     private final TabHeader.Tab<DatapackListPage> datapackTab = new TabHeader.Tab<>("datapackListPage");
 
@@ -65,9 +69,10 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         this.backupsDir = backupsDir;
 
         this.state = new SimpleObjectProperty<>(State.fromTitle(i18n("world.manage.title", world.getWorldName())));
-        this.header = new TabHeader(worldInfoTab, worldBackupsTab);
+        this.header = new TabHeader(worldInfoTab, gameRuleTab, worldBackupsTab);
 
         worldInfoTab.setNodeSupplier(() -> new WorldInfoPage(this));
+        gameRuleTab.setNodeSupplier(() -> new GameRulePage(this));
         worldBackupsTab.setNodeSupplier(() -> new WorldBackupsPage(this));
         datapackTab.setNodeSupplier(() -> new DatapackListPage(this));
 
@@ -83,6 +88,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
         AdvancedListBox sideBar = new AdvancedListBox()
                 .addNavigationDrawerTab(header, worldInfoTab, i18n("world.info"), SVG.INFO)
+                .addNavigationDrawerTab(header, gameRuleTab, "游戏规则", SVG.INFO)
                 .addNavigationDrawerTab(header, worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE);
 
         if (world.getGameVersion() != null && // old game will not write game version to level.dat
