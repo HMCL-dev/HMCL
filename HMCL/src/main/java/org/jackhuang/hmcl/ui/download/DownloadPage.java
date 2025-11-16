@@ -108,12 +108,12 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
         AdvancedListBox sideBar = new AdvancedListBox()
                 .startCategory(i18n("download.game").toUpperCase(Locale.ROOT))
-                .addNavigationDrawerTab(tab, newGameTab, i18n("game"), SVG.STADIA_CONTROLLER)
-                .addNavigationDrawerTab(tab, modpackTab, i18n("modpack"), SVG.PACKAGE2)
+                .addNavigationDrawerTab(tab, newGameTab, i18n("game"), SVG.STADIA_CONTROLLER, SVG.STADIA_CONTROLLER_FILL)
+                .addNavigationDrawerTab(tab, modpackTab, i18n("modpack"), SVG.PACKAGE2, SVG.PACKAGE2_FILL)
                 .startCategory(i18n("download.content").toUpperCase(Locale.ROOT))
-                .addNavigationDrawerTab(tab, modTab, i18n("mods"), SVG.EXTENSION)
+                .addNavigationDrawerTab(tab, modTab, i18n("mods"), SVG.EXTENSION, SVG.EXTENSION_FILL)
                 .addNavigationDrawerTab(tab, resourcePackTab, i18n("resourcepack"), SVG.TEXTURE)
-                .addNavigationDrawerTab(tab, shaderTab, i18n("download.shader"), SVG.WB_SUNNY)
+                .addNavigationDrawerTab(tab, shaderTab, i18n("download.shader"), SVG.WB_SUNNY, SVG.WB_SUNNY_FILL)
                 .addNavigationDrawerTab(tab, worldTab, i18n("world"), SVG.PUBLIC);
         FXUtils.setLimitWidth(sideBar, 200);
         setLeft(sideBar);
