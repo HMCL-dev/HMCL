@@ -87,14 +87,14 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         setLeft(left);
 
         AdvancedListBox sideBar = new AdvancedListBox()
-                .addNavigationDrawerTab(header, worldInfoTab, i18n("world.info"), SVG.INFO)
-                .addNavigationDrawerTab(header, gameRuleTab, "游戏规则", SVG.INFO)
-                .addNavigationDrawerTab(header, worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE);
+                .addNavigationDrawerTab(header, worldInfoTab, i18n("world.info"), SVG.INFO, SVG.INFO_FILL)
+                .addNavigationDrawerTab(header, gameRuleTab, "游戏规则", SVG.INFO, SVG.INFO_FILL)
+                .addNavigationDrawerTab(header, worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE, SVG.ARCHIVE_FILL);
 
         if (world.getGameVersion() != null && // old game will not write game version to level.dat
                 GameVersionNumber.asGameVersion(world.getGameVersion()).isAtLeast("1.13", "17w43a")) {
             header.getTabs().add(datapackTab);
-            sideBar.addNavigationDrawerTab(header, datapackTab, i18n("world.datapack"), SVG.EXTENSION);
+            sideBar.addNavigationDrawerTab(header, datapackTab, i18n("world.datapack"), SVG.EXTENSION, SVG.EXTENSION_FILL);
         }
 
         left.setTop(sideBar);
