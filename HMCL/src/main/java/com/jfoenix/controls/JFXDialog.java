@@ -305,7 +305,6 @@ public class JFXDialog extends StackPane {
             setVisible(false);
             closeDialog();
         }
-
     }
 
     private void closeDialog() {
