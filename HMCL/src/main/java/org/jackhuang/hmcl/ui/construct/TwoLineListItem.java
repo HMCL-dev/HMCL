@@ -23,6 +23,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
@@ -57,6 +58,7 @@ public class TwoLineListItem extends VBox {
 
         HBox firstLine = new HBox();
         firstLine.getStyleClass().add("first-line");
+        firstLine.setAlignment(Pos.CENTER_LEFT);
 
         Label lblTitle = new Label();
         lblTitle.getStyleClass().add("title");
@@ -132,7 +134,7 @@ public class TwoLineListItem extends VBox {
         if (showToolTipIfTruncated) {
             FXUtils.showTooltipWhenTruncated(tagLabel);
         }
-        HBox.setMargin(tagLabel, new Insets(0, 6, 0, 0));
+        HBox.setMargin(tagLabel, new Insets(0, 4, 0, 0));
         tagLabel.getStyleClass().add(StyleClass);
         return tagLabel;
     }

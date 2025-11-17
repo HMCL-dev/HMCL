@@ -287,26 +287,29 @@
 
 .two-line-list-item > .first-line > .tag {
     -fx-text-fill: -fx-base-color;
-    -fx-background-color: -fx-base-rippler-color;
-    -fx-padding: 2;
+    -fx-background-color: rgba(209, 231, 246, 0.3);
+    -fx-padding: 1 2 1 2;
     -fx-font-weight: normal;
-    -fx-font-size: 12px;
+    -fx-font-size: 11px;
+    -fx-background-radius: 2;
 }
 
 .two-line-list-item > .first-line > .tag-warning {
     -fx-text-fill: #d34336;
     -fx-background-color: #f1aeb5;
-    -fx-padding: 2;
+    -fx-padding: 1 2 1 2;
     -fx-font-weight: normal;
-    -fx-font-size: 12px;
+    -fx-font-size: 11px;
+    -fx-background-radius: 2;
 }
 
 .two-line-list-item > .first-line > .tag-overflow {
     -fx-text-fill: -fx-base-color;
-    -fx-background-color: rgba(202, 227, 244, 0.3);
-    -fx-padding: 2;
+    -fx-background-color: rgba(197, 224, 243, 0.3);
+    -fx-padding: 1 2 1 2;
     -fx-font-weight: normal;
-    -fx-font-size: 12px;
+    -fx-font-size: 11px;
+    -fx-background-radius: 2;
 }
 
 .two-line-item-second-large {
