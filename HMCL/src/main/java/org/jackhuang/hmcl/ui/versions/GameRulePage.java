@@ -175,9 +175,6 @@ public class GameRulePage extends ListPageBase<GameRulePage.GameRuleInfo> {
 
         public GameRuleListCell(JFXListView<GameRuleInfo> listView, Holder<Object> lastCell) {
             super(listView, lastCell);
-            //setSelectable();
-
-            //getContainer().getChildren().setAll(hBox);
         }
 
         @Override
