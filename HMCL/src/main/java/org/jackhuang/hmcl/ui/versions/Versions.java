@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.game.GameDirectoryType;
 import org.jackhuang.hmcl.game.GameRepository;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.setting.*;
@@ -126,7 +127,7 @@ public final class Versions {
 
     public static CompletableFuture<String> renameVersion(Profile profile, String version) {
         return Controllers.prompt(i18n("version.manage.rename.message"), (newName, resolve, reject) -> {
-            if (!FileUtils.isNameValid(newName)) {
+            if (!HMCLGameRepository.isValidVersionId(newName)) {
                 reject.accept(i18n("install.new_game.malformed"));
                 return;
             }
@@ -157,6 +158,10 @@ public final class Versions {
                 new PromptDialogPane.Builder(i18n("version.manage.duplicate.prompt"), (res, resolve, reject) -> {
                     String newVersionName = ((PromptDialogPane.Builder.StringQuestion) res.get(1)).getValue();
                     boolean copySaves = ((PromptDialogPane.Builder.BooleanQuestion) res.get(2)).getValue();
+                    if (!HMCLGameRepository.isValidVersionId(newVersionName)) {
+                        reject.accept(i18n("install.new_game.malformed"));
+                        return;
+                    }
                     Task.runAsync(() -> profile.getRepository().duplicateVersion(version, newVersionName, copySaves))
                             .thenComposeAsync(profile.getRepository().refreshVersionsAsync())
                             .whenComplete(Schedulers.javafx(), (result, exception) -> {
@@ -164,13 +169,15 @@ public final class Versions {
                                     resolve.run();
                                 } else {
                                     reject.accept(StringUtils.getStackTrace(exception));
-                                    profile.getRepository().removeVersionFromDisk(newVersionName);
+                                    if (!profile.getRepository().versionIdConflicts(newVersionName)) {
+                                        profile.getRepository().removeVersionFromDisk(newVersionName);
+                                    }
                                 }
                             }).start();
                 })
                         .addQuestion(new PromptDialogPane.Builder.HintQuestion(i18n("version.manage.duplicate.confirm")))
                         .addQuestion(new PromptDialogPane.Builder.StringQuestion(null, version,
-                                new Validator(i18n("install.new_game.already_exists"), newVersionName -> !profile.getRepository().hasVersion(newVersionName))))
+                                new Validator(i18n("install.new_game.already_exists"), newVersionName -> !profile.getRepository().versionIdConflicts(newVersionName))))
                         .addQuestion(new PromptDialogPane.Builder.BooleanQuestion(i18n("version.manage.duplicate.duplicate_save"), false)));
     }
 
