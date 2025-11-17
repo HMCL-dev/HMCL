@@ -17,6 +17,7 @@ import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.jetbrains.annotations.Nullable;
@@ -251,12 +252,9 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
             if (versionSetting.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
                 String nativesDirName = "natives-" + Platform.SYSTEM_PLATFORM;
                 if (versionId == null) {
-                    String separator = FileSystems.getDefault().getSeparator();
-                    return String.format("%s%s%s%s%s",
-                            profile.getRepository().getBaseDirectory().resolve("versions").toAbsolutePath().normalize(),
-                            separator,
+                    return String.join(FileSystems.getDefault().getSeparator(),
+                            FileUtils.getAbsolutePath(profile.getRepository().getBaseDirectory().resolve("versions")),
                             i18n("settings.advanced.natives_directory.default.version_id"),
-                            separator,
                             nativesDirName
                     );
                 } else {
