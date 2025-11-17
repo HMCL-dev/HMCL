@@ -60,14 +60,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Note: for JFXDialog to work properly, the root node <b>MUST</b>
- * be of type {@link StackPane}
- *
- * @author Shadi Shaheen
- * @version 1.0
- * @since 2016-03-09
- */
+/// Note: for JFXDialog to work properly, the root node **MUST**
+/// be of type [StackPane]
+///
+/// @author Shadi Shaheen
+/// @version 1.0
+/// @since 2016-03-09
 @DefaultProperty(value = "content")
 public class JFXDialog extends StackPane {
 
@@ -87,7 +85,7 @@ public class JFXDialog extends StackPane {
     private Region content;
     private Transition animation;
 
-    EventHandler<? super MouseEvent> closeHandler = e -> close();
+    private final EventHandler<? super MouseEvent> closeHandler = e -> close();
 
     /// creates empty JFXDialog control with CENTER animation type
     public JFXDialog() {
@@ -171,7 +169,7 @@ public class JFXDialog extends StackPane {
             this.addEventHandler(MouseEvent.MOUSE_PRESSED, closeHandler);
         }
         // prevent propagating the events to overlay pane
-        contentHolder.addEventHandler(MouseEvent.ANY, e -> e.consume());
+        contentHolder.addEventHandler(MouseEvent.ANY, Event::consume);
     }
 
     /***************************************************************************
@@ -180,9 +178,7 @@ public class JFXDialog extends StackPane {
      *                                                                         *
      **************************************************************************/
 
-    /**
-     * @return the dialog container
-     */
+    /// @return the dialog container
     public StackPane getDialogContainer() {
         return dialogContainer;
     }
