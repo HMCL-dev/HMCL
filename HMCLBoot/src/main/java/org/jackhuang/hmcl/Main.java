@@ -19,11 +19,15 @@ package org.jackhuang.hmcl;
 
 import org.jackhuang.hmcl.util.SwingUtils;
 
+import javax.swing.*;
+import java.util.ResourceBundle;
+
 /**
  * @author Glavo
  */
 public final class Main {
     private static final int MINIMUM_JAVA_VERSION = 17;
+    private static final String DOWNLOAD_PAGE = "https://hmcl.huangyuhui.net/download/";
 
     private Main() {
     }
@@ -73,14 +77,36 @@ public final class Main {
         }
     }
 
+    static void showErrorAndExit(String[] args) {
+        SwingUtils.initLookAndFeel();
+
+        ResourceBundle resourceBundle = BootProperties.getResourceBundle();
+        String errorTitle = resourceBundle.getString("boot.message.error");
+
+        if (args.length > 0 && args[0].equals("--apply-to")) {
+            String errorMessage = resourceBundle.getString("boot.manual_update");
+            System.err.println(errorMessage);
+            int result = JOptionPane.showOptionDialog(null, errorMessage, errorTitle, JOptionPane.YES_NO_OPTION,
+                    JOptionPane.ERROR_MESSAGE, null, null, null);
+
+            if (result == JOptionPane.YES_OPTION) {
+                System.out.println("Open " + DOWNLOAD_PAGE);
+                DesktopUtils.openLink(DOWNLOAD_PAGE);
+            }
+        } else {
+            String errorMessage = resourceBundle.getString("boot.unsupported_java_version");
+            System.err.println(errorMessage);
+            SwingUtils.showErrorDialog(errorMessage, errorTitle);
+        }
+
+        System.exit(1);
+    }
+
     public static void main(String[] args) throws Throwable {
         if (getJavaFeatureVersion(System.getProperty("java.version")) >= MINIMUM_JAVA_VERSION) {
             EntryPoint.main(args);
         } else {
-            String errorMessage = BootProperties.getResourceBundle().getString("boot.unsupported_java_version");
-            System.err.println(errorMessage);
-            SwingUtils.showErrorDialog(errorMessage);
-            System.exit(1);
+            showErrorAndExit(args);
         }
     }
 }
