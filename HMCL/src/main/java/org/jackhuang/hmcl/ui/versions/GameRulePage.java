@@ -173,24 +173,18 @@ public class GameRulePage extends ListPageBase<GameRulePage.GameRuleInfo> {
 
     static class GameRuleListCell extends MDListCell<GameRuleInfo> {
 
-        HBox hBox;
-
         public GameRuleListCell(JFXListView<GameRuleInfo> listView, Holder<Object> lastCell) {
             super(listView, lastCell);
-
-            hBox = new HBox(8);
-            hBox.setPickOnBounds(false);
-            hBox.setAlignment(Pos.CENTER_LEFT);
             //setSelectable();
 
-            getContainer().getChildren().setAll(hBox);
+            //getContainer().getChildren().setAll(hBox);
         }
 
         @Override
         protected void updateControl(GameRuleInfo item, boolean empty) {
             if (empty) return;
 
-            hBox.getChildren().setAll(item.container);
+            getContainer().getChildren().setAll(item.container);
         }
     }
 
