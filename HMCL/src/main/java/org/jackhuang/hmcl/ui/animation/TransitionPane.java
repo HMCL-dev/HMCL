@@ -54,6 +54,7 @@ public class TransitionPane extends StackPane {
         currentNode = newView;
 
         if (!AnimationUtils.isAnimationEnabled() || previousNode == null || transition == ContainerAnimations.NONE) {
+            AnimationUtils.reset(newView, true);
             getChildren().setAll(newView);
             return;
         }
