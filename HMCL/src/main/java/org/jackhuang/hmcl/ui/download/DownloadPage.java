@@ -39,7 +39,6 @@ import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
-import org.jackhuang.hmcl.ui.construct.TabControl;
 import org.jackhuang.hmcl.ui.construct.TabHeader;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
@@ -118,13 +117,6 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         setLeft(sideBar);
 
         setCenter(transitionPane);
-    }
-
-    private void selectTabIfCurseForgeAvailable(TabControl.Tab<?> newTab) {
-        if (CurseForgeRemoteModRepository.isAvailable())
-            tab.select(newTab);
-        else
-            Controllers.dialog(i18n("download.curseforge.unavailable"));
     }
 
     private static <T extends Node> Supplier<T> loadVersionFor(Supplier<T> nodeSupplier) {
@@ -214,7 +206,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     }
 
     public void showWorldDownloads() {
-        tab.select(worldTab);
+        tab.select(worldTab, false);
     }
 
     private static final class DownloadNavigator implements Navigation {

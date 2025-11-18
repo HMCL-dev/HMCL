@@ -89,11 +89,11 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
 
     public void showGameSettings(Profile profile) {
         gameTab.getNode().loadVersion(profile, null);
-        tab.select(gameTab);
+        tab.select(gameTab, false);
     }
 
     public void showFeedback() {
-        tab.select(feedbackTab);
+        tab.select(feedbackTab, false);
     }
 
     @Override
