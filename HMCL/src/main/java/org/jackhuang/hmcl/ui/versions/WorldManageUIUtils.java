@@ -18,7 +18,7 @@ import java.nio.file.Path;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class WorldManageUIUtils {
+public final class WorldManageUIUtils {
     private WorldManageUIUtils() {
     }
 
