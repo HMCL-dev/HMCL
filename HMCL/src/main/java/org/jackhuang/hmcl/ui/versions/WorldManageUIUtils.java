@@ -19,6 +19,9 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class WorldManageUIUtils {
+    private WorldManageUIUtils() {
+    }
+
     public static void delete(World world, Runnable runnable) {
         delete(world, runnable, null);
     }
