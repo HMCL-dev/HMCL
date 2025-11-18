@@ -104,7 +104,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         Profiles.registerVersionsListener(this::loadVersions);
 
         tab.select(newGameTab);
-        transitionPane.bindTabHeader(tab);
+        tab.bindContentPane(transitionPane);
 
         AdvancedListBox sideBar = new AdvancedListBox()
                 .startCategory(i18n("download.game").toUpperCase(Locale.ROOT))

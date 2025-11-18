@@ -36,6 +36,9 @@ import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Scale;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
+import org.jackhuang.hmcl.ui.animation.Motion;
+import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
 @SuppressWarnings("deprecation")
@@ -125,6 +128,17 @@ public class TabHeader extends Control implements TabControl, PageAware {
      */
     public void setSide(Side side) {
         this.side.set(side);
+    }
+
+    public void bindContentPane(TransitionPane pane) {
+        pane.setContent(getSelectionModel().getSelectedItem().getNode(), ContainerAnimations.NONE);
+        FXUtils.onChange(getSelectionModel().selectedItemProperty(), newValue -> {
+            pane.setContent(newValue.getNode(),
+                    ContainerAnimations.SLIDE_UP_FADE_IN,
+                    Motion.MEDIUM4,
+                    Motion.EASE_IN_OUT_CUBIC_EMPHASIZED
+            );
+        });
     }
 
     @Override

@@ -58,7 +58,7 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
         statusPage.setNodeSupplier(TerracottaControllerPage::new);
         tab = new TabHeader(statusPage);
         tab.select(statusPage);
-        transitionPane.bindTabHeader(tab);
+        tab.bindContentPane(transitionPane);
 
         BorderPane left = new BorderPane();
         FXUtils.setLimitWidth(left, 200);

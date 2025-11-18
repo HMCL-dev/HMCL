@@ -59,7 +59,7 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
 
         tab.select(gameTab);
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, event -> gameTab.getNode().loadVersion(Profiles.getSelectedProfile(), null));
-        transitionPane.bindTabHeader(tab);
+        tab.bindContentPane(transitionPane);
 
         AdvancedListBox sideBar = new AdvancedListBox()
                 .addNavigationDrawerTab(tab, gameTab, i18n("settings.type.global.manage"), SVG.STADIA_CONTROLLER, SVG.STADIA_CONTROLLER_FILL)

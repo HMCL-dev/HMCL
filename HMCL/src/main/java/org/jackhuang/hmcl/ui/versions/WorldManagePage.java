@@ -72,7 +72,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         datapackTab.setNodeSupplier(() -> new DatapackListPage(this));
 
         header.select(worldInfoTab);
-        transitionPane.bindTabHeader(header);
+        header.bindContentPane(transitionPane);
 
         setCenter(transitionPane);
 
