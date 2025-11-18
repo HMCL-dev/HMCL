@@ -88,6 +88,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class TerracottaControllerPage extends StackPane {
     private static final String FEEDBACK_TIP = "terracotta-feedback";
+    private static final int TERRACOTTA_AGREEMENT_VERSION = 2;
     private static final ObjectProperty<TerracottaState> UI_STATE = new SimpleObjectProperty<>();
 
     static {
@@ -182,7 +183,7 @@ public class TerracottaControllerPage extends StackPane {
                 download.setSubtitle(i18n("terracotta.status.uninitialized.desc"));
                 download.setRightIcon(SVG.ARROW_FORWARD);
                 FXUtils.onClicked(download, () -> {
-                    if (globalConfig().getTerracottaAgreementVersion() >= 1) {
+                    if (globalConfig().getTerracottaAgreementVersion() >= TERRACOTTA_AGREEMENT_VERSION) {
                         TerracottaState.Preparing s = TerracottaManager.install(null);
                         if (s != null) {
                             UI_STATE.set(s);
@@ -200,7 +201,7 @@ public class TerracottaControllerPage extends StackPane {
                         }
                     } else {
                         Controllers.confirmWithCountdown(i18n("terracotta.confirm.desc"), i18n("terracotta.confirm.title"), 5, MessageDialogPane.MessageType.INFO, () -> {
-                            globalConfig().setTerracottaAgreementVersion(1);
+                            globalConfig().setTerracottaAgreementVersion(TERRACOTTA_AGREEMENT_VERSION);
                             TerracottaState.Preparing s = TerracottaManager.install(null);
                             if (s != null) {
                                 UI_STATE.set(s);
