@@ -83,12 +83,10 @@ import java.util.Locale;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class TerracottaControllerPage extends StackPane {
     private static final String FEEDBACK_TIP = "terracotta-feedback";
-    private static final int TERRACOTTA_AGREEMENT_VERSION = 2;
     private static final ObjectProperty<TerracottaState> UI_STATE = new SimpleObjectProperty<>();
 
     static {
@@ -183,31 +181,20 @@ public class TerracottaControllerPage extends StackPane {
                 download.setSubtitle(i18n("terracotta.status.uninitialized.desc"));
                 download.setRightIcon(SVG.ARROW_FORWARD);
                 FXUtils.onClicked(download, () -> {
-                    if (globalConfig().getTerracottaAgreementVersion() >= TERRACOTTA_AGREEMENT_VERSION) {
-                        TerracottaState.Preparing s = TerracottaManager.install(null);
-                        if (s != null) {
-                            UI_STATE.set(s);
-                        }
+                    TerracottaState.Preparing s = TerracottaManager.install(null);
+                    if (s != null) {
+                        UI_STATE.set(s);
+                    }
 
-                        if (uninitialized.hasLegacy() && I18n.isUseChinese()) {
-                            Object feedback = config().getShownTips().get(FEEDBACK_TIP);
-                            if (!(feedback instanceof Number number) || number.intValue() < 1) {
-                                Controllers.confirm(i18n("terracotta.feedback.desc"), i18n("terracotta.feedback.title"), () -> {
-                                    FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK);
-                                    config().getShownTips().put(FEEDBACK_TIP, 1);
-                                }, () -> {
-                                });
-                            }
+                    if (uninitialized.hasLegacy() && I18n.isUseChinese()) {
+                        Object feedback = config().getShownTips().get(FEEDBACK_TIP);
+                        if (!(feedback instanceof Number number) || number.intValue() < 1) {
+                            Controllers.confirm(i18n("terracotta.feedback.desc"), i18n("terracotta.feedback.title"), () -> {
+                                FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK);
+                                config().getShownTips().put(FEEDBACK_TIP, 1);
+                            }, () -> {
+                            });
                         }
-                    } else {
-                        Controllers.confirmWithCountdown(i18n("terracotta.confirm.desc"), i18n("terracotta.confirm.title"), 5, MessageDialogPane.MessageType.INFO, () -> {
-                            globalConfig().setTerracottaAgreementVersion(TERRACOTTA_AGREEMENT_VERSION);
-                            TerracottaState.Preparing s = TerracottaManager.install(null);
-                            if (s != null) {
-                                UI_STATE.set(s);
-                            }
-                        }, () -> {
-                        });
                     }
                 });
 
