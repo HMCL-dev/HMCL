@@ -287,7 +287,7 @@
 
 .two-line-list-item > .first-line > .tag {
     -fx-text-fill: -fx-base-color;
-    -fx-background-color: rgba(209, 231, 246, 0.3);
+    -fx-background-color: -fx-base-rippler-color;
     -fx-padding: 1 2 1 2;
     -fx-font-weight: normal;
     -fx-font-size: 11px;
@@ -305,7 +305,7 @@
 
 .two-line-list-item > .first-line > .tag-overflow {
     -fx-text-fill: -fx-base-color;
-    -fx-background-color: rgba(197, 224, 243, 0.3);
+    -fx-background-color: derive(-fx-base-rippler-color, -10%);
     -fx-padding: 1 2 1 2;
     -fx-font-weight: normal;
     -fx-font-size: 11px;
