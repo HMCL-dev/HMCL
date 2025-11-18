@@ -120,9 +120,10 @@ public class TransitionPane extends StackPane {
 
     /// Marks a node as cacheable as a bitmap during animation.
     public interface Cacheable {
-        /// @return the [CacheHint] to use when caching this node during the given animation,
-        ///         or null to not cache it.
+        /// @return the [cache hint][CacheHint] to use when caching this node during the given animation,
+        ///         or `null` to not cache it.
         default @Nullable CacheHint getCacheHint(AnimationProducer animationProducer) {
+            // https://github.com/HMCL-dev/HMCL/issues/4789
             return animationProducer == ContainerAnimations.SLIDE_UP_FADE_IN ? CacheHint.SPEED : null;
         }
     }
