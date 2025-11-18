@@ -47,9 +47,9 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.Locale;
 
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.formatDateTime;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * @author Glavo
@@ -108,11 +108,30 @@ public final class WorldInfoPage extends SpinnerPane {
                 worldNamePane.setLeft(label);
                 BorderPane.setAlignment(label, Pos.CENTER_LEFT);
 
-                Label worldNameLabel = new Label();
-                FXUtils.copyOnDoubleClick(worldNameLabel);
-                worldNameLabel.setText(world.getWorldName());
-                BorderPane.setAlignment(worldNameLabel, Pos.CENTER_RIGHT);
-                worldNamePane.setRight(worldNameLabel);
+                JFXTextField worldNameField = new JFXTextField();
+                worldNameField.setDisable(worldManagePage.isDisable());
+                worldNameField.setPrefWidth(200);
+                BorderPane.setAlignment(worldNameField, Pos.CENTER_RIGHT);
+                worldNamePane.setRight(worldNameField);
+
+                Tag tag = dataTag.get("LevelName");
+                if (tag instanceof StringTag stringTag) {
+                    worldNameField.setText(stringTag.getValue());
+
+                    worldNameField.textProperty().addListener((observable, oldValue, newValue) -> {
+                        if (newValue != null) {
+                            try {
+                                stringTag.setValue(newValue);
+                                world.setWorldName(newValue);
+                                saveLevelDat();
+                            } catch (Throwable ignored) {
+
+                            }
+                        }
+                    });
+                } else {
+                    worldNameField.setDisable(true);
+                }
             }
 
             BorderPane gameVersionPane = new BorderPane();
@@ -203,8 +222,7 @@ public final class WorldInfoPage extends SpinnerPane {
                 allowCheatsButton.setDisable(worldManagePage.isReadOnly());
                 Tag tag = dataTag.get("allowCommands");
 
-                if (tag instanceof ByteTag) {
-                    ByteTag byteTag = (ByteTag) tag;
+                if (tag instanceof ByteTag byteTag) {
                     byte value = byteTag.getValue();
                     if (value == 0 || value == 1) {
                         allowCheatsButton.setSelected(value == 1);
@@ -226,8 +244,7 @@ public final class WorldInfoPage extends SpinnerPane {
                 generateFeaturesButton.setDisable(worldManagePage.isReadOnly());
                 Tag tag = worldGenSettings != null ? worldGenSettings.get("generate_features") : dataTag.get("MapFeatures");
 
-                if (tag instanceof ByteTag) {
-                    ByteTag byteTag = (ByteTag) tag;
+                if (tag instanceof ByteTag byteTag) {
                     byte value = byteTag.getValue();
                     if (value == 0 || value == 1) {
                         generateFeaturesButton.setSelected(value == 1);
@@ -255,8 +272,7 @@ public final class WorldInfoPage extends SpinnerPane {
                 difficultyPane.setRight(difficultyBox);
 
                 Tag tag = dataTag.get("Difficulty");
-                if (tag instanceof ByteTag) {
-                    ByteTag byteTag = (ByteTag) tag;
+                if (tag instanceof ByteTag byteTag) {
                     Difficulty difficulty = Difficulty.of(byteTag.getValue());
                     if (difficulty != null) {
                         difficultyBox.setValue(difficulty);
@@ -274,16 +290,38 @@ public final class WorldInfoPage extends SpinnerPane {
                 }
             }
 
+            OptionToggleButton difficultyLockPane = new OptionToggleButton();
+            {
+                difficultyLockPane.setTitle("难度锁定");
+                difficultyLockPane.setDisable(worldManagePage.isReadOnly());
+
+                Tag tag = dataTag.get("DifficultyLocked");
+
+                if (tag instanceof ByteTag byteTag) {
+                    byte value = byteTag.getValue();
+                    if (value == 0 || value == 1) {
+                        difficultyLockPane.setSelected(value == 1);
+                        difficultyLockPane.selectedProperty().addListener((o, oldValue, newValue) -> {
+                            byteTag.setValue(newValue ? (byte) 1 : (byte) 0);
+                            saveLevelDat();
+                        });
+                    } else {
+                        difficultyLockPane.setDisable(true);
+                    }
+                } else {
+                    difficultyLockPane.setDisable(true);
+                }
+            }
+
             basicInfo.getContent().setAll(
                     worldNamePane, gameVersionPane, randomSeedPane, lastPlayedPane, timePane,
-                    allowCheatsButton, generateFeaturesButton, difficultyPane);
+                    allowCheatsButton, generateFeaturesButton, difficultyPane, difficultyLockPane);
 
             rootPane.getChildren().addAll(ComponentList.createComponentListTitle(i18n("world.info.basic")), basicInfo);
         }
 
         Tag playerTag = dataTag.get("Player");
-        if (playerTag instanceof CompoundTag) {
-            CompoundTag player = (CompoundTag) playerTag;
+        if (playerTag instanceof CompoundTag player) {
             ComponentList playerInfo = new ComponentList();
 
             BorderPane locationPane = new BorderPane();
@@ -364,8 +402,7 @@ public final class WorldInfoPage extends SpinnerPane {
                 Tag hardcoreTag = dataTag.get("hardcore");
                 boolean isHardcore = hardcoreTag instanceof ByteTag && ((ByteTag) hardcoreTag).getValue() == 1;
 
-                if (tag instanceof IntTag) {
-                    IntTag intTag = (IntTag) tag;
+                if (tag instanceof IntTag intTag) {
                     GameType gameType = GameType.of(intTag.getValue(), isHardcore);
                     if (gameType != null) {
                         gameTypeBox.setValue(gameType);
@@ -407,8 +444,7 @@ public final class WorldInfoPage extends SpinnerPane {
                 healthPane.setRight(healthField);
 
                 Tag tag = player.get("Health");
-                if (tag instanceof FloatTag) {
-                    FloatTag floatTag = (FloatTag) tag;
+                if (tag instanceof FloatTag floatTag) {
                     healthField.setText(new DecimalFormat("#").format(floatTag.getValue().floatValue()));
 
                     healthField.textProperty().addListener((o, oldValue, newValue) -> {
@@ -441,8 +477,7 @@ public final class WorldInfoPage extends SpinnerPane {
                 foodLevelPane.setRight(foodLevelField);
 
                 Tag tag = player.get("foodLevel");
-                if (tag instanceof IntTag) {
-                    IntTag intTag = (IntTag) tag;
+                if (tag instanceof IntTag intTag) {
                     foodLevelField.setText(String.valueOf(intTag.getValue()));
 
                     foodLevelField.textProperty().addListener((o, oldValue, newValue) -> {
@@ -475,8 +510,7 @@ public final class WorldInfoPage extends SpinnerPane {
                 xpLevelPane.setRight(xpLevelField);
 
                 Tag tag = player.get("XpLevel");
-                if (tag instanceof IntTag) {
-                    IntTag intTag = (IntTag) tag;
+                if (tag instanceof IntTag intTag) {
                     xpLevelField.setText(String.valueOf(intTag.getValue()));
 
                     xpLevelField.textProperty().addListener((o, oldValue, newValue) -> {
@@ -521,8 +555,8 @@ public final class WorldInfoPage extends SpinnerPane {
         final String name;
 
         static Dimension of(Tag tag) {
-            if (tag instanceof IntTag) {
-                switch (((IntTag) tag).getValue()) {
+            if (tag instanceof IntTag intTag) {
+                switch (intTag.getValue()) {
                     case 0:
                         return OVERWORLD;
                     case 1:
@@ -532,21 +566,14 @@ public final class WorldInfoPage extends SpinnerPane {
                     default:
                         return null;
                 }
-            } else if (tag instanceof StringTag) {
-                String id = ((StringTag) tag).getValue();
-                switch (id) {
-                    case "overworld":
-                    case "minecraft:overworld":
-                        return OVERWORLD;
-                    case "the_nether":
-                    case "minecraft:the_nether":
-                        return THE_NETHER;
-                    case "the_end":
-                    case "minecraft:the_end":
-                        return THE_END;
-                    default:
-                        return new Dimension(id);
-                }
+            } else if (tag instanceof StringTag stringTag) {
+                String id = stringTag.getValue();
+                return switch (id) {
+                    case "overworld", "minecraft:overworld" -> OVERWORLD;
+                    case "the_nether", "minecraft:the_nether" -> THE_NETHER;
+                    case "the_end", "minecraft:the_end" -> THE_END;
+                    default -> new Dimension(id);
+                };
             } else {
                 return null;
             }
@@ -557,8 +584,7 @@ public final class WorldInfoPage extends SpinnerPane {
         }
 
         String formatPosition(Tag tag) {
-            if (tag instanceof ListTag) {
-                ListTag listTag = (ListTag) tag;
+            if (tag instanceof ListTag listTag) {
                 if (listTag.size() != 3)
                     return null;
 
@@ -575,8 +601,7 @@ public final class WorldInfoPage extends SpinnerPane {
                 return null;
             }
 
-            if (tag instanceof IntArrayTag) {
-                IntArrayTag intArrayTag = (IntArrayTag) tag;
+            if (tag instanceof IntArrayTag intArrayTag) {
 
                 int x = intArrayTag.getValue(0);
                 int y = intArrayTag.getValue(1);

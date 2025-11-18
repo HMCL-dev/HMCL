@@ -96,6 +96,10 @@ public final class World {
         return worldName;
     }
 
+    public void setWorldName(String worldName) {
+        this.worldName = worldName;
+    }
+
     public Path getLevelDatFile() {
         return file.resolve("level.dat");
     }
