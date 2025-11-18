@@ -71,12 +71,10 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         worldListTab.setNodeSupplier(loadVersionFor(WorldListPage::new));
         schematicsTab.setNodeSupplier(loadVersionFor(SchematicsPage::new));
 
-        tab = new TabHeader(versionSettingsTab, installerListTab, modListTab, worldListTab, schematicsTab);
+        tab = new TabHeader(transitionPane, versionSettingsTab, installerListTab, modListTab, worldListTab, schematicsTab);
+        tab.select(versionSettingsTab);
 
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
-
-        tab.select(versionSettingsTab);
-        tab.bindContentPane(transitionPane);
 
         listenerHolder.add(EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> checkSelectedVersion(), EventPriority.HIGHEST));
     }

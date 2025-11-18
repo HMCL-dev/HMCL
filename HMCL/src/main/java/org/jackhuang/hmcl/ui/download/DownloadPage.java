@@ -99,12 +99,11 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         resourcePackTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofResourcePack((profile, version, file) -> download(profile, version, file, "resourcepacks"), true)));
         shaderTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(ModrinthRemoteModRepository.SHADER_PACKS, (profile, version, file) -> download(profile, version, file, "shaderpacks"), true)));
         worldTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(CurseForgeRemoteModRepository.WORLDS)));
-        tab = new TabHeader(newGameTab, modpackTab, modTab, resourcePackTab, shaderTab, worldTab);
+        tab = new TabHeader(transitionPane, newGameTab, modpackTab, modTab, resourcePackTab, shaderTab, worldTab);
 
         Profiles.registerVersionsListener(this::loadVersions);
 
         tab.select(newGameTab);
-        tab.bindContentPane(transitionPane);
 
         AdvancedListBox sideBar = new AdvancedListBox()
                 .startCategory(i18n("download.game").toUpperCase(Locale.ROOT))
