@@ -64,6 +64,8 @@ public final class DecoratorAnimationProducer implements AnimationProducer {
                     new KeyValue(center.translateXProperty(), 30, Interpolator.EASE_BOTH)));
         }
 
+        keyFrames.add(new KeyFrame(Duration.ZERO,
+                new KeyValue(next.opacityProperty(), 0, Interpolator.EASE_BOTH)));
         keyFrames.add(new KeyFrame(halfDuration,
                 new KeyValue(next.opacityProperty(), 0, Interpolator.EASE_BOTH)));
         keyFrames.add(new KeyFrame(handler.getDuration(),
