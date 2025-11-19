@@ -65,15 +65,13 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         this.world = world;
         this.backupsDir = backupsDir;
 
+        this.worldInfoTab.setNodeSupplier(() -> new WorldInfoPage(this));
+        this.worldBackupsTab.setNodeSupplier(() -> new WorldBackupsPage(this));
+        this.datapackTab.setNodeSupplier(() -> new DatapackListPage(this));
+
         this.state = new SimpleObjectProperty<>(State.fromTitle(i18n("world.manage.title", StringUtils.parseColorEscapes(world.getWorldName()))));
-        this.header = new TabHeader(worldInfoTab, worldBackupsTab);
-
-        worldInfoTab.setNodeSupplier(() -> new WorldInfoPage(this));
-        worldBackupsTab.setNodeSupplier(() -> new WorldBackupsPage(this));
-        datapackTab.setNodeSupplier(() -> new DatapackListPage(this));
-
+        this.header = new TabHeader(transitionPane, worldInfoTab, worldBackupsTab);
         header.select(worldInfoTab);
-        transitionPane.bindTabHeader(header);
 
         setCenter(transitionPane);
 
