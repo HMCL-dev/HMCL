@@ -191,7 +191,10 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             launcherSettingsItem.setLeftGraphic(wrap(SVG.SETTINGS));
             launcherSettingsItem.setActionButtonVisible(false);
             launcherSettingsItem.setTitle(i18n("settings"));
-            launcherSettingsItem.setOnAction(e -> Controllers.navigate(Controllers.getSettingsPage()));
+            launcherSettingsItem.setOnAction(e -> {
+                Controllers.getSettingsPage().showGameSettings(Profiles.getSelectedProfile());
+                Controllers.navigate(Controllers.getSettingsPage());
+            });
             if (AnimationUtils.isAnimationEnabled()) {
                 FXUtils.prepareOnMouseEnter(launcherSettingsItem, Controllers::prepareSettingsPage);
             }
