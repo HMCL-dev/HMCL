@@ -184,7 +184,7 @@ public final class LocalModFile implements Comparable<LocalModFile> {
                 .sorted(Comparator.comparing(RemoteMod.Version::getDatePublished).reversed())
                 .collect(Collectors.toList());
         if (remoteVersions.isEmpty()) return null;
-        return new ModUpdate(this, currentVersion.get(), remoteVersions);
+        return new ModUpdate(repository, this, currentVersion.get(), remoteVersions);
     }
 
     @Override
@@ -203,14 +203,20 @@ public final class LocalModFile implements Comparable<LocalModFile> {
     }
 
     public static class ModUpdate {
+        private final RemoteModRepository repository;
         private final LocalModFile localModFile;
         private final RemoteMod.Version currentVersion;
         private final List<RemoteMod.Version> candidates;
 
-        public ModUpdate(LocalModFile localModFile, RemoteMod.Version currentVersion, List<RemoteMod.Version> candidates) {
+        public ModUpdate(RemoteModRepository repository, LocalModFile localModFile, RemoteMod.Version currentVersion, List<RemoteMod.Version> candidates) {
+            this.repository = repository;
             this.localModFile = localModFile;
             this.currentVersion = currentVersion;
             this.candidates = candidates;
+        }
+
+        public RemoteModRepository getRepository() {
+            return repository;
         }
 
         public LocalModFile getLocalMod() {

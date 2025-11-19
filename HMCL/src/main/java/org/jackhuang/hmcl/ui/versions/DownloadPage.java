@@ -31,6 +31,7 @@ import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -58,6 +59,7 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.safety.Safelist;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -533,17 +535,22 @@ public class DownloadPage extends Control implements DecoratorPage {
             Task.supplyAsync(() -> {
                 String changelogText;
                 if (version.getChangelog() != null) {
-                    changelogText = version.getChangelog();
+                    changelogText = version.getChangelog().isBlank() ? null : version.getChangelog();
                 } else {
-                    String changelog = selfPage.repository.getModChangelog(version.getModid(), version.getVersionId());
-                    Document document = Jsoup.parse(changelog);
-                    Document.OutputSettings outputSettings = new Document.OutputSettings().prettyPrint(false);
-                    document.outputSettings(outputSettings);
-                    document.select("br").append("\\n");
-                    document.select("p").prepend("\\n");
-                    document.select("p").append("\\n");
-                    String newHtml = document.html().replaceAll("\\\\n", System.lineSeparator());
-                    changelogText = Jsoup.clean(newHtml, "", Safelist.none(), outputSettings).trim();
+                    try {
+                        String changelog = selfPage.repository.getModChangelog(version.getModid(), version.getVersionId());
+                        Document document = Jsoup.parse(changelog);
+                        Document.OutputSettings outputSettings = new Document.OutputSettings().prettyPrint(false);
+                        document.outputSettings(outputSettings);
+                        document.select("br").append("\\n");
+                        document.select("p").prepend("\\n");
+                        document.select("p").append("\\n");
+                        String newHtml = document.html().replaceAll("\\\\n", System.lineSeparator());
+                        String plainText = Jsoup.clean(newHtml, "", Safelist.none(), outputSettings).trim();
+                        changelogText = plainText.isBlank() ? null : plainText;
+                    } catch (UnsupportedOperationException e) {
+                        changelogText = null;
+                    }
                 }
 
                 EnumMap<RemoteMod.DependencyType, List<Node>> dependencies = new EnumMap<>(RemoteMod.DependencyType.class);
@@ -567,8 +574,10 @@ public class DownloadPage extends Control implements DecoratorPage {
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
                     List<Node> nodes = new LinkedList<>();
-                    Text changelogText = new Text(result.getKey());
-                    nodes.add(changelogText);
+                    String changelog = result.getKey();
+                    if (changelog != null) {
+                        nodes.add(new Text(changelog));
+                    }
                     nodes.addAll(result.getValue());
                     dependenciesList.getContent().setAll(nodes);
                     spinnerPane.setFailedReason(null);
