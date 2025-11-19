@@ -25,23 +25,33 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
+import javafx.scene.SnapshotParameters;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.effect.BoxBlur;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.image.PixelReader;
+import javafx.scene.image.WritableImage;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
+import org.glavo.png.javafx.PNGJavaFXUtils;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.DecimalFormat;
 import java.time.Instant;
 import java.util.Arrays;
@@ -58,6 +68,8 @@ public final class WorldInfoPage extends SpinnerPane {
     private final WorldManagePage worldManagePage;
     private final World world;
     private CompoundTag levelDat;
+
+    ImageView iconImageView = new ImageView();
 
     public WorldInfoPage(WorldManagePage worldManagePage) {
         this.worldManagePage = worldManagePage;
@@ -145,6 +157,19 @@ public final class WorldInfoPage extends SpinnerPane {
                 gameVersionLabel.setText(world.getGameVersion());
                 BorderPane.setAlignment(gameVersionLabel, Pos.CENTER_RIGHT);
                 gameVersionPane.setRight(gameVersionLabel);
+            }
+
+            BorderPane iconPane = new BorderPane();
+            {
+                Label label = new Label("图标");
+                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
+                iconPane.setLeft(label);
+
+
+                FXUtils.limitSize(iconImageView, 32, 32);
+                iconImageView.setImage(world.getIcon() == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : world.getIcon());
+                FXUtils.onClicked(iconImageView, this::replaceWorldIcon);
+                iconPane.setRight(iconImageView);
             }
 
             BorderPane randomSeedPane = new BorderPane();
@@ -314,7 +339,7 @@ public final class WorldInfoPage extends SpinnerPane {
             }
 
             basicInfo.getContent().setAll(
-                    worldNamePane, gameVersionPane, randomSeedPane, lastPlayedPane, timePane,
+                    worldNamePane, gameVersionPane, iconPane, randomSeedPane, lastPlayedPane, timePane,
                     allowCheatsButton, generateFeaturesButton, difficultyPane, difficultyLockPane);
 
             rootPane.getChildren().addAll(ComponentList.createComponentListTitle(i18n("world.info.basic")), basicInfo);
@@ -656,6 +681,61 @@ public final class WorldInfoPage extends SpinnerPane {
         @Override
         public String toString() {
             return i18n("world.info.player.game_type." + name().toLowerCase(Locale.ROOT));
+        }
+    }
+
+    private void replaceWorldIcon() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("选择图像");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Image Files", "*.png"));
+        fileChooser.setInitialFileName("icon");
+
+        File file = fileChooser.showOpenDialog(Controllers.getStage());
+        if (file == null) return;
+
+        Image original = new Image(file.toURI().toString());
+
+        Image square = cropCenterSquare(original);
+
+        Image finalImage;
+        if ((int) square.getWidth() == 64 && (int) square.getHeight() == 64) {
+            finalImage = square;
+        } else {
+            finalImage = resizeImage(square, 64, 64);
+        }
+
+        Path output = world.getFile().resolve("icon.png");
+        saveImage(finalImage, output);
+    }
+
+    private Image cropCenterSquare(Image img) {
+        int w = (int) img.getWidth();
+        int h = (int) img.getHeight();
+        int size = Math.min(w, h);
+        int x = (w - size) / 2;
+        int y = (h - size) / 2;
+
+        PixelReader reader = img.getPixelReader();
+        WritableImage newImg = new WritableImage(reader, x, y, size, size);
+        return newImg;
+    }
+
+    private Image resizeImage(Image img, int width, int height) {
+        ImageView view = new ImageView(img);
+        view.setFitWidth(width);
+        view.setFitHeight(height);
+        view.setPreserveRatio(false);
+
+        SnapshotParameters params = new SnapshotParameters();
+        return view.snapshot(params, null);
+    }
+
+    private void saveImage(Image image, Path path) {
+        try {
+            PNGJavaFXUtils.writeImage(image, path);
+            iconImageView.setImage(image);
+        } catch (IOException e) {
+            LOG.warning(e.getMessage());
         }
     }
 }
