@@ -31,7 +31,7 @@ public final class WorldManageUIUtils {
                 i18n("button.remove.confirm"),
                 i18n("world.delete"),
                 () -> Task.runAsync(() -> closeSessionLockChannel(world, sessionLockChannel))
-                        .whenComplete((exception) -> world.delete())
+                        .thenRunAsync(world::delete)
                         .whenComplete(Schedulers.javafx(), (result, exception) -> {
                             if (exception == null) {
                                 runnable.run();
