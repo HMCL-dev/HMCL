@@ -25,6 +25,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
+import javafx.scene.Node;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -165,11 +166,19 @@ public final class WorldInfoPage extends SpinnerPane {
                 BorderPane.setAlignment(label, Pos.CENTER_LEFT);
                 iconPane.setLeft(label);
 
-
                 FXUtils.limitSize(iconImageView, 32, 32);
                 iconImageView.setImage(world.getIcon() == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : world.getIcon());
-                FXUtils.onClicked(iconImageView, this::replaceWorldIcon);
-                iconPane.setRight(iconImageView);
+
+                Node editIcon = SVG.EDIT.createIcon(Theme.blackFill(), 12);
+                editIcon.setCursor(Cursor.HAND);
+                FXUtils.onClicked(editIcon, this::changeWorldIcon);
+                FXUtils.installFastTooltip(editIcon, "修改世界图标");
+
+                HBox hBox = new HBox(8);
+                hBox.setAlignment(Pos.CENTER_LEFT);
+                hBox.getChildren().addAll(editIcon, iconImageView);
+
+                iconPane.setRight(hBox);
             }
 
             BorderPane randomSeedPane = new BorderPane();
@@ -684,7 +693,7 @@ public final class WorldInfoPage extends SpinnerPane {
         }
     }
 
-    private void replaceWorldIcon() {
+    private void changeWorldIcon() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("选择图像");
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Image Files", "*.png"));
