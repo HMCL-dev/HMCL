@@ -30,6 +30,7 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
+import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -53,6 +54,9 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.safety.Safelist;
 
 import java.nio.file.Path;
 import java.util.*;
@@ -471,13 +475,14 @@ public class DownloadPage extends Control implements DecoratorPage {
             ModItem modItem = new ModItem(version, selfPage);
             modItem.setMouseTransparent(true); // Item is displayed for info, clicking shouldn't open the dialog again
             box.getChildren().setAll(modItem);
+
             SpinnerPane spinnerPane = new SpinnerPane();
             ScrollPane scrollPane = new ScrollPane();
-            ComponentList dependenciesList = new ComponentList(Lang::immutableListOf);
-            loadDependencies(version, selfPage, spinnerPane, dependenciesList);
-            spinnerPane.setOnFailedAction(e -> loadDependencies(version, selfPage, spinnerPane, dependenciesList));
+            ComponentList changelogAndDependenciesList = new ComponentList(Lang::immutableListOf);
+            loadChangelogAndDependencies(version, selfPage, spinnerPane, changelogAndDependenciesList);
+            spinnerPane.setOnFailedAction(e -> loadChangelogAndDependencies(version, selfPage, spinnerPane, changelogAndDependenciesList));
 
-            scrollPane.setContent(dependenciesList);
+            scrollPane.setContent(changelogAndDependenciesList);
             scrollPane.setFitToWidth(true);
             scrollPane.setFitToHeight(true);
             spinnerPane.setContent(scrollPane);
@@ -523,9 +528,24 @@ public class DownloadPage extends Control implements DecoratorPage {
             onEscPressed(this, cancelButton::fire);
         }
 
-        private void loadDependencies(RemoteMod.Version version, DownloadPage selfPage, SpinnerPane spinnerPane, ComponentList dependenciesList) {
+        private void loadChangelogAndDependencies(RemoteMod.Version version, DownloadPage selfPage, SpinnerPane spinnerPane, ComponentList dependenciesList) {
             spinnerPane.setLoading(true);
             Task.supplyAsync(() -> {
+                String changelogText;
+                if (version.getChangelog() != null) {
+                    changelogText = version.getChangelog();
+                } else {
+                    String changelog = selfPage.repository.getModChangelog(version.getModid(), version.getVersionId());
+                    Document document = Jsoup.parse(changelog);
+                    Document.OutputSettings outputSettings = new Document.OutputSettings().prettyPrint(false);
+                    document.outputSettings(outputSettings);
+                    document.select("br").append("\\n");
+                    document.select("p").prepend("\\n");
+                    document.select("p").append("\\n");
+                    String newHtml = document.html().replaceAll("\\\\n", System.lineSeparator());
+                    changelogText = Jsoup.clean(newHtml, "", Safelist.none(), outputSettings).trim();
+                }
+
                 EnumMap<RemoteMod.DependencyType, List<Node>> dependencies = new EnumMap<>(RemoteMod.DependencyType.class);
                 for (RemoteMod.Dependency dependency : version.getDependencies()) {
                     if (dependency.getType() == RemoteMod.DependencyType.INCOMPATIBLE || dependency.getType() == RemoteMod.DependencyType.BROKEN) {
@@ -533,7 +553,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                     }
 
                     if (!dependencies.containsKey(dependency.getType())) {
-                        List<Node> list = new ArrayList<>();
+                        List<Node> list = new LinkedList<>();
                         Label title = new Label(i18n(DependencyModItem.I18N_KEY.get(dependency.getType())));
                         title.setPadding(new Insets(0, 8, 0, 8));
                         list.add(title);
@@ -543,16 +563,20 @@ public class DownloadPage extends Control implements DecoratorPage {
                     dependencies.get(dependency.getType()).add(dependencyModItem);
                 }
 
-                return dependencies.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+                return new Pair<>(changelogText, dependencies.values().stream().flatMap(Collection::stream).collect(Collectors.toList()));
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
-                spinnerPane.setLoading(false);
                 if (exception == null) {
-                    dependenciesList.getContent().setAll(result);
+                    List<Node> nodes = new LinkedList<>();
+                    Text changelogText = new Text(result.getKey());
+                    nodes.add(changelogText);
+                    nodes.addAll(result.getValue());
+                    dependenciesList.getContent().setAll(nodes);
                     spinnerPane.setFailedReason(null);
                 } else {
                     dependenciesList.getContent().setAll();
                     spinnerPane.setFailedReason(i18n("download.failed.refresh"));
                 }
+                spinnerPane.setLoading(false);
             }).start();
         }
     }

@@ -203,6 +203,13 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
         return response.getData().stream().map(CurseAddon.LatestFile::toVersion);
     }
 
+    @Override
+    public String getModChangelog(String modId, String fileId) throws IOException {
+        Response<String> response = withApiKey(HttpRequest.GET(String.format("%s/v1/mods/%s/files/%s/changelog", PREFIX, modId, fileId)))
+                .getJson(Response.typeOf(String.class));
+        return response.getData();
+    }
+
     public List<CurseAddon.Category> getCategoriesImpl() throws IOException {
         Response<List<CurseAddon.Category>> categories = withApiKey(HttpRequest.GET(PREFIX + "/v1/categories", pair("gameId", "432")))
                 .getJson(Response.typeOf(listTypeOf(CurseAddon.Category.class)));

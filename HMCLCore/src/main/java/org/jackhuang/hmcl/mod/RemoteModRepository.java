@@ -95,6 +95,8 @@ public interface RemoteModRepository {
 
     Stream<RemoteMod.Version> getRemoteVersionsById(String id) throws IOException;
 
+    String getModChangelog(String modId, String fileId) throws IOException;
+
     Stream<Category> getCategories() throws IOException;
 
     class Category {

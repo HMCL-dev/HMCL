@@ -213,6 +213,7 @@ public final class RemoteMod {
 
     public static class Version {
         private final IVersion self;
+        private final String versionId;
         private final String modid;
         private final String name;
         private final String version;
@@ -224,7 +225,8 @@ public final class RemoteMod {
         private final List<String> gameVersions;
         private final List<ModLoaderType> loaders;
 
-        public Version(IVersion self, String modid, String name, String version, String changelog, Instant datePublished, VersionType versionType, File file, List<Dependency> dependencies, List<String> gameVersions, List<ModLoaderType> loaders) {
+        public Version(IVersion self, String versionId, String modid, String name, String version, String changelog, Instant datePublished, VersionType versionType, File file, List<Dependency> dependencies, List<String> gameVersions, List<ModLoaderType> loaders) {
+            this.versionId = versionId;
             this.self = self;
             this.modid = modid;
             this.name = name;
@@ -240,6 +242,10 @@ public final class RemoteMod {
 
         public IVersion getSelf() {
             return self;
+        }
+
+        public String getVersionId() {
+            return versionId;
         }
 
         public String getModid() {
