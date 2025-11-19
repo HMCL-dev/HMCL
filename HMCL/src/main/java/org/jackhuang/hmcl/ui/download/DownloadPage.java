@@ -98,12 +98,11 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         resourcePackTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofResourcePack((profile, version, file) -> download(profile, version, file, "resourcepacks"), true)));
         shaderTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(ModrinthRemoteModRepository.SHADER_PACKS, (profile, version, file) -> download(profile, version, file, "shaderpacks"), true)));
         worldTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(CurseForgeRemoteModRepository.WORLDS)));
-        tab = new TabHeader(newGameTab, modpackTab, modTab, resourcePackTab, shaderTab, worldTab);
+        tab = new TabHeader(transitionPane, newGameTab, modpackTab, modTab, resourcePackTab, shaderTab, worldTab);
 
         Profiles.registerVersionsListener(this::loadVersions);
 
         tab.select(newGameTab);
-        transitionPane.bindTabHeader(tab);
 
         AdvancedListBox sideBar = new AdvancedListBox()
                 .startCategory(i18n("download.game").toUpperCase(Locale.ROOT))
@@ -194,20 +193,20 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     }
 
     public void showGameDownloads() {
-        tab.select(newGameTab);
+        tab.select(newGameTab, false);
     }
 
     public void showModpackDownloads() {
-        tab.select(modpackTab);
+        tab.select(modpackTab, false);
     }
 
     public DownloadListPage showModDownloads() {
-        tab.select(modTab);
+        tab.select(modTab, false);
         return modTab.getNode();
     }
 
     public void showWorldDownloads() {
-        tab.select(worldTab);
+        tab.select(worldTab, false);
     }
 
     private static final class DownloadNavigator implements Navigation {
