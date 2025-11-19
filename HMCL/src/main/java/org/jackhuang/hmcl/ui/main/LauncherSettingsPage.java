@@ -55,11 +55,10 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
         helpTab.setNodeSupplier(HelpPage::new);
         feedbackTab.setNodeSupplier(FeedbackPage::new);
         aboutTab.setNodeSupplier(AboutPage::new);
-        tab = new TabHeader(gameTab, javaManagementTab, settingsTab, personalizationTab, downloadTab, helpTab, feedbackTab, aboutTab);
+        tab = new TabHeader(transitionPane, gameTab, javaManagementTab, settingsTab, personalizationTab, downloadTab, helpTab, feedbackTab, aboutTab);
 
         tab.select(gameTab);
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, event -> gameTab.getNode().loadVersion(Profiles.getSelectedProfile(), null));
-        transitionPane.bindTabHeader(tab);
 
         AdvancedListBox sideBar = new AdvancedListBox()
                 .addNavigationDrawerTab(tab, gameTab, i18n("settings.type.global.manage"), SVG.STADIA_CONTROLLER, SVG.STADIA_CONTROLLER_FILL)
@@ -90,11 +89,11 @@ public class LauncherSettingsPage extends DecoratorAnimatedPage implements Decor
 
     public void showGameSettings(Profile profile) {
         gameTab.getNode().loadVersion(profile, null);
-        tab.select(gameTab);
+        tab.select(gameTab, false);
     }
 
     public void showFeedback() {
-        tab.select(feedbackTab);
+        tab.select(feedbackTab, false);
     }
 
     @Override
