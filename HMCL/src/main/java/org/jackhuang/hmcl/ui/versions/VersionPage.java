@@ -105,6 +105,10 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         };
     }
 
+    public void showInstanceSettings() {
+        tab.select(versionSettingsTab, false);
+    }
+
     public void setVersion(String version, Profile profile) {
         this.version.set(new Profile.ProfileVersion(profile, version));
     }
