@@ -177,7 +177,10 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             downloadItem.setLeftGraphic(wrap(SVG.DOWNLOAD));
             downloadItem.setActionButtonVisible(false);
             downloadItem.setTitle(i18n("download"));
-            downloadItem.setOnAction(e -> Controllers.navigate(Controllers.getDownloadPage()));
+            downloadItem.setOnAction(e -> {
+                Controllers.getDownloadPage().showGameDownloads();
+                Controllers.navigate(Controllers.getDownloadPage());
+            });
             FXUtils.installFastTooltip(downloadItem, i18n("download.hint"));
             if (AnimationUtils.isAnimationEnabled()) {
                 FXUtils.prepareOnMouseEnter(downloadItem, Controllers::prepareDownloadPage);
