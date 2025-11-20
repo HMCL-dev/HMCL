@@ -360,10 +360,10 @@ public final class WorldInfoPage extends SpinnerPane {
                 setRightTextLabel(lastDeathLocationPane, lastDeathLocationLabel);
 
                 Tag tag = player.get("LastDeathLocation");
-                if (tag instanceof CompoundTag) {
-                    Dimension dim = Dimension.of(((CompoundTag) tag).get("dimension"));
+                if (tag instanceof CompoundTag compoundTag) {
+                    Dimension dim = Dimension.of(compoundTag.get("dimension"));
                     if (dim != null) {
-                        String posString = dim.formatPosition(((CompoundTag) tag).get("pos"));
+                        String posString = dim.formatPosition(compoundTag.get("pos"));
                         if (posString != null)
                             lastDeathLocationLabel.setText(posString);
                     }
@@ -382,8 +382,8 @@ public final class WorldInfoPage extends SpinnerPane {
                     Tag y = player.get("SpawnY");
                     Tag z = player.get("SpawnZ");
 
-                    if (x instanceof IntTag && y instanceof IntTag && z instanceof IntTag)
-                        spawnLabel.setText(dim.formatPosition(((IntTag) x).getValue(), ((IntTag) y).getValue(), ((IntTag) z).getValue()));
+                    if (x instanceof IntTag intX && y instanceof IntTag intY && z instanceof IntTag intZ)
+                        spawnLabel.setText(dim.formatPosition(intX.getValue(), intY.getValue(), intZ.getValue()));
                 }
             }
 
