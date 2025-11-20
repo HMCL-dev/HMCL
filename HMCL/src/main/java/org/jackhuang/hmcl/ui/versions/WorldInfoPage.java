@@ -170,8 +170,14 @@ public final class WorldInfoPage extends SpinnerPane {
 
                 Node editIcon = SVG.EDIT.createIcon(Theme.blackFill(), 12);
                 editIcon.setCursor(Cursor.HAND);
-                FXUtils.onClicked(editIcon, this::changeWorldIcon);
+                FXUtils.onClicked(editIcon, () -> Controllers.confirm(
+                        "你需要提供一个分辨率为64×64，格式为PNG的图片，如果不是，HMCL将会将图片进行裁切并将分辨率修改为64×64","更改世界图标", MessageDialogPane.MessageType.INFO,
+                        this::changeWorldIcon,
+                        null
+                ));
                 FXUtils.installFastTooltip(editIcon, "修改世界图标");
+
+
 
                 HBox hBox = new HBox(8);
                 hBox.setAlignment(Pos.CENTER_LEFT);
