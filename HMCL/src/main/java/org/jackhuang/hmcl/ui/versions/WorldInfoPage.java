@@ -132,7 +132,6 @@ public final class WorldInfoPage extends SpinnerPane {
                                 world.setWorldName(newValue);
                                 saveLevelDat();
                             } catch (Throwable ignored) {
-
                             }
                         }
                     });
@@ -543,25 +542,19 @@ public final class WorldInfoPage extends SpinnerPane {
         }
     }
 
-    private static final class Dimension {
+    private record Dimension(String name) {
         static final Dimension OVERWORLD = new Dimension(null);
         static final Dimension THE_NETHER = new Dimension(i18n("world.info.dimension.the_nether"));
         static final Dimension THE_END = new Dimension(i18n("world.info.dimension.the_end"));
 
-        final String name;
-
         static Dimension of(Tag tag) {
             if (tag instanceof IntTag intTag) {
-                switch (intTag.getValue()) {
-                    case 0:
-                        return OVERWORLD;
-                    case 1:
-                        return THE_NETHER;
-                    case 2:
-                        return THE_END;
-                    default:
-                        return null;
-                }
+                return switch (intTag.getValue()) {
+                    case 0 -> OVERWORLD;
+                    case 1 -> THE_NETHER;
+                    case 2 -> THE_END;
+                    default -> null;
+                };
             } else if (tag instanceof StringTag stringTag) {
                 String id = stringTag.getValue();
                 return switch (id) {
@@ -573,10 +566,6 @@ public final class WorldInfoPage extends SpinnerPane {
             } else {
                 return null;
             }
-        }
-
-        private Dimension(String name) {
-            this.name = name;
         }
 
         String formatPosition(Tag tag) {
