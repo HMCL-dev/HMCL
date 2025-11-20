@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.util.i18n;
 
+import com.google.gson.TypeAdapter;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
@@ -24,6 +25,7 @@ import com.google.gson.stream.JsonWriter;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.translator.Translator;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -187,7 +189,7 @@ public final class SupportedLocale {
         return candidateLocales;
     }
 
-    public String i18n(String key, Object... formatArgs) {
+    public String i18n(@PropertyKey(resourceBundle = "assets.lang.I18N") String key, Object... formatArgs) {
         try {
             return String.format(getResourceBundle().getString(key), formatArgs);
         } catch (MissingResourceException e) {
@@ -199,7 +201,7 @@ public final class SupportedLocale {
         return key + Arrays.toString(formatArgs);
     }
 
-    public String i18n(String key) {
+    public String i18n(@PropertyKey(resourceBundle = "assets.lang.I18N") String key) {
         try {
             return getResourceBundle().getString(key);
         } catch (MissingResourceException e) {
