@@ -32,7 +32,6 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.effect.BoxBlur;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.image.PixelReader;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -697,20 +696,20 @@ public final class WorldInfoPage extends SpinnerPane {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("选择图像");
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Image Files", "*.png"));
-        fileChooser.setInitialFileName("icon");
+        fileChooser.setInitialFileName("icon.png");
 
         File file = fileChooser.showOpenDialog(Controllers.getStage());
         if (file == null) return;
 
         Image original = new Image(file.toURI().toString());
 
-        Image square = cropCenterSquare(original);
+        Image squareImage = cropCenterSquare(original);
 
         Image finalImage;
-        if ((int) square.getWidth() == 64 && (int) square.getHeight() == 64) {
-            finalImage = square;
+        if ((int) squareImage.getWidth() == 64 && (int) squareImage.getHeight() == 64) {
+            finalImage = squareImage;
         } else {
-            finalImage = resizeImage(square, 64, 64);
+            finalImage = resizeImage(squareImage, 64, 64);
         }
 
         Path output = world.getFile().resolve("icon.png");
@@ -724,9 +723,7 @@ public final class WorldInfoPage extends SpinnerPane {
         int x = (w - size) / 2;
         int y = (h - size) / 2;
 
-        PixelReader reader = img.getPixelReader();
-        WritableImage newImg = new WritableImage(reader, x, y, size, size);
-        return newImg;
+        return new WritableImage(img.getPixelReader(), x, y, size, size);
     }
 
     private Image resizeImage(Image img, int width, int height) {
