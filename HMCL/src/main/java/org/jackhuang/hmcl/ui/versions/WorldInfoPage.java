@@ -47,6 +47,7 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.io.File;
 import java.io.IOException;
@@ -116,15 +117,9 @@ public final class WorldInfoPage extends SpinnerPane {
         {
             BorderPane worldNamePane = new BorderPane();
             {
-                Label label = new Label(i18n("world.name"));
-                worldNamePane.setLeft(label);
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-
+                setLeftLabel(worldNamePane, "world.name");
                 JFXTextField worldNameField = new JFXTextField();
-                worldNameField.setDisable(worldManagePage.isDisable());
-                worldNameField.setPrefWidth(200);
-                BorderPane.setAlignment(worldNameField, Pos.CENTER_RIGHT);
-                worldNamePane.setRight(worldNameField);
+                setRightTextField(worldNamePane, worldNameField, 200);
 
                 Tag tag = dataTag.get("LevelName");
                 if (tag instanceof StringTag stringTag) {
@@ -148,27 +143,21 @@ public final class WorldInfoPage extends SpinnerPane {
 
             BorderPane gameVersionPane = new BorderPane();
             {
-                Label label = new Label(i18n("world.info.game_version"));
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-                gameVersionPane.setLeft(label);
-
+                setLeftLabel(gameVersionPane, "world.info.game_version");
                 Label gameVersionLabel = new Label();
-                FXUtils.copyOnDoubleClick(gameVersionLabel);
                 gameVersionLabel.setText(world.getGameVersion());
-                BorderPane.setAlignment(gameVersionLabel, Pos.CENTER_RIGHT);
-                gameVersionPane.setRight(gameVersionLabel);
+                setRightTextLabel(gameVersionPane, gameVersionLabel);
             }
 
             BorderPane iconPane = new BorderPane();
             {
-                Label label = new Label("图标");
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-                iconPane.setLeft(label);
+                setLeftLabel(iconPane, "world.icon");
 
                 FXUtils.limitSize(iconImageView, 32, 32);
                 iconImageView.setImage(world.getIcon() == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : world.getIcon());
 
                 Node editIcon = SVG.EDIT.createIcon(Theme.blackFill(), 12);
+                editIcon.setDisable(worldManagePage.isReadOnly());
                 editIcon.setCursor(Cursor.HAND);
                 FXUtils.onClicked(editIcon, () -> Controllers.confirm(
                         "你需要提供一个分辨率为64×64，格式为PNG的图片，如果不是，HMCL将会将图片进行裁切并将分辨率修改为64×64", "更改世界图标", MessageDialogPane.MessageType.INFO,
@@ -224,27 +213,18 @@ public final class WorldInfoPage extends SpinnerPane {
 
             BorderPane lastPlayedPane = new BorderPane();
             {
-                Label label = new Label(i18n("world.info.last_played"));
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-                lastPlayedPane.setLeft(label);
-
+                setLeftLabel(lastPlayedPane, "world.info.last_played");
                 Label lastPlayedLabel = new Label();
-                FXUtils.copyOnDoubleClick(lastPlayedLabel);
                 lastPlayedLabel.setText(formatDateTime(Instant.ofEpochMilli(world.getLastPlayed())));
-                BorderPane.setAlignment(lastPlayedLabel, Pos.CENTER_RIGHT);
-                lastPlayedPane.setRight(lastPlayedLabel);
+                setRightTextLabel(lastPlayedPane, lastPlayedLabel);
             }
 
             BorderPane timePane = new BorderPane();
             {
-                Label label = new Label(i18n("world.info.time"));
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-                timePane.setLeft(label);
+                setLeftLabel(timePane, "world.info.time");
 
                 Label timeLabel = new Label();
-                FXUtils.copyOnDoubleClick(timeLabel);
-                BorderPane.setAlignment(timeLabel, Pos.CENTER_RIGHT);
-                timePane.setRight(timeLabel);
+                setRightTextLabel(timePane, timeLabel);
 
                 Tag tag = dataTag.get("Time");
                 if (tag instanceof LongTag) {
@@ -299,9 +279,7 @@ public final class WorldInfoPage extends SpinnerPane {
 
             BorderPane difficultyPane = new BorderPane();
             {
-                Label label = new Label(i18n("world.info.difficulty"));
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-                difficultyPane.setLeft(label);
+                setLeftLabel(difficultyPane, "world.info.difficulty");
 
                 JFXComboBox<Difficulty> difficultyBox = new JFXComboBox<>(Difficulty.items);
                 difficultyBox.setDisable(worldManagePage.isReadOnly());
@@ -329,7 +307,7 @@ public final class WorldInfoPage extends SpinnerPane {
 
             OptionToggleButton difficultyLockPane = new OptionToggleButton();
             {
-                difficultyLockPane.setTitle("难度锁定");
+                difficultyLockPane.setTitle(i18n("world.info.difficultyLock"));
                 difficultyLockPane.setDisable(worldManagePage.isReadOnly());
 
                 Tag tag = dataTag.get("DifficultyLocked");
@@ -363,14 +341,9 @@ public final class WorldInfoPage extends SpinnerPane {
 
             BorderPane locationPane = new BorderPane();
             {
-                Label label = new Label(i18n("world.info.player.location"));
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-                locationPane.setLeft(label);
-
+                setLeftLabel(locationPane, "world.info.player.location");
                 Label locationLabel = new Label();
-                FXUtils.copyOnDoubleClick(locationLabel);
-                BorderPane.setAlignment(locationLabel, Pos.CENTER_RIGHT);
-                locationPane.setRight(locationLabel);
+                setRightTextLabel(locationPane, locationLabel);
 
                 Dimension dim = Dimension.of(player.get("Dimension"));
                 if (dim != null) {
@@ -382,14 +355,9 @@ public final class WorldInfoPage extends SpinnerPane {
 
             BorderPane lastDeathLocationPane = new BorderPane();
             {
-                Label label = new Label(i18n("world.info.player.last_death_location"));
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-                lastDeathLocationPane.setLeft(label);
-
+                setLeftLabel(lastDeathLocationPane, "world.info.player.last_death_location");
                 Label lastDeathLocationLabel = new Label();
-                FXUtils.copyOnDoubleClick(lastDeathLocationLabel);
-                BorderPane.setAlignment(lastDeathLocationLabel, Pos.CENTER_RIGHT);
-                lastDeathLocationPane.setRight(lastDeathLocationLabel);
+                setRightTextLabel(lastDeathLocationPane, lastDeathLocationLabel);
 
                 Tag tag = player.get("LastDeathLocation");
                 if (tag instanceof CompoundTag) {
@@ -404,14 +372,9 @@ public final class WorldInfoPage extends SpinnerPane {
 
             BorderPane spawnPane = new BorderPane();
             {
-                Label label = new Label(i18n("world.info.player.spawn"));
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-                spawnPane.setLeft(label);
-
+                setLeftLabel(spawnPane, "world.info.player.spawn");
                 Label spawnLabel = new Label();
-                FXUtils.copyOnDoubleClick(spawnLabel);
-                BorderPane.setAlignment(spawnLabel, Pos.CENTER_RIGHT);
-                spawnPane.setRight(spawnLabel);
+                setRightTextLabel(spawnPane, spawnLabel);
 
                 Dimension dim = Dimension.of(player.get("SpawnDimension"));
                 if (dim != null) {
@@ -426,9 +389,7 @@ public final class WorldInfoPage extends SpinnerPane {
 
             BorderPane playerGameTypePane = new BorderPane();
             {
-                Label label = new Label(i18n("world.info.player.game_type"));
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-                playerGameTypePane.setLeft(label);
+                setLeftLabel(playerGameTypePane, "world.info.player.game_type");
 
                 JFXComboBox<GameType> gameTypeBox = new JFXComboBox<>(GameType.items);
                 gameTypeBox.setDisable(worldManagePage.isReadOnly());
@@ -469,16 +430,9 @@ public final class WorldInfoPage extends SpinnerPane {
 
             BorderPane healthPane = new BorderPane();
             {
-                Label label = new Label(i18n("world.info.player.health"));
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-                healthPane.setLeft(label);
-
+                setLeftLabel(healthPane, "world.info.player.health");
                 JFXTextField healthField = new JFXTextField();
-                healthField.setDisable(worldManagePage.isReadOnly());
-                healthField.setPrefWidth(50);
-                healthField.setAlignment(Pos.CENTER_RIGHT);
-                BorderPane.setAlignment(healthField, Pos.CENTER_RIGHT);
-                healthPane.setRight(healthField);
+                setRightTextField(healthPane, healthField, 50);
 
                 Tag tag = player.get("Health");
                 if (tag instanceof FloatTag floatTag) {
@@ -502,16 +456,9 @@ public final class WorldInfoPage extends SpinnerPane {
 
             BorderPane foodLevelPane = new BorderPane();
             {
-                Label label = new Label(i18n("world.info.player.food_level"));
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-                foodLevelPane.setLeft(label);
-
+                setLeftLabel(foodLevelPane, "world.info.player.food_level");
                 JFXTextField foodLevelField = new JFXTextField();
-                foodLevelField.setDisable(worldManagePage.isReadOnly());
-                foodLevelField.setPrefWidth(50);
-                foodLevelField.setAlignment(Pos.CENTER_RIGHT);
-                BorderPane.setAlignment(foodLevelField, Pos.CENTER_RIGHT);
-                foodLevelPane.setRight(foodLevelField);
+                setRightTextField(foodLevelPane, foodLevelField, 50);
 
                 Tag tag = player.get("foodLevel");
                 if (tag instanceof IntTag intTag) {
@@ -535,16 +482,9 @@ public final class WorldInfoPage extends SpinnerPane {
 
             BorderPane xpLevelPane = new BorderPane();
             {
-                Label label = new Label(i18n("world.info.player.xp_level"));
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-                xpLevelPane.setLeft(label);
-
+                setLeftLabel(xpLevelPane, "world.info.player.xp_level");
                 JFXTextField xpLevelField = new JFXTextField();
-                xpLevelField.setDisable(worldManagePage.isReadOnly());
-                xpLevelField.setPrefWidth(50);
-                xpLevelField.setAlignment(Pos.CENTER_RIGHT);
-                BorderPane.setAlignment(xpLevelField, Pos.CENTER_RIGHT);
-                xpLevelPane.setRight(xpLevelField);
+                setRightTextField(xpLevelPane, xpLevelField, 50);
 
                 Tag tag = player.get("XpLevel");
                 if (tag instanceof IntTag intTag) {
@@ -573,6 +513,25 @@ public final class WorldInfoPage extends SpinnerPane {
 
             rootPane.getChildren().addAll(ComponentList.createComponentListTitle(i18n("world.info.player")), playerInfo);
         }
+    }
+
+    private void setLeftLabel(BorderPane borderPane, @PropertyKey(resourceBundle = "assets.lang.I18N") String key) {
+        Label label = new Label(i18n(key));
+        BorderPane.setAlignment(label, Pos.CENTER_LEFT);
+        borderPane.setLeft(label);
+    }
+
+    private void setRightTextField(BorderPane borderPane, JFXTextField textField, int perfWidth) {
+        textField.setDisable(worldManagePage.isDisable());
+        textField.setPrefWidth(perfWidth);
+        BorderPane.setAlignment(textField, Pos.CENTER_RIGHT);
+        borderPane.setRight(textField);
+    }
+
+    private void setRightTextLabel(BorderPane borderPane, Label label) {
+        FXUtils.copyOnDoubleClick(label);
+        BorderPane.setAlignment(label, Pos.CENTER_RIGHT);
+        borderPane.setRight(label);
     }
 
     private void saveLevelDat() {
