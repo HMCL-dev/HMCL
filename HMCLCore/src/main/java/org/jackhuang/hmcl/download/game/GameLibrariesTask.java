@@ -206,7 +206,7 @@ public final class GameLibrariesTask extends Task<Void> {
 
     private record FMLLib(String name, String sha1) {
         public String getDownloadURI() {
-            return "https://hmcl-dev.github.io/metadata/fmllibs/" + name;
+            return "https://hmcl.glavo.site/metadata/fmllibs/" + name;
         }
     }
 }
