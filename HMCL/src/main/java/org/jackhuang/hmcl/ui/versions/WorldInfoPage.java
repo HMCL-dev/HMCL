@@ -57,6 +57,7 @@ import java.text.DecimalFormat;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.concurrent.Callable;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.formatDateTime;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -144,8 +145,7 @@ public final class WorldInfoPage extends SpinnerPane {
             {
                 setLeftLabel(gameVersionPane, "world.info.game_version");
                 Label gameVersionLabel = new Label();
-                gameVersionLabel.setText(world.getGameVersion());
-                setRightTextLabel(gameVersionPane, gameVersionLabel);
+                setRightTextLabel(gameVersionPane, gameVersionLabel, world::getGameVersion);
             }
 
             BorderPane iconPane = new BorderPane();
@@ -214,8 +214,8 @@ public final class WorldInfoPage extends SpinnerPane {
             {
                 setLeftLabel(lastPlayedPane, "world.info.last_played");
                 Label lastPlayedLabel = new Label();
-                lastPlayedLabel.setText(formatDateTime(Instant.ofEpochMilli(world.getLastPlayed())));
-                setRightTextLabel(lastPlayedPane, lastPlayedLabel);
+                //lastPlayedLabel.setText(formatDateTime(Instant.ofEpochMilli(world.getLastPlayed())));
+                setRightTextLabel(lastPlayedPane, lastPlayedLabel, () -> formatDateTime(Instant.ofEpochMilli(world.getLastPlayed())));
             }
 
             BorderPane timePane = new BorderPane();
@@ -223,13 +223,15 @@ public final class WorldInfoPage extends SpinnerPane {
                 setLeftLabel(timePane, "world.info.time");
 
                 Label timeLabel = new Label();
-                setRightTextLabel(timePane, timeLabel);
-
-                Tag tag = dataTag.get("Time");
-                if (tag instanceof LongTag) {
-                    long days = ((LongTag) tag).getValue() / 24000;
-                    timeLabel.setText(i18n("world.info.time.format", days));
-                }
+                setRightTextLabel(timePane, timeLabel, () -> {
+                    Tag tag = dataTag.get("Time");
+                    if (tag instanceof LongTag) {
+                        long days = ((LongTag) tag).getValue() / 24000;
+                        return i18n("world.info.time.format", days);
+                    } else {
+                        return "";
+                    }
+                });
             }
 
             OptionToggleButton allowCheatsButton = new OptionToggleButton();
@@ -342,48 +344,52 @@ public final class WorldInfoPage extends SpinnerPane {
             {
                 setLeftLabel(locationPane, "world.info.player.location");
                 Label locationLabel = new Label();
-                setRightTextLabel(locationPane, locationLabel);
-
-                Dimension dim = Dimension.of(player.get("Dimension"));
-                if (dim != null) {
-                    String posString = dim.formatPosition(player.get("Pos"));
-                    if (posString != null)
-                        locationLabel.setText(posString);
-                }
+                setRightTextLabel(locationPane, locationLabel, () -> {
+                    Dimension dim = Dimension.of(player.get("Dimension"));
+                    if (dim != null) {
+                        String posString = dim.formatPosition(player.get("Pos"));
+                        if (posString != null)
+                            return posString;
+                    }
+                    return "";
+                });
             }
 
             BorderPane lastDeathLocationPane = new BorderPane();
             {
                 setLeftLabel(lastDeathLocationPane, "world.info.player.last_death_location");
                 Label lastDeathLocationLabel = new Label();
-                setRightTextLabel(lastDeathLocationPane, lastDeathLocationLabel);
-
-                Tag tag = player.get("LastDeathLocation");
-                if (tag instanceof CompoundTag compoundTag) {
-                    Dimension dim = Dimension.of(compoundTag.get("dimension"));
-                    if (dim != null) {
-                        String posString = dim.formatPosition(compoundTag.get("pos"));
-                        if (posString != null)
-                            lastDeathLocationLabel.setText(posString);
+                setRightTextLabel(lastDeathLocationPane, lastDeathLocationLabel, () -> {
+                    Tag tag = player.get("LastDeathLocation");
+                    if (tag instanceof CompoundTag compoundTag) {
+                        Dimension dim = Dimension.of(compoundTag.get("dimension"));
+                        if (dim != null) {
+                            String posString = dim.formatPosition(compoundTag.get("pos"));
+                            if (posString != null)
+                                return posString;
+                        }
                     }
-                }
+                    return "";
+                });
+
             }
 
             BorderPane spawnPane = new BorderPane();
             {
                 setLeftLabel(spawnPane, "world.info.player.spawn");
                 Label spawnLabel = new Label();
-                setRightTextLabel(spawnPane, spawnLabel);
+                setRightTextLabel(spawnPane, spawnLabel, () -> {
+                    Dimension dim = Dimension.of(player.get("SpawnDimension"));
+                    if (dim != null) {
+                        Tag x = player.get("SpawnX");
+                        Tag y = player.get("SpawnY");
+                        Tag z = player.get("SpawnZ");
 
-                Dimension dim = Dimension.of(player.get("SpawnDimension"));
-                if (dim != null) {
-                    Tag x = player.get("SpawnX");
-                    Tag y = player.get("SpawnY");
-                    Tag z = player.get("SpawnZ");
-
-                    if (x instanceof IntTag intX && y instanceof IntTag intY && z instanceof IntTag intZ)
-                        spawnLabel.setText(dim.formatPosition(intX.getValue(), intY.getValue(), intZ.getValue()));
-                }
+                        if (x instanceof IntTag intX && y instanceof IntTag intY && z instanceof IntTag intZ)
+                            return dim.formatPosition(intX.getValue(), intY.getValue(), intZ.getValue());
+                    }
+                    return "";
+                });
             }
 
             BorderPane playerGameTypePane = new BorderPane();
@@ -527,9 +533,13 @@ public final class WorldInfoPage extends SpinnerPane {
         borderPane.setRight(textField);
     }
 
-    private void setRightTextLabel(BorderPane borderPane, Label label) {
+    private void setRightTextLabel(BorderPane borderPane, Label label, Callable<String> setNameCall) {
         FXUtils.copyOnDoubleClick(label);
         BorderPane.setAlignment(label, Pos.CENTER_RIGHT);
+        try {
+            label.setText(setNameCall.call());
+        } catch (Throwable ignored) {
+        }
         borderPane.setRight(label);
     }
 
