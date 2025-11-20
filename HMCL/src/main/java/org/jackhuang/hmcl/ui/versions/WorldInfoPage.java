@@ -307,7 +307,7 @@ public final class WorldInfoPage extends SpinnerPane {
 
             OptionToggleButton difficultyLockPane = new OptionToggleButton();
             {
-                difficultyLockPane.setTitle(i18n("world.info.difficultyLock"));
+                difficultyLockPane.setTitle(i18n("world.info.difficulty_lock"));
                 difficultyLockPane.setDisable(worldManagePage.isReadOnly());
 
                 Tag tag = dataTag.get("DifficultyLocked");
