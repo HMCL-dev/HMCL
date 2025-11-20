@@ -381,14 +381,14 @@ public final class WorldInfoPage extends SpinnerPane {
                 setRightTextLabel(spawnPane, spawnLabel, () -> {
 
                     Dimension dim = Dimension.of(player.get("SpawnDimension"));
-                    if (dim != null) {//before 25w07a
+                    if (dim != null) { //before 25w07a
                         Tag x = player.get("SpawnX");
                         Tag y = player.get("SpawnY");
                         Tag z = player.get("SpawnZ");
 
                         if (x instanceof IntTag intX && y instanceof IntTag intY && z instanceof IntTag intZ)
                             return dim.formatPosition(intX.getValue(), intY.getValue(), intZ.getValue());
-                    } else {//after 25w07a
+                    } else { //after 25w07a
                         CompoundTag respawnTag = player.get("respawn");
                         dim = Dimension.of(respawnTag.get("dimension"));
                         Tag posTag = respawnTag.get("pos");
