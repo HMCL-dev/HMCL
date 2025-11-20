@@ -54,9 +54,6 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.safety.Safelist;
 
 import java.nio.file.Path;
 import java.util.*;
@@ -531,23 +528,15 @@ public class DownloadPage extends Control implements DecoratorPage {
         private void loadChangelogAndDependencies(RemoteMod.Version version, DownloadPage selfPage, SpinnerPane spinnerPane, ComponentList dependenciesList) {
             spinnerPane.setLoading(true);
             Task.supplyAsync(() -> {
-                String changelogText;
+                Optional<String> changelog;
                 if (version.getChangelog() != null) {
-                    changelogText = version.getChangelog().isBlank() ? null : version.getChangelog();
+                    changelog = Optional.ofNullable(version.getChangelog().isBlank() ? null : version.getChangelog());
                 } else {
                     try {
-                        String changelog = selfPage.repository.getModChangelog(version.getModid(), version.getVersionId());
-                        Document document = Jsoup.parse(changelog);
-                        Document.OutputSettings outputSettings = new Document.OutputSettings().prettyPrint(false);
-                        document.outputSettings(outputSettings);
-                        document.select("br").append("\\n");
-                        document.select("p").prepend("\\n");
-                        document.select("p").append("\\n");
-                        String newHtml = document.html().replaceAll("\\\\n", System.lineSeparator());
-                        String plainText = Jsoup.clean(newHtml, "", Safelist.none(), outputSettings).trim();
-                        changelogText = plainText.isBlank() ? null : plainText;
+                        String changelogText = StringUtils.htmlToText(selfPage.repository.getModChangelog(version.getModid(), version.getVersionId()));
+                        changelog = changelogText.isBlank() ? Optional.empty() : Optional.of(changelogText);
                     } catch (UnsupportedOperationException e) {
-                        changelogText = null;
+                        changelog = Optional.empty();
                     }
                 }
 
@@ -568,14 +557,11 @@ public class DownloadPage extends Control implements DecoratorPage {
                     dependencies.get(dependency.getType()).add(dependencyModItem);
                 }
 
-                return new Pair<>(changelogText, dependencies.values().stream().flatMap(Collection::stream).collect(Collectors.toList()));
+                return new Pair<>(changelog, dependencies.values().stream().flatMap(Collection::stream).collect(Collectors.toList()));
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
                     List<Node> nodes = new LinkedList<>();
-                    String changelog = result.getKey();
-                    if (changelog != null) {
-                        nodes.add(new Text(changelog));
-                    }
+                    result.getKey().ifPresent(s -> nodes.add(new HBox(new Text(s))));
                     nodes.addAll(result.getValue());
                     dependenciesList.getContent().setAll(nodes);
                     spinnerPane.setFailedReason(null);

@@ -41,13 +41,11 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.CSVTable;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.safety.Safelist;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -106,7 +104,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                     return;
                 }
                 ModUpdateObject object = items.get(cell.getIndex());
-                Controllers.dialog(new ModDetail(object.data.getCandidates().get(0), object.data.getRepository()));
+                Controllers.dialog(new ModDetail(object.data.getCandidates().get(0), object.data.getRepository(), object.getSource()));
             });
             return cell;
         });
@@ -290,7 +288,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
 
     private static final class ModItem extends StackPane {
 
-        ModItem(RemoteMod.Version dataItem) {
+        ModItem(RemoteMod.Version targetVersion, String source) {
             VBox pane = new VBox(8);
             pane.setPadding(new Insets(8, 0, 8, 0));
 
@@ -304,10 +302,10 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                     StackPane graphicPane = new StackPane();
                     TwoLineListItem content = new TwoLineListItem();
                     HBox.setHgrow(content, Priority.ALWAYS);
-                    content.setTitle(dataItem.getName());
-                    content.setSubtitle(I18n.formatDateTime(dataItem.getDatePublished()));
+                    content.setTitle(targetVersion.getVersion());
+                    content.setSubtitle(I18n.formatDateTime(targetVersion.getDatePublished()));
 
-                    switch (dataItem.getVersionType()) {
+                    switch (targetVersion.getVersionType()) {
                         case Alpha:
                             content.addTag(i18n("mods.channel.alpha"));
                             graphicPane.getChildren().setAll(SVG.ALPHA_CIRCLE.createIcon(Theme.blackFill(), 24));
@@ -322,7 +320,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                             break;
                     }
 
-                    for (ModLoaderType modLoaderType : dataItem.getLoaders()) {
+                    for (ModLoaderType modLoaderType : targetVersion.getLoaders()) {
                         switch (modLoaderType) {
                             case FORGE:
                                 content.addTag(i18n("install.installer.forge"));
@@ -345,6 +343,8 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                         }
                     }
 
+                    content.addTag(source);
+
                     descPane.getChildren().setAll(graphicPane, content);
                 }
 
@@ -363,39 +363,22 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
 
         private final RemoteModRepository repository;
 
-        public ModDetail(RemoteMod.Version version, RemoteModRepository repository) {
+        public ModDetail(RemoteMod.Version targetVersion, RemoteModRepository repository, String source) {
             this.repository = repository;
-            RemoteModRepository.Type type = repository.getType();
 
-            String title;
-            switch (type) {
-                case WORLD:
-                    title = "world.download.title";
-                    break;
-                case MODPACK:
-                    title = "modpack.download.title";
-                    break;
-                case RESOURCE_PACK:
-                    title = "resourcepack.download.title";
-                    break;
-                case MOD:
-                default:
-                    title = "mods.download.title";
-                    break;
-            }
-            this.setHeading(new HBox(new Label(i18n(title, version.getName()))));
+            this.setHeading(new HBox(new Label(i18n("mods.check_updates.update_mod", targetVersion.getName()))));
 
             VBox box = new VBox(8);
             box.setPadding(new Insets(8));
-            ModItem modItem = new ModItem(version);
+            ModItem modItem = new ModItem(targetVersion, source);
             modItem.setMouseTransparent(true); // Item is displayed for info, clicking shouldn't open the dialog again
             box.getChildren().setAll(modItem);
 
             SpinnerPane spinnerPane = new SpinnerPane();
             ScrollPane scrollPane = new ScrollPane();
             ComponentList changelogComponent = new ComponentList(Lang::immutableListOf);
-            loadChangelog(version, spinnerPane, changelogComponent);
-            spinnerPane.setOnFailedAction(e -> loadChangelog(version, spinnerPane, changelogComponent));
+            loadChangelog(targetVersion, spinnerPane, changelogComponent);
+            spinnerPane.setOnFailedAction(e -> loadChangelog(targetVersion, spinnerPane, changelogComponent));
 
             scrollPane.setContent(changelogComponent);
             scrollPane.setFitToWidth(true);
@@ -425,16 +408,8 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                     return version.getChangelog().isBlank() ? null : version.getChangelog();
                 } else {
                     try {
-                        String changelog = repository.getModChangelog(version.getModid(), version.getVersionId());
-                        Document document = Jsoup.parse(changelog);
-                        Document.OutputSettings outputSettings = new Document.OutputSettings().prettyPrint(false);
-                        document.outputSettings(outputSettings);
-                        document.select("br").append("\\n");
-                        document.select("p").prepend("\\n");
-                        document.select("p").append("\\n");
-                        String newHtml = document.html().replaceAll("\\\\n", System.lineSeparator());
-                        String plainText = Jsoup.clean(newHtml, "", Safelist.none(), outputSettings).trim();
-                        return plainText.isBlank() ? null : plainText;
+                        String changelog = StringUtils.htmlToText(repository.getModChangelog(version.getModid(), version.getVersionId()));
+                        return changelog.isBlank() ? null : changelog;
                     } catch (UnsupportedOperationException e) {
                         return null;
                     }
@@ -442,7 +417,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
                     if (result != null) {
-                        componentList.getContent().setAll(new Text(result));
+                        componentList.getContent().setAll(new HBox(new Text(result)));
                     } else {
                         componentList.getContent().setAll();
                     }
