@@ -155,8 +155,8 @@ public enum SVG {
 
     public Node createIcon(ObservableValue<? extends Paint> fill, double size) {
         SVGPath p = new SVGPath();
-        p.getStyleClass().add("svg");
         p.setContent(path);
+        p.getStyleClass().add("svg");
         if (fill != null)
             p.fillProperty().bind(fill);
 
@@ -165,12 +165,25 @@ public enum SVG {
 
     public Node createIcon(Paint fill, double size) {
         SVGPath p = new SVGPath();
-        p.getStyleClass().add("svg");
         p.setContent(path);
+        p.getStyleClass().add("svg");
         if (fill != null)
             p.fillProperty().set(fill);
 
         return createIcon(p, size);
     }
 
+    public Node createIcon(double size) {
+        SVGPath p = new SVGPath();
+        p.setContent(path);
+        p.getStyleClass().add("svg");
+        return createIcon(p, size);
+    }
+
+    public Node createIcon() {
+        SVGPath p = new SVGPath();
+        p.setContent(path);
+        p.getStyleClass().add("svg");
+        return createIcon(p, -1);
+    }
 }

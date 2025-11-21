@@ -34,12 +34,12 @@ import org.hildan.fxgson.factories.JavaFxPropertyTypeAdapterFactory;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.java.JavaRuntime;
+import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.gson.*;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.*;
 import java.net.Proxy;
 import java.nio.file.Path;
 import java.util.*;
@@ -277,18 +277,33 @@ public final class Config extends ObservableSetting {
     // UI
 
     @SerializedName("theme")
-    private final ObjectProperty<Theme> theme = new SimpleObjectProperty<>();
+    private final ObjectProperty<ThemeColor> themeColor = new SimpleObjectProperty<>();
 
-    public ObjectProperty<Theme> themeProperty() {
-        return theme;
+    public ObjectProperty<ThemeColor> themeColorProperty() {
+        return themeColor;
     }
 
-    public Theme getTheme() {
-        return theme.get();
+    public ThemeColor getThemeColor() {
+        return themeColor.get();
     }
 
-    public void setTheme(Theme theme) {
-        this.theme.set(theme);
+    public void setThemeColor(ThemeColor themeColor) {
+        this.themeColor.set(themeColor);
+    }
+
+    @SerializedName("themeBrightness")
+    private final StringProperty themeBrightness = new SimpleStringProperty("light");
+
+    public StringProperty themeBrightnessProperty() {
+        return themeBrightness;
+    }
+
+    public String getThemeBrightness() {
+        return themeBrightness.get();
+    }
+
+    public void setThemeBrightness(String themeBrightness) {
+        this.themeBrightness.set(themeBrightness);
     }
 
     @SerializedName("fontFamily")

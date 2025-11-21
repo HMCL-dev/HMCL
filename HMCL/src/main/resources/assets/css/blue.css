@@ -1,28 +1,51 @@
-/**
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
-.root {
-    -fx-base-color: #5C6BC0;
-    -fx-base-darker-color: derive(-fx-base-color, -10%);
-    -fx-base-check-color: derive(-fx-base-color, 30%);
-    -fx-rippler-color: rgba(92, 107, 192, 0.3);
-    -fx-base-rippler-color: derive(rgba(92, 107, 192, 0.3), 100%);
-    -fx-base-disabled-text-fill: rgba(256, 256, 256, 0.7);
-    -fx-base-text-fill: white;
-
-    -theme-thumb: rgba(92, 107, 192, 0.7);
+* {
+  -monet-primary: rgb(67, 82, 165);
+  -monet-on-primary: rgb(255, 255, 255);
+  -monet-primary-container: rgb(92, 107, 192);
+  -monet-on-primary-container: rgb(248, 246, 255);
+  -monet-primary-fixed: rgb(222, 224, 255);
+  -monet-primary-fixed-dim: rgb(186, 195, 255);
+  -monet-on-primary-fixed: rgb(0, 16, 91);
+  -monet-on-primary-fixed-variant: rgb(47, 63, 146);
+  -monet-secondary: rgb(87, 92, 127);
+  -monet-on-secondary: rgb(255, 255, 255);
+  -monet-secondary-container: rgb(208, 213, 253);
+  -monet-on-secondary-container: rgb(86, 91, 125);
+  -monet-secondary-fixed: rgb(222, 224, 255);
+  -monet-secondary-fixed-dim: rgb(191, 196, 236);
+  -monet-on-secondary-fixed: rgb(20, 25, 56);
+  -monet-on-secondary-fixed-variant: rgb(63, 69, 102);
+  -monet-tertiary: rgb(119, 82, 0);
+  -monet-on-tertiary: rgb(255, 255, 255);
+  -monet-tertiary-container: rgb(151, 105, 0);
+  -monet-on-tertiary-container: rgb(255, 246, 238);
+  -monet-tertiary-fixed: rgb(255, 222, 172);
+  -monet-tertiary-fixed-dim: rgb(246, 189, 88);
+  -monet-on-tertiary-fixed: rgb(40, 25, 0);
+  -monet-on-tertiary-fixed-variant: rgb(95, 65, 0);
+  -monet-error: rgb(186, 26, 26);
+  -monet-on-error: rgb(255, 255, 255);
+  -monet-error-container: rgb(255, 218, 214);
+  -monet-on-error-container: rgb(147, 0, 10);
+  -monet-surface: rgb(251, 248, 255);
+  -monet-on-surface: rgb(27, 27, 33);
+  -monet-surface-dim: rgb(219, 217, 225);
+  -monet-surface-bright: rgb(251, 248, 255);
+  -monet-surface-container-lowest: rgb(255, 255, 255);
+  -monet-surface-container-low: rgb(245, 242, 250);
+  -monet-surface-container: rgb(239, 237, 245);
+  -monet-surface-container-high: rgb(233, 231, 239);
+  -monet-surface-container-highest: rgb(227, 225, 233);
+  -monet-surface-variant: rgb(226, 225, 239);
+  -monet-on-surface-variant: rgb(69, 70, 81);
+  -monet-background: rgb(251, 248, 255);
+  -monet-on-background: rgb(27, 27, 33);
+  -monet-outline: rgb(118, 118, 131);
+  -monet-outline-variant: rgb(198, 197, 211);
+  -monet-shadow: rgb(0, 0, 0);
+  -monet-scrim: rgb(0, 0, 0);
+  -monet-inverse-surface: rgb(48, 48, 54);
+  -monet-inverse-on-surface: rgb(242, 239, 247);
+  -monet-inverse-primary: rgb(186, 195, 255);
+  -monet-surface-tint: rgb(72, 88, 171);
 }
