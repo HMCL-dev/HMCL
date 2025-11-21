@@ -115,23 +115,27 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                                     JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT,
                                     chunkBaseMenuItem.getWidth(), 0)));
         }
+
         toolbar.addNavigationDrawerItem(i18n("settings.game.exploration"), SVG.FOLDER_OPEN, () -> FXUtils.openFolder(world.getFile()), null);
 
-        PopupMenu managePopupMenu = new PopupMenu();
-        JFXPopup managePopup = new JFXPopup(managePopupMenu);
+        {
+            PopupMenu managePopupMenu = new PopupMenu();
+            JFXPopup managePopup = new JFXPopup(managePopupMenu);
 
-        managePopupMenu.getContent().addAll(
-                new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), () -> WorldManageUIUtils.export(world, sessionLockChannel), managePopup),
-                new IconedMenuItem(SVG.DELETE, i18n("world.delete"), () -> WorldManageUIUtils.delete(world, () -> fireEvent(new PageCloseEvent()), sessionLockChannel), managePopup)
-        );
+            managePopupMenu.getContent().addAll(
+                    new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), () -> WorldManageUIUtils.export(world, sessionLockChannel), managePopup),
+                    new IconedMenuItem(SVG.DELETE, i18n("world.delete"), () -> WorldManageUIUtils.delete(world, () -> fireEvent(new PageCloseEvent()), sessionLockChannel), managePopup)
+            );
 
-        toolbar.addNavigationDrawerItem("管理", SVG.MENU, null, managePopupMenuItem ->
-                managePopupMenuItem.setOnAction(e ->
-                        managePopup.show(managePopupMenuItem,
-                                JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT,
-                                managePopupMenuItem.getWidth(), 0)));
+            toolbar.addNavigationDrawerItem("管理", SVG.MENU, null, managePopupMenuItem ->
+                    managePopupMenuItem.setOnAction(e ->
+                            managePopup.show(managePopupMenuItem,
+                                    JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT,
+                                    managePopupMenuItem.getWidth(), 0)));
 
-        BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
+            BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
+        }
+
         left.setBottom(toolbar);
 
         // Does it need to be done in the background?
