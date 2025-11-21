@@ -548,7 +548,7 @@ public final class WorldInfoPage extends SpinnerPane {
         try {
             label.setText(setNameCall.call());
         } catch (Exception e) {
-            LOG.warning(e.getMessage());
+            LOG.warning("Exception happened when setting name", e);
         }
         borderPane.setRight(label);
     }

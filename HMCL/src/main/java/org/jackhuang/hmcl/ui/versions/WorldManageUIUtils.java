@@ -16,7 +16,6 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class WorldManageUIUtils {
     private WorldManageUIUtils() {
@@ -72,7 +71,6 @@ public final class WorldManageUIUtils {
         if (sessionLockChannel != null) {
             try {
                 sessionLockChannel.close();
-                LOG.info("Releases the lock on world " + world.getFileName());
             } catch (IOException e) {
                 throw new IOException("Failed to close session lock channel", e);
             }
