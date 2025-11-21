@@ -154,16 +154,19 @@ public final class WorldInfoPage extends SpinnerPane {
 
                 FXUtils.limitSize(iconImageView, 32, 32);
                 iconImageView.setImage(world.getIcon() == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : world.getIcon());
+                iconImageView.setCursor(Cursor.HAND);
 
                 Node editIcon = SVG.EDIT.createIcon(Theme.blackFill(), 12);
                 editIcon.setDisable(worldManagePage.isReadOnly());
                 editIcon.setCursor(Cursor.HAND);
-                FXUtils.onClicked(editIcon, () -> Controllers.confirm(
-                        "你需要提供一个分辨率为64×64，格式为PNG的图片，如果不是，HMCL将会将图片进行裁切并将分辨率修改为64×64", "更改世界图标", MessageDialogPane.MessageType.INFO,
+                Runnable onClickAction = () -> Controllers.confirm(
+                        i18n("world.icon.change.tip"), i18n("world.icon.change"), MessageDialogPane.MessageType.INFO,
                         this::changeWorldIcon,
                         null
-                ));
-                FXUtils.installFastTooltip(editIcon, "更改世界图标");
+                );
+                FXUtils.onClicked(editIcon, onClickAction);
+                FXUtils.onClicked(iconImageView, onClickAction);
+                FXUtils.installFastTooltip(editIcon, i18n("world.icon.change"));
 
                 HBox hBox = new HBox(8);
                 hBox.setAlignment(Pos.CENTER_LEFT);
@@ -666,8 +669,8 @@ public final class WorldInfoPage extends SpinnerPane {
 
     private void changeWorldIcon() {
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("选择图像");
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Image Files", "*.png"));
+        fileChooser.setTitle(i18n("world.icon.choose.title"));
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.png"), "*.png"));
         fileChooser.setInitialFileName("icon.png");
 
         File file = fileChooser.showOpenDialog(Controllers.getStage());
