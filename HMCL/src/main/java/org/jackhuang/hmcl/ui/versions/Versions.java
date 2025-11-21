@@ -287,6 +287,7 @@ public final class Versions {
 
     public static void modifyGameSettings(Profile profile, String version) {
         Controllers.getVersionPage().setVersion(version, profile);
+        Controllers.getVersionPage().showInstanceSettings();
         // VersionPage.loadVersion will be invoked after navigation
         Controllers.navigate(Controllers.getVersionPage());
     }

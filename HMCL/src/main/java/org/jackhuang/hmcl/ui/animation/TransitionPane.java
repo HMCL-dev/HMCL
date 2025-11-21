@@ -26,7 +26,6 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.construct.TabHeader;
 import org.jetbrains.annotations.Nullable;
 
 public class TransitionPane extends StackPane {
@@ -39,17 +38,6 @@ public class TransitionPane extends StackPane {
 
     public Node getCurrentNode() {
         return currentNode;
-    }
-
-    public void bindTabHeader(TabHeader tabHeader) {
-        this.setContent(tabHeader.getSelectionModel().getSelectedItem().getNode(), ContainerAnimations.NONE);
-        FXUtils.onChange(tabHeader.getSelectionModel().selectedItemProperty(), newValue -> {
-            this.setContent(newValue.getNode(),
-                    ContainerAnimations.SLIDE_UP_FADE_IN,
-                    Motion.MEDIUM4,
-                    Motion.EASE_IN_OUT_CUBIC_EMPHASIZED
-            );
-        });
     }
 
     public final void setContent(Node newView, AnimationProducer transition) {
@@ -66,6 +54,7 @@ public class TransitionPane extends StackPane {
         currentNode = newView;
 
         if (!AnimationUtils.isAnimationEnabled() || previousNode == null || transition == ContainerAnimations.NONE) {
+            AnimationUtils.reset(newView, true);
             getChildren().setAll(newView);
             return;
         }
