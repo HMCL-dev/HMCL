@@ -17,46 +17,11 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import javafx.beans.binding.Bindings;
-import javafx.beans.binding.ObjectBinding;
 import javafx.scene.paint.Color;
 
-import java.util.Objects;
-
+@Deprecated
 public final class Theme {
-    public static final Theme BLUE = new Theme("blue", "#5C6BC0");
     public static final Color BLACK = Color.web("#292929");
-
-    private final Color paint;
-    private final String color;
-    private final String name;
-
-    Theme(String name, String color) {
-        this.name = name;
-        this.color = Objects.requireNonNull(color);
-        this.paint = Color.web(color);
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getColor() {
-        return color;
-    }
-
-    private static ObjectBinding<Color> FOREGROUND_FILL;
-
-    public static ObjectBinding<Color> foregroundFillBinding() {
-        if (FOREGROUND_FILL == null)
-            FOREGROUND_FILL = Bindings.createObjectBinding(() -> Color.WHITE); // TODO
-//            FOREGROUND_FILL = Bindings.createObjectBinding(
-//                    () -> Theme.getTheme().getForegroundColor(),
-//                    config().themeProperty()
-//            );
-
-        return FOREGROUND_FILL;
-    }
 
     public static Color blackFill() {
         return BLACK;
@@ -65,5 +30,4 @@ public final class Theme {
     public static Color whiteFill() {
         return Color.WHITE;
     }
-
 }

@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui;
 
-import javafx.beans.value.ObservableValue;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Node;
@@ -151,16 +150,6 @@ public enum SVG {
         path.setScaleX(scale);
         path.setScaleY(scale);
         return new Group(path);
-    }
-
-    public Node createIcon(ObservableValue<? extends Paint> fill, double size) {
-        SVGPath p = new SVGPath();
-        p.setContent(path);
-        p.getStyleClass().add("svg");
-        if (fill != null)
-            p.fillProperty().bind(fill);
-
-        return createIcon(p, size);
     }
 
     public Node createIcon(Paint fill, double size) {
