@@ -1,4 +1,5 @@
 # https://gitlab.freedesktop.org/mesa/libdrm/-/blob/35a21916c8f621b35a67f3c5994280ae59a4981a/data/amdgpu.ids
+#
 # List of AMDGPU IDs
 #
 # Syntax:
