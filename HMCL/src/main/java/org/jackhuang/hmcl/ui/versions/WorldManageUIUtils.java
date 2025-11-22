@@ -143,7 +143,7 @@ public final class WorldManageUIUtils {
             try {
                 sessionLockChannel.close();
             } catch (IOException e) {
-                throw new IOException("Failed to close session lock channel", e);
+                throw new IOException("Failed to close session lock channel of the world " + world.getFile(), e);
             }
         }
     }
