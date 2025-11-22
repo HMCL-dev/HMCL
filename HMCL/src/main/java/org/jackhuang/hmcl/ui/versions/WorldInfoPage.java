@@ -47,6 +47,7 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.io.File;
@@ -217,7 +218,6 @@ public final class WorldInfoPage extends SpinnerPane {
             {
                 setLeftLabel(lastPlayedPane, "world.info.last_played");
                 Label lastPlayedLabel = new Label();
-                //lastPlayedLabel.setText(formatDateTime(Instant.ofEpochMilli(world.getLastPlayed())));
                 setRightTextLabel(lastPlayedPane, lastPlayedLabel, () -> formatDateTime(Instant.ofEpochMilli(world.getLastPlayed())));
             }
 
@@ -383,22 +383,29 @@ public final class WorldInfoPage extends SpinnerPane {
                 Label spawnLabel = new Label();
                 setRightTextLabel(spawnPane, spawnLabel, () -> {
 
-                    Dimension dim = Dimension.of(player.get("SpawnDimension"));
-                    if (dim != null) { //before 25w07a
+                    Dimension dimension;
+                    if (GameVersionNumber.asGameVersion(world.getGameVersion()).compareTo("25w07a") >= 0) {
+                        CompoundTag respawnTag = player.get("respawn");
+                        if (respawnTag == null) {
+                            return "";
+                        }
+                        dimension = Dimension.of(respawnTag.get("dimension"));
+                        Tag posTag = respawnTag.get("pos");
+
+                        if (posTag instanceof IntArrayTag intArrayTag) {
+                            return dimension.formatPosition(intArrayTag.getValue(0), intArrayTag.getValue(1), intArrayTag.getValue(2));
+                        }
+                    } else {
+                        dimension = Dimension.of(player.get("SpawnDimension"));
+                        if (dimension == null) {
+                            return "";
+                        }
                         Tag x = player.get("SpawnX");
                         Tag y = player.get("SpawnY");
                         Tag z = player.get("SpawnZ");
 
                         if (x instanceof IntTag intX && y instanceof IntTag intY && z instanceof IntTag intZ)
-                            return dim.formatPosition(intX.getValue(), intY.getValue(), intZ.getValue());
-                    } else { //after 25w07a
-                        CompoundTag respawnTag = player.get("respawn");
-                        dim = Dimension.of(respawnTag.get("dimension"));
-                        Tag posTag = respawnTag.get("pos");
-
-                        if (posTag instanceof IntArrayTag intArrayTag) {
-                            return dim.formatPosition(intArrayTag.getValue(0), intArrayTag.getValue(1), intArrayTag.getValue(2));
-                        }
+                            return dimension.formatPosition(intX.getValue(), intY.getValue(), intZ.getValue());
                     }
                     return "";
                 });
@@ -677,7 +684,6 @@ public final class WorldInfoPage extends SpinnerPane {
         if (file == null) return;
 
         Image original = new Image(file.toURI().toString());
-
         Image squareImage = cropCenterSquare(original);
 
         Image finalImage;

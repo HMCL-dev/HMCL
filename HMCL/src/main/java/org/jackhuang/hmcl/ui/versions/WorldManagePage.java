@@ -133,9 +133,9 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                                     JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT,
                                     managePopupMenuItem.getWidth(), 0)));
 
-            BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
         }
 
+        BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
         left.setBottom(toolbar);
 
         // Does it need to be done in the background?
