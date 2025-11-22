@@ -649,7 +649,7 @@ public final class WorldInfoPage extends SpinnerPane {
         static final ObservableList<Difficulty> items = FXCollections.observableList(Arrays.asList(values()));
 
         static Difficulty of(int d) {
-            return d >= 0 && d <= items.size() ? items.get(d) : null;
+            return (d >= 0 && d < items.size()) ? items.get(d) : null;
         }
 
         @Override
