@@ -32,9 +32,7 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
-import org.jackhuang.hmcl.ui.construct.PageAware;
-import org.jackhuang.hmcl.ui.construct.TabHeader;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.main.MainPage;
@@ -42,9 +40,12 @@ import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPage, PageAware {
+    private static final int TERRACOTTA_AGREEMENT_VERSION = 2;
+
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("terracotta.terracotta")));
     private final TabHeader tab;
     private final TabHeader.Tab<TerracottaControllerPage> statusPage = new TabHeader.Tab<>("statusPage");
@@ -55,9 +56,8 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
 
     public TerracottaPage() {
         statusPage.setNodeSupplier(TerracottaControllerPage::new);
-        tab = new TabHeader(statusPage);
+        tab = new TabHeader(transitionPane, statusPage);
         tab.select(statusPage);
-        transitionPane.bindTabHeader(tab);
 
         BorderPane left = new BorderPane();
         FXUtils.setLimitWidth(left, 200);
@@ -94,6 +94,12 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
     @Override
     public void onPageShown() {
         tab.onPageShown();
+
+        if (globalConfig().getTerracottaAgreementVersion() < TERRACOTTA_AGREEMENT_VERSION) {
+            Controllers.confirmWithCountdown(i18n("terracotta.confirm.desc"), i18n("terracotta.confirm.title"), 5, MessageDialogPane.MessageType.INFO, () -> {
+                globalConfig().setTerracottaAgreementVersion(TERRACOTTA_AGREEMENT_VERSION);
+            }, () -> fireEvent(new PageCloseEvent()));
+        }
     }
 
     @Override

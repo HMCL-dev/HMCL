@@ -964,25 +964,6 @@
     -fx-border-width: 0;
 }
 
-.options-list-item-expand-button {
-    -fx-toggle-icon4-size: 20px;
-    -fx-pref-width: -fx-toggle-icon4-size;
-    -fx-max-width: -fx-toggle-icon4-size;
-    -fx-min-width: -fx-toggle-icon4-size;
-    -fx-pref-height: -fx-toggle-icon4-size;
-    -fx-max-height: -fx-toggle-icon4-size;
-    -fx-min-height: -fx-toggle-icon4-size;
-    -fx-background-radius: 50px;
-    -fx-background-color: transparent;
-    -jfx-toggle-color: rgba(128, 128, 255, 0.2);
-    -jfx-untoggle-color: transparent;
-}
-
-.options-list-item-expand-button .jfx-rippler {
-    -jfx-rippler-fill: -fx-base-check-color;
-    -jfx-mask-type: CIRCLE;
-}
-
 /*******************************************************************************
 *                                                                              *
 * JFX Toggle Button                                                            *
