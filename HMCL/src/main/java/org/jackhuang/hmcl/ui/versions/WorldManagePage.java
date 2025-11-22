@@ -64,15 +64,13 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         this.world = world;
         this.backupsDir = backupsDir;
 
+        this.worldInfoTab.setNodeSupplier(() -> new WorldInfoPage(this));
+        this.worldBackupsTab.setNodeSupplier(() -> new WorldBackupsPage(this));
+        this.datapackTab.setNodeSupplier(() -> new DatapackListPage(this));
+
         this.state = new SimpleObjectProperty<>(State.fromTitle(i18n("world.manage.title", world.getWorldName())));
-        this.header = new TabHeader(worldInfoTab, worldBackupsTab);
-
-        worldInfoTab.setNodeSupplier(() -> new WorldInfoPage(this));
-        worldBackupsTab.setNodeSupplier(() -> new WorldBackupsPage(this));
-        datapackTab.setNodeSupplier(() -> new DatapackListPage(this));
-
+        this.header = new TabHeader(transitionPane, worldInfoTab, worldBackupsTab);
         header.select(worldInfoTab);
-        transitionPane.bindTabHeader(header);
 
         setCenter(transitionPane);
 
@@ -82,13 +80,13 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         setLeft(left);
 
         AdvancedListBox sideBar = new AdvancedListBox()
-                .addNavigationDrawerTab(header, worldInfoTab, i18n("world.info"), SVG.INFO)
-                .addNavigationDrawerTab(header, worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE);
+                .addNavigationDrawerTab(header, worldInfoTab, i18n("world.info"), SVG.INFO, SVG.INFO_FILL)
+                .addNavigationDrawerTab(header, worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE, SVG.ARCHIVE_FILL);
 
         if (world.getGameVersion() != null && // old game will not write game version to level.dat
                 GameVersionNumber.asGameVersion(world.getGameVersion()).isAtLeast("1.13", "17w43a")) {
             header.getTabs().add(datapackTab);
-            sideBar.addNavigationDrawerTab(header, datapackTab, i18n("world.datapack"), SVG.EXTENSION);
+            sideBar.addNavigationDrawerTab(header, datapackTab, i18n("world.datapack"), SVG.EXTENSION, SVG.EXTENSION_FILL);
         }
 
         left.setTop(sideBar);

@@ -20,12 +20,12 @@ package org.jackhuang.hmcl.ui.animation;
 import javafx.animation.Animation;
 import javafx.animation.Interpolator;
 import javafx.application.Platform;
+import javafx.scene.CacheHint;
 import javafx.scene.Node;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.construct.TabHeader;
 import org.jetbrains.annotations.Nullable;
 
 public class TransitionPane extends StackPane {
@@ -40,17 +40,6 @@ public class TransitionPane extends StackPane {
         return currentNode;
     }
 
-    public void bindTabHeader(TabHeader tabHeader) {
-        this.setContent(tabHeader.getSelectionModel().getSelectedItem().getNode(), ContainerAnimations.NONE);
-        FXUtils.onChange(tabHeader.getSelectionModel().selectedItemProperty(), newValue -> {
-            this.setContent(newValue.getNode(),
-                    ContainerAnimations.SLIDE_UP_FADE_IN,
-                    Motion.MEDIUM4,
-                    Motion.EASE_IN_OUT_CUBIC_EMPHASIZED
-            );
-        });
-    }
-
     public final void setContent(Node newView, AnimationProducer transition) {
         setContent(newView, transition, Motion.SHORT4);
     }
@@ -61,60 +50,53 @@ public class TransitionPane extends StackPane {
 
     public void setContent(Node newView, AnimationProducer transition,
                            Duration duration, Interpolator interpolator) {
-        Node previousNode;
-        if (getWidth() > 0 && getHeight() > 0) {
-            previousNode = currentNode;
-            if (previousNode == null) {
-                if (getChildren().isEmpty())
-                    previousNode = EMPTY_PANE;
-                else
-                    previousNode = getChildren().get(0);
-            }
-        } else
-            previousNode = EMPTY_PANE;
-
-        if (previousNode == newView)
-            previousNode = EMPTY_PANE;
-
+        Node previousNode = currentNode != newView && getWidth() > 0 && getHeight() > 0 ? currentNode : null;
         currentNode = newView;
 
-        getChildren().setAll(previousNode, currentNode);
-
-        if (previousNode == EMPTY_PANE) {
+        if (!AnimationUtils.isAnimationEnabled() || previousNode == null || transition == ContainerAnimations.NONE) {
+            AnimationUtils.reset(newView, true);
             getChildren().setAll(newView);
             return;
         }
 
-        if (AnimationUtils.isAnimationEnabled() && transition != ContainerAnimations.NONE) {
-            setMouseTransparent(true);
-            transition.init(this, previousNode, getCurrentNode());
+        getChildren().setAll(previousNode, newView);
 
-            Node finalPreviousNode = previousNode;
-            // runLater or "init" will not work
-            Platform.runLater(() -> {
-                Animation newAnimation = transition.animate(
-                        this,
-                        finalPreviousNode,
-                        getCurrentNode(),
-                        duration, interpolator);
-                newAnimation.setOnFinished(e -> {
-                    setMouseTransparent(false);
-                    getChildren().remove(finalPreviousNode);
-                });
-                FXUtils.playAnimation(this, "transition_pane", newAnimation);
-            });
-        } else {
-            getChildren().remove(previousNode);
+        setMouseTransparent(true);
+        transition.init(this, previousNode, newView);
+
+        CacheHint cacheHint = newView instanceof Cacheable cacheable
+                ? cacheable.getCacheHint(transition)
+                : null;
+
+        if (cacheHint != null) {
+            newView.setCache(true);
+            newView.setCacheHint(cacheHint);
         }
-    }
 
-    private final EmptyPane EMPTY_PANE = new EmptyPane();
+        // runLater or "init" will not work
+        Platform.runLater(() -> {
+            Animation newAnimation = transition.animate(
+                    this,
+                    previousNode,
+                    newView,
+                    duration, interpolator);
+            newAnimation.setOnFinished(e -> {
+                setMouseTransparent(false);
+                getChildren().remove(previousNode);
 
-    public static class EmptyPane extends StackPane {
+                if (cacheHint != null) {
+                    newView.setCache(false);
+                }
+            });
+            FXUtils.playAnimation(this, "transition_pane", newAnimation);
+        });
+
     }
 
     public interface AnimationProducer {
         default void init(TransitionPane container, Node previousNode, Node nextNode) {
+            AnimationUtils.reset(previousNode, true);
+            AnimationUtils.reset(nextNode, false);
         }
 
         Animation animate(Pane container, Node previousNode, Node nextNode,
@@ -122,6 +104,16 @@ public class TransitionPane extends StackPane {
 
         default @Nullable TransitionPane.AnimationProducer opposite() {
             return null;
+        }
+    }
+
+    /// Marks a node as cacheable as a bitmap during animation.
+    public interface Cacheable {
+        /// @return the [cache hint][CacheHint] to use when caching this node during the given animation,
+        ///         or `null` to not cache it.
+        default @Nullable CacheHint getCacheHint(AnimationProducer animationProducer) {
+            // https://github.com/HMCL-dev/HMCL/issues/4789
+            return animationProducer == ContainerAnimations.SLIDE_UP_FADE_IN ? CacheHint.SPEED : null;
         }
     }
 }

@@ -123,7 +123,7 @@ public final class JavaManagementPage extends ListPageBase<JavaManagementPage.Ja
     }
 
     void onShowRestoreJavaPage() {
-        Controllers.navigate(new JavaRestorePage(ConfigHolder.globalConfig().getDisabledJava()));
+        Controllers.navigateForward(new JavaRestorePage(ConfigHolder.globalConfig().getDisabledJava()));
     }
 
     private void onAddJavaBinary(Path file) {

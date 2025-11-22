@@ -34,6 +34,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.ListPageBase;
+import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PageAware;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
@@ -49,7 +50,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObject> implements VersionPage.VersionLoadable, PageAware {
+public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObject> implements VersionPage.VersionLoadable, PageAware, TransitionPane.Cacheable {
     private final BooleanProperty modded = new SimpleBooleanProperty(this, "modded", false);
 
     private final ReentrantLock lock = new ReentrantLock();
@@ -244,7 +245,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                             } else if (result.isEmpty()) {
                                 Controllers.dialog(i18n("mods.check_updates.empty"));
                             } else {
-                                Controllers.navigate(new ModUpdatesPage(modManager, result));
+                                Controllers.navigateForward(new ModUpdatesPage(modManager, result));
                             }
                         })
                         .withStagesHint(Collections.singletonList("mods.check_updates")),
