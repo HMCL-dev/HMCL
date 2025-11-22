@@ -83,7 +83,6 @@ import java.util.Locale;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class TerracottaControllerPage extends StackPane {
@@ -182,31 +181,20 @@ public class TerracottaControllerPage extends StackPane {
                 download.setSubtitle(i18n("terracotta.status.uninitialized.desc"));
                 download.setRightIcon(SVG.ARROW_FORWARD);
                 FXUtils.onClicked(download, () -> {
-                    if (globalConfig().getTerracottaAgreementVersion() >= 1) {
-                        TerracottaState.Preparing s = TerracottaManager.install(null);
-                        if (s != null) {
-                            UI_STATE.set(s);
-                        }
+                    TerracottaState.Preparing s = TerracottaManager.install(null);
+                    if (s != null) {
+                        UI_STATE.set(s);
+                    }
 
-                        if (uninitialized.hasLegacy() && I18n.isUseChinese()) {
-                            Object feedback = config().getShownTips().get(FEEDBACK_TIP);
-                            if (!(feedback instanceof Number number) || number.intValue() < 1) {
-                                Controllers.confirm(i18n("terracotta.feedback.desc"), i18n("terracotta.feedback.title"), () -> {
-                                    FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK);
-                                    config().getShownTips().put(FEEDBACK_TIP, 1);
-                                }, () -> {
-                                });
-                            }
+                    if (uninitialized.hasLegacy() && I18n.isUseChinese()) {
+                        Object feedback = config().getShownTips().get(FEEDBACK_TIP);
+                        if (!(feedback instanceof Number number) || number.intValue() < 1) {
+                            Controllers.confirm(i18n("terracotta.feedback.desc"), i18n("terracotta.feedback.title"), () -> {
+                                FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK);
+                                config().getShownTips().put(FEEDBACK_TIP, 1);
+                            }, () -> {
+                            });
                         }
-                    } else {
-                        Controllers.confirmWithCountdown(i18n("terracotta.confirm.desc"), i18n("terracotta.confirm.title"), 5, MessageDialogPane.MessageType.INFO, () -> {
-                            globalConfig().setTerracottaAgreementVersion(1);
-                            TerracottaState.Preparing s = TerracottaManager.install(null);
-                            if (s != null) {
-                                UI_STATE.set(s);
-                            }
-                        }, () -> {
-                        });
                     }
                 });
 
@@ -535,7 +523,7 @@ public class TerracottaControllerPage extends StackPane {
                 children.addAll(nodesProperty);
             }
 
-            transition.setContent(components, ContainerAnimations.SWIPE_LEFT_FADE_SHORT);
+            transition.setContent(components, ContainerAnimations.SLIDE_UP_FADE_IN);
         };
         listener.changed(UI_STATE, null, UI_STATE.get());
         holder.add(listener);
@@ -718,7 +706,7 @@ public class TerracottaControllerPage extends StackPane {
                 pane.getChildren().add(item);
             }
 
-            this.transition.setContent(pane, ContainerAnimations.SWIPE_LEFT_FADE_SHORT);
+            this.transition.setContent(pane, ContainerAnimations.SLIDE_UP_FADE_IN);
         }
     }
 }

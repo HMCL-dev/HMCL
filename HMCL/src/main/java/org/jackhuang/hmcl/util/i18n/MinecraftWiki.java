@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.util.i18n;
 
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.translator.Translator_lzh;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
@@ -29,7 +30,7 @@ public final class MinecraftWiki {
     private static final Pattern SNAPSHOT_PATTERN = Pattern.compile("^[0-9]{2}w[0-9]{2}.+$");
 
     public static String getWikiLink(SupportedLocale locale, GameRemoteVersion version) {
-        String wikiVersion = version.getSelfVersion();
+        String wikiVersion = StringUtils.removeSuffix(version.getSelfVersion(), "_unobfuscated");
         var gameVersion = GameVersionNumber.asGameVersion(wikiVersion);
 
         if (locale.getLocale().getLanguage().equals("lzh")) {

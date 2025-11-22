@@ -18,6 +18,10 @@
 package org.jackhuang.hmcl.ui.decorator;
 
 import com.jfoenix.controls.JFXButton;
+import javafx.animation.Interpolator;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
@@ -39,12 +43,13 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 
+import javafx.util.Duration;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.animation.AnimationProducer;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
+import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -205,16 +210,13 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 if (s == null) return;
                 Node node = createNavBar(skinnable, s.getLeftPaneWidth(), s.isBackable(), skinnable.canCloseProperty().get(), skinnable.showCloseAsHomeProperty().get(), s.isRefreshable(), s.getTitle(), s.getTitleNode());
                 if (s.isAnimate()) {
-                    AnimationProducer animation;
-                    if (skinnable.getNavigationDirection() == Navigation.NavigationDirection.NEXT) {
-                        animation = ContainerAnimations.SWIPE_LEFT_FADE_SHORT;
-                    } else if (skinnable.getNavigationDirection() == Navigation.NavigationDirection.PREVIOUS) {
-                        animation = ContainerAnimations.SWIPE_RIGHT_FADE_SHORT;
-                    } else {
-                        animation = ContainerAnimations.FADE;
-                    }
+                    TransitionPane.AnimationProducer animation = switch (skinnable.getNavigationDirection()) {
+                        case NEXT -> NavBarAnimations.NEXT;
+                        case PREVIOUS -> NavBarAnimations.PREVIOUS;
+                        default -> ContainerAnimations.FADE;
+                    };
                     skinnable.setNavigationDirection(Navigation.NavigationDirection.START);
-                    navBarPane.setContent(node, animation);
+                    navBarPane.setContent(node, animation, Motion.SHORT4);
                 } else {
                     navBarPane.getChildren().setAll(node);
                 }
@@ -499,5 +501,67 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 mouseEvent.consume();
             }
         }
+    }
+
+    enum NavBarAnimations implements TransitionPane.AnimationProducer {
+        NEXT {
+            @Override
+            public void init(TransitionPane container, Node previousNode, Node nextNode) {
+                super.init(container, previousNode, nextNode);
+                nextNode.setTranslateX(container.getWidth());
+            }
+
+            @Override
+            public Timeline animate(
+                    Pane container, Node previousNode, Node nextNode,
+                    Duration duration, Interpolator interpolator) {
+                return new Timeline(
+                        new KeyFrame(Duration.ZERO,
+                                new KeyValue(nextNode.translateXProperty(), 50, interpolator),
+                                new KeyValue(previousNode.translateXProperty(), 0, interpolator),
+                                new KeyValue(nextNode.opacityProperty(), 0, interpolator),
+                                new KeyValue(previousNode.opacityProperty(), 1, interpolator)),
+                        new KeyFrame(duration,
+                                new KeyValue(nextNode.translateXProperty(), 0, interpolator),
+                                new KeyValue(previousNode.translateXProperty(), -50, interpolator),
+                                new KeyValue(nextNode.opacityProperty(), 1, interpolator),
+                                new KeyValue(previousNode.opacityProperty(), 0, interpolator))
+                );
+            }
+
+            @Override
+            public TransitionPane.AnimationProducer opposite() {
+                return NEXT;
+            }
+        },
+
+        PREVIOUS {
+            @Override
+            public void init(TransitionPane container, Node previousNode, Node nextNode) {
+                super.init(container, previousNode, nextNode);
+                nextNode.setTranslateX(container.getWidth());
+            }
+
+            @Override
+            public Timeline animate(Pane container, Node previousNode, Node nextNode, Duration duration, Interpolator interpolator) {
+                return new Timeline(
+                        new KeyFrame(Duration.ZERO,
+                                new KeyValue(nextNode.translateXProperty(), -50, interpolator),
+                                new KeyValue(previousNode.translateXProperty(), 0, interpolator),
+                                new KeyValue(nextNode.opacityProperty(), 0, interpolator),
+                                new KeyValue(previousNode.opacityProperty(), 1, interpolator)),
+                        new KeyFrame(duration,
+                                new KeyValue(nextNode.translateXProperty(), 0, interpolator),
+                                new KeyValue(previousNode.translateXProperty(), 50, interpolator),
+                                new KeyValue(nextNode.opacityProperty(), 1, interpolator),
+                                new KeyValue(previousNode.opacityProperty(), 0, interpolator))
+                );
+            }
+
+            @Override
+            public TransitionPane.AnimationProducer opposite() {
+                return PREVIOUS;
+            }
+        };
     }
 }
