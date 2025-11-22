@@ -41,7 +41,7 @@ public final class RemoteVersion {
             } else {
                 throw new IOException("No download url is available");
             }
-        } catch (JsonParseException e) {
+        } catch (Throwable e) {
             throw new IOException("Malformed response", e);
         }
     }
