@@ -6,6 +6,7 @@ import org.jackhuang.hmcl.game.WorldLockedException;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.construct.InputDialogPane;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -13,9 +14,11 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class WorldManageUIUtils {
     private WorldManageUIUtils() {
@@ -65,6 +68,47 @@ public final class WorldManageUIUtils {
         }
 
         Controllers.getDecorator().startWizard(new SinglePageWizardProvider(controller -> new WorldExportPage(world, file, controller::onFinish)));
+    }
+
+    public static void copyWorld(World world, Runnable runnable) {
+        copyWorld(world, runnable, null);
+    }
+
+    public static void copyWorld(World world, Runnable runnable, FileChannel sessionLockChannel) {
+        Path worldPath = world.getFile();
+        Controllers.dialog(new InputDialogPane(
+                i18n("world.copy.prompt"),
+                "",
+                (result, resolve, reject) -> {
+                    if (StringUtils.isBlank(result)) {
+                        reject.accept(i18n("world.copy.failed.empty_name"));
+                        return;
+                    }
+
+                    if (result.contains("/") || result.contains("\\") || !FileUtils.isNameValid(result)) {
+                        reject.accept(i18n("world.copy.failed.invalid_name"));
+                        return;
+                    }
+
+                    Path targetDir = worldPath.resolveSibling(result);
+                    if (Files.exists(targetDir)) {
+                        reject.accept(i18n("world.copy.failed.already_exists"));
+                        return;
+                    }
+
+                    try {
+                        closeSessionLockChannel(world, sessionLockChannel);
+                        world.copy(result);
+                        Controllers.showToast(i18n("world.copy.success.toast"));
+                        if (runnable != null) {
+                            runnable.run();
+                        }
+                        resolve.run();
+                    } catch (IOException e) {
+                        LOG.warning("Failed to copy world", e);
+                        reject.accept(i18n("world.copy.failed"));
+                    }
+                }));
     }
 
     private static void closeSessionLockChannel(World world, FileChannel sessionLockChannel) throws IOException {

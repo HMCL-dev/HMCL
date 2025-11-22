@@ -124,10 +124,11 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
             managePopupMenu.getContent().addAll(
                     new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), () -> WorldManageUIUtils.export(world, sessionLockChannel), managePopup),
-                    new IconedMenuItem(SVG.DELETE, i18n("world.delete"), () -> WorldManageUIUtils.delete(world, () -> fireEvent(new PageCloseEvent()), sessionLockChannel), managePopup)
+                    new IconedMenuItem(SVG.DELETE, i18n("world.delete"), () -> WorldManageUIUtils.delete(world, () -> fireEvent(new PageCloseEvent()), sessionLockChannel), managePopup),
+                    new IconedMenuItem(SVG.CONTENT_COPY, i18n("world.copy"), () -> WorldManageUIUtils.copyWorld(world, null, sessionLockChannel), managePopup)
             );
 
-            toolbar.addNavigationDrawerItem("管理", SVG.MENU, null, managePopupMenuItem ->
+            toolbar.addNavigationDrawerItem(i18n("settings.game.management"), SVG.MENU, null, managePopupMenuItem ->
                     managePopupMenuItem.setOnAction(e ->
                             managePopup.show(managePopupMenuItem,
                                     JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT,

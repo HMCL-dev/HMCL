@@ -53,6 +53,10 @@ public final class WorldListItem extends Control {
         WorldManageUIUtils.delete(world, () -> parent.remove(this));
     }
 
+    public void copy() {
+        WorldManageUIUtils.copyWorld(world, parent::refresh);
+    }
+
     public void reveal() {
         FXUtils.openFolder(world.getFile());
     }

@@ -286,6 +286,16 @@ public final class World {
         FileUtils.forceDelete(file);
     }
 
+    public void copy(String newName) throws IOException {
+        if (!Files.isDirectory(file))
+            throw new IOException();
+
+        Path newPath = file.resolveSibling(newName);
+        FileUtils.copyDirectory(file, newPath);
+        World newWorld = new World(newPath);
+        newWorld.rename(newName);
+    }
+
     public CompoundTag readLevelDat() throws IOException {
         if (!Files.isDirectory(file))
             throw new IOException("Not a valid world directory");
