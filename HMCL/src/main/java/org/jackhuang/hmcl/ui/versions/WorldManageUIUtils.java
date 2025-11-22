@@ -98,16 +98,26 @@ public final class WorldManageUIUtils {
 
                     try {
                         closeSessionLockChannel(world, sessionLockChannel);
-                        world.copy(result);
-                        Controllers.showToast(i18n("world.copy.success.toast"));
-                        if (runnable != null) {
-                            runnable.run();
-                        }
-                        resolve.run();
                     } catch (IOException e) {
-                        LOG.warning("Failed to copy world", e);
-                        reject.accept(i18n("world.copy.failed"));
+                        Controllers.dialog(i18n("world.locked.failed"), null, MessageDialogPane.MessageType.WARNING);
+                        LOG.warning("unlock world fail", e);
                     }
+
+                    Task.runAsync(Schedulers.io(), () -> world.copy(result))
+                            .thenAcceptAsync(Schedulers.javafx(), (Void) -> Controllers.showToast(i18n("world.copy.success.toast")))
+                            .thenAcceptAsync(Schedulers.javafx(), (Void) -> {
+                                        if (runnable != null) {
+                                            runnable.run();
+                                        }
+                                    }
+                            ).whenComplete(Schedulers.javafx(), (exception) -> {
+                                if (exception == null) {
+                                    resolve.run();
+                                } else {
+                                    reject.accept(i18n("world.copy.failed"));
+                                }
+                            })
+                            .start();
                 }));
     }
 
