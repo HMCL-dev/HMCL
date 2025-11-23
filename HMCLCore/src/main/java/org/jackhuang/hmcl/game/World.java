@@ -96,6 +96,10 @@ public final class World {
         return worldName;
     }
 
+    public void setWorldName(String worldName) {
+        this.worldName = worldName;
+    }
+
     public Path getLevelDatFile() {
         return file.resolve("level.dat");
     }
@@ -280,6 +284,16 @@ public final class World {
             throw new WorldLockedException("The world " + getFile() + " has been locked");
         }
         FileUtils.forceDelete(file);
+    }
+
+    public void copy(String newName) throws IOException {
+        if (!Files.isDirectory(file))
+            throw new IOException();
+
+        Path newPath = file.resolveSibling(newName);
+        FileUtils.copyDirectory(file, newPath);
+        World newWorld = new World(newPath);
+        newWorld.rename(newName);
     }
 
     public CompoundTag readLevelDat() throws IOException {
