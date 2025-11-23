@@ -18,40 +18,39 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXDialogLayout;
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.CheckBoxTableCell;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import org.jackhuang.hmcl.mod.LocalModFile;
-import org.jackhuang.hmcl.mod.ModManager;
-import org.jackhuang.hmcl.mod.RemoteMod;
+import javafx.scene.layout.*;
+import javafx.scene.text.Text;
+import org.jackhuang.hmcl.mod.*;
+import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
-import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
+import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.CSVTable;
+import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -95,12 +94,27 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         TableColumn<ModUpdateObject, String> sourceColumn = new TableColumn<>(i18n("mods.check_updates.source"));
         setupCellValueFactory(sourceColumn, ModUpdateObject::sourceProperty);
 
+        TableColumn<ModUpdateObject, String> detailColumn = new TableColumn<>();
+        detailColumn.setCellFactory(param -> {
+            TableCell<ModUpdateObject, String> cell = (TableCell<ModUpdateObject, String>) TableColumn.DEFAULT_CELL_FACTORY.call(param);
+            cell.setOnMouseClicked(event -> {
+                List<ModUpdateObject> items = cell.getTableColumn().getTableView().getItems();
+                if (cell.getIndex() >= items.size()) {
+                    return;
+                }
+                ModUpdateObject object = items.get(cell.getIndex());
+                Controllers.dialog(new ModDetail(object.data.getCandidates().get(0), object.data.getRepository(), object.getSource()));
+            });
+            return cell;
+        });
+        detailColumn.setCellValueFactory(it -> new SimpleStringProperty(i18n("mods.check_updates.show_detail")));
+
         objects = FXCollections.observableList(updates.stream().map(ModUpdateObject::new).collect(Collectors.toList()));
         FXUtils.bindAllEnabled(allEnabledBox.selectedProperty(), objects.stream().map(o -> o.enabled).toArray(BooleanProperty[]::new));
 
         TableView<ModUpdateObject> table = new TableView<>(objects);
         table.setEditable(true);
-        table.getColumns().setAll(enabledColumn, fileNameColumn, currentVersionColumn, targetVersionColumn, sourceColumn);
+        table.getColumns().setAll(enabledColumn, fileNameColumn, currentVersionColumn, targetVersionColumn, sourceColumn, detailColumn);
 
         setCenter(table);
 
@@ -268,6 +282,142 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
 
         public void setSource(String source) {
             this.source.set(source);
+        }
+    }
+
+    private static final class ModItem extends StackPane {
+
+        ModItem(RemoteMod.Version targetVersion, String source) {
+            VBox pane = new VBox(8);
+            pane.setPadding(new Insets(8, 0, 8, 0));
+
+            {
+                HBox descPane = new HBox(8);
+                descPane.setPadding(new Insets(0, 8, 0, 8));
+                descPane.setAlignment(Pos.CENTER_LEFT);
+                descPane.setMouseTransparent(true);
+
+                {
+                    StackPane graphicPane = new StackPane();
+                    TwoLineListItem content = new TwoLineListItem();
+                    HBox.setHgrow(content, Priority.ALWAYS);
+                    content.setTitle(targetVersion.getVersion());
+                    content.setSubtitle(I18n.formatDateTime(targetVersion.getDatePublished()));
+
+                    switch (targetVersion.getVersionType()) {
+                        case Alpha:
+                            content.addTag(i18n("mods.channel.alpha"));
+                            graphicPane.getChildren().setAll(SVG.ALPHA_CIRCLE.createIcon(Theme.blackFill(), 24));
+                            break;
+                        case Beta:
+                            content.addTag(i18n("mods.channel.beta"));
+                            graphicPane.getChildren().setAll(SVG.BETA_CIRCLE.createIcon(Theme.blackFill(), 24));
+                            break;
+                        case Release:
+                            content.addTag(i18n("mods.channel.release"));
+                            graphicPane.getChildren().setAll(SVG.RELEASE_CIRCLE.createIcon(Theme.blackFill(), 24));
+                            break;
+                    }
+
+                    for (ModLoaderType modLoaderType : targetVersion.getLoaders()) {
+                        switch (modLoaderType) {
+                            case FORGE:
+                                content.addTag(i18n("install.installer.forge"));
+                                break;
+                            case CLEANROOM:
+                                content.addTag(i18n("install.installer.cleanroom"));
+                                break;
+                            case NEO_FORGED:
+                                content.addTag(i18n("install.installer.neoforge"));
+                                break;
+                            case FABRIC:
+                                content.addTag(i18n("install.installer.fabric"));
+                                break;
+                            case LITE_LOADER:
+                                content.addTag(i18n("install.installer.liteloader"));
+                                break;
+                            case QUILT:
+                                content.addTag(i18n("install.installer.quilt"));
+                                break;
+                        }
+                    }
+
+                    content.addTag(source);
+
+                    descPane.getChildren().setAll(graphicPane, content);
+                }
+
+                pane.getChildren().add(descPane);
+            }
+
+            getChildren().setAll(new RipplerContainer(pane));
+
+            // Workaround for https://github.com/HMCL-dev/HMCL/issues/2129
+            this.setMinHeight(50);
+        }
+    }
+
+    private static final class ModDetail extends JFXDialogLayout {
+
+        private final RemoteModRepository repository;
+
+        public ModDetail(RemoteMod.Version targetVersion, RemoteModRepository repository, String source) {
+            this.repository = repository;
+
+            this.setHeading(new HBox(new Label(i18n("mods.check_updates.update_mod", targetVersion.getName()))));
+
+            VBox box = new VBox(8);
+            box.setPadding(new Insets(8));
+            box.getChildren().setAll(new ModItem(targetVersion, source));
+
+            SpinnerPane spinnerPane = new SpinnerPane();
+            ScrollPane scrollPane = new ScrollPane();
+            ComponentList changelogComponent = new ComponentList(null);
+            loadChangelog(targetVersion, spinnerPane, changelogComponent);
+            spinnerPane.setOnFailedAction(e -> loadChangelog(targetVersion, spinnerPane, changelogComponent));
+
+            scrollPane.setContent(changelogComponent);
+            scrollPane.setFitToWidth(true);
+            scrollPane.setFitToHeight(true);
+            spinnerPane.setContent(scrollPane);
+            box.getChildren().add(spinnerPane);
+            VBox.setVgrow(spinnerPane, Priority.SOMETIMES);
+
+            this.setBody(box);
+
+            JFXButton closeButton = new JFXButton(i18n("button.ok"));
+            closeButton.getStyleClass().add("dialog-accept");
+            closeButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
+
+            setActions(closeButton);
+
+            this.prefWidthProperty().bind(BindingMapping.of(Controllers.getStage().widthProperty()).map(w -> w.doubleValue() * 0.7));
+            this.prefHeightProperty().bind(BindingMapping.of(Controllers.getStage().heightProperty()).map(w -> w.doubleValue() * 0.7));
+
+            onEscPressed(this, closeButton::fire);
+        }
+
+        private void loadChangelog(RemoteMod.Version version, SpinnerPane spinnerPane, ComponentList componentList) {
+            spinnerPane.setLoading(true);
+            Task.supplyAsync(() -> {
+                if (version.getChangelog() != null) {
+                    return StringUtils.nullIfBlank(version.getChangelog());
+                } else {
+                    try {
+                        return StringUtils.nullIfBlank(StringUtils.htmlToText(repository.getModChangelog(version.getModid(), version.getVersionId())));
+                    } catch (UnsupportedOperationException e) {
+                        return Optional.<String>empty();
+                    }
+                }
+            }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                if (exception == null) {
+                    result.ifPresent(s -> componentList.getContent().setAll(new HBox(new Text(s))));
+                    spinnerPane.setFailedReason(null);
+                } else {
+                    spinnerPane.setFailedReason(i18n("download.failed.refresh"));
+                }
+                spinnerPane.setLoading(false);
+            }).start();
         }
     }
 
