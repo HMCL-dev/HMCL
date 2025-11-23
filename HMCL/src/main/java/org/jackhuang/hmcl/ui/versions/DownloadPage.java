@@ -301,7 +301,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                     for (String gameVersion : control.versions.keys().stream()
                             .sorted(Collections.reverseOrder(GameVersionNumber::compare))
-                            .collect(Collectors.toList())) {
+                            .toList()) {
                         List<RemoteMod.Version> versions = control.versions.get(gameVersion);
                         if (versions == null || versions.isEmpty()) {
                             continue;
@@ -449,22 +449,12 @@ public class DownloadPage extends Control implements DecoratorPage {
         public ModVersion(RemoteMod.Version version, DownloadPage selfPage) {
             RemoteModRepository.Type type = selfPage.repository.getType();
 
-            String title;
-            switch (type) {
-                case WORLD:
-                    title = "world.download.title";
-                    break;
-                case MODPACK:
-                    title = "modpack.download.title";
-                    break;
-                case RESOURCE_PACK:
-                    title = "resourcepack.download.title";
-                    break;
-                case MOD:
-                default:
-                    title = "mods.download.title";
-                    break;
-            }
+            String title = switch (type) {
+                case WORLD -> "world.download.title";
+                case MODPACK -> "modpack.download.title";
+                case RESOURCE_PACK -> "resourcepack.download.title";
+                default -> "mods.download.title";
+            };
             this.setHeading(new HBox(new Label(i18n(title, version.getName()))));
 
             VBox box = new VBox(8);
@@ -530,12 +520,13 @@ public class DownloadPage extends Control implements DecoratorPage {
             Task.supplyAsync(() -> {
                 Optional<String> changelog;
                 if (version.getChangelog() != null) {
-                    changelog = Optional.ofNullable(version.getChangelog().isBlank() ? null : version.getChangelog());
+                    changelog = StringUtils.nullIfBlank(version.getChangelog());
                 } else {
                     try {
-                        String changelogText = StringUtils.htmlToText(selfPage.repository.getModChangelog(version.getModid(), version.getVersionId()));
-                        changelog = changelogText.isBlank() ? Optional.empty() : Optional.of(changelogText);
-                    } catch (UnsupportedOperationException e) {
+                        changelog = StringUtils.nullIfBlank(
+                                StringUtils.htmlToText(selfPage.repository.getModChangelog(version.getModid(), version.getVersionId()))
+                        );
+                    } catch (UnsupportedOperationException e) { // Should be impossible
                         changelog = Optional.empty();
                     }
                 }

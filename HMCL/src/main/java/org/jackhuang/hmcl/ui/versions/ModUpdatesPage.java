@@ -39,7 +39,6 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
@@ -351,8 +350,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                 pane.getChildren().add(descPane);
             }
 
-            RipplerContainer container = new RipplerContainer(pane);
-            getChildren().setAll(container);
+            getChildren().setAll(new RipplerContainer(pane));
 
             // Workaround for https://github.com/HMCL-dev/HMCL/issues/2129
             this.setMinHeight(50);
@@ -370,13 +368,11 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
 
             VBox box = new VBox(8);
             box.setPadding(new Insets(8));
-            ModItem modItem = new ModItem(targetVersion, source);
-            modItem.setMouseTransparent(true); // Item is displayed for info, clicking shouldn't open the dialog again
-            box.getChildren().setAll(modItem);
+            box.getChildren().setAll(new ModItem(targetVersion, source));
 
             SpinnerPane spinnerPane = new SpinnerPane();
             ScrollPane scrollPane = new ScrollPane();
-            ComponentList changelogComponent = new ComponentList(Lang::immutableListOf);
+            ComponentList changelogComponent = new ComponentList(null);
             loadChangelog(targetVersion, spinnerPane, changelogComponent);
             spinnerPane.setOnFailedAction(e -> loadChangelog(targetVersion, spinnerPane, changelogComponent));
 
@@ -405,25 +401,19 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
             spinnerPane.setLoading(true);
             Task.supplyAsync(() -> {
                 if (version.getChangelog() != null) {
-                    return version.getChangelog().isBlank() ? null : version.getChangelog();
+                    return StringUtils.nullIfBlank(version.getChangelog());
                 } else {
                     try {
-                        String changelog = StringUtils.htmlToText(repository.getModChangelog(version.getModid(), version.getVersionId()));
-                        return changelog.isBlank() ? null : changelog;
+                        return StringUtils.nullIfBlank(StringUtils.htmlToText(repository.getModChangelog(version.getModid(), version.getVersionId())));
                     } catch (UnsupportedOperationException e) {
-                        return null;
+                        return Optional.<String>empty();
                     }
                 }
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
-                    if (result != null) {
-                        componentList.getContent().setAll(new HBox(new Text(result)));
-                    } else {
-                        componentList.getContent().setAll();
-                    }
+                    result.ifPresent(s -> componentList.getContent().setAll(new HBox(new Text(s))));
                     spinnerPane.setFailedReason(null);
                 } else {
-                    componentList.getContent().setAll();
                     spinnerPane.setFailedReason(i18n("download.failed.refresh"));
                 }
                 spinnerPane.setLoading(false);

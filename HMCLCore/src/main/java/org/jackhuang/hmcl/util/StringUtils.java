@@ -534,6 +534,11 @@ public final class StringUtils {
         return true;
     }
 
+    @Contract(pure = true)
+    public static Optional<String> nullIfBlank(String str) {
+        return Optional.ofNullable(str).map(s -> s.isBlank() ? null : s);
+    }
+
     @Contract(value = "null -> null", pure = true)
     public static String htmlToText(String html) {
         if (html == null) {
@@ -546,7 +551,7 @@ public final class StringUtils {
         document.select("p").prepend("\\n");
         document.select("p").append("\\n");
         String newHtml = document.html().replaceAll("\\\\n", System.lineSeparator());
-        return Jsoup.clean(newHtml, "", Safelist.none(), outputSettings).trim();
+        return Jsoup.clean(newHtml, "", Safelist.none(), outputSettings);
     }
 
     public static class LevCalculator {
