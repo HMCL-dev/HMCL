@@ -34,7 +34,6 @@ public class AuthInfo implements AutoCloseable {
     public static final String USER_TYPE_MOJANG = "mojang";
     public static final String USER_TYPE_LEGACY = "legacy";
 
-
     private final String username;
     private final UUID uuid;
     private final String accessToken;
