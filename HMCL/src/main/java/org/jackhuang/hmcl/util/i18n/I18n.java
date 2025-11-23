@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
 import org.jackhuang.hmcl.util.i18n.translator.Translator;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -59,11 +60,11 @@ public final class I18n {
         return locale.getTranslator();
     }
 
-    public static String i18n(String key, Object... formatArgs) {
+    public static String i18n(@PropertyKey(resourceBundle = "assets.lang.I18N") String key, Object... formatArgs) {
         return locale.i18n(key, formatArgs);
     }
 
-    public static String i18n(String key) {
+    public static String i18n(@PropertyKey(resourceBundle = "assets.lang.I18N") String key) {
         return locale.i18n(key);
     }
 
