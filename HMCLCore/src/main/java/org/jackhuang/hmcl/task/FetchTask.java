@@ -212,6 +212,12 @@ public abstract class FetchTask<T> extends Task<T> {
                 do {
                     HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(currentURI);
                     requestBuilder.timeout(Duration.ofMillis(NetworkUtils.TIME_OUT));
+
+                    String userAgent = System.getProperty("http.agent");
+                    if (StringUtils.isNotBlank(userAgent)) {
+                        requestBuilder.header("User-Agent", userAgent);
+                    }
+
                     headers.forEach(requestBuilder::header);
                     response = Holder.HTTP_CLIENT.send(requestBuilder.build(), BODY_HANDLER);
 
