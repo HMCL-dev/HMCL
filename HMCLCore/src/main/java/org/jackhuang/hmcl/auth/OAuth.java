@@ -52,14 +52,11 @@ public class OAuth {
 
     public Result authenticate(GrantFlow grantFlow, Options options) throws AuthenticationException {
         try {
-            switch (grantFlow) {
-                case AUTHORIZATION_CODE:
-                    return authenticateAuthorizationCode(options);
-                case DEVICE:
-                    return authenticateDevice(options);
-                default:
-                    throw new UnsupportedOperationException("grant flow " + grantFlow);
-            }
+            return switch (grantFlow) {
+                case AUTHORIZATION_CODE -> authenticateAuthorizationCode(options);
+                case DEVICE -> authenticateDevice(options);
+                default -> throw new UnsupportedOperationException("grant flow " + grantFlow);
+            };
         } catch (IOException e) {
             throw new ServerDisconnectException(e);
         } catch (InterruptedException e) {

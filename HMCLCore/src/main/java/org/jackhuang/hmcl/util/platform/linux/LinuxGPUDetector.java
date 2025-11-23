@@ -202,20 +202,12 @@ final class LinuxGPUDetector {
         }
 
         if (builder.getName() == null) {
-            String subclassStr;
-            switch (subclassId) {
-                case 0: // PCI_CLASS_DISPLAY_VGA
-                    subclassStr = " (VGA compatible)";
-                    break;
-                case 1: // PCI_CLASS_DISPLAY_XGA
-                    subclassStr = " (XGA compatible)";
-                    break;
-                case 2: // PCI_CLASS_DISPLAY_3D
-                    subclassStr = " (3D)";
-                    break;
-                default:
-                    subclassStr = "";
-            }
+            String subclassStr = switch (subclassId) {
+                case 0 -> " (VGA compatible)"; // PCI_CLASS_DISPLAY_VGA
+                case 1 -> " (XGA compatible)"; // PCI_CLASS_DISPLAY_XGA
+                case 2 -> " (3D)"; // PCI_CLASS_DISPLAY_3D
+                default -> "";
+            };
 
             builder.setName(String.format("%s Device %04X%s",
                     builder.getVendor() != null ? builder.getVendor().toString() : "Unknown",

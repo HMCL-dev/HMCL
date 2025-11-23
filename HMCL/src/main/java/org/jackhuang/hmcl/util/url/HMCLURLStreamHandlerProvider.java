@@ -28,10 +28,9 @@ import java.net.spi.URLStreamHandlerProvider;
 public final class HMCLURLStreamHandlerProvider extends URLStreamHandlerProvider {
     @Override
     public URLStreamHandler createURLStreamHandler(String protocol) {
-        switch (protocol) {
-            case "data":
-                return new DataURLHandle();
-        }
-        return null;
+        return switch (protocol) {
+            case "data" -> new DataURLHandle();
+            default -> null;
+        };
     }
 }

@@ -89,29 +89,33 @@ public class Argb8888Palette {
     }
 
     public static Argb8888Palette forGreyscale(int bitDepth) throws PngException {
-        switch (bitDepth) {
-            case 1:
+        return switch (bitDepth) {
+            case 1 -> {
                 if (null == monochromePalette) {
                     monochromePalette = forGreyscale(2, 0xff); // Worth it or not really?
                 }
-                return monochromePalette;
-            case 2:
+                yield monochromePalette;
+            }
+            case 2 -> {
                 if (null == greyPalette2) {
                     greyPalette2 = forGreyscale(4, 0x55);
                 }
-                return greyPalette2;
-            case 4:
+                yield greyPalette2;
+            }
+            case 4 -> {
                 if (null == greyPalette4) {
                     greyPalette4 = forGreyscale(16, 0x11);
                 }
-                return greyPalette4;
-            case 8: // TODO: need??
+                yield greyPalette4;
+            }
+            case 8 -> { // TODO: need??
                 if (null == greyPalette8) {
                     greyPalette8 = forGreyscale(256, 0x01);
                 }
-                return greyPalette8;
-            default:
-                throw new PngIntegrityException(String.format("Valid greyscale bit depths are 1, 2, 4, 8, not %d", bitDepth));
-        }
+                yield greyPalette8;
+            }
+            default ->
+                    throw new PngIntegrityException(String.format("Valid greyscale bit depths are 1, 2, 4, 8, not %d", bitDepth));
+        };
     }
 }

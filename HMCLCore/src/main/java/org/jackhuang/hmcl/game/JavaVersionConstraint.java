@@ -179,18 +179,13 @@ public enum JavaVersionConstraint {
             if (forgePatchVersion == null) {
                 return false;
             }
-            switch (gameVersionNumber.toString()) {
-                case "1.16.3":
-                    return forgePatchVersion.compareTo(VersionNumber.asVersion("34.1.27")) >= 0;
-                case "1.16.4":
-                    return true;
-                case "1.16.5":
-                    return forgePatchVersion.compareTo(VersionNumber.asVersion("36.2.23")) <= 0;
-                case "1.17.1":
-                    return VersionNumber.between("37.0.60", "37.0.75").contains(forgePatchVersion);
-                default:
-                    return false;
-            }
+            return switch (gameVersionNumber.toString()) {
+                case "1.16.3" -> forgePatchVersion.compareTo(VersionNumber.asVersion("34.1.27")) >= 0;
+                case "1.16.4" -> true;
+                case "1.16.5" -> forgePatchVersion.compareTo(VersionNumber.asVersion("36.2.23")) <= 0;
+                case "1.17.1" -> VersionNumber.between("37.0.60", "37.0.75").contains(forgePatchVersion);
+                default -> false;
+            };
         }
 
         @Override

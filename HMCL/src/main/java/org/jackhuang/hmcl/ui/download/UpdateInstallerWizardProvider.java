@@ -97,9 +97,9 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
 
     @Override
     public Node createPage(WizardController controller, int step, SettingsMap settings) {
-        switch (step) {
-            case 0:
-                return new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer." + libraryId)), gameVersion, downloadProvider, libraryId, () -> {
+        return switch (step) {
+            case 0 ->
+                new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer." + libraryId)), gameVersion, downloadProvider, libraryId, () -> {
                     if (oldLibraryVersion == null) {
                         controller.onFinish();
                     } else if ("game".equals(libraryId)) {
@@ -110,9 +110,8 @@ public final class UpdateInstallerWizardProvider implements WizardProvider {
                                 i18n("install.change_version"), controller::onFinish, controller::onCancel);
                     }
                 });
-            default:
-                throw new IllegalStateException();
-        }
+            default -> throw new IllegalStateException();
+        };
     }
 
     @Override

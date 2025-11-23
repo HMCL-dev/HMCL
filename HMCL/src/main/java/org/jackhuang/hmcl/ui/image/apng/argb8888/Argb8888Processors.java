@@ -29,74 +29,48 @@ public class Argb8888Processors {
     public static Argb8888ScanlineProcessor from(PngHeader header, PngScanlineBuffer scanlineReader, Argb8888Bitmap bitmap) throws PngException {
 
         int bytesPerScanline = header.bytesPerRow;
-        switch (header.colourType) {
-            case PNG_GREYSCALE:
-                switch (header.bitDepth) {
-                    case 1:
-                        return new IndexedColourBits(bytesPerScanline, bitmap, 7, 0x01, PngConstants.SHIFTS_1, Argb8888Palette.forGreyscale(1));
-                    case 2:
-                        return new IndexedColourBits(bytesPerScanline, bitmap, 3, 0x03, PngConstants.SHIFTS_2, Argb8888Palette.forGreyscale(2));
-                    case 4:
-                        return new IndexedColourBits(bytesPerScanline, bitmap, 1, 0x0F, PngConstants.SHIFTS_4, Argb8888Palette.forGreyscale(4));
-                    case 8:
-                        return new Greyscale8(bytesPerScanline, bitmap);
-                    case 16:
-                        throw new PngFeatureException("Greyscale supports 1, 2, 4, 8 but not 16.");
-                    default:
+        return switch (header.colourType) {
+            case PNG_GREYSCALE -> switch (header.bitDepth) {
+                case 1 ->
+                        new IndexedColourBits(bytesPerScanline, bitmap, 7, 0x01, PngConstants.SHIFTS_1, Argb8888Palette.forGreyscale(1));
+                case 2 ->
+                        new IndexedColourBits(bytesPerScanline, bitmap, 3, 0x03, PngConstants.SHIFTS_2, Argb8888Palette.forGreyscale(2));
+                case 4 ->
+                        new IndexedColourBits(bytesPerScanline, bitmap, 1, 0x0F, PngConstants.SHIFTS_4, Argb8888Palette.forGreyscale(4));
+                case 8 -> new Greyscale8(bytesPerScanline, bitmap);
+                case 16 -> throw new PngFeatureException("Greyscale supports 1, 2, 4, 8 but not 16.");
+                default ->
                         throw new PngIntegrityException(String.format("Invalid greyscale bit-depth: %d", header.bitDepth)); // TODO: should be in header parse.
-                }
-
-            case PNG_GREYSCALE_WITH_ALPHA:
-                switch (header.bitDepth) {
-                    case 4:
-                        return new Greyscale4Alpha(bytesPerScanline, bitmap);
-                    case 8:
-                        return new Greyscale8Alpha(bytesPerScanline, bitmap);
-                    case 16:
-                        return new Greyscale16Alpha(bytesPerScanline, bitmap);
-                    default:
+            };
+            case PNG_GREYSCALE_WITH_ALPHA -> switch (header.bitDepth) {
+                case 4 -> new Greyscale4Alpha(bytesPerScanline, bitmap);
+                case 8 -> new Greyscale8Alpha(bytesPerScanline, bitmap);
+                case 16 -> new Greyscale16Alpha(bytesPerScanline, bitmap);
+                default ->
                         throw new PngIntegrityException(String.format("Invalid greyscale-with-alpha bit-depth: %d", header.bitDepth)); // TODO: should be in header parse.
-                }
-
-            case PNG_INDEXED_COLOUR:
-                switch (header.bitDepth) {
-                    case 1:
-                        return new IndexedColourBits(bytesPerScanline, bitmap, 7, 0x01, PngConstants.SHIFTS_1);
-                    case 2:
-                        return new IndexedColourBits(bytesPerScanline, bitmap, 3, 0x03, PngConstants.SHIFTS_2);
-                    case 4:
-                        return new IndexedColourBits(bytesPerScanline, bitmap, 1, 0x0F, PngConstants.SHIFTS_4);
-                    case 8:
-                        return new IndexedColour8(bytesPerScanline, bitmap);
-                    default:
+            };
+            case PNG_INDEXED_COLOUR -> switch (header.bitDepth) {
+                case 1 -> new IndexedColourBits(bytesPerScanline, bitmap, 7, 0x01, PngConstants.SHIFTS_1);
+                case 2 -> new IndexedColourBits(bytesPerScanline, bitmap, 3, 0x03, PngConstants.SHIFTS_2);
+                case 4 -> new IndexedColourBits(bytesPerScanline, bitmap, 1, 0x0F, PngConstants.SHIFTS_4);
+                case 8 -> new IndexedColour8(bytesPerScanline, bitmap);
+                default ->
                         throw new PngIntegrityException(String.format("Invalid indexed colour bit-depth: %d", header.bitDepth)); // TODO: should be in header parse.
-                }
-
-            case PNG_TRUECOLOUR:
-                switch (header.bitDepth) {
-                    case 8:
-                        return new Truecolour8(bytesPerScanline, bitmap);
-                    case 16:
-                        return new Truecolour16(bytesPerScanline, bitmap);
-                    default:
+            };
+            case PNG_TRUECOLOUR -> switch (header.bitDepth) {
+                case 8 -> new Truecolour8(bytesPerScanline, bitmap);
+                case 16 -> new Truecolour16(bytesPerScanline, bitmap);
+                default ->
                         throw new PngIntegrityException(String.format("Invalid truecolour bit-depth: %d", header.bitDepth)); // TODO: should be in header parse.
-
-                }
-
-            case PNG_TRUECOLOUR_WITH_ALPHA:
-                switch (header.bitDepth) {
-                    case 8:
-                        return new Truecolour8Alpha(bytesPerScanline, bitmap);
-                    case 16:
-                        return new Truecolour16Alpha(bytesPerScanline, bitmap);
-                    default:
+            };
+            case PNG_TRUECOLOUR_WITH_ALPHA -> switch (header.bitDepth) {
+                case 8 -> new Truecolour8Alpha(bytesPerScanline, bitmap);
+                case 16 -> new Truecolour16Alpha(bytesPerScanline, bitmap);
+                default ->
                         throw new PngIntegrityException(String.format("Invalid truecolour with alpha bit-depth: %d", header.bitDepth)); // TODO: should be in header parse.
-
-                }
-
-            default:
-                throw new PngFeatureException("ARGB8888 doesn't support PNG mode " + header.colourType.name());
-        }
+            };
+            default -> throw new PngFeatureException("ARGB8888 doesn't support PNG mode " + header.colourType.name());
+        };
     }
 
     /**

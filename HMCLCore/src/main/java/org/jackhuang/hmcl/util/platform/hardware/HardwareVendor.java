@@ -97,79 +97,45 @@ public final class HardwareVendor {
 
     public static @Nullable HardwareVendor ofPciVendorId(int vendorId) {
         // https://devicehunt.com/all-pci-vendors
-        switch (vendorId) {
-            case 0x106b:
-                return APPLE;
-            case 0x1002:
-            case 0x1022:
-            case 0x1dd8: // AMD Pensando Systems
-            case 0x1924: // AMD Solarflare
-                return AMD;
-            case 0x8086:
-            case 0x8087:
-            case 0x03e7:
-                return INTEL;
-            case 0x0955:
-            case 0x10de:
-            case 0x12d2:
-                return NVIDIA;
-            case 0x1ed5:
-                return MOORE_THREADS;
-            case 0x168c:
-            case 0x5143:
-                return QUALCOMM;
-            case 0x14c3:
-                return MTK;
-            case 0x15ad:
-                return VMWARE;
-            case 0x1ab8:
-                return PARALLEL;
-            case 0x1414:
-                return MICROSOFT;
-            case 0x182f:
-            case 0x14e4:
-                return BROADCOM;
-            case 0x0014:
-                return LOONGSON;
-            case 0x0731:
-                return JINGJIA_MICRO;
-            case 0x19e5:
-                return HUAWEI;
-            case 0x1d17:
-                return ZHAOXIN;
-            default:
-                return null;
-        }
+        return switch (vendorId) {
+            case 0x106b -> APPLE;
+            case 0x1002, 0x1022,
+                 0x1dd8, // AMD Pensando Systems
+                 0x1924 // AMD Solarflare
+                    -> AMD;
+            case 0x8086, 0x8087, 0x03e7 -> INTEL;
+            case 0x0955, 0x10de, 0x12d2 -> NVIDIA;
+            case 0x1ed5 -> MOORE_THREADS;
+            case 0x168c, 0x5143 -> QUALCOMM;
+            case 0x14c3 -> MTK;
+            case 0x15ad -> VMWARE;
+            case 0x1ab8 -> PARALLEL;
+            case 0x1414 -> MICROSOFT;
+            case 0x182f, 0x14e4 -> BROADCOM;
+            case 0x0014 -> LOONGSON;
+            case 0x0731 -> JINGJIA_MICRO;
+            case 0x19e5 -> HUAWEI;
+            case 0x1d17 -> ZHAOXIN;
+            default -> null;
+        };
     }
 
     public static @Nullable HardwareVendor ofArmImplementerId(int implementerId) {
         // https://github.com/util-linux/util-linux/blob/0a21358af3e50fcb13a9bf3702779f11a4739667/sys-utils/lscpu-arm.c#L301
-        switch (implementerId) {
-            case 0x41:
-                return ARM;
-            case 0x42:
-                return BROADCOM;
-            case 0x48:
-                return HUAWEI;
-            case 0x4e:
-                return NVIDIA;
-            case 0x51:
-                return QUALCOMM;
-            case 0x53:
-                return SAMSUNG;
-            case 0x56:
-                return MARVELL;
-            case 0x61:
-                return APPLE;
-            case 0x69:
-                return INTEL;
-            case 0x6D:
-                return MICROSOFT;
-            case 0xc0:
-                return AMPERE;
-            default:
-                return null;
-        }
+        return switch (implementerId) {
+            case 0x41 -> ARM;
+            case 0x42 -> BROADCOM;
+            case 0x48 -> HUAWEI;
+            case 0x4e -> NVIDIA;
+            case 0x51 -> QUALCOMM;
+            case 0x53 -> SAMSUNG;
+            case 0x56 -> MARVELL;
+            case 0x61 -> APPLE;
+            case 0x69 -> INTEL;
+            case 0x6D -> MICROSOFT;
+            case 0xc0 -> AMPERE;
+            default -> null;
+        };
     }
 
     private final String name;

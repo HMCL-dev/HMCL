@@ -307,12 +307,12 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
         @Override
         public Node createPage(WizardController controller, int step, SettingsMap settings) {
-            switch (step) {
-                case 0:
-                    return new InstallersPage(controller, profile.getRepository(), ((RemoteVersion) controller.getSettings().get("game")).getGameVersion(), downloadProvider);
-                default:
+            return switch (step) {
+                case 0 ->
+                    new InstallersPage(controller, profile.getRepository(), ((RemoteVersion) controller.getSettings().get("game")).getGameVersion(), downloadProvider);
+                default ->
                     throw new IllegalStateException("error step " + step + ", settings: " + settings + ", pages: " + controller.getPages());
-            }
+            };
         }
 
         @Override

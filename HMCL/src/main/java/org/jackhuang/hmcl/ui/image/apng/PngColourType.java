@@ -43,19 +43,14 @@ public enum PngColourType {
     }
 
     public static PngColourType fromByte(byte b) throws PngException {
-        switch (b) {
-            case 0:
-                return PNG_GREYSCALE;
-            case 2:
-                return PNG_TRUECOLOUR;
-            case 3:
-                return PNG_INDEXED_COLOUR;
-            case 4:
-                return PNG_GREYSCALE_WITH_ALPHA;
-            case 6:
-                return PNG_TRUECOLOUR_WITH_ALPHA;
-            default:
+        return switch (b) {
+            case 0 -> PNG_GREYSCALE;
+            case 2 -> PNG_TRUECOLOUR;
+            case 3 -> PNG_INDEXED_COLOUR;
+            case 4 -> PNG_GREYSCALE_WITH_ALPHA;
+            case 6 -> PNG_TRUECOLOUR_WITH_ALPHA;
+            default ->
                 throw new PngIntegrityException(String.format("Valid PNG colour types are 0, 2, 3, 4, 6. Type '%d' is invalid", b));
-        }
+        };
     }
 }

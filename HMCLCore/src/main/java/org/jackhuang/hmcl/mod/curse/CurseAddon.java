@@ -553,21 +553,11 @@ public class CurseAddon implements RemoteMod.IMod {
         }
 
         public RemoteMod.Version toVersion() {
-            RemoteMod.VersionType versionType;
-            switch (getReleaseType()) {
-                case 1:
-                    versionType = RemoteMod.VersionType.Release;
-                    break;
-                case 2:
-                    versionType = RemoteMod.VersionType.Beta;
-                    break;
-                case 3:
-                    versionType = RemoteMod.VersionType.Alpha;
-                    break;
-                default:
-                    versionType = RemoteMod.VersionType.Release;
-                    break;
-            }
+            RemoteMod.VersionType versionType = switch (getReleaseType()) {
+                case 2 -> RemoteMod.VersionType.Beta;
+                case 3 -> RemoteMod.VersionType.Alpha;
+                default -> RemoteMod.VersionType.Release;
+            };
 
             return new RemoteMod.Version(
                     this,

@@ -49,25 +49,19 @@ public final class OptiFineBMCLVersionList extends VersionList<OptiFineRemoteVer
     }
 
     private String fromLookupVersion(String version) {
-        switch (version) {
-            case "1.8.0":
-                return "1.8";
-            case "1.9.0":
-                return "1.9";
-            default:
-                return version;
-        }
+        return switch (version) {
+            case "1.8.0" -> "1.8";
+            case "1.9.0" -> "1.9";
+            default -> version;
+        };
     }
 
     private String toLookupVersion(String version) {
-        switch (version) {
-            case "1.8":
-                return "1.8.0";
-            case "1.9":
-                return "1.9.0";
-            default:
-                return version;
-        }
+        return switch (version) {
+            case "1.8" -> "1.8.0";
+            case "1.9" -> "1.9.0";
+            default -> version;
+        };
     }
 
     @Override

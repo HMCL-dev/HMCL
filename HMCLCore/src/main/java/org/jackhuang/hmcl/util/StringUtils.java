@@ -338,29 +338,16 @@ public final class StringUtils {
                         break;
                     } else if (c == '`' && i < str.length()) {
                         c = str.charAt(i++);
-                        switch (c) {
-                            case 'a':
-                                c = '\u0007';
-                                break;
-                            case 'b':
-                                c = '\b';
-                                break;
-                            case 'f':
-                                c = '\f';
-                                break;
-                            case 'n':
-                                c = '\n';
-                                break;
-                            case 'r':
-                                c = '\r';
-                                break;
-                            case 't':
-                                c = '\t';
-                                break;
-                            case 'v':
-                                c = '\u000b';
-                                break;
-                        }
+                        c = switch (c) {
+                            case 'a' -> '\u0007';
+                            case 'b' -> '\b';
+                            case 'f' -> '\f';
+                            case 'n' -> '\n';
+                            case 'r' -> '\r';
+                            case 't' -> '\t';
+                            case 'v' -> '\u000b';
+                            default -> c;
+                        };
                         current.append(c);
                     } else if (c == '$' && (varEnd = findVarEnd(str, i)) >= 0) {
                         String key = str.substring(i, varEnd);
@@ -494,11 +481,7 @@ public final class StringUtils {
     }
 
     public static String repeats(char ch, int repeat) {
-        StringBuilder result = new StringBuilder();
-        for (int i = 0; i < repeat; i++) {
-            result.append(ch);
-        }
-        return result.toString();
+        return String.valueOf(ch).repeat(Math.max(0, repeat));
     }
 
     public static String truncate(String str, int limit) {

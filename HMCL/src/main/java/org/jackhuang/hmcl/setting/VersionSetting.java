@@ -788,21 +788,12 @@ public final class VersionSetting implements Cloneable, Observable {
             obj.addProperty("versionIcon", src.getVersionIcon().ordinal());
 
             obj.addProperty("javaVersionType", src.getJavaVersionType().name());
-            String java;
-            switch (src.getJavaVersionType()) {
-                case DEFAULT:
-                    java = "Default";
-                    break;
-                case AUTO:
-                    java = "Auto";
-                    break;
-                case CUSTOM:
-                    java = "Custom";
-                    break;
-                default:
-                    java = src.getJavaVersion();
-                    break;
-            }
+            String java = switch (src.getJavaVersionType()) {
+                case DEFAULT -> "Default";
+                case AUTO -> "Auto";
+                case CUSTOM -> "Custom";
+                default -> src.getJavaVersion();
+            };
             obj.addProperty("java", java);
 
             obj.addProperty("renderer", src.getRenderer().name());
