@@ -23,12 +23,14 @@ import javafx.collections.ObservableList;
 import javafx.scene.Scene;
 import javafx.scene.paint.Color;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.CSSHotReload;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Locale;
@@ -155,6 +157,12 @@ public final class StyleSheets {
 
     public static void init(Scene scene) {
         Bindings.bindContent(scene.getStylesheets(), stylesheets);
+        CSSHotReload.initHotReload(scene,
+                Paths.get("HMCL/src/main/resources/assets/css"),
+                "blue.css",
+                "font.css",
+                "root.css"
+        );
     }
 
     private StyleSheets() {
