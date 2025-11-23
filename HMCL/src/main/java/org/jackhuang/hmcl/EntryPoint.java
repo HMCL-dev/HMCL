@@ -50,9 +50,7 @@ public final class EntryPoint {
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
             String workingDirectory = System.getProperty("user.dir");
             String windowsSystem = "C:\\WINDOWS\\system32";
-            if (workingDirectory == null || (
-                    workingDirectory.length() >= windowsSystem.length() && workingDirectory.substring(0, windowsSystem.length()).equalsIgnoreCase(windowsSystem)
-            )) {
+            if (workingDirectory == null || (workingDirectory.length() >= windowsSystem.length() && workingDirectory.substring(0, windowsSystem.length()).equalsIgnoreCase(windowsSystem))) {
                 Path path = JarUtils.thisJarPath();
                 if (path != null) {
                     Path parent = path.getParent();
