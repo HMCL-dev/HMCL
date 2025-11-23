@@ -42,7 +42,7 @@ public class AccountAdvancedListItem extends AdvancedListItem {
     private final Tooltip tooltip;
     private final Canvas canvas;
 
-    private final ObjectProperty<Account> account = new SimpleObjectProperty<Account>() {
+    private final ObjectProperty<Account> account = new SimpleObjectProperty<>() {
 
         @Override
         protected void invalidated() {

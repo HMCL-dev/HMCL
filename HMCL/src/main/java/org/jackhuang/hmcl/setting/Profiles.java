@@ -58,7 +58,7 @@ public final class Profiles {
     private static final ObservableList<Profile> profiles = observableArrayList(profile -> new Observable[] { profile });
     private static final ReadOnlyListWrapper<Profile> profilesWrapper = new ReadOnlyListWrapper<>(profiles);
 
-    private static final ObjectProperty<Profile> selectedProfile = new SimpleObjectProperty<Profile>() {
+    private static final ObjectProperty<Profile> selectedProfile = new SimpleObjectProperty<>() {
         {
             profiles.addListener(onInvalidating(this::invalidated));
         }

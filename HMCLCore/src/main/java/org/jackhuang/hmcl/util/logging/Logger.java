@@ -270,7 +270,7 @@ public final class Logger {
         if (logDir == null || !Files.isDirectory(logDir))
             return List.of();
 
-        ArrayList<LogFile> logFiles = new ArrayList<LogFile>();
+        ArrayList<LogFile> logFiles = new ArrayList<>();
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(logDir)) {
             for (Path path : stream) {
                 LogFile item = LogFile.ofFile(path);

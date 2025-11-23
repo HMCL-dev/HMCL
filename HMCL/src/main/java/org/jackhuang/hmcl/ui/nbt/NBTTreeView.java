@@ -45,7 +45,7 @@ public final class NBTTreeView extends TreeView<Tag> {
         Holder<Object> lastCell = new Holder<>();
         EnumMap<NBTTagType, Image> icons = new EnumMap<>(NBTTagType.class);
 
-        return view -> new TreeCell<Tag>() {
+        return view -> new TreeCell<>() {
             private void setTagText(String text) {
                 String name = ((Item) getTreeItem()).getName();
 

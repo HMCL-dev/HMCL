@@ -100,7 +100,7 @@ public class SpinnerPane extends Control {
         return onFailedActionProperty().get();
     }
 
-    private final ObjectProperty<EventHandler<Event>> onFailedAction = new SimpleObjectProperty<EventHandler<Event>>(this, "onFailedAction") {
+    private final ObjectProperty<EventHandler<Event>> onFailedAction = new SimpleObjectProperty<>(this, "onFailedAction") {
         @Override
         protected void invalidated() {
             setEventHandler(FAILED_ACTION, get());

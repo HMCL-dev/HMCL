@@ -189,7 +189,7 @@ public class Navigator extends TransitionPane {
         this.onNavigated.set(onNavigated);
     }
 
-    private final ObjectProperty<EventHandler<NavigationEvent>> onNavigated = new SimpleObjectProperty<EventHandler<NavigationEvent>>(this, "onNavigated") {
+    private final ObjectProperty<EventHandler<NavigationEvent>> onNavigated = new SimpleObjectProperty<>(this, "onNavigated") {
         @Override
         protected void invalidated() {
             setEventHandler(NavigationEvent.NAVIGATED, get());
@@ -208,7 +208,7 @@ public class Navigator extends TransitionPane {
         this.onNavigating.set(onNavigating);
     }
 
-    private final ObjectProperty<EventHandler<NavigationEvent>> onNavigating = new SimpleObjectProperty<EventHandler<NavigationEvent>>(this, "onNavigating") {
+    private final ObjectProperty<EventHandler<NavigationEvent>> onNavigating = new SimpleObjectProperty<>(this, "onNavigating") {
         @Override
         protected void invalidated() {
             setEventHandler(NavigationEvent.NAVIGATING, get());

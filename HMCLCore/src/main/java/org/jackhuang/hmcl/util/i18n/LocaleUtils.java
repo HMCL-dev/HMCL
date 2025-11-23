@@ -315,7 +315,7 @@ public final class LocaleUtils {
             String noDefaultPrefix = baseName + "_";
 
             try (Stream<Path> list = Files.list(dir)) {
-                LinkedHashMap<String, Path> result = new LinkedHashMap<String, Path>();
+                LinkedHashMap<String, Path> result = new LinkedHashMap<>();
 
                 list.forEach(file -> {
                     if (Files.isRegularFile(file)) {
@@ -348,7 +348,7 @@ public final class LocaleUtils {
     public static @NotNull @Unmodifiable Map<String, Map<String, Path>> findAllLocalizedFiles(Path dir, String baseName, Collection<String> exts) {
         if (Files.isDirectory(dir)) {
             try (Stream<Path> list = Files.list(dir)) {
-                LinkedHashMap<String, Map<String, Path>> result = new LinkedHashMap<String, Map<String, Path>>();
+                LinkedHashMap<String, Map<String, Path>> result = new LinkedHashMap<>();
 
                 list.forEach(file -> {
                     if (Files.isRegularFile(file)) {

@@ -423,7 +423,7 @@ public class JFXDialog extends StackPane {
 
     private static final class StyleableProperties {
         private static final CssMetaData<JFXDialog, DialogTransition> DIALOG_TRANSITION =
-                new CssMetaData<JFXDialog, DialogTransition>("-jfx-dialog-transition",
+                new CssMetaData<>("-jfx-dialog-transition",
                         DialogTransitionConverter.getInstance(),
                         DialogTransition.CENTER) {
                     @Override
@@ -465,7 +465,7 @@ public class JFXDialog extends StackPane {
      *                                                                         *
      **************************************************************************/
 
-    private final ObjectProperty<EventHandler<? super JFXDialogEvent>> onDialogClosedProperty = new ObjectPropertyBase<EventHandler<? super JFXDialogEvent>>() {
+    private final ObjectProperty<EventHandler<? super JFXDialogEvent>> onDialogClosedProperty = new ObjectPropertyBase<>() {
         @Override
         protected void invalidated() {
             setEventHandler(JFXDialogEvent.CLOSED, get());

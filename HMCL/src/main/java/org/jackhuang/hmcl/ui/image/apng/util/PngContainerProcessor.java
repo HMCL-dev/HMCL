@@ -49,7 +49,7 @@ public abstract class PngContainerProcessor<ResultT> implements PngChunkProcesso
     @Override
     public void processAnimationControl(PngAnimationControl animationControl) {
         container.animationControl = animationControl;
-        container.animationFrames = new ArrayList<PngFrameControl>(container.animationControl.numFrames);
+        container.animationFrames = new ArrayList<>(container.animationControl.numFrames);
     }
 
     @Override

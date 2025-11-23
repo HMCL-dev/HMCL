@@ -44,7 +44,7 @@ public final class MappedProperty<T, U> extends SimpleObjectProperty<U> {
         this.predecessor = predecessor;
         this.reservedMapper = reservedMapper;
 
-        binding = new ObjectBinding<U>() {
+        binding = new ObjectBinding<>() {
             {
                 bind(predecessor);
             }

@@ -310,7 +310,7 @@ public final class LogWindow extends Stage {
                 listView.setStyle("-fx-font-family: \"" + Lang.requireNonNullElse(config().getFontFamily(), FXUtils.DEFAULT_MONOSPACE_FONT)
                         + "\"; -fx-font-size: " + config().getFontSize() + "px;");
                 Holder<Object> lastCell = new Holder<>();
-                listView.setCellFactory(x -> new ListCell<Log>() {
+                listView.setCellFactory(x -> new ListCell<>() {
                     {
                         x.setSelectionModel(new NoneMultipleSelectionModel<>());
                         getStyleClass().add("log-window-list-cell");

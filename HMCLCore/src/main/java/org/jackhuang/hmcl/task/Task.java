@@ -964,7 +964,7 @@ public abstract class Task<T> {
     }
 
     public static <T> Task<T> fromCompletableFuture(CompletableFuture<T> future) {
-        return new CompletableFutureTask<T>() {
+        return new CompletableFutureTask<>() {
             @Override
             public CompletableFuture<T> getFuture(TaskCompletableFuture executor) {
                 return future;

@@ -66,7 +66,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
     @NotNull
     @Override
     public Iterator<LibraryMark> iterator() {
-        return new Iterator<LibraryMark>() {
+        return new Iterator<>() {
             Iterator<Map.Entry<String, Pair<Library, String>>> impl = libraries.entrySet().iterator();
 
             @Override

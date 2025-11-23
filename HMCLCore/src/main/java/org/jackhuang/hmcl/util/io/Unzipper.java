@@ -98,7 +98,7 @@ public final class Unzipper {
             if (terminateIfSubDirectoryNotExists && Files.notExists(root))
                 return;
 
-            Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
+            Files.walkFileTree(root, new SimpleFileVisitor<>() {
                 @Override
                 public FileVisitResult visitFile(Path file,
                                                  BasicFileAttributes attrs) throws IOException {

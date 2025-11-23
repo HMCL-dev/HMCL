@@ -64,7 +64,7 @@ public abstract class ObservableSetting implements Observable {
                 throw new AssertionError("Type: " + type);
 
             try {
-                ArrayList<ObservableField<?>> allFields = new ArrayList<ObservableField<?>>();
+                ArrayList<ObservableField<?>> allFields = new ArrayList<>();
 
                 for (Class<?> current = type;
                      current != ObservableSetting.class;

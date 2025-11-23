@@ -87,7 +87,7 @@ public final class Zipper implements Closeable {
      */
     public void putDirectory(Path source, String targetDir, ExceptionalPredicate<String, IOException> filter) throws IOException {
         String root = normalize(targetDir);
-        Files.walkFileTree(source, new SimpleFileVisitor<Path>() {
+        Files.walkFileTree(source, new SimpleFileVisitor<>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 if (".DS_Store".equals(file.getFileName().toString())) {

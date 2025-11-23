@@ -24,7 +24,7 @@ public interface ExceptionalConsumer<T, E extends Exception> {
     void accept(T t) throws E;
 
     static <T, E extends Exception> ExceptionalConsumer<T, E> fromRunnable(ExceptionalRunnable<E> runnable) {
-        return new ExceptionalConsumer<T, E>() {
+        return new ExceptionalConsumer<>() {
             @Override
             public void accept(T o) throws E {
                 runnable.run();

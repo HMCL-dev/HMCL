@@ -70,7 +70,7 @@ public final class WorldBackupTask extends Task<Path> {
             try (ZipOutputStream zipOutputStream = new ZipOutputStream(new BufferedOutputStream(outputStream))) {
                 String rootName = world.getFileName();
                 Path rootDir = this.world.getFile();
-                Files.walkFileTree(this.world.getFile(), new SimpleFileVisitor<Path>() {
+                Files.walkFileTree(this.world.getFile(), new SimpleFileVisitor<>() {
                     @Override
                     public FileVisitResult visitFile(Path path, BasicFileAttributes attrs) throws IOException {
                         if (path.endsWith("session.lock")) {

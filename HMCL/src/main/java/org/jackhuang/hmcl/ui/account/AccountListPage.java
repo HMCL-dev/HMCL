@@ -71,7 +71,7 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                 || globalConfig().isEnableOfflineAccount())
             RESTRICTED.set(false);
         else
-            globalConfig().enableOfflineAccountProperty().addListener(new ChangeListener<Boolean>() {
+            globalConfig().enableOfflineAccountProperty().addListener(new ChangeListener<>() {
                 @Override
                 public void changed(ObservableValue<? extends Boolean> o, Boolean oldValue, Boolean newValue) {
                     if (newValue) {

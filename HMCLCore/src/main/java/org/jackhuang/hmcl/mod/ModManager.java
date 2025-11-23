@@ -45,7 +45,7 @@ public final class ModManager {
     private static final Map<String, List<Pair<ModMetadataReader, ModLoaderType>>> READERS;
 
     static {
-        HashMap<String, List<Pair<ModMetadataReader, ModLoaderType>>> map = new HashMap<String, List<Pair<ModMetadataReader, ModLoaderType>>>();
+        HashMap<String, List<Pair<ModMetadataReader, ModLoaderType>>> map = new HashMap<>();
         List<@NotNull Pair<ModMetadataReader, ModLoaderType>> zipReaders = List.<Pair<ModMetadataReader, ModLoaderType>>of(
                 pair(ForgeNewModMetadata::fromForgeFile, ModLoaderType.FORGE),
                 pair(ForgeNewModMetadata::fromNeoForgeFile, ModLoaderType.NEO_FORGED),
@@ -112,8 +112,8 @@ public final class ModManager {
 
         Set<ModLoaderType> modLoaderTypes = analyzer.getModLoaders();
 
-        ArrayList<ModMetadataReader> supportedReaders = new ArrayList<ModMetadataReader>();
-        ArrayList<ModMetadataReader> unsupportedReaders = new ArrayList<ModMetadataReader>();
+        ArrayList<ModMetadataReader> supportedReaders = new ArrayList<>();
+        ArrayList<ModMetadataReader> unsupportedReaders = new ArrayList<>();
 
         for (Pair<ModMetadataReader, ModLoaderType> reader : readersMap) {
             if (modLoaderTypes.contains(reader.getValue())) {

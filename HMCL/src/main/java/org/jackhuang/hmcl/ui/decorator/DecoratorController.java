@@ -482,13 +482,14 @@ public class DecoratorController {
             if (node instanceof DialogAware)
                 ((DialogAware) node).onDialogShown();
         } else {
-            dialog.visibleProperty().addListener(new ChangeListener<Boolean>() {
+            dialog.visibleProperty().addListener(new ChangeListener<>() {
                 @Override
                 public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
                     if (newValue) {
                         dialog.requestFocus();
-                        if (node instanceof DialogAware)
+                        if (node instanceof DialogAware) {
                             ((DialogAware) node).onDialogShown();
+                        }
                         observable.removeListener(this);
                     }
                 }

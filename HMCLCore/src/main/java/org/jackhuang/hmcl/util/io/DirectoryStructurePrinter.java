@@ -30,7 +30,7 @@ final class DirectoryStructurePrinter {
             return;
         }
         if (Files.isDirectory(path)) {
-            Files.walkFileTree(path, new FileVisitor<Path>() {
+            Files.walkFileTree(path, new FileVisitor<>() {
                 private boolean isFolderEmpty;
 
                 private int depth = 1;

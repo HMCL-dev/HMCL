@@ -84,7 +84,7 @@ public record Document(DocumentFileTree directory,
     }
 
     public static Document load(DocumentFileTree directory, Path file, String name, DocumentLocale locale) throws IOException {
-        ArrayList<Item> items = new ArrayList<Item>();
+        ArrayList<Item> items = new ArrayList<>();
         try (BufferedReader reader = Files.newBufferedReader(file)) {
             String line;
 
@@ -98,7 +98,7 @@ public record Document(DocumentFileTree directory,
 
                     String macroName = matcher.group("name");
                     String endLine = "<!-- #END " + macroName + " -->";
-                    ArrayList<String> lines = new ArrayList<String>();
+                    ArrayList<String> lines = new ArrayList<>();
                     while (true) {
                         line = reader.readLine();
 
@@ -111,7 +111,7 @@ public record Document(DocumentFileTree directory,
                         }
                     }
 
-                    LinkedHashMap<String, List<String>> properties = new LinkedHashMap<String, List<String>>();
+                    LinkedHashMap<String, List<String>> properties = new LinkedHashMap<>();
                     int propertiesCount = 0;
 
                     // Handle properties

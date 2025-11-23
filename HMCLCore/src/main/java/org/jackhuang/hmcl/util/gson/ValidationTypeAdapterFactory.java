@@ -37,7 +37,7 @@ public final class ValidationTypeAdapterFactory implements TypeAdapterFactory {
     @Override
     public <T> TypeAdapter<T> create(Gson gson, TypeToken<T> tt) {
         final TypeAdapter<T> delegate = gson.getDelegateAdapter(this, tt);
-        return new TypeAdapter<T>() {
+        return new TypeAdapter<>() {
             @Override
             public void write(JsonWriter writer, T t) throws IOException {
                 if (t instanceof Validation) {

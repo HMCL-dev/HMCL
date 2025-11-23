@@ -262,7 +262,7 @@ public final class Accounts {
             }
 
         if (!globalConfig().isEnableOfflineAccount())
-            accounts.addListener(new ListChangeListener<Account>() {
+            accounts.addListener(new ListChangeListener<>() {
                 @Override
                 public void onChanged(Change<? extends Account> change) {
                     while (change.next()) {

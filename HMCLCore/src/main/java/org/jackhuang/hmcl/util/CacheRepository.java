@@ -333,7 +333,7 @@ public class CacheRepository {
 
     @SafeVarargs
     private LinkedHashMap<URI, ETagItem> joinETagIndexes(Collection<ETagItem>... indexes) {
-        LinkedHashMap<URI, ETagItem> eTags = new LinkedHashMap<URI, ETagItem>();
+        LinkedHashMap<URI, ETagItem> eTags = new LinkedHashMap<>();
         for (Collection<ETagItem> eTagItems : indexes) {
             if (eTagItems != null) {
                 for (ETagItem eTag : eTagItems) {

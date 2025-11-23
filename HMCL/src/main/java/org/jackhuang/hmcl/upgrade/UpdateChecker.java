@@ -88,7 +88,7 @@ public final class UpdateChecker {
             throw new IOException("Self verification failed");
         }
 
-        LinkedHashMap<String, String> query = new LinkedHashMap<String, String>();
+        LinkedHashMap<String, String> query = new LinkedHashMap<>();
         query.put("version", Metadata.VERSION);
         query.put("channel", preview ? channel.channelName + "-preview" : channel.channelName);
 

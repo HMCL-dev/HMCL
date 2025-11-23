@@ -107,7 +107,7 @@ final class WindowsGPUDetector {
         final String displayDevices = "SYSTEM\\CurrentControlSet\\Control\\Class\\{4d36e968-e325-11ce-bfc1-08002be10318}\\";
         final Pattern graphicsCardPattern = Pattern.compile("\\\\[0-9]+\\\\?$");
 
-        ArrayList<GraphicsCard> result = new ArrayList<GraphicsCard>();
+        ArrayList<GraphicsCard> result = new ArrayList<>();
         for (String subkey : reg.querySubKeys(hkey, displayDevices)) {
             if (!graphicsCardPattern.matcher(subkey).find())
                 continue;

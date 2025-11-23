@@ -98,7 +98,7 @@ public final class PropertyUtils {
                 }
                 WritableValue<Object> accessor;
                 if (returnValue instanceof ObservableList) {
-                    accessor = new WritableValue<Object>() {
+                    accessor = new WritableValue<>() {
                         @Override
                         public Object getValue() {
                             return returnValue;
@@ -110,7 +110,7 @@ public final class PropertyUtils {
                         }
                     };
                 } else if (returnValue instanceof ObservableSet) {
-                    accessor = new WritableValue<Object>() {
+                    accessor = new WritableValue<>() {
                         @Override
                         public Object getValue() {
                             return returnValue;
@@ -124,7 +124,7 @@ public final class PropertyUtils {
                         }
                     };
                 } else if (returnValue instanceof ObservableMap) {
-                    accessor = new WritableValue<Object>() {
+                    accessor = new WritableValue<>() {
                         @Override
                         public Object getValue() {
                             return returnValue;

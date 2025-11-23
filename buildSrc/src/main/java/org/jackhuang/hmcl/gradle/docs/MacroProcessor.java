@@ -95,7 +95,7 @@ public enum MacroProcessor {
 
             MacroProcessor.writeBegin(outputBuilder, macroBlock);
             if (localized.getDocuments().size() > 1) {
-                LinkedHashMap<String, List<Document>> languageToDocs = new LinkedHashMap<String, List<Document>>();
+                LinkedHashMap<String, List<Document>> languageToDocs = new LinkedHashMap<>();
                 for (DocumentLocale locale : DocumentLocale.values()) {
                     Document targetDoc = localized.getDocuments().get(locale);
                     if (targetDoc != null) {

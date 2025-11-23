@@ -248,7 +248,7 @@ public class TabHeader extends Control implements TabControl, PageAware {
 
             private final class HeadersRegion extends StackPane {
                 private SideAction action;
-                private final ObjectProperty<Side> side = new SimpleObjectProperty<Side>() {
+                private final ObjectProperty<Side> side = new SimpleObjectProperty<>() {
                     @Override
                     protected void invalidated() {
                         super.invalidated();

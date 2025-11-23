@@ -380,7 +380,7 @@ public final class Lang {
         if (enumeration == null) {
             throw new NullPointerException();
         }
-        return () -> new Iterator<T>() {
+        return () -> new Iterator<>() {
             public boolean hasNext() {
                 return enumeration.hasMoreElements();
             }

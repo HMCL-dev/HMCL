@@ -179,7 +179,7 @@ public abstract class WinReg {
                         case WinConstants.REG_MULTI_SZ: {
                             String str = new String(lpData.getByteArray(0L, cbData), StandardCharsets.UTF_16LE);
 
-                            ArrayList<String> result = new ArrayList<String>();
+                            ArrayList<String> result = new ArrayList<>();
                             for (int start = 0; start < str.length(); ) {
                                 final int end = str.indexOf('\0', start);
                                 if (end < 0) {

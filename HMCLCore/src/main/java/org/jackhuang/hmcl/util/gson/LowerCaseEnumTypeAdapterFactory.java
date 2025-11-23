@@ -48,13 +48,14 @@ public final class LowerCaseEnumTypeAdapterFactory implements TypeAdapterFactory
         for (Object constant : rawType.getEnumConstants())
             lowercaseToConstant.put(toLowercase(constant), (T) constant);
 
-        return new TypeAdapter<T>() {
+        return new TypeAdapter<>() {
             @Override
             public void write(JsonWriter writer, T t) throws IOException {
-                if (t == null)
+                if (t == null) {
                     writer.nullValue();
-                else
+                } else {
                     writer.value(toLowercase(t));
+                }
             }
 
             @Override

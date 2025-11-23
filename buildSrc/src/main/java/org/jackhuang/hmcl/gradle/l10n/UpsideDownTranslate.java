@@ -77,7 +77,7 @@ public abstract class UpsideDownTranslate extends DefaultTask {
         private static final Map<Integer, Integer> MAPPER = loadMap();
 
         private static Map<Integer, Integer> loadMap() {
-            LinkedHashMap<Integer, Integer> map = new LinkedHashMap<Integer, Integer>();
+            LinkedHashMap<Integer, Integer> map = new LinkedHashMap<>();
 
             InputStream inputStream = UpsideDownTranslate.class.getResourceAsStream("upside_down.txt");
             if (inputStream != null) {

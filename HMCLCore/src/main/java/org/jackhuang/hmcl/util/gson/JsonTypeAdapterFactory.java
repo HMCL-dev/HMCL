@@ -30,7 +30,7 @@ public final class JsonTypeAdapterFactory implements TypeAdapterFactory {
             classJsonSubtypeMap.put(subtype.clazz(), subtype);
         }
 
-        return new TypeAdapter<T>() {
+        return new TypeAdapter<>() {
             @Override
             public void write(JsonWriter out, T value) throws IOException {
                 Class<?> type = value.getClass();
@@ -85,7 +85,7 @@ public final class JsonTypeAdapterFactory implements TypeAdapterFactory {
 
         TypeAdapter<T> delegate = gson.getDelegateAdapter(this, type);
 
-        return new TypeAdapter<T>() {
+        return new TypeAdapter<>() {
             @Override
             public void write(JsonWriter out, T value) throws IOException {
                 Class<?> type = value.getClass();

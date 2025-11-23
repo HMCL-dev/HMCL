@@ -1185,7 +1185,7 @@ public final class FXUtils {
     }
 
     public static ObservableValue<Image> newRemoteImage(String url, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
-        SimpleObjectProperty<Image> image = new SimpleObjectProperty<Image>();
+        SimpleObjectProperty<Image> image = new SimpleObjectProperty<>();
         getRemoteImageTask(url, requestedWidth, requestedHeight, preserveRatio, smooth)
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
                     if (exception == null) {
@@ -1280,7 +1280,7 @@ public final class FXUtils {
     }
 
     public static <T> StringConverter<T> stringConverter(Function<T, String> func) {
-        return new StringConverter<T>() {
+        return new StringConverter<>() {
 
             @Override
             public String toString(T object) {
@@ -1296,14 +1296,15 @@ public final class FXUtils {
 
     public static <T> Callback<ListView<T>, ListCell<T>> jfxListCellFactory(Function<T, Node> graphicBuilder) {
         Holder<Object> lastCell = new Holder<>();
-        return view -> new JFXListCell<T>() {
+        return view -> new JFXListCell<>() {
             @Override
             public void updateItem(T item, boolean empty) {
                 super.updateItem(item, empty);
 
                 // https://mail.openjdk.org/pipermail/openjfx-dev/2022-July/034764.html
-                if (this == lastCell.value && !isVisible())
+                if (this == lastCell.value && !isVisible()) {
                     return;
+                }
                 lastCell.value = this;
 
                 if (!empty) {
