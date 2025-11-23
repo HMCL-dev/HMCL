@@ -25,7 +25,10 @@ import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.OAuth;
 import org.jackhuang.hmcl.auth.ServerDisconnectException;
 import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
-import org.jackhuang.hmcl.auth.yggdrasil.*;
+import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
+import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
+import org.jackhuang.hmcl.auth.yggdrasil.Texture;
+import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.*;
 import org.jackhuang.hmcl.util.io.*;
@@ -33,8 +36,10 @@ import org.jackhuang.hmcl.util.javafx.ObservableOptionalCache;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -287,6 +292,33 @@ public class MicrosoftService {
         }
     }
 
+    public void changeCape(String accessToken, String id) throws AuthenticationException, UnsupportedOperationException {
+        try {
+            HttpURLConnection con = NetworkUtils.createHttpConnection("https://api.minecraftservices.com/minecraft/profile/capes/active");
+            con.setRequestMethod("PUT");
+            con.setRequestProperty("Authorization", "Bearer " + accessToken);
+            con.setRequestProperty("Content-Type", "application/json");
+            con.setDoOutput(true);
+
+            try (OutputStream os = con.getOutputStream()) {
+                String jsonPayload = String.format("{\"capeId\":\"%s\"}", id);
+                os.write(jsonPayload.getBytes(StandardCharsets.UTF_8));
+            }
+
+            String response = NetworkUtils.readFullyAsString(con);
+            if (StringUtils.isBlank(response)) {
+                if (con.getResponseCode() / 100 != 2)
+                    throw new ResponseCodeException(con.getURL().toURI(), con.getResponseCode());
+            } else {
+                MinecraftErrorResponse profileResponse = GSON.fromJson(response, MinecraftErrorResponse.class);
+                if (StringUtils.isNotBlank(profileResponse.errorMessage) || con.getResponseCode() / 100 != 2)
+                    throw new AuthenticationException("Failed to change cape, response code: " + con.getResponseCode() + ", response: " + response);
+            }
+        } catch (IOException | JsonParseException | URISyntaxException e) {
+            throw new AuthenticationException(e);
+        }
+    }
+
     private static String request(String url, Object payload) throws AuthenticationException {
         try {
             if (payload == null)
@@ -295,6 +327,27 @@ public class MicrosoftService {
                 return NetworkUtils.doPost(NetworkUtils.toURI(url), payload instanceof String ? (String) payload : GSON.toJson(payload), "application/json");
         } catch (IOException e) {
             throw new ServerDisconnectException(e);
+        }
+    }
+
+    public void hideCape(String accessToken) throws AuthenticationException, UnsupportedOperationException {
+        try {
+            HttpURLConnection con = NetworkUtils.createHttpConnection("https://api.minecraftservices.com//minecraft/profile/capes/active");
+            con.setRequestMethod("DELETE");
+            con.setRequestProperty("Authorization", "Bearer " + accessToken);
+            con.setDoOutput(true);
+
+            String response = NetworkUtils.readFullyAsString(con);
+            if (StringUtils.isBlank(response)) {
+                if (con.getResponseCode() / 100 != 2)
+                    throw new ResponseCodeException(con.getURL().toURI(), con.getResponseCode());
+            } else {
+                MinecraftErrorResponse profileResponse = GSON.fromJson(response, MinecraftErrorResponse.class);
+                if (StringUtils.isNotBlank(profileResponse.errorMessage) || con.getResponseCode() / 100 != 2)
+                    throw new AuthenticationException("Failed to hide cape, response code: " + con.getResponseCode() + ", response: " + response);
+            }
+        } catch (IOException | JsonParseException | URISyntaxException e) {
+            throw new AuthenticationException(e);
         }
     }
 
@@ -419,10 +472,13 @@ public class MicrosoftService {
             Validation.requireNonNull(url, "url cannot be null");
             Validation.requireNonNull(variant, "variant cannot be null");
         }
+
+        public String getVariant() {
+            return variant;
+        }
     }
 
-    public static class MinecraftProfileResponseCape {
-
+    public record MinecraftProfileResponseCape(String id, String state, String url, String alias) {
     }
 
     public static class MinecraftProfileResponse extends MinecraftErrorResponse implements Validation {
@@ -441,6 +497,14 @@ public class MicrosoftService {
             Validation.requireNonNull(name, "name cannot be null");
             Validation.requireNonNull(skins, "skins cannot be null");
             Validation.requireNonNull(capes, "capes cannot be null");
+        }
+
+        public List<MinecraftProfileResponseSkin> getSkins() {
+            return skins;
+        }
+
+        public List<MinecraftProfileResponseCape> getCapes() {
+            return capes;
         }
     }
 
