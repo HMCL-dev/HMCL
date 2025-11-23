@@ -45,11 +45,11 @@ public final class I18n {
     }
 
     public static boolean isUpsideDown() {
-        return LocaleUtils.getScript(locale.getLocale()).equals("Qabs");
+        return LocaleUtils.getScript(locale.getDisplayLocale()).equals("Qabs");
     }
 
     public static boolean isUseChinese() {
-        return LocaleUtils.isChinese(locale.getLocale());
+        return LocaleUtils.isChinese(locale.getDisplayLocale());
     }
 
     public static ResourceBundle getResourceBundle() {
