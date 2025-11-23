@@ -1447,11 +1447,11 @@ public final class FXUtils {
             for (int i = 0; i < children.getLength(); i++) {
                 org.w3c.dom.Node node = children.item(i);
 
-                if (node instanceof Element) {
-                    Element element = (Element) node;
+                if (node instanceof Element element) {
                     if ("a".equals(element.getTagName())) {
                         String href = element.getAttribute("href");
                         Text text = new Text(element.getTextContent());
+                        text.getStyleClass().add("hyperlink");
                         onClicked(text, () -> {
                             String link = href;
                             try {

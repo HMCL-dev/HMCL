@@ -99,6 +99,7 @@ final class ComponentListCell extends StackPane {
             if (!overrideHeaderLeft) {
                 Label label = new Label();
                 label.textProperty().bind(list.titleProperty());
+                label.getStyleClass().add("title-label");
                 labelVBox.getChildren().add(label);
 
                 if (list.isHasSubtitle()) {

@@ -17,10 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.main;
 
-import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXComboBox;
-import com.jfoenix.controls.JFXSlider;
-import com.jfoenix.controls.JFXTextField;
+import com.jfoenix.controls.*;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -35,12 +32,11 @@ import javafx.scene.control.ColorPicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontSmoothingType;
-import org.jackhuang.hmcl.setting.EnumBackgroundImage;
-import org.jackhuang.hmcl.setting.FontManager;
-import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.setting.*;
+import org.jackhuang.hmcl.theme.Theme2;
+import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -93,13 +89,35 @@ public class PersonalizationPage extends StackPane {
             themeColorPickerContainer.setMinHeight(30);
             themePane.setRight(themeColorPickerContainer);
 
-            ColorPicker picker = new ColorPicker(Color.web(Theme.getTheme().getColor()));
-            picker.getCustomColors().setAll(Theme.SUGGESTED_COLORS);
-            picker.setOnAction(e ->
-                    config().setTheme(Theme.custom(Theme.getColorDisplayName(picker.getValue()))));
+            ColorPicker picker = new JFXColorPicker(Theme2.getTheme().primaryColorSeed().color());
+            picker.getCustomColors().setAll(ThemeColor.STANDARD_COLORS.stream().map(ThemeColor::color).toList());
+            picker.setOnAction(e -> config().setThemeColor(ThemeColor.of(picker.getValue())));
             themeColorPickerContainer.getChildren().setAll(picker);
             Platform.runLater(() -> JFXDepthManager.setDepth(picker, 0));
         }
+        {
+            BorderPane brightnessPane = new BorderPane();
+            themeList.getContent().add(brightnessPane);
+
+            Label left = new Label("主题模式"); // TODO: i18n
+            BorderPane.setAlignment(left, Pos.CENTER_LEFT);
+            brightnessPane.setLeft(left);
+
+            JFXComboBox<String> cboBrightness = new JFXComboBox<>(FXCollections.observableArrayList(
+                    "auto", "light", "dark"));
+            cboBrightness.setConverter(FXUtils.stringConverter(name -> {
+                // TODO: i18n
+                return switch (name) {
+                    case "auto" -> "跟随系统设置";
+                    case "light" -> "浅色模式";
+                    case "dark" -> "深色模式";
+                    default -> name;
+                };
+            }));
+            cboBrightness.valueProperty().bindBidirectional(config().themeBrightnessProperty());
+            brightnessPane.setRight(cboBrightness);
+        }
+
         {
             OptionToggleButton titleTransparentButton = new OptionToggleButton();
             themeList.getContent().add(titleTransparentButton);

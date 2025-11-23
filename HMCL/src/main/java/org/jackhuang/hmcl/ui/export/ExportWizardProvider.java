@@ -126,7 +126,7 @@ public final class ExportWizardProvider implements WizardProvider {
 
                     exported.setBackgroundImageType(config().getBackgroundImageType());
                     exported.setBackgroundImage(config().getBackgroundImage());
-                    exported.setTheme(config().getTheme());
+                    exported.setThemeColor(config().getThemeColor());
                     exported.setDownloadType(config().getDownloadType());
                     exported.setPreferredLoginType(config().getPreferredLoginType());
                     exported.getAuthlibInjectorServers().setAll(config().getAuthlibInjectorServers());

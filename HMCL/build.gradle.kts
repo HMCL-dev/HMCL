@@ -58,6 +58,7 @@ dependencies {
     implementation("libs:JFoenix")
     implementation(libs.twelvemonkeys.imageio.webp)
     implementation(libs.java.info)
+    implementation(libs.monet.fx)
 
     if (launcherExe.isBlank()) {
         implementation(libs.hmclauncher)

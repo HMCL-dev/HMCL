@@ -17,37 +17,15 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import com.google.gson.annotations.JsonAdapter;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.scene.paint.Color;
 
-import java.io.IOException;
-import java.util.Locale;
 import java.util.Objects;
-import java.util.Optional;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-
-@JsonAdapter(Theme.TypeAdapter.class)
 public final class Theme {
     public static final Theme BLUE = new Theme("blue", "#5C6BC0");
     public static final Color BLACK = Color.web("#292929");
-    public static final Color[] SUGGESTED_COLORS = new Color[]{
-            Color.web("#3D6DA3"), // blue
-            Color.web("#283593"), // dark blue
-            Color.web("#43A047"), // green
-            Color.web("#E67E22"), // orange
-            Color.web("#9C27B0"), // purple
-            Color.web("#B71C1C")  // red
-    };
-
-    public static Theme getTheme() {
-        Theme theme = config().getTheme();
-        return theme == null ? BLUE : theme;
-    }
 
     private final Color paint;
     private final String color;
@@ -67,76 +45,15 @@ public final class Theme {
         return color;
     }
 
-    public Color getPaint() {
-        return paint;
-    }
-
-    public boolean isCustom() {
-        return name.startsWith("#");
-    }
-
-    public boolean isLight() {
-        return paint.grayscale().getRed() >= 0.5;
-    }
-
-    public Color getForegroundColor() {
-        return isLight() ? Color.BLACK : Color.WHITE;
-    }
-
-    public static Theme custom(String color) {
-        if (!color.startsWith("#"))
-            throw new IllegalArgumentException();
-        return new Theme(color, color);
-    }
-
-    public static Optional<Theme> getTheme(String name) {
-        if (name == null)
-            return Optional.empty();
-        else if (name.startsWith("#"))
-            try {
-                Color.web(name);
-                return Optional.of(custom(name));
-            } catch (IllegalArgumentException ignore) {
-            }
-        else {
-            String color = null;
-            switch (name.toLowerCase(Locale.ROOT)) {
-                case "blue":
-                    return Optional.of(BLUE);
-                case "darker_blue":
-                    color = "#283593";
-                    break;
-                case "green":
-                    color = "#43A047";
-                    break;
-                case "orange":
-                    color = "#E67E22";
-                    break;
-                case "purple":
-                    color = "#9C27B0";
-                    break;
-                case "red":
-                    color = "#F44336";
-            }
-            if (color != null)
-                return Optional.of(new Theme(name, color));
-        }
-
-        return Optional.empty();
-    }
-
-    public static String getColorDisplayName(Color c) {
-        return c != null ? String.format("#%02X%02X%02X", Math.round(c.getRed() * 255.0D), Math.round(c.getGreen() * 255.0D), Math.round(c.getBlue() * 255.0D)) : null;
-    }
-
     private static ObjectBinding<Color> FOREGROUND_FILL;
 
     public static ObjectBinding<Color> foregroundFillBinding() {
         if (FOREGROUND_FILL == null)
-            FOREGROUND_FILL = Bindings.createObjectBinding(
-                    () -> Theme.getTheme().getForegroundColor(),
-                    config().themeProperty()
-            );
+            FOREGROUND_FILL = Bindings.createObjectBinding(() -> Color.WHITE); // TODO
+//            FOREGROUND_FILL = Bindings.createObjectBinding(
+//                    () -> Theme.getTheme().getForegroundColor(),
+//                    config().themeProperty()
+//            );
 
         return FOREGROUND_FILL;
     }
@@ -149,15 +66,4 @@ public final class Theme {
         return Color.WHITE;
     }
 
-    public static class TypeAdapter extends com.google.gson.TypeAdapter<Theme> {
-        @Override
-        public void write(JsonWriter out, Theme value) throws IOException {
-            out.value(value.getName().toLowerCase(Locale.ROOT));
-        }
-
-        @Override
-        public Theme read(JsonReader in) throws IOException {
-            return getTheme(in.nextString()).orElse(Theme.BLUE);
-        }
-    }
 }

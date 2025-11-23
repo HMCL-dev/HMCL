@@ -15,7 +15,6 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -111,7 +110,7 @@ public class IconedTwoLineListItem extends HBox {
         if (externalLinkButton == null) {
             externalLinkButton = new JFXButton();
             externalLinkButton.getStyleClass().add("toggle-icon4");
-            externalLinkButton.setGraphic(SVG.OPEN_IN_NEW.createIcon(Theme.blackFill(), -1));
+            externalLinkButton.setGraphic(SVG.OPEN_IN_NEW.createIcon());
             externalLinkButton.setOnAction(e -> FXUtils.openLink(externalLink.get()));
         }
         return externalLinkButton;
