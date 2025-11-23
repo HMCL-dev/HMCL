@@ -494,7 +494,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                                     }
                                     if (title.getTags()
                                             .stream()
-                                            .noneMatch(it -> it.getText().equals(loaderName))) {
+                                            .noneMatch(it -> it.text().equals(loaderName))) {
                                         title.addTag(loaderName);
                                     }
                                 }
@@ -619,7 +619,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
             List<String> warning = new ArrayList<>();
 
-            content.getTags().clear();
+            content.clearTags();
 
             LocalModFile modInfo = dataItem.getModInfo();
             ModTranslations.Mod modTranslations = dataItem.getModTranslations();

@@ -2,15 +2,11 @@ package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXButton;
 import javafx.beans.InvalidationListener;
-import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
-import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
@@ -22,7 +18,6 @@ import org.jackhuang.hmcl.util.StringUtils;
 
 public class IconedTwoLineListItem extends HBox {
     private final StringProperty title = new SimpleStringProperty(this, "title");
-    private final ObservableList<Label> tags = FXCollections.observableArrayList();
     private final StringProperty subtitle = new SimpleStringProperty(this, "subtitle");
     private final StringProperty externalLink = new SimpleStringProperty(this, "externalLink");
     private final ObjectProperty<Image> image = new SimpleObjectProperty<>(this, "image");
@@ -41,7 +36,6 @@ public class IconedTwoLineListItem extends HBox {
         twoLineListItem.titleProperty().bind(title);
         twoLineListItem.subtitleProperty().bind(subtitle);
         HBox.setHgrow(twoLineListItem, Priority.ALWAYS);
-        Bindings.bindContent(twoLineListItem.getTags(), tags);
 
         observer = FXUtils.observeWeak(() -> {
             getChildren().clear();
@@ -63,8 +57,8 @@ public class IconedTwoLineListItem extends HBox {
         this.title.set(title);
     }
 
-    public ObservableList<Label> getTags() {
-        return tags;
+    public void addTags(String tag) {
+        twoLineListItem.addTag(tag);
     }
 
     public String getSubtitle() {
