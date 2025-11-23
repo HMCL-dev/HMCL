@@ -373,10 +373,36 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 launcherVisibilityPane.setLeft(label);
                 BorderPane.setAlignment(label, Pos.CENTER_LEFT);
 
+                BorderPane launcherVisibilityOperationsPane = new BorderPane();
+                launcherVisibilityPane.setRight(launcherVisibilityOperationsPane);
+                BorderPane.setAlignment(launcherVisibilityOperationsPane, Pos.CENTER_RIGHT);
+
                 cboLauncherVisibility = new JFXComboBox<>();
-                launcherVisibilityPane.setRight(cboLauncherVisibility);
-                BorderPane.setAlignment(cboLauncherVisibility, Pos.CENTER_RIGHT);
                 FXUtils.setLimitWidth(cboLauncherVisibility, 300);
+                launcherVisibilityOperationsPane.setLeft(cboLauncherVisibility);
+                BorderPane.setAlignment(cboLauncherVisibility, Pos.CENTER_LEFT);
+
+                if (globalSetting) {
+                    JFXButton syncButton = FXUtils.newBorderButton(i18n("settings.advanced.launcher_visible_sync"));
+                    VBox btnBox = new VBox(syncButton);
+                    btnBox.setPadding(new Insets(0, 0, 0, 8));
+                    launcherVisibilityOperationsPane.setRight(btnBox);
+                    BorderPane.setAlignment(btnBox, Pos.CENTER_RIGHT);
+
+                    syncButton.setOnAction(e -> {
+                        Profiles.getProfiles().forEach(profile -> {
+                            try {
+                                profile.getRepository().getVersions().forEach(v -> {
+                                    profile.getVersionSetting(v.getId())
+                                            .launcherVisibilityProperty()
+                                            .setValue(cboLauncherVisibility.getSelectionModel()
+                                                    .getSelectedItem());
+                                });
+                            } catch (NullPointerException npe) {
+                            }
+                        });
+                    });
+                }
             }
 
             BorderPane dimensionPane = new BorderPane();
