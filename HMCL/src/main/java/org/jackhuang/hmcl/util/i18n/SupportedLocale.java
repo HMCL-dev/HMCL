@@ -97,8 +97,8 @@ public final class SupportedLocale {
         if (StringUtils.isBlank(language)) {
             this.locale = LocaleUtils.SYSTEM_DEFAULT;
             this.displayLocale = isExperimentalSupported(this.locale)
-                    ? this.locale
-                    : Locale.ENGLISH;
+                    ? Locale.ENGLISH
+                    : this.locale;
         } else {
             this.locale = Locale.forLanguageTag(language);
             this.displayLocale = this.locale;
