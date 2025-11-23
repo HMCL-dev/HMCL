@@ -94,22 +94,22 @@ public final class WorldManageUIUtils {
     public static void copyWorld(World world, Runnable runnable, FileChannel sessionLockChannel) {
         Path worldPath = world.getFile();
         Controllers.dialog(new InputDialogPane(
-                i18n("world.copy.prompt"),
+                i18n("world.duplicate.prompt"),
                 "",
                 (result, resolve, reject) -> {
                     if (StringUtils.isBlank(result)) {
-                        reject.accept(i18n("world.copy.failed.empty_name"));
+                        reject.accept(i18n("world.duplicate.failed.empty_name"));
                         return;
                     }
 
                     if (result.contains("/") || result.contains("\\") || !FileUtils.isNameValid(result)) {
-                        reject.accept(i18n("world.copy.failed.invalid_name"));
+                        reject.accept(i18n("world.duplicate.failed.invalid_name"));
                         return;
                     }
 
                     Path targetDir = worldPath.resolveSibling(result);
                     if (Files.exists(targetDir)) {
-                        reject.accept(i18n("world.copy.failed.already_exists"));
+                        reject.accept(i18n("world.duplicate.failed.already_exists"));
                         return;
                     }
 
@@ -121,7 +121,7 @@ public final class WorldManageUIUtils {
                     }
 
                     Task.runAsync(Schedulers.io(), () -> world.copy(result))
-                            .thenAcceptAsync(Schedulers.javafx(), (Void) -> Controllers.showToast(i18n("world.copy.success.toast")))
+                            .thenAcceptAsync(Schedulers.javafx(), (Void) -> Controllers.showToast(i18n("world.duplicate.success.toast")))
                             .thenAcceptAsync(Schedulers.javafx(), (Void) -> {
                                         if (runnable != null) {
                                             runnable.run();
@@ -131,7 +131,7 @@ public final class WorldManageUIUtils {
                                 if (exception == null) {
                                     resolve.run();
                                 } else {
-                                    reject.accept(i18n("world.copy.failed"));
+                                    reject.accept(i18n("world.duplicate.failed"));
                                 }
                             })
                             .start();
