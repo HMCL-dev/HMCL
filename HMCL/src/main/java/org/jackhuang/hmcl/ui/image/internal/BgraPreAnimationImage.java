@@ -20,43 +20,37 @@ package org.jackhuang.hmcl.ui.image.internal;
 import javafx.scene.image.PixelFormat;
 import org.jackhuang.hmcl.ui.image.AnimationImage;
 
+import java.util.List;
+
 /**
  * @author Glavo
  */
-public final class AnimationImageImpl extends AnimationImage {
-    private final int[][] frames;
-    private final int[] durations;
+public final class BgraPreAnimationImage extends AnimationImage {
+    private final List<BgraPreFrame> frames;
 
-    public AnimationImageImpl(int width, int height,
-                              int[][] frames, int[] durations, int cycleCount) {
+    public BgraPreAnimationImage(int width, int height, int cycleCount, List<BgraPreFrame> frames) {
         super(width, height, cycleCount);
-        if (frames.length != durations.length) {
-            throw new IllegalArgumentException("frames.length != durations.length");
-        }
-
         this.frames = frames;
-        this.durations = durations;
+
         play();
     }
 
     @Override
     public int getFramesCount() {
-        return frames.length;
+        return frames.size();
     }
 
     @Override
     public long getDuration(int index) {
-        return durations[index];
+        return frames.get(index).getDuration();
     }
 
+    @Override
     protected void updateImage(int frameIndex) {
-        final int width = (int) getWidth();
-        final int height = (int) getHeight();
-        final int[] frame = frames[frameIndex];
-        this.getPixelWriter().setPixels(0, 0,
-                width, height,
-                PixelFormat.getIntArgbInstance(),
-                frame, 0, width
+        BgraPreFrame frame = frames.get(frameIndex);
+        getPixelWriter().setPixels(frame.xOffset, frame.yOffset, frame.width, frame.height,
+                PixelFormat.getByteBgraPreInstance(),
+                frame.pixels, 0, 4 * frame.width
         );
     }
 }
