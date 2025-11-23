@@ -205,7 +205,7 @@ public class DefaultCacheRepository extends CacheRepository {
         try {
             Files.createDirectories(indexFile.getParent());
             FileUtils.saveSafely(indexFile, outputStream -> {
-                try (var writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8))) {
+                try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8))) {
                     JsonUtils.GSON.toJson(index, writer);
                 }
             });

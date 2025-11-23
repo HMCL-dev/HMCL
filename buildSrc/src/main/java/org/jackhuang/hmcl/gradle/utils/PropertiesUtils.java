@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.gradle.utils;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -28,7 +29,7 @@ import java.util.Properties;
 public final class PropertiesUtils {
     public static @NotNull Properties load(Path path) throws IOException {
         Properties properties = new Properties();
-        try (var reader = Files.newBufferedReader(path)) {
+        try (BufferedReader reader = Files.newBufferedReader(path)) {
             properties.load(reader);
         }
         return properties;

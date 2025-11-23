@@ -25,6 +25,7 @@ import org.gradle.api.logging.Logging;
 import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.TaskAction;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -52,10 +53,10 @@ public abstract class CheckTranslations extends DefaultTask {
     public void run() throws IOException {
         Checker checker = new Checker();
 
-        var english = new PropertiesFile(getEnglishFile());
-        var simplifiedChinese = new PropertiesFile(getSimplifiedChineseFile());
-        var traditionalChinese = new PropertiesFile(getTraditionalChineseFile());
-        var classicalChinese = new PropertiesFile(getClassicalChineseFile());
+        PropertiesFile english = new PropertiesFile(getEnglishFile());
+        PropertiesFile simplifiedChinese = new PropertiesFile(getSimplifiedChineseFile());
+        PropertiesFile traditionalChinese = new PropertiesFile(getTraditionalChineseFile());
+        PropertiesFile classicalChinese = new PropertiesFile(getClassicalChineseFile());
 
         simplifiedChinese.forEach((key, value) -> {
             checker.checkKeyExists(english, key);
@@ -92,7 +93,7 @@ public abstract class CheckTranslations extends DefaultTask {
 
         PropertiesFile(Path path) throws IOException {
             this.path = path;
-            try (var reader = Files.newBufferedReader(path)) {
+            try (BufferedReader reader = Files.newBufferedReader(path)) {
                 properties.load(reader);
             }
         }

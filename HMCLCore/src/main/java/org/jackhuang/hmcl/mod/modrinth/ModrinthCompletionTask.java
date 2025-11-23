@@ -122,7 +122,7 @@ public class ModrinthCompletionTask extends Task<Void> {
             if (modsDirectory.equals(filePath.getParent()) && this.modManager.hasSimpleMod(FileUtils.getName(filePath)))
                 continue;
 
-            var task = new FileDownloadTask(
+            FileDownloadTask task = new FileDownloadTask(
                     file.getDownloads().stream().map(NetworkUtils::toURI).collect(Collectors.toList()),
                     filePath);
             task.setCacheRepository(dependency.getCacheRepository());

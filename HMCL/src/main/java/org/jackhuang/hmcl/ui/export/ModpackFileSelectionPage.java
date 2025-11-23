@@ -36,6 +36,7 @@ import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -44,6 +45,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
@@ -106,7 +108,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
             node.setSelected(true);
 
         if (isDirectory) {
-            try (var stream = Files.list(file)) {
+            try (Stream<@NotNull Path> stream = Files.list(file)) {
                 stream.forEach(it -> {
                     CheckBoxTreeItem<String> subNode = getTreeItem(it, basePath + "/" + FileUtils.getName(it));
                     if (subNode != null) {

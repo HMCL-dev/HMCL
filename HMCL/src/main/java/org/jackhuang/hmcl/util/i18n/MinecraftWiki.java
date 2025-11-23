@@ -31,7 +31,7 @@ public final class MinecraftWiki {
 
     public static String getWikiLink(SupportedLocale locale, GameRemoteVersion version) {
         String wikiVersion = StringUtils.removeSuffix(version.getSelfVersion(), "_unobfuscated");
-        var gameVersion = GameVersionNumber.asGameVersion(wikiVersion);
+        GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(wikiVersion);
 
         if (locale.getLocale().getLanguage().equals("lzh")) {
             String translatedVersion;

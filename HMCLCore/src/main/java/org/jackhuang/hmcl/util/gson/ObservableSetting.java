@@ -64,7 +64,7 @@ public abstract class ObservableSetting implements Observable {
                 throw new AssertionError("Type: " + type);
 
             try {
-                var allFields = new ArrayList<ObservableField<?>>();
+                ArrayList<ObservableField<?>> allFields = new ArrayList<ObservableField<?>>();
 
                 for (Class<?> current = type;
                      current != ObservableSetting.class;
@@ -101,8 +101,8 @@ public abstract class ObservableSetting implements Observable {
         registered = true;
 
         @SuppressWarnings("unchecked")
-        var fields = (List<ObservableField<ObservableSetting>>) FIELDS.get(this.getClass());
-        for (var field : fields) {
+        List<ObservableField<ObservableSetting>> fields = (List<ObservableField<ObservableSetting>>) FIELDS.get(this.getClass());
+        for (ObservableField<ObservableSetting> field : fields) {
             Observable observable = field.get(this);
             tracker.track(observable);
             observable.addListener(helper);
@@ -320,10 +320,10 @@ public abstract class ObservableSetting implements Observable {
                 return JsonNull.INSTANCE;
 
             @SuppressWarnings("unchecked")
-            var fields = (List<ObservableField<T>>) FIELDS.get(setting.getClass());
+            List<ObservableField<T>> fields = (List<ObservableField<T>>) FIELDS.get(setting.getClass());
 
             JsonObject result = new JsonObject();
-            for (var field : fields) {
+            for (ObservableField<T> field : fields) {
                 Observable observable = field.get(setting);
                 if (setting.tracker.isDirty(observable)) {
                     field.serialize(result, setting, context);
@@ -343,9 +343,9 @@ public abstract class ObservableSetting implements Observable {
 
             T setting = createInstance();
             @SuppressWarnings("unchecked")
-            var fields = (List<ObservableField<T>>) FIELDS.get(setting.getClass());
+            List<ObservableField<T>> fields = (List<ObservableField<T>>) FIELDS.get(setting.getClass());
 
-            var values = new LinkedHashMap<>(json.getAsJsonObject().asMap());
+            LinkedHashMap<String, JsonElement> values = new LinkedHashMap<>(json.getAsJsonObject().asMap());
             for (ObservableField<T> field : fields) {
                 JsonElement value = values.remove(field.getSerializedName());
                 if (value == null) {

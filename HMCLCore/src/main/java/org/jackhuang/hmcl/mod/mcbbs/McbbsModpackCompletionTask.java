@@ -245,7 +245,7 @@ public class McbbsModpackCompletionTask extends CompletableFutureTask<Void> {
                                 McbbsModpackManifest.CurseFile curseFile = (McbbsModpackManifest.CurseFile) file;
                                 if (StringUtils.isNotBlank(curseFile.getFileName())) {
                                     if (!modManager.hasSimpleMod(curseFile.getFileName())) {
-                                        var task = new FileDownloadTask(curseFile.getUrl(), modManager.getSimpleModPath(curseFile.getFileName()));
+                                        FileDownloadTask task = new FileDownloadTask(curseFile.getUrl(), modManager.getSimpleModPath(curseFile.getFileName()));
                                         task.setCacheRepository(dependency.getCacheRepository());
                                         task.setCaching(true);
                                         dependencies.add(task.withCounter("hmcl.modpack.download"));

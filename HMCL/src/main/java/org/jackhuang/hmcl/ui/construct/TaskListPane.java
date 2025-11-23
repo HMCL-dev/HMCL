@@ -332,7 +332,7 @@ public final class TaskListPane extends StackPane {
                 prevStageNode.status.removeListener(statusChangeListener);
 
             if (item instanceof ProgressListNode) {
-                var progressListNode = (ProgressListNode) item;
+                ProgressListNode progressListNode = (ProgressListNode) item;
                 title.setText(progressListNode.title);
                 message.textProperty().bind(progressListNode.message);
                 bar.progressProperty().bind(progressListNode.progress);
@@ -342,7 +342,7 @@ public final class TaskListPane extends StackPane {
                 pane.setRight(message);
                 pane.setBottom(bar);
             } else if (item instanceof StageNode) {
-                var stageNode = (StageNode) item;
+                StageNode stageNode = (StageNode) item;
                 title.textProperty().bind(stageNode.title);
                 message.setText("");
                 bar.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);

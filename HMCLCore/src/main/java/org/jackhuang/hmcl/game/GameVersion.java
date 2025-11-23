@@ -188,7 +188,7 @@ final class GameVersion {
         if (file == null || !Files.isRegularFile(file))
             return Optional.empty();
 
-        try (var gameJar = new ZipFile(file.toFile())) {
+        try (ZipFile gameJar = new ZipFile(file.toFile())) {
             ZipEntry versionJson = gameJar.getEntry("version.json");
             if (versionJson != null) {
                 Optional<String> result = getVersionFromJson(gameJar.getInputStream(versionJson));

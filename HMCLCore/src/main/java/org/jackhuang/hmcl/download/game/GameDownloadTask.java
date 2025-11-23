@@ -55,7 +55,7 @@ public final class GameDownloadTask extends Task<Void> {
     public void execute() {
         Path jar = dependencyManager.getGameRepository().getVersionJar(version);
 
-        var task = new FileDownloadTask(
+        FileDownloadTask task = new FileDownloadTask(
                 dependencyManager.getDownloadProvider().injectURLWithCandidates(version.getDownloadInfo().getUrl()),
                 jar,
                 FileDownloadTask.IntegrityCheck.of(CacheRepository.SHA1, version.getDownloadInfo().getSha1()));

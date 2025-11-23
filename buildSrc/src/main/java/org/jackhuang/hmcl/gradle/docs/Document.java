@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.gradle.docs;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -83,8 +84,8 @@ public record Document(DocumentFileTree directory,
     }
 
     public static Document load(DocumentFileTree directory, Path file, String name, DocumentLocale locale) throws IOException {
-        var items = new ArrayList<Item>();
-        try (var reader = Files.newBufferedReader(file)) {
+        ArrayList<Item> items = new ArrayList<Item>();
+        try (BufferedReader reader = Files.newBufferedReader(file)) {
             String line;
 
             while ((line = reader.readLine()) != null) {
@@ -97,7 +98,7 @@ public record Document(DocumentFileTree directory,
 
                     String macroName = matcher.group("name");
                     String endLine = "<!-- #END " + macroName + " -->";
-                    var lines = new ArrayList<String>();
+                    ArrayList<String> lines = new ArrayList<String>();
                     while (true) {
                         line = reader.readLine();
 
@@ -110,7 +111,7 @@ public record Document(DocumentFileTree directory,
                         }
                     }
 
-                    var properties = new LinkedHashMap<String, List<String>>();
+                    LinkedHashMap<String, List<String>> properties = new LinkedHashMap<String, List<String>>();
                     int propertiesCount = 0;
 
                     // Handle properties

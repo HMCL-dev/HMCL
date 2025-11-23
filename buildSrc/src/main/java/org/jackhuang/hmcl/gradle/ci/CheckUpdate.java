@@ -67,7 +67,7 @@ public abstract class CheckUpdate extends DefaultTask {
     }
 
     private static String concatUri(String base, String... others) {
-        var builder = new StringBuilder(base);
+        StringBuilder builder = new StringBuilder(base);
         for (String other : others) {
             if (builder.charAt(builder.length() - 1) != '/') {
                 builder.append('/');
@@ -85,7 +85,7 @@ public abstract class CheckUpdate extends DefaultTask {
 
         BuildMetadata buildMetadata;
 
-        try (var helper = new Helper()) {
+        try (Helper helper = new Helper()) {
             JsonObject body = Objects.requireNonNull(helper.fetch(apiUri, JsonObject.class));
             String jobType = Objects.requireNonNull(body.getAsJsonPrimitive("_class"), "Missing _class property")
                     .getAsString();

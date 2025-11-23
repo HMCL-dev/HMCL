@@ -61,7 +61,7 @@ public final class InvocationDispatcher<T> implements Consumer<T> {
         if (PENDING_ARG_HANDLE.getAndSet(this, new Holder<>(t)) == null) {
             executor.execute(() -> {
                 @SuppressWarnings("unchecked")
-                var holder = (Holder<T>) PENDING_ARG_HANDLE.getAndSet(this, (Holder<T>) null);
+                Holder<T> holder = (Holder<T>) PENDING_ARG_HANDLE.getAndSet(this, (Holder<T>) null);
 
                 // If the executor supports multiple underlying threads,
                 // we need to add synchronization, but for now we can omit it :)

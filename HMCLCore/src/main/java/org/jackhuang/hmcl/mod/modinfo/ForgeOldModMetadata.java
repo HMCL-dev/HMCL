@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
@@ -130,8 +131,8 @@ public final class ForgeOldModMetadata {
 
         List<ForgeOldModMetadata> modList;
 
-        try (var reader = Files.newBufferedReader(mcmod);
-             var jsonReader = new JsonReader(reader)) {
+        try (BufferedReader reader = Files.newBufferedReader(mcmod);
+             JsonReader jsonReader = new JsonReader(reader)) {
             JsonToken firstToken = jsonReader.peek();
 
             if (firstToken == JsonToken.BEGIN_ARRAY)

@@ -95,7 +95,7 @@ public final class OptiFineInstallTask extends Task<Version> {
         dest = Files.createTempFile("optifine-installer", ".jar");
 
         if (installer == null) {
-            var task = new FileDownloadTask(
+            FileDownloadTask task = new FileDownloadTask(
                     dependencyManager.getDownloadProvider().injectURLsWithCandidates(remote.getUrls()),
                     dest, null);
             task.setCacheRepository(dependencyManager.getCacheRepository());

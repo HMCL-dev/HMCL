@@ -102,7 +102,7 @@ public final class TarFileTree extends ArchiveFileTree<TarArchiveReader, TarArch
 
     @Override
     protected void copyAttributes(@NotNull TarArchiveEntry source, @NotNull Path targetFile) throws IOException {
-        var fileAttributeView = Files.getFileAttributeView(targetFile, BasicFileAttributeView.class);
+        BasicFileAttributeView fileAttributeView = Files.getFileAttributeView(targetFile, BasicFileAttributeView.class);
         if (fileAttributeView == null)
             return;
 

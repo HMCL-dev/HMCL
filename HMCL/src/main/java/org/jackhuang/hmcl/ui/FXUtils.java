@@ -157,12 +157,12 @@ public final class FXUtils {
                 MethodHandles.Lookup lookup = MethodHandles.publicLookup();
                 Class<?> preferencesClass = Class.forName("javafx.application.Platform$Preferences");
                 @SuppressWarnings("unchecked")
-                var preferences0 = (ObservableMap<String, Object>) lookup.findStatic(Platform.class, "getPreferences", MethodType.methodType(preferencesClass))
+                ObservableMap<String, Object> preferences0 = (ObservableMap<String, Object>) lookup.findStatic(Platform.class, "getPreferences", MethodType.methodType(preferencesClass))
                         .invoke();
                 preferences = preferences0;
 
                 @SuppressWarnings("unchecked")
-                var colorSchemeProperty =
+                ReadOnlyObjectProperty<? extends Enum<? extends Enum<?>>> colorSchemeProperty =
                         (ReadOnlyObjectProperty<? extends Enum<?>>)
                                 lookup.findVirtual(preferencesClass, "colorSchemeProperty", MethodType.methodType(ReadOnlyObjectProperty.class))
                                         .invoke(preferences);
@@ -852,7 +852,7 @@ public final class FXUtils {
             if (!(o instanceof FXUtils.PaintBidirectionalBinding))
                 return false;
 
-            var that = (FXUtils.PaintBidirectionalBinding) o;
+            PaintBidirectionalBinding that = (FXUtils.PaintBidirectionalBinding) o;
 
             final ColorPicker colorPicker = this.colorPickerRef.get();
             final Property<Paint> property = this.propertyRef.get();
@@ -905,9 +905,9 @@ public final class FXUtils {
         @Override
         public void invalidated(Observable observable) {
             if (!updating) {
-                var comboBox = this.comboBoxRef.get();
-                var widthProperty = this.widthPropertyRef.get();
-                var heightProperty = this.heightPropertyRef.get();
+                JFXComboBox<String> comboBox = this.comboBoxRef.get();
+                IntegerProperty widthProperty = this.widthPropertyRef.get();
+                IntegerProperty heightProperty = this.heightPropertyRef.get();
 
                 if (comboBox == null || widthProperty == null || heightProperty == null) {
                     if (comboBox != null) {
@@ -984,15 +984,15 @@ public final class FXUtils {
             if (!(obj instanceof WindowsSizeBidirectionalBinding))
                 return false;
 
-            var that = (WindowsSizeBidirectionalBinding) obj;
+            WindowsSizeBidirectionalBinding that = (WindowsSizeBidirectionalBinding) obj;
 
-            var comboBox = this.comboBoxRef.get();
-            var widthProperty = this.widthPropertyRef.get();
-            var heightProperty = this.heightPropertyRef.get();
+            JFXComboBox<String> comboBox = this.comboBoxRef.get();
+            IntegerProperty widthProperty = this.widthPropertyRef.get();
+            IntegerProperty heightProperty = this.heightPropertyRef.get();
 
-            var thatComboBox = that.comboBoxRef.get();
-            var thatWidthProperty = that.widthPropertyRef.get();
-            var thatHeightProperty = that.heightPropertyRef.get();
+            JFXComboBox<String> thatComboBox = that.comboBoxRef.get();
+            IntegerProperty thatWidthProperty = that.widthPropertyRef.get();
+            IntegerProperty thatHeightProperty = that.heightPropertyRef.get();
 
             if (comboBox == null || widthProperty == null || heightProperty == null
                     || thatComboBox == null || thatWidthProperty == null || thatHeightProperty == null) {
@@ -1007,7 +1007,7 @@ public final class FXUtils {
 
     public static void bindWindowsSize(JFXComboBox<String> comboBox, IntegerProperty widthProperty, IntegerProperty heightProperty) {
         comboBox.setValue(widthProperty.get() + "x" + heightProperty.get());
-        var binding = new WindowsSizeBidirectionalBinding(comboBox, widthProperty, heightProperty);
+        WindowsSizeBidirectionalBinding binding = new WindowsSizeBidirectionalBinding(comboBox, widthProperty, heightProperty);
         comboBox.focusedProperty().addListener(binding);
         comboBox.sceneProperty().addListener(binding);
         widthProperty.addListener(binding);
@@ -1015,7 +1015,7 @@ public final class FXUtils {
     }
 
     public static void unbindWindowsSize(JFXComboBox<String> comboBox, IntegerProperty widthProperty, IntegerProperty heightProperty) {
-        var binding = new WindowsSizeBidirectionalBinding(comboBox, widthProperty, heightProperty);
+        WindowsSizeBidirectionalBinding binding = new WindowsSizeBidirectionalBinding(comboBox, widthProperty, heightProperty);
         comboBox.focusedProperty().removeListener(binding);
         comboBox.sceneProperty().removeListener(binding);
         widthProperty.removeListener(binding);
@@ -1096,7 +1096,7 @@ public final class FXUtils {
     public static Image loadImage(Path path,
                                   int requestedWidth, int requestedHeight,
                                   boolean preserveRatio, boolean smooth) throws Exception {
-        try (var input = new BufferedInputStream(Files.newInputStream(path))) {
+        try (BufferedInputStream input = new BufferedInputStream(Files.newInputStream(path))) {
             String ext = FileUtils.getExtension(path).toLowerCase(Locale.ROOT);
             ImageLoader loader = ImageUtils.EXT_TO_LOADER.get(ext);
             if (loader == null && !ImageUtils.DEFAULT_EXTS.contains(ext)) {
@@ -1185,7 +1185,7 @@ public final class FXUtils {
     }
 
     public static ObservableValue<Image> newRemoteImage(String url, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
-        var image = new SimpleObjectProperty<Image>();
+        SimpleObjectProperty<Image> image = new SimpleObjectProperty<Image>();
         getRemoteImageTask(url, requestedWidth, requestedHeight, preserveRatio, smooth)
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
                     if (exception == null) {
@@ -1231,8 +1231,8 @@ public final class FXUtils {
         ReadOnlyBooleanProperty textTruncatedProperty = textTruncatedProperty(labeled);
         if (textTruncatedProperty != null) {
             ChangeListener<Boolean> listener = (observable, oldValue, newValue) -> {
-                var label = (Labeled) ((ReadOnlyProperty<?>) observable).getBean();
-                var tooltip = (Tooltip) label.getProperties().get(LABEL_FULL_TEXT_PROP_KEY);
+                Labeled label = (Labeled) ((ReadOnlyProperty<?>) observable).getBean();
+                Tooltip tooltip = (Tooltip) label.getProperties().get(LABEL_FULL_TEXT_PROP_KEY);
 
                 if (newValue) {
                     if (tooltip == null) {

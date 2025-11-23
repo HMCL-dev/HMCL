@@ -47,6 +47,7 @@ import org.jackhuang.hmcl.util.skin.NormalizedSkin;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -156,7 +157,7 @@ public class AccountListItem extends RadioButton {
         return refreshAsync()
                 .thenRunAsync(() -> {
                     Image skinImg;
-                    try (var input = Files.newInputStream(selectedFile)) {
+                    try (InputStream input = Files.newInputStream(selectedFile)) {
                         skinImg = new Image(input);
                     } catch (IOException e) {
                         throw new InvalidSkinException("Failed to read skin image", e);

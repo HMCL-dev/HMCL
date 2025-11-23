@@ -180,7 +180,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
         Controllers.taskDialog(
                 Task.composeAsync(() -> {
-                    var task = new FileDownloadTask(file.getFile().getUrl(), dest, file.getFile().getIntegrityCheck());
+                    FileDownloadTask task = new FileDownloadTask(file.getFile().getUrl(), dest, file.getFile().getIntegrityCheck());
                     task.setName(file.getName());
                     return task;
                 }),

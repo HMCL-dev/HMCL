@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -112,7 +113,7 @@ public class FileItem extends BorderPane {
             }
         }
         chooser.titleProperty().bind(titleProperty());
-        var selectedDir = chooser.showDialog(Controllers.getStage());
+        File selectedDir = chooser.showDialog(Controllers.getStage());
         if (selectedDir != null) {
             path.set(processPath(selectedDir.toString()));
         }

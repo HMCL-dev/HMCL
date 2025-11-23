@@ -154,7 +154,7 @@ public enum OperatingSystem {
 
             // Get Windows version number
             if (reg != null) {
-                var baseVersion = OSVersion.Windows.parse(System.getProperty("os.version"));
+                OSVersion.Windows baseVersion = OSVersion.Windows.parse(System.getProperty("os.version"));
                 int majorVersion = baseVersion.major();
                 int minorVersion = baseVersion.minor();
                 int buildNumber = baseVersion.build();

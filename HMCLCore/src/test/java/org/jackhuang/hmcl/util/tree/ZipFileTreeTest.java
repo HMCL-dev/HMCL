@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.util.tree;
 
+import kala.compress.archivers.zip.ZipArchiveEntry;
 import kala.compress.archivers.zip.ZipArchiveReader;
 import org.junit.jupiter.api.Test;
 
@@ -44,15 +45,15 @@ public final class ZipFileTreeTest {
     public void testClose() throws IOException {
         Path testFile = getTestFile("utf-8.zip");
 
-        try (var channel = FileChannel.open(testFile, StandardOpenOption.READ)) {
-            var reader = new ZipArchiveReader(channel);
+        try (FileChannel channel = FileChannel.open(testFile, StandardOpenOption.READ)) {
+            ZipArchiveReader reader = new ZipArchiveReader(channel);
 
-            try (var ignored = new ZipFileTree(reader, false)) {
+            try (ZipFileTree ignored = new ZipFileTree(reader, false)) {
             }
 
             assertTrue(channel.isOpen());
 
-            try (var ignored = new ZipFileTree(reader)) {
+            try (ZipFileTree ignored = new ZipFileTree(reader)) {
             }
 
             assertFalse(channel.isOpen());
@@ -63,8 +64,8 @@ public final class ZipFileTreeTest {
     public void test() throws IOException {
         Path testFile = getTestFile("utf-8.zip");
 
-        try (var tree = new ZipFileTree(new ZipArchiveReader(testFile))) {
-            var root = tree.getRoot();
+        try (ZipFileTree tree = new ZipFileTree(new ZipArchiveReader(testFile))) {
+            ArchiveFileTree.Dir<ZipArchiveEntry> root = tree.getRoot();
             assertEquals(2, root.getFiles().size());
             assertEquals(0, root.getSubDirs().size());
 

@@ -292,7 +292,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                             if (isDisabled)
                                 fileName += ModManager.DISABLED_EXTENSION;
 
-                            var task = new FileDownloadTask(
+                            FileDownloadTask task = new FileDownloadTask(
                                     remote.getFile().getUrl(),
                                     modManager.getModsDirectory().resolve(fileName));
 

@@ -74,8 +74,8 @@ final class LocalizationUtils {
     }
 
     public static int compareLanguage(String l1, String l2) {
-        var list1 = resolveLanguage(l1);
-        var list2 = resolveLanguage(l2);
+        List<String> list1 = resolveLanguage(l1);
+        List<String> list2 = resolveLanguage(l2);
 
         int n = Math.min(list1.size(), list2.size());
         for (int i = 0; i < n; i++) {

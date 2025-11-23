@@ -90,7 +90,7 @@ public final class LocalizedText {
             } else if (localizedText.localizedValues != null) {
 
                 jsonWriter.beginObject();
-                for (var entry : localizedText.localizedValues.entrySet()) {
+                for (Map.Entry<String, String> entry : localizedText.localizedValues.entrySet()) {
                     jsonWriter.name(entry.getKey());
                     jsonWriter.value(entry.getValue());
                 }

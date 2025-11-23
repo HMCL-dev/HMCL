@@ -148,7 +148,7 @@ public final class Logger {
         String caller = CLASS_NAME + ".onExit";
 
         if (logRetention > 0 && logFile != null) {
-            var list = findRecentLogFiles(Integer.MAX_VALUE);
+            List<Path> list = findRecentLogFiles(Integer.MAX_VALUE);
             if (list.size() > logRetention) {
                 for (int i = 0, end = list.size() - logRetention; i < end; i++) {
                     Path file = list.get(i);
@@ -264,13 +264,13 @@ public final class Logger {
         if (n <= 0 || logFile == null)
             return List.of();
 
-        var currentLogFile = LogFile.ofFile(logFile);
+        LogFile currentLogFile = LogFile.ofFile(logFile);
 
         Path logDir = logFile.getParent();
         if (logDir == null || !Files.isDirectory(logDir))
             return List.of();
 
-        var logFiles = new ArrayList<LogFile>();
+        ArrayList<LogFile> logFiles = new ArrayList<LogFile>();
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(logDir)) {
             for (Path path : stream) {
                 LogFile item = LogFile.ofFile(path);
@@ -287,7 +287,7 @@ public final class Logger {
         final int resultLength = Math.min(n, logFiles.size());
         final int offset = logFiles.size() - resultLength;
 
-        var result = new Path[resultLength];
+        Path[] result = new Path[resultLength];
         for (int i = 0; i < resultLength; i++) {
             result[i] = logFiles.get(i + offset).file;
         }

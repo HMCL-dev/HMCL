@@ -343,7 +343,7 @@ public class NeoForgeOldInstallTask extends Task<Version> {
 
                     List<URI> mappingsUri = dependencyManager.getDownloadProvider()
                             .injectURLWithCandidates(mappings.getUrl());
-                    var mappingsTask = new FileDownloadTask(
+                    FileDownloadTask mappingsTask = new FileDownloadTask(
                             mappingsUri,
                             Path.of(output),
                             FileDownloadTask.IntegrityCheck.of("SHA-1", mappings.getSha1()));

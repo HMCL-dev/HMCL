@@ -78,7 +78,7 @@ public final class ImageUtils {
             return DEFAULT.load(input, requestedWidth, requestedHeight, preserveRatio, smooth);
 
         try {
-            var sequence = Png.readArgb8888BitmapSequence(input);
+            Argb8888BitmapSequence sequence = Png.readArgb8888BitmapSequence(input);
 
             final int width = sequence.header.width;
             final int height = sequence.header.height;
@@ -270,12 +270,12 @@ public final class ImageUtils {
 
         List<Argb8888BitmapSequence.Frame> frames = sequence.getAnimationFrames();
 
-        var framePixels = new int[frames.size()][];
-        var durations = new int[framePixels.length];
+        int[][] framePixels = new int[frames.size()][];
+        int[] durations = new int[framePixels.length];
 
         int[] buffer = new int[Math.multiplyExact(width, height)];
         for (int frameIndex = 0; frameIndex < frames.size(); frameIndex++) {
-            var frame = frames.get(frameIndex);
+            Argb8888BitmapSequence.Frame frame = frames.get(frameIndex);
             PngFrameControl control = frame.control;
 
             if (frameIndex == 0 && (

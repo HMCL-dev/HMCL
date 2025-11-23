@@ -93,8 +93,8 @@ public final class I18n {
     /// This method will return the first found resource;
     /// if none of the above resources exist, it returns `null`.
     public static @Nullable URL getBuiltinResource(String name, String suffix) {
-        var control = DefaultResourceBundleControl.INSTANCE;
-        var classLoader = I18n.class.getClassLoader();
+        DefaultResourceBundleControl control = DefaultResourceBundleControl.INSTANCE;
+        ClassLoader classLoader = I18n.class.getClassLoader();
         for (Locale locale : locale.getCandidateLocales()) {
             String resourceName = control.toResourceName(control.toBundleName(name, locale), suffix);
             URL input = classLoader.getResource(resourceName);

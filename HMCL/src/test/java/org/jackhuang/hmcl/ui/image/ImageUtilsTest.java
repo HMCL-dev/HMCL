@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.image;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -29,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public final class ImageUtilsTest {
 
     private static byte[] readHeaderBuffer(String fileName) {
-        try (var input = Files.newInputStream(Path.of("src/test/resources/image/" + fileName))) {
+        try (InputStream input = Files.newInputStream(Path.of("src/test/resources/image/" + fileName))) {
             return input.readNBytes(ImageUtils.HEADER_BUFFER_SIZE);
 
         } catch (IOException e) {

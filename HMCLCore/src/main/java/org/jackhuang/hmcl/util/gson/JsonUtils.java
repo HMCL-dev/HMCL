@@ -23,9 +23,7 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -72,7 +70,7 @@ public final class JsonUtils {
     }
 
     public static <T> T fromJsonFile(Path file, TypeToken<T> type) throws IOException {
-        try (var reader = Files.newBufferedReader(file)) {
+        try (BufferedReader reader = Files.newBufferedReader(file)) {
             return GSON.fromJson(reader, type.getType());
         }
     }
@@ -138,7 +136,7 @@ public final class JsonUtils {
     }
 
     public static void writeToJsonFile(Path file, Object value) throws IOException {
-        try (var writer = Files.newBufferedWriter(file)) {
+        try (BufferedWriter writer = Files.newBufferedWriter(file)) {
             GSON.toJson(value, writer);
         }
     }

@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
@@ -52,8 +53,8 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
     public void run() throws IOException {
         List<Item> items;
 
-        try (var reader = Files.newBufferedReader(getLanguageSubtagRegistryFile().getAsFile().get().toPath())) {
-            var builder = new ItemsBuilder();
+        try (BufferedReader reader = Files.newBufferedReader(getLanguageSubtagRegistryFile().getAsFile().get().toPath())) {
+            ItemsBuilder builder = new ItemsBuilder();
             builder.parse(reader);
             items = builder.items;
         }
@@ -122,7 +123,7 @@ public abstract class ParseLanguageSubtagRegistry extends DefaultTask {
         }
 
         void saveToCSV(RegularFileProperty csvFile) throws IOException {
-            try (var writer = Files.newBufferedWriter(csvFile.getAsFile().get().toPath(),
+            try (BufferedWriter writer = Files.newBufferedWriter(csvFile.getAsFile().get().toPath(),
                     StandardOpenOption.CREATE,
                     StandardOpenOption.TRUNCATE_EXISTING)) {
 

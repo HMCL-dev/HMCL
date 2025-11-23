@@ -189,7 +189,7 @@ public final class NetworkUtils {
             return location;
         }
 
-        var builder = new StringBuilder(location.length() + 10);
+        StringBuilder builder = new StringBuilder(location.length() + 10);
         builder.append(location, 0, i);
 
         for (; i < location.length(); i++) {
@@ -357,7 +357,7 @@ public final class NetworkUtils {
 
     public static String readFullyAsString(URLConnection con) throws IOException {
         try {
-            var contentEncoding = ContentEncoding.fromConnection(con);
+            ContentEncoding contentEncoding = ContentEncoding.fromConnection(con);
             Charset charset = getCharsetFromContentType(con.getHeaderField("Content-Type"));
 
             try (InputStream stdout = con.getInputStream()) {

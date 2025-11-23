@@ -189,8 +189,8 @@ public final class SettingsPage extends SettingsView {
                     LOG.info("Exporting latest logs to " + outputFile);
 
                     byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
-                    try (var os = Files.newOutputStream(outputFile);
-                         var zos = new ZipOutputStream(os)) {
+                    try (OutputStream os = Files.newOutputStream(outputFile);
+                         ZipOutputStream zos = new ZipOutputStream(os)) {
 
                         for (Path path : recentLogFiles) {
                             String fileName = FileUtils.getName(path);

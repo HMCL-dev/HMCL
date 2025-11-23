@@ -139,9 +139,9 @@ public abstract class FetchTask<T> extends Task<T> {
                           InputStream inputStream,
                           long contentLength,
                           ContentEncoding contentEncoding) throws IOException, InterruptedException {
-        try (var ignored = context;
-             var counter = new CounterInputStream(inputStream);
-             var input = contentEncoding.wrap(counter)) {
+        try (Context ignored = context;
+             CounterInputStream counter = new CounterInputStream(inputStream);
+             InputStream input = contentEncoding.wrap(counter)) {
             long lastDownloaded = 0L;
             byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
             while (true) {
@@ -272,7 +272,7 @@ public abstract class FetchTask<T> extends Task<T> {
                 }
 
                 long contentLength = response.headers().firstValueAsLong("content-length").orElse(-1L);
-                var contentEncoding = ContentEncoding.fromResponse(response);
+                ContentEncoding contentEncoding = ContentEncoding.fromResponse(response);
 
                 download(getContext(response, checkETag, bmclapiHash),
                         response.body(),
@@ -484,7 +484,7 @@ public abstract class FetchTask<T> extends Task<T> {
                 }
             }
         } else {
-            var downloadExecutor = (ThreadPoolExecutor) DOWNLOAD_EXECUTOR;
+            ThreadPoolExecutor downloadExecutor = (ThreadPoolExecutor) DOWNLOAD_EXECUTOR;
 
             if (downloadExecutor.getMaximumPoolSize() <= concurrency) {
                 downloadExecutor.setMaximumPoolSize(concurrency);

@@ -61,7 +61,7 @@ public final class JarUtils {
         if (entryPointClass != null) {
             InputStream input = entryPointClass.getResourceAsStream("/assets/hmcl.properties");
             if (input != null) {
-                try (var reader = new InputStreamReader(input, StandardCharsets.UTF_8)) {
+                try (InputStreamReader reader = new InputStreamReader(input, StandardCharsets.UTF_8)) {
                     properties.load(reader);
                 } catch (IOException ignored) {
                 }

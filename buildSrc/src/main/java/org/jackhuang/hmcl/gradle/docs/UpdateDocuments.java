@@ -41,7 +41,7 @@ public abstract class UpdateDocuments extends DefaultTask {
             if (item instanceof Document.Line line) {
                 MacroProcessor.processLine(outputBuilder, line.content(), document);
             } else if (item instanceof Document.MacroBlock macro) {
-                var processor = MacroProcessor.valueOf(macro.name());
+                MacroProcessor processor = MacroProcessor.valueOf(macro.name());
                 processor.apply(document, macro, outputBuilder);
             } else
                 throw new IllegalArgumentException("Unknown item type: " + item.getClass());

@@ -82,7 +82,7 @@ public abstract class CreateLocaleNamesResourceBundle extends DefaultTask {
         Files.createDirectories(outputDir);
 
         List<Locale> supportedLanguages;
-        try (var reader = Files.newBufferedReader(languagesFile)) {
+        try (BufferedReader reader = Files.newBufferedReader(languagesFile)) {
             supportedLanguages = new Gson().fromJson(reader, new TypeToken<List<String>>() {
                     }).stream()
                     .map(Locale::forLanguageTag)
@@ -114,7 +114,7 @@ public abstract class CreateLocaleNamesResourceBundle extends DefaultTask {
                     mapToFileName("LocaleNamesOverride", "properties", currentLanguage));
             Properties overrideProperties = new Properties();
             if (overrideFile != null) {
-                try (var reader = new InputStreamReader(overrideFile, StandardCharsets.UTF_8)) {
+                try (InputStreamReader reader = new InputStreamReader(overrideFile, StandardCharsets.UTF_8)) {
                     overrideProperties.load(reader);
                 }
             }
@@ -221,10 +221,10 @@ public abstract class CreateLocaleNamesResourceBundle extends DefaultTask {
         }
 
         void writeTo(Path file) throws IOException {
-            try (var writer = Files.newBufferedWriter(file, StandardOpenOption.CREATE_NEW)) {
+            try (BufferedWriter writer = Files.newBufferedWriter(file, StandardOpenOption.CREATE_NEW)) {
                 boolean firstBlock = true;
 
-                for (var entry : displayNames.entrySet()) {
+                for (Map.Entry<LocaleField, SortedMap<String, String>> entry : displayNames.entrySet()) {
                     LocaleField field = entry.getKey();
                     SortedMap<String, String> values = entry.getValue();
 
@@ -236,7 +236,7 @@ public abstract class CreateLocaleNamesResourceBundle extends DefaultTask {
 
                         writer.write("# " + field.blockHeader + "\n");
 
-                        for (var nameToDisplay : values.entrySet()) {
+                        for (Map.Entry<String, String> nameToDisplay : values.entrySet()) {
                             writer.write(nameToDisplay.getKey() + "=" + nameToDisplay.getValue() + "\n");
                         }
                     }

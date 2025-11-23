@@ -53,7 +53,7 @@ public enum MacroProcessor {
     BLOCK {
         @Override
         public void apply(Document document, Document.MacroBlock macroBlock, StringBuilder outputBuilder) throws IOException {
-            var mutableProperties = new LinkedHashMap<>(macroBlock.properties());
+            LinkedHashMap<String, List<String>> mutableProperties = new LinkedHashMap<>(macroBlock.properties());
             MacroProcessor.removeSingleProperty(mutableProperties, "NAME");
             boolean processLink = !"FALSE".equalsIgnoreCase(MacroProcessor.removeSingleProperty(mutableProperties, "PROCESS_LINK"));
 
@@ -95,7 +95,7 @@ public enum MacroProcessor {
 
             MacroProcessor.writeBegin(outputBuilder, macroBlock);
             if (localized.getDocuments().size() > 1) {
-                var languageToDocs = new LinkedHashMap<String, List<Document>>();
+                LinkedHashMap<String, List<Document>> languageToDocs = new LinkedHashMap<String, List<Document>>();
                 for (DocumentLocale locale : DocumentLocale.values()) {
                     Document targetDoc = localized.getDocuments().get(locale);
                     if (targetDoc != null) {
@@ -106,7 +106,7 @@ public enum MacroProcessor {
 
                 boolean firstLanguage = true;
 
-                for (var entry : languageToDocs.entrySet()) {
+                for (Map.Entry<String, List<Document>> entry : languageToDocs.entrySet()) {
                     if (firstLanguage)
                         firstLanguage = false;
                     else
@@ -180,7 +180,7 @@ public enum MacroProcessor {
 
         @Override
         public void apply(Document document, Document.MacroBlock macroBlock, StringBuilder outputBuilder) throws IOException {
-            var mutableProperties = new LinkedHashMap<>(macroBlock.properties());
+            LinkedHashMap<String, List<String>> mutableProperties = new LinkedHashMap<>(macroBlock.properties());
             String blockName = MacroProcessor.removeSingleProperty(mutableProperties, "NAME");
             if (blockName == null)
                 throw new IllegalArgumentException("Missing property: NAME");
@@ -202,7 +202,7 @@ public enum MacroProcessor {
 
             List<String> nameList = List.of(blockName);
 
-            var fromBlock = (Document.MacroBlock) fromDocument.items().stream()
+            Document.MacroBlock fromBlock = (Document.MacroBlock) fromDocument.items().stream()
                     .filter(it -> it instanceof Document.MacroBlock macro
                             && macro.name().equals(BLOCK.name())
                             && nameList.equals(macro.properties().get("NAME"))

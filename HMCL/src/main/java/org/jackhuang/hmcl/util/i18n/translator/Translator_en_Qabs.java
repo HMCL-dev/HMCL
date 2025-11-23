@@ -36,7 +36,7 @@ public class Translator_en_Qabs extends Translator {
     private static final Map<Integer, Integer> MAPPER;
 
     static {
-        var map = new LinkedHashMap<Integer, Integer>();
+        LinkedHashMap<Integer, Integer> map = new LinkedHashMap<Integer, Integer>();
         InputStream inputStream = Translator_en_Qabs.class.getResourceAsStream("/assets/lang/upside_down.txt");
         if (inputStream != null) {
             try (inputStream) {

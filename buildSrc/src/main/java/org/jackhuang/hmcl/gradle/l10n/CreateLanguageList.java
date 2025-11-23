@@ -30,6 +30,7 @@ import org.gradle.api.tasks.TaskAction;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -64,7 +65,7 @@ public abstract class CreateLanguageList extends DefaultTask {
         String baseName = getResourceBundleBaseName().get();
         String suffix = ".properties";
 
-        try (var stream = Files.newDirectoryStream(inputDir, file -> {
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(inputDir, file -> {
             String fileName = file.getFileName().toString();
             return fileName.startsWith(baseName) && fileName.endsWith(suffix);
         })) {

@@ -96,7 +96,7 @@ public final class ProxyManager {
         Authenticator.setDefault(new Authenticator() {
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
-                var defaultAuthenticator = ProxyManager.defaultAuthenticator;
+                SimpleAuthenticator defaultAuthenticator = ProxyManager.defaultAuthenticator;
                 return defaultAuthenticator != null ? defaultAuthenticator.getPasswordAuthentication() : null;
             }
         });

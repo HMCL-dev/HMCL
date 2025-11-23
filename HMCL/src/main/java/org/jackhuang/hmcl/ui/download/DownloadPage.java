@@ -142,7 +142,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             Path dest = runDirectory.resolve(subdirectoryName).resolve(result);
 
             Controllers.taskDialog(Task.composeAsync(() -> {
-                var task = new FileDownloadTask(file.getFile().getUrl(), dest);
+                FileDownloadTask task = new FileDownloadTask(file.getFile().getUrl(), dest);
                 task.setName(file.getName());
                 return task;
             }).whenComplete(Schedulers.javafx(), exception -> {

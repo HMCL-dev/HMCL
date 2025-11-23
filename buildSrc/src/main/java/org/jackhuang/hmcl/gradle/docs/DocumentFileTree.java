@@ -44,7 +44,7 @@ public final class DocumentFileTree {
                     if (tree == null)
                         throw new AssertionError();
 
-                    var result = DocumentLocale.parseFileName(fileName.substring(0, fileName.length() - ".md".length()));
+                    DocumentLocale.LocaleAndName result = DocumentLocale.parseFileName(fileName.substring(0, fileName.length() - ".md".length()));
                     tree.getFiles().computeIfAbsent(result.name(), name -> new LocalizedDocument(tree, name))
                             .getDocuments()
                             .put(result.locale(), Document.load(tree, file, result.name(), result.locale()));

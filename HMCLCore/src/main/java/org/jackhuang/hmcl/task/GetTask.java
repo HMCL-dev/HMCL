@@ -65,7 +65,7 @@ public final class GetTask extends FetchTask<String> {
         long length = -1;
         if (response != null)
             length = response.headers().firstValueAsLong("content-length").orElse(-1L);
-        final var baos = new ByteArrayOutputStream(length <= 0 ? 8192 : (int) length);
+        final ByteArrayOutputStream baos = new ByteArrayOutputStream(length <= 0 ? 8192 : (int) length);
 
         return new Context() {
             @Override

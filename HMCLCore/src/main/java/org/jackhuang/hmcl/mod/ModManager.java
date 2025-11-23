@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
@@ -44,8 +45,8 @@ public final class ModManager {
     private static final Map<String, List<Pair<ModMetadataReader, ModLoaderType>>> READERS;
 
     static {
-        var map = new HashMap<String, List<Pair<ModMetadataReader, ModLoaderType>>>();
-        var zipReaders = List.<Pair<ModMetadataReader, ModLoaderType>>of(
+        HashMap<String, List<Pair<ModMetadataReader, ModLoaderType>>> map = new HashMap<String, List<Pair<ModMetadataReader, ModLoaderType>>>();
+        List<@NotNull Pair<ModMetadataReader, ModLoaderType>> zipReaders = List.<Pair<ModMetadataReader, ModLoaderType>>of(
                 pair(ForgeNewModMetadata::fromForgeFile, ModLoaderType.FORGE),
                 pair(ForgeNewModMetadata::fromNeoForgeFile, ModLoaderType.NEO_FORGED),
                 pair(ForgeOldModMetadata::fromFile, ModLoaderType.FORGE),
@@ -111,8 +112,8 @@ public final class ModManager {
 
         Set<ModLoaderType> modLoaderTypes = analyzer.getModLoaders();
 
-        var supportedReaders = new ArrayList<ModMetadataReader>();
-        var unsupportedReaders = new ArrayList<ModMetadataReader>();
+        ArrayList<ModMetadataReader> supportedReaders = new ArrayList<ModMetadataReader>();
+        ArrayList<ModMetadataReader> unsupportedReaders = new ArrayList<ModMetadataReader>();
 
         for (Pair<ModMetadataReader, ModLoaderType> reader : readersMap) {
             if (modLoaderTypes.contains(reader.getValue())) {
