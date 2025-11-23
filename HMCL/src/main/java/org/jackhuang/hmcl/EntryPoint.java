@@ -46,6 +46,23 @@ public final class EntryPoint {
         System.getProperties().putIfAbsent("javafx.autoproxy.disable", "true");
         System.getProperties().putIfAbsent("http.agent", "HMCL/" + Metadata.VERSION);
 
+        // Fucking Windows may force working directory to system32 for unknown reasons.
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+            String workingDirectory = System.getProperty("user.dir");
+            String windowsSystem = "C:\\WINDOWS\\system32";
+            if (workingDirectory == null || (
+                    workingDirectory.length() >= windowsSystem.length() && workingDirectory.substring(0, windowsSystem.length()).equalsIgnoreCase(windowsSystem)
+            )) {
+                Path path = JarUtils.thisJarPath();
+                if (path != null) {
+                    Path parent = path.getParent();
+                    if (parent != null) {
+                        System.setProperty("user.dir", parent.toAbsolutePath().toString());
+                    }
+                }
+            }
+        }
+
         createHMCLDirectories();
         LOG.start(Metadata.HMCL_CURRENT_DIRECTORY.resolve("logs"));
 
