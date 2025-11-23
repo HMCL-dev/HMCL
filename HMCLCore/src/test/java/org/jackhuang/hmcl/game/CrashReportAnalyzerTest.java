@@ -84,10 +84,12 @@ public class CrashReportAnalyzerTest {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.analyze(loadLog("/logs/mod_resolution.txt")),
                 CrashReportAnalyzer.Rule.MOD_RESOLUTION);
-        assertEquals(("Errors were found!\n" +
-                        " - Mod test depends on mod {fabricloader @ [>=0.11.3]}, which is missing!\n" +
-                        " - Mod test depends on mod {fabric @ [*]}, which is missing!\n" +
-                        " - Mod test depends on mod {java @ [>=16]}, which is missing!\n").replaceAll("\\s+", ""),
+        assertEquals(("""
+                        Errors were found!
+                         - Mod test depends on mod {fabricloader @ [>=0.11.3]}, which is missing!
+                         - Mod test depends on mod {fabric @ [*]}, which is missing!
+                         - Mod test depends on mod {java @ [>=16]}, which is missing!
+                        """).replaceAll("\\s+", ""),
                 result.getMatcher().group("reason").replaceAll("\\s+", ""));
     }
 
@@ -123,25 +125,27 @@ public class CrashReportAnalyzerTest {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.analyze(loadLog("/crash-report/forge_error.txt")),
                 CrashReportAnalyzer.Rule.FORGE_ERROR);
-        assertEquals(("\nnet.minecraftforge.fml.common.MissingModsException: Mod pixelmon (Pixelmon) requires [forge@[14.23.5.2860,)]\n" +
-                        "\tat net.minecraftforge.fml.common.Loader.sortModList(Loader.java:264) ~[Loader.class:?]\n" +
-                        "\tat net.minecraftforge.fml.common.Loader.loadMods(Loader.java:570) ~[Loader.class:?]\n" +
-                        "\tat net.minecraftforge.fml.client.FMLClientHandler.beginMinecraftLoading(FMLClientHandler.java:232) [FMLClientHandler.class:?]\n" +
-                        "\tat net.minecraft.client.Minecraft.func_71384_a(Minecraft.java:467) [bib.class:?]\n" +
-                        "\tat net.minecraft.client.Minecraft.func_99999_d(Minecraft.java:378) [bib.class:?]\n" +
-                        "\tat net.minecraft.client.main.Main.main(SourceFile:123) [Main.class:?]\n" +
-                        "\tat sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:1.8.0_131]\n" +
-                        "\tat sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62) ~[?:1.8.0_131]\n" +
-                        "\tat sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:1.8.0_131]\n" +
-                        "\tat java.lang.reflect.Method.invoke(Method.java:498) ~[?:1.8.0_131]\n" +
-                        "\tat net.minecraft.launchwrapper.Launch.launch(Launch.java:135) [launchwrapper-1.12.jar:?]\n" +
-                        "\tat net.minecraft.launchwrapper.Launch.main(Launch.java:28) [launchwrapper-1.12.jar:?]\n" +
-                        "\tat sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:1.8.0_131]\n" +
-                        "\tat sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62) ~[?:1.8.0_131]\n" +
-                        "\tat sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:1.8.0_131]\n" +
-                        "\tat java.lang.reflect.Method.invoke(Method.java:498) ~[?:1.8.0_131]\n" +
-                        "\tat oolloo.jlw.Wrapper.invokeMain(Wrapper.java:58) [JavaWrapper.jar:?]\n" +
-                        "\tat oolloo.jlw.Wrapper.main(Wrapper.java:51) [JavaWrapper.jar:?]").replaceAll("\\s+", ""),
+        assertEquals(("""
+                        
+                        net.minecraftforge.fml.common.MissingModsException: Mod pixelmon (Pixelmon) requires [forge@[14.23.5.2860,)]
+                        \tat net.minecraftforge.fml.common.Loader.sortModList(Loader.java:264) ~[Loader.class:?]
+                        \tat net.minecraftforge.fml.common.Loader.loadMods(Loader.java:570) ~[Loader.class:?]
+                        \tat net.minecraftforge.fml.client.FMLClientHandler.beginMinecraftLoading(FMLClientHandler.java:232) [FMLClientHandler.class:?]
+                        \tat net.minecraft.client.Minecraft.func_71384_a(Minecraft.java:467) [bib.class:?]
+                        \tat net.minecraft.client.Minecraft.func_99999_d(Minecraft.java:378) [bib.class:?]
+                        \tat net.minecraft.client.main.Main.main(SourceFile:123) [Main.class:?]
+                        \tat sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:1.8.0_131]
+                        \tat sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62) ~[?:1.8.0_131]
+                        \tat sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:1.8.0_131]
+                        \tat java.lang.reflect.Method.invoke(Method.java:498) ~[?:1.8.0_131]
+                        \tat net.minecraft.launchwrapper.Launch.launch(Launch.java:135) [launchwrapper-1.12.jar:?]
+                        \tat net.minecraft.launchwrapper.Launch.main(Launch.java:28) [launchwrapper-1.12.jar:?]
+                        \tat sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[?:1.8.0_131]
+                        \tat sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62) ~[?:1.8.0_131]
+                        \tat sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[?:1.8.0_131]
+                        \tat java.lang.reflect.Method.invoke(Method.java:498) ~[?:1.8.0_131]
+                        \tat oolloo.jlw.Wrapper.invokeMain(Wrapper.java:58) [JavaWrapper.jar:?]
+                        \tat oolloo.jlw.Wrapper.main(Wrapper.java:51) [JavaWrapper.jar:?]""").replaceAll("\\s+", ""),
                 result.getMatcher().group("reason").replaceAll("\\s+", ""));
     }
 
@@ -376,14 +380,16 @@ public class CrashReportAnalyzerTest {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.analyze(loadLog("/logs/fabric_warnings.txt")),
                 CrashReportAnalyzer.Rule.FABRIC_WARNINGS);
-        assertEquals((" - Conflicting versions found for fabric-api-base: used 0.3.0+a02b446313, also found 0.3.0+a02b44633d, 0.3.0+a02b446318\n" +
-                        " - Conflicting versions found for fabric-rendering-data-attachment-v1: used 0.1.5+a02b446313, also found 0.1.5+a02b446318\n" +
-                        " - Conflicting versions found for fabric-rendering-fluids-v1: used 0.1.13+a02b446318, also found 0.1.13+a02b446313\n" +
-                        " - Conflicting versions found for fabric-lifecycle-events-v1: used 1.4.4+a02b44633d, also found 1.4.4+a02b446318\n" +
-                        " - Mod 'Sodium Extra' (sodium-extra) recommends any version of mod reeses-sodium-options, which is missing!\n" +
-                        "\t - You must install any version of reeses-sodium-options.\n" +
-                        " - Conflicting versions found for fabric-screen-api-v1: used 1.0.4+155f865c18, also found 1.0.4+198a96213d\n" +
-                        " - Conflicting versions found for fabric-key-binding-api-v1: used 1.0.4+a02b446318, also found 1.0.4+a02b44633d\n").replaceAll("\\s+", ""),
+        assertEquals(("""
+                         - Conflicting versions found for fabric-api-base: used 0.3.0+a02b446313, also found 0.3.0+a02b44633d, 0.3.0+a02b446318
+                         - Conflicting versions found for fabric-rendering-data-attachment-v1: used 0.1.5+a02b446313, also found 0.1.5+a02b446318
+                         - Conflicting versions found for fabric-rendering-fluids-v1: used 0.1.13+a02b446318, also found 0.1.13+a02b446313
+                         - Conflicting versions found for fabric-lifecycle-events-v1: used 1.4.4+a02b44633d, also found 1.4.4+a02b446318
+                         - Mod 'Sodium Extra' (sodium-extra) recommends any version of mod reeses-sodium-options, which is missing!
+                        \t - You must install any version of reeses-sodium-options.
+                         - Conflicting versions found for fabric-screen-api-v1: used 1.0.4+155f865c18, also found 1.0.4+198a96213d
+                         - Conflicting versions found for fabric-key-binding-api-v1: used 1.0.4+a02b446318, also found 1.0.4+a02b44633d
+                        """).replaceAll("\\s+", ""),
                 result.getMatcher().group("reason").replaceAll("\\s+", ""));
     }
 
@@ -392,12 +398,13 @@ public class CrashReportAnalyzerTest {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.analyze(loadLog("/logs/fabric_warnings2.txt")),
                 CrashReportAnalyzer.Rule.FABRIC_WARNINGS);
-        assertEquals(("net.fabricmc.loader.impl.FormattedException: Mod resolution encountered an incompatible mod set!\n" +
-                        "A potential solution has been determined:\n" +
-                        "\t - Install roughlyenoughitems, version 6.0.2 or later.\n" +
-                        "Unmet dependency listing:\n" +
-                        "\t - Mod 'Roughly Searchable' (roughlysearchable) 2.2.1+1.17.1 requires version 6.0.2 or later of roughlyenoughitems, which is missing!\n" +
-                        "\tat net.fabricmc.loader.impl.FabricLoaderImpl.load(FabricLoaderImpl.java:190) ~").replaceAll("\\s+", ""),
+        assertEquals(("""
+                        net.fabricmc.loader.impl.FormattedException: Mod resolution encountered an incompatible mod set!
+                        A potential solution has been determined:
+                        \t - Install roughlyenoughitems, version 6.0.2 or later.
+                        Unmet dependency listing:
+                        \t - Mod 'Roughly Searchable' (roughlysearchable) 2.2.1+1.17.1 requires version 6.0.2 or later of roughlyenoughitems, which is missing!
+                        \tat net.fabricmc.loader.impl.FabricLoaderImpl.load(FabricLoaderImpl.java:190) ~""").replaceAll("\\s+", ""),
                 result.getMatcher().group("reason").replaceAll("\\s+", ""));
     }
 
@@ -406,14 +413,15 @@ public class CrashReportAnalyzerTest {
         CrashReportAnalyzer.Result result = findResultByRule(
                 CrashReportAnalyzer.analyze(loadLog("/logs/fabric_warnings3.txt")),
                 CrashReportAnalyzer.Rule.FABRIC_WARNINGS);
-        assertEquals(("net.fabricmc.loader.impl.FormattedException: Some of your mods are incompatible with the game or each other!\n" +
-                        "确定了一种可能的解决方法，这样做可能会解决你的问题：\n" +
-                        "\t - 安装 fabric-api，任意版本。\n" +
-                        "\t - 安装 sodium，0.5.6 及以上版本。\n" +
-                        "更多信息：\n" +
-                        "\t - 模组 'Sodium Extra' (sodium-extra) 0.5.4+mc1.20.4-build.116 需要 fabric-api 的 任意版本，但没有安装它！\n" +
-                        "\t - 模组 'Sodium Extra' (sodium-extra) 0.5.4+mc1.20.4-build.116 需要 sodium 的 0.5.6 及以上版本，但没有安装它！\n" +
-                        "\tat net.fabricmc.loader.impl.FormattedException.ofLocalized(FormattedException.java:51) ~").replaceAll("\\s+", ""),
+        assertEquals(("""
+                        net.fabricmc.loader.impl.FormattedException: Some of your mods are incompatible with the game or each other!
+                        确定了一种可能的解决方法，这样做可能会解决你的问题：
+                        \t - 安装 fabric-api，任意版本。
+                        \t - 安装 sodium，0.5.6 及以上版本。
+                        更多信息：
+                        \t - 模组 'Sodium Extra' (sodium-extra) 0.5.4+mc1.20.4-build.116 需要 fabric-api 的 任意版本，但没有安装它！
+                        \t - 模组 'Sodium Extra' (sodium-extra) 0.5.4+mc1.20.4-build.116 需要 sodium 的 0.5.6 及以上版本，但没有安装它！
+                        \tat net.fabricmc.loader.impl.FormattedException.ofLocalized(FormattedException.java:51) ~""").replaceAll("\\s+", ""),
                 result.getMatcher().group("reason").replaceAll("\\s+", ""));
     }
 

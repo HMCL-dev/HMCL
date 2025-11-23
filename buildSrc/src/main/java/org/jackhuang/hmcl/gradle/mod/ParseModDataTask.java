@@ -140,13 +140,15 @@ public abstract class ParseModDataTask extends DefaultTask {
         }
 
         try (BufferedWriter writer = Files.newBufferedWriter(outputFile, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.CREATE)) {
-            writer.write("#\n" +
-                    "# Hello Minecraft! Launcher\n" +
-                    "# Copyright (C) 2025 huangyuhui <huanghongxun2008@126.com> and contributors\n" +
-                    "#\n" +
-                    "# mcmod.cn\n" +
-                    "# Copyright (C) 2025. All Rights Reserved.\n" +
-                    "#\n");
+            writer.write("""
+                    #
+                    # Hello Minecraft! Launcher
+                    # Copyright (C) 2025 huangyuhui <huanghongxun2008@126.com> and contributors
+                    #
+                    # mcmod.cn
+                    # Copyright (C) 2025. All Rights Reserved.
+                    #
+                    """);
             for (ModData mod : modDatas) {
                 String chineseName = mod.name.main;
                 String subName = mod.name.sub;

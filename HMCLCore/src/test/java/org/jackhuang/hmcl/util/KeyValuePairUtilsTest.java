@@ -16,10 +16,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public final class KeyValuePairUtilsTest {
     @Test
     public void test() throws IOException {
-        String content = "#test: key0=value0\n \n" +
-                "key1=value1\n" +
-                "key2=\"value2\"\n" +
-                "key3=\"\\\" \\n\"\n";
+        String content = """
+                #test: key0=value0
+                \s
+                key1=value1
+                key2="value2"
+                key3="\\" \\n"
+                """;
 
         Map<String, String> properties = KeyValuePairUtils.loadProperties(new BufferedReader(new StringReader(content)));
 

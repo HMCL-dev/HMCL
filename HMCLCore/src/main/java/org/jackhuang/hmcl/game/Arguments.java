@@ -114,18 +114,18 @@ public final class Arguments {
     public static final List<Argument> DEFAULT_GAME_ARGUMENTS;
 
     static {
-        List<Argument> jvm = new ArrayList<>(8);
-        jvm.add(new RuledArgument(Collections.singletonList(new CompatibilityRule(CompatibilityRule.Action.ALLOW, new OSRestriction(OperatingSystem.WINDOWS))), Collections.singletonList("-XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump")));
-        jvm.add(new RuledArgument(Collections.singletonList(new CompatibilityRule(CompatibilityRule.Action.ALLOW, new OSRestriction(OperatingSystem.WINDOWS, "^10\\."))), Arrays.asList("-Dos.name=Windows 10", "-Dos.version=10.0")));
-        jvm.add(new StringArgument("-Djava.library.path=${natives_directory}"));
-        jvm.add(new StringArgument("-Dminecraft.launcher.brand=${launcher_name}"));
-        jvm.add(new StringArgument("-Dminecraft.launcher.version=${launcher_version}"));
-        jvm.add(new StringArgument("-cp"));
-        jvm.add(new StringArgument("${classpath}"));
-        DEFAULT_JVM_ARGUMENTS = Collections.unmodifiableList(jvm);
+        DEFAULT_JVM_ARGUMENTS = List.of(
+                new RuledArgument(Collections.singletonList(new CompatibilityRule(CompatibilityRule.Action.ALLOW, new OSRestriction(OperatingSystem.WINDOWS))), Collections.singletonList("-XX:HeapDumpPath=MojangTricksIntelDriversForPerformance_javaw.exe_minecraft.exe.heapdump")),
+                new RuledArgument(Collections.singletonList(new CompatibilityRule(CompatibilityRule.Action.ALLOW, new OSRestriction(OperatingSystem.WINDOWS, "^10\\."))), Arrays.asList("-Dos.name=Windows 10", "-Dos.version=10.0")),
+                new StringArgument("-Djava.library.path=${natives_directory}"),
+                new StringArgument("-Dminecraft.launcher.brand=${launcher_name}"),
+                new StringArgument("-Dminecraft.launcher.version=${launcher_version}"),
+                new StringArgument("-cp"),
+                new StringArgument("${classpath}")
+        );
 
-        List<Argument> game = new ArrayList<>(1);
-        game.add(new RuledArgument(Collections.singletonList(new CompatibilityRule(CompatibilityRule.Action.ALLOW, null, Collections.singletonMap("has_custom_resolution", true))), Arrays.asList("--width", "${resolution_width}", "--height", "${resolution_height}")));
-        DEFAULT_GAME_ARGUMENTS = Collections.unmodifiableList(game);
+        DEFAULT_GAME_ARGUMENTS = List.of(
+                new RuledArgument(Collections.singletonList(new CompatibilityRule(CompatibilityRule.Action.ALLOW, null, Collections.singletonMap("has_custom_resolution", true))), Arrays.asList("--width", "${resolution_width}", "--height", "${resolution_height}"))
+        );
     }
 }

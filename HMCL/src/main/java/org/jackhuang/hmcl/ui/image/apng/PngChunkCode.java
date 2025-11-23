@@ -3,6 +3,8 @@
 
 package org.jackhuang.hmcl.ui.image.apng;
 
+import java.util.Objects;
+
 /**
  * One four-letter (32-byte) code identifying the type of a PNG chunk.
  * <p>
@@ -78,7 +80,7 @@ public class PngChunkCode {
         PngChunkCode that = (PngChunkCode) o;
 
         if (numeric != that.numeric) return false;
-        return !(letters != null ? !letters.equals(that.letters) : that.letters != null);
+        return Objects.equals(letters, that.letters);
     }
 
     @Override

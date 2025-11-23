@@ -189,7 +189,7 @@ public class AuthlibInjectorServer implements Observable {
                     })
                     .orElse(emptyMap());
             this.nonEmailLogin = metaObject.flatMap(meta -> tryCast(meta.get("feature.non_email_login"), JsonPrimitive.class))
-                    .map(it -> it.getAsBoolean())
+                    .map(JsonPrimitive::getAsBoolean)
                     .orElse(false);
         }
     }
