@@ -477,6 +477,17 @@ public final class Config extends ObservableSetting {
         this.downloadThreads.set(downloadThreads);
     }
 
+    @SerializedName("hardlink")
+    private final BooleanProperty hardlink = new SimpleBooleanProperty(false);
+
+    public BooleanProperty hardlinkProperty() { return hardlink; }
+
+    public boolean getHardlink() {
+        return hardlink.get();
+    }
+
+    public void setHardlink(boolean hardlink) { this.hardlink.set(hardlink); }
+
     @SerializedName("downloadType")
     private final StringProperty downloadType = new SimpleStringProperty(DownloadProviders.DEFAULT_RAW_PROVIDER_ID);
 
