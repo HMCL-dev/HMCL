@@ -157,12 +157,16 @@ public final class StyleSheets {
 
     public static void init(Scene scene) {
         Bindings.bindContent(scene.getStylesheets(), stylesheets);
-        CSSHotReload.initHotReload(scene,
-                Paths.get("HMCL/src/main/resources/assets/css"),
-                "blue.css",
-                "font.css",
-                "root.css"
-        );
+
+        Path sourceDir = Paths.get("HMCL/src/");
+        if (Files.exists(sourceDir) && Files.isDirectory(sourceDir)) {
+            CSSHotReload.init(scene,
+                    Paths.get("HMCL/src/main/resources/assets/css"),
+                    "blue.css",
+                    "font.css",
+                    "root.css"
+            );
+        }
     }
 
     private StyleSheets() {

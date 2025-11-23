@@ -27,7 +27,7 @@ import java.nio.file.*;
  */
 public class CSSHotReload {
 
-    public static void initHotReload(Scene scene, Path cssFolder, String... cssFiles) {
+    public static void init(Scene scene, Path cssFolder, String... cssFiles) {
         WatchService watchService;
         try {
             watchService = FileSystems.getDefault().newWatchService();
@@ -76,5 +76,8 @@ public class CSSHotReload {
 
             } catch (Throwable ignored) {}
         });
+    }
+
+    private CSSHotReload() {
     }
 }
