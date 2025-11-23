@@ -465,7 +465,7 @@ public final class Accounts {
         } else if (exception instanceof MicrosoftService.NoMinecraftJavaEditionProfileException) {
             return i18n("account.methods.microsoft.error.no_character");
         } else if (exception instanceof MicrosoftService.NoXuiException) {
-            return i18n("account.methods.microsoft.error.add_family_probably");
+            return i18n("account.methods.microsoft.error.add_family");
         } else if (exception instanceof OAuthServer.MicrosoftAuthenticationNotSupportedException) {
             return i18n("account.methods.microsoft.snapshot");
         } else if (exception instanceof OAuthAccount.WrongAccountException) {
