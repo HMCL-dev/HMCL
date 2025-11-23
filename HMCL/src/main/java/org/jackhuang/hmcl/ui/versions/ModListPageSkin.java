@@ -168,6 +168,8 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                             skinnable.enableSelected(listView.getSelectionModel().getSelectedItems())),
                     createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () ->
                             skinnable.disableSelected(listView.getSelectionModel().getSelectedItems())),
+                    createToolbarButton2(i18n("mods.check_updates"), SVG.UPDATE, () ->
+                            skinnable.checkUpdates(() -> listView.getSelectionModel().getSelectedItems().stream().map(ModInfoObject::getModInfo).toList())),
                     createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () ->
                             listView.getSelectionModel().selectAll()),
                     createToolbarButton2(i18n("button.cancel"), SVG.CANCEL, () ->

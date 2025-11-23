@@ -38,6 +38,7 @@ import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PageAware;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
@@ -231,11 +232,16 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     }
 
     public void checkUpdates() {
+        checkUpdates(modManager::getMods);
+    }
+
+    public void checkUpdates(ExceptionalSupplier<Collection<LocalModFile>, ?> mods) {
+        Objects.requireNonNull(mods);
         Runnable action = () -> Controllers.taskDialog(Task
                         .composeAsync(() -> {
                             Optional<String> gameVersion = profile.getRepository().getGameVersion(instanceId);
                             if (gameVersion.isPresent()) {
-                                return new ModCheckUpdatesTask(gameVersion.get(), modManager.getMods());
+                                return new ModCheckUpdatesTask(gameVersion.get(), mods.get());
                             }
                             return null;
                         })
