@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
 
 import javax.net.ssl.SSLHandshakeException;
@@ -70,12 +71,17 @@ public final class DownloadProviders {
                 "bmclapi", BMCLAPI
         );
 
-        AdaptedDownloadProvider fileProvider = new AdaptedDownloadProvider(List.of(BMCLAPI, MOJANG));
+        DownloadProvider fileProvider = LocaleUtils.IS_CHINA_MAINLAND
+                ? new AdaptedDownloadProvider(List.of(BMCLAPI, MOJANG))
+                : MOJANG;
 
         providersById = Map.of(
+                "balanced", new AutoDownloadProvider(
+                        LocaleUtils.IS_CHINA_MAINLAND ? List.of(MOJANG, BMCLAPI) : List.of(MOJANG),
+                        fileProvider),
                 "official", new AutoDownloadProvider(List.of(MOJANG), fileProvider),
-                "balanced", new AutoDownloadProvider(List.of(MOJANG, BMCLAPI), fileProvider),
-                "mirror", new AutoDownloadProvider(List.of(BMCLAPI, MOJANG), fileProvider));
+                "mirror", new AutoDownloadProvider(List.of(BMCLAPI, MOJANG), fileProvider)
+        );
 
         observer = FXUtils.observeWeak(() -> {
             FetchTask.setDownloadExecutorConcurrency(
