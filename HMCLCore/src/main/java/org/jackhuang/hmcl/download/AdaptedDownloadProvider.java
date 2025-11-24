@@ -36,10 +36,6 @@ public class AdaptedDownloadProvider implements DownloadProvider {
         this.downloadProviderCandidates = downloadProviderCandidates;
     }
 
-    public void setDownloadProviderCandidates(List<DownloadProvider> downloadProviderCandidates) {
-        this.downloadProviderCandidates = List.copyOf(downloadProviderCandidates);
-    }
-
     public DownloadProvider getPreferredDownloadProvider() {
         List<DownloadProvider> d = downloadProviderCandidates;
         if (d == null || d.isEmpty()) {

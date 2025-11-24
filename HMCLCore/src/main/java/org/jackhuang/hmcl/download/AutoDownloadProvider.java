@@ -26,7 +26,7 @@ import java.util.List;
  *
  * @author huangyuhui
  */
-public class AutoDownloadProvider implements DownloadProvider {
+public final class AutoDownloadProvider implements DownloadProvider {
     private final DownloadProvider versionListProvider;
     private final DownloadProvider fileProvider;
 
