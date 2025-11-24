@@ -20,8 +20,8 @@ package org.jackhuang.hmcl.download;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.net.URI;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * The service provider that provides Minecraft online file downloads.
@@ -59,7 +59,11 @@ public interface DownloadProvider {
     }
 
     default List<URI> injectURLsWithCandidates(List<String> urls) {
-        return urls.stream().flatMap(url -> injectURLWithCandidates(url).stream()).collect(Collectors.toList());
+        LinkedHashSet<URI> result = new LinkedHashSet<>();
+        for (String url : urls) {
+            result.addAll(injectURLWithCandidates(url));
+        }
+        return List.copyOf(result);
     }
 
     /**
