@@ -53,7 +53,6 @@ public final class DownloadProviders {
     private static final DownloadProvider DEFAULT_PROVIDER;
 
     public static final Map<String, DownloadProvider> providersById;
-    private static final AdaptedDownloadProvider fileDownloadProvider = new AdaptedDownloadProvider();
 
     @SuppressWarnings("unused")
     private static final InvalidationListener observer;
@@ -71,8 +70,7 @@ public final class DownloadProviders {
                 "bmclapi", BMCLAPI
         );
 
-        AdaptedDownloadProvider fileProvider = new AdaptedDownloadProvider();
-        fileProvider.setDownloadProviderCandidates(List.of(BMCLAPI, MOJANG));
+        AdaptedDownloadProvider fileProvider = new AdaptedDownloadProvider(List.of(BMCLAPI, MOJANG));
         BalancedDownloadProvider balanced = new BalancedDownloadProvider(MOJANG, BMCLAPI);
 
         providersById = Map.of(
@@ -95,28 +93,29 @@ public final class DownloadProviders {
                 DownloadProvider currentDownloadProvider = providersById.getOrDefault(versionListSource, DEFAULT_PROVIDER);
                 provider.setProvider(currentDownloadProvider);
             } else {
-                provider.setProvider(fileDownloadProvider);
+                String downloadType = config().getDownloadType();
+                DownloadProvider primary = RAW_PROVIDERS.getOrDefault(
+                        Objects.requireNonNullElse(downloadType, ""),
+                        DEFAULT_PROVIDER
+                );
+
+                List<DownloadProvider> providers = new ArrayList<>(RAW_PROVIDERS.size());
+                providers.add(primary);
+                for (DownloadProvider provider : RAW_PROVIDERS.values()) {
+                    if (provider != primary)
+                        providers.add(provider);
+                }
+                provider.setProvider(new AdaptedDownloadProvider(providers));
             }
         };
         config().versionListSourceProperty().addListener(onChangeDownloadSource);
         config().autoChooseDownloadTypeProperty().addListener(onChangeDownloadSource);
+        config().downloadTypeProperty().addListener(onChangeDownloadSource);
 
         onChangeDownloadSource.invalidated(null);
 
         FXUtils.onChangeAndOperate(config().downloadTypeProperty(), downloadType -> {
-            DownloadProvider primary = RAW_PROVIDERS.getOrDefault(
-                    Objects.requireNonNullElse(downloadType, ""),
-                    DEFAULT_PROVIDER
-            );
 
-            List<DownloadProvider> providers = new ArrayList<>(RAW_PROVIDERS.size());
-            providers.add(primary);
-            for (DownloadProvider provider : RAW_PROVIDERS.values()) {
-                if (provider != primary)
-                    providers.add(provider);
-            }
-
-            fileDownloadProvider.setDownloadProviderCandidates(providers);
         });
     }
 

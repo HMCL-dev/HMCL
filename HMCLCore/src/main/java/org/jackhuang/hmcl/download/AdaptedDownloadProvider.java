@@ -30,7 +30,11 @@ import java.util.List;
  */
 public class AdaptedDownloadProvider implements DownloadProvider {
 
-    private @Unmodifiable List<DownloadProvider> downloadProviderCandidates;
+    private final @Unmodifiable List<DownloadProvider> downloadProviderCandidates;
+
+    public AdaptedDownloadProvider(@Unmodifiable List<DownloadProvider> downloadProviderCandidates) {
+        this.downloadProviderCandidates = downloadProviderCandidates;
+    }
 
     public void setDownloadProviderCandidates(List<DownloadProvider> downloadProviderCandidates) {
         this.downloadProviderCandidates = List.copyOf(downloadProviderCandidates);
