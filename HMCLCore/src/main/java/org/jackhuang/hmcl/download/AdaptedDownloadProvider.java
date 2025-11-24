@@ -32,8 +32,8 @@ public class AdaptedDownloadProvider implements DownloadProvider {
 
     private final @Unmodifiable List<DownloadProvider> downloadProviderCandidates;
 
-    public AdaptedDownloadProvider(@Unmodifiable List<DownloadProvider> downloadProviderCandidates) {
-        this.downloadProviderCandidates = downloadProviderCandidates;
+    public AdaptedDownloadProvider(DownloadProvider ...downloadProviderCandidates) {
+        this.downloadProviderCandidates = List.of(downloadProviderCandidates);
     }
 
     public DownloadProvider getPreferredDownloadProvider() {

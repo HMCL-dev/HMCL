@@ -32,7 +32,6 @@ import java.io.FileNotFoundException;
 import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.nio.file.AccessDeniedException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -72,7 +71,7 @@ public final class DownloadProviders {
         );
 
         DownloadProvider fileProvider = LocaleUtils.IS_CHINA_MAINLAND
-                ? new AdaptedDownloadProvider(List.of(BMCLAPI, MOJANG))
+                ? new AdaptedDownloadProvider(BMCLAPI, MOJANG)
                 : MOJANG;
 
         providersById = Map.of(
@@ -104,13 +103,11 @@ public final class DownloadProviders {
                         DEFAULT_PROVIDER
                 );
 
-                List<DownloadProvider> providers = new ArrayList<>(RAW_PROVIDERS.size());
-                providers.add(primary);
-                for (DownloadProvider provider : RAW_PROVIDERS.values()) {
-                    if (provider != primary)
-                        providers.add(provider);
+                if (primary == MOJANG) {
+                    provider.setProvider(MOJANG);
+                } else {
+                    provider.setProvider(new AdaptedDownloadProvider(primary, MOJANG));
                 }
-                provider.setProvider(new AdaptedDownloadProvider(providers));
             }
         };
         config().versionListSourceProperty().addListener(onChangeDownloadSource);
@@ -118,10 +115,6 @@ public final class DownloadProviders {
         config().downloadTypeProperty().addListener(onChangeDownloadSource);
 
         onChangeDownloadSource.invalidated(null);
-
-        FXUtils.onChangeAndOperate(config().downloadTypeProperty(), downloadType -> {
-
-        });
     }
 
     /**
