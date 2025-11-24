@@ -18,57 +18,79 @@
 package org.jackhuang.hmcl.download;
 
 import java.net.URI;
-import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.function.Function;
 
-/**
- * Official Download Provider fetches version list from Mojang and
- * download files from mcbbs.
- *
- * @author huangyuhui
- */
+/// @author huangyuhui
 public final class AutoDownloadProvider implements DownloadProvider {
     private final List<DownloadProvider> versionListProviders;
-    private final DownloadProvider fileProvider;
-
-    private final Map<String, VersionList<?>> versionLists = new HashMap<>();
+    private final List<DownloadProvider> fileProviders;
+    private final ConcurrentMap<String, VersionList<?>> versionLists = new ConcurrentHashMap<>();
 
     public AutoDownloadProvider(
             List<DownloadProvider> versionListProviders,
-            DownloadProvider fileProvider) {
+            List<DownloadProvider> fileProviders) {
+        if (versionListProviders == null || versionListProviders.isEmpty()) {
+            throw new IllegalArgumentException("versionListProviders must not be null or empty");
+        }
+
+        if (fileProviders == null || fileProviders.isEmpty()) {
+            throw new IllegalArgumentException("fileProviders must not be null or empty");
+        }
+
         this.versionListProviders = versionListProviders;
-        this.fileProvider = fileProvider;
+        this.fileProviders = fileProviders;
     }
 
-    @Override
-    public List<URI> getVersionListURLs() {
+    public AutoDownloadProvider(DownloadProvider... downloadProviderCandidate) {
+        if (downloadProviderCandidate.length == 0) {
+            throw new IllegalArgumentException("Download provider must have at least one download provider");
+        }
+
+        this.versionListProviders = List.of(downloadProviderCandidate);
+        this.fileProviders = versionListProviders;
+    }
+
+    private DownloadProvider getPreferredDownloadProvider() {
+        return fileProviders.get(0);
+    }
+
+    private static List<URI> getAll(
+            List<DownloadProvider> providers,
+            Function<DownloadProvider, List<URI>> function) {
         LinkedHashSet<URI> result = new LinkedHashSet<>();
-        for (DownloadProvider provider : versionListProviders) {
-            result.addAll(provider.getVersionListURLs());
+        for (DownloadProvider provider : providers) {
+            result.addAll(function.apply(provider));
         }
         return List.copyOf(result);
     }
 
     @Override
+    public List<URI> getVersionListURLs() {
+        return getAll(versionListProviders, DownloadProvider::getVersionListURLs);
+    }
+
+    @Override
     public String injectURL(String baseURL) {
-        return fileProvider.injectURL(baseURL);
+        return getPreferredDownloadProvider().injectURL(baseURL);
     }
 
     @Override
     public List<URI> getAssetObjectCandidates(String assetObjectLocation) {
-        return fileProvider.getAssetObjectCandidates(assetObjectLocation);
+        return getAll(fileProviders, provider -> provider.getAssetObjectCandidates(assetObjectLocation));
     }
 
     @Override
     public List<URI> injectURLWithCandidates(String baseURL) {
-        return fileProvider.injectURLWithCandidates(baseURL);
+        return getAll(fileProviders, provider -> provider.injectURLWithCandidates(baseURL));
     }
 
     @Override
     public List<URI> injectURLsWithCandidates(List<String> urls) {
-        return fileProvider.injectURLsWithCandidates(urls);
+        return getAll(fileProviders, provider -> provider.injectURLsWithCandidates(urls));
     }
 
     @Override
@@ -88,6 +110,6 @@ public final class AutoDownloadProvider implements DownloadProvider {
 
     @Override
     public int getConcurrency() {
-        return fileProvider.getConcurrency();
+        return getPreferredDownloadProvider().getConcurrency();
     }
 }

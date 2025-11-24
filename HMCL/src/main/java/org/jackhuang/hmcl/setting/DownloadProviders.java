@@ -49,45 +49,34 @@ public final class DownloadProviders {
     public static final String DEFAULT_DIRECT_PROVIDER_ID = "mojang";
 
     private static final DownloadProviderWrapper PROVIDER_WRAPPER;
+
+    private static final DownloadProvider DEFAULT_PROVIDER;
     public static final Map<String, DownloadProvider> DIRECT_PROVIDERS;
     public static final Map<String, DownloadProvider> AUTO_PROVIDERS;
 
-    private static final MojangDownloadProvider RAW_MOJANG;
-    private static final BMCLAPIDownloadProvider RAW_BMCLAPI;
-
-    private static final DownloadProvider AUTO_OFFICIAL_PROVIDER;
-    private static final DownloadProvider AUTO_MIRROR_PROVIDER;
-    private static final DownloadProvider AUTO_BALANCED_PROVIDER;
-
     static {
-        String bmclapiRoot = "https://bmclapi2.bangbang93.com";
-        String bmclapiRootOverride = System.getProperty("hmcl.bmclapi.override");
-        if (bmclapiRootOverride != null) bmclapiRoot = bmclapiRootOverride;
+        String bmclapiRoot = System.getProperty("hmcl.bmclapi.override", "https://bmclapi2.bangbang93.com");
+        BMCLAPIDownloadProvider bmclapiRaw = new BMCLAPIDownloadProvider(bmclapiRoot);
 
-        RAW_MOJANG = new MojangDownloadProvider();
-        RAW_BMCLAPI = new BMCLAPIDownloadProvider(bmclapiRoot);
+        DownloadProvider mojang = new MojangDownloadProvider();
+        DownloadProvider bmclapi = new AutoDownloadProvider(mojang, bmclapiRaw);
+
+        DEFAULT_PROVIDER = mojang;
         DIRECT_PROVIDERS = Lang.mapOf(
-                pair("mojang", RAW_MOJANG),
-                pair("bmclapi", new AdaptedDownloadProvider(RAW_BMCLAPI, RAW_MOJANG))
+                pair("mojang", mojang),
+                pair("bmclapi", bmclapi)
         );
-
-        DownloadProvider autoFileProvider = new AdaptedDownloadProvider(RAW_BMCLAPI, RAW_MOJANG);
-        if (LocaleUtils.IS_CHINA_MAINLAND) {
-            AUTO_OFFICIAL_PROVIDER = new AutoDownloadProvider(List.of(RAW_MOJANG, RAW_BMCLAPI), autoFileProvider);
-            AUTO_BALANCED_PROVIDER = new AutoDownloadProvider(List.of(RAW_MOJANG, RAW_BMCLAPI), autoFileProvider);
-        } else {
-            AUTO_OFFICIAL_PROVIDER = RAW_MOJANG;
-            AUTO_BALANCED_PROVIDER = RAW_MOJANG;
-        }
-        AUTO_MIRROR_PROVIDER = new AutoDownloadProvider(List.of(RAW_BMCLAPI, RAW_MOJANG), autoFileProvider);
 
         AUTO_PROVIDERS = Lang.mapOf(
-                pair("balanced", AUTO_BALANCED_PROVIDER),
-                pair("official", AUTO_OFFICIAL_PROVIDER),
-                pair("mirror", AUTO_MIRROR_PROVIDER)
+                pair("balanced", LocaleUtils.IS_CHINA_MAINLAND ? bmclapi : mojang),
+                pair("official", LocaleUtils.IS_CHINA_MAINLAND ? new AutoDownloadProvider(
+                        List.of(mojang, bmclapiRaw),
+                        List.of(bmclapiRaw, mojang)
+                ) : mojang),
+                pair("mirror", bmclapi)
         );
 
-        PROVIDER_WRAPPER = new DownloadProviderWrapper(RAW_MOJANG);
+        PROVIDER_WRAPPER = new DownloadProviderWrapper(DEFAULT_PROVIDER);
     }
 
     static void init() {
@@ -104,14 +93,14 @@ public final class DownloadProviders {
             if (config().isAutoChooseDownloadType()) {
                 String versionListSource = config().getVersionListSource();
                 DownloadProvider downloadProvider = versionListSource != null
-                        ? AUTO_PROVIDERS.getOrDefault(versionListSource, RAW_MOJANG)
-                        : RAW_MOJANG;
+                        ? AUTO_PROVIDERS.getOrDefault(versionListSource, DEFAULT_PROVIDER)
+                        : DEFAULT_PROVIDER;
                 PROVIDER_WRAPPER.setProvider(downloadProvider);
             } else {
                 String downloadType = config().getDownloadType();
                 PROVIDER_WRAPPER.setProvider(downloadType != null
-                        ? DIRECT_PROVIDERS.getOrDefault(downloadType, RAW_MOJANG)
-                        : RAW_MOJANG);
+                        ? DIRECT_PROVIDERS.getOrDefault(downloadType, DEFAULT_PROVIDER)
+                        : DEFAULT_PROVIDER);
             }
         };
         config().versionListSourceProperty().addListener(onChangeDownloadSource);
