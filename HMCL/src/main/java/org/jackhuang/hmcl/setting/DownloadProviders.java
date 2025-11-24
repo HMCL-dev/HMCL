@@ -44,13 +44,13 @@ public final class DownloadProviders {
     private DownloadProviders() {
     }
 
-    private static final DownloadProviderWrapper provider;
+    private static final DownloadProviderWrapper PROVIDER_WRAPPER;
+    public static final Map<String, DownloadProvider> DIRECT_PROVIDERS;
+    public static final Map<String, DownloadProvider> AUTO_PROVIDERS;
 
-    public static final Map<String, DownloadProvider> RAW_PROVIDERS;
     private static final MojangDownloadProvider RAW_MOJANG;
     private static final BMCLAPIDownloadProvider RAW_BMCLAPI;
 
-    public static final Map<String, DownloadProvider> AUTO_PROVIDERS;
     private static final DownloadProvider AUTO_OFFICIAL_PROVIDER;
     private static final DownloadProvider AUTO_MIRROR_PROVIDER;
     private static final DownloadProvider AUTO_BALANCED_PROVIDER;
@@ -65,9 +65,9 @@ public final class DownloadProviders {
 
         RAW_MOJANG = new MojangDownloadProvider();
         RAW_BMCLAPI = new BMCLAPIDownloadProvider(bmclapiRoot);
-        RAW_PROVIDERS = Map.of(
+        DIRECT_PROVIDERS = Map.of(
                 "mojang", RAW_MOJANG,
-                "bmclapi", RAW_BMCLAPI
+                "bmclapi", new AdaptedDownloadProvider(RAW_BMCLAPI, RAW_MOJANG)
         );
 
         DownloadProvider autoFileProvider = new AdaptedDownloadProvider(RAW_BMCLAPI, RAW_MOJANG);
@@ -91,7 +91,7 @@ public final class DownloadProviders {
                     config().getAutoDownloadThreads() ? DEFAULT_CONCURRENCY : config().getDownloadThreads());
         }, config().autoDownloadThreadsProperty(), config().downloadThreadsProperty());
 
-        provider = new DownloadProviderWrapper(RAW_MOJANG);
+        PROVIDER_WRAPPER = new DownloadProviderWrapper(RAW_MOJANG);
     }
 
     static void init() {
@@ -101,17 +101,12 @@ public final class DownloadProviders {
                 DownloadProvider downloadProvider = versionListSource != null
                         ? AUTO_PROVIDERS.getOrDefault(versionListSource, RAW_MOJANG)
                         : RAW_MOJANG;
-                provider.setProvider(downloadProvider);
+                PROVIDER_WRAPPER.setProvider(downloadProvider);
             } else {
                 String downloadType = config().getDownloadType();
-                DownloadProvider primary = downloadType != null
-                        ? RAW_PROVIDERS.getOrDefault(downloadType, RAW_MOJANG)
-                        : RAW_MOJANG;
-                if (primary == RAW_MOJANG) {
-                    provider.setProvider(RAW_MOJANG);
-                } else {
-                    provider.setProvider(new AdaptedDownloadProvider(primary, RAW_MOJANG));
-                }
+                PROVIDER_WRAPPER.setProvider(downloadType != null
+                        ? DIRECT_PROVIDERS.getOrDefault(downloadType, RAW_MOJANG)
+                        : RAW_MOJANG);
             }
         };
         config().versionListSourceProperty().addListener(onChangeDownloadSource);
@@ -125,7 +120,7 @@ public final class DownloadProviders {
      * Get current primary preferred download provider
      */
     public static DownloadProvider getDownloadProvider() {
-        return provider;
+        return PROVIDER_WRAPPER;
     }
 
     public static String localizeErrorMessage(Throwable exception) {

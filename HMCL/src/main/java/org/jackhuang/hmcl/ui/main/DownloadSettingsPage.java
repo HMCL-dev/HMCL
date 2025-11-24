@@ -95,7 +95,7 @@ public class DownloadSettingsPage extends StackPane {
                     downloadSourcePane.setRight(cboDownloadSource);
                     FXUtils.setLimitWidth(cboDownloadSource, 420);
 
-                    cboDownloadSource.getItems().setAll(DownloadProviders.RAW_PROVIDERS.keySet());
+                    cboDownloadSource.getItems().setAll(DownloadProviders.DIRECT_PROVIDERS.keySet());
                     selectedItemPropertyFor(cboDownloadSource).bindBidirectional(config().downloadTypeProperty());
                 }
 
