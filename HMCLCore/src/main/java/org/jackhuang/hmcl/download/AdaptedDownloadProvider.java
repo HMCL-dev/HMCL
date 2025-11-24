@@ -20,8 +20,8 @@ package org.jackhuang.hmcl.download;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.net.URI;
+import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * The download provider that changes the real download source in need.
@@ -61,23 +61,29 @@ public class AdaptedDownloadProvider implements DownloadProvider {
 
     @Override
     public List<URI> getAssetObjectCandidates(String assetObjectLocation) {
-        return downloadProviderCandidates.stream()
-                .flatMap(d -> d.getAssetObjectCandidates(assetObjectLocation).stream())
-                .collect(Collectors.toList());
+        LinkedHashSet<URI> result = new LinkedHashSet<>();
+        for (DownloadProvider provider : downloadProviderCandidates) {
+            result.addAll(provider.getAssetObjectCandidates(assetObjectLocation));
+        }
+        return List.copyOf(result);
     }
 
     @Override
     public List<URI> injectURLWithCandidates(String baseURL) {
-        return downloadProviderCandidates.stream()
-                .flatMap(d -> d.injectURLWithCandidates(baseURL).stream())
-                .collect(Collectors.toList());
+        LinkedHashSet<URI> result = new LinkedHashSet<>();
+        for (DownloadProvider provider : downloadProviderCandidates) {
+            result.addAll(provider.injectURLWithCandidates(baseURL));
+        }
+        return List.copyOf(result);
     }
 
     @Override
     public List<URI> injectURLsWithCandidates(List<String> urls) {
-        return downloadProviderCandidates.stream()
-                .flatMap(d -> d.injectURLsWithCandidates(urls).stream())
-                .collect(Collectors.toList());
+        LinkedHashSet<URI> result = new LinkedHashSet<>();
+        for (DownloadProvider provider : downloadProviderCandidates) {
+            result.addAll(provider.injectURLsWithCandidates(urls));
+        }
+        return List.copyOf(result);
     }
 
     @Override

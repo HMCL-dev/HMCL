@@ -47,12 +47,13 @@ public final class DownloadProviders {
 
     private static final DownloadProviderWrapper provider;
 
-    public static final Map<String, DownloadProvider> providersById;
-    public static final Map<String, DownloadProvider> rawProviders;
-    private static final AdaptedDownloadProvider fileDownloadProvider = new AdaptedDownloadProvider();
-
+    public static final Map<String, DownloadProvider> RAW_PROVIDERS;
     private static final MojangDownloadProvider MOJANG;
     private static final BMCLAPIDownloadProvider BMCLAPI;
+    private static final DownloadProvider DEFAULT_PROVIDER;
+
+    public static final Map<String, DownloadProvider> providersById;
+    private static final AdaptedDownloadProvider fileDownloadProvider = new AdaptedDownloadProvider();
 
     public static final String DEFAULT_PROVIDER_ID = "balanced";
     public static final String DEFAULT_RAW_PROVIDER_ID = "bmclapi";
@@ -67,7 +68,8 @@ public final class DownloadProviders {
 
         MOJANG = new MojangDownloadProvider();
         BMCLAPI = new BMCLAPIDownloadProvider(bmclapiRoot);
-        rawProviders = Map.of(
+        DEFAULT_PROVIDER = BMCLAPI;
+        RAW_PROVIDERS = Map.of(
                 "mojang", MOJANG,
                 "bmclapi", BMCLAPI
         );
@@ -91,13 +93,9 @@ public final class DownloadProviders {
 
     static void init() {
         InvalidationListener onChangeDownloadSource = observable -> {
-            String versionListSource = Objects.requireNonNullElse(config().getVersionListSource(), "");
             if (config().isAutoChooseDownloadType()) {
-                DownloadProvider currentDownloadProvider = providersById.get(versionListSource);
-                if (currentDownloadProvider == null)
-                    currentDownloadProvider = Objects.requireNonNull(providersById.get(DEFAULT_PROVIDER_ID),
-                            "default provider is null");
-
+                String versionListSource = Objects.requireNonNullElse(config().getVersionListSource(), "");
+                DownloadProvider currentDownloadProvider = providersById.getOrDefault(versionListSource, DEFAULT_PROVIDER);
                 provider.setProvider(currentDownloadProvider);
             } else {
                 provider.setProvider(fileDownloadProvider);
@@ -110,18 +108,23 @@ public final class DownloadProviders {
 
         FXUtils.onChangeAndOperate(config().downloadTypeProperty(), downloadType -> {
             DownloadProvider primary = Objects.requireNonNullElseGet(
-                    rawProviders.get(Objects.requireNonNullElse(downloadType, "")),
-                    () -> rawProviders.get(DEFAULT_RAW_PROVIDER_ID));
+                    RAW_PROVIDERS.get(Objects.requireNonNullElse(downloadType, "")),
+                    () -> RAW_PROVIDERS.get(DEFAULT_RAW_PROVIDER_ID));
 
-            List<DownloadProvider> providers = new ArrayList<>(rawProviders.size());
+            List<DownloadProvider> providers = new ArrayList<>(RAW_PROVIDERS.size());
             providers.add(primary);
-            for (DownloadProvider provider : rawProviders.values()) {
+            for (DownloadProvider provider : RAW_PROVIDERS.values()) {
                 if (provider != primary)
                     providers.add(provider);
             }
 
             fileDownloadProvider.setDownloadProviderCandidates(providers);
         });
+    }
+
+    public static DownloadProvider getAutoDownloadProvider(String versionListSource) {
+
+
     }
 
     /**
