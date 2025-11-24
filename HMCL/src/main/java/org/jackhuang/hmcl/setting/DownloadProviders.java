@@ -21,7 +21,6 @@ import javafx.beans.InvalidationListener;
 import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.FetchTask;
-import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -46,7 +45,6 @@ public final class DownloadProviders {
     private DownloadProviders() {
     }
 
-
     public static final String DEFAULT_AUTO_PROVIDER_ID = "balanced";
     public static final String DEFAULT_DIRECT_PROVIDER_ID = "mojang";
 
@@ -60,9 +58,6 @@ public final class DownloadProviders {
     private static final DownloadProvider AUTO_OFFICIAL_PROVIDER;
     private static final DownloadProvider AUTO_MIRROR_PROVIDER;
     private static final DownloadProvider AUTO_BALANCED_PROVIDER;
-
-    @SuppressWarnings("unused")
-    private static final InvalidationListener observer;
 
     static {
         String bmclapiRoot = "https://bmclapi2.bangbang93.com";
@@ -92,15 +87,19 @@ public final class DownloadProviders {
                 pair("mirror", AUTO_MIRROR_PROVIDER)
         );
 
-        observer = FXUtils.observeWeak(() -> {
-            FetchTask.setDownloadExecutorConcurrency(
-                    config().getAutoDownloadThreads() ? DEFAULT_CONCURRENCY : config().getDownloadThreads());
-        }, config().autoDownloadThreadsProperty(), config().downloadThreadsProperty());
-
         PROVIDER_WRAPPER = new DownloadProviderWrapper(RAW_MOJANG);
     }
 
     static void init() {
+        InvalidationListener onChangeDownloadThreads = observable -> {
+            FetchTask.setDownloadExecutorConcurrency(config().getAutoDownloadThreads()
+                    ? DEFAULT_CONCURRENCY
+                    : config().getDownloadThreads());
+        };
+        config().autoDownloadThreadsProperty().addListener(onChangeDownloadThreads);
+        config().downloadThreadsProperty().addListener(onChangeDownloadThreads);
+        onChangeDownloadThreads.invalidated(null);
+
         InvalidationListener onChangeDownloadSource = observable -> {
             if (config().isAutoChooseDownloadType()) {
                 String versionListSource = config().getVersionListSource();
@@ -118,7 +117,6 @@ public final class DownloadProviders {
         config().versionListSourceProperty().addListener(onChangeDownloadSource);
         config().autoChooseDownloadTypeProperty().addListener(onChangeDownloadSource);
         config().downloadTypeProperty().addListener(onChangeDownloadSource);
-
         onChangeDownloadSource.invalidated(null);
     }
 
