@@ -1485,3 +1485,70 @@
 .html-italic {
     -fx-font-style: italic;
 }
+
+/*******************************************************************************
+ *                                                                             *
+ * Table View			                                                       *
+ *                                                                             *
+ ******************************************************************************/
+
+/* WE DEFINITELY NEED JFX TABLE-VIEW */
+
+.table-view {
+    -fx-padding: 3;
+}
+
+.table-view,
+.table-view .column-header,
+.table-view .filler,
+.table-view .column-header-background,
+.table-row-cell {
+    -fx-background-color: white;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+}
+
+.table-row-cell {
+    -fx-background-color: rgba(0, 0, 0, 0.03);
+}
+
+.table-row-cell:odd {
+    -fx-background-color: white;
+}
+
+.table-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: rgba(0.0, 0.0, 0.0, 0.87);
+}
+
+.table-view > .virtual-flow > .clipped-container > .sheet > .table-row-cell:filled:selected {
+    -fx-background-color: derive(#9ec5fe, 40%);
+    -fx-table-cell-border-color: derive(#9ec5fe, 40%);
+}
+
+.table-view > .virtual-flow > .scroll-bar:vertical {
+    -fx-skin: "org.jackhuang.hmcl.ui.construct.FloatScrollBarSkin";
+}
+
+.table-view > .virtual-flow > .scroll-bar:vertical .track {
+    -fx-fill: transparent;
+}
+
+/*******************************************************************************
+ *                                                                             *
+ * CheckBox			                                                           *
+ *                                                                             *
+ ******************************************************************************/
+
+/* For CheckBoxTableCell in ModUpdatesPage */
+
+.check-box .box {
+    -fx-background-color: transparent;
+    -fx-border-color: -fx-base-check-color;
+    -fx-border-width: 2;
+    -fx-border-radius: 3;
+}
+
+.check-box:selected .box .mark {
+    -fx-background-color: -fx-base-check-color;
+}
