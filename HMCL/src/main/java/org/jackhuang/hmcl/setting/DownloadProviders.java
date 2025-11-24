@@ -47,14 +47,13 @@ public final class DownloadProviders {
     private static final DownloadProviderWrapper provider;
 
     public static final Map<String, DownloadProvider> RAW_PROVIDERS;
-    private static final MojangDownloadProvider MOJANG;
-    private static final BMCLAPIDownloadProvider BMCLAPI;
-
-    private static final DownloadProvider OFFICIAL_AUTO_PROVIDER;
-    private static final DownloadProvider MIRROR_AUTO_PROVIDER;
-    private static final DownloadProvider BALANCED_AUTO_PROVIDER;
+    private static final MojangDownloadProvider RAW_MOJANG;
+    private static final BMCLAPIDownloadProvider RAW_BMCLAPI;
 
     public static final Map<String, DownloadProvider> AUTO_PROVIDERS;
+    private static final DownloadProvider AUTO_OFFICIAL_PROVIDER;
+    private static final DownloadProvider AUTO_MIRROR_PROVIDER;
+    private static final DownloadProvider AUTO_BALANCED_PROVIDER;
 
     @SuppressWarnings("unused")
     private static final InvalidationListener observer;
@@ -64,27 +63,27 @@ public final class DownloadProviders {
         String bmclapiRootOverride = System.getProperty("hmcl.bmclapi.override");
         if (bmclapiRootOverride != null) bmclapiRoot = bmclapiRootOverride;
 
-        MOJANG = new MojangDownloadProvider();
-        BMCLAPI = new BMCLAPIDownloadProvider(bmclapiRoot);
+        RAW_MOJANG = new MojangDownloadProvider();
+        RAW_BMCLAPI = new BMCLAPIDownloadProvider(bmclapiRoot);
         RAW_PROVIDERS = Map.of(
-                "mojang", MOJANG,
-                "bmclapi", BMCLAPI
+                "mojang", RAW_MOJANG,
+                "bmclapi", RAW_BMCLAPI
         );
 
-        DownloadProvider autoFileProvider = new AdaptedDownloadProvider(BMCLAPI, MOJANG);
+        DownloadProvider autoFileProvider = new AdaptedDownloadProvider(RAW_BMCLAPI, RAW_MOJANG);
         if (LocaleUtils.IS_CHINA_MAINLAND) {
-            OFFICIAL_AUTO_PROVIDER = new AutoDownloadProvider(List.of(MOJANG, BMCLAPI), autoFileProvider);
-            BALANCED_AUTO_PROVIDER = new AutoDownloadProvider(List.of(MOJANG, BMCLAPI), autoFileProvider);
+            AUTO_OFFICIAL_PROVIDER = new AutoDownloadProvider(List.of(RAW_MOJANG, RAW_BMCLAPI), autoFileProvider);
+            AUTO_BALANCED_PROVIDER = new AutoDownloadProvider(List.of(RAW_MOJANG, RAW_BMCLAPI), autoFileProvider);
         } else {
-            OFFICIAL_AUTO_PROVIDER = MOJANG;
-            BALANCED_AUTO_PROVIDER = MOJANG;
+            AUTO_OFFICIAL_PROVIDER = RAW_MOJANG;
+            AUTO_BALANCED_PROVIDER = RAW_MOJANG;
         }
-        MIRROR_AUTO_PROVIDER = new AutoDownloadProvider(List.of(BMCLAPI, MOJANG), autoFileProvider);
+        AUTO_MIRROR_PROVIDER = new AutoDownloadProvider(List.of(RAW_BMCLAPI, RAW_MOJANG), autoFileProvider);
 
         AUTO_PROVIDERS = Map.of(
-                "balanced", BALANCED_AUTO_PROVIDER,
-                "official", OFFICIAL_AUTO_PROVIDER,
-                "mirror", MIRROR_AUTO_PROVIDER
+                "balanced", AUTO_BALANCED_PROVIDER,
+                "official", AUTO_OFFICIAL_PROVIDER,
+                "mirror", AUTO_MIRROR_PROVIDER
         );
 
         observer = FXUtils.observeWeak(() -> {
@@ -92,7 +91,7 @@ public final class DownloadProviders {
                     config().getAutoDownloadThreads() ? DEFAULT_CONCURRENCY : config().getDownloadThreads());
         }, config().autoDownloadThreadsProperty(), config().downloadThreadsProperty());
 
-        provider = new DownloadProviderWrapper(MOJANG);
+        provider = new DownloadProviderWrapper(RAW_MOJANG);
     }
 
     static void init() {
@@ -100,18 +99,18 @@ public final class DownloadProviders {
             if (config().isAutoChooseDownloadType()) {
                 String versionListSource = config().getVersionListSource();
                 DownloadProvider downloadProvider = versionListSource != null
-                        ? AUTO_PROVIDERS.getOrDefault(versionListSource, MOJANG)
-                        : MOJANG;
+                        ? AUTO_PROVIDERS.getOrDefault(versionListSource, RAW_MOJANG)
+                        : RAW_MOJANG;
                 provider.setProvider(downloadProvider);
             } else {
                 String downloadType = config().getDownloadType();
                 DownloadProvider primary = downloadType != null
-                        ? RAW_PROVIDERS.getOrDefault(downloadType, MOJANG)
-                        : MOJANG;
-                if (primary == MOJANG) {
-                    provider.setProvider(MOJANG);
+                        ? RAW_PROVIDERS.getOrDefault(downloadType, RAW_MOJANG)
+                        : RAW_MOJANG;
+                if (primary == RAW_MOJANG) {
+                    provider.setProvider(RAW_MOJANG);
                 } else {
-                    provider.setProvider(new AdaptedDownloadProvider(primary, MOJANG));
+                    provider.setProvider(new AdaptedDownloadProvider(primary, RAW_MOJANG));
                 }
             }
         };

@@ -17,8 +17,6 @@
  */
 package org.jackhuang.hmcl.download;
 
-import org.jetbrains.annotations.Unmodifiable;
-
 import java.net.URI;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -28,9 +26,9 @@ import java.util.List;
  *
  * @author huangyuhui
  */
-public class AdaptedDownloadProvider implements DownloadProvider {
+public final class AdaptedDownloadProvider implements DownloadProvider {
 
-    private final @Unmodifiable List<DownloadProvider> downloadProviderCandidates;
+    private final List<DownloadProvider> downloadProviderCandidates;
 
     public AdaptedDownloadProvider(DownloadProvider ...downloadProviderCandidates) {
         this.downloadProviderCandidates = List.of(downloadProviderCandidates);
@@ -46,7 +44,11 @@ public class AdaptedDownloadProvider implements DownloadProvider {
 
     @Override
     public List<URI> getVersionListURLs() {
-        return getPreferredDownloadProvider().getVersionListURLs();
+        LinkedHashSet<URI> result = new LinkedHashSet<>();
+        for (DownloadProvider provider : downloadProviderCandidates) {
+            result.addAll(provider.getVersionListURLs());
+        }
+        return List.copyOf(result);
     }
 
     @Override
