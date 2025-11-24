@@ -478,7 +478,7 @@ public final class Config extends ObservableSetting {
     }
 
     @SerializedName("downloadType")
-    private final StringProperty downloadType = new SimpleStringProperty(DownloadProviders.DEFAULT_RAW_PROVIDER_ID);
+    private final StringProperty downloadType = new SimpleStringProperty();
 
     public StringProperty downloadTypeProperty() {
         return downloadType;
@@ -508,7 +508,7 @@ public final class Config extends ObservableSetting {
     }
 
     @SerializedName("versionListSource")
-    private final StringProperty versionListSource = new SimpleStringProperty("balanced");
+    private final StringProperty versionListSource = new SimpleStringProperty();
 
     public StringProperty versionListSourceProperty() {
         return versionListSource;

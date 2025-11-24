@@ -55,9 +55,6 @@ public final class DownloadProviders {
     public static final Map<String, DownloadProvider> providersById;
     private static final AdaptedDownloadProvider fileDownloadProvider = new AdaptedDownloadProvider();
 
-    public static final String DEFAULT_PROVIDER_ID = "balanced";
-    public static final String DEFAULT_RAW_PROVIDER_ID = "bmclapi";
-
     @SuppressWarnings("unused")
     private static final InvalidationListener observer;
 
@@ -107,9 +104,10 @@ public final class DownloadProviders {
         onChangeDownloadSource.invalidated(null);
 
         FXUtils.onChangeAndOperate(config().downloadTypeProperty(), downloadType -> {
-            DownloadProvider primary = Objects.requireNonNullElseGet(
-                    RAW_PROVIDERS.get(Objects.requireNonNullElse(downloadType, "")),
-                    () -> RAW_PROVIDERS.get(DEFAULT_RAW_PROVIDER_ID));
+            DownloadProvider primary = RAW_PROVIDERS.getOrDefault(
+                    Objects.requireNonNullElse(downloadType, ""),
+                    DEFAULT_PROVIDER
+            );
 
             List<DownloadProvider> providers = new ArrayList<>(RAW_PROVIDERS.size());
             providers.add(primary);
