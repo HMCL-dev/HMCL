@@ -50,11 +50,6 @@ public class AdaptedDownloadProvider implements DownloadProvider {
     }
 
     @Override
-    public String getAssetBaseURL() {
-        return getPreferredDownloadProvider().getAssetBaseURL();
-    }
-
-    @Override
     public String injectURL(String baseURL) {
         return getPreferredDownloadProvider().injectURL(baseURL);
     }

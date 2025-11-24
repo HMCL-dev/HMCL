@@ -27,6 +27,10 @@ import org.jackhuang.hmcl.download.neoforge.NeoForgeOfficialVersionList;
 import org.jackhuang.hmcl.download.optifine.OptiFineBMCLVersionList;
 import org.jackhuang.hmcl.download.quilt.QuiltAPIVersionList;
 import org.jackhuang.hmcl.download.quilt.QuiltVersionList;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
+
+import java.net.URI;
+import java.util.List;
 
 /**
  * @author huangyuhui
@@ -66,8 +70,8 @@ public class MojangDownloadProvider implements DownloadProvider {
     }
 
     @Override
-    public String getAssetBaseURL() {
-        return "https://resources.download.minecraft.net/";
+    public List<URI> getAssetObjectCandidates(String assetObjectLocation) {
+        return List.of(NetworkUtils.toURI("https://resources.download.minecraft.net/" + assetObjectLocation));
     }
 
     @Override

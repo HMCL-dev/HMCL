@@ -51,11 +51,6 @@ public final class DownloadProviderWrapper implements DownloadProvider {
     }
 
     @Override
-    public String getAssetBaseURL() {
-        return getProvider().getAssetBaseURL();
-    }
-
-    @Override
     public String injectURL(String baseURL) {
         return getProvider().injectURL(baseURL);
     }

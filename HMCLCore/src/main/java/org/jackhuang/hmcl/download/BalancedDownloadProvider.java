@@ -17,7 +17,9 @@
  */
 package org.jackhuang.hmcl.download;
 
+import java.net.URI;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -40,7 +42,7 @@ public final class BalancedDownloadProvider implements DownloadProvider {
     }
 
     @Override
-    public String getAssetBaseURL() {
+    public List<URI> getAssetObjectCandidates(String assetObjectLocation) {
         throw new UnsupportedOperationException();
     }
 

@@ -122,11 +122,6 @@ public final class DownloadProviders {
         });
     }
 
-    public static DownloadProvider getAutoDownloadProvider(String versionListSource) {
-
-
-    }
-
     /**
      * Get current primary preferred download provider
      */

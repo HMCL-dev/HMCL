@@ -41,11 +41,6 @@ public class AutoDownloadProvider implements DownloadProvider {
     }
 
     @Override
-    public String getAssetBaseURL() {
-        return fileProvider.getAssetBaseURL();
-    }
-
-    @Override
     public String injectURL(String baseURL) {
         return fileProvider.injectURL(baseURL);
     }
