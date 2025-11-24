@@ -1503,17 +1503,29 @@
 .table-view .filler,
 .table-view .column-header-background,
 .table-row-cell {
-    -fx-background-color: white;
     -fx-background-radius: 6;
     -fx-border-radius: 6;
 }
 
+.table-view {
+    -fx-background-color: white;
+}
+
+.table-view .column-header,
+.table-view .filler {
+    -fx-background-color: transparent;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: rgba(0, 0, 0, 0.05);
+}
+
 .table-row-cell {
-    -fx-background-color: rgba(0, 0, 0, 0.03);
+    -fx-background-color: white;
 }
 
 .table-row-cell:odd {
-    -fx-background-color: white;
+    -fx-background-color: rgba(0, 0, 0, 0.03);
 }
 
 .table-cell {
@@ -1526,11 +1538,11 @@
     -fx-table-cell-border-color: derive(#9ec5fe, 40%);
 }
 
-.table-view > .virtual-flow > .scroll-bar:vertical {
+.table-view > .virtual-flow > .scroll-bar {
     -fx-skin: "org.jackhuang.hmcl.ui.construct.FloatScrollBarSkin";
 }
 
-.table-view > .virtual-flow > .scroll-bar:vertical .track {
+.table-view > .virtual-flow > .scroll-bar .track {
     -fx-fill: transparent;
 }
 
