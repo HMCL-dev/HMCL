@@ -95,17 +95,13 @@ public final class AutoDownloadProvider implements DownloadProvider {
 
     @Override
     public VersionList<?> getVersionListById(String id) {
-        if (versionListProviders.size() == 1) {
-            return versionListProviders.get(0).getVersionListById(id);
-        } else {
-            return versionLists.computeIfAbsent(id, value -> {
-                VersionList<?>[] lists = new VersionList<?>[versionListProviders.size()];
-                for (int i = 0; i < versionListProviders.size(); i++) {
-                    lists[i] = versionListProviders.get(i).getVersionListById(value);
-                }
-                return new MultipleSourceVersionList(lists);
-            });
-        }
+        return versionLists.computeIfAbsent(id, value -> {
+            VersionList<?>[] lists = new VersionList<?>[versionListProviders.size()];
+            for (int i = 0; i < versionListProviders.size(); i++) {
+                lists[i] = versionListProviders.get(i).getVersionListById(value);
+            }
+            return new MultipleSourceVersionList(lists);
+        });
     }
 
     @Override
