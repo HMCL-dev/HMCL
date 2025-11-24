@@ -66,11 +66,10 @@ public final class LiteLoaderBMCLVersionList extends VersionList<LiteLoaderRemot
                     lock.writeLock().lock();
                     try {
                         versions.clear();
-
                         versions.put(gameVersion, new LiteLoaderRemoteVersion(
                                 gameVersion, v.version, RemoteVersion.Type.UNCATEGORIZED,
                                 Collections.singletonList(NetworkUtils.withQuery(
-                                        downloadProvider.injectURL("https://bmclapi2.bangbang93.com/liteloader/download"),
+                                        downloadProvider.getApiRoot() + "/liteloader/download",
                                         Collections.singletonMap("version", v.version)
                                 )),
                                 v.build.getTweakClass(), v.build.getLibraries()
