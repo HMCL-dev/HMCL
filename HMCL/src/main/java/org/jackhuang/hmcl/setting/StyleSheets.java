@@ -23,14 +23,11 @@ import javafx.collections.ObservableList;
 import javafx.scene.Scene;
 import javafx.scene.paint.Color;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.util.CSSHotReload;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.Locale;
@@ -155,17 +152,63 @@ public final class StyleSheets {
                 '}', blueCss);
     }
 
+    public static void hotReload(Scene scene, Path cssFolder) {
+        try {
+            WatchService watcher = FileSystems.getDefault().newWatchService();
+            cssFolder.register(watcher, StandardWatchEventKinds.ENTRY_MODIFY);
+
+            Thread thread = new Thread(() -> {
+                while (true) {
+                    WatchKey key;
+                    try {
+                        key = watcher.take();
+                    } catch (InterruptedException e) {
+                        return;
+                    }
+
+                    for (WatchEvent<?> event : key.pollEvents()) {
+                        Path changed = (Path) event.context();
+
+                        if (changed.toString().endsWith(".css")) {
+                            Path file = cssFolder.resolve(changed);
+                            reloadCSS(scene, file);
+                        }
+                    }
+
+                    if (!key.reset()) break;
+                }
+            });
+
+            thread.setDaemon(true);
+            thread.start();
+        } catch (IOException ignored) {}
+    }
+
+    private static void reloadCSS(Scene scene, Path file) {
+        FXUtils.runInFX(() -> {
+            try {
+                Path temp = Files.createTempFile("css-", ".css");
+                Files.copy(file, temp, StandardCopyOption.REPLACE_EXISTING);
+
+                String cssName = file.getFileName().toString();
+                String url = temp.toUri().toString();
+
+                scene.getStylesheets().removeIf(s -> s.contains(cssName));
+                scene.getStylesheets().add(url);
+                temp.toFile().deleteOnExit();
+
+                LOG.info("Reloaded CSS: " + cssName);
+
+            } catch (IOException ignored) {}
+        });
+    }
+
     public static void init(Scene scene) {
         Bindings.bindContent(scene.getStylesheets(), stylesheets);
 
-        Path sourceDir = Paths.get("HMCL/src/");
-        if (Files.exists(sourceDir) && Files.isDirectory(sourceDir)) {
-            CSSHotReload.init(scene,
-                    Paths.get("HMCL/src/main/resources/assets/css"),
-                    "blue.css",
-                    "font.css",
-                    "root.css"
-            );
+        Path dir = Paths.get("HMCL/src/main/resources/assets/css");
+        if (Files.isDirectory(dir)) {
+            hotReload(scene, dir);
         }
     }
 
