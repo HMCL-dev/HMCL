@@ -71,12 +71,11 @@ public final class DownloadProviders {
         );
 
         AdaptedDownloadProvider fileProvider = new AdaptedDownloadProvider(List.of(BMCLAPI, MOJANG));
-        BalancedDownloadProvider balanced = new BalancedDownloadProvider(MOJANG, BMCLAPI);
 
         providersById = Map.of(
-                "official", new AutoDownloadProvider(MOJANG, fileProvider),
-                "balanced", new AutoDownloadProvider(balanced, fileProvider),
-                "mirror", new AutoDownloadProvider(BMCLAPI, fileProvider));
+                "official", new AutoDownloadProvider(List.of(MOJANG), fileProvider),
+                "balanced", new AutoDownloadProvider(List.of(MOJANG, BMCLAPI), fileProvider),
+                "mirror", new AutoDownloadProvider(List.of(BMCLAPI, MOJANG), fileProvider));
 
         observer = FXUtils.observeWeak(() -> {
             FetchTask.setDownloadExecutorConcurrency(

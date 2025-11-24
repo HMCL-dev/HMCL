@@ -18,7 +18,10 @@
 package org.jackhuang.hmcl.download;
 
 import java.net.URI;
+import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Official Download Provider fetches version list from Mojang and
@@ -27,17 +30,25 @@ import java.util.List;
  * @author huangyuhui
  */
 public final class AutoDownloadProvider implements DownloadProvider {
-    private final DownloadProvider versionListProvider;
+    private final List<DownloadProvider> versionListProviders;
     private final DownloadProvider fileProvider;
 
-    public AutoDownloadProvider(DownloadProvider versionListProvider, DownloadProvider fileProvider) {
-        this.versionListProvider = versionListProvider;
+    private final Map<String, VersionList<?>> versionLists = new HashMap<>();
+
+    public AutoDownloadProvider(
+            List<DownloadProvider> versionListProviders,
+            DownloadProvider fileProvider) {
+        this.versionListProviders = versionListProviders;
         this.fileProvider = fileProvider;
     }
 
     @Override
     public List<URI> getVersionListURLs() {
-        return versionListProvider.getVersionListURLs();
+        LinkedHashSet<URI> result = new LinkedHashSet<>();
+        for (DownloadProvider provider : versionListProviders) {
+            result.addAll(provider.getVersionListURLs());
+        }
+        return List.copyOf(result);
     }
 
     @Override
@@ -62,7 +73,17 @@ public final class AutoDownloadProvider implements DownloadProvider {
 
     @Override
     public VersionList<?> getVersionListById(String id) {
-        return versionListProvider.getVersionListById(id);
+        if (versionListProviders.size() == 1) {
+            return versionListProviders.get(0).getVersionListById(id);
+        } else {
+            return versionLists.computeIfAbsent(id, value -> {
+                VersionList<?>[] lists = new VersionList<?>[versionListProviders.size()];
+                for (int i = 0; i < versionListProviders.size(); i++) {
+                    lists[i] = versionListProviders.get(i).getVersionListById(value);
+                }
+                return new MultipleSourceVersionList(lists);
+            });
+        }
     }
 
     @Override
