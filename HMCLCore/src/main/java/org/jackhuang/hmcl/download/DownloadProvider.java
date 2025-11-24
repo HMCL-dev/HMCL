@@ -30,7 +30,7 @@ import java.util.List;
  */
 public interface DownloadProvider {
 
-    String getVersionListURL();
+    List<URI> getVersionListURLs();
 
     List<URI> getAssetObjectCandidates(String assetObjectLocation);
 

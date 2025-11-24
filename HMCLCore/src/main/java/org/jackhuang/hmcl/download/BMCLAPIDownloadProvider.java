@@ -101,8 +101,8 @@ public final class BMCLAPIDownloadProvider implements DownloadProvider {
     }
 
     @Override
-    public String getVersionListURL() {
-        return apiRoot + "/mc/game/version_manifest.json";
+    public List<URI> getVersionListURLs() {
+        return List.of(URI.create(apiRoot + "/mc/game/version_manifest.json"));
     }
 
     @Override

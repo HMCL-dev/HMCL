@@ -45,8 +45,8 @@ public class AdaptedDownloadProvider implements DownloadProvider {
     }
 
     @Override
-    public String getVersionListURL() {
-        return getPreferredDownloadProvider().getVersionListURL();
+    public List<URI> getVersionListURLs() {
+        return getPreferredDownloadProvider().getVersionListURLs();
     }
 
     @Override

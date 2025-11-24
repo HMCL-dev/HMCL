@@ -36,8 +36,8 @@ public class AutoDownloadProvider implements DownloadProvider {
     }
 
     @Override
-    public String getVersionListURL() {
-        return versionListProvider.getVersionListURL();
+    public List<URI> getVersionListURLs() {
+        return versionListProvider.getVersionListURLs();
     }
 
     @Override

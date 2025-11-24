@@ -53,7 +53,7 @@ public final class GameVersionList extends VersionList<GameRemoteVersion> {
 
     @Override
     public Task<?> refreshAsync() {
-        return new GetTask(downloadProvider.getVersionListURL()).thenGetJsonAsync(GameRemoteVersions.class)
+        return new GetTask(downloadProvider.getVersionListURLs()).thenGetJsonAsync(GameRemoteVersions.class)
                 .thenAcceptAsync(root -> {
                     GameRemoteVersions unlistedVersions = null;
 

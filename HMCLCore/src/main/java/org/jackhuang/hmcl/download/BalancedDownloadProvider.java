@@ -37,7 +37,7 @@ public final class BalancedDownloadProvider implements DownloadProvider {
     }
 
     @Override
-    public String getVersionListURL() {
+    public List<URI> getVersionListURLs() {
         throw new UnsupportedOperationException();
     }
 

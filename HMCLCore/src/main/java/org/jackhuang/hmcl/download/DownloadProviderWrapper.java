@@ -46,8 +46,8 @@ public final class DownloadProviderWrapper implements DownloadProvider {
     }
 
     @Override
-    public String getVersionListURL() {
-        return getProvider().getVersionListURL();
+    public List<URI> getVersionListURLs() {
+        return getProvider().getVersionListURLs();
     }
 
     @Override
