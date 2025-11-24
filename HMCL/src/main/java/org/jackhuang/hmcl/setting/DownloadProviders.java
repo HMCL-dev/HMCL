@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
@@ -38,11 +39,16 @@ import java.util.concurrent.CancellationException;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.task.FetchTask.DEFAULT_CONCURRENCY;
+import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class DownloadProviders {
     private DownloadProviders() {
     }
+
+
+    public static final String DEFAULT_AUTO_PROVIDER_ID = "balanced";
+    public static final String DEFAULT_DIRECT_PROVIDER_ID = "mojang";
 
     private static final DownloadProviderWrapper PROVIDER_WRAPPER;
     public static final Map<String, DownloadProvider> DIRECT_PROVIDERS;
@@ -65,9 +71,9 @@ public final class DownloadProviders {
 
         RAW_MOJANG = new MojangDownloadProvider();
         RAW_BMCLAPI = new BMCLAPIDownloadProvider(bmclapiRoot);
-        DIRECT_PROVIDERS = Map.of(
-                "mojang", RAW_MOJANG,
-                "bmclapi", new AdaptedDownloadProvider(RAW_BMCLAPI, RAW_MOJANG)
+        DIRECT_PROVIDERS = Lang.mapOf(
+                pair("mojang", RAW_MOJANG),
+                pair("bmclapi", new AdaptedDownloadProvider(RAW_BMCLAPI, RAW_MOJANG))
         );
 
         DownloadProvider autoFileProvider = new AdaptedDownloadProvider(RAW_BMCLAPI, RAW_MOJANG);
@@ -80,10 +86,10 @@ public final class DownloadProviders {
         }
         AUTO_MIRROR_PROVIDER = new AutoDownloadProvider(List.of(RAW_BMCLAPI, RAW_MOJANG), autoFileProvider);
 
-        AUTO_PROVIDERS = Map.of(
-                "balanced", AUTO_BALANCED_PROVIDER,
-                "official", AUTO_OFFICIAL_PROVIDER,
-                "mirror", AUTO_MIRROR_PROVIDER
+        AUTO_PROVIDERS = Lang.mapOf(
+                pair("balanced", AUTO_BALANCED_PROVIDER),
+                pair("official", AUTO_OFFICIAL_PROVIDER),
+                pair("mirror", AUTO_MIRROR_PROVIDER)
         );
 
         observer = FXUtils.observeWeak(() -> {
