@@ -161,6 +161,9 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                 String currentId = getSkinnable().getMainPage().getCurrentGame();
                 return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
             }, it -> getSkinnable().getMainPage().getProfile().setSelectedVersion(it.getId()));
+            if (AnimationUtils.isAnimationEnabled()) {
+                FXUtils.prepareOnMouseEnter(gameListItem, Controllers::prepareVersionPage);
+            }
 
             // third item in left sidebar
             AdvancedListItem gameItem = new AdvancedListItem();
@@ -174,7 +177,10 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             downloadItem.setLeftGraphic(wrap(SVG.DOWNLOAD));
             downloadItem.setActionButtonVisible(false);
             downloadItem.setTitle(i18n("download"));
-            downloadItem.setOnAction(e -> Controllers.navigate(Controllers.getDownloadPage()));
+            downloadItem.setOnAction(e -> {
+                Controllers.getDownloadPage().showGameDownloads();
+                Controllers.navigate(Controllers.getDownloadPage());
+            });
             FXUtils.installFastTooltip(downloadItem, i18n("download.hint"));
             if (AnimationUtils.isAnimationEnabled()) {
                 FXUtils.prepareOnMouseEnter(downloadItem, Controllers::prepareDownloadPage);
@@ -185,7 +191,10 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             launcherSettingsItem.setLeftGraphic(wrap(SVG.SETTINGS));
             launcherSettingsItem.setActionButtonVisible(false);
             launcherSettingsItem.setTitle(i18n("settings"));
-            launcherSettingsItem.setOnAction(e -> Controllers.navigate(Controllers.getSettingsPage()));
+            launcherSettingsItem.setOnAction(e -> {
+                Controllers.getSettingsPage().showGameSettings(Profiles.getSelectedProfile());
+                Controllers.navigate(Controllers.getSettingsPage());
+            });
             if (AnimationUtils.isAnimationEnabled()) {
                 FXUtils.prepareOnMouseEnter(launcherSettingsItem, Controllers::prepareSettingsPage);
             }

@@ -26,6 +26,7 @@ import com.jfoenix.effects.JFXDepthManager;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.layout.Region;
+import org.jackhuang.hmcl.ui.FXUtils;
 
 // https://github.com/HMCL-dev/HMCL/issues/4720
 public class JFXListViewSkin<T> extends ListViewSkin<T> {
@@ -38,6 +39,7 @@ public class JFXListViewSkin<T> extends ListViewSkin<T> {
         flow = (VirtualFlow<ListCell<T>>) getChildren().get(0);
         JFXDepthManager.setDepth(flow, listView.depthProperty().get());
         listView.depthProperty().addListener((o, oldVal, newVal) -> JFXDepthManager.setDepth(flow, newVal));
+        FXUtils.smoothScrolling(flow);
     }
 
     @Override

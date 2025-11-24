@@ -36,12 +36,24 @@ import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Scale;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
+import org.jackhuang.hmcl.ui.animation.Motion;
+import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
+import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("deprecation")
 public class TabHeader extends Control implements TabControl, PageAware {
 
+    private final TransitionPane contentPane;
+
     public TabHeader(Tab<?>... tabs) {
+        this(null, tabs);
+    }
+
+    public TabHeader(@Nullable TransitionPane contentPane, Tab<?>... tabs) {
+        this.contentPane = contentPane;
+
         getStyleClass().setAll("tab-header");
         if (tabs != null) {
             getTabs().addAll(tabs);
@@ -49,41 +61,48 @@ public class TabHeader extends Control implements TabControl, PageAware {
     }
 
     private final ObservableList<Tab<?>> tabs = FXCollections.observableArrayList();
-    private final ObjectProperty<Side> side = new SimpleObjectProperty<>(Side.TOP);
 
     @Override
     public ObservableList<Tab<?>> getTabs() {
         return tabs;
     }
 
-    private final ObjectProperty<SingleSelectionModel<Tab<?>>> selectionModel = new SimpleObjectProperty<>(this, "selectionModel", new TabControlSelectionModel(this));
+    private final SingleSelectionModel<Tab<?>> selectionModel = new TabControlSelectionModel(this);
 
     public SingleSelectionModel<Tab<?>> getSelectionModel() {
-        return selectionModel.get();
-    }
-
-    public ObjectProperty<SingleSelectionModel<Tab<?>>> selectionModelProperty() {
         return selectionModel;
     }
 
-    public void setSelectionModel(SingleSelectionModel<Tab<?>> selectionModel) {
-        this.selectionModel.set(selectionModel);
+    public void select(Tab<?> tab) {
+        select(tab, true);
     }
 
-    public void select(Tab<?> tab) {
+    public void select(Tab<?> tab, boolean playAnimation) {
         Tab<?> oldTab = getSelectionModel().getSelectedItem();
         if (oldTab != null) {
-            if (oldTab.getNode() instanceof PageAware) {
-                ((PageAware) oldTab.getNode()).onPageHidden();
+            if (oldTab.getNode() instanceof PageAware pageAware) {
+                pageAware.onPageHidden();
             }
         }
 
         tab.initializeIfNeeded();
-        if (tab.getNode() instanceof PageAware) {
-            ((PageAware) tab.getNode()).onPageShown();
+        if (tab.getNode() instanceof PageAware pageAware) {
+            pageAware.onPageShown();
         }
 
         getSelectionModel().select(tab);
+
+        if (contentPane != null) {
+            if (playAnimation && contentPane.getCurrentNode() != null) {
+                contentPane.setContent(tab.getNode(),
+                        ContainerAnimations.SLIDE_UP_FADE_IN,
+                        Motion.MEDIUM4,
+                        Motion.EASE_IN_OUT_CUBIC_EMPHASIZED
+                );
+            } else {
+                contentPane.setContent(tab.getNode(), ContainerAnimations.NONE);
+            }
+        }
     }
 
     @Override
@@ -106,18 +125,20 @@ public class TabHeader extends Control implements TabControl, PageAware {
         }
     }
 
-    /**
-     * The position to place the tabs.
-     */
-    public Side getSide() {
-        return side.get();
-    }
+    private final ObjectProperty<Side> side = new SimpleObjectProperty<>(Side.TOP);
 
     /**
      * The position of the tabs.
      */
     public ObjectProperty<Side> sideProperty() {
         return side;
+    }
+
+    /**
+     * The position to place the tabs.
+     */
+    public Side getSide() {
+        return side.get();
     }
 
     /**

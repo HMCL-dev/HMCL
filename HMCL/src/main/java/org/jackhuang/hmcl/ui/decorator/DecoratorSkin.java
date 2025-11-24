@@ -507,13 +507,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         NEXT {
             @Override
             public void init(TransitionPane container, Node previousNode, Node nextNode) {
-                previousNode.setScaleX(1);
-                previousNode.setScaleY(1);
-                previousNode.setOpacity(0);
-                previousNode.setTranslateX(0);
-                nextNode.setScaleX(1);
-                nextNode.setScaleY(1);
-                nextNode.setOpacity(1);
+                super.init(container, previousNode, nextNode);
                 nextNode.setTranslateX(container.getWidth());
             }
 
@@ -544,13 +538,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         PREVIOUS {
             @Override
             public void init(TransitionPane container, Node previousNode, Node nextNode) {
-                previousNode.setScaleX(1);
-                previousNode.setScaleY(1);
-                previousNode.setOpacity(1);
-                previousNode.setTranslateX(0);
-                nextNode.setScaleX(1);
-                nextNode.setScaleY(1);
-                nextNode.setOpacity(0);
+                super.init(container, previousNode, nextNode);
                 nextNode.setTranslateX(container.getWidth());
             }
 

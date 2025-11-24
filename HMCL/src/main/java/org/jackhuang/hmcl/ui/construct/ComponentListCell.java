@@ -17,11 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import com.jfoenix.controls.JFXButton;
-import javafx.animation.Animation;
-import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
-import javafx.animation.Timeline;
+import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -29,6 +25,8 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
@@ -36,6 +34,7 @@ import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
+import org.jackhuang.hmcl.ui.animation.Motion;
 
 /**
  * @author huangyuhui
@@ -71,7 +70,6 @@ final class ComponentListCell extends StackPane {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private void updateLayout() {
         if (content instanceof ComponentList list) {
             content.getStyleClass().remove("options-list");
@@ -82,9 +80,8 @@ final class ComponentListCell extends StackPane {
             VBox groupNode = new VBox();
 
             Node expandIcon = SVG.KEYBOARD_ARROW_DOWN.createIcon(Theme.blackFill(), 20);
-            JFXButton expandButton = new JFXButton();
-            expandButton.setGraphic(expandIcon);
-            expandButton.getStyleClass().add("options-list-item-expand-button");
+            expandIcon.setMouseTransparent(true);
+            HBox.setMargin(expandIcon, new Insets(0, 8, 0, 8));
 
             VBox labelVBox = new VBox();
             labelVBox.setMouseTransparent(true);
@@ -123,7 +120,7 @@ final class ComponentListCell extends StackPane {
                 if (rightNode != null)
                     header.getChildren().add(rightNode);
             }
-            header.getChildren().add(expandButton);
+            header.getChildren().add(expandIcon);
 
             RipplerContainer headerRippler = new RipplerContainer(header);
             groupNode.getChildren().add(headerRippler);
@@ -138,7 +135,12 @@ final class ComponentListCell extends StackPane {
             container.getChildren().setAll(content);
             groupNode.getChildren().add(container);
 
-            Runnable onExpand = () -> {
+            headerRippler.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
+                if (event.getButton() != MouseButton.PRIMARY)
+                    return;
+
+                event.consume();
+
                 if (expandAnimation != null && expandAnimation.getStatus() == Animation.Status.RUNNING) {
                     expandAnimation.stop();
                 }
@@ -155,16 +157,23 @@ final class ComponentListCell extends StackPane {
                     double newAnimatedHeight = (list.prefHeight(list.getWidth()) + (hasPadding ? 8 + 10 : 4)) * (expanded ? 1 : -1);
                     double newHeight = expanded ? getHeight() + newAnimatedHeight : prefHeight(list.getWidth());
                     double contentHeight = expanded ? newAnimatedHeight : 0;
+                    double targetRotate = expanded ? -180 : 0;
 
                     if (expanded) {
                         updateClip(newHeight);
                     }
 
                     if (AnimationUtils.isAnimationEnabled()) {
-                        expandAnimation = new Timeline(new KeyFrame(new Duration(320.0),
-                                new KeyValue(container.minHeightProperty(), contentHeight, FXUtils.SINE),
-                                new KeyValue(container.maxHeightProperty(), contentHeight, FXUtils.SINE)
-                        ));
+                        double currentRotate = expandIcon.getRotate();
+                        Duration duration = Motion.LONG2.multiply(Math.abs(currentRotate - targetRotate) / 180.0);
+                        Interpolator interpolator = Motion.EASE_IN_OUT_CUBIC_EMPHASIZED;
+
+                        expandAnimation = new Timeline(
+                                new KeyFrame(duration,
+                                        new KeyValue(container.minHeightProperty(), contentHeight, interpolator),
+                                        new KeyValue(container.maxHeightProperty(), contentHeight, interpolator),
+                                        new KeyValue(expandIcon.rotateProperty(), targetRotate, interpolator))
+                        );
 
                         if (!expanded) {
                             expandAnimation.setOnFinished(e2 -> updateClip(newHeight));
@@ -174,18 +183,14 @@ final class ComponentListCell extends StackPane {
                     } else {
                         container.setMinHeight(contentHeight);
                         container.setMaxHeight(contentHeight);
+                        expandIcon.setRotate(targetRotate);
 
                         if (!expanded) {
                             updateClip(newHeight);
                         }
                     }
                 });
-            };
-
-            FXUtils.onClicked(headerRippler, onExpand);
-            expandButton.setOnAction(e -> onExpand.run());
-
-            expandedProperty().addListener((a, b, newValue) -> expandIcon.setRotate(newValue ? 180 : 0));
+            });
 
             getChildren().setAll(groupNode);
         } else {
