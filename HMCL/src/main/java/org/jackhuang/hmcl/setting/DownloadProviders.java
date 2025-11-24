@@ -34,7 +34,6 @@ import java.net.URI;
 import java.nio.file.AccessDeniedException;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.CancellationException;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
@@ -50,9 +49,12 @@ public final class DownloadProviders {
     public static final Map<String, DownloadProvider> RAW_PROVIDERS;
     private static final MojangDownloadProvider MOJANG;
     private static final BMCLAPIDownloadProvider BMCLAPI;
-    private static final DownloadProvider DEFAULT_PROVIDER;
 
-    public static final Map<String, DownloadProvider> providersById;
+    private static final DownloadProvider OFFICIAL_AUTO_PROVIDER;
+    private static final DownloadProvider MIRROR_AUTO_PROVIDER;
+    private static final DownloadProvider BALANCED_AUTO_PROVIDER;
+
+    public static final Map<String, DownloadProvider> AUTO_PROVIDERS;
 
     @SuppressWarnings("unused")
     private static final InvalidationListener observer;
@@ -64,22 +66,25 @@ public final class DownloadProviders {
 
         MOJANG = new MojangDownloadProvider();
         BMCLAPI = new BMCLAPIDownloadProvider(bmclapiRoot);
-        DEFAULT_PROVIDER = BMCLAPI;
         RAW_PROVIDERS = Map.of(
                 "mojang", MOJANG,
                 "bmclapi", BMCLAPI
         );
 
-        DownloadProvider fileProvider = LocaleUtils.IS_CHINA_MAINLAND
-                ? new AdaptedDownloadProvider(BMCLAPI, MOJANG)
-                : MOJANG;
+        DownloadProvider autoFileProvider = new AdaptedDownloadProvider(BMCLAPI, MOJANG);
+        if (LocaleUtils.IS_CHINA_MAINLAND) {
+            OFFICIAL_AUTO_PROVIDER = new AutoDownloadProvider(List.of(MOJANG, BMCLAPI), autoFileProvider);
+            BALANCED_AUTO_PROVIDER = new AutoDownloadProvider(List.of(MOJANG, BMCLAPI), autoFileProvider);
+        } else {
+            OFFICIAL_AUTO_PROVIDER = MOJANG;
+            BALANCED_AUTO_PROVIDER = MOJANG;
+        }
+        MIRROR_AUTO_PROVIDER = new AutoDownloadProvider(List.of(BMCLAPI, MOJANG), autoFileProvider);
 
-        providersById = Map.of(
-                "balanced", new AutoDownloadProvider(
-                        LocaleUtils.IS_CHINA_MAINLAND ? List.of(MOJANG, BMCLAPI) : List.of(MOJANG),
-                        fileProvider),
-                "official", new AutoDownloadProvider(List.of(MOJANG), fileProvider),
-                "mirror", new AutoDownloadProvider(List.of(BMCLAPI, MOJANG), fileProvider)
+        AUTO_PROVIDERS = Map.of(
+                "balanced", BALANCED_AUTO_PROVIDER,
+                "official", OFFICIAL_AUTO_PROVIDER,
+                "mirror", MIRROR_AUTO_PROVIDER
         );
 
         observer = FXUtils.observeWeak(() -> {
@@ -93,16 +98,16 @@ public final class DownloadProviders {
     static void init() {
         InvalidationListener onChangeDownloadSource = observable -> {
             if (config().isAutoChooseDownloadType()) {
-                String versionListSource = Objects.requireNonNullElse(config().getVersionListSource(), "");
-                DownloadProvider currentDownloadProvider = providersById.getOrDefault(versionListSource, DEFAULT_PROVIDER);
-                provider.setProvider(currentDownloadProvider);
+                String versionListSource = config().getVersionListSource();
+                DownloadProvider downloadProvider = versionListSource != null
+                        ? AUTO_PROVIDERS.getOrDefault(versionListSource, MOJANG)
+                        : MOJANG;
+                provider.setProvider(downloadProvider);
             } else {
                 String downloadType = config().getDownloadType();
-                DownloadProvider primary = RAW_PROVIDERS.getOrDefault(
-                        Objects.requireNonNullElse(downloadType, ""),
-                        DEFAULT_PROVIDER
-                );
-
+                DownloadProvider primary = downloadType != null
+                        ? RAW_PROVIDERS.getOrDefault(downloadType, MOJANG)
+                        : MOJANG;
                 if (primary == MOJANG) {
                     provider.setProvider(MOJANG);
                 } else {

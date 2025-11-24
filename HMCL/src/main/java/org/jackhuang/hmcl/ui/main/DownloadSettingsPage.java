@@ -78,7 +78,7 @@ public class DownloadSettingsPage extends StackPane {
                     versionListSourcePane.setRight(cboVersionListSource);
                     FXUtils.setLimitWidth(cboVersionListSource, 400);
 
-                    cboVersionListSource.getItems().setAll(DownloadProviders.providersById.keySet());
+                    cboVersionListSource.getItems().setAll(DownloadProviders.AUTO_PROVIDERS.keySet());
                     selectedItemPropertyFor(cboVersionListSource).bindBidirectional(config().versionListSourceProperty());
                 }
 
