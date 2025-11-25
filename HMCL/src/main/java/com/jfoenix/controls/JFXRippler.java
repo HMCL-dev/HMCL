@@ -72,7 +72,7 @@ public class JFXRippler extends StackPane {
         CIRCLE, RECT, FIT
     }
 
-    private RippleGenerator rippler;
+    protected RippleGenerator rippler;
     protected Pane ripplerPane;
     protected Node control;
 
@@ -344,7 +344,7 @@ public class JFXRippler extends StackPane {
      * the createRipple method is called. Ripples grow and fade out
      * over 0.6 seconds
      */
-    final class RippleGenerator extends Group {
+    protected final class RippleGenerator extends Group {
 
         private double generatorCenterX = 0;
         private double generatorCenterY = 0;
