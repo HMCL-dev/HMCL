@@ -108,13 +108,12 @@ public final class ModpackInfoPage extends Control implements WizardPage {
     private void onNext() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle(i18n("modpack.wizard.step.initialization.save"));
-        if (controller.getSettings().get(MODPACK_TYPE) == ModpackTypeSelectionPage.MODPACK_TYPE_MODRINTH) {
+        if (MODPACK_TYPE_MODRINTH.equals(controller.getSettings().get(MODPACK_TYPE))) {
             fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("modpack"), "*.mrpack"));
-            fileChooser.setInitialFileName(name.get() + ".mrpack");
         } else {
             fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("modpack"), "*.zip"));
-            fileChooser.setInitialFileName(name.get() + ".zip");
         }
+        fileChooser.setInitialFileName(name.get());
         Path file = FileUtils.toPath(fileChooser.showSaveDialog(Controllers.getStage()));
         if (file == null) {
             controller.onEnd();
