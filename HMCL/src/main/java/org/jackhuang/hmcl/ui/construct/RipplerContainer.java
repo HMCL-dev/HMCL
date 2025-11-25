@@ -137,7 +137,7 @@ public class RipplerContainer extends StackPane {
     }
 
     private void interpolateBackground(double frac) {
-        Color onSurface = Theme.getTheme().getColorScheme().getOnSurface();
+        Color onSurface = Theme.getColorScheme().getOnSurface();
         setBackground(new Background(new BackgroundFill(
                 Color.color(onSurface.getRed(), onSurface.getGreen(), onSurface.getBlue(), frac * 0.04),
                 CornerRadii.EMPTY, Insets.EMPTY)));

@@ -91,7 +91,7 @@ public record Theme(ThemeColor primaryColorSeed,
     }
 
     private static final ColorSchemeBinding colorScheme = ColorSchemeBinding.createColorSchemeBinding(
-            () -> theme.get().getColorScheme(),
+            () -> theme.get().toColorScheme(),
             theme
     );
 
@@ -99,12 +99,8 @@ public record Theme(ThemeColor primaryColorSeed,
         return colorScheme;
     }
 
-    public ColorScheme getColorScheme() {
-        return ColorScheme.newBuilder()
-                .setPrimaryColorSeed(primaryColorSeed.color())
-                .setColorStyle(ColorStyle.FIDELITY)
-                .setBrightness(brightness)
-                .build();
+    public static ColorScheme getColorScheme() {
+        return colorScheme.get();
     }
 
     private static final BooleanBinding darkMode = Bindings.createBooleanBinding(
@@ -116,7 +112,11 @@ public record Theme(ThemeColor primaryColorSeed,
         return darkMode;
     }
 
-    public BooleanBinding darkMode() {
-        return darkModeProperty();
+    public ColorScheme toColorScheme() {
+        return ColorScheme.newBuilder()
+                .setPrimaryColorSeed(primaryColorSeed.color())
+                .setColorStyle(ColorStyle.FIDELITY)
+                .setBrightness(brightness)
+                .build();
     }
 }
