@@ -1214,7 +1214,7 @@ public final class FXUtils {
     public static JFXButton newToggleButton4(SVG icon) {
         JFXButton button = new JFXButton();
         button.getStyleClass().add("toggle-icon4");
-        button.setGraphic(icon.createIcon(Theme.blackFill(), -1));
+        button.setGraphic(icon.createIcon());
         return button;
     }
 

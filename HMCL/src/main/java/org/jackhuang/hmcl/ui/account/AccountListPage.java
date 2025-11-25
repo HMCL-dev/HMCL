@@ -158,7 +158,7 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                             e.consume();
                         });
                         btnRemove.getStyleClass().add("toggle-icon4");
-                        btnRemove.setGraphic(SVG.CLOSE.createIcon(Theme.blackFill(), 14));
+                        btnRemove.setGraphic(SVG.CLOSE.createIcon(14));
                         item.setRightGraphic(btnRemove);
 
                         ObservableValue<String> title = BindingMapping.of(server, AuthlibInjectorServer::getName);

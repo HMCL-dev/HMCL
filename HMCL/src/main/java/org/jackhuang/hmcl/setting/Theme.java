@@ -21,7 +21,7 @@ import javafx.scene.paint.Color;
 
 @Deprecated
 public final class Theme {
-    public static final Color BLACK = Color.web("#292929");
+    private static final Color BLACK = Color.web("#292929");
 
     public static Color blackFill() {
         return BLACK;
