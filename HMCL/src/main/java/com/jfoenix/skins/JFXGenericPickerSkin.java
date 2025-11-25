@@ -25,6 +25,7 @@ import com.sun.javafx.binding.ExpressionHelper;
 import com.sun.javafx.event.EventHandlerManager;
 import com.sun.javafx.stage.WindowEventDispatcher;
 import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanPropertyBase;
 import javafx.beans.value.ChangeListener;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
@@ -37,12 +38,16 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.stage.Window;
 
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public abstract class JFXGenericPickerSkin<T> extends ComboBoxPopupControl<T> {
 
@@ -117,12 +122,27 @@ public abstract class JFXGenericPickerSkin<T> extends ComboBoxPopupControl<T> {
         }
     };
 
+    private static final VarHandle READ_ONLY_BOOLEAN_PROPERTY_BASE_HELPER;
+
+    static {
+        VarHandle readOnlyBooleanPropertyBaseHelper;
+        try {
+            readOnlyBooleanPropertyBaseHelper = MethodHandles.privateLookupIn(ReadOnlyBooleanPropertyBase.class, MethodHandles.lookup())
+                    .findVarHandle(ReadOnlyBooleanPropertyBase.class, "helper", ExpressionHelper.class);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            LOG.warning("Failed to get var handle", e);
+            readOnlyBooleanPropertyBaseHelper = null;
+        }
+        READ_ONLY_BOOLEAN_PROPERTY_BASE_HELPER = readOnlyBooleanPropertyBaseHelper;
+    }
+
     private void removeParentFakeFocusListener(ComboBoxBase<T> comboBoxBase) {
         // handle FakeFocusField cast exception
         try {
             final ReadOnlyBooleanProperty focusedProperty = comboBoxBase.focusedProperty();
-            ExpressionHelper value = ReflectionHelper.getFieldContent(focusedProperty.getClass().getSuperclass(), focusedProperty, "helper");
-            ChangeListener[] changeListeners = ReflectionHelper.getFieldContent(value.getClass(), value, "changeListeners");
+            //noinspection unchecked
+            ExpressionHelper<Boolean> value = (ExpressionHelper<Boolean>) READ_ONLY_BOOLEAN_PROPERTY_BASE_HELPER.get(focusedProperty);
+            ChangeListener<? super Boolean>[] changeListeners = ReflectionHelper.getFieldContent(value.getClass(), value, "changeListeners");
             // remove parent focus listener to prevent editor class cast exception
             for (int i = changeListeners.length - 1; i > 0; i--) {
                 if (changeListeners[i] != null && changeListeners[i].getClass().getName().contains("ComboBoxPopupControl")) {
