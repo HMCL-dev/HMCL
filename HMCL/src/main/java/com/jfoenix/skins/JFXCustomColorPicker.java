@@ -43,10 +43,7 @@ import java.util.ArrayList;
 
 import static javafx.animation.Interpolator.EASE_BOTH;
 
-
-/**
- * @author Shadi Shaheen
- */
+/// @author Shadi Shaheen
 final class JFXCustomColorPicker extends Pane {
 
     ObjectProperty<RecentColorPath> selectedPath = new SimpleObjectProperty<>();
@@ -125,7 +122,6 @@ final class JFXCustomColorPicker extends Pane {
         selectedPath.set((RecentColorPath) this.getChildren().get(shapesStartIndex));
     }
 
-
     public int getShapesNumber() {
         return shapesNumber;
     }
@@ -149,7 +145,6 @@ final class JFXCustomColorPicker extends Pane {
             return Color.WHITE;
         }
     }
-
 
     public void preAnimate() {
         final CubicCurve firstCurve = curves.get(0);
@@ -309,7 +304,6 @@ final class JFXCustomColorPicker extends Pane {
         innerCircleCurveTo.xProperty().bind(innerCircleCurve.startXProperty());
         innerCircleCurveTo.yProperty().bind(innerCircleCurve.startYProperty());
     }
-
 
     private void createQuadraticCurve(final DoubleProperty rotationAngle, final double initControlX1, final double initControlY1) {
         for (int i = 0; i < 2; i++) {

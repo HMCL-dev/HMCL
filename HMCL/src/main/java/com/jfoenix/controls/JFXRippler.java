@@ -80,7 +80,7 @@ public class JFXRippler extends StackPane {
 
     private boolean enabled = true;
     private boolean forceOverlay = false;
-    private Interpolator rippleInterpolator = Interpolator.SPLINE(0.0825,
+    private final Interpolator rippleInterpolator = Interpolator.SPLINE(0.0825,
             0.3025,
             0.0875,
             0.9975); //0.1, 0.54, 0.28, 0.95);
@@ -295,23 +295,16 @@ public class JFXRippler extends StackPane {
         };
     }
 
-    /**
-     * show/hide the ripple overlay
-     *
-     * @param visible
-     * @param forceOverlay used to hold the overlay after ripple action
-     */
+    /// show/hide the ripple overlay
+    ///
+    /// @param forceOverlay used to hold the overlay after ripple action
     public void setOverlayVisible(boolean visible, boolean forceOverlay) {
         this.forceOverlay = forceOverlay;
         setOverlayVisible(visible);
     }
 
-    /**
-     * show/hide the ripple overlay
-     * NOTE: setting overlay visibility to false will reset forceOverlay to false
-     *
-     * @param visible
-     */
+    /// show/hide the ripple overlay
+    /// NOTE: setting overlay visibility to false will reset forceOverlay to false
     public void setOverlayVisible(boolean visible) {
         if (visible) {
             showOverlay();
@@ -325,7 +318,6 @@ public class JFXRippler extends StackPane {
      * this method will be set to private in future versions of JFoenix,
      * user the method {@link #setOverlayVisible(boolean)}
      */
-    @Deprecated
     public void showOverlay() {
         if (rippler.overlayRect != null) {
             rippler.overlayRect.outAnimation.stop();
@@ -334,7 +326,6 @@ public class JFXRippler extends StackPane {
         rippler.overlayRect.inAnimation.play();
     }
 
-    @Deprecated
     public void hideOverlay() {
         if (!forceOverlay) {
             if (rippler.overlayRect != null) {
@@ -417,7 +408,6 @@ public class JFXRippler extends StackPane {
         void cacheRippleClip(boolean cached) {
             cacheRipplerClip = cached;
         }
-
 
         void createOverlay() {
             if (overlayRect == null) {
@@ -718,7 +708,6 @@ public class JFXRippler extends StackPane {
     public ObjectProperty<RipplerPos> positionProperty() {
         return this.position;
     }
-
 
     private static final class StyleableProperties {
         private static final CssMetaData<JFXRippler, Boolean> RIPPLER_RECENTER =

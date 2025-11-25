@@ -36,7 +36,7 @@ public class JFXClippedPane extends StackPane {
 
     private final Region clip = new Region();
 
-    public JFXClippedPane(){
+    public JFXClippedPane() {
         super();
         init();
     }
@@ -55,6 +55,6 @@ public class JFXClippedPane extends StackPane {
     @Override
     protected void layoutChildren() {
         super.layoutChildren();
-        clip.resizeRelocate(0,0,getWidth(), getHeight());
+        clip.resizeRelocate(0, 0, getWidth(), getHeight());
     }
 }

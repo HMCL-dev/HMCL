@@ -348,7 +348,7 @@ public class JFXCustomColorPickerDialog extends StackPane {
 
     public void show() {
         dialog.setOpacity(0);
-        //		pickerDecorator.setOpacity(0);
+        // pickerDecorator.setOpacity(0);
         if (dialog.getOwner() != null) {
             dialog.widthProperty().addListener(positionAdjuster);
             dialog.heightProperty().addListener(positionAdjuster);

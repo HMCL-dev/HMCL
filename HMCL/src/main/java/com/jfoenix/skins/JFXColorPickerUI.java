@@ -39,7 +39,6 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Path;
 import javafx.util.Duration;
 
-
 /**
  * @author Shadi Shaheen & Bassel El Mabsout this UI allows the user to pick a color using HSL color system
  */
@@ -62,7 +61,6 @@ final class JFXColorPickerUI extends Pane {
     private CurveTransition colorsTransition;
 
     public JFXColorPickerUI(int pickerSize) {
-
         JFXDepthManager.setDepth(this, 1);
 
         this.pickerSize = pickerSize;
@@ -86,8 +84,7 @@ final class JFXColorPickerUI extends Pane {
         Circle r1 = new Circle(pickerRadius - huesSmallR);
         Circle r2 = new Circle(pickerRadius - huesRadius);
         colorSelector = new Pane();
-        colorSelector.setStyle(
-            "-fx-border-color:#424242; -fx-border-width:1px; -fx-background-color:rgba(255, 255, 255, 0.87);");
+        colorSelector.setStyle("-fx-border-color:#424242; -fx-border-width:1px; -fx-background-color:rgba(255, 255, 255, 0.87);");
         colorSelector.setPrefSize(pickerRadius - huesSmallR, pickerRadius - huesSmallR);
         colorSelector.setShape(Path.subtract(r1, r2));
         colorSelector.setCache(true);
@@ -116,17 +113,17 @@ final class JFXColorPickerUI extends Pane {
             double x = centerX + huesRadius * Math.cos(theta);
             double y = centerY + huesRadius * Math.sin(theta);
             colorsTransition = new CurveTransition(new Point2D(colorSelector.getTranslateX() + colorSelector.getPrefWidth() / 2,
-                colorSelector.getTranslateY() + colorSelector.getPrefHeight() / 2),
-                new Point2D(x, y));
+                    colorSelector.getTranslateY() + colorSelector.getPrefHeight() / 2),
+                    new Point2D(x, y));
             colorsTransition.play();
         });
         colorSelector.translateXProperty()
-            .addListener((o, oldVal, newVal) -> updateHSLCircleColor((int) (newVal.intValue() + colorSelector.getPrefWidth() / 2),
-                (int) (colorSelector.getTranslateY() + colorSelector
-                    .getPrefHeight() / 2)));
+                .addListener((o, oldVal, newVal) -> updateHSLCircleColor((int) (newVal.intValue() + colorSelector.getPrefWidth() / 2),
+                        (int) (colorSelector.getTranslateY() + colorSelector
+                                .getPrefHeight() / 2)));
         colorSelector.translateYProperty()
-            .addListener((o, oldVal, newVal) -> updateHSLCircleColor((int) (colorSelector.getTranslateX() + colorSelector
-                .getPrefWidth() / 2), (int) (newVal.intValue() + colorSelector.getPrefHeight() / 2)));
+                .addListener((o, oldVal, newVal) -> updateHSLCircleColor((int) (colorSelector.getTranslateX() + colorSelector
+                        .getPrefWidth() / 2), (int) (newVal.intValue() + colorSelector.getPrefHeight() / 2)));
 
 
         // Create SL Circle
@@ -141,7 +138,7 @@ final class JFXColorPickerUI extends Pane {
         Circle c2 = new Circle((selectorSize / 2) * 0.5);
         selector.setShape(Path.subtract(c1, c2));
         selector.setStyle(
-            "-fx-border-color:#424242; -fx-border-width:1px;-fx-background-color:rgba(255, 255, 255, 0.87);");
+                "-fx-border-color:#424242; -fx-border-width:1px;-fx-background-color:rgba(255, 255, 255, 0.87);");
         selector.setPrefSize(selectorSize, selectorSize);
         selector.setMinSize(selectorSize, selectorSize);
         selector.setMaxSize(selectorSize, selectorSize);
@@ -170,26 +167,26 @@ final class JFXColorPickerUI extends Pane {
         });
         slCircleView.addEventHandler(MouseEvent.MOUSE_PRESSED, (event) -> {
             selectorTransition = new CachedTransition(selector, new Timeline(new KeyFrame(Duration.millis(1000),
-                new KeyValue(selector.translateXProperty(),
-                    event.getX() - selector
-                        .getPrefWidth() / 2,
-                    Interpolator.EASE_BOTH),
-                new KeyValue(selector.translateYProperty(),
-                    event.getY() - selector
-                        .getPrefHeight() / 2,
-                    Interpolator.EASE_BOTH)))) {{
-                setCycleDuration(Duration.millis(160));
-                setDelay(Duration.seconds(0));
-            }};
+                    new KeyValue(selector.translateXProperty(),
+                            event.getX() - selector.getPrefWidth() / 2,
+                            Interpolator.EASE_BOTH),
+                    new KeyValue(selector.translateYProperty(),
+                            event.getY() - selector.getPrefHeight() / 2,
+                            Interpolator.EASE_BOTH)))) {
+                {
+                    setCycleDuration(Duration.millis(160));
+                    setDelay(Duration.seconds(0));
+                }
+            };
             selectorTransition.play();
         });
         // add slCircleView listener
         selector.translateXProperty()
-            .addListener((o, oldVal, newVal) -> setColorAtLocation(newVal.intValue() + selectorSize / 2,
-                (int) selector.getTranslateY() + selectorSize / 2));
+                .addListener((o, oldVal, newVal) -> setColorAtLocation(newVal.intValue() + selectorSize / 2,
+                        (int) selector.getTranslateY() + selectorSize / 2));
         selector.translateYProperty()
-            .addListener((o, oldVal, newVal) -> setColorAtLocation((int) selector.getTranslateX() + selectorSize / 2,
-                newVal.intValue() + selectorSize / 2));
+                .addListener((o, oldVal, newVal) -> setColorAtLocation((int) selector.getTranslateX() + selectorSize / 2,
+                        newVal.intValue() + selectorSize / 2));
 
 
         // initial color selection
@@ -246,7 +243,7 @@ final class JFXColorPickerUI extends Pane {
         colorAdjust.setHue(map(currentHue + (currentHue < 127.5 ? 1 : -1) * 127.5, 0, 255, -1, 1));
         slCircleView.setEffect(colorAdjust);
         setColorAtLocation((int) selector.getTranslateX() + selectorSize / 2,
-            (int) selector.getTranslateY() + selectorSize / 2);
+                (int) selector.getTranslateY() + selectorSize / 2);
     }
 
 
@@ -259,9 +256,9 @@ final class JFXColorPickerUI extends Pane {
     public void moveToColor(Color color) {
         allowColorChange = false;
         double max = Math.max(color.getRed(),
-            Math.max(color.getGreen(), color.getBlue())), min = Math.min(color.getRed(),
-            Math.min(color.getGreen(),
-                color.getBlue()));
+                Math.max(color.getGreen(), color.getBlue())), min = Math.min(color.getRed(),
+                Math.min(color.getGreen(),
+                        color.getBlue()));
         double hue = 0;
         double l = (max + min) / 2;
         double s = 0;
@@ -285,10 +282,12 @@ final class JFXColorPickerUI extends Pane {
         double theta = map(currentHue, 0, 255, -Math.PI, Math.PI);
         double x = centerX + huesRadius * Math.cos(theta);
         double y = centerY + huesRadius * Math.sin(theta);
-        colorsTransition = new CurveTransition(new Point2D(colorSelector.getTranslateX() + colorSelector.getPrefWidth() / 2,
-            colorSelector.getTranslateY() + colorSelector.getPrefHeight() / 2),
-            new Point2D(x, y));
-
+        colorsTransition = new CurveTransition(
+                new Point2D(
+                        colorSelector.getTranslateX() + colorSelector.getPrefWidth() / 2,
+                        colorSelector.getTranslateY() + colorSelector.getPrefHeight() / 2
+                ),
+                new Point2D(x, y));
 
         // Animate SL
         s = map(s, 0, 1, 0, 255);
@@ -312,15 +311,17 @@ final class JFXColorPickerUI extends Pane {
             endPointY = y - selector.getPrefHeight() / 2;
         }
         selectorTransition = new CachedTransition(selector, new Timeline(new KeyFrame(Duration.millis(1000),
-            new KeyValue(selector.translateXProperty(),
-                endPointX,
-                Interpolator.EASE_BOTH),
-            new KeyValue(selector.translateYProperty(),
-                endPointY,
-                Interpolator.EASE_BOTH)))) {{
-            setCycleDuration(Duration.millis(160));
-            setDelay(Duration.seconds(0));
-        }};
+                new KeyValue(selector.translateXProperty(),
+                        endPointX,
+                        Interpolator.EASE_BOTH),
+                new KeyValue(selector.translateYProperty(),
+                        endPointY,
+                        Interpolator.EASE_BOTH)))) {
+            {
+                setCycleDuration(Duration.millis(160));
+                setDelay(Duration.seconds(0));
+            }
+        };
 
         if (pTrans != null) {
             pTrans.stop();
@@ -341,7 +342,7 @@ final class JFXColorPickerUI extends Pane {
             Color color = getColorAtLocation(x, y);
             String colorString = "rgb(" + color.getRed() * 255 + "," + color.getGreen() * 255 + "," + color.getBlue() * 255 + ");";
             for (Node node : colorNodes)
-                node.setStyle("-fx-background-color:" + colorString + "; -fx-fill:" + colorString+";");
+                node.setStyle("-fx-background-color:" + colorString + "; -fx-fill:" + colorString + ";");
         }
     }
 
@@ -446,7 +447,6 @@ final class JFXColorPickerUI extends Pane {
         return pixelColor;
     }
 
-
     /***************************************************************************
      *                                                                         *
      * Hues Animation                                                          *
@@ -491,10 +491,9 @@ final class JFXColorPickerUI extends Pane {
         }
     }
 
-
     /***************************************************************************
      *                                                                         *
-     * Util methods	                                                           *
+     * Util methods                                                            *
      *                                                                         *
      **************************************************************************/
 
@@ -589,9 +588,8 @@ final class JFXColorPickerUI extends Pane {
         dx = ox - ax;
         dy = oy - ay;
         radius = Math.sqrt(dx * dx + dy * dy);
-        return new double[] {ox, oy, radius};
+        return new double[]{ox, oy, radius};
     }
-
 
     private Point2D getPointFromSL(int saturation, int lightness, double radius) {
         double dy = map(saturation, 0, 255, -radius, radius);
@@ -622,9 +620,9 @@ final class JFXColorPickerUI extends Pane {
 
     private Point2D rotate(Point2D a, Point2D center, double angle) {
         double resultX = center.getX() + (a.getX() - center.getX()) * Math.cos(angle) - (a.getY() - center.getY()) * Math
-            .sin(angle);
+                .sin(angle);
         double resultY = center.getY() + (a.getX() - center.getX()) * Math.sin(angle) + (a.getY() - center.getY()) * Math
-            .cos(angle);
+                .cos(angle);
         return new Point2D(resultX, resultY);
     }
 

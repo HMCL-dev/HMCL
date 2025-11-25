@@ -122,18 +122,17 @@ public abstract class JFXGenericPickerSkin<T> extends ComboBoxPopupControl<T> {
         }
     };
 
-    private static final VarHandle READ_ONLY_BOOLEAN_PROPERTY_BASE_HELPER;
+    private static final VarHandle READ_ONLY_BOOLEAN_PROPERTY_BASE_HELPER =
+            findVarHandle(ReadOnlyBooleanPropertyBase.class, "helper", ExpressionHelper.class);
 
-    static {
-        VarHandle readOnlyBooleanPropertyBaseHelper;
+    /// @author Glavo
+    private static VarHandle findVarHandle(Class<?> targetClass, String fieldName, Class<?> type) {
         try {
-            readOnlyBooleanPropertyBaseHelper = MethodHandles.privateLookupIn(ReadOnlyBooleanPropertyBase.class, MethodHandles.lookup())
-                    .findVarHandle(ReadOnlyBooleanPropertyBase.class, "helper", ExpressionHelper.class);
+            return MethodHandles.privateLookupIn(targetClass, MethodHandles.lookup()).findVarHandle(targetClass, fieldName, type);
         } catch (NoSuchFieldException | IllegalAccessException e) {
             LOG.warning("Failed to get var handle", e);
-            readOnlyBooleanPropertyBaseHelper = null;
+            return null;
         }
-        READ_ONLY_BOOLEAN_PROPERTY_BASE_HELPER = readOnlyBooleanPropertyBaseHelper;
     }
 
     private void removeParentFakeFocusListener(ComboBoxBase<T> comboBoxBase) {

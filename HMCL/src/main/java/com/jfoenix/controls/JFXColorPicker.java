@@ -107,7 +107,7 @@ public class JFXColorPicker extends ColorPicker {
         this.disableAnimationProperty().set(disabled);
     }
 
-    private static class StyleableProperties {
+    private static final class StyleableProperties {
 
         private static final CssMetaData<JFXColorPicker, Boolean> DISABLE_ANIMATION =
             new CssMetaData<JFXColorPicker, Boolean>("-jfx-disable-animation",
@@ -133,7 +133,6 @@ public class JFXColorPicker extends ColorPicker {
             CHILD_STYLEABLES = Collections.unmodifiableList(styleables);
         }
     }
-
 
     @Override
     public List<CssMetaData<? extends Styleable, ?>> getControlCssMetaData() {

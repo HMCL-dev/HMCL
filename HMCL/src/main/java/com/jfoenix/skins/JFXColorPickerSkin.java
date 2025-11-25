@@ -101,7 +101,6 @@ public final class JFXColorPickerSkin extends JFXGenericPickerSkin<Color> {
         });
     }
 
-
     @Override
     protected double computePrefWidth(double height, double topInset, double rightInset, double bottomInset, double leftInset) {
         double width = 100;
@@ -202,11 +201,11 @@ public final class JFXColorPickerSkin extends JFXGenericPickerSkin<Color> {
 
     /***************************************************************************
      *                                                                         *
-     * Stylesheet Handling   											       *
+     * Stylesheet Handling                                                     *
      *                                                                         *
      **************************************************************************/
 
-    private static class StyleableProperties {
+    private static final class StyleableProperties {
         private static final CssMetaData<ColorPicker, Boolean> COLOR_LABEL_VISIBLE =
                 new CssMetaData<ColorPicker, Boolean>("-fx-color-label-visible",
                         BooleanConverter.getInstance(), Boolean.TRUE) {
