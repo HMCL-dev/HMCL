@@ -1347,10 +1347,6 @@
 *                                                                              *
 *******************************************************************************/
 
-.jfx-color-picker .color-picker-label {
-    -fx-text-fill: -monet-on-surface;
-}
-
 .jfx-color-picker:armed,
 .jfx-color-picker:hover,
 .jfx-color-picker:focused,
@@ -1362,7 +1358,7 @@
 }
 
 .jfx-color-picker > .jfx-rippler > .color-box {
-    -fx-background-color: #fafafa;
+    -fx-background-color: -monet-primary-seed;
     -fx-background-radius: 3px;
     -fx-background-insets: 0px;
 }

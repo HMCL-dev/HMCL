@@ -168,6 +168,8 @@ public final class StyleSheets {
             addColor(builder, colorRole.getVariableName(), scheme.getColor(colorRole));
         }
 
+        addColor(builder, "-monet-primary-seed", scheme.getPrimaryColorSeed());
+
         addColor(builder, scheme, ColorRole.PRIMARY, 0.5);
         addColor(builder, scheme, ColorRole.SECONDARY_CONTAINER, 0.5);
         addColor(builder, scheme, ColorRole.SURFACE, 0.5);
