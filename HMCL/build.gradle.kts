@@ -125,6 +125,7 @@ val addOpens = listOf(
     "javafx.base/com.sun.javafx.binding",
     "javafx.base/com.sun.javafx.event",
     "javafx.base/com.sun.javafx.runtime",
+    "javafx.base/javafx.beans.property",
     "javafx.graphics/javafx.css",
     "javafx.graphics/javafx.stage",
     "javafx.graphics/com.sun.javafx.stage",

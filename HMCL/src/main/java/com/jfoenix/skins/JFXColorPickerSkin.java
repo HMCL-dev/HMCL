@@ -28,11 +28,7 @@ import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
-import javafx.css.CssMetaData;
-import javafx.css.SimpleStyleableBooleanProperty;
-import javafx.css.Styleable;
-import javafx.css.StyleableBooleanProperty;
-import javafx.css.StyleableProperty;
+import javafx.css.*;
 import javafx.css.converter.BooleanConverter;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
@@ -54,10 +50,10 @@ import java.util.List;
 /**
  * @author Shadi Shaheen
  */
-public class JFXColorPickerSkin extends JFXGenericPickerSkin<Color> {
+public final class JFXColorPickerSkin extends JFXGenericPickerSkin<Color> {
 
-    private Label displayNode;
-    private JFXClippedPane colorBox;
+    private final Label displayNode;
+    private final JFXClippedPane colorBox;
     private JFXColorPalette popupContent;
     StyleableBooleanProperty colorLabelVisible = new SimpleStyleableBooleanProperty(StyleableProperties.COLOR_LABEL_VISIBLE,
             JFXColorPickerSkin.this,
@@ -97,16 +93,13 @@ public class JFXColorPickerSkin extends JFXGenericPickerSkin<Color> {
         registerChangeListener(colorPicker.valueProperty(), obs -> updateColor());
 
         colorLabelVisible.addListener(invalidate -> {
-            if (displayNode != null) {
-                if (colorLabelVisible.get()) {
-                    displayNode.setText(JFXNodeUtils.colorToHex(getSkinnable().getValue()));
-                } else {
-                    displayNode.setText("");
-                }
+            if (colorLabelVisible.get()) {
+                displayNode.setText(JFXNodeUtils.colorToHex(getSkinnable().getValue()));
+            } else {
+                displayNode.setText("");
             }
         });
     }
-
 
     @Override
     protected double computePrefWidth(double height, double topInset, double rightInset, double bottomInset, double leftInset) {
@@ -208,11 +201,11 @@ public class JFXColorPickerSkin extends JFXGenericPickerSkin<Color> {
 
     /***************************************************************************
      *                                                                         *
-     * Stylesheet Handling   											       *
+     * Stylesheet Handling                                                     *
      *                                                                         *
      **************************************************************************/
 
-    private static class StyleableProperties {
+    private static final class StyleableProperties {
         private static final CssMetaData<ColorPicker, Boolean> COLOR_LABEL_VISIBLE =
                 new CssMetaData<ColorPicker, Boolean>("-fx-color-label-visible",
                         BooleanConverter.getInstance(), Boolean.TRUE) {
