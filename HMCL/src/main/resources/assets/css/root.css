@@ -406,7 +406,8 @@
  ******************************************************************************/
 
 .tooltip {
-    -fx-text-fill: WHITE;
+    -fx-text-fill: -monet-inverse-on-surface;
+    -fx-background-color: -monet-inverse-surface;
 }
 
 /*******************************************************************************
@@ -1350,6 +1351,21 @@
     -fx-text-fill: -monet-on-surface;
 }
 
+.jfx-color-picker:armed,
+.jfx-color-picker:hover,
+.jfx-color-picker:focused,
+.jfx-color-picker {
+    -fx-background-color: TRANSPARENT, TRANSPARENT, TRANSPARENT, TRANSPARENT;
+    -fx-background-radius: 3px;
+    -fx-background-insets: 0px;
+    -fx-min-height: 25px;
+}
+
+.jfx-color-picker > .jfx-rippler > .color-box {
+    -fx-background-color: #fafafa;
+    -fx-background-radius: 3px;
+    -fx-background-insets: 0px;
+}
 /*******************************************************************************
 *                                                                              *
 * JFX Decorator                                                                *
