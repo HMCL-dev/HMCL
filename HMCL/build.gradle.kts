@@ -117,10 +117,6 @@ tasks.checkstyleMain {
     exclude("**/org/jackhuang/hmcl/ui/image/apng/**")
 }
 
-tasks.compileJava {
-    options.compilerArgs.add("--add-exports=java.base/jdk.internal.loader=ALL-UNNAMED")
-}
-
 val addOpens = listOf(
     "java.base/java.lang",
     "java.base/java.lang.reflect",
@@ -128,14 +124,21 @@ val addOpens = listOf(
     "javafx.base/com.sun.javafx.binding",
     "javafx.base/com.sun.javafx.event",
     "javafx.base/com.sun.javafx.runtime",
+    "javafx.base/javafx.beans.property",
     "javafx.graphics/javafx.css",
+    "javafx.graphics/javafx.stage",
     "javafx.graphics/com.sun.javafx.stage",
+    "javafx.graphics/com.sun.javafx.util",
     "javafx.graphics/com.sun.prism",
     "javafx.controls/com.sun.javafx.scene.control",
     "javafx.controls/com.sun.javafx.scene.control.behavior",
     "javafx.controls/javafx.scene.control.skin",
     "jdk.attach/sun.tools.attach",
 )
+
+tasks.compileJava {
+    options.compilerArgs.addAll(addOpens.map { "--add-exports=$it=ALL-UNNAMED" })
+}
 
 val hmclProperties = buildList {
     add("hmcl.version" to project.version.toString())
