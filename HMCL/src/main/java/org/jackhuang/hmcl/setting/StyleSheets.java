@@ -170,11 +170,10 @@ public final class StyleSheets {
             addColor(builder, colorRole.getVariableName(), scheme.getColor(colorRole));
         }
 
-        addColor(builder, "-monet-primary-transparent", scheme.getPrimary(), 0.5);
-        addColor(builder, "-monet-secondary-container-transparent", scheme.getSecondaryContainer(), 0.5);
-        addColor(builder, "-monet-surface-transparent", scheme.getSurface(), 0.5);
-        addColor(builder, "-monet-surface-transparent-80", scheme.getSurface(), 0.8);
-
+        addColor(builder, scheme, ColorRole.PRIMARY, 0.5);
+        addColor(builder, scheme, ColorRole.SECONDARY_CONTAINER, 0.5);
+        addColor(builder, scheme, ColorRole.SURFACE, 0.5);
+        addColor(builder, scheme, ColorRole.SURFACE, 0.8);
         addColor(builder, scheme, ColorRole.ON_SURFACE_VARIANT, 0.38);
         addColor(builder, scheme, ColorRole.SURFACE_CONTAINER_LOW, 0.8);
         addColor(builder, scheme, ColorRole.SECONDARY_CONTAINER, 0.8);

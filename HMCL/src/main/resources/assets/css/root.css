@@ -107,7 +107,7 @@
 }
 
 .memory-allocate {
-    -fx-background-color: -monet-primary-transparent;
+    -fx-background-color: -monet-primary-transparent-50;
 }
 
 .memory-allocate:disabled {
@@ -181,7 +181,7 @@
 }
 
 .advanced-list-item:selected > .rippler-container > .container {
-    -fx-background-color: -monet-secondary-container-transparent;
+    -fx-background-color: -monet-secondary-container-transparent-50;
 }
 
 .advanced-list-item:selected > .rippler-container > .container > .two-line-list-item > .first-line > .title {
@@ -210,7 +210,7 @@
 }
 
 .profile-list-item:selected > .rippler-container > BorderPane {
-    -fx-background-color: -monet-secondary-container-transparent;
+    -fx-background-color: -monet-secondary-container-transparent-50;
 }
 
 .profile-list-item:selected > .rippler-container > BorderPane > .two-line-list-item > .first-line > .title {
@@ -1384,11 +1384,11 @@
 }
 
 .content-background {
-    -fx-background-color: -monet-surface-transparent;
+    -fx-background-color: -monet-surface-transparent-50;
 }
 
 .gray-background {
-    -fx-background-color: -monet-surface-transparent;
+    -fx-background-color: -monet-surface-transparent-50;
 }
 
 /*******************************************************************************
