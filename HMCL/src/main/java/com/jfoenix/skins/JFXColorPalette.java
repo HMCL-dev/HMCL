@@ -42,8 +42,11 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.StrokeType;
+import org.jackhuang.hmcl.util.i18n.I18n;
 
 import java.util.List;
+
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /**
  * @author Shadi Shaheen FUTURE WORK: this UI will get re-designed to match material design guidlines
@@ -54,19 +57,18 @@ final class JFXColorPalette extends Region {
 
     // package protected for testing purposes
     JFXColorGrid colorPickerGrid;
-    final JFXButton customColorLink = new JFXButton("Custom Color");
+    final JFXButton customColorLink = new JFXButton(i18n("color.custom"));
     JFXCustomColorPickerDialog customColorDialog = null;
 
     private final JFXColorPicker colorPicker;
     private final GridPane customColorGrid = new GridPane();
-    private final Label customColorLabel = new Label("Recent Colors");
+    private final Label customColorLabel = new Label(i18n("color.recent"));
 
     private PopupControl popupControl;
     private ColorSquare focusedSquare;
 
     private Color mouseDragColor = null;
     private boolean dragDetected = false;
-
 
     private final ColorSquare hoverSquare = new ColorSquare();
 
