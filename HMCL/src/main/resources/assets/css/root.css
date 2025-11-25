@@ -1362,6 +1362,11 @@
     -fx-background-radius: 3px;
     -fx-background-insets: 0px;
 }
+
+.color-palette {
+    -fx-background-color: -monet-surface;
+}
+
 /*******************************************************************************
 *                                                                              *
 * JFX Decorator                                                                *
