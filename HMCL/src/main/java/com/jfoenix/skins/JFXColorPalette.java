@@ -49,7 +49,7 @@ import java.util.List;
  * @author Shadi Shaheen FUTURE WORK: this UI will get re-designed to match material design guidlines
  */
 
-class JFXColorPalette extends Region {
+final class JFXColorPalette extends Region {
 
     private static final int SQUARE_SIZE = 15;
 
@@ -58,7 +58,7 @@ class JFXColorPalette extends Region {
     final JFXButton customColorLink = new JFXButton("Custom Color");
     JFXCustomColorPickerDialog customColorDialog = null;
 
-    private JFXColorPicker colorPicker;
+    private final JFXColorPicker colorPicker;
     private final GridPane customColorGrid = new GridPane();
     private final Label customColorLabel = new Label("Recent Colors");
 
@@ -400,7 +400,7 @@ class JFXColorPalette extends Region {
     }
 
     private static final int NUM_OF_COLUMNS = 10;
-    private static double[] RAW_VALUES = {
+    private static final double[] RAW_VALUES = {
         // WARNING: always make sure the number of colors is a divisable by NUM_OF_COLUMNS
         250, 250, 250, // first row
         245, 245, 245,

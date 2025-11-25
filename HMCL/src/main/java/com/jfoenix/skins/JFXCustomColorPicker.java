@@ -47,7 +47,7 @@ import static javafx.animation.Interpolator.EASE_BOTH;
 /**
  * @author Shadi Shaheen
  */
-class JFXCustomColorPicker extends Pane {
+final class JFXCustomColorPicker extends Pane {
 
     ObjectProperty<RecentColorPath> selectedPath = new SimpleObjectProperty<>();
     private MoveTo startPoint;
@@ -55,17 +55,17 @@ class JFXCustomColorPicker extends Pane {
     private CubicCurveTo outerCircleCurveTo;
     private CubicCurveTo curve1To;
     private CubicCurveTo innerCircleCurveTo;
-    private ArrayList<CubicCurve> curves = new ArrayList<>();
+    private final ArrayList<CubicCurve> curves = new ArrayList<>();
 
-    private double distance = 200;
-    private double centerX = distance;
-    private double centerY = distance;
-    private double radius = 110;
+    private final double distance = 200;
+    private final double centerX = distance;
+    private final double centerY = distance;
+    private final double radius = 110;
 
-    private int shapesNumber = 13;
-    private ArrayList<RecentColorPath> shapes = new ArrayList<>();
+    private static final int shapesNumber = 13;
+    private final ArrayList<RecentColorPath> shapes = new ArrayList<>();
     private CachedTransition showAnimation;
-    private JFXColorPickerUI hslColorPicker;
+    private final JFXColorPickerUI hslColorPicker;
 
     public JFXCustomColorPicker() {
         this.setPickOnBounds(false);
@@ -86,10 +86,10 @@ class JFXCustomColorPicker extends Pane {
         for (int i = 0; i < shapesNumber; i++) {
             final double angle = 2 * i * Math.PI / shapesNumber;
             final RecentColorPath path = new RecentColorPath(startPoint,
-                curve0To,
-                outerCircleCurveTo,
-                curve1To,
-                innerCircleCurveTo);
+                    curve0To,
+                    outerCircleCurveTo,
+                    curve1To,
+                    innerCircleCurveTo);
             shapes.add(path);
             path.setPickOnBounds(false);
             final Rotate rotate = new Rotate(Math.toDegrees(angle), centerX, centerY);
@@ -170,12 +170,12 @@ class JFXCustomColorPicker extends Pane {
         firstCurve.setControlY1(centerY + radius / 2);
 
         final KeyFrame keyFrame = new KeyFrame(Duration.millis(1000),
-            new KeyValue(firstCurve.startXProperty(), x, EASE_BOTH),
-            new KeyValue(firstCurve.startYProperty(), y, EASE_BOTH),
-            new KeyValue(secondCurve.startXProperty(), x1, EASE_BOTH),
-            new KeyValue(secondCurve.startYProperty(), y1, EASE_BOTH),
-            new KeyValue(firstCurve.controlX1Property(), cx1, EASE_BOTH),
-            new KeyValue(firstCurve.controlY1Property(), cy1, EASE_BOTH)
+                new KeyValue(firstCurve.startXProperty(), x, EASE_BOTH),
+                new KeyValue(firstCurve.startYProperty(), y, EASE_BOTH),
+                new KeyValue(secondCurve.startXProperty(), x1, EASE_BOTH),
+                new KeyValue(secondCurve.startYProperty(), y1, EASE_BOTH),
+                new KeyValue(firstCurve.controlX1Property(), cx1, EASE_BOTH),
+                new KeyValue(firstCurve.controlY1Property(), cy1, EASE_BOTH)
         );
         final Timeline timeline = new Timeline(keyFrame);
         showAnimation = new CachedTransition(this, timeline) {
@@ -207,52 +207,52 @@ class JFXCustomColorPicker extends Pane {
         innerCircleCurve.endYProperty().bind(curves.get(1).startYProperty());
         curves.get(0).startXProperty().addListener((o, oldVal, newVal) -> {
             final Point2D controlPoint = makeControlPoint(newVal.doubleValue(),
-                curves.get(0).getStartY(),
-                innerCircle,
-                shapesNumber,
-                -1);
+                    curves.get(0).getStartY(),
+                    innerCircle,
+                    shapesNumber,
+                    -1);
             innerCircleCurve.setControlX1(controlPoint.getX());
             innerCircleCurve.setControlY1(controlPoint.getY());
         });
         curves.get(0).startYProperty().addListener((o, oldVal, newVal) -> {
             final Point2D controlPoint = makeControlPoint(curves.get(0).getStartX(),
-                newVal.doubleValue(),
-                innerCircle,
-                shapesNumber,
-                -1);
+                    newVal.doubleValue(),
+                    innerCircle,
+                    shapesNumber,
+                    -1);
             innerCircleCurve.setControlX1(controlPoint.getX());
             innerCircleCurve.setControlY1(controlPoint.getY());
         });
         curves.get(1).startXProperty().addListener((o, oldVal, newVal) -> {
             final Point2D controlPoint = makeControlPoint(newVal.doubleValue(),
-                curves.get(1).getStartY(),
-                innerCircle,
-                shapesNumber,
-                1);
+                    curves.get(1).getStartY(),
+                    innerCircle,
+                    shapesNumber,
+                    1);
             innerCircleCurve.setControlX2(controlPoint.getX());
             innerCircleCurve.setControlY2(controlPoint.getY());
         });
         curves.get(1).startYProperty().addListener((o, oldVal, newVal) -> {
             final Point2D controlPoint = makeControlPoint(curves.get(1).getStartX(),
-                newVal.doubleValue(),
-                innerCircle,
-                shapesNumber,
-                1);
+                    newVal.doubleValue(),
+                    innerCircle,
+                    shapesNumber,
+                    1);
             innerCircleCurve.setControlX2(controlPoint.getX());
             innerCircleCurve.setControlY2(controlPoint.getY());
         });
         Point2D controlPoint = makeControlPoint(curves.get(0).getStartX(),
-            curves.get(0).getStartY(),
-            innerCircle,
-            shapesNumber,
-            -1);
+                curves.get(0).getStartY(),
+                innerCircle,
+                shapesNumber,
+                -1);
         innerCircleCurve.setControlX1(controlPoint.getX());
         innerCircleCurve.setControlY1(controlPoint.getY());
         controlPoint = makeControlPoint(curves.get(1).getStartX(),
-            curves.get(1).getStartY(),
-            innerCircle,
-            shapesNumber,
-            1);
+                curves.get(1).getStartY(),
+                innerCircle,
+                shapesNumber,
+                1);
         innerCircleCurve.setControlX2(controlPoint.getX());
         innerCircleCurve.setControlY2(controlPoint.getY());
 
@@ -263,10 +263,10 @@ class JFXCustomColorPicker extends Pane {
         outerCircleCurve.endXProperty().bind(curves.get(1).endXProperty());
         outerCircleCurve.endYProperty().bind(curves.get(1).endYProperty());
         controlPoint = makeControlPoint(curves.get(0).getEndX(),
-            curves.get(0).getEndY(),
-            outerCircle,
-            shapesNumber,
-            -1);
+                curves.get(0).getEndY(),
+                outerCircle,
+                shapesNumber,
+                -1);
         outerCircleCurve.setControlX1(controlPoint.getX());
         outerCircleCurve.setControlY1(controlPoint.getY());
         controlPoint = makeControlPoint(curves.get(1).getEndX(), curves.get(1).getEndY(), outerCircle, shapesNumber, 1);
@@ -442,9 +442,9 @@ class JFXCustomColorPicker extends Pane {
 
     private Point2D rotate(final Point2D a, final Point2D center, final double angle) {
         final double resultX = center.getX() + (a.getX() - center.getX()) * Math.cos(angle) - (a.getY() - center.getY()) * Math
-            .sin(angle);
+                .sin(angle);
         final double resultY = center.getY() + (a.getX() - center.getX()) * Math.sin(angle) + (a.getY() - center.getY()) * Math
-            .cos(angle);
+                .cos(angle);
         return new Point2D(resultX, resultY);
     }
 
@@ -485,37 +485,37 @@ class JFXCustomColorPicker extends Pane {
     private final class PathClickTransition extends CachedTransition {
         PathClickTransition(final Path path) {
             super(JFXCustomColorPicker.this, new Timeline(
-                    new KeyFrame(Duration.ZERO,
-                        new KeyValue(((DropShadow) path.getEffect()).radiusProperty(),
-                            JFXDepthManager.getShadowAt(2).radiusProperty().get(),
-                            EASE_BOTH),
-                        new KeyValue(((DropShadow) path.getEffect()).spreadProperty(),
-                            JFXDepthManager.getShadowAt(2).spreadProperty().get(),
-                            EASE_BOTH),
-                        new KeyValue(((DropShadow) path.getEffect()).offsetXProperty(),
-                            JFXDepthManager.getShadowAt(2).offsetXProperty().get(),
-                            EASE_BOTH),
-                        new KeyValue(((DropShadow) path.getEffect()).offsetYProperty(),
-                            JFXDepthManager.getShadowAt(2).offsetYProperty().get(),
-                            EASE_BOTH),
-                        new KeyValue(path.strokeWidthProperty(), 0, EASE_BOTH)
-                    ),
-                    new KeyFrame(Duration.millis(1000),
-                        new KeyValue(((DropShadow) path.getEffect()).radiusProperty(),
-                            JFXDepthManager.getShadowAt(5).radiusProperty().get(),
-                            EASE_BOTH),
-                        new KeyValue(((DropShadow) path.getEffect()).spreadProperty(),
-                            JFXDepthManager.getShadowAt(5).spreadProperty().get(),
-                            EASE_BOTH),
-                        new KeyValue(((DropShadow) path.getEffect()).offsetXProperty(),
-                            JFXDepthManager.getShadowAt(5).offsetXProperty().get(),
-                            EASE_BOTH),
-                        new KeyValue(((DropShadow) path.getEffect()).offsetYProperty(),
-                            JFXDepthManager.getShadowAt(5).offsetYProperty().get(),
-                            EASE_BOTH),
-                        new KeyValue(path.strokeWidthProperty(), 2, EASE_BOTH)
+                            new KeyFrame(Duration.ZERO,
+                                    new KeyValue(((DropShadow) path.getEffect()).radiusProperty(),
+                                            JFXDepthManager.getShadowAt(2).radiusProperty().get(),
+                                            EASE_BOTH),
+                                    new KeyValue(((DropShadow) path.getEffect()).spreadProperty(),
+                                            JFXDepthManager.getShadowAt(2).spreadProperty().get(),
+                                            EASE_BOTH),
+                                    new KeyValue(((DropShadow) path.getEffect()).offsetXProperty(),
+                                            JFXDepthManager.getShadowAt(2).offsetXProperty().get(),
+                                            EASE_BOTH),
+                                    new KeyValue(((DropShadow) path.getEffect()).offsetYProperty(),
+                                            JFXDepthManager.getShadowAt(2).offsetYProperty().get(),
+                                            EASE_BOTH),
+                                    new KeyValue(path.strokeWidthProperty(), 0, EASE_BOTH)
+                            ),
+                            new KeyFrame(Duration.millis(1000),
+                                    new KeyValue(((DropShadow) path.getEffect()).radiusProperty(),
+                                            JFXDepthManager.getShadowAt(5).radiusProperty().get(),
+                                            EASE_BOTH),
+                                    new KeyValue(((DropShadow) path.getEffect()).spreadProperty(),
+                                            JFXDepthManager.getShadowAt(5).spreadProperty().get(),
+                                            EASE_BOTH),
+                                    new KeyValue(((DropShadow) path.getEffect()).offsetXProperty(),
+                                            JFXDepthManager.getShadowAt(5).offsetXProperty().get(),
+                                            EASE_BOTH),
+                                    new KeyValue(((DropShadow) path.getEffect()).offsetYProperty(),
+                                            JFXDepthManager.getShadowAt(5).offsetYProperty().get(),
+                                            EASE_BOTH),
+                                    new KeyValue(path.strokeWidthProperty(), 2, EASE_BOTH)
+                            )
                     )
-                )
             );
             // reduce the number to increase the shifting , increase number to reduce shifting
             setCycleDuration(Duration.millis(120));

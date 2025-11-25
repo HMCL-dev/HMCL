@@ -44,7 +44,7 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public abstract class JFXGenericPickerSkin<T> extends ComboBoxPopupControl<T>{
+public abstract class JFXGenericPickerSkin<T> extends ComboBoxPopupControl<T> {
 
     private final EventHandler<MouseEvent> mouseEnteredEventHandler;
     private final EventHandler<MouseEvent> mousePressedEventHandler;
@@ -83,7 +83,7 @@ public abstract class JFXGenericPickerSkin<T> extends ComboBoxPopupControl<T>{
         this.unregisterChangeListeners(comboBoxBase.editableProperty());
 
         updateArrowButtonListeners();
-        registerChangeListener(comboBoxBase.editableProperty(), obs->{
+        registerChangeListener(comboBoxBase.editableProperty(), obs -> {
             updateArrowButtonListeners();
             reflectUpdateDisplayArea();
         });
@@ -108,7 +108,7 @@ public abstract class JFXGenericPickerSkin<T> extends ComboBoxPopupControl<T>{
      *                                                                         *
      **************************************************************************/
 
-    private BiConsumer<String, EventType<?>> parentArrowEventHandlerTerminator = (handlerName, eventType) ->{
+    private final BiConsumer<String, EventType<?>> parentArrowEventHandlerTerminator = (handlerName, eventType) -> {
         try {
             EventHandler handler = ReflectionHelper.getFieldContent(ComboBoxBaseSkin.class, this, handlerName);
             arrowButton.removeEventHandler(eventType, handler);
@@ -124,7 +124,7 @@ public abstract class JFXGenericPickerSkin<T> extends ComboBoxPopupControl<T>{
             ExpressionHelper value = ReflectionHelper.getFieldContent(focusedProperty.getClass().getSuperclass(), focusedProperty, "helper");
             ChangeListener[] changeListeners = ReflectionHelper.getFieldContent(value.getClass(), value, "changeListeners");
             // remove parent focus listener to prevent editor class cast exception
-            for(int i = changeListeners.length - 1; i > 0; i--) {
+            for (int i = changeListeners.length - 1; i > 0; i--) {
                 if (changeListeners[i] != null && changeListeners[i].getClass().getName().contains("ComboBoxPopupControl")) {
                     focusedProperty.removeListener(changeListeners[i]);
                     break;
@@ -146,7 +146,7 @@ public abstract class JFXGenericPickerSkin<T> extends ComboBoxPopupControl<T>{
 //            Object obj = fieldConsumer.apply(()->CompositeEventHandler.class.getDeclaredField("firstRecord"),compositeEventHandler);
 //            EventHandler handler = (EventHandler) fieldConsumer.apply(() -> obj.getClass().getDeclaredField("eventHandler"), obj);
 //            popup.removeEventHandler(MouseEvent.MOUSE_CLICKED, handler);
-            popup.addEventHandler(MouseEvent.MOUSE_CLICKED, click-> behavior.onAutoHide(popup));
+            popup.addEventHandler(MouseEvent.MOUSE_CLICKED, click -> behavior.onAutoHide(popup));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -173,10 +173,10 @@ public abstract class JFXGenericPickerSkin<T> extends ComboBoxPopupControl<T>{
      *                                                                         *
      **************************************************************************/
 
-    private HashMap<String, Method> parentCachedMethods = new HashMap<>();
+    private final HashMap<String, Method> parentCachedMethods = new HashMap<>();
 
-    Function<String, Method> methodSupplier = name ->{
-        if(!parentCachedMethods.containsKey(name)){
+    Function<String, Method> methodSupplier = name -> {
+        if (!parentCachedMethods.containsKey(name)) {
             try {
                 Method method = ComboBoxPopupControl.class.getDeclaredMethod(name);
                 method.setAccessible(true);
@@ -188,7 +188,7 @@ public abstract class JFXGenericPickerSkin<T> extends ComboBoxPopupControl<T>{
         return parentCachedMethods.get(name);
     };
 
-    Consumer<Method> methodInvoker = method -> {
+    final Consumer<Method> methodInvoker = method -> {
         try {
             method.invoke(this);
         } catch (Exception e) {
@@ -196,7 +196,7 @@ public abstract class JFXGenericPickerSkin<T> extends ComboBoxPopupControl<T>{
         }
     };
 
-    Function<Method, Object> methodReturnInvoker = method -> {
+    final Function<Method, Object> methodReturnInvoker = method -> {
         try {
             return method.invoke(this);
         } catch (Exception e) {
@@ -213,7 +213,7 @@ public abstract class JFXGenericPickerSkin<T> extends ComboBoxPopupControl<T>{
         methodInvoker.accept(methodSupplier.apply("setTextFromTextFieldIntoComboBoxValue"));
     }
 
-    protected TextField reflectGetEditableInputNode(){
+    protected TextField reflectGetEditableInputNode() {
         return (TextField) methodReturnInvoker.apply(methodSupplier.apply("getEditableInputNode"));
     }
 

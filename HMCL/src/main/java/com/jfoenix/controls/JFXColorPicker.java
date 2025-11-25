@@ -90,7 +90,7 @@ public class JFXColorPicker extends ColorPicker {
     /**
      * disable animation on button action
      */
-    private StyleableBooleanProperty disableAnimation = new SimpleStyleableBooleanProperty(StyleableProperties.DISABLE_ANIMATION,
+    private final StyleableBooleanProperty disableAnimation = new SimpleStyleableBooleanProperty(StyleableProperties.DISABLE_ANIMATION,
         JFXColorPicker.this,
         "disableAnimation",
         false);

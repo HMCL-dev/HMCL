@@ -50,10 +50,10 @@ import java.util.List;
 /**
  * @author Shadi Shaheen
  */
-public class JFXColorPickerSkin extends JFXGenericPickerSkin<Color> {
+public final class JFXColorPickerSkin extends JFXGenericPickerSkin<Color> {
 
-    private Label displayNode;
-    private JFXClippedPane colorBox;
+    private final Label displayNode;
+    private final JFXClippedPane colorBox;
     private JFXColorPalette popupContent;
     StyleableBooleanProperty colorLabelVisible = new SimpleStyleableBooleanProperty(StyleableProperties.COLOR_LABEL_VISIBLE,
             JFXColorPickerSkin.this,
@@ -93,12 +93,10 @@ public class JFXColorPickerSkin extends JFXGenericPickerSkin<Color> {
         registerChangeListener(colorPicker.valueProperty(), obs -> updateColor());
 
         colorLabelVisible.addListener(invalidate -> {
-            if (displayNode != null) {
-                if (colorLabelVisible.get()) {
-                    displayNode.setText(JFXNodeUtils.colorToHex(getSkinnable().getValue()));
-                } else {
-                    displayNode.setText("");
-                }
+            if (colorLabelVisible.get()) {
+                displayNode.setText(JFXNodeUtils.colorToHex(getSkinnable().getValue()));
+            } else {
+                displayNode.setText("");
             }
         });
     }
