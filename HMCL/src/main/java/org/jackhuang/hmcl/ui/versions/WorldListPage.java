@@ -27,7 +27,6 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
-import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
@@ -42,7 +41,7 @@ import java.util.stream.Stream;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class WorldListPage extends ListPageBase<WorldListItem> implements VersionPage.VersionLoadable, TransitionPane.Cacheable {
+public final class WorldListPage extends ListPageBase<WorldListItem> implements VersionPage.VersionLoadable {
     private final BooleanProperty showAll = new SimpleBooleanProperty(this, "showAll", false);
 
     private Path savesDir;
