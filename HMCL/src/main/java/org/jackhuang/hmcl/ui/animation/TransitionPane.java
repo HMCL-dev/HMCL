@@ -20,12 +20,12 @@ package org.jackhuang.hmcl.ui.animation;
 import javafx.animation.Animation;
 import javafx.animation.Interpolator;
 import javafx.application.Platform;
+import javafx.scene.CacheHint;
 import javafx.scene.Node;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.construct.TabHeader;
 import org.jetbrains.annotations.Nullable;
 
 public class TransitionPane extends StackPane {
@@ -38,17 +38,6 @@ public class TransitionPane extends StackPane {
 
     public Node getCurrentNode() {
         return currentNode;
-    }
-
-    public void bindTabHeader(TabHeader tabHeader) {
-        this.setContent(tabHeader.getSelectionModel().getSelectedItem().getNode(), ContainerAnimations.NONE);
-        FXUtils.onChange(tabHeader.getSelectionModel().selectedItemProperty(), newValue -> {
-            this.setContent(newValue.getNode(),
-                    ContainerAnimations.SLIDE_UP_FADE_IN,
-                    Motion.MEDIUM4,
-                    Motion.EASE_IN_OUT_CUBIC_EMPHASIZED
-            );
-        });
     }
 
     public final void setContent(Node newView, AnimationProducer transition) {
@@ -65,6 +54,7 @@ public class TransitionPane extends StackPane {
         currentNode = newView;
 
         if (!AnimationUtils.isAnimationEnabled() || previousNode == null || transition == ContainerAnimations.NONE) {
+            AnimationUtils.reset(newView, true);
             getChildren().setAll(newView);
             return;
         }
@@ -73,6 +63,15 @@ public class TransitionPane extends StackPane {
 
         setMouseTransparent(true);
         transition.init(this, previousNode, newView);
+
+        CacheHint cacheHint = newView instanceof Cacheable cacheable
+                ? cacheable.getCacheHint(transition)
+                : null;
+
+        if (cacheHint != null) {
+            newView.setCache(true);
+            newView.setCacheHint(cacheHint);
+        }
 
         // runLater or "init" will not work
         Platform.runLater(() -> {
@@ -84,6 +83,10 @@ public class TransitionPane extends StackPane {
             newAnimation.setOnFinished(e -> {
                 setMouseTransparent(false);
                 getChildren().remove(previousNode);
+
+                if (cacheHint != null) {
+                    newView.setCache(false);
+                }
             });
             FXUtils.playAnimation(this, "transition_pane", newAnimation);
         });
@@ -101,6 +104,16 @@ public class TransitionPane extends StackPane {
 
         default @Nullable TransitionPane.AnimationProducer opposite() {
             return null;
+        }
+    }
+
+    /// Marks a node as cacheable as a bitmap during animation.
+    public interface Cacheable {
+        /// @return the [cache hint][CacheHint] to use when caching this node during the given animation,
+        ///         or `null` to not cache it.
+        default @Nullable CacheHint getCacheHint(AnimationProducer animationProducer) {
+            // https://github.com/HMCL-dev/HMCL/issues/4789
+            return animationProducer == ContainerAnimations.SLIDE_UP_FADE_IN ? CacheHint.SPEED : null;
         }
     }
 }

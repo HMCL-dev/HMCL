@@ -29,10 +29,7 @@ import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
-import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
-import org.jackhuang.hmcl.ui.construct.PopupMenu;
-import org.jackhuang.hmcl.ui.construct.TabHeader;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.ChunkBaseApp;
@@ -68,16 +65,14 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         this.world = world;
         this.backupsDir = backupsDir;
 
-        this.state = new SimpleObjectProperty<>(State.fromTitle(i18n("world.manage.title", world.getWorldName())));
-        this.header = new TabHeader(worldInfoTab, gameRuleTab, worldBackupsTab);
-
-        worldInfoTab.setNodeSupplier(() -> new WorldInfoPage(this));
+        this.worldInfoTab.setNodeSupplier(() -> new WorldInfoPage(this));
         gameRuleTab.setNodeSupplier(() -> new GameRulePage(this));
-        worldBackupsTab.setNodeSupplier(() -> new WorldBackupsPage(this));
-        datapackTab.setNodeSupplier(() -> new DatapackListPage(this));
+        this.worldBackupsTab.setNodeSupplier(() -> new WorldBackupsPage(this));
+        this.datapackTab.setNodeSupplier(() -> new DatapackListPage(this));
 
+        this.state = new SimpleObjectProperty<>(State.fromTitle(i18n("world.manage.title", world.getWorldName())));
+        this.header = new TabHeader(transitionPane, worldInfoTab, gameRuleTab, worldBackupsTab);
         header.select(worldInfoTab);
-        transitionPane.bindTabHeader(header);
 
         setCenter(transitionPane);
 
