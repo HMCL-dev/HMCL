@@ -1363,6 +1363,10 @@
     -fx-background-insets: 0px;
 }
 
+.color-palette-region {
+
+}
+
 .color-palette {
     -fx-background-color: -monet-surface;
 }
