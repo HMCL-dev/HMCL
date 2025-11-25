@@ -35,7 +35,7 @@ import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontSmoothingType;
 import org.jackhuang.hmcl.setting.*;
-import org.jackhuang.hmcl.theme.Theme2;
+import org.jackhuang.hmcl.theme.Theme;
 import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -89,7 +89,7 @@ public class PersonalizationPage extends StackPane {
             themeColorPickerContainer.setMinHeight(30);
             themePane.setRight(themeColorPickerContainer);
 
-            ColorPicker picker = new JFXColorPicker(Theme2.getTheme().primaryColorSeed().color());
+            ColorPicker picker = new JFXColorPicker(Theme.getTheme().primaryColorSeed().color());
             picker.getCustomColors().setAll(ThemeColor.STANDARD_COLORS.stream().map(ThemeColor::color).toList());
             picker.setOnAction(e -> config().setThemeColor(ThemeColor.of(picker.getValue())));
             themeColorPickerContainer.getChildren().setAll(picker);
@@ -285,7 +285,7 @@ public class PersonalizationPage extends StackPane {
 
                         JFXButton clearButton = new JFXButton();
                         clearButton.getStyleClass().add("toggle-icon4");
-                        clearButton.setGraphic(SVG.RESTORE.createIcon(Theme.blackFill(), -1));
+                        clearButton.setGraphic(SVG.RESTORE.createIcon());
                         clearButton.setOnAction(e -> cboFont.setValue(null));
 
                         hBox.getChildren().setAll(cboFont, clearButton);

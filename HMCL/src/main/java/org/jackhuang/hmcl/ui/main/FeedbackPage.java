@@ -21,7 +21,7 @@ import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.theme.Theme2;
+import org.jackhuang.hmcl.theme.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.IconedTwoLineListItem;
@@ -52,7 +52,7 @@ public class FeedbackPage extends SpinnerPane {
             users.setExternalLink(Metadata.GROUPS_URL);
 
             IconedTwoLineListItem github = new IconedTwoLineListItem();
-            github.imageProperty().bind(Bindings.when(Theme2.darkModeProperty())
+            github.imageProperty().bind(Bindings.when(Theme.darkModeProperty())
                     .then(FXUtils.newBuiltinImage("/assets/img/github-white.png"))
                     .otherwise(FXUtils.newBuiltinImage("/assets/img/github.png")));
             github.setTitle(i18n("feedback.github"));

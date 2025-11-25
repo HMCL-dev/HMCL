@@ -30,7 +30,6 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
@@ -79,7 +78,7 @@ final class ComponentListCell extends StackPane {
 
             VBox groupNode = new VBox();
 
-            Node expandIcon = SVG.KEYBOARD_ARROW_DOWN.createIcon(Theme.blackFill(), 20);
+            Node expandIcon = SVG.KEYBOARD_ARROW_DOWN.createIcon(20);
             expandIcon.setMouseTransparent(true);
             HBox.setMargin(expandIcon, new Insets(0, 8, 0, 8));
 

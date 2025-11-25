@@ -29,7 +29,6 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
 import javafx.scene.text.TextAlignment;
 import org.jackhuang.hmcl.setting.EnumCommonDirectory;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
@@ -125,7 +124,7 @@ public abstract class SettingsView extends StackPane {
                         btnUpdate = new JFXButton();
                         btnUpdate.setOnAction(e -> onUpdate());
                         btnUpdate.getStyleClass().add("toggle-icon4");
-                        btnUpdate.setGraphic(SVG.UPDATE.createIcon(Theme.blackFill(), 20));
+                        btnUpdate.setGraphic(SVG.UPDATE.createIcon(20));
 
                         updatePane.setHeaderRight(btnUpdate);
                     }

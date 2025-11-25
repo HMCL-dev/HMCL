@@ -37,12 +37,12 @@ import java.util.Objects;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 
 /// @author Glavo
-public record Theme2(ThemeColor primaryColorSeed,
-                     Brightness brightness) {
+public record Theme(ThemeColor primaryColorSeed,
+                    Brightness brightness) {
 
-    public static final Theme2 DEFAULT = new Theme2(ThemeColor.DEFAULT, Brightness.DEFAULT);
+    public static final Theme DEFAULT = new Theme(ThemeColor.DEFAULT, Brightness.DEFAULT);
 
-    private static final ObjectExpression<Theme2> theme = new ObjectBinding<>() {
+    private static final ObjectExpression<Theme> theme = new ObjectBinding<>() {
         {
             List<Observable> observables = new ArrayList<>();
 
@@ -74,19 +74,19 @@ public record Theme2(ThemeColor primaryColorSeed,
         }
 
         @Override
-        protected Theme2 computeValue() {
-            return new Theme2(
+        protected Theme computeValue() {
+            return new Theme(
                     Objects.requireNonNullElse(config().getThemeColor(), ThemeColor.DEFAULT),
                     getBrightness()
             );
         }
     };
 
-    public static ObjectExpression<Theme2> themeProperty() {
+    public static ObjectExpression<Theme> themeProperty() {
         return theme;
     }
 
-    public static Theme2 getTheme() {
+    public static Theme getTheme() {
         return themeProperty().get();
     }
 

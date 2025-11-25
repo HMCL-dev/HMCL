@@ -21,7 +21,6 @@ import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.layout.StackPane;
-import javafx.scene.paint.Paint;
 import javafx.scene.shape.SVGPath;
 
 /**
@@ -150,16 +149,6 @@ public enum SVG {
         path.setScaleX(scale);
         path.setScaleY(scale);
         return new Group(path);
-    }
-
-    public Node createIcon(Paint fill, double size) {
-        SVGPath p = new SVGPath();
-        p.setContent(path);
-        p.getStyleClass().add("svg");
-        if (fill != null)
-            p.fillProperty().set(fill);
-
-        return createIcon(p, size);
     }
 
     public Node createIcon(double size) {

@@ -45,7 +45,6 @@ import javafx.stage.Stage;
 
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
@@ -275,7 +274,6 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 backNavButton.setFocusTraversable(false);
                 backNavButton.setGraphic(SVG.ARROW_BACK.createIcon());
                 backNavButton.getStyleClass().add("jfx-decorator-button");
-                backNavButton.ripplerFillProperty().set(Theme.whiteFill());
                 backNavButton.onActionProperty().bind(skinnable.onBackNavButtonActionProperty());
                 backNavButton.visibleProperty().set(canBack);
 
@@ -287,7 +285,6 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 closeNavButton.setFocusTraversable(false);
                 closeNavButton.setGraphic(SVG.CLOSE.createIcon());
                 closeNavButton.getStyleClass().add("jfx-decorator-button");
-                closeNavButton.ripplerFillProperty().set(Theme.whiteFill());
                 closeNavButton.onActionProperty().bind(skinnable.onCloseNavButtonActionProperty());
                 if (showCloseAsHome)
                     closeNavButton.setGraphic(SVG.HOME.createIcon());
@@ -335,7 +332,6 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 JFXButton refreshNavButton = new JFXButton();
                 refreshNavButton.setGraphic(SVG.REFRESH.createIcon());
                 refreshNavButton.getStyleClass().add("jfx-decorator-button");
-                refreshNavButton.ripplerFillProperty().set(Theme.whiteFill());
                 refreshNavButton.onActionProperty().bind(skinnable.onRefreshNavButtonActionProperty());
 
                 Rectangle separator = new Rectangle();

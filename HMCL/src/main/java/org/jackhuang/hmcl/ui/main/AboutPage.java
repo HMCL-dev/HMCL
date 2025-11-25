@@ -28,7 +28,7 @@ import javafx.scene.image.Image;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.theme.Theme2;
+import org.jackhuang.hmcl.theme.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.IconedTwoLineListItem;
@@ -134,7 +134,7 @@ public final class AboutPage extends StackPane {
                     if (image.isJsonPrimitive()) {
                         item.setImage(loadImage(image.getAsString()));
                     } else if (image.isJsonObject()) {
-                        item.imageProperty().bind(Bindings.when(Theme2.darkModeProperty())
+                        item.imageProperty().bind(Bindings.when(Theme.darkModeProperty())
                                 .then(loadImage(image.getAsJsonObject().get("dark").getAsString()))
                                 .otherwise(loadImage(image.getAsJsonObject().get("light").getAsString())));
                     }

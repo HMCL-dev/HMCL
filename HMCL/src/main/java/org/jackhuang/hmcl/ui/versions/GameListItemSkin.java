@@ -26,7 +26,6 @@ import javafx.scene.control.SkinBase;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
@@ -81,7 +80,7 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
             JFXButton btnUpgrade = new JFXButton();
             btnUpgrade.setOnAction(e -> skinnable.update());
             btnUpgrade.getStyleClass().add("toggle-icon4");
-            btnUpgrade.setGraphic(FXUtils.limitingSize(SVG.UPDATE.createIcon(Theme.blackFill(), 24), 24, 24));
+            btnUpgrade.setGraphic(FXUtils.limitingSize(SVG.UPDATE.createIcon(24), 24, 24));
             FXUtils.installFastTooltip(btnUpgrade, i18n("version.update"));
             right.getChildren().add(btnUpgrade);
         }
@@ -91,7 +90,7 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
             btnLaunch.setOnAction(e -> skinnable.launch());
             btnLaunch.getStyleClass().add("toggle-icon4");
             BorderPane.setAlignment(btnLaunch, Pos.CENTER);
-            btnLaunch.setGraphic(FXUtils.limitingSize(SVG.ROCKET_LAUNCH.createIcon(Theme.blackFill(), 24), 24, 24));
+            btnLaunch.setGraphic(FXUtils.limitingSize(SVG.ROCKET_LAUNCH.createIcon(24), 24, 24));
             FXUtils.installFastTooltip(btnLaunch, i18n("version.launch.test"));
             right.getChildren().add(btnLaunch);
         }
@@ -106,7 +105,7 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
             });
             btnManage.getStyleClass().add("toggle-icon4");
             BorderPane.setAlignment(btnManage, Pos.CENTER);
-            btnManage.setGraphic(FXUtils.limitingSize(SVG.MORE_VERT.createIcon(Theme.blackFill(), 24), 24, 24));
+            btnManage.setGraphic(FXUtils.limitingSize(SVG.MORE_VERT.createIcon(24), 24, 24));
             FXUtils.installFastTooltip(btnManage, i18n("settings.game.management"));
             right.getChildren().add(btnManage);
         }
