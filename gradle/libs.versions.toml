@@ -20,7 +20,7 @@ authlib-injector = "1.2.6"
 monet-fx = "0.4.0"
 
 # testing
-junit = "5.13.4"
+junit = "6.0.1"
 jimfs = "1.3.0"
 
 # plugins
