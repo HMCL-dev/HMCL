@@ -352,7 +352,7 @@ public class JFXRippler extends StackPane {
         private final AtomicBoolean generating = new AtomicBoolean(false);
         private boolean cacheRipplerClip = false;
         private boolean resetClip = false;
-        private final Queue<Ripple> ripplesQueue = new LinkedList<Ripple>();
+        private final Queue<Ripple> ripplesQueue = new LinkedList<>();
 
         RippleGenerator() {
             // improve in performance, by preventing
@@ -677,7 +677,7 @@ public class JFXRippler extends StackPane {
             false);
 
     public Boolean isRipplerDisabled() {
-        return ripplerDisabled == null ? false : ripplerDisabled.get();
+        return ripplerDisabled != null && ripplerDisabled.get();
     }
 
     public StyleableBooleanProperty ripplerDisabledProperty() {
@@ -708,7 +708,7 @@ public class JFXRippler extends StackPane {
 
     private static final class StyleableProperties {
         private static final CssMetaData<JFXRippler, Boolean> RIPPLER_RECENTER =
-                new CssMetaData<JFXRippler, Boolean>("-jfx-rippler-recenter",
+                new CssMetaData<>("-jfx-rippler-recenter",
                         BooleanConverter.getInstance(), false) {
                     @Override
                     public boolean isSettable(JFXRippler control) {
@@ -721,7 +721,7 @@ public class JFXRippler extends StackPane {
                     }
                 };
         private static final CssMetaData<JFXRippler, Boolean> RIPPLER_DISABLED =
-                new CssMetaData<JFXRippler, Boolean>("-jfx-rippler-disabled",
+                new CssMetaData<>("-jfx-rippler-disabled",
                         BooleanConverter.getInstance(), false) {
                     @Override
                     public boolean isSettable(JFXRippler control) {
@@ -734,7 +734,7 @@ public class JFXRippler extends StackPane {
                     }
                 };
         private static final CssMetaData<JFXRippler, Paint> RIPPLER_FILL =
-                new CssMetaData<JFXRippler, Paint>("-jfx-rippler-fill",
+                new CssMetaData<>("-jfx-rippler-fill",
                         PaintConverter.getInstance(), Color.rgb(0, 200, 255)) {
                     @Override
                     public boolean isSettable(JFXRippler control) {
@@ -747,7 +747,7 @@ public class JFXRippler extends StackPane {
                     }
                 };
         private static final CssMetaData<JFXRippler, Number> RIPPLER_RADIUS =
-                new CssMetaData<JFXRippler, Number>("-jfx-rippler-radius",
+                new CssMetaData<>("-jfx-rippler-radius",
                         SizeConverter.getInstance(), Region.USE_COMPUTED_SIZE) {
                     @Override
                     public boolean isSettable(JFXRippler control) {
@@ -760,7 +760,7 @@ public class JFXRippler extends StackPane {
                     }
                 };
         private static final CssMetaData<JFXRippler, RipplerMask> MASK_TYPE =
-                new CssMetaData<JFXRippler, RipplerMask>("-jfx-mask-type",
+                new CssMetaData<>("-jfx-mask-type",
                         RipplerMaskTypeConverter.getInstance(), RipplerMask.RECT) {
                     @Override
                     public boolean isSettable(JFXRippler control) {
