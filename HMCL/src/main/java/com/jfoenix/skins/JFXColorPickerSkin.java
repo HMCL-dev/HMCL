@@ -4,11 +4,13 @@
 //
 package com.jfoenix.skins;
 
-import com.jfoenix.adapters.skins.ColorPickerSkin;
+import com.jfoenix.adapters.ExceptionHelper;
+import com.jfoenix.adapters.ReflectionHelper;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXColorPicker;
 import com.jfoenix.effects.JFXDepthManager;
 
+import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -18,6 +20,7 @@ import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.beans.binding.Bindings;
+import javafx.beans.value.ObservableValue;
 import javafx.css.CssMetaData;
 import javafx.css.SimpleStyleableBooleanProperty;
 import javafx.css.StyleConverter;
@@ -27,10 +30,10 @@ import javafx.css.StyleableProperty;
 import javafx.event.Event;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
-import javafx.scene.control.ColorPicker;
-import javafx.scene.control.ComboBoxBase;
-import javafx.scene.control.Label;
-import javafx.scene.control.SkinBase;
+import javafx.scene.control.*;
+import javafx.scene.control.skin.ColorPickerSkin;
+import javafx.scene.control.skin.ComboBoxBaseSkin;
+import javafx.scene.control.skin.ComboBoxPopupControl;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.CornerRadii;
@@ -41,6 +44,8 @@ import javafx.scene.shape.Circle;
 import javafx.util.Duration;
 
 public class JFXColorPickerSkin extends ColorPickerSkin {
+    private static final VarHandle arrowButtonField = ReflectionHelper.getHandle(ComboBoxBaseSkin.class, "arrowButton", StackPane.class);
+
     private final Label displayNode;
     private final Pane pickerColorBox;
     private final StackPane pickerColorClip;
@@ -75,12 +80,15 @@ public class JFXColorPickerSkin extends ColorPickerSkin {
         this.pickerColorBox.getChildren().add(button);
         this.updateColor();
         this.getChildren().add(this.pickerColorBox);
-        this.getChildren().remove(this.getArrowButton());
+        if (arrowButtonField != null) {
+            this.getChildren().remove((StackPane) arrowButtonField.get(this));
+        }
+
         JFXDepthManager.setDepth(this.getSkinnable(), 1);
         this.getPopupContent();
         super.getPopupContent();
-        this.registerChangeListener2(colorPicker.valueProperty(), "VALUE", this::updateColor);
-        this.registerChangeListener2(colorPicker.showingProperty(), "SHOWING", () -> {
+        this.registerChangeListener(colorPicker.valueProperty(), ignored -> this.updateColor());
+        this.registerChangeListener(colorPicker.showingProperty(), ignored -> {
             if (this.getSkinnable().isShowing()) {
                 this.show();
             } else if (!this.popupContent.isCustomColorDialogShowing()) {
@@ -97,12 +105,16 @@ public class JFXColorPickerSkin extends ColorPickerSkin {
         });
     }
 
+    protected PopupControl getPopup2() {
+        return ReflectionHelper.invoke(ComboBoxPopupControl.class, this, "getPopup");
+    }
+
     protected double computePrefWidth(double height, double topInset, double rightInset, double bottomInset, double leftInset) {
         if (!this.colorLabelVisible.get()) {
             return super.computePrefWidth(height, topInset, rightInset, bottomInset, leftInset);
         } else {
             String displayNodeText = this.displayNode.getText();
-            double width = 0.0F;
+            double width = 0.0;
             this.displayNode.setText("#00000000");
             width = Math.max(width, super.computePrefWidth(height, topInset, rightInset, bottomInset, leftInset));
             this.displayNode.setText(displayNodeText);
