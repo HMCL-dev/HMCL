@@ -14,6 +14,8 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.ListPageBase;
@@ -163,6 +165,7 @@ public class GameRulePage extends ListPageBase<GameRulePage.GameRuleInfo> {
             Holder<Object> lastCell = new Holder<>();
             listView.setItems(getSkinnable().getItems());
             listView.setCellFactory(x -> new GameRuleListCell(listView, lastCell));
+            FXUtils.ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
             root.getContent().add(center);
 
             pane.getChildren().add(root);
