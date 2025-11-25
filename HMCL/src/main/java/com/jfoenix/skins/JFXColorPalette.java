@@ -42,7 +42,6 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.StrokeType;
-import org.jackhuang.hmcl.util.i18n.I18n;
 
 import java.util.List;
 
