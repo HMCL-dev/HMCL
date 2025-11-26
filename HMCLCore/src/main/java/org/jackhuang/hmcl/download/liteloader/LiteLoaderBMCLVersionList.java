@@ -60,8 +60,8 @@ public final class LiteLoaderBMCLVersionList extends VersionList<LiteLoaderRemot
 
     @Override
     public Task<?> refreshAsync(String gameVersion) {
-        return new GetTask(NetworkUtils.withQuery(
-                downloadProvider.injectURLWithCandidates(downloadProvider.getApiRoot() + "/liteloader/list"), Map.of(
+        return new GetTask(
+                NetworkUtils.withQuery(downloadProvider.getApiRoot() + "/liteloader/list", Map.of(
                         "mcversion", gameVersion
                 )))
                 .thenGetJsonAsync(LiteLoaderBMCLVersion.class)
