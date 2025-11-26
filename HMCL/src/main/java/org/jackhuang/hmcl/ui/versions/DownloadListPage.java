@@ -576,7 +576,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                                     } else {
                                         LOG.warning("Failed to load image", exception);
                                     }
-                                }).start();
+                                }).setSignificance(Task.TaskSignificance.MINOR).start();
                             }
                         } else {
                             imageView.setImage(null);
