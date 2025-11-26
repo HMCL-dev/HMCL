@@ -1367,6 +1367,11 @@
     -fx-background-insets: 0px;
 }
 
+.jfx-color-picker > .jfx-rippler > .color-box:disabled {
+    -fx-background-color: transparent;
+}
+
+
 .color-palette-region {
 }
 
