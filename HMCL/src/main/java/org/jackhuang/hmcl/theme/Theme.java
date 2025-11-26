@@ -121,7 +121,7 @@ public record Theme(ThemeColor primaryColorSeed,
     public ColorScheme toColorScheme() {
         return ColorScheme.newBuilder()
                 .setPrimaryColorSeed(primaryColorSeed.color())
-                //.setColorStyle(ColorStyle.FIDELITY)
+                .setColorStyle(ColorStyle.FIDELITY)
                 .setBrightness(brightness)
                 .build();
     }
