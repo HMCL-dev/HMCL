@@ -134,6 +134,7 @@ public final class FXUtils {
     public static final @Nullable ObservableMap<String, Object> PREFERENCES;
     public static final @Nullable ObservableBooleanValue DARK_MODE;
     public static final @Nullable Boolean REDUCED_MOTION;
+    public static final @Nullable ReadOnlyObjectProperty<Color> ACCENT_COLOR;
 
     public static final @Nullable MethodHandle TEXT_TRUNCATED_PROPERTY;
 
@@ -150,6 +151,7 @@ public final class FXUtils {
 
         ObservableMap<String, Object> preferences = null;
         ObservableBooleanValue darkMode = null;
+        ReadOnlyObjectProperty<Color> accentColorProperty = null;
         Boolean reducedMotion = null;
         if (JAVAFX_MAJOR_VERSION >= 22) {
             try {
@@ -161,13 +163,18 @@ public final class FXUtils {
                 preferences = preferences0;
 
                 @SuppressWarnings("unchecked")
-                var colorSchemeProperty =
-                        (ReadOnlyObjectProperty<? extends Enum<?>>)
-                                lookup.findVirtual(preferencesClass, "colorSchemeProperty", MethodType.methodType(ReadOnlyObjectProperty.class))
-                                        .invoke(preferences);
+                var colorSchemeProperty = (ReadOnlyObjectProperty<? extends Enum<?>>)
+                        lookup.findVirtual(preferencesClass, "colorSchemeProperty", MethodType.methodType(ReadOnlyObjectProperty.class))
+                                .invoke(preferences);
 
                 darkMode = Bindings.createBooleanBinding(() ->
                         "DARK".equals(colorSchemeProperty.get().name()), colorSchemeProperty);
+
+                @SuppressWarnings("unchecked")
+                var accentColorProperty0 = (ReadOnlyObjectProperty<Color>)
+                        lookup.findVirtual(preferencesClass, "accentColorProperty", MethodType.methodType(ReadOnlyObjectProperty.class))
+                                .invoke(preferences);
+                accentColorProperty = accentColorProperty0;
 
                 if (JAVAFX_MAJOR_VERSION >= 24) {
                     reducedMotion = (boolean)
@@ -181,6 +188,7 @@ public final class FXUtils {
         PREFERENCES = preferences;
         DARK_MODE = darkMode;
         REDUCED_MOTION = reducedMotion;
+        ACCENT_COLOR = accentColorProperty;
 
         MethodHandle textTruncatedProperty = null;
         if (JAVAFX_MAJOR_VERSION >= 23) {

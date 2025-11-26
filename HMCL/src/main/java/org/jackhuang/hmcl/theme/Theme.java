@@ -25,7 +25,6 @@ import javafx.beans.binding.ObjectExpression;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundImage;
 import javafx.scene.paint.Color;
 import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorScheme;
@@ -35,7 +34,6 @@ import org.glavo.monetfx.beans.binding.ColorSchemeExpression;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 
-import javax.swing.text.html.CSS;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -59,6 +57,9 @@ public record Theme(ThemeColor primaryColorSeed,
             observables.add(Controllers.getDecorator().getDecorator().contentBackgroundProperty());
             if (FXUtils.DARK_MODE != null) {
                 observables.add(FXUtils.DARK_MODE);
+            }
+            if (FXUtils.ACCENT_COLOR != null) {
+                observables.add(FXUtils.ACCENT_COLOR);
             }
             bind(observables.toArray(new Observable[0]));
         }
@@ -102,6 +103,9 @@ public record Theme(ThemeColor primaryColorSeed,
                         yield ThemeColor.DEFAULT;
                     }
                 }
+                case SYSTEM -> FXUtils.ACCENT_COLOR != null
+                        ? ThemeColor.of(FXUtils.ACCENT_COLOR.get())
+                        : ThemeColor.DEFAULT;
                 default -> ThemeColor.DEFAULT;
             };
 
