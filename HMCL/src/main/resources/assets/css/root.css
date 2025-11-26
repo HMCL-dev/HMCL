@@ -1005,7 +1005,7 @@
 *******************************************************************************/
 
 .jfx-toggle-button {
-    -jfx-toggle-color: -fx-base-check-color;
+    -jfx-toggle-color: -monet-primary;
 }
 
 .toggle-label {
