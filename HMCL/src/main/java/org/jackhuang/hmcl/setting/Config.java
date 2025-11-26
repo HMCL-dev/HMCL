@@ -35,6 +35,7 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.theme.ThemeColor;
+import org.jackhuang.hmcl.theme.ThemeColorType;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.gson.*;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
@@ -275,6 +276,21 @@ public final class Config extends ObservableSetting {
     }
 
     // UI
+
+    @SerializedName("themeColorType")
+    private final ObjectProperty<ThemeColorType> themeColorType = new RawPreservingObjectProperty<>(ThemeColorType.DEFAULT);
+
+    public ObjectProperty<ThemeColorType> themeColorTypeProperty() {
+        return themeColorType;
+    }
+
+    public ThemeColorType getThemeColorType() {
+        return themeColorType.get();
+    }
+
+    public void setThemeColorType(ThemeColorType themeColorType) {
+        this.themeColorType.set(themeColorType);
+    }
 
     @SerializedName("theme")
     private final ObjectProperty<ThemeColor> themeColor = new SimpleObjectProperty<>();

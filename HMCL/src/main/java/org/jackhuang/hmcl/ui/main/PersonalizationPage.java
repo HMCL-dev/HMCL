@@ -37,6 +37,7 @@ import javafx.scene.text.FontSmoothingType;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.theme.Theme;
 import org.jackhuang.hmcl.theme.ThemeColor;
+import org.jackhuang.hmcl.theme.ThemeColorType;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -44,6 +45,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -78,22 +80,21 @@ public class PersonalizationPage extends StackPane {
 
         ComponentList themeList = new ComponentList();
         {
-            BorderPane themePane = new BorderPane();
-            themeList.getContent().add(themePane);
+            ComponentSublist themeColorTypeList = new ComponentSublist();
+            themeColorTypeList.setTitle(i18n("settings.launcher.theme"));
+            themeList.getContent().add(themeColorTypeList);
 
-            Label left = new Label(i18n("settings.launcher.theme"));
-            BorderPane.setAlignment(left, Pos.CENTER_LEFT);
-            themePane.setLeft(left);
-
-            StackPane themeColorPickerContainer = new StackPane();
-            themeColorPickerContainer.setMinHeight(30);
-            themePane.setRight(themeColorPickerContainer);
-
-            ColorPicker picker = new JFXColorPicker(Theme.getTheme().primaryColorSeed().color());
-            picker.getCustomColors().setAll(ThemeColor.STANDARD_COLORS.stream().map(ThemeColor::color).toList());
-            picker.setOnAction(e -> config().setThemeColor(ThemeColor.of(picker.getValue())));
-            themeColorPickerContainer.getChildren().setAll(picker);
-            Platform.runLater(() -> JFXDepthManager.setDepth(picker, 0));
+            MultiFileItem<ThemeColorType> themeColorTypeItem = new MultiFileItem<>();
+            themeColorTypeList.getContent().add(themeColorTypeItem);
+            themeColorTypeItem.loadChildren(List.of( // TODO: i18n
+                    new MultiFileItem.Option<>("默认", ThemeColorType.DEFAULT),
+                    new MultiFileItem.Option<>("跟随壁纸", ThemeColorType.MONET),
+                    new MultiFileItem.Option<>("跟随系统", ThemeColorType.SYSTEM),
+                    new MultiFileItem.PaintOption<>("自定义", ThemeColorType.CUSTOM)
+                            .setCustomColors(ThemeColor.STANDARD_COLORS.stream().map(ThemeColor::color).toList())
+                            .bindThemeColorBidirectional(config().themeColorProperty())
+            ));
+            themeColorTypeItem.selectedDataProperty().bindBidirectional(config().themeColorTypeProperty());
         }
         {
             BorderPane brightnessPane = new BorderPane();
