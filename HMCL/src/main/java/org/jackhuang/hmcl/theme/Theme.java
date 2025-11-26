@@ -23,14 +23,19 @@ import javafx.beans.binding.BooleanBinding;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.binding.ObjectExpression;
 import javafx.beans.value.ObservableValue;
+import javafx.scene.image.Image;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundImage;
 import javafx.scene.paint.Color;
 import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorScheme;
 import org.glavo.monetfx.ColorStyle;
 import org.glavo.monetfx.beans.binding.ColorSchemeBinding;
 import org.glavo.monetfx.beans.binding.ColorSchemeExpression;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 
+import javax.swing.text.html.CSS;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -48,8 +53,10 @@ public record Theme(ThemeColor primaryColorSeed,
         {
             List<Observable> observables = new ArrayList<>();
 
+            observables.add(config().themeColorTypeProperty());
             observables.add(config().themeColorProperty());
             observables.add(config().themeBrightnessProperty());
+            observables.add(Controllers.getDecorator().getDecorator().contentBackgroundProperty());
             if (FXUtils.DARK_MODE != null) {
                 observables.add(FXUtils.DARK_MODE);
             }
@@ -77,10 +84,28 @@ public record Theme(ThemeColor primaryColorSeed,
 
         @Override
         protected Theme computeValue() {
-            return new Theme(
-                    Objects.requireNonNullElse(config().getThemeColor(), ThemeColor.DEFAULT),
-                    getBrightness()
-            );
+            ThemeColor themeColor = switch (Objects.requireNonNullElse(config().getThemeColorType(), ThemeColorType.DEFAULT)) {
+                case CUSTOM -> Objects.requireNonNullElse(config().getThemeColor(), ThemeColor.DEFAULT);
+                case MONET -> {
+                    Background contentBackground = Controllers.getDecorator().getDecorator().getContentBackground();
+                    if (contentBackground != null) {
+                        if (!contentBackground.getImages().isEmpty()) {
+                            Image backgroundImage = contentBackground.getImages().get(0).getImage();
+                            yield ThemeColor.of(ColorScheme.extractColor(backgroundImage, ThemeColor.DEFAULT.color()));
+                        } else if (!contentBackground.getFills().isEmpty()
+                                && contentBackground.getFills().get(0).getFill() instanceof Color color) {
+                            yield ThemeColor.of(color);
+                        } else {
+                            yield ThemeColor.DEFAULT;
+                        }
+                    } else {
+                        yield ThemeColor.DEFAULT;
+                    }
+                }
+                default -> ThemeColor.DEFAULT;
+            };
+
+            return new Theme(themeColor, getBrightness());
         }
     };
 
