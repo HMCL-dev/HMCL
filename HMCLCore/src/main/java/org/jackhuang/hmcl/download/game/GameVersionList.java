@@ -91,4 +91,9 @@ public final class GameVersionList extends VersionList<GameRemoteVersion> {
                     }
                 });
     }
+
+    @Override
+    public String toString() {
+        return "GameVersionList[downloadProvider=%s]".formatted(downloadProvider);
+    }
 }
