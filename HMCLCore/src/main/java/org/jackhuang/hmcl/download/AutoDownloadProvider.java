@@ -108,4 +108,9 @@ public final class AutoDownloadProvider implements DownloadProvider {
     public int getConcurrency() {
         return getPreferredDownloadProvider().getConcurrency();
     }
+
+    @Override
+    public String toString() {
+        return "AutoDownloadProvider[versionListProviders=%s, fileProviders=%s]".formatted(versionListProviders, fileProviders);
+    }
 }

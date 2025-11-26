@@ -26,7 +26,7 @@ import java.util.Objects;
  */
 public final class DownloadProviderWrapper implements DownloadProvider {
 
-    private DownloadProvider provider;
+    private volatile DownloadProvider provider;
 
     public DownloadProviderWrapper(DownloadProvider provider) {
         this.provider = provider;
@@ -73,5 +73,10 @@ public final class DownloadProviderWrapper implements DownloadProvider {
     @Override
     public int getConcurrency() {
         return getProvider().getConcurrency();
+    }
+
+    @Override
+    public String toString() {
+        return "DownloadProviderWrapper[provider=%s]".formatted(provider);
     }
 }
