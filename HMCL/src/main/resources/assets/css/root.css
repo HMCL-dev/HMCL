@@ -1368,11 +1368,26 @@
 }
 
 .color-palette-region {
+}
 
+.color-palette-region .jfx-button {
+    -fx-text-fill: -monet-on-surface;
 }
 
 .color-palette {
     -fx-background-color: -monet-surface;
+}
+
+.custom-color-dialog .jfx-tab-pane {
+    -fx-background-color: -monet-surface;
+}
+
+.custom-color-dialog .custom-color-field {
+    -jfx-unfocus-color: -monet-on-surface;
+    -fx-background-color: TRANSPARENT;
+    -fx-font-weight: BOLD;
+    -fx-alignment: top-left;
+    -fx-max-width: 300;
 }
 
 /*******************************************************************************
