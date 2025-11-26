@@ -23,8 +23,6 @@ import java.net.URI;
 import java.util.List;
 import java.util.Objects;
 
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
-
 /**
  * @author Glavo
  */
