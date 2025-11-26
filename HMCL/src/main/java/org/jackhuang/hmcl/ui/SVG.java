@@ -17,10 +17,12 @@
  */
 package org.jackhuang.hmcl.ui;
 
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Paint;
 import javafx.scene.shape.SVGPath;
 
 /**
@@ -162,6 +164,14 @@ public enum SVG {
         SVGPath p = new SVGPath();
         p.setContent(path);
         p.getStyleClass().add("svg");
+        return createIcon(p, -1);
+    }
+
+    public Node createIcon(ObservableValue<? extends Paint> color) {
+        SVGPath p = new SVGPath();
+        p.setContent(path);
+        p.getStyleClass().add("svg");
+        p.fillProperty().bind(color);
         return createIcon(p, -1);
     }
 }

@@ -22,6 +22,8 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.binding.ObjectExpression;
+import javafx.beans.value.ObservableValue;
+import javafx.scene.paint.Color;
 import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorScheme;
 import org.glavo.monetfx.ColorStyle;
@@ -101,6 +103,10 @@ public record Theme(ThemeColor primaryColorSeed,
 
     public static ColorScheme getColorScheme() {
         return colorScheme.get();
+    }
+
+    public static ObservableValue<Color> titleFillProperty() {
+        return colorSchemeProperty().getOnPrimaryContainer();
     }
 
     private static final BooleanBinding darkMode = Bindings.createBooleanBinding(
