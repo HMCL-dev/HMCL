@@ -59,7 +59,7 @@ public final class DownloadProviders {
         BMCLAPIDownloadProvider bmclapiRaw = new BMCLAPIDownloadProvider(bmclapiRoot);
 
         DownloadProvider mojang = new MojangDownloadProvider();
-        DownloadProvider bmclapi = new AutoDownloadProvider(mojang, bmclapiRaw);
+        DownloadProvider bmclapi = new AutoDownloadProvider(bmclapiRaw, mojang);
 
         DEFAULT_PROVIDER = mojang;
         DIRECT_PROVIDERS = Lang.mapOf(
