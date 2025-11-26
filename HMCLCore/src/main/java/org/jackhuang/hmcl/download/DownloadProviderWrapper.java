@@ -17,9 +17,13 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.jackhuang.hmcl.task.Task;
+
 import java.net.URI;
 import java.util.List;
 import java.util.Objects;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * @author Glavo
@@ -67,7 +71,22 @@ public final class DownloadProviderWrapper implements DownloadProvider {
 
     @Override
     public VersionList<?> getVersionListById(String id) {
-        return getProvider().getVersionListById(id);
+        return new VersionList<>() {
+            @Override
+            public boolean hasType() {
+                return getProvider().getVersionListById(id).hasType();
+            }
+
+            @Override
+            public Task<?> refreshAsync() {
+                return getProvider().getVersionListById(id).refreshAsync();
+            }
+
+            @Override
+            public Task<?> refreshAsync(String gameVersion) {
+                return getProvider().getVersionListById(id).refreshAsync(gameVersion);
+            }
+        };
     }
 
     @Override
