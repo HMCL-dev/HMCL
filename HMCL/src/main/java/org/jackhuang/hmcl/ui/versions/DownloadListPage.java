@@ -35,6 +35,7 @@ import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -63,6 +64,7 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
+import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -70,6 +72,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.selectedItemPropertyFor;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class DownloadListPage extends Control implements DecoratorPage, VersionPage.VersionLoadable {
     protected final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
@@ -521,6 +524,8 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                     Controllers.navigate(new DownloadPage(getSkinnable(), selectedItem, getSkinnable().getProfileVersion(), getSkinnable().callback));
                 });
 
+                var iconCache = new WeakHashMap<RemoteMod, WeakReference<Task<Image>>>();
+
                 // ListViewBehavior would consume ESC pressed event, preventing us from handling it, so we ignore it here
                 ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
                 listView.setCellFactory(x -> new FloatListCell<>(listView) {
@@ -550,7 +555,31 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                                 .map(category -> getSkinnable().getLocalizedCategory(category))
                                 .forEach(content::addTag);
                         if (StringUtils.isNotBlank(dataItem.getIconUrl())) {
-                            imageView.imageProperty().bind(FXUtils.newRemoteImage(dataItem.getIconUrl(), 80, 80, true, true));
+                            WeakReference<Task<Image>> cacheRef = iconCache.get(dataItem);
+                            Task<Image> cache;
+                            if (cacheRef == null || (cache = cacheRef.get()) == null) {
+                                cache = FXUtils.getRemoteImageTask(dataItem.getIconUrl(), 80, 80, true, true);
+                                cacheRef = new WeakReference<>(cache);
+                                iconCache.put(dataItem, cacheRef);
+                            }
+
+                            Image image = cache.getResult();
+                            if (image != null) {
+                                imageView.setImage(image);
+                            } else {
+                                imageView.setImage(null);
+                                cache.whenComplete(Schedulers.javafx(), (result, exception) -> {
+                                    if (result != null) {
+                                        if (dataItem == getItem()) {
+                                            imageView.setImage(result);
+                                        }
+                                    } else {
+                                        LOG.warning("Failed to load image", exception);
+                                    }
+                                }).start();
+                            }
+                        } else {
+                            imageView.setImage(null);
                         }
                     }
                 });
