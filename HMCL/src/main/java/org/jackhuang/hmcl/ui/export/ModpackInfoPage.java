@@ -45,6 +45,7 @@ import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 
 import java.nio.file.Path;
@@ -110,10 +111,11 @@ public final class ModpackInfoPage extends Control implements WizardPage {
         fileChooser.setTitle(i18n("modpack.wizard.step.initialization.save"));
         if (MODPACK_TYPE_MODRINTH.equals(controller.getSettings().get(MODPACK_TYPE))) {
             fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("modpack"), "*.mrpack"));
+            fileChooser.setInitialFileName(name.get() + (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS ? "" : ".mrpack"));
         } else {
             fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("modpack"), "*.zip"));
+            fileChooser.setInitialFileName(name.get() + ".zip");
         }
-        fileChooser.setInitialFileName(name.get());
         Path file = FileUtils.toPath(fileChooser.showSaveDialog(Controllers.getStage()));
         if (file == null) {
             controller.onEnd();
@@ -187,12 +189,12 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                 borderPane.setStyle("-fx-padding: 16;");
                 scroll.setContent(borderPane);
 
-                if (skinnable.controller.getSettings().get(MODPACK_TYPE) == MODPACK_TYPE_SERVER) {
+                if (MODPACK_TYPE_SERVER.equals(skinnable.controller.getSettings().get(MODPACK_TYPE))) {
                     Hyperlink hyperlink = new Hyperlink(i18n("modpack.wizard.step.initialization.server"));
                     hyperlink.setOnAction(e -> FXUtils.openLink(Metadata.DOCS_URL + "/modpack/serverpack.html"));
                     borderPane.setTop(hyperlink);
                 }
-                if (skinnable.controller.getSettings().get(MODPACK_TYPE) == MODPACK_TYPE_MODRINTH) {
+                if (MODPACK_TYPE_MODRINTH.equals(skinnable.controller.getSettings().get(MODPACK_TYPE))) {
                     HintPane pane = new HintPane(MessageDialogPane.MessageType.INFO);
                     pane.setText(i18n("modpack.wizard.step.initialization.modrinth.info"));
                     borderPane.setTop(pane);
