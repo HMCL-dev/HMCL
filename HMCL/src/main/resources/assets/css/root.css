@@ -1417,6 +1417,7 @@
  * Scroll Bar			                                                       *
  *                                                                             *
  ******************************************************************************/
+/* unsued? */
 
 .scroll-bar:vertical > .track-background, .scroll-bar:horizontal > .track-background {
     -fx-background-color: #F1F1F1;
@@ -1489,28 +1490,28 @@
 *******************************************************************************/
 
 .error-label {
-    -fx-text-fill: #D34336;
+    -fx-text-fill: -monet-error;
     -fx-font-size: 0.75em;
     -fx-font-weight: bold;
 }
 
 .error-icon {
-    -fx-fill: #D34336;
+    -fx-fill: -monet-error;
     -fx-font-size: 1.0em;
 }
 
 .jfx-text-field:error, .jfx-password-field:error, .jfx-text-area:error, .jfx-combo-box:error {
-    -jfx-focus-color: #D34336;
-    -jfx-unfocus-color: #D34336;
+    -jfx-focus-color: -monet-error;
+    -jfx-unfocus-color: -monet-error;
 }
 
 .jfx-text-field .error-label, .jfx-password-field .error-label, .jfx-text-area .error-label {
-    -fx-text-fill: #D34336;
+    -fx-text-fill: -monet-error;
     -fx-font-size: 0.75em;
 }
 
 .jfx-text-field .error-icon, .jfx-password-field .error-icon, .jfx-text-area .error-icon {
-    -fx-fill: #D34336;
+    -fx-fill: -monet-error;
     -fx-font-size: 1.0em;
 }
 
