@@ -773,6 +773,10 @@
     -fx-background-radius: 50px;
 }
 
+.menu-up-down-button .label {
+    -fx-text-fill: -monet-on-surface;
+}
+
 /*******************************************************************************
 *                                                                              *
 * JFX Check Box                                                                *

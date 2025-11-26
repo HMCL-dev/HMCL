@@ -38,6 +38,7 @@ public class MenuUpDownButton extends Control {
     private final StringProperty text = new SimpleStringProperty(this, "text");
 
     public MenuUpDownButton() {
+        this.getStyleClass().add("menu-up-down-button");
     }
 
     @Override
