@@ -99,19 +99,18 @@ public class JFXCheckBoxSkin extends CheckBoxSkin {
     }
 
     private void updateRippleColor() {
-        Paint color = this.getSkinnable().isSelected()
-                ? ((JFXCheckBox) this.getSkinnable()).getCheckedColor()
-                : ((JFXCheckBox) this.getSkinnable()).getUnCheckedColor();
-        this.rippler.setRipplerFill(color);
+        var control = (JFXCheckBox) this.getSkinnable();
+        this.rippler.setRipplerFill(control.isSelected()
+                ? control.getCheckedColor()
+                : control.getUnCheckedColor());
     }
 
     private void updateColors() {
-        var checkBox = (JFXCheckBox) getSkinnable();
-
-        final Paint color = checkBox.isSelected()
-                ? checkBox.getCheckedColor()
-                : checkBox.getUnCheckedColor();
-        JFXNodeUtils.updateBackground(box.getBackground(), box, checkBox.isSelected() ? checkBox.getCheckedColor() : Color.TRANSPARENT);
+        var control = (JFXCheckBox) getSkinnable();
+        final Paint color = control.isSelected()
+                ? control.getCheckedColor()
+                : control.getUnCheckedColor();
+        JFXNodeUtils.updateBackground(box.getBackground(), box, control.isSelected() ? control.getCheckedColor() : Color.TRANSPARENT);
         rippler.setRipplerFill(color);
         final BorderStroke borderStroke = box.getBorder().getStrokes().get(0);
         box.setBorder(new Border(new BorderStroke(color,
@@ -208,7 +207,7 @@ public class JFXCheckBoxSkin extends CheckBoxSkin {
                                     new KeyValue(JFXCheckBoxSkin.this.mark.scaleXProperty(), (double) 0.5F, Interpolator.EASE_OUT),
                                     new KeyValue(JFXCheckBoxSkin.this.mark.scaleYProperty(), (double) 0.5F, Interpolator.EASE_OUT)),
                             new KeyFrame(Duration.millis(1000.0),
-                                    new KeyValue(JFXCheckBoxSkin.this.mark.visibleProperty(), true, Interpolator.LINEAR),
+                                    new KeyValue(JFXCheckBoxSkin.this.mark.visibleProperty(), true, Interpolator.EASE_OUT),
                                     new KeyValue(JFXCheckBoxSkin.this.mark.scaleXProperty(), 1, Interpolator.EASE_OUT),
                                     new KeyValue(JFXCheckBoxSkin.this.mark.scaleYProperty(), 1, Interpolator.EASE_OUT))
                     )
