@@ -81,7 +81,6 @@ public class JFXCheckBoxSkin extends CheckBoxSkin {
             } else {
                 this.rippler.hideOverlay();
             }
-
         });
         control.pressedProperty().addListener((o, oldVal, newVal) -> this.rippler.hideOverlay());
         this.updateChildren();
@@ -102,7 +101,6 @@ public class JFXCheckBoxSkin extends CheckBoxSkin {
             this.getChildren().remove(1);
             this.getChildren().add(this.container);
         }
-
     }
 
     protected double computeMinWidth(double height, double topInset, double rightInset, double bottomInset, double leftInset) {
