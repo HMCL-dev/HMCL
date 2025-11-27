@@ -130,7 +130,7 @@ public class PersonalizationPage extends StackPane {
             BorderPane colorStyle = new BorderPane();
             themeList.getContent().add(colorStyle);
 
-            Label left = new Label("颜色风格"); // TODO: i18n
+            Label left = new Label("色彩风格"); // TODO: i18n
             BorderPane.setAlignment(left, Pos.CENTER_LEFT);
             colorStyle.setLeft(left);
 
