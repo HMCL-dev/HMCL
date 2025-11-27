@@ -34,9 +34,7 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -63,7 +61,6 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
                 itemsProperty().setAll(worlds.stream()
                         .filter(world -> isShowAll() || world.getGameVersion() == null || world.getGameVersion().equals(gameVersion) || world.getGameVersion().replace(" Pre-Release ", "-pre").replace(" Release Candidate ", "-rc").replace(" Unobfuscated", "_unobfuscated").equals(gameVersion))
                         .map(world -> new WorldListItem(this, world, backupsDir)).toList());
-            worlds.forEach(world -> LOG.debug(world.getGameVersion()));
         });
     }
 
