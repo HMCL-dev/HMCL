@@ -48,11 +48,11 @@ public class JFXCheckBoxSkin extends CheckBoxSkin {
 
     public JFXCheckBoxSkin(JFXCheckBox control) {
         super(control);
-        this.box.setMinSize(18.0F, 18.0F);
-        this.box.setPrefSize(18.0F, 18.0F);
-        this.box.setMaxSize(18.0F, 18.0F);
-        this.box.setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, new CornerRadii(2.0F), Insets.EMPTY)));
-        this.box.setBorder(new Border(new BorderStroke(control.getUnCheckedColor(), BorderStrokeStyle.SOLID, new CornerRadii(2.0F), new BorderWidths(this.lineThick))));
+        this.box.setMinSize(18.0, 18.0);
+        this.box.setPrefSize(18.0, 18.0);
+        this.box.setMaxSize(18.0, 18.0);
+        this.box.setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, new CornerRadii(2.0), Insets.EMPTY)));
+        this.box.setBorder(new Border(new BorderStroke(control.getUnCheckedColor(), BorderStrokeStyle.SOLID, new CornerRadii(2.0), new BorderWidths(this.lineThick))));
         StackPane boxContainer = new StackPane();
         boxContainer.getChildren().add(this.box);
         boxContainer.setPadding(new Insets(this.padding));
@@ -61,11 +61,11 @@ public class JFXCheckBoxSkin extends CheckBoxSkin {
         SVGPath shape = new SVGPath();
         shape.setContent("M384 690l452-452 60 60-512 512-238-238 60-60z");
         this.mark.setShape(shape);
-        this.mark.setMaxSize(15.0F, 12.0F);
+        this.mark.setMaxSize(15.0, 12.0);
         this.mark.setStyle("-fx-background-color:WHITE; -fx-border-color:WHITE; -fx-border-width:2px;");
         this.mark.setVisible(false);
-        this.mark.setScaleX(0.0F);
-        this.mark.setScaleY(0.0F);
+        this.mark.setScaleX(0.0);
+        this.mark.setScaleY(0.0);
         boxContainer.getChildren().add(this.mark);
         this.container.getChildren().add(this.rippler);
         AnchorPane.setRightAnchor(this.rippler, this.labelOffset);
@@ -106,19 +106,19 @@ public class JFXCheckBoxSkin extends CheckBoxSkin {
     }
 
     protected double computeMinWidth(double height, double topInset, double rightInset, double bottomInset, double leftInset) {
-        return super.computePrefWidth(height, topInset, rightInset, bottomInset, leftInset) + this.snapSizeX(this.box.minWidth(-1.0F)) + this.labelOffset + (double) 2.0F * this.padding;
+        return super.computePrefWidth(height, topInset, rightInset, bottomInset, leftInset) + this.snapSizeX(this.box.minWidth(-1.0)) + this.labelOffset + 2.0 * this.padding;
     }
 
     protected double computePrefWidth(double height, double topInset, double rightInset, double bottomInset, double leftInset) {
-        return super.computePrefWidth(height, topInset, rightInset, bottomInset, leftInset) + this.snapSizeY(this.box.prefWidth(-1.0F)) + this.labelOffset + (double) 2.0F * this.padding;
+        return super.computePrefWidth(height, topInset, rightInset, bottomInset, leftInset) + this.snapSizeY(this.box.prefWidth(-1.0)) + this.labelOffset + 2.0 * this.padding;
     }
 
     protected void layoutChildren(double x, double y, double w, double h) {
         CheckBox checkBox = this.getSkinnable();
-        double boxWidth = this.snapSizeX(this.container.prefWidth(-1.0F));
-        double boxHeight = this.snapSizeY(this.container.prefHeight(-1.0F));
-        double computeWidth = Math.min(checkBox.prefWidth(-1.0F), checkBox.minWidth(-1.0F)) + this.labelOffset + (double) 2.0F * this.padding;
-        double labelWidth = Math.min(computeWidth - boxWidth, w - this.snapSizeX(boxWidth)) + this.labelOffset + (double) 2.0F * this.padding;
+        double boxWidth = this.snapSizeX(this.container.prefWidth(-1.0));
+        double boxHeight = this.snapSizeY(this.container.prefHeight(-1.0));
+        double computeWidth = Math.min(checkBox.prefWidth(-1.0), checkBox.minWidth(-1.0)) + this.labelOffset + 2.0 * this.padding;
+        double labelWidth = Math.min(computeWidth - boxWidth, w - this.snapSizeX(boxWidth)) + this.labelOffset + 2.0 * this.padding;
         double labelHeight = Math.min(checkBox.prefHeight(labelWidth), h);
         double maxHeight = Math.max(boxHeight, labelHeight);
         double xOffset = computeXOffset(w, labelWidth + boxWidth, checkBox.getAlignment().getHpos()) + x;
@@ -133,32 +133,32 @@ public class JFXCheckBoxSkin extends CheckBoxSkin {
 
         this.layoutLabelInArea(xOffset + boxWidth, yOffset, labelWidth, maxHeight, checkBox.getAlignment());
         this.container.resize(boxWidth, boxHeight);
-        this.positionInArea(this.container, xOffset, yOffset, boxWidth, maxHeight, 0.0F, checkBox.getAlignment().getHpos(), checkBox.getAlignment().getVpos());
+        this.positionInArea(this.container, xOffset, yOffset, boxWidth, maxHeight, 0.0, checkBox.getAlignment().getHpos(), checkBox.getAlignment().getVpos());
     }
 
     static double computeXOffset(double width, double contentWidth, HPos hpos) {
         switch (hpos) {
             case LEFT:
-                return 0.0F;
+                return 0.0;
             case CENTER:
-                return (width - contentWidth) / (double) 2.0F;
+                return (width - contentWidth) / 2.0;
             case RIGHT:
                 return width - contentWidth;
             default:
-                return 0.0F;
+                return 0.0;
         }
     }
 
     static double computeYOffset(double height, double contentHeight, VPos vpos) {
         switch (vpos) {
             case TOP:
-                return 0.0F;
+                return 0.0;
             case CENTER:
-                return (height - contentHeight) / (double) 2.0F;
+                return (height - contentHeight) / 2.0;
             case BOTTOM:
                 return height - contentHeight;
             default:
-                return 0.0F;
+                return 0.0;
         }
     }
 
@@ -168,21 +168,21 @@ public class JFXCheckBoxSkin extends CheckBoxSkin {
         }
 
         JFXCheckBox control = (JFXCheckBox) this.getSkinnable();
-        this.transition.setRate(selection ? (double) 1.0F : (double) -1.0F);
-        this.select.setRate(selection ? (double) 1.0F : (double) -1.0F);
+        this.transition.setRate(selection ? 1.0 : -1.0);
+        this.select.setRate(selection ? 1.0 : -1.0);
         this.transition.play();
         this.select.play();
-        this.box.setBorder(new Border(new BorderStroke(selection ? control.getCheckedColor() : control.getUnCheckedColor(), BorderStrokeStyle.SOLID, new CornerRadii(2.0F), new BorderWidths(this.lineThick))));
+        this.box.setBorder(new Border(new BorderStroke(selection ? control.getCheckedColor() : control.getUnCheckedColor(), BorderStrokeStyle.SOLID, new CornerRadii(2.0), new BorderWidths(this.lineThick))));
     }
 
     private void createFillTransition() {
-        this.select = new JFXFillTransition(Duration.millis(120.0F), this.box, Color.TRANSPARENT, (Color) ((JFXCheckBox) this.getSkinnable()).getCheckedColor());
+        this.select = new JFXFillTransition(Duration.millis(120.0), this.box, Color.TRANSPARENT, (Color) ((JFXCheckBox) this.getSkinnable()).getCheckedColor());
         this.select.setInterpolator(Interpolator.EASE_OUT);
     }
 
     private final class CheckBoxTransition extends CachedTransition {
         CheckBoxTransition() {
-            super(JFXCheckBoxSkin.this.mark, new Timeline(new KeyFrame(Duration.ZERO, new KeyValue(JFXCheckBoxSkin.this.mark.visibleProperty(), false, Interpolator.EASE_BOTH), new KeyValue(JFXCheckBoxSkin.this.mark.scaleXProperty(), (double) 0.5F, Interpolator.EASE_OUT), new KeyValue(JFXCheckBoxSkin.this.mark.scaleYProperty(), (double) 0.5F, Interpolator.EASE_OUT)), new KeyFrame(Duration.millis(400.0F), new KeyValue(JFXCheckBoxSkin.this.mark.visibleProperty(), true, Interpolator.EASE_OUT), new KeyValue(JFXCheckBoxSkin.this.mark.scaleXProperty(), (double) 0.5F, Interpolator.EASE_OUT), new KeyValue(JFXCheckBoxSkin.this.mark.scaleYProperty(), (double) 0.5F, Interpolator.EASE_OUT)), new KeyFrame(Duration.millis(1000.0F), new KeyValue(JFXCheckBoxSkin.this.mark.scaleXProperty(), 1, Interpolator.EASE_OUT), new KeyValue(JFXCheckBoxSkin.this.mark.scaleYProperty(), 1, Interpolator.EASE_OUT))));
+            super(JFXCheckBoxSkin.this.mark, new Timeline(new KeyFrame(Duration.ZERO, new KeyValue(JFXCheckBoxSkin.this.mark.visibleProperty(), false, Interpolator.EASE_BOTH), new KeyValue(JFXCheckBoxSkin.this.mark.scaleXProperty(), (double) 0.5F, Interpolator.EASE_OUT), new KeyValue(JFXCheckBoxSkin.this.mark.scaleYProperty(), (double) 0.5F, Interpolator.EASE_OUT)), new KeyFrame(Duration.millis(400.0), new KeyValue(JFXCheckBoxSkin.this.mark.visibleProperty(), true, Interpolator.EASE_OUT), new KeyValue(JFXCheckBoxSkin.this.mark.scaleXProperty(), (double) 0.5F, Interpolator.EASE_OUT), new KeyValue(JFXCheckBoxSkin.this.mark.scaleYProperty(), (double) 0.5F, Interpolator.EASE_OUT)), new KeyFrame(Duration.millis(1000.0), new KeyValue(JFXCheckBoxSkin.this.mark.scaleXProperty(), 1, Interpolator.EASE_OUT), new KeyValue(JFXCheckBoxSkin.this.mark.scaleYProperty(), 1, Interpolator.EASE_OUT))));
             this.setCycleDuration(Duration.seconds(0.12));
             this.setDelay(Duration.seconds(0.05));
         }
