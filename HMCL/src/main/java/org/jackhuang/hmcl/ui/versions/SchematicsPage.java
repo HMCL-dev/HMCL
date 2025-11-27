@@ -36,7 +36,6 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
-import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -60,7 +59,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /**
  * @author Glavo
  */
-public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> implements VersionPage.VersionLoadable, TransitionPane.Cacheable {
+public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> implements VersionPage.VersionLoadable {
 
     private static String translateAuthorName(String author) {
         if (I18n.isUseChinese() && "hsds".equals(author)) {
