@@ -30,6 +30,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.theme.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
@@ -105,6 +106,7 @@ final class ComponentListCell extends StackPane {
                     Label subtitleLabel = new Label();
                     subtitleLabel.textProperty().bind(list.subtitleProperty());
                     subtitleLabel.getStyleClass().add("subtitle-label");
+                    subtitleLabel.textFillProperty().bind(Theme.colorSchemeProperty().getOnSurfaceVariant());
                     labelVBox.getChildren().add(subtitleLabel);
                 }
             }
