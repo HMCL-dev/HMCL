@@ -63,10 +63,10 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
 
         showAll.addListener(e -> {
             if (worlds != null)
-                LOG.debug("execute this");
                 itemsProperty().setAll(worlds.stream()
-                        .filter(world -> isShowAll() || world.getGameVersion() == null || world.getGameVersion().equals(gameVersion) || world.getGameVersion().replace(" Pre-Release ", "-pre").replace(" Unobfuscated", "_unobfuscated").equals(gameVersion))
+                        .filter(world -> isShowAll() || world.getGameVersion() == null || world.getGameVersion().equals(gameVersion) || world.getGameVersion().replace(" Pre-Release ", "-pre").replace(" Release Candidate ", "-rc").replace(" Unobfuscated", "_unobfuscated").equals(gameVersion))
                         .map(world -> new WorldListItem(this, world, backupsDir)).toList());
+            worlds.forEach(world -> LOG.debug(world.getGameVersion()));
         });
     }
 
@@ -104,7 +104,7 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
                     setLoading(false);
                     if (exception == null) {
                         itemsProperty().setAll(result.stream()
-                                .filter(world -> isShowAll() || world.getGameVersion() == null || world.getGameVersion().equals(gameVersion) || world.getGameVersion().replace(" Pre-Release ", "-pre").replace(" Unobfuscated", "_unobfuscated").equals(gameVersion))
+                                .filter(world -> isShowAll() || world.getGameVersion() == null || world.getGameVersion().equals(gameVersion) || world.getGameVersion().replace(" Pre-Release ", "-pre").replace(" Release Candidate ", "-rc").replace(" Unobfuscated", "_unobfuscated").equals(gameVersion))
                                 .map(world -> new WorldListItem(this, world, backupsDir))
                                 .collect(Collectors.toList()));
                     } else {
