@@ -73,6 +73,28 @@ public class PersonalizationPage extends StackPane {
 
         ComponentList themeList = new ComponentList();
         {
+            BorderPane brightnessPane = new BorderPane();
+            themeList.getContent().add(brightnessPane);
+
+            Label left = new Label("主题模式"); // TODO: i18n
+            BorderPane.setAlignment(left, Pos.CENTER_LEFT);
+            brightnessPane.setLeft(left);
+
+            JFXComboBox<String> cboBrightness = new JFXComboBox<>(FXCollections.observableArrayList(
+                    "auto", "light", "dark"));
+            cboBrightness.setConverter(FXUtils.stringConverter(name -> {
+                // TODO: i18n
+                return switch (name) {
+                    case "auto" -> "跟随系统设置";
+                    case "light" -> "浅色模式";
+                    case "dark" -> "深色模式";
+                    default -> name;
+                };
+            }));
+            cboBrightness.valueProperty().bindBidirectional(config().themeBrightnessProperty());
+            brightnessPane.setRight(cboBrightness);
+        }
+        {
             ComponentSublist themeColorTypeList = new ComponentSublist();
             themeColorTypeList.setTitle(i18n("settings.launcher.theme"));
             themeColorTypeList.setHasSubtitle(true);
@@ -104,47 +126,10 @@ public class PersonalizationPage extends StackPane {
                     }, themeColorTypeItem.selectedDataProperty()));
         }
         {
-            BorderPane brightnessPane = new BorderPane();
-            themeList.getContent().add(brightnessPane);
-
-            Label left = new Label("主题模式"); // TODO: i18n
-            BorderPane.setAlignment(left, Pos.CENTER_LEFT);
-            brightnessPane.setLeft(left);
-
-            JFXComboBox<String> cboBrightness = new JFXComboBox<>(FXCollections.observableArrayList(
-                    "auto", "light", "dark"));
-            cboBrightness.setConverter(FXUtils.stringConverter(name -> {
-                // TODO: i18n
-                return switch (name) {
-                    case "auto" -> "跟随系统设置";
-                    case "light" -> "浅色模式";
-                    case "dark" -> "深色模式";
-                    default -> name;
-                };
-            }));
-            cboBrightness.valueProperty().bindBidirectional(config().themeBrightnessProperty());
-            brightnessPane.setRight(cboBrightness);
-        }
-
-        {
-            OptionToggleButton titleTransparentButton = new OptionToggleButton();
-            themeList.getContent().add(titleTransparentButton);
-            titleTransparentButton.selectedProperty().bindBidirectional(config().titleTransparentProperty());
-            titleTransparentButton.setTitle(i18n("settings.launcher.title_transparent"));
-        }
-        {
-            OptionToggleButton animationButton = new OptionToggleButton();
-            themeList.getContent().add(animationButton);
-            animationButton.selectedProperty().bindBidirectional(config().animationDisabledProperty());
-            animationButton.setTitle(i18n("settings.launcher.turn_off_animations"));
-        }
-        content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.appearance")), themeList);
-
-        {
-            ComponentList componentList = new ComponentList();
-
             MultiFileItem<EnumBackgroundImage> backgroundItem = new MultiFileItem<>();
             ComponentSublist backgroundSublist = new ComponentSublist();
+            themeList.getContent().add(backgroundSublist);
+            backgroundSublist.setTitle(i18n("launcher.background"));
             backgroundSublist.getContent().add(backgroundItem);
             backgroundSublist.setTitle(i18n("launcher.background"));
             backgroundSublist.setHasSubtitle(true);
@@ -168,7 +153,20 @@ public class PersonalizationPage extends StackPane {
                     new When(backgroundItem.selectedDataProperty().isEqualTo(EnumBackgroundImage.DEFAULT))
                             .then(i18n("launcher.background.default"))
                             .otherwise(config().backgroundImageProperty()));
-
+        }
+        {
+            OptionToggleButton titleTransparentButton = new OptionToggleButton();
+            themeList.getContent().add(titleTransparentButton);
+            titleTransparentButton.selectedProperty().bindBidirectional(config().titleTransparentProperty());
+            titleTransparentButton.setTitle(i18n("settings.launcher.title_transparent"));
+        }
+        {
+            OptionToggleButton animationButton = new OptionToggleButton();
+            themeList.getContent().add(animationButton);
+            animationButton.selectedProperty().bindBidirectional(config().animationDisabledProperty());
+            animationButton.setTitle(i18n("settings.launcher.turn_off_animations"));
+        }
+        {
             HBox opacityItem = new HBox(8);
             {
                 opacityItem.setAlignment(Pos.CENTER);
@@ -212,9 +210,9 @@ public class PersonalizationPage extends StackPane {
                 opacityItem.getChildren().setAll(label, slider, textOpacity);
             }
 
-            componentList.getContent().setAll(backgroundItem, opacityItem);
-            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("launcher.background")), componentList);
+            themeList.getContent().add(opacityItem);
         }
+        content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.appearance")), themeList);
 
         {
             ComponentList logPane = new ComponentSublist();
