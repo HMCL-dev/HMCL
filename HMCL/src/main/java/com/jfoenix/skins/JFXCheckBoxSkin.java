@@ -137,29 +137,20 @@ public class JFXCheckBoxSkin extends CheckBoxSkin {
     }
 
     static double computeXOffset(double width, double contentWidth, HPos hpos) {
-        switch (hpos) {
-            case LEFT:
-                return 0.0;
-            case CENTER:
-                return (width - contentWidth) / 2.0;
-            case RIGHT:
-                return width - contentWidth;
-            default:
-                return 0.0;
-        }
+        return switch (hpos) {
+            case LEFT -> 0.0;
+            case CENTER -> (width - contentWidth) / 2.0;
+            case RIGHT -> width - contentWidth;
+        };
     }
 
     static double computeYOffset(double height, double contentHeight, VPos vpos) {
-        switch (vpos) {
-            case TOP:
-                return 0.0;
-            case CENTER:
-                return (height - contentHeight) / 2.0;
-            case BOTTOM:
-                return height - contentHeight;
-            default:
-                return 0.0;
-        }
+        return switch (vpos) {
+            case TOP -> 0.0;
+            case CENTER -> (height - contentHeight) / 2.0;
+            case BOTTOM -> height - contentHeight;
+            default -> 0.0;
+        };
     }
 
     private void playSelectAnimation(Boolean selection) {
@@ -182,7 +173,22 @@ public class JFXCheckBoxSkin extends CheckBoxSkin {
 
     private final class CheckBoxTransition extends CachedTransition {
         CheckBoxTransition() {
-            super(JFXCheckBoxSkin.this.mark, new Timeline(new KeyFrame(Duration.ZERO, new KeyValue(JFXCheckBoxSkin.this.mark.visibleProperty(), false, Interpolator.EASE_BOTH), new KeyValue(JFXCheckBoxSkin.this.mark.scaleXProperty(), (double) 0.5F, Interpolator.EASE_OUT), new KeyValue(JFXCheckBoxSkin.this.mark.scaleYProperty(), (double) 0.5F, Interpolator.EASE_OUT)), new KeyFrame(Duration.millis(400.0), new KeyValue(JFXCheckBoxSkin.this.mark.visibleProperty(), true, Interpolator.EASE_OUT), new KeyValue(JFXCheckBoxSkin.this.mark.scaleXProperty(), (double) 0.5F, Interpolator.EASE_OUT), new KeyValue(JFXCheckBoxSkin.this.mark.scaleYProperty(), (double) 0.5F, Interpolator.EASE_OUT)), new KeyFrame(Duration.millis(1000.0), new KeyValue(JFXCheckBoxSkin.this.mark.scaleXProperty(), 1, Interpolator.EASE_OUT), new KeyValue(JFXCheckBoxSkin.this.mark.scaleYProperty(), 1, Interpolator.EASE_OUT))));
+            super(JFXCheckBoxSkin.this.mark,
+                    new Timeline(
+                            new KeyFrame(Duration.ZERO,
+                                    new KeyValue(JFXCheckBoxSkin.this.mark.visibleProperty(), false, Interpolator.EASE_OUT),
+                                    new KeyValue(JFXCheckBoxSkin.this.mark.scaleXProperty(), (double) 0.5F, Interpolator.EASE_OUT),
+                                    new KeyValue(JFXCheckBoxSkin.this.mark.scaleYProperty(), (double) 0.5F, Interpolator.EASE_OUT)),
+                            new KeyFrame(Duration.millis(400.0),
+                                    new KeyValue(JFXCheckBoxSkin.this.mark.visibleProperty(), true, Interpolator.EASE_OUT),
+                                    new KeyValue(JFXCheckBoxSkin.this.mark.scaleXProperty(), (double) 0.5F, Interpolator.EASE_OUT),
+                                    new KeyValue(JFXCheckBoxSkin.this.mark.scaleYProperty(), (double) 0.5F, Interpolator.EASE_OUT)),
+                            new KeyFrame(Duration.millis(1000.0),
+                                    new KeyValue(JFXCheckBoxSkin.this.mark.visibleProperty(), true, Interpolator.LINEAR),
+                                    new KeyValue(JFXCheckBoxSkin.this.mark.scaleXProperty(), 1, Interpolator.EASE_OUT),
+                                    new KeyValue(JFXCheckBoxSkin.this.mark.scaleYProperty(), 1, Interpolator.EASE_OUT))
+                    )
+            );
             this.setCycleDuration(Duration.seconds(0.12));
             this.setDelay(Duration.seconds(0.05));
         }
