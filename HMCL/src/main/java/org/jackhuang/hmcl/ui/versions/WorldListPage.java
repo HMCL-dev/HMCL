@@ -67,8 +67,6 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
                 itemsProperty().setAll(worlds.stream()
                         .filter(world -> isShowAll() || world.getGameVersion() == null || world.getGameVersion().equals(gameVersion) || world.getGameVersion().replace(" Pre-Release ", "-pre").replace(" Unobfuscated", "_unobfuscated").equals(gameVersion))
                         .map(world -> new WorldListItem(this, world, backupsDir)).toList());
-                worlds.forEach(world -> LOG.debug("world.getGameVersion(): " + world.getGameVersion() + ", gameVersion: " + gameVersion + ", map.getOrDefault(world.getGameVersion(), \"\"): " + map.getOrDefault(world.getGameVersion(), "")
-                + "\nisShowAll() : " + isShowAll() + ", world.getGameVersion() == null: " + (world.getGameVersion() == null) + ", world.getGameVersion().equals(gameVersion): " + world.getGameVersion().equals(gameVersion) + ", world.getGameVersion().replace(\" Pre-Release \", \"-pre\").equals(gameVersion)" + world.getGameVersion().replace(" Pre-Release ", "-pre").equals(gameVersion)));
         });
     }
 
