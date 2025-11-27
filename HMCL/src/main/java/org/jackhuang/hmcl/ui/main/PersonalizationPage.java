@@ -40,10 +40,7 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
+import java.util.*;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
@@ -78,11 +75,14 @@ public class PersonalizationPage extends StackPane {
         {
             ComponentSublist themeColorTypeList = new ComponentSublist();
             themeColorTypeList.setTitle(i18n("settings.launcher.theme"));
+            themeColorTypeList.setHasSubtitle(true);
             themeList.getContent().add(themeColorTypeList);
+
+            // TODO: i18n
 
             MultiFileItem<ThemeColorType> themeColorTypeItem = new MultiFileItem<>();
             themeColorTypeList.getContent().add(themeColorTypeItem);
-            themeColorTypeItem.loadChildren(List.of( // TODO: i18n
+            themeColorTypeItem.loadChildren(List.of(
                     new MultiFileItem.Option<>("默认", ThemeColorType.DEFAULT),
                     new MultiFileItem.Option<>("跟随壁纸", ThemeColorType.MONET),
                     new MultiFileItem.Option<>("跟随系统", ThemeColorType.SYSTEM),
@@ -91,6 +91,17 @@ public class PersonalizationPage extends StackPane {
                             .bindThemeColorBidirectional(config().themeColorProperty())
             ));
             themeColorTypeItem.selectedDataProperty().bindBidirectional(config().themeColorTypeProperty());
+
+            themeColorTypeList.subtitleProperty().bind(Bindings.createStringBinding(() ->
+                    switch (Objects.requireNonNullElse(
+                            themeColorTypeItem.getSelectedData(),
+                            ThemeColorType.DEFAULT
+                    )) {
+                        case MONET -> "跟随壁纸";
+                        case SYSTEM -> "跟随系统";
+                        case CUSTOM -> "自定义";
+                        default -> "默认";
+                    }, themeColorTypeItem.selectedDataProperty()));
         }
         {
             BorderPane brightnessPane = new BorderPane();
