@@ -45,7 +45,6 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class WorldListPage extends ListPageBase<WorldListItem> implements VersionPage.VersionLoadable {
     private final BooleanProperty showAll = new SimpleBooleanProperty(this, "showAll", false);
-    private final Map<String, String> map = new HashMap<>();
 
     private Path savesDir;
     private Path backupsDir;
@@ -58,8 +57,6 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
         FXUtils.applyDragListener(this, it -> "zip".equals(FileUtils.getExtension(it)), modpacks -> {
             installWorld(modpacks.get(0));
         });
-
-        map.put("1.21.11 Pre-Release 2 Unobfuscated", "1.21.11-pre2_unobfuscated");
 
         showAll.addListener(e -> {
             if (worlds != null)
