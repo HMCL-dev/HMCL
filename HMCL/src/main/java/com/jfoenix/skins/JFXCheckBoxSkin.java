@@ -87,6 +87,9 @@ public class JFXCheckBoxSkin extends CheckBoxSkin {
         control.pressedProperty().addListener((o, oldVal, newVal) -> this.rippler.hideOverlay());
         this.updateChildren();
         this.registerChangeListener(control.checkedColorProperty(), ignored -> {
+            if (select != null) {
+                select.stop();
+            }
             this.createFillTransition();
             updateColors();
         });
