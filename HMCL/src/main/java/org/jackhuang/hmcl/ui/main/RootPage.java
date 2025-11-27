@@ -50,6 +50,7 @@ import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
@@ -205,11 +206,13 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             terracottaItem.setActionButtonVisible(false);
             terracottaItem.setTitle(i18n("terracotta"));
             terracottaItem.setOnAction(e -> {
-                if (TerracottaMetadata.PROVIDER != null) {
+                if (LocaleUtils.IS_CHINA_MAINLAND && TerracottaMetadata.PROVIDER != null) {
                     Controllers.navigate(Controllers.getTerracottaPage());
                 } else {
                     String message;
-                    if (Architecture.SYSTEM_ARCH.getBits() == Bits.BIT_32)
+                    if (!LocaleUtils.IS_CHINA_MAINLAND) {
+                        message = i18n("terracotta.unsupported.region");
+                    } else if (Architecture.SYSTEM_ARCH.getBits() == Bits.BIT_32)
                         message = i18n("terracotta.unsupported.arch.32bit");
                     else if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
                             && !OperatingSystem.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_10))
