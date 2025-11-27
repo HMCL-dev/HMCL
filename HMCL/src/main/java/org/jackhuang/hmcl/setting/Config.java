@@ -27,6 +27,7 @@ import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
 import javafx.scene.paint.Paint;
+import org.glavo.monetfx.ColorStyle;
 import org.hildan.fxgson.creators.ObservableListCreator;
 import org.hildan.fxgson.creators.ObservableMapCreator;
 import org.hildan.fxgson.creators.ObservableSetCreator;
@@ -277,6 +278,21 @@ public final class Config extends ObservableSetting {
 
     // UI
 
+    @SerializedName("themeBrightness")
+    private final StringProperty themeBrightness = new SimpleStringProperty("light");
+
+    public StringProperty themeBrightnessProperty() {
+        return themeBrightness;
+    }
+
+    public String getThemeBrightness() {
+        return themeBrightness.get();
+    }
+
+    public void setThemeBrightness(String themeBrightness) {
+        this.themeBrightness.set(themeBrightness);
+    }
+
     @SerializedName("themeColorType")
     private final ObjectProperty<ThemeColorType> themeColorType = new RawPreservingObjectProperty<>(ThemeColorType.DEFAULT);
 
@@ -307,19 +323,19 @@ public final class Config extends ObservableSetting {
         this.themeColor.set(themeColor);
     }
 
-    @SerializedName("themeBrightness")
-    private final StringProperty themeBrightness = new SimpleStringProperty("light");
+    @SerializedName("themeColorStyle")
+    private final ObjectProperty<ColorStyle> themeColorStyle = new RawPreservingObjectProperty<>(ColorStyle.FIDELITY);
 
-    public StringProperty themeBrightnessProperty() {
-        return themeBrightness;
+    public ObjectProperty<ColorStyle> themeColorStyleProperty() {
+        return themeColorStyle;
     }
 
-    public String getThemeBrightness() {
-        return themeBrightness.get();
+    public ColorStyle getThemeColorStyle() {
+        return themeColorStyle.get();
     }
 
-    public void setThemeBrightness(String themeBrightness) {
-        this.themeBrightness.set(themeBrightness);
+    public void setThemeColorStyle(ColorStyle themeColorStyle) {
+        this.themeColorStyle.set(themeColorStyle);
     }
 
     @SerializedName("fontFamily")

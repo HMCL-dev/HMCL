@@ -31,6 +31,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontSmoothingType;
+import org.glavo.monetfx.ColorStyle;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.theme.ThemeColorType;
@@ -124,6 +125,35 @@ public class PersonalizationPage extends StackPane {
                         case CUSTOM -> "自定义";
                         default -> "默认";
                     }, themeColorTypeItem.selectedDataProperty()));
+        }
+        {
+            BorderPane colorStyle = new BorderPane();
+            themeList.getContent().add(colorStyle);
+
+            Label left = new Label("颜色风格"); // TODO: i18n
+            BorderPane.setAlignment(left, Pos.CENTER_LEFT);
+            colorStyle.setLeft(left);
+
+            JFXComboBox<ColorStyle> cboBrightness = new JFXComboBox<>(FXCollections.observableArrayList(
+                    ColorStyle.FIDELITY,
+                    ColorStyle.TONAL_SPOT,
+                    ColorStyle.EXPRESSIVE,
+                    ColorStyle.FRUIT_SALAD,
+                    ColorStyle.MONOCHROME
+            ));
+            cboBrightness.setConverter(FXUtils.stringConverter(style -> {
+                // TODO: i18n
+                return switch (style) {
+                    case FIDELITY -> "原色";
+                    case TONAL_SPOT -> "点缀";
+                    case EXPRESSIVE -> "活力";
+                    case FRUIT_SALAD -> "水果沙拉";
+                    case MONOCHROME -> "黑白";
+                    default -> style.toString();
+                };
+            }));
+            cboBrightness.valueProperty().bindBidirectional(config().themeColorStyleProperty());
+            colorStyle.setRight(cboBrightness);
         }
         {
             MultiFileItem<EnumBackgroundImage> backgroundItem = new MultiFileItem<>();

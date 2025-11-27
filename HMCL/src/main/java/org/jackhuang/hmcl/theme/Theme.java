@@ -45,17 +45,20 @@ import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 
 /// @author Glavo
 public record Theme(ThemeColor primaryColorSeed,
-                    Brightness brightness) {
+                    Brightness brightness,
+                    ColorStyle colorStyle
+) {
 
-    public static final Theme DEFAULT = new Theme(ThemeColor.DEFAULT, Brightness.DEFAULT);
+    public static final Theme DEFAULT = new Theme(ThemeColor.DEFAULT, Brightness.DEFAULT, ColorStyle.FIDELITY);
 
     private static final ObjectExpression<Theme> theme = new ObjectBinding<>() {
         {
             List<Observable> observables = new ArrayList<>();
 
+            observables.add(config().themeBrightnessProperty());
             observables.add(config().themeColorTypeProperty());
             observables.add(config().themeColorProperty());
-            observables.add(config().themeBrightnessProperty());
+            observables.add(config().themeColorStyleProperty());
             observables.add(Controllers.getDecorator().getDecorator().contentBackgroundProperty());
             if (FXUtils.DARK_MODE != null) {
                 observables.add(FXUtils.DARK_MODE);
@@ -111,7 +114,11 @@ public record Theme(ThemeColor primaryColorSeed,
                 default -> ThemeColor.DEFAULT;
             };
 
-            return new Theme(themeColor, getBrightness());
+            return new Theme(
+                    themeColor,
+                    getBrightness(),
+                    Objects.requireNonNullElse(config().getThemeColorStyle(), ColorStyle.FIDELITY)
+            );
         }
     };
 
@@ -159,7 +166,7 @@ public record Theme(ThemeColor primaryColorSeed,
     public ColorScheme toColorScheme() {
         return ColorScheme.newBuilder()
                 .setPrimaryColorSeed(primaryColorSeed.color())
-                .setColorStyle(ColorStyle.FIDELITY)
+                .setColorStyle(colorStyle)
                 .setBrightness(brightness)
                 .build();
     }
