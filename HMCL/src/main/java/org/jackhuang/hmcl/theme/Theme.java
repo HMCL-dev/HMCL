@@ -22,6 +22,7 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.binding.ObjectExpression;
+import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Background;
@@ -125,11 +126,13 @@ public record Theme(ThemeColor primaryColorSeed,
     private static final ColorSchemeProperty colorScheme = new SimpleColorSchemeProperty();
 
     static {
-        theme.addListener((observable, oldValue, newValue) -> {
+        ChangeListener<Theme> listener = (observable, oldValue, newValue) -> {
             if (!Objects.equals(oldValue, newValue)) {
                 colorScheme.set(newValue != null ? newValue.toColorScheme() : DEFAULT.toColorScheme());
             }
-        });
+        };
+        listener.changed(theme, null, theme.get());
+        theme.addListener(listener);
     }
 
     public static ReadOnlyColorSchemeProperty colorSchemeProperty() {
