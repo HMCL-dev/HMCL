@@ -34,7 +34,9 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -43,6 +45,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class WorldListPage extends ListPageBase<WorldListItem> implements VersionPage.VersionLoadable {
     private final BooleanProperty showAll = new SimpleBooleanProperty(this, "showAll", false);
+    private final Map<String, String> map = new HashMap<>();
 
     private Path savesDir;
     private Path backupsDir;
@@ -56,11 +59,16 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
             installWorld(modpacks.get(0));
         });
 
+        map.put("1.21.11 Pre-Release 2 Unobfuscated", "1.21.11-pre2_unobfuscated");
+
         showAll.addListener(e -> {
             if (worlds != null)
+                LOG.debug("execute this");
                 itemsProperty().setAll(worlds.stream()
-                        .filter(world -> isShowAll() || world.getGameVersion() == null || world.getGameVersion().equals(gameVersion))
+                        .filter(world -> isShowAll() || world.getGameVersion() == null || world.getGameVersion().equals(gameVersion) || world.getGameVersion().replace(" Pre-Release ", "-pre").replace(" Unobfuscated", "_unobfuscated").equals(gameVersion))
                         .map(world -> new WorldListItem(this, world, backupsDir)).toList());
+                worlds.forEach(world -> LOG.debug("world.getGameVersion(): " + world.getGameVersion() + ", gameVersion: " + gameVersion + ", map.getOrDefault(world.getGameVersion(), \"\"): " + map.getOrDefault(world.getGameVersion(), "")
+                + "\nisShowAll() : " + isShowAll() + ", world.getGameVersion() == null: " + (world.getGameVersion() == null) + ", world.getGameVersion().equals(gameVersion): " + world.getGameVersion().equals(gameVersion) + ", world.getGameVersion().replace(\" Pre-Release \", \"-pre\").equals(gameVersion)" + world.getGameVersion().replace(" Pre-Release ", "-pre").equals(gameVersion)));
         });
     }
 
@@ -98,7 +106,7 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
                     setLoading(false);
                     if (exception == null) {
                         itemsProperty().setAll(result.stream()
-                                .filter(world -> isShowAll() || world.getGameVersion() == null || world.getGameVersion().equals(gameVersion))
+                                .filter(world -> isShowAll() || world.getGameVersion() == null || world.getGameVersion().equals(gameVersion) || world.getGameVersion().replace(" Pre-Release ", "-pre").replace(" Unobfuscated", "_unobfuscated").equals(gameVersion))
                                 .map(world -> new WorldListItem(this, world, backupsDir))
                                 .collect(Collectors.toList()));
                     } else {
