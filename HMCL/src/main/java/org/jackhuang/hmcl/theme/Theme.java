@@ -29,8 +29,9 @@ import javafx.scene.paint.Color;
 import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorScheme;
 import org.glavo.monetfx.ColorStyle;
-import org.glavo.monetfx.beans.binding.ColorSchemeBinding;
-import org.glavo.monetfx.beans.binding.ColorSchemeExpression;
+import org.glavo.monetfx.beans.property.ColorSchemeProperty;
+import org.glavo.monetfx.beans.property.ReadOnlyColorSchemeProperty;
+import org.glavo.monetfx.beans.property.SimpleColorSchemeProperty;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 
@@ -121,12 +122,17 @@ public record Theme(ThemeColor primaryColorSeed,
         return themeProperty().get();
     }
 
-    private static final ColorSchemeBinding colorScheme = ColorSchemeBinding.createColorSchemeBinding(
-            () -> theme.get().toColorScheme(),
-            theme
-    );
+    private static final ColorSchemeProperty colorScheme = new SimpleColorSchemeProperty();
 
-    public static ColorSchemeExpression colorSchemeProperty() {
+    static {
+        theme.addListener((observable, oldValue, newValue) -> {
+            if (!Objects.equals(oldValue, newValue)) {
+                colorScheme.set(newValue != null ? newValue.toColorScheme() : DEFAULT.toColorScheme());
+            }
+        });
+    }
+
+    public static ReadOnlyColorSchemeProperty colorSchemeProperty() {
         return colorScheme;
     }
 
