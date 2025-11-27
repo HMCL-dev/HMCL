@@ -784,9 +784,10 @@
 *******************************************************************************/
 
 .jfx-check-box {
-    -fx-text-fill: -monet-on-surface;
     -fx-font-weight: BOLD;
+    -fx-text-fill: -monet-on-surface;
     -jfx-checked-color: -monet-primary;
+    -jfx-unchecked-color: #5A5A5A;
 }
 
 /*******************************************************************************
