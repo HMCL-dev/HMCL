@@ -29,6 +29,7 @@ import javafx.scene.layout.Background;
 import javafx.scene.paint.Color;
 import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorScheme;
+import org.glavo.monetfx.ColorSpecVersion;
 import org.glavo.monetfx.ColorStyle;
 import org.glavo.monetfx.beans.property.ColorSchemeProperty;
 import org.glavo.monetfx.beans.property.ReadOnlyColorSchemeProperty;
@@ -168,6 +169,7 @@ public record Theme(ThemeColor primaryColorSeed,
                 .setPrimaryColorSeed(primaryColorSeed.color())
                 .setColorStyle(colorStyle)
                 .setBrightness(brightness)
+                .setSpecVersion(ColorSpecVersion.SPEC_2025)
                 .build();
     }
 }
