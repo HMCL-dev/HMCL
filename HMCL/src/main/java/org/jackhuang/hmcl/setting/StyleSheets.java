@@ -24,8 +24,8 @@ import javafx.scene.Scene;
 import javafx.scene.paint.Color;
 import org.glavo.monetfx.ColorRole;
 import org.glavo.monetfx.ColorScheme;
-import org.jackhuang.hmcl.theme.Theme;
 import org.jackhuang.hmcl.theme.ThemeColor;
+import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.FXUtils;
 
 import java.io.IOException;
@@ -57,7 +57,7 @@ public final class StyleSheets {
         stylesheets = FXCollections.observableList(Arrays.asList(array));
 
         FontManager.fontProperty().addListener(o -> stylesheets.set(FONT_STYLE_SHEET_INDEX, getFontStyleSheet()));
-        Theme.colorSchemeProperty().addListener(o -> stylesheets.set(THEME_STYLE_SHEET_INDEX, getThemeStyleSheet()));
+        Themes.colorSchemeProperty().addListener(o -> stylesheets.set(THEME_STYLE_SHEET_INDEX, getThemeStyleSheet()));
     }
 
     private static String toStyleSheetUri(String styleSheet, String fallback) {
@@ -160,7 +160,7 @@ public final class StyleSheets {
 //        if (theme.equals(Theme2.DEFAULT))
 //            return blueCss;
 
-        ColorScheme scheme = Theme.getColorScheme();
+        ColorScheme scheme = Themes.getColorScheme();
 
         StringBuilder builder = new StringBuilder();
         builder.append("* {\n");

@@ -38,7 +38,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.theme.Theme;
+import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.util.Lang;
@@ -137,7 +137,7 @@ public class RipplerContainer extends StackPane {
     }
 
     private void interpolateBackground(double frac) {
-        Color onSurface = Theme.getColorScheme().getOnSurface();
+        Color onSurface = Themes.getColorScheme().getOnSurface();
         setBackground(new Background(new BackgroundFill(
                 Color.color(onSurface.getRed(), onSurface.getGreen(), onSurface.getBlue(), frac * 0.04),
                 CornerRadii.EMPTY, Insets.EMPTY)));

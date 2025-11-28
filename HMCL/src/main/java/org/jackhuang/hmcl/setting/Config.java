@@ -35,6 +35,7 @@ import org.hildan.fxgson.factories.JavaFxPropertyTypeAdapterFactory;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.java.JavaRuntime;
+import org.jackhuang.hmcl.theme.Theme;
 import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.theme.ThemeColorType;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -277,6 +278,13 @@ public final class Config extends ObservableSetting {
     }
 
     // UI
+
+    @SerializedName("themes")
+    private final ObservableMap<String, Theme> themes = FXCollections.observableMap(new TreeMap<>());
+
+    public ObservableMap<String, Theme> getThemes() {
+        return themes;
+    }
 
     @SerializedName("themeBrightness")
     private final StringProperty themeBrightness = new SimpleStringProperty("light");

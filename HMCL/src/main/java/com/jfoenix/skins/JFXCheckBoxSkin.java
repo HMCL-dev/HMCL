@@ -34,7 +34,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.SVGPath;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.theme.Theme;
+import org.jackhuang.hmcl.theme.Themes;
 
 public class JFXCheckBoxSkin extends CheckBoxSkin {
     private final StackPane box = new StackPane();
@@ -54,7 +54,7 @@ public class JFXCheckBoxSkin extends CheckBoxSkin {
         this.box.setPrefSize(18.0, 18.0);
         this.box.setMaxSize(18.0, 18.0);
         this.box.setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, new CornerRadii(2.0), Insets.EMPTY)));
-        this.box.setBorder(new Border(new BorderStroke(Theme.getColorScheme().getOnSurfaceVariant(), BorderStrokeStyle.SOLID, new CornerRadii(2.0), new BorderWidths(this.lineThick))));
+        this.box.setBorder(new Border(new BorderStroke(Themes.getColorScheme().getOnSurfaceVariant(), BorderStrokeStyle.SOLID, new CornerRadii(2.0), new BorderWidths(this.lineThick))));
         StackPane boxContainer = new StackPane();
         boxContainer.getChildren().add(this.box);
         boxContainer.setPadding(new Insets(this.padding));
@@ -112,7 +112,7 @@ public class JFXCheckBoxSkin extends CheckBoxSkin {
         rippler.setRipplerFill(isSelected ? control.getCheckedColor() : control.getUnCheckedColor());
         final BorderStroke borderStroke = box.getBorder().getStrokes().get(0);
         box.setBorder(new Border(new BorderStroke(
-                isSelected ? control.getCheckedColor() : Theme.getColorScheme().getOnSurfaceVariant(),
+                isSelected ? control.getCheckedColor() : Themes.getColorScheme().getOnSurfaceVariant(),
                 borderStroke.getTopStyle(),
                 borderStroke.getRadii(),
                 borderStroke.getWidths())));
@@ -185,7 +185,7 @@ public class JFXCheckBoxSkin extends CheckBoxSkin {
         this.transition.play();
         this.select.play();
         this.box.setBorder(new Border(new BorderStroke(
-                selection ? control.getCheckedColor() : Theme.getColorScheme().getOnSurfaceVariant(),
+                selection ? control.getCheckedColor() : Themes.getColorScheme().getOnSurfaceVariant(),
                 BorderStrokeStyle.SOLID,
                 new CornerRadii(2.0),
                 new BorderWidths(this.lineThick))));

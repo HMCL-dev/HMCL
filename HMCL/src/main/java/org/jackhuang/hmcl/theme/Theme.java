@@ -17,151 +17,29 @@
  */
 package org.jackhuang.hmcl.theme;
 
-import javafx.beans.Observable;
-import javafx.beans.binding.Bindings;
-import javafx.beans.binding.BooleanBinding;
-import javafx.beans.binding.ObjectBinding;
-import javafx.beans.binding.ObjectExpression;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.scene.image.Image;
-import javafx.scene.layout.Background;
-import javafx.scene.paint.Color;
 import org.glavo.monetfx.*;
-import org.glavo.monetfx.beans.property.ColorSchemeProperty;
-import org.glavo.monetfx.beans.property.ReadOnlyColorSchemeProperty;
-import org.glavo.monetfx.beans.property.SimpleColorSchemeProperty;
-import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.FXUtils;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
-
-import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import java.util.*;
 
 /// @author Glavo
-public record Theme(ThemeColor primaryColorSeed,
-                    Brightness brightness,
-                    ColorStyle colorStyle,
-                    Contrast contrast
-) {
+public final class Theme {
 
     public static final Theme DEFAULT = new Theme(ThemeColor.DEFAULT, Brightness.DEFAULT, ColorStyle.FIDELITY, Contrast.DEFAULT);
 
-    private static final ObjectExpression<Theme> theme = new ObjectBinding<>() {
-        {
-            List<Observable> observables = new ArrayList<>();
+    private final ThemeColor primaryColorSeed;
+    private final Brightness brightness;
+    private final ColorStyle colorStyle;
+    private final Contrast contrast;
 
-            observables.add(config().themeBrightnessProperty());
-            observables.add(config().themeColorTypeProperty());
-            observables.add(config().themeColorProperty());
-            observables.add(config().themeColorStyleProperty());
-            observables.add(config().highContrastProperty());
-            observables.add(Controllers.getDecorator().getDecorator().contentBackgroundProperty());
-            if (FXUtils.DARK_MODE != null) {
-                observables.add(FXUtils.DARK_MODE);
-            }
-            if (FXUtils.ACCENT_COLOR != null) {
-                observables.add(FXUtils.ACCENT_COLOR);
-            }
-            bind(observables.toArray(new Observable[0]));
-        }
-
-        private Brightness getBrightness() {
-            String themeBrightness = config().getThemeBrightness();
-            if (themeBrightness == null)
-                return Brightness.DEFAULT;
-
-            return switch (themeBrightness.toLowerCase(Locale.ROOT).trim()) {
-                case "auto" -> {
-                    if (FXUtils.DARK_MODE != null) {
-                        yield FXUtils.DARK_MODE.get() ? Brightness.DARK : Brightness.LIGHT;
-                    } else {
-                        yield Brightness.DEFAULT;
-                    }
-                }
-                case "dark" -> Brightness.DARK;
-                case "light" -> Brightness.LIGHT;
-                default -> Brightness.DEFAULT;
-            };
-        }
-
-        @Override
-        protected Theme computeValue() {
-            ThemeColor themeColor = switch (Objects.requireNonNullElse(config().getThemeColorType(), ThemeColorType.DEFAULT)) {
-                case CUSTOM -> Objects.requireNonNullElse(config().getThemeColor(), ThemeColor.DEFAULT);
-                case MONET -> {
-                    Background contentBackground = Controllers.getDecorator().getDecorator().getContentBackground();
-                    if (contentBackground != null) {
-                        if (!contentBackground.getImages().isEmpty()) {
-                            Image backgroundImage = contentBackground.getImages().get(0).getImage();
-                            yield ThemeColor.of(ColorScheme.extractColor(backgroundImage, ThemeColor.DEFAULT.color()));
-                        } else if (!contentBackground.getFills().isEmpty()
-                                && contentBackground.getFills().get(0).getFill() instanceof Color color) {
-                            yield ThemeColor.of(color);
-                        } else {
-                            yield ThemeColor.DEFAULT;
-                        }
-                    } else {
-                        yield ThemeColor.DEFAULT;
-                    }
-                }
-                case SYSTEM -> FXUtils.ACCENT_COLOR != null
-                        ? ThemeColor.of(FXUtils.ACCENT_COLOR.get())
-                        : ThemeColor.DEFAULT;
-                default -> ThemeColor.DEFAULT;
-            };
-
-            return new Theme(
-                    themeColor,
-                    getBrightness(),
-                    Objects.requireNonNullElse(config().getThemeColorStyle(), DEFAULT.colorStyle()),
-                    config().isHighContrast() ? Contrast.HIGH : Contrast.DEFAULT
-            );
-        }
-    };
-
-    public static ObjectExpression<Theme> themeProperty() {
-        return theme;
-    }
-
-    public static Theme getTheme() {
-        return themeProperty().get();
-    }
-
-    private static final ColorSchemeProperty colorScheme = new SimpleColorSchemeProperty();
-
-    static {
-        ChangeListener<Theme> listener = (observable, oldValue, newValue) -> {
-            if (!Objects.equals(oldValue, newValue)) {
-                colorScheme.set(newValue != null ? newValue.toColorScheme() : DEFAULT.toColorScheme());
-            }
-        };
-        listener.changed(theme, null, theme.get());
-        theme.addListener(listener);
-    }
-
-    public static ReadOnlyColorSchemeProperty colorSchemeProperty() {
-        return colorScheme;
-    }
-
-    public static ColorScheme getColorScheme() {
-        return colorScheme.get();
-    }
-
-    public static ObservableValue<Color> titleFillProperty() {
-        return colorSchemeProperty().getOnPrimaryContainer();
-    }
-
-    private static final BooleanBinding darkMode = Bindings.createBooleanBinding(
-            () -> colorScheme.get().getBrightness() == Brightness.DARK,
-            colorScheme
-    );
-
-    public static BooleanBinding darkModeProperty() {
-        return darkMode;
+    public Theme(ThemeColor primaryColorSeed,
+                 Brightness brightness,
+                 ColorStyle colorStyle,
+                 Contrast contrast
+    ) {
+        this.primaryColorSeed = primaryColorSeed;
+        this.brightness = brightness;
+        this.colorStyle = colorStyle;
+        this.contrast = contrast;
     }
 
     public ColorScheme toColorScheme() {
@@ -173,4 +51,44 @@ public record Theme(ThemeColor primaryColorSeed,
                 .setContrast(contrast)
                 .build();
     }
+
+    public ThemeColor primaryColorSeed() {
+        return primaryColorSeed;
+    }
+
+    public Brightness brightness() {
+        return brightness;
+    }
+
+    public ColorStyle colorStyle() {
+        return colorStyle;
+    }
+
+    public Contrast contrast() {
+        return contrast;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj == this || obj instanceof Theme that
+                && this.primaryColorSeed.equals(that.primaryColorSeed)
+                && this.brightness.equals(that.brightness)
+                && this.colorStyle.equals(that.colorStyle)
+                && this.contrast.equals(that.contrast);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(primaryColorSeed, brightness, colorStyle, contrast);
+    }
+
+    @Override
+    public String toString() {
+        return "Theme[" +
+                "primaryColorSeed=" + primaryColorSeed + ", " +
+                "brightness=" + brightness + ", " +
+                "colorStyle=" + colorStyle + ", " +
+                "contrast=" + contrast + ']';
+    }
+
 }
