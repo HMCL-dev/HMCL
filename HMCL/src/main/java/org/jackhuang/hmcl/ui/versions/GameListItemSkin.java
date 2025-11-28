@@ -45,6 +45,7 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
         JFXPopup popup = new JFXPopup(menu);
 
         menu.getContent().setAll(
+                new IconedMenuItem(SVG.PLAY_ARROW, i18n("version.launch"), () -> currentSkinnable.launch(), popup),
                 new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("version.launch.test"), () -> currentSkinnable.testGame(), popup),
                 new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), () -> currentSkinnable.generateLaunchScript(), popup),
                 new MenuSeparator(),
@@ -91,19 +92,9 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
             btnLaunch.setOnAction(e -> skinnable.launch());
             btnLaunch.getStyleClass().add("toggle-icon4");
             BorderPane.setAlignment(btnLaunch, Pos.CENTER);
-            btnLaunch.setGraphic(FXUtils.limitingSize(SVG.ROCKET_LAUNCH.createIcon(Theme.blackFill(), 24), 24, 24 ));
+            btnLaunch.setGraphic(FXUtils.limitingSize(SVG.PLAY_ARROW.createIcon(Theme.blackFill(), 24), 24, 24 ));
             FXUtils.installFastTooltip(btnLaunch, i18n("version.launch"));
             right.getChildren().add(btnLaunch);
-        }
-
-        {
-            JFXButton btnTest = new JFXButton();
-            btnTest.setOnAction(e -> skinnable.testGame());
-            btnTest.getStyleClass().add("toggle-icon4");
-            BorderPane.setAlignment(btnTest, Pos.CENTER);
-            btnTest.setGraphic(FXUtils.limitingSize(SVG.ROCKET_LAUNCH.createIcon(Theme.blackFill(), 24), 24, 24));
-            FXUtils.installFastTooltip(btnTest, i18n("version.launch.test"));
-            right.getChildren().add(btnTest);
         }
 
         {

@@ -181,6 +181,10 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         Versions.testGame(getProfile(), getVersion());
     }
 
+    private void launch() {
+        Versions.launch(getProfile(), getVersion(), null);
+    }
+
     private void updateGame() {
         Versions.updateVersion(getProfile(), getVersion());
     }
@@ -243,6 +247,13 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                         .addNavigationDrawerTab(control.tab, control.schematicsTab, i18n("schematics.manage"), SVG.SCHEMA, SVG.SCHEMA_FILL);
                 VBox.setVgrow(sideBar, Priority.ALWAYS);
 
+                PopupMenu launchList = new PopupMenu();
+                JFXPopup launchPopup = new JFXPopup(launchList);
+                launchList.getContent().setAll(
+                        new IconedMenuItem(SVG.PLAY_ARROW, i18n("version.launch"), control::launch, launchPopup),
+                        new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("version.launch.test"), control::testGame, launchPopup)
+                );
+
                 PopupMenu browseList = new PopupMenu();
                 JFXPopup browsePopup = new JFXPopup(browseList);
                 browseList.getContent().setAll(
@@ -278,7 +289,9 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                         .addNavigationDrawerItem(i18n("version.update"), SVG.UPDATE, control::updateGame, upgradeItem -> {
                             upgradeItem.visibleProperty().bind(control.currentVersionUpgradable);
                         })
-                        .addNavigationDrawerItem(i18n("version.launch.test"), SVG.ROCKET_LAUNCH, control::testGame)
+                        .addNavigationDrawerItem("启动", SVG.PLAY_ARROW, null, launchMenuItem -> {
+                            launchMenuItem.setOnAction(e -> launchPopup.show(launchMenuItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, launchMenuItem.getWidth(), 0));
+                        })
                         .addNavigationDrawerItem(i18n("settings.game.exploration"), SVG.FOLDER_OPEN, null, browseMenuItem -> {
                             browseMenuItem.setOnAction(e -> browsePopup.show(browseMenuItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, browseMenuItem.getWidth(), 0));
                         })
