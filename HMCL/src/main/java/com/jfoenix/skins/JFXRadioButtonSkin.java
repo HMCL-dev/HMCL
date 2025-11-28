@@ -69,7 +69,6 @@ public class JFXRadioButtonSkin extends RadioButtonSkin {
         });
         control.pressedProperty().addListener((o, oldVal, newVal) -> this.rippler.hideOverlay());
         this.registerChangeListener(control.selectedColorProperty(), ignored -> {
-            this.updateAnimation();
             boolean isSelected = this.getSkinnable().isSelected();
             Color unSelectedColor = ((JFXRadioButton) this.getSkinnable()).getUnSelectedColor();
             Color selectedColor = ((JFXRadioButton) this.getSkinnable()).getSelectedColor();
@@ -80,7 +79,6 @@ public class JFXRadioButtonSkin extends RadioButtonSkin {
         });
 
         this.registerChangeListener(control.unSelectedColorProperty(), ignored -> {
-            this.updateAnimation();
             boolean isSelected = this.getSkinnable().isSelected();
             Color unSelectedColor = ((JFXRadioButton) this.getSkinnable()).getUnSelectedColor();
             Color selectedColor = ((JFXRadioButton) this.getSkinnable()).getSelectedColor();
@@ -95,6 +93,7 @@ public class JFXRadioButtonSkin extends RadioButtonSkin {
             Color unSelectedColor = ((JFXRadioButton) this.getSkinnable()).getUnSelectedColor();
             Color selectedColor = ((JFXRadioButton) this.getSkinnable()).getSelectedColor();
             this.rippler.setRipplerFill(isSelected ? selectedColor : unSelectedColor);
+            this.radio.setStroke(isSelected ? selectedColor : unSelectedColor);
             if (this.timeline == null) {
                 this.updateAnimation();
             }
@@ -147,17 +146,13 @@ public class JFXRadioButtonSkin extends RadioButtonSkin {
     }
 
     private void updateAnimation() {
-        Color unSelectedColor = ((JFXRadioButton) this.getSkinnable()).getUnSelectedColor();
-        Color selectedColor = ((JFXRadioButton) this.getSkinnable()).getSelectedColor();
         this.timeline = new Timeline(
                 new KeyFrame(Duration.ZERO,
                         new KeyValue(this.dot.scaleXProperty(), 0, Interpolator.EASE_BOTH),
-                        new KeyValue(this.dot.scaleYProperty(), 0, Interpolator.EASE_BOTH),
-                        new KeyValue(this.radio.strokeProperty(), unSelectedColor, Interpolator.EASE_BOTH)),
+                        new KeyValue(this.dot.scaleYProperty(), 0, Interpolator.EASE_BOTH)),
                 new KeyFrame(Duration.millis(200.0),
                         new KeyValue(this.dot.scaleXProperty(), 1, Interpolator.EASE_BOTH),
-                        new KeyValue(this.dot.scaleYProperty(), 1, Interpolator.EASE_BOTH),
-                        new KeyValue(this.radio.strokeProperty(), selectedColor, Interpolator.EASE_BOTH))
+                        new KeyValue(this.dot.scaleYProperty(), 1, Interpolator.EASE_BOTH))
         );
     }
 
