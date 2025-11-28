@@ -150,16 +150,20 @@ public class JFXRadioButtonSkin extends RadioButtonSkin {
     private void updateAnimation() {
         Color unSelectedColor = ((JFXRadioButton) this.getSkinnable()).getUnSelectedColor();
         Color selectedColor = ((JFXRadioButton) this.getSkinnable()).getSelectedColor();
-        this.timeline = new Timeline(new KeyFrame(Duration.ZERO, new KeyValue(this.dot.scaleXProperty(), 0, Interpolator.EASE_BOTH), new KeyValue(this.dot.scaleYProperty(), 0, Interpolator.EASE_BOTH), new KeyValue(this.radio.strokeProperty(), unSelectedColor, Interpolator.EASE_BOTH)), new KeyFrame(Duration.millis(200.0), new KeyValue(this.dot.scaleXProperty(), 0.6, Interpolator.EASE_BOTH), new KeyValue(this.dot.scaleYProperty(), 0.6, Interpolator.EASE_BOTH), new KeyValue(this.radio.strokeProperty(), selectedColor, Interpolator.EASE_BOTH)));
+        this.timeline = new Timeline(
+                new KeyFrame(Duration.ZERO,
+                        new KeyValue(this.dot.scaleXProperty(), 0, Interpolator.EASE_BOTH),
+                        new KeyValue(this.dot.scaleYProperty(), 0, Interpolator.EASE_BOTH),
+                        new KeyValue(this.radio.strokeProperty(), unSelectedColor, Interpolator.EASE_BOTH)),
+                new KeyFrame(Duration.millis(200.0),
+                        new KeyValue(this.dot.scaleXProperty(), 0.6, Interpolator.EASE_BOTH),
+                        new KeyValue(this.dot.scaleYProperty(), 0.6, Interpolator.EASE_BOTH),
+                        new KeyValue(this.radio.strokeProperty(), selectedColor, Interpolator.EASE_BOTH))
+        );
     }
 
     private void removeRadio() {
-        for (int i = 0; i < this.getChildren().size(); ++i) {
-            if ("radio".equals(this.getChildren().get(i).getStyleClass().get(0))) {
-                this.getChildren().remove(i);
-            }
-        }
-
+        this.getChildren().removeIf(node -> "radio".equals(node.getStyleClass().get(0)));
     }
 
     protected double computeMinWidth(double height, double topInset, double rightInset, double bottomInset, double leftInset) {
@@ -180,10 +184,9 @@ public class JFXRadioButtonSkin extends RadioButtonSkin {
 
     static double computeYOffset(double height, double contentHeight, VPos vpos) {
         return switch (vpos) {
-            case TOP -> 0.0;
+            case TOP, BASELINE -> 0.0;
             case CENTER -> (height - contentHeight) / 2.0;
             case BOTTOM -> height - contentHeight;
-            default -> 0.0;
         };
     }
 }
