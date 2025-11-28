@@ -338,6 +338,21 @@ public final class Config extends ObservableSetting {
         this.themeColorStyle.set(themeColorStyle);
     }
 
+    @SerializedName("highContrast")
+    private final BooleanProperty highContrast = new SimpleBooleanProperty(false);
+
+    public BooleanProperty highContrastProperty() {
+        return highContrast;
+    }
+
+    public boolean isHighContrast() {
+        return highContrast.get();
+    }
+
+    public void setHighContrast(boolean highContrast) {
+        this.highContrast.set(highContrast);
+    }
+
     @SerializedName("fontFamily")
     private final StringProperty fontFamily = new SimpleStringProperty();
 

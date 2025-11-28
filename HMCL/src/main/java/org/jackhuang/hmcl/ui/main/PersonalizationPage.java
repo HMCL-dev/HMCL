@@ -153,6 +153,12 @@ public class PersonalizationPage extends StackPane {
             colorStyle.setRight(cboBrightness);
         }
         {
+            OptionToggleButton highContrastButton = new OptionToggleButton();
+            themeList.getContent().add(highContrastButton);
+            highContrastButton.selectedProperty().bindBidirectional(config().highContrastProperty());
+            highContrastButton.setTitle("高对比度模式"); // TOOD: i18n
+        }
+        {
             MultiFileItem<EnumBackgroundImage> backgroundItem = new MultiFileItem<>();
             ComponentSublist backgroundSublist = new ComponentSublist();
             themeList.getContent().add(backgroundSublist);

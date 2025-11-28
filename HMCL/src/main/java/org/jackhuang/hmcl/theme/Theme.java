@@ -27,10 +27,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Background;
 import javafx.scene.paint.Color;
-import org.glavo.monetfx.Brightness;
-import org.glavo.monetfx.ColorScheme;
-import org.glavo.monetfx.ColorSpecVersion;
-import org.glavo.monetfx.ColorStyle;
+import org.glavo.monetfx.*;
 import org.glavo.monetfx.beans.property.ColorSchemeProperty;
 import org.glavo.monetfx.beans.property.ReadOnlyColorSchemeProperty;
 import org.glavo.monetfx.beans.property.SimpleColorSchemeProperty;
@@ -47,10 +44,11 @@ import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 /// @author Glavo
 public record Theme(ThemeColor primaryColorSeed,
                     Brightness brightness,
-                    ColorStyle colorStyle
+                    ColorStyle colorStyle,
+                    Contrast contrast
 ) {
 
-    public static final Theme DEFAULT = new Theme(ThemeColor.DEFAULT, Brightness.DEFAULT, ColorStyle.FIDELITY);
+    public static final Theme DEFAULT = new Theme(ThemeColor.DEFAULT, Brightness.DEFAULT, ColorStyle.FIDELITY, Contrast.DEFAULT);
 
     private static final ObjectExpression<Theme> theme = new ObjectBinding<>() {
         {
@@ -60,6 +58,7 @@ public record Theme(ThemeColor primaryColorSeed,
             observables.add(config().themeColorTypeProperty());
             observables.add(config().themeColorProperty());
             observables.add(config().themeColorStyleProperty());
+            observables.add(config().highContrastProperty());
             observables.add(Controllers.getDecorator().getDecorator().contentBackgroundProperty());
             if (FXUtils.DARK_MODE != null) {
                 observables.add(FXUtils.DARK_MODE);
@@ -118,7 +117,8 @@ public record Theme(ThemeColor primaryColorSeed,
             return new Theme(
                     themeColor,
                     getBrightness(),
-                    Objects.requireNonNullElse(config().getThemeColorStyle(), ColorStyle.FIDELITY)
+                    Objects.requireNonNullElse(config().getThemeColorStyle(), DEFAULT.colorStyle()),
+                    config().isHighContrast() ? Contrast.HIGH : Contrast.DEFAULT
             );
         }
     };
@@ -170,6 +170,7 @@ public record Theme(ThemeColor primaryColorSeed,
                 .setColorStyle(colorStyle)
                 .setBrightness(brightness)
                 .setSpecVersion(ColorSpecVersion.SPEC_2025)
+                .setContrast(contrast)
                 .build();
     }
 }
