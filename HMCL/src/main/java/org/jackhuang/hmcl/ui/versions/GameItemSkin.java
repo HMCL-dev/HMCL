@@ -47,7 +47,7 @@ public class GameItemSkin extends SkinBase<GameItem> {
         TwoLineListItem item = new TwoLineListItem();
         item.titleProperty().bind(skinnable.titleProperty());
         FXUtils.onChangeAndOperate(skinnable.tagProperty(), tag -> {
-            item.getTags().clear();
+            item.clearTags();
             if (StringUtils.isNotBlank(tag))
                 item.addTag(tag);
         });

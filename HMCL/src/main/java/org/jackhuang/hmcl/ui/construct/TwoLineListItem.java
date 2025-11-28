@@ -18,11 +18,12 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.*;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
@@ -30,21 +31,21 @@ import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.AggregatedObservableList;
 
+import java.util.stream.Collectors;
+
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+
 public class TwoLineListItem extends VBox {
     private static final String DEFAULT_STYLE_CLASS = "two-line-list-item";
-
-    private static Label createTagLabel(String tag) {
-        Label tagLabel = new Label();
-        tagLabel.setText(tag);
-        HBox.setMargin(tagLabel, new Insets(0, 8, 0, 0));
-        return tagLabel;
-    }
+    private static final int UNLIMITED_TAGS = -1;
 
     private final StringProperty title = new SimpleStringProperty(this, "title");
-    private final ObservableList<Label> tags = FXCollections.observableArrayList();
     private final StringProperty subtitle = new SimpleStringProperty(this, "subtitle");
+    private final ReadOnlyListWrapper<Tag> sourceTags = new ReadOnlyListWrapper<>(this, "sourceTags", FXCollections.observableArrayList());
+    private final ObservableList<Label> visibleTagLabels = FXCollections.observableArrayList();
 
-    private final AggregatedObservableList<Node> firstLineChildren;
+    private final IntegerProperty visibleTagLimit = new SimpleIntegerProperty(UNLIMITED_TAGS);
+    private final Label overflowLabel = createTagLabel("", "tag-overflow", false);
 
     public TwoLineListItem(String titleString, String subtitleString) {
         this();
@@ -54,23 +55,28 @@ public class TwoLineListItem extends VBox {
     }
 
     public TwoLineListItem() {
-        setMouseTransparent(true);
 
         HBox firstLine = new HBox();
         firstLine.getStyleClass().add("first-line");
+        firstLine.setAlignment(Pos.CENTER_LEFT);
 
         Label lblTitle = new Label();
         lblTitle.getStyleClass().add("title");
         lblTitle.textProperty().bind(title);
+        FXUtils.showTooltipWhenTruncated(lblTitle);
 
-        firstLineChildren = new AggregatedObservableList<>();
+        AggregatedObservableList<Node> firstLineChildren = new AggregatedObservableList<>();
         firstLineChildren.appendList(FXCollections.singletonObservableList(lblTitle));
-        firstLineChildren.appendList(tags);
+        firstLineChildren.appendList(visibleTagLabels);
+        sourceTags.addListener((ListChangeListener<? super Tag>) this::updateVisibleTagLabels);
+        visibleTagLimit.addListener(observable -> rebuildVisibleTagLabels());
+
         Bindings.bindContent(firstLine.getChildren(), firstLineChildren.getAggregatedList());
 
         Label lblSubtitle = new Label();
         lblSubtitle.getStyleClass().add("subtitle");
         lblSubtitle.textProperty().bind(subtitle);
+        FXUtils.showTooltipWhenTruncated(lblSubtitle);
 
         HBox secondLine = new HBox();
         secondLine.getChildren().setAll(lblSubtitle);
@@ -83,6 +89,54 @@ public class TwoLineListItem extends VBox {
         });
 
         getStyleClass().add(DEFAULT_STYLE_CLASS);
+    }
+
+    private void updateVisibleTagLabels(ListChangeListener.Change<? extends Tag> c) {
+        if (visibleTagLimit.get() == UNLIMITED_TAGS || visibleTagLabels.size() < visibleTagLimit.get()) {
+            while (c.next()) {
+                if (c.wasAdded()) {
+                    for (Tag tag : c.getAddedSubList()) {
+                        if (visibleTagLimit.get() != UNLIMITED_TAGS && visibleTagLabels.size() > visibleTagLimit.get()) {
+                            break;
+                        }
+                        visibleTagLabels.add(createTagLabel(tag.text, tag.styleClass, true));
+                    }
+                }
+            }
+        }
+        updateOverflowTag();
+    }
+
+    private void rebuildVisibleTagLabels() {
+        visibleTagLabels.clear();
+        for (Tag allTag : sourceTags) {
+            if (visibleTagLimit.get() != UNLIMITED_TAGS && visibleTagLabels.size() > visibleTagLimit.get()) {
+                break;
+            }
+            visibleTagLabels.add(createTagLabel(allTag.text, allTag.styleClass, true));
+        }
+        updateOverflowTag();
+    }
+
+    private void updateOverflowTag() {
+        if (visibleTagLimit.get() != UNLIMITED_TAGS && sourceTags.size() > visibleTagLimit.get()) {
+            FXUtils.installFastTooltip(overflowLabel, sourceTags.stream().skip(visibleTagLimit.get())
+                    .map(Tag::text).collect(Collectors.joining("\n")));
+            overflowLabel.setText(i18n("tag.overflow", (sourceTags.size() - visibleTagLimit.get())));
+            if (!visibleTagLabels.contains(overflowLabel)) {
+                visibleTagLabels.add(overflowLabel);
+            }
+        }
+    }
+
+    private static Label createTagLabel(String tag, String StyleClass, Boolean showToolTipIfTruncated) {
+        Label tagLabel = new Label(tag);
+        if (showToolTipIfTruncated) {
+            FXUtils.showTooltipWhenTruncated(tagLabel);
+        }
+        HBox.setMargin(tagLabel, new Insets(0, 4, 0, 0));
+        tagLabel.getStyleClass().add(StyleClass);
+        return tagLabel;
     }
 
     public String getTitle() {
@@ -110,23 +164,37 @@ public class TwoLineListItem extends VBox {
     }
 
     public void addTag(String tag) {
-        Label tagLabel = createTagLabel(tag);
-        tagLabel.getStyleClass().add("tag");
-        getTags().add(tagLabel);
+        sourceTags.add(new Tag(tag, "tag"));
     }
 
     public void addTagWarning(String tag) {
-        Label tagLabel = createTagLabel(tag);
-        tagLabel.getStyleClass().add("tag-warning");
-        getTags().add(tagLabel);
+        sourceTags.add(new Tag(tag, "tag-warning"));
     }
 
-    public ObservableList<Label> getTags() {
-        return tags;
+    public ReadOnlyListProperty<Tag> getTags() {
+        return sourceTags.getReadOnlyProperty();
+    }
+
+    public void setVisibleTagLimit(int visibleTagLimit) {
+        if (visibleTagLimit >= -1) {
+            this.visibleTagLimit.set(visibleTagLimit);
+        }
+    }
+
+    public IntegerProperty getVisibleTagLimit() {
+        return visibleTagLimit;
+    }
+
+    public void clearTags() {
+        sourceTags.clear();
+        visibleTagLabels.clear();
     }
 
     @Override
     public String toString() {
         return getTitle();
+    }
+
+    public record Tag(String text, String styleClass) {
     }
 }

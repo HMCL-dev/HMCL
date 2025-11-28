@@ -288,17 +288,28 @@
 .two-line-list-item > .first-line > .tag {
     -fx-text-fill: -fx-base-color;
     -fx-background-color: -fx-base-rippler-color;
-    -fx-padding: 2;
+    -fx-padding: 1 2 1 2;
     -fx-font-weight: normal;
-    -fx-font-size: 12px;
+    -fx-font-size: 11px;
+    -fx-background-radius: 2;
 }
 
 .two-line-list-item > .first-line > .tag-warning {
-    -fx-text-fill: #d34336;;
+    -fx-text-fill: #d34336;
     -fx-background-color: #f1aeb5;
-    -fx-padding: 2;
+    -fx-padding: 1 2 1 2;
     -fx-font-weight: normal;
-    -fx-font-size: 12px;
+    -fx-font-size: 11px;
+    -fx-background-radius: 2;
+}
+
+.two-line-list-item > .first-line > .tag-overflow {
+    -fx-text-fill: -fx-base-color;
+    -fx-background-color: derive(-fx-base-rippler-color, -10%);
+    -fx-padding: 1 2 1 2;
+    -fx-font-weight: normal;
+    -fx-font-size: 11px;
+    -fx-background-radius: 2;
 }
 
 .two-line-item-second-large {
