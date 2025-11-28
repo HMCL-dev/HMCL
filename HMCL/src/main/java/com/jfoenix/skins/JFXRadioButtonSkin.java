@@ -23,6 +23,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 
 public class JFXRadioButtonSkin extends RadioButtonSkin {
     private static final double PADDING = 15.0;
@@ -68,36 +69,10 @@ public class JFXRadioButtonSkin extends RadioButtonSkin {
 
         });
         control.pressedProperty().addListener((o, oldVal, newVal) -> this.rippler.hideOverlay());
-        this.registerChangeListener(control.selectedColorProperty(), ignored -> {
-            boolean isSelected = this.getSkinnable().isSelected();
-            Color unSelectedColor = ((JFXRadioButton) this.getSkinnable()).getUnSelectedColor();
-            Color selectedColor = ((JFXRadioButton) this.getSkinnable()).getSelectedColor();
-            this.rippler.setRipplerFill(isSelected ? selectedColor : unSelectedColor);
-            if (isSelected) {
-                this.radio.strokeProperty().set(selectedColor);
-            }
-        });
-
-        this.registerChangeListener(control.unSelectedColorProperty(), ignored -> {
-            boolean isSelected = this.getSkinnable().isSelected();
-            Color unSelectedColor = ((JFXRadioButton) this.getSkinnable()).getUnSelectedColor();
-            Color selectedColor = ((JFXRadioButton) this.getSkinnable()).getSelectedColor();
-            this.rippler.setRipplerFill(isSelected ? selectedColor : unSelectedColor);
-            if (!isSelected) {
-                this.radio.strokeProperty().set(unSelectedColor);
-            }
-
-        });
+        this.registerChangeListener(control.selectedColorProperty(), ignored -> updateColors());
+        this.registerChangeListener(control.unSelectedColorProperty(), ignored -> updateColors());
         this.registerChangeListener(control.selectedProperty(), ignored -> {
-            boolean isSelected = this.getSkinnable().isSelected();
-            Color unSelectedColor = ((JFXRadioButton) this.getSkinnable()).getUnSelectedColor();
-            Color selectedColor = ((JFXRadioButton) this.getSkinnable()).getSelectedColor();
-            this.rippler.setRipplerFill(isSelected ? selectedColor : unSelectedColor);
-            this.radio.setStroke(isSelected ? selectedColor : unSelectedColor);
-            if (this.timeline == null) {
-                this.updateAnimation();
-            }
-
+            updateColors();
             this.playAnimation();
         });
     }
@@ -132,32 +107,44 @@ public class JFXRadioButtonSkin extends RadioButtonSkin {
     }
 
     private void initializeComponents() {
-        Color unSelectedColor = ((JFXRadioButton) this.getSkinnable()).getUnSelectedColor();
-        Color selectedColor = ((JFXRadioButton) this.getSkinnable()).getSelectedColor();
-        this.radio.setStroke(unSelectedColor);
-        this.rippler.setRipplerFill(this.getSkinnable().isSelected() ? selectedColor : unSelectedColor);
-        this.updateAnimation();
+        this.updateColors();
         this.playAnimation();
     }
 
     private void playAnimation() {
-        this.timeline.setRate(this.getSkinnable().isSelected() ? 1.0 : -1.0);
-        this.timeline.play();
-    }
-
-    private void updateAnimation() {
-        this.timeline = new Timeline(
-                new KeyFrame(Duration.ZERO,
-                        new KeyValue(this.dot.scaleXProperty(), 0, Interpolator.EASE_BOTH),
-                        new KeyValue(this.dot.scaleYProperty(), 0, Interpolator.EASE_BOTH)),
-                new KeyFrame(Duration.millis(200.0),
-                        new KeyValue(this.dot.scaleXProperty(), 1, Interpolator.EASE_BOTH),
-                        new KeyValue(this.dot.scaleYProperty(), 1, Interpolator.EASE_BOTH))
-        );
+        if (AnimationUtils.isAnimationEnabled()) {
+            if (this.timeline == null) {
+                this.timeline = new Timeline(
+                        new KeyFrame(Duration.ZERO,
+                                new KeyValue(this.dot.scaleXProperty(), 0, Interpolator.EASE_BOTH),
+                                new KeyValue(this.dot.scaleYProperty(), 0, Interpolator.EASE_BOTH)),
+                        new KeyFrame(Duration.millis(200.0),
+                                new KeyValue(this.dot.scaleXProperty(), 1, Interpolator.EASE_BOTH),
+                                new KeyValue(this.dot.scaleYProperty(), 1, Interpolator.EASE_BOTH))
+                );
+            } else {
+                this.timeline.stop();
+            }
+            this.timeline.setRate(this.getSkinnable().isSelected() ? 1.0 : -1.0);
+            this.timeline.play();
+        } else {
+            double endScale = this.getSkinnable().isSelected() ? 1.0 : 0.0;
+            this.dot.setScaleX(endScale);
+            this.dot.setScaleY(endScale);
+        }
     }
 
     private void removeRadio() {
         this.getChildren().removeIf(node -> "radio".equals(node.getStyleClass().get(0)));
+    }
+
+    private void updateColors() {
+        var control = (JFXRadioButton) getSkinnable();
+        boolean isSelected = control.isSelected();
+        Color unSelectedColor = control.getUnSelectedColor();
+        Color selectedColor = control.getSelectedColor();
+        rippler.setRipplerFill(isSelected ? selectedColor : unSelectedColor);
+        radio.setStroke(isSelected ? selectedColor : unSelectedColor);
     }
 
     protected double computeMinWidth(double height, double topInset, double rightInset, double bottomInset, double leftInset) {
