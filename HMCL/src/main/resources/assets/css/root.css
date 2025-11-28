@@ -649,10 +649,10 @@
  *                                                                             *
  ******************************************************************************/
 
- .jfx-radio-button {
+.jfx-radio-button {
     -jfx-selected-color: -fx-base-check-color;
-     -jfx-unselected-color: #5A5A5A;
- }
+    -jfx-unselected-color: #5A5A5A;
+}
 
 .jfx-radio-button .radio {
     -fx-stroke-width: 2.0px;
