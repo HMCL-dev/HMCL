@@ -149,4 +149,38 @@ public final class MacOSHardwareDetector extends HardwareDetector {
 
         return Collections.emptyList();
     }
+
+    public long getFreeMemorySize() {
+        try {
+            Process process = Runtime.getRuntime().exec("vm_stat");
+            long pageSize = -1;
+            long freePages = -1;
+            long inactivePages = -1;
+
+            try (var reader = process.inputReader()) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    if (pageSize == -1 && line.contains("page size of")) {
+                        pageSize = Long.parseLong(line.replaceAll(".*page size of (\\d+) bytes.*", "$1"));
+                    } else if (freePages == -1 && line.startsWith("Pages free:")) {
+                        freePages = Long.parseLong(line.split(":")[1].trim().replace(".", ""));
+                    } else if (inactivePages == -1 && line.startsWith("Pages inactive:")) {
+                        inactivePages = Long.parseLong(line.split(":")[1].trim().replace(".", ""));
+                    }
+                    if (pageSize != -1 && freePages != -1 && inactivePages != -1) {
+                        break;
+                    }
+                }
+            }
+
+            process.waitFor();
+
+            if (pageSize != -1 && freePages != -1 && inactivePages != -1) {
+                return (freePages + inactivePages) * pageSize;
+            }
+        } catch (Throwable e) {
+            LOG.warning("Failed to parse vm_stat output", e);
+        }
+        return super.getFreeMemorySize();
+    }
 }
