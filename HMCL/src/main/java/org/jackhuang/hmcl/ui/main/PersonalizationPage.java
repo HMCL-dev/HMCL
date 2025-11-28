@@ -115,11 +115,8 @@ public class PersonalizationPage extends StackPane {
             ));
             themeColorTypeItem.selectedDataProperty().bindBidirectional(config().themeColorTypeProperty());
 
-            themeColorTypeList.subtitleProperty().bind(Bindings.createStringBinding(() ->
-                    switch (Objects.requireNonNullElse(
-                            themeColorTypeItem.getSelectedData(),
-                            ThemeColorType.DEFAULT
-                    )) {
+            themeColorTypeList.subtitleProperty().bind(Bindings.createStringBinding(
+                    () -> switch (Objects.requireNonNullElse(themeColorTypeItem.getSelectedData(), ThemeColorType.DEFAULT)) {
                         case MONET -> "跟随壁纸";
                         case SYSTEM -> "跟随系统";
                         case CUSTOM -> "自定义";

@@ -673,6 +673,7 @@
 
 .jfx-radio-button {
     -jfx-selected-color: -monet-primary;
+    -jfx-unselected-color: -monet-primary;
     -fx-text-fill: -monet-on-surface;
 }
 
@@ -681,6 +682,9 @@
     -fx-fill: transparent;
 }
 
+.jfx-radio-button .radio-container:hover{
+    -fx-cursor: hand;
+}
 
 /*******************************************************************************
  *                                                                             *
