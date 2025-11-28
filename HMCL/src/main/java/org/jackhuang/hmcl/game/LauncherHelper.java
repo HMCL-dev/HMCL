@@ -81,6 +81,7 @@ public final class LauncherHelper {
     private final VersionSetting setting;
     private LauncherVisibility launcherVisibility;
     private boolean showLogs;
+    private String worldFolderName;
 
     public LauncherHelper(Profile profile, Account account, String selectedVersion) {
         this.profile = Objects.requireNonNull(profile);
@@ -109,6 +110,10 @@ public final class LauncherHelper {
 
     public void setKeep() {
         launcherVisibility = LauncherVisibility.KEEP;
+    }
+
+    public void setQuickWorld(String worldFolderName) {
+        this.worldFolderName = worldFolderName;
     }
 
     public void launch() {
@@ -204,7 +209,7 @@ public final class LauncherHelper {
                     );
                 }).thenComposeAsync(launcher -> { // launcher is prev task's result
                     if (scriptFile == null) {
-                        return Task.supplyAsync(launcher::launch);
+                        return Task.supplyAsync(() -> worldFolderName != null ? launcher.launch(worldFolderName) : launcher.launch());
                     } else {
                         return Task.supplyAsync(() -> {
                             launcher.makeLaunchScript(scriptFile);

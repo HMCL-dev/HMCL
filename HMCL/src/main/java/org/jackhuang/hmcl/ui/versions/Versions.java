@@ -234,6 +234,10 @@ public final class Versions {
         launch(profile, id, LauncherHelper::setTestMode);
     }
 
+    public static void quickWorldLaunch(Profile profile, String id, String worldFolderName) {
+        launch(profile, id, launcherHelper -> launcherHelper.setQuickWorld(worldFolderName));
+    }
+
     private static boolean checkVersionForLaunching(Profile profile, String id) {
         if (id == null || !profile.getRepository().isLoaded() || !profile.getRepository().hasVersion(id)) {
             JFXButton gotoDownload = new JFXButton(i18n("version.empty.launch.goto_download"));
