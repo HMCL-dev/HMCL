@@ -43,9 +43,8 @@ public class JFXRadioButtonSkin extends RadioButtonSkin {
         this.radio.setStrokeWidth(2.0);
         this.radio.setFill(Color.TRANSPARENT);
 
-        this.dot = new Circle();
+        this.dot = new Circle(4);
         this.dot.getStyleClass().setAll("dot");
-        this.dot.setRadius(radioRadius);
         this.dot.fillProperty().bind(control.selectedColorProperty());
         this.dot.setScaleX(0.0);
         this.dot.setScaleY(0.0);
@@ -156,8 +155,8 @@ public class JFXRadioButtonSkin extends RadioButtonSkin {
                         new KeyValue(this.dot.scaleYProperty(), 0, Interpolator.EASE_BOTH),
                         new KeyValue(this.radio.strokeProperty(), unSelectedColor, Interpolator.EASE_BOTH)),
                 new KeyFrame(Duration.millis(200.0),
-                        new KeyValue(this.dot.scaleXProperty(), 0.6, Interpolator.EASE_BOTH),
-                        new KeyValue(this.dot.scaleYProperty(), 0.6, Interpolator.EASE_BOTH),
+                        new KeyValue(this.dot.scaleXProperty(), 1, Interpolator.EASE_BOTH),
+                        new KeyValue(this.dot.scaleYProperty(), 1, Interpolator.EASE_BOTH),
                         new KeyValue(this.radio.strokeProperty(), selectedColor, Interpolator.EASE_BOTH))
         );
     }
