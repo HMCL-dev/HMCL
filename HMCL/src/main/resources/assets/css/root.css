@@ -649,9 +649,9 @@
  *                                                                             *
  ******************************************************************************/
 
-.jfx-radio-button {
+ .jfx-radio-button {
     -jfx-selected-color: -fx-base-check-color;
-}
+ }
 
 .jfx-radio-button .radio {
     -fx-stroke-width: 2.0px;
