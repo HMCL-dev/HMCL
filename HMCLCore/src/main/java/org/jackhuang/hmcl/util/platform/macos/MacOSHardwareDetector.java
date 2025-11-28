@@ -150,6 +150,7 @@ public final class MacOSHardwareDetector extends HardwareDetector {
         return Collections.emptyList();
     }
 
+    @Override
     public long getFreeMemorySize() {
         try {
             Process process = Runtime.getRuntime().exec("vm_stat");
