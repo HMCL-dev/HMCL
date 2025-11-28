@@ -673,7 +673,7 @@
 
 .jfx-radio-button {
     -jfx-selected-color: -monet-primary;
-    -jfx-unselected-color: -monet-primary;
+    -jfx-unselected-color: -monet-on-surface-variant;
     -fx-text-fill: -monet-on-surface;
 }
 
