@@ -651,7 +651,6 @@
 
 .jfx-radio-button {
     -jfx-selected-color: -fx-base-check-color;
-    -jfx-unselected-color: #5A5A5A;
 }
 
 .jfx-radio-button .radio {
@@ -661,10 +660,6 @@
 
 .jfx-radio-button .dot {
     -fx-fill: -fx-base-check-color;
-}
-
-.jfx-radio-button .radio-container:hover {
-    -fx-cursor: hand;
 }
 
 /*******************************************************************************
