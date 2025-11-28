@@ -59,14 +59,13 @@ public class JFXRadioButtonSkin extends RadioButtonSkin {
     public JFXRadioButtonSkin(JFXRadioButton control) {
         super(control);
 
-        final double radioRadius = 8;
-        radio = new Circle(radioRadius);
+        radio = new Circle(8);
         radio.getStyleClass().setAll("radio");
         radio.setStrokeWidth(2);
         radio.setFill(Color.TRANSPARENT);
         radio.setSmooth(true);
 
-        dot = new Circle(radioRadius);
+        dot = new Circle(4);
         dot.getStyleClass().setAll("dot");
         dot.fillProperty().bind(control.selectedColorProperty());
         dot.setScaleX(0);
@@ -135,12 +134,12 @@ public class JFXRadioButtonSkin extends RadioButtonSkin {
                 new JFXKeyFrame(Duration.millis(200),
                         JFXKeyValue.builder()
                                 .setTarget(dot.scaleXProperty())
-                                .setEndValueSupplier(() -> getSkinnable().isSelected() ? 0.55 : 0)
+                                .setEndValueSupplier(() -> getSkinnable().isSelected() ? 1 : 0)
                                 .setInterpolator(Interpolator.EASE_BOTH)
                                 .build(),
                         JFXKeyValue.builder()
                                 .setTarget(dot.scaleYProperty())
-                                .setEndValueSupplier(() -> getSkinnable().isSelected() ? 0.55 : 0)
+                                .setEndValueSupplier(() -> getSkinnable().isSelected() ? 1 : 0)
                                 .setInterpolator(Interpolator.EASE_BOTH)
                                 .build(),
                         JFXKeyValue.builder()
