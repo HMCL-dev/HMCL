@@ -138,6 +138,7 @@ public final class WorldListItemSkin extends SkinBase<WorldListItem> {
                 new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), item::export, popup),
                 new IconedMenuItem(SVG.DELETE, i18n("world.delete"), item::delete, popup),
                 new IconedMenuItem(SVG.CONTENT_COPY, i18n("world.duplicate"), item::copy, popup),
+                new MenuSeparator(),
                 new IconedMenuItem(SVG.FOLDER_OPEN, i18n("folder.world"), item::reveal, popup));
 
         JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(root, popup);
