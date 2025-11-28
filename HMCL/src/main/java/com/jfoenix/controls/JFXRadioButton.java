@@ -26,6 +26,7 @@ import javafx.css.converter.ColorConverter;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.Skin;
 import javafx.scene.paint.Color;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -143,7 +144,7 @@ public class JFXRadioButton extends RadioButton {
     private final StyleableBooleanProperty disableAnimation = new SimpleStyleableBooleanProperty(StyleableProperties.DISABLE_ANIMATION,
             JFXRadioButton.this,
             "disableAnimation",
-            false);
+            !AnimationUtils.isAnimationEnabled());
 
     public final StyleableBooleanProperty disableAnimationProperty() {
         return this.disableAnimation;
