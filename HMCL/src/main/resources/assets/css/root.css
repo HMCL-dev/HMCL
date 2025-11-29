@@ -52,12 +52,12 @@
 }
 
 .hint.info {
-    -fx-background-color: -monet-secondary-container;
+    -fx-background-color: -monet-primary-fixed-dim;
     -fx-border-color: -monet-outline;
 }
 
 .hint.info Text, .hint.info .svg {
-    -fx-fill: -monet-on-secondary-container;
+    -fx-fill: -monet-on-primary-fixed;
 }
 
 .hint.success {
