@@ -117,7 +117,9 @@ public final class WorldListItemSkin extends SkinBase<WorldListItem> {
         World world = item.getWorld();
 
         popupMenu.getContent().addAll(
-                new IconedMenuItem(SVG.SETTINGS, i18n("world.manage.button"), item::showManagePage, popup));
+                new IconedMenuItem(SVG.SETTINGS, i18n("world.manage.button"), item::showManagePage, popup),
+                new IconedMenuItem(SVG.PLAY_ARROW, i18n("version.launch"), item::launch, popup)
+        );
 
         if (ChunkBaseApp.isSupported(world)) {
             popupMenu.getContent().addAll(

@@ -98,4 +98,8 @@ public final class WorldListItem extends Control {
     public void showManagePage() {
         Controllers.navigate(new WorldManagePage(world, backupsDir, profile, id));
     }
+
+    public void launch() {
+        Versions.quickWorldLaunch(profile, id, world.getFileName());
+    }
 }
