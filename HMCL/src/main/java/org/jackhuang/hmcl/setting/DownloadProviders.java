@@ -24,6 +24,7 @@ import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
 
 import javax.net.ssl.SSLHandshakeException;
@@ -60,6 +61,9 @@ public final class DownloadProviders {
     @SuppressWarnings("unused")
     private static final InvalidationListener observer;
 
+    @SuppressWarnings("unused")
+    private static final InvalidationListener hardlinkObserver;
+
     static {
         String bmclapiRoot = "https://bmclapi2.bangbang93.com";
         String bmclapiRootOverride = System.getProperty("hmcl.bmclapi.override");
@@ -85,6 +89,9 @@ public final class DownloadProviders {
             FetchTask.setDownloadExecutorConcurrency(
                     config().getAutoDownloadThreads() ? DEFAULT_CONCURRENCY : config().getDownloadThreads());
         }, config().autoDownloadThreadsProperty(), config().downloadThreadsProperty());
+
+        hardlinkObserver = FXUtils.observeWeak(() -> FileUtils.setHardLink(config().getHardlink()),
+                config().hardlinkProperty());
 
         provider = new DownloadProviderWrapper(MOJANG);
     }
