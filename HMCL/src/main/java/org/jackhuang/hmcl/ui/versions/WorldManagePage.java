@@ -99,7 +99,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
         AdvancedListBox toolbar = new AdvancedListBox();
 
-        if (GameVersionNumber.compare(world.getGameVersion(), "23w14a") >= 0) {
+        if (world.getWorldName() != null && GameVersionNumber.compare(world.getGameVersion(), "23w14a") >= 0) {
             toolbar.addNavigationDrawerItem(i18n("version.launch_and_enter_world"), SVG.PLAY_ARROW,this::launch,null);
         }
 
@@ -177,6 +177,6 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     public void launch() {
         closePage();
         fireEvent(new PageCloseEvent());
-        Versions.quickWorldLaunch(profile, id, world.getFileName());
+        Versions.launchAndEnterWorld(profile, id, world.getFileName());
     }
 }

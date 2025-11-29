@@ -112,7 +112,7 @@ public final class LauncherHelper {
         launcherVisibility = LauncherVisibility.KEEP;
     }
 
-    public void setQuickWorld(String worldFolderName) {
+    public void setQuickEnterWorld(String worldFolderName) {
         this.worldFolderName = worldFolderName;
     }
 
@@ -209,7 +209,7 @@ public final class LauncherHelper {
                     );
                 }).thenComposeAsync(launcher -> { // launcher is prev task's result
                     if (worldFolderName != null) {
-                        launcher.setQuickLaunchWorld(worldFolderName);
+                        launcher.setQuickEnterWorld(worldFolderName);
                     }
                     if (scriptFile == null) {
                         return Task.supplyAsync(launcher::launch);

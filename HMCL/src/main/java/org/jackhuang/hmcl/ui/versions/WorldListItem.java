@@ -100,6 +100,6 @@ public final class WorldListItem extends Control {
     }
 
     public void launch() {
-        Versions.quickWorldLaunch(profile, id, world.getFileName());
+        Versions.launchAndEnterWorld(profile, id, world.getFileName());
     }
 }

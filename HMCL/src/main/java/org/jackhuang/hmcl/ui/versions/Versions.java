@@ -234,8 +234,8 @@ public final class Versions {
         launch(profile, id, LauncherHelper::setTestMode);
     }
 
-    public static void quickWorldLaunch(Profile profile, String id, String worldFolderName) {
-        launch(profile, id, launcherHelper -> launcherHelper.setQuickWorld(worldFolderName));
+    public static void launchAndEnterWorld(Profile profile, String id, String worldFolderName) {
+        launch(profile, id, launcherHelper -> launcherHelper.setQuickEnterWorld(worldFolderName));
     }
 
     private static boolean checkVersionForLaunching(Profile profile, String id) {

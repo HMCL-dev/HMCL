@@ -66,7 +66,7 @@ public class DefaultLauncher extends Launcher {
         this.analyzer = LibraryAnalyzer.analyze(version, repository.getGameVersion(version).orElse(null));
     }
 
-    public void setQuickLaunchWorld(String worldFolderName) {
+    public void setQuickEnterWorld(String worldFolderName) {
         this.worldFolderName = worldFolderName;
     }
 
