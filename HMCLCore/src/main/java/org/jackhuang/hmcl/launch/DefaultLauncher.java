@@ -70,7 +70,6 @@ public class DefaultLauncher extends Launcher {
         this.worldFolderName = worldFolderName;
     }
 
-
     private Command generateCommandLine(Path nativeFolder) throws IOException {
         CommandBuilder res = new CommandBuilder();
 
@@ -476,7 +475,6 @@ public class DefaultLauncher extends Launcher {
         );
     }
 
-
     @Override
     public ManagedProcess launch() throws IOException, InterruptedException {
         Path nativeFolder;
@@ -486,7 +484,7 @@ public class DefaultLauncher extends Launcher {
             nativeFolder = Path.of(options.getNativesDir());
         }
 
-        final Command command =generateCommandLine(nativeFolder);
+        final Command command = generateCommandLine(nativeFolder);
 
         // To guarantee that when failed to generate launch command line, we will not call pre-launch command
         List<String> rawCommandLine = command.commandLine.asList();
