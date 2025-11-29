@@ -26,14 +26,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
         with:
+          fetch-depth: 0
           fetch-tags: true
       - name: Set up JDK
         uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '25'
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v5
       - name: Fetch last version
         run: ./gradlew ${{ matrix.task }} --no-daemon --info --stacktrace
       - name: Check for existing tags
