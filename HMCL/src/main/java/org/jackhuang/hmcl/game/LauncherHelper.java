@@ -51,6 +51,7 @@ import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.nio.file.AccessDeniedException;
@@ -60,7 +61,6 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
-import java.lang.ref.WeakReference;
 
 import static javafx.application.Platform.runLater;
 import static javafx.application.Platform.setImplicitExit;
@@ -208,13 +208,11 @@ public final class LauncherHelper {
                                     : new HMCLProcessListener(repository, version.get(), authInfo, launchOptions, launchingLatch, gameVersion.isPresent())
                     );
                 }).thenComposeAsync(launcher -> { // launcher is prev task's result
+                    if (worldFolderName != null) {
+                        launcher.setQuickLaunchWorld(worldFolderName);
+                    }
                     if (scriptFile == null) {
-                        return Task.supplyAsync(() -> {
-                            if (worldFolderName != null) {
-                                launcher.setQuickLaunchWorld(worldFolderName);
-                            }
-                            return launcher.launch();
-                        });
+                        return Task.supplyAsync(launcher::launch);
                     } else {
                         return Task.supplyAsync(() -> {
                             launcher.makeLaunchScript(scriptFile);
