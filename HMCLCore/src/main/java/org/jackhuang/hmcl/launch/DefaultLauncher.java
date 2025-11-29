@@ -50,6 +50,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public class DefaultLauncher extends Launcher {
 
     private final LibraryAnalyzer analyzer;
+    private String worldFolderName;
 
     public DefaultLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options) {
         this(repository, version, authInfo, options, null);
@@ -65,11 +66,12 @@ public class DefaultLauncher extends Launcher {
         this.analyzer = LibraryAnalyzer.analyze(version, repository.getGameVersion(version).orElse(null));
     }
 
-    private Command generateCommandLine(Path nativeFolder) throws IOException {
-        return generateCommandLine(nativeFolder, null);
+    public void setQuickLaunchWorld(String worldFolderName) {
+        this.worldFolderName = worldFolderName;
     }
 
-    private Command generateCommandLine(Path nativeFolder, String worldFolderName) throws IOException {
+
+    private Command generateCommandLine(Path nativeFolder) throws IOException {
         CommandBuilder res = new CommandBuilder();
 
         switch (options.getProcessPriority()) {
@@ -474,12 +476,9 @@ public class DefaultLauncher extends Launcher {
         );
     }
 
+
     @Override
     public ManagedProcess launch() throws IOException, InterruptedException {
-        return launch(null);
-    }
-
-    public ManagedProcess launch(String worldFolderName) throws IOException, InterruptedException {
         Path nativeFolder;
         if (options.getNativesDirType() == NativesDirectoryType.VERSION_FOLDER) {
             nativeFolder = repository.getNativeDirectory(version.getId(), options.getJava().getPlatform());
@@ -487,7 +486,7 @@ public class DefaultLauncher extends Launcher {
             nativeFolder = Path.of(options.getNativesDir());
         }
 
-        final Command command = worldFolderName != null ? generateCommandLine(nativeFolder, worldFolderName) : generateCommandLine(nativeFolder);
+        final Command command =generateCommandLine(nativeFolder);
 
         // To guarantee that when failed to generate launch command line, we will not call pre-launch command
         List<String> rawCommandLine = command.commandLine.asList();

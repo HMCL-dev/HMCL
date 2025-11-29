@@ -209,7 +209,12 @@ public final class LauncherHelper {
                     );
                 }).thenComposeAsync(launcher -> { // launcher is prev task's result
                     if (scriptFile == null) {
-                        return Task.supplyAsync(() -> worldFolderName != null ? launcher.launch(worldFolderName) : launcher.launch());
+                        return Task.supplyAsync(() -> {
+                            if (worldFolderName != null) {
+                                launcher.setQuickLaunchWorld(worldFolderName);
+                            }
+                            return launcher.launch();
+                        });
                     } else {
                         return Task.supplyAsync(() -> {
                             launcher.makeLaunchScript(scriptFile);
