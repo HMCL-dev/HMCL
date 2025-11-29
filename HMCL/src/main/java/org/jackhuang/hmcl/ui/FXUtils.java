@@ -1350,7 +1350,7 @@ public final class FXUtils {
 
     public static void onClicked(Node node, Runnable action) {
         node.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
-            if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 1) {
+            if (e.getButton() == MouseButton.PRIMARY) {
                 action.run();
                 e.consume();
             }

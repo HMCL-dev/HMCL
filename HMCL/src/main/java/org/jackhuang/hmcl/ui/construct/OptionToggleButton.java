@@ -63,12 +63,7 @@ public class OptionToggleButton extends StackPane {
         toggleButton.setSize(8);
         FXUtils.setLimitHeight(toggleButton, 30);
 
-        container.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
-            if (e.getButton() == MouseButton.PRIMARY) {
-                toggleButton.setSelected(!toggleButton.isSelected());
-                e.consume();
-            }
-        });
+        FXUtils.onClicked(container, () -> toggleButton.setSelected(!toggleButton.isSelected()));
 
         FXUtils.onChangeAndOperate(subtitleProperty(), subtitle -> {
             if (StringUtils.isNotBlank(subtitle)) {
