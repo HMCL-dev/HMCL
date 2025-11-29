@@ -99,7 +99,10 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
         AdvancedListBox toolbar = new AdvancedListBox();
 
-        toolbar.addNavigationDrawerItem(i18n("version.launch_and_enter_world"), SVG.PLAY_ARROW,this::launch,null);
+        if (GameVersionNumber.compare(world.getGameVersion(), "23w14a") >= 0) {
+            toolbar.addNavigationDrawerItem(i18n("version.launch_and_enter_world"), SVG.PLAY_ARROW,this::launch,null);
+        }
+
         if (ChunkBaseApp.isSupported(world)) {
             PopupMenu popupMenu = new PopupMenu();
             JFXPopup popup = new JFXPopup(popupMenu);
