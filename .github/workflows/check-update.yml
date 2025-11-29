@@ -66,14 +66,14 @@ jobs:
           GH_DOWNLOAD_BASE_URL: https://github.com/HMCL-dev/HMCL/releases/download
       - name: Create release
         if: ${{ env.continue == 'true' }}
-        uses: softprops/action-gh-release@v2
-        with:
-          body_path: RELEASE_NOTE
-          files: |
-            HMCL-${{ env.HMCL_VERSION }}.exe
-            HMCL-${{ env.HMCL_VERSION }}.jar
-            HMCL-${{ env.HMCL_VERSION }}.sh
-          target_commitish: ${{ env.HMCL_COMMIT_SHA }}
-          name: ${{ env.HMCL_TAG_NAME }}
-          tag_name: ${{ env.HMCL_TAG_NAME }}
-          prerelease: true
+        run: |
+          gh release create "${HMCL_TAG_NAME}" \
+            "HMCL-${HMCL_VERSION}.exe" \
+            "HMCL-${HMCL_VERSION}.jar" \
+            "HMCL-${HMCL_VERSION}.sh" \
+            --title "${HMCL_TAG_NAME}" \
+            --notes-file RELEASE_NOTE \
+            --target "${HMCL_COMMIT_SHA}" \
+            --prerelease
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
