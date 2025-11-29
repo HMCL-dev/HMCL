@@ -24,8 +24,6 @@ import javafx.beans.binding.ObjectBinding;
 import javafx.beans.binding.ObjectExpression;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.scene.image.Image;
-import javafx.scene.layout.Background;
 import javafx.scene.paint.Color;
 import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorScheme;
@@ -33,7 +31,6 @@ import org.glavo.monetfx.Contrast;
 import org.glavo.monetfx.beans.property.ColorSchemeProperty;
 import org.glavo.monetfx.beans.property.ReadOnlyColorSchemeProperty;
 import org.glavo.monetfx.beans.property.SimpleColorSchemeProperty;
-import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 
 import java.util.ArrayList;
@@ -51,16 +48,9 @@ public final class Themes {
             List<Observable> observables = new ArrayList<>();
 
             observables.add(config().themeBrightnessProperty());
-            observables.add(config().themeColorTypeProperty());
             observables.add(config().themeColorProperty());
-            observables.add(config().themeColorStyleProperty());
-            observables.add(config().highContrastProperty());
-            observables.add(Controllers.getDecorator().getDecorator().contentBackgroundProperty());
             if (FXUtils.DARK_MODE != null) {
                 observables.add(FXUtils.DARK_MODE);
-            }
-            if (FXUtils.ACCENT_COLOR != null) {
-                observables.add(FXUtils.ACCENT_COLOR);
             }
             bind(observables.toArray(new Observable[0]));
         }
@@ -86,36 +76,9 @@ public final class Themes {
 
         @Override
         protected Theme computeValue() {
-            ThemeColor themeColor = switch (Objects.requireNonNullElse(config().getThemeColorType(), ThemeColorType.DEFAULT)) {
-                case CUSTOM -> Objects.requireNonNullElse(config().getThemeColor(), ThemeColor.DEFAULT);
-                case MONET -> {
-                    Background contentBackground = Controllers.getDecorator().getDecorator().getContentBackground();
-                    if (contentBackground != null) {
-                        if (!contentBackground.getImages().isEmpty()) {
-                            Image backgroundImage = contentBackground.getImages().get(0).getImage();
-                            yield ThemeColor.of(ColorScheme.extractColor(backgroundImage, ThemeColor.DEFAULT.color()));
-                        } else if (!contentBackground.getFills().isEmpty()
-                                && contentBackground.getFills().get(0).getFill() instanceof Color color) {
-                            yield ThemeColor.of(color);
-                        } else {
-                            yield ThemeColor.DEFAULT;
-                        }
-                    } else {
-                        yield ThemeColor.DEFAULT;
-                    }
-                }
-                case SYSTEM -> FXUtils.ACCENT_COLOR != null
-                        ? ThemeColor.of(FXUtils.ACCENT_COLOR.get())
-                        : ThemeColor.DEFAULT;
-                default -> ThemeColor.DEFAULT;
-            };
+            ThemeColor themeColor = Objects.requireNonNullElse(config().getThemeColor(), ThemeColor.DEFAULT);
 
-            return new Theme(
-                    themeColor,
-                    getBrightness(),
-                    Objects.requireNonNullElse(config().getThemeColorStyle(), Theme.DEFAULT.colorStyle()),
-                    config().isHighContrast() ? Contrast.HIGH : Contrast.DEFAULT
-            );
+            return new Theme(themeColor, getBrightness(), Theme.DEFAULT.colorStyle(), Contrast.DEFAULT);
         }
     };
     private static final ColorSchemeProperty colorScheme = new SimpleColorSchemeProperty();

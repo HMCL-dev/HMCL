@@ -27,7 +27,6 @@ import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
 import javafx.scene.paint.Paint;
-import org.glavo.monetfx.ColorStyle;
 import org.hildan.fxgson.creators.ObservableListCreator;
 import org.hildan.fxgson.creators.ObservableMapCreator;
 import org.hildan.fxgson.creators.ObservableSetCreator;
@@ -35,9 +34,7 @@ import org.hildan.fxgson.factories.JavaFxPropertyTypeAdapterFactory;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.java.JavaRuntime;
-import org.jackhuang.hmcl.theme.Theme;
 import org.jackhuang.hmcl.theme.ThemeColor;
-import org.jackhuang.hmcl.theme.ThemeColorType;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.gson.*;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
@@ -279,13 +276,6 @@ public final class Config extends ObservableSetting {
 
     // UI
 
-    @SerializedName("themes")
-    private final ObservableMap<String, Theme> themes = FXCollections.observableMap(new TreeMap<>());
-
-    public ObservableMap<String, Theme> getThemes() {
-        return themes;
-    }
-
     @SerializedName("themeBrightness")
     private final StringProperty themeBrightness = new SimpleStringProperty("light");
 
@@ -301,21 +291,6 @@ public final class Config extends ObservableSetting {
         this.themeBrightness.set(themeBrightness);
     }
 
-    @SerializedName("themeColorType")
-    private final ObjectProperty<ThemeColorType> themeColorType = new RawPreservingObjectProperty<>(ThemeColorType.DEFAULT);
-
-    public ObjectProperty<ThemeColorType> themeColorTypeProperty() {
-        return themeColorType;
-    }
-
-    public ThemeColorType getThemeColorType() {
-        return themeColorType.get();
-    }
-
-    public void setThemeColorType(ThemeColorType themeColorType) {
-        this.themeColorType.set(themeColorType);
-    }
-
     @SerializedName("theme")
     private final ObjectProperty<ThemeColor> themeColor = new SimpleObjectProperty<>();
 
@@ -329,36 +304,6 @@ public final class Config extends ObservableSetting {
 
     public void setThemeColor(ThemeColor themeColor) {
         this.themeColor.set(themeColor);
-    }
-
-    @SerializedName("themeColorStyle")
-    private final ObjectProperty<ColorStyle> themeColorStyle = new RawPreservingObjectProperty<>(ColorStyle.FIDELITY);
-
-    public ObjectProperty<ColorStyle> themeColorStyleProperty() {
-        return themeColorStyle;
-    }
-
-    public ColorStyle getThemeColorStyle() {
-        return themeColorStyle.get();
-    }
-
-    public void setThemeColorStyle(ColorStyle themeColorStyle) {
-        this.themeColorStyle.set(themeColorStyle);
-    }
-
-    @SerializedName("highContrast")
-    private final BooleanProperty highContrast = new SimpleBooleanProperty(false);
-
-    public BooleanProperty highContrastProperty() {
-        return highContrast;
-    }
-
-    public boolean isHighContrast() {
-        return highContrast.get();
-    }
-
-    public void setHighContrast(boolean highContrast) {
-        this.highContrast.set(highContrast);
     }
 
     @SerializedName("fontFamily")
