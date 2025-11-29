@@ -71,7 +71,7 @@ public final class Theme {
     @Override
     public boolean equals(Object obj) {
         return obj == this || obj instanceof Theme that
-                && this.primaryColorSeed.equals(that.primaryColorSeed)
+                && this.primaryColorSeed.color().equals(that.primaryColorSeed.color())
                 && this.brightness.equals(that.brightness)
                 && this.colorStyle.equals(that.colorStyle)
                 && this.contrast.equals(that.contrast);
