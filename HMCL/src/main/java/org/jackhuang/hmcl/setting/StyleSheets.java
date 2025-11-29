@@ -61,15 +61,6 @@ public final class StyleSheets {
     }
 
     private static String toStyleSheetUri(String styleSheet, String fallback) {
-        try {
-            // TODO: for debug
-            Path file = Path.of("build/style.css").toAbsolutePath();
-            LOG.debug("Write style sheet to " + file);
-            Files.writeString(file, styleSheet);
-        } catch (Throwable e) {
-            LOG.debug("Failed to write stylesheet", e);
-        }
-
         if (FXUtils.JAVAFX_MAJOR_VERSION >= 17)
             // JavaFX 17+ support loading stylesheets from data URIs
             // https://bugs.openjdk.org/browse/JDK-8267554
