@@ -289,7 +289,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                         .addNavigationDrawerItem(i18n("version.update"), SVG.UPDATE, control::updateGame, upgradeItem -> {
                             upgradeItem.visibleProperty().bind(control.currentVersionUpgradable);
                         })
-                        .addNavigationDrawerItem("启动", SVG.PLAY_ARROW, null, launchMenuItem -> {
+                        .addNavigationDrawerItem(i18n("version.launch.options"), SVG.PLAY_ARROW, null, launchMenuItem -> {
                             launchMenuItem.setOnAction(e -> launchPopup.show(launchMenuItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, launchMenuItem.getWidth(), 0));
                         })
                         .addNavigationDrawerItem(i18n("settings.game.exploration"), SVG.FOLDER_OPEN, null, browseMenuItem -> {

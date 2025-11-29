@@ -328,7 +328,7 @@ public class DefaultLauncher extends Launcher {
             }
         }
 
-        if (worldFolderName != null && GameVersionNumber.asGameVersion(gameVersion).compareTo("23w14a") > 0) {
+        if (worldFolderName != null && GameVersionNumber.asGameVersion(gameVersion).compareTo("23w14a") >= 0) {
             res.add("--quickPlaySingleplayer");
             res.add(worldFolderName);
         }
