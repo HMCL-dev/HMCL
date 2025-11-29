@@ -78,6 +78,30 @@ public class PersonalizationPage extends StackPane {
 
         ComponentList themeList = new ComponentList();
         {
+            BorderPane brightnessPane = new BorderPane();
+            themeList.getContent().add(brightnessPane);
+
+            Label left = new Label("主题模式"); // TODO: i18n
+            BorderPane.setAlignment(left, Pos.CENTER_LEFT);
+
+            brightnessPane.setLeft(left);
+
+            JFXComboBox<String> cboBrightness = new JFXComboBox<>(
+                    FXCollections.observableArrayList("auto", "light", "dark"));
+            cboBrightness.setConverter(FXUtils.stringConverter(name -> {
+                // TODO: i18n
+                return switch (name) {
+                    case "auto" -> "跟随系统设置";
+                    case "light" -> "浅色模式";
+                    case "dark" -> "深色模式";
+                    default -> name;
+                };
+            }));
+            cboBrightness.valueProperty().bindBidirectional(config().themeBrightnessProperty());
+            brightnessPane.setRight(cboBrightness);
+        }
+
+        {
             BorderPane themePane = new BorderPane();
             themeList.getContent().add(themePane);
 
