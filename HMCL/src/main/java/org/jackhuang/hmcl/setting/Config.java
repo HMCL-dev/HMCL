@@ -292,7 +292,7 @@ public final class Config extends ObservableSetting {
     }
 
     @SerializedName("theme")
-    private final ObjectProperty<ThemeColor> themeColor = new SimpleObjectProperty<>();
+    private final ObjectProperty<ThemeColor> themeColor = new SimpleObjectProperty<>(ThemeColor.DEFAULT);
 
     public ObjectProperty<ThemeColor> themeColorProperty() {
         return themeColor;
