@@ -1,21 +1,21 @@
 {
-  "version_legacy": "0\\.3\\.([89]-rc\\.([0-9]|10)|10|11|12)",
+  "version_legacy": "0\\.3\\.([89]-rc\\.([0-9]|10)|(1[0-3]))",
   "version_recent": [
-    "0.3.12"
+    "0.3.13"
   ],
-  "version_latest": "0.3.13",
+  "version_latest": "0.3.14",
   "classifiers": {
-    "freebsd-x86_64": "sha256:0713e54ee552496416bda9d9e814e33a8950ca8f321f5b3c6dd2e07e79b0e3af",
-    "linux-arm64": "sha256:61affc46035337c182adeca3671b4cf4cc59c7b4e73039899f35416f7d00ad94",
-    "linux-x86_64": "sha256:9399e1627b77d518950e66d944c9a4b70c20d2e13ca2c0e2fed0ded637e7ae06",
-    "linux-loongarch64": "sha256:f3eb4c40dfccc25b5b355298c776abe3d399afb57a2af38803dd78089f0c182e",
-    "linux-riscv64": "sha256:26f95f8b5f83746c9cf9a8362ce0ef793ede8515897a1ba15e5e6f93c3d39533",
-    "macos-arm64": "sha256:35ba271c7dc924e91c2fdd8c1cabeff2ce3d060836748a7a07162b0a5900e8d5",
-    "macos-arm64.pkg": "sha256:90a613ec69f28713fe06188247c57b7cc91743c95112de5aed85ea252103beaa",
-    "macos-x86_64": "sha256:45b420b15a32d5450794a9776cf45a217871cf4333b29b65a35d7358c806b5b1",
-    "macos-x86_64.pkg": "sha256:587623becb3593ccb5fe542a201a67ab3a4029dfa847fcef758faff7ba6d38d5",
-    "windows-arm64.exe": "sha256:bd4e1acf2f304761cdabddd9ade94d046534f4c024bc3026ac98e6be58c2bc22",
-    "windows-x86_64.exe": "sha256:b89599bbcc92b00222cfc6f2e5ef636b7daf192c96efba1049a892e6cb59ee70"
+    "freebsd-x86_64": "sha256:ff8c50b701e55fde9701a1f7fbe9d7317b24087c28ca6337ba9d695c53ad499a",
+    "linux-arm64": "sha256:6912a14255cdeedee512244c686dd7f80dcc45d8dfbe129ea4ea3f1b22d3de60",
+    "linux-x86_64": "sha256:9b13f51dc41c5112f2ab163df5c0dccdff3d22deb793a6698c013e9c09badd00",
+    "linux-loongarch64": "sha256:729ca24ef643547b6a3917520ec3335b92e226ad1884c85d6bb6c2cfa917cb03",
+    "linux-riscv64": "sha256:afbd8cffeacc47431f18c3ae659f7a308e1d3f2efab0ab9c5ece5176d068bf30",
+    "macos-arm64": "sha256:9ed9c7a35b01dce440135c91e4a5e617d84f6c8ba13a117d13a2796dc69584f5",
+    "macos-arm64.pkg": "sha256:49dbebd608c4036c260f09d4005dedaacb26fc1582b10479ed51476baa48f4a9",
+    "macos-x86_64": "sha256:40a44703237b0a194b0fb18075e3b2361ace8f4319b60269cb56c5548d2afb3a",
+    "macos-x86_64.pkg": "sha256:95a9de782b9c3a352ae6ec702c2fc4ca34ba807e8e4a768e61902a0c78391332",
+    "windows-arm64.exe": "sha256:8428c6bc6228213c5f645ab3dd0f3b684da515be103ee53d5bdc4adf59fc8a5f",
+    "windows-x86_64.exe": "sha256:942b91888264e1c96a10b7c94bd134f4b10d3e352e3c731def0ff6a3069c8221"
   },
   "downloads": [
     "https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}"
