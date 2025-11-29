@@ -239,8 +239,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             StackPane icon = new StackPane();
             icon.setPrefSize(size, size);
             icon.setMaxSize(size, size);
-            SVG svg = getIcon();
-            icon.getChildren().add(svg.createIcon(size));
+            icon.getChildren().add(getIcon().createIcon(size));
             return icon;
         }
 
