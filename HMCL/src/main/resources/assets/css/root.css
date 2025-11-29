@@ -752,15 +752,15 @@
 }
 
 .jfx-button-border {
-    -fx-background-color: -monet-outline-variant;
-    -fx-border-color: -monet-outline-variant;
+    -fx-background-color: transparent;
+    -fx-border-color: -monet-outline;
     -fx-border-radius: 5px;
     -fx-border-width: 0.2px;
     -fx-padding: 8px;
 }
 
 .jfx-button-border, .jfx-button-border * {
-    -fx-text-fill: -monet-on-surface-variant;
+    -fx-text-fill: -monet-primary;
 }
 
 .jfx-button-raised-round {
