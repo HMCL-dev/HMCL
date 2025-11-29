@@ -32,6 +32,7 @@ import org.jackhuang.hmcl.util.platform.hardware.HardwareVendor;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
 
@@ -172,13 +173,17 @@ public final class MacOSHardwareDetector extends HardwareDetector {
                         break;
                     }
                 }
+                process.waitFor();
             }
 
-            process.waitFor();
+            if (pageSize == -1) throw new IOException("Missing 'page size' in vm_stat output");
+            if (freePages == -1) throw new IOException("Missing 'Pages free' in vm_stat output");
+            if (inactivePages == -1) throw new IOException("Missing 'Pages inactive' in vm_stat output");
 
-            if (pageSize != -1 && freePages != -1 && inactivePages != -1) {
-                return (freePages + inactivePages) * pageSize;
-            }
+            long available = (freePages + inactivePages) * pageSize;
+            if (available < 0) throw new IOException("Invalid available memory size: " + available + " bytes");
+
+            return available;
         } catch (Throwable e) {
             LOG.warning("Failed to parse vm_stat output", e);
         }
