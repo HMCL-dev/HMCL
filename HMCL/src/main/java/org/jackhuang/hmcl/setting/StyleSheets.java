@@ -22,6 +22,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Scene;
 import javafx.scene.paint.Color;
+import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorRole;
 import org.glavo.monetfx.ColorScheme;
 import org.jackhuang.hmcl.theme.Theme;
@@ -169,6 +170,13 @@ public final class StyleSheets {
         addColor(builder, scheme, ColorRole.ON_SURFACE_VARIANT, 0.38);
         addColor(builder, scheme, ColorRole.SURFACE_CONTAINER_LOW, 0.8);
         addColor(builder, scheme, ColorRole.SECONDARY_CONTAINER, 0.8);
+
+        // If we use -monet-error-container as the tag color, there may be a conflict between the tag and background colors on the mod management page
+        if (scheme.getBrightness() == Brightness.LIGHT) {
+            addColor(builder, "-warning-tag-background", Color.web("#f1aeb5"));
+        } else {
+            addColor(builder, "-warning-tag-background", Color.web("#2c0b0e"));
+        }
 
         builder.append("}\n");
         return toStyleSheetUri(builder.toString(), blueCss);

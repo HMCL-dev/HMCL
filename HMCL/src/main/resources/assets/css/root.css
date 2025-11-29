@@ -306,7 +306,7 @@
 
 .two-line-list-item > .first-line > .tag-warning {
     -fx-text-fill: -monet-on-error-container;
-    -fx-background-color: -monet-error-container;
+    -fx-background-color: -warning-tag-background;
     -fx-padding: 2;
     -fx-font-weight: normal;
     -fx-font-size: 12px;
