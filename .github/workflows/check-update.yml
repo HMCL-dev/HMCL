@@ -23,14 +23,15 @@ jobs:
     runs-on: ubuntu-latest
     name: check-update-${{ matrix.channel }}
     steps:
-      - uses: actions/checkout@v5
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-tags: true
       - name: Set up JDK
         uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '25'
-      - name: Fetch tags
-        run: git fetch --all --tags
       - name: Fetch last version
         run: ./gradlew ${{ matrix.task }} --no-daemon --info --stacktrace
       - name: Check for existing tags
