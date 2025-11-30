@@ -16,9 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* TODO: Monet */
 .root {
-    -fx-base-check-color: derive(-monet-primary-container, 30%);
 }
 
 .svg {
@@ -851,7 +849,7 @@
 
 /*.list-cell:odd:selected > .jfx-rippler > StackPane,*/
 /*.list-cell:even:selected > .jfx-rippler > StackPane {*/
-/*    -fx-background-color: derive(-fx-base-check-color, 30%);*/
+/*    -fx-background-color: derive(-monet-primary, 30%);*/
 /*}*/
 
 .jfx-list-view {
@@ -1170,7 +1168,7 @@
 }
 
 .announcement-close-button .jfx-rippler {
-    -jfx-rippler-fill: -fx-base-check-color;
+    -jfx-rippler-fill: -monet-primary;
     -jfx-mask-type: CIRCLE;
 }
 
