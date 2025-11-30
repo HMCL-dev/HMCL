@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.decorator;
 
 import com.jfoenix.controls.JFXDialog;
 import com.jfoenix.controls.JFXSnackbar;
+import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -49,8 +50,8 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.account.AddAuthlibInjectorServerPane;
-import org.jackhuang.hmcl.ui.animation.AnimationUtils;
-import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
+import org.jackhuang.hmcl.ui.animation.*;
+import org.jackhuang.hmcl.ui.animation.TransitionPane.AnimationProducer;
 import org.jackhuang.hmcl.ui.construct.DialogAware;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.JFXDialogPane;
@@ -93,16 +94,16 @@ public class DecoratorController {
             if (AnimationUtils.playWindowAnimation()) {
                 Timeline timeline = new Timeline(
                         new KeyFrame(Duration.millis(0),
-                                new KeyValue(decorator.opacityProperty(), 1, FXUtils.EASE),
-                                new KeyValue(decorator.scaleXProperty(), 1, FXUtils.EASE),
-                                new KeyValue(decorator.scaleYProperty(), 1, FXUtils.EASE),
-                                new KeyValue(decorator.scaleZProperty(), 0.3, FXUtils.EASE)
+                                new KeyValue(decorator.opacityProperty(), 1, Motion.EASE),
+                                new KeyValue(decorator.scaleXProperty(), 1, Motion.EASE),
+                                new KeyValue(decorator.scaleYProperty(), 1, Motion.EASE),
+                                new KeyValue(decorator.scaleZProperty(), 0.3, Motion.EASE)
                         ),
                         new KeyFrame(Duration.millis(200),
-                                new KeyValue(decorator.opacityProperty(), 0, FXUtils.EASE),
-                                new KeyValue(decorator.scaleXProperty(), 0.8, FXUtils.EASE),
-                                new KeyValue(decorator.scaleYProperty(), 0.8, FXUtils.EASE),
-                                new KeyValue(decorator.scaleZProperty(), 0.8, FXUtils.EASE)
+                                new KeyValue(decorator.opacityProperty(), 0, Motion.EASE),
+                                new KeyValue(decorator.scaleXProperty(), 0.8, Motion.EASE),
+                                new KeyValue(decorator.scaleYProperty(), 0.8, Motion.EASE),
+                                new KeyValue(decorator.scaleZProperty(), 0.8, Motion.EASE)
                         )
                 );
                 timeline.setOnFinished(event -> Launcher.stopApplication());
@@ -367,10 +368,8 @@ public class DecoratorController {
 
     // ==== Navigation ====
 
-    private static final DecoratorAnimationProducer animation = new DecoratorAnimationProducer();
-
-    public void navigate(Node node) {
-        navigator.navigate(node, animation);
+    public void navigate(Node node, AnimationProducer animationProducer, Duration duration, Interpolator interpolator) {
+        navigator.navigate(node, animationProducer, duration, interpolator);
     }
 
     private void close() {
@@ -461,7 +460,9 @@ public class DecoratorController {
                 Platform.runLater(() -> showDialog(node));
                 return;
             }
-            dialog = new JFXDialog();
+            dialog = new JFXDialog(AnimationUtils.isAnimationEnabled()
+                    ? JFXDialog.DialogTransition.CENTER
+                    : JFXDialog.DialogTransition.NONE);
             dialogPane = new JFXDialogPane();
 
             dialog.setContent(dialogPane);
@@ -540,7 +541,8 @@ public class DecoratorController {
     public void startWizard(WizardProvider wizardProvider, String category) {
         FXUtils.checkFxUserThread();
 
-        navigator.navigate(new DecoratorWizardDisplayer(wizardProvider, category), ContainerAnimations.FADE);
+        navigator.navigate(new DecoratorWizardDisplayer(wizardProvider, category),
+                ContainerAnimations.FORWARD, Motion.SHORT4, Motion.EASE);
     }
 
     // ==== Authlib Injector DnD ====

@@ -49,6 +49,8 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.account.AccountListPage;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
+import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
+import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.decorator.DecoratorController;
@@ -90,7 +92,7 @@ public final class Controllers {
 
     private static Scene scene;
     private static Stage stage;
-    private static Lazy<VersionPage> versionPage = new Lazy<>(VersionPage::new);
+    private static VersionPage versionPage;
     private static Lazy<GameListPage> gameListPage = new Lazy<>(() -> {
         GameListPage gameListPage = new GameListPage();
         gameListPage.selectedProfileProperty().bindBidirectional(Profiles.selectedProfileProperty());
@@ -103,7 +105,7 @@ public final class Controllers {
     });
     private static Lazy<RootPage> rootPage = new Lazy<>(RootPage::new);
     private static DecoratorController decorator;
-    private static Lazy<DownloadPage> downloadPage = new Lazy<>(DownloadPage::new);
+    private static DownloadPage downloadPage;
     private static Lazy<AccountListPage> accountListPage = new Lazy<>(() -> {
         AccountListPage accountListPage = new AccountListPage();
         accountListPage.selectedAccountProperty().bindBidirectional(Accounts.selectedAccountProperty());
@@ -111,7 +113,7 @@ public final class Controllers {
         accountListPage.authServersProperty().bindContentBidirectional(config().getAuthlibInjectorServers());
         return accountListPage;
     });
-    private static Lazy<LauncherSettingsPage> settingsPage = new Lazy<>(LauncherSettingsPage::new);
+    private static LauncherSettingsPage settingsPage;
     private static Lazy<TerracottaPage> terracottaPage = new Lazy<>(TerracottaPage::new);
 
     private Controllers() {
@@ -127,7 +129,18 @@ public final class Controllers {
 
     // FXThread
     public static VersionPage getVersionPage() {
-        return versionPage.get();
+        if (versionPage == null) {
+            versionPage = new VersionPage();
+        }
+        return versionPage;
+    }
+
+    @FXThread
+    public static void prepareVersionPage() {
+        if (versionPage == null) {
+            LOG.info("Prepare the version page");
+            versionPage = FXUtils.prepareNode(new VersionPage());
+        }
     }
 
     // FXThread
@@ -142,7 +155,18 @@ public final class Controllers {
 
     // FXThread
     public static LauncherSettingsPage getSettingsPage() {
-        return settingsPage.get();
+        if (settingsPage == null) {
+            settingsPage = new LauncherSettingsPage();
+        }
+        return settingsPage;
+    }
+
+    @FXThread
+    public static void prepareSettingsPage() {
+        if (settingsPage == null) {
+            LOG.info("Prepare the settings page");
+            settingsPage = FXUtils.prepareNode(new LauncherSettingsPage());
+        }
     }
 
     // FXThread
@@ -152,7 +176,18 @@ public final class Controllers {
 
     // FXThread
     public static DownloadPage getDownloadPage() {
-        return downloadPage.get();
+        if (downloadPage == null) {
+            downloadPage = new DownloadPage();
+        }
+        return downloadPage;
+    }
+
+    @FXThread
+    public static void prepareDownloadPage() {
+        if (downloadPage == null) {
+            LOG.info("Prepare the download page");
+            downloadPage = FXUtils.prepareNode(new DownloadPage());
+        }
     }
 
     // FXThread
@@ -306,16 +341,16 @@ public final class Controllers {
         if (AnimationUtils.playWindowAnimation()) {
             Timeline timeline = new Timeline(
                     new KeyFrame(Duration.millis(0),
-                            new KeyValue(decorator.getDecorator().opacityProperty(), 0, FXUtils.EASE),
-                            new KeyValue(decorator.getDecorator().scaleXProperty(), 0.8, FXUtils.EASE),
-                            new KeyValue(decorator.getDecorator().scaleYProperty(), 0.8, FXUtils.EASE),
-                            new KeyValue(decorator.getDecorator().scaleZProperty(), 0.8, FXUtils.EASE)
+                            new KeyValue(decorator.getDecorator().opacityProperty(), 0, Motion.EASE),
+                            new KeyValue(decorator.getDecorator().scaleXProperty(), 0.8, Motion.EASE),
+                            new KeyValue(decorator.getDecorator().scaleYProperty(), 0.8, Motion.EASE),
+                            new KeyValue(decorator.getDecorator().scaleZProperty(), 0.8, Motion.EASE)
                     ),
                     new KeyFrame(Duration.millis(600),
-                            new KeyValue(decorator.getDecorator().opacityProperty(), 1, FXUtils.EASE),
-                            new KeyValue(decorator.getDecorator().scaleXProperty(), 1, FXUtils.EASE),
-                            new KeyValue(decorator.getDecorator().scaleYProperty(), 1, FXUtils.EASE),
-                            new KeyValue(decorator.getDecorator().scaleZProperty(), 1, FXUtils.EASE)
+                            new KeyValue(decorator.getDecorator().opacityProperty(), 1, Motion.EASE),
+                            new KeyValue(decorator.getDecorator().scaleXProperty(), 1, Motion.EASE),
+                            new KeyValue(decorator.getDecorator().scaleYProperty(), 1, Motion.EASE),
+                            new KeyValue(decorator.getDecorator().scaleZProperty(), 1, Motion.EASE)
                     )
             );
             timeline.play();
@@ -498,7 +533,11 @@ public final class Controllers {
     }
 
     public static void navigate(Node node) {
-        decorator.navigate(node);
+        decorator.navigate(node, ContainerAnimations.NAVIGATION, Motion.SHORT4, Motion.EASE);
+    }
+
+    public static void navigateForward(Node node) {
+        decorator.navigate(node, ContainerAnimations.FORWARD, Motion.SHORT4, Motion.EASE);
     }
 
     public static void showToast(String content) {
@@ -533,6 +572,7 @@ public final class Controllers {
         downloadPage = null;
         accountListPage = null;
         settingsPage = null;
+        terracottaPage = null;
         decorator = null;
         stage = null;
         scene = null;

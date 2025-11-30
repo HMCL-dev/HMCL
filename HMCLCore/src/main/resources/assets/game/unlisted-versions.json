@@ -1,6 +1,34 @@
 {
   "versions": [
     {
+      "id": "1.21.11-pre2_unobfuscated",
+      "type": "unobfuscated",
+      "url": "https://piston-meta.mojang.com/v1/packages/2955ce0af0512fdfe53ff0740b017344acf6f397/1.21.11-pre2_unobfuscated.json",
+      "time": "2025-11-21T12:07:21+00:00",
+      "releaseTime": "2025-11-21T12:07:21+00:00"
+    },
+    {
+      "id": "1.21.11-pre1_unobfuscated",
+      "type": "unobfuscated",
+      "url": "https://piston-meta.mojang.com/v1/packages/9c267f8dda2728bae55201a753cdd07b584709f1/1.21.11-pre1_unobfuscated.json",
+      "time": "2025-11-19T08:30:46+00:00",
+      "releaseTime": "2025-11-19T08:30:46+00:00"
+    },
+    {
+      "id": "25w46a_unobfuscated",
+      "type": "unobfuscated",
+      "url": "https://piston-meta.mojang.com/v1/packages/314ade2afeada364047798e163ef8e82427c69e1/25w46a_unobfuscated.json",
+      "time": "2025-11-11T13:20:54+00:00",
+      "releaseTime": "2025-11-11T13:20:54+00:00"
+    },
+    {
+      "id": "25w45a_unobfuscated",
+      "type": "unobfuscated",
+      "url": "https://piston-meta.mojang.com/v1/packages/7a3c149f148b6aa5ac3af48c4f701adea7e5b615/25w45a_unobfuscated.json",
+      "time": "2025-11-04T14:07:08+00:00",
+      "releaseTime": "2025-11-04T14:07:08+00:00"
+    },
+    {
       "id": "1.19_deep_dark_experimental_snapshot-1",
       "type": "pending",
       "url": "https://zkitefly.github.io/unlisted-versions-of-minecraft/files/1_19_deep_dark_experimental_snapshot-1/1_19_deep_dark_experimental_snapshot-1.json",
