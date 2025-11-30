@@ -423,8 +423,9 @@
     -fx-background-color: derive(-monet-primary-container, -30%);
 }
 
+/* TODO: It seems not actually used */
 .tab-rippler {
-    -jfx-rippler-fill: -fx-base-check-color;
+    -jfx-rippler-fill: derive(-monet-primary-container, 30%);
 }
 
 .jfx-tab-pane .jfx-rippler {
@@ -610,7 +611,7 @@
 .jfx-tool-bar-second {
     -fx-pref-height: 42;
     -fx-padding: 2 2 2 2;
-    -fx-background-color: -fx-base-check-color;
+    -fx-background-color: -monet-primary-container;
     -fx-alignment: CENTER-LEFT;
     -fx-spacing: 8;
 }
