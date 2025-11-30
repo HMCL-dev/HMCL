@@ -314,7 +314,7 @@ public class DefaultLauncher extends Launcher {
 
             try {
                 ServerAddress parsed = ServerAddress.parse(address);
-                if (GameVersionNumber.asGameVersion(gameVersion).compareTo("23w14a") < 0) {
+                if (!GameVersionNumber.asGameVersion(gameVersion).isAtLeast("1.13", "23w14a")) {
                     res.add("--server");
                     res.add(parsed.getHost());
                     res.add("--port");
@@ -328,7 +328,7 @@ public class DefaultLauncher extends Launcher {
             }
         }
 
-        if (worldFolderName != null && GameVersionNumber.asGameVersion(gameVersion).compareTo("23w14a") >= 0) {
+        if (worldFolderName != null && GameVersionNumber.asGameVersion(gameVersion).isAtLeast("1.20", "23w14a")) {
             res.add("--quickPlaySingleplayer");
             res.add(worldFolderName);
         }
