@@ -222,6 +222,21 @@ public final class Config extends ObservableSetting {
         this.acceptPreviewUpdate.set(acceptPreviewUpdate);
     }
 
+    @SerializedName("disableStartupUpdateDialog")
+    private final BooleanProperty disableStartupUpdateDialog = new SimpleBooleanProperty(false);
+
+    public BooleanProperty disableStartupUpdateDialogProperty() {
+        return disableStartupUpdateDialog;
+    }
+
+    public boolean isDisableStartupUpdateDialog() {
+        return disableStartupUpdateDialog.get();
+    }
+
+    public void setDisableStartupUpdateDialog(boolean disableStartupUpdateDialog) {
+        this.disableStartupUpdateDialog.set(disableStartupUpdateDialog);
+    }
+
     @SerializedName("shownTips")
     private final ObservableMap<String, Object> shownTips = FXCollections.observableHashMap();
 
