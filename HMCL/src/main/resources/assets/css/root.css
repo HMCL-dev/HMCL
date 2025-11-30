@@ -416,7 +416,7 @@
  ******************************************************************************/
 
 .tab-header-background {
-    -fx-background-color: -fx-base-check-color;
+    -fx-background-color: -monet-surface;
 }
 
 .tab-selected-line {
