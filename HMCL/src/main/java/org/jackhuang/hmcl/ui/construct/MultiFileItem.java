@@ -31,12 +31,15 @@ import javafx.scene.control.Toggle;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -308,8 +311,18 @@ public final class MultiFileItem<T> extends VBox {
             super(title, data);
         }
 
+        public PaintOption<T> setCustomColors(List<Color> colors) {
+            colorPicker.getCustomColors().setAll(colors);
+            return this;
+        }
+
         public PaintOption<T> bindBidirectional(Property<Paint> property) {
             FXUtils.bindPaint(colorPicker, property);
+            return this;
+        }
+
+        public PaintOption<T> bindThemeColorBidirectional(Property<ThemeColor> property) {
+            ThemeColor.bindBidirectional(colorPicker, property);
             return this;
         }
 

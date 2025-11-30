@@ -35,7 +35,6 @@ import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.DownloadProviders;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
@@ -263,7 +262,7 @@ public final class JavaManagementPage extends ListPageBase<JavaManagementPage.Ja
             {
                 JFXButton revealButton = new JFXButton();
                 revealButton.getStyleClass().add("toggle-icon4");
-                revealButton.setGraphic(FXUtils.limitingSize(SVG.FOLDER_OPEN.createIcon(Theme.blackFill(), 24), 24, 24));
+                revealButton.setGraphic(FXUtils.limitingSize(SVG.FOLDER_OPEN.createIcon(24), 24, 24));
                 revealButton.setOnAction(e -> control.onReveal());
                 FXUtils.installFastTooltip(revealButton, i18n("reveal.in_file_manager"));
 
@@ -276,12 +275,12 @@ public final class JavaManagementPage extends ListPageBase<JavaManagementPage.Ja
                         null
                 ));
                 if (java.isManaged()) {
-                    removeButton.setGraphic(FXUtils.limitingSize(SVG.DELETE_FOREVER.createIcon(Theme.blackFill(), 24), 24, 24));
+                    removeButton.setGraphic(FXUtils.limitingSize(SVG.DELETE_FOREVER.createIcon(24), 24, 24));
                     FXUtils.installFastTooltip(removeButton, i18n("java.uninstall"));
                     if (JavaRuntime.CURRENT_JAVA != null && java.getBinary().equals(JavaRuntime.CURRENT_JAVA.getBinary()))
                         removeButton.setDisable(true);
                 } else {
-                    removeButton.setGraphic(FXUtils.limitingSize(SVG.DELETE.createIcon(Theme.blackFill(), 24), 24, 24));
+                    removeButton.setGraphic(FXUtils.limitingSize(SVG.DELETE.createIcon(24), 24, 24));
                     FXUtils.installFastTooltip(removeButton, i18n("java.disable"));
                 }
 

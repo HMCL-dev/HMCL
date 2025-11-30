@@ -41,6 +41,7 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.*;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.setting.StyleSheets;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -48,8 +49,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Shadi Shaheen
  */
 public class JFXCustomColorPickerDialog extends StackPane {
-
-    public static final String rgbFieldStyle = "-fx-background-color:TRANSPARENT;-fx-font-weight: BOLD;-fx-prompt-text-fill: #808080; -fx-alignment: top-left ; -fx-max-width: 300;";
     private final Stage dialog = new Stage();
     // used for concurrency control and preventing FX-thread over use
     private final AtomicInteger concurrencyController = new AtomicInteger(-1);
@@ -81,15 +80,7 @@ public class JFXCustomColorPickerDialog extends StackPane {
         pickerDecorator.setOnCloseButtonAction(this::updateColor);
         pickerDecorator.setPickOnBounds(false);
         customScene = new Scene(pickerDecorator, Color.TRANSPARENT);
-        if (owner != null) {
-            final Scene ownerScene = owner.getScene();
-            if (ownerScene != null) {
-                if (ownerScene.getUserAgentStylesheet() != null) {
-                    customScene.setUserAgentStylesheet(ownerScene.getUserAgentStylesheet());
-                }
-                customScene.getStylesheets().addAll(ownerScene.getStylesheets());
-            }
-        }
+        StyleSheets.init(customScene);
         curvedColorPicker = new JFXCustomColorPicker();
 
         StackPane pane = new StackPane(curvedColorPicker);
@@ -104,17 +95,15 @@ public class JFXCustomColorPickerDialog extends StackPane {
         JFXTextField hsbField = new JFXTextField();
         JFXTextField hexField = new JFXTextField();
 
-        rgbField.setStyle(rgbFieldStyle);
+        rgbField.getStyleClass().add("custom-color-field");
         rgbField.setPromptText("RGB Color");
         rgbField.textProperty().addListener((o, oldVal, newVal) -> updateColorFromUserInput(newVal));
 
-        hsbField.setStyle(
-                "-fx-background-color:TRANSPARENT;-fx-font-weight: BOLD;-fx-prompt-text-fill: #808080; -fx-alignment: top-left ; -fx-max-width: 300;");
+        hsbField.getStyleClass().add("custom-color-field");
         hsbField.setPromptText("HSB Color");
         hsbField.textProperty().addListener((o, oldVal, newVal) -> updateColorFromUserInput(newVal));
 
-        hexField.setStyle(
-                "-fx-background-color:TRANSPARENT;-fx-font-weight: BOLD;-fx-prompt-text-fill: #808080; -fx-alignment: top-left ; -fx-max-width: 300;");
+        hexField.getStyleClass().add("custom-color-field");
         hexField.setPromptText("#HEX Color");
         hexField.textProperty().addListener((o, oldVal, newVal) -> updateColorFromUserInput(newVal));
 

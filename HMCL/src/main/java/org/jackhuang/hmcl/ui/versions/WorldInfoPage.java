@@ -33,7 +33,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.game.World;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -161,7 +160,7 @@ public final class WorldInfoPage extends SpinnerPane {
                 blur.setIterations(3);
                 FXUtils.onChangeAndOperate(visibility, isVisibility -> {
                     SVG icon = isVisibility ? SVG.VISIBILITY : SVG.VISIBILITY_OFF;
-                    visibilityButton.getChildren().setAll(icon.createIcon(Theme.blackFill(), 12));
+                    visibilityButton.getChildren().setAll(icon.createIcon(12));
                     randomSeedLabel.setEffect(isVisibility ? null : blur);
                 });
             }
