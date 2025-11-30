@@ -141,6 +141,11 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         return versions.stream().map(ProjectVersion::toVersion).flatMap(Lang::toStream);
     }
 
+    @Override
+    public String getModChangelog(String modId, String fileId) throws IOException {
+        throw new UnsupportedOperationException();
+    }
+
     public List<Category> getCategoriesImpl() throws IOException {
         List<Category> categories = HttpRequest.GET(PREFIX + "/v2/tag/category").getJson(listTypeOf(Category.class));
         return categories.stream().filter(category -> category.getProjectType().equals(projectType)).collect(Collectors.toList());
@@ -496,6 +501,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
 
             return Optional.of(new RemoteMod.Version(
                     this,
+                    getId(),
                     projectId,
                     name,
                     versionNumber,
