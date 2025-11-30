@@ -28,7 +28,6 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.event.Event;
 import javafx.geometry.Bounds;
-import javafx.geometry.Insets;
 import javafx.geometry.NodeOrientation;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -116,11 +115,6 @@ final class JFXColorPalette extends Region {
         colorPicker.getCustomColors().addListener((Change<? extends Color> change) -> buildCustomColors());
         VBox paletteBox = new VBox();
         paletteBox.getStyleClass().add("color-palette");
-        paletteBox.setBackground(new Background(new BackgroundFill(Color.WHITE, CornerRadii.EMPTY, Insets.EMPTY)));
-        paletteBox.setBorder(new Border(new BorderStroke(Color.valueOf("#9E9E9E"),
-                BorderStrokeStyle.SOLID,
-                CornerRadii.EMPTY,
-                BorderWidths.DEFAULT)));
         paletteBox.getChildren().addAll(colorPickerGrid);
         if (colorPicker.getPreDefinedColors() == null) {
             paletteBox.getChildren().addAll(customColorLabel, customColorGrid, customColorLink);

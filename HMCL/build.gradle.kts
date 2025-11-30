@@ -58,6 +58,7 @@ dependencies {
     implementation("libs:JFoenix")
     implementation(libs.twelvemonkeys.imageio.webp)
     implementation(libs.java.info)
+    implementation(libs.monet.fx)
 
     if (launcherExe.isBlank()) {
         implementation(libs.hmclauncher)
@@ -205,7 +206,8 @@ tasks.shadowJar {
         "Main-Class" to "org.jackhuang.hmcl.Main",
         "Multi-Release" to "true",
         "Add-Opens" to addOpens.joinToString(" "),
-        "Enable-Native-Access" to "ALL-UNNAMED"
+        "Enable-Native-Access" to "ALL-UNNAMED",
+        "Enable-Final-Field-Mutation" to "ALL-UNNAMED",
     )
 
     if (launcherExe.isNotBlank()) {

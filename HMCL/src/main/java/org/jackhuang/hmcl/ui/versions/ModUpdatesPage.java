@@ -125,7 +125,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         JFXButton exportListButton = FXUtils.newRaisedButton(i18n("button.export"));
         exportListButton.setOnAction(e -> exportList());
 
-        JFXButton nextButton = FXUtils.newRaisedButton(i18n("mods.check_updates.update"));
+        JFXButton nextButton = FXUtils.newRaisedButton(i18n("mods.check_updates.confirm"));
         nextButton.setOnAction(e -> updateMods());
 
         JFXButton cancelButton = FXUtils.newRaisedButton(i18n("button.cancel"));
@@ -161,7 +161,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                         Controllers.dialog(i18n("install.success"));
                     }
                 }),
-                i18n("mods.check_updates.update"),
+                i18n("mods.check_updates"),
                 TaskCancellationAction.NORMAL);
     }
 
@@ -426,7 +426,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         private final List<LocalModFile> failedMods = new ArrayList<>();
 
         ModUpdateTask(ModManager modManager, List<Pair<LocalModFile, RemoteMod.Version>> mods) {
-            setStage("mods.check_updates.update");
+            setStage("mods.check_updates.confirm");
             getProperties().put("total", mods.size());
 
             this.dependents = new ArrayList<>();
@@ -458,7 +458,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                                 failedMods.add(local);
                             }
                         })
-                        .withCounter("mods.check_updates.update"));
+                        .withCounter("mods.check_updates.confirm"));
             }
         }
 
