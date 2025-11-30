@@ -1633,7 +1633,7 @@
 }
 
 .table-view {
-    -fx-background-color: white;
+    -fx-background-color: -monet-surface-container;
 }
 
 .table-view .column-header,
@@ -1642,25 +1642,26 @@
 }
 
 .table-view .column-header-background {
-    -fx-background-color: rgba(0, 0, 0, 0.05);
+    -fx-background-color: derive(-monet-surface-container, 20%);
 }
 
 .table-row-cell {
-    -fx-background-color: white;
+    -fx-background-color: -monet-surface-container;
+    -fx-table-cell-border-color: -monet-surface-container;
 }
 
 .table-row-cell:odd {
-    -fx-background-color: rgba(0, 0, 0, 0.03);
+    -fx-background-color: derive(-monet-surface-container, 20%);
 }
 
 .table-cell {
     -fx-background-color: transparent;
-    -fx-text-fill: rgba(0.0, 0.0, 0.0, 0.87);
+    -fx-text-fill: -monet-on-surface;
 }
 
 .table-view > .virtual-flow > .clipped-container > .sheet > .table-row-cell:filled:selected {
-    -fx-background-color: derive(#9ec5fe, 40%);
-    -fx-table-cell-border-color: derive(#9ec5fe, 40%);
+    -fx-background-color: -monet-secondary-container;
+    -fx-table-cell-border-color: -monet-secondary-container;
 }
 
 .table-view > .virtual-flow > .scroll-bar {
@@ -1681,11 +1682,11 @@
 
 .check-box .box {
     -fx-background-color: transparent;
-    -fx-border-color: -fx-base-check-color;
+    -fx-border-color: -monet-primary;
     -fx-border-width: 2;
     -fx-border-radius: 3;
 }
 
 .check-box:selected .box .mark {
-    -fx-background-color: -fx-base-check-color;
+    -fx-background-color: -monet-primary;
 }
