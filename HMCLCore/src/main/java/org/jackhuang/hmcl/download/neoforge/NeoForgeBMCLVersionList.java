@@ -46,11 +46,6 @@ public final class NeoForgeBMCLVersionList extends VersionList<NeoForgeRemoteVer
     }
 
     @Override
-    public Task<?> loadAsync() {
-        throw new UnsupportedOperationException("NeoForgeBMCLVersionList does not support loading the entire NeoForge remote version list.");
-    }
-
-    @Override
     public Task<?> refreshAsync() {
         throw new UnsupportedOperationException("NeoForgeBMCLVersionList does not support loading the entire NeoForge remote version list.");
     }

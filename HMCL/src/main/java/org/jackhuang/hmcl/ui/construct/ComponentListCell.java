@@ -30,7 +30,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
@@ -79,7 +79,7 @@ final class ComponentListCell extends StackPane {
 
             VBox groupNode = new VBox();
 
-            Node expandIcon = SVG.KEYBOARD_ARROW_DOWN.createIcon(Theme.blackFill(), 20);
+            Node expandIcon = SVG.KEYBOARD_ARROW_DOWN.createIcon(20);
             expandIcon.setMouseTransparent(true);
             HBox.setMargin(expandIcon, new Insets(0, 8, 0, 8));
 
@@ -99,12 +99,14 @@ final class ComponentListCell extends StackPane {
             if (!overrideHeaderLeft) {
                 Label label = new Label();
                 label.textProperty().bind(list.titleProperty());
+                label.getStyleClass().add("title-label");
                 labelVBox.getChildren().add(label);
 
                 if (list.isHasSubtitle()) {
                     Label subtitleLabel = new Label();
                     subtitleLabel.textProperty().bind(list.subtitleProperty());
                     subtitleLabel.getStyleClass().add("subtitle-label");
+                    subtitleLabel.textFillProperty().bind(Themes.colorSchemeProperty().getOnSurfaceVariant());
                     labelVBox.getChildren().add(subtitleLabel);
                 }
             }

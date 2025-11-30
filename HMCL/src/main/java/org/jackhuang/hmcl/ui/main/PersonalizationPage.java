@@ -32,12 +32,11 @@ import javafx.scene.control.ColorPicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontSmoothingType;
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
 import org.jackhuang.hmcl.setting.FontManager;
-import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -79,6 +78,22 @@ public class PersonalizationPage extends StackPane {
 
         ComponentList themeList = new ComponentList();
         {
+            BorderPane brightnessPane = new BorderPane();
+            themeList.getContent().add(brightnessPane);
+
+            Label left = new Label(i18n("settings.launcher.brightness"));
+            BorderPane.setAlignment(left, Pos.CENTER_LEFT);
+
+            brightnessPane.setLeft(left);
+
+            JFXComboBox<String> cboBrightness = new JFXComboBox<>(
+                    FXCollections.observableArrayList("auto", "light", "dark"));
+            cboBrightness.setConverter(FXUtils.stringConverter(name -> i18n("settings.launcher.brightness." + name)));
+            cboBrightness.valueProperty().bindBidirectional(config().themeBrightnessProperty());
+            brightnessPane.setRight(cboBrightness);
+        }
+
+        {
             BorderPane themePane = new BorderPane();
             themeList.getContent().add(themePane);
 
@@ -90,10 +105,9 @@ public class PersonalizationPage extends StackPane {
             themeColorPickerContainer.setMinHeight(30);
             themePane.setRight(themeColorPickerContainer);
 
-            ColorPicker picker = new JFXColorPicker(Color.web(Theme.getTheme().getColor()));
-            picker.getCustomColors().setAll(Theme.SUGGESTED_COLORS);
-            picker.setOnAction(e ->
-                    config().setTheme(Theme.custom(Theme.getColorDisplayName(picker.getValue()))));
+            ColorPicker picker = new JFXColorPicker();
+            picker.getCustomColors().setAll(ThemeColor.STANDARD_COLORS.stream().map(ThemeColor::color).toList());
+            ThemeColor.bindBidirectional(picker, config().themeColorProperty());
             themeColorPickerContainer.getChildren().setAll(picker);
             Platform.runLater(() -> JFXDepthManager.setDepth(picker, 0));
         }
@@ -264,7 +278,7 @@ public class PersonalizationPage extends StackPane {
 
                         JFXButton clearButton = new JFXButton();
                         clearButton.getStyleClass().add("toggle-icon4");
-                        clearButton.setGraphic(SVG.RESTORE.createIcon(Theme.blackFill(), -1));
+                        clearButton.setGraphic(SVG.RESTORE.createIcon());
                         clearButton.setOnAction(e -> cboFont.setValue(null));
 
                         hBox.getChildren().setAll(cboFont, clearButton);

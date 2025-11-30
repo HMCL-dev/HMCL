@@ -46,7 +46,6 @@ import javafx.scene.text.TextFlow;
 import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.terracotta.TerracottaManager;
@@ -559,7 +558,7 @@ public class TerracottaControllerPage extends StackPane {
             Label description = new Label(link.description().getText(I18n.getLocale().getCandidateLocales()));
             HBox placeholder = new HBox();
             HBox.setHgrow(placeholder, Priority.ALWAYS);
-            Node icon = SVG.OPEN_IN_NEW.createIcon(Theme.blackFill(), 16);
+            Node icon = SVG.OPEN_IN_NEW.createIcon(16);
             node.getChildren().setAll(description, placeholder, icon);
 
             String url = link.link();
@@ -670,11 +669,11 @@ public class TerracottaControllerPage extends StackPane {
         }
 
         public void setLeftIcon(SVG left) {
-            this.left.set(left.createIcon(Theme.blackFill(), 28));
+            this.left.set(left.createIcon(28));
         }
 
         public void setRightIcon(SVG right) {
-            this.right.set(right.createIcon(Theme.blackFill(), 28));
+            this.right.set(right.createIcon(28));
         }
     }
 

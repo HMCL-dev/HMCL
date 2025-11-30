@@ -27,7 +27,6 @@ import javafx.scene.Node;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Paint;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.EventPriority;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
@@ -325,7 +324,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     }
 
     public static Node wrap(SVG svg) {
-        return wrap(svg.createIcon((Paint) null, 20));
+        return wrap(svg.createIcon(20));
     }
 
     public interface VersionLoadable {

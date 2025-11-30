@@ -32,9 +32,9 @@ import javafx.scene.layout.BorderWidths;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
-import javafx.scene.paint.Paint;
 import javafx.scene.shape.SVGPath;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.theme.Themes;
 
 public class JFXCheckBoxSkin extends CheckBoxSkin {
     private final StackPane box = new StackPane();
@@ -54,7 +54,7 @@ public class JFXCheckBoxSkin extends CheckBoxSkin {
         this.box.setPrefSize(18.0, 18.0);
         this.box.setMaxSize(18.0, 18.0);
         this.box.setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, new CornerRadii(2.0), Insets.EMPTY)));
-        this.box.setBorder(new Border(new BorderStroke(control.getUnCheckedColor(), BorderStrokeStyle.SOLID, new CornerRadii(2.0), new BorderWidths(this.lineThick))));
+        this.box.setBorder(new Border(new BorderStroke(Themes.getColorScheme().getOnSurfaceVariant(), BorderStrokeStyle.SOLID, new CornerRadii(2.0), new BorderWidths(this.lineThick))));
         StackPane boxContainer = new StackPane();
         boxContainer.getChildren().add(this.box);
         boxContainer.setPadding(new Insets(this.padding));
@@ -64,7 +64,7 @@ public class JFXCheckBoxSkin extends CheckBoxSkin {
         shape.setContent("M384 690l452-452 60 60-512 512-238-238 60-60z");
         this.mark.setShape(shape);
         this.mark.setMaxSize(15.0, 12.0);
-        this.mark.setStyle("-fx-background-color:WHITE; -fx-border-color:WHITE; -fx-border-width:2px;");
+        this.mark.setStyle("-fx-background-color:-monet-on-primary; -fx-border-color:-monet-on-primary; -fx-border-width:2px;");
         this.mark.setVisible(false);
         this.mark.setScaleX(0.0);
         this.mark.setScaleY(0.0);
@@ -107,13 +107,12 @@ public class JFXCheckBoxSkin extends CheckBoxSkin {
 
     private void updateColors() {
         var control = (JFXCheckBox) getSkinnable();
-        final Paint color = control.isSelected()
-                ? control.getCheckedColor()
-                : control.getUnCheckedColor();
-        JFXNodeUtils.updateBackground(box.getBackground(), box, control.isSelected() ? control.getCheckedColor() : Color.TRANSPARENT);
-        rippler.setRipplerFill(color);
+        boolean isSelected = control.isSelected();
+        JFXNodeUtils.updateBackground(box.getBackground(), box, isSelected ? control.getCheckedColor() : Color.TRANSPARENT);
+        rippler.setRipplerFill(isSelected ? control.getCheckedColor() : control.getUnCheckedColor());
         final BorderStroke borderStroke = box.getBorder().getStrokes().get(0);
-        box.setBorder(new Border(new BorderStroke(color,
+        box.setBorder(new Border(new BorderStroke(
+                isSelected ? control.getCheckedColor() : Themes.getColorScheme().getOnSurfaceVariant(),
                 borderStroke.getTopStyle(),
                 borderStroke.getRadii(),
                 borderStroke.getWidths())));
@@ -185,7 +184,11 @@ public class JFXCheckBoxSkin extends CheckBoxSkin {
         this.select.setRate(selection ? 1.0 : -1.0);
         this.transition.play();
         this.select.play();
-        this.box.setBorder(new Border(new BorderStroke(selection ? control.getCheckedColor() : control.getUnCheckedColor(), BorderStrokeStyle.SOLID, new CornerRadii(2.0), new BorderWidths(this.lineThick))));
+        this.box.setBorder(new Border(new BorderStroke(
+                selection ? control.getCheckedColor() : Themes.getColorScheme().getOnSurfaceVariant(),
+                BorderStrokeStyle.SOLID,
+                new CornerRadii(2.0),
+                new BorderWidths(this.lineThick))));
     }
 
     private void createFillTransition() {
