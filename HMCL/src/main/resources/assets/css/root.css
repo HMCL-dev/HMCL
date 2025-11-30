@@ -1143,7 +1143,7 @@
     -fx-min-height: -fx-toggle-icon-tiny-size;
     -fx-background-radius: 25px;
     -fx-background-color: transparent;
-    -jfx-toggle-color: -fx-base-check-color;
+    -jfx-toggle-color: -monet-primary;
     -jfx-untoggle-color: transparent;
 }
 
@@ -1153,7 +1153,7 @@
 }
 
 .toggle-icon-tiny .jfx-rippler {
-    -jfx-rippler-fill: -fx-base-check-color;
+    -jfx-rippler-fill: -monet-primary;
     -jfx-mask-type: CIRCLE;
 }
 
