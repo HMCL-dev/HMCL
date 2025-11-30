@@ -209,7 +209,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                     Controllers.navigate(Controllers.getTerracottaPage());
                 } else {
                     String message;
-                   if (Architecture.SYSTEM_ARCH.getBits() == Bits.BIT_32)
+                    if (Architecture.SYSTEM_ARCH.getBits() == Bits.BIT_32)
                         message = i18n("terracotta.unsupported.arch.32bit");
                     else if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
                             && !OperatingSystem.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_10))
