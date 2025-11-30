@@ -26,7 +26,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -67,7 +66,7 @@ public class HintPane extends VBox {
                 throw new IllegalArgumentException("Unrecognized message box message type " + type);
         }
 
-        HBox hbox = new HBox(svg.createIcon(Theme.blackFill(), 16), new Text(type.getDisplayName()));
+        HBox hbox = new HBox(svg.createIcon(16), new Text(type.getDisplayName()));
         hbox.setAlignment(Pos.CENTER_LEFT);
         flow.getChildren().setAll(label);
         getChildren().setAll(hbox, flow);

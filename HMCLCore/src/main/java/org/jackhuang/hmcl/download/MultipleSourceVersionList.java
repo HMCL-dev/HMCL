@@ -41,11 +41,6 @@ public class MultipleSourceVersionList extends VersionList<RemoteVersion> {
     }
 
     @Override
-    public Task<?> loadAsync() {
-        throw new UnsupportedOperationException("MultipleSourceVersionList does not support loading the entire remote version list.");
-    }
-
-    @Override
     public Task<?> refreshAsync() {
         throw new UnsupportedOperationException("MultipleSourceVersionList does not support loading the entire remote version list.");
     }

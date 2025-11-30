@@ -46,7 +46,6 @@ import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -591,15 +590,15 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             imageView.setImage(VersionIconType.COMMAND.getIcon());
 
             restoreButton.getStyleClass().add("toggle-icon4");
-            restoreButton.setGraphic(FXUtils.limitingSize(SVG.RESTORE.createIcon(Theme.blackFill(), 24), 24, 24));
+            restoreButton.setGraphic(FXUtils.limitingSize(SVG.RESTORE.createIcon(24), 24, 24));
 
             FXUtils.installFastTooltip(restoreButton, i18n("mods.restore"));
 
             revealButton.getStyleClass().add("toggle-icon4");
-            revealButton.setGraphic(FXUtils.limitingSize(SVG.FOLDER.createIcon(Theme.blackFill(), 24), 24, 24));
+            revealButton.setGraphic(FXUtils.limitingSize(SVG.FOLDER.createIcon(24), 24, 24));
 
             infoButton.getStyleClass().add("toggle-icon4");
-            infoButton.setGraphic(FXUtils.limitingSize(SVG.INFO.createIcon(Theme.blackFill(), 24), 24, 24));
+            infoButton.setGraphic(FXUtils.limitingSize(SVG.INFO.createIcon(24), 24, 24));
 
             container.getChildren().setAll(checkBox, imageView, content, restoreButton, revealButton, infoButton);
 

@@ -210,8 +210,10 @@ public abstract class FetchTask<T> extends Task<T> {
                     headers.putAll(repository.injectConnection(uri));
 
                 do {
-                    HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(currentURI);
-                    requestBuilder.timeout(Duration.ofMillis(NetworkUtils.TIME_OUT));
+                    HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(currentURI)
+                            .timeout(Duration.ofMillis(NetworkUtils.TIME_OUT))
+                            .header("User-Agent", Holder.USER_AGENT);
+
                     headers.forEach(requestBuilder::header);
                     response = Holder.HTTP_CLIENT.send(requestBuilder.build(), BODY_HANDLER);
 
@@ -506,6 +508,7 @@ public abstract class FetchTask<T> extends Task<T> {
     /// Ensure that [#HTTP_CLIENT] is initialized after ProxyManager has been initialized.
     private static final class Holder {
         private static final HttpClient HTTP_CLIENT;
+        private static final String USER_AGENT = System.getProperty("http.agent", "HMCL");
 
         static {
             boolean useHttp2 = !"false".equalsIgnoreCase(System.getProperty("hmcl.http2"));
