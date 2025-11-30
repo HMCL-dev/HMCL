@@ -64,6 +64,7 @@ public class LaunchOptions implements Serializable {
     private Renderer renderer = Renderer.DEFAULT;
     private boolean useNativeGLFW;
     private boolean useNativeOpenAL;
+    private boolean enableDebugLogOutput;
     private boolean daemon;
 
     /**
@@ -282,6 +283,10 @@ public class LaunchOptions implements Serializable {
         return useNativeOpenAL;
     }
 
+    public boolean isEnableDebugLogOutput() {
+        return enableDebugLogOutput;
+    }
+
     /**
      * Will launcher keeps alive after game launched or not.
      */
@@ -497,5 +502,9 @@ public class LaunchOptions implements Serializable {
             return this;
         }
 
+        public Builder setEnableDebugLogOutput(boolean u) {
+            options.enableDebugLogOutput = u;
+            return this;
+        }
     }
 }
