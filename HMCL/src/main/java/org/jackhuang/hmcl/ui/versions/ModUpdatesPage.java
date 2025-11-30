@@ -30,10 +30,10 @@ import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import org.jackhuang.hmcl.mod.*;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.theme.Theme;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -307,15 +307,15 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                     switch (targetVersion.getVersionType()) {
                         case Alpha:
                             content.addTag(i18n("mods.channel.alpha"));
-                            graphicPane.getChildren().setAll(SVG.ALPHA_CIRCLE.createIcon(Theme.blackFill(), 24));
+                            graphicPane.getChildren().setAll(SVG.ALPHA_CIRCLE.createIcon(24));
                             break;
                         case Beta:
                             content.addTag(i18n("mods.channel.beta"));
-                            graphicPane.getChildren().setAll(SVG.BETA_CIRCLE.createIcon(Theme.blackFill(), 24));
+                            graphicPane.getChildren().setAll(SVG.BETA_CIRCLE.createIcon(24));
                             break;
                         case Release:
                             content.addTag(i18n("mods.channel.release"));
-                            graphicPane.getChildren().setAll(SVG.RELEASE_CIRCLE.createIcon(Theme.blackFill(), 24));
+                            graphicPane.getChildren().setAll(SVG.RELEASE_CIRCLE.createIcon(24));
                             break;
                     }
 
