@@ -51,6 +51,7 @@ import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.nio.file.AccessDeniedException;
@@ -60,7 +61,6 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
-import java.lang.ref.WeakReference;
 
 import static javafx.application.Platform.runLater;
 import static javafx.application.Platform.setImplicitExit;
@@ -81,6 +81,7 @@ public final class LauncherHelper {
     private final VersionSetting setting;
     private LauncherVisibility launcherVisibility;
     private boolean showLogs;
+    private String worldFolderName;
 
     public LauncherHelper(Profile profile, Account account, String selectedVersion) {
         this.profile = Objects.requireNonNull(profile);
@@ -109,6 +110,10 @@ public final class LauncherHelper {
 
     public void setKeep() {
         launcherVisibility = LauncherVisibility.KEEP;
+    }
+
+    public void setQuickEnterWorld(String worldFolderName) {
+        this.worldFolderName = worldFolderName;
     }
 
     public void launch() {
@@ -203,6 +208,9 @@ public final class LauncherHelper {
                                     : new HMCLProcessListener(repository, version.get(), authInfo, launchOptions, launchingLatch, gameVersion.isPresent())
                     );
                 }).thenComposeAsync(launcher -> { // launcher is prev task's result
+                    if (worldFolderName != null) {
+                        launcher.setQuickEnterWorld(worldFolderName);
+                    }
                     if (scriptFile == null) {
                         return Task.supplyAsync(launcher::launch);
                     } else {

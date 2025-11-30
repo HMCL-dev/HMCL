@@ -50,6 +50,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public class DefaultLauncher extends Launcher {
 
     private final LibraryAnalyzer analyzer;
+    private String worldFolderName;
 
     public DefaultLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options) {
         this(repository, version, authInfo, options, null);
@@ -63,6 +64,10 @@ public class DefaultLauncher extends Launcher {
         super(repository, version, authInfo, options, listener, daemon);
 
         this.analyzer = LibraryAnalyzer.analyze(version, repository.getGameVersion(version).orElse(null));
+    }
+
+    public void setQuickEnterWorld(String worldFolderName) {
+        this.worldFolderName = worldFolderName;
     }
 
     private Command generateCommandLine(Path nativeFolder) throws IOException {
@@ -309,7 +314,7 @@ public class DefaultLauncher extends Launcher {
 
             try {
                 ServerAddress parsed = ServerAddress.parse(address);
-                if (GameVersionNumber.asGameVersion(gameVersion).compareTo("1.20") < 0) {
+                if (!GameVersionNumber.asGameVersion(gameVersion).isAtLeast("1.13", "23w14a")) {
                     res.add("--server");
                     res.add(parsed.getHost());
                     res.add("--port");
@@ -321,6 +326,11 @@ public class DefaultLauncher extends Launcher {
             } catch (IllegalArgumentException e) {
                 LOG.warning("Invalid server address: " + address, e);
             }
+        }
+
+        if (worldFolderName != null && GameVersionNumber.asGameVersion(gameVersion).isAtLeast("1.20", "23w14a")) {
+            res.add("--quickPlaySingleplayer");
+            res.add(worldFolderName);
         }
 
         if (options.isFullscreen())
