@@ -244,7 +244,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
 
     public static final class Release extends GameVersionNumber {
 
-        private static final Pattern PATTERN = Pattern.compile("1\\.(?<minor>[0-9]+)(\\.(?<patch>[0-9]+))?((?<eaType>(-[a-zA-Z]+| Pre-Release ))(?<eaVersion>.+))?");
+        private static final Pattern PATTERN = Pattern.compile("1\\.(?<minor>[0-9]+)(\\.(?<patch>[0-9]+))?((?<eaType>(-[a-zA-Z]+| Pre-Release | Release Candidate | experimental snapshot ))(?<eaVersion>.+))?");
 
         public static final int TYPE_GA = Integer.MAX_VALUE;
 
@@ -272,7 +272,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
                 eaType = TYPE_GA;
             } else if ("-pre".equals(eaTypeString) || " Pre-Release ".equals(eaTypeString)) {
                 eaType = TYPE_PRE;
-            } else if ("-rc".equals(eaTypeString)) {
+            } else if ("-rc".equals(eaTypeString) || " Release Candidate ".equals(eaTypeString)) {
                 eaType = TYPE_RC;
             } else if ("-exp".equals(eaTypeString)) {
                 eaType = TYPE_EXP;
