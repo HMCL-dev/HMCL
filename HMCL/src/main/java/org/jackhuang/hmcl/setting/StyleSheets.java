@@ -142,7 +142,7 @@ public final class StyleSheets {
     }
 
     private static void addColor(StringBuilder builder, ColorScheme scheme, ColorRole role, double opacity) {
-        builder.append("  ").append(role.getVariableName()).append("-transparent-").append((int) (100 * opacity))
+        builder.append("  ").append(role.getVariableName()).append("-transparent-%02d".formatted((int) (100 * opacity)))
                 .append(": ").append(ThemeColor.getColorDisplayNameWithOpacity(scheme.getColor(role), opacity))
                 .append(";\n");
     }

@@ -16,10 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/* TODO: Monet */
 .root {
-    -fx-base-check-color: derive(-monet-primary-container, 30%);
-    -fx-base-text-fill: -monet-on-primary-container;
 }
 
 .svg {
@@ -154,10 +151,6 @@
 
 .rippler-container {
     -jfx-rippler-fill: #a2a2a2;
-}
-
-.rippler-container:selected .label {
-    -fx-text-fill: -fx-base-text-fill;
 }
 
 .advanced-list-item > .rippler-container > .container {
@@ -317,14 +310,26 @@
 }
 
 .two-line-item-second-large > .first-line > .title, .two-line-item-second-large-title {
-    -fx-text-fill: rgba(0, 0, 0, 0.5);
+    -fx-text-fill: -monet-on-surface-variant;
     -fx-font-weight: normal;
     -fx-font-size: 12px;
 }
 
 .two-line-item-second-large > HBox > .subtitle {
-    -fx-text-fill: #292929;
+    -fx-text-fill: -monet-on-surface;
     -fx-font-size: 15px;
+}
+
+.game-crash-window {
+    -fx-background-color: -monet-surface-container;
+}
+
+.game-crash-window .crash-reason-text-flow Text {
+    -fx-fill: -monet-on-surface;
+}
+
+.game-crash-window .crash-reason-text-flow .hyperlink {
+    -fx-fill: #0070E0;
 }
 
 .wrap-text > HBox > .subtitle {
@@ -395,6 +400,10 @@
     -fx-font-size: 14px;
 }
 
+.launch-pane .svg {
+    -fx-fill: -monet-on-primary-container;
+}
+
 .launch-pane > Rectangle {
     -fx-fill: -monet-primary-container;
 }
@@ -417,15 +426,16 @@
  ******************************************************************************/
 
 .tab-header-background {
-    -fx-background-color: -fx-base-check-color;
+    -fx-background-color: -monet-surface;
 }
 
 .tab-selected-line {
     -fx-background-color: derive(-monet-primary-container, -30%);
 }
 
+/* TODO: It seems not actually used */
 .tab-rippler {
-    -jfx-rippler-fill: -fx-base-check-color;
+    -jfx-rippler-fill: derive(-monet-primary-container, 30%);
 }
 
 .jfx-tab-pane .jfx-rippler {
@@ -585,7 +595,7 @@
 }
 
 .jfx-tool-bar .jfx-decorator-button .svg {
-    -fx-fill: -fx-base-text-fill;
+    -fx-fill: -monet-on-primary-container;
 }
 
 .jfx-tool-bar Label {
@@ -611,13 +621,13 @@
 .jfx-tool-bar-second {
     -fx-pref-height: 42;
     -fx-padding: 2 2 2 2;
-    -fx-background-color: -fx-base-check-color;
+    -fx-background-color: -monet-primary-container;
     -fx-alignment: CENTER-LEFT;
     -fx-spacing: 8;
 }
 
 .jfx-tool-bar-second .label {
-    -fx-text-fill: -fx-base-text-fill;
+    -fx-text-fill: -monet-on-primary-container;
     -fx-font-size: 16;
     -fx-font-weight: bold;
 }
@@ -851,7 +861,7 @@
 
 /*.list-cell:odd:selected > .jfx-rippler > StackPane,*/
 /*.list-cell:even:selected > .jfx-rippler > StackPane {*/
-/*    -fx-background-color: derive(-fx-base-check-color, 30%);*/
+/*    -fx-background-color: derive(-monet-primary, 30%);*/
 /*}*/
 
 .jfx-list-view {
@@ -1143,7 +1153,7 @@
     -fx-min-height: -fx-toggle-icon-tiny-size;
     -fx-background-radius: 25px;
     -fx-background-color: transparent;
-    -jfx-toggle-color: -fx-base-check-color;
+    -jfx-toggle-color: -monet-primary;
     -jfx-untoggle-color: transparent;
 }
 
@@ -1153,7 +1163,7 @@
 }
 
 .toggle-icon-tiny .jfx-rippler {
-    -jfx-rippler-fill: -fx-base-check-color;
+    -jfx-rippler-fill: -monet-primary;
     -jfx-mask-type: CIRCLE;
 }
 
@@ -1170,7 +1180,7 @@
 }
 
 .announcement-close-button .jfx-rippler {
-    -jfx-rippler-fill: -fx-base-check-color;
+    -jfx-rippler-fill: -monet-primary;
     -jfx-mask-type: CIRCLE;
 }
 
