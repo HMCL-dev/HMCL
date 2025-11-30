@@ -100,7 +100,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         AdvancedListBox toolbar = new AdvancedListBox();
 
         if (world.getWorldName() != null && GameVersionNumber.asGameVersion(world.getGameVersion()).isAtLeast("1.20", "23w14a")) {
-            toolbar.addNavigationDrawerItem(i18n("version.launch_and_enter_world"), SVG.PLAY_ARROW,this::launch,null);
+            toolbar.addNavigationDrawerItem(i18n("version.launch_and_enter_world"), SVG.PLAY_ARROW,this::launch,advancedListItem -> advancedListItem.setDisable(isReadOnly()));
         }
 
         if (ChunkBaseApp.isSupported(world)) {
