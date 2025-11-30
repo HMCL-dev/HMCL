@@ -1621,6 +1621,7 @@
 
 .table-view {
     -fx-padding: 3;
+    -fx-background-color: -monet-surface-container-low;
 }
 
 .table-view,
@@ -1632,26 +1633,22 @@
     -fx-border-radius: 6;
 }
 
-.table-view {
-    -fx-background-color: -monet-surface-container;
-}
-
 .table-view .column-header,
 .table-view .filler {
     -fx-background-color: transparent;
 }
 
 .table-view .column-header-background {
-    -fx-background-color: derive(-monet-surface-container, 20%);
+    -fx-background-color: -monet-surface-container-highest;
 }
 
 .table-row-cell {
     -fx-background-color: -monet-surface-container;
-    -fx-table-cell-border-color: -monet-surface-container;
+    -fx-table-cell-border-color: -monet-surface-container-lowest;
 }
 
 .table-row-cell:odd {
-    -fx-background-color: derive(-monet-surface-container, 20%);
+    -fx-background-color: -monet-surface-container-high;
 }
 
 .table-cell {
@@ -1661,7 +1658,6 @@
 
 .table-view > .virtual-flow > .clipped-container > .sheet > .table-row-cell:filled:selected {
     -fx-background-color: -monet-secondary-container;
-    -fx-table-cell-border-color: -monet-secondary-container;
 }
 
 .table-view > .virtual-flow > .scroll-bar {
