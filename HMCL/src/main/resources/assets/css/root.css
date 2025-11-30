@@ -310,14 +310,26 @@
 }
 
 .two-line-item-second-large > .first-line > .title, .two-line-item-second-large-title {
-    -fx-text-fill: rgba(0, 0, 0, 0.5);
+    -fx-text-fill: -monet-on-surface-variant;
     -fx-font-weight: normal;
     -fx-font-size: 12px;
 }
 
 .two-line-item-second-large > HBox > .subtitle {
-    -fx-text-fill: #292929;
+    -fx-text-fill: -monet-on-surface;
     -fx-font-size: 15px;
+}
+
+.game-crash-window {
+    -fx-background-color: -monet-surface-container;
+}
+
+.game-crash-window .crash-reason-text-flow Text {
+    -fx-fill: -monet-on-surface;
+}
+
+.game-crash-window .crash-reason-text-flow .hyperlink {
+    -fx-fill: #0070E0;
 }
 
 .wrap-text > HBox > .subtitle {
