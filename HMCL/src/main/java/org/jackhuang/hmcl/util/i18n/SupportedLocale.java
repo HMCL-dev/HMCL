@@ -42,6 +42,10 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class SupportedLocale {
     public static final SupportedLocale DEFAULT = new SupportedLocale();
 
+    public static boolean isExperimentalSupported(Locale locale) {
+        return "ar".equals(locale.getLanguage());
+    }
+
     private static final ConcurrentMap<Locale, SupportedLocale> LOCALES = new ConcurrentHashMap<>();
 
     public static List<SupportedLocale> getSupportedLocales() {
@@ -51,7 +55,11 @@ public final class SupportedLocale {
         InputStream locales = SupportedLocale.class.getResourceAsStream("/assets/lang/languages.json");
         if (locales != null) {
             try (locales) {
-                list.addAll(JsonUtils.fromNonNullJsonFully(locales, JsonUtils.listTypeOf(SupportedLocale.class)));
+                for (SupportedLocale locale : JsonUtils.fromNonNullJsonFully(locales, JsonUtils.listTypeOf(SupportedLocale.class))) {
+                    if (!isExperimentalSupported(locale.getLocale())) {
+                        list.add(locale);
+                    }
+                }
             } catch (Throwable e) {
                 LOG.warning("Failed to load languages.json", e);
             }
@@ -73,6 +81,7 @@ public final class SupportedLocale {
     private final boolean isDefault;
     private final String name;
     private final Locale locale;
+    private final Locale displayLocale;
     private final TextDirection textDirection;
 
     private ResourceBundle resourceBundle;
@@ -85,9 +94,15 @@ public final class SupportedLocale {
         this.name = "def"; // TODO: Change to "default" after updating the Config format
 
         String language = System.getenv("HMCL_LANGUAGE");
-        this.locale = StringUtils.isBlank(language)
-                ? LocaleUtils.SYSTEM_DEFAULT
-                : Locale.forLanguageTag(language);
+        if (StringUtils.isBlank(language)) {
+            this.locale = LocaleUtils.SYSTEM_DEFAULT;
+            this.displayLocale = isExperimentalSupported(this.locale)
+                    ? Locale.ENGLISH
+                    : this.locale;
+        } else {
+            this.locale = Locale.forLanguageTag(language);
+            this.displayLocale = this.locale;
+        }
         this.textDirection = LocaleUtils.getTextDirection(locale);
     }
 
@@ -95,6 +110,7 @@ public final class SupportedLocale {
         this.isDefault = false;
         this.name = locale.toLanguageTag();
         this.locale = locale;
+        this.displayLocale = locale;
         this.textDirection = LocaleUtils.getTextDirection(locale);
     }
 
@@ -108,6 +124,15 @@ public final class SupportedLocale {
 
     public Locale getLocale() {
         return locale;
+    }
+
+    /// Used to represent the text display language of HMCL.
+    ///
+    /// Usually equivalent to [#getLocale()],
+    /// but for [experimentally supported languages][#isExperimentalSupported(Locale)],
+    /// it falls back to ENGLISH by default.
+    public Locale getDisplayLocale() {
+        return displayLocale;
     }
 
     public TextDirection getTextDirection() {
@@ -167,7 +192,7 @@ public final class SupportedLocale {
     public ResourceBundle getResourceBundle() {
         ResourceBundle bundle = resourceBundle;
         if (resourceBundle == null)
-            resourceBundle = bundle = ResourceBundle.getBundle("assets.lang.I18N", locale,
+            resourceBundle = bundle = ResourceBundle.getBundle("assets.lang.I18N", displayLocale,
                     DefaultResourceBundleControl.INSTANCE);
 
         return bundle;
@@ -176,7 +201,7 @@ public final class SupportedLocale {
     public ResourceBundle getLocaleNamesBundle() {
         ResourceBundle bundle = localeNamesBundle;
         if (localeNamesBundle == null)
-            localeNamesBundle = bundle = ResourceBundle.getBundle("assets.lang.LocaleNames", locale,
+            localeNamesBundle = bundle = ResourceBundle.getBundle("assets.lang.LocaleNames", displayLocale,
                     DefaultResourceBundleControl.INSTANCE);
 
         return bundle;
@@ -184,7 +209,7 @@ public final class SupportedLocale {
 
     public List<Locale> getCandidateLocales() {
         if (candidateLocales == null)
-            candidateLocales = List.copyOf(LocaleUtils.getCandidateLocales(locale));
+            candidateLocales = List.copyOf(LocaleUtils.getCandidateLocales(displayLocale));
         return candidateLocales;
     }
 

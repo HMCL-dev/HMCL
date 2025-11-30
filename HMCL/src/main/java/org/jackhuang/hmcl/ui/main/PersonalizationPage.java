@@ -17,10 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.main;
 
-import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXComboBox;
-import com.jfoenix.controls.JFXSlider;
-import com.jfoenix.controls.JFXTextField;
+import com.jfoenix.controls.*;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -93,7 +90,7 @@ public class PersonalizationPage extends StackPane {
             themeColorPickerContainer.setMinHeight(30);
             themePane.setRight(themeColorPickerContainer);
 
-            ColorPicker picker = new ColorPicker(Color.web(Theme.getTheme().getColor()));
+            ColorPicker picker = new JFXColorPicker(Color.web(Theme.getTheme().getColor()));
             picker.getCustomColors().setAll(Theme.SUGGESTED_COLORS);
             picker.setOnAction(e ->
                     config().setTheme(Theme.custom(Theme.getColorDisplayName(picker.getValue()))));

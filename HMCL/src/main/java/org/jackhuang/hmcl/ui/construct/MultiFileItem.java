@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
+import com.jfoenix.controls.JFXColorPicker;
 import com.jfoenix.controls.JFXRadioButton;
 import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.validation.base.ValidatorBase;
@@ -301,7 +302,7 @@ public final class MultiFileItem<T> extends VBox {
     }
 
     public static final class PaintOption<T> extends Option<T> {
-        private final ColorPicker colorPicker = new ColorPicker();
+        private final ColorPicker colorPicker = new JFXColorPicker();
 
         public PaintOption(String title, T data) {
             super(title, data);
