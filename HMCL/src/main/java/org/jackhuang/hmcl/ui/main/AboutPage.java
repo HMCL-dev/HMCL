@@ -21,12 +21,14 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.IconedTwoLineListItem;
@@ -105,6 +107,12 @@ public final class AboutPage extends StackPane {
         getChildren().setAll(scrollPane);
     }
 
+    private static Image loadImage(String url) {
+        return url.startsWith("/")
+                ? FXUtils.newBuiltinImage(url)
+                : new Image(url);
+    }
+
     private static ComponentList loadIconedTwoLineList(String path) {
         ComponentList componentList = new ComponentList();
 
@@ -122,10 +130,14 @@ public final class AboutPage extends StackPane {
                 IconedTwoLineListItem item = new IconedTwoLineListItem();
 
                 if (obj.has("image")) {
-                    String image = obj.get("image").getAsString();
-                    item.setImage(image.startsWith("/")
-                            ? FXUtils.newBuiltinImage(image)
-                            : new Image(image));
+                    JsonElement image = obj.get("image");
+                    if (image.isJsonPrimitive()) {
+                        item.setImage(loadImage(image.getAsString()));
+                    } else if (image.isJsonObject()) {
+                        item.imageProperty().bind(Bindings.when(Themes.darkModeProperty())
+                                .then(loadImage(image.getAsJsonObject().get("dark").getAsString()))
+                                .otherwise(loadImage(image.getAsJsonObject().get("light").getAsString())));
+                    }
                 }
 
                 if (obj.has("title"))

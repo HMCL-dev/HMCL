@@ -71,7 +71,10 @@
     "externalLink" : "https://github.com/mcmod-info-mirror"
   },
   {
-    "image" : "/assets/img/github.png",
+    "image" : {
+      "light" : "/assets/img/github.png",
+      "dark" : "/assets/img/github-white.png"
+    },
     "titleLocalized" : "about.thanks_to.contributors",
     "subtitleLocalized" : "about.thanks_to.contributors.statement",
     "externalLink" : "https://github.com/HMCL-dev/HMCL/graphs/contributors"
