@@ -179,7 +179,6 @@ public final class StyleSheets {
         }
 
         builder.append("}\n");
-        System.out.println(builder);
         return toStyleSheetUri(builder.toString(), blueCss);
     }
 
