@@ -90,7 +90,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                 .addNavigationDrawerTab(header, worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE, SVG.ARCHIVE_FILL);
 
         if (world.getGameVersion() != null && // old game will not write game version to level.dat
-                GameVersionNumber.asGameVersion(world.getGameVersion()).isAtLeast("1.20", "17w43a")) {
+                GameVersionNumber.asGameVersion(world.getGameVersion()).isAtLeast("1.13", "17w43a")) {
             header.getTabs().add(datapackTab);
             sideBar.addNavigationDrawerTab(header, datapackTab, i18n("world.datapack"), SVG.EXTENSION, SVG.EXTENSION_FILL);
         }
@@ -99,7 +99,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
         AdvancedListBox toolbar = new AdvancedListBox();
 
-        if (world.getWorldName() != null && GameVersionNumber.asGameVersion(world.getWorldName()).isAtLeast("1.13", "23w14a")) {
+        if (world.getWorldName() != null && GameVersionNumber.asGameVersion(world.getGameVersion()).isAtLeast("1.20", "23w14a")) {
             toolbar.addNavigationDrawerItem(i18n("version.launch_and_enter_world"), SVG.PLAY_ARROW,this::launch,null);
         }
 
