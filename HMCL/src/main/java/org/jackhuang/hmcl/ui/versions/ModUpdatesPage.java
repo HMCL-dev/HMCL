@@ -99,7 +99,6 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         FXUtils.bindAllEnabled(allEnabledBox.selectedProperty(), objects.stream().map(o -> o.enabled).toArray(BooleanProperty[]::new));
 
         TableView<ModUpdateObject> table = new TableView<>(objects);
-        table.setEditable(true);
         table.getColumns().setAll(enabledColumn, fileNameColumn, currentVersionColumn, targetVersionColumn, sourceColumn);
 
         setCenter(table);
