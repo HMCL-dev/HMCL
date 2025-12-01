@@ -1443,6 +1443,18 @@
     -fx-max-width: 300;
 }
 
+.custom-color-dialog .tab .tab-label {
+    -fx-text-fill: -monet-on-surface;
+}
+
+.custom-color-dialog .tab .jfx-rippler {
+    -jfx-rippler-fill: -monet-on-surface;
+}
+
+.custom-color-dialog .tab-selected-line {
+    -fx-background-color: -monet-on-surface;
+}
+
 /*******************************************************************************
 *                                                                              *
 * JFX Decorator                                                                *

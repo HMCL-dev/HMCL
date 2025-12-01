@@ -156,15 +156,15 @@ public class JFXCustomColorPickerDialog extends StackPane {
                     Color fontColor = ((Color) newVal.getFills().get(0).getFill()).grayscale()
                             .getRed() > 0.5 ? Color.valueOf(
                             "rgba(40, 40, 40, 0.87)") : Color.valueOf("rgba(255, 255, 255, 0.87)");
-                    for (Node tabNode : tabs.lookupAll(".tab")) {
-                        for (Node node : tabNode.lookupAll(".tab-label")) {
-                            ((Label) node).setTextFill(fontColor);
-                        }
-                        for (Node node : tabNode.lookupAll(".jfx-rippler")) {
-                            ((JFXRippler) node).setRipplerFill(fontColor);
-                        }
-                    }
-                    ((Pane) tabs.lookup(".tab-selected-line")).setBackground(new Background(new BackgroundFill(fontColor, CornerRadii.EMPTY, Insets.EMPTY)));
+//                    for (Node tabNode : tabs.lookupAll(".tab")) {
+//                        for (Node node : tabNode.lookupAll(".tab-label")) {
+//                            ((Label) node).setTextFill(fontColor);
+//                        }
+//                        for (Node node : tabNode.lookupAll(".jfx-rippler")) {
+//                            ((JFXRippler) node).setRipplerFill(fontColor);
+//                        }
+//                    }
+//                    ((Pane) tabs.lookup(".tab-selected-line")).setBackground(new Background(new BackgroundFill(fontColor, CornerRadii.EMPTY, Insets.EMPTY)));
                     pickerDecorator.lookupAll(".jfx-decorator-button").forEach(button -> {
                         ((JFXButton) button).setRipplerFill(fontColor);
                         ((SVGGlyph) ((JFXButton) button).getGraphic()).setFill(fontColor);
