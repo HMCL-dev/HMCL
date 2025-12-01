@@ -113,8 +113,16 @@ public final class Themes {
         return colorScheme.get();
     }
 
+    private static final ObjectBinding<Color> titleFill = Bindings.createObjectBinding(
+            () -> config().isTitleTransparent()
+                    ? getColorScheme().getOnSurface()
+                    : getColorScheme().getOnPrimaryContainer(),
+            colorSchemeProperty(),
+            config().titleTransparentProperty()
+    );
+
     public static ObservableValue<Color> titleFillProperty() {
-        return colorSchemeProperty().getOnPrimaryContainer();
+        return titleFill;
     }
 
     public static BooleanBinding darkModeProperty() {
