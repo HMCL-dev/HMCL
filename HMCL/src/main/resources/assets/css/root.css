@@ -145,7 +145,7 @@
 }
 
 .announcement .hyperlink {
-    -fx-fill: #0070E0;
+    -fx-fill: -monet-primary;
     -fx-font-size: 13px;
 }
 
@@ -329,7 +329,7 @@
 }
 
 .game-crash-window .crash-reason-text-flow .hyperlink {
-    -fx-fill: #0070E0;
+    -fx-fill: -monet-primary;
 }
 
 .wrap-text > HBox > .subtitle {
