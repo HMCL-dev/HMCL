@@ -76,7 +76,7 @@
 }
 
 .hint.warning {
-    -fx-background-color: -monet-tertiary-fixed;
+    -fx-background-color: -monet-tertiary-fixed-dim;
     -fx-border-color: -monet-outline;
 }
 
