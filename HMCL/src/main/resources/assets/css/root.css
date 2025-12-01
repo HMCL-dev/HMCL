@@ -1369,6 +1369,10 @@
     -fx-fill: -monet-on-surface;
 }
 
+.jfx-combo-box .text-field {
+    -fx-text-fill: -monet-on-surface;
+}
+
 .combo-box-popup .list-view {
     -fx-background-color: -monet-surface-container;
 }
