@@ -76,12 +76,12 @@
 }
 
 .hint.warning {
-    -fx-background-color: -monet-tertiary-container;
+    -fx-background-color: -monet-tertiary-fixed;
     -fx-border-color: -monet-outline;
 }
 
 .hint.warning Text, .hint.warning .svg {
-    -fx-fill: -monet-on-tertiary-container;
+    -fx-fill: -monet-on-tertiary-fixed;
 }
 
 .skin-pane .jfx-text-field {
