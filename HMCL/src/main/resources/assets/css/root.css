@@ -1208,14 +1208,18 @@
     -fx-text-fill: gray;
 }
 
+.log-window {
+    -fx-background-color: -monet-surface-container;
+}
+
 .log-window .scroll-bar .thumb {
-    -fx-fill: rgba(0, 0, 0, 0.5);
+    -fx-fill: -monet-surface-tint;
 }
 
 .log-window-list-cell {
-    -fx-text-fill: black;
+    -fx-text-fill: -monet-on-surface;
     -fx-border-width: 0 0 1 0;
-    -fx-border-color: #dddddd;
+    -fx-border-color: -monet-outline-variant;
 }
 
 .log-window-list-cell:empty {

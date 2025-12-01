@@ -264,7 +264,6 @@ public final class LogWindow extends Stage {
 
             VBox vbox = new VBox(3);
             vbox.setPadding(new Insets(3, 0, 3, 0));
-            vbox.setStyle("-fx-background-color: white");
             getChildren().setAll(vbox);
 
             {
