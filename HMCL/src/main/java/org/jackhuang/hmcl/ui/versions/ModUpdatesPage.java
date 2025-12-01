@@ -99,6 +99,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         FXUtils.bindAllEnabled(allEnabledBox.selectedProperty(), objects.stream().map(o -> o.enabled).toArray(BooleanProperty[]::new));
 
         TableView<ModUpdateObject> table = new TableView<>(objects);
+        table.setEditable(true);
         table.getColumns().setAll(enabledColumn, fileNameColumn, currentVersionColumn, targetVersionColumn, sourceColumn);
 
         setCenter(table);
@@ -116,6 +117,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         JFXButton cancelButton = FXUtils.newRaisedButton(i18n("button.cancel"));
         cancelButton.setOnAction(e -> fireEvent(new PageCloseEvent()));
         onEscPressed(this, cancelButton::fire);
+        onEscPressed(table, cancelButton::fire);
 
         actions.getChildren().setAll(exportListButton, nextButton, cancelButton);
         setBottom(actions);
