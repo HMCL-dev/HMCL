@@ -48,6 +48,11 @@
     -fx-padding: 6;
 }
 
+.hint .hyperlink {
+    -fx-fill: -monet-primary;
+    -fx-text-fill: -monet-primary;
+}
+
 .hint.info {
     -fx-background-color: -monet-primary-fixed-dim;
     -fx-border-color: -monet-outline;
