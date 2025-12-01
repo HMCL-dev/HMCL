@@ -1227,31 +1227,31 @@
 }
 
 .log-window-list-cell:fatal {
-    -fx-background-color: #F7A699;
+    -fx-background-color: -fixed-log-fatal;
 }
 
 .log-window-list-cell:error {
-    -fx-background-color: #FFCCBB;
+    -fx-background-color: -fixed-log-error;
 }
 
 .log-window-list-cell:warn {
-    -fx-background-color: #FFEECC;
+    -fx-background-color: -fixed-log-warn;
 }
 
 .log-window-list-cell:info {
-    -fx-background-color: #FFFFFF;
+    -fx-background-color: -fixed-log-info;
 }
 
 .log-window-list-cell:debug {
-    -fx-background-color: #EEE9E0;
+    -fx-background-color: -fixed-log-debug;
 }
 
 .log-window-list-cell:trace {
-    -fx-background-color: #EEE9E0;
+    -fx-background-color: -fixed-log-trace;
 }
 
 .log-window-list-cell:selected {
-    -fx-background-color: #C4C4C4;
+    -fx-background-color: -monet-surface;
 }
 
 /*******************************************************************************

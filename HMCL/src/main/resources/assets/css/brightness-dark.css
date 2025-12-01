@@ -1,0 +1,8 @@
+.log-window {
+    -fixed-log-trace: #EEE9E0;
+    -fixed-log-debug: #EEE9E0;
+    -fixed-log-info: #FFFFFF;
+    -fixed-log-warn: #FFEECC;
+    -fixed-log-error: #FFCCBB;
+    -fixed-log-fatal: #F7A699;
+}

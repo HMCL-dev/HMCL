@@ -47,7 +47,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class StyleSheets {
     private static final int FONT_STYLE_SHEET_INDEX = 0;
     private static final int THEME_STYLE_SHEET_INDEX = 1;
-    private static final int FIXED_COLOR_SHEET_INDEX = 2;
+    private static final int BRIGHTNESS_SHEET_INDEX = 2;
 
     private static final ObservableList<String> stylesheets;
 
@@ -55,7 +55,7 @@ public final class StyleSheets {
         String[] array = new String[]{
                 getFontStyleSheet(),
                 getThemeStyleSheet(),
-                getFixedColorStyleSheet(),
+                getBrightnessStyleSheet(),
                 "/assets/css/root.css"
         };
         stylesheets = FXCollections.observableList(Arrays.asList(array));
@@ -63,7 +63,7 @@ public final class StyleSheets {
         FontManager.fontProperty().addListener(o -> stylesheets.set(FONT_STYLE_SHEET_INDEX, getFontStyleSheet()));
         Themes.colorSchemeProperty().addListener(o -> {
             stylesheets.set(THEME_STYLE_SHEET_INDEX, getThemeStyleSheet());
-            stylesheets.set(FIXED_COLOR_SHEET_INDEX, getFixedColorStyleSheet());
+            stylesheets.set(BRIGHTNESS_SHEET_INDEX, getBrightnessStyleSheet());
         });
     }
 
@@ -136,10 +136,10 @@ public final class StyleSheets {
         return toStyleSheetUri(builder.toString(), defaultCss);
     }
 
-    private static String getFixedColorStyleSheet() {
+    private static String getBrightnessStyleSheet() {
         return Themes.getColorScheme().getBrightness() == Brightness.LIGHT
-                ? "/assets/css/fixed-color-light.css"
-                : "/assets/css/fixed-color-dark.css";
+                ? "/assets/css/brightness-light.css"
+                : "/assets/css/brightness-dark.css";
     }
 
     private static void addColor(StringBuilder builder, String name, Color color) {
