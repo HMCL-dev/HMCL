@@ -79,15 +79,15 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         enabledColumn.setMinWidth(40);
 
         TableColumn<ModUpdateObject, String> fileNameColumn = new TableColumn<>(i18n("mods.check_updates.file"));
-        fileNameColumn.setPrefWidth(200);
+        fileNameColumn.setPrefWidth(180);
         setupCellValueFactory(fileNameColumn, ModUpdateObject::fileNameProperty);
 
         TableColumn<ModUpdateObject, String> currentVersionColumn = new TableColumn<>(i18n("mods.check_updates.current_version"));
-        currentVersionColumn.setPrefWidth(200);
+        currentVersionColumn.setPrefWidth(180);
         setupCellValueFactory(currentVersionColumn, ModUpdateObject::currentVersionProperty);
 
         TableColumn<ModUpdateObject, String> targetVersionColumn = new TableColumn<>(i18n("mods.check_updates.target_version"));
-        targetVersionColumn.setPrefWidth(200);
+        targetVersionColumn.setPrefWidth(180);
         setupCellValueFactory(targetVersionColumn, ModUpdateObject::targetVersionProperty);
 
         TableColumn<ModUpdateObject, String> sourceColumn = new TableColumn<>(i18n("mods.check_updates.source"));
