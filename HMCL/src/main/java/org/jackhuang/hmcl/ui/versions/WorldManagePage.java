@@ -78,6 +78,13 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         this.header = new TabHeader(transitionPane, worldInfoTab, worldBackupsTab);
         header.select(worldInfoTab);
 
+        // Does it need to be done in the background?
+        try {
+            sessionLockChannel = world.lock();
+            LOG.info("Acquired lock on world " + world.getFileName());
+        } catch (IOException ignored) {
+        }
+
         setCenter(transitionPane);
 
         BorderPane left = new BorderPane();
@@ -100,7 +107,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         AdvancedListBox toolbar = new AdvancedListBox();
 
         if (world.getWorldName() != null && GameVersionNumber.asGameVersion(world.getGameVersion()).isAtLeast("1.20", "23w14a")) {
-            toolbar.addNavigationDrawerItem(i18n("version.launch_and_enter_world"), SVG.PLAY_ARROW,this::launch,advancedListItem -> advancedListItem.setDisable(isReadOnly()));
+            toolbar.addNavigationDrawerItem(i18n("version.launch_and_enter_world"), SVG.PLAY_ARROW, this::launch, advancedListItem -> advancedListItem.setDisable(isReadOnly()));
         }
 
         if (ChunkBaseApp.isSupported(world)) {
@@ -128,13 +135,6 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
         BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
         left.setBottom(toolbar);
-
-        // Does it need to be done in the background?
-        try {
-            sessionLockChannel = world.lock();
-            LOG.info("Acquired lock on world " + world.getFileName());
-        } catch (IOException ignored) {
-        }
     }
 
     @Override
