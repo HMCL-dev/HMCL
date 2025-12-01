@@ -250,7 +250,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                 JFXPopup launchPopup = new JFXPopup(launchList);
                 launchList.getContent().setAll(
                         new IconedMenuItem(SVG.PLAY_ARROW, i18n("version.launch"), control::launch, launchPopup),
-                        new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("version.launch.test"), control::testGame, launchPopup)
+                        new IconedMenuItem(SVG.TROUBLESHOOT, i18n("version.launch.test"), control::testGame, launchPopup)
                 );
 
                 PopupMenu browseList = new PopupMenu();
@@ -270,7 +270,6 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                 PopupMenu managementList = new PopupMenu();
                 JFXPopup managementPopup = new JFXPopup(managementList);
                 managementList.getContent().setAll(
-                        new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("version.launch.test"), control::testGame, managementPopup),
                         new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), control::generateLaunchScript, managementPopup),
                         new MenuSeparator(),
                         new IconedMenuItem(SVG.EDIT, i18n("version.manage.rename"), control::rename, managementPopup),

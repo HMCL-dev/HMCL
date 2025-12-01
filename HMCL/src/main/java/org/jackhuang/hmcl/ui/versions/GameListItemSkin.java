@@ -45,7 +45,7 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
 
         menu.getContent().setAll(
                 new IconedMenuItem(SVG.PLAY_ARROW, i18n("version.launch"), () -> currentSkinnable.launch(), popup),
-                new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("version.launch.test"), () -> currentSkinnable.testGame(), popup),
+                new IconedMenuItem(SVG.TROUBLESHOOT, i18n("version.launch.test"), () -> currentSkinnable.testGame(), popup),
                 new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), () -> currentSkinnable.generateLaunchScript(), popup),
                 new MenuSeparator(),
                 new IconedMenuItem(SVG.SETTINGS, i18n("version.manage.manage"), () -> currentSkinnable.modifyGameSettings(), popup),
