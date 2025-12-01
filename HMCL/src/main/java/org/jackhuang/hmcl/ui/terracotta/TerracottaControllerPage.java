@@ -168,6 +168,7 @@ public class TerracottaControllerPage extends StackPane {
                 progressProperty.set(0);
 
                 TextFlow body = FXUtils.segmentToTextFlow(i18n("terracotta.confirm.desc"), Controllers::onHyperlinkAction);
+                body.getStyleClass().add("terracotta-license");
                 body.setLineSpacing(4);
 
                 LineButton download = LineButton.of();
@@ -626,6 +627,7 @@ public class TerracottaControllerPage extends StackPane {
                         }
 
                         HBox secondLine = new HBox();
+                        secondLine.getStyleClass().add("second-line");
                         {
                             Text text = new Text(button.subTitle.get());
                             text.setFill(new Color(0, 0, 0, 0.5));

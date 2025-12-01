@@ -294,6 +294,10 @@
     -fx-font-size: 12px;
 }
 
+.two-line-list-item > .second-line > .subtitle Text {
+    -fx-fill: -monet-on-surface-variant;
+}
+
 .two-line-list-item > .first-line > .tag {
     -fx-text-fill: -monet-on-secondary-container;
     -fx-background-color: -monet-secondary-container;
@@ -323,6 +327,10 @@
 .two-line-item-second-large > HBox > .subtitle {
     -fx-text-fill: -monet-on-surface;
     -fx-font-size: 15px;
+}
+
+.terracotta-license Text {
+    -fx-fill: -monet-on-surface;
 }
 
 .game-crash-window {
