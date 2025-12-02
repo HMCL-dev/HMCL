@@ -90,11 +90,19 @@ public final class Themes {
     static {
         ChangeListener<Theme> listener = (observable, oldValue, newValue) -> {
             if (!Objects.equals(oldValue, newValue)) {
-                colorScheme.set(newValue != null ? newValue.toColorScheme() : Theme.DEFAULT.toColorScheme());
+                if (oldValue == null) {
+                    colorScheme.set(newValue.toColorScheme());
+                }else {
+                    ThemeTransition.animate(oldValue,newValue);
+                }
             }
         };
         listener.changed(theme, null, theme.get());
         theme.addListener(listener);
+    }
+
+    static ColorSchemeProperty internalColorSchemeProperty() {
+        return colorScheme;
     }
 
     public static ObjectExpression<Theme> themeProperty() {
