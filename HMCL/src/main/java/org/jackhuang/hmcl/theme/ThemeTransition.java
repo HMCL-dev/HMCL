@@ -16,7 +16,7 @@ public class ThemeTransition {
         progress.addListener((obs, o, t) -> {
             Color animColor = interpolate(oldColor, newColor, t.doubleValue());
             Theme tempTheme = new Theme(
-                    new ThemeColor("anim", animColor),
+                    new ThemeColor("transition", animColor),
                     newTheme.brightness(),
                     newTheme.colorStyle(),
                     newTheme.contrast()
