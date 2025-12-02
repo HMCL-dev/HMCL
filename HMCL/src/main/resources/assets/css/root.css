@@ -1638,7 +1638,7 @@
 }
 
 .html-hyperlink {
-    -fx-fill: blue;
+    -fx-fill: -monet-primary;
 }
 
 .html-h1 {
