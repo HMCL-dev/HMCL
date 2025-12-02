@@ -160,9 +160,9 @@ public final class StyleSheets {
 
     private static String getThemeStyleSheet() {
         final String blueCss = "/assets/css/blue.css";
-
-        if (Theme.DEFAULT.equals(Themes.getTheme()))
-            return blueCss;
+//
+//        if (Theme.DEFAULT.equals(Themes.getTheme()))
+//            return blueCss;
 
         ColorScheme scheme = Themes.getColorScheme();
 
@@ -181,6 +181,7 @@ public final class StyleSheets {
         addColor(builder, scheme, ColorRole.ON_SURFACE_VARIANT, 0.38);
         addColor(builder, scheme, ColorRole.SURFACE_CONTAINER_LOW, 0.8);
         addColor(builder, scheme, ColorRole.SECONDARY_CONTAINER, 0.8);
+        addColor(builder, scheme, ColorRole.INVERSE_SURFACE, 0.8);
 
         builder.append("}\n");
         return toStyleSheetUri(builder.toString(), blueCss);
