@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.util.platform.windows;
 
 import com.sun.jna.*;
+import com.sun.jna.ptr.ByReference;
 import com.sun.jna.ptr.LongByReference;
 
 import java.util.Arrays;
@@ -27,6 +28,57 @@ import java.util.List;
  * @author Glavo
  */
 public interface WinTypes {
+
+    /// @see <a href="https://learn.microsoft.com/windows/win32/winprog/windows-data-types">Windows Data Types</a>
+    final class BOOL extends IntegerType {
+
+        public static final int SIZE = 4;
+
+        public BOOL() {
+            this(0);
+        }
+
+        public BOOL(boolean value) {
+            this(value ? 1L : 0L);
+        }
+
+        public BOOL(long value) {
+            super(SIZE, value, false);
+            assert value == 0 || value == 1;
+        }
+
+        public boolean booleanValue() {
+            return this.intValue() > 0;
+        }
+
+        @Override
+        public String toString() {
+            return Boolean.toString(booleanValue());
+        }
+
+    }
+
+    /// @see <a href="https://learn.microsoft.com/windows/win32/winprog/windows-data-types">Windows Data Types</a>
+    final class BOOLByReference extends ByReference {
+
+        public BOOLByReference() {
+            this(new BOOL(0));
+        }
+
+        public BOOLByReference(BOOL value) {
+            super(BOOL.SIZE);
+            setValue(value);
+        }
+
+        public void setValue(BOOL value) {
+            getPointer().setInt(0, value.intValue());
+        }
+
+        public BOOL getValue() {
+            return new BOOL(getPointer().getInt(0));
+        }
+    }
+
     /**
      * @see <a href="https://learn.microsoft.com/windows/win32/api/winnt/ns-winnt-osversioninfoexw">OSVERSIONINFOEXW structure</a>
      */
