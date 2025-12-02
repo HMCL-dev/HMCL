@@ -188,16 +188,13 @@ public final class MainPage extends StackPane implements DecoratorPage {
             StackPane.setAlignment(hBox, Pos.CENTER_LEFT);
             StackPane.setMargin(hBox, new Insets(9, 12, 9, 16));
             {
-                Label lblIcon = new Label();
-                lblIcon.setGraphic(SVG.UPDATE.createIcon(20));
-
                 TwoLineListItem prompt = new TwoLineListItem();
                 prompt.setSubtitle(i18n("update.bubble.subtitle"));
                 prompt.setPickOnBounds(false);
                 prompt.titleProperty().bind(BindingMapping.of(latestVersionProperty()).map(latestVersion ->
                         latestVersion == null ? "" : i18n("update.bubble.title", latestVersion.getVersion())));
 
-                hBox.getChildren().setAll(lblIcon, prompt);
+                hBox.getChildren().setAll(SVG.UPDATE.createIcon(20), prompt);
             }
 
             JFXButton closeUpdateButton = new JFXButton();

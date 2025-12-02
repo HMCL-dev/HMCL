@@ -355,14 +355,17 @@
 }
 
 .bubble {
-    -fx-background-color: rgba(0, 0, 0, 0.5);
+    -fx-background-color: -monet-inverse-surface-transparent-80;
     -fx-background-radius: 2px;
-    -fx-text-fill: white;
 }
 
 .bubble > HBox > .two-line-list-item > .first-line > .title,
 .bubble > HBox > .two-line-list-item > HBox > .subtitle {
-    -fx-text-fill: white;
+    -fx-text-fill: -monet-inverse-on-surface;
+}
+
+.bubble .svg {
+    -fx-fill: -monet-inverse-on-surface;
 }
 
 .sponsor-pane {
@@ -1638,7 +1641,7 @@
 }
 
 .html-hyperlink {
-    -fx-fill: blue;
+    -fx-fill: -monet-primary;
 }
 
 .html-h1 {
