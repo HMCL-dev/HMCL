@@ -174,12 +174,4 @@ public enum SVG {
         p.fillProperty().bind(color);
         return createIcon(p, -1);
     }
-
-    public Node createIcon(ObservableValue<? extends Paint> color, double size) {
-        SVGPath p = new SVGPath();
-        p.setContent(path);
-        p.getStyleClass().add("svg");
-        p.fillProperty().bind(color);
-        return createIcon(p, size);
-    }
 }
