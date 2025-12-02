@@ -1,10 +1,10 @@
 .log-window {
     -fixed-log-text-fill: #FFFFFF;
-    -fixed-log-trace: #343A40;
-    -fixed-log-debug: #212529;
-    -fixed-log-info: #000000;
-    -fixed-log-warn: #2C0B0E;
+    -fixed-log-trace: #495057;
+    -fixed-log-debug: #343A40;
+    -fixed-log-info: #212529;
+    -fixed-log-warn: #331904;
     -fixed-log-error: #58151C;
     -fixed-log-fatal: #842029;
-    -fixed-log-selected: #495057;
+    -fixed-log-selected: #6C757D;
 }
