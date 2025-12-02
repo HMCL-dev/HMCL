@@ -212,6 +212,7 @@ public class TerracottaControllerPage extends StackPane {
                 progressProperty.set(1);
 
                 TextFlow flow = FXUtils.segmentToTextFlow(i18n("terracotta.confirm.desc"), Controllers::onHyperlinkAction);
+                flow.getStyleClass().add("terracotta-license");
                 flow.setLineSpacing(4);
 
                 LineButton host = LineButton.of();
