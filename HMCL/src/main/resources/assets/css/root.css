@@ -844,6 +844,7 @@
 
 .jfx-text-field, .jfx-password-field, .jfx-text-area {
     -fx-background-color: -monet-surface-container-highest;
+    -fx-highlight-fill: -monet-primary;
     -fx-text-fill: -monet-on-surface;
     -fx-font-weight: BOLD;
     -fx-prompt-text-fill: -monet-on-surface-variant;
