@@ -1240,31 +1240,34 @@
 }
 
 .log-window-list-cell:fatal {
-    -fx-background-color: -fixed-log-fatal;
+    -fx-text-fill: -monet-on-error-container;
+    -fx-background-color: -monet-error-container;
 }
 
 .log-window-list-cell:error {
-    -fx-background-color: -fixed-log-error;
+    -fx-text-fill: -monet-on-error-container;
+    -fx-background-color: -monet-error-container;
 }
 
 .log-window-list-cell:warn {
-    -fx-background-color: -fixed-log-warn;
+    -fx-text-fill: -monet-on-tertiary-fixed;
+    -fx-background-color: -monet-tertiary-fixed;
 }
 
 .log-window-list-cell:info {
-    -fx-background-color: -fixed-log-info;
+    -fx-background-color: -monet-surface-container;
 }
 
 .log-window-list-cell:debug {
-    -fx-background-color: -fixed-log-debug;
+    -fx-background-color: -monet-surface-container-high;
 }
 
 .log-window-list-cell:trace {
-    -fx-background-color: -fixed-log-trace;
+    -fx-background-color: -monet-surface-container-high;
 }
 
 .log-window-list-cell:selected {
-    -fx-background-color: -monet-surface;
+    -fx-background-color: -monet-surface-container-highest;
 }
 
 /*******************************************************************************
