@@ -1239,33 +1239,40 @@
     -fx-border-width: 0;
 }
 
-.log-window-list-cell:fatal {
+.log-window-list-cell:fatal,
+.log-toggle.fatal {
     -fx-text-fill: -monet-on-error-container;
     -fx-background-color: -monet-error-container;
 }
 
-.log-window-list-cell:error {
+.log-window-list-cell:error,
+.log-toggle.error {
     -fx-text-fill: -monet-on-error-container;
     -fx-background-color: -monet-error-container;
 }
 
-.log-window-list-cell:warn {
+.log-window-list-cell:warn,
+.log-toggle.warn {
     -fx-text-fill: -monet-on-tertiary-fixed;
     -fx-background-color: -monet-tertiary-fixed;
 }
 
-.log-window-list-cell:info {
-    -fx-text-fill: -monet-on-surface;
-    -fx-background-color: -monet-surface-container;
+.log-window-list-cell:info,
+.log-toggle.info {
+    -fx-text-fill: -monet-on-primary-fixed;
+    -fx-background-color: -monet-primary-fixed;
 }
 
-.log-window-list-cell:debug {
-    -fx-background-color: -monet-surface-container-high;
+.log-window-list-cell:debug,
+.log-toggle.debug {
+    -fx-text-fill: -monet-on-primary-fixed;
+    -fx-background-color: -monet-primary-fixed-dim;
 }
 
-.log-window-list-cell:trace {
-    -fx-text-fill: -monet-on-surface;
-    -fx-background-color: -monet-surface-container-high;
+.log-window-list-cell:trace,
+.log-toggle.trace {
+    -fx-text-fill: -monet-on-primary-fixed;
+    -fx-background-color: -monet-primary-fixed-dim;
 }
 
 .log-window-list-cell:selected {
