@@ -40,7 +40,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import org.jackhuang.hmcl.game.LauncherHelper;
@@ -631,7 +630,6 @@ public class TerracottaControllerPage extends StackPane {
                         secondLine.getStyleClass().add("second-line");
                         {
                             Text text = new Text(button.subTitle.get());
-                            text.setFill(new Color(0, 0, 0, 0.5));
 
                             TextFlow lblSubtitle = new TextFlow(text);
                             lblSubtitle.getStyleClass().add("subtitle");
