@@ -182,13 +182,6 @@ public final class StyleSheets {
         addColor(builder, scheme, ColorRole.SURFACE_CONTAINER_LOW, 0.8);
         addColor(builder, scheme, ColorRole.SECONDARY_CONTAINER, 0.8);
 
-        // If we use -monet-error-container as the tag color, there may be a conflict between the tag and background colors on the mod management page
-        if (scheme.getBrightness() == Brightness.LIGHT) {
-            addColor(builder, "-warning-tag-background", Color.web("#f1aeb5"));
-        } else {
-            addColor(builder, "-warning-tag-background", Color.web("#2c0b0e"));
-        }
-
         builder.append("}\n");
         return toStyleSheetUri(builder.toString(), blueCss);
     }

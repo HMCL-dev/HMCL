@@ -8,3 +8,7 @@
     -fixed-log-fatal: #842029;
     -fixed-log-selected: #6C757D;
 }
+
+.two-line-list-item {
+    -fixed-warning-tag-background: #2c0b0e;
+}
