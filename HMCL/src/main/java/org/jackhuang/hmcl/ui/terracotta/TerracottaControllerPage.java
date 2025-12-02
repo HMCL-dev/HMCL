@@ -40,7 +40,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import org.jackhuang.hmcl.game.LauncherHelper;
@@ -168,6 +167,7 @@ public class TerracottaControllerPage extends StackPane {
                 progressProperty.set(0);
 
                 TextFlow body = FXUtils.segmentToTextFlow(i18n("terracotta.confirm.desc"), Controllers::onHyperlinkAction);
+                body.getStyleClass().add("terracotta-license");
                 body.setLineSpacing(4);
 
                 LineButton download = LineButton.of();
@@ -211,6 +211,7 @@ public class TerracottaControllerPage extends StackPane {
                 progressProperty.set(1);
 
                 TextFlow flow = FXUtils.segmentToTextFlow(i18n("terracotta.confirm.desc"), Controllers::onHyperlinkAction);
+                flow.getStyleClass().add("terracotta-license");
                 flow.setLineSpacing(4);
 
                 LineButton host = LineButton.of();
@@ -626,9 +627,9 @@ public class TerracottaControllerPage extends StackPane {
                         }
 
                         HBox secondLine = new HBox();
+                        secondLine.getStyleClass().add("second-line");
                         {
                             Text text = new Text(button.subTitle.get());
-                            text.setFill(new Color(0, 0, 0, 0.5));
 
                             TextFlow lblSubtitle = new TextFlow(text);
                             lblSubtitle.getStyleClass().add("subtitle");
