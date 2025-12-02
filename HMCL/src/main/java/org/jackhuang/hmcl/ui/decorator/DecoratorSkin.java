@@ -304,6 +304,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             BorderPane center = new BorderPane();
             if (title != null) {
                 Label titleLabel = new Label();
+                titleLabel.textFillProperty().bind(Themes.titleFillProperty());
                 BorderPane.setAlignment(titleLabel, Pos.CENTER_LEFT);
                 titleLabel.getStyleClass().add("jfx-decorator-title");
                 if (titleNode == null) {

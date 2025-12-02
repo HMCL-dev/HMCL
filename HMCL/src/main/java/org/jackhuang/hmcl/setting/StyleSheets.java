@@ -47,6 +47,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class StyleSheets {
     private static final int FONT_STYLE_SHEET_INDEX = 0;
     private static final int THEME_STYLE_SHEET_INDEX = 1;
+    private static final int BRIGHTNESS_SHEET_INDEX = 2;
 
     private static final ObservableList<String> stylesheets;
 
@@ -54,12 +55,16 @@ public final class StyleSheets {
         String[] array = new String[]{
                 getFontStyleSheet(),
                 getThemeStyleSheet(),
+                getBrightnessStyleSheet(),
                 "/assets/css/root.css"
         };
         stylesheets = FXCollections.observableList(Arrays.asList(array));
 
         FontManager.fontProperty().addListener(o -> stylesheets.set(FONT_STYLE_SHEET_INDEX, getFontStyleSheet()));
-        Themes.colorSchemeProperty().addListener(o -> stylesheets.set(THEME_STYLE_SHEET_INDEX, getThemeStyleSheet()));
+        Themes.colorSchemeProperty().addListener(o -> {
+            stylesheets.set(THEME_STYLE_SHEET_INDEX, getThemeStyleSheet());
+            stylesheets.set(BRIGHTNESS_SHEET_INDEX, getBrightnessStyleSheet());
+        });
     }
 
     private static String toStyleSheetUri(String styleSheet, String fallback) {
@@ -131,6 +136,12 @@ public final class StyleSheets {
         return toStyleSheetUri(builder.toString(), defaultCss);
     }
 
+    private static String getBrightnessStyleSheet() {
+        return Themes.getColorScheme().getBrightness() == Brightness.LIGHT
+                ? "/assets/css/brightness-light.css"
+                : "/assets/css/brightness-dark.css";
+    }
+
     private static void addColor(StringBuilder builder, String name, Color color) {
         builder.append("  ").append(name)
                 .append(": ").append(ThemeColor.getColorDisplayName(color)).append(";\n");
@@ -142,7 +153,7 @@ public final class StyleSheets {
     }
 
     private static void addColor(StringBuilder builder, ColorScheme scheme, ColorRole role, double opacity) {
-        builder.append("  ").append(role.getVariableName()).append("-transparent-").append((int) (100 * opacity))
+        builder.append("  ").append(role.getVariableName()).append("-transparent-%02d".formatted((int) (100 * opacity)))
                 .append(": ").append(ThemeColor.getColorDisplayNameWithOpacity(scheme.getColor(role), opacity))
                 .append(";\n");
     }
@@ -170,13 +181,6 @@ public final class StyleSheets {
         addColor(builder, scheme, ColorRole.ON_SURFACE_VARIANT, 0.38);
         addColor(builder, scheme, ColorRole.SURFACE_CONTAINER_LOW, 0.8);
         addColor(builder, scheme, ColorRole.SECONDARY_CONTAINER, 0.8);
-
-        // If we use -monet-error-container as the tag color, there may be a conflict between the tag and background colors on the mod management page
-        if (scheme.getBrightness() == Brightness.LIGHT) {
-            addColor(builder, "-warning-tag-background", Color.web("#f1aeb5"));
-        } else {
-            addColor(builder, "-warning-tag-background", Color.web("#2c0b0e"));
-        }
 
         builder.append("}\n");
         return toStyleSheetUri(builder.toString(), blueCss);

@@ -264,7 +264,6 @@ public final class LogWindow extends Stage {
 
             VBox vbox = new VBox(3);
             vbox.setPadding(new Insets(3, 0, 3, 0));
-            vbox.setStyle("-fx-background-color: white");
             getChildren().setAll(vbox);
 
             {
@@ -286,8 +285,7 @@ public final class LogWindow extends Stage {
                     HBox hBox = new HBox(3);
                     for (int i = 0; i < LEVELS.length; i++) {
                         ToggleButton button = new ToggleButton();
-                        button.setStyle("-fx-background-color: " + FXUtils.toWeb(LEVELS[i].getColor()) + ";");
-                        button.getStyleClass().add("log-toggle");
+                        button.getStyleClass().addAll("log-toggle", LEVELS[i].name().toLowerCase(Locale.ROOT));
                         button.textProperty().bind(control.buttonText[i]);
                         button.setSelected(true);
                         control.showLevel[i].bind(button.selectedProperty());
