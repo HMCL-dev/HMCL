@@ -1230,7 +1230,7 @@
 }
 
 .log-window-list-cell {
-    -fx-text-fill: -monet-on-surface;
+    -fx-text-fill: -fixed-log-text-fill;
     -fx-border-width: 0 0 1 0;
     -fx-border-color: -monet-outline-variant;
 }
@@ -1241,43 +1241,43 @@
 
 .log-window-list-cell:fatal,
 .log-toggle.fatal {
-    -fx-text-fill: -monet-on-error-container;
-    -fx-background-color: -monet-error-container;
+    -fx-text-fill: -fixed-log-text-fill;
+    -fx-background-color: -fixed-log-fatal;
 }
 
 .log-window-list-cell:error,
 .log-toggle.error {
-    -fx-text-fill: -monet-on-error-container;
-    -fx-background-color: -monet-error-container;
+    -fx-text-fill: -fixed-log-text-fill;
+    -fx-background-color: -fixed-log-error;
 }
 
 .log-window-list-cell:warn,
 .log-toggle.warn {
-    -fx-text-fill: -monet-on-tertiary-fixed;
-    -fx-background-color: -monet-tertiary-fixed;
+    -fx-text-fill: -fixed-log-text-fill;
+    -fx-background-color: -fixed-log-warn;
 }
 
 .log-window-list-cell:info,
 .log-toggle.info {
-    -fx-text-fill: -monet-on-primary-fixed;
-    -fx-background-color: -monet-primary-fixed;
+    -fx-text-fill: -fixed-log-text-fill;
+    -fx-background-color: -fixed-log-info;
 }
 
 .log-window-list-cell:debug,
 .log-toggle.debug {
-    -fx-text-fill: -monet-on-primary-fixed;
-    -fx-background-color: -monet-primary-fixed-dim;
+    -fx-text-fill: -fixed-log-text-fill;
+    -fx-background-color: -fixed-log-debug;
 }
 
 .log-window-list-cell:trace,
 .log-toggle.trace {
-    -fx-text-fill: -monet-on-primary-fixed;
-    -fx-background-color: -monet-primary-fixed-dim;
+    -fx-text-fill: -fixed-log-text-fill;
+    -fx-background-color: -fixed-log-trace;
 }
 
 .log-window-list-cell:selected {
-    -fx-text-fill: -monet-on-surface;
-    -fx-background-color: -monet-surface-container-highest;
+    -fx-text-fill: -fixed-log-text-fill;
+    -fx-background-color: -fixed-log-selected;
 }
 
 /*.log-window-list-cell:filled {*/
