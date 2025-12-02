@@ -63,6 +63,7 @@ public final class JFXColorPickerSkin extends JFXGenericPickerSkin<Color> {
             true);
 
     private final ObjectProperty<Color> textFill = new SimpleObjectProperty<>(Color.BLACK);
+    private final ObjectProperty<Background> colorBoxBackground = new SimpleObjectProperty<>(null);
 
     public JFXColorPickerSkin(final ColorPicker colorPicker) {
         super(colorPicker);
@@ -77,6 +78,7 @@ public final class JFXColorPickerSkin extends JFXGenericPickerSkin<Color> {
         colorBox = new JFXClippedPane(displayNode);
         colorBox.getStyleClass().add("color-box");
         colorBox.setManaged(false);
+        colorBox.backgroundProperty().bind(colorBoxBackground);
         initColor();
         final JFXRippler rippler = new JFXRippler(colorBox, JFXRippler.RipplerMask.FIT);
         rippler.ripplerFillProperty().bind(textFill);
@@ -173,7 +175,7 @@ public final class JFXColorPickerSkin extends JFXGenericPickerSkin<Color> {
                             200,
                             Interpolator.EASE_BOTH)));
             animateColor.setOnFinished((finish) -> {
-                JFXNodeUtils.updateBackground(colorBox.getBackground(), colorBox, colorCircle.getFill());
+                colorBoxBackground.set(new Background(new BackgroundFill(colorCircle.getFill(), new CornerRadii(3), Insets.EMPTY)));
                 colorBox.getChildren().remove(colorCircle);
             });
             animateColor.play();
@@ -193,7 +195,7 @@ public final class JFXColorPickerSkin extends JFXGenericPickerSkin<Color> {
         Color color = colorPicker.getValue();
         Color circleColor = color == null ? Color.WHITE : color;
         // update picker box color
-        colorBox.setBackground(new Background(new BackgroundFill(circleColor, new CornerRadii(3), Insets.EMPTY)));
+        colorBoxBackground.set(new Background(new BackgroundFill(circleColor, new CornerRadii(3), Insets.EMPTY)));
         // update label color
         textFill.set(circleColor.grayscale().getRed() < 0.5 ? Color.valueOf(
                 "rgba(255, 255, 255, 0.87)") : Color.valueOf("rgba(0, 0, 0, 0.87)"));
