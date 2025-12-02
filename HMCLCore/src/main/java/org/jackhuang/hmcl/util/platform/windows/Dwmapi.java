@@ -22,6 +22,7 @@ import com.sun.jna.PointerType;
 import com.sun.jna.win32.StdCallLibrary;
 import org.jackhuang.hmcl.util.platform.NativeUtils;
 
+/// @author Glavo
 public interface Dwmapi extends StdCallLibrary {
     Dwmapi INSTANCE = NativeUtils.USE_JNA && com.sun.jna.Platform.isWindows()
             ? NativeUtils.load("dwmapi", Dwmapi.class)

@@ -27,10 +27,8 @@ import java.util.OptionalLong;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+/// @author Glavo
 public final class WindowsNativeUtils {
-
-    private WindowsNativeUtils() {
-    }
 
     public static OptionalLong getWindowHandle(Stage stage) {
         try {
@@ -55,5 +53,8 @@ public final class WindowsNativeUtils {
             LOG.warning("Failed to get window handle", ex);
             return OptionalLong.empty();
         }
+    }
+
+    private WindowsNativeUtils() {
     }
 }
