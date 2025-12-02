@@ -1255,6 +1255,7 @@
 }
 
 .log-window-list-cell:info {
+    -fx-text-fill: -monet-on-surface;
     -fx-background-color: -monet-surface-container;
 }
 
@@ -1263,12 +1264,18 @@
 }
 
 .log-window-list-cell:trace {
+    -fx-text-fill: -monet-on-surface;
     -fx-background-color: -monet-surface-container-high;
 }
 
 .log-window-list-cell:selected {
+    -fx-text-fill: -monet-on-surface;
     -fx-background-color: -monet-surface-container-highest;
 }
+
+/*.log-window-list-cell:filled {*/
+/*    -fx-background-color: red;*/
+/*}*/
 
 /*******************************************************************************
 *                                                                              *
