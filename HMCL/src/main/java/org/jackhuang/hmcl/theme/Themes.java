@@ -17,14 +17,21 @@
  */
 package org.jackhuang.hmcl.theme;
 
+import javafx.animation.Interpolator;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.binding.ObjectExpression;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleDoubleProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.paint.Color;
+import javafx.util.Duration;
 import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorScheme;
 import org.glavo.monetfx.Contrast;
@@ -42,6 +49,8 @@ import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 
 /// @author Glavo
 public final class Themes {
+
+    private static final Duration TRANSITION_DURATION = Duration.millis(300);
 
     private static final ObjectExpression<Theme> theme = new ObjectBinding<>() {
         {
@@ -92,8 +101,8 @@ public final class Themes {
             if (!Objects.equals(oldValue, newValue)) {
                 if (oldValue == null) {
                     colorScheme.set(newValue.toColorScheme());
-                }else {
-                    ThemeTransition.animate(oldValue,newValue);
+                } else {
+                    animate(oldValue,newValue);
                 }
             }
         };
@@ -127,6 +136,37 @@ public final class Themes {
 
     public static BooleanBinding darkModeProperty() {
         return darkMode;
+    }
+
+    public static void animate(Theme oldTheme, Theme newTheme) {
+        Color oldColor = oldTheme.primaryColorSeed().color();
+        Color newColor = newTheme.primaryColorSeed().color();
+        DoubleProperty progress = new SimpleDoubleProperty(0);
+        progress.addListener((obs, o, t) -> {
+            Color animColor = interpolateColor(oldColor, newColor, t.doubleValue());
+            Theme tempTheme = new Theme(
+                    new ThemeColor("animate", animColor),
+                    newTheme.brightness(),
+                    newTheme.colorStyle(),
+                    newTheme.contrast()
+            );
+            Themes.internalColorSchemeProperty().set(tempTheme.toColorScheme());
+        });
+        Timeline timeline = new Timeline(
+                new KeyFrame(Duration.ZERO, new KeyValue(progress, 0)),
+                new KeyFrame(TRANSITION_DURATION, new KeyValue(progress, 1, Interpolator.EASE_BOTH))
+                //new KeyFrame(Duration.millis(1000), new KeyValue(progress, 1, Interpolator.EASE_IN))
+        );
+        timeline.play();
+
+    }
+
+    private static Color interpolateColor(Color from, Color to, double delta) {
+        double r = from.getRed() + (to.getRed() - from.getRed()) * delta;
+        double g = from.getGreen() + (to.getGreen() - from.getGreen()) * delta;
+        double b = from.getBlue() + (to.getBlue() - from.getBlue()) * delta;
+        double a = from.getOpacity() + (to.getOpacity() - from.getOpacity()) * delta;
+        return new Color(r, g, b, a);
     }
 
     private Themes() {
