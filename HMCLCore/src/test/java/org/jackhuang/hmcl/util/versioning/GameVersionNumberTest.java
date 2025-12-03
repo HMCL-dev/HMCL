@@ -148,10 +148,10 @@ public final class GameVersionNumberTest {
         }
     }
 
-    private static void assertSimpleReleaseVersion(String simpleReleaseVersion, int minor, int patch) {
+    private static void assertSimpleReleaseVersion(String simpleReleaseVersion, int major, int minor, int patch) {
         GameVersionNumber.Release release = GameVersionNumber.Release.parseSimple(simpleReleaseVersion);
         assertAll("Assert Simple Release Version " + simpleReleaseVersion,
-                () -> assertEquals(1, release.getMajor()),
+                () -> assertEquals(major, release.getMajor()),
                 () -> assertEquals(minor, release.getMinor()),
                 () -> assertEquals(patch, release.getPatch()),
                 () -> assertEquals(GameVersionNumber.Release.TYPE_UNKNOWN, release.getEaType()),
@@ -161,11 +161,16 @@ public final class GameVersionNumberTest {
 
     @Test
     public void testParseSimpleRelease() {
-        assertSimpleReleaseVersion("1.0", 0, 0);
-        assertSimpleReleaseVersion("1.13", 13, 0);
-        assertSimpleReleaseVersion("1.21.8", 21, 8);
+        assertSimpleReleaseVersion("1.0", 1, 0, 0);
+        assertSimpleReleaseVersion("1.13", 1, 13, 0);
+        assertSimpleReleaseVersion("1.21.8", 1, 21, 8);
+        assertSimpleReleaseVersion("26.1", 26, 1, 0);
 
+        assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Release.parseSimple("26"));
+        assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Release.parseSimple("25"));
+        assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Release.parseSimple("25.0"));
         assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Release.parseSimple("2.0"));
+        assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Release.parseSimple("1"));
         assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Release.parseSimple("1..0"));
         assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Release.parseSimple("1.0."));
         assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Release.parseSimple("1.a"));

@@ -54,7 +54,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
                     return Release.ZERO;
 
                 if (version.length() == 6 && version.charAt(2) == 'w')
-                    return Snapshot.parse(version);
+                    return LegacySnapshot.parse(version);
 
                 if (version.startsWith("1."))
                     return Release.parse(version);
@@ -103,8 +103,8 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
         if (this instanceof Special && !value.endsWith("_unobfuscated"))
             return true;
 
-        if (this instanceof Snapshot snapshot) {
-            return snapshot.intValue == Snapshot.toInt(15, 14, 'a');
+        if (this instanceof LegacySnapshot snapshot) {
+            return snapshot.intValue == LegacySnapshot.toInt(15, 14, 'a');
         }
 
         return false;
@@ -159,7 +159,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
 
             return self.compareToRelease(other) >= 0;
         } else {
-            return this.compareTo(Snapshot.parse(snapshotVersion)) >= 0;
+            return this.compareTo(LegacySnapshot.parse(snapshotVersion)) >= 0;
         }
     }
 
@@ -383,7 +383,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
             return this.eaVersion.compareTo(other.eaVersion);
         }
 
-        int compareToSnapshot(Snapshot other) {
+        int compareToSnapshot(LegacySnapshot other) {
             int idx = Arrays.binarySearch(Versions.SNAPSHOT_INTS, other.intValue);
             if (idx >= 0)
                 return this.compareToRelease(Versions.SNAPSHOT_PREV[idx]) <= 0 ? -1 : 1;
@@ -400,8 +400,8 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
             if (other instanceof Release)
                 return compareToRelease((Release) other);
 
-            if (other instanceof Snapshot)
-                return compareToSnapshot((Snapshot) other);
+            if (other instanceof LegacySnapshot)
+                return compareToSnapshot((LegacySnapshot) other);
 
             if (other instanceof Special)
                 return -((Special) other).compareToReleaseOrSnapshot(this);
@@ -446,8 +446,9 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
         }
     }
 
-    public static final class Snapshot extends GameVersionNumber {
-        static Snapshot parse(String value) {
+    /// Legacy snapshot version numbers like `25w46a`.
+    public static final class LegacySnapshot extends GameVersionNumber {
+        static LegacySnapshot parse(String value) {
             if (value.length() != 6 || value.charAt(2) != 'w')
                 throw new IllegalArgumentException(value);
 
@@ -464,7 +465,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
             if ((suffix < 'a' || suffix > 'z') && suffix != '~')
                 throw new IllegalArgumentException(value);
 
-            return new Snapshot(value, year, week, suffix);
+            return new LegacySnapshot(value, year, week, suffix);
         }
 
         static int toInt(int year, int week, char suffix) {
@@ -473,7 +474,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
 
         final int intValue;
 
-        Snapshot(String value, int year, int week, char suffix) {
+        LegacySnapshot(String value, int year, int week, char suffix) {
             super(value);
             this.intValue = toInt(year, week, suffix);
         }
@@ -488,8 +489,8 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
             if (other instanceof Release)
                 return -((Release) other).compareToSnapshot(this);
 
-            if (other instanceof Snapshot)
-                return Integer.compare(this.intValue, ((Snapshot) other).intValue);
+            if (other instanceof LegacySnapshot)
+                return Integer.compare(this.intValue, ((LegacySnapshot) other).intValue);
 
             if (other instanceof Special)
                 return -((Special) other).compareToReleaseOrSnapshot(this);
@@ -512,7 +513,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;
-            return o instanceof Snapshot other && this.intValue == other.intValue;
+            return o instanceof LegacySnapshot other && this.intValue == other.intValue;
         }
 
         @Override
@@ -599,7 +600,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
             if (o instanceof Release)
                 return compareToReleaseOrSnapshot(o);
 
-            if (o instanceof Snapshot)
+            if (o instanceof LegacySnapshot)
                 return compareToReleaseOrSnapshot(o);
 
             if (o instanceof Special)
@@ -630,7 +631,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
         static {
             ArrayDeque<String> defaultGameVersions = new ArrayDeque<>(64);
 
-            List<Snapshot> snapshots = new ArrayList<>(1024);
+            List<LegacySnapshot> snapshots = new ArrayList<>(1024);
             List<Release> snapshotPrev = new ArrayList<>(1024);
 
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(GameVersionNumber.class.getResourceAsStream("/assets/game/versions.txt"), StandardCharsets.US_ASCII))) {
@@ -646,7 +647,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
                     if (currentRelease == null)
                         currentRelease = (Release) version;
 
-                    if (version instanceof Snapshot snapshot) {
+                    if (version instanceof LegacySnapshot snapshot) {
                         snapshots.add(snapshot);
                         snapshotPrev.add(currentRelease);
                     } else if (version instanceof Release) {

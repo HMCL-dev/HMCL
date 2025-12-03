@@ -107,7 +107,7 @@ public class Translator_lzh extends Translator {
             }
 
             return builder.toString();
-        } else if (gameVersion instanceof GameVersionNumber.Snapshot snapshot) {
+        } else if (gameVersion instanceof GameVersionNumber.LegacySnapshot snapshot) {
             StringBuilder builder = new StringBuilder();
 
             appendDigitByDigit(builder, String.valueOf(snapshot.getYear()));
