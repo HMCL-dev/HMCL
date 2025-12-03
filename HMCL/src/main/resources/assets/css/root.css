@@ -1216,18 +1216,44 @@
 *                                                                              *
 *******************************************************************************/
 
-.log-toggle:selected {
-    -fx-background-color: transparent;
+.log-toggle {
     -fx-border: 1px;
-    -fx-border-color: black;
-    -fx-text-fill: black;
+    -fx-border-color: -fixed-log-toggle-unselected;
+    -fx-text-fill: -fixed-log-toggle-unselected;
 }
 
-.log-toggle {
-    -fx-background-color: transparent;
+.log-toggle:selected {
     -fx-border: 1px;
-    -fx-border-color: gray;
-    -fx-text-fill: gray;
+    -fx-border-color: -fixed-log-toggle-selected;
+    -fx-text-fill: -fixed-log-toggle-selected;
+}
+
+.log-toggle.fatal {
+    -fx-background-color: -fixed-log-fatal;
+}
+
+.log-toggle.error {
+    -fx-background-color: -fixed-log-error;
+}
+
+.log-toggle.warn {
+    -fx-background-color: -fixed-log-warn;
+}
+
+.log-toggle.info {
+    -fx-background-color: -fixed-log-info;
+}
+
+.log-toggle.debug {
+    -fx-background-color: -fixed-log-debug;
+}
+
+.log-toggle.trace {
+    -fx-background-color: -fixed-log-trace;
+}
+
+.log-window-list-cell:selected {
+    -fx-background-color: -fixed-log-selected;
 }
 
 .log-window {
@@ -1252,38 +1278,32 @@
     -fx-border-width: 0;
 }
 
-.log-window-list-cell:fatal,
-.log-toggle.fatal {
+.log-window-list-cell:fatal {
     -fx-text-fill: -fixed-log-text-fill;
     -fx-background-color: -fixed-log-fatal;
 }
 
-.log-window-list-cell:error,
-.log-toggle.error {
+.log-window-list-cell:error {
     -fx-text-fill: -fixed-log-text-fill;
     -fx-background-color: -fixed-log-error;
 }
 
-.log-window-list-cell:warn,
-.log-toggle.warn {
+.log-window-list-cell:warn {
     -fx-text-fill: -fixed-log-text-fill;
     -fx-background-color: -fixed-log-warn;
 }
 
-.log-window-list-cell:info,
-.log-toggle.info {
+.log-window-list-cell:info {
     -fx-text-fill: -fixed-log-text-fill;
     -fx-background-color: -fixed-log-info;
 }
 
-.log-window-list-cell:debug,
-.log-toggle.debug {
+.log-window-list-cell:debug {
     -fx-text-fill: -fixed-log-text-fill;
     -fx-background-color: -fixed-log-debug;
 }
 
-.log-window-list-cell:trace,
-.log-toggle.trace {
+.log-window-list-cell:trace {
     -fx-text-fill: -fixed-log-text-fill;
     -fx-background-color: -fixed-log-trace;
 }
