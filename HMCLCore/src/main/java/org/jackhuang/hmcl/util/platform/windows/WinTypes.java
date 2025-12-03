@@ -79,6 +79,46 @@ public interface WinTypes {
         }
     }
 
+    /// @see <a href="https://learn.microsoft.com/windows/win32/winprog/windows-data-types">Windows Data Types</a>
+    final class HANDLE extends PointerType {
+        public static final long INVALID_VALUE = Native.POINTER_SIZE == 8 ? -1 : 0xFFFFFFFFL;
+
+        public static final HANDLE INVALID = new HANDLE(Pointer.createConstant(INVALID_VALUE));
+
+        private boolean immutable;
+
+        public HANDLE() {
+        }
+
+        public HANDLE(Pointer p) {
+            setPointer(p);
+            immutable = true;
+        }
+
+        @Override
+        public Object fromNative(Object nativeValue, FromNativeContext context) {
+            Object o = super.fromNative(nativeValue, context);
+            if (INVALID.equals(o)) {
+                return INVALID;
+            }
+            return o;
+        }
+
+        @Override
+        public void setPointer(Pointer p) {
+            if (immutable) {
+                throw new UnsupportedOperationException("immutable reference");
+            }
+
+            super.setPointer(p);
+        }
+
+        @Override
+        public String toString() {
+            return String.valueOf(getPointer());
+        }
+    }
+
     /**
      * @see <a href="https://learn.microsoft.com/windows/win32/api/winnt/ns-winnt-osversioninfoexw">OSVERSIONINFOEXW structure</a>
      */

@@ -103,8 +103,11 @@ public final class LogWindow extends Stage {
                     windowsDarkModeListenerHolder = FXUtils.onWeakChangeAndOperate(Themes.darkModeProperty(), darkMode -> {
                         if (LogWindow.this.isShowing()) {
                             WindowsNativeUtils.getWindowHandle(LogWindow.this).ifPresent(handle -> {
+                                if (handle == WinTypes.HANDLE.INVALID_VALUE)
+                                    return;
+
                                 Dwmapi.INSTANCE.DwmSetWindowAttribute(
-                                        Pointer.createConstant(handle),
+                                        new WinTypes.HANDLE(Pointer.createConstant(handle)),
                                         WinConstants.DWMWA_USE_IMMERSIVE_DARK_MODE,
                                         new WinTypes.BOOLByReference(new WinTypes.BOOL(darkMode)),
                                         WinTypes.BOOL.SIZE

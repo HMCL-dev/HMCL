@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.util.platform.windows;
 
-import com.sun.jna.Pointer;
 import com.sun.jna.PointerType;
 import com.sun.jna.win32.StdCallLibrary;
 import org.jackhuang.hmcl.util.platform.NativeUtils;
@@ -29,5 +28,5 @@ public interface Dwmapi extends StdCallLibrary {
             : null;
 
     /// @see <a href="https://learn.microsoft.com/windows/win32/api/dwmapi/nf-dwmapi-dwmsetwindowattribute">DwmSetWindowAttribute function</a>
-    Pointer DwmSetWindowAttribute(Pointer hwnd, int dwAttribute, PointerType pvAttribute, int cbAttribute);
+    int DwmSetWindowAttribute(WinTypes.HANDLE hwnd, int dwAttribute, PointerType pvAttribute, int cbAttribute);
 }
