@@ -863,3 +863,5 @@
 1.21.11-pre2_unobfuscated
 1.21.11-pre3
 1.21.11-pre3_unobfuscated
+1.21.11-pre4
+1.21.11-pre4_unobfuscated
