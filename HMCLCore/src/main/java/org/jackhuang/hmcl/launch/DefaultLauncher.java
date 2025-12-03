@@ -65,7 +65,6 @@ public class DefaultLauncher extends Launcher {
         this.analyzer = LibraryAnalyzer.analyze(version, repository.getGameVersion(version).orElse(null));
     }
 
-
     private Command generateCommandLine(Path nativeFolder) throws IOException {
         CommandBuilder res = new CommandBuilder();
 
