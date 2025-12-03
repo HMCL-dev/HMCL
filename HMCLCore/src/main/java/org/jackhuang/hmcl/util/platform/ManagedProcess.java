@@ -114,15 +114,19 @@ public final class ManagedProcess {
     public List<String> getLines(Predicate<String> lineFilter) {
         lock.lock();
 
-        if (lineFilter == null)
-            return List.copyOf(lines);
+        try {
+            if (lineFilter == null)
+                return List.copyOf(lines);
 
-        ArrayList<String> res = new ArrayList<>();
-        for (String line : this.lines) {
-            if (lineFilter.test(line))
-                res.add(line);
+            ArrayList<String> res = new ArrayList<>();
+            for (String line : this.lines) {
+                if (lineFilter.test(line))
+                    res.add(line);
+            }
+            return Collections.unmodifiableList(res);
+        } finally {
+            lock.unlock();
         }
-        return Collections.unmodifiableList(res);
     }
 
     public void addLine(String line) {
