@@ -68,6 +68,7 @@ public class HintPane extends VBox {
 
         HBox hbox = new HBox(svg.createIcon(16), new Text(type.getDisplayName()));
         hbox.setAlignment(Pos.CENTER_LEFT);
+        hbox.setSpacing(2);
         flow.getChildren().setAll(label);
         getChildren().setAll(hbox, flow);
         label.textProperty().bind(text);
