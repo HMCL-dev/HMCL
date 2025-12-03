@@ -22,6 +22,7 @@ import javafx.stage.Stage;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
+import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
@@ -81,6 +82,7 @@ public final class LauncherHelper {
     private final VersionSetting setting;
     private LauncherVisibility launcherVisibility;
     private boolean showLogs;
+    private boolean disableOfflineSkin;
 
     public LauncherHelper(Profile profile, Account account, String selectedVersion) {
         this.profile = Objects.requireNonNull(profile);
@@ -109,6 +111,10 @@ public final class LauncherHelper {
 
     public void setKeep() {
         launcherVisibility = LauncherVisibility.KEEP;
+    }
+
+    public void setDisableOfflineSkin() {
+        disableOfflineSkin = true;
     }
 
     public void launch() {
@@ -639,10 +645,13 @@ public final class LauncherHelper {
         return future;
     }
 
-    private static Task<AuthInfo> logIn(Account account) {
+    private Task<AuthInfo> logIn(Account account) {
         return Task.composeAsync(() -> {
             try {
-                return Task.completed(account.logIn());
+                if (disableOfflineSkin && account instanceof OfflineAccount offlineAccount)
+                    return Task.completed(offlineAccount.logInWithoutSkin());
+                else
+                    return Task.completed(account.logIn());
             } catch (CredentialExpiredException e) {
                 LOG.info("Credential has expired", e);
 
