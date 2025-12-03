@@ -113,7 +113,8 @@ public final class LauncherHelper {
     }
 
     public void setQuickEnterWorld(String worldFolderName) {
-        this.worldFolderName = worldFolderName;
+        //this.worldFolderName = worldFolderName;
+        profile.getRepository().setQuickPlayOption(new QuickPlayOption(QuickPlayOption.Type.SINGLEPLAYER, worldFolderName));
     }
 
     public void launch() {
@@ -208,9 +209,6 @@ public final class LauncherHelper {
                                     : new HMCLProcessListener(repository, version.get(), authInfo, launchOptions, launchingLatch, gameVersion.isPresent())
                     );
                 }).thenComposeAsync(launcher -> { // launcher is prev task's result
-                    if (worldFolderName != null) {
-                        launcher.setQuickEnterWorld(worldFolderName);
-                    }
                     if (scriptFile == null) {
                         return Task.supplyAsync(launcher::launch);
                     } else {

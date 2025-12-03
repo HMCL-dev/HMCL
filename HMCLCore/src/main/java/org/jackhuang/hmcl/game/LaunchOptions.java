@@ -48,6 +48,8 @@ public class LaunchOptions implements Serializable {
     private Integer height;
     private boolean fullscreen;
     private String serverIp;
+    private String worldFolderName;
+    private String realmID;
     private String wrapper;
     private Proxy.Type proxyType;
     private String proxyHost;
@@ -185,6 +187,18 @@ public class LaunchOptions implements Serializable {
      */
     public String getServerIp() {
         return serverIp;
+    }
+
+    /**
+     * The folder name of a local world
+     */
+
+    public String getWorldFolderName() {
+        return worldFolderName;
+    }
+
+    public String getRealmID() {
+        return realmID;
     }
 
     /**
@@ -409,6 +423,16 @@ public class LaunchOptions implements Serializable {
 
         public Builder setServerIp(String serverIp) {
             options.serverIp = serverIp;
+            return this;
+        }
+
+        public Builder setWorldFolderName(String worldFolderName) {
+            options.worldFolderName = worldFolderName;
+            return this;
+        }
+
+        public Builder setRealmID(String realmID) {
+            options.realmID = realmID;
             return this;
         }
 

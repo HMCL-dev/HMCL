@@ -25,20 +25,20 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventManager;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.mod.ModAdviser;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.mod.ModpackProvider;
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -55,11 +55,12 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class HMCLGameRepository extends DefaultGameRepository {
     private final Profile profile;
+    private QuickPlayOption quickPlayOption;
 
     // local version settings
     private final Map<String, VersionSetting> localVersionSettings = new HashMap<>();
@@ -108,6 +109,14 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 .filter(v -> !v.isHidden())
                 .sorted(Comparator.comparing((Version v) -> Lang.requireNonNullElse(v.getReleaseTime(), Instant.EPOCH))
                         .thenComparing(v -> VersionNumber.asVersion(v.getId())));
+    }
+
+    public QuickPlayOption getQuickPlayOption() {
+        return quickPlayOption;
+    }
+
+    public void setQuickPlayOption(QuickPlayOption quickPlayOption) {
+        this.quickPlayOption = quickPlayOption;
     }
 
     @Override
@@ -433,6 +442,15 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 .setDaemon(!makeLaunchScript && vs.getLauncherVisibility().isDaemon())
                 .setJavaAgents(javaAgents)
                 .setJavaArguments(javaArguments);
+
+        if (quickPlayOption != null) {
+            switch (quickPlayOption.type) {
+                case SINGLEPLAYER -> builder.setWorldFolderName(quickPlayOption.target);
+                case MULTIPLAYER -> builder.setServerIp(quickPlayOption.target);
+                case REALM -> builder.setRealmID(quickPlayOption.target);
+            }
+            quickPlayOption = null;
+        }
 
         if (config().hasProxy()) {
             builder.setProxyType(config().getProxyType());
