@@ -154,7 +154,7 @@ public final class GameVersionNumberTest {
                 () -> assertEquals(major, release.getMajor()),
                 () -> assertEquals(minor, release.getMinor()),
                 () -> assertEquals(patch, release.getPatch()),
-                () -> assertEquals(GameVersionNumber.Release.TYPE_UNKNOWN, release.getEaType()),
+                () -> assertEquals(GameVersionNumber.Release.ReleaseType.UNKNOWN, release.getEaType()),
                 () -> assertEquals(VersionNumber.ZERO, release.getEaVersion())
         );
     }
@@ -167,8 +167,7 @@ public final class GameVersionNumberTest {
         assertSimpleReleaseVersion("26.1", 26, 1, 0);
 
         assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Release.parseSimple("26"));
-        assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Release.parseSimple("25"));
-        assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Release.parseSimple("25.0"));
+        assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Release.parseSimple("24.0"));
         assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Release.parseSimple("2.0"));
         assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Release.parseSimple("1"));
         assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Release.parseSimple("1..0"));
