@@ -113,7 +113,6 @@ public final class ManagedProcess {
      */
     public List<String> getLines(Predicate<String> lineFilter) {
         lock.lock();
-
         try {
             if (lineFilter == null)
                 return List.copyOf(lines);
