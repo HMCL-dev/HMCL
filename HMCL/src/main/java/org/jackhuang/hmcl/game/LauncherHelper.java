@@ -82,7 +82,7 @@ public final class LauncherHelper {
     private final VersionSetting setting;
     private LauncherVisibility launcherVisibility;
     private boolean showLogs;
-    private boolean disableOfflineSkin;
+    private boolean disableOfflineSkin = false;
 
     public LauncherHelper(Profile profile, Account account, String selectedVersion) {
         this.profile = Objects.requireNonNull(profile);
@@ -194,8 +194,12 @@ public final class LauncherHelper {
                 .thenComposeAsync(() -> gameVersion.map(s -> new GameVerificationFixTask(dependencyManager, s, version.get())).orElse(null))
                 .thenComposeAsync(() -> logIn(account).withStage("launch.state.logging_in"))
                 .thenComposeAsync(authInfo -> Task.supplyAsync(() -> {
-                    LaunchOptions launchOptions = repository.getLaunchOptions(
+                    LaunchOptions.Builder launchOptionsBuilder = repository.getLaunchOptions(
                             selectedVersion, javaVersionRef.get(), profile.getGameDir(), javaAgents, javaArguments, scriptFile != null);
+                    if (disableOfflineSkin) {
+                        launchOptionsBuilder.setDaemon(false);
+                    }
+                    LaunchOptions launchOptions = launchOptionsBuilder.create();
 
                     LOG.info("Here's the structure of game mod directory:\n" + FileUtils.printFileStructure(repository.getModsDirectory(selectedVersion), 10));
 
