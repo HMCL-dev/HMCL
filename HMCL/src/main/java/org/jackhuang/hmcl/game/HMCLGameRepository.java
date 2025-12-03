@@ -110,7 +110,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                         .thenComparing(v -> VersionNumber.asVersion(v.getId())));
     }
 
-
     @Override
     protected void refreshVersionsImpl() {
         localVersionSettings.clear();
@@ -392,7 +391,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         return getLaunchOptions(version, javaVersion, gameDir, javaAgents, javaArguments, makeLaunchScript, null);
     }
 
-
     public LaunchOptions getLaunchOptions(String version, JavaRuntime javaVersion, Path gameDir, List<String> javaAgents, List<String> javaArguments, boolean makeLaunchScript, QuickPlayOption quickPlayOption) {
         VersionSetting vs = getVersionSetting(version);
 
@@ -446,7 +444,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 case MULTIPLAYER -> builder.setServerIp(quickPlayOption.target());
                 case REALM -> builder.setRealmID(quickPlayOption.target());
             }
-            quickPlayOption = null;
         }
 
         if (config().hasProxy()) {
