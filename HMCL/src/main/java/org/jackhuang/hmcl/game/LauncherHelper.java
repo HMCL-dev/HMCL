@@ -81,7 +81,7 @@ public final class LauncherHelper {
     private final VersionSetting setting;
     private LauncherVisibility launcherVisibility;
     private boolean showLogs;
-    private String worldFolderName;
+    private QuickPlayOption quickPlayOption;
 
     public LauncherHelper(Profile profile, Account account, String selectedVersion) {
         this.profile = Objects.requireNonNull(profile);
@@ -113,8 +113,7 @@ public final class LauncherHelper {
     }
 
     public void setQuickEnterWorld(String worldFolderName) {
-        //this.worldFolderName = worldFolderName;
-        profile.getRepository().setQuickPlayOption(new QuickPlayOption(QuickPlayOption.Type.SINGLEPLAYER, worldFolderName));
+        quickPlayOption = new QuickPlayOption(QuickPlayOption.Type.SINGLEPLAYER, worldFolderName);
     }
 
     public void launch() {
@@ -195,7 +194,7 @@ public final class LauncherHelper {
                 .thenComposeAsync(() -> logIn(account).withStage("launch.state.logging_in"))
                 .thenComposeAsync(authInfo -> Task.supplyAsync(() -> {
                     LaunchOptions launchOptions = repository.getLaunchOptions(
-                            selectedVersion, javaVersionRef.get(), profile.getGameDir(), javaAgents, javaArguments, scriptFile != null);
+                            selectedVersion, javaVersionRef.get(), profile.getGameDir(), javaAgents, javaArguments, scriptFile != null, quickPlayOption);
 
                     LOG.info("Here's the structure of game mod directory:\n" + FileUtils.printFileStructure(repository.getModsDirectory(selectedVersion), 10));
 

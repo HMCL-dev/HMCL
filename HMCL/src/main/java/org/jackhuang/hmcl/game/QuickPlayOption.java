@@ -1,13 +1,6 @@
 package org.jackhuang.hmcl.game;
 
-public class QuickPlayOption {
-    Type type;
-    String target;
-
-    public QuickPlayOption(Type type, String target) {
-        this.type = type;
-        this.target = target;
-    }
+public record QuickPlayOption(Type type, String target) {
 
     enum Type {
         SINGLEPLAYER, MULTIPLAYER, REALM

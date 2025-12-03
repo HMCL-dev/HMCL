@@ -60,7 +60,6 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class HMCLGameRepository extends DefaultGameRepository {
     private final Profile profile;
-    private QuickPlayOption quickPlayOption;
 
     // local version settings
     private final Map<String, VersionSetting> localVersionSettings = new HashMap<>();
@@ -111,13 +110,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                         .thenComparing(v -> VersionNumber.asVersion(v.getId())));
     }
 
-    public QuickPlayOption getQuickPlayOption() {
-        return quickPlayOption;
-    }
-
-    public void setQuickPlayOption(QuickPlayOption quickPlayOption) {
-        this.quickPlayOption = quickPlayOption;
-    }
 
     @Override
     protected void refreshVersionsImpl() {
@@ -397,6 +389,11 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     public LaunchOptions getLaunchOptions(String version, JavaRuntime javaVersion, Path gameDir, List<String> javaAgents, List<String> javaArguments, boolean makeLaunchScript) {
+        return getLaunchOptions(version, javaVersion, gameDir, javaAgents, javaArguments, makeLaunchScript, null);
+    }
+
+
+    public LaunchOptions getLaunchOptions(String version, JavaRuntime javaVersion, Path gameDir, List<String> javaAgents, List<String> javaArguments, boolean makeLaunchScript, QuickPlayOption quickPlayOption) {
         VersionSetting vs = getVersionSetting(version);
 
         LaunchOptions.Builder builder = new LaunchOptions.Builder()
@@ -444,10 +441,10 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 .setJavaArguments(javaArguments);
 
         if (quickPlayOption != null) {
-            switch (quickPlayOption.type) {
-                case SINGLEPLAYER -> builder.setWorldFolderName(quickPlayOption.target);
-                case MULTIPLAYER -> builder.setServerIp(quickPlayOption.target);
-                case REALM -> builder.setRealmID(quickPlayOption.target);
+            switch (quickPlayOption.type()) {
+                case SINGLEPLAYER -> builder.setWorldFolderName(quickPlayOption.target());
+                case MULTIPLAYER -> builder.setServerIp(quickPlayOption.target());
+                case REALM -> builder.setRealmID(quickPlayOption.target());
             }
             quickPlayOption = null;
         }
