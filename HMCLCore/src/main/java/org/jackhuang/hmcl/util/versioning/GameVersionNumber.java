@@ -53,11 +53,11 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
                 if (version.equals("0.0"))
                     return Release.ZERO;
 
-                if (version.startsWith("1."))
-                    return Release.parse(version);
-
                 if (version.length() == 6 && version.charAt(2) == 'w')
                     return Snapshot.parse(version);
+
+                if (version.startsWith("1."))
+                    return Release.parse(version);
             }
         } catch (IllegalArgumentException ignore) {
         }
@@ -144,10 +144,10 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
     ///
     /// ```java
     /// GameVersionNumber.asVersion("...").isAtLeast("1.13", "17w43a");
-    /// ```
+    ///```
     ///
     /// @param strictReleaseVersion When `strictReleaseVersion` is `false`, `releaseVersion` is considered less than
-    /// its corresponding pre/rc versions.
+    ///                             its corresponding pre/rc versions.
     public boolean isAtLeast(@NotNull String releaseVersion, @NotNull String snapshotVersion, boolean strictReleaseVersion) {
         if (this instanceof Release self) {
             Release other;
@@ -244,7 +244,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
 
     public static final class Release extends GameVersionNumber {
 
-        private static final Pattern PATTERN = Pattern.compile("1\\.(?<minor>[0-9]+)(\\.(?<patch>[0-9]+))?((?<eaType>(-[a-zA-Z]+| Pre-Release ))(?<eaVersion>.+))?");
+        private static final Pattern PATTERN = Pattern.compile("(?<major>1|[1-9][0-9]+)\\.(?<minor>[0-9]+)(\\.(?<patch>[0-9]+))?((?<eaType>(-[a-zA-Z]+| Pre-Release ))(?<eaVersion>.+))?");
 
         public static final int TYPE_GA = Integer.MAX_VALUE;
 
@@ -260,6 +260,10 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
             if (!matcher.matches()) {
                 throw new IllegalArgumentException(value);
             }
+
+            int major = Integer.parseInt(matcher.group("major"));
+            if (major != 1 && major < 26)
+                throw new IllegalArgumentException(value);
 
             int minor = Integer.parseInt(matcher.group("minor"));
 
@@ -283,7 +287,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
             String eaVersionString = matcher.group("eaVersion");
             VersionNumber eaVersion = eaVersionString != null ? VersionNumber.asVersion(eaVersionString) : VersionNumber.ZERO;
 
-            return new Release(value, 1, minor, patch, eaType, eaVersion);
+            return new Release(value, major, minor, patch, eaType, eaVersion);
         }
 
         private static int getNumberLength(String value, int offset) {
@@ -299,15 +303,20 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
             return current - offset;
         }
 
-        /// Quickly parses a simple format (`1\.[0-9]+(\.[0-9]+)?`) release version.
+        /// Quickly parses a simple format (`[1-9][0-9]+\.[0-9]+(\.[0-9]+)?`) release version.
         /// The returned [#eaType] will be set to [#TYPE_UNKNOWN], meaning it will be less than all pre/rc and official versions of this version.
         ///
         /// @see GameVersionNumber#isAtLeast(String, String)
         static Release parseSimple(String value) {
-            if (!value.startsWith("1."))
+            int majorLength = getNumberLength(value, 0);
+            if (majorLength == 0 || value.length() < majorLength + 2 || value.charAt(majorLength) != '.')
                 throw new IllegalArgumentException(value);
 
-            final int minorOffset = 2;
+            int major = Integer.parseInt(value.substring(0, majorLength));
+            if (major != 1 && major < 26)
+                throw new IllegalArgumentException(value);
+
+            final int minorOffset = majorLength + 1;
 
             int minorLength = getNumberLength(value, minorOffset);
             if (minorLength == 0)
@@ -326,7 +335,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
                     patch = Integer.parseInt(value.substring(patchOffset));
                 }
 
-                return new Release(value, 1, minor, patch, TYPE_UNKNOWN, VersionNumber.ZERO);
+                return new Release(value, major, minor, patch, TYPE_UNKNOWN, VersionNumber.ZERO);
             } catch (NumberFormatException e) {
                 throw new IllegalArgumentException(value);
             }
