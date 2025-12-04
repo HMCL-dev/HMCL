@@ -101,8 +101,10 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
     }
 
     public boolean isAprilFools() {
-        if (this instanceof Special)
-            return true;
+        if (this instanceof Special) {
+            String normalizedVersion = this.toNormalizedString();
+            return !normalizedVersion.startsWith("1.") || normalizedVersion.equals("1.RV-Pre1");
+        }
 
         if (this instanceof LegacySnapshot snapshot) {
             return snapshot.intValue == LegacySnapshot.toInt(15, 14, 'a', false);
