@@ -148,7 +148,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
     ///```
     ///
     /// @param strictReleaseVersion When `strictReleaseVersion` is `false`, `releaseVersion` is considered less than
-    ///                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             its corresponding pre/rc versions.
+    ///                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 its corresponding pre/rc versions.
     public boolean isAtLeast(@NotNull String releaseVersion, @NotNull String snapshotVersion, boolean strictReleaseVersion) {
         if (this instanceof Release self) {
             Release other;
@@ -247,11 +247,26 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
         private static final int MINIMUM_YEAR_MAJOR_VERSION = 25;
 
         public enum ReleaseType {
-            UNKNOWN, SNAPSHOT, EXP, PRE_RELEASE, RELEASE_CANDIDATE, GA
+            UNKNOWN(""),
+            SNAPSHOT("-snapshot-"),
+            EXP("-exp"),
+            PRE_RELEASE("-pre"),
+            RELEASE_CANDIDATE("-rc"),
+            GA("");
+            private final String infix;
+
+            ReleaseType(String infix) {
+                this.infix = infix;
+            }
         }
 
         public enum Additional {
-            NONE, UNOBFUSCATED
+            NONE(""), UNOBFUSCATED("_unobfuscated");
+            private final String suffix;
+
+            Additional(String suffix) {
+                this.suffix = suffix;
+            }
         }
 
         static final Release ZERO = new Release(
@@ -260,10 +275,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
                 ReleaseType.UNKNOWN, VersionNumber.ZERO, Additional.NONE
         );
 
-        private static final Pattern VERSION_PATTERN = Pattern.compile("(?<major>1|[1-9]\\d+)\\.(?<minor>\\d+)(\\.(?<patch>[0-9]+))?(?<suffix>.*)");
-        private static final Pattern SUFFIX_SNAPSHOT_PATTERN = Pattern.compile("-snapshot-(?<version>[0-9]+)");
-        private static final Pattern SUFFIX_PRE_RELEASE_PATTERN = Pattern.compile("(?: Pre-Release |-pre)(?<version>\\d+)");
-        private static final Pattern SUFFIX_RELEASE_CANDIDATE_PATTERN = Pattern.compile("(?: Release-Candidate |-rc)(?<version>\\d+)");
+        private static final Pattern VERSION_PATTERN = Pattern.compile("(?<prefix>(?<major>1|[1-9]\\d+)\\.(?<minor>\\d+)(\\.(?<patch>[0-9]+))?)(?<suffix>.*)");
 
         static Release parse(String value) {
             Matcher matcher = VERSION_PATTERN.matcher(value);
@@ -280,53 +292,62 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
             String patchString = matcher.group("patch");
             int patch = patchString != null ? Integer.parseInt(patchString) : 0;
 
+            String suffix = matcher.group("suffix");
+
             ReleaseType releaseType;
             VersionNumber eaVersion;
             Additional additional = Additional.NONE;
+            boolean needNormalize = false;
 
-            parseSuffix:
-            {
-                String suffix = matcher.group("suffix");
-                if (suffix.endsWith("_unobfuscated")) {
-                    suffix = suffix.substring(0, suffix.length() - "_unobfuscated".length());
-                    additional = Additional.UNOBFUSCATED;
-                } else if (suffix.endsWith(" Unobfuscated")) {
-                    suffix = suffix.substring(0, suffix.length() - " Unobfuscated".length());
-                    additional = Additional.UNOBFUSCATED;
-                }
+            if (suffix.endsWith("_unobfuscated")) {
+                suffix = suffix.substring(0, suffix.length() - "_unobfuscated".length());
+                additional = Additional.UNOBFUSCATED;
+            } else if (suffix.endsWith(" Unobfuscated")) {
+                needNormalize = true;
+                suffix = suffix.substring(0, suffix.length() - " Unobfuscated".length());
+                additional = Additional.UNOBFUSCATED;
+            }
 
-                if (suffix.isEmpty()) {
-                    releaseType = ReleaseType.GA;
-                    eaVersion = VersionNumber.ZERO;
-                    break parseSuffix;
-                }
-
-                matcher = SUFFIX_SNAPSHOT_PATTERN.matcher(suffix);
-                if (matcher.matches()) {
-                    releaseType = ReleaseType.SNAPSHOT;
-                    eaVersion = VersionNumber.asVersion(matcher.group("version"));
-                    break parseSuffix;
-                }
-
-                matcher = SUFFIX_PRE_RELEASE_PATTERN.matcher(suffix);
-                if (matcher.matches()) {
-                    releaseType = ReleaseType.PRE_RELEASE;
-                    eaVersion = VersionNumber.asVersion(matcher.group("version"));
-                    break parseSuffix;
-                }
-
-                matcher = SUFFIX_RELEASE_CANDIDATE_PATTERN.matcher(suffix);
-                if (matcher.matches()) {
-                    releaseType = ReleaseType.RELEASE_CANDIDATE;
-                    eaVersion = VersionNumber.asVersion(matcher.group("version"));
-                    break parseSuffix;
-                }
-
+            if (suffix.isEmpty()) {
+                releaseType = ReleaseType.GA;
+                eaVersion = VersionNumber.ZERO;
+            } else if (suffix.startsWith("-snapshot-")) {
+                releaseType = ReleaseType.SNAPSHOT;
+                eaVersion = VersionNumber.asVersion(suffix.substring(0, suffix.length() - "-snapshot-".length()));
+            } else if (suffix.startsWith("-pre")) {
+                releaseType = ReleaseType.PRE_RELEASE;
+                eaVersion = VersionNumber.asVersion(suffix.substring(0, suffix.length() - "-pre".length()));
+            } else if (suffix.startsWith(" Pre-Release ")) {
+                needNormalize = true;
+                releaseType = ReleaseType.PRE_RELEASE;
+                eaVersion = VersionNumber.asVersion(suffix.substring(0, suffix.length() - " Pre-Release ".length()));
+            } else if (suffix.startsWith("-rc")) {
+                releaseType = ReleaseType.RELEASE_CANDIDATE;
+                eaVersion = VersionNumber.asVersion(suffix.substring(0, suffix.length() - "-rc".length()));
+            } else if (suffix.startsWith(" Release-Candidate ")) {
+                needNormalize = true;
+                releaseType = ReleaseType.RELEASE_CANDIDATE;
+                eaVersion = VersionNumber.asVersion(suffix.substring(0, suffix.length() - " Release-Candidate ".length()));
+            } else {
                 releaseType = ReleaseType.UNKNOWN;
                 eaVersion = VersionNumber.asVersion(suffix);
             }
 
-            return new Release(value, value, major, minor, patch, releaseType, eaVersion, additional);
+            String normalized;
+            if (needNormalize) {
+                StringBuilder builder = new StringBuilder(value.length());
+                builder.append(matcher.group("prefix"));
+                if (releaseType != ReleaseType.GA) {
+                    builder.append(releaseType.infix);
+                    builder.append(eaVersion);
+                }
+                builder.append(additional.suffix);
+                normalized = builder.toString();
+            } else {
+                normalized = value;
+            }
+
+            return new Release(value, normalized, major, minor, patch, releaseType, eaVersion, additional);
         }
 
         /// Quickly parses a simple format (`[1-9][0-9]+\.[0-9]+(\.[0-9]+)?`) release version.
