@@ -55,10 +55,9 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
                 if (version.length() == 6 && version.charAt(2) == 'w')
                     return LegacySnapshot.parse(version);
 
-                if (version.startsWith("1."))
-                    return Release.parse(version);
+                return Release.parse(version);
             }
-        } catch (IllegalArgumentException ignore) {
+        } catch (Throwable ignore) {
         }
 
         Special special = Versions.SPECIALS.get(version);
@@ -145,7 +144,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
     ///
     /// ```java
     /// GameVersionNumber.asVersion("...").isAtLeast("1.13", "17w43a");
-    /// ```
+    ///```
     ///
     /// @param strictReleaseVersion When `strictReleaseVersion` is `false`, `releaseVersion` is considered less than
     public boolean isAtLeast(@NotNull String releaseVersion, @NotNull String snapshotVersion, boolean strictReleaseVersion) {
