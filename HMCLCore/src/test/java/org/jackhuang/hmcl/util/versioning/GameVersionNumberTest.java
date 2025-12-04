@@ -199,8 +199,10 @@ public final class GameVersionNumberTest {
         assertSimpleReleaseVersion("1.13", 1, 13, 0);
         assertSimpleReleaseVersion("1.21.8", 1, 21, 8);
         assertSimpleReleaseVersion("26.1", 26, 1, 0);
+        assertSimpleReleaseVersion("26.1.1", 26, 1, 1);
 
         assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Release.parseSimple("26"));
+        assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Release.parseSimple("24.0.0"));
         assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Release.parseSimple("24.0"));
         assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Release.parseSimple("2.0"));
         assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Release.parseSimple("1"));
