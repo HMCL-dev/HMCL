@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.util.versioning;
 
+import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
@@ -171,10 +172,15 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
         return value;
     }
 
-    public String toDebugString() {
-        return "%s (class=%s, type=%s, normalized=%s)".formatted(
-                value, getClass().getSimpleName(), getType().name(), normalized
-        );
+    protected ToStringBuilder buildDebugString() {
+        return new ToStringBuilder(this)
+                .append("value", value)
+                .append("normalized", normalized)
+                .append("type", getType());
+    }
+
+    public final String toDebugString() {
+        return buildDebugString().toString();
     }
 
     public static final class Old extends GameVersionNumber {
@@ -525,6 +531,17 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
                     && eaVersion.equals(other.eaVersion)
                     && additional.equals(other.additional);
         }
+
+        @Override
+        protected ToStringBuilder buildDebugString() {
+            return super.buildDebugString()
+                    .append("major", major)
+                    .append("minor", minor)
+                    .append("patch", patch)
+                    .append("eaType", eaType)
+                    .append("eaVersion", eaVersion)
+                    .append("additional", additional);
+        }
     }
 
     /// Legacy snapshot version numbers like `25w46a`.
@@ -624,6 +641,15 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
         @Override
         public int hashCode() {
             return intValue;
+        }
+
+        @Override
+        protected ToStringBuilder buildDebugString() {
+            return super.buildDebugString()
+                    .append("year", getYear())
+                    .append("week", getWeek())
+                    .append("suffix", getSuffix())
+                    .append("unobfuscated", isUnobfuscated());
         }
     }
 
