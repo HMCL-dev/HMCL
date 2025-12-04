@@ -132,6 +132,7 @@ public final class GameVersionNumberTest {
         assertOldVersion("a1.0.13_01-1", GameVersionNumber.Type.ALPHA, "1.0.13_01-1");
         assertOldVersion("b1.0", GameVersionNumber.Type.BETA, "1.0");
         assertOldVersion("b1.0_01", GameVersionNumber.Type.BETA, "1.0_01");
+        assertOldVersion("b1.6-tb3", GameVersionNumber.Type.BETA, "1.6-tb3");
         assertOldVersion("b1.8-pre1-2", GameVersionNumber.Type.BETA, "1.8-pre1-2");
         assertOldVersion("b1.9-pre1", GameVersionNumber.Type.BETA, "1.9-pre1");
     }

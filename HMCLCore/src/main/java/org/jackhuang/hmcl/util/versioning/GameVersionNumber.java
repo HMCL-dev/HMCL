@@ -263,7 +263,6 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
         public enum ReleaseType {
             UNKNOWN(""),
             SNAPSHOT("-snapshot-"),
-            EXP("-exp"),
             PRE_RELEASE("-pre"),
             RELEASE_CANDIDATE("-rc"),
             GA("");
