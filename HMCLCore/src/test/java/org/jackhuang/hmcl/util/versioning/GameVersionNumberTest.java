@@ -313,8 +313,8 @@ public final class GameVersionNumberTest {
                 "24w14a",
                 "25w45a",
                 "25w45a_unobfuscated",
-                "Unknown",
-                "100.0"
+                "100.0",
+                "Unknown"
         );
     }
 

@@ -463,7 +463,9 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
         }
 
         int compareToSnapshot(LegacySnapshot other) {
-            if (major == 1) {
+            if (major == 0) {
+                return -1;
+            } else if (major == 1) {
                 int idx = Arrays.binarySearch(Versions.SNAPSHOT_INTS, other.intValue);
                 if (idx >= 0)
                     return this.compareToRelease(Versions.SNAPSHOT_PREV[idx]) <= 0 ? -1 : 1;
