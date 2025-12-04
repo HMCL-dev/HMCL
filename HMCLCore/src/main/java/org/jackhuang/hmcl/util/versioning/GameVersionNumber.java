@@ -145,10 +145,9 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
     ///
     /// ```java
     /// GameVersionNumber.asVersion("...").isAtLeast("1.13", "17w43a");
-    ///```
+    /// ```
     ///
     /// @param strictReleaseVersion When `strictReleaseVersion` is `false`, `releaseVersion` is considered less than
-    ///                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 its corresponding pre/rc versions.
     public boolean isAtLeast(@NotNull String releaseVersion, @NotNull String snapshotVersion, boolean strictReleaseVersion) {
         if (this instanceof Release self) {
             Release other;
@@ -498,20 +497,24 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
             return eaVersion;
         }
 
+        public Additional getAdditional() {
+            return additional;
+        }
+
         @Override
         public int hashCode() {
-            return Objects.hash(major, minor, patch, eaType, eaVersion);
+            return Objects.hash(major, minor, patch, eaType, eaVersion, additional);
         }
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
-            return o instanceof Release other
+            return this == o || o instanceof Release other
                     && major == other.major
                     && minor == other.minor
                     && patch == other.patch
                     && eaType == other.eaType
-                    && eaVersion.equals(other.eaVersion);
+                    && eaVersion.equals(other.eaVersion)
+                    && additional.equals(other.additional);
         }
     }
 
