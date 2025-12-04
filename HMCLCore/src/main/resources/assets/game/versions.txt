@@ -452,19 +452,19 @@
 3D Shareware v1.34
 19w14a
 19w14b
-1.14 Pre-Release 1
-1.14 Pre-Release 2
-1.14 Pre-Release 3
-1.14 Pre-Release 4
-1.14 Pre-Release 5
+1.14-pre1
+1.14-pre2
+1.14-pre3
+1.14-pre4
+1.14-pre5
 1.14
-1.14.1 Pre-Release 1
-1.14.1 Pre-Release 2
+1.14.1-pre1
+1.14.1-pre2
 1.14.1
-1.14.2 Pre-Release 1
-1.14.2 Pre-Release 2
-1.14.2 Pre-Release 3
-1.14.2 Pre-Release 4
+1.14.2-pre1
+1.14.2-pre2
+1.14.2-pre3
+1.14.2-pre4
 1.14.2
 1.14.3-pre1
 1.14.3-pre2
