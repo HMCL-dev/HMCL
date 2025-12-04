@@ -104,7 +104,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
             return true;
 
         if (this instanceof LegacySnapshot snapshot) {
-            return snapshot.intValue == LegacySnapshot.toInt(15, 14, 'a');
+            return snapshot.intValue == LegacySnapshot.toInt(15, 14, 'a', false);
         }
 
         return false;
@@ -520,8 +520,29 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
     /// Legacy snapshot version numbers like `25w46a`.
     public static final class LegacySnapshot extends GameVersionNumber {
         static LegacySnapshot parse(String value) {
-            if (value.length() != 6 || value.charAt(2) != 'w')
+            if (value.length() < 6 || value.charAt(2) != 'w')
                 throw new IllegalArgumentException(value);
+
+            int prefixLength;
+            boolean unobfuscated;
+            String normalized;
+            if (value.endsWith("_unobfuscated")) {
+                prefixLength = value.length() - "_unobfuscated".length();
+                unobfuscated = true;
+                normalized = value;
+            } else if (value.endsWith(" Unobfuscated")) {
+                prefixLength = value.length() - " Unobfuscated".length();
+                unobfuscated = true;
+                normalized = value.substring(0, prefixLength) + "_unobfuscated";
+            } else {
+                prefixLength = value.length();
+                unobfuscated = false;
+                normalized = value;
+            }
+
+            if (prefixLength != 6) {
+                throw new IllegalArgumentException(value);
+            }
 
             int year;
             int week;
@@ -536,7 +557,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
             if ((suffix < 'a' || suffix > 'z') && suffix != '~')
                 throw new IllegalArgumentException(value);
 
-            return new LegacySnapshot(value, year, week, suffix, false);
+            return new LegacySnapshot(value, normalized, year, week, suffix, unobfuscated);
         }
 
         static int toInt(int year, int week, char suffix, boolean unobfuscated) {
@@ -545,8 +566,8 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
 
         final int intValue;
 
-        LegacySnapshot(String value, int year, int week, char suffix, boolean unobfuscated) {
-            super(value, value);
+        LegacySnapshot(String value, String normalized, int year, int week, char suffix, boolean unobfuscated) {
+            super(value, normalized);
             this.intValue = toInt(year, week, suffix, unobfuscated);
         }
 
