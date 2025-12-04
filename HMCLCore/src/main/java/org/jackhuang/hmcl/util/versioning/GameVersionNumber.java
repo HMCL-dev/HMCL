@@ -52,7 +52,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
                 if (version.equals("0.0"))
                     return Release.ZERO;
 
-                if (version.length() == 6 && version.charAt(2) == 'w')
+                if (version.length() >= 6 && version.charAt(2) == 'w')
                     return LegacySnapshot.parse(version);
 
                 return Release.parse(version);
@@ -160,6 +160,10 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
         } else {
             return this.compareTo(LegacySnapshot.parse(snapshotVersion)) >= 0;
         }
+    }
+
+    public String toNormalizedString() {
+        return normalized;
     }
 
     @Override

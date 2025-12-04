@@ -18,6 +18,11 @@
 package org.jackhuang.hmcl.util.versioning;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestFactory;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.MethodSources;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -146,6 +151,44 @@ public final class GameVersionNumberTest {
         for (String version : versions) {
             assertFalse(asGameVersion(version) instanceof GameVersionNumber.Old, "version=" + version);
         }
+    }
+
+    private static void testParseLegacySnapshot(int year, int week, char suffix) {
+        String raw = "%02dw%02d%s".formatted(year, week, suffix);
+        var rawVersion = (GameVersionNumber.LegacySnapshot) asGameVersion(raw);
+        assertInstanceOf(GameVersionNumber.LegacySnapshot.class, rawVersion);
+        assertEquals(raw, rawVersion.toString());
+        assertEquals(raw, rawVersion.toNormalizedString());
+        assertEquals(year, rawVersion.getYear());
+        assertEquals(week, rawVersion.getWeek());
+        assertEquals(suffix, rawVersion.getSuffix());
+        assertFalse(rawVersion.isUnobfuscated());
+
+        var unobfuscated = raw + "_unobfuscated";
+        var unobfuscatedVersion = (GameVersionNumber.LegacySnapshot) asGameVersion(unobfuscated);
+        assertInstanceOf(GameVersionNumber.LegacySnapshot.class, rawVersion);
+        assertEquals(unobfuscated, unobfuscatedVersion.toString());
+        assertEquals(unobfuscated, unobfuscatedVersion.toNormalizedString());
+        assertEquals(year, unobfuscatedVersion.getYear());
+        assertEquals(week, unobfuscatedVersion.getWeek());
+        assertEquals(suffix, unobfuscatedVersion.getSuffix());
+        assertTrue(unobfuscatedVersion.isUnobfuscated());
+
+        var unobfuscated2 = raw + " Unobfuscated";
+        var unobfuscatedVersion2 = (GameVersionNumber.LegacySnapshot) asGameVersion(unobfuscated2);
+        assertInstanceOf(GameVersionNumber.LegacySnapshot.class, rawVersion);
+        assertEquals(unobfuscated2, unobfuscatedVersion2.toString());
+        assertEquals(unobfuscated, unobfuscatedVersion2.toNormalizedString());
+        assertEquals(year, unobfuscatedVersion2.getYear());
+        assertEquals(week, unobfuscatedVersion2.getWeek());
+        assertEquals(suffix, unobfuscatedVersion2.getSuffix());
+        assertTrue(unobfuscatedVersion2.isUnobfuscated());
+    }
+
+    @Test
+    public void testParseLegacySnapshot() {
+        testParseLegacySnapshot(25, 46, 'a');
+        testParseLegacySnapshot(25, 46, '~');
     }
 
     private static void assertSimpleReleaseVersion(String simpleReleaseVersion, int major, int minor, int patch) {
