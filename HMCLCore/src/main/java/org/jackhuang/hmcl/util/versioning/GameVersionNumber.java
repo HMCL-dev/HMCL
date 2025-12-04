@@ -338,10 +338,10 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
             } else if (suffix.startsWith("-rc")) {
                 releaseType = ReleaseType.RELEASE_CANDIDATE;
                 eaVersion = VersionNumber.asVersion(suffix.substring("-rc".length()));
-            } else if (suffix.startsWith(" Release-Candidate ")) {
+            } else if (suffix.startsWith(" Release Candidate ")) {
                 needNormalize = true;
                 releaseType = ReleaseType.RELEASE_CANDIDATE;
-                eaVersion = VersionNumber.asVersion(suffix.substring(" Release-Candidate ".length()));
+                eaVersion = VersionNumber.asVersion(suffix.substring(" Release Candidate ".length()));
             } else {
                 releaseType = ReleaseType.UNKNOWN;
                 eaVersion = VersionNumber.asVersion(suffix);
