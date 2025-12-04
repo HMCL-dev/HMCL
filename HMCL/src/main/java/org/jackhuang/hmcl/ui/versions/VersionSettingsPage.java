@@ -58,6 +58,7 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.DataSizeUnit.GIGABYTES;
@@ -95,7 +96,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
     private final VBox rootPane;
     private final JFXComboBox<String> cboWindowsSize;
-    private final JFXTextField txtServerIP;
     private final ComponentList componentList;
     private final JFXComboBox<LauncherVisibility> cboLauncherVisibility;
     private final JFXCheckBox chkAutoAllocate;
@@ -119,6 +119,11 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private final InvalidationListener javaListener = any -> initJavaSubtitle();
     private boolean updatingJavaSetting = false;
     private boolean updatingSelectedJava = false;
+
+    private final JFXTextField txtServerIP;
+    private final JFXComboBox<String> txtWorldFolderName;
+    private final JFXTextField txtRealmID;
+    private final ComponentSublist quickLaunchSubList;
 
     private final StringProperty selectedVersion = new SimpleStringProperty();
     private final BooleanProperty navigateToSpecificSettings = new SimpleBooleanProperty(false);
@@ -422,20 +427,42 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 FXUtils.setLimitWidth(cboProcessPriority, 300);
             }
 
-            GridPane serverPane = new GridPane();
+            GridPane quickLaunchPane = new GridPane();
+            quickLaunchSubList = new ComponentSublist();
+            quickLaunchSubList.setTitle("快速启动（若同时设置优先级 单人 > 多人 > realm）");
+            quickLaunchSubList.getContent().add(quickLaunchPane);
+
             {
                 ColumnConstraints title = new ColumnConstraints();
                 ColumnConstraints value = new ColumnConstraints();
                 value.setFillWidth(true);
                 value.setHgrow(Priority.ALWAYS);
                 value.setHalignment(HPos.RIGHT);
-                serverPane.setHgap(16);
-                serverPane.setVgap(8);
-                serverPane.getColumnConstraints().setAll(title, value);
+                quickLaunchPane.setHgap(16);
+                quickLaunchPane.setVgap(8);
+                quickLaunchPane.getColumnConstraints().setAll(title, value);
+            }
 
+            {
+                txtWorldFolderName = new JFXComboBox<String>();
+                txtWorldFolderName.setPromptText(i18n("settings.advanced.world_folder_name.prompt"));
+                txtWorldFolderName.setEditable(true);
+                txtWorldFolderName.getItems().setAll(getWorlds());
+                FXUtils.setLimitWidth(txtWorldFolderName, 300);
+                quickLaunchPane.addRow(0, new Label(i18n("settings.advanced.world_folder_name")), txtWorldFolderName);
+            }
+
+            {
                 txtServerIP = new JFXTextField();
                 txtServerIP.setPromptText(i18n("settings.advanced.server_ip.prompt"));
-                Validator.addTo(txtServerIP).accept(str -> {
+                FXUtils.setLimitWidth(txtServerIP, 300);
+                quickLaunchPane.addRow(1, new Label(i18n("settings.advanced.server_ip")), txtServerIP);
+            }
+
+            {
+                txtRealmID = new JFXTextField();
+                txtRealmID.setPromptText(i18n("settings.advanced.realm_id.prompt"));
+                Validator.addTo(txtRealmID).accept(str -> {
                     if (StringUtils.isBlank(str))
                         return true;
                     try {
@@ -445,8 +472,8 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                         return false;
                     }
                 });
-                FXUtils.setLimitWidth(txtServerIP, 300);
-                serverPane.addRow(0, new Label(i18n("settings.advanced.server_ip")), txtServerIP);
+                FXUtils.setLimitWidth(txtRealmID, 300);
+                quickLaunchPane.addRow(2, new Label(i18n("settings.advanced.realm_id")), txtRealmID);
             }
 
             BorderPane showAdvancedSettingPane = new BorderPane();
@@ -475,7 +502,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     dimensionPane,
                     showLogsPane,
                     processPriorityPane,
-                    serverPane,
+                    quickLaunchSubList,
                     showAdvancedSettingPane
             );
         }
@@ -548,6 +575,8 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             javaCustomOption.valueProperty().unbindBidirectional(lastVersionSetting.javaDirProperty());
             gameDirCustomOption.valueProperty().unbindBidirectional(lastVersionSetting.gameDirProperty());
             FXUtils.unbind(txtServerIP, lastVersionSetting.serverIpProperty());
+            txtWorldFolderName.valueProperty().unbindBidirectional(lastVersionSetting.worldFolderNameProperty());
+            FXUtils.unbind(txtRealmID, lastVersionSetting.realmIDProperty());
             chkAutoAllocate.selectedProperty().unbindBidirectional(lastVersionSetting.autoMemoryProperty());
             chkFullscreen.selectedProperty().unbindBidirectional(lastVersionSetting.fullscreenProperty());
             showLogsPane.selectedProperty().unbindBidirectional(lastVersionSetting.showLogsProperty());
@@ -582,11 +611,15 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         javaCustomOption.bindBidirectional(versionSetting.javaDirProperty());
         gameDirCustomOption.bindBidirectional(versionSetting.gameDirProperty());
         FXUtils.bindString(txtServerIP, versionSetting.serverIpProperty());
+        txtWorldFolderName.valueProperty().bindBidirectional(versionSetting.worldFolderNameProperty());
+        FXUtils.bindString(txtRealmID, versionSetting.realmIDProperty());
         chkAutoAllocate.selectedProperty().bindBidirectional(versionSetting.autoMemoryProperty());
         chkFullscreen.selectedProperty().bindBidirectional(versionSetting.fullscreenProperty());
         showLogsPane.selectedProperty().bindBidirectional(versionSetting.showLogsProperty());
         FXUtils.bindEnum(cboLauncherVisibility, versionSetting.launcherVisibilityProperty());
         FXUtils.bindEnum(cboProcessPriority, versionSetting.processPriorityProperty());
+
+        txtWorldFolderName.getItems().setAll(getWorlds());
 
         if (versionId != null)
             enableSpecificSettings.set(!versionSetting.isUsesGlobal());
@@ -796,6 +829,16 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         if (maxScreenWidth >= 3840 && maxScreenHeight >= 2160) resolutions.add("3840x2160");
 
         return resolutions;
+    }
+
+    private List<String> getWorlds() {
+        if (profile != null) {
+            return World.getWorlds(profile.getRepository().getSavesDirectory(versionId))
+                    .map(World::getFileName)
+                    .toList();
+        } else {
+            return List.of();
+        }
     }
 
     @Override
