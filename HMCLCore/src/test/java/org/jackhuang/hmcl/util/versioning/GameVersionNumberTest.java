@@ -353,7 +353,13 @@ public final class GameVersionNumberTest {
     }
 
     private static void assertNormalized(String normalized, String version) {
-        assertEquals(normalized, GameVersionNumber.asGameVersion(version).toNormalizedString());
+        GameVersionNumber gameVersion = asGameVersion(version);
+        GameVersionNumber normalizedGameVersion = GameVersionNumber.asGameVersion(normalized);
+
+        assertEquals(normalized, gameVersion.toNormalizedString());
+        assertEquals(normalizedGameVersion, gameVersion);
+        assertEquals(0, normalizedGameVersion.compareTo(gameVersion));
+        assertEquals(0, gameVersion.compareTo(normalizedGameVersion));
     }
 
     @Test
