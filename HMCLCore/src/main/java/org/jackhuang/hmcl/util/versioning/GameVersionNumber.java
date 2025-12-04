@@ -342,8 +342,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
                 releaseType = ReleaseType.RELEASE_CANDIDATE;
                 eaVersion = VersionNumber.asVersion(suffix.substring(" Release Candidate ".length()));
             } else {
-                releaseType = ReleaseType.UNKNOWN;
-                eaVersion = VersionNumber.asVersion(suffix);
+                throw new IllegalArgumentException(value);
             }
 
             String normalized;

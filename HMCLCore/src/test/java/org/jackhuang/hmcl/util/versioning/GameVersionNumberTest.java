@@ -227,7 +227,7 @@ public final class GameVersionNumberTest {
                 "0.0",
                 "1.0",
                 "1.99",
-                "1.99.1-unknown1",
+                // "1.99.1-unknown1",
                 "1.99.1-pre1",
                 "1.99.1 Pre-Release 2",
                 "1.99.1-rc1",
