@@ -95,10 +95,10 @@ public class Translator_lzh extends Translator {
             //noinspection StatementWithEmptyBody
             if (release.getEaType() == GameVersionNumber.Release.ReleaseType.GA) {
                 // do nothing
-            } else if (release.getEaType() == GameVersionNumber.Release.ReleaseType.PRE) {
+            } else if (release.getEaType() == GameVersionNumber.Release.ReleaseType.PRE_RELEASE) {
                 builder.append("之預");
                 appendDigitByDigit(builder, release.getEaVersion().toString());
-            } else if (release.getEaType() == GameVersionNumber.Release.ReleaseType.RC) {
+            } else if (release.getEaType() == GameVersionNumber.Release.ReleaseType.RELEASE_CANDIDATE) {
                 builder.append("之候");
                 appendDigitByDigit(builder, release.getEaVersion().toString());
             } else {
