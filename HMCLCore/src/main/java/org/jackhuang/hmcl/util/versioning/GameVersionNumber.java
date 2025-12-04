@@ -171,6 +171,12 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
         return value;
     }
 
+    public String toDebugString() {
+        return "%s (class=%s, type=%s, normalized=%s)".formatted(
+                value, getClass().getSimpleName(), getType().name(), normalized
+        );
+    }
+
     public static final class Old extends GameVersionNumber {
         static Old parse(String value) {
             Type type;
@@ -274,7 +280,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
         static final Release ZERO = new Release(
                 "0.0", "0.0",
                 0, 0, 0,
-                ReleaseType.UNKNOWN, VersionNumber.ZERO, Additional.NONE
+                ReleaseType.GA, VersionNumber.ZERO, Additional.NONE
         );
 
         private static final Pattern VERSION_PATTERN = Pattern.compile("(?<prefix>(?<major>1|[1-9]\\d+)\\.(?<minor>\\d+)(\\.(?<patch>[0-9]+))?)(?<suffix>.*)");
@@ -315,21 +321,21 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
                 eaVersion = VersionNumber.ZERO;
             } else if (suffix.startsWith("-snapshot-")) {
                 releaseType = ReleaseType.SNAPSHOT;
-                eaVersion = VersionNumber.asVersion(suffix.substring(0, suffix.length() - "-snapshot-".length()));
+                eaVersion = VersionNumber.asVersion(suffix.substring("-snapshot-".length()));
             } else if (suffix.startsWith("-pre")) {
                 releaseType = ReleaseType.PRE_RELEASE;
-                eaVersion = VersionNumber.asVersion(suffix.substring(0, suffix.length() - "-pre".length()));
+                eaVersion = VersionNumber.asVersion(suffix.substring("-pre".length()));
             } else if (suffix.startsWith(" Pre-Release ")) {
                 needNormalize = true;
                 releaseType = ReleaseType.PRE_RELEASE;
-                eaVersion = VersionNumber.asVersion(suffix.substring(0, suffix.length() - " Pre-Release ".length()));
+                eaVersion = VersionNumber.asVersion(suffix.substring(" Pre-Release ".length()));
             } else if (suffix.startsWith("-rc")) {
                 releaseType = ReleaseType.RELEASE_CANDIDATE;
-                eaVersion = VersionNumber.asVersion(suffix.substring(0, suffix.length() - "-rc".length()));
+                eaVersion = VersionNumber.asVersion(suffix.substring("-rc".length()));
             } else if (suffix.startsWith(" Release-Candidate ")) {
                 needNormalize = true;
                 releaseType = ReleaseType.RELEASE_CANDIDATE;
-                eaVersion = VersionNumber.asVersion(suffix.substring(0, suffix.length() - " Release-Candidate ".length()));
+                eaVersion = VersionNumber.asVersion(suffix.substring(" Release-Candidate ".length()));
             } else {
                 releaseType = ReleaseType.UNKNOWN;
                 eaVersion = VersionNumber.asVersion(suffix);

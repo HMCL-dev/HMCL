@@ -18,11 +18,6 @@
 package org.jackhuang.hmcl.util.versioning;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestFactory;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.MethodSources;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -76,10 +71,6 @@ public final class GameVersionNumberTest {
         assertEquals(asGameVersion(version1), asGameVersion(version2), errorMessage(version1, version2));
     }
 
-    private static String toString(GameVersionNumber gameVersionNumber) {
-        return gameVersionNumber.getClass().getSimpleName();
-    }
-
     private static void assertOrder(String... versions) {
         for (int i = 0; i < versions.length - 1; i++) {
             GameVersionNumber version1 = asGameVersion(versions[i]);
@@ -89,8 +80,8 @@ public final class GameVersionNumberTest {
             for (int j = i + 1; j < versions.length; j++) {
                 GameVersionNumber version2 = asGameVersion(versions[j]);
 
-                assertEquals(-1, version1.compareTo(version2), String.format("version1=%s (%s), version2=%s (%s)", versions[i], toString(version1), versions[j], toString(version2)));
-                assertEquals(1, version2.compareTo(version1), String.format("version1=%s (%s), version2=%s (%s)", versions[i], toString(version1), versions[j], toString(version2)));
+                assertTrue(version1.compareTo(version2) < 0, "version1=%s (%s), version2=%s (%s)".formatted(versions[i], version1.toDebugString(), versions[j], version2.toDebugString()));
+                assertTrue(version2.compareTo(version1) > 0, "version1=%s (%s), version2=%s (%s)".formatted(versions[i], version1.toDebugString(), versions[j], version2.toDebugString()));
             }
         }
 
@@ -188,7 +179,7 @@ public final class GameVersionNumberTest {
     @Test
     public void testParseLegacySnapshot() {
         testParseLegacySnapshot(25, 46, 'a');
-        testParseLegacySnapshot(25, 46, '~');
+        testParseLegacySnapshot(13, 12, '~');
     }
 
     private static void assertSimpleReleaseVersion(String simpleReleaseVersion, int major, int minor, int patch) {
