@@ -536,18 +536,18 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
             if ((suffix < 'a' || suffix > 'z') && suffix != '~')
                 throw new IllegalArgumentException(value);
 
-            return new LegacySnapshot(value, year, week, suffix);
+            return new LegacySnapshot(value, year, week, suffix, false);
         }
 
-        static int toInt(int year, int week, char suffix) {
-            return (year << 16) | (week << 8) | suffix;
+        static int toInt(int year, int week, char suffix, boolean unobfuscated) {
+            return (year << 24) | (week << 16) | (suffix << 8) | (unobfuscated ? 1 : 0);
         }
 
         final int intValue;
 
-        LegacySnapshot(String value, int year, int week, char suffix) {
+        LegacySnapshot(String value, int year, int week, char suffix, boolean unobfuscated) {
             super(value, value);
-            this.intValue = toInt(year, week, suffix);
+            this.intValue = toInt(year, week, suffix, unobfuscated);
         }
 
         @Override
@@ -570,20 +570,23 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
         }
 
         public int getYear() {
-            return (intValue >> 16) & 0xff;
+            return (intValue >> 24) & 0xff;
         }
 
         public int getWeek() {
-            return (intValue >> 8) & 0xff;
+            return (intValue >> 16) & 0xff;
         }
 
         public char getSuffix() {
-            return (char) (intValue & 0xff);
+            return (char) ((intValue >> 8) & 0xff);
+        }
+
+        public boolean isUnobfuscated() {
+            return (intValue & 0b00000001) != 0;
         }
 
         @Override
         public boolean equals(Object o) {
-            if (this == o) return true;
             return o instanceof LegacySnapshot other && this.intValue == other.intValue;
         }
 
