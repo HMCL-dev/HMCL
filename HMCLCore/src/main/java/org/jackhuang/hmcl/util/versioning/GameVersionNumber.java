@@ -38,6 +38,10 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
     }
 
     public static GameVersionNumber asGameVersion(String version) {
+        GameVersionNumber versionNumber = Versions.KNOWN_VERSIONS.get(version);
+        if (versionNumber != null)
+            return versionNumber;
+
         try {
             if (!version.isEmpty()) {
                 char ch = version.charAt(0);
@@ -61,11 +65,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
         } catch (Throwable ignore) {
         }
 
-        Special special = Versions.SPECIALS.get(version);
-        if (special == null) {
-            special = new Special(version);
-        }
-        return special;
+        return new Special(version, version);
     }
 
     public static GameVersionNumber asGameVersion(Optional<String> version) {
@@ -660,8 +660,8 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
 
         private GameVersionNumber prev;
 
-        Special(String value) {
-            super(value, value);
+        Special(String value, String normalized) {
+            super(value, normalized);
         }
 
         @Override
@@ -751,7 +751,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
     }
 
     static final class Versions {
-        static final HashMap<String, Special> SPECIALS = new HashMap<>();
+        static final HashMap<String, GameVersionNumber> KNOWN_VERSIONS = new HashMap<>();
         static final String[] DEFAULT_GAME_VERSIONS;
 
         static final int[] SNAPSHOT_INTS;
@@ -763,7 +763,8 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
             List<LegacySnapshot> snapshots = new ArrayList<>(1024);
             List<Release> snapshotPrev = new ArrayList<>(1024);
 
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(GameVersionNumber.class.getResourceAsStream("/assets/game/versions.txt"), StandardCharsets.US_ASCII))) {
+            //noinspection DataFlowIssue
+            try (var reader = new BufferedReader(new InputStreamReader(GameVersionNumber.class.getResourceAsStream("/assets/game/versions.txt"), StandardCharsets.US_ASCII))) {
                 Release currentRelease = null;
                 GameVersionNumber prev = null;
 
@@ -787,7 +788,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
                         }
                     } else if (version instanceof Special special) {
                         special.prev = prev;
-                        SPECIALS.put(special.value, special);
+                        KNOWN_VERSIONS.put(special.value, special);
                     } else
                         throw new AssertionError("version: " + version);
 
@@ -796,6 +797,27 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
             } catch (IOException e) {
                 throw new AssertionError(e);
             }
+
+            //noinspection DataFlowIssue
+            try (var reader = new BufferedReader(new InputStreamReader(GameVersionNumber.class.getResourceAsStream("/assets/game/version-alias.csv"), StandardCharsets.US_ASCII))) {
+                for (String line; (line = reader.readLine()) != null; ) {
+                    if (line.isEmpty())
+                        continue;
+
+                    String[] parts = line.split(",");
+                    if (parts.length < 2)
+                        throw new AssertionError("Invalid line: " + line);
+
+                    String normalized = parts[0];
+                    for (int i = 1; i < parts.length; i++) {
+                        String version = parts[1];
+                        KNOWN_VERSIONS.put(version, new Special(version, normalized));
+                    }
+                }
+            } catch (IOException e) {
+                throw new AssertionError(e);
+            }
+
 
             DEFAULT_GAME_VERSIONS = defaultGameVersions.toArray(new String[0]);
 
