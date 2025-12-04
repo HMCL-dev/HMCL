@@ -286,7 +286,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
         static final Release ZERO = new Release(
                 "0.0", "0.0",
                 0, 0, 0,
-                ReleaseType.GA, VersionNumber.ZERO, Additional.NONE
+                ReleaseType.UNKNOWN, VersionNumber.ZERO, Additional.NONE
         );
 
         private static final Pattern VERSION_PATTERN = Pattern.compile("(?<prefix>(?<major>1|[1-9]\\d+)\\.(?<minor>\\d+)(\\.(?<patch>[0-9]+))?)(?<suffix>.*)");
