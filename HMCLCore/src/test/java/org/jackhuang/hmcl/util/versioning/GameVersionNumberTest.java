@@ -352,6 +352,21 @@ public final class GameVersionNumberTest {
         );
     }
 
+    private static void assertNormalized(String normalized, String version) {
+        assertEquals(normalized, GameVersionNumber.asGameVersion(version).toNormalizedString());
+    }
+
+    @Test
+    public void testToNormalizedString() {
+        for (String version : readVersions()) {
+            assertNormalized(version, version);
+        }
+
+        assertNormalized("1.21.11-pre3", "1.21.11 Pre-Release 3");
+        assertNormalized("1.21.11-pre3_unobfuscated", "1.21.11 Pre-Release 3 Unobfuscated");
+        assertNormalized("1.21.11-pre3_unobfuscated", "1.21.11-pre3 Unobfuscated");
+    }
+
     @Test
     public void isAtLeast() {
         assertTrue(asGameVersion("1.13").isAtLeast("1.13", "17w43a"));
