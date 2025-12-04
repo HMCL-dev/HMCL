@@ -92,6 +92,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private Profile profile;
     private WeakListenerHolder listenerHolder;
     private String versionId;
+    private boolean globalSetting;
 
     private final VBox rootPane;
     private final JFXComboBox<String> cboWindowsSize;
@@ -131,6 +132,8 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private final BooleanProperty modpack = new SimpleBooleanProperty();
 
     public VersionSettingsPage(boolean globalSetting) {
+        this.globalSetting = globalSetting;
+
         ScrollPane scrollPane = new ScrollPane();
         scrollPane.setFitToHeight(true);
         scrollPane.setFitToWidth(true);
@@ -428,7 +431,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
             GridPane quickLaunchPane = new GridPane();
             quickLaunchSubList = new ComponentSublist();
-            quickLaunchSubList.setTitle("快速启动（若同时设置优先级 单人 > 多人 > realm）");
+            quickLaunchSubList.setTitle(i18n("settings.advanced.quick_launch"));
             quickLaunchSubList.getContent().add(quickLaunchPane);
 
             {
@@ -444,7 +447,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
             {
                 txtWorldFolderName = new JFXComboBox<String>();
-                txtWorldFolderName.setPromptText(i18n("settings.advanced.world_folder_name.prompt"));
+                txtWorldFolderName.setPromptText(globalSetting ? i18n("settings.advanced.quick_launch.not_suggest.prompt") : i18n("settings.advanced.world_folder_name.prompt"));
                 txtWorldFolderName.setEditable(true);
                 txtWorldFolderName.getItems().setAll(getWorlds());
                 FXUtils.setLimitWidth(txtWorldFolderName, 300);
@@ -453,14 +456,14 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
             {
                 txtServerIP = new JFXTextField();
-                txtServerIP.setPromptText(i18n("settings.advanced.server_ip.prompt"));
+                txtServerIP.setPromptText(globalSetting ? i18n("settings.advanced.quick_launch.not_suggest.prompt") : i18n("settings.advanced.server_ip.prompt"));
                 FXUtils.setLimitWidth(txtServerIP, 300);
                 quickLaunchPane.addRow(1, new Label(i18n("settings.advanced.server_ip")), txtServerIP);
             }
 
             {
                 txtRealmID = new JFXTextField();
-                txtRealmID.setPromptText(i18n("settings.advanced.realm_id.prompt"));
+                txtRealmID.setPromptText(globalSetting ? i18n("settings.advanced.quick_launch.not_suggest.prompt") : i18n("settings.advanced.realm_id.prompt"));
                 Validator.addTo(txtRealmID).accept(str -> {
                     if (StringUtils.isBlank(str))
                         return true;
@@ -619,6 +622,9 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         FXUtils.bindEnum(cboProcessPriority, versionSetting.processPriorityProperty());
 
         txtWorldFolderName.getItems().setAll(getWorlds());
+        txtWorldFolderName.setPromptText(globalSetting ? i18n("settings.advanced.quick_launch.not_suggest.prompt") : i18n("settings.advanced.world_folder_name.prompt"));
+        txtServerIP.setPromptText(globalSetting ? i18n("settings.advanced.quick_launch.not_suggest.prompt") : i18n("settings.advanced.server_ip.prompt"));
+        txtRealmID.setPromptText(globalSetting ? i18n("settings.advanced.quick_launch.not_suggest.prompt") : i18n("settings.advanced.realm_id.prompt"));
 
         if (versionId != null)
             enableSpecificSettings.set(!versionSetting.isUsesGlobal());
