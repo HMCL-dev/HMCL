@@ -155,30 +155,37 @@ public final class MacOSHardwareDetector extends HardwareDetector {
     public long getFreeMemorySize() {
         try {
             Process process = Runtime.getRuntime().exec("vm_stat");
+            Map<String, String> stats;
             long pageSize = -1;
-            long freePages = -1;
-            long inactivePages = -1;
 
-            try (var reader = process.inputReader()) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    if (pageSize == -1 && line.contains("page size of")) {
-                        pageSize = Long.parseLong(line.replaceAll(".*page size of (\\d+) bytes.*", "$1"));
-                    } else if (freePages == -1 && line.startsWith("Pages free:")) {
-                        freePages = Long.parseLong(line.split(":")[1].trim().replace(".", ""));
-                    } else if (inactivePages == -1 && line.startsWith("Pages inactive:")) {
-                        inactivePages = Long.parseLong(line.split(":")[1].trim().replace(".", ""));
-                    }
-                    if (pageSize != -1 && freePages != -1 && inactivePages != -1) {
-                        break;
+            try (var reader = process.inputReader(OperatingSystem.NATIVE_CHARSET)) {
+                List<String> lines = reader.lines().toList();
+                process.waitFor();
+
+                if (!lines.isEmpty()) {
+                    String first = lines.get(0);
+                    if (first.contains("page size of")) {
+                        pageSize = Long.parseLong(first.replaceAll(".*page size of (\\d+) bytes.*", "$1"));
                     }
                 }
-                process.waitFor();
+
+                stats = KeyValuePairUtils.loadPairs(lines.iterator());
             }
 
-            if (pageSize == -1) throw new IOException("Missing 'page size' in vm_stat output");
-            if (freePages == -1) throw new IOException("Missing 'Pages free' in vm_stat output");
-            if (inactivePages == -1) throw new IOException("Missing 'Pages inactive' in vm_stat output");
+            if (pageSize == -1)
+                throw new IOException("Missing 'page size' in vm_stat output");
+
+            Long freePages = null, inactivePages = null;
+            try {
+                String freeStr = stats.get("Pages free");
+                if (freeStr != null) freePages = Long.parseLong(freeStr.replace(".", ""));
+                String inactiveStr = stats.get("Pages inactive");
+                if (inactiveStr != null) inactivePages = Long.parseLong(inactiveStr.replace(".", ""));
+            } catch (NumberFormatException ignored) {
+            }
+
+            if (freePages == null) throw new IOException("Missing 'Pages free' in vm_stat output");
+            if (inactivePages == null) throw new IOException("Missing 'Pages inactive' in vm_stat output");
 
             long available = (freePages + inactivePages) * pageSize;
             if (available < 0) throw new IOException("Invalid available memory size: " + available + " bytes");
@@ -186,7 +193,7 @@ public final class MacOSHardwareDetector extends HardwareDetector {
             return available;
         } catch (Throwable e) {
             LOG.warning("Failed to parse vm_stat output", e);
+            return super.getFreeMemorySize();
         }
-        return super.getFreeMemorySize();
     }
 }
