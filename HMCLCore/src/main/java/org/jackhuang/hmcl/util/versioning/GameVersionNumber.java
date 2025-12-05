@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.util.versioning;
 
 import org.jackhuang.hmcl.util.ToStringBuilder;
+import org.jackhuang.hmcl.util.logging.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
@@ -27,6 +28,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * @author Glavo
@@ -38,7 +41,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
     }
 
     public static GameVersionNumber asGameVersion(String version) {
-        GameVersionNumber versionNumber = Versions.KNOWN_VERSIONS.get(version);
+        GameVersionNumber versionNumber = Versions.SPECIALS.get(version);
         if (versionNumber != null)
             return versionNumber;
 
@@ -131,6 +134,10 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
             return Integer.compare(this.getType().ordinal(), other.getType().ordinal());
 
         return compareToImpl(other);
+    }
+
+    public boolean isSameVersion(GameVersionNumber other) {
+        return this == other || other != null && this.compareTo(other) == 0;
     }
 
     /// @see #isAtLeast(String, String, boolean)
@@ -710,7 +717,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
             if (other.isUnknown())
                 return -1;
 
-            if (this.value.equals(other.value))
+            if (this.normalized.equals(other.normalized))
                 return 0;
 
             int c = this.getPrevNormalVersion().compareTo(other.getPrevNormalVersion());
@@ -751,7 +758,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
     }
 
     static final class Versions {
-        static final HashMap<String, GameVersionNumber> KNOWN_VERSIONS = new HashMap<>();
+        static final HashMap<String, Special> SPECIALS = new HashMap<>();
         static final String[] DEFAULT_GAME_VERSIONS;
 
         static final int[] SNAPSHOT_INTS;
@@ -788,7 +795,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
                         }
                     } else if (version instanceof Special special) {
                         special.prev = prev;
-                        KNOWN_VERSIONS.put(special.value, special);
+                        SPECIALS.put(special.value, special);
                     } else
                         throw new AssertionError("version: " + version);
 
@@ -809,15 +816,22 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
                         throw new AssertionError("Invalid line: " + line);
 
                     String normalized = parts[0];
+                    Special normalizedVersion = SPECIALS.get(normalized);
+                    if (normalizedVersion == null) {
+                        LOG.warning("Unknown special version: " + normalized);
+                        continue;
+                    }
+
                     for (int i = 1; i < parts.length; i++) {
                         String version = parts[1];
-                        KNOWN_VERSIONS.put(version, new Special(version, normalized));
+                        Special versionNumber = new Special(version, normalized);
+                        versionNumber.prev = normalizedVersion.prev;
+                        SPECIALS.put(version, versionNumber);
                     }
                 }
             } catch (IOException e) {
                 throw new AssertionError(e);
             }
-
 
             DEFAULT_GAME_VERSIONS = defaultGameVersions.toArray(new String[0]);
 

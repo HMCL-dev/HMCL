@@ -245,7 +245,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                 item.setSubtitle(formatDateTime(skinnable.getBackupTime()) + (skinnable.count == 0 ? "" : " (" + skinnable.count + ")"));
 
                 if (world.getGameVersion() != null)
-                    item.addTag(world.getGameVersion());
+                    item.addTag(world.getGameVersion().toNormalizedString());
             }
 
             {

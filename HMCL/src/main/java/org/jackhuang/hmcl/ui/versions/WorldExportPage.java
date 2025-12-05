@@ -41,7 +41,7 @@ public class WorldExportPage extends WizardSinglePage {
         this.world = world;
 
         path.set(export.toString());
-        gameVersion.set(world.getGameVersion());
+        gameVersion.set(world.getGameVersion().toNormalizedString());
         worldName.set(world.getWorldName());
     }
 

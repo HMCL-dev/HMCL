@@ -72,10 +72,10 @@ public final class WorldListItemSkin extends SkinBase<WorldListItem> {
             item.setMouseTransparent(true);
             if (world.getWorldName() != null)
                 item.setTitle(parseColorEscapes(world.getWorldName()));
-            item.setSubtitle(i18n("world.datetime", formatDateTime(Instant.ofEpochMilli(world.getLastPlayed())), world.getGameVersion() == null ? i18n("message.unknown") : world.getGameVersion()));
+            item.setSubtitle(i18n("world.datetime", formatDateTime(Instant.ofEpochMilli(world.getLastPlayed()))));
 
             if (world.getGameVersion() != null)
-                item.addTag(world.getGameVersion());
+                item.addTag(world.getGameVersion().toNormalizedString());
             if (world.isLocked())
                 item.addTag(i18n("world.locked"));
         }
@@ -126,7 +126,7 @@ public final class WorldListItemSkin extends SkinBase<WorldListItem> {
                     new IconedMenuItem(SVG.FORT, i18n("world.chunkbase.nether_fortress"), () -> ChunkBaseApp.openNetherFortressFinder(world), popup)
             );
 
-            if (GameVersionNumber.compare(world.getGameVersion(), "1.13") >= 0) {
+            if (world.getGameVersion() != null && world.getGameVersion().compareTo("1.13") >= 0) {
                 popupMenu.getContent().add(new IconedMenuItem(SVG.LOCATION_CITY, i18n("world.chunkbase.end_city"),
                         () -> ChunkBaseApp.openEndCityFinder(world), popup));
             }
