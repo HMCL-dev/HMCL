@@ -105,7 +105,8 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
     public boolean isAprilFools() {
         if (this instanceof Special) {
             String normalizedVersion = this.toNormalizedString();
-            return !normalizedVersion.startsWith("1.") || normalizedVersion.equals("1.RV-Pre1");
+            return !normalizedVersion.startsWith("1.") && !normalizedVersion.equals("13w12~")
+                    || normalizedVersion.equals("1.RV-Pre1");
         }
 
         if (this instanceof LegacySnapshot snapshot) {
@@ -573,7 +574,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
             }
 
             char suffix = value.charAt(5);
-            if ((suffix < 'a' || suffix > 'z') && suffix != '~')
+            if (suffix < 'a' || suffix > 'z')
                 throw new IllegalArgumentException(value);
 
             return new LegacySnapshot(value, normalized, year, week, suffix, unobfuscated);

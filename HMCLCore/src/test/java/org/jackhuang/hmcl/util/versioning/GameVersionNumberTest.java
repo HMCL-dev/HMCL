@@ -180,7 +180,6 @@ public final class GameVersionNumberTest {
     @Test
     public void testParseLegacySnapshot() {
         testParseLegacySnapshot(25, 46, 'a');
-        testParseLegacySnapshot(13, 12, '~');
     }
 
     private static void assertSimpleReleaseVersion(String simpleReleaseVersion, int major, int minor, int patch) {
@@ -243,7 +242,6 @@ public final class GameVersionNumberTest {
                 "90w01a",
                 "90w01b",
                 "90w01e",
-                "90w01~",
                 "90w02a"
         );
     }
@@ -393,7 +391,7 @@ public final class GameVersionNumberTest {
         assertNormalized("1.18_experimental-snapshot-5", "1.18 Experimental Snapshot 5");
         assertNormalized("1.18_experimental-snapshot-6", "1.18 Experimental Snapshot 6");
         assertNormalized("1.19_deep_dark_experimental_snapshot-1", "Deep Dark Experimental Snapshot 1");
-
+        assertNormalized("20w14infinite", "20w14~");
     }
 
     @Test
