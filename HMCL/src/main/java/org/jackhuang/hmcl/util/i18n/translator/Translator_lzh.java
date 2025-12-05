@@ -149,6 +149,7 @@ public class Translator_lzh extends Translator {
                 case "2.0_purple" -> "二點〇紫";
                 case "1.rv-pre1" -> "一點真視之預一";
                 case "3d shareware v1.34" -> "躍然享件一點三四";
+                // case "13w12~" -> "一三週一二";
                 case "20w14infinite", "20w14~", "20w14∞" -> "二〇週一四宇";
                 case "22w13oneblockatatime" -> "二二週一三典";
                 case "23w13a_or_b" -> "二三週一三暨";
