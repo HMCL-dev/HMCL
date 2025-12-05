@@ -92,18 +92,34 @@ public class Translator_lzh extends Translator {
                 appendDigitByDigit(builder, String.valueOf(release.getPatch()));
             }
 
-            //noinspection StatementWithEmptyBody
-            if (release.getEaType() == GameVersionNumber.Release.ReleaseType.GA) {
-                // do nothing
-            } else if (release.getEaType() == GameVersionNumber.Release.ReleaseType.PRE_RELEASE) {
-                builder.append("之預");
-                appendDigitByDigit(builder, release.getEaVersion().toString());
-            } else if (release.getEaType() == GameVersionNumber.Release.ReleaseType.RELEASE_CANDIDATE) {
-                builder.append("之候");
-                appendDigitByDigit(builder, release.getEaVersion().toString());
-            } else {
-                // Unsupported
-                return gameVersion.toString();
+            switch (release.getEaType()) {
+                case GA -> {
+                    // do nothing
+                }
+                case PRE_RELEASE -> {
+                    builder.append("之預");
+                    appendDigitByDigit(builder, release.getEaVersion().toString());
+                }
+                case RELEASE_CANDIDATE -> {
+                    builder.append("之候");
+                    appendDigitByDigit(builder, release.getEaVersion().toString());
+                }
+                default -> {
+                    // Unsupported
+                    return gameVersion.toString();
+                }
+            }
+
+            switch (release.getAdditional()) {
+                case NONE -> {
+                }
+                case UNOBFUSCATED -> {
+                    builder.append("涇渭");
+                }
+                default -> {
+                    // Unsupported
+                    return gameVersion.toString();
+                }
             }
 
             return builder.toString();
@@ -119,6 +135,9 @@ public class Translator_lzh extends Translator {
                 builder.append(TIAN_GAN[suffix - 'a']);
             else
                 builder.append(suffix);
+
+            if (snapshot.isUnobfuscated())
+                builder.append("涇渭");
 
             return builder.toString();
         } else if (gameVersion instanceof GameVersionNumber.Special) {

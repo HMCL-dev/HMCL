@@ -226,7 +226,6 @@ public final class GameVersionNumberTest {
                 "0.0",
                 "1.0",
                 "1.99",
-                // "1.99.1-unknown1",
                 "1.99.1-pre1",
                 "1.99.1 Pre-Release 2",
                 "1.99.1-rc1",
@@ -314,6 +313,12 @@ public final class GameVersionNumberTest {
                 "24w14a",
                 "25w45a",
                 "25w45a_unobfuscated",
+                "26.1-snapshot-1",
+                "26.1-snapshot-2",
+                "26.1",
+                "26.2-snapshot-1",
+                "26.2-snapshot-2",
+                "26.2",
                 "100.0",
                 "Unknown"
         );
