@@ -281,14 +281,14 @@ public final class TerracottaManager {
         return null;
     }
 
-    public static Task<TerracottaState.GuestStarting> setGuesting(String room) {
+    public static Task<TerracottaState.GuestConnecting> setGuesting(String room) {
         TerracottaState state = STATE_V.get();
         if (state instanceof TerracottaState.PortSpecific portSpecific) {
             return new GetTask(NetworkUtils.toURI(String.format(
                     "http://127.0.0.1:%d/state/guesting?room=%s&player=%s", portSpecific.port, room, getPlayerName()
             )))
                     .setSignificance(Task.TaskSignificance.MINOR)
-                    .thenSupplyAsync(() -> new TerracottaState.GuestStarting(-1, -1, null))
+                    .thenSupplyAsync(() -> new TerracottaState.GuestConnecting(-1, -1, null))
                     .setSignificance(Task.TaskSignificance.MINOR);
         } else {
             return null;
