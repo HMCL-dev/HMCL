@@ -374,6 +374,26 @@ public final class GameVersionNumberTest {
         assertNormalized("1.21.11-pre3_unobfuscated", "1.21.11-pre3 Unobfuscated");
         assertNormalized("1.21.11-rc1", "1.21.11 Release Candidate 1");
         assertNormalized("1.21.11-rc1_unobfuscated", "1.21.11 Release Candidate 1 Unobfuscated");
+        assertNormalized("1.14_combat-212796", "1.14.3 - Combat Test");
+        assertNormalized("1.14_combat-0", "Combat Test 2");
+        assertNormalized("1.14_combat-3", "Combat Test 3");
+        assertNormalized("1.15_combat-1", "Combat Test 4");
+        assertNormalized("1.15_combat-6", "Combat Test 5");
+        assertNormalized("1.16_combat-0", "Combat Test 6");
+        assertNormalized("1.16_combat-1", "Combat Test 7");
+        assertNormalized("1.16_combat-2", "Combat Test 7b");
+        assertNormalized("1.16_combat-3", "Combat Test 7c");
+        assertNormalized("1.16_combat-4", "Combat Test 8");
+        assertNormalized("1.16_combat-5", "Combat Test 8b");
+        assertNormalized("1.16_combat-6", "Combat Test 8c");
+        assertNormalized("1.18_experimental-snapshot-1", "1.18 Experimental Snapshot 1");
+        assertNormalized("1.18_experimental-snapshot-2", "1.18 Experimental Snapshot 2");
+        assertNormalized("1.18_experimental-snapshot-3", "1.18 Experimental Snapshot 3");
+        assertNormalized("1.18_experimental-snapshot-4", "1.18 Experimental Snapshot 4");
+        assertNormalized("1.18_experimental-snapshot-5", "1.18 Experimental Snapshot 5");
+        assertNormalized("1.18_experimental-snapshot-6", "1.18 Experimental Snapshot 6");
+        assertNormalized("1.19_deep_dark_experimental_snapshot-1", "Deep Dark Experimental Snapshot 1");
+
     }
 
     @Test
