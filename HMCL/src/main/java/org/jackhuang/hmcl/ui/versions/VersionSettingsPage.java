@@ -45,6 +45,8 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.ServerAddress;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.PropertyUtils;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
@@ -56,6 +58,7 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.DataSizeUnit.GIGABYTES;
@@ -418,51 +421,81 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
             BorderPane processPriorityPane = new BorderPane();
             {
-                Label label = new Label(i18n("settings.advanced.process_priority"));
-                processPriorityPane.setLeft(label);
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
+                {
+                    Label label = new Label(i18n("settings.advanced.process_priority"));
+                    processPriorityPane.setLeft(label);
+                    BorderPane.setAlignment(label, Pos.CENTER_LEFT);
 
-                cboProcessPriority = new JFXComboBox<>();
-                processPriorityPane.setRight(cboProcessPriority);
-                BorderPane.setAlignment(cboProcessPriority, Pos.CENTER_RIGHT);
-                FXUtils.setLimitWidth(cboProcessPriority, 300);
-            }
+                    cboProcessPriority = new JFXComboBox<>();
+                    processPriorityPane.setRight(cboProcessPriority);
+                    BorderPane.setAlignment(cboProcessPriority, Pos.CENTER_RIGHT);
+                    FXUtils.setLimitWidth(cboProcessPriority, 300);
+                }
 
-            quickLaunchPane = new GridPane();
-            quickLaunchSubList = new ComponentSublist();
-            quickLaunchSubList.setTitle(i18n("settings.advanced.quick_launch"));
-            quickLaunchSubList.getContent().add(quickLaunchPane);
+                quickLaunchPane = new GridPane();
+                quickLaunchSubList = new ComponentSublist();
+                {
+                    quickLaunchSubList.setTitle(i18n("settings.advanced.quick_launch"));
+                    quickLaunchSubList.setHasSubtitle(true);
+                    quickLaunchSubList.getContent().add(quickLaunchPane);
 
-            {
-                ColumnConstraints title = new ColumnConstraints();
-                ColumnConstraints value = new ColumnConstraints();
-                value.setFillWidth(true);
-                value.setHgrow(Priority.ALWAYS);
-                value.setHalignment(HPos.RIGHT);
-                quickLaunchPane.setHgap(16);
-                quickLaunchPane.setVgap(8);
-                quickLaunchPane.getColumnConstraints().setAll(title, value);
-            }
+                    ColumnConstraints title = new ColumnConstraints();
+                    ColumnConstraints value = new ColumnConstraints();
+                    value.setFillWidth(true);
+                    value.setHgrow(Priority.ALWAYS);
+                    value.setHalignment(HPos.RIGHT);
+                    quickLaunchPane.setHgap(16);
+                    quickLaunchPane.setVgap(8);
+                    quickLaunchPane.getColumnConstraints().setAll(title, value);
+                }
 
-            {
-                txtWorldFolderName = new JFXComboBox<>();
-                txtWorldFolderName.setPromptText(globalSetting ? i18n("settings.advanced.quick_launch.not_suggest.prompt") : i18n("settings.advanced.world_folder_name.prompt"));
-                txtWorldFolderName.setEditable(true);
-                txtWorldFolderName.getItems().setAll(getWorlds());
-                quickLaunchPane.addRow(0, new Label(i18n("settings.advanced.world_folder_name")), txtWorldFolderName);
-            }
+                {
+                    txtWorldFolderName = new JFXComboBox<>();
+                    txtWorldFolderName.setPromptText(globalSetting ? i18n("settings.advanced.quick_launch.not_suggest.prompt") : i18n("settings.advanced.world_folder_name.prompt"));
+                    txtWorldFolderName.setEditable(true);
+                    txtWorldFolderName.getItems().setAll(getWorlds());
+                    quickLaunchPane.addRow(0, new Label(i18n("settings.advanced.world_folder_name")), txtWorldFolderName);
+                }
 
-            {
-                txtServerIP = new JFXTextField();
-                txtServerIP.setPromptText(globalSetting ? i18n("settings.advanced.quick_launch.not_suggest.prompt") : i18n("settings.advanced.server_ip.prompt"));
-                FXUtils.setLimitWidth(txtServerIP, 300);
-                quickLaunchPane.addRow(1, new Label(i18n("settings.advanced.server_ip")), txtServerIP);
-            }
+                {
+                    txtServerIP = new JFXTextField();
+                    txtServerIP.setPromptText(globalSetting ? i18n("settings.advanced.quick_launch.not_suggest.prompt") : i18n("settings.advanced.server_ip.prompt"));
+                    Validator.addTo(txtServerIP).accept(str -> {
+                        if (StringUtils.isBlank(str))
+                            return true;
+                        try {
+                            ServerAddress.parse(str);
+                            return true;
+                        } catch (Exception ignored) {
+                            return false;
+                        }
+                    });
+                    quickLaunchPane.addRow(1, new Label(i18n("settings.advanced.server_ip")), txtServerIP);
+                }
 
-            {
-                txtRealmID = new JFXTextField();
-                txtRealmID.setPromptText(globalSetting ? i18n("settings.advanced.quick_launch.not_suggest.prompt") : i18n("settings.advanced.realm_id.prompt"));
-                quickLaunchPane.addRow(2, new Label(i18n("settings.advanced.realm_id")), txtRealmID);
+                {
+                    txtRealmID = new JFXTextField();
+                    txtRealmID.setPromptText(globalSetting ? i18n("settings.advanced.quick_launch.not_suggest.prompt") : i18n("settings.advanced.realm_id.prompt"));
+                    quickLaunchPane.addRow(2, new Label(i18n("settings.advanced.realm_id")), txtRealmID);
+                }
+
+                {
+                    Consumer<String> consumer = (object) -> {
+                        if (StringUtils.isNotBlank(txtWorldFolderName.valueProperty().getValue())) {
+                            quickLaunchSubList.subtitleProperty().set(i18n("settings.advanced.world_folder_name.subtitle") + txtWorldFolderName.valueProperty().getValue());
+                        } else if (StringUtils.isNotBlank(txtServerIP.getText())) {
+                            quickLaunchSubList.subtitleProperty().set(i18n("settings.advanced.server_ip.subtitle") + txtServerIP.getText());
+                        } else if (StringUtils.isNotBlank(txtRealmID.getText())) {
+                            quickLaunchSubList.subtitleProperty().set(i18n("settings.advanced.realm_id.subtitle") + txtRealmID.getText());
+                        } else {
+                            quickLaunchSubList.subtitleProperty().set(i18n("settings.advanced.quick_launch.not_set.subtitle"));
+                        }
+                    };
+
+                    FXUtils.onChangeAndOperate(txtWorldFolderName.valueProperty(), consumer);
+                    FXUtils.onChangeAndOperate(txtServerIP.textProperty(), consumer);
+                    FXUtils.onChangeAndOperate(txtRealmID.textProperty(), consumer);
+                }
             }
 
             BorderPane showAdvancedSettingPane = new BorderPane();
