@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.util.versioning;
 
 import org.jackhuang.hmcl.util.ToStringBuilder;
-import org.jackhuang.hmcl.util.logging.Logger;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
@@ -136,10 +135,6 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
         return compareToImpl(other);
     }
 
-    public boolean isSameVersion(GameVersionNumber other) {
-        return this == other || other != null && this.compareTo(other) == 0;
-    }
-
     /// @see #isAtLeast(String, String, boolean)
     public boolean isAtLeast(@NotNull String releaseVersion, @NotNull String snapshotVersion) {
         return isAtLeast(releaseVersion, snapshotVersion, false);
@@ -174,6 +169,11 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
 
     public String toNormalizedString() {
         return normalized;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        return obj == this || obj instanceof GameVersionNumber that && compareTo(that) == 0;
     }
 
     @Override
@@ -252,12 +252,6 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
         @Override
         int compareToImpl(@NotNull GameVersionNumber other) {
             return this.versionNumber.compareTo(((Old) other).versionNumber);
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            return o instanceof Old other && type == other.type && this.versionNumber.compareTo(other.versionNumber) == 0;
         }
 
         @Override
@@ -531,17 +525,6 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
         }
 
         @Override
-        public boolean equals(Object o) {
-            return this == o || o instanceof Release other
-                    && major == other.major
-                    && minor == other.minor
-                    && patch == other.patch
-                    && eaType == other.eaType
-                    && eaVersion.equals(other.eaVersion)
-                    && additional.equals(other.additional);
-        }
-
-        @Override
         protected ToStringBuilder buildDebugString() {
             return super.buildDebugString()
                     .append("major", major)
@@ -640,11 +623,6 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
 
         public boolean isUnobfuscated() {
             return (intValue & 0b00000001) != 0;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            return o instanceof LegacySnapshot other && this.intValue == other.intValue;
         }
 
         @Override
@@ -749,11 +727,6 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
         @Override
         public int hashCode() {
             return value.hashCode();
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            return this == o || o instanceof Special other && this.value.equals(other.value);
         }
     }
 
