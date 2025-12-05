@@ -441,11 +441,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 .setJavaArguments(javaArguments);
 
         if (quickPlayOption != null) {
-            switch (quickPlayOption.type()) {
-                case SINGLEPLAYER -> builder.setWorldFolderName(quickPlayOption.target());
-                case MULTIPLAYER -> builder.setServerIp(quickPlayOption.target());
-                case REALM -> builder.setRealmID(quickPlayOption.target());
-            }
+            quickPlayOption.type().apply(builder, quickPlayOption.target());
         }
 
         if (config().hasProxy()) {
