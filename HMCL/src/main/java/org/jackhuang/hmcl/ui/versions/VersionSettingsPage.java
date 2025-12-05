@@ -93,7 +93,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private Profile profile;
     private WeakListenerHolder listenerHolder;
     private String versionId;
-    private boolean globalSetting;
+    private BooleanProperty globalSetting;
 
     private final VBox rootPane;
     private final JFXComboBox<String> cboWindowsSize;
@@ -134,7 +134,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private final BooleanProperty modpack = new SimpleBooleanProperty();
 
     public VersionSettingsPage(boolean globalSetting) {
-        this.globalSetting = globalSetting;
+        this.globalSetting = new SimpleBooleanProperty(globalSetting);
 
         ScrollPane scrollPane = new ScrollPane();
         scrollPane.setFitToHeight(true);
@@ -437,7 +437,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 {
                     quickLaunchSubList.setTitle(i18n("settings.advanced.quick_launch"));
                     quickLaunchSubList.setHasSubtitle(true);
-                    quickLaunchSubList.getContent().add(quickLaunchPane);
 
                     ColumnConstraints title = new ColumnConstraints();
                     ColumnConstraints value = new ColumnConstraints();
@@ -450,8 +449,21 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 }
 
                 {
+                    HintPane notSuggestPane = new HintPane(MessageDialogPane.MessageType.WARNING);
+                    notSuggestPane.setText(i18n("settings.advanced.quick_launch.not_suggest.prompt"));
+                    notSuggestPane.managedProperty().bind(this.globalSetting);
+                    notSuggestPane.visibleProperty().bind(this.globalSetting);
+                    quickLaunchSubList.getContent().add(notSuggestPane);
+                }
+
+                boolean supportModernQuickLaunch = true;
+                if (versionId != null) {
+                    supportModernQuickLaunch = GameVersionNumber.asGameVersion(versionId).isAtLeast("1.20", "23w14a");
+                }
+
+                {
                     txtWorldFolderName = new JFXComboBox<>();
-                    txtWorldFolderName.setPromptText(globalSetting ? i18n("settings.advanced.quick_launch.not_suggest.prompt") : i18n("settings.advanced.world_folder_name.prompt"));
+                    txtWorldFolderName.setPromptText(supportModernQuickLaunch ? i18n("settings.advanced.world_folder_name.prompt") : i18n("settings.advanced.quick_launch.not_support.prompt"));
                     txtWorldFolderName.setEditable(true);
                     txtWorldFolderName.getItems().setAll(getWorlds());
                     quickLaunchPane.addRow(0, new Label(i18n("settings.advanced.world_folder_name")), txtWorldFolderName);
@@ -459,7 +471,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
                 {
                     txtServerIP = new JFXTextField();
-                    txtServerIP.setPromptText(globalSetting ? i18n("settings.advanced.quick_launch.not_suggest.prompt") : i18n("settings.advanced.server_ip.prompt"));
+                    txtServerIP.setPromptText(i18n("settings.advanced.server_ip.prompt"));
                     Validator.addTo(txtServerIP).accept(str -> {
                         if (StringUtils.isBlank(str))
                             return true;
@@ -475,9 +487,11 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
                 {
                     txtRealmID = new JFXTextField();
-                    txtRealmID.setPromptText(globalSetting ? i18n("settings.advanced.quick_launch.not_suggest.prompt") : i18n("settings.advanced.realm_id.prompt"));
+                    txtRealmID.setPromptText(supportModernQuickLaunch ? i18n("settings.advanced.realm_id.prompt") : i18n("settings.advanced.quick_launch.not_support.prompt"));
                     quickLaunchPane.addRow(2, new Label(i18n("settings.advanced.realm_id")), txtRealmID);
                 }
+
+                quickLaunchSubList.getContent().add(quickLaunchPane);
 
                 {
                     Consumer<String> consumer = (object) -> {
@@ -642,17 +656,13 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         FXUtils.bindEnum(cboProcessPriority, versionSetting.processPriorityProperty());
 
         txtWorldFolderName.getItems().setAll(getWorlds());
-        txtServerIP.setPromptText(globalSetting ? i18n("settings.advanced.quick_launch.not_suggest.prompt") : i18n("settings.advanced.server_ip.prompt"));
 
         boolean supportModernQuickLaunch = true;
         if (versionId != null) {
             supportModernQuickLaunch = GameVersionNumber.asGameVersion(versionId).isAtLeast("1.20", "23w14a");
         }
 
-        if (globalSetting) {
-            txtWorldFolderName.setPromptText(i18n("settings.advanced.quick_launch.not_suggest.prompt"));
-            txtRealmID.setPromptText(i18n("settings.advanced.quick_launch.not_suggest.prompt"));
-        } else if (supportModernQuickLaunch) {
+        if (supportModernQuickLaunch) {
             txtWorldFolderName.setPromptText(i18n("settings.advanced.world_folder_name.prompt"));
             txtRealmID.setPromptText(i18n("settings.advanced.realm_id.prompt"));
         } else {
