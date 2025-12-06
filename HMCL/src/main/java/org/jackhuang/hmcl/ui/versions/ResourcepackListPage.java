@@ -261,10 +261,10 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
             root.setCenter(content);
 
             btnReveal.getStyleClass().add("toggle-icon4");
-            btnReveal.setGraphic(SVG.FOLDER_OPEN.createIcon(Theme.blackFill(), -1));
+            btnReveal.setGraphic(SVG.FOLDER_OPEN.createIcon());
 
             btnDelete.getStyleClass().add("toggle-icon4");
-            btnDelete.setGraphic(SVG.DELETE_FOREVER.createIcon(Theme.blackFill(), -1));
+            btnDelete.setGraphic(SVG.DELETE_FOREVER.createIcon());
 
             HBox right = new HBox(8);
             right.setAlignment(Pos.CENTER_RIGHT);

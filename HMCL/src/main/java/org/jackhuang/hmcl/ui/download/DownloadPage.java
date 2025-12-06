@@ -201,7 +201,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     }
 
     public void showResourcepackDownloads() {
-        tab.select(resourcePackTab);
+        tab.select(resourcePackTab, false);
     }
 
     public DownloadListPage showModDownloads() {
