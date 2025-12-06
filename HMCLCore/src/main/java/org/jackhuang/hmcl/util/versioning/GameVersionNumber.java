@@ -690,8 +690,8 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
 
         GameVersionNumber getPrevNormalVersion() {
             GameVersionNumber v = prev;
-            while (v instanceof Special) {
-                v = ((Special) v).prev;
+            while (v instanceof Special special) {
+                v = special.prev;
             }
 
             if (v == null) throw new AssertionError("version: " + value);
