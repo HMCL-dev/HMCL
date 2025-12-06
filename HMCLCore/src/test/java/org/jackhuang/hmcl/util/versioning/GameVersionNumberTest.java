@@ -64,13 +64,25 @@ public final class GameVersionNumberTest {
     }
 
     private static void assertOrder(String... versions) {
+        var gameVersionNumbers = new GameVersionNumber[versions.length];
+        for (int i = 0; i < versions.length; i++) {
+            gameVersionNumbers[i] = asGameVersion(versions[i]);
+        }
+
         for (int i = 0; i < versions.length - 1; i++) {
-            GameVersionNumber version1 = asGameVersion(versions[i]);
+            GameVersionNumber version1 = gameVersionNumbers[i];
+
+            for (int j = 0; j < i; j++) {
+                GameVersionNumber version2 = gameVersionNumbers[j];
+
+                assertTrue(version1.compareTo(version2) > 0, "version1=%s (%s), version2=%s (%s)".formatted(versions[i], version1.toDebugString(), versions[j], version2.toDebugString()));
+                assertTrue(version2.compareTo(version1) < 0, "version1=%s (%s), version2=%s (%s)".formatted(versions[i], version1.toDebugString(), versions[j], version2.toDebugString()));
+            }
 
             assertGameVersionEquals(versions[i]);
 
             for (int j = i + 1; j < versions.length; j++) {
-                GameVersionNumber version2 = asGameVersion(versions[j]);
+                GameVersionNumber version2 = gameVersionNumbers[j];
 
                 assertTrue(version1.compareTo(version2) < 0, "version1=%s (%s), version2=%s (%s)".formatted(versions[i], version1.toDebugString(), versions[j], version2.toDebugString()));
                 assertTrue(version2.compareTo(version1) > 0, "version1=%s (%s), version2=%s (%s)".formatted(versions[i], version1.toDebugString(), versions[j], version2.toDebugString()));
@@ -154,14 +166,17 @@ public final class GameVersionNumberTest {
         assertOldVersion("b1.6-tb3", GameVersionNumber.Type.BETA, "1.6-tb3");
         assertOldVersion("b1.8-pre1-2", GameVersionNumber.Type.BETA, "1.8-pre1-2");
         assertOldVersion("b1.9-pre1", GameVersionNumber.Type.BETA, "1.9-pre1");
-    }
 
-    @Test
-    public void testParseNew() {
-        List<String> versions = readVersions();
-        for (String version : versions) {
-            assertFalse(asGameVersion(version) instanceof GameVersionNumber.Old, "version=" + version);
-        }
+        assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Old.parse(""));
+        assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Old.parse("1.21"));
+        assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Old.parse("r-132211"));
+        assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Old.parse("rd-"));
+        assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Old.parse("rd-a"));
+        assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Old.parse("i-20100223"));
+        assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Old.parse("in-"));
+        assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Old.parse("in-a"));
+        assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Old.parse("inf-"));
+        assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Old.parse("inf-a"));
     }
 
     private static void testParseLegacySnapshot(int year, int week, char suffix) {
@@ -197,7 +212,14 @@ public final class GameVersionNumberTest {
     }
 
     @Test
-    public void testParseLegacySnapshot() {
+    public void testParseNew() {
+        List<String> versions = readVersions();
+        for (String version : versions) {
+            GameVersionNumber gameVersion = asGameVersion(version);
+            assertFalse(gameVersion instanceof GameVersionNumber.Old, "version=" + gameVersion.toDebugString());
+        }
+
+        assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Release.parse("2.1"));
         testParseLegacySnapshot(25, 46, 'a');
     }
 
@@ -314,6 +336,7 @@ public final class GameVersionNumberTest {
                 "1.14",
                 "1.15.2",
                 "20w06a",
+                "20w13b",
                 "20w14infinite",
                 "20w22a",
                 "1.16-pre1",
@@ -332,6 +355,7 @@ public final class GameVersionNumberTest {
                 "24w14a",
                 "25w45a",
                 "25w45a_unobfuscated",
+                "99w99a",
                 "26.1-snapshot-1",
                 "26.1-snapshot-2",
                 "26.1",

@@ -190,6 +190,9 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
 
     public static final class Old extends GameVersionNumber {
         static Old parse(String value) {
+            if (value.isEmpty())
+                throw new IllegalArgumentException("Empty old version number");
+
             Type type;
             int prefixLength = 1;
             switch (value.charAt(0)) {
