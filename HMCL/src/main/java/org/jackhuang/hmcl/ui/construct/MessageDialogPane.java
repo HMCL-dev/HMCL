@@ -49,8 +49,8 @@ public final class MessageDialogPane extends HBox {
         ERROR(SVG.ERROR),
         INFO(SVG.INFO),
         WARNING(SVG.WARNING),
-        QUESTION(SVG.CHECK_CIRCLE),
-        SUCCESS(SVG.HELP);
+        QUESTION(SVG.HELP),
+        SUCCESS(SVG.CHECK_CIRCLE);
 
         private final SVG icon;
 
