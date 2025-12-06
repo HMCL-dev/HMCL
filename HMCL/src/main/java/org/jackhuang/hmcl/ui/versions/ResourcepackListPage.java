@@ -18,7 +18,6 @@ import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.resourcepack.ResourcepackFile;
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
