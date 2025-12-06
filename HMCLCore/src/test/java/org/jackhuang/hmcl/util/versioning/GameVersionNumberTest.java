@@ -51,8 +51,8 @@ public final class GameVersionNumberTest {
         return versions;
     }
 
-    private static String errorMessage(String version1, String version2) {
-        return String.format("version1=%s, version2=%s", version1, version2);
+    private static Supplier<String> errorMessage(GameVersionNumber version1, GameVersionNumber version2) {
+        return () -> "version1=%s, version2=%s".formatted(version1.toDebugString(), version2.toDebugString());
     }
 
     private static void assertGameVersionEquals(String version) {
@@ -60,8 +60,12 @@ public final class GameVersionNumberTest {
     }
 
     private static void assertGameVersionEquals(String version1, String version2) {
-        assertEquals(0, asGameVersion(version1).compareTo(version2), errorMessage(version1, version2));
-        assertEquals(asGameVersion(version1), asGameVersion(version2), errorMessage(version1, version2));
+        GameVersionNumber gameVersion1 = asGameVersion(version1);
+        GameVersionNumber gameVersion2 = asGameVersion(version2);
+        assertEquals(0, gameVersion1.compareTo(gameVersion2), errorMessage(gameVersion1, gameVersion2));
+        assertEquals(gameVersion1, gameVersion2, errorMessage(gameVersion1, gameVersion2));
+        assertEquals(gameVersion2, gameVersion1, errorMessage(gameVersion1, gameVersion2));
+        assertEquals(gameVersion1.hashCode(), gameVersion2.hashCode(), errorMessage(gameVersion1, gameVersion2));
     }
 
     private static void assertOrder(String... versions) {
@@ -76,12 +80,10 @@ public final class GameVersionNumberTest {
             for (int j = 0; j < i; j++) {
                 GameVersionNumber version2 = gameVersionNumbers[j];
 
-                Supplier<String> debugMessage = () -> "version1=%s, version2=%s".formatted(version1.toDebugString(), version2.toDebugString());
-
-                assertTrue(version1.compareTo(version2) > 0, debugMessage);
-                assertTrue(version2.compareTo(version1) < 0, debugMessage);
-                assertNotEquals(version1, version2, debugMessage);
-                assertNotEquals(version2, version1, debugMessage);
+                assertTrue(version1.compareTo(version2) > 0, errorMessage(version1, version2));
+                assertTrue(version2.compareTo(version1) < 0, errorMessage(version1, version2));
+                assertNotEquals(version1, version2, errorMessage(version1, version2));
+                assertNotEquals(version2, version1, errorMessage(version1, version2));
             }
 
             assertGameVersionEquals(versions[i]);
@@ -89,12 +91,10 @@ public final class GameVersionNumberTest {
             for (int j = i + 1; j < versions.length; j++) {
                 GameVersionNumber version2 = gameVersionNumbers[j];
 
-                Supplier<String> debugMessage = () -> "version1=%s, version2=%s".formatted(version1.toDebugString(), version2.toDebugString());
-
-                assertTrue(version1.compareTo(version2) < 0, debugMessage);
-                assertTrue(version2.compareTo(version1) > 0, debugMessage);
-                assertNotEquals(version1, version2, debugMessage);
-                assertNotEquals(version2, version1, debugMessage);
+                assertTrue(version1.compareTo(version2) < 0, errorMessage(version1, version2));
+                assertTrue(version2.compareTo(version1) > 0, errorMessage(version1, version2));
+                assertNotEquals(version1, version2, errorMessage(version1, version2));
+                assertNotEquals(version2, version1, errorMessage(version1, version2));
             }
         }
 
