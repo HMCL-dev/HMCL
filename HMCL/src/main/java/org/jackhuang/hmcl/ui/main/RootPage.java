@@ -17,9 +17,12 @@
  */
 package org.jackhuang.hmcl.ui.main;
 
+import com.jfoenix.controls.JFXPopup;
 import javafx.beans.property.ReadOnlyObjectProperty;
 
+import javafx.scene.input.MouseButton;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -35,10 +38,12 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.account.AccountAdvancedListItem;
+import org.jackhuang.hmcl.ui.account.AccountMenuItem;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
@@ -62,6 +67,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
+import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -144,6 +150,11 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             // first item in left sidebar
             AccountAdvancedListItem accountListItem = new AccountAdvancedListItem();
             accountListItem.setOnAction(e -> Controllers.navigate(Controllers.getAccountListPage()));
+            accountListItem.setOnMouseClicked(e -> {
+                if (e.getButton() == MouseButton.SECONDARY) {
+                    showAccountListPopupMenu(JFXPopup.PopupHPosition.LEFT, e.getX(), e.getY());
+                }
+            });
             accountListItem.accountProperty().bind(Accounts.selectedAccountProperty());
 
             // second item in left sidebar
@@ -241,6 +252,26 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             setCenter(getSkinnable().getMainPage());
         }
 
+        private void showAccountListPopupMenu(JFXPopup.PopupHPosition hPosition, double initOffsetX, double initOffsetY) {
+            PopupMenu popupMenu = new PopupMenu();
+            JFXPopup popup = new JFXPopup(popupMenu);
+            AdvancedListBox scrollPane = new AdvancedListBox();
+            scrollPane.setPrefWidth(220);
+            scrollPane.setPrefHeight(260);
+
+            for (Account account : Accounts.getAccounts()) {
+                AccountMenuItem item = new AccountMenuItem(account);
+                item.setOnAction(e -> {
+                    Accounts.setSelectedAccount(account);
+                    popup.hide();
+                });
+                scrollPane.add(item);
+            }
+
+            popupMenu.getContent().add(scrollPane);
+            JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(getSkinnable(), popup);
+            popup.show(getSkinnable(), vPosition, hPosition, initOffsetX, initOffsetY);
+        }
     }
 
     private boolean checkedModpack = false;
