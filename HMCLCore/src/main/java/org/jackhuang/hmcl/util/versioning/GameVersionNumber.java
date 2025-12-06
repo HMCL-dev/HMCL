@@ -725,11 +725,11 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
                 return c;
 
             GameVersionNumber v = prev;
-            while (v instanceof Special) {
+            while (v instanceof Special special) {
                 if (v == other)
                     return 1;
 
-                v = ((Special) v).prev;
+                v = special.prev;
             }
 
             return -1;
