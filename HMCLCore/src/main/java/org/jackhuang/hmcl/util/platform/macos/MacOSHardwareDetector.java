@@ -32,6 +32,7 @@ import org.jackhuang.hmcl.util.platform.hardware.HardwareVendor;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
 
@@ -148,5 +149,51 @@ public final class MacOSHardwareDetector extends HardwareDetector {
         }
 
         return Collections.emptyList();
+    }
+
+    @Override
+    public long getFreeMemorySize() {
+        try {
+            Process process = Runtime.getRuntime().exec("vm_stat");
+            Map<String, String> stats;
+            long pageSize = -1;
+
+            try (var reader = process.inputReader(OperatingSystem.NATIVE_CHARSET)) {
+                List<String> lines = reader.lines().toList();
+                process.waitFor();
+
+                if (!lines.isEmpty()) {
+                    String first = lines.get(0);
+                    if (first.contains("page size of")) {
+                        pageSize = Long.parseLong(first.replaceAll(".*page size of (\\d+) bytes.*", "$1"));
+                    }
+                }
+
+                stats = KeyValuePairUtils.loadPairs(lines.iterator());
+            }
+
+            if (pageSize == -1)
+                throw new IOException("Missing 'page size' in vm_stat output");
+
+            Long freePages = null, inactivePages = null;
+            try {
+                String freeStr = stats.get("Pages free");
+                if (freeStr != null) freePages = Long.parseLong(freeStr.replace(".", ""));
+                String inactiveStr = stats.get("Pages inactive");
+                if (inactiveStr != null) inactivePages = Long.parseLong(inactiveStr.replace(".", ""));
+            } catch (NumberFormatException ignored) {
+            }
+
+            if (freePages == null) throw new IOException("Missing 'Pages free' in vm_stat output");
+            if (inactivePages == null) throw new IOException("Missing 'Pages inactive' in vm_stat output");
+
+            long available = (freePages + inactivePages) * pageSize;
+            if (available < 0) throw new IOException("Invalid available memory size: " + available + " bytes");
+
+            return available;
+        } catch (Throwable e) {
+            LOG.warning("Failed to parse vm_stat output", e);
+            return super.getFreeMemorySize();
+        }
     }
 }
