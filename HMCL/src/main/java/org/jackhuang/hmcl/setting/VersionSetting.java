@@ -480,39 +480,6 @@ public final class VersionSetting implements Cloneable, Observable {
         serverIpProperty.set(serverIp);
     }
 
-    /**
-     * The world that will be entered after Minecraft successfully loaded.
-     */
-    private final StringProperty worldFolderNameProperty = new SimpleStringProperty(this, "worldFolderName", "");
-
-    public StringProperty worldFolderNameProperty() {
-        return worldFolderNameProperty;
-    }
-
-    public String getWorldFolderName() {
-        return worldFolderNameProperty.get();
-    }
-
-    public void setWorldFolderName(String worldFolderName) {
-        worldFolderNameProperty.set(worldFolderName);
-    }
-
-    /**
-     * The realm that will be entered after Minecraft successfully loaded.
-     */
-    private final StringProperty realmIDProperty = new SimpleStringProperty(this, "realmID", "");
-
-    public StringProperty realmIDProperty() {
-        return realmIDProperty;
-    }
-
-    public String getRealmID() {
-        return realmIDProperty.get();
-    }
-
-    public void setRealmID(String realmID) {
-        realmIDProperty.set(realmID);
-    }
 
     private final BooleanProperty fullscreenProperty = new SimpleBooleanProperty(this, "fullscreen", false);
 
@@ -801,8 +768,6 @@ public final class VersionSetting implements Cloneable, Observable {
             obj.addProperty("precalledCommand", src.getPreLaunchCommand());
             obj.addProperty("postExitCommand", src.getPostExitCommand());
             obj.addProperty("serverIp", src.getServerIp());
-            obj.addProperty("worldFolderName", src.getWorldFolderName());
-            obj.addProperty("realmID", src.getRealmID());
             obj.addProperty("wrapper", src.getWrapper());
             obj.addProperty("fullscreen", src.isFullscreen());
             obj.addProperty("noJVMArgs", src.isNoJVMArgs());
@@ -872,8 +837,6 @@ public final class VersionSetting implements Cloneable, Observable {
             vs.setPreLaunchCommand(Optional.ofNullable(obj.get("precalledCommand")).map(JsonElement::getAsString).orElse(""));
             vs.setPostExitCommand(Optional.ofNullable(obj.get("postExitCommand")).map(JsonElement::getAsString).orElse(""));
             vs.setServerIp(Optional.ofNullable(obj.get("serverIp")).map(JsonElement::getAsString).orElse(""));
-            vs.setWorldFolderName(Optional.ofNullable(obj.get("worldFolderName")).map(JsonElement::getAsString).orElse(""));
-            vs.setRealmID(Optional.ofNullable(obj.get("realmID")).map(JsonElement::getAsString).orElse(""));
             vs.setWrapper(Optional.ofNullable(obj.get("wrapper")).map(JsonElement::getAsString).orElse(""));
             vs.setGameDir(Optional.ofNullable(obj.get("gameDir")).map(JsonElement::getAsString).orElse(""));
             vs.setNativesDir(Optional.ofNullable(obj.get("nativesDir")).map(JsonElement::getAsString).orElse(""));
