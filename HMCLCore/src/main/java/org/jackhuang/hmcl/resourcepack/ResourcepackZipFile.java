@@ -33,7 +33,7 @@ public final class ResourcepackZipFile implements ResourcepackFile {
                 LOG.warning("Failed to parse resourcepack meta", e);
             }
 
-            var iconEntry = zipFileTree.getEntry("pack.png");
+            var iconEntry = zipFileTree.getEntry("/pack.png");
             if (iconEntry != null) {
                 try (InputStream is = zipFileTree.getInputStream(iconEntry)) {
                     icon = is.readAllBytes();

@@ -24,7 +24,6 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.ListPageBase;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.ui.image.ImageUtils;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
@@ -189,7 +188,7 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
             byte[] iconData = file.getIcon();
             if (iconData != null) {
                 try (ByteArrayInputStream inputStream = new ByteArrayInputStream(iconData)) {
-                    image = ImageUtils.DEFAULT.load(inputStream, 64, 64, true, true);
+                    image = new Image(inputStream, 64, 64, true, true);
                 } catch (Exception e) {
                     LOG.warning("Failed to load resourcepack icon " + file.getPath(), e);
                 }
