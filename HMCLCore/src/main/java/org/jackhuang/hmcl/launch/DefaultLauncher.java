@@ -309,7 +309,7 @@ public class DefaultLauncher extends Launcher {
 
             try {
                 ServerAddress parsed = ServerAddress.parse(address);
-                if (GameVersionNumber.asGameVersion(gameVersion).compareTo("1.20") < 0) {
+                if (!GameVersionNumber.asGameVersion(gameVersion).isAtLeast("1.20", "23w14a")) {
                     res.add("--server");
                     res.add(parsed.getHost());
                     res.add("--port");
@@ -321,6 +321,16 @@ public class DefaultLauncher extends Launcher {
             } catch (IllegalArgumentException e) {
                 LOG.warning("Invalid server address: " + address, e);
             }
+        }
+
+        if (StringUtils.isNotBlank(options.getWorldFolderName()) && GameVersionNumber.asGameVersion(gameVersion).isAtLeast("1.20", "23w14a")) {
+            res.add("--quickPlaySingleplayer");
+            res.add(options.getWorldFolderName());
+        }
+
+        if (StringUtils.isNotBlank(options.getRealmID()) && GameVersionNumber.asGameVersion(gameVersion).isAtLeast("1.20", "23w14a")) {
+            res.add("--quickPlayRealms");
+            res.add(options.getRealmID());
         }
 
         if (options.isFullscreen())
