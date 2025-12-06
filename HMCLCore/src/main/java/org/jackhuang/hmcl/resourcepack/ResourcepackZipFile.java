@@ -4,6 +4,7 @@ import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.modinfo.PackMcMeta;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.tree.ZipFileTree;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,8 +46,7 @@ public final class ResourcepackZipFile implements ResourcepackFile {
         this.icon = icon;
         this.description = description;
 
-        String fileName = path.getFileName().toString();
-        name = fileName.substring(0, fileName.length() - 4);
+        name = FileUtils.getNameWithoutExtension(path);
     }
 
     @Override
