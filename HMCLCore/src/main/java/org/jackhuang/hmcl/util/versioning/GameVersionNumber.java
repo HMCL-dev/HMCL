@@ -681,7 +681,7 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
             if (versionNumber != null)
                 return versionNumber;
 
-            return versionNumber = VersionNumber.asVersion(value);
+            return versionNumber = VersionNumber.asVersion(normalized);
         }
 
         GameVersionNumber getPrevNormalVersion() {
@@ -745,14 +745,12 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
 
         @Override
         public boolean equals(Object o) {
-            return o instanceof Special that
-                    && this.versionNumber.equals(that.versionNumber)
-                    && this.prev.equals(that.prev);
+            return o instanceof Special that && this.normalized.equals(that.normalized);
         }
 
         @Override
         public int hashCode() {
-            return value.hashCode();
+            return normalized.hashCode();
         }
     }
 
