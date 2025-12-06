@@ -63,6 +63,7 @@ public final class GameVersionNumberTest {
         GameVersionNumber gameVersion1 = asGameVersion(version1);
         GameVersionNumber gameVersion2 = asGameVersion(version2);
         assertEquals(0, gameVersion1.compareTo(gameVersion2), errorMessage(gameVersion1, gameVersion2));
+        assertEquals(0, gameVersion2.compareTo(gameVersion1), errorMessage(gameVersion1, gameVersion2));
         assertEquals(gameVersion1, gameVersion2, errorMessage(gameVersion1, gameVersion2));
         assertEquals(gameVersion2, gameVersion1, errorMessage(gameVersion1, gameVersion2));
         assertEquals(gameVersion1.hashCode(), gameVersion2.hashCode(), errorMessage(gameVersion1, gameVersion2));
@@ -287,7 +288,8 @@ public final class GameVersionNumberTest {
                 "1.99.1-rc1",
                 "1.99.1",
                 "1.100",
-                "1.100.1"
+                "1.100.1",
+                "26.1"
         );
     }
 
@@ -419,13 +421,9 @@ public final class GameVersionNumberTest {
     }
 
     private static void assertNormalized(String normalized, String version) {
-        GameVersionNumber gameVersion = asGameVersion(version);
-        GameVersionNumber normalizedGameVersion = GameVersionNumber.asGameVersion(normalized);
-
-        assertEquals(normalized, gameVersion.toNormalizedString());
-        assertEquals(normalizedGameVersion, gameVersion);
-        assertEquals(0, normalizedGameVersion.compareTo(gameVersion));
-        assertEquals(0, gameVersion.compareTo(normalizedGameVersion));
+        assertGameVersionEquals(version);
+        assertGameVersionEquals(normalized, version);
+        assertEquals(normalized, asGameVersion(version).toNormalizedString());
     }
 
     @Test
