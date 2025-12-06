@@ -25,6 +25,7 @@ import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.function.Supplier;
 
 import static org.jackhuang.hmcl.util.versioning.GameVersionNumber.asGameVersion;
 import static org.junit.jupiter.api.Assertions.*;
@@ -75,8 +76,12 @@ public final class GameVersionNumberTest {
             for (int j = 0; j < i; j++) {
                 GameVersionNumber version2 = gameVersionNumbers[j];
 
-                assertTrue(version1.compareTo(version2) > 0, "version1=%s (%s), version2=%s (%s)".formatted(versions[i], version1.toDebugString(), versions[j], version2.toDebugString()));
-                assertTrue(version2.compareTo(version1) < 0, "version1=%s (%s), version2=%s (%s)".formatted(versions[i], version1.toDebugString(), versions[j], version2.toDebugString()));
+                Supplier<String> debugMessage = () -> "version1=%s, version2=%s".formatted(version1.toDebugString(), version2.toDebugString());
+
+                assertTrue(version1.compareTo(version2) > 0, debugMessage);
+                assertTrue(version2.compareTo(version1) < 0, debugMessage);
+                assertNotEquals(version1, version2, debugMessage);
+                assertNotEquals(version2, version1, debugMessage);
             }
 
             assertGameVersionEquals(versions[i]);
@@ -84,8 +89,12 @@ public final class GameVersionNumberTest {
             for (int j = i + 1; j < versions.length; j++) {
                 GameVersionNumber version2 = gameVersionNumbers[j];
 
-                assertTrue(version1.compareTo(version2) < 0, "version1=%s (%s), version2=%s (%s)".formatted(versions[i], version1.toDebugString(), versions[j], version2.toDebugString()));
-                assertTrue(version2.compareTo(version1) > 0, "version1=%s (%s), version2=%s (%s)".formatted(versions[i], version1.toDebugString(), versions[j], version2.toDebugString()));
+                Supplier<String> debugMessage = () -> "version1=%s, version2=%s".formatted(version1.toDebugString(), version2.toDebugString());
+
+                assertTrue(version1.compareTo(version2) < 0, debugMessage);
+                assertTrue(version2.compareTo(version1) > 0, debugMessage);
+                assertNotEquals(version1, version2, debugMessage);
+                assertNotEquals(version2, version1, debugMessage);
             }
         }
 
@@ -219,8 +228,14 @@ public final class GameVersionNumberTest {
             assertFalse(gameVersion instanceof GameVersionNumber.Old, "version=" + gameVersion.toDebugString());
         }
 
-        assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Release.parse("2.1"));
         testParseLegacySnapshot(25, 46, 'a');
+
+        assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.Release.parse("2.1"));
+        assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.LegacySnapshot.parse("1.0"));
+        assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.LegacySnapshot.parse("1.100.1"));
+        assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.LegacySnapshot.parse("aawbba"));
+        assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.LegacySnapshot.parse("13w12A"));
+        assertThrows(IllegalArgumentException.class, () -> GameVersionNumber.LegacySnapshot.parse("13w12~"));
     }
 
     private static void assertSimpleReleaseVersion(String simpleReleaseVersion, int major, int minor, int patch) {
@@ -353,8 +368,12 @@ public final class GameVersionNumberTest {
                 "24w13a",
                 "24w14potato",
                 "24w14a",
-                "25w45a",
-                "25w45a_unobfuscated",
+                "25w46a",
+                "25w46a_unobfuscated",
+                "1.21.11-pre1",
+                "1.21.11-pre1_unobfuscated",
+                "1.21.11-pre2",
+                "1.21.11-pre2_unobfuscated",
                 "99w99a",
                 "26.1-snapshot-1",
                 "26.1-snapshot-2",

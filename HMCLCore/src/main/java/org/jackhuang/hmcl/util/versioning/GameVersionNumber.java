@@ -489,14 +489,14 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
 
         @Override
         int compareToImpl(@NotNull GameVersionNumber other) {
-            if (other instanceof Release)
-                return compareToRelease((Release) other);
+            if (other instanceof Release release)
+                return compareToRelease(release);
 
-            if (other instanceof LegacySnapshot)
-                return compareToSnapshot((LegacySnapshot) other);
+            if (other instanceof LegacySnapshot snapshot)
+                return compareToSnapshot(snapshot);
 
-            if (other instanceof Special)
-                return -((Special) other).compareToReleaseOrSnapshot(this);
+            if (other instanceof Special special)
+                return -special.compareToReleaseOrSnapshot(this);
 
             throw new AssertionError(other.getClass());
         }
