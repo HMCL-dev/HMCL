@@ -1,6 +1,34 @@
 {
   "versions": [
     {
+      "id": "1.21.11-rc2_unobfuscated",
+      "type": "unobfuscated",
+      "url": "https://piston-meta.mojang.com/v1/packages/9282a3fb154d2a425086c62c11827281308bf93b/1.21.11-rc2_unobfuscated.json",
+      "time": "2025-12-05T11:57:45+00:00",
+      "releaseTime": "2025-12-05T11:57:45+00:00"
+    },
+    {
+      "id": "1.21.11-rc1_unobfuscated",
+      "type": "unobfuscated",
+      "url": "https://piston-meta.mojang.com/v1/packages/5d3ee0ef1f0251cf7e073354ca9e085a884a643d/1.21.11-rc1_unobfuscated.json",
+      "time": "2025-12-04T15:56:55+00:00",
+      "releaseTime": "2025-12-04T15:56:55+00:00"
+    },
+    {
+      "id": "1.21.11-pre5_unobfuscated",
+      "type": "unobfuscated",
+      "url": "https://piston-meta.mojang.com/v1/packages/1028441ca6d288bbf2103e773196bf524f7260fd/1.21.11-pre5_unobfuscated.json",
+      "time": "2025-12-03T13:34:06+00:00",
+      "releaseTime": "2025-12-03T13:34:06+00:00"
+    },
+    {
+      "id": "1.21.11-pre4_unobfuscated",
+      "type": "unobfuscated",
+      "url": "https://piston-meta.mojang.com/v1/packages/410ce37a2506adcfd54ef7d89168cfbe89cac4cb/1.21.11-pre4_unobfuscated.json",
+      "time": "2025-12-01T13:40:12+00:00",
+      "releaseTime": "2025-12-01T13:40:12+00:00"
+    },
+    {
       "id": "1.21.11-pre3_unobfuscated",
       "type": "unobfuscated",
       "url": "https://piston-meta.mojang.com/v1/packages/579bf3428f72b5ea04883d202e4831bfdcb2aa8d/1.21.11-pre3_unobfuscated.json",
