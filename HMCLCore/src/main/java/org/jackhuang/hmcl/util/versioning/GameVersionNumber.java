@@ -150,10 +150,10 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
     ///
     /// ```java
     /// GameVersionNumber.asVersion("...").isAtLeast("1.13", "17w43a");
-    /// ```
+    ///```
     ///
     /// @param strictReleaseVersion When `strictReleaseVersion` is `false`, `releaseVersion` is considered less than
-    /// its corresponding pre/rc versions.
+    ///                             its corresponding pre/rc versions.
     public boolean isAtLeast(@NotNull String releaseVersion, @NotNull String snapshotVersion, boolean strictReleaseVersion) {
         if (this instanceof Release self) {
             Release other;
@@ -813,8 +813,10 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
                         continue;
 
                     String[] parts = line.split(",");
-                    if (parts.length < 2)
-                        throw new AssertionError("Invalid line: " + line);
+                    if (parts.length < 2) {
+                        LOG.warning("Invalid line: " + line);
+                        continue;
+                    }
 
                     String normalized = parts[0];
                     Special normalizedVersion = SPECIALS.get(normalized);
