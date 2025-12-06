@@ -39,6 +39,7 @@ import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.*;
@@ -245,7 +246,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                 item.setSubtitle(formatDateTime(skinnable.getBackupTime()) + (skinnable.count == 0 ? "" : " (" + skinnable.count + ")"));
 
                 if (world.getGameVersion() != null)
-                    item.addTag(world.getGameVersion());
+                    item.addTag(I18n.getDisplayVersion(world.getGameVersion()));
             }
 
             {
