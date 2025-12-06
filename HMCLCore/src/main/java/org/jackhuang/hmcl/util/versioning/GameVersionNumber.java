@@ -788,8 +788,8 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
                     if (version instanceof LegacySnapshot snapshot) {
                         snapshots.add(snapshot);
                         snapshotPrev.add(currentRelease);
-                    } else if (version instanceof Release) {
-                        currentRelease = (Release) version;
+                    } else if (version instanceof Release release) {
+                        currentRelease = release;
 
                         if (currentRelease.eaType == Release.ReleaseType.GA) {
                             defaultGameVersions.addFirst(currentRelease.value);
