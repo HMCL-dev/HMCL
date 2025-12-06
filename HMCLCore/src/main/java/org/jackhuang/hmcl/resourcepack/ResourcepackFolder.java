@@ -20,7 +20,7 @@ public final class ResourcepackFolder implements ResourcepackFile {
 
         LocalModFile.Description description = null;
         try {
-            description = JsonUtils.fromJsonFile(path.resolve("pack.mcmeta"), PackMcMeta.class).getPackInfo().getDescription();
+            description = JsonUtils.fromJsonFile(path.resolve("pack.mcmeta"), PackMcMeta.class).pack().description();
         } catch (Exception e) {
             LOG.warning("Failed to parse resourcepack meta", e);
         }

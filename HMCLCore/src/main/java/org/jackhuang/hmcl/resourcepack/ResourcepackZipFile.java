@@ -27,7 +27,7 @@ public final class ResourcepackZipFile implements ResourcepackFile {
 
         try (var zipFileTree = new ZipFileTree(CompressingUtils.openZipFile(path))) {
             try {
-                description = JsonUtils.fromNonNullJson(zipFileTree.readTextEntry("/pack.mcmeta"), PackMcMeta.class).getPackInfo().getDescription();
+                description = JsonUtils.fromNonNullJson(zipFileTree.readTextEntry("/pack.mcmeta"), PackMcMeta.class).pack().description();
             } catch (Exception e) {
                 LOG.warning("Failed to parse resourcepack meta", e);
             }
