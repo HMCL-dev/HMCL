@@ -34,7 +34,6 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.ChunkBaseApp;
-import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
@@ -97,7 +96,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                 .addNavigationDrawerTab(header, worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE, SVG.ARCHIVE_FILL);
 
         if (world.getGameVersion() != null && // old game will not write game version to level.dat
-                GameVersionNumber.asGameVersion(world.getGameVersion()).isAtLeast("1.13", "17w43a")) {
+                world.getGameVersion().isAtLeast("1.13", "17w43a")) {
             header.getTabs().add(datapackTab);
             sideBar.addNavigationDrawerTab(header, datapackTab, i18n("world.datapack"), SVG.EXTENSION, SVG.EXTENSION_FILL);
         }
@@ -120,7 +119,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                     new IconedMenuItem(SVG.FORT, i18n("world.chunkbase.nether_fortress"), () -> ChunkBaseApp.openNetherFortressFinder(world), popup)
             );
 
-            if (GameVersionNumber.compare(world.getGameVersion(), "1.13") >= 0) {
+            if (world.getGameVersion() != null && world.getGameVersion().compareTo("1.13") >= 0) {
                 popupMenu.getContent().add(
                         new IconedMenuItem(SVG.LOCATION_CITY, i18n("world.chunkbase.end_city"), () -> ChunkBaseApp.openEndCityFinder(world), popup));
             }
