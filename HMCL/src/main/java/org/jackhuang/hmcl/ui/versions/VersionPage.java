@@ -132,12 +132,12 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
             installerListTab.getNode().loadVersion(profile, version);
         if (modListTab.isInitialized())
             modListTab.getNode().loadVersion(profile, version);
+        if (resourcePackTab.isInitialized())
+            resourcePackTab.getNode().loadVersion(profile, version);
         if (worldListTab.isInitialized())
             worldListTab.getNode().loadVersion(profile, version);
         if (schematicsTab.isInitialized())
             schematicsTab.getNode().loadVersion(profile, version);
-        if (resourcePackTab.isInitialized())
-            resourcePackTab.getNode().loadVersion(profile, version);
         currentVersionUpgradable.set(profile.getRepository().isModpack(version));
     }
 
