@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -72,8 +73,14 @@ public class TaskExecutorDialogPane extends BorderPane {
         this.setBottom(bottom);
         bottom.setPadding(new Insets(0, 8, 8, 8));
         {
-            lblProgress = new Label();
+            lblProgress = new Label("0.0 B/s");  // Prevent sudden changes in layout
             bottom.setLeft(lblProgress);
+            BorderPane.setMargin(lblProgress, new Insets(0, 0, 4, 14));
+
+            if (config().isShowLaunchTips()) {
+                LaunchTipLabel lblBottomTip = new LaunchTipLabel();
+                bottom.setCenter(lblBottomTip);
+            }
 
             btnCancel = new JFXButton(i18n("button.cancel"));
             btnCancel.getStyleClass().add("dialog-cancel");
