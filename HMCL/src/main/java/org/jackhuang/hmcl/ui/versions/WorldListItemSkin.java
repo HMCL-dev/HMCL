@@ -75,7 +75,7 @@ public final class WorldListItemSkin extends SkinBase<WorldListItem> {
             item.setSubtitle(i18n("world.datetime", formatDateTime(Instant.ofEpochMilli(world.getLastPlayed()))));
 
             if (world.getGameVersion() != null)
-                item.addTag(world.getGameVersion().toNormalizedString());
+                item.addTag(I18n.getDisplayVersion(world.getGameVersion()));
             if (world.isLocked())
                 item.addTag(i18n("world.locked"));
         }

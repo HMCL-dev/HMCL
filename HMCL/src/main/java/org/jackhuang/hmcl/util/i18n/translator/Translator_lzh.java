@@ -200,6 +200,11 @@ public class Translator_lzh extends Translator {
     }
 
     @Override
+    public String getDisplayVersion(GameVersionNumber versionNumber) {
+        return translateGameVersion(versionNumber);
+    }
+
+    @Override
     public String formatDateTime(TemporalAccessor time) {
         LocalDateTime localDateTime;
         if (time instanceof Instant instant)
