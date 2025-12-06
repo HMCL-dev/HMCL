@@ -740,8 +740,8 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
             if (o instanceof Release || o instanceof LegacySnapshot)
                 return compareToReleaseOrSnapshot(o);
 
-            if (o instanceof Special)
-                return compareToSpecial((Special) o);
+            if (o instanceof Special special)
+                return compareToSpecial(special);
 
             throw new AssertionError(o.getClass());
         }
