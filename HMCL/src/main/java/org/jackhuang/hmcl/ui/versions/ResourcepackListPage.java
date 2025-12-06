@@ -91,9 +91,10 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
             }
         }).whenComplete(Schedulers.javafx(), ((result, exception) -> {
             if (exception == null) {
-                itemsProperty().setAll(result);
+                getItems().setAll(result);
             } else {
                 LOG.warning("Failed to load resourcepacks", exception);
+                getItems().clear();
             }
             setLoading(false);
         })).start();
