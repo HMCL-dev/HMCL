@@ -24,6 +24,7 @@ import com.github.steveice10.opennbt.tag.builtin.StringTag;
 import com.github.steveice10.opennbt.tag.builtin.Tag;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.util.io.*;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -48,7 +49,7 @@ public final class World {
     private final Path file;
     private String fileName;
     private String worldName;
-    private String gameVersion;
+    private GameVersionNumber gameVersion;
     private long lastPlayed;
     private Image icon;
     private Long seed;
@@ -108,7 +109,7 @@ public final class World {
         return lastPlayed;
     }
 
-    public String getGameVersion() {
+    public @Nullable GameVersionNumber getGameVersion() {
         return gameVersion;
     }
 
@@ -188,7 +189,7 @@ public final class World {
             CompoundTag version = data.get("Version");
 
             if (version.get("Name") instanceof StringTag)
-                gameVersion = version.<StringTag>get("Name").getValue();
+                gameVersion = GameVersionNumber.asGameVersion(version.<StringTag>get("Name").getValue());
         }
 
         Tag worldGenSettings = data.get("WorldGenSettings");

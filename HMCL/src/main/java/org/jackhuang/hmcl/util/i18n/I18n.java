@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.util.i18n;
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
 import org.jackhuang.hmcl.util.i18n.translator.Translator;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -75,7 +76,11 @@ public final class I18n {
         return getTranslator().formatSpeed(bytes);
     }
 
-    public static String getDisplaySelfVersion(RemoteVersion version) {
+    public static String getDisplayVersion(RemoteVersion version) {
+        return getTranslator().getDisplayVersion(version);
+    }
+
+    public static String getDisplayVersion(GameVersionNumber version) {
         return getTranslator().getDisplayVersion(version);
     }
 
