@@ -422,9 +422,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 .setWidth(vs.getWidth())
                 .setHeight(vs.getHeight())
                 .setFullscreen(vs.isFullscreen())
-                .setServerIp(vs.getServerIp())
-                .setWorldFolderName(vs.getWorldFolderName())
-                .setRealmID(vs.getRealmID())
                 .setWrapper(vs.getWrapper())
                 .setPreLaunchCommand(vs.getPreLaunchCommand())
                 .setPostExitCommand(vs.getPostExitCommand())
@@ -441,10 +438,11 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 .setJavaArguments(javaArguments);
 
         if (quickPlayOption != null) {
-            builder.setWorldFolderName(null)
-                    .setServerIp(null)
-                    .setRealmID(null);
             quickPlayOption.applyTo(builder);
+        } else {
+            builder.setServerIp(vs.getServerIp())
+                    .setWorldFolderName(vs.getWorldFolderName())
+                    .setRealmID(vs.getRealmID());
         }
 
         if (config().hasProxy()) {

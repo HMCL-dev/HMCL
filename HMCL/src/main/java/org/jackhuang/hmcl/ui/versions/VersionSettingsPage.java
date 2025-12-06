@@ -442,7 +442,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     quickLaunchSubList.getContent().add(quickLaunchPane);
 
                     quickLaunchPane.setSpacing(8);
-                    quickLaunchPane.getChildren().add(quickLaunchGrid);
 
                     ColumnConstraints title = new ColumnConstraints();
                     ColumnConstraints value = new ColumnConstraints();
@@ -456,7 +455,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
                 {
                     HintPane notSuggestPane = new HintPane(MessageDialogPane.MessageType.WARNING);
-                    notSuggestPane.setText(i18n("settings.advanced.quick_launch.not_suggest.prompt"));
+                    notSuggestPane.setText(i18n("settings.advanced.quick_launch.not_suggest.hint"));
                     notSuggestPane.managedProperty().bind(this.globalSetting);
                     notSuggestPane.visibleProperty().bind(this.globalSetting);
                     quickLaunchPane.getChildren().add(notSuggestPane);
@@ -496,6 +495,8 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     txtRealmID.setPromptText(supportModernQuickLaunch ? i18n("settings.advanced.realm_id.prompt") : i18n("settings.advanced.quick_launch.not_support.prompt"));
                     quickLaunchGrid.addRow(2, new Label(i18n("settings.advanced.realm_id")), txtRealmID);
                 }
+
+                quickLaunchPane.getChildren().add(quickLaunchGrid);
 
                 {
                     Consumer<String> consumer = (object) -> {

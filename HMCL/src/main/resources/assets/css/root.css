@@ -1012,6 +1012,7 @@
     -fx-padding: 0;
 }
 
+/*The .no-padding style of ComponentList unexpectedly overrides the style of JFXComboBox, so fixed here.*/
 .no-padding .jfx-combo-box .list-cell {
     -fx-padding: 8;
 }
