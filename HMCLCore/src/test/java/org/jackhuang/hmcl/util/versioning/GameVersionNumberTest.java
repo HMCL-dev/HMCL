@@ -152,9 +152,9 @@ public final class GameVersionNumberTest {
             assertIterableEquals(versions, copied);
         }
 
-        for (int radomSeed = 0; radomSeed < 5; radomSeed++) {
+        for (int randomSeed = 0; randomSeed < 5; randomSeed++) {
             List<String> copied = new ArrayList<>(versions);
-            Collections.shuffle(copied, new Random(radomSeed));
+            Collections.shuffle(copied, new Random(randomSeed));
             copied.sort(Comparator.comparing(GameVersionNumber::asGameVersion));
             assertIterableEquals(versions, copied);
         }
