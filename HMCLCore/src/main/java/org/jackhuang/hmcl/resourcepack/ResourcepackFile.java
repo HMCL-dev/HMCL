@@ -16,7 +16,7 @@ public interface ResourcepackFile {
 
     Path getPath();
 
-    byte[] getIcon();
+    byte @Nullable [] getIcon();
 
     static ResourcepackFile parse(Path path) throws IOException {
         String fileName = path.getFileName().toString();

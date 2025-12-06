@@ -3,6 +3,7 @@ package org.jackhuang.hmcl.resourcepack;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.modinfo.PackMcMeta;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -13,7 +14,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class ResourcepackFolder implements ResourcepackFile {
     private final Path path;
     private final LocalModFile.Description description;
-    private final byte[] icon;
+    private final byte @Nullable [] icon;
 
     public ResourcepackFolder(Path path) {
         this.path = path;
@@ -25,10 +26,11 @@ public final class ResourcepackFolder implements ResourcepackFile {
             LOG.warning("Failed to parse resourcepack meta", e);
         }
 
-        byte[] icon = new byte[0];
+        byte[] icon;
         try {
             icon = Files.readAllBytes(path.resolve("pack.png"));
         } catch (IOException e) {
+            icon = null;
             LOG.warning("Failed to read resourcepack icon", e);
         }
         this.icon = icon;
@@ -52,7 +54,7 @@ public final class ResourcepackFolder implements ResourcepackFile {
     }
 
     @Override
-    public byte[] getIcon() {
+    public byte @Nullable [] getIcon() {
         return icon;
     }
 }
