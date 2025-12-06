@@ -431,6 +431,8 @@ public final class FXUtils {
         tooltip.setShowDelay(showDelay);
         tooltip.setShowDuration(showDuration);
         tooltip.setHideDelay(hideDelay);
+        // https://github.com/HMCL-dev/HMCL/pull/4933
+        tooltip.setStyle("-fx-text-fill: -monet-inverse-on-surface; -fx-background-color: -monet-inverse-surface;");
         Tooltip.install(node, tooltip);
     }
 
