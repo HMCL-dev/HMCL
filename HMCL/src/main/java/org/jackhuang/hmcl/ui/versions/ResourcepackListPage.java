@@ -214,6 +214,7 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
                     return;
                 }
             } else {
+                imageView.setImage(FXUtils.newBuiltinImage("/assets/img/unknown_pack.png"));
                 imageFuture = CompletableFuture.supplyAsync(this::loadIcon, Schedulers.io());
                 this.iconCache = new SoftReference<>(imageFuture);
             }
