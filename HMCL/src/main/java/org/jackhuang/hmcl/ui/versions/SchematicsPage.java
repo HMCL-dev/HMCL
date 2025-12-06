@@ -33,7 +33,6 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.schematic.LitematicFile;
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
@@ -240,7 +239,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             StackPane icon = new StackPane();
             icon.setPrefSize(size, size);
             icon.setMaxSize(size, size);
-            icon.getChildren().add(getIcon().createIcon(Theme.blackFill(), size));
+            icon.getChildren().add(getIcon().createIcon(size));
             return icon;
         }
 
@@ -580,12 +579,12 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 JFXButton btnReveal = new JFXButton();
                 FXUtils.installFastTooltip(btnReveal, i18n("reveal.in_file_manager"));
                 btnReveal.getStyleClass().add("toggle-icon4");
-                btnReveal.setGraphic(SVG.FOLDER_OPEN.createIcon(Theme.blackFill(), -1));
+                btnReveal.setGraphic(SVG.FOLDER_OPEN.createIcon());
                 btnReveal.setOnAction(event -> item.onReveal());
 
                 JFXButton btnDelete = new JFXButton();
                 btnDelete.getStyleClass().add("toggle-icon4");
-                btnDelete.setGraphic(SVG.DELETE_FOREVER.createIcon(Theme.blackFill(), -1));
+                btnDelete.setGraphic(SVG.DELETE_FOREVER.createIcon());
                 btnDelete.setOnAction(event ->
                         Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"),
                                 item::onDelete, null));

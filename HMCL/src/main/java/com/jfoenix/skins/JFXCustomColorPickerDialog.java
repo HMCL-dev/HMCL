@@ -32,15 +32,14 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Rectangle2D;
-import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.*;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.setting.StyleSheets;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -48,8 +47,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Shadi Shaheen
  */
 public class JFXCustomColorPickerDialog extends StackPane {
-
-    public static final String rgbFieldStyle = "-fx-background-color:TRANSPARENT;-fx-font-weight: BOLD;-fx-prompt-text-fill: #808080; -fx-alignment: top-left ; -fx-max-width: 300;";
     private final Stage dialog = new Stage();
     // used for concurrency control and preventing FX-thread over use
     private final AtomicInteger concurrencyController = new AtomicInteger(-1);
@@ -81,15 +78,7 @@ public class JFXCustomColorPickerDialog extends StackPane {
         pickerDecorator.setOnCloseButtonAction(this::updateColor);
         pickerDecorator.setPickOnBounds(false);
         customScene = new Scene(pickerDecorator, Color.TRANSPARENT);
-        if (owner != null) {
-            final Scene ownerScene = owner.getScene();
-            if (ownerScene != null) {
-                if (ownerScene.getUserAgentStylesheet() != null) {
-                    customScene.setUserAgentStylesheet(ownerScene.getUserAgentStylesheet());
-                }
-                customScene.getStylesheets().addAll(ownerScene.getStylesheets());
-            }
-        }
+        StyleSheets.init(customScene);
         curvedColorPicker = new JFXCustomColorPicker();
 
         StackPane pane = new StackPane(curvedColorPicker);
@@ -104,17 +93,15 @@ public class JFXCustomColorPickerDialog extends StackPane {
         JFXTextField hsbField = new JFXTextField();
         JFXTextField hexField = new JFXTextField();
 
-        rgbField.setStyle(rgbFieldStyle);
+        rgbField.getStyleClass().add("custom-color-field");
         rgbField.setPromptText("RGB Color");
         rgbField.textProperty().addListener((o, oldVal, newVal) -> updateColorFromUserInput(newVal));
 
-        hsbField.setStyle(
-                "-fx-background-color:TRANSPARENT;-fx-font-weight: BOLD;-fx-prompt-text-fill: #808080; -fx-alignment: top-left ; -fx-max-width: 300;");
+        hsbField.getStyleClass().add("custom-color-field");
         hsbField.setPromptText("HSB Color");
         hsbField.textProperty().addListener((o, oldVal, newVal) -> updateColorFromUserInput(newVal));
 
-        hexField.setStyle(
-                "-fx-background-color:TRANSPARENT;-fx-font-weight: BOLD;-fx-prompt-text-fill: #808080; -fx-alignment: top-left ; -fx-max-width: 300;");
+        hexField.getStyleClass().add("custom-color-field");
         hexField.setPromptText("#HEX Color");
         hexField.textProperty().addListener((o, oldVal, newVal) -> updateColorFromUserInput(newVal));
 
@@ -167,15 +154,15 @@ public class JFXCustomColorPickerDialog extends StackPane {
                     Color fontColor = ((Color) newVal.getFills().get(0).getFill()).grayscale()
                             .getRed() > 0.5 ? Color.valueOf(
                             "rgba(40, 40, 40, 0.87)") : Color.valueOf("rgba(255, 255, 255, 0.87)");
-                    for (Node tabNode : tabs.lookupAll(".tab")) {
-                        for (Node node : tabNode.lookupAll(".tab-label")) {
-                            ((Label) node).setTextFill(fontColor);
-                        }
-                        for (Node node : tabNode.lookupAll(".jfx-rippler")) {
-                            ((JFXRippler) node).setRipplerFill(fontColor);
-                        }
-                    }
-                    ((Pane) tabs.lookup(".tab-selected-line")).setBackground(new Background(new BackgroundFill(fontColor, CornerRadii.EMPTY, Insets.EMPTY)));
+//                    for (Node tabNode : tabs.lookupAll(".tab")) {
+//                        for (Node node : tabNode.lookupAll(".tab-label")) {
+//                            ((Label) node).setTextFill(fontColor);
+//                        }
+//                        for (Node node : tabNode.lookupAll(".jfx-rippler")) {
+//                            ((JFXRippler) node).setRipplerFill(fontColor);
+//                        }
+//                    }
+//                    ((Pane) tabs.lookup(".tab-selected-line")).setBackground(new Background(new BackgroundFill(fontColor, CornerRadii.EMPTY, Insets.EMPTY)));
                     pickerDecorator.lookupAll(".jfx-decorator-button").forEach(button -> {
                         ((JFXButton) button).setRipplerFill(fontColor);
                         ((SVGGlyph) ((JFXButton) button).getGraphic()).setFill(fontColor);

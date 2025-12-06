@@ -28,7 +28,6 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.TextFlow;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -91,7 +90,7 @@ public final class MessageDialogPane extends HBox {
             default:
                 throw new IllegalArgumentException("Unrecognized message box message type " + type);
         }
-        graphic.setGraphic(svg.createIcon(Theme.blackFill(), 40));
+        graphic.setGraphic(svg.createIcon(40));
 
         VBox vbox = new VBox();
         HBox.setHgrow(vbox, Priority.ALWAYS);
