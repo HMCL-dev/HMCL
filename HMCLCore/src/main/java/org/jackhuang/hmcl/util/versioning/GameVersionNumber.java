@@ -173,11 +173,6 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
     }
 
     @Override
-    public boolean equals(Object obj) {
-        return obj == this || obj instanceof GameVersionNumber that && compareTo(that) == 0;
-    }
-
-    @Override
     public String toString() {
         return value;
     }
@@ -257,7 +252,14 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
 
         @Override
         public int hashCode() {
-            return Objects.hash(type, versionNumber.hashCode());
+            return Objects.hash(type, versionNumber);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return o instanceof Old that
+                    && this.type == that.type
+                    && this.versionNumber.equals(that.versionNumber);
         }
     }
 
@@ -526,6 +528,17 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
         }
 
         @Override
+        public boolean equals(Object o) {
+            return o instanceof Release that
+                    && this.major == that.major
+                    && this.minor == that.minor
+                    && this.patch == that.patch
+                    && this.eaType == that.eaType
+                    && this.eaVersion.equals(that.eaVersion)
+                    && this.additional == that.additional;
+        }
+
+        @Override
         protected ToStringBuilder buildDebugString() {
             return super.buildDebugString()
                     .append("major", major)
@@ -632,6 +645,11 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
         }
 
         @Override
+        public boolean equals(Object o) {
+            return o instanceof LegacySnapshot that && this.intValue == that.intValue;
+        }
+
+        @Override
         protected ToStringBuilder buildDebugString() {
             return super.buildDebugString()
                     .append("year", getYear())
@@ -723,6 +741,13 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
                 return compareToSpecial((Special) o);
 
             throw new AssertionError(o.getClass());
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            return o instanceof Special that
+                    && this.versionNumber.equals(that.versionNumber)
+                    && this.prev.equals(that.prev);
         }
 
         @Override

@@ -32,7 +32,6 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.ChunkBaseApp;
-import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.time.Instant;
 
