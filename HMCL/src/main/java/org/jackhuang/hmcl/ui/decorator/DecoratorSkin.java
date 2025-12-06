@@ -45,7 +45,7 @@ import javafx.stage.Stage;
 
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
@@ -233,19 +233,19 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             {
                 JFXButton btnHelp = new JFXButton();
                 btnHelp.setFocusTraversable(false);
-                btnHelp.setGraphic(SVG.HELP.createIcon(Theme.foregroundFillBinding(), -1));
+                btnHelp.setGraphic(SVG.HELP.createIcon(Themes.titleFillProperty()));
                 btnHelp.getStyleClass().add("jfx-decorator-button");
                 btnHelp.setOnAction(e -> FXUtils.openLink(Metadata.CONTACT_URL));
 
                 JFXButton btnMin = new JFXButton();
                 btnMin.setFocusTraversable(false);
-                btnMin.setGraphic(SVG.MINIMIZE.createIcon(Theme.foregroundFillBinding(), -1));
+                btnMin.setGraphic(SVG.MINIMIZE.createIcon(Themes.titleFillProperty()));
                 btnMin.getStyleClass().add("jfx-decorator-button");
                 btnMin.setOnAction(e -> skinnable.minimize());
 
                 JFXButton btnClose = new JFXButton();
                 btnClose.setFocusTraversable(false);
-                btnClose.setGraphic(SVG.CLOSE.createIcon(Theme.foregroundFillBinding(), -1));
+                btnClose.setGraphic(SVG.CLOSE.createIcon(Themes.titleFillProperty()));
                 btnClose.getStyleClass().add("jfx-decorator-button");
                 btnClose.setOnAction(e -> skinnable.close());
 
@@ -265,6 +265,8 @@ public class DecoratorSkin extends SkinBase<Decorator> {
 
     private Node createNavBar(Decorator skinnable, double leftPaneWidth, boolean canBack, boolean canClose, boolean showCloseAsHome, boolean canRefresh, String title, Node titleNode) {
         BorderPane navBar = new BorderPane();
+        navBar.getStyleClass().add("navigation-bar");
+
         {
             HBox navLeft = new HBox();
             navLeft.setAlignment(Pos.CENTER_LEFT);
@@ -273,9 +275,8 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             if (canBack) {
                 JFXButton backNavButton = new JFXButton();
                 backNavButton.setFocusTraversable(false);
-                backNavButton.setGraphic(SVG.ARROW_BACK.createIcon(Theme.foregroundFillBinding(), -1));
+                backNavButton.setGraphic(SVG.ARROW_BACK.createIcon(Themes.titleFillProperty()));
                 backNavButton.getStyleClass().add("jfx-decorator-button");
-                backNavButton.ripplerFillProperty().set(Theme.whiteFill());
                 backNavButton.onActionProperty().bind(skinnable.onBackNavButtonActionProperty());
                 backNavButton.visibleProperty().set(canBack);
 
@@ -285,14 +286,13 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             if (canClose) {
                 JFXButton closeNavButton = new JFXButton();
                 closeNavButton.setFocusTraversable(false);
-                closeNavButton.setGraphic(SVG.CLOSE.createIcon(Theme.foregroundFillBinding(), -1));
+                closeNavButton.setGraphic(SVG.CLOSE.createIcon(Themes.titleFillProperty()));
                 closeNavButton.getStyleClass().add("jfx-decorator-button");
-                closeNavButton.ripplerFillProperty().set(Theme.whiteFill());
                 closeNavButton.onActionProperty().bind(skinnable.onCloseNavButtonActionProperty());
                 if (showCloseAsHome)
-                    closeNavButton.setGraphic(SVG.HOME.createIcon(Theme.foregroundFillBinding(), -1));
+                    closeNavButton.setGraphic(SVG.HOME.createIcon(Themes.titleFillProperty()));
                 else
-                    closeNavButton.setGraphic(SVG.CLOSE.createIcon(Theme.foregroundFillBinding(), -1));
+                    closeNavButton.setGraphic(SVG.CLOSE.createIcon(Themes.titleFillProperty()));
 
                 navLeft.getChildren().add(closeNavButton);
             }
@@ -304,6 +304,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             BorderPane center = new BorderPane();
             if (title != null) {
                 Label titleLabel = new Label();
+                titleLabel.textFillProperty().bind(Themes.titleFillProperty());
                 BorderPane.setAlignment(titleLabel, Pos.CENTER_LEFT);
                 titleLabel.getStyleClass().add("jfx-decorator-title");
                 if (titleNode == null) {
@@ -333,9 +334,8 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 HBox navRight = new HBox();
                 navRight.setAlignment(Pos.CENTER_RIGHT);
                 JFXButton refreshNavButton = new JFXButton();
-                refreshNavButton.setGraphic(SVG.REFRESH.createIcon(Theme.foregroundFillBinding(), -1));
+                refreshNavButton.setGraphic(SVG.REFRESH.createIcon(Themes.titleFillProperty()));
                 refreshNavButton.getStyleClass().add("jfx-decorator-button");
-                refreshNavButton.ripplerFillProperty().set(Theme.whiteFill());
                 refreshNavButton.onActionProperty().bind(skinnable.onRefreshNavButtonActionProperty());
 
                 Rectangle separator = new Rectangle();

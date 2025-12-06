@@ -60,17 +60,19 @@ public final class LiteLoaderBMCLVersionList extends VersionList<LiteLoaderRemot
 
     @Override
     public Task<?> refreshAsync(String gameVersion) {
-        return new GetTask(NetworkUtils.withQuery(downloadProvider.injectURLWithCandidates("https://bmclapi2.bangbang93.com/liteloader/list"), Map.of("mcversion", gameVersion)))
+        return new GetTask(
+                NetworkUtils.withQuery(downloadProvider.getApiRoot() + "/liteloader/list", Map.of(
+                        "mcversion", gameVersion
+                )))
                 .thenGetJsonAsync(LiteLoaderBMCLVersion.class)
                 .thenAcceptAsync(v -> {
                     lock.writeLock().lock();
                     try {
                         versions.clear();
-
                         versions.put(gameVersion, new LiteLoaderRemoteVersion(
                                 gameVersion, v.version, RemoteVersion.Type.UNCATEGORIZED,
                                 Collections.singletonList(NetworkUtils.withQuery(
-                                        downloadProvider.injectURL("https://bmclapi2.bangbang93.com/liteloader/download"),
+                                        downloadProvider.getApiRoot() + "/liteloader/download",
                                         Collections.singletonMap("version", v.version)
                                 )),
                                 v.build.getTweakClass(), v.build.getLibraries()

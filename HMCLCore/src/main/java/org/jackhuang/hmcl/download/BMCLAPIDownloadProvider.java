@@ -28,7 +28,9 @@ import org.jackhuang.hmcl.download.optifine.OptiFineBMCLVersionList;
 import org.jackhuang.hmcl.download.quilt.QuiltAPIVersionList;
 import org.jackhuang.hmcl.download.quilt.QuiltVersionList;
 import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 
+import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 
@@ -99,13 +101,13 @@ public final class BMCLAPIDownloadProvider implements DownloadProvider {
     }
 
     @Override
-    public String getVersionListURL() {
-        return apiRoot + "/mc/game/version_manifest.json";
+    public List<URI> getVersionListURLs() {
+        return List.of(URI.create(apiRoot + "/mc/game/version_manifest.json"));
     }
 
     @Override
-    public String getAssetBaseURL() {
-        return apiRoot + "/assets/";
+    public List<URI> getAssetObjectCandidates(String assetObjectLocation) {
+        return List.of(NetworkUtils.toURI(apiRoot + "/assets/" + assetObjectLocation));
     }
 
     @Override

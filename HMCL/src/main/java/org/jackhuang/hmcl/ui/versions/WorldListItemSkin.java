@@ -28,7 +28,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.game.World;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -89,7 +88,7 @@ public final class WorldListItemSkin extends SkinBase<WorldListItem> {
             JFXButton btnMore = new JFXButton();
             right.getChildren().add(btnMore);
             btnMore.getStyleClass().add("toggle-icon4");
-            btnMore.setGraphic(SVG.MORE_VERT.createIcon(Theme.blackFill(), -1));
+            btnMore.setGraphic(SVG.MORE_VERT.createIcon());
             btnMore.setOnAction(event -> showPopupMenu(JFXPopup.PopupHPosition.RIGHT, 0, root.getHeight()));
         }
 

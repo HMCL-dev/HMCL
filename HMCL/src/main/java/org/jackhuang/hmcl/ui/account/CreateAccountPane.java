@@ -50,7 +50,6 @@ import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.game.OAuthServer;
 import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.setting.Accounts;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
@@ -465,7 +464,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 linksContainer.setMinWidth(USE_PREF_SIZE);
 
                 JFXButton btnAddServer = new JFXButton();
-                btnAddServer.setGraphic(SVG.ADD.createIcon(Theme.blackFill(), 20));
+                btnAddServer.setGraphic(SVG.ADD.createIcon(20));
                 btnAddServer.getStyleClass().add("toggle-icon4");
                 btnAddServer.setOnAction(e -> {
                     Controllers.dialog(new AddAuthlibInjectorServerPane());
