@@ -250,7 +250,7 @@ public class TerracottaControllerPage extends StackPane {
                 guest.setRightIcon(SVG.ARROW_FORWARD);
                 FXUtils.onClicked(guest, () -> {
                     Controllers.prompt(i18n("terracotta.status.waiting.guest.prompt.title"), (code, resolve, reject) -> {
-                        Task<TerracottaState.GuestStarting> task = TerracottaManager.setGuesting(code);
+                        Task<TerracottaState.GuestConnecting> task = TerracottaManager.setGuesting(code);
                         if (task != null) {
                             task.whenComplete(Schedulers.javafx(), (s, e) -> {
                                 if (e != null) {
@@ -368,7 +368,7 @@ public class TerracottaControllerPage extends StackPane {
                         nodesProperty.setAll(code, copy, back, new PlayerProfileUI(hostOK.getProfiles()));
                     }
                 }
-            } else if (state instanceof TerracottaState.GuestStarting) {
+            } else if (state instanceof TerracottaState.GuestConnecting || state instanceof TerracottaState.GuestStarting) {
                 statusProperty.set(i18n("terracotta.status.guest_starting"));
                 progressProperty.set(-1);
 
@@ -383,7 +383,26 @@ public class TerracottaControllerPage extends StackPane {
                     }
                 });
 
-                nodesProperty.setAll(room);
+                nodesProperty.clear();
+                if (state instanceof TerracottaState.GuestStarting) {
+                    TerracottaState.GuestStarting.Difficulty difficulty = ((TerracottaState.GuestStarting) state).getDifficulty();
+                    if (difficulty != null && difficulty != TerracottaState.GuestStarting.Difficulty.UNKNOWN) {
+                        LineButton info = LineButton.of();
+                        info.setLeftIcon(switch (difficulty) {
+                            case UNKNOWN -> throw new AssertionError();
+                            case EASIEST, SIMPLE -> SVG.INFO;
+                            case MEDIUM, TOUGH -> SVG.WARNING;
+                        });
+
+                        String difficultyID = difficulty.name().toLowerCase(Locale.ROOT);
+                        info.setTitle(i18n(String.format("terracotta.difficulty.%s", difficultyID)));
+                        info.setSubtitle(i18n("terracotta.difficulty.estimate_only"));
+
+                        nodesProperty.add(info);
+                    }
+                }
+
+                nodesProperty.add(room);
             } else if (state instanceof TerracottaState.GuestOK guestOK) {
                 if (guestOK.isForkOf(legacyState)) {
                     if (nodesProperty.get(nodesProperty.size() - 1) instanceof PlayerProfileUI profileUI) {
