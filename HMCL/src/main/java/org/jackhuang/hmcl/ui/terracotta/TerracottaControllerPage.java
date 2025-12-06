@@ -40,13 +40,11 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.terracotta.TerracottaManager;
@@ -59,14 +57,10 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.ComponentSublist;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
-import org.jackhuang.hmcl.ui.construct.RipplerContainer;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
-import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
 import org.jackhuang.hmcl.util.logging.Logger;
@@ -173,6 +167,7 @@ public class TerracottaControllerPage extends StackPane {
                 progressProperty.set(0);
 
                 TextFlow body = FXUtils.segmentToTextFlow(i18n("terracotta.confirm.desc"), Controllers::onHyperlinkAction);
+                body.getStyleClass().add("terracotta-license");
                 body.setLineSpacing(4);
 
                 LineButton download = LineButton.of();
@@ -216,6 +211,7 @@ public class TerracottaControllerPage extends StackPane {
                 progressProperty.set(1);
 
                 TextFlow flow = FXUtils.segmentToTextFlow(i18n("terracotta.confirm.desc"), Controllers::onHyperlinkAction);
+                flow.getStyleClass().add("terracotta-license");
                 flow.setLineSpacing(4);
 
                 LineButton host = LineButton.of();
@@ -530,7 +526,13 @@ public class TerracottaControllerPage extends StackPane {
         UI_STATE.addListener(new WeakChangeListener<>(listener));
 
         VBox content = new VBox(10);
-        content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("terracotta.status")), transition);
+        content.getChildren().add(ComponentList.createComponentListTitle(i18n("terracotta.status")));
+        if (!LocaleUtils.IS_CHINA_MAINLAND) {
+            HintPane hintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
+            hintPane.setText(i18n("terracotta.unsupported.region"));
+            content.getChildren().add(hintPane);
+        }
+        content.getChildren().add(transition);
         content.setPadding(new Insets(10));
         content.setFillWidth(true);
 
@@ -559,7 +561,7 @@ public class TerracottaControllerPage extends StackPane {
             Label description = new Label(link.description().getText(I18n.getLocale().getCandidateLocales()));
             HBox placeholder = new HBox();
             HBox.setHgrow(placeholder, Priority.ALWAYS);
-            Node icon = SVG.OPEN_IN_NEW.createIcon(Theme.blackFill(), 16);
+            Node icon = SVG.OPEN_IN_NEW.createIcon(16);
             node.getChildren().setAll(description, placeholder, icon);
 
             String url = link.link();
@@ -625,9 +627,9 @@ public class TerracottaControllerPage extends StackPane {
                         }
 
                         HBox secondLine = new HBox();
+                        secondLine.getStyleClass().add("second-line");
                         {
                             Text text = new Text(button.subTitle.get());
-                            text.setFill(new Color(0, 0, 0, 0.5));
 
                             TextFlow lblSubtitle = new TextFlow(text);
                             lblSubtitle.getStyleClass().add("subtitle");
@@ -670,11 +672,11 @@ public class TerracottaControllerPage extends StackPane {
         }
 
         public void setLeftIcon(SVG left) {
-            this.left.set(left.createIcon(Theme.blackFill(), 28));
+            this.left.set(left.createIcon(28));
         }
 
         public void setRightIcon(SVG right) {
-            this.right.set(right.createIcon(Theme.blackFill(), 28));
+            this.right.set(right.createIcon(28));
         }
     }
 
