@@ -60,11 +60,6 @@ public record PackMcMeta(@SerializedName("pack") PackInfo pack) implements Valid
         public PackVersion getEffectiveMaxVersion() {
             return !maxPackVersion.isUnspecified() ? maxPackVersion : new PackVersion(packFormat, 0);
         }
-
-        @Override
-        public LocalModFile.Description description() {
-            return description;
-        }
     }
 
     public record PackVersion(int majorVersion, int minorVersion) implements Comparable<PackVersion> {
