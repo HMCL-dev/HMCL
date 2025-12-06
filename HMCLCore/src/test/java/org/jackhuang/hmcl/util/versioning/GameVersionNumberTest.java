@@ -34,6 +34,8 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public final class GameVersionNumberTest {
 
+    //region Helpers
+
     private static List<String> readVersions() {
         List<String> versions = new ArrayList<>();
 
@@ -46,16 +48,6 @@ public final class GameVersionNumberTest {
         }
 
         return versions;
-    }
-
-    @Test
-    public void testSortVersions() {
-        List<String> versions = readVersions();
-        List<String> copied = new ArrayList<>(versions);
-        Collections.shuffle(copied, new Random(0));
-        copied.sort(Comparator.comparing(GameVersionNumber::asGameVersion));
-
-        assertIterableEquals(versions, copied);
     }
 
     private static String errorMessage(String version1, String version2) {
@@ -96,6 +88,8 @@ public final class GameVersionNumberTest {
         assertEquals(VersionNumber.asVersion(versionNumber), old.versionNumber);
     }
 
+    //endregion Helpers
+
     private static boolean isAprilFools(String version) {
         return asGameVersion(version).isAprilFools();
     }
@@ -118,6 +112,31 @@ public final class GameVersionNumberTest {
         assertFalse(isAprilFools("13w12~"));
         assertFalse(isAprilFools("15w14b"));
         assertFalse(isAprilFools("25w45a_unobfuscated"));
+    }
+
+    @Test
+    public void testSortVersions() {
+        List<String> versions = readVersions();
+
+        {
+            List<String> copied = new ArrayList<>(versions);
+            copied.sort(Comparator.comparing(GameVersionNumber::asGameVersion));
+            assertIterableEquals(versions, copied);
+        }
+
+        {
+            List<String> copied = new ArrayList<>(versions);
+            Collections.reverse(copied);
+            copied.sort(Comparator.comparing(GameVersionNumber::asGameVersion));
+            assertIterableEquals(versions, copied);
+        }
+
+        for (int radomSeed = 0; radomSeed < 5; radomSeed++) {
+            List<String> copied = new ArrayList<>(versions);
+            Collections.shuffle(copied, new Random(radomSeed));
+            copied.sort(Comparator.comparing(GameVersionNumber::asGameVersion));
+            assertIterableEquals(versions, copied);
+        }
     }
 
     @Test
