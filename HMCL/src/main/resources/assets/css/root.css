@@ -1012,6 +1012,14 @@
     -fx-padding: 0;
 }
 
+.no-padding .jfx-combo-box .list-cell {
+    -fx-padding: 8;
+}
+
+.no-padding .jfx-combo-box {
+    -fx-padding: 4 8 4 8;
+}
+
 .options-list-item:first {
     -fx-background-radius: 4 4 0 0;
     -fx-border-width: 0;
