@@ -401,24 +401,42 @@ public final class GameVersionNumberTest {
 
     @Test
     public void isAtLeast() {
-        assertTrue(asGameVersion("1.13").isAtLeast("1.13", "17w43a"));
-        assertTrue(asGameVersion("1.13.1").isAtLeast("1.13", "17w43a"));
-        assertTrue(asGameVersion("1.14").isAtLeast("1.13", "17w43a"));
-        assertTrue(asGameVersion("1.13-rc1").isAtLeast("1.13", "17w43a"));
-        assertTrue(asGameVersion("1.13-pre1").isAtLeast("1.13", "17w43a"));
-        assertTrue(asGameVersion("17w43a").isAtLeast("1.13", "17w43a"));
-        assertTrue(asGameVersion("17w43b").isAtLeast("1.13", "17w43a"));
-        assertTrue(asGameVersion("17w45a").isAtLeast("1.13", "17w43a"));
+        assertTrue(asGameVersion("1.13").isAtLeast("1.13", "17w43a", true));
+        assertTrue(asGameVersion("1.13").isAtLeast("1.13", "17w43a", false));
+        assertTrue(asGameVersion("1.13.1").isAtLeast("1.13", "17w43a", true));
+        assertTrue(asGameVersion("1.13.1").isAtLeast("1.13", "17w43a", false));
+        assertTrue(asGameVersion("1.14").isAtLeast("1.13", "17w43a", true));
+        assertTrue(asGameVersion("1.14").isAtLeast("1.13", "17w43a", false));
+        assertTrue(asGameVersion("1.13-rc1").isAtLeast("1.13", "17w43a", false));
+        assertTrue(asGameVersion("1.13-pre1").isAtLeast("1.13", "17w43a", false));
+        assertTrue(asGameVersion("17w43a").isAtLeast("1.13", "17w43a", true));
+        assertTrue(asGameVersion("17w43a").isAtLeast("1.13", "17w43a", false));
+        assertTrue(asGameVersion("17w43b").isAtLeast("1.13", "17w43a", true));
+        assertTrue(asGameVersion("17w43b").isAtLeast("1.13", "17w43a", false));
+        assertTrue(asGameVersion("17w45a").isAtLeast("1.13", "17w43a", true));
+        assertTrue(asGameVersion("17w45a").isAtLeast("1.13", "17w43a", false));
 
-        assertFalse(asGameVersion("17w31a").isAtLeast("1.13", "17w43a"));
-        assertFalse(asGameVersion("1.12").isAtLeast("1.13", "17w43a"));
-        assertFalse(asGameVersion("1.12.2").isAtLeast("1.13", "17w43a"));
-        assertFalse(asGameVersion("1.12.2-pre1").isAtLeast("1.13", "17w43a"));
-        assertFalse(asGameVersion("rd-132211").isAtLeast("1.13", "17w43a"));
-        assertFalse(asGameVersion("a1.0.6").isAtLeast("1.13", "17w43a"));
 
-        assertThrows(IllegalArgumentException.class, () -> asGameVersion("1.13").isAtLeast("17w43a", "17w43a"));
-        assertThrows(IllegalArgumentException.class, () -> asGameVersion("17w43a").isAtLeast("1.13", "1.13"));
-        assertThrows(IllegalArgumentException.class, () -> asGameVersion("17w43a").isAtLeast("1.13", "22w13oneblockatatime"));
+        assertFalse(asGameVersion("1.13-rc1").isAtLeast("1.13", "17w43a", true));
+        assertFalse(asGameVersion("1.13-pre1").isAtLeast("1.13", "17w43a", true));
+        assertFalse(asGameVersion("17w31a").isAtLeast("1.13", "17w43a", true));
+        assertFalse(asGameVersion("17w31a").isAtLeast("1.13", "17w43a", false));
+        assertFalse(asGameVersion("1.12").isAtLeast("1.13", "17w43a", true));
+        assertFalse(asGameVersion("1.12").isAtLeast("1.13", "17w43a", false));
+        assertFalse(asGameVersion("1.12.2").isAtLeast("1.13", "17w43a", true));
+        assertFalse(asGameVersion("1.12.2").isAtLeast("1.13", "17w43a", false));
+        assertFalse(asGameVersion("1.12.2-pre1").isAtLeast("1.13", "17w43a", true));
+        assertFalse(asGameVersion("1.12.2-pre1").isAtLeast("1.13", "17w43a", false));
+        assertFalse(asGameVersion("rd-132211").isAtLeast("1.13", "17w43a", true));
+        assertFalse(asGameVersion("rd-132211").isAtLeast("1.13", "17w43a", false));
+        assertFalse(asGameVersion("a1.0.6").isAtLeast("1.13", "17w43a", true));
+        assertFalse(asGameVersion("a1.0.6").isAtLeast("1.13", "17w43a", false));
+
+        assertThrows(IllegalArgumentException.class, () -> asGameVersion("1.13").isAtLeast("17w43a", "17w43a", true));
+        assertThrows(IllegalArgumentException.class, () -> asGameVersion("1.13").isAtLeast("17w43a", "17w43a", false));
+        assertThrows(IllegalArgumentException.class, () -> asGameVersion("17w43a").isAtLeast("1.13", "1.13", true));
+        assertThrows(IllegalArgumentException.class, () -> asGameVersion("17w43a").isAtLeast("1.13", "1.13", false));
+        assertThrows(IllegalArgumentException.class, () -> asGameVersion("17w43a").isAtLeast("1.13", "22w13oneblockatatime", true));
+        assertThrows(IllegalArgumentException.class, () -> asGameVersion("17w43a").isAtLeast("1.13", "22w13oneblockatatime", false));
     }
 }
