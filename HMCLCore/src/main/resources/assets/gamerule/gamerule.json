@@ -1,16 +1,18 @@
 [
   {
     "ruleKey" : [
+      "advance_time",
       "doDaylightCycle"
     ],
-    "displayName" : "是否有昼夜交替",
+    "displayI18nKey" : "gamerule.advance_time",
     "defaultValue": true
   },
   {
     "ruleKey" : [
+      "random_tick_speed",
       "randomTickSpeed"
     ],
-    "displayName" : "随机刻速率",
+    "displayI18nKey" : "gamerule.random_tick_speed",
     "defaultValue": 3
   }
 ]

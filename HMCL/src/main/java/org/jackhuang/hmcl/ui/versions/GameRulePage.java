@@ -41,12 +41,11 @@ public class GameRulePage extends ListPageBase<GameRulePage.GameRuleInfo> {
     public GameRulePage(WorldManagePage worldManagePage) {
         this.worldManagePage = worldManagePage;
         ObservableList<GameRulePage.GameRuleInfo> gameRuleList = FXCollections.observableArrayList();
-        //用于测试，目前还在写UI。
         gameRuleMap.forEach((s, gameRule) -> {
             if (gameRule instanceof GameRule.BooleanGameRule booleanGameRule) {
-                gameRuleList.add(new GameRuleInfo(s, booleanGameRule.getDisplayName(), booleanGameRule.getValue()));
+                gameRuleList.add(new GameRuleInfo(s, i18n(booleanGameRule.getDisplayI18nKey()), booleanGameRule.getValue()));
             } else if (gameRule instanceof GameRule.IntGameRule intGameRule) {
-                gameRuleList.add(new GameRuleInfo(s, intGameRule.getDisplayName(), intGameRule.getValue()));
+                gameRuleList.add(new GameRuleInfo(s, i18n(intGameRule.getDisplayI18nKey()), intGameRule.getValue()));
             }
         });
 

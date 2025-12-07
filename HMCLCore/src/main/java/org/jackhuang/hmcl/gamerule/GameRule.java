@@ -22,7 +22,7 @@ import java.util.Map;
 public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule.IntGameRule {
 
     private List<String> ruleKey;
-    private String displayName = "";
+    private String displayI18nKey = "";
 
     public static GameRule createGameRule(ArrayList<String> ruleKey, String displayName, boolean value) {
         return new BooleanGameRule(ruleKey, displayName, value);
@@ -68,21 +68,21 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         return ruleKey;
     }
 
-    public void setDisplayName(String displayName) {
-        this.displayName = displayName;
+    public void setDisplayI18nKey(String displayI18nKey) {
+        this.displayI18nKey = displayI18nKey;
     }
 
-    public String getDisplayName() {
-        return displayName;
+    public String getDisplayI18nKey() {
+        return displayI18nKey;
     }
 
     public static final class BooleanGameRule extends GameRule {
         private final BooleanProperty value = new SimpleBooleanProperty(false);
         private final BooleanProperty defaultValue = new SimpleBooleanProperty(false);
 
-        private BooleanGameRule(List<String> ruleKey, String displayName, boolean value) {
+        private BooleanGameRule(List<String> ruleKey, String displayI18nKey, boolean value) {
             this.setRuleKey(ruleKey);
-            this.setDisplayName(displayName);
+            this.setDisplayI18nKey(displayI18nKey);
             this.value.set(value);
         }
 
@@ -92,7 +92,7 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
 
         @Override
         public GameRule clone() {
-            BooleanGameRule booleanGameRule = new BooleanGameRule(getRuleKey(), getDisplayName(), value.getValue());
+            BooleanGameRule booleanGameRule = new BooleanGameRule(getRuleKey(), getDisplayI18nKey(), value.getValue());
             booleanGameRule.defaultValue.setValue(defaultValue.getValue());
             return booleanGameRule;
         }
@@ -126,9 +126,9 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         private final IntegerProperty value = new SimpleIntegerProperty(0);
         private final IntegerProperty defaultValue = new SimpleIntegerProperty(0);
 
-        private IntGameRule(List<String> ruleKey, String displayName, int value) {
+        private IntGameRule(List<String> ruleKey, String displayI18nKey, int value) {
             this.setRuleKey(ruleKey);
-            this.setDisplayName(displayName);
+            this.setDisplayI18nKey(displayI18nKey);
             this.value.set(value);
         }
 
@@ -138,7 +138,7 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
 
         @Override
         public GameRule clone() {
-            IntGameRule intGameRule = new IntGameRule(getRuleKey(), getDisplayName(), value.getValue());
+            IntGameRule intGameRule = new IntGameRule(getRuleKey(), getDisplayI18nKey(), value.getValue());
             intGameRule.defaultValue.setValue(defaultValue.getValue());
             return intGameRule;
         }
@@ -187,7 +187,7 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
                 booleanGameRule.defaultValue.setValue(jsonObject.get("defaultValue").getAsBoolean());
             }
 
-            gameRule.displayName = jsonObject.get("displayName").getAsString();
+            gameRule.displayI18nKey = jsonObject.get("displayI18nKey").getAsString();
 
             JsonElement ruleKeyElement = jsonObject.get("ruleKey");
             Type listType = JsonUtils.listTypeOf(String.class).getType();
