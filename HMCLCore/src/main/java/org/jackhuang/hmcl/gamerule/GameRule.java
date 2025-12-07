@@ -21,6 +21,14 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
     private List<String> ruleKey;
     private String displayI18nKey = "";
 
+    protected GameRule() {
+    }
+
+    protected GameRule(List<String> ruleKey, String displayI18nKey) {
+        this.ruleKey = ruleKey;
+        this.displayI18nKey = displayI18nKey;
+    }
+
     public static GameRule createSimpleGameRule(String ruleKey, boolean value) {
         return new BooleanGameRule(Collections.singletonList(ruleKey), "", value);
     }
@@ -30,17 +38,8 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
     }
 
     public static GameRule mixGameRule(GameRule simpleGameRule, GameRule mapGameRule) {
-        if (simpleGameRule instanceof BooleanGameRule simplpBooleanGameRule && mapGameRule instanceof BooleanGameRule mixBooleanGameRule) {
-            simplpBooleanGameRule.setDisplayI18nKey(mixBooleanGameRule.getDisplayI18nKey());
-            simplpBooleanGameRule.setDefaultValue(mixBooleanGameRule.getDefaultValue());
-            return simplpBooleanGameRule;
-        } else if (simpleGameRule instanceof IntGameRule simplpIntGameRule && simpleGameRule instanceof IntGameRule mixIntGameRule) {
-            simplpIntGameRule.setDisplayI18nKey(mixIntGameRule.getDisplayI18nKey());
-            simplpIntGameRule.setDefaultValue(mixIntGameRule.getDefaultValue());
-            return simplpIntGameRule;
-        } else {
-            return simpleGameRule;
-        }
+        simpleGameRule.applyMetadata(mapGameRule);
+        return simpleGameRule;
     }
 
     public static void addSimpleGameRule(Map<String, GameRule> gameRuleMap, String ruleKey, String displayName, boolean value) {
@@ -57,6 +56,8 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
     }
 
     public abstract GameRule clone();
+
+    public abstract void applyMetadata(GameRule metadataSource);
 
     public void setRuleKey(List<String> ruleKey) {
         this.ruleKey = ruleKey;
@@ -79,8 +80,7 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         private final BooleanProperty defaultValue = new SimpleBooleanProperty(false);
 
         private BooleanGameRule(List<String> ruleKey, String displayI18nKey, boolean value) {
-            this.setRuleKey(ruleKey);
-            this.setDisplayI18nKey(displayI18nKey);
+            super(ruleKey, displayI18nKey);
             this.value.set(value);
         }
 
@@ -93,6 +93,14 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
             BooleanGameRule booleanGameRule = new BooleanGameRule(getRuleKey(), getDisplayI18nKey(), value.getValue());
             booleanGameRule.defaultValue.setValue(defaultValue.getValue());
             return booleanGameRule;
+        }
+
+        @Override
+        public void applyMetadata(GameRule metadataSource) {
+            if (metadataSource instanceof BooleanGameRule source) {
+                this.setDisplayI18nKey(source.getDisplayI18nKey());
+                this.setDefaultValue(source.getDefaultValue());
+            }
         }
 
         public boolean getDefaultValue() {
@@ -125,8 +133,7 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         private final IntegerProperty defaultValue = new SimpleIntegerProperty(0);
 
         private IntGameRule(List<String> ruleKey, String displayI18nKey, int value) {
-            this.setRuleKey(ruleKey);
-            this.setDisplayI18nKey(displayI18nKey);
+            super(ruleKey, displayI18nKey);
             this.value.set(value);
         }
 
@@ -139,6 +146,14 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
             IntGameRule intGameRule = new IntGameRule(getRuleKey(), getDisplayI18nKey(), value.getValue());
             intGameRule.defaultValue.setValue(defaultValue.getValue());
             return intGameRule;
+        }
+
+        @Override
+        public void applyMetadata(GameRule metadataSource) {
+            if (metadataSource instanceof IntGameRule source) {
+                this.setDisplayI18nKey(source.getDisplayI18nKey());
+                this.setDefaultValue(source.getDefaultValue());
+            }
         }
 
         public int getDefaultValue() {
