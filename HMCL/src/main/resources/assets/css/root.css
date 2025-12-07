@@ -1683,3 +1683,7 @@
     -fx-text-fill: -monet-inverse-on-surface;
     -fx-background-color: -monet-inverse-surface;
 }
+
+.tooltip .text {
+    -fx-fill: -monet-inverse-on-surface;
+}
