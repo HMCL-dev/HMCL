@@ -151,7 +151,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                     createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
                     createToolbarButton2(i18n("mods.add"), SVG.ADD, skinnable::add),
                     createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, skinnable::openModFolder),
-                    createToolbarButton2(i18n("mods.check_updates"), SVG.UPDATE, skinnable::checkUpdates),
+                    createToolbarButton2(i18n("mods.check_updates.button"), SVG.UPDATE, skinnable::checkUpdates),
                     createToolbarButton2(i18n("download"), SVG.DOWNLOAD, skinnable::download),
                     createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar))
             );

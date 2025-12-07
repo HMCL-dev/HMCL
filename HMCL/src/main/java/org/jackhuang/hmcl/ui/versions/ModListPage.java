@@ -247,8 +247,8 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                                 Controllers.navigateForward(new ModUpdatesPage(modManager, result));
                             }
                         })
-                        .withStagesHint(Collections.singletonList("mods.check_updates")),
-                i18n("update.checking"), TaskCancellationAction.NORMAL);
+                        .withStagesHint(Collections.singletonList("update.checking")),
+                i18n("mods.check_updates"), TaskCancellationAction.NORMAL);
 
         if (profile.getRepository().isModpack(instanceId)) {
             Controllers.confirm(

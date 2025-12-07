@@ -19,8 +19,8 @@ package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
+import com.jfoenix.controls.JFXSpinner;
 import javafx.scene.control.Label;
-import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.ScrollPane;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -48,7 +48,7 @@ public final class UpgradeDialog extends JFXDialogLayout {
         maxHeightProperty().bind(Controllers.getScene().heightProperty().multiply(0.7));
 
         setHeading(new Label(i18n("update.changelog")));
-        setBody(new ProgressIndicator());
+        setBody(new JFXSpinner());
 
         String url = CHANGELOG_URL + remoteVersion.getChannel().channelName + ".html";
 
