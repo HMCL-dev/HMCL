@@ -46,7 +46,6 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.io.File;
@@ -156,7 +155,7 @@ public final class WorldInfoPage extends SpinnerPane {
                 iconImageView.setImage(world.getIcon() == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : world.getIcon());
                 iconImageView.setCursor(Cursor.HAND);
 
-                Node editIcon = SVG.EDIT.createIcon(Theme.blackFill(), 12);
+                Node editIcon = SVG.EDIT.createIcon(12);
                 editIcon.setDisable(worldManagePage.isReadOnly());
                 editIcon.setCursor(Cursor.HAND);
                 Runnable onClickAction = () -> Controllers.confirm(
@@ -383,7 +382,7 @@ public final class WorldInfoPage extends SpinnerPane {
                 setRightTextLabel(spawnPane, spawnLabel, () -> {
 
                     Dimension dimension;
-                    if (GameVersionNumber.asGameVersion(world.getGameVersion()).compareTo("25w07a") >= 0) {
+                    if (world.getGameVersion().compareTo("25w07a") >= 0) {
                         CompoundTag respawnTag = player.get("respawn");
                         if (respawnTag == null) {
                             return "";
