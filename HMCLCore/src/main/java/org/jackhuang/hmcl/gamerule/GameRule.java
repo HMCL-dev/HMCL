@@ -21,14 +21,6 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
     private List<String> ruleKey;
     private String displayI18nKey = "";
 
-    public static GameRule createGameRule(ArrayList<String> ruleKey, String displayName, boolean value) {
-        return new BooleanGameRule(ruleKey, displayName, value);
-    }
-
-    public static GameRule createGameRule(ArrayList<String> ruleKey, String displayName, int value) {
-        return new IntGameRule(ruleKey, displayName, value);
-    }
-
     public static GameRule createSimpleGameRule(String ruleKey, boolean value) {
         return new BooleanGameRule(Collections.singletonList(ruleKey), "", value);
     }
@@ -51,27 +43,14 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         }
     }
 
-    public static Map<String, GameRule> addSimpleGameRule(Map<String, GameRule> gameRuleMap, String ruleKey, String displayName, boolean value) {
-        ArrayList<String> ruleKeyList = new ArrayList<>();
-        ruleKeyList.add(ruleKey);
-        gameRuleMap.put(ruleKey, new BooleanGameRule(ruleKeyList, displayName, value));
-        return gameRuleMap;
+    public static void addSimpleGameRule(Map<String, GameRule> gameRuleMap, String ruleKey, String displayName, boolean value) {
+        gameRuleMap.put(ruleKey, new BooleanGameRule(Collections.singletonList(ruleKey), displayName, value));
     }
 
-    public static Map<String, GameRule> addSimpleGameRule(Map<String, GameRule> gameRuleMap, String ruleKey, String displayName, int value) {
-        ArrayList<String> ruleKeyList = new ArrayList<>();
-        ruleKeyList.add(ruleKey);
-        gameRuleMap.put(ruleKey, new IntGameRule(ruleKeyList, displayName, value));
-        return gameRuleMap;
+    public static void addSimpleGameRule(Map<String, GameRule> gameRuleMap, String ruleKey, String displayName, int value) {
+        gameRuleMap.put(ruleKey, new IntGameRule(Collections.singletonList(ruleKey), displayName, value));
     }
 
-    public static Map<String, GameRule> addSimpleGameRule(Map<String, GameRule> gameRuleMap, String ruleKey, boolean value) {
-        return addSimpleGameRule(gameRuleMap, ruleKey, "", value);
-    }
-
-    public static Map<String, GameRule> addSimpleGameRule(Map<String, GameRule> gameRuleMap, String ruleKey, int value) {
-        return addSimpleGameRule(gameRuleMap, ruleKey, "", value);
-    }
 
     public static Map<String, GameRule> getCloneGameRuleMap() {
         return GameRule.GameRuleHolder.cloneGameRuleMap();
@@ -190,32 +169,32 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
     static class GameRuleDeserializer implements JsonDeserializer<GameRule> {
 
         @Override
-        public GameRule deserialize(JsonElement jsonElement, Type type, JsonDeserializationContext jsonDeserializationContext) throws JsonParseException {
+        public GameRule deserialize(JsonElement jsonElement, Type type, JsonDeserializationContext context) throws JsonParseException {
             JsonObject jsonObject = jsonElement.getAsJsonObject();
-            GameRule gameRule;
-            if (jsonObject.get("defaultValue") instanceof JsonPrimitive jsonPrimitive && jsonPrimitive.isNumber()) {
-                gameRule = new IntGameRule();
-            } else {
-                gameRule = new BooleanGameRule();
-            }
 
-            if (gameRule instanceof IntGameRule intGameRule) {
-                intGameRule.defaultValue.setValue(jsonObject.get("defaultValue").getAsInt());
-            } else {
-                BooleanGameRule booleanGameRule = (BooleanGameRule) gameRule;
-                booleanGameRule.defaultValue.setValue(jsonObject.get("defaultValue").getAsBoolean());
-            }
-
+            GameRule gameRule = createRuleFromDefaultValue(jsonObject.get("defaultValue"));
             gameRule.displayI18nKey = jsonObject.get("displayI18nKey").getAsString();
 
-            JsonElement ruleKeyElement = jsonObject.get("ruleKey");
             Type listType = JsonUtils.listTypeOf(String.class).getType();
-            gameRule.ruleKey = jsonDeserializationContext.deserialize(ruleKeyElement, listType);
+            gameRule.ruleKey = context.deserialize(jsonObject.get("ruleKey"), listType);
+
             return gameRule;
+        }
+
+        private GameRule createRuleFromDefaultValue(JsonElement defaultValueElement) {
+            if (defaultValueElement instanceof JsonPrimitive p && p.isNumber()) {
+                IntGameRule rule = new IntGameRule();
+                rule.setDefaultValue(defaultValueElement.getAsInt());
+                return rule;
+            } else {
+                BooleanGameRule rule = new BooleanGameRule();
+                rule.setDefaultValue(defaultValueElement.getAsBoolean());
+                return rule;
+            }
         }
     }
 
-    public static class GameRuleHolder {
+     static final class GameRuleHolder {
         private static final Map<String, GameRule> gameRuleMap = new HashMap<>();
 
         static {
@@ -227,7 +206,7 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
                 String jsonContent = new String(is.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
                 gameRules = JsonUtils.fromNonNullJson(jsonContent, JsonUtils.listTypeOf(GameRule.class));
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new RuntimeException("Failed to initialize GameRuleHolder", e);
             }
             for (GameRule gameRule : gameRules) {
                 for (String s : gameRule.ruleKey) {
