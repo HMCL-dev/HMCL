@@ -21,8 +21,8 @@ import java.util.Map;
 @JsonAdapter(GameRule.GameRuleDeserializer.class)
 public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule.IntGameRule {
 
-    List<String> ruleKey;
-    String displayName = "";
+    private List<String> ruleKey;
+    private String displayName = "";
 
     public static GameRule createGameRule(ArrayList<String> ruleKey, String displayName, boolean value) {
         return new BooleanGameRule(ruleKey, displayName, value);
@@ -32,15 +32,57 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         return new IntGameRule(ruleKey, displayName, value);
     }
 
-    public abstract GameRule clone() ;
+    public static Map<String, GameRule> addSimpleGameRule(Map<String, GameRule> gameRuleMap, String ruleKey, String displayName, boolean value) {
+        ArrayList<String> ruleKeyList = new ArrayList<>();
+        ruleKeyList.add(ruleKey);
+        gameRuleMap.put(ruleKey, new BooleanGameRule(ruleKeyList, displayName, value));
+        return gameRuleMap;
+    }
+
+    public static Map<String, GameRule> addSimpleGameRule(Map<String, GameRule> gameRuleMap, String ruleKey, String displayName, int value) {
+        ArrayList<String> ruleKeyList = new ArrayList<>();
+        ruleKeyList.add(ruleKey);
+        gameRuleMap.put(ruleKey, new IntGameRule(ruleKeyList, displayName, value));
+        return gameRuleMap;
+    }
+
+    public static Map<String, GameRule> addSimpleGameRule(Map<String, GameRule> gameRuleMap, String ruleKey, boolean value) {
+        return addSimpleGameRule(gameRuleMap, ruleKey, "", value);
+    }
+
+    public static Map<String, GameRule> addSimpleGameRule(Map<String, GameRule> gameRuleMap, String ruleKey, int value) {
+        return addSimpleGameRule(gameRuleMap, ruleKey, "", value);
+    }
+
+    public static Map<String, GameRule> getCloneGameRuleMap() {
+        return GameRule.GameRuleHolder.cloneGameRuleMap();
+    }
+
+    public abstract GameRule clone();
+
+    public void setRuleKey(List<String> ruleKey) {
+        this.ruleKey = ruleKey;
+    }
+
+    public List<String> getRuleKey() {
+        return ruleKey;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public String getDisplayName() {
+        return displayName;
+    }
 
     static final class BooleanGameRule extends GameRule {
-        BooleanProperty value = new SimpleBooleanProperty(false);
-        BooleanProperty defaultValue = new SimpleBooleanProperty(false);
+        private final BooleanProperty value = new SimpleBooleanProperty(false);
+        private final BooleanProperty defaultValue = new SimpleBooleanProperty(false);
 
         private BooleanGameRule(List<String> ruleKey, String displayName, boolean value) {
-            this.ruleKey = ruleKey;
-            this.displayName = displayName;
+            this.setRuleKey(ruleKey);
+            this.setDisplayName(displayName);
             this.value.set(value);
         }
 
@@ -50,19 +92,43 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
 
         @Override
         public GameRule clone() {
-            BooleanGameRule booleanGameRule = new BooleanGameRule(ruleKey, displayName, value.getValue());
+            BooleanGameRule booleanGameRule = new BooleanGameRule(getRuleKey(), getDisplayName(), value.getValue());
             booleanGameRule.defaultValue.setValue(defaultValue.getValue());
             return booleanGameRule;
+        }
+
+        public boolean getDefaultValue() {
+            return defaultValue.get();
+        }
+
+        public BooleanProperty defaultValueProperty() {
+            return defaultValue;
+        }
+
+        private void setDefaultValue(boolean value) {
+            this.defaultValue.setValue(value);
+        }
+
+        public boolean getValue() {
+            return value.get();
+        }
+
+        public BooleanProperty valueProperty() {
+            return value;
+        }
+
+        public void setValue(boolean value) {
+            this.value.setValue(value);
         }
     }
 
     static final class IntGameRule extends GameRule {
-        IntegerProperty value = new SimpleIntegerProperty(0);
-        IntegerProperty defaultValue = new SimpleIntegerProperty(0);
+        private final IntegerProperty value = new SimpleIntegerProperty(0);
+        private final IntegerProperty defaultValue = new SimpleIntegerProperty(0);
 
         private IntGameRule(List<String> ruleKey, String displayName, int value) {
-            this.ruleKey = ruleKey;
-            this.displayName = displayName;
+            this.setRuleKey(ruleKey);
+            this.setDisplayName(displayName);
             this.value.set(value);
         }
 
@@ -72,9 +138,33 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
 
         @Override
         public GameRule clone() {
-            IntGameRule intGameRule = new IntGameRule(ruleKey, displayName, value.getValue());
+            IntGameRule intGameRule = new IntGameRule(getRuleKey(), getDisplayName(), value.getValue());
             intGameRule.defaultValue.setValue(defaultValue.getValue());
             return intGameRule;
+        }
+
+        public int getDefaultValue() {
+            return defaultValue.get();
+        }
+
+        public IntegerProperty defaultValueProperty() {
+            return defaultValue;
+        }
+
+        private void setDefaultValue(int value) {
+            this.defaultValue.setValue(value);
+        }
+
+        public int getValue() {
+            return value.get();
+        }
+
+        public IntegerProperty valueProperty() {
+            return value;
+        }
+
+        public void setValue(int value) {
+            this.value.setValue(value);
         }
     }
 
@@ -107,7 +197,7 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
     }
 
     public static class GameRuleHolder {
-        public static Map<String, GameRule> gameRuleMap = new HashMap<>();
+        private static final Map<String, GameRule> gameRuleMap = new HashMap<>();
 
         static {
             List<GameRule> gameRules;
@@ -125,11 +215,9 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
                     gameRuleMap.put(s, gameRule);
                 }
             }
-
-            System.out.println("GameRuleMap: " + gameRuleMap);
         }
 
-        public static Map<String, GameRule> cloneGameRuleMap() {
+        private static Map<String, GameRule> cloneGameRuleMap() {
             Map<String, GameRule> newGameRuleMap = new HashMap<>();
             gameRuleMap.forEach((key, gameRule) -> newGameRuleMap.put(key, gameRule.clone()));
             return newGameRuleMap;

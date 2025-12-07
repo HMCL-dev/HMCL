@@ -36,7 +36,7 @@ public class GameRulePage extends ListPageBase<GameRulePage.GameRuleInfo> {
 
     WorldManagePage worldManagePage;
 
-    Map<String, GameRule> gameRuleMap = GameRule.GameRuleHolder.cloneGameRuleMap();
+    Map<String, GameRule> gameRuleMap = GameRule.getCloneGameRuleMap();
 
     public GameRulePage(WorldManagePage worldManagePage) {
         this.worldManagePage = worldManagePage;
