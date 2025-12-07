@@ -27,6 +27,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.StringJoiner;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -78,7 +79,7 @@ public final class ForgeNewModMetadata {
         private final String displayName;
         private final String side;
         private final String displayURL;
-        @JsonAdapter(AuthorSerializer.class)
+        @JsonAdapter(AuthorDeserializer.class)
         private final String authors;
         private final String description;
 
@@ -124,24 +125,21 @@ public final class ForgeNewModMetadata {
             return description;
         }
 
-        static final class AuthorSerializer implements JsonDeserializer<String> {
+        static final class AuthorDeserializer implements JsonDeserializer<String> {
             @Override
             public String deserialize(JsonElement authors, Type type, JsonDeserializationContext context) throws JsonParseException {
                 if (authors instanceof JsonPrimitive primitive) {
                     return primitive.getAsString();
                 } else if (authors instanceof JsonArray array) {
-                    StringBuilder builder = new StringBuilder();
+                    var joiner = new StringJoiner(", ");
                     for (int i = 0; i < array.size(); i++) {
                         if (!(array.get(i) instanceof JsonPrimitive element)) {
                             return authors.toString();
                         }
 
-                        builder.append(element.getAsString());
-                        if (array.size() - 1 != i) {
-                            builder.append(", ");
-                        }
+                        joiner.add(element.getAsString());
                     }
-                    return builder.toString();
+                    return joiner.toString();
                 }
 
                 return authors.toString();
