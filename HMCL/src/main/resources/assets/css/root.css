@@ -41,6 +41,10 @@
     -fx-text-fill: -monet-on-surface-variant;
 }
 
+.hyperlink {
+    -fx-text-fill: -monet-primary;
+}
+
 .hint {
     -fx-background-radius: 5;
     -fx-border-width: 1;
