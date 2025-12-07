@@ -76,7 +76,7 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         return displayName;
     }
 
-    static final class BooleanGameRule extends GameRule {
+    public static final class BooleanGameRule extends GameRule {
         private final BooleanProperty value = new SimpleBooleanProperty(false);
         private final BooleanProperty defaultValue = new SimpleBooleanProperty(false);
 
@@ -122,7 +122,7 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         }
     }
 
-    static final class IntGameRule extends GameRule {
+    public static final class IntGameRule extends GameRule {
         private final IntegerProperty value = new SimpleIntegerProperty(0);
         private final IntegerProperty defaultValue = new SimpleIntegerProperty(0);
 

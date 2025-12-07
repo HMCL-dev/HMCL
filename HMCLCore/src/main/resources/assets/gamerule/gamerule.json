@@ -1,8 +1,7 @@
 [
   {
     "ruleKey" : [
-      "doDaylightCycle",
-      "hello"
+      "doDaylightCycle"
     ],
     "displayName" : "是否有昼夜交替",
     "defaultValue": true

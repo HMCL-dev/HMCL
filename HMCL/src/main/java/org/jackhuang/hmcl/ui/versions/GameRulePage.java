@@ -42,40 +42,13 @@ public class GameRulePage extends ListPageBase<GameRulePage.GameRuleInfo> {
         this.worldManagePage = worldManagePage;
         ObservableList<GameRulePage.GameRuleInfo> gameRuleList = FXCollections.observableArrayList();
         //用于测试，目前还在写UI。
-        gameRuleList.add(new GameRuleInfo("sneak_speed", "潜行前进速度", 2));
-        gameRuleList.add(new GameRuleInfo("spawn_immediately", "死亡立即重生", false));
-        gameRuleList.add(new GameRuleInfo("time_advance", "时间自然流逝", true));
-        gameRuleList.add(new GameRuleInfo("max_health", "最大生命值", 30));
-        gameRuleList.add(new GameRuleInfo("pvp_enabled", "启用玩家间对抗", false));
-        gameRuleList.add(new GameRuleInfo("keep_inventory_on_death", "死亡后保留物品栏", true));
-        gameRuleList.add(new GameRuleInfo("mob_spawning_enabled", "启用怪物生成", true));
-        gameRuleList.add(new GameRuleInfo("day_night_cycle_speed", "昼夜交替速度", 1));
-        gameRuleList.add(new GameRuleInfo("fall_damage_multiplier", "掉落伤害倍率", 1));
-        gameRuleList.add(new GameRuleInfo("friendly_fire_enabled", "启用友军伤害", false));
-        gameRuleList.add(new GameRuleInfo("health_regeneration", "启用生命值自然恢复", true));
-        gameRuleList.add(new GameRuleInfo("explosions_destroy_blocks", "爆炸破坏方块", true));
-        gameRuleList.add(new GameRuleInfo("show_coordinates", "显示玩家坐标", true));
-        gameRuleList.add(new GameRuleInfo("crafting_enabled", "启用制作系统", true));
-        gameRuleList.add(new GameRuleInfo("hunger_system_enabled", "启用饥饿系统", true));
-        gameRuleList.add(new GameRuleInfo("xp_multiplier", "经验值获取倍率", 1));
-        gameRuleList.add(new GameRuleInfo("max_players", "服务器最大玩家数", 10));
-        gameRuleList.add(new GameRuleInfo("gravity_level", "重力等级", 10));
-        gameRuleList.add(new GameRuleInfo("keep_xp_on_death", "死亡后保留经验值", false));
-        gameRuleList.add(new GameRuleInfo("weather_cycle_enabled", "启用天气变化", true));
-        gameRuleList.add(new GameRuleInfo("loot_drop_multiplier", "战利品掉落倍率", 1));
-        gameRuleList.add(new GameRuleInfo("build_height_limit", "建筑高度限制", 256));
-        gameRuleList.add(new GameRuleInfo("enable_flight", "允许玩家飞行", false));
-        gameRuleList.add(new GameRuleInfo("mob_griefing", "怪物破坏环境", true));
-        gameRuleList.add(new GameRuleInfo("resource_respawn_rate", "资源刷新速率", 100));
-        gameRuleList.add(new GameRuleInfo("chat_enabled", "启用游戏内聊天", true));
-        gameRuleList.add(new GameRuleInfo("max_mana", "最大法力值", 100));
-        gameRuleList.add(new GameRuleInfo("mana_regeneration_rate", "法力恢复速度", 5));
-        gameRuleList.add(new GameRuleInfo("stamina_consumption_rate", "耐力消耗速率", 1));
-        gameRuleList.add(new GameRuleInfo("enable_portals", "启用传送门", true));
-        gameRuleList.add(new GameRuleInfo("difficulty_level", "游戏难度等级", 2));
-        gameRuleList.add(new GameRuleInfo("command_blocks_enabled", "启用命令方块", false));
-        gameRuleList.add(new GameRuleInfo("structure_generation", "生成世界结构", true));
-        gameRuleList.add(new GameRuleInfo("item_durability", "启用物品耐久度", true));
+        gameRuleMap.forEach((s, gameRule) -> {
+            if (gameRule instanceof GameRule.BooleanGameRule booleanGameRule) {
+                gameRuleList.add(new GameRuleInfo(s, booleanGameRule.getDisplayName(), booleanGameRule.getValue()));
+            } else if (gameRule instanceof GameRule.IntGameRule intGameRule) {
+                gameRuleList.add(new GameRuleInfo(s, intGameRule.getDisplayName(), intGameRule.getValue()));
+            }
+        });
 
         setItems(gameRuleList);
     }
