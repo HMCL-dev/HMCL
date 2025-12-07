@@ -89,7 +89,7 @@
     -fx-fill: -monet-on-tertiary-fixed;
 }
 
-.hint.warning .hyperlink{
+.hint.warning .hyperlink {
     -fx-fill: -fx-hyperlink-fill;
     -fx-text-fill: -fx-hyperlink-fill;
 }
