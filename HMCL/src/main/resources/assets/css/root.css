@@ -45,6 +45,10 @@
     -fx-text-fill: -monet-primary;
 }
 
+.hyperlink:focused {
+    -fx-border-color: -monet-primary;
+}
+
 .hint {
     -fx-background-radius: 5;
     -fx-border-width: 1;
