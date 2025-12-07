@@ -53,7 +53,6 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         gameRuleMap.put(ruleKey, new IntGameRule(Collections.singletonList(ruleKey), displayName, value));
     }
 
-
     public static Map<String, GameRule> getCloneGameRuleMap() {
         return GameRule.GameRuleHolder.cloneGameRuleMap();
     }

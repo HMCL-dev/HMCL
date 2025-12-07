@@ -241,7 +241,6 @@ public class GameRulePage extends ListPageBase<GameRulePage.GameRuleInfo> {
         INT, BOOLEAN
     }
 
-
     private CompoundTag loadWorldInfo() throws IOException {
         if (!Files.isDirectory(world.getFile()))
             throw new IOException("Not a valid world directory");
