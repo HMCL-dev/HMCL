@@ -101,7 +101,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         TableView<ModUpdateObject> table = new TableView<>(objects);
         table.setEditable(true);
         table.getColumns().setAll(enabledColumn, fileNameColumn, currentVersionColumn, targetVersionColumn, sourceColumn);
-        setMargin(table, new Insets(8, 8, 5, 8));
+        setMargin(table, new Insets(10, 10, 5, 10));
 
         setCenter(table);
 
