@@ -72,7 +72,7 @@ public final class MinecraftWiki {
                 else if (wikiVersion.startsWith("1.0.0-rc2"))
                     wikiVersion = "1.0.0-rc2";
             }
-        } else if (gameVersion instanceof GameVersionNumber.Snapshot) {
+        } else if (gameVersion instanceof GameVersionNumber.LegacySnapshot) {
             return locale.i18n("wiki.version.game.snapshot", wikiVersion) + variantSuffix;
         } else {
             if (wikiVersion.length() >= 6 && wikiVersion.charAt(2) == 'w') {

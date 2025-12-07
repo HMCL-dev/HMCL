@@ -23,9 +23,9 @@ import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.ModManager;
-import org.jackhuang.hmcl.util.Immutable;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.Validation;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -36,28 +36,12 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-@Immutable
-public class PackMcMeta implements Validation {
-    @SerializedName("pack")
-    private final PackInfo pack;
-
-    public PackMcMeta() {
-        this(new PackInfo());
-    }
-
-    public PackMcMeta(PackInfo packInfo) {
-        this.pack = packInfo;
-    }
-
-    public PackInfo getPackInfo() {
-        return pack;
-    }
-
+@JsonSerializable
+public record PackMcMeta(@SerializedName("pack") PackInfo pack) implements Validation {
     @Override
     public void validate() throws JsonParseException {
         if (pack == null)
@@ -65,39 +49,16 @@ public class PackMcMeta implements Validation {
     }
 
     @JsonAdapter(PackInfoDeserializer.class)
-    public static class PackInfo {
-        @SerializedName("pack_format")
-        private final int packFormat;
-
-        @SerializedName("min_format")
-        private final PackVersion minPackVersion;
-        @SerializedName("max_format")
-        private final PackVersion maxPackVersion;
-
-        @SerializedName("description")
-        private final LocalModFile.Description description;
-
-        public PackInfo() {
-            this(0, PackVersion.UNSPECIFIED, PackVersion.UNSPECIFIED, new LocalModFile.Description(Collections.emptyList()));
-        }
-
-        public PackInfo(int packFormat, PackVersion minPackVersion, PackVersion maxPackVersion, LocalModFile.Description description) {
-            this.packFormat = packFormat;
-            this.minPackVersion = minPackVersion;
-            this.maxPackVersion = maxPackVersion;
-            this.description = description;
-        }
-
+    public record PackInfo(@SerializedName("pack_format") int packFormat,
+                           @SerializedName("min_format") PackVersion minPackVersion,
+                           @SerializedName("max_format") PackVersion maxPackVersion,
+                           @SerializedName("description") LocalModFile.Description description) {
         public PackVersion getEffectiveMinVersion() {
             return !minPackVersion.isUnspecified() ? minPackVersion : new PackVersion(packFormat, 0);
         }
 
         public PackVersion getEffectiveMaxVersion() {
             return !maxPackVersion.isUnspecified() ? maxPackVersion : new PackVersion(packFormat, 0);
-        }
-
-        public LocalModFile.Description getDescription() {
-            return description;
         }
     }
 
@@ -148,7 +109,7 @@ public class PackMcMeta implements Validation {
         }
     }
 
-    public static class PackInfoDeserializer implements JsonDeserializer<PackInfo> {
+    public static final class PackInfoDeserializer implements JsonDeserializer<PackInfo> {
 
         private List<LocalModFile.Description.Part> pairToPart(List<Pair<String, String>> lists, String color) {
             List<LocalModFile.Description.Part> parts = new ArrayList<>();

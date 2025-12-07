@@ -28,6 +28,8 @@ import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.css.*;
 import javafx.css.converter.BooleanConverter;
 import javafx.geometry.Insets;
@@ -60,6 +62,9 @@ public final class JFXColorPickerSkin extends JFXGenericPickerSkin<Color> {
             "colorLabelVisible",
             true);
 
+    private final ObjectProperty<Color> textFill = new SimpleObjectProperty<>(Color.BLACK);
+    private final ObjectProperty<Background> colorBoxBackground = new SimpleObjectProperty<>(null);
+
     public JFXColorPickerSkin(final ColorPicker colorPicker) {
         super(colorPicker);
 
@@ -67,14 +72,16 @@ public final class JFXColorPickerSkin extends JFXGenericPickerSkin<Color> {
         displayNode = new Label("");
         displayNode.getStyleClass().add("color-label");
         displayNode.setMouseTransparent(true);
+        displayNode.textFillProperty().bind(textFill);
 
         // label graphic
         colorBox = new JFXClippedPane(displayNode);
         colorBox.getStyleClass().add("color-box");
         colorBox.setManaged(false);
+        colorBox.backgroundProperty().bind(colorBoxBackground);
         initColor();
         final JFXRippler rippler = new JFXRippler(colorBox, JFXRippler.RipplerMask.FIT);
-        rippler.ripplerFillProperty().bind(displayNode.textFillProperty());
+        rippler.ripplerFillProperty().bind(textFill);
         getChildren().setAll(rippler);
         JFXDepthManager.setDepth(getSkinnable(), 1);
         getSkinnable().setPickOnBounds(false);
@@ -168,13 +175,13 @@ public final class JFXColorPickerSkin extends JFXGenericPickerSkin<Color> {
                             200,
                             Interpolator.EASE_BOTH)));
             animateColor.setOnFinished((finish) -> {
-                JFXNodeUtils.updateBackground(colorBox.getBackground(), colorBox, colorCircle.getFill());
+                colorBoxBackground.set(new Background(new BackgroundFill(colorCircle.getFill(), new CornerRadii(3), Insets.EMPTY)));
                 colorBox.getChildren().remove(colorCircle);
             });
             animateColor.play();
         }
         // update label color
-        displayNode.setTextFill(circleColor.grayscale().getRed() < 0.5 ? Color.valueOf(
+        textFill.set(circleColor.grayscale().getRed() < 0.5 ? Color.valueOf(
                 "rgba(255, 255, 255, 0.87)") : Color.valueOf("rgba(0, 0, 0, 0.87)"));
         if (colorLabelVisible.get()) {
             displayNode.setText(JFXNodeUtils.colorToHex(circleColor));
@@ -188,9 +195,9 @@ public final class JFXColorPickerSkin extends JFXGenericPickerSkin<Color> {
         Color color = colorPicker.getValue();
         Color circleColor = color == null ? Color.WHITE : color;
         // update picker box color
-        colorBox.setBackground(new Background(new BackgroundFill(circleColor, new CornerRadii(3), Insets.EMPTY)));
+        colorBoxBackground.set(new Background(new BackgroundFill(circleColor, new CornerRadii(3), Insets.EMPTY)));
         // update label color
-        displayNode.setTextFill(circleColor.grayscale().getRed() < 0.5 ? Color.valueOf(
+        textFill.set(circleColor.grayscale().getRed() < 0.5 ? Color.valueOf(
                 "rgba(255, 255, 255, 0.87)") : Color.valueOf("rgba(0, 0, 0, 0.87)"));
         if (colorLabelVisible.get()) {
             displayNode.setText(JFXNodeUtils.colorToHex(circleColor));

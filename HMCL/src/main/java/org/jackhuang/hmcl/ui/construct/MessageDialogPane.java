@@ -46,11 +46,21 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public final class MessageDialogPane extends HBox {
 
     public enum MessageType {
-        ERROR,
-        INFO,
-        WARNING,
-        QUESTION,
-        SUCCESS;
+        ERROR(SVG.ERROR),
+        INFO(SVG.INFO),
+        WARNING(SVG.WARNING),
+        QUESTION(SVG.HELP),
+        SUCCESS(SVG.CHECK_CIRCLE);
+
+        private final SVG icon;
+
+        MessageType(SVG icon) {
+            this.icon = icon;
+        }
+
+        public SVG getIcon() {
+            return icon;
+        }
 
         public String getDisplayName() {
             return i18n("message." + name().toLowerCase(Locale.ROOT));
@@ -70,27 +80,7 @@ public final class MessageDialogPane extends HBox {
         graphic.setTranslateY(10);
         graphic.setMinSize(40, 40);
         graphic.setMaxSize(40, 40);
-        SVG svg;
-        switch (type) {
-            case INFO:
-                svg = SVG.INFO;
-                break;
-            case ERROR:
-                svg = SVG.ERROR;
-                break;
-            case SUCCESS:
-                svg = SVG.CHECK_CIRCLE;
-                break;
-            case WARNING:
-                svg = SVG.WARNING;
-                break;
-            case QUESTION:
-                svg = SVG.HELP;
-                break;
-            default:
-                throw new IllegalArgumentException("Unrecognized message box message type " + type);
-        }
-        graphic.setGraphic(svg.createIcon(40));
+        graphic.setGraphic(type.getIcon().createIcon(40));
 
         VBox vbox = new VBox();
         HBox.setHgrow(vbox, Priority.ALWAYS);
