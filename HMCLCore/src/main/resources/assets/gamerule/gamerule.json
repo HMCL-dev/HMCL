@@ -1,0 +1,17 @@
+[
+  {
+    "ruleKey" : [
+      "doDaylightCycle",
+      "hello"
+    ],
+    "displayName" : "是否有昼夜交替",
+    "defaultValue": true
+  },
+  {
+    "ruleKey" : [
+      "randomTickSpeed"
+    ],
+    "displayName" : "随机刻速率",
+    "defaultValue": 3
+  }
+]

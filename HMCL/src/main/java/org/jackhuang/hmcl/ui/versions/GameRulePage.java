@@ -17,6 +17,7 @@ import javafx.scene.control.SkinBase;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
+import org.jackhuang.hmcl.gamerule.GameRule;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.ListPageBase;
 import org.jackhuang.hmcl.ui.SVG;
@@ -26,12 +27,16 @@ import org.jackhuang.hmcl.ui.construct.OptionToggleButton;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.util.Holder;
 
+import java.util.Map;
+
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameRulePage extends ListPageBase<GameRulePage.GameRuleInfo> {
 
     WorldManagePage worldManagePage;
+
+    Map<String, GameRule> gameRuleMap = GameRule.GameRuleHolder.cloneGameRuleMap();
 
     public GameRulePage(WorldManagePage worldManagePage) {
         this.worldManagePage = worldManagePage;
