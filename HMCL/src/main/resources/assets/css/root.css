@@ -48,7 +48,7 @@
     -fx-padding: 6;
 }
 
-.hint {
+.hint .hyperlink {
     -fx-fill: -monet-primary;
     -fx-text-fill: -monet-primary;
 }
@@ -158,7 +158,7 @@
     -fx-font-size: 13px;
 }
 
-.announcement {
+.announcement .hyperlink {
     -fx-fill: -monet-primary;
     -fx-font-size: 13px;
 }
@@ -350,7 +350,7 @@
     -fx-fill: -monet-on-surface;
 }
 
-.game-crash-window .crash-reason-text-flow {
+.game-crash-window .crash-reason-text-flow .hyperlink {
     -fx-fill: -monet-primary;
 }
 
