@@ -671,11 +671,6 @@
     -fx-padding: 10.0;
 }
 
-.jfx-tool-bar-button .jfx-rippler {
-    -jfx-rippler-fill: -monet-on-surface;
-    -jfx-mask-type: CIRCLE;
-}
-
 .jfx-decorator-button {
     -fx-max-width: 40px;
     -fx-background-radius: 5px;
@@ -763,6 +758,10 @@
     -jfx-rippler-fill: -monet-on-primary;
     -jfx-mask-type: CIRCLE;
     -fx-padding: 0.0;
+}
+
+.jfx-tool-bar-button .jfx-rippler {
+    -jfx-rippler-fill: -monet-on-surface;
 }
 
 .jfx-button-raised {
