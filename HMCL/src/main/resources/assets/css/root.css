@@ -1541,7 +1541,6 @@
  * Scroll Bar			                                                       *
  *                                                                             *
  ******************************************************************************/
-/* unsued? */
 
 .scroll-bar:vertical > .track-background, .scroll-bar:horizontal > .track-background {
     -fx-background-color: #F1F1F1;
@@ -1572,6 +1571,14 @@
 
 .scroll-bar > .decrement-button > .decrement-arrow {
     -fx-shape: "M298 598l214-214 214 214h-428z";
+}
+
+.jfx-combo-box .scroll-bar {
+    -fx-skin: "org.jackhuang.hmcl.ui.construct.FloatScrollBarSkin";
+}
+
+.jfx-combo-box .scroll-bar .track {
+    -fx-fill: transparent;
 }
 
 /*******************************************************************************
