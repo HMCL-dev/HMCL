@@ -12,10 +12,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @JsonSerializable
 @JsonAdapter(GameRule.GameRuleDeserializer.class)
@@ -30,6 +27,28 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
 
     public static GameRule createGameRule(ArrayList<String> ruleKey, String displayName, int value) {
         return new IntGameRule(ruleKey, displayName, value);
+    }
+
+    public static GameRule createSimpleGameRule(String ruleKey, boolean value) {
+        return new BooleanGameRule(Collections.singletonList(ruleKey), "", value);
+    }
+
+    public static GameRule createSimpleGameRule(String ruleKey, int value) {
+        return new IntGameRule(Collections.singletonList(ruleKey), "", value);
+    }
+
+    public static GameRule mixGameRule(GameRule simpleGameRule, GameRule mapGameRule) {
+        if (simpleGameRule instanceof BooleanGameRule simplpBooleanGameRule && mapGameRule instanceof BooleanGameRule mixBooleanGameRule) {
+            simplpBooleanGameRule.setDisplayI18nKey(mixBooleanGameRule.getDisplayI18nKey());
+            simplpBooleanGameRule.setDefaultValue(mixBooleanGameRule.getDefaultValue());
+            return simplpBooleanGameRule;
+        } else if (simpleGameRule instanceof IntGameRule simplpIntGameRule && simpleGameRule instanceof IntGameRule mixIntGameRule) {
+            simplpIntGameRule.setDisplayI18nKey(mixIntGameRule.getDisplayI18nKey());
+            simplpIntGameRule.setDefaultValue(mixIntGameRule.getDefaultValue());
+            return simplpIntGameRule;
+        } else {
+            return simpleGameRule;
+        }
     }
 
     public static Map<String, GameRule> addSimpleGameRule(Map<String, GameRule> gameRuleMap, String ruleKey, String displayName, boolean value) {

@@ -1,5 +1,8 @@
 package org.jackhuang.hmcl.ui.versions;
 
+import com.github.steveice10.opennbt.tag.builtin.ByteTag;
+import com.github.steveice10.opennbt.tag.builtin.CompoundTag;
+import com.github.steveice10.opennbt.tag.builtin.IntTag;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXTextField;
@@ -17,7 +20,10 @@ import javafx.scene.control.SkinBase;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
+import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.gamerule.GameRule;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.ListPageBase;
 import org.jackhuang.hmcl.ui.SVG;
@@ -27,29 +33,96 @@ import org.jackhuang.hmcl.ui.construct.OptionToggleButton;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.util.Holder;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.HashMap;
 import java.util.Map;
 
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class GameRulePage extends ListPageBase<GameRulePage.GameRuleInfo> {
 
-    WorldManagePage worldManagePage;
+    private WorldManagePage worldManagePage;
+    private World world;
+    private CompoundTag levelDat;
 
     Map<String, GameRule> gameRuleMap = GameRule.getCloneGameRuleMap();
+    Map<String, GameRule> gameRuleFinalMap = new HashMap<>();
+
+    ObservableList<GameRulePage.GameRuleInfo> gameRuleList;
 
     public GameRulePage(WorldManagePage worldManagePage) {
         this.worldManagePage = worldManagePage;
-        ObservableList<GameRulePage.GameRuleInfo> gameRuleList = FXCollections.observableArrayList();
-        gameRuleMap.forEach((s, gameRule) -> {
+        this.world = worldManagePage.getWorld();
+
+        gameRuleList = FXCollections.observableArrayList();
+        setItems(gameRuleList);
+
+        this.setLoading(true);
+        Task.supplyAsync(this::loadWorldInfo)
+                .whenComplete(Schedulers.javafx(), ((result, exception) -> {
+                    if (exception == null) {
+                        this.levelDat = result;
+                        updateControls();
+                        setLoading(false);
+                    } else {
+                        LOG.warning("Failed to load level.dat", exception);
+                        setFailedReason(i18n("world.info.failed"));
+                    }
+                })).start();
+    }
+
+    public void updateControls() {
+        boolean isNewGameRuleFormat;
+
+        CompoundTag dataTag = levelDat.get("Data");
+        CompoundTag gameRuleCompoundTag = dataTag.get("game_rules");
+        if (gameRuleCompoundTag == null) {
+            gameRuleCompoundTag = dataTag.get("GameRules");
+            isNewGameRuleFormat = false;
+        } else {
+            isNewGameRuleFormat = true;
+        }
+        if (isNewGameRuleFormat) {
+            gameRuleCompoundTag.iterator().forEachRemaining(gameRuleTag -> {
+                LOG.trace(gameRuleTag.toString());
+                if (gameRuleTag instanceof IntTag intTag) {
+                    GameRule finalGameRule = GameRule.createSimpleGameRule(intTag.getName(), intTag.getValue());
+                    gameRuleMap.forEach((key, itGameRule) -> {
+                        if (gameRuleTag.getName().equals(key) && itGameRule instanceof GameRule.IntGameRule intGameRule) {
+                            gameRuleFinalMap.put(key, GameRule.mixGameRule(finalGameRule, intGameRule));
+                            LOG.trace("find one: " + finalGameRule.getRuleKey() + ", intTag is " + intTag.getValue());
+                        }
+                    });
+                } else if (gameRuleTag instanceof ByteTag byteTag) {
+                    GameRule finalGameRule = GameRule.createSimpleGameRule(byteTag.getName(), byteTag.getValue() == 1);
+                    gameRuleMap.forEach((key, itGameRule) -> {
+                        if (gameRuleTag.getName().equals(key) && itGameRule instanceof GameRule.BooleanGameRule booleanGameRule) {
+                            gameRuleFinalMap.put(key, GameRule.mixGameRule(finalGameRule, booleanGameRule));
+                            LOG.trace("find one: " + finalGameRule.getRuleKey() + ", byteTag is " + byteTag.getValue());
+                        }
+                    });
+                }
+            });
+        }
+
+        LOG.trace("gameRuleFinalMap: size" + gameRuleFinalMap.size() + ", detail: " + gameRuleFinalMap.toString());
+        gameRuleFinalMap.forEach((s, gameRule) -> {
+            String displayText;
+            try {
+                displayText = i18n(gameRule.getDisplayI18nKey());
+            } catch (Exception e) {
+                displayText = gameRule.getDisplayI18nKey();
+            }
             if (gameRule instanceof GameRule.BooleanGameRule booleanGameRule) {
-                gameRuleList.add(new GameRuleInfo(s, i18n(booleanGameRule.getDisplayI18nKey()), booleanGameRule.getValue()));
+                gameRuleList.add(new GameRuleInfo(s, displayText, booleanGameRule.getValue()));
             } else if (gameRule instanceof GameRule.IntGameRule intGameRule) {
-                gameRuleList.add(new GameRuleInfo(s, i18n(intGameRule.getDisplayI18nKey()), intGameRule.getValue()));
+                gameRuleList.add(new GameRuleInfo(s, displayText, intGameRule.getValue()));
             }
         });
 
-        setItems(gameRuleList);
     }
 
     @Override
@@ -167,5 +240,13 @@ public class GameRulePage extends ListPageBase<GameRulePage.GameRuleInfo> {
 
     enum GameRuleType {
         INT, BOOLEAN
+    }
+
+
+    private CompoundTag loadWorldInfo() throws IOException {
+        if (!Files.isDirectory(world.getFile()))
+            throw new IOException("Not a valid world directory");
+
+        return world.readLevelDat();
     }
 }

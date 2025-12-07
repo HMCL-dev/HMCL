@@ -1,18 +1,465 @@
 [
   {
-    "ruleKey" : [
-      "advance_time",
-      "doDaylightCycle"
+    "ruleKey": [
+      "minecraft:advance_time",
+      "minecraft:doDaylightCycle"
     ],
-    "displayI18nKey" : "gamerule.advance_time",
+    "displayI18nKey": "gamerule.advance_time",
     "defaultValue": true
   },
   {
-    "ruleKey" : [
-      "random_tick_speed",
-      "randomTickSpeed"
+    "ruleKey": [
+      "minecraft:advance_weather",
+      "minecraft:doWeatherCycle"
     ],
-    "displayI18nKey" : "gamerule.random_tick_speed",
+    "displayI18nKey": "gamerule.advance_weather",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:allowFireTicksAwayFromPlayer"
+    ],
+    "displayI18nKey": "gamerule.allow_fire_ticks_away_from_player",
+    "defaultValue": false
+  },
+  {
+    "ruleKey": [
+      "minecraft:allow_entering_nether_using_portals"
+    ],
+    "displayI18nKey": "gamerule.allow_entering_nether_using_portals",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:block_drops",
+      "minecraft:doTileDrops"
+    ],
+    "displayI18nKey": "gamerule.block_drops",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:block_explosion_drop_decay"
+    ],
+    "displayI18nKey": "gamerule.block_explosion_drop_decay",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:command_block_output",
+      "minecraft:commandBlockOutput"
+    ],
+    "displayI18nKey": "gamerule.command_block_output",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:command_blocks_work",
+      "minecraft:commandBlocksEnabled"
+    ],
+    "displayI18nKey": "gamerule.command_blocks_work",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:doFireTick"
+    ],
+    "displayI18nKey": "gamerule.do_fire_tick",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:drowning_damage"
+    ],
+    "displayI18nKey": "gamerule.drowning_damage",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:elytra_movement_check",
+      "minecraft:disableElytraMovementCheck"
+    ],
+    "displayI18nKey": "gamerule.elytra_movement_check",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:ender_pearls_vanish_on_death"
+    ],
+    "displayI18nKey": "gamerule.ender_pearls_vanish_on_death",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:entity_drops",
+      "minecraft:doEntityDrops"
+    ],
+    "displayI18nKey": "gamerule.entity_drops",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:fall_damage"
+    ],
+    "displayI18nKey": "gamerule.fall_damage",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:fire_damage"
+    ],
+    "displayI18nKey": "gamerule.fire_damage",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:fire_spread_radius_around_player"
+    ],
+    "displayI18nKey": "gamerule.fire_spread_radius_around_player",
+    "defaultValue": 128
+  },
+  {
+    "ruleKey": [
+      "minecraft:forgive_dead_players"
+    ],
+    "displayI18nKey": "gamerule.forgive_dead_players",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:freeze_damage"
+    ],
+    "displayI18nKey": "gamerule.freeze_damage",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:global_sound_events"
+    ],
+    "displayI18nKey": "gamerule.global_sound_events",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:immediate_respawn",
+      "minecraft:doImmediateRespawn"
+    ],
+    "displayI18nKey": "gamerule.immediate_respawn",
+    "defaultValue": false
+  },
+  {
+    "ruleKey": [
+      "minecraft:keep_inventory",
+      "minecraft:keepInventory"
+    ],
+    "displayI18nKey": "gamerule.keep_inventory",
+    "defaultValue": false
+  },
+  {
+    "ruleKey": [
+      "minecraft:lava_source_conversion"
+    ],
+    "displayI18nKey": "gamerule.lava_source_conversion",
+    "defaultValue": false
+  },
+  {
+    "ruleKey": [
+      "minecraft:limited_crafting",
+      "minecraft:doLimitedCrafting"
+    ],
+    "displayI18nKey": "gamerule.limited_crafting",
+    "defaultValue": false
+  },
+  {
+    "ruleKey": [
+      "minecraft:locator_bar"
+    ],
+    "displayI18nKey": "gamerule.locator_bar",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:log_admin_commands",
+      "minecraft:logAdminCommands"
+    ],
+    "displayI18nKey": "gamerule.log_admin_commands",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:max_block_modifications",
+      "minecraft:commandModificationBlockLimit"
+    ],
+    "displayI18nKey": "gamerule.max_block_modifications",
+    "defaultValue": 32768
+  },
+  {
+    "ruleKey": [
+      "minecraft:max_command_forks",
+      "minecraft:maxCommandForkCount"
+    ],
+    "displayI18nKey": "gamerule.max_command_forks",
+    "defaultValue": 65536
+  },
+  {
+    "ruleKey": [
+      "minecraft:max_command_sequence_length",
+      "minecraft:maxCommandChainLength"
+    ],
+    "displayI18nKey": "gamerule.max_command_sequence_length",
+    "defaultValue": 65536
+  },
+  {
+    "ruleKey": [
+      "minecraft:max_entity_cramming",
+      "minecraft:maxEntityCramming"
+    ],
+    "displayI18nKey": "gamerule.max_entity_cramming",
+    "defaultValue": 24
+  },
+  {
+    "ruleKey": [
+      "minecraft:max_minecart_speed",
+      "minecraft:minecartMaxSpeed"
+    ],
+    "displayI18nKey": "gamerule.max_minecart_speed",
+    "defaultValue": 8
+  },
+  {
+    "ruleKey": [
+      "minecraft:max_snow_accumulation_height",
+      "minecraft:snowAccumulationHeight"
+    ],
+    "displayI18nKey": "gamerule.max_snow_accumulation_height",
+    "defaultValue": 1
+  },
+  {
+    "ruleKey": [
+      "minecraft:mob_drops",
+      "minecraft:doMobLoot"
+    ],
+    "displayI18nKey": "gamerule.mob_drops",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:mob_explosion_drop_decay"
+    ],
+    "displayI18nKey": "gamerule.mob_explosion_drop_decay",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:mob_griefing",
+      "minecraft:mobGriefing"
+    ],
+    "displayI18nKey": "gamerule.mob_griefing",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:natural_health_regeneration",
+      "minecraft:naturalRegeneration"
+    ],
+    "displayI18nKey": "gamerule.natural_health_regeneration",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:player_movement_check",
+      "minecraft:disablePlayerMovementCheck"
+    ],
+    "displayI18nKey": "gamerule.player_movement_check",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:players_nether_portal_creative_delay"
+    ],
+    "displayI18nKey": "gamerule.players_nether_portal_creative_delay",
+    "defaultValue": 0
+  },
+  {
+    "ruleKey": [
+      "minecraft:players_nether_portal_default_delay"
+    ],
+    "displayI18nKey": "gamerule.players_nether_portal_default_delay",
+    "defaultValue": 80
+  },
+  {
+    "ruleKey": [
+      "minecraft:players_sleeping_percentage"
+    ],
+    "displayI18nKey": "gamerule.players_sleeping_percentage",
+    "defaultValue": 100
+  },
+  {
+    "ruleKey": [
+      "minecraft:projectiles_can_break_blocks"
+    ],
+    "displayI18nKey": "gamerule.projectiles_can_break_blocks",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:pvp"
+    ],
+    "displayI18nKey": "gamerule.pvp",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:raids",
+      "minecraft:disableRaids"
+    ],
+    "displayI18nKey": "gamerule.raids",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:random_tick_speed",
+      "minecraft:randomTickSpeed"
+    ],
+    "displayI18nKey": "gamerule.random_tick_speed",
     "defaultValue": 3
+  },
+  {
+    "ruleKey": [
+      "minecraft:reduced_debug_info",
+      "minecraft:reducedDebugInfo"
+    ],
+    "displayI18nKey": "gamerule.reduced_debug_info",
+    "defaultValue": false
+  },
+  {
+    "ruleKey": [
+      "minecraft:respawn_radius",
+      "minecraft:spawnRadius"
+    ],
+    "displayI18nKey": "gamerule.respawn_radius",
+    "defaultValue": 10
+  },
+  {
+    "ruleKey": [
+      "minecraft:send_command_feedback",
+      "minecraft:sendCommandFeedback"
+    ],
+    "displayI18nKey": "gamerule.send_command_feedback",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:show_advancement_messages",
+      "minecraft:announceAdvancements"
+    ],
+    "displayI18nKey": "gamerule.show_advancement_messages",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:show_death_messages",
+      "minecraft:showDeathMessages"
+    ],
+    "displayI18nKey": "gamerule.show_death_messages",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:spawn_mobs",
+      "minecraft:doMobSpawning"
+    ],
+    "displayI18nKey": "gamerule.spawn_mobs",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:spawn_monsters"
+    ],
+    "displayI18nKey": "gamerule.spawn_monsters",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:spawn_patrols",
+      "minecraft:doPatrolSpawning"
+    ],
+    "displayI18nKey": "gamerule.spawn_patrols",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:spawn_phantoms",
+      "minecraft:doInsomnia"
+    ],
+    "displayI18nKey": "gamerule.spawn_phantoms",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:spawn_wandering_traders",
+      "minecraft:doTraderSpawning"
+    ],
+    "displayI18nKey": "gamerule.spawn_wandering_traders",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:spawn_wardens",
+      "minecraft:doWardenSpawning"
+    ],
+    "displayI18nKey": "gamerule.spawn_wardens",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:spawner_blocks_work",
+      "minecraft:spawnerBlocksEnabled"
+    ],
+    "displayI18nKey": "gamerule.spawner_blocks_work",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:spectators_generate_chunks"
+    ],
+    "displayI18nKey": "gamerule.spectators_generate_chunks",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:spread_vines",
+      "minecraft:doVinesSpread"
+    ],
+    "displayI18nKey": "gamerule.spread_vines",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:tnt_explodes"
+    ],
+    "displayI18nKey": "gamerule.tnt_explodes",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:tnt_explosion_drop_decay"
+    ],
+    "displayI18nKey": "gamerule.tnt_explosion_drop_decay",
+    "defaultValue": false
+  },
+  {
+    "ruleKey": [
+      "minecraft:universal_anger",
+      "minecraft:universalAnger"
+    ],
+    "displayI18nKey": "gamerule.universal_anger",
+    "defaultValue": false
+  },
+  {
+    "ruleKey": [
+      "minecraft:water_source_conversion"
+    ],
+    "displayI18nKey": "gamerule.water_source_conversion",
+    "defaultValue": true
   }
 ]
