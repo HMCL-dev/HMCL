@@ -85,7 +85,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                 .addNavigationDrawerTab(header, worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE, SVG.ARCHIVE_FILL);
 
         if (world.getGameVersion() != null && // old game will not write game version to level.dat
-                GameVersionNumber.asGameVersion(world.getGameVersion()).isAtLeast("1.13", "17w43a")) {
+                world.getGameVersion().isAtLeast("1.13", "17w43a")) {
             header.getTabs().add(datapackTab);
             sideBar.addNavigationDrawerTab(header, datapackTab, i18n("world.datapack"), SVG.EXTENSION, SVG.EXTENSION_FILL);
         }
@@ -104,7 +104,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                     new IconedMenuItem(SVG.FORT, i18n("world.chunkbase.nether_fortress"), () -> ChunkBaseApp.openNetherFortressFinder(world), chunkBasePopup)
             );
 
-            if (GameVersionNumber.compare(world.getGameVersion(), "1.13") >= 0) {
+            if (world.getGameVersion() != null && world.getGameVersion().compareTo("1.13") >= 0) {
                 chunkBasePopupMenu.getContent().add(
                         new IconedMenuItem(SVG.LOCATION_CITY, i18n("world.chunkbase.end_city"), () -> ChunkBaseApp.openEndCityFinder(world), chunkBasePopup));
             }

@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.util.i18n.translator;
 
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -28,23 +29,27 @@ import java.util.Locale;
 /// @author Glavo
 public class Translator {
     protected final SupportedLocale supportedLocale;
-    protected final Locale locale;
+    protected final Locale displayLocale;
 
     public Translator(SupportedLocale supportedLocale) {
         this.supportedLocale = supportedLocale;
-        this.locale = supportedLocale.getLocale();
+        this.displayLocale = supportedLocale.getDisplayLocale();
     }
 
     public final SupportedLocale getSupportedLocale() {
         return supportedLocale;
     }
 
-    public final Locale getLocale() {
-        return locale;
+    public final Locale getDisplayLocale() {
+        return displayLocale;
     }
 
     public String getDisplayVersion(RemoteVersion remoteVersion) {
         return remoteVersion.getSelfVersion();
+    }
+
+    public String getDisplayVersion(GameVersionNumber versionNumber) {
+        return versionNumber.toNormalizedString();
     }
 
     /// @see [#formatDateTime(TemporalAccessor)]

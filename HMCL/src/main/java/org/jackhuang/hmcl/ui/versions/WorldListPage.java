@@ -27,8 +27,8 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
-import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
@@ -42,7 +42,7 @@ import java.util.stream.Stream;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class WorldListPage extends ListPageBase<WorldListItem> implements VersionPage.VersionLoadable, TransitionPane.Cacheable {
+public final class WorldListPage extends ListPageBase<WorldListItem> implements VersionPage.VersionLoadable {
     private final BooleanProperty showAll = new SimpleBooleanProperty(this, "showAll", false);
 
     private Path savesDir;
@@ -50,7 +50,7 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
     private List<World> worlds;
     private Profile profile;
     private String id;
-    private String gameVersion;
+    private GameVersionNumber gameVersion;
 
     public WorldListPage() {
         FXUtils.applyDragListener(this, it -> "zip".equals(FileUtils.getExtension(it)), modpacks -> {
@@ -88,7 +88,7 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
             return;
 
         setLoading(true);
-        Task.runAsync(() -> gameVersion = profile.getRepository().getGameVersion(id).orElse(null))
+        Task.runAsync(() -> gameVersion = profile.getRepository().getGameVersion(id).map(GameVersionNumber::asGameVersion).orElse(null))
                 .thenApplyAsync(unused -> {
                     try (Stream<World> stream = World.getWorlds(savesDir)) {
                         return stream.parallel().collect(Collectors.toList());
