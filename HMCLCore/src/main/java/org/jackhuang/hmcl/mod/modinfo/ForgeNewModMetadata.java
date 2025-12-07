@@ -1,6 +1,9 @@
 package org.jackhuang.hmcl.mod.modinfo;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
 import com.moandjiezana.toml.Toml;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
@@ -13,7 +16,10 @@ import org.jackhuang.hmcl.util.io.CompressingUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.*;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -68,14 +74,14 @@ public final class ForgeNewModMetadata {
         private final String displayName;
         private final String side;
         private final String displayURL;
-        private final String authors;
+        private final JsonElement authors;
         private final String description;
 
         public Mod() {
-            this("", "", "", "", "", "", "");
+            this("", "", "", "", "", new JsonPrimitive(""), "");
         }
 
-        public Mod(String modId, String version, String displayName, String side, String displayURL, String authors, String description) {
+        public Mod(String modId, String version, String displayName, String side, String displayURL, JsonElement authors, String description) {
             this.modId = modId;
             this.version = version;
             this.displayName = displayName;
@@ -105,7 +111,7 @@ public final class ForgeNewModMetadata {
             return displayURL;
         }
 
-        public String getAuthors() {
+        public JsonElement getAuthors() {
             return authors;
         }
 
@@ -175,9 +181,29 @@ public final class ForgeNewModMetadata {
         ModLoaderType type = analyzeLoader(toml, mod.getModId(), modLoaderType);
 
         return new LocalModFile(modManager, modManager.getLocalMod(mod.getModId(), type), modFile, mod.getDisplayName(), new LocalModFile.Description(mod.getDescription()),
-                mod.getAuthors(), jarVersion == null ? mod.getVersion() : mod.getVersion().replace("${file.jarVersion}", jarVersion), "",
+                normalizeAuthor(mod.getAuthors()), jarVersion == null ? mod.getVersion() : mod.getVersion().replace("${file.jarVersion}", jarVersion), "",
                 mod.getDisplayURL(),
                 metadata.getLogoFile());
+    }
+
+    private static String normalizeAuthor(JsonElement authors) {
+        if (authors instanceof JsonPrimitive primitive) {
+            return primitive.getAsString();
+        } else if (authors instanceof JsonArray array) {
+            StringBuilder builder = new StringBuilder();
+            for (int i = 0; i < array.size(); i++) {
+                if (!(array.get(i) instanceof JsonPrimitive element)) {
+                    return null;
+                }
+
+                builder.append(element.getAsString());
+                if (array.size() - 1 != i) {
+                    builder.append(", ");
+                }
+            }
+            return builder.toString();
+        }
+        return authors.toString();
     }
 
     private static LocalModFile fromEmbeddedMod(ModManager modManager, Path modFile, FileSystem fs, ModLoaderType modLoaderType) throws IOException {
