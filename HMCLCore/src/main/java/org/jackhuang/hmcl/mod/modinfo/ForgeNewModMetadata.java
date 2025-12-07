@@ -128,7 +128,9 @@ public final class ForgeNewModMetadata {
         static final class AuthorDeserializer implements JsonDeserializer<String> {
             @Override
             public String deserialize(JsonElement authors, Type type, JsonDeserializationContext context) throws JsonParseException {
-                if (authors instanceof JsonPrimitive primitive) {
+                if (authors == null || authors.isJsonNull()) {
+                    return null;
+                } else if (authors instanceof JsonPrimitive primitive) {
                     return primitive.getAsString();
                 } else if (authors instanceof JsonArray array) {
                     var joiner = new StringJoiner(", ");
