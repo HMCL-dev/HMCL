@@ -89,9 +89,13 @@
     -fx-fill: -monet-on-tertiary-fixed;
 }
 
-.hint.warning .hyperlink {
+.hint.warning {
     -fx-fill: -fx-hyperlink-fill;
     -fx-text-fill: -fx-hyperlink-fill;
+}
+
+.hyperlink:visited {
+    -fx-text-fill: -monet-on-surface;
 }
 
 .skin-pane .jfx-text-field {
@@ -154,7 +158,7 @@
     -fx-font-size: 13px;
 }
 
-.announcement .hyperlink {
+.announcement {
     -fx-fill: -monet-primary;
     -fx-font-size: 13px;
 }
@@ -346,7 +350,7 @@
     -fx-fill: -monet-on-surface;
 }
 
-.game-crash-window .crash-reason-text-flow .hyperlink {
+.game-crash-window .crash-reason-text-flow {
     -fx-fill: -monet-primary;
 }
 
