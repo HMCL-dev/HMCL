@@ -12,7 +12,10 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @JsonSerializable
 @JsonAdapter(GameRule.GameRuleDeserializer.class)
@@ -209,7 +212,7 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         }
     }
 
-     static final class GameRuleHolder {
+    static final class GameRuleHolder {
         private static final Map<String, GameRule> gameRuleMap = new HashMap<>();
 
         static {

@@ -78,32 +78,31 @@ public class GameRulePage extends ListPageBase<GameRulePage.GameRuleInfo> {
         boolean isNewGameRuleFormat;
 
         CompoundTag dataTag = levelDat.get("Data");
-        CompoundTag gameRuleCompoundTag = dataTag.get("game_rules");
-        if (gameRuleCompoundTag == null) {
+        CompoundTag gameRuleCompoundTag;
+        gameRuleCompoundTag = dataTag.get("game_rules");
+        if (gameRuleCompoundTag != null) {
+            isNewGameRuleFormat = true;
+        } else {
             gameRuleCompoundTag = dataTag.get("GameRules");
             isNewGameRuleFormat = false;
-        } else {
-            isNewGameRuleFormat = true;
         }
         if (isNewGameRuleFormat) {
             gameRuleCompoundTag.iterator().forEachRemaining(gameRuleTag -> {
                 LOG.trace(gameRuleTag.toString());
                 if (gameRuleTag instanceof IntTag intTag) {
                     GameRule finalGameRule = GameRule.createSimpleGameRule(intTag.getName(), intTag.getValue());
-                    gameRuleMap.forEach((key, itGameRule) -> {
-                        if (gameRuleTag.getName().equals(key) && itGameRule instanceof GameRule.IntGameRule intGameRule) {
-                            gameRuleFinalMap.put(key, GameRule.mixGameRule(finalGameRule, intGameRule));
-                            LOG.trace("find one: " + finalGameRule.getRuleKey() + ", intTag is " + intTag.getValue());
-                        }
-                    });
+                    GameRule gr = gameRuleMap.getOrDefault(intTag.getName(), null);
+                    if (gr instanceof GameRule.IntGameRule intGR) {
+                        gameRuleFinalMap.put(intTag.getName(), GameRule.mixGameRule(finalGameRule, intGR));
+                        LOG.trace("find one: " + finalGameRule.getRuleKey() + ", intTag is " + intTag.getValue());
+                    }
                 } else if (gameRuleTag instanceof ByteTag byteTag) {
                     GameRule finalGameRule = GameRule.createSimpleGameRule(byteTag.getName(), byteTag.getValue() == 1);
-                    gameRuleMap.forEach((key, itGameRule) -> {
-                        if (gameRuleTag.getName().equals(key) && itGameRule instanceof GameRule.BooleanGameRule booleanGameRule) {
-                            gameRuleFinalMap.put(key, GameRule.mixGameRule(finalGameRule, booleanGameRule));
-                            LOG.trace("find one: " + finalGameRule.getRuleKey() + ", byteTag is " + byteTag.getValue());
-                        }
-                    });
+                    GameRule gr = gameRuleMap.getOrDefault(byteTag.getName(), null);
+                    if (gr instanceof GameRule.BooleanGameRule booleanGR) {
+                        gameRuleFinalMap.put(byteTag.getName(), GameRule.mixGameRule(finalGameRule, booleanGR));
+                        LOG.trace("find one: " + finalGameRule.getRuleKey() + ", byteTag is " + byteTag.getValue());
+                    }
                 }
             });
         }
