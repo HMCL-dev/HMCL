@@ -17,22 +17,24 @@
  */
 package org.jackhuang.hmcl.gamerule;
 
+import com.github.steveice10.opennbt.tag.builtin.ByteTag;
+import com.github.steveice10.opennbt.tag.builtin.IntTag;
+import com.github.steveice10.opennbt.tag.builtin.StringTag;
+import com.github.steveice10.opennbt.tag.builtin.Tag;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @JsonSerializable
 @JsonAdapter(GameRule.GameRuleDeserializer.class)
@@ -54,11 +56,15 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
     }
 
     public static GameRule createSimpleGameRule(String ruleKey, int value) {
-        return new IntGameRule(Collections.singletonList(ruleKey), "", value);
+        IntGameRule intGameRule = new IntGameRule(Collections.singletonList(ruleKey), "", value);
+        intGameRule.maxValue = Integer.MAX_VALUE;
+        intGameRule.minValue = Integer.MIN_VALUE;
+        return intGameRule;
     }
 
-    public static void mixGameRule(GameRule simpleGameRule, GameRule gameRule) {
+    public static GameRule mixGameRule(GameRule simpleGameRule, GameRule gameRule) {
         simpleGameRule.applyMetadata(gameRule);
+        return simpleGameRule;
     }
 
     public static void addSimpleGameRule(Map<String, GameRule> gameRuleMap, String ruleKey, String displayName, boolean value) {
@@ -67,6 +73,45 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
 
     public static void addSimpleGameRule(Map<String, GameRule> gameRuleMap, String ruleKey, String displayName, int value) {
         gameRuleMap.put(ruleKey, new IntGameRule(Collections.singletonList(ruleKey), displayName, value));
+    }
+
+    public static Optional<GameRuleNbt> createGameRuleNbt(Tag tag) {
+        if (tag instanceof StringTag stringTag && (tag.getValue().equals("true") || tag.getValue().equals("false"))) {
+            return Optional.of(new GameRuleNbt.StringByteGameRuleNBT(stringTag));
+        } else if (tag instanceof StringTag stringTag && Lang.toIntOrNull(stringTag.getValue()) != null) {
+            return Optional.of(new GameRuleNbt.StringIntGameRuleNBT(stringTag));
+        } else if (tag instanceof IntTag intTag) {
+            return Optional.of(new GameRuleNbt.IntGameRuleNBT(intTag));
+        } else if (tag instanceof ByteTag byteTag) {
+            return Optional.of(new GameRuleNbt.ByteRuleNBT(byteTag));
+        }
+        return Optional.empty();
+    }
+
+    public static Optional<GameRule> getFullGameRule(Tag tag, Map<String, GameRule> gameRuleMap) {
+        GameRule dataGameRule = gameRuleMap.getOrDefault(tag.getName(), null);
+        if (dataGameRule != null && tag instanceof IntTag intTag) {
+            return Optional.of(mixGameRule(GameRule.createSimpleGameRule(intTag.getName(), intTag.getValue()), dataGameRule));
+        } else if (dataGameRule != null && tag instanceof ByteTag byteTag) {
+            return Optional.of(mixGameRule(GameRule.createSimpleGameRule(byteTag.getName(), byteTag.getValue() == 1), dataGameRule));
+        } else if (dataGameRule == null && tag instanceof IntTag intTag) {
+            return Optional.of(createSimpleGameRule(tag.getName(), intTag.getValue()));
+        } else if (dataGameRule == null && tag instanceof ByteTag byteTag) {
+            return Optional.of(createSimpleGameRule(tag.getName(), byteTag.getValue() == 1));
+        } else if (dataGameRule != null && tag instanceof StringTag stringTag) {
+            if (stringTag.getValue().equals("true") || stringTag.getValue().equals("false")) {
+                return Optional.of(mixGameRule(GameRule.createSimpleGameRule(stringTag.getName(), Boolean.parseBoolean(stringTag.getValue())), dataGameRule));
+            } else if (Lang.toIntOrNull(stringTag.getValue()) != null) {
+                return Optional.of(mixGameRule(GameRule.createSimpleGameRule(stringTag.getName(), Lang.toIntOrNull(stringTag.getValue())), dataGameRule));
+            }
+        } else if (dataGameRule == null && tag instanceof StringTag stringTag) {
+            if (stringTag.getValue().equals("true") || stringTag.getValue().equals("false")) {
+                return Optional.of(createSimpleGameRule(stringTag.getName(), Boolean.parseBoolean(stringTag.getValue())));
+            } else if (Lang.toIntOrNull(stringTag.getValue()) != null) {
+                return Optional.of(createSimpleGameRule(stringTag.getName(), Lang.toIntOrNull(stringTag.getValue())));
+            }
+        }
+        return Optional.empty();
     }
 
     public static Map<String, GameRule> getCloneGameRuleMap() {

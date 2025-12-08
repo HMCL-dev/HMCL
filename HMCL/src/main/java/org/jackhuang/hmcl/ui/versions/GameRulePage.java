@@ -17,14 +17,13 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import com.github.steveice10.opennbt.tag.builtin.ByteTag;
 import com.github.steveice10.opennbt.tag.builtin.CompoundTag;
-import com.github.steveice10.opennbt.tag.builtin.IntTag;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Skin;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.gamerule.GameRule;
+import org.jackhuang.hmcl.gamerule.GameRuleNbt;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.ListPageBase;
@@ -68,62 +67,39 @@ public class GameRulePage extends ListPageBase<GameRulePageSkin.GameRuleInfo> {
     }
 
     public void updateControls() {
-        boolean isNewGameRuleFormat;
-
         CompoundTag dataTag = levelDat.get("Data");
         CompoundTag gameRuleCompoundTag;
         gameRuleCompoundTag = dataTag.get("game_rules");
         if (gameRuleCompoundTag != null) {
-            isNewGameRuleFormat = true;
         } else {
             gameRuleCompoundTag = dataTag.get("GameRules");
-            isNewGameRuleFormat = false;
         }
-        if (isNewGameRuleFormat) {
-            gameRuleCompoundTag.iterator().forEachRemaining(gameRuleTag -> {
-                //LOG.trace(gameRuleTag.toString());
-                GameRule finalGameRule;
-                if (gameRuleTag instanceof IntTag intTag) {
-                    finalGameRule = GameRule.createSimpleGameRule(intTag.getName(), intTag.getValue());
-                    GameRule gr = gameRuleMap.getOrDefault(intTag.getName(), null);
-                    if (gr instanceof GameRule.IntGameRule intGR) {
-                        GameRule.mixGameRule(finalGameRule, intGR);
-                    }
-                    String displayText;
-                    try {
-                        displayText = i18n(finalGameRule.getDisplayI18nKey());
-                    } catch (Exception e) {
-                        displayText = finalGameRule.getDisplayI18nKey();
-                    }
-                    if (finalGameRule instanceof GameRule.IntGameRule intGameRule) {
-                        LOG.trace("find one: " + finalGameRule.getRuleKey() + intGameRule.getValue() + "minValue: " + intGameRule.getMinValue() + ", maxValue" + intGameRule.getMaxValue() + ", intTag is " + intTag.getValue());
-                        gameRuleList.add(new GameRulePageSkin.GameRuleInfo(finalGameRule.getRuleKey().get(0), displayText, intGameRule.getValue(), intGameRule.getMinValue(), intGameRule.getMaxValue(), intTag, this::saveLevelDat));
-                    }
-                } else if (gameRuleTag instanceof ByteTag byteTag) {
-                    finalGameRule = GameRule.createSimpleGameRule(byteTag.getName(), byteTag.getValue() == 1);
-                    GameRule gr = gameRuleMap.getOrDefault(byteTag.getName(), null);
-                    if (gr instanceof GameRule.BooleanGameRule booleanGR) {
-                        GameRule.mixGameRule(finalGameRule, booleanGR);
-                        //LOG.trace("find one: " + finalGameRule.getRuleKey() + ", byteTag is " + byteTag.getValue());
-                    }
-                    String displayText;
-                    try {
-                        displayText = i18n(finalGameRule.getDisplayI18nKey());
-                    } catch (Exception e) {
-                        displayText = finalGameRule.getDisplayI18nKey();
-                    }
-                    if (finalGameRule instanceof GameRule.BooleanGameRule booleanGameRule) {
-                        gameRuleList.add(new GameRulePageSkin.GameRuleInfo(finalGameRule.getRuleKey().get(0), displayText, booleanGameRule.getValue(), byteTag, this::saveLevelDat));
-                    }
-                } else {
-                    return;
-                }
-            });
-        } else {
-            gameRuleCompoundTag.iterator().forEachRemaining(gameRuleTag -> {
-                LOG.trace(gameRuleTag.toString());
-            });
-        }
+        gameRuleCompoundTag.iterator().forEachRemaining(gameRuleTag -> {
+            //LOG.trace(gameRuleTag.toString());
+            GameRule finalGameRule;
+
+            GameRuleNbt gameRuleNbt = GameRule.createGameRuleNbt(gameRuleTag).orElse(null);
+            finalGameRule = GameRule.getFullGameRule(gameRuleTag, gameRuleMap).orElse(null);
+            if (gameRuleNbt == null || finalGameRule == null) {
+                return;
+            }
+
+            //LOG.trace(finalGameRule.getRuleKey().toString());
+
+            String displayText;
+            try {
+                displayText = i18n(finalGameRule.getDisplayI18nKey());
+            } catch (Exception e) {
+                displayText = finalGameRule.getDisplayI18nKey();
+            }
+
+            if (finalGameRule instanceof GameRule.IntGameRule intGameRule) {
+                gameRuleList.add(new GameRulePageSkin.GameRuleInfo(intGameRule.getRuleKey().get(0), displayText, intGameRule.getValue(), intGameRule.getMinValue(), intGameRule.getMaxValue(), gameRuleNbt, this::saveLevelDat));
+            } else if (finalGameRule instanceof GameRule.BooleanGameRule booleanGameRule) {
+                gameRuleList.add(new GameRulePageSkin.GameRuleInfo(booleanGameRule.getRuleKey().get(0), displayText, booleanGameRule.getValue(), gameRuleNbt, this::saveLevelDat));
+            }
+        });
+
 
     }
 

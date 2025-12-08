@@ -1,8 +1,5 @@
 package org.jackhuang.hmcl.ui.versions;
 
-import com.github.steveice10.opennbt.tag.builtin.ByteTag;
-import com.github.steveice10.opennbt.tag.builtin.IntTag;
-import com.github.steveice10.opennbt.tag.builtin.Tag;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXTextField;
@@ -13,6 +10,7 @@ import javafx.scene.control.SkinBase;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
+import org.jackhuang.hmcl.gamerule.GameRuleNbt;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -21,7 +19,6 @@ import org.jackhuang.hmcl.util.Lang;
 
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 class GameRulePageSkin extends SkinBase<GameRulePage> {
 
@@ -71,14 +68,14 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
 
         String ruleKey;
         String displayName;
-        Tag tag;
+        GameRuleNbt gameRuleNbt;
 
         BorderPane container = new BorderPane();
 
-        public GameRuleInfo(String ruleKey, String displayName, Boolean onValue, ByteTag byteTag, Runnable onSave) {
+        public GameRuleInfo(String ruleKey, String displayName, Boolean onValue, GameRuleNbt<Boolean> gameRuleNbt, Runnable onSave) {
             this.ruleKey = ruleKey;
             this.displayName = displayName;
-            this.tag = byteTag;
+            this.gameRuleNbt = gameRuleNbt;
 
             OptionToggleButton toggleButton = new OptionToggleButton();
             toggleButton.setTitle(displayName);
@@ -86,20 +83,18 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
             toggleButton.setSelected(onValue);
 
             toggleButton.selectedProperty().addListener((observable, oldValue, newValue) -> {
-                ByteTag theByteTag = (ByteTag) tag;
-                theByteTag.setValue((byte) (newValue ? 1 : 0));
+                gameRuleNbt.changeValue(newValue);
                 onSave.run();
-                LOG.trace(theByteTag.toString());
             });
 
             HBox.setHgrow(container, Priority.ALWAYS);
             container.setCenter(toggleButton);
         }
 
-        public GameRuleInfo(String ruleKey, String displayName, Integer currentValue, int minValue, int maxValue, IntTag intTag, Runnable onSave) {
+        public GameRuleInfo(String ruleKey, String displayName, Integer currentValue, int minValue, int maxValue, GameRuleNbt<String> gameRuleNbt, Runnable onSave) {
             this.ruleKey = ruleKey;
             this.displayName = displayName;
-            this.tag = intTag;
+            this.gameRuleNbt = gameRuleNbt;
 
             VBox vbox = new VBox();
             vbox.getChildren().addAll(new Label(displayName), new Label(ruleKey));
@@ -114,17 +109,15 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
             FXUtils.setValidateWhileTextChanged(textField, true);
             textField.setValidators(new NumberRangeValidator(i18n("input.integer"), i18n("input.number_range", minValue, maxValue), minValue, maxValue, false));
             textField.textProperty().addListener((observable, oldValue, newValue) -> {
-                IntTag theIntTag = (IntTag) tag;
                 Integer value = Lang.toIntOrNull(newValue);
                 if (value == null) {
                     return;
                 } else if (value > maxValue || value < minValue) {
                     return;
                 } else {
-                    theIntTag.setValue(value);
+                    gameRuleNbt.changeValue(newValue);
                     onSave.run();
                 }
-                LOG.trace(theIntTag.toString());
             });
 
             HBox.setHgrow(container, Priority.ALWAYS);
