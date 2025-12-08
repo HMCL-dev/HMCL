@@ -86,17 +86,19 @@ public class TransitionPane extends StackPane {
                     previousNode,
                     newView,
                     duration, interpolator);
-            newAnimation.setOnFinished(e -> {
-                setMouseTransparent(false);
-                getChildren().remove(previousNode);
+            newAnimation.statusProperty().addListener((observable, oldValue, newValue) -> {
+                if (oldValue == Animation.Status.RUNNING && newValue != Animation.Status.RUNNING) {
+                    setMouseTransparent(false);
+                    getChildren().remove(previousNode);
 
-                if (cacheHint != null) {
-                    newView.setCache(false);
+                    if (cacheHint != null) {
+                        newView.setCache(false);
+                    }
                 }
             });
 
-            newAnimation.play();
             oldAnimation = newAnimation;
+            newAnimation.play();
         });
 
     }
