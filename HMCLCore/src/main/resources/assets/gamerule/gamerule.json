@@ -116,7 +116,8 @@
       "minecraft:fire_spread_radius_around_player"
     ],
     "displayI18nKey": "gamerule.fire_spread_radius_around_player",
-    "defaultValue": 128
+    "defaultValue": 128,
+    "minValue": -1
   },
   {
     "ruleKey": [
@@ -191,7 +192,8 @@
       "minecraft:commandModificationBlockLimit"
     ],
     "displayI18nKey": "gamerule.max_block_modifications",
-    "defaultValue": 32768
+    "defaultValue": 32768,
+    "minValue": -1
   },
   {
     "ruleKey": [
@@ -199,7 +201,8 @@
       "minecraft:maxCommandForkCount"
     ],
     "displayI18nKey": "gamerule.max_command_forks",
-    "defaultValue": 65536
+    "defaultValue": 65536,
+    "minValue": 0
   },
   {
     "ruleKey": [
@@ -207,7 +210,8 @@
       "minecraft:maxCommandChainLength"
     ],
     "displayI18nKey": "gamerule.max_command_sequence_length",
-    "defaultValue": 65536
+    "defaultValue": 65536,
+    "minValue": 0
   },
   {
     "ruleKey": [
@@ -215,7 +219,8 @@
       "minecraft:maxEntityCramming"
     ],
     "displayI18nKey": "gamerule.max_entity_cramming",
-    "defaultValue": 24
+    "defaultValue": 24,
+    "minValue": 0
   },
   {
     "ruleKey": [
@@ -223,7 +228,9 @@
       "minecraft:minecartMaxSpeed"
     ],
     "displayI18nKey": "gamerule.max_minecart_speed",
-    "defaultValue": 8
+    "defaultValue": 8,
+    "minValue": 1,
+    "maxValue": 1000
   },
   {
     "ruleKey": [
@@ -231,7 +238,9 @@
       "minecraft:snowAccumulationHeight"
     ],
     "displayI18nKey": "gamerule.max_snow_accumulation_height",
-    "defaultValue": 1
+    "defaultValue": 1,
+    "minValue": 0,
+    "maxValue": 8
   },
   {
     "ruleKey": [
@@ -277,21 +286,24 @@
       "minecraft:players_nether_portal_creative_delay"
     ],
     "displayI18nKey": "gamerule.players_nether_portal_creative_delay",
-    "defaultValue": 0
+    "defaultValue": 0,
+    "minValue": 0
   },
   {
     "ruleKey": [
       "minecraft:players_nether_portal_default_delay"
     ],
     "displayI18nKey": "gamerule.players_nether_portal_default_delay",
-    "defaultValue": 80
+    "defaultValue": 80,
+    "minValue": 0
   },
   {
     "ruleKey": [
       "minecraft:players_sleeping_percentage"
     ],
     "displayI18nKey": "gamerule.players_sleeping_percentage",
-    "defaultValue": 100
+    "defaultValue": 100,
+    "minValue": 0
   },
   {
     "ruleKey": [
@@ -321,7 +333,8 @@
       "minecraft:randomTickSpeed"
     ],
     "displayI18nKey": "gamerule.random_tick_speed",
-    "defaultValue": 3
+    "defaultValue": 3,
+    "minValue": 0
   },
   {
     "ruleKey": [
@@ -337,7 +350,8 @@
       "minecraft:spawnRadius"
     ],
     "displayI18nKey": "gamerule.respawn_radius",
-    "defaultValue": 10
+    "defaultValue": 10,
+    "minValue": 0
   },
   {
     "ruleKey": [

@@ -1,8 +1,26 @@
+/*
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2025 huangyuhui <huanghongxun2008@126.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package org.jackhuang.hmcl.ui.versions;
 
 import com.github.steveice10.opennbt.tag.builtin.ByteTag;
 import com.github.steveice10.opennbt.tag.builtin.CompoundTag;
 import com.github.steveice10.opennbt.tag.builtin.IntTag;
+import com.github.steveice10.opennbt.tag.builtin.Tag;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXTextField;
@@ -27,15 +45,12 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.ListPageBase;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.MDListCell;
-import org.jackhuang.hmcl.ui.construct.OptionToggleButton;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Holder;
+import org.jackhuang.hmcl.util.Lang;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.HashMap;
 import java.util.Map;
 
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
@@ -49,7 +64,6 @@ public class GameRulePage extends ListPageBase<GameRulePage.GameRuleInfo> {
     private CompoundTag levelDat;
 
     Map<String, GameRule> gameRuleMap = GameRule.getCloneGameRuleMap();
-    Map<String, GameRule> gameRuleFinalMap = new HashMap<>();
 
     ObservableList<GameRulePage.GameRuleInfo> gameRuleList;
 
@@ -88,39 +102,49 @@ public class GameRulePage extends ListPageBase<GameRulePage.GameRuleInfo> {
         }
         if (isNewGameRuleFormat) {
             gameRuleCompoundTag.iterator().forEachRemaining(gameRuleTag -> {
-                LOG.trace(gameRuleTag.toString());
+                //LOG.trace(gameRuleTag.toString());
+                GameRule finalGameRule;
                 if (gameRuleTag instanceof IntTag intTag) {
-                    GameRule finalGameRule = GameRule.createSimpleGameRule(intTag.getName(), intTag.getValue());
+                    finalGameRule = GameRule.createSimpleGameRule(intTag.getName(), intTag.getValue());
                     GameRule gr = gameRuleMap.getOrDefault(intTag.getName(), null);
                     if (gr instanceof GameRule.IntGameRule intGR) {
-                        gameRuleFinalMap.put(intTag.getName(), GameRule.mixGameRule(finalGameRule, intGR));
-                        LOG.trace("find one: " + finalGameRule.getRuleKey() + ", intTag is " + intTag.getValue());
+                        GameRule.mixGameRule(finalGameRule, intGR);
+                    }
+                    String displayText;
+                    try {
+                        displayText = i18n(finalGameRule.getDisplayI18nKey());
+                    } catch (Exception e) {
+                        displayText = finalGameRule.getDisplayI18nKey();
+                    }
+                    if (finalGameRule instanceof GameRule.IntGameRule intGameRule) {
+                        LOG.trace("find one: " + finalGameRule.getRuleKey() + intGameRule.getValue() + "minValue: " + intGameRule.getMinValue() + ", maxValue" + intGameRule.getMaxValue() + ", intTag is " + intTag.getValue());
+                        gameRuleList.add(new GameRuleInfo(finalGameRule.getRuleKey().get(0), displayText, intGameRule.getValue(), intGameRule.getMinValue(), intGameRule.getMaxValue(), intTag));
                     }
                 } else if (gameRuleTag instanceof ByteTag byteTag) {
-                    GameRule finalGameRule = GameRule.createSimpleGameRule(byteTag.getName(), byteTag.getValue() == 1);
+                    finalGameRule = GameRule.createSimpleGameRule(byteTag.getName(), byteTag.getValue() == 1);
                     GameRule gr = gameRuleMap.getOrDefault(byteTag.getName(), null);
                     if (gr instanceof GameRule.BooleanGameRule booleanGR) {
-                        gameRuleFinalMap.put(byteTag.getName(), GameRule.mixGameRule(finalGameRule, booleanGR));
-                        LOG.trace("find one: " + finalGameRule.getRuleKey() + ", byteTag is " + byteTag.getValue());
+                        GameRule.mixGameRule(finalGameRule, booleanGR);
+                        //LOG.trace("find one: " + finalGameRule.getRuleKey() + ", byteTag is " + byteTag.getValue());
                     }
+                    String displayText;
+                    try {
+                        displayText = i18n(finalGameRule.getDisplayI18nKey());
+                    } catch (Exception e) {
+                        displayText = finalGameRule.getDisplayI18nKey();
+                    }
+                    if (finalGameRule instanceof GameRule.BooleanGameRule booleanGameRule) {
+                        gameRuleList.add(new GameRuleInfo(finalGameRule.getRuleKey().get(0), displayText, booleanGameRule.getValue(), byteTag));
+                    }
+                } else {
+                    return;
                 }
             });
+        } else {
+            gameRuleCompoundTag.iterator().forEachRemaining(gameRuleTag -> {
+                LOG.trace(gameRuleTag.toString());
+            });
         }
-
-        LOG.trace("gameRuleFinalMap: size" + gameRuleFinalMap.size() + ", detail: " + gameRuleFinalMap.toString());
-        gameRuleFinalMap.forEach((s, gameRule) -> {
-            String displayText;
-            try {
-                displayText = i18n(gameRule.getDisplayI18nKey());
-            } catch (Exception e) {
-                displayText = gameRule.getDisplayI18nKey();
-            }
-            if (gameRule instanceof GameRule.BooleanGameRule booleanGameRule) {
-                gameRuleList.add(new GameRuleInfo(s, displayText, booleanGameRule.getValue()));
-            } else if (gameRule instanceof GameRule.IntGameRule intGameRule) {
-                gameRuleList.add(new GameRuleInfo(s, displayText, intGameRule.getValue()));
-            }
-        });
 
     }
 
@@ -136,29 +160,38 @@ public class GameRulePage extends ListPageBase<GameRulePage.GameRuleInfo> {
         BooleanProperty onValue;
         IntegerProperty currentValue;
         GameRuleType gameRuleType;
+        Tag tag;
 
         BorderPane container = new BorderPane();
 
-        public GameRuleInfo(String ruleKey, String displayName, Boolean onValue) {
+        public GameRuleInfo(String ruleKey, String displayName, Boolean onValue, ByteTag byteTag) {
             this.ruleKey = ruleKey;
             this.displayName = displayName;
             this.onValue = new SimpleBooleanProperty(onValue);
             gameRuleType = GameRuleType.BOOLEAN;
+            this.tag = byteTag;
 
             OptionToggleButton toggleButton = new OptionToggleButton();
             toggleButton.setTitle(displayName);
             toggleButton.setSubtitle(ruleKey);
             toggleButton.setSelected(onValue);
 
+            toggleButton.selectedProperty().addListener((observable, oldValue, newValue) -> {
+                ByteTag theByteTag = (ByteTag) tag;
+                theByteTag.setValue((byte) (newValue ? 1 : 0));
+                LOG.trace(theByteTag.toString());
+            });
+
             HBox.setHgrow(container, Priority.ALWAYS);
             container.setCenter(toggleButton);
         }
 
-        public GameRuleInfo(String ruleKey, String displayName, Integer currentValue) {
+        public GameRuleInfo(String ruleKey, String displayName, Integer currentValue, int minValue, int maxValue, IntTag intTag) {
             this.ruleKey = ruleKey;
             this.displayName = displayName;
             this.currentValue = new SimpleIntegerProperty(currentValue);
             gameRuleType = GameRuleType.INT;
+            this.tag = intTag;
 
             VBox vbox = new VBox();
             vbox.getChildren().addAll(new Label(displayName), new Label(ruleKey));
@@ -170,6 +203,20 @@ public class GameRulePage extends ListPageBase<GameRulePage.GameRuleInfo> {
             textField.maxWidth(10);
             textField.minWidth(10);
             textField.textProperty().set(currentValue.toString());
+            FXUtils.setValidateWhileTextChanged(textField, true);
+            textField.setValidators(new NumberRangeValidator(i18n("input.number"), i18n("input.number_range", minValue, maxValue), minValue, maxValue, false));
+            textField.textProperty().addListener((observable, oldValue, newValue) -> {
+                IntTag theIntTag = (IntTag) tag;
+                Integer value = Lang.toIntOrNull(newValue);
+                if (value == null) {
+                    return;
+                } else if (value > maxValue || value < minValue) {
+                    return;
+                } else {
+                    theIntTag.setValue(value);
+                }
+                LOG.trace(theIntTag.toString());
+            });
 
             HBox.setHgrow(container, Priority.ALWAYS);
             container.setCenter(vbox);

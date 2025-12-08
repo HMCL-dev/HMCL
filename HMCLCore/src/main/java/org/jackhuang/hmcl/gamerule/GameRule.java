@@ -1,3 +1,20 @@
+/*
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2025 huangyuhui <huanghongxun2008@126.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package org.jackhuang.hmcl.gamerule;
 
 import com.google.gson.*;
@@ -40,9 +57,8 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         return new IntGameRule(Collections.singletonList(ruleKey), "", value);
     }
 
-    public static GameRule mixGameRule(GameRule simpleGameRule, GameRule mapGameRule) {
-        simpleGameRule.applyMetadata(mapGameRule);
-        return simpleGameRule;
+    public static void mixGameRule(GameRule simpleGameRule, GameRule gameRule) {
+        simpleGameRule.applyMetadata(gameRule);
     }
 
     public static void addSimpleGameRule(Map<String, GameRule> gameRuleMap, String ruleKey, String displayName, boolean value) {
@@ -133,6 +149,8 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
     public static final class IntGameRule extends GameRule {
         private final IntegerProperty value = new SimpleIntegerProperty(0);
         private final IntegerProperty defaultValue = new SimpleIntegerProperty(0);
+        private int maxValue = 0;
+        private int minValue = 0;
 
         private IntGameRule(List<String> ruleKey, String displayI18nKey, int value) {
             super(ruleKey, displayI18nKey);
@@ -147,6 +165,8 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         public GameRule clone() {
             IntGameRule intGameRule = new IntGameRule(getRuleKey(), getDisplayI18nKey(), value.getValue());
             intGameRule.defaultValue.setValue(defaultValue.getValue());
+            intGameRule.minValue = minValue;
+            intGameRule.maxValue = maxValue;
             return intGameRule;
         }
 
@@ -155,6 +175,8 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
             if (metadataSource instanceof IntGameRule source) {
                 this.setDisplayI18nKey(source.getDisplayI18nKey());
                 this.setDefaultValue(source.getDefaultValue());
+                this.maxValue = source.getMaxValue();
+                this.minValue = source.getMinValue();
             }
         }
 
@@ -181,6 +203,22 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         public void setValue(int value) {
             this.value.setValue(value);
         }
+
+        public int getMaxValue() {
+            return maxValue;
+        }
+
+        public void setMaxValue(int maxValue) {
+            this.maxValue = maxValue;
+        }
+
+        public int getMinValue() {
+            return minValue;
+        }
+
+        public void setMinValue(int minValue) {
+            this.minValue = minValue;
+        }
     }
 
     static class GameRuleDeserializer implements JsonDeserializer<GameRule> {
@@ -194,6 +232,20 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
 
             Type listType = JsonUtils.listTypeOf(String.class).getType();
             gameRule.ruleKey = context.deserialize(jsonObject.get("ruleKey"), listType);
+
+            if (gameRule instanceof IntGameRule intGameRule) {
+                if (jsonObject.has("maxValue") && jsonObject.get("maxValue") instanceof JsonPrimitive jsonPrimitive) {
+                    intGameRule.maxValue = jsonPrimitive.getAsInt();
+                } else {
+                    intGameRule.maxValue = Integer.MAX_VALUE;
+                }
+
+                if (jsonObject.has("minValue") && jsonObject.get("minValue") instanceof JsonPrimitive jsonPrimitive) {
+                    intGameRule.minValue = jsonPrimitive.getAsInt();
+                } else {
+                    intGameRule.minValue = Integer.MIN_VALUE;
+                }
+            }
 
             return gameRule;
         }
