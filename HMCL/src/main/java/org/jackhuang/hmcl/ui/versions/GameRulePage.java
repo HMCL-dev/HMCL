@@ -27,10 +27,15 @@ import org.jackhuang.hmcl.gamerule.GameRuleNBT;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.ListPageBase;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Locale;
 import java.util.Map;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -75,32 +80,29 @@ public class GameRulePage extends ListPageBase<GameRulePageSkin.GameRuleInfo> {
             gameRuleCompoundTag = dataTag.get("GameRules");
         }
         gameRuleCompoundTag.iterator().forEachRemaining(gameRuleTag -> {
-            //LOG.trace(gameRuleTag.toString());
-            GameRule finalGameRule;
-
-            GameRuleNBT gameRuleNbt = GameRule.createGameRuleNbt(gameRuleTag).orElse(null);
-            finalGameRule = GameRule.getFullGameRule(gameRuleTag, gameRuleMap).orElse(null);
-            if (gameRuleNbt == null || finalGameRule == null) {
+            GameRuleNBT gameRuleNBT = GameRule.createGameRuleNbt(gameRuleTag).orElse(null);
+            GameRule finalGameRule = GameRule.getFullGameRule(gameRuleTag, gameRuleMap).orElse(null);
+            if (gameRuleNBT == null || finalGameRule == null) {
                 return;
             }
 
-            //LOG.trace(finalGameRule.getRuleKey().toString());
-
             String displayText;
             try {
-                displayText = i18n(finalGameRule.getDisplayI18nKey());
+                if (StringUtils.isNotBlank(finalGameRule.getDisplayI18nKey())) {
+                    displayText = i18n(finalGameRule.getDisplayI18nKey());
+                } else {
+                    displayText = "";
+                }
             } catch (Exception e) {
-                displayText = finalGameRule.getDisplayI18nKey();
+                displayText = "";
             }
 
             if (finalGameRule instanceof GameRule.IntGameRule intGameRule) {
-                gameRuleList.add(new GameRulePageSkin.GameRuleInfo(intGameRule.getRuleKey().get(0), displayText, intGameRule.getValue(), intGameRule.getMinValue(), intGameRule.getMaxValue(), gameRuleNbt, this::saveLevelDat));
+                gameRuleList.add(new GameRulePageSkin.GameRuleInfo(intGameRule.getRuleKey().get(0), displayText, intGameRule.getValue(), intGameRule.getMinValue(), intGameRule.getMaxValue(), gameRuleNBT, this::saveLevelDat));
             } else if (finalGameRule instanceof GameRule.BooleanGameRule booleanGameRule) {
-                gameRuleList.add(new GameRulePageSkin.GameRuleInfo(booleanGameRule.getRuleKey().get(0), displayText, booleanGameRule.getValue(), gameRuleNbt, this::saveLevelDat));
+                gameRuleList.add(new GameRulePageSkin.GameRuleInfo(booleanGameRule.getRuleKey().get(0), displayText, booleanGameRule.getValue(), gameRuleNBT, this::saveLevelDat));
             }
         });
-
-
     }
 
     @Override
@@ -122,5 +124,30 @@ public class GameRulePage extends ListPageBase<GameRulePageSkin.GameRuleInfo> {
         } catch (IOException e) {
             LOG.warning("Failed to save level.dat of world " + world.getWorldName(), e);
         }
+    }
+
+    @NotNull Predicate<GameRulePageSkin.GameRuleInfo> updateSearchPredicate(String queryString) {
+        if (queryString.isBlank()) {
+            return gameRuleInfo -> true;
+        }
+
+        final Predicate<String> stringPredicate;
+        if (queryString.startsWith("regex:")) {
+            try {
+                Pattern pattern = Pattern.compile(StringUtils.substringAfter(queryString, "regex:"));
+                stringPredicate = s -> s != null && pattern.matcher(s).find();
+            } catch (Exception e) {
+                return dataPack -> false;
+            }
+        } else {
+            String lowerCaseFilter = queryString.toLowerCase(Locale.ROOT);
+            stringPredicate = s -> s != null && s.toLowerCase(Locale.ROOT).contains(lowerCaseFilter);
+        }
+
+        return gameRuleInfo -> {
+            String displayName = gameRuleInfo.displayName;
+            String ruleKey = gameRuleInfo.ruleKey;
+            return stringPredicate.test(displayName) || stringPredicate.test(ruleKey);
+        };
     }
 }

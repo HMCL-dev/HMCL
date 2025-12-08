@@ -3,6 +3,8 @@ package org.jackhuang.hmcl.ui.versions;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXTextField;
+import javafx.animation.PauseTransition;
+import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
@@ -10,6 +12,7 @@ import javafx.scene.control.SkinBase;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.gamerule.GameRuleNBT;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -25,9 +28,10 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
     private final HBox searchBar;
     private final JFXTextField searchField;
     JFXListView<GameRulePageSkin.GameRuleInfo> listView = new JFXListView<>();
+    private final FilteredList<GameRuleInfo> filteredList;
 
-    protected GameRulePageSkin(GameRulePage control) {
-        super(control);
+    GameRulePageSkin(GameRulePage skinnable) {
+        super(skinnable);
         StackPane pane = new StackPane();
         pane.setPadding(new Insets(10));
         pane.getStyleClass().addAll("notice-pane");
@@ -35,12 +39,20 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
         ComponentList root = new ComponentList();
         root.getStyleClass().add("no-padding");
 
+        filteredList = new FilteredList<>(skinnable.getItems());
+
         {
             searchBar = new HBox();
             searchBar.setAlignment(Pos.CENTER);
             searchBar.setPadding(new Insets(0, 5, 0, 5));
             searchField = new JFXTextField();
             searchField.setPromptText(i18n("search"));
+            PauseTransition pause = new PauseTransition(Duration.millis(100));
+            pause.setOnFinished(event -> filteredList.setPredicate(skinnable.updateSearchPredicate(searchField.getText())));
+            searchField.textProperty().addListener((observable) -> {
+                pause.setRate(1);
+                pause.playFromStart();
+            });
             HBox.setHgrow(searchField, Priority.ALWAYS);
             JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE,
                     searchField::clear);
@@ -54,7 +66,7 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
         center.getStyleClass().add("large-spinner-pane");
         center.setContent(listView);
         Holder<Object> lastCell = new Holder<>();
-        listView.setItems(getSkinnable().getItems());
+        listView.setItems(filteredList);
         listView.setCellFactory(x -> new GameRuleListCell(listView, lastCell));
         FXUtils.ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
         root.getContent().add(center);
