@@ -97,7 +97,7 @@ public class GameRulePage extends ListPageBase<GameRulePageSkin.GameRuleInfo> {
                     }
                     if (finalGameRule instanceof GameRule.IntGameRule intGameRule) {
                         LOG.trace("find one: " + finalGameRule.getRuleKey() + intGameRule.getValue() + "minValue: " + intGameRule.getMinValue() + ", maxValue" + intGameRule.getMaxValue() + ", intTag is " + intTag.getValue());
-                        gameRuleList.add(new GameRulePageSkin.GameRuleInfo(finalGameRule.getRuleKey().get(0), displayText, intGameRule.getValue(), intGameRule.getMinValue(), intGameRule.getMaxValue(), intTag));
+                        gameRuleList.add(new GameRulePageSkin.GameRuleInfo(finalGameRule.getRuleKey().get(0), displayText, intGameRule.getValue(), intGameRule.getMinValue(), intGameRule.getMaxValue(), intTag, this::saveLevelDat));
                     }
                 } else if (gameRuleTag instanceof ByteTag byteTag) {
                     finalGameRule = GameRule.createSimpleGameRule(byteTag.getName(), byteTag.getValue() == 1);
@@ -113,7 +113,7 @@ public class GameRulePage extends ListPageBase<GameRulePageSkin.GameRuleInfo> {
                         displayText = finalGameRule.getDisplayI18nKey();
                     }
                     if (finalGameRule instanceof GameRule.BooleanGameRule booleanGameRule) {
-                        gameRuleList.add(new GameRulePageSkin.GameRuleInfo(finalGameRule.getRuleKey().get(0), displayText, booleanGameRule.getValue(), byteTag));
+                        gameRuleList.add(new GameRulePageSkin.GameRuleInfo(finalGameRule.getRuleKey().get(0), displayText, booleanGameRule.getValue(), byteTag, this::saveLevelDat));
                     }
                 } else {
                     return;
@@ -137,5 +137,14 @@ public class GameRulePage extends ListPageBase<GameRulePageSkin.GameRuleInfo> {
             throw new IOException("Not a valid world directory");
 
         return world.readLevelDat();
+    }
+
+    void saveLevelDat() {
+        LOG.info("Saving level.dat of world " + world.getWorldName());
+        try {
+            this.world.writeLevelDat(levelDat);
+        } catch (IOException e) {
+            LOG.warning("Failed to save level.dat of world " + world.getWorldName(), e);
+        }
     }
 }

@@ -75,7 +75,7 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
 
         BorderPane container = new BorderPane();
 
-        public GameRuleInfo(String ruleKey, String displayName, Boolean onValue, ByteTag byteTag) {
+        public GameRuleInfo(String ruleKey, String displayName, Boolean onValue, ByteTag byteTag, Runnable onSave) {
             this.ruleKey = ruleKey;
             this.displayName = displayName;
             this.tag = byteTag;
@@ -88,6 +88,7 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
             toggleButton.selectedProperty().addListener((observable, oldValue, newValue) -> {
                 ByteTag theByteTag = (ByteTag) tag;
                 theByteTag.setValue((byte) (newValue ? 1 : 0));
+                onSave.run();
                 LOG.trace(theByteTag.toString());
             });
 
@@ -95,7 +96,7 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
             container.setCenter(toggleButton);
         }
 
-        public GameRuleInfo(String ruleKey, String displayName, Integer currentValue, int minValue, int maxValue, IntTag intTag) {
+        public GameRuleInfo(String ruleKey, String displayName, Integer currentValue, int minValue, int maxValue, IntTag intTag, Runnable onSave) {
             this.ruleKey = ruleKey;
             this.displayName = displayName;
             this.tag = intTag;
@@ -121,6 +122,7 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
                     return;
                 } else {
                     theIntTag.setValue(value);
+                    onSave.run();
                 }
                 LOG.trace(theIntTag.toString());
             });
@@ -141,7 +143,6 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
         @Override
         protected void updateControl(GameRuleInfo item, boolean empty) {
             if (empty) return;
-
             getContainer().getChildren().setAll(item.container);
         }
     }
