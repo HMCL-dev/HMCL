@@ -204,7 +204,7 @@ public class GameRulePage extends ListPageBase<GameRulePage.GameRuleInfo> {
             textField.minWidth(10);
             textField.textProperty().set(currentValue.toString());
             FXUtils.setValidateWhileTextChanged(textField, true);
-            textField.setValidators(new NumberRangeValidator(i18n("input.number"), i18n("input.number_range", minValue, maxValue), minValue, maxValue, false));
+            textField.setValidators(new NumberRangeValidator(i18n("input.integer"), i18n("input.number_range", minValue, maxValue), minValue, maxValue, false));
             textField.textProperty().addListener((observable, oldValue, newValue) -> {
                 IntTag theIntTag = (IntTag) tag;
                 Integer value = Lang.toIntOrNull(newValue);
