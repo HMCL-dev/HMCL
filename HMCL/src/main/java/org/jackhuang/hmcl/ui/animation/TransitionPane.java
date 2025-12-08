@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 public class TransitionPane extends StackPane {
 
     private Node currentNode;
+    private Animation oldAnimation;
 
     public TransitionPane() {
         FXUtils.setOverflowHidden(this);
@@ -62,6 +63,11 @@ public class TransitionPane extends StackPane {
         getChildren().setAll(previousNode, newView);
 
         setMouseTransparent(true);
+
+        if (oldAnimation != null) {
+            oldAnimation.stop();
+            oldAnimation = null;
+        }
         transition.init(this, previousNode, newView);
 
         CacheHint cacheHint = newView instanceof Cacheable cacheable
@@ -88,7 +94,9 @@ public class TransitionPane extends StackPane {
                     newView.setCache(false);
                 }
             });
-            FXUtils.playAnimation(this, "transition_pane", newAnimation);
+
+            newAnimation.play();
+            oldAnimation = newAnimation;
         });
 
     }
