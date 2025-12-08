@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXPopup;
 import javafx.beans.property.ReadOnlyObjectProperty;
-
 import javafx.scene.input.MouseButton;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.Account;
@@ -67,11 +66,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
-import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
     private MainPage mainPage = null;
@@ -150,9 +148,14 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             // first item in left sidebar
             AccountAdvancedListItem accountListItem = new AccountAdvancedListItem();
             accountListItem.setOnAction(e -> Controllers.navigate(Controllers.getAccountListPage()));
+            accountListItem.getBtnMenu().setOnAction(e -> {
+                showAccountListPopupMenu(accountListItem);
+                e.consume();
+            });
             accountListItem.setOnMouseClicked(e -> {
                 if (e.getButton() == MouseButton.SECONDARY) {
-                    showAccountListPopupMenu(JFXPopup.PopupHPosition.LEFT, e.getX(), e.getY());
+                    showAccountListPopupMenu(accountListItem);
+                    e.consume();
                 }
             });
             accountListItem.accountProperty().bind(Accounts.selectedAccountProperty());
@@ -252,7 +255,9 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             setCenter(getSkinnable().getMainPage());
         }
 
-        private void showAccountListPopupMenu(JFXPopup.PopupHPosition hPosition, double initOffsetX, double initOffsetY) {
+        public void showAccountListPopupMenu(
+                AccountAdvancedListItem accountListItem
+        ) {
             PopupMenu popupMenu = new PopupMenu();
             JFXPopup popup = new JFXPopup(popupMenu);
             AdvancedListBox scrollPane = new AdvancedListBox();
@@ -269,8 +274,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             }
 
             popupMenu.getContent().add(scrollPane);
-            JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(getSkinnable(), popup);
-            popup.show(getSkinnable(), vPosition, hPosition, initOffsetX, initOffsetY);
+            popup.show(accountListItem, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, accountListItem.getWidth(), 0);
         }
     }
 
