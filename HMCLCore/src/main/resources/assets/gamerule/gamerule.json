@@ -2,7 +2,7 @@
   {
     "ruleKey": [
       "minecraft:advance_time",
-      "minecraft:doDaylightCycle"
+      "doDaylightCycle"
     ],
     "displayI18nKey": "gamerule.advance_time",
     "defaultValue": true
@@ -10,21 +10,22 @@
   {
     "ruleKey": [
       "minecraft:advance_weather",
-      "minecraft:doWeatherCycle"
+      "doWeatherCycle"
     ],
     "displayI18nKey": "gamerule.advance_weather",
     "defaultValue": true
   },
   {
     "ruleKey": [
-      "minecraft:allowFireTicksAwayFromPlayer"
+      "allowFireTicksAwayFromPlayer"
     ],
     "displayI18nKey": "gamerule.allow_fire_ticks_away_from_player",
     "defaultValue": false
   },
   {
     "ruleKey": [
-      "minecraft:allow_entering_nether_using_portals"
+      "minecraft:allow_entering_nether_using_portals",
+      "allowEnteringNetherUsingPortals"
     ],
     "displayI18nKey": "gamerule.allow_entering_nether_using_portals",
     "defaultValue": true
@@ -32,14 +33,15 @@
   {
     "ruleKey": [
       "minecraft:block_drops",
-      "minecraft:doTileDrops"
+      "doTileDrops"
     ],
     "displayI18nKey": "gamerule.block_drops",
     "defaultValue": true
   },
   {
     "ruleKey": [
-      "minecraft:block_explosion_drop_decay"
+      "minecraft:block_explosion_drop_decay",
+      "blockExplosionDropDecay"
     ],
     "displayI18nKey": "gamerule.block_explosion_drop_decay",
     "defaultValue": true
@@ -47,7 +49,7 @@
   {
     "ruleKey": [
       "minecraft:command_block_output",
-      "minecraft:commandBlockOutput"
+      "commandBlockOutput"
     ],
     "displayI18nKey": "gamerule.command_block_output",
     "defaultValue": true
@@ -55,21 +57,22 @@
   {
     "ruleKey": [
       "minecraft:command_blocks_work",
-      "minecraft:commandBlocksEnabled"
+      "commandBlocksEnabled"
     ],
     "displayI18nKey": "gamerule.command_blocks_work",
     "defaultValue": true
   },
   {
     "ruleKey": [
-      "minecraft:doFireTick"
+      "doFireTick"
     ],
     "displayI18nKey": "gamerule.do_fire_tick",
     "defaultValue": true
   },
   {
     "ruleKey": [
-      "minecraft:drowning_damage"
+      "minecraft:drowning_damage",
+      "drowningDamage"
     ],
     "displayI18nKey": "gamerule.drowning_damage",
     "defaultValue": true
@@ -77,14 +80,15 @@
   {
     "ruleKey": [
       "minecraft:elytra_movement_check",
-      "minecraft:disableElytraMovementCheck"
+      "disableElytraMovementCheck"
     ],
     "displayI18nKey": "gamerule.elytra_movement_check",
     "defaultValue": true
   },
   {
     "ruleKey": [
-      "minecraft:ender_pearls_vanish_on_death"
+      "minecraft:ender_pearls_vanish_on_death",
+      "enderPearlsVanishOnDeath"
     ],
     "displayI18nKey": "gamerule.ender_pearls_vanish_on_death",
     "defaultValue": true
@@ -92,21 +96,23 @@
   {
     "ruleKey": [
       "minecraft:entity_drops",
-      "minecraft:doEntityDrops"
+      "doEntityDrops"
     ],
     "displayI18nKey": "gamerule.entity_drops",
     "defaultValue": true
   },
   {
     "ruleKey": [
-      "minecraft:fall_damage"
+      "minecraft:fall_damage",
+      "fallDamage"
     ],
     "displayI18nKey": "gamerule.fall_damage",
     "defaultValue": true
   },
   {
     "ruleKey": [
-      "minecraft:fire_damage"
+      "minecraft:fire_damage",
+      "fireDamage"
     ],
     "displayI18nKey": "gamerule.fire_damage",
     "defaultValue": true
@@ -121,21 +127,24 @@
   },
   {
     "ruleKey": [
-      "minecraft:forgive_dead_players"
+      "minecraft:forgive_dead_players",
+      "forgiveDeadPlayers"
     ],
     "displayI18nKey": "gamerule.forgive_dead_players",
     "defaultValue": true
   },
   {
     "ruleKey": [
-      "minecraft:freeze_damage"
+      "minecraft:freeze_damage",
+      "freezeDamage"
     ],
     "displayI18nKey": "gamerule.freeze_damage",
     "defaultValue": true
   },
   {
     "ruleKey": [
-      "minecraft:global_sound_events"
+      "minecraft:global_sound_events",
+      "globalSoundEvents"
     ],
     "displayI18nKey": "gamerule.global_sound_events",
     "defaultValue": true
@@ -143,7 +152,7 @@
   {
     "ruleKey": [
       "minecraft:immediate_respawn",
-      "minecraft:doImmediateRespawn"
+      "doImmediateRespawn"
     ],
     "displayI18nKey": "gamerule.immediate_respawn",
     "defaultValue": false
@@ -151,14 +160,15 @@
   {
     "ruleKey": [
       "minecraft:keep_inventory",
-      "minecraft:keepInventory"
+      "keepInventory"
     ],
     "displayI18nKey": "gamerule.keep_inventory",
     "defaultValue": false
   },
   {
     "ruleKey": [
-      "minecraft:lava_source_conversion"
+      "minecraft:lava_source_conversion",
+      "lavaSourceConversion"
     ],
     "displayI18nKey": "gamerule.lava_source_conversion",
     "defaultValue": false
@@ -166,14 +176,15 @@
   {
     "ruleKey": [
       "minecraft:limited_crafting",
-      "minecraft:doLimitedCrafting"
+      "doLimitedCrafting"
     ],
     "displayI18nKey": "gamerule.limited_crafting",
     "defaultValue": false
   },
   {
     "ruleKey": [
-      "minecraft:locator_bar"
+      "minecraft:locator_bar",
+      "locatorBar"
     ],
     "displayI18nKey": "gamerule.locator_bar",
     "defaultValue": true
@@ -181,7 +192,7 @@
   {
     "ruleKey": [
       "minecraft:log_admin_commands",
-      "minecraft:logAdminCommands"
+      "logAdminCommands"
     ],
     "displayI18nKey": "gamerule.log_admin_commands",
     "defaultValue": true
@@ -189,7 +200,7 @@
   {
     "ruleKey": [
       "minecraft:max_block_modifications",
-      "minecraft:commandModificationBlockLimit"
+      "commandModificationBlockLimit"
     ],
     "displayI18nKey": "gamerule.max_block_modifications",
     "defaultValue": 32768,
@@ -198,7 +209,7 @@
   {
     "ruleKey": [
       "minecraft:max_command_forks",
-      "minecraft:maxCommandForkCount"
+      "maxCommandForkCount"
     ],
     "displayI18nKey": "gamerule.max_command_forks",
     "defaultValue": 65536,
@@ -207,7 +218,7 @@
   {
     "ruleKey": [
       "minecraft:max_command_sequence_length",
-      "minecraft:maxCommandChainLength"
+      "maxCommandChainLength"
     ],
     "displayI18nKey": "gamerule.max_command_sequence_length",
     "defaultValue": 65536,
@@ -216,7 +227,7 @@
   {
     "ruleKey": [
       "minecraft:max_entity_cramming",
-      "minecraft:maxEntityCramming"
+      "maxEntityCramming"
     ],
     "displayI18nKey": "gamerule.max_entity_cramming",
     "defaultValue": 24,
@@ -225,7 +236,7 @@
   {
     "ruleKey": [
       "minecraft:max_minecart_speed",
-      "minecraft:minecartMaxSpeed"
+      "minecartMaxSpeed"
     ],
     "displayI18nKey": "gamerule.max_minecart_speed",
     "defaultValue": 8,
@@ -235,7 +246,7 @@
   {
     "ruleKey": [
       "minecraft:max_snow_accumulation_height",
-      "minecraft:snowAccumulationHeight"
+      "snowAccumulationHeight"
     ],
     "displayI18nKey": "gamerule.max_snow_accumulation_height",
     "defaultValue": 1,
@@ -245,14 +256,15 @@
   {
     "ruleKey": [
       "minecraft:mob_drops",
-      "minecraft:doMobLoot"
+      "doMobLoot"
     ],
     "displayI18nKey": "gamerule.mob_drops",
     "defaultValue": true
   },
   {
     "ruleKey": [
-      "minecraft:mob_explosion_drop_decay"
+      "minecraft:mob_explosion_drop_decay",
+      "mobExplosionDropDecay"
     ],
     "displayI18nKey": "gamerule.mob_explosion_drop_decay",
     "defaultValue": true
@@ -260,7 +272,7 @@
   {
     "ruleKey": [
       "minecraft:mob_griefing",
-      "minecraft:mobGriefing"
+      "mobGriefing"
     ],
     "displayI18nKey": "gamerule.mob_griefing",
     "defaultValue": true
@@ -268,7 +280,7 @@
   {
     "ruleKey": [
       "minecraft:natural_health_regeneration",
-      "minecraft:naturalRegeneration"
+      "naturalRegeneration"
     ],
     "displayI18nKey": "gamerule.natural_health_regeneration",
     "defaultValue": true
@@ -276,14 +288,15 @@
   {
     "ruleKey": [
       "minecraft:player_movement_check",
-      "minecraft:disablePlayerMovementCheck"
+      "disablePlayerMovementCheck"
     ],
     "displayI18nKey": "gamerule.player_movement_check",
     "defaultValue": true
   },
   {
     "ruleKey": [
-      "minecraft:players_nether_portal_creative_delay"
+      "minecraft:players_nether_portal_creative_delay",
+      "playersNetherPortalCreativeDelay"
     ],
     "displayI18nKey": "gamerule.players_nether_portal_creative_delay",
     "defaultValue": 0,
@@ -291,7 +304,8 @@
   },
   {
     "ruleKey": [
-      "minecraft:players_nether_portal_default_delay"
+      "minecraft:players_nether_portal_default_delay",
+      "playersNetherPortalDefaultDelay"
     ],
     "displayI18nKey": "gamerule.players_nether_portal_default_delay",
     "defaultValue": 80,
@@ -299,7 +313,8 @@
   },
   {
     "ruleKey": [
-      "minecraft:players_sleeping_percentage"
+      "minecraft:players_sleeping_percentage",
+      "playersSleepingPercentage"
     ],
     "displayI18nKey": "gamerule.players_sleeping_percentage",
     "defaultValue": 100,
@@ -307,14 +322,16 @@
   },
   {
     "ruleKey": [
-      "minecraft:projectiles_can_break_blocks"
+      "minecraft:projectiles_can_break_blocks",
+      "projectilesCanBreakBlocks"
     ],
     "displayI18nKey": "gamerule.projectiles_can_break_blocks",
     "defaultValue": true
   },
   {
     "ruleKey": [
-      "minecraft:pvp"
+      "minecraft:pvp",
+      "pvp"
     ],
     "displayI18nKey": "gamerule.pvp",
     "defaultValue": true
@@ -322,7 +339,7 @@
   {
     "ruleKey": [
       "minecraft:raids",
-      "minecraft:disableRaids"
+      "disableRaids"
     ],
     "displayI18nKey": "gamerule.raids",
     "defaultValue": true
@@ -330,7 +347,7 @@
   {
     "ruleKey": [
       "minecraft:random_tick_speed",
-      "minecraft:randomTickSpeed"
+      "randomTickSpeed"
     ],
     "displayI18nKey": "gamerule.random_tick_speed",
     "defaultValue": 3,
@@ -339,7 +356,7 @@
   {
     "ruleKey": [
       "minecraft:reduced_debug_info",
-      "minecraft:reducedDebugInfo"
+      "reducedDebugInfo"
     ],
     "displayI18nKey": "gamerule.reduced_debug_info",
     "defaultValue": false
@@ -347,7 +364,7 @@
   {
     "ruleKey": [
       "minecraft:respawn_radius",
-      "minecraft:spawnRadius"
+      "spawnRadius"
     ],
     "displayI18nKey": "gamerule.respawn_radius",
     "defaultValue": 10,
@@ -356,7 +373,7 @@
   {
     "ruleKey": [
       "minecraft:send_command_feedback",
-      "minecraft:sendCommandFeedback"
+      "sendCommandFeedback"
     ],
     "displayI18nKey": "gamerule.send_command_feedback",
     "defaultValue": true
@@ -364,7 +381,7 @@
   {
     "ruleKey": [
       "minecraft:show_advancement_messages",
-      "minecraft:announceAdvancements"
+      "announceAdvancements"
     ],
     "displayI18nKey": "gamerule.show_advancement_messages",
     "defaultValue": true
@@ -372,7 +389,7 @@
   {
     "ruleKey": [
       "minecraft:show_death_messages",
-      "minecraft:showDeathMessages"
+      "showDeathMessages"
     ],
     "displayI18nKey": "gamerule.show_death_messages",
     "defaultValue": true
@@ -380,14 +397,15 @@
   {
     "ruleKey": [
       "minecraft:spawn_mobs",
-      "minecraft:doMobSpawning"
+      "doMobSpawning"
     ],
     "displayI18nKey": "gamerule.spawn_mobs",
     "defaultValue": true
   },
   {
     "ruleKey": [
-      "minecraft:spawn_monsters"
+      "minecraft:spawn_monsters",
+      "spawnMonsters"
     ],
     "displayI18nKey": "gamerule.spawn_monsters",
     "defaultValue": true
@@ -395,7 +413,7 @@
   {
     "ruleKey": [
       "minecraft:spawn_patrols",
-      "minecraft:doPatrolSpawning"
+      "doPatrolSpawning"
     ],
     "displayI18nKey": "gamerule.spawn_patrols",
     "defaultValue": true
@@ -403,7 +421,7 @@
   {
     "ruleKey": [
       "minecraft:spawn_phantoms",
-      "minecraft:doInsomnia"
+      "doInsomnia"
     ],
     "displayI18nKey": "gamerule.spawn_phantoms",
     "defaultValue": true
@@ -411,7 +429,7 @@
   {
     "ruleKey": [
       "minecraft:spawn_wandering_traders",
-      "minecraft:doTraderSpawning"
+      "doTraderSpawning"
     ],
     "displayI18nKey": "gamerule.spawn_wandering_traders",
     "defaultValue": true
@@ -419,7 +437,7 @@
   {
     "ruleKey": [
       "minecraft:spawn_wardens",
-      "minecraft:doWardenSpawning"
+      "doWardenSpawning"
     ],
     "displayI18nKey": "gamerule.spawn_wardens",
     "defaultValue": true
@@ -427,14 +445,15 @@
   {
     "ruleKey": [
       "minecraft:spawner_blocks_work",
-      "minecraft:spawnerBlocksEnabled"
+      "spawnerBlocksEnabled"
     ],
     "displayI18nKey": "gamerule.spawner_blocks_work",
     "defaultValue": true
   },
   {
     "ruleKey": [
-      "minecraft:spectators_generate_chunks"
+      "minecraft:spectators_generate_chunks",
+      "spectatorsGenerateChunks"
     ],
     "displayI18nKey": "gamerule.spectators_generate_chunks",
     "defaultValue": true
@@ -442,21 +461,23 @@
   {
     "ruleKey": [
       "minecraft:spread_vines",
-      "minecraft:doVinesSpread"
+      "doVinesSpread"
     ],
     "displayI18nKey": "gamerule.spread_vines",
     "defaultValue": true
   },
   {
     "ruleKey": [
-      "minecraft:tnt_explodes"
+      "minecraft:tnt_explodes",
+      "tntExplodes"
     ],
     "displayI18nKey": "gamerule.tnt_explodes",
     "defaultValue": true
   },
   {
     "ruleKey": [
-      "minecraft:tnt_explosion_drop_decay"
+      "minecraft:tnt_explosion_drop_decay",
+      "tntExplosionDropDecay"
     ],
     "displayI18nKey": "gamerule.tnt_explosion_drop_decay",
     "defaultValue": false
@@ -464,14 +485,15 @@
   {
     "ruleKey": [
       "minecraft:universal_anger",
-      "minecraft:universalAnger"
+      "universalAnger"
     ],
     "displayI18nKey": "gamerule.universal_anger",
     "defaultValue": false
   },
   {
     "ruleKey": [
-      "minecraft:water_source_conversion"
+      "minecraft:water_source_conversion",
+      "waterSourceConversion"
     ],
     "displayI18nKey": "gamerule.water_source_conversion",
     "defaultValue": true
