@@ -1,4 +1,4 @@
-   # Hello Minecraft! Launcher
+# Hello Minecraft! Launcher
 
 <!-- #BEGIN BLOCK -->
 <!-- #PROPERTY NAME=BADGES -->
