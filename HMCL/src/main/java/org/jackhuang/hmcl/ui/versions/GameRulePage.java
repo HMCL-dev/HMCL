@@ -23,7 +23,7 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.Skin;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.gamerule.GameRule;
-import org.jackhuang.hmcl.gamerule.GameRuleNbt;
+import org.jackhuang.hmcl.gamerule.GameRuleNBT;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.ListPageBase;
@@ -78,7 +78,7 @@ public class GameRulePage extends ListPageBase<GameRulePageSkin.GameRuleInfo> {
             //LOG.trace(gameRuleTag.toString());
             GameRule finalGameRule;
 
-            GameRuleNbt gameRuleNbt = GameRule.createGameRuleNbt(gameRuleTag).orElse(null);
+            GameRuleNBT gameRuleNbt = GameRule.createGameRuleNbt(gameRuleTag).orElse(null);
             finalGameRule = GameRule.getFullGameRule(gameRuleTag, gameRuleMap).orElse(null);
             if (gameRuleNbt == null || finalGameRule == null) {
                 return;

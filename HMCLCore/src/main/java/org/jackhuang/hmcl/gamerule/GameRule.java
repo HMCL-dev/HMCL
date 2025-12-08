@@ -75,15 +75,15 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         gameRuleMap.put(ruleKey, new IntGameRule(Collections.singletonList(ruleKey), displayName, value));
     }
 
-    public static Optional<GameRuleNbt> createGameRuleNbt(Tag tag) {
+    public static Optional<GameRuleNBT> createGameRuleNbt(Tag tag) {
         if (tag instanceof StringTag stringTag && (tag.getValue().equals("true") || tag.getValue().equals("false"))) {
-            return Optional.of(new GameRuleNbt.StringByteGameRuleNBT(stringTag));
+            return Optional.of(new GameRuleNBT.StringByteGameRuleNBT(stringTag));
         } else if (tag instanceof StringTag stringTag && Lang.toIntOrNull(stringTag.getValue()) != null) {
-            return Optional.of(new GameRuleNbt.StringIntGameRuleNBT(stringTag));
+            return Optional.of(new GameRuleNBT.StringIntGameRuleNBT(stringTag));
         } else if (tag instanceof IntTag intTag) {
-            return Optional.of(new GameRuleNbt.IntGameRuleNBT(intTag));
+            return Optional.of(new GameRuleNBT.IntGameRuleNBT(intTag));
         } else if (tag instanceof ByteTag byteTag) {
-            return Optional.of(new GameRuleNbt.ByteRuleNBT(byteTag));
+            return Optional.of(new GameRuleNBT.ByteRuleNBT(byteTag));
         }
         return Optional.empty();
     }

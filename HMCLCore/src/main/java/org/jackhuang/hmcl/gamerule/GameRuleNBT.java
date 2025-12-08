@@ -23,7 +23,7 @@ import com.github.steveice10.opennbt.tag.builtin.StringTag;
 import com.github.steveice10.opennbt.tag.builtin.Tag;
 import org.jackhuang.hmcl.util.Lang;
 
-public abstract class GameRuleNbt<T> {
+public abstract class GameRuleNBT<T> {
 
     private Tag gameRuleTag;
 
@@ -37,7 +37,7 @@ public abstract class GameRuleNbt<T> {
         this.gameRuleTag = gameRuleTag;
     }
 
-    static class IntGameRuleNBT extends GameRuleNbt<String> {
+    static class IntGameRuleNBT extends GameRuleNBT<String> {
 
         public IntGameRuleNBT(IntTag gameRuleTag) {
             setGameRuleTag(gameRuleTag);
@@ -51,7 +51,7 @@ public abstract class GameRuleNbt<T> {
         }
     }
 
-    static class ByteRuleNBT extends GameRuleNbt<Boolean> {
+    static class ByteRuleNBT extends GameRuleNBT<Boolean> {
 
         public ByteRuleNBT(ByteTag gameRuleTag) {
             setGameRuleTag(gameRuleTag);
@@ -64,7 +64,7 @@ public abstract class GameRuleNbt<T> {
         }
     }
 
-    static class StringIntGameRuleNBT extends GameRuleNbt<String> {
+    static class StringIntGameRuleNBT extends GameRuleNBT<String> {
 
         public StringIntGameRuleNBT(StringTag gameRuleTag) {
             setGameRuleTag(gameRuleTag);
@@ -77,7 +77,7 @@ public abstract class GameRuleNbt<T> {
         }
     }
 
-    static class StringByteGameRuleNBT extends GameRuleNbt<Boolean> {
+    static class StringByteGameRuleNBT extends GameRuleNBT<Boolean> {
 
         public StringByteGameRuleNBT(StringTag gameRuleTag) {
             setGameRuleTag(gameRuleTag);

@@ -10,7 +10,7 @@ import javafx.scene.control.SkinBase;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
-import org.jackhuang.hmcl.gamerule.GameRuleNbt;
+import org.jackhuang.hmcl.gamerule.GameRuleNBT;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -68,11 +68,11 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
 
         String ruleKey;
         String displayName;
-        GameRuleNbt gameRuleNbt;
+        GameRuleNBT gameRuleNbt;
 
         BorderPane container = new BorderPane();
 
-        public GameRuleInfo(String ruleKey, String displayName, Boolean onValue, GameRuleNbt<Boolean> gameRuleNbt, Runnable onSave) {
+        public GameRuleInfo(String ruleKey, String displayName, Boolean onValue, GameRuleNBT<Boolean> gameRuleNbt, Runnable onSave) {
             this.ruleKey = ruleKey;
             this.displayName = displayName;
             this.gameRuleNbt = gameRuleNbt;
@@ -91,7 +91,7 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
             container.setCenter(toggleButton);
         }
 
-        public GameRuleInfo(String ruleKey, String displayName, Integer currentValue, int minValue, int maxValue, GameRuleNbt<String> gameRuleNbt, Runnable onSave) {
+        public GameRuleInfo(String ruleKey, String displayName, Integer currentValue, int minValue, int maxValue, GameRuleNBT<String> gameRuleNbt, Runnable onSave) {
             this.ruleKey = ruleKey;
             this.displayName = displayName;
             this.gameRuleNbt = gameRuleNbt;
