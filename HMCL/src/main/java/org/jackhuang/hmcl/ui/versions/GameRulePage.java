@@ -57,7 +57,7 @@ import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class GameRulePage extends ListPageBase<GameRulePage.GameRuleInfo> {
+public class GameRulePage extends ListPageBase<GameRulePageSkin.GameRuleInfo> {
 
     private WorldManagePage worldManagePage;
     private World world;
@@ -65,7 +65,7 @@ public class GameRulePage extends ListPageBase<GameRulePage.GameRuleInfo> {
 
     Map<String, GameRule> gameRuleMap = GameRule.getCloneGameRuleMap();
 
-    ObservableList<GameRulePage.GameRuleInfo> gameRuleList;
+    ObservableList<GameRulePageSkin.GameRuleInfo> gameRuleList;
 
     public GameRulePage(WorldManagePage worldManagePage) {
         this.worldManagePage = worldManagePage;
@@ -118,7 +118,7 @@ public class GameRulePage extends ListPageBase<GameRulePage.GameRuleInfo> {
                     }
                     if (finalGameRule instanceof GameRule.IntGameRule intGameRule) {
                         LOG.trace("find one: " + finalGameRule.getRuleKey() + intGameRule.getValue() + "minValue: " + intGameRule.getMinValue() + ", maxValue" + intGameRule.getMaxValue() + ", intTag is " + intTag.getValue());
-                        gameRuleList.add(new GameRuleInfo(finalGameRule.getRuleKey().get(0), displayText, intGameRule.getValue(), intGameRule.getMinValue(), intGameRule.getMaxValue(), intTag));
+                        gameRuleList.add(new GameRulePageSkin.GameRuleInfo(finalGameRule.getRuleKey().get(0), displayText, intGameRule.getValue(), intGameRule.getMinValue(), intGameRule.getMaxValue(), intTag));
                     }
                 } else if (gameRuleTag instanceof ByteTag byteTag) {
                     finalGameRule = GameRule.createSimpleGameRule(byteTag.getName(), byteTag.getValue() == 1);
@@ -134,7 +134,7 @@ public class GameRulePage extends ListPageBase<GameRulePage.GameRuleInfo> {
                         displayText = finalGameRule.getDisplayI18nKey();
                     }
                     if (finalGameRule instanceof GameRule.BooleanGameRule booleanGameRule) {
-                        gameRuleList.add(new GameRuleInfo(finalGameRule.getRuleKey().get(0), displayText, booleanGameRule.getValue(), byteTag));
+                        gameRuleList.add(new GameRulePageSkin.GameRuleInfo(finalGameRule.getRuleKey().get(0), displayText, booleanGameRule.getValue(), byteTag));
                     }
                 } else {
                     return;
@@ -151,137 +151,6 @@ public class GameRulePage extends ListPageBase<GameRulePage.GameRuleInfo> {
     @Override
     protected Skin<?> createDefaultSkin() {
         return new GameRulePageSkin(this);
-    }
-
-    static class GameRuleInfo {
-
-        String ruleKey;
-        String displayName;
-        BooleanProperty onValue;
-        IntegerProperty currentValue;
-        GameRuleType gameRuleType;
-        Tag tag;
-
-        BorderPane container = new BorderPane();
-
-        public GameRuleInfo(String ruleKey, String displayName, Boolean onValue, ByteTag byteTag) {
-            this.ruleKey = ruleKey;
-            this.displayName = displayName;
-            this.onValue = new SimpleBooleanProperty(onValue);
-            gameRuleType = GameRuleType.BOOLEAN;
-            this.tag = byteTag;
-
-            OptionToggleButton toggleButton = new OptionToggleButton();
-            toggleButton.setTitle(displayName);
-            toggleButton.setSubtitle(ruleKey);
-            toggleButton.setSelected(onValue);
-
-            toggleButton.selectedProperty().addListener((observable, oldValue, newValue) -> {
-                ByteTag theByteTag = (ByteTag) tag;
-                theByteTag.setValue((byte) (newValue ? 1 : 0));
-                LOG.trace(theByteTag.toString());
-            });
-
-            HBox.setHgrow(container, Priority.ALWAYS);
-            container.setCenter(toggleButton);
-        }
-
-        public GameRuleInfo(String ruleKey, String displayName, Integer currentValue, int minValue, int maxValue, IntTag intTag) {
-            this.ruleKey = ruleKey;
-            this.displayName = displayName;
-            this.currentValue = new SimpleIntegerProperty(currentValue);
-            gameRuleType = GameRuleType.INT;
-            this.tag = intTag;
-
-            VBox vbox = new VBox();
-            vbox.getChildren().addAll(new Label(displayName), new Label(ruleKey));
-            vbox.setAlignment(Pos.CENTER_LEFT);
-            HBox.setHgrow(vbox, Priority.ALWAYS);
-
-            container.setPadding(new Insets(8, 8, 8, 16));
-            JFXTextField textField = new JFXTextField();
-            textField.maxWidth(10);
-            textField.minWidth(10);
-            textField.textProperty().set(currentValue.toString());
-            FXUtils.setValidateWhileTextChanged(textField, true);
-            textField.setValidators(new NumberRangeValidator(i18n("input.integer"), i18n("input.number_range", minValue, maxValue), minValue, maxValue, false));
-            textField.textProperty().addListener((observable, oldValue, newValue) -> {
-                IntTag theIntTag = (IntTag) tag;
-                Integer value = Lang.toIntOrNull(newValue);
-                if (value == null) {
-                    return;
-                } else if (value > maxValue || value < minValue) {
-                    return;
-                } else {
-                    theIntTag.setValue(value);
-                }
-                LOG.trace(theIntTag.toString());
-            });
-
-            HBox.setHgrow(container, Priority.ALWAYS);
-            container.setCenter(vbox);
-            container.setRight(textField);
-        }
-
-    }
-
-    static class GameRulePageSkin extends SkinBase<GameRulePage> {
-
-        private final HBox searchBar;
-        private final JFXTextField searchField;
-        JFXListView<GameRuleInfo> listView = new JFXListView<>();
-
-        protected GameRulePageSkin(GameRulePage control) {
-            super(control);
-            StackPane pane = new StackPane();
-            pane.setPadding(new Insets(10));
-            pane.getStyleClass().addAll("notice-pane");
-
-            ComponentList root = new ComponentList();
-            root.getStyleClass().add("no-padding");
-
-            {
-                searchBar = new HBox();
-                searchBar.setAlignment(Pos.CENTER);
-                searchBar.setPadding(new Insets(0, 5, 0, 5));
-                searchField = new JFXTextField();
-                searchField.setPromptText(i18n("search"));
-                HBox.setHgrow(searchField, Priority.ALWAYS);
-                JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE,
-                        searchField::clear);
-                FXUtils.onEscPressed(searchField, closeSearchBar::fire);
-                searchBar.getChildren().addAll(searchField, closeSearchBar);
-                root.getContent().add(searchBar);
-            }
-
-            SpinnerPane center = new SpinnerPane();
-            ComponentList.setVgrow(center, Priority.ALWAYS);
-            center.getStyleClass().add("large-spinner-pane");
-            center.setContent(listView);
-            Holder<Object> lastCell = new Holder<>();
-            listView.setItems(getSkinnable().getItems());
-            listView.setCellFactory(x -> new GameRuleListCell(listView, lastCell));
-            FXUtils.ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
-            root.getContent().add(center);
-
-            pane.getChildren().add(root);
-            getChildren().add(pane);
-
-        }
-    }
-
-    static class GameRuleListCell extends MDListCell<GameRuleInfo> {
-
-        public GameRuleListCell(JFXListView<GameRuleInfo> listView, Holder<Object> lastCell) {
-            super(listView, lastCell);
-        }
-
-        @Override
-        protected void updateControl(GameRuleInfo item, boolean empty) {
-            if (empty) return;
-
-            getContainer().getChildren().setAll(item.container);
-        }
     }
 
     enum GameRuleType {
