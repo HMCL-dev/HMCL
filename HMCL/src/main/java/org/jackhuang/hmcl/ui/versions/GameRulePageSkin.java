@@ -6,10 +6,6 @@ import com.github.steveice10.opennbt.tag.builtin.Tag;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXTextField;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleIntegerProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
@@ -75,9 +71,6 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
 
         String ruleKey;
         String displayName;
-        BooleanProperty onValue;
-        IntegerProperty currentValue;
-        GameRulePage.GameRuleType gameRuleType;
         Tag tag;
 
         BorderPane container = new BorderPane();
@@ -85,8 +78,6 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
         public GameRuleInfo(String ruleKey, String displayName, Boolean onValue, ByteTag byteTag) {
             this.ruleKey = ruleKey;
             this.displayName = displayName;
-            this.onValue = new SimpleBooleanProperty(onValue);
-            gameRuleType = GameRulePage.GameRuleType.BOOLEAN;
             this.tag = byteTag;
 
             OptionToggleButton toggleButton = new OptionToggleButton();
@@ -107,8 +98,6 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
         public GameRuleInfo(String ruleKey, String displayName, Integer currentValue, int minValue, int maxValue, IntTag intTag) {
             this.ruleKey = ruleKey;
             this.displayName = displayName;
-            this.currentValue = new SimpleIntegerProperty(currentValue);
-            gameRuleType = GameRulePage.GameRuleType.INT;
             this.tag = intTag;
 
             VBox vbox = new VBox();
