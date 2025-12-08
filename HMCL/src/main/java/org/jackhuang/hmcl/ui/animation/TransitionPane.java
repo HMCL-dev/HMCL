@@ -51,6 +51,11 @@ public class TransitionPane extends StackPane {
 
     public void setContent(Node newView, AnimationProducer transition,
                            Duration duration, Interpolator interpolator) {
+        if (oldAnimation != null) {
+            oldAnimation.stop();
+            oldAnimation = null;
+        }
+
         Node previousNode = currentNode != newView && getWidth() > 0 && getHeight() > 0 ? currentNode : null;
         currentNode = newView;
 
@@ -63,11 +68,6 @@ public class TransitionPane extends StackPane {
         getChildren().setAll(previousNode, newView);
 
         setMouseTransparent(true);
-
-        if (oldAnimation != null) {
-            oldAnimation.stop();
-            oldAnimation = null;
-        }
         transition.init(this, previousNode, newView);
 
         CacheHint cacheHint = newView instanceof Cacheable cacheable
