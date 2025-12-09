@@ -35,7 +35,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.util.*;
+import java.util.stream.Collectors;
 
+/// Represents an abstract game rule in Minecraft (e.g., `doDaylightCycle`, `randomTickSpeed`).
+///
+/// This class handles the logic for:
+/// * Defining rule types (Boolean or Integer).
+/// * Parsing rules from NBT tags (read from `level.dat`).
+/// * Serializing/Deserializing rules via GSON.
+/// * Binding values to JavaFX properties for UI integration.
+///
+/// It is a sealed class permitting only [BooleanGameRule] and [IntGameRule].
 @JsonSerializable
 @JsonAdapter(GameRule.GameRuleDeserializer.class)
 public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule.IntGameRule {
@@ -62,6 +72,42 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         return intGameRule;
     }
 
+    /// Parses an NBT Tag to create a corresponding [GameRule].
+    ///
+    /// This method handles type coercion:
+    /// * [IntTag] -> [IntGameRule]
+    /// * [ByteTag] -> [BooleanGameRule]
+    /// * [StringTag] -> Tries to parse as [BooleanGameRule] ("true"/"false") or [IntGameRule].
+    ///
+    /// @param tag The NBT tag to parse.
+    /// @return An Optional containing the GameRule if parsing was successful.
+    private static Optional<GameRule> createSimpleRuleFromTag(Tag tag) {
+        String name = tag.getName();
+
+        if (tag instanceof IntTag intTag) {
+            return Optional.of(createSimpleGameRule(name, intTag.getValue()));
+        }
+        if (tag instanceof ByteTag byteTag) {
+            return Optional.of(createSimpleGameRule(name, byteTag.getValue() == 1));
+        }
+        if (tag instanceof StringTag stringTag) {
+            String value = stringTag.getValue();
+            if ("true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value)) {
+                return Optional.of(createSimpleGameRule(name, Boolean.parseBoolean(value)));
+            }
+            Integer intValue = Lang.toIntOrNull(value);
+            if (intValue != null) {
+                return Optional.of(createSimpleGameRule(name, intValue));
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    /// Applies metadata from a definition rule to a simple value rule.
+    ///
+    /// This is used to hydrate a raw rule read from NBT (which only has a ruleKey and value)
+    /// with static definition data (translation keys, min/max values) loaded from JSON.
     public static GameRule mixGameRule(GameRule simpleGameRule, GameRule gameRule) {
         simpleGameRule.applyMetadata(gameRule);
         return simpleGameRule;
@@ -75,6 +121,10 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         gameRuleMap.put(ruleKey, new IntGameRule(Collections.singletonList(ruleKey), displayName, value));
     }
 
+    /// Creates a [GameRuleNBT] wrapper around an NBT Tag.
+    /// Used for unified changing operations back to NBT format.
+    ///
+    /// @see GameRuleNBT
     public static Optional<GameRuleNBT> createGameRuleNbt(Tag tag) {
         if (tag instanceof StringTag stringTag && (tag.getValue().equals("true") || tag.getValue().equals("false"))) {
             return Optional.of(new GameRuleNBT.StringByteGameRuleNBT(stringTag));
@@ -83,35 +133,21 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         } else if (tag instanceof IntTag intTag) {
             return Optional.of(new GameRuleNBT.IntGameRuleNBT(intTag));
         } else if (tag instanceof ByteTag byteTag) {
-            return Optional.of(new GameRuleNBT.ByteRuleNBT(byteTag));
+            return Optional.of(new GameRuleNBT.ByteGameRuleNBT(byteTag));
         }
         return Optional.empty();
     }
 
+    /// Retrieves a fully populated GameRule based on an NBT tag.
+    ///
+    /// This combines parsing the tag [#createGameRuleNbt(Tag)] and applying known metadata
+    /// from the provided `gameRuleMap`.
     public static Optional<GameRule> getFullGameRule(Tag tag, Map<String, GameRule> gameRuleMap) {
-        GameRule dataGameRule = gameRuleMap.getOrDefault(tag.getName(), null);
-        if (dataGameRule != null && tag instanceof IntTag intTag) {
-            return Optional.of(mixGameRule(GameRule.createSimpleGameRule(intTag.getName(), intTag.getValue()), dataGameRule));
-        } else if (dataGameRule != null && tag instanceof ByteTag byteTag) {
-            return Optional.of(mixGameRule(GameRule.createSimpleGameRule(byteTag.getName(), byteTag.getValue() == 1), dataGameRule));
-        } else if (dataGameRule == null && tag instanceof IntTag intTag) {
-            return Optional.of(createSimpleGameRule(tag.getName(), intTag.getValue()));
-        } else if (dataGameRule == null && tag instanceof ByteTag byteTag) {
-            return Optional.of(createSimpleGameRule(tag.getName(), byteTag.getValue() == 1));
-        } else if (dataGameRule != null && tag instanceof StringTag stringTag) {
-            if (stringTag.getValue().equals("true") || stringTag.getValue().equals("false")) {
-                return Optional.of(mixGameRule(GameRule.createSimpleGameRule(stringTag.getName(), Boolean.parseBoolean(stringTag.getValue())), dataGameRule));
-            } else if (Lang.toIntOrNull(stringTag.getValue()) != null) {
-                return Optional.of(mixGameRule(GameRule.createSimpleGameRule(stringTag.getName(), Lang.toIntOrNull(stringTag.getValue())), dataGameRule));
-            }
-        } else if (dataGameRule == null && tag instanceof StringTag stringTag) {
-            if (stringTag.getValue().equals("true") || stringTag.getValue().equals("false")) {
-                return Optional.of(createSimpleGameRule(stringTag.getName(), Boolean.parseBoolean(stringTag.getValue())));
-            } else if (Lang.toIntOrNull(stringTag.getValue()) != null) {
-                return Optional.of(createSimpleGameRule(stringTag.getName(), Lang.toIntOrNull(stringTag.getValue())));
-            }
-        }
-        return Optional.empty();
+        return createSimpleRuleFromTag(tag).map(simpleGameRule -> {
+            Optional.ofNullable(gameRuleMap.get(tag.getName()))
+                    .ifPresent(simpleGameRule::applyMetadata);
+            return simpleGameRule;
+        });
     }
 
     public static Map<String, GameRule> getCloneGameRuleMap() {
@@ -120,6 +156,7 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
 
     public abstract GameRule clone();
 
+    /// Copies metadata (e.g., descriptions, ranges) from the source rule to this instance.
     public abstract void applyMetadata(GameRule metadataSource);
 
     public void setRuleKey(List<String> ruleKey) {
@@ -138,6 +175,8 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         return displayI18nKey;
     }
 
+    /// Implementation of a boolean-based GameRule.
+    /// Wraps values in [BooleanProperty] for UI binding.
     public static final class BooleanGameRule extends GameRule {
         private final BooleanProperty value = new SimpleBooleanProperty(false);
         private final BooleanProperty defaultValue = new SimpleBooleanProperty(false);
@@ -191,6 +230,8 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         }
     }
 
+    /// Implementation of an integer-based GameRule.
+    /// Wraps values in [IntegerProperty] and supports min/max value validation.
     public static final class IntGameRule extends GameRule {
         private final IntegerProperty value = new SimpleIntegerProperty(0);
         private final IntegerProperty defaultValue = new SimpleIntegerProperty(0);
@@ -266,6 +307,8 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         }
     }
 
+    /// Custom GSON deserializer for [GameRule].
+    /// Determines whether to create an [IntGameRule] or [BooleanGameRule] based on the JSON content.
     static class GameRuleDeserializer implements JsonDeserializer<GameRule> {
 
         @Override
@@ -330,9 +373,7 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         }
 
         private static Map<String, GameRule> cloneGameRuleMap() {
-            Map<String, GameRule> newGameRuleMap = new HashMap<>();
-            gameRuleMap.forEach((key, gameRule) -> newGameRuleMap.put(key, gameRule.clone()));
-            return newGameRuleMap;
+            return gameRuleMap.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().clone()));
         }
 
     }

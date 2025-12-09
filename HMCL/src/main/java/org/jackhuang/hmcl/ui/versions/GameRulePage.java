@@ -23,7 +23,6 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.Skin;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.gamerule.GameRule;
-import org.jackhuang.hmcl.gamerule.GameRuleNBT;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.ListPageBase;
@@ -75,33 +74,33 @@ public class GameRulePage extends ListPageBase<GameRulePageSkin.GameRuleInfo> {
         CompoundTag dataTag = levelDat.get("Data");
         CompoundTag gameRuleCompoundTag;
         gameRuleCompoundTag = dataTag.get("game_rules");
-        if (gameRuleCompoundTag != null) {
-        } else {
+        if (gameRuleCompoundTag == null) {
             gameRuleCompoundTag = dataTag.get("GameRules");
         }
+
+        if (gameRuleCompoundTag == null) {
+            LOG.warning("Neither 'game_rules' nor 'GameRules' tag found in level.dat");
+            return;
+        }
+
         gameRuleCompoundTag.iterator().forEachRemaining(gameRuleTag -> {
-            GameRuleNBT gameRuleNBT = GameRule.createGameRuleNbt(gameRuleTag).orElse(null);
-            GameRule finalGameRule = GameRule.getFullGameRule(gameRuleTag, gameRuleMap).orElse(null);
-            if (gameRuleNBT == null || finalGameRule == null) {
-                return;
-            }
-
-            String displayText;
-            try {
-                if (StringUtils.isNotBlank(finalGameRule.getDisplayI18nKey())) {
-                    displayText = i18n(finalGameRule.getDisplayI18nKey());
-                } else {
-                    displayText = "";
-                }
-            } catch (Exception e) {
-                displayText = "";
-            }
-
-            if (finalGameRule instanceof GameRule.IntGameRule intGameRule) {
-                gameRuleList.add(new GameRulePageSkin.GameRuleInfo(intGameRule.getRuleKey().get(0), displayText, intGameRule.getValue(), intGameRule.getMinValue(), intGameRule.getMaxValue(), gameRuleNBT, this::saveLevelDat));
-            } else if (finalGameRule instanceof GameRule.BooleanGameRule booleanGameRule) {
-                gameRuleList.add(new GameRulePageSkin.GameRuleInfo(booleanGameRule.getRuleKey().get(0), displayText, booleanGameRule.getValue(), gameRuleNBT, this::saveLevelDat));
-            }
+            GameRule.createGameRuleNbt(gameRuleTag).ifPresent(gameRuleNBT -> {
+                GameRule.getFullGameRule(gameRuleTag, gameRuleMap).ifPresent(gameRule -> {
+                    String displayText = "";
+                    try {
+                        if (StringUtils.isNotBlank(gameRule.getDisplayI18nKey())) {
+                            displayText = i18n(gameRule.getDisplayI18nKey());
+                        }
+                    } catch (Exception e) {
+                        LOG.warning("Failed to get i18n text for key: " + gameRule.getDisplayI18nKey(), e);
+                    }
+                    if (gameRule instanceof GameRule.IntGameRule intGameRule) {
+                        gameRuleList.add(new GameRulePageSkin.GameRuleInfo(intGameRule.getRuleKey().get(0), displayText, intGameRule.getValue(), intGameRule.getMinValue(), intGameRule.getMaxValue(), gameRuleNBT, this::saveLevelDat));
+                    } else if (gameRule instanceof GameRule.BooleanGameRule booleanGameRule) {
+                        gameRuleList.add(new GameRulePageSkin.GameRuleInfo(booleanGameRule.getRuleKey().get(0), displayText, booleanGameRule.getValue(), gameRuleNBT, this::saveLevelDat));
+                    }
+                });
+            });
         });
     }
 
@@ -144,10 +143,6 @@ public class GameRulePage extends ListPageBase<GameRulePageSkin.GameRuleInfo> {
             stringPredicate = s -> s != null && s.toLowerCase(Locale.ROOT).contains(lowerCaseFilter);
         }
 
-        return gameRuleInfo -> {
-            String displayName = gameRuleInfo.displayName;
-            String ruleKey = gameRuleInfo.ruleKey;
-            return stringPredicate.test(displayName) || stringPredicate.test(ruleKey);
-        };
+        return gameRuleInfo -> stringPredicate.test(gameRuleInfo.displayName) || stringPredicate.test(gameRuleInfo.ruleKey);
     }
 }

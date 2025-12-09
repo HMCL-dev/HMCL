@@ -23,70 +23,81 @@ import com.github.steveice10.opennbt.tag.builtin.StringTag;
 import com.github.steveice10.opennbt.tag.builtin.Tag;
 import org.jackhuang.hmcl.util.Lang;
 
-public abstract class GameRuleNBT<T> {
+/**
+ * An abstract representation of a Minecraft game rule stored as an NBT tag.
+ * <p>
+ * This class acts as a generic wrapper for a specific game rule's NBT tag,
+ * providing a unified interface to modify its value. It abstracts the underlying
+ * NBT tag implementation, allowing different types of game rule values (like integers,
+ * booleans, or strings) to be handled consistently.
+ * <p>
+ * Subclasses must implement the {@link #changeValue(Object)} method to define
+ * how an input value of type {@code T} is converted and applied to the wrapped
+ * NBT tag of type {@code V}.
+ *
+ * @param <T> The type of the value used to update the game rule (e.g., {@link String}, {@link Boolean}).
+ * @param <V> The specific {@link Tag} subtype being wrapped (e.g., {@link IntTag}, {@link ByteTag}).
+ */
+public sealed abstract class GameRuleNBT<T, V extends Tag> permits GameRuleNBT.IntGameRuleNBT, GameRuleNBT.ByteGameRuleNBT, GameRuleNBT.StringIntGameRuleNBT, GameRuleNBT.StringByteGameRuleNBT {
 
-    private Tag gameRuleTag;
+    private final V gameRuleTag;
 
-    public abstract void changeValue(T newValue);
-
-    public Tag getGameRuleTag() {
-        return gameRuleTag;
-    }
-
-    public void setGameRuleTag(Tag gameRuleTag) {
+    protected GameRuleNBT(V gameRuleTag) {
         this.gameRuleTag = gameRuleTag;
     }
 
-    static class IntGameRuleNBT extends GameRuleNBT<String> {
+    public abstract void changeValue(T newValue);
+
+    public V getGameRuleTag() {
+        return gameRuleTag;
+    }
+
+    static final class IntGameRuleNBT extends GameRuleNBT<String, IntTag> {
 
         public IntGameRuleNBT(IntTag gameRuleTag) {
-            setGameRuleTag(gameRuleTag);
+            super(gameRuleTag);
         }
 
         @Override
         public void changeValue(String newValue) {
-            IntTag intTag = (IntTag) getGameRuleTag();
             Integer value = Lang.toIntOrNull(newValue);
-            intTag.setValue(value);
+            getGameRuleTag().setValue(value);
         }
     }
 
-    static class ByteRuleNBT extends GameRuleNBT<Boolean> {
+    static final class ByteGameRuleNBT extends GameRuleNBT<Boolean, ByteTag> {
 
-        public ByteRuleNBT(ByteTag gameRuleTag) {
-            setGameRuleTag(gameRuleTag);
+        public ByteGameRuleNBT(ByteTag gameRuleTag) {
+            super(gameRuleTag);
         }
 
         @Override
         public void changeValue(Boolean newValue) {
-            ByteTag byteTag = (ByteTag) getGameRuleTag();
-            byteTag.setValue((byte) (newValue ? 1 : 0));
+            getGameRuleTag().setValue((byte) (newValue ? 1 : 0));
         }
     }
 
-    static class StringIntGameRuleNBT extends GameRuleNBT<String> {
+    static final class StringIntGameRuleNBT extends GameRuleNBT<String, StringTag> {
 
         public StringIntGameRuleNBT(StringTag gameRuleTag) {
-            setGameRuleTag(gameRuleTag);
+            super(gameRuleTag);
         }
 
         @Override
         public void changeValue(String newValue) {
-            StringTag stringTag = (StringTag) getGameRuleTag();
-            stringTag.setValue(newValue);
+            getGameRuleTag().setValue(newValue);
         }
     }
 
-    static class StringByteGameRuleNBT extends GameRuleNBT<Boolean> {
+    static final class StringByteGameRuleNBT extends GameRuleNBT<Boolean, StringTag> {
 
         public StringByteGameRuleNBT(StringTag gameRuleTag) {
-            setGameRuleTag(gameRuleTag);
+            super(gameRuleTag);
         }
 
         @Override
         public void changeValue(Boolean newValue) {
-            StringTag stringTag = (StringTag) getGameRuleTag();
-            stringTag.setValue(newValue ? "true" : "false");
+            getGameRuleTag().setValue(newValue ? "true" : "false");
         }
     }
 }
