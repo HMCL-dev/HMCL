@@ -95,9 +95,9 @@ public class GameRulePage extends ListPageBase<GameRulePageSkin.GameRuleInfo> {
                         LOG.warning("Failed to get i18n text for key: " + gameRule.getDisplayI18nKey(), e);
                     }
                     if (gameRule instanceof GameRule.IntGameRule intGameRule) {
-                        gameRuleList.add(new GameRulePageSkin.GameRuleInfo(intGameRule.getRuleKey().get(0), displayText, intGameRule.getValue(), intGameRule.getMinValue(), intGameRule.getMaxValue(), gameRuleNBT, this::saveLevelDat));
+                        gameRuleList.add(new GameRulePageSkin.GameRuleInfo(intGameRule.getRuleKey().get(0), displayText, intGameRule.getValue(), intGameRule.getMinValue(), intGameRule.getMaxValue(), intGameRule.getDefaultValue(), gameRuleNBT, this::saveLevelDat));
                     } else if (gameRule instanceof GameRule.BooleanGameRule booleanGameRule) {
-                        gameRuleList.add(new GameRulePageSkin.GameRuleInfo(booleanGameRule.getRuleKey().get(0), displayText, booleanGameRule.getValue(), gameRuleNBT, this::saveLevelDat));
+                        gameRuleList.add(new GameRulePageSkin.GameRuleInfo(booleanGameRule.getRuleKey().get(0), displayText, booleanGameRule.getValue(), booleanGameRule.getDefaultValue(), gameRuleNBT, this::saveLevelDat));
                     }
                 });
             });

@@ -27,6 +27,7 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.value.ObservableBooleanValue;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -179,7 +180,7 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
     /// Wraps values in [BooleanProperty] for UI binding.
     public static final class BooleanGameRule extends GameRule {
         private final BooleanProperty value = new SimpleBooleanProperty(false);
-        private final BooleanProperty defaultValue = new SimpleBooleanProperty(false);
+        private Optional<BooleanProperty> defaultValue = Optional.empty();
 
         private BooleanGameRule(List<String> ruleKey, String displayI18nKey, boolean value) {
             super(ruleKey, displayI18nKey);
@@ -193,7 +194,7 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         @Override
         public GameRule clone() {
             BooleanGameRule booleanGameRule = new BooleanGameRule(getRuleKey(), getDisplayI18nKey(), value.getValue());
-            booleanGameRule.defaultValue.setValue(defaultValue.getValue());
+            this.getDefaultValue().ifPresent(booleanGameRule::setDefaultValue);
             return booleanGameRule;
         }
 
@@ -201,20 +202,20 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         public void applyMetadata(GameRule metadataSource) {
             if (metadataSource instanceof BooleanGameRule source) {
                 this.setDisplayI18nKey(source.getDisplayI18nKey());
-                this.setDefaultValue(source.getDefaultValue());
+                source.getDefaultValue().ifPresent(this::setDefaultValue);
             }
         }
 
-        public boolean getDefaultValue() {
-            return defaultValue.get();
+        public Optional<Boolean> getDefaultValue() {
+            return defaultValue.map(ObservableBooleanValue::get);
         }
 
-        public BooleanProperty defaultValueProperty() {
+        public Optional<BooleanProperty> defaultValueProperty() {
             return defaultValue;
         }
 
         private void setDefaultValue(boolean value) {
-            this.defaultValue.setValue(value);
+            this.defaultValue.ifPresentOrElse(defaultValue -> defaultValue.setValue(value), () -> defaultValue = Optional.of(new SimpleBooleanProperty(value)));
         }
 
         public boolean getValue() {
@@ -234,7 +235,7 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
     /// Wraps values in [IntegerProperty] and supports min/max value validation.
     public static final class IntGameRule extends GameRule {
         private final IntegerProperty value = new SimpleIntegerProperty(0);
-        private final IntegerProperty defaultValue = new SimpleIntegerProperty(0);
+        private Optional<IntegerProperty> defaultValue = Optional.empty();
         private int maxValue = 0;
         private int minValue = 0;
 
@@ -250,7 +251,7 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         @Override
         public GameRule clone() {
             IntGameRule intGameRule = new IntGameRule(getRuleKey(), getDisplayI18nKey(), value.getValue());
-            intGameRule.defaultValue.setValue(defaultValue.getValue());
+            getDefaultValue().ifPresent(intGameRule::setDefaultValue);
             intGameRule.minValue = minValue;
             intGameRule.maxValue = maxValue;
             return intGameRule;
@@ -260,22 +261,22 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         public void applyMetadata(GameRule metadataSource) {
             if (metadataSource instanceof IntGameRule source) {
                 this.setDisplayI18nKey(source.getDisplayI18nKey());
-                this.setDefaultValue(source.getDefaultValue());
+                source.getDefaultValue().ifPresent(this::setDefaultValue);
                 this.maxValue = source.getMaxValue();
                 this.minValue = source.getMinValue();
             }
         }
 
-        public int getDefaultValue() {
-            return defaultValue.get();
+        public Optional<Integer> getDefaultValue() {
+            return defaultValue.map(IntegerProperty::getValue);
         }
 
-        public IntegerProperty defaultValueProperty() {
+        public Optional<IntegerProperty> defaultValueProperty() {
             return defaultValue;
         }
 
         private void setDefaultValue(int value) {
-            this.defaultValue.setValue(value);
+            defaultValue.ifPresentOrElse(defaultValue -> defaultValue.set(value), () -> defaultValue = Optional.of(new SimpleIntegerProperty(value)));
         }
 
         public int getValue() {

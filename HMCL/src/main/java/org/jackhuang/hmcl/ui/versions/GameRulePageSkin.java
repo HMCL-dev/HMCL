@@ -38,6 +38,8 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.Lang;
 
+import java.util.Optional;
+
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -102,7 +104,7 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
 
         BorderPane container = new BorderPane();
 
-        public GameRuleInfo(String ruleKey, String displayName, Boolean onValue, GameRuleNBT<Boolean, Tag> gameRuleNbt, Runnable onSave) {
+        public GameRuleInfo(String ruleKey, String displayName, Boolean onValue, Optional<Boolean> defaultValue, GameRuleNBT<Boolean, Tag> gameRuleNbt, Runnable onSave) {
             this.ruleKey = ruleKey;
             this.displayName = displayName;
             this.gameRuleNbt = gameRuleNbt;
@@ -119,9 +121,19 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
 
             HBox.setHgrow(container, Priority.ALWAYS);
             container.setCenter(toggleButton);
+
+            JFXButton resetButton = new JFXButton();
+            resetButton.setGraphic(SVG.ARROW_BACK.createIcon(24));
+            defaultValue.ifPresentOrElse(value -> {
+                resetButton.setOnAction(event -> {
+                    toggleButton.selectedProperty().set(value);
+                });
+            }, () -> resetButton.setDisable(true));
+            resetButton.setAlignment(Pos.BOTTOM_CENTER);
+            container.setRight(resetButton);
         }
 
-        public GameRuleInfo(String ruleKey, String displayName, Integer currentValue, int minValue, int maxValue, GameRuleNBT<String, Tag> gameRuleNbt, Runnable onSave) {
+        public GameRuleInfo(String ruleKey, String displayName, Integer currentValue, int minValue, int maxValue, Optional<Integer> defaultValue, GameRuleNBT<String, Tag> gameRuleNbt, Runnable onSave) {
             this.ruleKey = ruleKey;
             this.displayName = displayName;
             this.gameRuleNbt = gameRuleNbt;
@@ -132,6 +144,8 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
             HBox.setHgrow(vbox, Priority.ALWAYS);
 
             container.setPadding(new Insets(8, 8, 8, 16));
+            HBox hBox = new HBox();
+
             JFXTextField textField = new JFXTextField();
             textField.maxWidth(10);
             textField.minWidth(10);
@@ -149,10 +163,20 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
                     onSave.run();
                 }
             });
+            hBox.getChildren().add(textField);
+
+            JFXButton resetButton = new JFXButton();
+            resetButton.setGraphic(SVG.ARROW_BACK.createIcon(24));
+            defaultValue.ifPresentOrElse(value -> {
+                resetButton.setOnAction(event -> textField.textProperty().set(String.valueOf(value)));
+            }, () -> resetButton.setDisable(true));
+            resetButton.setAlignment(Pos.BOTTOM_CENTER);
+            hBox.setSpacing(4);
+            hBox.getChildren().add(resetButton);
 
             HBox.setHgrow(container, Priority.ALWAYS);
             container.setCenter(vbox);
-            container.setRight(textField);
+            container.setRight(hBox);
         }
 
     }
