@@ -190,14 +190,14 @@ public class LaunchOptions implements Serializable {
     }
 
     /**
-     * The folder name of a local world
+     * The folder name of a local world that will join when enter game main menu.
      */
     public String getWorldFolderName() {
         return worldFolderName;
     }
 
     /**
-     * The realm ID for a Minecraft realm.
+     * The realm ID for a Minecraft realm that will connect to when enter game main menu.
      */
     public String getRealmID() {
         return realmID;
