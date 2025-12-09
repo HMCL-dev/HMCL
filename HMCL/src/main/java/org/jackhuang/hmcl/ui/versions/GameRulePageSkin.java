@@ -102,7 +102,7 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
         String displayName;
         GameRuleNBT gameRuleNbt;
 
-        BorderPane container = new BorderPane();
+        HBox container = new HBox();
 
         public GameRuleInfo(String ruleKey, String displayName, Boolean onValue, Optional<Boolean> defaultValue, GameRuleNBT<Boolean, Tag> gameRuleNbt, Runnable onSave) {
             this.ruleKey = ruleKey;
@@ -113,14 +113,14 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
             toggleButton.setTitle(displayName);
             toggleButton.setSubtitle(ruleKey);
             toggleButton.setSelected(onValue);
-
             toggleButton.selectedProperty().addListener((observable, oldValue, newValue) -> {
                 gameRuleNbt.changeValue(newValue);
                 onSave.run();
             });
 
+            HBox.setHgrow(toggleButton, Priority.ALWAYS);
             HBox.setHgrow(container, Priority.ALWAYS);
-            container.setCenter(toggleButton);
+            container.getChildren().add(toggleButton);
 
             JFXButton resetButton = new JFXButton();
             resetButton.setGraphic(SVG.ARROW_BACK.createIcon(24));
@@ -128,9 +128,14 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
                 resetButton.setOnAction(event -> {
                     toggleButton.selectedProperty().set(value);
                 });
-            }, () -> resetButton.setDisable(true));
-            resetButton.setAlignment(Pos.BOTTOM_CENTER);
-            container.setRight(resetButton);
+                FXUtils.installSlowTooltip(resetButton, i18n("gamerule.restore_default_values.tooltip", value));
+            }, () -> {
+                resetButton.setDisable(true);
+            });
+
+            container.setAlignment(Pos.CENTER_LEFT);
+            container.setPadding(new Insets(0, 8, 0, 0));
+            container.getChildren().add(resetButton);
         }
 
         public GameRuleInfo(String ruleKey, String displayName, Integer currentValue, int minValue, int maxValue, Optional<Integer> defaultValue, GameRuleNBT<String, Tag> gameRuleNbt, Runnable onSave) {
@@ -140,15 +145,13 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
 
             VBox vbox = new VBox();
             vbox.getChildren().addAll(new Label(displayName), new Label(ruleKey));
+
             vbox.setAlignment(Pos.CENTER_LEFT);
             HBox.setHgrow(vbox, Priority.ALWAYS);
-
             container.setPadding(new Insets(8, 8, 8, 16));
-            HBox hBox = new HBox();
 
+            HBox hBox = new HBox();
             JFXTextField textField = new JFXTextField();
-            textField.maxWidth(10);
-            textField.minWidth(10);
             textField.textProperty().set(currentValue.toString());
             FXUtils.setValidateWhileTextChanged(textField, true);
             textField.setValidators(new NumberRangeValidator(i18n("input.integer"), i18n("input.number_range", minValue, maxValue), minValue, maxValue, false));
@@ -163,20 +166,31 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
                     onSave.run();
                 }
             });
+
+            textField.maxWidth(10);
+            textField.minWidth(10);
             hBox.getChildren().add(textField);
 
             JFXButton resetButton = new JFXButton();
             resetButton.setGraphic(SVG.ARROW_BACK.createIcon(24));
             defaultValue.ifPresentOrElse(value -> {
-                resetButton.setOnAction(event -> textField.textProperty().set(String.valueOf(value)));
-            }, () -> resetButton.setDisable(true));
+                resetButton.setOnAction(event -> {
+                    textField.textProperty().set(String.valueOf(value));
+                });
+                FXUtils.installSlowTooltip(resetButton, i18n("gamerule.restore_default_values.tooltip", value));
+            }, () -> {
+                resetButton.setDisable(true);
+            });
+
             resetButton.setAlignment(Pos.BOTTOM_CENTER);
-            hBox.setSpacing(4);
+            hBox.setSpacing(12);
             hBox.getChildren().add(resetButton);
+            hBox.setAlignment(Pos.CENTER_LEFT);
 
             HBox.setHgrow(container, Priority.ALWAYS);
-            container.setCenter(vbox);
-            container.setRight(hBox);
+            container.getChildren().add(vbox);
+            container.getChildren().add(hBox);
+            container.setAlignment(Pos.CENTER_LEFT);
         }
 
     }
