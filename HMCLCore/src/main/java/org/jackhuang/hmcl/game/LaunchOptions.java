@@ -192,11 +192,13 @@ public class LaunchOptions implements Serializable {
     /**
      * The folder name of a local world
      */
-
     public String getWorldFolderName() {
         return worldFolderName;
     }
 
+    /**
+     * The realm ID for a Minecraft realm.
+     */
     public String getRealmID() {
         return realmID;
     }
