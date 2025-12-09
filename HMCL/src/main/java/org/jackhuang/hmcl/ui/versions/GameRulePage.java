@@ -118,9 +118,7 @@ public class GameRulePage extends ListPageBase<GameRulePageSkin.GameRuleInfo> {
 
     void saveLevelDat() {
         LOG.info("Saving level.dat of world " + world.getWorldName());
-        Task.runAsync(Schedulers.io(), () -> {
-                    this.world.writeLevelDat(levelDat);
-                })
+        Task.runAsync(Schedulers.io(), () -> this.world.writeLevelDat(levelDat))
                 .whenComplete(Schedulers.defaultScheduler(), ((result, exception) -> {
                     if (exception != null) {
                         LOG.warning("Failed to save level.dat of world " + world.getWorldName(), exception);
