@@ -103,6 +103,13 @@
   },
   {
     "ruleKey": [
+      "entitiesWithPassengersCanUsePortals"
+    ],
+    "displayI18nKey": "gamerule.entities_with_passengers_can_use_portals",
+    "defaultValue": false
+  },
+  {
+    "ruleKey": [
       "minecraft:fall_damage",
       "fallDamage"
     ],
@@ -393,6 +400,13 @@
     ],
     "displayI18nKey": "gamerule.show_death_messages",
     "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "spawnChunkRadius"
+    ],
+    "displayI18nKey": "gamerule.spawn_chunk_radius",
+    "defaultValue": 2
   },
   {
     "ruleKey": [
