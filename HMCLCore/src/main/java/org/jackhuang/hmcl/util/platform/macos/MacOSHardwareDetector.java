@@ -32,9 +32,10 @@ import org.jackhuang.hmcl.util.platform.hardware.HardwareVendor;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -151,49 +152,49 @@ public final class MacOSHardwareDetector extends HardwareDetector {
         return Collections.emptyList();
     }
 
+    private static final Pattern PATTERN = Pattern.compile("\\(page size of (?<size>\\d+) bytes\\)");
+
     @Override
     public long getFreeMemorySize() {
+        vmStat:
         try {
-            Process process = Runtime.getRuntime().exec("vm_stat");
-            Map<String, String> stats;
-            long pageSize = -1;
+            Map<String, String> stats = SystemUtils.run(List.of("/usr/bin/vm_stat"),
+                    inputStream -> KeyValuePairUtils.loadPairs(
+                            new BufferedReader(new InputStreamReader(inputStream, OperatingSystem.NATIVE_CHARSET))));
+            String statistics = stats.get("Mach Virtual Memory Statistics");
 
-            try (var reader = process.inputReader(OperatingSystem.NATIVE_CHARSET)) {
-                List<String> lines = reader.lines().toList();
-                process.waitFor();
+            long pageSize;
+            long pagesFree;
+            long pagesInactive;
 
-                if (!lines.isEmpty()) {
-                    String first = lines.get(0);
-                    if (first.contains("page size of")) {
-                        pageSize = Long.parseLong(first.replaceAll(".*page size of (\\d+) bytes.*", "$1"));
-                    }
-                }
+            if (statistics != null) {
+                Matcher matcher = PATTERN.matcher(statistics);
+                if (matcher.matches())
+                    pageSize = Long.parseLong(matcher.group("size"));
+                else
+                    break vmStat;
+            } else
+                break vmStat;
 
-                stats = KeyValuePairUtils.loadPairs(lines.iterator());
-            }
+            String pagesFreeStr = stats.get("Pages free");
+            if (pagesFreeStr != null && pagesFreeStr.endsWith("."))
+                pagesFree = Long.parseUnsignedLong(pagesFreeStr, 0, pagesFreeStr.length() - 1, 10);
+            else
+                break vmStat;
 
-            if (pageSize == -1)
-                throw new IOException("Missing 'page size' in vm_stat output");
+            String pagesInactiveStr = stats.get("Pages inactive");
+            if (pagesInactiveStr != null && pagesInactiveStr.endsWith("."))
+                pagesInactive = Long.parseUnsignedLong(pagesInactiveStr, 0, pagesInactiveStr.length() - 1, 10);
+            else
+                break vmStat;
 
-            Long freePages = null, inactivePages = null;
-            try {
-                String freeStr = stats.get("Pages free");
-                if (freeStr != null) freePages = Long.parseLong(freeStr.replace(".", ""));
-                String inactiveStr = stats.get("Pages inactive");
-                if (inactiveStr != null) inactivePages = Long.parseLong(inactiveStr.replace(".", ""));
-            } catch (NumberFormatException ignored) {
-            }
-
-            if (freePages == null) throw new IOException("Missing 'Pages free' in vm_stat output");
-            if (inactivePages == null) throw new IOException("Missing 'Pages inactive' in vm_stat output");
-
-            long available = (freePages + inactivePages) * pageSize;
-            if (available < 0) throw new IOException("Invalid available memory size: " + available + " bytes");
-
-            return available;
+            long available = (pagesFree + pagesInactive) * pageSize;
+            if (available > 0)
+                return available;
         } catch (Throwable e) {
             LOG.warning("Failed to parse vm_stat output", e);
-            return super.getFreeMemorySize();
         }
+
+        return super.getFreeMemorySize();
     }
 }
