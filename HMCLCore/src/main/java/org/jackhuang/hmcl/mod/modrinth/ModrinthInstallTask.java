@@ -18,19 +18,27 @@
 package org.jackhuang.hmcl.mod.modrinth;
 
 import com.google.gson.JsonParseException;
+import javafx.scene.image.Image;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.mod.*;
+import org.jackhuang.hmcl.task.CacheFileTask;
+import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.logging.Logger;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+
 public class ModrinthInstallTask extends Task<Void> {
+    private static final Set<String> SUPPORTED_ICON_EXTS = Set.of("png", "jpg", "jpeg", "bmp", "gif", "webp", "apng");
 
     private final DefaultDependencyManager dependencyManager;
     private final DefaultGameRepository repository;
@@ -41,6 +49,8 @@ public class ModrinthInstallTask extends Task<Void> {
     private final String iconUrl;
     private final Path run;
     private final ModpackConfiguration<ModrinthManifest> config;
+    private String iconExt;
+    private Task<Path> downloadIconTask;
     private final List<Task<?>> dependents = new ArrayList<>(4);
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
@@ -105,7 +115,13 @@ public class ModrinthInstallTask extends Task<Void> {
         List<String> subDirectories = Arrays.asList("/client-overrides", "/overrides");
         dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), subDirectories, any -> true, config).withStage("hmcl.modpack"));
         dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), subDirectories, manifest, ModrinthModpackProvider.INSTANCE, manifest.getName(), manifest.getVersionId(), repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
-
+        if (StringUtils.isNotBlank(iconUrl)) {
+            String ext = StringUtils.substringAfter(iconUrl, '.');
+            if (SUPPORTED_ICON_EXTS.contains(ext)) {
+                iconExt = ext;
+                dependents.add(downloadIconTask = new CacheFileTask(iconUrl));
+            }
+        }
         dependencies.add(new ModrinthCompletionTask(dependencyManager, name, manifest));
     }
 
@@ -135,5 +151,13 @@ public class ModrinthInstallTask extends Task<Void> {
         Path root = repository.getVersionRoot(name);
         Files.createDirectories(root);
         JsonUtils.writeToJsonFile(root.resolve("modrinth.index.json"), manifest);
+
+        if (iconExt != null) {
+            try {
+                Files.copy(downloadIconTask.getResult(), root.resolve("icon." + iconExt));
+            } catch (Exception e) {
+                LOG.warning("Failed to copy modpack icon", e);
+            }
+        }
     }
 }
