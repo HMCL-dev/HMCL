@@ -20,13 +20,11 @@ package org.jackhuang.hmcl.ui.versions.server;
 import com.github.steveice10.opennbt.tag.builtin.ByteTag;
 import com.github.steveice10.opennbt.tag.builtin.CompoundTag;
 import com.github.steveice10.opennbt.tag.builtin.StringTag;
+import javafx.scene.image.Image;
+import org.jackhuang.hmcl.ui.image.ImageUtils;
+import org.jackhuang.hmcl.util.Lazy;
 
-import javax.imageio.ImageIO;
-import java.awt.*;
-import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
@@ -34,19 +32,36 @@ import java.util.Objects;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public record ServerData(
-        boolean acceptTextures,
-        boolean hidden,
-        BufferedImage icon,
-        String ip,
-        String name
-) {
+public final class ServerData {
+    final boolean acceptTextures;
+    final boolean hidden;
+    final String icon;
+    final String ip;
+    final String name;
+
+    final Lazy<Image> iconImage;
+
+    public ServerData(
+            boolean acceptTextures,
+            boolean hidden,
+            String icon,
+            String ip,
+            String name
+    ) {
+        this.acceptTextures = acceptTextures;
+        this.hidden = hidden;
+        this.icon = icon;
+        this.ip = ip;
+        this.name = name;
+
+        this.iconImage = new Lazy<>(() -> parseImage(icon));
+    }
 
     public static ServerData fromStorage(Map<Object, Object> storage) {
         return new ServerData(
                 Boolean.TRUE.equals(storage.get("acceptTextures")),
                 Boolean.TRUE.equals(storage.get("hidden")),
-                storage.get("icon") instanceof String s ? parseImage(s) : null,
+                storage.get("icon") instanceof String s ? s : null,
                 storage.get("ip") instanceof String s ? s : null,
                 storage.get("name") instanceof String s ? s : null
         );
@@ -56,33 +71,21 @@ public record ServerData(
         return new ServerData(
                 tag.get("acceptTextures") instanceof ByteTag bt && bt.getValue() != 0,
                 tag.get("hidden") instanceof ByteTag bt && bt.getValue() != 0,
-                tag.get("icon") instanceof StringTag st ? parseImage(st.getValue()) : null,
+                tag.get("icon") instanceof StringTag st ? st.getValue() : null,
                 tag.get("ip") instanceof StringTag st ? st.getValue() : null,
                 tag.get("name") instanceof StringTag st ? st.getValue() : null
         );
     }
 
-    public static BufferedImage parseImage(String imageBase64String) {
+    public static Image parseImage(String imageBase64String) {
         if (imageBase64String == null || imageBase64String.isEmpty()) {
             return null;
         }
         try (ByteArrayInputStream bais = new ByteArrayInputStream(Base64.getDecoder().decode(imageBase64String))) {
-            return ImageIO.read(bais);
-        } catch (IOException e) {
+            // png format.
+            return ImageUtils.DEFAULT.load(bais, 0, 0, true, true);
+        } catch (Exception e) {
             LOG.warning("Failed to decode server icon", e);
-            return null;
-        }
-    }
-
-    public static String encodeImage(Image image) {
-        if (image == null) {
-            return null;
-        }
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream()) {
-            ImageIO.write((BufferedImage) image, "PNG", baos);
-            return Base64.getEncoder().encodeToString(baos.toByteArray());
-        } catch (IOException e) {
-            LOG.warning("Failed to encode server icon", e);
             return null;
         }
     }
@@ -94,7 +97,7 @@ public record ServerData(
     public void writeToCompoundTag(CompoundTag tag) {
         tag.put(new ByteTag("acceptTextures", (byte) (acceptTextures ? 1 : 0)));
         tag.put(new ByteTag("hidden", (byte) (hidden ? 1 : 0)));
-        if (icon != null) tag.put(new StringTag("icon", encodeImage(icon)));
+        if (icon != null) tag.put(new StringTag("icon", icon));
         if (ip != null) tag.put(new StringTag("ip", ip));
         if (name != null) tag.put(new StringTag("name", name));
     }
@@ -102,7 +105,7 @@ public record ServerData(
     public Map<Object, Object> toSerializeMap() {
         Map<Object, Object> map = new HashMap<>();
         map.put("acceptTextures", acceptTextures);
-        if (icon != null) map.put("icon", encodeImage(icon));
+        if (icon != null) map.put("icon", icon);
         if (ip != null) map.put("ip", ip);
         if (name != null) map.put("name", name);
         return map;
@@ -119,4 +122,15 @@ public record ServerData(
     public int hashCode() {
         return Objects.hash(ip, name);
     }
+
+    @Override
+    public String toString() {
+        return "ServerData[" +
+                "acceptTextures=" + acceptTextures + ", " +
+                "hidden=" + hidden + ", " +
+                "icon=" + icon + ", " +
+                "ip=" + ip + ", " +
+                "name=" + name + ']';
+    }
+
 }

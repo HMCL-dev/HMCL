@@ -36,7 +36,6 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.SwingFXUtils;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -82,7 +81,7 @@ public class ServerListItem extends Control {
         copyToInstance.setDisable(ownerProfile.equals(parent.profile) && ownerProfileID.equals(parent.version));
         popupMenu.getContent().addAll(
                 new IconedMenuItem(SVG.CONTENT_COPY, i18n("servers.manage.copy.server.ip"), () ->
-                        FXUtils.copyText(serverData.ip(), i18n("servers.manage.copy.server.ip.ok.toast")), popup),
+                        FXUtils.copyText(serverData.ip, i18n("servers.manage.copy.server.ip.ok.toast")), popup),
                 copyToInstance,
                 new MenuSeparator(),
                 new IconedMenuItem(SVG.DELETE, i18n("servers.manage.delete"), this::delete, popup)
@@ -124,18 +123,18 @@ public class ServerListItem extends Control {
                 ImageView imageView = new ImageView();
                 left.getChildren().add(imageView);
                 FXUtils.limitSize(imageView, 32, 32);
-                imageView.setImage(serverData.icon() == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : SwingFXUtils.toFXImage(serverData.icon(), null));
+                imageView.setImage(serverData.iconImage.get() == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : serverData.iconImage.get());
             }
 
             {
                 TwoLineListItem item = new TwoLineListItem();
                 root.setCenter(item);
                 item.setMouseTransparent(true);
-                if (serverData.name() != null)
-                    item.setTitle(parseColorEscapes(serverData.name()));
-                item.setSubtitle(serverData.ip());
+                if (serverData.name != null)
+                    item.setTitle(parseColorEscapes(serverData.name));
+                item.setSubtitle(serverData.ip);
                 item.addTag(ownerProfileID);
-                if (serverData.hidden()) {
+                if (serverData.hidden) {
                     item.addTag(i18n("server.tag.hide"));
                 }
             }

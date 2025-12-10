@@ -99,7 +99,7 @@ public class ServerListPage extends ListPageBase<ServerListItem> implements Vers
     private void updateFilter() {
         itemsProperty().setAll(serverListItems.stream()
                 .filter(item -> showAll.get() || (item.ownerProfile.equals(profile) && item.ownerProfileID.equals(version)))
-                .filter(item -> showHide.get() || !item.serverData.hidden())
+                .filter(item -> showHide.get() || !item.serverData.hidden)
                 .toList()
         );
     }
