@@ -38,17 +38,19 @@ public class ModrinthInstallTask extends Task<Void> {
     private final Modpack modpack;
     private final ModrinthManifest manifest;
     private final String name;
+    private final String iconUrl;
     private final Path run;
     private final ModpackConfiguration<ModrinthManifest> config;
     private final List<Task<?>> dependents = new ArrayList<>(4);
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
-    public ModrinthInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, Modpack modpack, ModrinthManifest manifest, String name) {
+    public ModrinthInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, Modpack modpack, ModrinthManifest manifest, String name, String iconUrl) {
         this.dependencyManager = dependencyManager;
         this.zipFile = zipFile;
         this.modpack = modpack;
         this.manifest = manifest;
         this.name = name;
+        this.iconUrl = iconUrl;
         this.repository = dependencyManager.getGameRepository();
         this.run = repository.getRunDirectory(name);
 

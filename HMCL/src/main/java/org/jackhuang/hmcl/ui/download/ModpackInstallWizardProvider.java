@@ -119,7 +119,7 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
                 return ModpackHelper.getInstallTask(profile, serverModpackManifest, name, modpack)
                         .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
             } else {
-                return ModpackHelper.getInstallTask(profile, selected, name, modpack)
+                return ModpackHelper.getInstallTask(profile, selected, name, modpack, )
                         .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
             }
         }
