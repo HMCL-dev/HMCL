@@ -64,6 +64,13 @@
   },
   {
     "ruleKey": [
+      "disableRaids"
+    ],
+    "displayI18nKey": "gamerule.disable_raids",
+    "defaultValue": false
+  },
+  {
+    "ruleKey": [
       "doFireTick"
     ],
     "displayI18nKey": "gamerule.do_fire_tick",
@@ -345,8 +352,7 @@
   },
   {
     "ruleKey": [
-      "minecraft:raids",
-      "disableRaids"
+      "minecraft:raids"
     ],
     "displayI18nKey": "gamerule.raids",
     "defaultValue": true
