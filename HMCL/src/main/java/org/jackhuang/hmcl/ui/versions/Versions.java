@@ -72,7 +72,7 @@ public final class Versions {
         }
     }
 
-    public static void downloadModpackImpl(Profile profile, String version, RemoteMod.Version file) {
+    public static void downloadModpackImpl(Profile profile, String version, RemoteMod mod, RemoteMod.Version file) {
         Path modpack;
         URI downloadURL;
         try {

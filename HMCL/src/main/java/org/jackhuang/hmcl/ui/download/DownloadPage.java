@@ -85,7 +85,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                 "game", versionPageNavigator::onGameSelected)));
         modpackTab.setNodeSupplier(loadVersionFor(() -> {
             DownloadListPage page = HMCLLocalizedDownloadListPage.ofModPack((profile, __, mod, file) -> {
-                Versions.downloadModpackImpl(profile, uploadVersion, file);
+                Versions.downloadModpackImpl(profile, uploadVersion, mod, file);
             }, false);
 
             JFXButton installLocalModpackButton = FXUtils.newRaisedButton(i18n("install.modpack"));
