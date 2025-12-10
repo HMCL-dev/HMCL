@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.SettingsMap;
+import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -75,6 +76,8 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
             settings.put(LocalModpackPage.MODPACK_FILE, file);
         if (updateVersion != null)
             settings.put(LocalModpackPage.MODPACK_NAME, updateVersion);
+        if (StringUtils.isNotBlank(iconUrl))
+            settings.put(LocalModpackPage.MODPACK_ICON_URL, iconUrl);
         settings.put(ModpackPage.PROFILE, profile);
     }
 
