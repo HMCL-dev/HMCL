@@ -73,6 +73,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
 
         TableColumn<ModUpdateObject, Boolean> enabledColumn = new TableColumn<>();
         var allEnabledBox = new JFXCheckBox();
+        enabledColumn.setStyle("-fx-alignment: CENTER;");
         enabledColumn.setGraphic(allEnabledBox);
         enabledColumn.setCellFactory(JFXCheckBoxTableCell.forTableColumn(enabledColumn));
         setupCellValueFactory(enabledColumn, ModUpdateObject::enabledProperty);

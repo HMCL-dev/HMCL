@@ -46,6 +46,7 @@ public final class JFXCheckBoxTableCell<S, T> extends TableCell<S, T> {
         if (empty) {
             setText(null);
             setGraphic(null);
+            checkBox.disableProperty().unbind();
         } else {
             setGraphic(checkBox);
 
