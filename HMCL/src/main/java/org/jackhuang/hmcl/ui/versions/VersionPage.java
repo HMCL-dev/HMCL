@@ -250,7 +250,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                         .addNavigationDrawerTab(control.tab, control.resourcePackTab, i18n("resourcepack.manage"), SVG.TEXTURE)
                         .addNavigationDrawerTab(control.tab, control.worldListTab, i18n("world.manage"), SVG.PUBLIC)
                         .addNavigationDrawerTab(control.tab, control.schematicsTab, i18n("schematics.manage"), SVG.SCHEMA, SVG.SCHEMA_FILL)
-                        .addNavigationDrawerTab(control.tab, control.serverListTab, i18n("servers.manage"), SVG.SERVERS);
+                        .addNavigationDrawerTab(control.tab, control.serverListTab, i18n("servers.manage"), SVG.SERVERS, SVG.SERVERS_FILL);
                 VBox.setVgrow(sideBar, Priority.ALWAYS);
 
                 PopupMenu browseList = new PopupMenu();
