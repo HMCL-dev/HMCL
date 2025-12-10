@@ -45,6 +45,7 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
     private final Profile profile;
     private final Path file;
     private final String updateVersion;
+    private String iconUrl;
 
     public ModpackInstallWizardProvider(Profile profile) {
         this(profile, null, null);
@@ -62,6 +63,10 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         this.profile = profile;
         this.file = modpackFile;
         this.updateVersion = updateVersion;
+    }
+
+    public void setIconUrl(String iconUrl) {
+        this.iconUrl = iconUrl;
     }
 
     @Override
