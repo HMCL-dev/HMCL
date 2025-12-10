@@ -161,7 +161,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         if (this.callback == null) {
             saveAs(mod, file);
         } else {
-            this.callback.download(version.getProfile(), version.getVersion(), file);
+            this.callback.download(version.getProfile(), version.getVersion(), mod, file);
         }
     }
 
@@ -557,6 +557,6 @@ public class DownloadPage extends Control implements DecoratorPage {
     }
 
     public interface DownloadCallback {
-        void download(Profile profile, @Nullable String version, RemoteMod.Version file);
+        void download(Profile profile, @Nullable String version, RemoteMod mod, RemoteMod.Version file);
     }
 }
