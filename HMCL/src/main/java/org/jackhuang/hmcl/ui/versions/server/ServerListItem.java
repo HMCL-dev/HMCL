@@ -25,6 +25,7 @@ import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -153,6 +154,11 @@ public class ServerListItem extends Control {
             }
 
             RipplerContainer container = new RipplerContainer(root);
+
+            container.setOnMouseClicked(event -> {
+                if (event.getButton() == MouseButton.SECONDARY)
+                    showPopupMenu(JFXPopup.PopupHPosition.LEFT, event.getX(), event.getY());
+            });
             getChildren().setAll(container);
         }
     }
