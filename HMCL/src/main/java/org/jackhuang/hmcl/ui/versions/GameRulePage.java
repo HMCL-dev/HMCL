@@ -39,7 +39,7 @@ import java.util.regex.Pattern;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class GameRulePage extends ListPageBase<GameRulePageSkin.GameRuleInfo> {
+public class GameRulePage extends ListPageBase<GameRuleInfo> {
 
     private WorldManagePage worldManagePage;
     private World world;
@@ -47,7 +47,8 @@ public class GameRulePage extends ListPageBase<GameRulePageSkin.GameRuleInfo> {
 
     Map<String, GameRule> gameRuleMap = GameRule.getCloneGameRuleMap();
 
-    ObservableList<GameRulePageSkin.GameRuleInfo> gameRuleList;
+    ObservableList<GameRuleInfo> gameRuleList;
+    private boolean isResettingAll = false;
 
     public GameRulePage(WorldManagePage worldManagePage) {
         this.worldManagePage = worldManagePage;
@@ -95,9 +96,9 @@ public class GameRulePage extends ListPageBase<GameRulePageSkin.GameRuleInfo> {
                         LOG.warning("Failed to get i18n text for key: " + gameRule.getDisplayI18nKey(), e);
                     }
                     if (gameRule instanceof GameRule.IntGameRule intGameRule) {
-                        gameRuleList.add(new GameRulePageSkin.GameRuleInfo(intGameRule.getRuleKey().get(0), displayText, intGameRule.getValue(), intGameRule.getMinValue(), intGameRule.getMaxValue(), intGameRule.getDefaultValue(), gameRuleNBT, this::saveLevelDat));
+                        gameRuleList.add(new GameRuleInfo.IntGameRuleInfo(intGameRule.getRuleKey().get(0), displayText, intGameRule.getValue(), intGameRule.getMinValue(), intGameRule.getMaxValue(), intGameRule.getDefaultValue(), gameRuleNBT, this::saveLevelDatIfNotResettingAll));
                     } else if (gameRule instanceof GameRule.BooleanGameRule booleanGameRule) {
-                        gameRuleList.add(new GameRulePageSkin.GameRuleInfo(booleanGameRule.getRuleKey().get(0), displayText, booleanGameRule.getValue(), booleanGameRule.getDefaultValue(), gameRuleNBT, this::saveLevelDat));
+                        gameRuleList.add(new GameRuleInfo.BooleanGameRuleInfo(booleanGameRule.getRuleKey().get(0), displayText, booleanGameRule.getValue(), booleanGameRule.getDefaultValue(), gameRuleNBT, this::saveLevelDatIfNotResettingAll));
                     }
                 });
             });
@@ -107,6 +108,14 @@ public class GameRulePage extends ListPageBase<GameRulePageSkin.GameRuleInfo> {
     @Override
     protected Skin<?> createDefaultSkin() {
         return new GameRulePageSkin(this);
+    }
+
+    public boolean isIsResettingAll() {
+        return isResettingAll;
+    }
+
+    public void setIsResettingAll(boolean isResettingAll) {
+        this.isResettingAll = isResettingAll;
     }
 
     private CompoundTag loadWorldInfo() throws IOException {
@@ -126,7 +135,13 @@ public class GameRulePage extends ListPageBase<GameRulePageSkin.GameRuleInfo> {
                 })).start();
     }
 
-    @NotNull Predicate<GameRulePageSkin.GameRuleInfo> updateSearchPredicate(String queryString) {
+    void saveLevelDatIfNotResettingAll() {
+        if (!isResettingAll) {
+            saveLevelDat();
+        }
+    }
+
+    @NotNull Predicate<GameRuleInfo> updateSearchPredicate(String queryString) {
         if (queryString.isBlank()) {
             return gameRuleInfo -> true;
         }
@@ -144,6 +159,6 @@ public class GameRulePage extends ListPageBase<GameRulePageSkin.GameRuleInfo> {
             stringPredicate = s -> s != null && s.toLowerCase(Locale.ROOT).contains(lowerCaseFilter);
         }
 
-        return gameRuleInfo -> stringPredicate.test(gameRuleInfo.displayName) || stringPredicate.test(gameRuleInfo.ruleKey);
+        return gameRuleInfo -> stringPredicate.test(gameRuleInfo.getDisplayName()) || stringPredicate.test(gameRuleInfo.getRuleKey());
     }
 }
