@@ -1,6 +1,13 @@
 {
   "versions": [
     {
+      "id": "1.21.11_unobfuscated",
+      "type": "unobfuscated",
+      "url": "https://piston-meta.mojang.com/v1/packages/327be7759157b04495c591dbb721875e341877af/1.21.11_unobfuscated.json",
+      "time": "2025-12-09T12:43:15+00:00",
+      "releaseTime": "2025-12-09T12:43:15+00:00"
+    },
+    {
       "id": "1.21.11-rc2_unobfuscated",
       "type": "unobfuscated",
       "url": "https://piston-meta.mojang.com/v1/packages/9282a3fb154d2a425086c62c11827281308bf93b/1.21.11-rc2_unobfuscated.json",
