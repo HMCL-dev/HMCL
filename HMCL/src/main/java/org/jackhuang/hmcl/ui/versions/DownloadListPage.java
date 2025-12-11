@@ -66,6 +66,7 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.lang.ref.WeakReference;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
@@ -524,7 +525,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                     Controllers.navigate(new DownloadPage(getSkinnable(), selectedItem, getSkinnable().getProfileVersion(), getSkinnable().callback));
                 });
 
-                var iconCache = new WeakHashMap<RemoteMod, WeakReference<Task<Image>>>();
+                var iconCache = new WeakHashMap<RemoteMod, WeakReference<CompletableFuture<Image>>>();
 
                 // ListViewBehavior would consume ESC pressed event, preventing us from handling it, so we ignore it here
                 ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
@@ -555,28 +556,39 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                                 .map(category -> getSkinnable().getLocalizedCategory(category))
                                 .forEach(content::addTag);
                         if (StringUtils.isNotBlank(dataItem.getIconUrl())) {
-                            WeakReference<Task<Image>> cacheRef = iconCache.get(dataItem);
-                            Task<Image> cache;
+                            WeakReference<CompletableFuture<Image>> cacheRef = iconCache.get(dataItem);
+                            CompletableFuture<Image> cache;
                             if (cacheRef == null || (cache = cacheRef.get()) == null) {
-                                cache = FXUtils.getRemoteImageTask(dataItem.getIconUrl(), 80, 80, true, true);
-                                cacheRef = new WeakReference<>(cache);
+                                cache = new CompletableFuture<>();
+
+                                WeakReference<CompletableFuture<Image>> futureRef = new WeakReference<>(cache);
+                                cacheRef = futureRef;
                                 iconCache.put(dataItem, cacheRef);
+
+                                FXUtils.getRemoteImageTask(dataItem.getIconUrl(), 80, 80, true, true)
+                                        .whenComplete(Schedulers.defaultScheduler(), (result, exception) -> {
+                                            CompletableFuture<Image> future = futureRef.get();
+                                            if (future != null) {
+                                                if (exception == null) {
+                                                    future.complete(result);
+                                                } else {
+                                                    LOG.warning("Failed to load image", exception);
+                                                    future.completeExceptionally(exception);
+                                                }
+                                            }
+                                        }).start();
                             }
 
-                            Image image = cache.getResult();
+                            Image image = cache.getNow(null);
                             if (image != null) {
                                 imageView.setImage(image);
                             } else {
                                 imageView.setImage(null);
-                                cache.whenComplete(Schedulers.javafx(), (result, exception) -> {
-                                    if (result != null) {
-                                        if (dataItem == getItem()) {
-                                            imageView.setImage(result);
-                                        }
-                                    } else {
-                                        LOG.warning("Failed to load image", exception);
+                                cache.thenAcceptAsync(result -> {
+                                    if (result != null && dataItem == getItem()) {
+                                        imageView.setImage(result);
                                     }
-                                }).setSignificance(Task.TaskSignificance.MINOR).start();
+                                }, Schedulers.javafx());
                             }
                         } else {
                             imageView.setImage(null);
