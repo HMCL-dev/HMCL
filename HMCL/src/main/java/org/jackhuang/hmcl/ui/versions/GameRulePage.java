@@ -141,6 +141,15 @@ public class GameRulePage extends ListPageBase<GameRuleInfo> {
         }
     }
 
+    void resettingAllGameRule(){
+        isResettingAll = true;
+        for (GameRuleInfo gameRuleInfo : getItems()) {
+            gameRuleInfo.resetValue();
+        }
+        saveLevelDat();
+        isResettingAll = false;
+    }
+
     @NotNull Predicate<GameRuleInfo> updateSearchPredicate(String queryString) {
         if (queryString.isBlank()) {
             return gameRuleInfo -> true;

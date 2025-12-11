@@ -42,6 +42,7 @@ public abstract class GameRuleInfo {
     private String displayName;
     private GameRuleNBT gameRuleNBT;
 
+    //Due to the significant difference in skin between BooleanGameRuleInfo and IntGameRuleInfo, which are essentially two completely different styles, it is not suitable to update each other in Cell#updateControl. Therefore, they are directly integrated into the info.
     private HBox container = new HBox();
     private Runnable setToDefault = () -> {
     };

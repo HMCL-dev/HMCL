@@ -60,14 +60,7 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
         filteredList = new FilteredList<>(skinnable.getItems());
 
         {
-            JFXButton resetAllButton = createToolbarButton2(i18n("gamerule.restore_default_values_all.button"), SVG.RESTORE, () -> {
-                skinnable.setIsResettingAll(true);
-                for (GameRuleInfo gameRuleInfo : filteredList) {
-                    gameRuleInfo.resetValue();
-                }
-                skinnable.saveLevelDat();
-                skinnable.setIsResettingAll(false);
-            });
+            JFXButton resetAllButton = createToolbarButton2(i18n("gamerule.restore_default_values_all.button"), SVG.RESTORE, skinnable::resettingAllGameRule);
 
             searchBar = new HBox();
             searchBar.setAlignment(Pos.CENTER);
