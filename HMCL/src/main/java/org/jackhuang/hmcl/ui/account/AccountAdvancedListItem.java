@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.account;
 
-import com.jfoenix.controls.JFXButton;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -31,7 +30,6 @@ import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilAccount;
 import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
@@ -43,7 +41,6 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public class AccountAdvancedListItem extends AdvancedListItem {
     private final Tooltip tooltip;
     private final Canvas canvas;
-    private final JFXButton btnMenu;
 
     private final ObjectProperty<Account> account = new SimpleObjectProperty<Account>() {
 
@@ -77,17 +74,9 @@ public class AccountAdvancedListItem extends AdvancedListItem {
         canvas = new Canvas(32, 32);
         setLeftGraphic(canvas);
 
-        btnMenu = new JFXButton();
-        btnMenu.setGraphic(SVG.ARROW_DROP_RIGHT.createIcon(30));
-        setRightGraphic(btnMenu);
-
         FXUtils.onScroll(this, Accounts.getAccounts(),
                 accounts -> accounts.indexOf(account.get()),
                 Accounts::setSelectedAccount);
-    }
-
-    public JFXButton getBtnMenu() {
-        return btnMenu;
     }
 
     public ObjectProperty<Account> accountProperty() {

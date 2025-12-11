@@ -148,10 +148,6 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             // first item in left sidebar
             AccountAdvancedListItem accountListItem = new AccountAdvancedListItem();
             accountListItem.setOnAction(e -> Controllers.navigate(Controllers.getAccountListPage()));
-            accountListItem.getBtnMenu().setOnAction(e -> {
-                showAccountListPopupMenu(accountListItem);
-                e.consume();
-            });
             accountListItem.setOnMouseClicked(e -> {
                 if (e.getButton() == MouseButton.SECONDARY) {
                     showAccountListPopupMenu(accountListItem);
