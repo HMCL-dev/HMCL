@@ -19,9 +19,6 @@ package org.jackhuang.hmcl.ui.account;
 
 import com.jfoenix.controls.*;
 import com.jfoenix.validation.base.ValidatorBase;
-import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
-import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.beans.NamedArg;
 import javafx.beans.binding.BooleanBinding;
@@ -39,7 +36,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextInputControl;
 import javafx.scene.layout.*;
 
-import javafx.util.Duration;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.CharacterSelector;
@@ -54,7 +50,6 @@ import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.game.OAuthServer;
 import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.setting.Accounts;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
@@ -268,33 +263,12 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         };
 
         if (factory instanceof OfflineAccountFactory && username != null && (!USERNAME_CHECKER_PATTERN.matcher(username).matches() || username.length() > 16)) {
-            JFXButton btnYes = new JFXButton(i18n("button.ok"));
-            btnYes.getStyleClass().add("dialog-error");
-            btnYes.setOnAction(e -> doCreate.run());
-            btnYes.setDisable(true);
-
-            int countdown = 10;
-            KeyFrame[] keyFrames = new KeyFrame[countdown + 1];
-            for (int i = 0; i < countdown; i++) {
-                keyFrames[i] = new KeyFrame(Duration.seconds(i),
-                        new KeyValue(btnYes.textProperty(), i18n("button.ok.countdown", countdown - i)));
-            }
-            keyFrames[countdown] = new KeyFrame(Duration.seconds(countdown),
-                    new KeyValue(btnYes.textProperty(), i18n("button.ok")),
-                    new KeyValue(btnYes.disableProperty(), false));
-
-            Timeline timeline = new Timeline(keyFrames);
-            Controllers.confirmAction(
-                    i18n("account.methods.offline.name.invalid"), i18n("message.warning"),
+            Controllers.confirmWithCountdown(i18n("account.methods.offline.name.invalid"), i18n("message.warning"), 10,
                     MessageDialogPane.MessageType.WARNING,
-                    btnYes,
-                    () -> {
-                        timeline.stop();
+                    doCreate, () -> {
                         body.setDisable(false);
                         spinner.hideSpinner();
-                    }
-            );
-            timeline.play();
+                    });
         } else {
             doCreate.run();
         }
@@ -490,7 +464,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 linksContainer.setMinWidth(USE_PREF_SIZE);
 
                 JFXButton btnAddServer = new JFXButton();
-                btnAddServer.setGraphic(SVG.ADD.createIcon(Theme.blackFill(), 20));
+                btnAddServer.setGraphic(SVG.ADD.createIcon(20));
                 btnAddServer.getStyleClass().add("toggle-icon4");
                 btnAddServer.setOnAction(e -> {
                     Controllers.dialog(new AddAuthlibInjectorServerPane());

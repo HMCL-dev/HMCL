@@ -191,7 +191,7 @@ public final class LauncherHelper {
                     LaunchOptions launchOptions = repository.getLaunchOptions(
                             selectedVersion, javaVersionRef.get(), profile.getGameDir(), javaAgents, javaArguments, scriptFile != null);
 
-                    LOG.info("Here's the structure of game mod directory:\n" + FileUtils.printFileStructure(repository.getModManager(selectedVersion).getModsDirectory(), 10));
+                    LOG.info("Here's the structure of game mod directory:\n" + FileUtils.printFileStructure(repository.getModsDirectory(selectedVersion), 10));
 
                     return new HMCLGameLauncher(
                             repository,
@@ -915,7 +915,15 @@ public final class LauncherHelper {
 
     }
 
-    public static final Queue<WeakReference<ManagedProcess>> PROCESSES = new ConcurrentLinkedQueue<>();
+    private static final Queue<WeakReference<ManagedProcess>> PROCESSES = new ConcurrentLinkedQueue<>();
+
+    public static int countMangedProcesses() {
+        PROCESSES.removeIf(it -> {
+            ManagedProcess process = it.get();
+            return process == null || !process.isRunning();
+        });
+        return PROCESSES.size();
+    }
 
     public static void stopManagedProcesses() {
         while (!PROCESSES.isEmpty())
