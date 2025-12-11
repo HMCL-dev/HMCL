@@ -64,6 +64,7 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
 import java.net.URI;
@@ -242,6 +243,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
     private static class ModDownloadListPageSkin extends SkinBase<DownloadListPage> {
         private final JFXListView<RemoteMod> listView = new JFXListView<>();
+        private final WeakHashMap<RemoteMod, WeakReference<CompletableFuture<Image>>> iconCache = new WeakHashMap<>();
 
         protected ModDownloadListPageSkin(DownloadListPage control) {
             super(control);
@@ -529,8 +531,6 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                     Controllers.navigate(new DownloadPage(getSkinnable(), selectedItem, getSkinnable().getProfileVersion(), getSkinnable().callback));
                 });
 
-                var iconCache = new WeakHashMap<RemoteMod, WeakReference<CompletableFuture<Image>>>();
-
                 // ListViewBehavior would consume ESC pressed event, preventing us from handling it, so we ignore it here
                 ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
                 listView.setCellFactory(x -> new FloatListCell<>(listView) {
@@ -560,54 +560,63 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                                 .map(category -> getSkinnable().getLocalizedCategory(category))
                                 .forEach(content::addTag);
 
-                        URI iconUrl = NetworkUtils.toURIOrNull(dataItem.getIconUrl());
-                        if (iconUrl != null) {
-                            WeakReference<CompletableFuture<Image>> cacheRef = iconCache.get(dataItem);
-                            CompletableFuture<Image> cache;
-                            if (cacheRef == null || (cache = cacheRef.get()) == null) {
-                                cache = new CompletableFuture<>();
-
-                                WeakReference<CompletableFuture<Image>> futureRef = new WeakReference<>(cache);
-                                cacheRef = futureRef;
-                                iconCache.put(dataItem, cacheRef);
-
-                                FXUtils.getRemoteImageTask(iconUrl, 80, 80, true, true)
-                                        .whenComplete(Schedulers.defaultScheduler(), (result, exception) -> {
-                                            CompletableFuture<Image> future = futureRef.get();
-                                            if (future != null) {
-                                                if (exception == null) {
-                                                    future.complete(result);
-                                                } else {
-                                                    LOG.warning("Failed to load image from " + iconUrl, exception);
-                                                    future.completeExceptionally(exception);
-                                                }
-                                            }
-                                        }).start();
-                            }
-
-                            try {
-                                Image image = cache.getNow(null);
-                                if (image != null) {
-                                    imageView.setImage(image);
-                                } else {
-                                    imageView.setImage(null);
-                                    cache.thenAcceptAsync(result -> {
-                                        if (result != null && dataItem == getItem()) {
-                                            imageView.setImage(result);
-                                        }
-                                    }, Schedulers.javafx());
-                                }
-                            } catch (CancellationException | CompletionException ignored) {
-                                imageView.setImage(null);
-                            }
-                        } else {
-                            imageView.setImage(null);
-                        }
+                        loadIcon(dataItem, imageView, new WeakReference<>(this.itemProperty()));
                     }
                 });
             }
 
             getChildren().setAll(pane);
+        }
+
+        private void loadIcon(RemoteMod mod, ImageView imageView, @Nullable WeakReference<ObjectProperty<RemoteMod>> current) {
+            URI iconUrl = NetworkUtils.toURIOrNull(mod.getIconUrl());
+            if (iconUrl != null) {
+                WeakReference<CompletableFuture<Image>> cacheRef = iconCache.get(mod);
+                CompletableFuture<Image> cache;
+                if (cacheRef == null || (cache = cacheRef.get()) == null) {
+                    cache = new CompletableFuture<>();
+
+                    WeakReference<CompletableFuture<Image>> futureRef = new WeakReference<>(cache);
+                    cacheRef = futureRef;
+                    iconCache.put(mod, cacheRef);
+
+                    FXUtils.getRemoteImageTask(iconUrl, 80, 80, true, true)
+                            .whenComplete(Schedulers.defaultScheduler(), (result, exception) -> {
+                                CompletableFuture<Image> future = futureRef.get();
+                                if (future != null) {
+                                    if (exception == null) {
+                                        future.complete(result);
+                                    } else {
+                                        LOG.warning("Failed to load image from " + iconUrl, exception);
+                                        future.completeExceptionally(exception);
+                                    }
+                                }
+                            }).start();
+                }
+
+                try {
+                    Image image = cache.getNow(null);
+                    if (image != null) {
+                        imageView.setImage(image);
+                    } else {
+                        imageView.setImage(null);
+                        cache.thenAcceptAsync(result -> {
+                            if (current != null) {
+                                var currentProperty = current.get();
+                                if (currentProperty == null || currentProperty.get() != mod) {
+                                    // The current ListCell has already switched to another object
+                                    return;
+                                }
+                            }
+                            imageView.setImage(result);
+                        }, Schedulers.javafx());
+                    }
+                } catch (CancellationException | CompletionException ignored) {
+                    imageView.setImage(null);
+                }
+            } else {
+                imageView.setImage(null);
+            }
         }
 
         private static class CategoryIndented {
