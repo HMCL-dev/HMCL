@@ -1185,6 +1185,12 @@ public final class FXUtils {
                 .setSignificance(Task.TaskSignificance.MINOR);
     }
 
+    public static Task<Image> getRemoteImageTask(URI uri, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
+        return new CacheFileTask(uri)
+                .thenApplyAsync(file -> loadImage(file, requestedWidth, requestedHeight, preserveRatio, smooth))
+                .setSignificance(Task.TaskSignificance.MINOR);
+    }
+
     public static ObservableValue<Image> newRemoteImage(String url, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
         var image = new SimpleObjectProperty<Image>();
         getRemoteImageTask(url, requestedWidth, requestedHeight, preserveRatio, smooth)

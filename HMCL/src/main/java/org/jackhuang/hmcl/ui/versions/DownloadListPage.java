@@ -61,12 +61,16 @@ import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.lang.ref.WeakReference;
+import java.net.URI;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
@@ -555,7 +559,9 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         dataItem.getCategories().stream()
                                 .map(category -> getSkinnable().getLocalizedCategory(category))
                                 .forEach(content::addTag);
-                        if (StringUtils.isNotBlank(dataItem.getIconUrl())) {
+
+                        URI iconUrl = NetworkUtils.toURIOrNull(dataItem.getIconUrl());
+                        if (iconUrl != null) {
                             WeakReference<CompletableFuture<Image>> cacheRef = iconCache.get(dataItem);
                             CompletableFuture<Image> cache;
                             if (cacheRef == null || (cache = cacheRef.get()) == null) {
@@ -565,7 +571,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                                 cacheRef = futureRef;
                                 iconCache.put(dataItem, cacheRef);
 
-                                FXUtils.getRemoteImageTask(dataItem.getIconUrl(), 80, 80, true, true)
+                                FXUtils.getRemoteImageTask(iconUrl, 80, 80, true, true)
                                         .whenComplete(Schedulers.defaultScheduler(), (result, exception) -> {
                                             CompletableFuture<Image> future = futureRef.get();
                                             if (future != null) {
@@ -579,16 +585,21 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                                         }).start();
                             }
 
-                            Image image = cache.getNow(null);
-                            if (image != null) {
-                                imageView.setImage(image);
-                            } else {
+
+                            try {
+                                Image image = cache.getNow(null);
+                                if (image != null) {
+                                    imageView.setImage(image);
+                                } else {
+                                    imageView.setImage(null);
+                                    cache.thenAcceptAsync(result -> {
+                                        if (result != null && dataItem == getItem()) {
+                                            imageView.setImage(result);
+                                        }
+                                    }, Schedulers.javafx());
+                                }
+                            } catch (CancellationException | CompletionException ignored) {
                                 imageView.setImage(null);
-                                cache.thenAcceptAsync(result -> {
-                                    if (result != null && dataItem == getItem()) {
-                                        imageView.setImage(result);
-                                    }
-                                }, Schedulers.javafx());
                             }
                         } else {
                             imageView.setImage(null);
