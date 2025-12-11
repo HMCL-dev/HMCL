@@ -578,13 +578,12 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                                                 if (exception == null) {
                                                     future.complete(result);
                                                 } else {
-                                                    LOG.warning("Failed to load image from " + dataItem.getIconUrl(), exception);
+                                                    LOG.warning("Failed to load image from " + iconUrl, exception);
                                                     future.completeExceptionally(exception);
                                                 }
                                             }
                                         }).start();
                             }
-
 
                             try {
                                 Image image = cache.getNow(null);
