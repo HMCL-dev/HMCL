@@ -141,7 +141,7 @@ public class GameRulePage extends ListPageBase<GameRuleInfo> {
         }
     }
 
-    void resettingAllGameRule(){
+    void resettingAllGameRule() {
         isResettingAll = true;
         for (GameRuleInfo gameRuleInfo : getItems()) {
             gameRuleInfo.resetValue();
