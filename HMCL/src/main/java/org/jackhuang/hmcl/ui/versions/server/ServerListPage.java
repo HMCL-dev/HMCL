@@ -124,10 +124,11 @@ public class ServerListPage extends ListPageBase<ServerListItem> implements Vers
                 Path serverDat = profile.getRepository().getServersDatFilePath(version.getId());
                 List<ServerData> dataList = readServersFromDat(serverDat);
                 for (int i = 0; i < dataList.size(); i++) {
-                    list.add(new ServerListItem(serverDat, i, switch (profile.getRepository().getGameDirectoryType(version.getId())) {
+                    String tag = switch (profile.getRepository().getGameDirectoryType(version.getId())) {
                         case CUSTOM, ROOT_FOLDER -> i18n("server.tag.public");
                         case VERSION_FOLDER -> version.getId();
-                    }, this, dataList.get(i)));
+                    };
+                    list.add(new ServerListItem(serverDat, i, tag, this, dataList.get(i)));
                 }
             }
             return list;
