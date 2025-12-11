@@ -98,7 +98,7 @@ public class ServerListPage extends ListPageBase<ServerListItem> implements Vers
 
     private void updateFilter() {
         itemsProperty().setAll(serverListItems.stream()
-                .filter(item -> showAll.get() || (item.ownerProfile.equals(profile) && item.ownerProfileID.equals(version)))
+                .filter(item -> showAll.get() || (item.serverDatPath.equals(profile.getRepository().getServersDatFilePath(version))))
                 .filter(item -> showHide.get() || !item.serverData.hidden)
                 .toList()
         );
@@ -122,13 +122,17 @@ public class ServerListPage extends ListPageBase<ServerListItem> implements Vers
             List<ServerListItem> list = new ArrayList<>();
             for (Version version : profile.getRepository().getVersions()) {
                 Path serverDat = profile.getRepository().getServersDatFilePath(version.getId());
-                for (ServerData serverData : readServersFromDat(serverDat)) {
-                    list.add(new ServerListItem(this, profile, version.getId(), serverData));
+                List<ServerData> dataList = readServersFromDat(serverDat);
+                for (int i = 0; i < dataList.size(); i++) {
+                    list.add(new ServerListItem(serverDat, i, switch (profile.getRepository().getGameDirectoryType(version.getId())) {
+                        case CUSTOM, ROOT_FOLDER -> i18n("server.tag.public");
+                        case VERSION_FOLDER -> version.getId();
+                    }, this, dataList.get(i)));
                 }
             }
             return list;
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
-            serverListItems = result;
+            serverListItems = result.stream().distinct().toList();
             setLoading(false);
             if (exception == null) {
                 updateFilter();

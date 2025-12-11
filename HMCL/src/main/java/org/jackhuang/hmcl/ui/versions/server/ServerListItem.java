@@ -29,7 +29,6 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
-import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -39,6 +38,7 @@ import org.jackhuang.hmcl.ui.construct.*;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 
 import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 import static org.jackhuang.hmcl.ui.versions.server.ServerListPage.readServersFromDat;
@@ -47,14 +47,17 @@ import static org.jackhuang.hmcl.util.StringUtils.parseColorEscapes;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class ServerListItem extends Control {
-    final Profile ownerProfile;
-    final String ownerProfileID;
+    final Path serverDatPath;
+    final int inDatPathSlot;
+    final String tag;
+
     final ServerData serverData;
     private final ServerListPage parent;
 
-    public ServerListItem(ServerListPage parent, Profile ownerProfile, String ownerProfileID, ServerData serverData) {
-        this.ownerProfile = ownerProfile;
-        this.ownerProfileID = ownerProfileID;
+    public ServerListItem(Path serverDatPath, int inDatPathSlot, String tag, ServerListPage parent, ServerData serverData) {
+        this.serverDatPath = serverDatPath;
+        this.inDatPathSlot = inDatPathSlot;
+        this.tag = tag;
         this.serverData = serverData;
         this.parent = parent;
     }
@@ -78,7 +81,7 @@ public class ServerListItem extends Control {
             }).start();
         }, popup);
 
-        copyToInstance.setDisable(ownerProfile.equals(parent.profile) && ownerProfileID.equals(parent.version));
+        copyToInstance.setDisable(parent.profile.getRepository().getServersDatFilePath(parent.version).equals(serverDatPath));
         popupMenu.getContent().addAll(
                 new IconedMenuItem(SVG.CONTENT_COPY, i18n("servers.manage.copy.server.ip"), () ->
                         FXUtils.copyText(serverData.ip, i18n("servers.manage.copy.server.ip.ok.toast")), popup),
@@ -97,14 +100,25 @@ public class ServerListItem extends Control {
                 i18n("button.remove.confirm"),
                 i18n("server.delete"),
                 () -> Task.runAsync(() -> {
-                    Path datFilePath = ownerProfile.getRepository().getServersDatFilePath(ownerProfileID);
-                    List<ServerData> dataList = readServersFromDat(datFilePath);
+                    List<ServerData> dataList = readServersFromDat(serverDatPath);
                     dataList.remove(serverData);
-                    saveServerToDat(datFilePath, dataList);
+                    saveServerToDat(serverDatPath, dataList);
                     Task.runAsync(Schedulers.javafx(), parent::refresh).start();
                 }).start(),
                 null
         );
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        ServerListItem that = (ServerListItem) o;
+        return inDatPathSlot == that.inDatPathSlot && Objects.equals(serverDatPath, that.serverDatPath);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(serverDatPath, inDatPathSlot);
     }
 
     private class ServerListItemSkin extends SkinBase<ServerListItem> {
@@ -133,7 +147,9 @@ public class ServerListItem extends Control {
                 if (serverData.name != null)
                     item.setTitle(parseColorEscapes(serverData.name));
                 item.setSubtitle(serverData.ip);
-                item.addTag(ownerProfileID);
+
+                item.addTag(tag);
+
                 if (serverData.hidden) {
                     item.addTag(i18n("server.tag.hide"));
                 }
@@ -161,5 +177,4 @@ public class ServerListItem extends Control {
             getChildren().setAll(container);
         }
     }
-
 }
