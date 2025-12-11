@@ -597,9 +597,7 @@ public final class WorldInfoPage extends SpinnerPane {
         }
 
         String formatPosition(Tag tag) {
-            if (tag instanceof ListTag listTag) {
-                if (listTag.size() != 3)
-                    return null;
+            if (tag instanceof ListTag listTag && listTag.size() == 3) {
 
                 Tag x = listTag.get(0);
                 Tag y = listTag.get(1);
@@ -681,7 +679,14 @@ public final class WorldInfoPage extends SpinnerPane {
         File file = fileChooser.showOpenDialog(Controllers.getStage());
         if (file == null) return;
 
-        Image original = new Image(file.toURI().toString());
+        Image original;
+        try {
+            original = FXUtils.loadImage(file.toPath());
+        } catch (Exception e) {
+            LOG.warning("Failed to load image", e);
+            Controllers.dialog(i18n("world.icon.change.fail.text"), i18n("world.icon.change.fail.title"), MessageDialogPane.MessageType.ERROR);
+            return;
+        }
         Image squareImage = cropCenterSquare(original);
 
         Image finalImage;
@@ -719,6 +724,7 @@ public final class WorldInfoPage extends SpinnerPane {
         try {
             PNGJavaFXUtils.writeImage(image, path);
             iconImageView.setImage(image);
+            Controllers.showToast(i18n("world.icon.change.succeed.toast"));
         } catch (IOException e) {
             LOG.warning(e.getMessage());
         }
