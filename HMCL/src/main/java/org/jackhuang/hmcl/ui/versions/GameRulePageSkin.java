@@ -31,6 +31,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
@@ -60,7 +61,9 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
         filteredList = new FilteredList<>(skinnable.getItems());
 
         {
-            JFXButton resetAllButton = createToolbarButton2(i18n("gamerule.restore_default_values_all.button"), SVG.RESTORE, skinnable::resettingAllGameRule);
+            JFXButton resetAllButton = createToolbarButton2(i18n("gamerule.restore_default_values_all"), SVG.RESTORE, () -> {
+                Controllers.confirm(i18n("gamerule.restore_default_values_all.confirm"), null, skinnable::resettingAllGameRule, null);
+            });
 
             searchBar = new HBox();
             searchBar.setAlignment(Pos.CENTER);

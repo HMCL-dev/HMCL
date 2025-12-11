@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.gamerule.GameRule;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.ListPageBase;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
@@ -148,6 +149,7 @@ public class GameRulePage extends ListPageBase<GameRuleInfo> {
         }
         saveLevelDat();
         isResettingAll = false;
+        Controllers.showToast(i18n("gamerule.restore_default_values_all.finish.toast"));
     }
 
     @NotNull Predicate<GameRuleInfo> updateSearchPredicate(String queryString) {

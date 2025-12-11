@@ -82,7 +82,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
         AdvancedListBox sideBar = new AdvancedListBox()
                 .addNavigationDrawerTab(header, worldInfoTab, i18n("world.info"), SVG.INFO, SVG.INFO_FILL)
-                .addNavigationDrawerTab(header, gameRuleTab, "游戏规则", SVG.INFO, SVG.INFO_FILL)
+                .addNavigationDrawerTab(header, gameRuleTab, i18n("gamerule"), SVG.RULE)
                 .addNavigationDrawerTab(header, worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE, SVG.ARCHIVE_FILL);
 
         if (world.getGameVersion() != null && // old game will not write game version to level.dat
