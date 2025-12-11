@@ -813,6 +813,10 @@
     -jfx-unchecked-color: transparent;
 }
 
+.table-view .jfx-check-box .jfx-rippler {
+    -jfx-rippler-disabled: true;
+}
+
 /*******************************************************************************
 *                                                                              *
 * JFX Progress Bar                                                             *
