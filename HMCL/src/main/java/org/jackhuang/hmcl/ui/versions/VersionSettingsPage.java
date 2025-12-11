@@ -465,7 +465,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                         if (advancedVersionSettingPage == null)
                             advancedVersionSettingPage = new AdvancedVersionSettingPage(profile, versionId, lastVersionSetting);
 
-                        Controllers.navigate(advancedVersionSettingPage);
+                        Controllers.navigateForward(advancedVersionSettingPage);
                     }
                 });
                 showAdvancedSettingPane.setRight(button);

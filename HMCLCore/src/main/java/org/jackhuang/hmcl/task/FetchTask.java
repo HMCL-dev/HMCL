@@ -187,7 +187,9 @@ public abstract class FetchTask<T> extends Task<T> {
 
         ArrayList<IOException> exceptions = null;
 
-        for (int retryTime = 0; retryTime < retry; retryTime++) {
+        // If loading the cache fails, the cache should not be loaded again.
+        boolean useCachedResult = true;
+        for (int retryTime = 0, retryLimit = retry; retryTime < retryLimit; retryTime++) {
             if (isCancelled()) {
                 throw new InterruptedException();
             }
@@ -204,12 +206,14 @@ public abstract class FetchTask<T> extends Task<T> {
 
                 LinkedHashMap<String, String> headers = new LinkedHashMap<>();
                 headers.put("accept-encoding", "gzip");
-                if (checkETag)
+                if (useCachedResult && checkETag)
                     headers.putAll(repository.injectConnection(uri));
 
                 do {
-                    HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(currentURI);
-                    requestBuilder.timeout(Duration.ofMillis(NetworkUtils.TIME_OUT));
+                    HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(currentURI)
+                            .timeout(Duration.ofMillis(NetworkUtils.TIME_OUT))
+                            .header("User-Agent", Holder.USER_AGENT);
+
                     headers.forEach(requestBuilder::header);
                     response = Holder.HTTP_CLIENT.send(requestBuilder.build(), BODY_HANDLER);
 
@@ -248,7 +252,7 @@ public abstract class FetchTask<T> extends Task<T> {
                 } while (true);
 
                 int responseCode = response.statusCode();
-                if (responseCode == HttpURLConnection.HTTP_NOT_MODIFIED) {
+                if (useCachedResult && responseCode == HttpURLConnection.HTTP_NOT_MODIFIED) {
                     // Handle cache
                     try {
                         Path cache = repository.getCachedRemoteFile(currentURI, false);
@@ -260,9 +264,10 @@ public abstract class FetchTask<T> extends Task<T> {
                     } catch (IOException e) {
                         LOG.warning("Unable to use cached file, redownload " + NetworkUtils.dropQuery(uri), e);
                         repository.removeRemoteEntry(currentURI);
+                        useCachedResult = false;
                         // Now we must reconnect the server since 304 may result in empty content,
                         // if we want to redownload the file, we must reconnect the server without etag settings.
-                        retryTime--;
+                        retryLimit++;
                         continue;
                     }
                 } else if (responseCode / 100 == 4) {
@@ -503,6 +508,7 @@ public abstract class FetchTask<T> extends Task<T> {
     /// Ensure that [#HTTP_CLIENT] is initialized after ProxyManager has been initialized.
     private static final class Holder {
         private static final HttpClient HTTP_CLIENT;
+        private static final String USER_AGENT = System.getProperty("http.agent", "HMCL");
 
         static {
             boolean useHttp2 = !"false".equalsIgnoreCase(System.getProperty("hmcl.http2"));

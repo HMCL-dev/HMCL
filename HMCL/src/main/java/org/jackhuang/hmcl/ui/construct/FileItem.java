@@ -28,7 +28,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -60,7 +59,7 @@ public class FileItem extends BorderPane {
         setLeft(left);
 
         JFXButton right = new JFXButton();
-        right.setGraphic(SVG.EDIT.createIcon(Theme.blackFill(), 16));
+        right.setGraphic(SVG.EDIT.createIcon(16));
         right.getStyleClass().add("toggle-icon4");
         right.setOnAction(e -> onExplore());
         FXUtils.installFastTooltip(right, i18n("button.edit"));
