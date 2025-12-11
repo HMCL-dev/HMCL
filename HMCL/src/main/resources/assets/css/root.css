@@ -41,6 +41,14 @@
     -fx-text-fill: -monet-on-surface-variant;
 }
 
+.hyperlink {
+    -fx-text-fill: -monet-primary;
+}
+
+.hyperlink:focused {
+    -fx-border-color: -monet-primary;
+}
+
 .hint {
     -fx-background-radius: 5;
     -fx-border-width: 1;
@@ -160,7 +168,11 @@
 }
 
 .rippler-container {
-    -jfx-rippler-fill: #a2a2a2;
+    -jfx-rippler-fill: -monet-on-surface-variant;
+}
+
+.advanced-list-item .rippler-container {
+    -jfx-rippler-fill: -monet-on-secondary-container;
 }
 
 .advanced-list-item > .rippler-container > .container {
@@ -431,17 +443,6 @@
 
 /*******************************************************************************
  *                                                                             *
- * Tooltip                                                                     *
- *                                                                             *
- ******************************************************************************/
-
-.tooltip {
-    -fx-text-fill: -monet-inverse-on-surface;
-    -fx-background-color: -monet-inverse-surface;
-}
-
-/*******************************************************************************
- *                                                                             *
  * JFX Tab Pane                                                                *
  *                                                                             *
  ******************************************************************************/
@@ -674,11 +675,6 @@
     -fx-padding: 10.0;
 }
 
-.jfx-tool-bar-button .jfx-rippler {
-    -jfx-rippler-fill: -monet-on-surface;
-    -jfx-mask-type: CIRCLE;
-}
-
 .jfx-decorator-button {
     -fx-max-width: 40px;
     -fx-background-radius: 5px;
@@ -763,7 +759,7 @@
 }
 
 .jfx-button .jfx-rippler {
-    -jfx-rippler-fill: -monet-on-primary;
+    -jfx-rippler-fill: -monet-on-surface;
     -jfx-mask-type: CIRCLE;
     -fx-padding: 0.0;
 }
@@ -773,6 +769,7 @@
 }
 
 .jfx-button-raised .jfx-rippler {
+    -jfx-rippler-fill: -monet-on-primary;
     -jfx-mask-type: CIRCLE;
     -fx-padding: 0.0;
 }
@@ -814,6 +811,10 @@
     -fx-text-fill: -monet-on-surface;
     -jfx-checked-color: -monet-primary;
     -jfx-unchecked-color: transparent;
+}
+
+.table-view .jfx-check-box .jfx-rippler {
+    -jfx-rippler-disabled: true;
 }
 
 /*******************************************************************************
@@ -1548,7 +1549,6 @@
  * Scroll Bar			                                                       *
  *                                                                             *
  ******************************************************************************/
-/* unsued? */
 
 .scroll-bar:vertical > .track-background, .scroll-bar:horizontal > .track-background {
     -fx-background-color: #F1F1F1;
@@ -1579,6 +1579,14 @@
 
 .scroll-bar > .decrement-button > .decrement-arrow {
     -fx-shape: "M298 598l214-214 214 214h-428z";
+}
+
+.jfx-combo-box .scroll-bar {
+    -fx-skin: "org.jackhuang.hmcl.ui.construct.FloatScrollBarSkin";
+}
+
+.jfx-combo-box .scroll-bar .track {
+    -fx-fill: transparent;
 }
 
 /*******************************************************************************
@@ -1682,4 +1690,19 @@
 
 .html-italic {
     -fx-font-style: italic;
+}
+
+/*******************************************************************************
+ *                                                                             *
+ * Tooltip                                                                     *
+ *                                                                             *
+ ******************************************************************************/
+
+.tooltip {
+    -fx-text-fill: -monet-inverse-on-surface;
+    -fx-background-color: -monet-inverse-surface;
+}
+
+.tooltip .text {
+    -fx-fill: -monet-inverse-on-surface;
 }
