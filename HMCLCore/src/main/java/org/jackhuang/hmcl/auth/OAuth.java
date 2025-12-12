@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.auth;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
@@ -32,12 +33,6 @@ import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
 public class OAuth {
-    public static final OAuth MICROSOFT = new OAuth(
-            "https://login.live.com/oauth20_authorize.srf",
-            "https://login.live.com/oauth20_token.srf",
-            "https://login.microsoftonline.com/consumers/oauth2/v2.0/devicecode",
-            "https://login.microsoftonline.com/consumers/oauth2/v2.0/token");
-
     private final String authorizationURL;
     private final String accessTokenURL;
     private final String deviceCodeURL;
@@ -50,13 +45,13 @@ public class OAuth {
         this.tokenURL = tokenURL;
     }
 
-    public Result authenticate(GrantFlow grantFlow, Options options) throws AuthenticationException {
+    public Result authenticate(GrantFlow grantFlow, OAuthService service) throws AuthenticationException {
         try {
             switch (grantFlow) {
                 case AUTHORIZATION_CODE:
-                    return authenticateAuthorizationCode(options);
+                    return authenticateAuthorizationCode(service);
                 case DEVICE:
-                    return authenticateDevice(options);
+                    return authenticateDevice(service);
                 default:
                     throw new UnsupportedOperationException("grant flow " + grantFlow);
             }
@@ -75,19 +70,25 @@ public class OAuth {
         }
     }
 
-    private Result authenticateAuthorizationCode(Options options) throws IOException, InterruptedException, JsonParseException, ExecutionException, AuthenticationException {
-        Session session = options.callback.startServer();
-        options.callback.openBrowser(NetworkUtils.withQuery(authorizationURL,
-                mapOf(pair("client_id", options.callback.getClientId()), pair("response_type", "code"),
-                        pair("redirect_uri", session.getRedirectURI()), pair("scope", options.scope),
-                        pair("prompt", "select_account"))));
+    private Result authenticateAuthorizationCode(OAuthService service) throws IOException, InterruptedException, JsonParseException, ExecutionException, AuthenticationException {
+        Session session = service.callback.startServer();
+        service.callback.openBrowser(NetworkUtils.withQuery(authorizationURL, mapOf(
+                pair("client_id", service.callback.getClientId()),
+                pair("response_type", "code"),
+                pair("redirect_uri", session.getRedirectURI()),
+                pair("scope", service.scope),
+                pair("prompt", "select_account")
+        )));
         String code = session.waitFor();
 
         // Authorization Code -> Token
-        AuthorizationResponse response = HttpRequest.POST(accessTokenURL)
-                .form(pair("client_id", options.callback.getClientId()), pair("code", code),
-                        pair("grant_type", "authorization_code"), pair("client_secret", options.callback.getClientSecret()),
-                        pair("redirect_uri", session.getRedirectURI()), pair("scope", options.scope))
+        AuthorizationResponse response = HttpRequest.POST(accessTokenURL).form(
+                        pair("client_id", service.callback.getClientId()),
+                        pair("code", code),
+                        pair("grant_type", "authorization_code"),
+                        pair("client_secret", service.callback.getClientSecret()),
+                        pair("redirect_uri", session.getRedirectURI()),
+                        pair("scope", service.scope))
                 .ignoreHttpCode()
                 .retry(5)
                 .getJson(AuthorizationResponse.class);
@@ -95,18 +96,22 @@ public class OAuth {
         return new Result(response.accessToken, response.refreshToken);
     }
 
-    private Result authenticateDevice(Options options) throws IOException, InterruptedException, JsonParseException, AuthenticationException {
+    private Result authenticateDevice(OAuthService service) throws IOException, InterruptedException, JsonParseException, AuthenticationException {
         DeviceTokenResponse deviceTokenResponse = HttpRequest.POST(deviceCodeURL)
-                .form(pair("client_id", options.callback.getClientId()), pair("scope", options.scope))
+                .form(pair("client_id", service.callback.getClientId()), pair("scope", service.scope))
                 .ignoreHttpCode()
                 .retry(5)
                 .getJson(DeviceTokenResponse.class);
         handleErrorResponse(deviceTokenResponse);
 
-        options.callback.grantDeviceCode(deviceTokenResponse.userCode, deviceTokenResponse.verificationURI);
+        service.callback.grantDeviceCode(deviceTokenResponse.userCode,
+                deviceTokenResponse.verificationUri,
+                deviceTokenResponse.verificationUriComplete);
 
-        // Microsoft OAuth Flow
-        options.callback.openBrowser(deviceTokenResponse.verificationURI);
+        if (StringUtils.isBlank(deviceTokenResponse.verificationUriComplete))
+            service.callback.openBrowser(deviceTokenResponse.verificationUri);
+        else
+            service.callback.openBrowser(deviceTokenResponse.verificationUriComplete);
 
         long startTime = System.nanoTime();
         long interval = TimeUnit.MILLISECONDS.convert(deviceTokenResponse.interval, TimeUnit.SECONDS);
@@ -123,8 +128,8 @@ public class OAuth {
             TokenResponse tokenResponse = HttpRequest.POST(tokenURL)
                     .form(
                             pair("grant_type", "urn:ietf:params:oauth:grant-type:device_code"),
-                            pair("code", deviceTokenResponse.deviceCode),
-                            pair("client_id", options.callback.getClientId()))
+                            pair("device_code", deviceTokenResponse.deviceCode),
+                            pair("client_id", service.callback.getClientId()))
                     .ignoreHttpCode()
                     .retry(5)
                     .getJson(TokenResponse.class);
@@ -142,19 +147,19 @@ public class OAuth {
                 continue;
             }
 
-            return new Result(tokenResponse.accessToken, tokenResponse.refreshToken);
+            return new Result(tokenResponse.accessToken, tokenResponse.refreshToken, tokenResponse.idToken);
         }
     }
 
-    public Result refresh(String refreshToken, Options options) throws AuthenticationException {
+    public Result refresh(String refreshToken, OAuthService service) throws AuthenticationException {
         try {
-            Map<String, String> query = mapOf(pair("client_id", options.callback.getClientId()),
+            Map<String, String> query = mapOf(pair("client_id", service.callback.getClientId()),
                     pair("refresh_token", refreshToken),
                     pair("grant_type", "refresh_token")
             );
 
-            if (!options.callback.isPublicClient()) {
-                query.put("client_secret", options.callback.getClientSecret());
+            if (!service.callback.isPublicClient()) {
+                query.put("client_secret", service.callback.getClientSecret());
             }
 
             RefreshResponse response = HttpRequest.POST(tokenURL)
@@ -166,7 +171,7 @@ public class OAuth {
 
             handleErrorResponse(response);
 
-            return new Result(response.accessToken, response.refreshToken);
+            return new Result(response.accessToken, response.refreshToken, response.idToken);
         } catch (IOException e) {
             throw new ServerDisconnectException(e);
         } catch (JsonParseException e) {
@@ -188,22 +193,6 @@ public class OAuth {
         }
 
         throw new RemoteAuthenticationException(response.error, response.errorDescription, "");
-    }
-
-    public static class Options {
-        private String userAgent;
-        private final String scope;
-        private final Callback callback;
-
-        public Options(String scope, Callback callback) {
-            this.scope = scope;
-            this.callback = callback;
-        }
-
-        public Options setUserAgent(String userAgent) {
-            this.userAgent = userAgent;
-            return this;
-        }
     }
 
     public interface Session {
@@ -232,7 +221,7 @@ public class OAuth {
          */
         Session startServer() throws IOException, AuthenticationException;
 
-        void grantDeviceCode(String userCode, String verificationURI);
+        void grantDeviceCode(String userCode, String verificationURI, String verificationUriComplete);
 
         /**
          * Open browser
@@ -256,10 +245,16 @@ public class OAuth {
     public static final class Result {
         private final String accessToken;
         private final String refreshToken;
+        private final String idToken;
 
         public Result(String accessToken, String refreshToken) {
+            this(accessToken, refreshToken, null);
+        }
+
+        public Result(String accessToken, String refreshToken, String idToken) {
             this.accessToken = accessToken;
             this.refreshToken = refreshToken;
+            this.idToken = idToken;
         }
 
         public String getAccessToken() {
@@ -268,6 +263,10 @@ public class OAuth {
 
         public String getRefreshToken() {
             return refreshToken;
+        }
+
+        public String getIdToken() {
+            return idToken;
         }
     }
 
@@ -280,7 +279,10 @@ public class OAuth {
 
         // The URI to be visited for user.
         @SerializedName("verification_uri")
-        public String verificationURI;
+        public String verificationUri;
+
+        @SerializedName("verification_uri_complete")
+        public String verificationUriComplete;
 
         // Lifetime in seconds for device_code and user_code
         @SerializedName("expires_in")
@@ -310,6 +312,11 @@ public class OAuth {
         @SerializedName("refresh_token")
         public String refreshToken;
 
+        /**
+         * LittleSkin ID Token
+         */
+        @SerializedName("id_token")
+        public String idToken;
     }
 
     private static class ErrorResponse {
@@ -361,5 +368,8 @@ public class OAuth {
 
         @SerializedName("refresh_token")
         String refreshToken;
+
+        @SerializedName("id_token")
+        String idToken;
     }
 }

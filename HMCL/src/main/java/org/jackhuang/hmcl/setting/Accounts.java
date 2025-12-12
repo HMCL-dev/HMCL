@@ -27,6 +27,9 @@ import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.authlibinjector.*;
+import org.jackhuang.hmcl.auth.littleskin.LittleSkinAccount;
+import org.jackhuang.hmcl.auth.littleskin.LittleSkinAccountFactory;
+import org.jackhuang.hmcl.auth.littleskin.LittleSkinService;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccountFactory;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftService;
@@ -35,8 +38,8 @@ import org.jackhuang.hmcl.auth.offline.OfflineAccountFactory;
 import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
 import org.jackhuang.hmcl.game.OAuthServer;
 import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.io.JarUtils;
+import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.skin.InvalidSkinException;
 
 import javax.net.ssl.SSLException;
@@ -52,7 +55,6 @@ import static javafx.collections.FXCollections.observableArrayList;
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
-import static org.jackhuang.hmcl.util.Lang.immutableListOf;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
@@ -69,12 +71,24 @@ public final class Accounts {
 
     private static final AuthlibInjectorArtifactProvider AUTHLIB_INJECTOR_DOWNLOADER = createAuthlibInjectorArtifactProvider();
 
-    public static final OAuthServer.Factory OAUTH_CALLBACK = new OAuthServer.Factory();
+    public static final OAuthServer.Factory MICROSOFT_OAUTH_CALLBACK = new OAuthServer.Factory(
+            System.getProperty("hmcl.microsoft.auth.id",
+                    JarUtils.getAttribute("hmcl.microsoft.auth.id", "")),
+            System.getProperty("hmcl.microsoft.auth.secret",
+                    JarUtils.getAttribute("hmcl.microsoft.auth.secret", ""))
+    );
+
+    public static final OAuthServer.Factory LITTLE_SKIN_CALLBACK = new OAuthServer.Factory(
+            System.getProperty("hmcl.littleskin.auth.id",
+                    JarUtils.getAttribute("hmcl.littleskin.auth.id", "")
+            ), ""
+    );
 
     public static final OfflineAccountFactory FACTORY_OFFLINE = new OfflineAccountFactory(AUTHLIB_INJECTOR_DOWNLOADER);
     public static final AuthlibInjectorAccountFactory FACTORY_AUTHLIB_INJECTOR = new AuthlibInjectorAccountFactory(AUTHLIB_INJECTOR_DOWNLOADER, Accounts::getOrCreateAuthlibInjectorServer);
-    public static final MicrosoftAccountFactory FACTORY_MICROSOFT = new MicrosoftAccountFactory(new MicrosoftService(OAUTH_CALLBACK));
-    public static final List<AccountFactory<?>> FACTORIES = immutableListOf(FACTORY_OFFLINE, FACTORY_MICROSOFT, FACTORY_AUTHLIB_INJECTOR);
+    public static final MicrosoftAccountFactory FACTORY_MICROSOFT = new MicrosoftAccountFactory(new MicrosoftService(MICROSOFT_OAUTH_CALLBACK));
+    public static final LittleSkinAccountFactory FACTORY_LITTLE_SKIN = new LittleSkinAccountFactory(new LittleSkinService(LITTLE_SKIN_CALLBACK));
+    public static final List<AccountFactory<?>> FACTORIES = List.of(FACTORY_OFFLINE, FACTORY_MICROSOFT, FACTORY_LITTLE_SKIN, FACTORY_AUTHLIB_INJECTOR);
 
     // ==== login type / account factory mapping ====
     private static final Map<String, AccountFactory<?>> type2factory = new HashMap<>();
@@ -84,6 +98,7 @@ public final class Accounts {
         type2factory.put("offline", FACTORY_OFFLINE);
         type2factory.put("authlibInjector", FACTORY_AUTHLIB_INJECTOR);
         type2factory.put("microsoft", FACTORY_MICROSOFT);
+        type2factory.put("littleskin", FACTORY_LITTLE_SKIN);
 
         type2factory.forEach((type, factory) -> factory2type.put(factory, type));
     }
@@ -116,6 +131,8 @@ public final class Accounts {
             return FACTORY_AUTHLIB_INJECTOR;
         else if (account instanceof MicrosoftAccount)
             return FACTORY_MICROSOFT;
+        else if (account instanceof LittleSkinAccount)
+            return FACTORY_LITTLE_SKIN;
         else
             throw new IllegalArgumentException("Failed to determine account type: " + account);
     }
@@ -196,16 +213,6 @@ public final class Accounts {
     static void init() {
         if (initialized)
             throw new IllegalStateException("Already initialized");
-
-        if (!config().isAddedLittleSkin()) {
-            AuthlibInjectorServer littleSkin = new AuthlibInjectorServer("https://littleskin.cn/api/yggdrasil/");
-
-            if (config().getAuthlibInjectorServers().stream().noneMatch(it -> littleSkin.getUrl().equals(it.getUrl()))) {
-                config().getAuthlibInjectorServers().add(0, littleSkin);
-            }
-
-            config().setAddedLittleSkin(true);
-        }
 
         loadGlobalAccountStorages();
 
@@ -401,7 +408,9 @@ public final class Accounts {
     private static final Map<AccountFactory<?>, String> unlocalizedLoginTypeNames = mapOf(
             pair(Accounts.FACTORY_OFFLINE, "account.methods.offline"),
             pair(Accounts.FACTORY_AUTHLIB_INJECTOR, "account.methods.authlib_injector"),
-            pair(Accounts.FACTORY_MICROSOFT, "account.methods.microsoft"));
+            pair(Accounts.FACTORY_MICROSOFT, "account.methods.microsoft"),
+            pair(Accounts.FACTORY_LITTLE_SKIN, "account.methods.littleskin")
+    );
 
     public static String getLocalizedLoginTypeName(AccountFactory<?> factory) {
         return i18n(Optional.ofNullable(unlocalizedLoginTypeNames.get(factory))
@@ -467,7 +476,7 @@ public final class Accounts {
         } else if (exception instanceof MicrosoftService.NoXuiException) {
             return i18n("account.methods.microsoft.error.add_family_probably");
         } else if (exception instanceof OAuthServer.MicrosoftAuthenticationNotSupportedException) {
-            return i18n("account.methods.microsoft.snapshot");
+            return i18n("account.methods.snapshot");
         } else if (exception instanceof OAuthAccount.WrongAccountException) {
             return i18n("account.failed.wrong_account");
         } else if (exception.getClass() == AuthenticationException.class) {
