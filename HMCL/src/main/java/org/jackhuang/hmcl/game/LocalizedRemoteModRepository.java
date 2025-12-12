@@ -42,9 +42,9 @@ public abstract class LocalizedRemoteModRepository implements RemoteModRepositor
     protected abstract SortType getBackedRemoteModRepositorySortOrder();
 
     @Override
-    public SearchResult search(DownloadProvider downloadProvider, String gameVersion, Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder) throws IOException {
+    public SearchResult search(DownloadProvider downloadProvider, String gameVersion, Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder, LoaderType loaderType) throws IOException {
         if (!StringUtils.containsChinese(searchFilter)) {
-            return getBackedRemoteModRepository().search(downloadProvider, gameVersion, category, pageOffset, pageSize, searchFilter, sort, sortOrder);
+            return getBackedRemoteModRepository().search(downloadProvider, gameVersion, category, pageOffset, pageSize, searchFilter, sort, sortOrder, loaderType);
         }
 
         Set<String> englishSearchFiltersSet = new HashSet<>(INITIAL_CAPACITY);
@@ -66,7 +66,7 @@ public abstract class LocalizedRemoteModRepository implements RemoteModRepositor
         RemoteMod[] searchResultArray = new RemoteMod[pageSize];
         int totalPages, chineseIndex = 0, englishIndex = pageSize - 1;
         {
-            SearchResult searchResult = getBackedRemoteModRepository().search(downloadProvider, gameVersion, category, pageOffset, pageSize, String.join(" ", englishSearchFiltersSet), getBackedRemoteModRepositorySortOrder(), sortOrder);
+            SearchResult searchResult = getBackedRemoteModRepository().search(downloadProvider, gameVersion, category, pageOffset, pageSize, String.join(" ", englishSearchFiltersSet), getBackedRemoteModRepositorySortOrder(), sortOrder, loaderType);
             for (Iterator<RemoteMod> iterator = searchResult.getUnsortedResults().iterator(); iterator.hasNext(); ) {
                 if (chineseIndex > englishIndex) {
                     LOG.warning("Too many search results! Are the backed remote mod repository broken? Or are the API broken?");
