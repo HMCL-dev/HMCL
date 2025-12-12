@@ -559,10 +559,10 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         dataItem.getCategories().stream()
                                 .map(category -> getSkinnable().getLocalizedCategory(category))
                                 .forEach(content::addTag);
-                        loadIcon(dataItem, imageView);
+                        loadIcon(dataItem);
                     }
 
-                    private void loadIcon(RemoteMod mod, ImageView imageView) {
+                    private void loadIcon(RemoteMod mod) {
                         WeakReference<CompletableFuture<Image>> cacheRef = iconCache.get(mod);
                         CompletableFuture<Image> cache;
                         if (cacheRef != null && (cache = cacheRef.get()) != null) {
