@@ -1509,6 +1509,63 @@
 }
 
 /*******************************************************************************
+ *                                                                             *
+ * Table View                                                                  *
+ *                                                                             *
+ ******************************************************************************/
+
+/* WE DEFINITELY NEED JFX TABLE-VIEW */
+
+.table-view {
+    -fx-padding: 3;
+    -fx-background-color: -monet-surface-container-low;
+}
+
+.table-view,
+.table-view .column-header,
+.table-view .filler,
+.table-view .column-header-background,
+.table-row-cell {
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+}
+
+.table-view .column-header,
+.table-view .filler {
+    -fx-background-color: transparent;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: -monet-surface-container-highest;
+}
+
+.table-row-cell {
+    -fx-background-color: -monet-surface-container;
+    -fx-table-cell-border-color: -monet-surface-container-lowest;
+}
+
+.table-row-cell:odd {
+    -fx-background-color: -monet-surface-container-high;
+}
+
+.table-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: -monet-on-surface;
+}
+
+.table-view > .virtual-flow > .clipped-container > .sheet > .table-row-cell:filled:selected {
+    -fx-background-color: -monet-secondary-container;
+}
+
+.table-view > .virtual-flow > .scroll-bar {
+    -fx-skin: "org.jackhuang.hmcl.ui.construct.FloatScrollBarSkin";
+}
+
+.table-view > .virtual-flow > .scroll-bar .track {
+    -fx-fill: transparent;
+}
+
+/*******************************************************************************
 *                                                                              *
 * JFX Decorator                                                                *
 *                                                                              *
@@ -1705,80 +1762,4 @@
 
 .tooltip .text {
     -fx-fill: -monet-inverse-on-surface;
-}
-
-/*******************************************************************************
- *                                                                             *
- * Table View                                                                  *
- *                                                                             *
- ******************************************************************************/
-
-/* WE DEFINITELY NEED JFX TABLE-VIEW */
-
-.table-view {
-    -fx-padding: 3;
-    -fx-background-color: -monet-surface-container-low;
-}
-
-.table-view,
-.table-view .column-header,
-.table-view .filler,
-.table-view .column-header-background,
-.table-row-cell {
-    -fx-background-radius: 6;
-    -fx-border-radius: 6;
-}
-
-.table-view .column-header,
-.table-view .filler {
-    -fx-background-color: transparent;
-}
-
-.table-view .column-header-background {
-    -fx-background-color: -monet-surface-container-highest;
-}
-
-.table-row-cell {
-    -fx-background-color: -monet-surface-container;
-    -fx-table-cell-border-color: -monet-surface-container-lowest;
-}
-
-.table-row-cell:odd {
-    -fx-background-color: -monet-surface-container-high;
-}
-
-.table-cell {
-    -fx-background-color: transparent;
-    -fx-text-fill: -monet-on-surface;
-}
-
-.table-view > .virtual-flow > .clipped-container > .sheet > .table-row-cell:filled:selected {
-    -fx-background-color: -monet-secondary-container;
-}
-
-.table-view > .virtual-flow > .scroll-bar {
-    -fx-skin: "org.jackhuang.hmcl.ui.construct.FloatScrollBarSkin";
-}
-
-.table-view > .virtual-flow > .scroll-bar .track {
-    -fx-fill: transparent;
-}
-
-/*******************************************************************************
- *                                                                             *
- * CheckBox			                                                           *
- *                                                                             *
- ******************************************************************************/
-
-/* For CheckBoxTableCell in ModUpdatesPage */
-
-.check-box .box {
-    -fx-background-color: transparent;
-    -fx-border-color: -monet-primary;
-    -fx-border-width: 2;
-    -fx-border-radius: 3;
-}
-
-.check-box:selected .box .mark {
-    -fx-background-color: -monet-primary;
 }
