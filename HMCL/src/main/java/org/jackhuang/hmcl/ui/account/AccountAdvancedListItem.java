@@ -81,6 +81,18 @@ public class AccountAdvancedListItem extends AdvancedListItem {
                 Accounts::setSelectedAccount);
     }
 
+    public AccountAdvancedListItem(Account account) {
+        tooltip = new Tooltip();
+        FXUtils.installFastTooltip(this, tooltip);
+
+        canvas = new Canvas(32, 32);
+        setLeftGraphic(canvas);
+
+        setActionButtonVisible(false);
+
+        this.accountProperty().set(account);
+    }
+
     public ObjectProperty<Account> accountProperty() {
         return account;
     }
