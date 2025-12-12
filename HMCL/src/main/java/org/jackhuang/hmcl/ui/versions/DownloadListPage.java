@@ -586,15 +586,12 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         iconCache.put(mod.getIconUrl(), futureRef);
 
                         FXUtils.getRemoteImageTask(iconUrl, 80, 80, true, true)
-                                .whenComplete(Schedulers.defaultScheduler(), (result, exception) -> {
-                                    CompletableFuture<Image> f = futureRef.get();
-                                    if (f != null) {
-                                        if (exception == null) {
-                                            f.complete(result);
-                                        } else {
-                                            LOG.warning("Failed to load image from " + iconUrl, exception);
-                                            f.completeExceptionally(exception);
-                                        }
+                                .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                                    if (exception == null) {
+                                        future.complete(result);
+                                    } else {
+                                        LOG.warning("Failed to load image from " + iconUrl, exception);
+                                        future.completeExceptionally(exception);
                                     }
                                 }).start();
                         loadIcon(future, mod.getIconUrl());
