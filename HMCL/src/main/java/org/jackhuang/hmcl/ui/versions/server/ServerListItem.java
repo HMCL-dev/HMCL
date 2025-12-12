@@ -135,6 +135,7 @@ public class ServerListItem extends Control {
                 if (serverDataHolder.profile.equals(parent.profile) && serverDataHolder.holdInstances.contains(parent.version)) {
                     // current instance holds this server data.
                     item.addTag(i18n("server.tag.hold.current"));
+                    serverDataHolder.holdInstances.stream().filter(e -> !e.equals(parent.version)).forEach(item::addTag);
                 } else {
                     for (String holdInstance : serverDataHolder.holdInstances) {
                         item.addTag(holdInstance);
