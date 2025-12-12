@@ -1,0 +1,67 @@
+/*
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2025 huangyuhui <huanghongxun2008@126.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+package org.jackhuang.hmcl.ui.construct;
+
+import com.jfoenix.validation.base.ValidatorBase;
+import javafx.beans.NamedArg;
+import javafx.scene.control.TextInputControl;
+import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.StringUtils;
+
+public class NumberRangeValidator extends ValidatorBase {
+    private final String notNumberMessage;
+    private final String outOfLimitMessage;
+    private final boolean nullable;
+    private final int minValue;
+    private final int maxValue;
+
+    public NumberRangeValidator(@NamedArg("notNumberMessage") String notNumberMessage, @NamedArg("outOfLimitMessage") String outOfLimitMessage, @NamedArg("minValue") int minValue, @NamedArg("maxValue") int maxValue, @NamedArg("nullable") boolean nullable) {
+        super(notNumberMessage);
+        this.notNumberMessage = notNumberMessage;
+        this.outOfLimitMessage = outOfLimitMessage;
+        this.nullable = nullable;
+        this.minValue = minValue;
+        this.maxValue = maxValue;
+    }
+
+    @Override
+    protected void eval() {
+        if (srcControl.get() instanceof TextInputControl) {
+            evalTextInputField();
+        }
+    }
+
+    private void evalTextInputField() {
+        TextInputControl textField = ((TextInputControl) srcControl.get());
+
+        if (StringUtils.isBlank(textField.getText()))
+            hasErrors.set(!nullable);
+        else {
+            Integer intOrNull = Lang.toIntOrNull(textField.getText());
+            if (intOrNull == null) {
+                setMessage(notNumberMessage);
+                hasErrors.set(true);
+            } else if (intOrNull > maxValue || intOrNull < minValue) {
+                setMessage(outOfLimitMessage);
+                hasErrors.set(true);
+            } else {
+                hasErrors.set(false);
+            }
+        }
+    }
+}
