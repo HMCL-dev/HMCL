@@ -154,6 +154,7 @@ public final class WorldInfoPage extends SpinnerPane {
                 FXUtils.limitSize(iconImageView, 32, 32);
                 iconImageView.setImage(world.getIcon() == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : world.getIcon());
                 iconImageView.setCursor(Cursor.HAND);
+                iconImageView.setDisable(worldManagePage.isReadOnly());
 
                 Node editIcon = SVG.EDIT.createIcon(12);
                 editIcon.setDisable(worldManagePage.isReadOnly());
