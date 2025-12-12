@@ -232,7 +232,10 @@ public class TerracottaControllerPage extends StackPane {
                                 MessageDialogPane.MessageType.QUESTION
                         ).addAction(i18n("version.launch"), () -> {
                             Profile profile = Profiles.getSelectedProfile();
-                            Versions.launch(profile, profile.getSelectedVersion(), LauncherHelper::setKeep);
+                            Versions.launch(profile, profile.getSelectedVersion(), launcherHelper -> {
+                                launcherHelper.setKeep();
+                                launcherHelper.setDisableOfflineSkin();
+                            });
                         }).addCancel(i18n("terracotta.status.waiting.host.launch.skip"), () -> {
                             TerracottaState.HostScanning s1 = TerracottaManager.setScanning();
                             if (s1 != null) {
