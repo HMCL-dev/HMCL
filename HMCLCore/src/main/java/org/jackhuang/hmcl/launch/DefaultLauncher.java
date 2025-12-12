@@ -147,7 +147,7 @@ public class DefaultLauncher extends Launcher {
         res.addDefault("-Djava.rmi.server.useCodebaseOnly=", "true");
         res.addDefault("-Dcom.sun.jndi.rmi.object.trustURLCodebase=", "false");
         res.addDefault("-Dcom.sun.jndi.cosnaming.object.trustURLCodebase=", "false");
-        
+
         String formatMsgNoLookups = res.addDefault("-Dlog4j2.formatMsgNoLookups=", "true");
         if (isUsingLog4j() && (options.isEnableDebugLogOutput() || !"-Dlog4j2.formatMsgNoLookups=false".equals(formatMsgNoLookups))) {
             res.addDefault("-Dlog4j.configurationFile=", FileUtils.getAbsolutePath(getLog4jConfigurationFile()));
