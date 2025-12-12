@@ -19,6 +19,8 @@ package org.jackhuang.hmcl.ui.export;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXTreeView;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.CheckBox;
@@ -58,6 +60,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
     private final String version;
     private final ModAdviser adviser;
     private final CheckBoxTreeItem<String> rootNode;
+    private final BooleanProperty hasSelection = new SimpleBooleanProperty(false);
 
     public ModpackFileSelectionPage(WizardController controller, Profile profile, String version, ModAdviser adviser) {
         this.controller = controller;
@@ -70,6 +73,8 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         treeView.setSelectionModel(new NoneMultipleSelectionModel<>());
         this.setCenter(treeView);
 
+        updateHasSelection();
+
         HBox nextPane = new HBox();
         nextPane.setPadding(new Insets(16, 16, 16, 0));
         nextPane.setAlignment(Pos.CENTER_RIGHT);
@@ -77,6 +82,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
             JFXButton btnNext = FXUtils.newRaisedButton(i18n("wizard.next"));
             btnNext.setPrefSize(100, 40);
             btnNext.setOnAction(e -> onNext());
+            btnNext.disableProperty().bind(hasSelection.not());
 
             nextPane.getChildren().setAll(btnNext);
         }
@@ -133,6 +139,8 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         CheckBox checkBox = new CheckBox();
         checkBox.selectedProperty().bindBidirectional(node.selectedProperty());
         checkBox.indeterminateProperty().bindBidirectional(node.indeterminateProperty());
+        checkBox.setOnAction(e -> updateHasSelection());
+        
         graphic.getChildren().add(checkBox);
 
         if (TRANSLATION.containsKey(basePath)) {
@@ -147,6 +155,26 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         node.setGraphic(graphic);
 
         return node;
+    }
+
+    private void updateHasSelection() {
+        hasSelection.set(hasAnySelection(rootNode, true));
+    }
+
+    private boolean hasAnySelection(CheckBoxTreeItem<String> node, boolean ignoreCurrent) {
+        if (node == null) {
+            return false;
+        }
+        boolean currentSelected = !ignoreCurrent && (node.isSelected() || node.isIndeterminate());
+        if (currentSelected) {
+            return true;
+        }
+        for (TreeItem<String> child : node.getChildren()) {
+            if (child instanceof CheckBoxTreeItem && hasAnySelection((CheckBoxTreeItem<String>) child, false)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void getFilesNeeded(CheckBoxTreeItem<String> node, String basePath, List<String> list) {
