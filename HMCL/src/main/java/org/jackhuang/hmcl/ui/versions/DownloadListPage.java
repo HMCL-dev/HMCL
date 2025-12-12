@@ -586,7 +586,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         iconCache.put(mod.getIconUrl(), futureRef);
 
                         FXUtils.getRemoteImageTask(iconUrl, 80, 80, true, true)
-                                .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                                .whenComplete(Schedulers.defaultScheduler(), (result, exception) -> {
                                     if (exception == null) {
                                         future.complete(result);
                                     } else {
