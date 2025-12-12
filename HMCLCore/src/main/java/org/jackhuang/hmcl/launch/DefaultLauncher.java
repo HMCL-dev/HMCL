@@ -149,16 +149,9 @@ public class DefaultLauncher extends Launcher {
         res.addDefault("-Dcom.sun.jndi.cosnaming.object.trustURLCodebase=", "false");
         
         String formatMsgNoLookups = res.addDefault("-Dlog4j2.formatMsgNoLookups=", "true");
-        if (isUsingLog4j()) {
-            if (options.isEnableDebugLogOutput()) {
-                res.addDefault("-Dlog4j.configurationFile=", FileUtils.getAbsolutePath(getLog4jConfigurationFile()));
-            } else {
-                if (!"-Dlog4j2.formatMsgNoLookups=false".equals(formatMsgNoLookups)) {
-                    res.addDefault("-Dlog4j.configurationFile=", FileUtils.getAbsolutePath(getLog4jConfigurationFile()));
-                }
-            }
+        if (isUsingLog4j() && (options.isEnableDebugLogOutput() || !"-Dlog4j2.formatMsgNoLookups=false".equals(formatMsgNoLookups))) {
+            res.addDefault("-Dlog4j.configurationFile=", FileUtils.getAbsolutePath(getLog4jConfigurationFile()));
         }
-
 
         // Default JVM Args
         if (!options.isNoGeneratedJVMArgs()) {
