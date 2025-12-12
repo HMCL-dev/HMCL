@@ -382,7 +382,7 @@ public final class WorldInfoPage extends SpinnerPane {
                 setRightTextLabel(spawnPane, spawnLabel, () -> {
 
                     Dimension dimension;
-                    if (player.get("respawn") instanceof CompoundTag respawnTag) {//Valid after 25w07a
+                    if (player.get("respawn") instanceof CompoundTag respawnTag) { //Valid after 25w07a
                         dimension = Dimension.of(respawnTag.get("dimension"));
                         Tag posTag = respawnTag.get("pos");
 
@@ -391,7 +391,7 @@ public final class WorldInfoPage extends SpinnerPane {
                         }
                     } else if (player.get("SpawnX") instanceof IntTag intX
                             && player.get("SpawnY") instanceof IntTag intY
-                            && player.get("SpawnZ") instanceof IntTag intZ) {//Valid before 25w07a
+                            && player.get("SpawnZ") instanceof IntTag intZ) { //Valid before 25w07a
                         //SpawnDimension tag is valid after 20w12a. Prior to this version, the game did not record the respawn point dimension and respawned in the Overworld.
                         dimension = Dimension.of(player.get("SpawnDimension") == null ? new IntTag("SpawnDimension", 0) : player.get("SpawnDimension"));
                         if (dimension == null) {
