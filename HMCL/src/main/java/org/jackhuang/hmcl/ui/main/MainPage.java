@@ -52,6 +52,7 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -120,6 +121,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             titleLabel.setRotate(180);
         }
         titleLabel.getStyleClass().add("jfx-decorator-title");
+        titleLabel.textFillProperty().bind(Themes.titleFillProperty());
         titleNode.getChildren().setAll(titleIcon, titleLabel);
 
         state.setValue(new State(null, titleNode, false, false, true));
@@ -186,16 +188,13 @@ public final class MainPage extends StackPane implements DecoratorPage {
             StackPane.setAlignment(hBox, Pos.CENTER_LEFT);
             StackPane.setMargin(hBox, new Insets(9, 12, 9, 16));
             {
-                Label lblIcon = new Label();
-                lblIcon.setGraphic(SVG.UPDATE.createIcon(20));
-
                 TwoLineListItem prompt = new TwoLineListItem();
                 prompt.setSubtitle(i18n("update.bubble.subtitle"));
                 prompt.setPickOnBounds(false);
                 prompt.titleProperty().bind(BindingMapping.of(latestVersionProperty()).map(latestVersion ->
                         latestVersion == null ? "" : i18n("update.bubble.title", latestVersion.getVersion())));
 
-                hBox.getChildren().setAll(lblIcon, prompt);
+                hBox.getChildren().setAll(SVG.UPDATE.createIcon(20), prompt);
             }
 
             JFXButton closeUpdateButton = new JFXButton();

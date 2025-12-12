@@ -76,6 +76,7 @@ public class TaskExecutorDialogPane extends BorderPane {
             bottom.setLeft(lblProgress);
 
             btnCancel = new JFXButton(i18n("button.cancel"));
+            btnCancel.getStyleClass().add("dialog-cancel");
             bottom.setRight(btnCancel);
         }
 
