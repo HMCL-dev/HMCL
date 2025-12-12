@@ -35,6 +35,7 @@ import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -60,16 +61,24 @@ import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.NotNull;
 
+import java.lang.ref.WeakReference;
+import java.net.URI;
 import java.util.*;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.selectedItemPropertyFor;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class DownloadListPage extends Control implements DecoratorPage, VersionPage.VersionLoadable {
     protected final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
@@ -523,6 +532,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
                 // ListViewBehavior would consume ESC pressed event, preventing us from handling it, so we ignore it here
                 ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
+                var iconCache = new WeakHashMap<String, WeakReference<CompletableFuture<Image>>>();
                 listView.setCellFactory(x -> new FloatListCell<>(listView) {
                     private final TwoLineListItem content = new TwoLineListItem();
                     private final ImageView imageView = new ImageView();
@@ -549,8 +559,64 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         dataItem.getCategories().stream()
                                 .map(category -> getSkinnable().getLocalizedCategory(category))
                                 .forEach(content::addTag);
-                        if (StringUtils.isNotBlank(dataItem.getIconUrl())) {
-                            imageView.imageProperty().bind(FXUtils.newRemoteImage(dataItem.getIconUrl(), 80, 80, true, true));
+                        loadIcon(dataItem);
+                    }
+
+                    private void loadIcon(RemoteMod mod) {
+                        if (StringUtils.isBlank(mod.getIconUrl())) {
+                            imageView.setImage(null);
+                            return;
+                        }
+
+                        WeakReference<CompletableFuture<Image>> cacheRef = iconCache.get(mod.getIconUrl());
+                        CompletableFuture<Image> cache;
+                        if (cacheRef != null && (cache = cacheRef.get()) != null) {
+                            loadIcon(cache, mod.getIconUrl());
+                            return;
+                        }
+
+                        URI iconUrl = NetworkUtils.toURIOrNull(mod.getIconUrl());
+                        if (iconUrl == null) {
+                            imageView.setImage(null);
+                            return;
+                        }
+
+                        CompletableFuture<Image> future = new CompletableFuture<>();
+                        WeakReference<CompletableFuture<Image>> futureRef = new WeakReference<>(future);
+                        iconCache.put(mod.getIconUrl(), futureRef);
+
+                        FXUtils.getRemoteImageTask(iconUrl, 80, 80, true, true)
+                                .whenComplete(Schedulers.defaultScheduler(), (result, exception) -> {
+                                    if (exception == null) {
+                                        future.complete(result);
+                                    } else {
+                                        LOG.warning("Failed to load image from " + iconUrl, exception);
+                                        future.completeExceptionally(exception);
+                                    }
+                                }).start();
+                        loadIcon(future, mod.getIconUrl());
+                    }
+
+                    private void loadIcon(@NotNull CompletableFuture<Image> future,
+                                          @NotNull String iconUrl) {
+                        Image image;
+                        try {
+                            image = future.getNow(null);
+                        } catch (CancellationException | CompletionException ignored) {
+                            imageView.setImage(null);
+                            return;
+                        }
+
+                        if (image != null) {
+                            imageView.setImage(image);
+                        } else {
+                            imageView.setImage(null);
+                            future.thenAcceptAsync(result -> {
+                                RemoteMod item = getItem();
+                                if (item != null && iconUrl.equals(item.getIconUrl())) {
+                                    this.imageView.setImage(result);
+                                }
+                            }, Schedulers.javafx());
                         }
                     }
                 });
