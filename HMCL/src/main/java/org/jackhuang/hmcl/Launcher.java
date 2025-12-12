@@ -20,11 +20,13 @@ package org.jackhuang.hmcl;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.value.ObservableBooleanValue;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.ButtonType;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.DataFormat;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.SambaException;
@@ -54,6 +56,7 @@ import java.net.CookieManager;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Objects;
@@ -78,6 +81,18 @@ public final class Launcher extends Application {
         LOG.info("Prism Pipeline: " + FXUtils.GRAPHICS_PIPELINE);
         LOG.info("Dark Mode: " + Optional.ofNullable(FXUtils.DARK_MODE).map(ObservableBooleanValue::get).orElse(false));
         LOG.info("Reduced Motion: " + Objects.requireNonNullElse(FXUtils.REDUCED_MOTION, false));
+
+        if (Screen.getScreens().isEmpty()) {
+            LOG.info("No screen");
+        } else {
+            StringBuilder builder = new StringBuilder("Screens:");
+            int count = 0;
+            for (Screen screen : Screen.getScreens()) {
+                builder.append("\n - Screen ").append(++count).append(": ");
+                appendScreen(builder, screen);
+            }
+            LOG.info(builder.toString());
+        }
 
         try {
             try {
@@ -129,6 +144,38 @@ public final class Launcher extends Application {
         } catch (Throwable e) {
             CRASH_REPORTER.uncaughtException(Thread.currentThread(), e);
         }
+    }
+
+    private static void appendScreen(StringBuilder builder, Screen screen) {
+        Rectangle2D bounds = screen.getBounds();
+        double scale = screen.getOutputScaleX();
+
+        builder.append(Math.round(bounds.getWidth() * scale));
+        builder.append('x');
+        builder.append(Math.round(bounds.getHeight() * scale));
+
+        DecimalFormat decimalFormat = new DecimalFormat("#.##");
+
+        if (scale != 1.0) {
+            builder.append(" @ ");
+            builder.append(decimalFormat.format(scale));
+            builder.append('x');
+        }
+
+        double dpi = screen.getDpi();
+        builder.append(' ');
+        builder.append(decimalFormat.format(dpi));
+        builder.append("dpi");
+
+        builder.append(" in ")
+                .append(Math.round(Math.sqrt(bounds.getWidth() * bounds.getWidth() + bounds.getHeight() * bounds.getHeight()) / dpi))
+                .append('"');
+
+        builder.append(" (").append(decimalFormat.format(bounds.getMinX()))
+                .append(", ").append(decimalFormat.format(bounds.getMinY()))
+                .append(", ").append(decimalFormat.format(bounds.getMaxX()))
+                .append(", ").append(decimalFormat.format(bounds.getMaxY()))
+                .append(")");
     }
 
     private static ButtonType showAlert(AlertType alertType, String contentText, ButtonType... buttons) {

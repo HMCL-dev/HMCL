@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
+import com.jfoenix.controls.JFXCheckBox;
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -30,6 +31,13 @@ import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import org.jackhuang.hmcl.mod.*;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import org.jackhuang.hmcl.mod.LocalModFile;
+import org.jackhuang.hmcl.mod.ModManager;
+import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -37,6 +45,9 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.ui.construct.JFXCheckBoxTableCell;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -70,9 +81,10 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         getStyleClass().add("gray-background");
 
         TableColumn<ModUpdateObject, Boolean> enabledColumn = new TableColumn<>();
-        CheckBox allEnabledBox = new CheckBox();
+        var allEnabledBox = new JFXCheckBox();
+        enabledColumn.setStyle("-fx-alignment: CENTER;");
         enabledColumn.setGraphic(allEnabledBox);
-        enabledColumn.setCellFactory(CheckBoxTableCell.forTableColumn(enabledColumn));
+        enabledColumn.setCellFactory(JFXCheckBoxTableCell.forTableColumn(enabledColumn));
         setupCellValueFactory(enabledColumn, ModUpdateObject::enabledProperty);
         enabledColumn.setEditable(true);
         enabledColumn.setMaxWidth(40);
@@ -114,6 +126,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         TableView<ModUpdateObject> table = new TableView<>(objects);
         table.setEditable(true);
         table.getColumns().setAll(enabledColumn, fileNameColumn, currentVersionColumn, targetVersionColumn, sourceColumn, detailColumn);
+        setMargin(table, new Insets(10, 10, 5, 10));
 
         setCenter(table);
 
