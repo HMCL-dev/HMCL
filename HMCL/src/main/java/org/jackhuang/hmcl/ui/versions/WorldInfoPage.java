@@ -361,7 +361,7 @@ public final class WorldInfoPage extends SpinnerPane {
                 setLeftLabel(lastDeathLocationPane, "world.info.player.last_death_location");
                 Label lastDeathLocationLabel = new Label();
                 setRightTextLabel(lastDeathLocationPane, lastDeathLocationLabel, () -> {
-                    Tag tag = player.get("LastDeathLocation");
+                    Tag tag = player.get("LastDeathLocation");//Valid after 22w14a; prior to this version, the game did not record the last death location data.
                     if (tag instanceof CompoundTag compoundTag) {
                         Dimension dim = Dimension.of(compoundTag.get("dimension"));
                         if (dim != null) {
@@ -382,29 +382,25 @@ public final class WorldInfoPage extends SpinnerPane {
                 setRightTextLabel(spawnPane, spawnLabel, () -> {
 
                     Dimension dimension;
-                    if (world.getGameVersion().compareTo("25w07a") >= 0) {
-                        CompoundTag respawnTag = player.get("respawn");
-                        if (respawnTag == null) {
-                            return "";
-                        }
+                    if (player.get("respawn") instanceof CompoundTag respawnTag) {//Valid after 25w07a
                         dimension = Dimension.of(respawnTag.get("dimension"));
                         Tag posTag = respawnTag.get("pos");
 
                         if (posTag instanceof IntArrayTag intArrayTag) {
                             return dimension.formatPosition(intArrayTag.getValue(0), intArrayTag.getValue(1), intArrayTag.getValue(2));
                         }
-                    } else {
-                        dimension = Dimension.of(player.get("SpawnDimension"));
+                    } else if (player.get("SpawnX") instanceof IntTag intX
+                            && player.get("SpawnY") instanceof IntTag intY
+                            && player.get("SpawnZ") instanceof IntTag intZ) {//Valid before 25w07a
+                        //SpawnDimension tag is valid after 20w12a. Prior to this version, the game did not record the respawn point dimension and respawned in the Overworld.
+                        dimension = Dimension.of(player.get("SpawnDimension") == null ? new IntTag("SpawnDimension", 0) : player.get("SpawnDimension"));
                         if (dimension == null) {
                             return "";
                         }
-                        Tag x = player.get("SpawnX");
-                        Tag y = player.get("SpawnY");
-                        Tag z = player.get("SpawnZ");
 
-                        if (x instanceof IntTag intX && y instanceof IntTag intY && z instanceof IntTag intZ)
-                            return dimension.formatPosition(intX.getValue(), intY.getValue(), intZ.getValue());
+                        return dimension.formatPosition(intX.getValue(), intY.getValue(), intZ.getValue());
                     }
+
                     return "";
                 });
             }
@@ -546,7 +542,7 @@ public final class WorldInfoPage extends SpinnerPane {
     private void setRightTextField(BorderPane borderPane, JFXTextField textField, int perfWidth) {
         textField.setDisable(worldManagePage.isDisable());
         textField.setPrefWidth(perfWidth);
-        BorderPane.setAlignment(textField, Pos.CENTER_RIGHT);
+        textField.setAlignment(Pos.CENTER_RIGHT);
         borderPane.setRight(textField);
     }
 
