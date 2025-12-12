@@ -615,7 +615,8 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         } else {
                             imageView.setImage(null);
                             future.thenAcceptAsync(result -> {
-                                if (getItem() != null && getItem().getIconUrl().equals(iconUrl)) {
+                                RemoteMod item = getItem();
+                                if (item != null && iconUrl.equals(item.getIconUrl())) {
                                     this.imageView.setImage(result);
                                 }
                             }, Schedulers.javafx());
