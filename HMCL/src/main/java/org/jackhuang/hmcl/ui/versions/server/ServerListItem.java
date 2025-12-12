@@ -38,7 +38,6 @@ import org.jackhuang.hmcl.ui.construct.*;
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Objects;
 
 import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 import static org.jackhuang.hmcl.ui.versions.server.ServerListPage.readServersFromDat;
@@ -47,18 +46,11 @@ import static org.jackhuang.hmcl.util.StringUtils.parseColorEscapes;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class ServerListItem extends Control {
-    final Path serverDatPath;
-    final int inDatPathSlot;
-    final String tag;
-
-    final ServerData serverData;
+    final ServerDataHolder serverDataHolder;
     private final ServerListPage parent;
 
-    public ServerListItem(Path serverDatPath, int inDatPathSlot, String tag, ServerListPage parent, ServerData serverData) {
-        this.serverDatPath = serverDatPath;
-        this.inDatPathSlot = inDatPathSlot;
-        this.tag = tag;
-        this.serverData = serverData;
+    public ServerListItem(ServerListPage parent, ServerDataHolder serverDataHolder) {
+        this.serverDataHolder = serverDataHolder;
         this.parent = parent;
     }
 
@@ -75,16 +67,16 @@ public class ServerListItem extends Control {
             Task.runAsync(() -> {
                 Path datFilePath = parent.profile.getRepository().getServersDatFilePath(parent.version);
                 List<ServerData> dataList = readServersFromDat(datFilePath);
-                dataList.add(serverData);
+                dataList.add(serverDataHolder.serverData);
                 saveServerToDat(datFilePath, dataList);
                 Task.runAsync(Schedulers.javafx(), parent::refresh).start();
             }).start();
         }, popup);
 
-        copyToInstance.setDisable(parent.profile.getRepository().getServersDatFilePath(parent.version).equals(serverDatPath));
+        copyToInstance.setDisable(parent.profile.getRepository().getServersDatFilePath(parent.version).equals(serverDataHolder.serverDatPath));
         popupMenu.getContent().addAll(
                 new IconedMenuItem(SVG.CONTENT_COPY, i18n("servers.manage.copy.server.ip"), () ->
-                        FXUtils.copyText(serverData.ip, i18n("servers.manage.copy.server.ip.ok.toast")), popup),
+                        FXUtils.copyText(serverDataHolder.serverData.ip, i18n("servers.manage.copy.server.ip.ok.toast")), popup),
                 copyToInstance,
                 new MenuSeparator(),
                 new IconedMenuItem(SVG.DELETE, i18n("servers.manage.delete"), this::delete, popup)
@@ -100,25 +92,13 @@ public class ServerListItem extends Control {
                 i18n("button.remove.confirm"),
                 i18n("server.delete"),
                 () -> Task.runAsync(() -> {
-                    List<ServerData> dataList = readServersFromDat(serverDatPath);
-                    dataList.remove(serverData);
-                    saveServerToDat(serverDatPath, dataList);
+                    List<ServerData> dataList = readServersFromDat(serverDataHolder.serverDatPath);
+                    dataList.remove(serverDataHolder.serverData);
+                    saveServerToDat(serverDataHolder.serverDatPath, dataList);
                     Task.runAsync(Schedulers.javafx(), parent::refresh).start();
                 }).start(),
                 null
         );
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (o == null || getClass() != o.getClass()) return false;
-        ServerListItem that = (ServerListItem) o;
-        return inDatPathSlot == that.inDatPathSlot && Objects.equals(serverDatPath, that.serverDatPath);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(serverDatPath, inDatPathSlot);
     }
 
     private class ServerListItemSkin extends SkinBase<ServerListItem> {
@@ -137,21 +117,28 @@ public class ServerListItem extends Control {
                 ImageView imageView = new ImageView();
                 left.getChildren().add(imageView);
                 FXUtils.limitSize(imageView, 32, 32);
-                imageView.setImage(serverData.iconImage.get() == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : serverData.iconImage.get());
+                imageView.setImage(serverDataHolder.serverData.iconImage.get() == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : serverDataHolder.serverData.iconImage.get());
             }
 
             {
                 TwoLineListItem item = new TwoLineListItem();
                 root.setCenter(item);
                 item.setMouseTransparent(true);
-                if (serverData.name != null)
-                    item.setTitle(parseColorEscapes(serverData.name));
-                item.setSubtitle(serverData.ip);
+                if (serverDataHolder.serverData.name != null)
+                    item.setTitle(parseColorEscapes(serverDataHolder.serverData.name));
+                item.setSubtitle(serverDataHolder.serverData.ip);
 
-                item.addTag(tag);
-
-                if (serverData.hidden) {
+                if (serverDataHolder.serverData.hidden) {
                     item.addTag(i18n("server.tag.hide"));
+                }
+
+                if (serverDataHolder.profile.equals(parent.profile) && serverDataHolder.holdInstances.contains(parent.version)) {
+                    // current instance holds this server data.
+                    item.addTag(i18n("server.tag.hold.current"));
+                } else {
+                    for (String holdInstance : serverDataHolder.holdInstances) {
+                        item.addTag(holdInstance);
+                    }
                 }
             }
 

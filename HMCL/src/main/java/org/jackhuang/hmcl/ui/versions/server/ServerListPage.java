@@ -38,9 +38,7 @@ import org.jackhuang.hmcl.ui.versions.VersionPage;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -98,8 +96,8 @@ public class ServerListPage extends ListPageBase<ServerListItem> implements Vers
 
     private void updateFilter() {
         itemsProperty().setAll(serverListItems.stream()
-                .filter(item -> showAll.get() || (item.serverDatPath.equals(profile.getRepository().getServersDatFilePath(version))))
-                .filter(item -> showHide.get() || !item.serverData.hidden)
+                .filter(item -> showAll.get() || (item.serverDataHolder.holdInstances.contains(version) && item.serverDataHolder.profile.equals(profile)))
+                .filter(item -> showHide.get() || !item.serverDataHolder.serverData.hidden)
                 .toList()
         );
     }
@@ -119,21 +117,23 @@ public class ServerListPage extends ListPageBase<ServerListItem> implements Vers
         setLoading(true);
 
         Task.supplyAsync(() -> {
-            List<ServerListItem> list = new ArrayList<>();
+            Map<ServerDataHolder, ServerListItem> map = new LinkedHashMap<>();
             for (Version version : profile.getRepository().getVersions()) {
                 Path serverDat = profile.getRepository().getServersDatFilePath(version.getId());
                 List<ServerData> dataList = readServersFromDat(serverDat);
                 for (int i = 0; i < dataList.size(); i++) {
-                    String tag = switch (profile.getRepository().getGameDirectoryType(version.getId())) {
-                        case CUSTOM, ROOT_FOLDER -> i18n("server.tag.public");
-                        case VERSION_FOLDER -> version.getId();
-                    };
-                    list.add(new ServerListItem(serverDat, i, tag, this, dataList.get(i)));
+                    ServerDataHolder dataHolder = new ServerDataHolder(profile, serverDat, i, dataList.get(i));
+                    if (!map.containsKey(dataHolder)) {
+                        map.put(dataHolder, new ServerListItem(this, dataHolder));
+                    } else {
+                        dataHolder = map.get(dataHolder).serverDataHolder;
+                    }
+                    dataHolder.holdInstances.add(version.getId());
                 }
             }
-            return list;
+            return map.values();
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
-            serverListItems = result.stream().distinct().toList();
+            serverListItems = result.stream().toList();
             setLoading(false);
             if (exception == null) {
                 updateFilter();
