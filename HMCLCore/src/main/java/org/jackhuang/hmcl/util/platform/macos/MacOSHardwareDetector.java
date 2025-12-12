@@ -152,7 +152,7 @@ public final class MacOSHardwareDetector extends HardwareDetector {
         return Collections.emptyList();
     }
 
-    private static final Pattern PATTERN = Pattern.compile("\\(page size of (?<size>\\d+) bytes\\)");
+    private static final Pattern pageSizePattern = Pattern.compile("\\(page size of (?<size>\\d+) bytes\\)");
 
     @Override
     public long getFreeMemorySize() {
@@ -166,31 +166,52 @@ public final class MacOSHardwareDetector extends HardwareDetector {
             long pageSize;
             long pagesFree;
             long pagesInactive;
+            long pagesSpeculative;
+            long pagesPurgeable;
 
             if (statistics != null) {
-                Matcher matcher = PATTERN.matcher(statistics);
-                if (matcher.matches())
+                Matcher matcher = pageSizePattern.matcher(statistics);
+                if (matcher.matches()) {
                     pageSize = Long.parseLong(matcher.group("size"));
-                else
+                } else {
                     break vmStat;
-            } else
+                }
+            } else {
                 break vmStat;
+            }
 
             String pagesFreeStr = stats.get("Pages free");
-            if (pagesFreeStr != null && pagesFreeStr.endsWith("."))
+            if (pagesFreeStr != null && pagesFreeStr.endsWith(".")) {
                 pagesFree = Long.parseUnsignedLong(pagesFreeStr, 0, pagesFreeStr.length() - 1, 10);
-            else
+            } else {
                 break vmStat;
+            }
 
             String pagesInactiveStr = stats.get("Pages inactive");
-            if (pagesInactiveStr != null && pagesInactiveStr.endsWith("."))
+            if (pagesInactiveStr != null && pagesInactiveStr.endsWith(".")) {
                 pagesInactive = Long.parseUnsignedLong(pagesInactiveStr, 0, pagesInactiveStr.length() - 1, 10);
-            else
+            } else {
                 break vmStat;
+            }
 
-            long available = (pagesFree + pagesInactive) * pageSize;
-            if (available > 0)
+            String pageSpeculativeStr = stats.get("Pages speculative");
+            if (pageSpeculativeStr != null && pageSpeculativeStr.endsWith(".")) {
+                pagesSpeculative = Long.parseLong(pageSpeculativeStr.substring(0, pageSpeculativeStr.length() - 1));
+            } else {
+                break vmStat;
+            }
+
+            String pagePurgeableStr = stats.get("Pages purgeable");
+            if (pagePurgeableStr != null && pageSpeculativeStr.endsWith(".")) {
+                pagesPurgeable = Long.parseLong(pagePurgeableStr.substring(0, pagePurgeableStr.length() - 1));
+            } else {
+                break vmStat;
+            }
+
+            long available = (pagesFree - pagesSpeculative + pagesInactive + pagesPurgeable) * pageSize;
+            if (available > 0) {
                 return available;
+            }
         } catch (Throwable e) {
             LOG.warning("Failed to parse vm_stat output", e);
         }
