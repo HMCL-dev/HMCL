@@ -605,25 +605,28 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                               @NotNull CompletableFuture<Image> future,
                               @NotNull RemoteMod mod,
                               @Nullable WeakReference<ObjectProperty<RemoteMod>> current) {
+            Image image;
             try {
-                Image image = future.getNow(null);
-                if (image != null) {
-                    imageView.setImage(image);
-                } else {
-                    imageView.setImage(null);
-                    future.thenAcceptAsync(result -> {
-                        if (current != null) {
-                            var currentProperty = current.get();
-                            if (currentProperty == null || currentProperty.get() != mod) {
-                                // The current ListCell has already switched to another object
-                                return;
-                            }
-                        }
-                        imageView.setImage(result);
-                    }, Schedulers.javafx());
-                }
+                image = future.getNow(null);
             } catch (CancellationException | CompletionException ignored) {
                 imageView.setImage(null);
+                return;
+            }
+
+            if (image != null) {
+                imageView.setImage(image);
+            } else {
+                imageView.setImage(null);
+                future.thenAcceptAsync(result -> {
+                    if (current != null) {
+                        var currentProperty = current.get();
+                        if (currentProperty == null || currentProperty.get() != mod) {
+                            // The current ListCell has already switched to another object
+                            return;
+                        }
+                    }
+                    imageView.setImage(result);
+                }, Schedulers.javafx());
             }
         }
 
