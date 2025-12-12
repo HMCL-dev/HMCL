@@ -243,7 +243,6 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
     private static class ModDownloadListPageSkin extends SkinBase<DownloadListPage> {
         private final JFXListView<RemoteMod> listView = new JFXListView<>();
-        private final WeakHashMap<RemoteMod, WeakReference<CompletableFuture<Image>>> iconCache = new WeakHashMap<>();
 
         protected ModDownloadListPageSkin(DownloadListPage control) {
             super(control);
@@ -533,6 +532,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
                 // ListViewBehavior would consume ESC pressed event, preventing us from handling it, so we ignore it here
                 ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
+                var iconCache = new WeakHashMap<String, WeakReference<CompletableFuture<Image>>>();
                 listView.setCellFactory(x -> new FloatListCell<>(listView) {
                     private final TwoLineListItem content = new TwoLineListItem();
                     private final ImageView imageView = new ImageView();
@@ -563,10 +563,15 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                     }
 
                     private void loadIcon(RemoteMod mod) {
-                        WeakReference<CompletableFuture<Image>> cacheRef = iconCache.get(mod);
+                        if (StringUtils.isBlank(mod.getIconUrl())) {
+                            imageView.setImage(null);
+                            return;
+                        }
+
+                        WeakReference<CompletableFuture<Image>> cacheRef = iconCache.get(mod.getIconUrl());
                         CompletableFuture<Image> cache;
                         if (cacheRef != null && (cache = cacheRef.get()) != null) {
-                            loadIcon(cache, mod);
+                            loadIcon(cache, mod.getIconUrl());
                             return;
                         }
 
@@ -578,7 +583,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
                         CompletableFuture<Image> future = new CompletableFuture<>();
                         WeakReference<CompletableFuture<Image>> futureRef = new WeakReference<>(future);
-                        iconCache.put(mod, futureRef);
+                        iconCache.put(mod.getIconUrl(), futureRef);
 
                         FXUtils.getRemoteImageTask(iconUrl, 80, 80, true, true)
                                 .whenComplete(Schedulers.defaultScheduler(), (result, exception) -> {
@@ -592,11 +597,11 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                                         }
                                     }
                                 }).start();
-                        loadIcon(future, mod);
+                        loadIcon(future, mod.getIconUrl());
                     }
 
                     private void loadIcon(@NotNull CompletableFuture<Image> future,
-                                          @NotNull RemoteMod mod) {
+                                          @NotNull String iconUrl) {
                         Image image;
                         try {
                             image = future.getNow(null);
@@ -610,7 +615,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         } else {
                             imageView.setImage(null);
                             future.thenAcceptAsync(result -> {
-                                if (getItem() == mod) {
+                                if (getItem() != null && getItem().getIconUrl().equals(iconUrl)) {
                                     this.imageView.setImage(result);
                                 }
                             }, Schedulers.javafx());
