@@ -37,7 +37,6 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.account.AccountAdvancedListItem;
-import org.jackhuang.hmcl.ui.account.AccountMenuItem;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
@@ -258,10 +257,11 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             JFXPopup popup = new JFXPopup(popupMenu);
             AdvancedListBox scrollPane = new AdvancedListBox();
             scrollPane.setPrefWidth(220);
-            scrollPane.setPrefHeight(260);
+            scrollPane.setPrefHeight(-1);
+            scrollPane.setMaxHeight(260);
 
             for (Account account : Accounts.getAccounts()) {
-                AccountMenuItem item = new AccountMenuItem(account);
+                AccountAdvancedListItem item = new AccountAdvancedListItem(account);
                 item.setOnAction(e -> {
                     Accounts.setSelectedAccount(account);
                     popup.hide();
