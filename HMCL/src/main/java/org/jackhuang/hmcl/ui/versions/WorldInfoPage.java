@@ -175,42 +175,44 @@ public final class WorldInfoPage extends SpinnerPane {
                 iconPane.setRight(hBox);
             }
 
-            BorderPane randomSeedPane = new BorderPane();
+            BorderPane seedPane = new BorderPane();
             {
-
-                HBox left = new HBox(8);
-                BorderPane.setAlignment(left, Pos.CENTER_LEFT);
-                left.setAlignment(Pos.CENTER_LEFT);
-                randomSeedPane.setLeft(left);
-
-                Label label = new Label(i18n("world.info.random_seed"));
+                setLeftLabel(seedPane, "world.info.random_seed");
 
                 SimpleBooleanProperty visibility = new SimpleBooleanProperty();
                 StackPane visibilityButton = new StackPane();
-                visibilityButton.setCursor(Cursor.HAND);
-                FXUtils.setLimitWidth(visibilityButton, 12);
-                FXUtils.setLimitHeight(visibilityButton, 12);
-                FXUtils.onClicked(visibilityButton, () -> visibility.set(!visibility.get()));
-
-                left.getChildren().setAll(label, visibilityButton);
-
-                Label randomSeedLabel = new Label();
-                FXUtils.copyOnDoubleClick(randomSeedLabel);
-                BorderPane.setAlignment(randomSeedLabel, Pos.CENTER_RIGHT);
-                randomSeedPane.setRight(randomSeedLabel);
-
-                Tag tag = worldGenSettings != null ? worldGenSettings.get("seed") : dataTag.get("RandomSeed");
-                if (tag instanceof LongTag) {
-                    randomSeedLabel.setText(tag.getValue().toString());
+                {
+                    visibilityButton.setCursor(Cursor.HAND);
+                    FXUtils.setLimitWidth(visibilityButton, 12);
+                    FXUtils.setLimitHeight(visibilityButton, 12);
+                    FXUtils.onClicked(visibilityButton, () -> visibility.set(!visibility.get()));
                 }
 
-                BoxBlur blur = new BoxBlur();
-                blur.setIterations(3);
-                FXUtils.onChangeAndOperate(visibility, isVisibility -> {
-                    SVG icon = isVisibility ? SVG.VISIBILITY : SVG.VISIBILITY_OFF;
-                    visibilityButton.getChildren().setAll(icon.createIcon(12));
-                    randomSeedLabel.setEffect(isVisibility ? null : blur);
-                });
+                Label seedLabel = new Label();
+                {
+                    FXUtils.copyOnDoubleClick(seedLabel);
+                    BorderPane.setAlignment(seedLabel, Pos.CENTER_RIGHT);
+
+                    Tag tag = worldGenSettings != null ? worldGenSettings.get("seed") : dataTag.get("RandomSeed");
+                    if (tag instanceof LongTag) {
+                        seedLabel.setText(tag.getValue().toString());
+                    }
+
+                    BoxBlur blur = new BoxBlur();
+                    blur.setIterations(3);
+                    FXUtils.onChangeAndOperate(visibility, isVisibility -> {
+                        SVG icon = isVisibility ? SVG.VISIBILITY : SVG.VISIBILITY_OFF;
+                        visibilityButton.getChildren().setAll(icon.createIcon(12));
+                        seedLabel.setEffect(isVisibility ? null : blur);
+                    });
+                }
+
+                HBox right = new HBox(8);
+                {
+                    BorderPane.setAlignment(right, Pos.CENTER_RIGHT);
+                    right.getChildren().setAll(visibilityButton, seedLabel);
+                    seedPane.setRight(right);
+                }
             }
 
             BorderPane lastPlayedPane = new BorderPane();
@@ -242,20 +244,7 @@ public final class WorldInfoPage extends SpinnerPane {
                 allowCheatsButton.setDisable(worldManagePage.isReadOnly());
                 Tag tag = dataTag.get("allowCommands");
 
-                if (tag instanceof ByteTag byteTag) {
-                    byte value = byteTag.getValue();
-                    if (value == 0 || value == 1) {
-                        allowCheatsButton.setSelected(value == 1);
-                        allowCheatsButton.selectedProperty().addListener((o, oldValue, newValue) -> {
-                            byteTag.setValue(newValue ? (byte) 1 : (byte) 0);
-                            saveLevelDat();
-                        });
-                    } else {
-                        allowCheatsButton.setDisable(true);
-                    }
-                } else {
-                    allowCheatsButton.setDisable(true);
-                }
+                checkTagAndSetListener(tag, allowCheatsButton);
             }
 
             OptionToggleButton generateFeaturesButton = new OptionToggleButton();
@@ -264,20 +253,7 @@ public final class WorldInfoPage extends SpinnerPane {
                 generateFeaturesButton.setDisable(worldManagePage.isReadOnly());
                 Tag tag = worldGenSettings != null ? worldGenSettings.get("generate_features") : dataTag.get("MapFeatures");
 
-                if (tag instanceof ByteTag byteTag) {
-                    byte value = byteTag.getValue();
-                    if (value == 0 || value == 1) {
-                        generateFeaturesButton.setSelected(value == 1);
-                        generateFeaturesButton.selectedProperty().addListener((o, oldValue, newValue) -> {
-                            byteTag.setValue(newValue ? (byte) 1 : (byte) 0);
-                            saveLevelDat();
-                        });
-                    } else {
-                        generateFeaturesButton.setDisable(true);
-                    }
-                } else {
-                    generateFeaturesButton.setDisable(true);
-                }
+                checkTagAndSetListener(tag, generateFeaturesButton);
             }
 
             BorderPane difficultyPane = new BorderPane();
@@ -314,25 +290,11 @@ public final class WorldInfoPage extends SpinnerPane {
                 difficultyLockPane.setDisable(worldManagePage.isReadOnly());
 
                 Tag tag = dataTag.get("DifficultyLocked");
-
-                if (tag instanceof ByteTag byteTag) {
-                    byte value = byteTag.getValue();
-                    if (value == 0 || value == 1) {
-                        difficultyLockPane.setSelected(value == 1);
-                        difficultyLockPane.selectedProperty().addListener((o, oldValue, newValue) -> {
-                            byteTag.setValue(newValue ? (byte) 1 : (byte) 0);
-                            saveLevelDat();
-                        });
-                    } else {
-                        difficultyLockPane.setDisable(true);
-                    }
-                } else {
-                    difficultyLockPane.setDisable(true);
-                }
+                checkTagAndSetListener(tag, difficultyLockPane);
             }
 
             basicInfo.getContent().setAll(
-                    worldNamePane, gameVersionPane, iconPane, randomSeedPane, lastPlayedPane, timePane,
+                    worldNamePane, gameVersionPane, iconPane, seedPane, lastPlayedPane, timePane,
                     allowCheatsButton, generateFeaturesButton, difficultyPane, difficultyLockPane);
 
             rootPane.getChildren().addAll(ComponentList.createComponentListTitle(i18n("world.info.basic")), basicInfo);
@@ -455,19 +417,7 @@ public final class WorldInfoPage extends SpinnerPane {
 
                 Tag tag = player.get("Health");
                 if (tag instanceof FloatTag floatTag) {
-                    healthField.setText(new DecimalFormat("#").format(floatTag.getValue().floatValue()));
-
-                    healthField.textProperty().addListener((o, oldValue, newValue) -> {
-                        if (newValue != null) {
-                            try {
-                                floatTag.setValue(Float.parseFloat(newValue));
-                                saveLevelDat();
-                            } catch (Throwable ignored) {
-                            }
-                        }
-                    });
-                    FXUtils.setValidateWhileTextChanged(healthField, true);
-                    healthField.setValidators(new DoubleValidator(i18n("input.number"), true));
+                    setTagAndTextFiled(floatTag, healthField);
                 } else {
                     healthField.setDisable(true);
                 }
@@ -481,19 +431,7 @@ public final class WorldInfoPage extends SpinnerPane {
 
                 Tag tag = player.get("foodLevel");
                 if (tag instanceof IntTag intTag) {
-                    foodLevelField.setText(String.valueOf(intTag.getValue()));
-
-                    foodLevelField.textProperty().addListener((o, oldValue, newValue) -> {
-                        if (newValue != null) {
-                            try {
-                                intTag.setValue(Integer.parseInt(newValue));
-                                saveLevelDat();
-                            } catch (Throwable ignored) {
-                            }
-                        }
-                    });
-                    FXUtils.setValidateWhileTextChanged(foodLevelField, true);
-                    foodLevelField.setValidators(new NumberValidator(i18n("input.number"), true));
+                    setTagAndTextFiled(intTag, foodLevelField);
                 } else {
                     foodLevelField.setDisable(true);
                 }
@@ -507,19 +445,7 @@ public final class WorldInfoPage extends SpinnerPane {
 
                 Tag tag = player.get("XpLevel");
                 if (tag instanceof IntTag intTag) {
-                    xpLevelField.setText(String.valueOf(intTag.getValue()));
-
-                    xpLevelField.textProperty().addListener((o, oldValue, newValue) -> {
-                        if (newValue != null) {
-                            try {
-                                intTag.setValue(Integer.parseInt(newValue));
-                                saveLevelDat();
-                            } catch (Throwable ignored) {
-                            }
-                        }
-                    });
-                    FXUtils.setValidateWhileTextChanged(xpLevelField, true);
-                    xpLevelField.setValidators(new NumberValidator(i18n("input.number"), true));
+                    setTagAndTextFiled(intTag, xpLevelField);
                 } else {
                     xpLevelField.setDisable(true);
                 }
@@ -556,6 +482,57 @@ public final class WorldInfoPage extends SpinnerPane {
             LOG.warning("Exception happened when setting name", e);
         }
         borderPane.setRight(label);
+    }
+
+    private void checkTagAndSetListener(Tag tag, OptionToggleButton toggleButton) {
+        if (tag instanceof ByteTag byteTag) {
+            byte value = byteTag.getValue();
+            if (value == 0 || value == 1) {
+                toggleButton.setSelected(value == 1);
+                toggleButton.selectedProperty().addListener((o, oldValue, newValue) -> {
+                    byteTag.setValue((byte) (newValue ? 1 : 0));
+                    saveLevelDat();
+                });
+            } else {
+                toggleButton.setDisable(true);
+            }
+        } else {
+            toggleButton.setDisable(true);
+        }
+    }
+
+    private void setTagAndTextFiled(IntTag intTag, JFXTextField jfxTextField) {
+        jfxTextField.setText(String.valueOf(intTag.getValue()));
+
+        jfxTextField.textProperty().addListener((o, oldValue, newValue) -> {
+            if (newValue != null) {
+                try {
+                    intTag.setValue(Integer.parseInt(newValue));
+                    saveLevelDat();
+                } catch (Exception e) {
+                    jfxTextField.setText(oldValue);
+                    LOG.warning("Exception happened when saving level.dat", e);
+                }
+            }
+        });
+        FXUtils.setValidateWhileTextChanged(jfxTextField, true);
+        jfxTextField.setValidators(new NumberValidator(i18n("input.number"), true));
+    }
+
+    private void setTagAndTextFiled(FloatTag floatTag, JFXTextField jfxTextField) {
+        jfxTextField.setText(new DecimalFormat("#").format(floatTag.getValue().floatValue()));
+
+        jfxTextField.textProperty().addListener((o, oldValue, newValue) -> {
+            if (newValue != null) {
+                try {
+                    floatTag.setValue(Float.parseFloat(newValue));
+                    saveLevelDat();
+                } catch (Throwable ignored) {
+                }
+            }
+        });
+        FXUtils.setValidateWhileTextChanged(jfxTextField, true);
+        jfxTextField.setValidators(new DoubleValidator(i18n("input.number"), true));
     }
 
     private void saveLevelDat() {
