@@ -146,7 +146,7 @@ public final class ModpackHelper {
         }
     }
 
-    public static Task<?> getInstallTask(Profile profile, ServerModpackManifest manifest, String name, Modpack modpack) {
+    public static Task<?> getInstallTask(Profile profile, ServerModpackManifest manifest, String name, Modpack modpack, Path iconFile) {
         profile.getRepository().markVersionAsModpack(name);
 
         ExceptionalRunnable<?> success = () -> {
@@ -174,12 +174,12 @@ public final class ModpackHelper {
         return Files.exists(Paths.get("externalgames").resolve(name));
     }
 
-    public static Task<?> getInstallManuallyCreatedModpackTask(Profile profile, Path zipFile, String name, Charset charset) {
+    public static Task<?> getInstallManuallyCreatedModpackTask(Profile profile, Path zipFile, String name, Charset charset, Path iconFile) {
         if (isExternalGameNameConflicts(name)) {
             throw new IllegalArgumentException("name existing");
         }
 
-        return new ManuallyCreatedModpackInstallTask(profile, zipFile, charset, name)
+        return new ManuallyCreatedModpackInstallTask(profile, zipFile, charset, name, iconFile)
                 .thenAcceptAsync(Schedulers.javafx(), location -> {
                     Profile newProfile = new Profile(name, location);
                     newProfile.setUseRelativePath(true);
@@ -188,7 +188,7 @@ public final class ModpackHelper {
                 });
     }
 
-    public static Task<?> getInstallTask(Profile profile, Path zipFile, String name, Modpack modpack) {
+    public static Task<?> getInstallTask(Profile profile, Path zipFile, String name, Modpack modpack, Path iconFile) {
         profile.getRepository().markVersionAsModpack(name);
 
         ExceptionalRunnable<?> success = () -> {
@@ -208,22 +208,22 @@ public final class ModpackHelper {
         };
 
         if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
-            return modpack.getInstallTask(profile.getDependency(), zipFile, name)
+            return modpack.getInstallTask(profile.getDependency(), zipFile, name, iconFile)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
                     .thenComposeAsync(createMultiMCPostInstallTask(profile, (MultiMCInstanceConfiguration) modpack.getManifest(), name))
                     .withStagesHint(List.of("hmcl.modpack", "hmcl.modpack.download"));
         else if (modpack.getManifest() instanceof McbbsModpackManifest)
-            return modpack.getInstallTask(profile.getDependency(), zipFile, name)
+            return modpack.getInstallTask(profile.getDependency(), zipFile, name, iconFile)
                     .whenComplete(Schedulers.defaultScheduler(), success, failure)
                     .thenComposeAsync(createMcbbsPostInstallTask(profile, (McbbsModpackManifest) modpack.getManifest(), name))
                     .withStagesHint(List.of("hmcl.modpack", "hmcl.modpack.download"));
         else
-            return modpack.getInstallTask(profile.getDependency(), zipFile, name)
+            return modpack.getInstallTask(profile.getDependency(), zipFile, name, iconFile)
                     .whenComplete(Schedulers.javafx(), success, failure)
                     .withStagesHint(List.of("hmcl.modpack", "hmcl.modpack.download"));
     }
 
-    public static Task<Void> getUpdateTask(Profile profile, ServerModpackManifest manifest, Charset charset, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException {
+    public static Task<Void> getUpdateTask(Profile profile, ServerModpackManifest manifest, Charset charset, String name, ModpackConfiguration<?> configuration, Path iconFile) throws UnsupportedModpackException {
         switch (configuration.getType()) {
             case ServerModpackRemoteInstallTask.MODPACK_TYPE:
                 return new ModpackUpdateTask(profile.getRepository(), name, new ServerModpackRemoteInstallTask(profile.getDependency(), manifest, name))
@@ -233,17 +233,17 @@ public final class ModpackHelper {
         }
     }
 
-    public static Task<?> getUpdateTask(Profile profile, Path zipFile, Charset charset, String name, ModpackConfiguration<?> configuration) throws UnsupportedModpackException, ManuallyCreatedModpackException, MismatchedModpackTypeException {
+    public static Task<?> getUpdateTask(Profile profile, Path zipFile, Charset charset, String name, ModpackConfiguration<?> configuration, Path iconFile) throws UnsupportedModpackException, ManuallyCreatedModpackException, MismatchedModpackTypeException {
         Modpack modpack = ModpackHelper.readModpackManifest(zipFile, charset);
         ModpackProvider provider = getProviderByType(configuration.getType());
         if (provider == null) {
             throw new UnsupportedModpackException();
         }
         if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
-            return provider.createUpdateTask(profile.getDependency(), name, zipFile, modpack)
+            return provider.createUpdateTask(profile.getDependency(), name, zipFile, modpack, iconFile)
                     .thenComposeAsync(() -> createMultiMCPostUpdateTask(profile, (MultiMCInstanceConfiguration) modpack.getManifest(), name));
         else
-            return provider.createUpdateTask(profile.getDependency(), name, zipFile, modpack);
+            return provider.createUpdateTask(profile.getDependency(), name, zipFile, modpack, iconFile);
     }
 
     public static void toVersionSetting(MultiMCInstanceConfiguration c, VersionSetting vs) {

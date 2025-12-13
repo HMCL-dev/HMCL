@@ -45,23 +45,25 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
     private final Profile profile;
     private final Path file;
     private final String updateVersion;
+    private final Path iconFile;
 
     public ModpackInstallWizardProvider(Profile profile) {
-        this(profile, null, null);
+        this(profile, null, null, null);
     }
 
     public ModpackInstallWizardProvider(Profile profile, Path modpackFile) {
-        this(profile, modpackFile, null);
+        this(profile, modpackFile, null, null);
     }
 
     public ModpackInstallWizardProvider(Profile profile, String updateVersion) {
-        this(profile, null, updateVersion);
+        this(profile, null, updateVersion, null);
     }
 
-    public ModpackInstallWizardProvider(Profile profile, Path modpackFile, String updateVersion) {
+    public ModpackInstallWizardProvider(Profile profile, Path modpackFile, String updateVersion, Path iconFile) {
         this.profile = profile;
         this.file = modpackFile;
         this.updateVersion = updateVersion;
+        this.iconFile = iconFile;
     }
 
     @Override
@@ -70,6 +72,8 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
             settings.put(LocalModpackPage.MODPACK_FILE, file);
         if (updateVersion != null)
             settings.put(LocalModpackPage.MODPACK_NAME, updateVersion);
+        if (iconFile != null)
+            settings.put(LocalModpackPage.MODPACK_ICON_FILE, iconFile);
         settings.put(ModpackPage.PROFILE, profile);
     }
 
@@ -80,9 +84,10 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         String name = settings.get(LocalModpackPage.MODPACK_NAME);
         Charset charset = settings.get(LocalModpackPage.MODPACK_CHARSET);
         boolean isManuallyCreated = settings.getOrDefault(LocalModpackPage.MODPACK_MANUALLY_CREATED, false);
+        Path iconFile = settings.get(LocalModpackPage.MODPACK_ICON_FILE);
 
         if (isManuallyCreated) {
-            return ModpackHelper.getInstallManuallyCreatedModpackTask(profile, selected, name, charset);
+            return ModpackHelper.getInstallManuallyCreatedModpackTask(profile, selected, name, charset, iconFile);
         }
 
         if ((selected == null && serverModpackManifest == null) || modpack == null || name == null) return null;
@@ -94,9 +99,9 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
             }
             try {
                 if (serverModpackManifest != null) {
-                    return ModpackHelper.getUpdateTask(profile, serverModpackManifest, modpack.getEncoding(), name, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(name)));
+                    return ModpackHelper.getUpdateTask(profile, serverModpackManifest, modpack.getEncoding(), name, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(name)), iconFile);
                 } else {
-                    return ModpackHelper.getUpdateTask(profile, selected, modpack.getEncoding(), name, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(name)));
+                    return ModpackHelper.getUpdateTask(profile, selected, modpack.getEncoding(), name, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(name)), iconFile);
                 }
             } catch (UnsupportedModpackException | ManuallyCreatedModpackException e) {
                 Controllers.dialog(i18n("modpack.unsupported"), i18n("message.error"), MessageType.ERROR);
@@ -108,10 +113,10 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
             return null;
         } else {
             if (serverModpackManifest != null) {
-                return ModpackHelper.getInstallTask(profile, serverModpackManifest, name, modpack)
+                return ModpackHelper.getInstallTask(profile, serverModpackManifest, name, modpack, iconFile)
                         .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
             } else {
-                return ModpackHelper.getInstallTask(profile, selected, name, modpack)
+                return ModpackHelper.getInstallTask(profile, selected, name, modpack, iconFile)
                         .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
             }
         }

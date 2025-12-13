@@ -23,9 +23,7 @@ import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
 
 import java.nio.charset.Charset;
-import java.nio.file.FileSystem;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 
 public class ManuallyCreatedModpackInstallTask extends Task<Path> {
 
@@ -33,12 +31,14 @@ public class ManuallyCreatedModpackInstallTask extends Task<Path> {
     private final Path zipFile;
     private final Charset charset;
     private final String name;
+    private final Path iconFile;
 
-    public ManuallyCreatedModpackInstallTask(Profile profile, Path zipFile, Charset charset, String name) {
+    public ManuallyCreatedModpackInstallTask(Profile profile, Path zipFile, Charset charset, String name, Path iconFile) {
         this.profile = profile;
         this.zipFile = zipFile;
         this.charset = charset;
         this.name = name;
+        this.iconFile = iconFile;
     }
 
     @Override
@@ -57,5 +57,11 @@ public class ManuallyCreatedModpackInstallTask extends Task<Path> {
                 .setTerminateIfSubDirectoryNotExists()
                 .setEncoding(charset)
                 .unzip();
+        if (iconFile != null) {
+            try {
+                Files.copy(iconFile, dest.resolve("icon.png"));
+            } catch (FileAlreadyExistsException ignored) { // Icon exists and we do not want to overwrite it
+            }
+        }
     }
 }
