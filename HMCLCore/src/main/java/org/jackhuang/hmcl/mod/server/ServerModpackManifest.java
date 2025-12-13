@@ -126,8 +126,8 @@ public class ServerModpackManifest implements ModpackManifest, Validation {
                 .orElseThrow(() -> new IOException("Cannot find game version")).getVersion();
         return new Modpack(name, author, version, gameVersion, description, encoding, this) {
             @Override
-            public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, String name) {
-                return new ServerModpackLocalInstallTask(dependencyManager, zipFile, this, ServerModpackManifest.this, name);
+            public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, String name, Path iconFile) {
+                return new ServerModpackLocalInstallTask(dependencyManager, zipFile, this, ServerModpackManifest.this, name, iconFile);
             }
         };
     }

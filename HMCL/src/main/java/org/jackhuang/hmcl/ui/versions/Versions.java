@@ -49,6 +49,9 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -72,12 +75,33 @@ public final class Versions {
         }
     }
 
-    public static void downloadModpackImpl(Profile profile, String version, RemoteMod.Version file) {
+    public static void downloadModpackImpl(Profile profile, String version, RemoteMod.Version file, RemoteMod addon) {
         Path modpack;
+        Path icon;
         URI downloadURL;
+        URI iconURL;
         try {
             downloadURL = NetworkUtils.toURI(file.getFile().getUrl());
             modpack = Files.createTempFile("modpack", ".zip");
+            if (StringUtils.isNotBlank(addon.getIconUrl())) {
+                int i = addon.getIconUrl().lastIndexOf('.');
+                if (i < 0 || i >= addon.getIconUrl().length() - 1) {
+                    iconURL = null;
+                    icon = null;
+                } else {
+                    String extension = addon.getIconUrl().substring(i + 1);
+                    if (!FXUtils.IMAGE_EXTENSIONS.contains(extension)) {
+                        iconURL = null;
+                        icon = null;
+                    } else {
+                        iconURL = NetworkUtils.toURI(addon.getIconUrl());
+                        icon = Files.createTempFile("modpack_icon", "." + extension);
+                    }
+                }
+            } else {
+                iconURL = null;
+                icon = null;
+            }
         } catch (IOException | IllegalArgumentException e) {
             Controllers.dialog(
                     i18n("install.failed.downloading.detail", file.getFile().getUrl()) + "\n" + StringUtils.getStackTrace(e),
@@ -85,14 +109,10 @@ public final class Versions {
             return;
         }
         Controllers.taskDialog(
-                new FileDownloadTask(downloadURL, modpack)
+                new ModpackDownloadTask(downloadURL, modpack, iconURL, icon)
                         .whenComplete(Schedulers.javafx(), e -> {
                             if (e == null) {
-                                if (version != null) {
-                                    Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile, modpack, version));
-                                } else {
-                                    Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile, modpack));
-                                }
+                                Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile, modpack, version, icon));
                             } else if (e instanceof CancellationException) {
                                 Controllers.showToast(i18n("message.cancelled"));
                             } else {
@@ -290,5 +310,22 @@ public final class Versions {
         Controllers.getVersionPage().showInstanceSettings();
         // VersionPage.loadVersion will be invoked after navigation
         Controllers.navigate(Controllers.getVersionPage());
+    }
+
+    private static class ModpackDownloadTask extends FileDownloadTask {
+
+        private final Set<FileDownloadTask> dependents = new HashSet<>();
+
+        public ModpackDownloadTask(URI uri, Path path, URI iconUri, Path iconPath) {
+            super(uri, path);
+            if (iconUri != null && iconPath != null) {
+                dependents.add(new FileDownloadTask(iconUri, iconPath));
+            }
+        }
+
+        @Override
+        public Collection<? extends Task<?>> getDependents() {
+            return dependents;
+        }
     }
 }

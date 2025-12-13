@@ -180,4 +180,5 @@ public final class LocalModpackPage extends ModpackPage {
     public static final SettingsMap.Key<Modpack> MODPACK_MANIFEST = new SettingsMap.Key<>("MODPACK_MANIFEST");
     public static final SettingsMap.Key<Charset> MODPACK_CHARSET = new SettingsMap.Key<>("MODPACK_CHARSET");
     public static final SettingsMap.Key<Boolean> MODPACK_MANUALLY_CREATED = new SettingsMap.Key<>("MODPACK_MANUALLY_CREATED");
+    public static final SettingsMap.Key<Path> MODPACK_ICON_FILE = new SettingsMap.Key<>("MODPACK_ICON_FILE");
 }
