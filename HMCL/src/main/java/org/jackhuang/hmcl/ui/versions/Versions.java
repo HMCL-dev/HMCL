@@ -84,9 +84,20 @@ public final class Versions {
             downloadURL = NetworkUtils.toURI(file.getFile().getUrl());
             modpack = Files.createTempFile("modpack", ".zip");
             if (StringUtils.isNotBlank(addon.getIconUrl())) {
-                iconURL = NetworkUtils.toURI(addon.getIconUrl());
                 int i = addon.getIconUrl().lastIndexOf('.');
-                icon = Files.createTempFile("modpack_icon", i == -1 ? ".png" : addon.getIconUrl().substring(i));
+                if (i < 0 || i >= addon.getIconUrl().length() - 1) {
+                    iconURL = null;
+                    icon = null;
+                } else {
+                    String extension = addon.getIconUrl().substring(i + 1);
+                    if (!FXUtils.IMAGE_EXTENSIONS.contains(extension)) {
+                        iconURL = null;
+                        icon = null;
+                    } else {
+                        iconURL = NetworkUtils.toURI(addon.getIconUrl());
+                        icon = Files.createTempFile("modpack_icon", "." + extension);
+                    }
+                }
             } else {
                 iconURL = null;
                 icon = null;
