@@ -30,7 +30,6 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
-import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -54,7 +53,6 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
-import org.jsoup.Jsoup;
 
 import java.nio.file.Path;
 import java.util.*;
@@ -556,21 +554,11 @@ public class DownloadPage extends Control implements DecoratorPage {
                 if (exception == null) {
                     List<Node> nodes = new LinkedList<>();
                     result.getKey().ifPresent(s -> {
-                        changelogCache.put(version, s);
-                        HBox container;
-                        if (HTMLRenderer.isHTML(s)) {
-                            var document = Jsoup.parse(s);
-                            HTMLRenderer renderer = HTMLRenderer.openHyperlinkInBrowser();
-                            renderer.appendNode(document);
-                            renderer.mergeLineBreaks();
-                            var textFlow = renderer.render();
-                            textFlow.setPrefWidth(Region.USE_COMPUTED_SIZE);
-                            container = new HBox(textFlow);
-                        } else {
-                            container = new HBox(new Text(s));
+                        if (!HTMLRenderer.isHTML(s)) {
+                            s = StringUtils.markdownToHTML(s);
                         }
-                        container.getStyleClass().add("mod-changelog");
-                        nodes.add(container);
+                        changelogCache.put(version, s);
+                        nodes.add(FXUtils.renderModChangelog(s));
                     });
                     nodes.addAll(result.getValue());
                     dependenciesList.getContent().setAll(nodes);

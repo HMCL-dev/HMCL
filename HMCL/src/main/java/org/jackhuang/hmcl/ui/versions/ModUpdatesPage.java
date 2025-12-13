@@ -28,7 +28,6 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
-import javafx.scene.text.Text;
 import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -45,7 +44,6 @@ import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.CSVTable;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
-import org.jsoup.Jsoup;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -425,21 +423,11 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
                     result.ifPresent(s -> {
-                        object.changelog = s;
-                        HBox container;
-                        if (HTMLRenderer.isHTML(s)) {
-                            var document = Jsoup.parse(s);
-                            HTMLRenderer renderer = HTMLRenderer.openHyperlinkInBrowser();
-                            renderer.appendNode(document);
-                            renderer.mergeLineBreaks();
-                            var textFlow = renderer.render();
-                            textFlow.setPrefWidth(Region.USE_COMPUTED_SIZE);
-                            container = new HBox(textFlow);
-                        } else {
-                            container = new HBox(new Text(s));
+                        if (!HTMLRenderer.isHTML(s)) {
+                            s = StringUtils.markdownToHTML(s);
                         }
-                        container.getStyleClass().add("mod-changelog");
-                        componentList.getContent().setAll(container);
+                        object.changelog = s;
+                        componentList.getContent().setAll(FXUtils.renderModChangelog(s));
                     });
                     spinnerPane.setFailedReason(null);
                 } else {
