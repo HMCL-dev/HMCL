@@ -490,8 +490,13 @@ public final class WorldInfoPage extends SpinnerPane {
             if (value == 0 || value == 1) {
                 toggleButton.setSelected(value == 1);
                 toggleButton.selectedProperty().addListener((o, oldValue, newValue) -> {
-                    byteTag.setValue((byte) (newValue ? 1 : 0));
-                    saveLevelDat();
+                    try {
+                        byteTag.setValue((byte) (newValue ? 1 : 0));
+                        saveLevelDat();
+                    } catch (Exception e) {
+                        toggleButton.setSelected(oldValue);
+                        LOG.warning("Exception happened when saving level.dat", e);
+                    }
                 });
             } else {
                 toggleButton.setDisable(true);
@@ -527,7 +532,9 @@ public final class WorldInfoPage extends SpinnerPane {
                 try {
                     floatTag.setValue(Float.parseFloat(newValue));
                     saveLevelDat();
-                } catch (Throwable ignored) {
+                } catch (Exception e) {
+                    jfxTextField.setText(oldValue);
+                    LOG.warning("Exception happened when saving level.dat", e);
                 }
             }
         });
