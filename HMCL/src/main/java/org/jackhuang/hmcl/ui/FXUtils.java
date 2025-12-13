@@ -71,6 +71,7 @@ import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jetbrains.annotations.Nullable;
+import org.jsoup.Jsoup;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -1575,5 +1576,18 @@ public final class FXUtils {
         return (availableSpaceAbove > menuHeight && availableSpaceBelow < menuHeight)
                 ? JFXPopup.PopupVPosition.BOTTOM  // Show menu below the button, expanding downward
                 : JFXPopup.PopupVPosition.TOP;    // Show menu above the button, expanding upward
+    }
+
+    public static HBox renderModChangelog(String changelogHTML) {
+        HTMLRenderer renderer = HTMLRenderer.openHyperlinkInBrowser();
+        renderer.appendNode(Jsoup.parse(changelogHTML));
+        renderer.mergeLineBreaks();
+
+        var textFlow = renderer.render();
+        textFlow.setPrefWidth(Region.USE_COMPUTED_SIZE);
+
+        HBox container = new HBox(textFlow);
+        container.getStyleClass().add("mod-changelog");
+        return container;
     }
 }
