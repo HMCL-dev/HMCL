@@ -805,9 +805,9 @@ public final class VersionSetting implements Cloneable, Observable {
             }
             obj.addProperty("java", java);
 
-            obj.addProperty("renderer", src.getDriver().name());
+            obj.addProperty("driver", src.getDriver().name());
             if (src.getDriver() == Driver.LLVMPIPE)
-                obj.addProperty("useSoftwareRenderer", true);
+                obj.addProperty("useLLVMpipe", true);
 
             return obj;
         }
@@ -877,7 +877,7 @@ public final class VersionSetting implements Cloneable, Observable {
                 }
             }
 
-            vs.setDriver(Optional.ofNullable(obj.get("renderer")).map(JsonElement::getAsString)
+            vs.setDriver(Optional.ofNullable(obj.get("driver")).map(JsonElement::getAsString)
                     .flatMap(name -> {
                         try {
                             return Optional.of(Driver.valueOf(name.toUpperCase(Locale.ROOT)));
@@ -885,8 +885,8 @@ public final class VersionSetting implements Cloneable, Observable {
                             return Optional.empty();
                         }
                     }).orElseGet(() -> {
-                        boolean useSoftwareRenderer = Optional.ofNullable(obj.get("useSoftwareRenderer")).map(JsonElement::getAsBoolean).orElse(false);
-                        return useSoftwareRenderer ? Driver.LLVMPIPE : Driver.DEFAULT;
+                        boolean useLLVMpipe = Optional.ofNullable(obj.get("useLLVMpipe")).map(JsonElement::getAsBoolean).orElse(false);
+                        return useLLVMpipe ? Driver.LLVMPIPE : Driver.DEFAULT;
                     }));
 
             return vs;
