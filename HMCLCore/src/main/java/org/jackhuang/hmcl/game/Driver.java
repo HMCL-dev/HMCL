@@ -1,6 +1,6 @@
 package org.jackhuang.hmcl.game;
 
-public enum Renderer {
+public enum Driver {
     DEFAULT,
     ZINK,
     LLVMPIPE,

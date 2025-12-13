@@ -589,18 +589,18 @@ public final class VersionSetting implements Cloneable, Observable {
         processPriorityProperty.set(processPriority);
     }
 
-    private final ObjectProperty<Renderer> rendererProperty = new SimpleObjectProperty<>(this, "renderer", Renderer.DEFAULT);
+    private final ObjectProperty<Driver> driverProperty = new SimpleObjectProperty<>(this, "driver", Driver.DEFAULT);
 
-    public Renderer getRenderer() {
-        return rendererProperty.get();
+    public Driver getDriver() {
+        return driverProperty.get();
     }
 
-    public ObjectProperty<Renderer> rendererProperty() {
-        return rendererProperty;
+    public ObjectProperty<Driver> driverProperty() {
+        return driverProperty;
     }
 
-    public void setRenderer(Renderer renderer) {
-        this.rendererProperty.set(renderer);
+    public void setDriver(Driver driver) {
+        this.driverProperty.set(driver);
     }
 
     private final BooleanProperty useNativeGLFW = new SimpleBooleanProperty(this, "nativeGLFW", false);
@@ -805,8 +805,8 @@ public final class VersionSetting implements Cloneable, Observable {
             }
             obj.addProperty("java", java);
 
-            obj.addProperty("renderer", src.getRenderer().name());
-            if (src.getRenderer() == Renderer.LLVMPIPE)
+            obj.addProperty("renderer", src.getDriver().name());
+            if (src.getDriver() == Driver.LLVMPIPE)
                 obj.addProperty("useSoftwareRenderer", true);
 
             return obj;
@@ -877,16 +877,16 @@ public final class VersionSetting implements Cloneable, Observable {
                 }
             }
 
-            vs.setRenderer(Optional.ofNullable(obj.get("renderer")).map(JsonElement::getAsString)
+            vs.setDriver(Optional.ofNullable(obj.get("renderer")).map(JsonElement::getAsString)
                     .flatMap(name -> {
                         try {
-                            return Optional.of(Renderer.valueOf(name.toUpperCase(Locale.ROOT)));
+                            return Optional.of(Driver.valueOf(name.toUpperCase(Locale.ROOT)));
                         } catch (IllegalArgumentException ignored) {
                             return Optional.empty();
                         }
                     }).orElseGet(() -> {
                         boolean useSoftwareRenderer = Optional.ofNullable(obj.get("useSoftwareRenderer")).map(JsonElement::getAsBoolean).orElse(false);
-                        return useSoftwareRenderer ? Renderer.LLVMPIPE : Renderer.DEFAULT;
+                        return useSoftwareRenderer ? Driver.LLVMPIPE : Driver.DEFAULT;
                     }));
 
             return vs;

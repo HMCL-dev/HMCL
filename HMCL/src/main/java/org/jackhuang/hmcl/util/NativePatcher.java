@@ -179,14 +179,14 @@ public final class NativePatcher {
         return version.setLibraries(newLibraries);
     }
 
-    public static @Nullable Library getWindowsMesaLoader(@NotNull JavaRuntime javaVersion, @NotNull Renderer renderer, @NotNull OSVersion windowsVersion) {
-        if (renderer == Renderer.DEFAULT)
+    public static @Nullable Library getWindowsMesaLoader(@NotNull JavaRuntime javaVersion, @NotNull Driver driver, @NotNull OSVersion windowsVersion) {
+        if (driver == Driver.DEFAULT)
             return null;
 
         if (windowsVersion.isAtLeast(OSVersion.WINDOWS_10)) {
             return getNatives(javaVersion.getPlatform()).get("mesa-loader");
         } else if (windowsVersion.isAtLeast(OSVersion.WINDOWS_7)) {
-            if (renderer == Renderer.LLVMPIPE)
+            if (driver == Driver.LLVMPIPE)
                 return getNatives(javaVersion.getPlatform()).get("software-renderer-loader");
             else
                 return null;
