@@ -35,6 +35,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.HTMLRenderer;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
@@ -44,6 +45,7 @@ import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.CSVTable;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
+import org.jsoup.Jsoup;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -106,7 +108,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                     return;
                 }
                 ModUpdateObject object = items.get(cell.getIndex());
-                Controllers.dialog(new ModDetail(object.data.getCandidates().get(0), object.data.getRepository(), object.getSource()));
+                Controllers.dialog(new ModDetail(object));
             });
             return cell;
         });
@@ -212,6 +214,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         final StringProperty currentVersion = new SimpleStringProperty();
         final StringProperty targetVersion = new SimpleStringProperty();
         final StringProperty source = new SimpleStringProperty();
+        String changelog = null;
 
         public ModUpdateObject(LocalModFile.ModUpdate data) {
             this.data = data;
@@ -366,8 +369,10 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
 
         private final RemoteModRepository repository;
 
-        public ModDetail(RemoteMod.Version targetVersion, RemoteModRepository repository, String source) {
-            this.repository = repository;
+        public ModDetail(ModUpdateObject object) {
+            this.repository = object.data.getRepository();
+            RemoteMod.Version targetVersion = object.data.getCandidates().get(0);
+            String source = object.getSource();
 
             this.setHeading(new HBox(new Label(i18n("mods.check_updates.update_mod", targetVersion.getName()))));
 
@@ -378,8 +383,8 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
             SpinnerPane spinnerPane = new SpinnerPane();
             ScrollPane scrollPane = new ScrollPane();
             ComponentList changelogComponent = new ComponentList(null);
-            loadChangelog(targetVersion, spinnerPane, changelogComponent);
-            spinnerPane.setOnFailedAction(e -> loadChangelog(targetVersion, spinnerPane, changelogComponent));
+            loadChangelog(object, spinnerPane, changelogComponent);
+            spinnerPane.setOnFailedAction(e -> loadChangelog(object, spinnerPane, changelogComponent));
 
             scrollPane.setContent(changelogComponent);
             scrollPane.setFitToWidth(true);
@@ -402,21 +407,40 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
             onEscPressed(this, closeButton::fire);
         }
 
-        private void loadChangelog(RemoteMod.Version version, SpinnerPane spinnerPane, ComponentList componentList) {
+        private void loadChangelog(ModUpdateObject object, SpinnerPane spinnerPane, ComponentList componentList) {
             spinnerPane.setLoading(true);
             Task.supplyAsync(() -> {
+                if (object.changelog != null) {
+                    return Optional.of(object.changelog);
+                }
+                RemoteMod.Version version = object.data.getCandidates().get(0);
                 if (version.getChangelog() != null) {
                     return StringUtils.nullIfBlank(version.getChangelog());
-                } else {
-                    try {
-                        return StringUtils.nullIfBlank(StringUtils.htmlToText(repository.getModChangelog(version.getModid(), version.getVersionId())));
-                    } catch (UnsupportedOperationException e) {
-                        return Optional.<String>empty();
-                    }
+                }
+                try {
+                    return StringUtils.nullIfBlank(repository.getModChangelog(version.getModid(), version.getVersionId()));
+                } catch (UnsupportedOperationException e) {
+                    return Optional.<String>empty();
                 }
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
-                    result.ifPresent(s -> componentList.getContent().setAll(new HBox(new Text(s))));
+                    result.ifPresent(s -> {
+                        object.changelog = s;
+                        HBox container;
+                        if (HTMLRenderer.isHTML(s)) {
+                            var document = Jsoup.parse(s);
+                            HTMLRenderer renderer = HTMLRenderer.openHyperlinkInBrowser();
+                            renderer.appendNode(document);
+                            renderer.mergeLineBreaks();
+                            var textFlow = renderer.render();
+                            textFlow.setPrefWidth(Region.USE_COMPUTED_SIZE);
+                            container = new HBox(textFlow);
+                        } else {
+                            container = new HBox(new Text(s));
+                        }
+                        container.getStyleClass().add("mod-changelog");
+                        componentList.getContent().setAll(container);
+                    });
                     spinnerPane.setFailedReason(null);
                 } else {
                     spinnerPane.setFailedReason(i18n("download.failed.refresh"));

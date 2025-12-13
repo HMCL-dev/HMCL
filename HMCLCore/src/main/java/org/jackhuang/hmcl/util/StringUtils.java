@@ -18,9 +18,6 @@
 package org.jackhuang.hmcl.util;
 
 import org.jetbrains.annotations.Contract;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.safety.Safelist;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -537,21 +534,6 @@ public final class StringUtils {
     @Contract(pure = true)
     public static Optional<String> nullIfBlank(String str) {
         return Optional.ofNullable(str).map(s -> s.isBlank() ? null : s);
-    }
-
-    @Contract(value = "null -> null", pure = true)
-    public static String htmlToText(String html) {
-        if (html == null) {
-            return null;
-        }
-        Document document = Jsoup.parse(html);
-        Document.OutputSettings outputSettings = new Document.OutputSettings().prettyPrint(false);
-        document.outputSettings(outputSettings);
-        document.select("br").append("\\n");
-        document.select("p").prepend("\\n");
-        document.select("p").append("\\n");
-        String newHtml = document.html().replaceAll("\\\\n", System.lineSeparator());
-        return Jsoup.clean(newHtml, "", Safelist.none(), outputSettings);
     }
 
     public static class LevCalculator {

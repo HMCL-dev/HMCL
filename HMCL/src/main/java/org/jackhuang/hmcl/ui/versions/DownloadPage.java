@@ -44,6 +44,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.HTMLRenderer;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
@@ -53,6 +54,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
+import org.jsoup.Jsoup;
 
 import java.nio.file.Path;
 import java.util.*;
@@ -63,6 +65,8 @@ import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class DownloadPage extends Control implements DecoratorPage {
+    private static final WeakHashMap<RemoteMod.Version, String> changelogCache = new WeakHashMap<>();
+
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     private final BooleanProperty loaded = new SimpleBooleanProperty(false);
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
@@ -518,14 +522,14 @@ public class DownloadPage extends Control implements DecoratorPage {
             spinnerPane.setLoading(true);
             Task.supplyAsync(() -> {
                 Optional<String> changelog;
-                if (version.getChangelog() != null) {
+                if (changelogCache.containsKey(version)) {
+                    changelog = Optional.ofNullable(changelogCache.get(version));
+                } else if (version.getChangelog() != null) {
                     changelog = StringUtils.nullIfBlank(version.getChangelog());
                 } else {
                     try {
-                        changelog = StringUtils.nullIfBlank(
-                                StringUtils.htmlToText(selfPage.repository.getModChangelog(version.getModid(), version.getVersionId()))
-                        );
-                    } catch (UnsupportedOperationException e) { // Should be impossible
+                        changelog = StringUtils.nullIfBlank(selfPage.repository.getModChangelog(version.getModid(), version.getVersionId()));
+                    } catch (UnsupportedOperationException e) {
                         changelog = Optional.empty();
                     }
                 }
@@ -540,7 +544,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                         List<Node> list = new LinkedList<>();
                         Label title = new Label(i18n(DependencyModItem.I18N_KEY.get(dependency.getType())));
                         title.setPadding(new Insets(0, 8, 0, 8));
-                        list.add(title);
+                        list.add(new HBox(title));
                         dependencies.put(dependency.getType(), list);
                     }
                     DependencyModItem dependencyModItem = new DependencyModItem(selfPage.page, dependency.load(), selfPage.version, selfPage.callback);
@@ -551,7 +555,23 @@ public class DownloadPage extends Control implements DecoratorPage {
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
                     List<Node> nodes = new LinkedList<>();
-                    result.getKey().ifPresent(s -> nodes.add(new HBox(new Text(s))));
+                    result.getKey().ifPresent(s -> {
+                        changelogCache.put(version, s);
+                        HBox container;
+                        if (HTMLRenderer.isHTML(s)) {
+                            var document = Jsoup.parse(s);
+                            HTMLRenderer renderer = HTMLRenderer.openHyperlinkInBrowser();
+                            renderer.appendNode(document);
+                            renderer.mergeLineBreaks();
+                            var textFlow = renderer.render();
+                            textFlow.setPrefWidth(Region.USE_COMPUTED_SIZE);
+                            container = new HBox(textFlow);
+                        } else {
+                            container = new HBox(new Text(s));
+                        }
+                        container.getStyleClass().add("mod-changelog");
+                        nodes.add(container);
+                    });
                     nodes.addAll(result.getValue());
                     dependenciesList.getContent().setAll(nodes);
                     spinnerPane.setFailedReason(null);
