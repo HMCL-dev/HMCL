@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.versions;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.game.WorldLockedException;
 import org.jackhuang.hmcl.setting.Profile;
@@ -101,5 +102,13 @@ public final class WorldListItem extends Control {
 
     public void launch() {
         Versions.launchAndEnterWorld(profile, id, world.getFileName());
+    }
+
+    public void launchInTestMode() {
+        Versions.launch(profile, id, LauncherHelper::setTestMode, launcherHelper -> launcherHelper.setQuickEnterWorld(world.getWorldName()));
+    }
+
+    public void generateLaunchScript() {
+        Versions.generateLaunchScript(profile, id, launcherHelper -> launcherHelper.setQuickEnterWorld(world.getWorldName()));
     }
 }

@@ -25,6 +25,7 @@ import javafx.geometry.Insets;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -106,7 +107,18 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         AdvancedListBox toolbar = new AdvancedListBox();
 
         if (world.getGameVersion() != null && world.getGameVersion().isAtLeast("1.20", "23w14a")) {
-            toolbar.addNavigationDrawerItem(i18n("version.launch_and_enter_world"), SVG.PLAY_ARROW, this::launch, advancedListItem -> advancedListItem.setDisable(isReadOnly()));
+            PopupMenu launchMenu = new PopupMenu();
+            JFXPopup launchPopup = new JFXPopup(launchMenu);
+
+            launchMenu.getContent().addAll(
+                    new IconedMenuItem(SVG.PLAY_ARROW, i18n("version.launch_and_enter_world"), this::launch, launchPopup),
+                    new IconedMenuItem(SVG.TROUBLESHOOT, i18n("version.launch.test_and_enter_world"), this::launchInTestMode, launchPopup)
+            );
+
+            toolbar.addNavigationDrawerItem(i18n("version.launch_and_enter_world"), SVG.PLAY_ARROW, null, launchMenuItem -> {
+                launchMenuItem.setOnAction(e -> launchPopup.show(launchMenuItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, launchMenuItem.getWidth(), 0));
+            });
+            toolbar.addNavigationDrawerItem(i18n("version.launch_script"), SVG.SCRIPT, this::generateLaunchScript, null);
         }
 
         if (ChunkBaseApp.isSupported(world)) {
@@ -177,5 +189,15 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         closePage();
         fireEvent(new PageCloseEvent());
         Versions.launchAndEnterWorld(profile, id, world.getFileName());
+    }
+
+    public void launchInTestMode() {
+        closePage();
+        fireEvent(new PageCloseEvent());
+        Versions.launch(profile, id, LauncherHelper::setTestMode, launcherHelper -> launcherHelper.setQuickEnterWorld(world.getWorldName()));
+    }
+
+    public void generateLaunchScript() {
+        Versions.generateLaunchScript(profile, id, launcherHelper -> launcherHelper.setQuickEnterWorld(world.getWorldName()));
     }
 }

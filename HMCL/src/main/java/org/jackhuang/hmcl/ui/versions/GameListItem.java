@@ -90,7 +90,7 @@ public class GameListItem extends Control {
     }
 
     public void launch() {
-        Versions.launch(profile, version, null);
+        Versions.launch(profile, version);
     }
 
     public void modifyGameSettings() {

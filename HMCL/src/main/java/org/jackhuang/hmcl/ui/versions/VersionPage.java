@@ -181,7 +181,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     }
 
     private void launch() {
-        Versions.launch(getProfile(), getVersion(), null);
+        Versions.launch(getProfile(), getVersion());
     }
 
     private void updateGame() {

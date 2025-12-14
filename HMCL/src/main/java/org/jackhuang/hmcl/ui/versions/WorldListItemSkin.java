@@ -115,15 +115,23 @@ public final class WorldListItemSkin extends SkinBase<WorldListItem> {
         WorldListItem item = getSkinnable();
         World world = item.getWorld();
 
-        popupMenu.getContent().addAll(
-                new IconedMenuItem(SVG.SETTINGS, i18n("world.manage.button"), item::showManagePage, popup)
-        );
-
         if (world.getGameVersion() != null && world.getGameVersion().isAtLeast("1.20", "23w14a")) {
+
             IconedMenuItem launchItem = new IconedMenuItem(SVG.PLAY_ARROW, i18n("version.launch_and_enter_world"), item::launch, popup);
             launchItem.setDisable(world.isLocked());
             popupMenu.getContent().add(launchItem);
+
+            IconedMenuItem launchInTestModeItem = new IconedMenuItem(SVG.TROUBLESHOOT, i18n("version.launch.test_and_enter_world"), item::launchInTestMode, popup);
+            launchInTestModeItem.setDisable(world.isLocked());
+            popupMenu.getContent().add(launchInTestModeItem);
+
+            popupMenu.getContent().add(new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), item::generateLaunchScript, popup));
         }
+
+        popupMenu.getContent().addAll(
+                new MenuSeparator(),
+                new IconedMenuItem(SVG.SETTINGS, i18n("world.manage.button"), item::showManagePage, popup)
+        );
 
         if (ChunkBaseApp.isSupported(world)) {
             popupMenu.getContent().addAll(
