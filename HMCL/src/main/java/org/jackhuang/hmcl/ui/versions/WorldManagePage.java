@@ -114,7 +114,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                     new IconedMenuItem(SVG.TROUBLESHOOT, i18n("version.launch.test_and_enter_world"), this::launchInTestMode, launchPopup)
             );
 
-            toolbar.addNavigationDrawerItem(i18n("version.launch_and_enter_world"), SVG.PLAY_ARROW, null, launchMenuItem -> {
+            toolbar.addNavigationDrawerItem(i18n("version.launch"), SVG.PLAY_ARROW, null, launchMenuItem -> {
                 launchMenuItem.setOnAction(e -> launchPopup.show(launchMenuItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, launchMenuItem.getWidth(), 0));
             });
             toolbar.addNavigationDrawerItem(i18n("version.launch_script"), SVG.SCRIPT, this::generateLaunchScript, null);
@@ -193,7 +193,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     public void launchInTestMode() {
         closePage();
         fireEvent(new PageCloseEvent());
-        Versions.LaunchAndEnterWorldInTestMode(profile, id, world.getFileName());
+        Versions.launchAndEnterWorldInTestMode(profile, id, world.getFileName());
     }
 
     public void generateLaunchScript() {

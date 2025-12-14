@@ -104,7 +104,7 @@ public final class WorldListItem extends Control {
     }
 
     public void launchInTestMode() {
-        Versions.LaunchAndEnterWorldInTestMode(profile, id, world.getFileName());
+        Versions.launchAndEnterWorldInTestMode(profile, id, world.getFileName());
     }
 
     public void generateLaunchScript() {
