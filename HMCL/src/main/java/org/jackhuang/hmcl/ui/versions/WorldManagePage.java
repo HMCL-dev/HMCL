@@ -25,7 +25,6 @@ import javafx.geometry.Insets;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -194,10 +193,10 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     public void launchInTestMode() {
         closePage();
         fireEvent(new PageCloseEvent());
-        Versions.launch(profile, id, LauncherHelper::setTestMode, launcherHelper -> launcherHelper.setQuickEnterWorld(world.getWorldName()));
+        Versions.LaunchAndEnterWorldInTestMode(profile, id, world.getFileName());
     }
 
     public void generateLaunchScript() {
-        Versions.generateLaunchScript(profile, id, launcherHelper -> launcherHelper.setQuickEnterWorld(world.getWorldName()));
+        Versions.generateLaunchScriptForQuickEnterWorld(profile, id, world.getFileName());
     }
 }
