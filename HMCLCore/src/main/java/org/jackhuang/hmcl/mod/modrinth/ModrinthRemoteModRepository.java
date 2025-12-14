@@ -315,11 +315,11 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         }
 
         public RemoteMod toMod() {
-            RemoteMod.ProjectType type = switch (projectType) {
-                case "modpack" -> RemoteMod.ProjectType.MODPACK;
-                case "resourcepack" -> RemoteMod.ProjectType.RESOURCE_PACK;
-                case "shader" -> RemoteMod.ProjectType.SHADER;
-                default -> RemoteMod.ProjectType.MOD;
+            RemoteModRepository.Type type = switch (projectType) {
+                case "modpack" -> RemoteModRepository.Type.MODPACK;
+                case "resourcepack" -> RemoteModRepository.Type.RESOURCE_PACK;
+                case "shader" -> RemoteModRepository.Type.SHADER;
+                default -> RemoteModRepository.Type.MOD;
             };
             return new RemoteMod(
                     slug,
@@ -701,11 +701,11 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         }
 
         public RemoteMod toMod() {
-            RemoteMod.ProjectType type = switch (projectType) {
-                case "modpack" -> RemoteMod.ProjectType.MODPACK;
-                case "resourcepack" -> RemoteMod.ProjectType.RESOURCE_PACK;
-                case "shader" -> RemoteMod.ProjectType.SHADER;
-                default -> RemoteMod.ProjectType.MOD;
+            RemoteModRepository.Type type = switch (projectType) {
+                case "modpack" -> RemoteModRepository.Type.MODPACK;
+                case "resourcepack" -> RemoteModRepository.Type.RESOURCE_PACK;
+                case "shader" -> RemoteModRepository.Type.SHADER;
+                default -> RemoteModRepository.Type.MOD;
             };
             return new RemoteMod(
                     slug,

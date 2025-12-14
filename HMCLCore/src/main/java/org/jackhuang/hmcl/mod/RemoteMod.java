@@ -40,7 +40,7 @@ public final class RemoteMod {
         public Stream<RemoteMod.Version> loadVersions(RemoteModRepository modRepository) throws IOException {
             throw new IOException();
         }
-    }, ProjectType.MOD);
+    }, RemoteModRepository.Type.MOD);
 
     private final String slug;
     private final String author;
@@ -50,9 +50,9 @@ public final class RemoteMod {
     private final String pageUrl;
     private final String iconUrl;
     private final IMod data;
-    private final ProjectType projectType;
+    private final RemoteModRepository.Type repoType;
 
-    public RemoteMod(String slug, String author, String title, String description, List<String> categories, String pageUrl, String iconUrl, IMod data, ProjectType projectType) {
+    public RemoteMod(String slug, String author, String title, String description, List<String> categories, String pageUrl, String iconUrl, IMod data, RemoteModRepository.Type repoType) {
         this.slug = slug;
         this.author = author;
         this.title = title;
@@ -61,7 +61,7 @@ public final class RemoteMod {
         this.pageUrl = pageUrl;
         this.iconUrl = iconUrl;
         this.data = data;
-        this.projectType = projectType;
+        this.repoType = repoType;
     }
 
     public String getSlug() {
@@ -96,36 +96,8 @@ public final class RemoteMod {
         return data;
     }
 
-    public ProjectType getProjectType() {
-        return projectType;
-    }
-
-    public enum ProjectType {
-        MOD(RemoteModRepository.Type.MOD),
-        MODPACK(RemoteModRepository.Type.MODPACK),
-        RESOURCE_PACK(RemoteModRepository.Type.RESOURCE_PACK),
-        SHADER(RemoteModRepository.Type.SHADER),
-        WORLD(RemoteModRepository.Type.WORLD);
-
-        public static ProjectType getByRepositoryType(RemoteModRepository.Type repositoryType) {
-            return switch (repositoryType) {
-                case WORLD -> WORLD;
-                case SHADER -> SHADER;
-                case RESOURCE_PACK -> RESOURCE_PACK;
-                case MODPACK -> MODPACK;
-                default -> MOD;
-            };
-        }
-
-        final RemoteModRepository.Type repositoryType;
-
-        ProjectType(RemoteModRepository.Type repositoryType) {
-            this.repositoryType = repositoryType;
-        }
-
-        public RemoteModRepository.Type getRepositoryType() {
-            return repositoryType;
-        }
+    public RemoteModRepository.Type getRepositoryType() {
+        return repoType;
     }
 
     public enum VersionType {

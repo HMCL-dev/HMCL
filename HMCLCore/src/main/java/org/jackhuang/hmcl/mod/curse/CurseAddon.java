@@ -209,7 +209,7 @@ public class CurseAddon implements RemoteMod.IMod {
         return modRepository.getRemoteVersionsById(Integer.toString(id));
     }
 
-    public RemoteMod toMod(RemoteMod.ProjectType type) {
+    public RemoteMod toMod(RemoteModRepository.Type type) {
         String iconUrl = Optional.ofNullable(logo).map(Logo::getThumbnailUrl).orElse("");
 
         return new RemoteMod(

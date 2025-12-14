@@ -352,7 +352,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             imageView.setFitHeight(40);
             pane.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), content);
 
-            RemoteModRepository.Type type = addon.getProjectType().getRepositoryType();
+            RemoteModRepository.Type type = addon.getRepositoryType();
 
             DownloadCallback callback = switch (type) {
                 case MOD -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_MOD;
