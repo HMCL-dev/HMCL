@@ -73,14 +73,20 @@ public class DownloadPage extends Control implements DecoratorPage {
     private final Profile.ProfileVersion version;
     private final DownloadCallback callback;
     private final DownloadListPage page;
+    private final RemoteModRepository.Type type;
 
     private SimpleMultimap<String, RemoteMod.Version, List<RemoteMod.Version>> versions;
 
     public DownloadPage(DownloadListPage page, RemoteMod addon, Profile.ProfileVersion version, @Nullable DownloadCallback callback) {
+        this(page, addon, version, callback, null);
+    }
+
+    public DownloadPage(DownloadListPage page, RemoteMod addon, Profile.ProfileVersion version, @Nullable DownloadCallback callback, @Nullable RemoteModRepository.Type type) {
         this.page = page;
         this.repository = page.repository;
         this.addon = addon;
-        this.translations = ModTranslations.getTranslationsByRepositoryType(repository.getType());
+        this.type = Objects.requireNonNullElse(type, repository.getType());
+        this.translations = ModTranslations.getTranslationsByRepositoryType(this.type);
         this.mod = translations.getModByCurseForgeId(addon.getSlug());
         this.version = version;
         this.callback = callback;
@@ -335,7 +341,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 Pair.pair(RemoteMod.DependencyType.BROKEN, "mods.dependency.broken")
         ));
 
-        DependencyModItem(DownloadListPage page, RemoteMod addon, Profile.ProfileVersion version, DownloadCallback callback) {
+        DependencyModItem(DownloadListPage page, RemoteMod addon, Profile.ProfileVersion version) {
             HBox pane = new HBox(8);
             pane.setPadding(new Insets(0, 8, 0, 8));
             pane.setAlignment(Pos.CENTER_LEFT);
@@ -346,15 +352,24 @@ public class DownloadPage extends Control implements DecoratorPage {
             imageView.setFitHeight(40);
             pane.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), content);
 
+            RemoteModRepository.Type type = addon.getProjectType().getRepositoryType();
+
+            DownloadCallback callback = switch (type) {
+                case MOD -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_MOD;
+                case RESOURCE_PACK -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_RESOURCE_PACK;
+                case SHADER -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_SHADER;
+                default -> null;
+            };
+
             RipplerContainer container = new RipplerContainer(pane);
             FXUtils.onClicked(container, () -> {
                 fireEvent(new DialogCloseEvent());
-                Controllers.navigate(new DownloadPage(page, addon, version, callback));
+                Controllers.navigate(new DownloadPage(page, addon, version, callback, type));
             });
             getChildren().setAll(container);
 
             if (addon != RemoteMod.BROKEN) {
-                ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(page.repository.getType()).getModByCurseForgeId(addon.getSlug());
+                ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(type).getModByCurseForgeId(addon.getSlug());
                 content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : addon.getTitle());
                 content.setSubtitle(addon.getDescription());
                 addon.getCategories().stream()
@@ -445,7 +460,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     private static final class ModVersion extends JFXDialogLayout {
         public ModVersion(RemoteMod.Version version, DownloadPage selfPage) {
-            RemoteModRepository.Type type = selfPage.repository.getType();
+            RemoteModRepository.Type type = selfPage.type;
 
             String title;
             switch (type) {
@@ -538,7 +553,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                         list.add(title);
                         dependencies.put(dependency.getType(), list);
                     }
-                    DependencyModItem dependencyModItem = new DependencyModItem(selfPage.page, dependency.load(), selfPage.version, selfPage.callback);
+                    DependencyModItem dependencyModItem = new DependencyModItem(selfPage.page, dependency.load(), selfPage.version);
                     dependencies.get(dependency.getType()).add(dependencyModItem);
                 }
 
