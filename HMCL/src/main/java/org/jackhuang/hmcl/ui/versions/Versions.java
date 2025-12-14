@@ -200,7 +200,8 @@ public final class Versions {
         }
     }
 
-    public static void generateLaunchScript(Profile profile, String id) {
+    @SafeVarargs
+    public static void generateLaunchScript(Profile profile, String id, Consumer<LauncherHelper>... injecters) {
         if (!checkVersionForLaunching(profile, id))
             return;
         ensureSelectedAccount(account -> {
@@ -214,24 +215,43 @@ public final class Versions {
                     : new FileChooser.ExtensionFilter(i18n("extension.sh"), "*.sh"));
             chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.ps1"), "*.ps1"));
             Path file = FileUtils.toPath(chooser.showSaveDialog(Controllers.getStage()));
-            if (file != null)
-                new LauncherHelper(profile, account, id).makeLaunchScript(file);
+            if (file != null) {
+                LauncherHelper launcherHelper = new LauncherHelper(profile, account, id);
+                for (Consumer<LauncherHelper> injecter : injecters) {
+                    injecter.accept(launcherHelper);
+                }
+                launcherHelper.makeLaunchScript(file);
+            }
         });
     }
 
-    public static void launch(Profile profile, String id, Consumer<LauncherHelper> injecter) {
+    @SafeVarargs
+    public static void launch(Profile profile, String id, Consumer<LauncherHelper>... injecters) {
         if (!checkVersionForLaunching(profile, id))
             return;
         ensureSelectedAccount(account -> {
             LauncherHelper launcherHelper = new LauncherHelper(profile, account, id);
-            if (injecter != null)
+            for (Consumer<LauncherHelper> injecter : injecters) {
                 injecter.accept(launcherHelper);
+            }
             launcherHelper.launch();
         });
     }
 
     public static void testGame(Profile profile, String id) {
         launch(profile, id, LauncherHelper::setTestMode);
+    }
+
+    public static void launchAndEnterWorld(Profile profile, String id, String worldFolderName) {
+        launch(profile, id, launcherHelper -> launcherHelper.setQuickEnterWorld(worldFolderName));
+    }
+
+    public static void LaunchAndEnterWorldInTestMode(Profile profile, String id, String worldFolderName) {
+        launch(profile, id, LauncherHelper::setTestMode, launcherHelper -> launcherHelper.setQuickEnterWorld(worldFolderName));
+    }
+
+    public static void generateLaunchScriptForQuickEnterWorld(Profile profile, String id, String worldFolderName) {
+        generateLaunchScript(profile, id, launcherHelper -> launcherHelper.setQuickEnterWorld(worldFolderName));
     }
 
     private static boolean checkVersionForLaunching(Profile profile, String id) {

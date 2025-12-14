@@ -346,7 +346,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
     private void launch() {
         Profile profile = Profiles.getSelectedProfile();
-        Versions.launch(profile, profile.getSelectedVersion(), null);
+        Versions.launch(profile, profile.getSelectedVersion());
     }
 
     private void launchNoGame() {

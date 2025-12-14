@@ -51,6 +51,7 @@ import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.nio.file.AccessDeniedException;
@@ -60,7 +61,6 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
-import java.lang.ref.WeakReference;
 
 import static javafx.application.Platform.runLater;
 import static javafx.application.Platform.setImplicitExit;
@@ -81,6 +81,7 @@ public final class LauncherHelper {
     private final VersionSetting setting;
     private LauncherVisibility launcherVisibility;
     private boolean showLogs;
+    private QuickPlayOption quickPlayOption;
 
     public LauncherHelper(Profile profile, Account account, String selectedVersion) {
         this.profile = Objects.requireNonNull(profile);
@@ -109,6 +110,10 @@ public final class LauncherHelper {
 
     public void setKeep() {
         launcherVisibility = LauncherVisibility.KEEP;
+    }
+
+    public void setQuickEnterWorld(String worldFolderName) {
+        quickPlayOption = new QuickPlayOption(QuickPlayOption.Type.SINGLEPLAYER, worldFolderName);
     }
 
     public void launch() {
@@ -189,7 +194,7 @@ public final class LauncherHelper {
                 .thenComposeAsync(() -> logIn(account).withStage("launch.state.logging_in"))
                 .thenComposeAsync(authInfo -> Task.supplyAsync(() -> {
                     LaunchOptions launchOptions = repository.getLaunchOptions(
-                            selectedVersion, javaVersionRef.get(), profile.getGameDir(), javaAgents, javaArguments, scriptFile != null);
+                            selectedVersion, javaVersionRef.get(), profile.getGameDir(), javaAgents, javaArguments, scriptFile != null, quickPlayOption);
 
                     LOG.info("Here's the structure of game mod directory:\n" + FileUtils.printFileStructure(repository.getModsDirectory(selectedVersion), 10));
 

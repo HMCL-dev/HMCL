@@ -85,8 +85,12 @@ public class GameListItem extends Control {
         Versions.openFolder(profile, version);
     }
 
-    public void launch() {
+    public void testGame() {
         Versions.testGame(profile, version);
+    }
+
+    public void launch() {
+        Versions.launch(profile, version);
     }
 
     public void modifyGameSettings() {
