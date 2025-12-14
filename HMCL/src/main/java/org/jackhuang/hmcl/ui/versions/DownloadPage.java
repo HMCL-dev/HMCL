@@ -462,22 +462,13 @@ public class DownloadPage extends Control implements DecoratorPage {
         public ModVersion(RemoteMod.Version version, DownloadPage selfPage) {
             RemoteModRepository.Type type = selfPage.type;
 
-            String title;
-            switch (type) {
-                case WORLD:
-                    title = "world.download.title";
-                    break;
-                case MODPACK:
-                    title = "modpack.download.title";
-                    break;
-                case RESOURCE_PACK:
-                    title = "resourcepack.download.title";
-                    break;
-                case MOD:
-                default:
-                    title = "mods.download.title";
-                    break;
-            }
+            String title = switch (type) {
+                case WORLD -> "world.download.title";
+                case MODPACK -> "modpack.download.title";
+                case RESOURCE_PACK -> "resourcepack.download.title";
+                case SHADER -> "download.shader.title";
+                default -> "mods.download.title";
+            };
             this.setHeading(new HBox(new Label(i18n(title, version.getName()))));
 
             VBox box = new VBox(8);
