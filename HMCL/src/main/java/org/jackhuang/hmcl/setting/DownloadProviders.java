@@ -21,9 +21,10 @@ import javafx.beans.InvalidationListener;
 import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.FetchTask;
-import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
 
 import javax.net.ssl.SSLHandshakeException;
@@ -31,104 +32,88 @@ import java.io.FileNotFoundException;
 import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.nio.file.AccessDeniedException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.CancellationException;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.task.FetchTask.DEFAULT_CONCURRENCY;
+import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class DownloadProviders {
     private DownloadProviders() {
     }
 
-    private static final DownloadProviderWrapper provider;
+    public static final String DEFAULT_AUTO_PROVIDER_ID = "balanced";
+    public static final String DEFAULT_DIRECT_PROVIDER_ID = "mojang";
 
-    public static final Map<String, DownloadProvider> providersById;
-    public static final Map<String, DownloadProvider> rawProviders;
-    private static final AdaptedDownloadProvider fileDownloadProvider = new AdaptedDownloadProvider();
+    private static final DownloadProviderWrapper PROVIDER_WRAPPER;
 
-    private static final MojangDownloadProvider MOJANG;
-    private static final BMCLAPIDownloadProvider BMCLAPI;
-
-    public static final String DEFAULT_PROVIDER_ID = "balanced";
-    public static final String DEFAULT_RAW_PROVIDER_ID = "bmclapi";
-
-    @SuppressWarnings("unused")
-    private static final InvalidationListener observer;
+    private static final DownloadProvider DEFAULT_PROVIDER;
+    public static final Map<String, DownloadProvider> DIRECT_PROVIDERS;
+    public static final Map<String, DownloadProvider> AUTO_PROVIDERS;
 
     static {
-        String bmclapiRoot = "https://bmclapi2.bangbang93.com";
-        String bmclapiRootOverride = System.getProperty("hmcl.bmclapi.override");
-        if (bmclapiRootOverride != null) bmclapiRoot = bmclapiRootOverride;
+        String bmclapiRoot = System.getProperty("hmcl.bmclapi.override", "https://bmclapi2.bangbang93.com");
+        BMCLAPIDownloadProvider bmclapiRaw = new BMCLAPIDownloadProvider(bmclapiRoot);
 
-        MOJANG = new MojangDownloadProvider();
-        BMCLAPI = new BMCLAPIDownloadProvider(bmclapiRoot);
-        rawProviders = Map.of(
-                "mojang", MOJANG,
-                "bmclapi", BMCLAPI
+        DownloadProvider mojang = new MojangDownloadProvider();
+        DownloadProvider bmclapi = new AutoDownloadProvider(bmclapiRaw, mojang);
+
+        DEFAULT_PROVIDER = mojang;
+        DIRECT_PROVIDERS = Lang.mapOf(
+                pair("mojang", mojang),
+                pair("bmclapi", bmclapi)
         );
 
-        AdaptedDownloadProvider fileProvider = new AdaptedDownloadProvider();
-        fileProvider.setDownloadProviderCandidates(List.of(BMCLAPI, MOJANG));
-        BalancedDownloadProvider balanced = new BalancedDownloadProvider(MOJANG, BMCLAPI);
+        AUTO_PROVIDERS = Lang.mapOf(
+                pair("balanced", LocaleUtils.IS_CHINA_MAINLAND ? bmclapi : mojang),
+                pair("official", LocaleUtils.IS_CHINA_MAINLAND ? new AutoDownloadProvider(
+                        List.of(mojang, bmclapiRaw),
+                        List.of(bmclapiRaw, mojang)
+                ) : mojang),
+                pair("mirror", bmclapi)
+        );
 
-        providersById = Map.of(
-                "official", new AutoDownloadProvider(MOJANG, fileProvider),
-                "balanced", new AutoDownloadProvider(balanced, fileProvider),
-                "mirror", new AutoDownloadProvider(BMCLAPI, fileProvider));
-
-        observer = FXUtils.observeWeak(() -> {
-            FetchTask.setDownloadExecutorConcurrency(
-                    config().getAutoDownloadThreads() ? DEFAULT_CONCURRENCY : config().getDownloadThreads());
-        }, config().autoDownloadThreadsProperty(), config().downloadThreadsProperty());
-
-        provider = new DownloadProviderWrapper(MOJANG);
+        PROVIDER_WRAPPER = new DownloadProviderWrapper(DEFAULT_PROVIDER);
     }
 
     static void init() {
-        InvalidationListener onChangeDownloadSource = observable -> {
-            String versionListSource = Objects.requireNonNullElse(config().getVersionListSource(), "");
-            if (config().isAutoChooseDownloadType()) {
-                DownloadProvider currentDownloadProvider = providersById.get(versionListSource);
-                if (currentDownloadProvider == null)
-                    currentDownloadProvider = Objects.requireNonNull(providersById.get(DEFAULT_PROVIDER_ID),
-                            "default provider is null");
+        InvalidationListener onChangeDownloadThreads = observable -> {
+            FetchTask.setDownloadExecutorConcurrency(config().getAutoDownloadThreads()
+                    ? DEFAULT_CONCURRENCY
+                    : config().getDownloadThreads());
+        };
+        config().autoDownloadThreadsProperty().addListener(onChangeDownloadThreads);
+        config().downloadThreadsProperty().addListener(onChangeDownloadThreads);
+        onChangeDownloadThreads.invalidated(null);
 
-                provider.setProvider(currentDownloadProvider);
+        InvalidationListener onChangeDownloadSource = observable -> {
+            if (config().isAutoChooseDownloadType()) {
+                String versionListSource = config().getVersionListSource();
+                DownloadProvider downloadProvider = versionListSource != null
+                        ? AUTO_PROVIDERS.getOrDefault(versionListSource, DEFAULT_PROVIDER)
+                        : DEFAULT_PROVIDER;
+                PROVIDER_WRAPPER.setProvider(downloadProvider);
             } else {
-                provider.setProvider(fileDownloadProvider);
+                String downloadType = config().getDownloadType();
+                PROVIDER_WRAPPER.setProvider(downloadType != null
+                        ? DIRECT_PROVIDERS.getOrDefault(downloadType, DEFAULT_PROVIDER)
+                        : DEFAULT_PROVIDER);
             }
         };
         config().versionListSourceProperty().addListener(onChangeDownloadSource);
         config().autoChooseDownloadTypeProperty().addListener(onChangeDownloadSource);
-
+        config().downloadTypeProperty().addListener(onChangeDownloadSource);
         onChangeDownloadSource.invalidated(null);
-
-        FXUtils.onChangeAndOperate(config().downloadTypeProperty(), downloadType -> {
-            DownloadProvider primary = Objects.requireNonNullElseGet(
-                    rawProviders.get(Objects.requireNonNullElse(downloadType, "")),
-                    () -> rawProviders.get(DEFAULT_RAW_PROVIDER_ID));
-
-            List<DownloadProvider> providers = new ArrayList<>(rawProviders.size());
-            providers.add(primary);
-            for (DownloadProvider provider : rawProviders.values()) {
-                if (provider != primary)
-                    providers.add(provider);
-            }
-
-            fileDownloadProvider.setDownloadProviderCandidates(providers);
-        });
     }
 
     /**
      * Get current primary preferred download provider
      */
     public static DownloadProvider getDownloadProvider() {
-        return provider;
+        return PROVIDER_WRAPPER;
     }
 
     public static String localizeErrorMessage(Throwable exception) {

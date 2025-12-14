@@ -1,6 +1,8 @@
 # 本地化
 
-<!-- TODO: 本文档需要进一步完善。为了便于修改，我们暂时不将本文件翻译至其他语言，在完善后再在独立 PR 中提供其他语言的译文。 -->
+<!-- #BEGIN LANGUAGE_SWITCHER -->
+[English](Localization.md) | **中文**
+<!-- #END LANGUAGE_SWITCHER -->
 
 HMCL 为多种语言提供本地化支持。
 
@@ -107,7 +109,7 @@ HMCL 的绝大多数文本都位于这个文件中，翻译此文件就能翻译
 作为翻译的第一步，请从[这张表格](https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry)中查询这个语言对应的两字母或三字母语言标签。
 例如，英语的语言标签为 `en`。
 
-在确定了语言标签后，请在 [`I18N.properties` 文件旁](../HMCL/src/main/resources/assets/lang)创建 `I18N_<语言标签>.properites` (例如 `I18N_en.properties`) 文件。
+在确定了语言标签后，请在 [`I18N.properties` 文件旁](../HMCL/src/main/resources/assets/lang)创建 `I18N_<本地化文件后缀>.properties` (例如 `I18N_en.properties`) 文件。
 随后，你就可以开始在这个文件中进行翻译工作了。
 
 `I18N.properties` 文件会遵循[资源回退机制](#资源回退机制)查询缺失的译文。
@@ -287,6 +289,8 @@ HMCL 总是会将 `zh-CN` 加入所有中文环境的搜索列表中，将 `zh-T
 
 ## 自动同步文档内容
 
+<!-- #BEGIN BLOCK -->
+<!-- #PROPERTY PROCESS_LINK=false -->
 为了简化文档的维护，HMCL 使用了一套宏机制自动维护文档的部分内容。在命令行中执行
 
 ```bash
@@ -305,8 +309,8 @@ HMCL 总是会将 `zh-CN` 加入所有中文环境的搜索列表中，将 `zh-T
 随后执行 `./gradlew updateDocuments`，这两行内容会被自动替换为类似这样的跳转链接:
 
 ```markdown
-**English** |
-中文 ([简体](README_zh.md), [繁體](README_zh.md), [文言](README_zh.md)) | [日本語](README_zh.md) | [español](README_zh.md) | [русский](README_zh.md) | [українська](README_zh.md)
+**English** (**Standard**, [uʍoᗡ ǝpᴉsd∩](README_en_Qabs.md)) | 中文 ([简体](README_zh.md), [繁體](README_zh_Hant.md), [文言](README_lzh.md)) | [日本語](README_ja.md) | [español](README_es.md) | [русский](README_ru.md) | [українська](README_uk.md)
 ```
 
 关于宏的更多内容，请见 [MacroProcessor.java](../buildSrc/src/main/java/org/jackhuang/hmcl/gradle/docs/MacroProcessor.java)。
+<!-- #END BLOCK -->

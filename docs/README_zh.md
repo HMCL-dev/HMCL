@@ -47,15 +47,9 @@ HMCL 有着强大的跨平台能力。它不仅支持 Windows、Linux、macOS、
 * IDE：IntelliJ IDEA
 * 编译器：Java 17+
 
-### 编译
+### 构建 HMCL
 
-于项目根文件夹执行以下命令：
-
-```bash
-./gradlew clean build
-```
-
-请确保你至少安装了 JDK 17 或更高版本。
+参见[构建指南](./Building_zh.md)页面。
 
 ## JVM 选项 (用于调试)
 

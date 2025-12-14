@@ -233,7 +233,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             }
             setGraphic(pane);
 
-            twoLineListItem.setTitle(I18n.getDisplaySelfVersion(remoteVersion));
+            twoLineListItem.setTitle(I18n.getDisplayVersion(remoteVersion));
             if (remoteVersion.getReleaseDate() != null) {
                 twoLineListItem.setSubtitle(I18n.formatDateTime(remoteVersion.getReleaseDate()));
             } else {
@@ -250,7 +250,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                         twoLineListItem.addTag(i18n("version.game.release"));
                         imageView.setImage(VersionIconType.GRASS.getIcon());
                     }
-                    case PENDING, SNAPSHOT -> {
+                    case SNAPSHOT, PENDING, UNOBFUSCATED -> {
                         if (versionType == RemoteVersion.Type.SNAPSHOT
                                 && GameVersionNumber.asGameVersion(remoteVersion.getGameVersion()).isAprilFools()) {
                             twoLineListItem.addTag(i18n("version.game.april_fools"));
@@ -455,7 +455,8 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     return switch (filter) {
                         case RELEASE -> versionType == RemoteVersion.Type.RELEASE;
                         case SNAPSHOTS -> versionType == RemoteVersion.Type.SNAPSHOT
-                                || versionType == RemoteVersion.Type.PENDING;
+                                || versionType == RemoteVersion.Type.PENDING
+                                || versionType == RemoteVersion.Type.UNOBFUSCATED;
                         case APRIL_FOOLS -> versionType == RemoteVersion.Type.SNAPSHOT
                                 && GameVersionNumber.asGameVersion(it.getGameVersion()).isAprilFools();
                         case OLD -> versionType == RemoteVersion.Type.OLD;

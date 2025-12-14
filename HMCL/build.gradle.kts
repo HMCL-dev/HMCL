@@ -58,6 +58,7 @@ dependencies {
     implementation("libs:JFoenix")
     implementation(libs.twelvemonkeys.imageio.webp)
     implementation(libs.java.info)
+    implementation(libs.monet.fx)
 
     if (launcherExe.isBlank()) {
         implementation(libs.hmclauncher)
@@ -117,10 +118,6 @@ tasks.checkstyleMain {
     exclude("**/org/jackhuang/hmcl/ui/image/apng/**")
 }
 
-tasks.compileJava {
-    options.compilerArgs.add("--add-exports=java.base/jdk.internal.loader=ALL-UNNAMED")
-}
-
 val addOpens = listOf(
     "java.base/java.lang",
     "java.base/java.lang.reflect",
@@ -128,14 +125,23 @@ val addOpens = listOf(
     "javafx.base/com.sun.javafx.binding",
     "javafx.base/com.sun.javafx.event",
     "javafx.base/com.sun.javafx.runtime",
+    "javafx.base/javafx.beans.property",
     "javafx.graphics/javafx.css",
+    "javafx.graphics/javafx.stage",
+    "javafx.graphics/com.sun.glass.ui",
     "javafx.graphics/com.sun.javafx.stage",
+    "javafx.graphics/com.sun.javafx.util",
     "javafx.graphics/com.sun.prism",
     "javafx.controls/com.sun.javafx.scene.control",
     "javafx.controls/com.sun.javafx.scene.control.behavior",
+    "javafx.graphics/com.sun.javafx.tk.quantum",
     "javafx.controls/javafx.scene.control.skin",
     "jdk.attach/sun.tools.attach",
 )
+
+tasks.compileJava {
+    options.compilerArgs.addAll(addOpens.map { "--add-exports=$it=ALL-UNNAMED" })
+}
 
 val hmclProperties = buildList {
     add("hmcl.version" to project.version.toString())
@@ -202,7 +208,8 @@ tasks.shadowJar {
         "Main-Class" to "org.jackhuang.hmcl.Main",
         "Multi-Release" to "true",
         "Add-Opens" to addOpens.joinToString(" "),
-        "Enable-Native-Access" to "ALL-UNNAMED"
+        "Enable-Native-Access" to "ALL-UNNAMED",
+        "Enable-Final-Field-Mutation" to "ALL-UNNAMED",
     )
 
     if (launcherExe.isNotBlank()) {
@@ -335,7 +342,7 @@ tasks.register<JavaExec>("run") {
     classpath = files(jarPath)
     workingDir = rootProject.rootDir
 
-    val vmOptions = parseToolOptions(System.getenv("HMCL_JAVA_OPTS"))
+    val vmOptions = parseToolOptions(System.getenv("HMCL_JAVA_OPTS") ?: "-Xmx1g")
     if (vmOptions.none { it.startsWith("-Dhmcl.offline.auth.restricted=") })
         vmOptions += "-Dhmcl.offline.auth.restricted=false"
 

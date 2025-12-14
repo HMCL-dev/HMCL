@@ -236,6 +236,7 @@ public final class NativePatcher {
             minVersion = "1.6";
         } else if (platform.equals(Platform.LINUX_RISCV64)) {
             minVersion = "1.8";
+            maxVersion = "1.21.5";
         } else if (platform.equals(Platform.LINUX_LOONGARCH64)) {
             minVersion = "1.6";
         } else if (platform.equals(Platform.LINUX_LOONGARCH64_OW)) {
@@ -248,7 +249,7 @@ public final class NativePatcher {
 
         if (minVersion != null) {
             if (gameVersion.compareTo(minVersion) >= 0) {
-                if (maxVersion != null && gameVersion.compareTo(maxVersion) >= 0)
+                if (maxVersion != null && gameVersion.compareTo(maxVersion) > 0)
                     return SupportStatus.UNSUPPORTED;
 
                 String[] defaultGameVersions = GameVersionNumber.getDefaultGameVersions();
