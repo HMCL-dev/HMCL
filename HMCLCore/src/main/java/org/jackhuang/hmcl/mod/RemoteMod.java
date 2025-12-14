@@ -40,7 +40,7 @@ public final class RemoteMod {
         public Stream<RemoteMod.Version> loadVersions(RemoteModRepository modRepository) throws IOException {
             throw new IOException();
         }
-    });
+    }, RemoteModRepository.Type.MOD);
 
     private final String slug;
     private final String author;
@@ -50,8 +50,9 @@ public final class RemoteMod {
     private final String pageUrl;
     private final String iconUrl;
     private final IMod data;
+    private final RemoteModRepository.Type repoType;
 
-    public RemoteMod(String slug, String author, String title, String description, List<String> categories, String pageUrl, String iconUrl, IMod data) {
+    public RemoteMod(String slug, String author, String title, String description, List<String> categories, String pageUrl, String iconUrl, IMod data, RemoteModRepository.Type repoType) {
         this.slug = slug;
         this.author = author;
         this.title = title;
@@ -60,6 +61,7 @@ public final class RemoteMod {
         this.pageUrl = pageUrl;
         this.iconUrl = iconUrl;
         this.data = data;
+        this.repoType = repoType;
     }
 
     public String getSlug() {
@@ -92,6 +94,10 @@ public final class RemoteMod {
 
     public IMod getData() {
         return data;
+    }
+
+    public RemoteModRepository.Type getRepositoryType() {
+        return repoType;
     }
 
     public enum VersionType {

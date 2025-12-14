@@ -126,7 +126,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
                 pair("pageSize", Integer.toString(pageSize)))))))
                 .getJson(Response.typeOf(listTypeOf(CurseAddon.class)));
         if (searchFilter.isEmpty()) {
-            return new SearchResult(response.getData().stream().map(CurseAddon::toMod), calculateTotalPages(response, pageSize));
+            return new SearchResult(response.getData().stream().map(addon -> addon.toMod(type)), calculateTotalPages(response, pageSize));
         }
 
         // https://github.com/HMCL-dev/HMCL/issues/1549
@@ -138,7 +138,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
 
         StringUtils.LevCalculator levCalculator = new StringUtils.LevCalculator();
 
-        return new SearchResult(response.getData().stream().map(CurseAddon::toMod).map(remoteMod -> {
+        return new SearchResult(response.getData().stream().map(addon -> addon.toMod(type)).map(remoteMod -> {
             String lowerCaseResult = remoteMod.getTitle().toLowerCase(Locale.ROOT);
             int diff = levCalculator.calc(lowerCaseSearchFilter, lowerCaseResult);
 
@@ -149,7 +149,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
             }
 
             return pair(remoteMod, diff);
-        }).sorted(Comparator.comparingInt(Pair::getValue)).map(Pair::getKey), response.getData().stream().map(CurseAddon::toMod), calculateTotalPages(response, pageSize));
+        }).sorted(Comparator.comparingInt(Pair::getValue)).map(Pair::getKey), response.getData().stream().map(addon -> addon.toMod(type)), calculateTotalPages(response, pageSize));
     }
 
     @Override
@@ -188,7 +188,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     public RemoteMod getModById(String id) throws IOException {
         Response<CurseAddon> response = withApiKey(HttpRequest.GET(PREFIX + "/v1/mods/" + id))
                 .getJson(Response.typeOf(CurseAddon.class));
-        return response.data.toMod();
+        return response.data.toMod(type);
     }
 
     @Override

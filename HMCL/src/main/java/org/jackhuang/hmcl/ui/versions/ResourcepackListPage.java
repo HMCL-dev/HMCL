@@ -216,7 +216,6 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
             this.page = page;
 
             BorderPane root = new BorderPane();
-            root.getStyleClass().add("md-list-cell");
             root.setPadding(new Insets(8));
 
             HBox left = new HBox(8);

@@ -33,6 +33,7 @@ public interface RemoteModRepository {
         MODPACK,
         RESOURCE_PACK,
         WORLD,
+        SHADER,
         CUSTOMIZATION
     }
 

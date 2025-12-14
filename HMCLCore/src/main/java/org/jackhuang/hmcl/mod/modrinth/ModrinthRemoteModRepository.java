@@ -53,13 +53,21 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
 
     private final String projectType;
 
+    private final RemoteModRepository.Type type;
+
     private ModrinthRemoteModRepository(String projectType) {
         this.projectType = projectType;
+        this.type = switch (projectType) {
+            case "modpack" -> Type.MODPACK;
+            case "resourcepack" -> Type.RESOURCE_PACK;
+            case "shader" -> Type.SHADER;
+            default -> Type.MOD;
+        };
     }
 
     @Override
     public Type getType() {
-        return Type.MOD;
+        return this.type;
     }
 
     private static String convertSortType(SortType sortType) {
@@ -307,6 +315,12 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         }
 
         public RemoteMod toMod() {
+            RemoteModRepository.Type type = switch (projectType) {
+                case "modpack" -> RemoteModRepository.Type.MODPACK;
+                case "resourcepack" -> RemoteModRepository.Type.RESOURCE_PACK;
+                case "shader" -> RemoteModRepository.Type.SHADER;
+                default -> RemoteModRepository.Type.MOD;
+            };
             return new RemoteMod(
                     slug,
                     "",
@@ -315,7 +329,8 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                     categories,
                     String.format("https://modrinth.com/%s/%s", projectType, id),
                     iconUrl,
-                    this
+                    this,
+                    type
             );
         }
     }
@@ -686,6 +701,12 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         }
 
         public RemoteMod toMod() {
+            RemoteModRepository.Type type = switch (projectType) {
+                case "modpack" -> RemoteModRepository.Type.MODPACK;
+                case "resourcepack" -> RemoteModRepository.Type.RESOURCE_PACK;
+                case "shader" -> RemoteModRepository.Type.SHADER;
+                default -> RemoteModRepository.Type.MOD;
+            };
             return new RemoteMod(
                     slug,
                     author,
@@ -694,7 +715,8 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                     categories,
                     String.format("https://modrinth.com/%s/%s", projectType, projectId),
                     iconUrl,
-                    this
+                    this,
+                    type
             );
         }
     }
