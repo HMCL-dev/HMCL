@@ -29,16 +29,21 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.AggregatedObservableList;
-import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
 public class TwoLineListItem extends VBox {
     private static final String DEFAULT_STYLE_CLASS = "two-line-list-item";
 
+    private static Label createTagLabel(String tag) {
+        Label tagLabel = new Label();
+        tagLabel.setText(tag);
+        HBox.setMargin(tagLabel, new Insets(0, 8, 0, 0));
+        return tagLabel;
+    }
+
     private final StringProperty title = new SimpleStringProperty(this, "title");
-    private final ObservableList<String> tags = FXCollections.observableArrayList();
+    private final ObservableList<Label> tags = FXCollections.observableArrayList();
     private final StringProperty subtitle = new SimpleStringProperty(this, "subtitle");
 
-    private final ObservableList<Node> tagLabels;
     private final AggregatedObservableList<Node> firstLineChildren;
 
     public TwoLineListItem(String titleString, String subtitleString) {
@@ -58,16 +63,9 @@ public class TwoLineListItem extends VBox {
         lblTitle.getStyleClass().add("title");
         lblTitle.textProperty().bind(title);
 
-        tagLabels = MappedObservableList.create(tags, tag -> {
-            Label tagLabel = new Label();
-            tagLabel.getStyleClass().add("tag");
-            tagLabel.setText(tag);
-            HBox.setMargin(tagLabel, new Insets(0, 8, 0, 0));
-            return tagLabel;
-        });
         firstLineChildren = new AggregatedObservableList<>();
         firstLineChildren.appendList(FXCollections.singletonObservableList(lblTitle));
-        firstLineChildren.appendList(tagLabels);
+        firstLineChildren.appendList(tags);
         Bindings.bindContent(firstLine.getChildren(), firstLineChildren.getAggregatedList());
 
         Label lblSubtitle = new Label();
@@ -111,7 +109,19 @@ public class TwoLineListItem extends VBox {
         this.subtitle.set(subtitle);
     }
 
-    public ObservableList<String> getTags() {
+    public void addTag(String tag) {
+        Label tagLabel = createTagLabel(tag);
+        tagLabel.getStyleClass().add("tag");
+        getTags().add(tagLabel);
+    }
+
+    public void addTagWarning(String tag) {
+        Label tagLabel = createTagLabel(tag);
+        tagLabel.getStyleClass().add("tag-warning");
+        getTags().add(tagLabel);
+    }
+
+    public ObservableList<Label> getTags() {
         return tags;
     }
 

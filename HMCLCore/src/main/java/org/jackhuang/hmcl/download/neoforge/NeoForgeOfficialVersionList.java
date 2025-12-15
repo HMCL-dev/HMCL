@@ -24,7 +24,6 @@ public final class NeoForgeOfficialVersionList extends VersionList<NeoForgeRemot
     }
 
     private static final String OLD_URL = "https://maven.neoforged.net/api/maven/versions/releases/net/neoforged/forge";
-
     private static final String META_URL = "https://maven.neoforged.net/api/maven/versions/releases/net/neoforged/neoforge";
 
     @Override
@@ -38,8 +37,8 @@ public final class NeoForgeOfficialVersionList extends VersionList<NeoForgeRemot
     @Override
     public Task<?> refreshAsync() {
         return Task.allOf(
-                new GetTask(downloadProvider.injectURL(OLD_URL)).thenGetJsonAsync(OfficialAPIResult.class),
-                new GetTask(downloadProvider.injectURL(META_URL)).thenGetJsonAsync(OfficialAPIResult.class)
+                new GetTask(downloadProvider.injectURLWithCandidates(OLD_URL)).thenGetJsonAsync(OfficialAPIResult.class),
+                new GetTask(downloadProvider.injectURLWithCandidates(META_URL)).thenGetJsonAsync(OfficialAPIResult.class)
         ).thenAcceptAsync(results -> {
             lock.writeLock().lock();
 

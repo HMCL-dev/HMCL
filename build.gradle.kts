@@ -1,3 +1,7 @@
+import org.jackhuang.hmcl.gradle.ci.CheckUpdate
+import org.jackhuang.hmcl.gradle.docs.UpdateDocuments
+import org.jackhuang.hmcl.gradle.l10n.ParseLanguageSubtagRegistry
+
 plugins {
     id("checkstyle")
 }
@@ -18,13 +22,25 @@ subprojects {
             name = "libs"
             dirs = setOf(rootProject.file("lib"))
         }
-        mavenCentral()
+
+        System.getenv("MAVEN_CENTRAL_REPO").let { repo ->
+            if (repo.isNullOrBlank())
+                mavenCentral()
+            else
+                maven(url = repo)
+        }
+
         maven(url = "https://jitpack.io")
         maven(url = "https://libraries.minecraft.net")
     }
 
     tasks.withType<JavaCompile> {
         options.encoding = "UTF-8"
+    }
+
+    @Suppress("UnstableApiUsage")
+    tasks.withType<Checkstyle> {
+        maxHeapSize.set("2g")
     }
 
     configure<CheckstyleExtension> {
@@ -57,58 +73,25 @@ subprojects {
     }
 }
 
-tasks.register("checkTranslations") {
-    doLast {
-        val hmclLangDir = file("HMCL/src/main/resources/assets/lang")
-
-        val en = java.util.Properties().apply {
-            hmclLangDir.resolve("I18N.properties").bufferedReader().use { load(it) }
-        }
-
-        val zh = java.util.Properties().apply {
-            hmclLangDir.resolve("I18N_zh.properties").bufferedReader().use { load(it) }
-        }
-
-        val zh_CN = java.util.Properties().apply {
-            hmclLangDir.resolve("I18N_zh_CN.properties").bufferedReader().use { load(it) }
-        }
-
-        var success = true
-
-        zh_CN.forEach {
-            if (!en.containsKey(it.key)) {
-                project.logger.warn("I18N.properties missing key '${it.key}'")
-                success = false
-            }
-        }
-
-        zh_CN.forEach {
-            if (!zh.containsKey(it.key)) {
-                project.logger.warn("I18N_zh.properties missing key '${it.key}'")
-                success = false
-            }
-        }
-
-        zh_CN.forEach {
-            if (it.value.toString().contains("帐户")) {
-                project.logger.warn("The misspelled '帐户' in '${it.key}' should be replaced by '账户'")
-                success = false
-            }
-        }
-
-        zh_CN.forEach {
-            if (it.value.toString().contains("其它")) {
-                project.logger.warn("The misspelled '其它' in '${it.key}' should be replaced by '其他'")
-                success = false
-            }
-        }
-
-        if (!success) {
-            throw GradleException("Part of the translation is missing")
-        }
-    }
-}
-
 org.jackhuang.hmcl.gradle.javafx.JavaFXUtils.register(rootProject)
 
 defaultTasks("clean", "build")
+
+tasks.register<ParseLanguageSubtagRegistry>("parseLanguageSubtagRegistry") {
+    languageSubtagRegistryFile.set(layout.projectDirectory.file("language-subtag-registry"))
+
+    sublanguagesFile.set(layout.projectDirectory.file("HMCLCore/src/main/resources/assets/lang/sublanguages.csv"))
+    defaultScriptFile.set(layout.projectDirectory.file("HMCLCore/src/main/resources/assets/lang/default_script.csv"))
+}
+
+tasks.register<UpdateDocuments>("updateDocuments") {
+    documentsDir.set(layout.projectDirectory.dir("docs"))
+}
+
+tasks.register<CheckUpdate>("checkUpdateDev") {
+    uri.set("https://ci.huangyuhui.net/job/HMCL-nightly")
+}
+
+tasks.register<CheckUpdate>("checkUpdateStable") {
+    uri.set("https://ci.huangyuhui.net/job/HMCL-stable")
+}

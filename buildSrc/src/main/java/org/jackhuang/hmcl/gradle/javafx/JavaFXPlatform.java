@@ -25,11 +25,8 @@ import java.util.*;
 public final class JavaFXPlatform {
 
     public static final String LEGACY_JAVAFX_VERSION = "19.0.2.1";
-    public static final String CLASSIC_JAVAFX_VERSION = "17.0.15";
-    public static final String MODERN_JAVAFX_VERSION = "24.0.1";
-
-    private static final int JAVA_11 = 11;
-    private static final int JAVA_22 = 22;
+    public static final String CLASSIC_JAVAFX_VERSION = "21.0.8";
+    public static final String MODERN_JAVAFX_VERSION = "25";
 
     private static final String OFFICIAL_GROUP_ID = "org.openjfx";
     private static final String GLAVO_GROUP_ID = "org.glavo.hmcl.openjfx";
@@ -52,7 +49,7 @@ public final class JavaFXPlatform {
         ALL.put("linux-x86_64", new JavaFXPlatform("linux"));
         ALL.put("linux-arm32", new JavaFXPlatform("linux-arm32-monocle", legacyVersions));
         ALL.put("linux-arm64", new JavaFXPlatform("linux-aarch64", Map.of(
-                JavaFXVersionType.CLASSIC, LEGACY_JAVAFX_VERSION,
+                JavaFXVersionType.CLASSIC, "21.0.1",
                 JavaFXVersionType.MODERN, MODERN_JAVAFX_VERSION
         )));
         ALL.put("linux-loongarch64", new JavaFXPlatform("linux", GLAVO_GROUP_ID, "17.0.8-loongarch64"));

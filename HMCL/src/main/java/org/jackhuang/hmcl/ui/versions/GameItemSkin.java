@@ -47,11 +47,9 @@ public class GameItemSkin extends SkinBase<GameItem> {
         TwoLineListItem item = new TwoLineListItem();
         item.titleProperty().bind(skinnable.titleProperty());
         FXUtils.onChangeAndOperate(skinnable.tagProperty(), tag -> {
-            if (StringUtils.isNotBlank(tag)) {
-                item.getTags().setAll(tag);
-            } else {
-                item.getTags().clear();
-            }
+            item.getTags().clear();
+            if (StringUtils.isNotBlank(tag))
+                item.addTag(tag);
         });
         item.subtitleProperty().bind(skinnable.subtitleProperty());
         BorderPane.setAlignment(item, Pos.CENTER);

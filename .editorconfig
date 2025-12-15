@@ -1071,6 +1071,7 @@ ij_jsp_keep_indents_on_empty_lines = false
 ij_jspx_keep_indents_on_empty_lines = false
 
 [{*.markdown,*.md}]
+max_line_length = 200
 ij_markdown_force_one_space_after_blockquote_symbol = true
 ij_markdown_force_one_space_after_header_symbol = true
 ij_markdown_force_one_space_after_list_bullet = true

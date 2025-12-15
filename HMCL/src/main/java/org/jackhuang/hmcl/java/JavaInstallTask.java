@@ -20,17 +20,20 @@ package org.jackhuang.hmcl.java;
 import kala.compress.archivers.ArchiveEntry;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
-import org.jackhuang.hmcl.util.Hex;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.tree.ArchiveFileTree;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
 import java.util.ArrayList;
+import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -98,10 +101,9 @@ public final class JavaInstallTask extends Task<JavaManifest> {
                 }
 
                 if (tree.isExecutable(entry))
-                    //noinspection ResultOfMethodCallIgnored
-                    path.toFile().setExecutable(true);
+                    FileUtils.setExecutable(path);
 
-                files.put(String.join("/", nameStack), new JavaLocalFiles.LocalFile(Hex.encodeHex(messageDigest.digest()), size));
+                files.put(String.join("/", nameStack), new JavaLocalFiles.LocalFile(HexFormat.of().formatHex(messageDigest.digest()), size));
             }
             nameStack.remove(nameStack.size() - 1);
         }

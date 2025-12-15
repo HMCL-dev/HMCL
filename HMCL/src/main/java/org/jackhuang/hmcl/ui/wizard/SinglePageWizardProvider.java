@@ -18,8 +18,8 @@
 package org.jackhuang.hmcl.ui.wizard;
 
 import javafx.scene.Node;
+import org.jackhuang.hmcl.util.SettingsMap;
 
-import java.util.Map;
 import java.util.function.Function;
 
 public class SinglePageWizardProvider implements WizardProvider {
@@ -32,16 +32,16 @@ public class SinglePageWizardProvider implements WizardProvider {
     }
 
     @Override
-    public void start(Map<String, Object> settings) {
+    public void start(SettingsMap settings) {
     }
 
     @Override
-    public Object finish(Map<String, Object> settings) {
+    public Object finish(SettingsMap settings) {
         return page.finish();
     }
 
     @Override
-    public Node createPage(WizardController controller, int step, Map<String, Object> settings) {
+    public Node createPage(WizardController controller, int step, SettingsMap settings) {
         if (step != 0) throw new IllegalStateException("Step must be 0");
 
         return page = provider.apply(controller);

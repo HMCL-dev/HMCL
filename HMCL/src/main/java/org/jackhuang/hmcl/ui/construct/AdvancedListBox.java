@@ -18,13 +18,18 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
+import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
 
 import java.util.function.Consumer;
@@ -40,8 +45,16 @@ public class AdvancedListBox extends ScrollPane {
         setFitToHeight(true);
         setFitToWidth(true);
         setHbarPolicy(ScrollBarPolicy.NEVER);
+        setVbarPolicy(ScrollBarPolicy.NEVER);
 
         container.getStyleClass().add("advanced-list-box-content");
+
+        this.addEventFilter(MouseEvent.MOUSE_ENTERED, event -> {
+            if (container.getHeight() > getHeight())
+                setVbarPolicy(ScrollBarPolicy.AS_NEEDED);
+        });
+        this.addEventFilter(MouseEvent.MOUSE_EXITED,
+                event -> setVbarPolicy(ScrollBarPolicy.NEVER));
     }
 
     public AdvancedListBox add(Node child) {
@@ -86,6 +99,28 @@ public class AdvancedListBox extends ScrollPane {
         AdvancedListItem item = createNavigationDrawerItem(title, leftGraphic);
         item.activeProperty().bind(tabHeader.getSelectionModel().selectedItemProperty().isEqualTo(tab));
         item.setOnAction(e -> tabHeader.select(tab));
+        return add(item);
+    }
+
+    public AdvancedListBox addNavigationDrawerTab(TabHeader tabHeader, TabControl.Tab<?> tab, String title,
+                                                  SVG unselectedGraphic, SVG selectedGraphic) {
+        AdvancedListItem item = createNavigationDrawerItem(title, null);
+        item.activeProperty().bind(tabHeader.getSelectionModel().selectedItemProperty().isEqualTo(tab));
+        item.setOnAction(e -> tabHeader.select(tab));
+
+        Node unselectedIcon = unselectedGraphic.createIcon(20);
+        Node selectedIcon = selectedGraphic.createIcon(20);
+
+        TransitionPane leftGraphic = new TransitionPane();
+        leftGraphic.setAlignment(Pos.CENTER);
+        FXUtils.setLimitWidth(leftGraphic, 30);
+        FXUtils.setLimitHeight(leftGraphic, 20);
+        leftGraphic.setPadding(Insets.EMPTY);
+        leftGraphic.setContent(item.isActive() ? selectedIcon : unselectedIcon, ContainerAnimations.NONE);
+        FXUtils.onChange(item.activeProperty(), active ->
+                leftGraphic.setContent(active ? selectedIcon : unselectedIcon, ContainerAnimations.FADE));
+
+        item.setLeftGraphic(leftGraphic);
         return add(item);
     }
 

@@ -26,7 +26,7 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -48,20 +48,17 @@ public final class Profiles {
     }
 
     public static String getProfileDisplayName(Profile profile) {
-        switch (profile.getName()) {
-            case Profiles.DEFAULT_PROFILE:
-                return i18n("profile.default");
-            case Profiles.HOME_PROFILE:
-                return i18n("profile.home");
-            default:
-                return profile.getName();
-        }
+        return switch (profile.getName()) {
+            case Profiles.DEFAULT_PROFILE -> i18n("profile.default");
+            case Profiles.HOME_PROFILE -> i18n("profile.home");
+            default -> profile.getName();
+        };
     }
 
     private static final ObservableList<Profile> profiles = observableArrayList(profile -> new Observable[] { profile });
     private static final ReadOnlyListWrapper<Profile> profilesWrapper = new ReadOnlyListWrapper<>(profiles);
 
-    private static ObjectProperty<Profile> selectedProfile = new SimpleObjectProperty<Profile>() {
+    private static final ObjectProperty<Profile> selectedProfile = new SimpleObjectProperty<Profile>() {
         {
             profiles.addListener(onInvalidating(this::invalidated));
         }
@@ -104,8 +101,8 @@ public final class Profiles {
 
     private static void checkProfiles() {
         if (profiles.isEmpty()) {
-            Profile current = new Profile(Profiles.DEFAULT_PROFILE, new File(".minecraft"), new VersionSetting(), null, true);
-            Profile home = new Profile(Profiles.HOME_PROFILE, Metadata.MINECRAFT_DIRECTORY.toFile());
+            Profile current = new Profile(Profiles.DEFAULT_PROFILE, Path.of(".minecraft"), new VersionSetting(), null, true);
+            Profile home = new Profile(Profiles.HOME_PROFILE, Metadata.MINECRAFT_DIRECTORY);
             Platform.runLater(() -> profiles.addAll(current, home));
         }
     }

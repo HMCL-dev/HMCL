@@ -41,13 +41,14 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogController;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.skin.InvalidSkinException;
 import org.jackhuang.hmcl.util.skin.NormalizedSkin;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
@@ -116,8 +117,7 @@ public class AccountListItem extends RadioButton {
     }
 
     public ObservableBooleanValue canUploadSkin() {
-        if (account instanceof AuthlibInjectorAccount) {
-            AuthlibInjectorAccount aiAccount = (AuthlibInjectorAccount) account;
+        if (account instanceof AuthlibInjectorAccount aiAccount) {
             ObjectBinding<Optional<CompleteGameProfile>> profile = aiAccount.getYggdrasilService().getProfileRepository().binding(aiAccount.getUUID());
             return createBooleanBinding(() -> {
                 Set<TextureType> uploadableTextures = profile.get()
@@ -148,7 +148,7 @@ public class AccountListItem extends RadioButton {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("account.skin.upload"));
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("account.skin.file"), "*.png"));
-        File selectedFile = chooser.showOpenDialog(Controllers.getStage());
+        Path selectedFile = FileUtils.toPath(chooser.showOpenDialog(Controllers.getStage()));
         if (selectedFile == null) {
             return null;
         }
@@ -156,7 +156,7 @@ public class AccountListItem extends RadioButton {
         return refreshAsync()
                 .thenRunAsync(() -> {
                     Image skinImg;
-                    try (FileInputStream input = new FileInputStream(selectedFile)) {
+                    try (var input = Files.newInputStream(selectedFile)) {
                         skinImg = new Image(input);
                     } catch (IOException e) {
                         throw new InvalidSkinException("Failed to read skin image", e);
@@ -167,7 +167,7 @@ public class AccountListItem extends RadioButton {
                     NormalizedSkin skin = new NormalizedSkin(skinImg);
                     String model = skin.isSlim() ? "slim" : "";
                     LOG.info("Uploading skin [" + selectedFile + "], model [" + model + "]");
-                    account.uploadSkin(skin.isSlim(), selectedFile.toPath());
+                    account.uploadSkin(skin.isSlim(), selectedFile);
                 })
                 .thenComposeAsync(refreshAsync())
                 .whenComplete(Schedulers.javafx(), e -> {

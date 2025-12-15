@@ -18,61 +18,103 @@
 package org.jackhuang.hmcl.task;
 
 import javafx.application.Platform;
+import org.jackhuang.hmcl.util.Lang;
+import org.jetbrains.annotations.Nullable;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.util.concurrent.*;
+import java.util.function.Function;
 
-import static org.jackhuang.hmcl.util.Lang.threadPool;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-/**
- *
- * @author huangyuhui
- */
+/// @author huangyuhui
 public final class Schedulers {
 
     private Schedulers() {
     }
 
-    private static volatile ExecutorService IO_EXECUTOR;
+    private static final @Nullable Function<String, ExecutorService> NEW_VIRTUAL_THREAD_PER_TASK_EXECUTOR;
 
-    /**
-     * Get singleton instance of the thread pool for I/O operations,
-     * usually for reading files from disk, or Internet connections.
-     *
-     * This thread pool has no more than 4 threads, and number of threads will get
-     * reduced if concurrency is less than thread number.
-     *
-     * @return Thread pool for I/O operations.
-     */
-    public static ExecutorService io() {
-        if (IO_EXECUTOR == null) {
-            synchronized (Schedulers.class) {
-                if (IO_EXECUTOR == null) {
-                    IO_EXECUTOR = threadPool("IO", true, 4, 10, TimeUnit.SECONDS);
-                }
+    static {
+        if (Runtime.version().feature() >= 21) {
+            try {
+                MethodHandles.Lookup lookup = MethodHandles.publicLookup();
+
+                Class<?> vtBuilderCls = Class.forName("java.lang.Thread$Builder$OfVirtual");
+
+                MethodHandle ofVirtualHandle = lookup.findStatic(Thread.class, "ofVirtual", MethodType.methodType(vtBuilderCls));
+                MethodHandle setNameHandle = lookup.findVirtual(vtBuilderCls, "name", MethodType.methodType(vtBuilderCls, String.class, long.class));
+                MethodHandle toFactoryHandle = lookup.findVirtual(vtBuilderCls, "factory", MethodType.methodType(ThreadFactory.class));
+                MethodHandle newThreadPerTaskExecutorFactory = lookup.findStatic(Executors.class, "newThreadPerTaskExecutor", MethodType.methodType(ExecutorService.class, ThreadFactory.class));
+
+                NEW_VIRTUAL_THREAD_PER_TASK_EXECUTOR = name -> {
+                    try {
+                        Object virtualThreadBuilder = ofVirtualHandle.invoke();
+                        setNameHandle.invoke(virtualThreadBuilder, name, 1L);
+                        ThreadFactory threadFactory = (ThreadFactory) toFactoryHandle.invoke(virtualThreadBuilder);
+
+                        return (ExecutorService) newThreadPerTaskExecutorFactory.invokeExact(threadFactory);
+                    } catch (Throwable e) {
+                        throw new AssertionError("Unreachable", e);
+                    }
+                };
+            } catch (Throwable e) {
+                throw new AssertionError("Unreachable", e);
             }
+        } else {
+            NEW_VIRTUAL_THREAD_PER_TASK_EXECUTOR = null;
+        }
+    }
+
+    /// @return Returns null if the Java version is below 21, otherwise always returns a non-null value.
+    public static ExecutorService newVirtualThreadPerTaskExecutor(String name) {
+        if (NEW_VIRTUAL_THREAD_PER_TASK_EXECUTOR == null) {
+            return null;
         }
 
-        return IO_EXECUTOR;
+        return NEW_VIRTUAL_THREAD_PER_TASK_EXECUTOR.apply(name);
+    }
+
+    /// This thread pool is suitable for network and local I/O operations.
+    ///
+    /// For Java 21 or later, all tasks will be dispatched to virtual threads.
+    ///
+    /// @return Thread pool for I/O operations.
+    public static ExecutorService io() {
+        return Holder.IO_EXECUTOR;
     }
 
     public static Executor javafx() {
         return Platform::runLater;
     }
 
+    /// Default thread pool, equivalent to [ForkJoinPool#commonPool()].
+    ///
+    /// It is recommended to perform computation tasks on this thread pool. For I/O operations, please use [#io()].
     public static Executor defaultScheduler() {
         return ForkJoinPool.commonPool();
     }
 
-    public static synchronized void shutdown() {
+    public static void shutdown() {
         LOG.info("Shutting down executor services.");
 
         // shutdownNow will interrupt all threads.
         // So when we want to close the app, no threads need to be waited for finish.
         // Sometimes it resolves the problem that the app does not exit.
+    }
 
-        if (IO_EXECUTOR != null)
-            IO_EXECUTOR.shutdownNow();
+    private static final class Holder {
+        private static final ExecutorService IO_EXECUTOR;
+
+        static {
+            //noinspection resource
+            ExecutorService vtExecutor = newVirtualThreadPerTaskExecutor("IO");
+            IO_EXECUTOR = vtExecutor != null
+                    ? vtExecutor
+                    : Executors.newCachedThreadPool(Lang.counterThreadFactory("IO", true));
+        }
     }
 
 }

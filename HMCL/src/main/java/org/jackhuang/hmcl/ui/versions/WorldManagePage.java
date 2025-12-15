@@ -28,13 +28,11 @@ import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.ChunkBaseApp;
-import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
@@ -65,22 +63,14 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         this.world = world;
         this.backupsDir = backupsDir;
 
+        this.worldInfoTab.setNodeSupplier(() -> new WorldInfoPage(this));
+        this.worldBackupsTab.setNodeSupplier(() -> new WorldBackupsPage(this));
+        this.datapackTab.setNodeSupplier(() -> new DatapackListPage(this));
+
         this.state = new SimpleObjectProperty<>(State.fromTitle(i18n("world.manage.title", world.getWorldName())));
-        this.header = new TabHeader(worldInfoTab, worldBackupsTab);
-
-        if (world.getGameVersion() != null && // old game will not write game version to level.dat
-                GameVersionNumber.compare(world.getGameVersion(), "1.13") >= 0) {
-            header.getTabs().add(datapackTab);
-        }
-
-        worldInfoTab.setNodeSupplier(() -> new WorldInfoPage(this));
-        worldBackupsTab.setNodeSupplier(() -> new WorldBackupsPage(this));
-        datapackTab.setNodeSupplier(() -> new DatapackListPage(this));
-
+        this.header = new TabHeader(transitionPane, worldInfoTab, worldBackupsTab);
         header.select(worldInfoTab);
-        transitionPane.setContent(worldInfoTab.getNode(), ContainerAnimations.NONE);
-        FXUtils.onChange(header.getSelectionModel().selectedItemProperty(), newValue ->
-                transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE));
+
         setCenter(transitionPane);
 
         BorderPane left = new BorderPane();
@@ -89,9 +79,15 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         setLeft(left);
 
         AdvancedListBox sideBar = new AdvancedListBox()
-                .addNavigationDrawerTab(header, worldInfoTab, i18n("world.info"), SVG.INFO)
-                .addNavigationDrawerTab(header, worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE)
-                .addNavigationDrawerTab(header, datapackTab, i18n("world.datapack"), SVG.EXTENSION);
+                .addNavigationDrawerTab(header, worldInfoTab, i18n("world.info"), SVG.INFO, SVG.INFO_FILL)
+                .addNavigationDrawerTab(header, worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE, SVG.ARCHIVE_FILL);
+
+        if (world.getGameVersion() != null && // old game will not write game version to level.dat
+                world.getGameVersion().isAtLeast("1.13", "17w43a")) {
+            header.getTabs().add(datapackTab);
+            sideBar.addNavigationDrawerTab(header, datapackTab, i18n("world.datapack"), SVG.EXTENSION, SVG.EXTENSION_FILL);
+        }
+
         left.setTop(sideBar);
 
         AdvancedListBox toolbar = new AdvancedListBox();
@@ -105,7 +101,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                     new IconedMenuItem(SVG.FORT, i18n("world.chunkbase.nether_fortress"), () -> ChunkBaseApp.openNetherFortressFinder(world), popup)
             );
 
-            if (GameVersionNumber.compare(world.getGameVersion(), "1.13") >= 0) {
+            if (world.getGameVersion() != null && world.getGameVersion().compareTo("1.13") >= 0) {
                 popupMenu.getContent().add(
                         new IconedMenuItem(SVG.LOCATION_CITY, i18n("world.chunkbase.end_city"), () -> ChunkBaseApp.openEndCityFinder(world), popup));
             }
@@ -116,7 +112,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                                     JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT,
                                     chunkBaseMenuItem.getWidth(), 0)));
         }
-        toolbar.addNavigationDrawerItem(i18n("settings.game.exploration"), SVG.FOLDER_OPEN, () -> FXUtils.openFolder(world.getFile().toFile()), null);
+        toolbar.addNavigationDrawerItem(i18n("settings.game.exploration"), SVG.FOLDER_OPEN, () -> FXUtils.openFolder(world.getFile()), null);
 
         BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
         left.setBottom(toolbar);

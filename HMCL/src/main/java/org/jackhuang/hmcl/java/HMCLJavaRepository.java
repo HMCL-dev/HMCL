@@ -207,7 +207,7 @@ public final class HMCLJavaRepository implements JavaRepository {
     public Task<Void> getUninstallJavaTask(Platform platform, String name) {
         return Task.runAsync(() -> {
             Files.deleteIfExists(getManifestFile(platform, name));
-            FileUtils.deleteDirectory(getJavaDir(platform, name).toFile());
+            FileUtils.deleteDirectory(getJavaDir(platform, name));
         });
     }
 
@@ -220,7 +220,7 @@ public final class HMCLJavaRepository implements JavaRepository {
             if (relativized.getNameCount() > 1) {
                 String name = relativized.getName(0).toString();
                 Files.deleteIfExists(getManifestFile(java.getPlatform(), name));
-                FileUtils.deleteDirectory(getJavaDir(java.getPlatform(), name).toFile());
+                FileUtils.deleteDirectory(getJavaDir(java.getPlatform(), name));
             }
         });
     }

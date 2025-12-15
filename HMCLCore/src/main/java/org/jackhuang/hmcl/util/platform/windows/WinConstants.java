@@ -96,4 +96,8 @@ public interface WinConstants {
     int RelationNumaNodeEx = 6;
     int RelationProcessorModule = 7;
     int RelationAll = 0xffff;
+
+    // https://learn.microsoft.com/windows/win32/api/dwmapi/ne-dwmapi-dwmwindowattribute
+    int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
+
 }

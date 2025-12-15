@@ -26,7 +26,6 @@ import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
@@ -46,11 +45,11 @@ public final class McbbsModpackProvider implements ModpackProvider {
     }
 
     @Override
-    public Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, String name, File zipFile, Modpack modpack) throws MismatchedModpackTypeException {
-        if (!(modpack.getManifest() instanceof McbbsModpackManifest))
+    public Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, String name, Path zipFile, Modpack modpack) throws MismatchedModpackTypeException {
+        if (!(modpack.getManifest() instanceof McbbsModpackManifest mcbbsModpackManifest))
             throw new MismatchedModpackTypeException(getName(), modpack.getManifest().getProvider().getName());
 
-        return new ModpackUpdateTask(dependencyManager.getGameRepository(), name, new McbbsModpackLocalInstallTask(dependencyManager, zipFile, modpack, (McbbsModpackManifest) modpack.getManifest(), name));
+        return new ModpackUpdateTask(dependencyManager.getGameRepository(), name, new McbbsModpackLocalInstallTask(dependencyManager, zipFile, modpack, mcbbsModpackManifest, name));
     }
 
     @Override

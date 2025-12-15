@@ -25,7 +25,11 @@ import com.github.steveice10.opennbt.tag.builtin.Tag;
 import kala.compress.utils.BoundedInputStream;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;

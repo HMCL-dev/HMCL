@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.util.io;
 
 import org.jackhuang.hmcl.util.function.ExceptionalPredicate;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -151,6 +152,31 @@ public final class Zipper implements Closeable {
         zos.putNextEntry(new ZipEntry(normalize(path)));
         IOUtils.copyTo(in, zos, buffer);
         zos.closeEntry();
+    }
+
+    public OutputStream putStream(String path) throws IOException {
+        zos.putNextEntry(new ZipEntry(normalize(path)));
+        return new OutputStream() {
+            public void write(int b) throws IOException {
+                zos.write(b);
+            }
+
+            public void write(@NotNull byte[] b) throws IOException {
+                zos.write(b);
+            }
+
+            public void write(@NotNull byte[] b, int off, int len) throws IOException {
+                zos.write(b, off, len);
+            }
+
+            public void flush() throws IOException {
+                zos.flush();
+            }
+
+            public void close() throws IOException {
+                zos.closeEntry();
+            }
+        };
     }
 
     public void putLines(Stream<String> lines, String path) throws IOException {

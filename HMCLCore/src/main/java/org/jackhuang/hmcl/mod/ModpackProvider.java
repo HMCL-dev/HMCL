@@ -23,7 +23,6 @@ import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.task.Task;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
@@ -34,7 +33,7 @@ public interface ModpackProvider {
 
     Task<?> createCompletionTask(DefaultDependencyManager dependencyManager, String version);
 
-    Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, String name, File zipFile, Modpack modpack) throws MismatchedModpackTypeException;
+    Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, String name, Path zipFile, Modpack modpack) throws MismatchedModpackTypeException;
 
     /**
      * @param zipFile the opened modpack zip file.

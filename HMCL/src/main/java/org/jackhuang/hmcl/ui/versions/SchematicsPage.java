@@ -33,7 +33,6 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.schematic.LitematicFile;
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
@@ -42,18 +41,15 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -77,8 +73,8 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
     public SchematicsPage() {
         FXUtils.applyDragListener(this,
-                file -> currentDirectory != null && file.isFile() && file.getName().endsWith(".litematic"),
-                files -> addFiles(files.stream().map(File::toPath).collect(Collectors.toList()))
+                file -> currentDirectory != null && Files.isRegularFile(file) && FileUtils.getName(file).endsWith(".litematic"),
+                this::addFiles
         );
     }
 
@@ -150,9 +146,9 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         fileChooser.setTitle(i18n("schematics.add"));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(
                 i18n("schematics"), "*.litematic"));
-        List<File> files = fileChooser.showOpenMultipleDialog(Controllers.getStage());
+        List<Path> files = FileUtils.toPaths(fileChooser.showOpenMultipleDialog(Controllers.getStage()));
         if (files != null && !files.isEmpty()) {
-            addFiles(files.stream().map(File::toPath).collect(Collectors.toList()));
+            addFiles(files);
         }
     }
 
@@ -170,7 +166,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                         return;
                     }
 
-                    if (result.contains("/") || result.contains("\\") || !OperatingSystem.isNameValid(result)) {
+                    if (result.contains("/") || result.contains("\\") || !FileUtils.isNameValid(result)) {
                         reject.accept(i18n("schematics.create_directory.failed.invalid_name"));
                         return;
                     }
@@ -243,7 +239,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             StackPane icon = new StackPane();
             icon.setPrefSize(size, size);
             icon.setMaxSize(size, size);
-            icon.getChildren().add(getIcon().createIcon(Theme.blackFill(), size));
+            icon.getChildren().add(getIcon().createIcon(size));
             return icon;
         }
 
@@ -368,13 +364,13 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
         @Override
         void onReveal() {
-            FXUtils.openFolder(path.toFile());
+            FXUtils.openFolder(path);
         }
 
         @Override
         void onDelete() {
             try {
-                FileUtils.cleanDirectory(path.toFile());
+                FileUtils.cleanDirectory(path);
                 Files.deleteIfExists(path);
                 refresh();
             } catch (IOException e) {
@@ -583,12 +579,12 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 JFXButton btnReveal = new JFXButton();
                 FXUtils.installFastTooltip(btnReveal, i18n("reveal.in_file_manager"));
                 btnReveal.getStyleClass().add("toggle-icon4");
-                btnReveal.setGraphic(SVG.FOLDER_OPEN.createIcon(Theme.blackFill(), -1));
+                btnReveal.setGraphic(SVG.FOLDER_OPEN.createIcon());
                 btnReveal.setOnAction(event -> item.onReveal());
 
                 JFXButton btnDelete = new JFXButton();
                 btnDelete.getStyleClass().add("toggle-icon4");
-                btnDelete.setGraphic(SVG.DELETE_FOREVER.createIcon(Theme.blackFill(), -1));
+                btnDelete.setGraphic(SVG.DELETE_FOREVER.createIcon());
                 btnDelete.setOnAction(event ->
                         Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"),
                                 item::onDelete, null));

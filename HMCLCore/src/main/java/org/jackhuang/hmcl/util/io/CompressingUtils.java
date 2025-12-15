@@ -22,7 +22,6 @@ import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
@@ -237,8 +236,8 @@ public final class CompressingUtils {
      * @return the plain text content of given file.
      * @throws IOException if the file is not a valid zip file.
      */
-    public static String readTextZipEntry(File zipFile, String name) throws IOException {
-        try (ZipArchiveReader s = new ZipArchiveReader(zipFile.toPath())) {
+    public static String readTextZipEntry(Path zipFile, String name) throws IOException {
+        try (ZipArchiveReader s = new ZipArchiveReader(zipFile)) {
             return readTextZipEntry(s, name);
         }
     }
@@ -266,21 +265,6 @@ public final class CompressingUtils {
     public static String readTextZipEntry(Path zipFile, String name, Charset encoding) throws IOException {
         try (ZipArchiveReader s = openZipFile(zipFile, encoding)) {
             return IOUtils.readFullyAsString(s.getInputStream(s.getEntry(name)));
-        }
-    }
-
-    /**
-     * Read the text content of a file in zip.
-     *
-     * @param file the zip file
-     * @param name the location of the text in zip file, something like A/B/C/D.txt
-     * @return the plain text content of given file.
-     */
-    public static Optional<String> readTextZipEntryQuietly(File file, String name) {
-        try {
-            return Optional.of(readTextZipEntry(file, name));
-        } catch (IOException | NullPointerException e) {
-            return Optional.empty();
         }
     }
 

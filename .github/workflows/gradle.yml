@@ -19,16 +19,36 @@ jobs:
         distribution: 'zulu'
         java-version: '17'
         java-package: 'jdk+fx'
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v5
+      with:
+        cache-cleanup: never
     - name: Build with Gradle
-      run: ./gradlew build --no-daemon
+      run: ./gradlew build --no-daemon --parallel
       env:
         MICROSOFT_AUTH_ID: ${{ secrets.MICROSOFT_AUTH_ID }}
         MICROSOFT_AUTH_SECRET: ${{ secrets.MICROSOFT_AUTH_SECRET }}
         CURSEFORGE_API_KEY: ${{ secrets.CURSEFORGE_API_KEY }}
     - name: Get short SHA
       run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
-    - name: Upload Artifacts
+    - name: Upload JAR
       uses: actions/upload-artifact@v4
       with:
-        name: HMCL-${{ env.SHORT_SHA }}
-        path: HMCL/build/libs
+        name: HMCL-${{ env.SHORT_SHA }}-jar
+        path: |
+          HMCL/build/libs/HMCL-*.jar
+          HMCL/build/libs/HMCL-*.jar.sha256
+    - name: Upload EXE
+      uses: actions/upload-artifact@v4
+      with:
+        name: HMCL-${{ env.SHORT_SHA }}-exe
+        path: |
+          HMCL/build/libs/HMCL-*.exe
+          HMCL/build/libs/HMCL-*.exe.sha256
+    - name: Upload SH
+      uses: actions/upload-artifact@v4
+      with:
+        name: HMCL-${{ env.SHORT_SHA }}-sh
+        path: |
+          HMCL/build/libs/HMCL-*.sh
+          HMCL/build/libs/HMCL-*.sh.sha256

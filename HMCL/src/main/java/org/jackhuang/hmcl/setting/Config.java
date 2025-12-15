@@ -17,12 +17,9 @@
  */
 package org.jackhuang.hmcl.setting;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonParseException;
-import com.google.gson.ToNumberPolicy;
+import com.google.gson.*;
+import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
-import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
@@ -36,26 +33,25 @@ import org.hildan.fxgson.creators.ObservableSetCreator;
 import org.hildan.fxgson.factories.JavaFxPropertyTypeAdapterFactory;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
-import org.jackhuang.hmcl.util.gson.EnumOrdinalDeserializer;
-import org.jackhuang.hmcl.util.gson.FileTypeAdapter;
-import org.jackhuang.hmcl.util.gson.PaintAdapter;
-import org.jackhuang.hmcl.util.i18n.Locales;
-import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
-import org.jackhuang.hmcl.util.javafx.ObservableHelper;
-import org.jackhuang.hmcl.util.javafx.PropertyUtils;
+import org.jackhuang.hmcl.java.JavaRuntime;
+import org.jackhuang.hmcl.theme.ThemeColor;
+import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.gson.*;
+import org.jackhuang.hmcl.util.i18n.SupportedLocale;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.net.Proxy;
-import java.util.Map;
-import java.util.TreeMap;
+import java.nio.file.Path;
+import java.util.*;
 
-public final class Config implements Observable {
+@JsonAdapter(value = Config.Adapter.class)
+public final class Config extends ObservableSetting {
 
+    public static final int CURRENT_VERSION = 2;
     public static final int CURRENT_UI_VERSION = 0;
 
     public static final Gson CONFIG_GSON = new GsonBuilder()
-            .registerTypeAdapter(File.class, FileTypeAdapter.INSTANCE)
+            .registerTypeAdapter(Path.class, PathTypeAdapter.INSTANCE)
             .registerTypeAdapter(ObservableList.class, new ObservableListCreator())
             .registerTypeAdapter(ObservableSet.class, new ObservableSetCreator())
             .registerTypeAdapter(ObservableMap.class, new ObservableMapCreator())
@@ -69,131 +65,35 @@ public final class Config implements Observable {
 
     @Nullable
     public static Config fromJson(String json) throws JsonParseException {
-        Config loaded = CONFIG_GSON.fromJson(json, Config.class);
-        if (loaded == null) {
-            return null;
-        }
-        Config instance = new Config();
-        PropertyUtils.copyProperties(loaded, instance);
-        return instance;
+        return CONFIG_GSON.fromJson(json, Config.class);
     }
 
-    @SerializedName("last")
-    private StringProperty selectedProfile = new SimpleStringProperty("");
+    public Config() {
+        tracker.markDirty(configVersion);
+        tracker.markDirty(uiVersion);
+        register();
+    }
 
-    @SerializedName("backgroundType")
-    private ObjectProperty<EnumBackgroundImage> backgroundImageType = new SimpleObjectProperty<>(EnumBackgroundImage.DEFAULT);
+    public String toJson() {
+        return CONFIG_GSON.toJson(this);
+    }
 
-    @SerializedName("bgpath")
-    private StringProperty backgroundImage = new SimpleStringProperty();
-
-    @SerializedName("bgurl")
-    private StringProperty backgroundImageUrl = new SimpleStringProperty();
-
-    @SerializedName("bgImageOpacity")
-    private IntegerProperty backgroundImageOpacity = new SimpleIntegerProperty(100);
-
-    @SerializedName("bgpaint")
-    private ObjectProperty<Paint> backgroundPaint = new SimpleObjectProperty<>();
-
-    @SerializedName("commonDirType")
-    private ObjectProperty<EnumCommonDirectory> commonDirType = new SimpleObjectProperty<>(EnumCommonDirectory.DEFAULT);
-
-    @SerializedName("commonpath")
-    private StringProperty commonDirectory = new SimpleStringProperty(Metadata.MINECRAFT_DIRECTORY.toString());
-
-    @SerializedName("hasProxy")
-    private BooleanProperty hasProxy = new SimpleBooleanProperty();
-
-    @SerializedName("hasProxyAuth")
-    private BooleanProperty hasProxyAuth = new SimpleBooleanProperty();
-
-    @SerializedName("proxyType")
-    private ObjectProperty<Proxy.Type> proxyType = new SimpleObjectProperty<>(Proxy.Type.HTTP);
-
-    @SerializedName("proxyHost")
-    private StringProperty proxyHost = new SimpleStringProperty();
-
-    @SerializedName("proxyPort")
-    private IntegerProperty proxyPort = new SimpleIntegerProperty();
-
-    @SerializedName("proxyUserName")
-    private StringProperty proxyUser = new SimpleStringProperty();
-
-    @SerializedName("proxyPassword")
-    private StringProperty proxyPass = new SimpleStringProperty();
-
-    @SerializedName("x")
-    private DoubleProperty x = new SimpleDoubleProperty();
-
-    @SerializedName("y")
-    private DoubleProperty y = new SimpleDoubleProperty();
-
-    @SerializedName("width")
-    private DoubleProperty width = new SimpleDoubleProperty();
-
-    @SerializedName("height")
-    private DoubleProperty height = new SimpleDoubleProperty();
-
-    @SerializedName("theme")
-    private ObjectProperty<Theme> theme = new SimpleObjectProperty<>();
-
-    @SerializedName("localization")
-    private ObjectProperty<SupportedLocale> localization = new SimpleObjectProperty<>(Locales.DEFAULT);
-
-    @SerializedName("autoDownloadThreads")
-    private BooleanProperty autoDownloadThreads = new SimpleBooleanProperty(true);
-
-    @SerializedName("downloadThreads")
-    private IntegerProperty downloadThreads = new SimpleIntegerProperty(64);
-
-    @SerializedName("downloadType")
-    private StringProperty downloadType = new SimpleStringProperty(DownloadProviders.DEFAULT_RAW_PROVIDER_ID);
-
-    @SerializedName("autoChooseDownloadType")
-    private BooleanProperty autoChooseDownloadType = new SimpleBooleanProperty(true);
-
-    @SerializedName("versionListSource")
-    private StringProperty versionListSource = new SimpleStringProperty("balanced");
-
-    @SerializedName("configurations")
-    private SimpleMapProperty<String, Profile> configurations = new SimpleMapProperty<>(FXCollections.observableMap(new TreeMap<>()));
-
-    @SerializedName("selectedAccount")
-    private StringProperty selectedAccount = new SimpleStringProperty();
-
-    @SerializedName("accounts")
-    private ObservableList<Map<Object, Object>> accountStorages = FXCollections.observableArrayList();
-
-    @SerializedName("fontFamily")
-    private StringProperty fontFamily = new SimpleStringProperty();
-
-    @SerializedName("fontSize")
-    private DoubleProperty fontSize = new SimpleDoubleProperty(12);
-
-    @SerializedName("launcherFontFamily")
-    private StringProperty launcherFontFamily = new SimpleStringProperty();
-
-    @SerializedName("logLines")
-    private ObjectProperty<Integer> logLines = new SimpleObjectProperty<>();
-
-    @SerializedName("titleTransparent")
-    private BooleanProperty titleTransparent = new SimpleBooleanProperty(false);
-
-    @SerializedName("authlibInjectorServers")
-    private ObservableList<AuthlibInjectorServer> authlibInjectorServers = FXCollections.observableArrayList(server -> new Observable[]{server});
-
-    @SerializedName("addedLittleSkin")
-    private BooleanProperty addedLittleSkin = new SimpleBooleanProperty(false);
-
-    @SerializedName("disableAutoGameOptions")
-    private BooleanProperty disableAutoGameOptions = new SimpleBooleanProperty(false);
-
-    @SerializedName("promptedVersion")
-    private StringProperty promptedVersion = new SimpleStringProperty();
+    // Properties
 
     @SerializedName("_version")
-    private IntegerProperty configVersion = new SimpleIntegerProperty(0);
+    private final IntegerProperty configVersion = new SimpleIntegerProperty(CURRENT_VERSION);
+
+    public IntegerProperty configVersionProperty() {
+        return configVersion;
+    }
+
+    public int getConfigVersion() {
+        return configVersion.get();
+    }
+
+    public void setConfigVersion(int configVersion) {
+        this.configVersion.set(configVersion);
+    }
 
     /**
      * The version of UI that the user have last used.
@@ -203,279 +103,85 @@ public final class Config implements Observable {
      * In particular, the property is default to 0, so that whoever open the application for the first time will see the guide.
      */
     @SerializedName("uiVersion")
-    private IntegerProperty uiVersion = new SimpleIntegerProperty(0);
+    private final IntegerProperty uiVersion = new SimpleIntegerProperty(CURRENT_UI_VERSION);
 
-    /**
-     * The preferred login type to use when the user wants to add an account.
-     */
-    @SerializedName("preferredLoginType")
-    private StringProperty preferredLoginType = new SimpleStringProperty();
-
-    @SerializedName("animationDisabled")
-    private BooleanProperty animationDisabled = new SimpleBooleanProperty();
-
-    @SerializedName("shownTips")
-    private ObservableMap<String, Object> shownTips = FXCollections.observableHashMap();
-
-    private transient ObservableHelper helper = new ObservableHelper(this);
-
-    public Config() {
-        PropertyUtils.attachListener(this, helper);
+    public IntegerProperty uiVersionProperty() {
+        return uiVersion;
     }
 
-    @Override
-    public void addListener(InvalidationListener listener) {
-        helper.addListener(listener);
+    public int getUiVersion() {
+        return uiVersion.get();
     }
 
-    @Override
-    public void removeListener(InvalidationListener listener) {
-        helper.removeListener(listener);
+    public void setUiVersion(int uiVersion) {
+        this.uiVersion.set(uiVersion);
     }
 
-    public String toJson() {
-        return CONFIG_GSON.toJson(this);
-    }
+    @SerializedName("x")
+    private final DoubleProperty x = new SimpleDoubleProperty();
 
-    // Getters & Setters & Properties
-    public String getSelectedProfile() {
-        return selectedProfile.get();
-    }
-
-    public void setSelectedProfile(String selectedProfile) {
-        this.selectedProfile.set(selectedProfile);
-    }
-
-    public StringProperty selectedProfileProperty() {
-        return selectedProfile;
-    }
-
-    public EnumBackgroundImage getBackgroundImageType() {
-        return backgroundImageType.get();
-    }
-
-    public void setBackgroundImageType(EnumBackgroundImage backgroundImageType) {
-        this.backgroundImageType.set(backgroundImageType);
-    }
-
-    public ObjectProperty<EnumBackgroundImage> backgroundImageTypeProperty() {
-        return backgroundImageType;
-    }
-
-    public String getBackgroundImage() {
-        return backgroundImage.get();
-    }
-
-    public void setBackgroundImage(String backgroundImage) {
-        this.backgroundImage.set(backgroundImage);
-    }
-
-    public StringProperty backgroundImageProperty() {
-        return backgroundImage;
-    }
-
-    public String getBackgroundImageUrl() {
-        return backgroundImageUrl.get();
-    }
-
-    public StringProperty backgroundImageUrlProperty() {
-        return backgroundImageUrl;
-    }
-
-    public void setBackgroundImageUrl(String backgroundImageUrl) {
-        this.backgroundImageUrl.set(backgroundImageUrl);
-    }
-
-    public Paint getBackgroundPaint() {
-        return backgroundPaint.get();
-    }
-
-    public ObjectProperty<Paint> backgroundPaintProperty() {
-        return backgroundPaint;
-    }
-
-    public void setBackgroundPaint(Paint backgroundPaint) {
-        this.backgroundPaint.set(backgroundPaint);
-    }
-
-    public int getBackgroundImageOpacity() {
-        return backgroundImageOpacity.get();
-    }
-
-    public void setBackgroundImageOpacity(int backgroundImageOpacity) {
-        this.backgroundImageOpacity.set(backgroundImageOpacity);
-    }
-
-    public IntegerProperty backgroundImageOpacityProperty() {
-        return backgroundImageOpacity;
-    }
-
-    public EnumCommonDirectory getCommonDirType() {
-        return commonDirType.get();
-    }
-
-    public ObjectProperty<EnumCommonDirectory> commonDirTypeProperty() {
-        return commonDirType;
-    }
-
-    public void setCommonDirType(EnumCommonDirectory commonDirType) {
-        this.commonDirType.set(commonDirType);
-    }
-
-    public String getCommonDirectory() {
-        return commonDirectory.get();
-    }
-
-    public void setCommonDirectory(String commonDirectory) {
-        this.commonDirectory.set(commonDirectory);
-    }
-
-    public StringProperty commonDirectoryProperty() {
-        return commonDirectory;
-    }
-
-    public boolean hasProxy() {
-        return hasProxy.get();
-    }
-
-    public void setHasProxy(boolean hasProxy) {
-        this.hasProxy.set(hasProxy);
-    }
-
-    public BooleanProperty hasProxyProperty() {
-        return hasProxy;
-    }
-
-    public boolean hasProxyAuth() {
-        return hasProxyAuth.get();
-    }
-
-    public void setHasProxyAuth(boolean hasProxyAuth) {
-        this.hasProxyAuth.set(hasProxyAuth);
-    }
-
-    public BooleanProperty hasProxyAuthProperty() {
-        return hasProxyAuth;
-    }
-
-    public Proxy.Type getProxyType() {
-        return proxyType.get();
-    }
-
-    public void setProxyType(Proxy.Type proxyType) {
-        this.proxyType.set(proxyType);
-    }
-
-    public ObjectProperty<Proxy.Type> proxyTypeProperty() {
-        return proxyType;
-    }
-
-    public String getProxyHost() {
-        return proxyHost.get();
-    }
-
-    public void setProxyHost(String proxyHost) {
-        this.proxyHost.set(proxyHost);
-    }
-
-    public StringProperty proxyHostProperty() {
-        return proxyHost;
-    }
-
-    public int getProxyPort() {
-        return proxyPort.get();
-    }
-
-    public void setProxyPort(int proxyPort) {
-        this.proxyPort.set(proxyPort);
-    }
-
-    public IntegerProperty proxyPortProperty() {
-        return proxyPort;
-    }
-
-    public String getProxyUser() {
-        return proxyUser.get();
-    }
-
-    public void setProxyUser(String proxyUser) {
-        this.proxyUser.set(proxyUser);
-    }
-
-    public StringProperty proxyUserProperty() {
-        return proxyUser;
-    }
-
-    public String getProxyPass() {
-        return proxyPass.get();
-    }
-
-    public void setProxyPass(String proxyPass) {
-        this.proxyPass.set(proxyPass);
-    }
-
-    public StringProperty proxyPassProperty() {
-        return proxyPass;
+    public DoubleProperty xProperty() {
+        return x;
     }
 
     public double getX() {
         return x.get();
     }
 
-    public DoubleProperty xProperty() {
-        return x;
-    }
-
     public void setX(double x) {
         this.x.set(x);
+    }
+
+    @SerializedName("y")
+    private final DoubleProperty y = new SimpleDoubleProperty();
+
+    public DoubleProperty yProperty() {
+        return y;
     }
 
     public double getY() {
         return y.get();
     }
 
-    public DoubleProperty yProperty() {
-        return y;
-    }
-
     public void setY(double y) {
         this.y.set(y);
+    }
+
+    @SerializedName("width")
+    private final DoubleProperty width = new SimpleDoubleProperty();
+
+    public DoubleProperty widthProperty() {
+        return width;
     }
 
     public double getWidth() {
         return width.get();
     }
 
-    public DoubleProperty widthProperty() {
-        return width;
-    }
-
     public void setWidth(double width) {
         this.width.set(width);
+    }
+
+    @SerializedName("height")
+    private final DoubleProperty height = new SimpleDoubleProperty();
+
+    public DoubleProperty heightProperty() {
+        return height;
     }
 
     public double getHeight() {
         return height.get();
     }
 
-    public DoubleProperty heightProperty() {
-        return height;
-    }
-
     public void setHeight(double height) {
         this.height.set(height);
     }
 
-    public Theme getTheme() {
-        return theme.get();
-    }
+    @SerializedName("localization")
+    private final ObjectProperty<SupportedLocale> localization = new SimpleObjectProperty<>(SupportedLocale.DEFAULT);
 
-    public void setTheme(Theme theme) {
-        this.theme.set(theme);
-    }
-
-    public ObjectProperty<Theme> themeProperty() {
-        return theme;
+    public ObjectProperty<SupportedLocale> localizationProperty() {
+        return localization;
     }
 
     public SupportedLocale getLocalization() {
@@ -486,225 +192,8 @@ public final class Config implements Observable {
         this.localization.set(localization);
     }
 
-    public ObjectProperty<SupportedLocale> localizationProperty() {
-        return localization;
-    }
-
-    public boolean getAutoDownloadThreads() {
-        return autoDownloadThreads.get();
-    }
-
-    public BooleanProperty autoDownloadThreadsProperty() {
-        return autoDownloadThreads;
-    }
-
-    public void setAutoDownloadThreads(boolean autoDownloadThreads) {
-        this.autoDownloadThreads.set(autoDownloadThreads);
-    }
-
-    public int getDownloadThreads() {
-        return downloadThreads.get();
-    }
-
-    public IntegerProperty downloadThreadsProperty() {
-        return downloadThreads;
-    }
-
-    public void setDownloadThreads(int downloadThreads) {
-        this.downloadThreads.set(downloadThreads);
-    }
-
-    public String getDownloadType() {
-        return downloadType.get();
-    }
-
-    public void setDownloadType(String downloadType) {
-        this.downloadType.set(downloadType);
-    }
-
-    public StringProperty downloadTypeProperty() {
-        return downloadType;
-    }
-
-    public boolean isAutoChooseDownloadType() {
-        return autoChooseDownloadType.get();
-    }
-
-    public BooleanProperty autoChooseDownloadTypeProperty() {
-        return autoChooseDownloadType;
-    }
-
-    public void setAutoChooseDownloadType(boolean autoChooseDownloadType) {
-        this.autoChooseDownloadType.set(autoChooseDownloadType);
-    }
-
-    public String getVersionListSource() {
-        return versionListSource.get();
-    }
-
-    public void setVersionListSource(String versionListSource) {
-        this.versionListSource.set(versionListSource);
-    }
-
-    public StringProperty versionListSourceProperty() {
-        return versionListSource;
-    }
-
-    public MapProperty<String, Profile> getConfigurations() {
-        return configurations;
-    }
-
-    public String getSelectedAccount() {
-        return selectedAccount.get();
-    }
-
-    public void setSelectedAccount(String selectedAccount) {
-        this.selectedAccount.set(selectedAccount);
-    }
-
-    public StringProperty selectedAccountProperty() {
-        return selectedAccount;
-    }
-
-    public ObservableList<Map<Object, Object>> getAccountStorages() {
-        return accountStorages;
-    }
-
-    public String getFontFamily() {
-        return fontFamily.get();
-    }
-
-    public void setFontFamily(String fontFamily) {
-        this.fontFamily.set(fontFamily);
-    }
-
-    public StringProperty fontFamilyProperty() {
-        return fontFamily;
-    }
-
-    public double getFontSize() {
-        return fontSize.get();
-    }
-
-    public void setFontSize(double fontSize) {
-        this.fontSize.set(fontSize);
-    }
-
-    public DoubleProperty fontSizeProperty() {
-        return fontSize;
-    }
-
-    public String getLauncherFontFamily() {
-        return launcherFontFamily.get();
-    }
-
-    public StringProperty launcherFontFamilyProperty() {
-        return launcherFontFamily;
-    }
-
-    public void setLauncherFontFamily(String launcherFontFamily) {
-        this.launcherFontFamily.set(launcherFontFamily);
-    }
-
-    public Integer getLogLines() {
-        return logLines.get();
-    }
-
-    public void setLogLines(Integer logLines) {
-        this.logLines.set(logLines);
-    }
-
-    public ObjectProperty<Integer> logLinesProperty() {
-        return logLines;
-    }
-
-    public ObservableList<AuthlibInjectorServer> getAuthlibInjectorServers() {
-        return authlibInjectorServers;
-    }
-
-    public boolean isAddedLittleSkin() {
-        return addedLittleSkin.get();
-    }
-
-    public BooleanProperty addedLittleSkinProperty() {
-        return addedLittleSkin;
-    }
-
-    public void setAddedLittleSkin(boolean addedLittleSkin) {
-        this.addedLittleSkin.set(addedLittleSkin);
-    }
-
-    public BooleanProperty disableAutoGameOptionsProperty() {
-        return disableAutoGameOptions;
-    }
-
-    public boolean isDisableAutoGameOptions() {
-        return disableAutoGameOptions.get();
-    }
-
-    public void setDisableAutoGameOptions(boolean disableAutoGameOptions) {
-        this.disableAutoGameOptions.set(disableAutoGameOptions);
-    }
-
-    public int getConfigVersion() {
-        return configVersion.get();
-    }
-
-    public IntegerProperty configVersionProperty() {
-        return configVersion;
-    }
-
-    public void setConfigVersion(int configVersion) {
-        this.configVersion.set(configVersion);
-    }
-
-    public int getUiVersion() {
-        return uiVersion.get();
-    }
-
-    public IntegerProperty uiVersionProperty() {
-        return uiVersion;
-    }
-
-    public void setUiVersion(int uiVersion) {
-        this.uiVersion.set(uiVersion);
-    }
-
-    public String getPreferredLoginType() {
-        return preferredLoginType.get();
-    }
-
-    public void setPreferredLoginType(String preferredLoginType) {
-        this.preferredLoginType.set(preferredLoginType);
-    }
-
-    public StringProperty preferredLoginTypeProperty() {
-        return preferredLoginType;
-    }
-
-    public boolean isAnimationDisabled() {
-        return animationDisabled.get();
-    }
-
-    public BooleanProperty animationDisabledProperty() {
-        return animationDisabled;
-    }
-
-    public void setAnimationDisabled(boolean animationDisabled) {
-        this.animationDisabled.set(animationDisabled);
-    }
-
-    public boolean isTitleTransparent() {
-        return titleTransparent.get();
-    }
-
-    public BooleanProperty titleTransparentProperty() {
-        return titleTransparent;
-    }
-
-    public void setTitleTransparent(boolean titleTransparent) {
-        this.titleTransparent.set(titleTransparent);
-    }
+    @SerializedName("promptedVersion")
+    private final StringProperty promptedVersion = new SimpleStringProperty();
 
     public String getPromptedVersion() {
         return promptedVersion.get();
@@ -718,7 +207,550 @@ public final class Config implements Observable {
         this.promptedVersion.set(promptedVersion);
     }
 
+    @SerializedName("acceptPreviewUpdate")
+    private final BooleanProperty acceptPreviewUpdate = new SimpleBooleanProperty(false);
+
+    public BooleanProperty acceptPreviewUpdateProperty() {
+        return acceptPreviewUpdate;
+    }
+
+    public boolean isAcceptPreviewUpdate() {
+        return acceptPreviewUpdate.get();
+    }
+
+    public void setAcceptPreviewUpdate(boolean acceptPreviewUpdate) {
+        this.acceptPreviewUpdate.set(acceptPreviewUpdate);
+    }
+
+    @SerializedName("shownTips")
+    private final ObservableMap<String, Object> shownTips = FXCollections.observableHashMap();
+
     public ObservableMap<String, Object> getShownTips() {
         return shownTips;
+    }
+
+    @SerializedName("commonDirType")
+    private final ObjectProperty<EnumCommonDirectory> commonDirType = new RawPreservingObjectProperty<>(EnumCommonDirectory.DEFAULT);
+
+    public ObjectProperty<EnumCommonDirectory> commonDirTypeProperty() {
+        return commonDirType;
+    }
+
+    public EnumCommonDirectory getCommonDirType() {
+        return commonDirType.get();
+    }
+
+    public void setCommonDirType(EnumCommonDirectory commonDirType) {
+        this.commonDirType.set(commonDirType);
+    }
+
+    @SerializedName("commonpath")
+    private final StringProperty commonDirectory = new SimpleStringProperty(Metadata.MINECRAFT_DIRECTORY.toString());
+
+    public StringProperty commonDirectoryProperty() {
+        return commonDirectory;
+    }
+
+    public String getCommonDirectory() {
+        return commonDirectory.get();
+    }
+
+    public void setCommonDirectory(String commonDirectory) {
+        this.commonDirectory.set(commonDirectory);
+    }
+
+    @SerializedName("logLines")
+    private final ObjectProperty<Integer> logLines = new SimpleObjectProperty<>();
+
+    public ObjectProperty<Integer> logLinesProperty() {
+        return logLines;
+    }
+
+    public Integer getLogLines() {
+        return logLines.get();
+    }
+
+    public void setLogLines(Integer logLines) {
+        this.logLines.set(logLines);
+    }
+
+    // UI
+
+    @SerializedName("themeBrightness")
+    private final StringProperty themeBrightness = new SimpleStringProperty("light");
+
+    public StringProperty themeBrightnessProperty() {
+        return themeBrightness;
+    }
+
+    public String getThemeBrightness() {
+        return themeBrightness.get();
+    }
+
+    public void setThemeBrightness(String themeBrightness) {
+        this.themeBrightness.set(themeBrightness);
+    }
+
+    @SerializedName("theme")
+    private final ObjectProperty<ThemeColor> themeColor = new SimpleObjectProperty<>(ThemeColor.DEFAULT);
+
+    public ObjectProperty<ThemeColor> themeColorProperty() {
+        return themeColor;
+    }
+
+    public ThemeColor getThemeColor() {
+        return themeColor.get();
+    }
+
+    public void setThemeColor(ThemeColor themeColor) {
+        this.themeColor.set(themeColor);
+    }
+
+    @SerializedName("fontFamily")
+    private final StringProperty fontFamily = new SimpleStringProperty();
+
+    public StringProperty fontFamilyProperty() {
+        return fontFamily;
+    }
+
+    public String getFontFamily() {
+        return fontFamily.get();
+    }
+
+    public void setFontFamily(String fontFamily) {
+        this.fontFamily.set(fontFamily);
+    }
+
+    @SerializedName("fontSize")
+    private final DoubleProperty fontSize = new SimpleDoubleProperty(12);
+
+    public DoubleProperty fontSizeProperty() {
+        return fontSize;
+    }
+
+    public double getFontSize() {
+        return fontSize.get();
+    }
+
+    public void setFontSize(double fontSize) {
+        this.fontSize.set(fontSize);
+    }
+
+    @SerializedName("launcherFontFamily")
+    private final StringProperty launcherFontFamily = new SimpleStringProperty();
+
+    public StringProperty launcherFontFamilyProperty() {
+        return launcherFontFamily;
+    }
+
+    public String getLauncherFontFamily() {
+        return launcherFontFamily.get();
+    }
+
+    public void setLauncherFontFamily(String launcherFontFamily) {
+        this.launcherFontFamily.set(launcherFontFamily);
+    }
+
+    @SerializedName("animationDisabled")
+    private final BooleanProperty animationDisabled = new SimpleBooleanProperty(
+            FXUtils.REDUCED_MOTION == Boolean.TRUE
+                    || !JavaRuntime.CURRENT_JIT_ENABLED
+                    || !FXUtils.GPU_ACCELERATION_ENABLED
+    );
+
+    public BooleanProperty animationDisabledProperty() {
+        return animationDisabled;
+    }
+
+    public boolean isAnimationDisabled() {
+        return animationDisabled.get();
+    }
+
+    public void setAnimationDisabled(boolean animationDisabled) {
+        this.animationDisabled.set(animationDisabled);
+    }
+
+    @SerializedName("titleTransparent")
+    private final BooleanProperty titleTransparent = new SimpleBooleanProperty(false);
+
+    public BooleanProperty titleTransparentProperty() {
+        return titleTransparent;
+    }
+
+    public boolean isTitleTransparent() {
+        return titleTransparent.get();
+    }
+
+    public void setTitleTransparent(boolean titleTransparent) {
+        this.titleTransparent.set(titleTransparent);
+    }
+
+    @SerializedName("backgroundType")
+    private final ObjectProperty<EnumBackgroundImage> backgroundImageType = new RawPreservingObjectProperty<>(EnumBackgroundImage.DEFAULT);
+
+    public ObjectProperty<EnumBackgroundImage> backgroundImageTypeProperty() {
+        return backgroundImageType;
+    }
+
+    public EnumBackgroundImage getBackgroundImageType() {
+        return backgroundImageType.get();
+    }
+
+    public void setBackgroundImageType(EnumBackgroundImage backgroundImageType) {
+        this.backgroundImageType.set(backgroundImageType);
+    }
+
+    @SerializedName("bgpath")
+    private final StringProperty backgroundImage = new SimpleStringProperty();
+
+    public StringProperty backgroundImageProperty() {
+        return backgroundImage;
+    }
+
+    public String getBackgroundImage() {
+        return backgroundImage.get();
+    }
+
+    public void setBackgroundImage(String backgroundImage) {
+        this.backgroundImage.set(backgroundImage);
+    }
+
+    @SerializedName("bgurl")
+    private final StringProperty backgroundImageUrl = new SimpleStringProperty();
+
+    public StringProperty backgroundImageUrlProperty() {
+        return backgroundImageUrl;
+    }
+
+    public String getBackgroundImageUrl() {
+        return backgroundImageUrl.get();
+    }
+
+    public void setBackgroundImageUrl(String backgroundImageUrl) {
+        this.backgroundImageUrl.set(backgroundImageUrl);
+    }
+
+    @SerializedName("bgpaint")
+    private final ObjectProperty<Paint> backgroundPaint = new SimpleObjectProperty<>();
+
+    public Paint getBackgroundPaint() {
+        return backgroundPaint.get();
+    }
+
+    public ObjectProperty<Paint> backgroundPaintProperty() {
+        return backgroundPaint;
+    }
+
+    public void setBackgroundPaint(Paint backgroundPaint) {
+        this.backgroundPaint.set(backgroundPaint);
+    }
+
+    @SerializedName("bgImageOpacity")
+    private final IntegerProperty backgroundImageOpacity = new SimpleIntegerProperty(100);
+
+    public IntegerProperty backgroundImageOpacityProperty() {
+        return backgroundImageOpacity;
+    }
+
+    public int getBackgroundImageOpacity() {
+        return backgroundImageOpacity.get();
+    }
+
+    public void setBackgroundImageOpacity(int backgroundImageOpacity) {
+        this.backgroundImageOpacity.set(backgroundImageOpacity);
+    }
+
+    // Networks
+
+    @SerializedName("autoDownloadThreads")
+    private final BooleanProperty autoDownloadThreads = new SimpleBooleanProperty(true);
+
+    public BooleanProperty autoDownloadThreadsProperty() {
+        return autoDownloadThreads;
+    }
+
+    public boolean getAutoDownloadThreads() {
+        return autoDownloadThreads.get();
+    }
+
+    public void setAutoDownloadThreads(boolean autoDownloadThreads) {
+        this.autoDownloadThreads.set(autoDownloadThreads);
+    }
+
+    @SerializedName("downloadThreads")
+    private final IntegerProperty downloadThreads = new SimpleIntegerProperty(64);
+
+    public IntegerProperty downloadThreadsProperty() {
+        return downloadThreads;
+    }
+
+    public int getDownloadThreads() {
+        return downloadThreads.get();
+    }
+
+    public void setDownloadThreads(int downloadThreads) {
+        this.downloadThreads.set(downloadThreads);
+    }
+
+    @SerializedName("downloadType")
+    private final StringProperty downloadType = new SimpleStringProperty(DownloadProviders.DEFAULT_DIRECT_PROVIDER_ID);
+
+    public StringProperty downloadTypeProperty() {
+        return downloadType;
+    }
+
+    public String getDownloadType() {
+        return downloadType.get();
+    }
+
+    public void setDownloadType(String downloadType) {
+        this.downloadType.set(downloadType);
+    }
+
+    @SerializedName("autoChooseDownloadType")
+    private final BooleanProperty autoChooseDownloadType = new SimpleBooleanProperty(true);
+
+    public BooleanProperty autoChooseDownloadTypeProperty() {
+        return autoChooseDownloadType;
+    }
+
+    public boolean isAutoChooseDownloadType() {
+        return autoChooseDownloadType.get();
+    }
+
+    public void setAutoChooseDownloadType(boolean autoChooseDownloadType) {
+        this.autoChooseDownloadType.set(autoChooseDownloadType);
+    }
+
+    @SerializedName("versionListSource")
+    private final StringProperty versionListSource = new SimpleStringProperty(DownloadProviders.DEFAULT_AUTO_PROVIDER_ID);
+
+    public StringProperty versionListSourceProperty() {
+        return versionListSource;
+    }
+
+    public String getVersionListSource() {
+        return versionListSource.get();
+    }
+
+    public void setVersionListSource(String versionListSource) {
+        this.versionListSource.set(versionListSource);
+    }
+
+    @SerializedName("hasProxy")
+    private final BooleanProperty hasProxy = new SimpleBooleanProperty();
+
+    public BooleanProperty hasProxyProperty() {
+        return hasProxy;
+    }
+
+    public boolean hasProxy() {
+        return hasProxy.get();
+    }
+
+    public void setHasProxy(boolean hasProxy) {
+        this.hasProxy.set(hasProxy);
+    }
+
+    @SerializedName("hasProxyAuth")
+    private final BooleanProperty hasProxyAuth = new SimpleBooleanProperty();
+
+    public BooleanProperty hasProxyAuthProperty() {
+        return hasProxyAuth;
+    }
+
+    public boolean hasProxyAuth() {
+        return hasProxyAuth.get();
+    }
+
+    public void setHasProxyAuth(boolean hasProxyAuth) {
+        this.hasProxyAuth.set(hasProxyAuth);
+    }
+
+    @SerializedName("proxyType")
+    private final ObjectProperty<Proxy.Type> proxyType = new SimpleObjectProperty<>(Proxy.Type.HTTP);
+
+    public ObjectProperty<Proxy.Type> proxyTypeProperty() {
+        return proxyType;
+    }
+
+    public Proxy.Type getProxyType() {
+        return proxyType.get();
+    }
+
+    public void setProxyType(Proxy.Type proxyType) {
+        this.proxyType.set(proxyType);
+    }
+
+    @SerializedName("proxyHost")
+    private final StringProperty proxyHost = new SimpleStringProperty();
+
+    public StringProperty proxyHostProperty() {
+        return proxyHost;
+    }
+
+    public String getProxyHost() {
+        return proxyHost.get();
+    }
+
+    public void setProxyHost(String proxyHost) {
+        this.proxyHost.set(proxyHost);
+    }
+
+    @SerializedName("proxyPort")
+    private final IntegerProperty proxyPort = new SimpleIntegerProperty();
+
+    public IntegerProperty proxyPortProperty() {
+        return proxyPort;
+    }
+
+    public int getProxyPort() {
+        return proxyPort.get();
+    }
+
+    public void setProxyPort(int proxyPort) {
+        this.proxyPort.set(proxyPort);
+    }
+
+    @SerializedName("proxyUserName")
+    private final StringProperty proxyUser = new SimpleStringProperty();
+
+    public StringProperty proxyUserProperty() {
+        return proxyUser;
+    }
+
+    public String getProxyUser() {
+        return proxyUser.get();
+    }
+
+    public void setProxyUser(String proxyUser) {
+        this.proxyUser.set(proxyUser);
+    }
+
+    @SerializedName("proxyPassword")
+    private final StringProperty proxyPass = new SimpleStringProperty();
+
+    public StringProperty proxyPassProperty() {
+        return proxyPass;
+    }
+
+    public String getProxyPass() {
+        return proxyPass.get();
+    }
+
+    public void setProxyPass(String proxyPass) {
+        this.proxyPass.set(proxyPass);
+    }
+
+    // Game
+
+    @SerializedName("disableAutoGameOptions")
+    private final BooleanProperty disableAutoGameOptions = new SimpleBooleanProperty(false);
+
+    public BooleanProperty disableAutoGameOptionsProperty() {
+        return disableAutoGameOptions;
+    }
+
+    public boolean isDisableAutoGameOptions() {
+        return disableAutoGameOptions.get();
+    }
+
+    public void setDisableAutoGameOptions(boolean disableAutoGameOptions) {
+        this.disableAutoGameOptions.set(disableAutoGameOptions);
+    }
+
+    // Accounts
+
+    @SerializedName("authlibInjectorServers")
+    private final ObservableList<AuthlibInjectorServer> authlibInjectorServers = FXCollections.observableArrayList(server -> new Observable[]{server});
+
+    public ObservableList<AuthlibInjectorServer> getAuthlibInjectorServers() {
+        return authlibInjectorServers;
+    }
+
+    @SerializedName("addedLittleSkin")
+    private final BooleanProperty addedLittleSkin = new SimpleBooleanProperty(false);
+
+    public BooleanProperty addedLittleSkinProperty() {
+        return addedLittleSkin;
+    }
+
+    public boolean isAddedLittleSkin() {
+        return addedLittleSkin.get();
+    }
+
+    public void setAddedLittleSkin(boolean addedLittleSkin) {
+        this.addedLittleSkin.set(addedLittleSkin);
+    }
+
+    /**
+     * The preferred login type to use when the user wants to add an account.
+     */
+    @SerializedName("preferredLoginType")
+    private final StringProperty preferredLoginType = new SimpleStringProperty();
+
+    public StringProperty preferredLoginTypeProperty() {
+        return preferredLoginType;
+    }
+
+    public String getPreferredLoginType() {
+        return preferredLoginType.get();
+    }
+
+    public void setPreferredLoginType(String preferredLoginType) {
+        this.preferredLoginType.set(preferredLoginType);
+    }
+
+    @SerializedName("selectedAccount")
+    private final StringProperty selectedAccount = new SimpleStringProperty();
+
+    public StringProperty selectedAccountProperty() {
+        return selectedAccount;
+    }
+
+    public String getSelectedAccount() {
+        return selectedAccount.get();
+    }
+
+    public void setSelectedAccount(String selectedAccount) {
+        this.selectedAccount.set(selectedAccount);
+    }
+
+    @SerializedName("accounts")
+    private final ObservableList<Map<Object, Object>> accountStorages = FXCollections.observableArrayList();
+
+    public ObservableList<Map<Object, Object>> getAccountStorages() {
+        return accountStorages;
+    }
+
+    // Configurations
+
+    @SerializedName("last")
+    private final StringProperty selectedProfile = new SimpleStringProperty("");
+
+    public StringProperty selectedProfileProperty() {
+        return selectedProfile;
+    }
+
+    public String getSelectedProfile() {
+        return selectedProfile.get();
+    }
+
+    public void setSelectedProfile(String selectedProfile) {
+        this.selectedProfile.set(selectedProfile);
+    }
+
+    @SerializedName("configurations")
+    private final SimpleMapProperty<String, Profile> configurations = new SimpleMapProperty<>(FXCollections.observableMap(new TreeMap<>()));
+
+    public MapProperty<String, Profile> getConfigurations() {
+        return configurations;
+    }
+
+    public static final class Adapter extends ObservableSetting.Adapter<Config> {
+        @Override
+        protected Config createInstance() {
+            return new Config();
+        }
     }
 }

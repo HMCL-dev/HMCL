@@ -139,7 +139,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
         StringUtils.LevCalculator levCalculator = new StringUtils.LevCalculator();
 
         return new SearchResult(response.getData().stream().map(CurseAddon::toMod).map(remoteMod -> {
-            String lowerCaseResult = remoteMod.getTitle().toLowerCase();
+            String lowerCaseResult = remoteMod.getTitle().toLowerCase(Locale.ROOT);
             int diff = levCalculator.calc(lowerCaseSearchFilter, lowerCaseResult);
 
             for (String s : StringUtils.tokenize(lowerCaseResult)) {
@@ -169,6 +169,9 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
         }
 
         long hash = Integer.toUnsignedLong(MurmurHash2.hash32(baos.toByteArray(), baos.size(), 1));
+        if (hash == 811513880) { // Workaround for https://github.com/HMCL-dev/HMCL/issues/4597
+            return Optional.empty();
+        }
 
         Response<FingerprintMatchesResult> response = withApiKey(HttpRequest.POST(PREFIX + "/v1/fingerprints/432"))
                 .json(mapOf(pair("fingerprints", Collections.singletonList(hash))))

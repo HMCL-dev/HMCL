@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.event;
 
 import org.jackhuang.hmcl.util.ToStringBuilder;
 
-import java.io.File;
+import java.nio.file.Path;
 
 /**
  * This event gets fired when json of a game version is malformed. You can do something here.
@@ -30,7 +30,7 @@ import java.io.File;
  */
 public final class GameJsonParseFailedEvent extends Event {
     private final String version;
-    private final File jsonFile;
+    private final Path jsonFile;
 
     /**
      *
@@ -38,13 +38,13 @@ public final class GameJsonParseFailedEvent extends Event {
      * @param jsonFile the minecraft.json file.
      * @param version the version name
      */
-    public GameJsonParseFailedEvent(Object source, File jsonFile, String version) {
+    public GameJsonParseFailedEvent(Object source, Path jsonFile, String version) {
         super(source);
         this.version = version;
         this.jsonFile = jsonFile;
     }
 
-    public File getJsonFile() {
+    public Path getJsonFile() {
         return jsonFile;
     }
 

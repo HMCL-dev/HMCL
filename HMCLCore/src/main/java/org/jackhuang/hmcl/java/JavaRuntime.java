@@ -130,6 +130,7 @@ public final class JavaRuntime implements Comparable<JavaRuntime> {
 
     public static final JavaRuntime CURRENT_JAVA;
     public static final int CURRENT_VERSION;
+    public static final boolean CURRENT_JIT_ENABLED;
 
     public static JavaRuntime getDefault() {
         return CURRENT_JAVA;
@@ -152,5 +153,9 @@ public final class JavaRuntime implements Comparable<JavaRuntime> {
 
         CURRENT_JAVA = executable != null ? JavaRuntime.of(executable, JavaInfo.CURRENT_ENVIRONMENT, false) : null;
         CURRENT_VERSION = JavaInfo.CURRENT_ENVIRONMENT.getParsedVersion();
+
+        String vmInfo = System.getProperty("java.vm.info", "");
+        CURRENT_JIT_ENABLED = !vmInfo.contains("interpreted mode") // HotSpot
+                && !vmInfo.contains("JIT disabled"); // J9
     }
 }

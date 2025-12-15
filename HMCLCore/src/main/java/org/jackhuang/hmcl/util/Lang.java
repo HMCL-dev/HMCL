@@ -48,9 +48,10 @@ public final class Lang {
 
     /**
      * Construct a mutable map by given key-value pairs.
+     *
      * @param pairs entries in the new map
-     * @param <K> the type of keys
-     * @param <V> the type of values
+     * @param <K>   the type of keys
+     * @param <V>   the type of values
      * @return the map which contains data in {@code pairs}.
      */
     @SafeVarargs
@@ -60,9 +61,10 @@ public final class Lang {
 
     /**
      * Construct a mutable map by given key-value pairs.
+     *
      * @param pairs entries in the new map
-     * @param <K> the type of keys
-     * @param <V> the type of values
+     * @param <K>   the type of keys
+     * @param <V>   the type of values
      * @return the map which contains data in {@code pairs}.
      */
     public static <K, V> Map<K, V> mapOf(Iterable<Pair<K, V>> pairs) {
@@ -122,9 +124,10 @@ public final class Lang {
 
     /**
      * Cast {@code obj} to V dynamically.
-     * @param obj the object reference to be cast.
+     *
+     * @param obj   the object reference to be cast.
      * @param clazz the class reference of {@code V}.
-     * @param <V> the type that {@code obj} is being cast to.
+     * @param <V>   the type that {@code obj} is being cast to.
      * @return {@code obj} in the type of {@code V}.
      */
     public static <V> Optional<V> tryCast(Object obj, Class<V> clazz) {
@@ -154,8 +157,8 @@ public final class Lang {
     /**
      * Join two collections into one list.
      *
-     * @param a one collection, to be joined.
-     * @param b another collection to be joined.
+     * @param a   one collection, to be joined.
+     * @param b   another collection to be joined.
      * @param <T> the super type of elements in {@code a} and {@code b}
      * @return the joint collection
      */
@@ -172,6 +175,16 @@ public final class Lang {
         return list == null ? null : list.isEmpty() ? null : new ArrayList<>(list);
     }
 
+    public static <T> int indexWhere(List<T> list, Predicate<T> predicate) {
+        int idx = 0;
+        for (T value : list) {
+            if (predicate.test(value))
+                return idx;
+            idx++;
+        }
+        return -1;
+    }
+
     public static void executeDelayed(Runnable runnable, TimeUnit timeUnit, long timeout, boolean isDaemon) {
         thread(() -> {
             try {
@@ -185,6 +198,7 @@ public final class Lang {
 
     /**
      * Start a thread invoking {@code runnable} immediately.
+     *
      * @param runnable code to run.
      * @return the reference of the started thread
      */
@@ -194,8 +208,9 @@ public final class Lang {
 
     /**
      * Start a thread invoking {@code runnable} immediately.
+     *
      * @param runnable code to run
-     * @param name the name of thread
+     * @param name     the name of thread
      * @return the reference of the started thread
      */
     public static Thread thread(Runnable runnable, String name) {
@@ -204,8 +219,9 @@ public final class Lang {
 
     /**
      * Start a thread invoking {@code runnable} immediately.
+     *
      * @param runnable code to run
-     * @param name the name of thread
+     * @param name     the name of thread
      * @param isDaemon true if thread will be terminated when only daemon threads are running.
      * @return the reference of the started thread
      */
@@ -220,14 +236,22 @@ public final class Lang {
     }
 
     public static ThreadPoolExecutor threadPool(String name, boolean daemon, int threads, long timeout, TimeUnit timeunit) {
+        ThreadPoolExecutor pool = new ThreadPoolExecutor(
+                threads, threads,
+                timeout, timeunit,
+                new LinkedBlockingQueue<>(),
+                counterThreadFactory(name, daemon));
+        pool.allowCoreThreadTimeOut(true);
+        return pool;
+    }
+
+    public static ThreadFactory counterThreadFactory(String name, boolean daemon) {
         AtomicInteger counter = new AtomicInteger(1);
-        ThreadPoolExecutor pool = new ThreadPoolExecutor(threads, threads, timeout, timeunit, new LinkedBlockingQueue<>(), r -> {
+        return r -> {
             Thread t = new Thread(r, name + "-" + counter.getAndIncrement());
             t.setDaemon(daemon);
             return t;
-        });
-        pool.allowCoreThreadTimeOut(true);
-        return pool;
+        };
     }
 
     public static int parseInt(Object string, int defaultValue) {
@@ -258,7 +282,8 @@ public final class Lang {
 
     /**
      * Find the first non-null reference in given list.
-     * @param t nullable references list.
+     *
+     * @param t   nullable references list.
      * @param <T> the type of nullable references
      * @return the first non-null reference.
      */

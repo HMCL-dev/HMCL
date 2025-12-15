@@ -56,7 +56,6 @@ import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.hardware.PhysicalMemoryStatus;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -112,6 +111,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private final MultiFileItem.FileOption<GameDirectoryType> gameDirCustomOption;
     private final JFXComboBox<ProcessPriority> cboProcessPriority;
     private final OptionToggleButton showLogsPane;
+    private final OptionToggleButton enableDebugLogOutputPane;
     private final ImagePickerItem iconPickerItem;
 
     private final ChangeListener<Collection<JavaRuntime>> javaListChangeListener;
@@ -199,7 +199,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     copyGlobalPane.setLeft(label);
                     BorderPane.setAlignment(label, Pos.CENTER_LEFT);
 
-                    JFXButton copyAll = new JFXButton(i18n("settings.game.copy_global.copy_all"));
+                    JFXButton copyAll = FXUtils.newBorderButton(i18n("settings.game.copy_global.copy_all"));
                     copyAll.disableProperty().bind(modpack);
                     copyGlobalPane.setRight(copyAll);
                     copyAll.setOnAction(e -> Controllers.confirm(i18n("settings.game.copy_global.copy_all.confirm"), null, () -> {
@@ -210,7 +210,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
                         PropertyUtils.copyProperties(profile.getGlobal(), lastVersionSetting, name -> !ignored.contains(name));
                     }, null));
-                    copyAll.getStyleClass().add("jfx-button-border");
                     BorderPane.setAlignment(copyAll, Pos.CENTER_RIGHT);
                 }
 
@@ -412,6 +411,9 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             showLogsPane = new OptionToggleButton();
             showLogsPane.setTitle(i18n("settings.show_log"));
 
+            enableDebugLogOutputPane = new OptionToggleButton();
+            enableDebugLogOutputPane.setTitle(i18n("settings.enable_debug_log_output"));
+
             BorderPane processPriorityPane = new BorderPane();
             {
                 Label label = new Label(i18n("settings.advanced.process_priority"));
@@ -457,16 +459,15 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 showAdvancedSettingPane.setLeft(label);
                 BorderPane.setAlignment(label, Pos.CENTER_LEFT);
 
-                JFXButton button = new JFXButton(i18n("settings.advanced.modify"));
+                JFXButton button = FXUtils.newBorderButton(i18n("settings.advanced.modify"));
                 button.setOnAction(e -> {
                     if (lastVersionSetting != null) {
                         if (advancedVersionSettingPage == null)
                             advancedVersionSettingPage = new AdvancedVersionSettingPage(profile, versionId, lastVersionSetting);
 
-                        Controllers.navigate(advancedVersionSettingPage);
+                        Controllers.navigateForward(advancedVersionSettingPage);
                     }
                 });
-                button.getStyleClass().add("jfx-button-border");
                 showAdvancedSettingPane.setRight(button);
             }
 
@@ -477,6 +478,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     launcherVisibilityPane,
                     dimensionPane,
                     showLogsPane,
+                    enableDebugLogOutputPane,
                     processPriorityPane,
                     serverPane,
                     showAdvancedSettingPane
@@ -554,6 +556,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             chkAutoAllocate.selectedProperty().unbindBidirectional(lastVersionSetting.autoMemoryProperty());
             chkFullscreen.selectedProperty().unbindBidirectional(lastVersionSetting.fullscreenProperty());
             showLogsPane.selectedProperty().unbindBidirectional(lastVersionSetting.showLogsProperty());
+            enableDebugLogOutputPane.selectedProperty().unbindBidirectional(lastVersionSetting.enableDebugLogOutputProperty());
             FXUtils.unbindEnum(cboLauncherVisibility, lastVersionSetting.launcherVisibilityProperty());
             FXUtils.unbindEnum(cboProcessPriority, lastVersionSetting.processPriorityProperty());
 
@@ -588,6 +591,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         chkAutoAllocate.selectedProperty().bindBidirectional(versionSetting.autoMemoryProperty());
         chkFullscreen.selectedProperty().bindBidirectional(versionSetting.fullscreenProperty());
         showLogsPane.selectedProperty().bindBidirectional(versionSetting.showLogsProperty());
+        enableDebugLogOutputPane.selectedProperty().bindBidirectional(versionSetting.enableDebugLogOutputProperty());
         FXUtils.bindEnum(cboLauncherVisibility, versionSetting.launcherVisibilityProperty());
         FXUtils.bindEnum(cboProcessPriority, versionSetting.processPriorityProperty());
 
@@ -635,7 +639,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         versionSetting.javaVersionProperty().addListener(javaListener);
 
         gameDirItem.selectedDataProperty().bindBidirectional(versionSetting.gameDirTypeProperty());
-        gameDirSublist.subtitleProperty().bind(Bindings.createStringBinding(() -> Paths.get(profile.getRepository().getRunDirectory(versionId).getAbsolutePath()).normalize().toString(),
+        gameDirSublist.subtitleProperty().bind(Bindings.createStringBinding(() -> profile.getRepository().getRunDirectory(versionId).toAbsolutePath().normalize().toString(),
                 versionSetting.gameDirProperty(), versionSetting.gameDirTypeProperty()));
 
         lastVersionSetting = versionSetting;

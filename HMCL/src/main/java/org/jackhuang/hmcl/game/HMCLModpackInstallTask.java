@@ -29,14 +29,15 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public final class HMCLModpackInstallTask extends Task<Void> {
-    private final File zipFile;
+    private final Path zipFile;
     private final String name;
     private final HMCLGameRepository repository;
     private final DefaultDependencyManager dependency;
@@ -44,16 +45,16 @@ public final class HMCLModpackInstallTask extends Task<Void> {
     private final List<Task<?>> dependencies = new ArrayList<>(1);
     private final List<Task<?>> dependents = new ArrayList<>(4);
 
-    public HMCLModpackInstallTask(Profile profile, File zipFile, Modpack modpack, String name) {
+    public HMCLModpackInstallTask(Profile profile, Path zipFile, Modpack modpack, String name) {
         dependency = profile.getDependency();
         repository = profile.getRepository();
         this.zipFile = zipFile;
         this.name = name;
         this.modpack = modpack;
 
-        File run = repository.getRunDirectory(name);
-        File json = repository.getModpackConfiguration(name);
-        if (repository.hasVersion(name) && !json.exists())
+        Path run = repository.getRunDirectory(name);
+        Path json = repository.getModpackConfiguration(name);
+        if (repository.hasVersion(name) && Files.notExists(json))
             throw new IllegalArgumentException("Version " + name + " already exists");
 
         dependents.add(dependency.gameBuilder().name(name).gameVersion(modpack.getGameVersion()).buildAsync());
@@ -64,8 +65,8 @@ public final class HMCLModpackInstallTask extends Task<Void> {
 
         ModpackConfiguration<Modpack> config = null;
         try {
-            if (json.exists()) {
-                config = JsonUtils.fromJsonFile(json.toPath(), ModpackConfiguration.typeOf(Modpack.class));
+            if (Files.exists(json)) {
+                config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(Modpack.class));
 
                 if (!HMCLModpackProvider.INSTANCE.getName().equals(config.getType()))
                     throw new IllegalArgumentException("Version " + name + " is not a HMCL modpack. Cannot update this version.");

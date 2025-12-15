@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.util.i18n;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.ResourceBundle;
@@ -31,8 +30,8 @@ import java.util.ResourceBundle;
 /// - For all Chinese locales, `zh-CN` is always added to the candidate list. If `zh-Hans` already exists in the candidate list,
 ///   `zh-CN` is inserted before `zh`; otherwise, it is inserted after `zh`.
 /// - For all Traditional Chinese locales, `zh-TW` is always added to the candidate list (before `zh`).
-/// - For all Chinese variants (such as `lzh`, `cmn`, `yue`, etc.), a candidate list with the language code replaced by `zh`
-///   is added to the end of the candidate list.
+/// - For all supported ISO 639-3 language code (such as `eng`, `zho`, `lzh`, etc.),
+///  a candidate list with the language code replaced by the ISO 639-1 (Macro)language code is added to the end of the candidate list.
 ///
 /// @author Glavo
 public class DefaultResourceBundleControl extends ResourceBundle.Control {
@@ -42,63 +41,15 @@ public class DefaultResourceBundleControl extends ResourceBundle.Control {
     public DefaultResourceBundleControl() {
     }
 
-    private static List<Locale> ensureEditable(List<Locale> list) {
-        return list instanceof ArrayList<?>
-                ? list
-                : new ArrayList<>(list);
+    @Override
+    public List<Locale> getCandidateLocales(String baseName, Locale locale) {
+        return LocaleUtils.getCandidateLocales(locale);
     }
 
     @Override
-    public List<Locale> getCandidateLocales(String baseName, Locale locale) {
-        if (locale.getLanguage().isEmpty())
-            return getCandidateLocales(baseName, Locale.ENGLISH);
-
-        if (LocaleUtils.isChinese(locale)) {
-            String language = locale.getLanguage();
-            String script = locale.getScript();
-
-            if (script.isEmpty()) {
-                script = LocaleUtils.getScript(locale);
-                locale = new Locale.Builder()
-                        .setLocale(locale)
-                        .setScript(script)
-                        .build();
-            }
-
-            List<Locale> locales = super.getCandidateLocales("", locale);
-
-            if (language.equals("zh")) {
-                if (locales.contains(LocaleUtils.LOCALE_ZH_HANT) && !locales.contains(Locale.TRADITIONAL_CHINESE)) {
-                    locales = ensureEditable(locales);
-                    int chineseIdx = locales.indexOf(Locale.CHINESE);
-                    if (chineseIdx >= 0)
-                        locales.add(chineseIdx, Locale.TRADITIONAL_CHINESE);
-                }
-
-                if (!locales.contains(Locale.SIMPLIFIED_CHINESE)) {
-                    int chineseIdx = locales.indexOf(Locale.CHINESE);
-
-                    if (chineseIdx >= 0) {
-                        locales = ensureEditable(locales);
-                        if (locales.contains(LocaleUtils.LOCALE_ZH_HANS))
-                            locales.add(chineseIdx, Locale.SIMPLIFIED_CHINESE);
-                        else
-                            locales.add(chineseIdx + 1, Locale.SIMPLIFIED_CHINESE);
-                    }
-                }
-            } else {
-                locales = ensureEditable(locales);
-                locales.removeIf(it -> !it.getLanguage().equals(language));
-
-                locales.addAll(getCandidateLocales("", new Locale.Builder()
-                        .setLocale(locale)
-                        .setLanguage("zh")
-                        .build()));
-            }
-
-            return locales;
-        }
-
-        return super.getCandidateLocales(baseName, locale);
+    public Locale getFallbackLocale(String baseName, Locale locale) {
+        // By default, when only the base bundle is found, it will attempt to fall back to Locale.getDefault() for further lookup.
+        // Since we always use the base bundle as the English resource file, we want to suppress this behavior.
+        return null;
     }
 }

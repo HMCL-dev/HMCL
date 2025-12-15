@@ -19,7 +19,13 @@ package org.jackhuang.hmcl.ui.account;
 
 import com.jfoenix.controls.JFXButton;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.*;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ListProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleListProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -33,7 +39,6 @@ import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.setting.Accounts;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -41,58 +46,27 @@ import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.ui.construct.ClassTitle;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
-import org.jackhuang.hmcl.util.platform.NativeUtils;
-import org.jackhuang.hmcl.util.platform.OperatingSystem;
-import org.jackhuang.hmcl.util.platform.windows.Kernel32;
-import org.jackhuang.hmcl.util.platform.windows.WinConstants;
 
-import java.time.ZoneId;
-import java.util.Arrays;
 import java.util.Locale;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.createSelectedItemPropertyFor;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class AccountListPage extends DecoratorAnimatedPage implements DecoratorPage {
     static final BooleanProperty RESTRICTED = new SimpleBooleanProperty(true);
-
-    private static boolean isExemptedRegion() {
-        String zoneId = ZoneId.systemDefault().getId();
-        if (Arrays.asList(
-                "Asia/Shanghai",
-                // Although Asia/Beijing is not a legal name, Deepin uses it
-                "Asia/Beijing",
-                "Asia/Chongqing",
-                "Asia/Chungking",
-                "Asia/Harbin"
-        ).contains(zoneId))
-            return true;
-
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS && NativeUtils.USE_JNA) {
-            Kernel32 kernel32 = Kernel32.INSTANCE;
-
-            // https://learn.microsoft.com/windows/win32/intl/table-of-geographical-locations
-            if (kernel32 != null && kernel32.GetUserGeoID(WinConstants.GEOCLASS_NATION) == 45) // China
-                return true;
-        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX && "GMT+08:00".equals(zoneId))
-            // Some Linux distributions may use invalid time zone ids (e.g., Asia/Beijing)
-            // Java may not be able to resolve this name and use GMT+08:00 instead.
-            return true;
-
-        return false;
-    }
 
     static {
         String property = System.getProperty("hmcl.offline.auth.restricted", "auto");
 
         if ("false".equals(property)
-                || "auto".equals(property) && isExemptedRegion()
+                || "auto".equals(property) && LocaleUtils.IS_CHINA_MAINLAND
                 || globalConfig().isEnableOfflineAccount())
             RESTRICTED.set(false);
         else
@@ -183,7 +157,7 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                             e.consume();
                         });
                         btnRemove.getStyleClass().add("toggle-icon4");
-                        btnRemove.setGraphic(SVG.CLOSE.createIcon(Theme.blackFill(), 14));
+                        btnRemove.setGraphic(SVG.CLOSE.createIcon(14));
                         item.setRightGraphic(btnRemove);
 
                         ObservableValue<String> title = BindingMapping.of(server, AuthlibInjectorServer::getName);

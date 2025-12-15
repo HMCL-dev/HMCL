@@ -10,7 +10,7 @@
     </module>
 
     <module name="FileLength"><!-- max line length for single file: http://checkstyle.sourceforge.net/config_sizes.html#FileLength -->
-        <property name="max" value="1500"/>
+        <property name="max" value="2000"/>
     </module>
 
     <module name="TreeWalker">
@@ -47,7 +47,7 @@
         </module>
 
         <!-- Classes -->
-        <!-- <module name="FinalClass"/> --> <!-- class with only private constructor must be final: http://checkstyle.sourceforge.net/config_design.html#FinalClass -->
+        <module name="FinalClass"/> <!-- class with only private constructor must be final: http://checkstyle.sourceforge.net/config_design.html#FinalClass -->
         <module name="SimplifyBooleanReturn"/> <!-- directly return boolean does not check and return http://checkstyle.sourceforge.net/config_design.html#SimplifyBooleanReturn -->
         <module name="StringLiteralEquality"/> <!-- you can't write myString == "this" http://checkstyle.sourceforge.net/config_design.html#StringLiteralEquality -->
         <module name="OneTopLevelClass"/> <!-- only one root class per file http://checkstyle.sourceforge.net/config_design.html#OneTopLevelClass -->
@@ -104,5 +104,17 @@
         <module name="RedundantImport"/> <!-- e.g. double import statements: http://checkstyle.sourceforge.net/config_imports.html#RedundantImport -->
         <module name="UnusedImports"/> <!-- http://checkstyle.sourceforge.net/config_imports.html#UnusedImports -->
         <module name="IllegalImport"/> <!-- checks if import sun.* is used http://checkstyle.sourceforge.net/config_imports.html#IllegalImport -->
+
+        <!--  Custom -->
+        <module name="RegexpSinglelineJava">
+            <property name="format" value="\.toLowerCase\(\)"/>
+            <property name="ignoreComments" value="true"/>
+            <property name="message" value="Should not use String#toLowerCase(), use String#toLowerCase(Locale.ROOT) instead."/>
+        </module>
+        <module name="RegexpSinglelineJava">
+            <property name="format" value="\.toUpperCase\(\)"/>
+            <property name="ignoreComments" value="true"/>
+            <property name="message" value="Should not use String#toUpperCase(), use String#toUpperCase(Locale.ROOT) instead."/>
+        </module>
     </module>
 </module>

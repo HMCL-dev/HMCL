@@ -52,7 +52,7 @@ public final class LiteLoaderVersionList extends VersionList<LiteLoaderRemoteVer
 
     @Override
     public Task<?> refreshAsync(String gameVersion) {
-        return new GetTask(downloadProvider.injectURL(LITELOADER_LIST))
+        return new GetTask(downloadProvider.injectURLWithCandidates(LITELOADER_LIST))
                 .thenGetJsonAsync(LiteLoaderVersionsRoot.class)
                 .thenAcceptAsync(root -> {
                     LiteLoaderGameVersions versions = root.getVersions().get(gameVersion);

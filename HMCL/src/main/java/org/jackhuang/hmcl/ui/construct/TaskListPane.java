@@ -64,7 +64,6 @@ import org.jackhuang.hmcl.mod.multimc.MultiMCModpackInstallTask;
 import org.jackhuang.hmcl.mod.server.ServerModpackCompletionTask;
 import org.jackhuang.hmcl.mod.server.ServerModpackExportTask;
 import org.jackhuang.hmcl.mod.server.ServerModpackLocalInstallTask;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
@@ -310,7 +309,7 @@ public final class TaskListPane extends StackPane {
         }
 
         private void updateLeftIcon(StageNode.Status status) {
-            left.getChildren().setAll(status.svg.createIcon(Theme.blackFill(), STATUS_ICON_SIZE));
+            left.getChildren().setAll(status.svg.createIcon(STATUS_ICON_SIZE));
         }
 
         @Override

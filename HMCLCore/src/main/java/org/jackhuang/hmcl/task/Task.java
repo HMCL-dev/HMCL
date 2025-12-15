@@ -345,14 +345,9 @@ public abstract class Task<T> {
     }
 
     private final ReadOnlyStringWrapper message = new ReadOnlyStringWrapper(this, "message", null);
-    private final InvocationDispatcher<String> messageUpdate = InvocationDispatcher.runOn(Platform::runLater, message::set);
 
     public final ReadOnlyStringProperty messageProperty() {
         return message.getReadOnlyProperty();
-    }
-
-    protected final void updateMessage(String newMessage) {
-        messageUpdate.accept(newMessage);
     }
 
     public final T run() throws Exception {

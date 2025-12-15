@@ -28,15 +28,16 @@ import org.jackhuang.hmcl.mod.ModpackInstallTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class ServerModpackLocalInstallTask extends Task<Void> {
 
-    private final File zipFile;
+    private final Path zipFile;
     private final Modpack modpack;
     private final ServerModpackManifest manifest;
     private final String name;
@@ -44,16 +45,16 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
     private final List<Task<?>> dependencies = new ArrayList<>();
     private final List<Task<?>> dependents = new ArrayList<>(4);
 
-    public ServerModpackLocalInstallTask(DefaultDependencyManager dependencyManager, File zipFile, Modpack modpack, ServerModpackManifest manifest, String name) {
+    public ServerModpackLocalInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, Modpack modpack, ServerModpackManifest manifest, String name) {
         this.zipFile = zipFile;
         this.modpack = modpack;
         this.manifest = manifest;
         this.name = name;
         this.repository = dependencyManager.getGameRepository();
-        File run = repository.getRunDirectory(name);
+        Path run = repository.getRunDirectory(name);
 
-        File json = repository.getModpackConfiguration(name);
-        if (repository.hasVersion(name) && !json.exists())
+        Path json = repository.getModpackConfiguration(name);
+        if (repository.hasVersion(name) && Files.notExists(json))
             throw new IllegalArgumentException("Version " + name + " already exists.");
 
         GameBuilder builder = dependencyManager.gameBuilder().name(name);
@@ -69,8 +70,8 @@ public class ServerModpackLocalInstallTask extends Task<Void> {
 
         ModpackConfiguration<ServerModpackManifest> config = null;
         try {
-            if (json.exists()) {
-                config = JsonUtils.fromJsonFile(json.toPath(), ModpackConfiguration.typeOf(ServerModpackManifest.class));
+            if (Files.exists(json)) {
+                config = JsonUtils.fromJsonFile(json, ModpackConfiguration.typeOf(ServerModpackManifest.class));
 
                 if (!ServerModpackProvider.INSTANCE.getName().equals(config.getType()))
                     throw new IllegalArgumentException("Version " + name + " is not a Server modpack. Cannot update this version.");

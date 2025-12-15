@@ -19,8 +19,7 @@ package org.jackhuang.hmcl.ui.wizard;
 
 import javafx.scene.Node;
 import org.jackhuang.hmcl.task.Task;
-
-import java.util.Map;
+import org.jackhuang.hmcl.util.SettingsMap;
 
 public interface WizardDisplayer {
     default void onStart() {
@@ -34,5 +33,5 @@ public interface WizardDisplayer {
 
     void navigateTo(Node page, Navigation.NavigationDirection nav);
 
-    void handleTask(Map<String, Object> settings, Task<?> task);
+    void handleTask(SettingsMap settings, Task<?> task);
 }

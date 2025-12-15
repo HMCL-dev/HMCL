@@ -33,10 +33,13 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.NoneMultipleSelectionModel;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
+import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +48,7 @@ import java.util.Objects;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * @author huangyuhui
@@ -80,16 +84,18 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         this.setBottom(nextPane);
     }
 
-    private CheckBoxTreeItem<String> getTreeItem(File file, String basePath) {
-        if (!file.exists())
+    private CheckBoxTreeItem<String> getTreeItem(Path file, String basePath) {
+        if (Files.notExists(file))
             return null;
+
+        boolean isDirectory = Files.isDirectory(file);
 
         ModAdviser.ModSuggestion state = ModAdviser.ModSuggestion.SUGGESTED;
         if (basePath.length() > "minecraft/".length()) {
-            state = adviser.advise(StringUtils.substringAfter(basePath, "minecraft/") + (file.isDirectory() ? "/" : ""), file.isDirectory());
-            if (file.isFile() && Objects.equals(FileUtils.getNameWithoutExtension(file), version)) // Ignore <version>.json, <version>.jar
+            state = adviser.advise(StringUtils.substringAfter(basePath, "minecraft/") + (isDirectory ? "/" : ""), isDirectory);
+            if (!isDirectory && Objects.equals(FileUtils.getNameWithoutExtension(file), version))
                 state = ModAdviser.ModSuggestion.HIDDEN;
-            if (file.isDirectory() && Objects.equals(file.getName(), version + "-natives")) // Ignore <version>-natives
+            if (isDirectory && Objects.equals(FileUtils.getName(file), version + "-natives")) // Ignore <version>-natives
                 state = ModAdviser.ModSuggestion.HIDDEN;
             if (state == ModAdviser.ModSuggestion.HIDDEN)
                 return null;
@@ -99,11 +105,10 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         if (state == ModAdviser.ModSuggestion.SUGGESTED)
             node.setSelected(true);
 
-        if (file.isDirectory()) {
-            File[] files = file.listFiles();
-            if (files != null) {
-                for (File it : files) {
-                    CheckBoxTreeItem<String> subNode = getTreeItem(it, basePath + "/" + it.getName());
+        if (isDirectory) {
+            try (var stream = Files.list(file)) {
+                stream.forEach(it -> {
+                    CheckBoxTreeItem<String> subNode = getTreeItem(it, basePath + "/" + FileUtils.getName(it));
                     if (subNode != null) {
                         node.setSelected(subNode.isSelected() || node.isSelected());
                         if (!subNode.isSelected()) {
@@ -111,8 +116,11 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
                         }
                         node.getChildren().add(subNode);
                     }
-                }
+                });
+            } catch (IOException e) {
+                LOG.warning("Failed to list contents of " + file, e);
             }
+
             if (!node.isSelected()) node.setIndeterminate(false);
 
             // Empty folder need not to be displayed.
@@ -155,7 +163,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
     }
 
     @Override
-    public void cleanup(Map<String, Object> settings) {
+    public void cleanup(SettingsMap settings) {
         controller.getSettings().remove(MODPACK_FILE_SELECTION);
     }
 
@@ -171,7 +179,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         return i18n("modpack.wizard.step.2.title");
     }
 
-    public static final String MODPACK_FILE_SELECTION = "modpack.accepted";
+    public static final SettingsMap.Key<List<String>> MODPACK_FILE_SELECTION = new SettingsMap.Key<>("modpack.accepted");
     private static final Map<String, String> TRANSLATION = mapOf(
             pair("minecraft/hmclversion.cfg", i18n("modpack.files.hmclversion_cfg")),
             pair("minecraft/servers.dat", i18n("modpack.files.servers_dat")),

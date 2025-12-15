@@ -47,6 +47,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.java.JavaRuntime;
+import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.Platform;
 
 import javax.swing.*;
@@ -62,7 +63,6 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.jar.Manifest;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toSet;
@@ -92,27 +92,27 @@ public final class SelfDependencyPatcher {
             } else {
                 defaultRepository = Repository.MAVEN_CENTRAL;
             }
-            repositories = Collections.unmodifiableList(Arrays.asList(Repository.MAVEN_CENTRAL, Repository.TENCENTCLOUD_MIRROR));
+            repositories = List.of(Repository.MAVEN_CENTRAL, Repository.TENCENTCLOUD_MIRROR);
         } else {
             defaultRepository = new Repository(String.format(i18n("repositories.custom"), customUrl), customUrl);
-            repositories = Collections.unmodifiableList(Arrays.asList(Repository.MAVEN_CENTRAL, Repository.TENCENTCLOUD_MIRROR, defaultRepository));
+            repositories = List.of(Repository.MAVEN_CENTRAL, Repository.TENCENTCLOUD_MIRROR, defaultRepository);
         }
     }
 
     private static final class DependencyDescriptor {
         private static final String DEPENDENCIES_LIST_FILE = "/assets/openjfx-dependencies.json";
-        private static final Path DEPENDENCIES_DIR_PATH = Metadata.DEPENDENCIES_DIRECTORY.resolve(Platform.getPlatform().toString()).resolve("openjfx");
+        private static final Path DEPENDENCIES_DIR_PATH = Metadata.DEPENDENCIES_DIRECTORY.resolve(Platform.CURRENT_PLATFORM.toString()).resolve("openjfx");
 
         static List<DependencyDescriptor> readDependencies() {
             //noinspection ConstantConditions
             try (Reader reader = new InputStreamReader(SelfDependencyPatcher.class.getResourceAsStream(DEPENDENCIES_LIST_FILE), UTF_8)) {
                 Map<String, Map<String, List<DependencyDescriptor>>> allDependencies =
                         JsonUtils.GSON.fromJson(reader, mapTypeOf(String.class, mapTypeOf(String.class, listTypeOf(DependencyDescriptor.class))));
-                Map<String, List<DependencyDescriptor>> platform = allDependencies.get(Platform.getPlatform().toString());
+                Map<String, List<DependencyDescriptor>> platform = allDependencies.get(Platform.CURRENT_PLATFORM.toString());
                 if (platform == null)
                     return null;
 
-                if (JavaRuntime.CURRENT_VERSION >= 22) {
+                if (JavaRuntime.CURRENT_VERSION >= 23) {
                     List<DependencyDescriptor> modernDependencies = platform.get("modern");
                     if (modernDependencies != null)
                         return modernDependencies;
@@ -143,17 +143,9 @@ public final class SelfDependencyPatcher {
         }
     }
 
-    private static final class Repository {
+    private record Repository(String name, String url) {
         public static final Repository MAVEN_CENTRAL = new Repository(i18n("repositories.maven_central"), "https://repo1.maven.org/maven2");
         public static final Repository TENCENTCLOUD_MIRROR = new Repository(i18n("repositories.tencentcloud_mirror"), "https://mirrors.cloud.tencent.com/nexus/repository/maven-public");
-
-        private final String name;
-        private final String url;
-
-        Repository(String name, String url) {
-            this.name = name;
-            this.url = url;
-        }
 
         public String resolveDependencyURL(DependencyDescriptor descriptor) {
             return String.format("%s/%s/%s/%s/%s",
@@ -261,14 +253,7 @@ public final class SelfDependencyPatcher {
                 .map(DependencyDescriptor::localPath)
                 .toArray(Path[]::new);
 
-        String addOpens = null;
-        try (InputStream input = SelfDependencyPatcher.class.getResourceAsStream("/META-INF/MANIFEST.MF")) {
-            if (input != null)
-                addOpens = new Manifest(input).getMainAttributes().getValue("Add-Opens");
-        } catch (IOException e) {
-            LOG.warning("Failed to read MANIFEST.MF file", e);
-        }
-
+        String addOpens = JarUtils.getAttribute("hmcl.add-opens", null);
         JavaFXPatcher.patch(modules, jars, addOpens != null ? addOpens.split(" ") : new String[0]);
     }
 
@@ -387,7 +372,7 @@ public final class SelfDependencyPatcher {
             }
         }
 
-        String sha1 = Hex.encodeHex(digest.digest());
+        String sha1 = HexFormat.of().formatHex(digest.digest());
         if (!dependency.sha1().equalsIgnoreCase(sha1))
             throw new ChecksumMismatchException("SHA-1", dependency.sha1(), sha1);
     }

@@ -18,10 +18,11 @@
 package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.Platform;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -30,7 +31,7 @@ import java.util.Set;
 
 /**
  * Supports operations on versioning.
- *
+ * <p>
  * Note that game repository will not do any operations which need connection with Internet, if do,
  * see {@link org.jackhuang.hmcl.download.DependencyManager}
  *
@@ -79,7 +80,7 @@ public interface GameRepository extends VersionProvider {
 
     /**
      * Load version list.
-     *
+     * <p>
      * This method should be called before launching a version.
      * A time-costly operation.
      * You'd better execute this method in a new thread.
@@ -95,16 +96,16 @@ public interface GameRepository extends VersionProvider {
      * The root folders the versions must be unique.
      * For example, .minecraft/versions/&lt;version name&gt;/.
      */
-    File getVersionRoot(String id);
+    Path getVersionRoot(String id);
 
     /**
      * Gets the current running directory of the given version for game.
      *
      * @param id the version id
      */
-    File getRunDirectory(String id);
+    Path getRunDirectory(String id);
 
-    File getLibrariesDirectory(Version version);
+    Path getLibrariesDirectory(Version version);
 
     /**
      * Get the library file in disk.
@@ -114,11 +115,11 @@ public interface GameRepository extends VersionProvider {
      * @param lib the library, {@link Version#getLibraries()}
      * @return the library file
      */
-    File getLibraryFile(Version version, Library lib);
+    Path getLibraryFile(Version version, Library lib);
 
     /**
      * Get the directory that native libraries will be unzipped to.
-     *
+     * <p>
      * You'd better return a unique directory.
      * Or if it returns a temporary directory, {@link org.jackhuang.hmcl.launch.Launcher#makeLaunchScript} will fail.
      * If you do want to return a temporary directory, make {@link org.jackhuang.hmcl.launch.Launcher#makeLaunchScript}
@@ -128,7 +129,13 @@ public interface GameRepository extends VersionProvider {
      * @param platform the platform of native libraries
      * @return the native directory
      */
-    File getNativeDirectory(String id, Platform platform);
+    Path getNativeDirectory(String id, Platform platform);
+
+    /// Get the directory for placing mod files.
+    ///
+    /// @param id instance id
+    /// @return the mods directory
+    Path getModsDirectory(String id);
 
     /**
      * Get minecraft jar
@@ -136,11 +143,11 @@ public interface GameRepository extends VersionProvider {
      * @param version resolvedVersion
      * @return the minecraft jar
      */
-    File getVersionJar(Version version);
+    Path getVersionJar(Version version);
 
     /**
      * Detect game version.
-     *
+     * <p>
      * This method is time-consuming, but the result will be cached.
      * Consider running this job in IO scheduler.
      *
@@ -151,7 +158,7 @@ public interface GameRepository extends VersionProvider {
 
     /**
      * Detect game version.
-     *
+     * <p>
      * This method is time-consuming, but the result will be cached.
      * Consider running this job in IO scheduler.
      *
@@ -168,7 +175,7 @@ public interface GameRepository extends VersionProvider {
      * @param version version id
      * @return the minecraft jar
      */
-    default File getVersionJar(String version) throws VersionNotFoundException {
+    default Path getVersionJar(String version) throws VersionNotFoundException {
         return getVersionJar(getVersion(version).resolve(this));
     }
 
@@ -254,9 +261,9 @@ public interface GameRepository extends VersionProvider {
         Set<String> classpath = new LinkedHashSet<>();
         for (Library library : version.getLibraries())
             if (library.appliesToCurrentEnvironment() && !library.isNative()) {
-                File f = getLibraryFile(version, library);
-                if (f.exists() && f.isFile())
-                    classpath.add(f.getAbsolutePath());
+                Path f = getLibraryFile(version, library);
+                if (Files.isRegularFile(f))
+                    classpath.add(FileUtils.getAbsolutePath(f));
             }
         return classpath;
     }

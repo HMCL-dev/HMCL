@@ -42,7 +42,7 @@ public class CrashReport {
                 "\n  Content: \n    " +
                 stackTrace + "\n\n" +
                 "-- System Details --\n" +
-                "  Operating System: " + OperatingSystem.SYSTEM_NAME + ' ' + OperatingSystem.SYSTEM_VERSION + "\n" +
+                "  Operating System: " + OperatingSystem.SYSTEM_NAME + ' ' + OperatingSystem.SYSTEM_VERSION.getVersion() + "\n" +
                 "  System Architecture: " + Architecture.SYSTEM_ARCH.getDisplayName() + "\n" +
                 "  Java Architecture: " + Architecture.CURRENT_ARCH.getDisplayName() + "\n" +
                 "  Java Version: " + System.getProperty("java.version") + ", " + System.getProperty("java.vendor") + "\n" +

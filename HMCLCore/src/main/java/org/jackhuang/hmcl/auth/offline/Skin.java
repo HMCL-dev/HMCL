@@ -34,7 +34,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URLConnection;
+import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -244,7 +244,7 @@ public class Skin {
         }
 
         @Override
-        protected Context getContext(URLConnection connection, boolean checkETag, String bmclapiHash) throws IOException {
+        protected Context getContext(HttpResponse<?> response, boolean checkETag, String bmclapiHash) throws IOException {
             return new Context() {
                 final ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
@@ -260,7 +260,7 @@ public class Skin {
                     setResult(new ByteArrayInputStream(baos.toByteArray()));
 
                     if (checkETag) {
-                        repository.cacheBytes(connection, baos.toByteArray());
+                        repository.cacheBytes(response, baos.toByteArray());
                     }
                 }
             };

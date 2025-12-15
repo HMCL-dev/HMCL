@@ -112,7 +112,7 @@ public final class SystemUtils {
         return Thread.currentThread().getContextClassLoader().getResource("com/sun/tools/attach/VirtualMachine.class") != null;
     }
 
-    private static void onLogLine(String log) {
+    public static void onLogLine(String log) {
         LOG.info(log);
     }
 }

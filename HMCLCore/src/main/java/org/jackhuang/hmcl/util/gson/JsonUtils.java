@@ -23,7 +23,6 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -150,7 +149,7 @@ public final class JsonUtils {
                 .setPrettyPrinting()
                 .registerTypeAdapter(Instant.class, InstantTypeAdapter.INSTANCE)
                 .registerTypeAdapter(UUID.class, UUIDTypeAdapter.INSTANCE)
-                .registerTypeAdapter(File.class, FileTypeAdapter.INSTANCE)
+                .registerTypeAdapter(Path.class, PathTypeAdapter.INSTANCE)
                 .registerTypeAdapterFactory(ValidationTypeAdapterFactory.INSTANCE)
                 .registerTypeAdapterFactory(LowerCaseEnumTypeAdapterFactory.INSTANCE)
                 .registerTypeAdapterFactory(JsonTypeAdapterFactory.INSTANCE);

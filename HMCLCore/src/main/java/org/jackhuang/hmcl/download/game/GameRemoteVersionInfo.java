@@ -20,8 +20,8 @@ package org.jackhuang.hmcl.download.game;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.game.ReleaseType;
-import org.jackhuang.hmcl.util.Constants;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.Validation;
 
 import java.time.Instant;
@@ -30,59 +30,14 @@ import java.time.Instant;
  *
  * @author huangyuhui
  */
-public final class GameRemoteVersionInfo implements Validation {
+@JsonSerializable
+public record GameRemoteVersionInfo(
+        @SerializedName("id") String gameVersion,
+        @SerializedName("time") Instant time,
+        @SerializedName("releaseTime") Instant releaseTime,
+        @SerializedName("type") ReleaseType type,
+        @SerializedName("url") String url) implements Validation {
 
-    @SerializedName("id")
-    private final String gameVersion;
-
-    @SerializedName("time")
-    private final Instant time;
-
-    @SerializedName("releaseTime")
-    private final Instant releaseTime;
-
-    @SerializedName("type")
-    private final ReleaseType type;
-
-    @SerializedName("url")
-    private final String url;
-
-    public GameRemoteVersionInfo() {
-        this("", Instant.now(), Instant.now(), ReleaseType.UNKNOWN);
-    }
-
-    public GameRemoteVersionInfo(String gameVersion, Instant time, Instant releaseTime, ReleaseType type) {
-        this(gameVersion, time, releaseTime, type, Constants.DEFAULT_LIBRARY_URL + gameVersion + "/" + gameVersion + ".json");
-    }
-
-    public GameRemoteVersionInfo(String gameVersion, Instant time, Instant releaseTime, ReleaseType type, String url) {
-        this.gameVersion = gameVersion;
-        this.time = time;
-        this.releaseTime = releaseTime;
-        this.type = type;
-        this.url = url;
-    }
-
-    public String getGameVersion() {
-        return gameVersion;
-    }
-
-    public Instant getTime() {
-        return time;
-    }
-
-    public Instant getReleaseTime() {
-        return releaseTime;
-    }
-
-    public ReleaseType getType() {
-        return type;
-    }
-
-    public String getUrl() {
-        return url;
-    }
-    
     @Override
     public void validate() throws JsonParseException {
         if (StringUtils.isBlank(gameVersion))

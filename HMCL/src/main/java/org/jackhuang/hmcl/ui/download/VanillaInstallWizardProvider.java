@@ -28,8 +28,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
-
-import java.util.Map;
+import org.jackhuang.hmcl.util.SettingsMap;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -45,36 +44,37 @@ public final class VanillaInstallWizardProvider implements WizardProvider {
     }
 
     @Override
-    public void start(Map<String, Object> settings) {
-        settings.put(PROFILE, profile);
+    public void start(SettingsMap settings) {
+        settings.put(ModpackPage.PROFILE, profile);
     }
 
-    private Task<Void> finishVersionDownloadingAsync(Map<String, Object> settings) {
+    private Task<Void> finishVersionDownloadingAsync(SettingsMap settings) {
         GameBuilder builder = dependencyManager.gameBuilder();
 
         String name = (String) settings.get("name");
         builder.name(name);
         builder.gameVersion(((RemoteVersion) settings.get("game")).getGameVersion());
 
-        for (Map.Entry<String, Object> entry : settings.entrySet())
-            if (!"game".equals(entry.getKey()) && entry.getValue() instanceof RemoteVersion)
-                builder.version((RemoteVersion) entry.getValue());
+        settings.asStringMap().forEach((key, value) -> {
+            if (!"game".equals(key) && value instanceof RemoteVersion remoteVersion)
+                builder.version(remoteVersion);
+        });
 
         return builder.buildAsync().whenComplete(any -> profile.getRepository().refreshVersions())
                 .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
     }
 
     @Override
-    public Object finish(Map<String, Object> settings) {
+    public Object finish(SettingsMap settings) {
         settings.put("title", i18n("install.new_game.installation"));
         settings.put("success_message", i18n("install.success"));
-        settings.put("failure_callback", (FailureCallback) (settings1, exception, next) -> UpdateInstallerWizardProvider.alertFailureMessage(exception, next));
+        settings.put(FailureCallback.KEY, (settings1, exception, next) -> UpdateInstallerWizardProvider.alertFailureMessage(exception, next));
 
         return finishVersionDownloadingAsync(settings);
     }
 
     @Override
-    public Node createPage(WizardController controller, int step, Map<String, Object> settings) {
+    public Node createPage(WizardController controller, int step, SettingsMap settings) {
         switch (step) {
             case 0:
                 return new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer.game")), "", downloadProvider, "game",
@@ -88,6 +88,4 @@ public final class VanillaInstallWizardProvider implements WizardProvider {
     public boolean cancel() {
         return true;
     }
-
-    public static final String PROFILE = "PROFILE";
 }

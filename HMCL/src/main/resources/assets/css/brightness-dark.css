@@ -1,0 +1,20 @@
+.hint {
+    -fx-hyperlink-fill: -monet-inverse-primary;
+}
+
+.two-line-list-item {
+    -fixed-warning-tag-background: #2c0b0e;
+}
+
+.log-window {
+    -fixed-log-toggle-selected: #DEE2E6;
+    -fixed-log-toggle-unselected: #6C757D;
+    -fixed-log-text-fill: #FFFFFF;
+    -fixed-log-trace: #495057;
+    -fixed-log-debug: #343A40;
+    -fixed-log-info: #212529;
+    -fixed-log-warn: #331904;
+    -fixed-log-error: #58151C;
+    -fixed-log-fatal: #842029;
+    -fixed-log-selected: #6C757D;
+}

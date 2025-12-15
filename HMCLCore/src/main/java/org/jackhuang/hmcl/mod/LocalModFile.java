@@ -189,7 +189,7 @@ public final class LocalModFile implements Comparable<LocalModFile> {
 
     @Override
     public int compareTo(LocalModFile o) {
-        return getFileName().compareTo(o.getFileName());
+        return getFileName().compareToIgnoreCase(o.getFileName());
     }
 
     @Override

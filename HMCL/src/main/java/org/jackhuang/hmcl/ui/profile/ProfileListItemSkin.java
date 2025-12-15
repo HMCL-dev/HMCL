@@ -24,7 +24,6 @@ import javafx.scene.Node;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
@@ -64,7 +63,7 @@ public class ProfileListItemSkin extends SkinBase<ProfileListItem> {
         btnRemove.setOnAction(e -> skinnable.remove());
         btnRemove.getStyleClass().add("toggle-icon4");
         BorderPane.setAlignment(btnRemove, Pos.CENTER);
-        btnRemove.setGraphic(SVG.CLOSE.createIcon(Theme.blackFill(), 14));
+        btnRemove.setGraphic(SVG.CLOSE.createIcon(14));
         right.getChildren().add(btnRemove);
         root.setRight(right);
 

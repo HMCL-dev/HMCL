@@ -23,6 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HexFormat;
 
 /**
  * @author huangyuhui
@@ -74,15 +75,15 @@ public final class DigestUtils {
     }
 
     public static String digestToString(String algorithm, byte[] data) throws IOException {
-        return Hex.encodeHex(digest(algorithm, data));
+        return HexFormat.of().formatHex(digest(algorithm, data));
     }
 
     public static String digestToString(String algorithm, Path path) throws IOException {
-        return Hex.encodeHex(digest(algorithm, path));
+        return HexFormat.of().formatHex(digest(algorithm, path));
     }
 
     public static String digestToString(String algorithm, InputStream data) throws IOException {
-        return Hex.encodeHex(digest(algorithm, data));
+        return HexFormat.of().formatHex(digest(algorithm, data));
     }
 
     private static final ThreadLocal<byte[]> threadLocalBuffer = ThreadLocal.withInitial(() -> new byte[STREAM_BUFFER_LENGTH]);
