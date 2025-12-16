@@ -36,10 +36,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
@@ -151,13 +148,13 @@ public final class ResourcePackManager {
         if (!Files.isRegularFile(optionsFile)) return options;
         try (var stream = Files.lines(optionsFile)) {
             stream.forEach(s -> {
-                        if (StringUtils.isNotBlank(s)) {
-                            var entry = s.split(":", 2);
-                            if (entry.length == 2) {
-                                options.put(entry[0], entry[1]);
-                            }
-                        }
-                    });
+                if (StringUtils.isNotBlank(s)) {
+                    var entry = s.split(":", 2);
+                    if (entry.length == 2) {
+                        options.put(entry[0], entry[1]);
+                    }
+                }
+            });
         } catch (IOException e) {
             LOG.warning("Failed to read instance options file", e);
         }

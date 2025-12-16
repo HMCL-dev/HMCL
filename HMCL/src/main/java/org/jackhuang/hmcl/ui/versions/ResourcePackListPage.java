@@ -3,8 +3,6 @@ package org.jackhuang.hmcl.ui.versions;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXListView;
-import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -14,7 +12,6 @@ import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
@@ -220,32 +217,29 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
             this.page = page;
 
-            BorderPane root = new BorderPane();
-            root.setPadding(new Insets(8));
+            HBox root = new HBox(8);
+            root.setPickOnBounds(false);
+            root.setAlignment(Pos.CENTER_LEFT);
 
-            HBox left = new HBox(8);
-            left.setAlignment(Pos.CENTER);
-            FXUtils.limitSize(imageView, 32, 32);
-            left.getChildren().addAll(checkBox, imageView);
-            left.setPadding(new Insets(0, 8, 0, 0));
-            FXUtils.setLimitWidth(left, 48);
-            root.setLeft(left);
+            imageView.setFitWidth(24);
+            imageView.setFitHeight(24);
+            imageView.setPreserveRatio(true);
 
             HBox.setHgrow(content, Priority.ALWAYS);
-            root.setCenter(content);
+            content.setMouseTransparent(true);
 
             btnReveal.getStyleClass().add("toggle-icon4");
-            btnReveal.setGraphic(SVG.FOLDER_OPEN.createIcon());
+            btnReveal.setGraphic(FXUtils.limitingSize(SVG.FOLDER.createIcon(24), 24, 24));
 
             btnDelete.getStyleClass().add("toggle-icon4");
-            btnDelete.setGraphic(SVG.DELETE_FOREVER.createIcon());
+            btnDelete.setGraphic(FXUtils.limitingSize(SVG.DELETE_FOREVER.createIcon(24), 24, 24));
 
-            HBox right = new HBox(8);
-            right.setAlignment(Pos.CENTER_RIGHT);
-            right.getChildren().setAll(btnReveal, btnDelete);
-            root.setRight(right);
+            root.getChildren().setAll(checkBox, imageView, content, btnReveal, btnDelete);
 
-            getContainer().getChildren().add(new RipplerContainer(root));
+            setSelectable();
+
+            StackPane.setMargin(root, new Insets(8));
+            getContainer().getChildren().add(root);
         }
 
         @Override
