@@ -1,5 +1,7 @@
 package org.jackhuang.hmcl.resourcepack;
 
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.modinfo.PackMcMeta;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -28,6 +30,8 @@ public sealed abstract class ResourcePackFile implements Comparable<ResourcePack
     protected final String name;
     protected final String fileName;
 
+    private ObjectProperty<Compatibility> compatibility = null;
+
     protected ResourcePackFile(ResourcePackManager manager, Path path) {
         this.manager = manager;
         this.path = path;
@@ -47,8 +51,11 @@ public sealed abstract class ResourcePackFile implements Comparable<ResourcePack
         return getPath().getFileName().toString();
     }
 
-    public boolean isIncompatible() {
-        return manager.isIncompatible(this);
+    public Compatibility getCompatibility() {
+        if (compatibility == null) {
+            compatibility = new SimpleObjectProperty<>(this, "compatibility", manager.getCompatibility(this));
+        }
+        return compatibility.get();
     }
 
     public boolean isEnabled() {
@@ -80,5 +87,14 @@ public sealed abstract class ResourcePackFile implements Comparable<ResourcePack
     @Override
     public int compareTo(@NotNull ResourcePackFile other) {
         return this.getFileName().compareToIgnoreCase(other.getFileName());
+    }
+
+    public enum Compatibility {
+        COMPATIBLE,
+        TOO_NEW,
+        TOO_OLD,
+        INVALID,
+        MISSING_PACK_META,
+        MISSING_GAME_META
     }
 }

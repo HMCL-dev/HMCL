@@ -6,10 +6,12 @@ import com.jfoenix.controls.JFXListView;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
@@ -203,6 +205,8 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     }
 
     private static final class ResourcePackListCell extends MDListCell<ResourcePackInfoObject> {
+        private static final PseudoClass WARNING = PseudoClass.getPseudoClass("warning");
+
         private final JFXCheckBox checkBox = new JFXCheckBox();
         private final ImageView imageView = new ImageView();
         private final TwoLineListItem content = new TwoLineListItem();
@@ -210,10 +214,14 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         private final JFXButton btnDelete = new JFXButton();
         private final ResourcePackListPage page;
 
+        private Tooltip warningTooltip = null;
+
         private BooleanProperty booleanProperty = null;
 
         public ResourcePackListCell(JFXListView<ResourcePackInfoObject> listView, Holder<Object> lastCell, ResourcePackListPage page) {
             super(listView, lastCell);
+
+            getStyleClass().add("resource-pack-list-cell");
 
             this.page = page;
 
@@ -244,6 +252,12 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
         @Override
         protected void updateControl(ResourcePackInfoObject item, boolean empty) {
+            pseudoClassStateChanged(WARNING, false);
+            if (warningTooltip != null) {
+                Tooltip.uninstall(this, warningTooltip);
+                warningTooltip = null;
+            }
+
             if (empty || item == null) {
                 return;
             }
@@ -266,6 +280,21 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 checkBox.selectedProperty().unbindBidirectional(booleanProperty);
             }
             checkBox.selectedProperty().bindBidirectional(booleanProperty = item.enabledProperty());
+
+            {
+                String warningKey = switch (item.file.getCompatibility()) {
+                    case TOO_NEW -> "resourcepack.warning.too_new";
+                    case TOO_OLD -> "resourcepack.warning.too_old";
+                    case INVALID -> "resourcepack.warning.invalid";
+                    case MISSING_PACK_META -> "resourcepack.warning.missing_pack_meta";
+                    case MISSING_GAME_META -> "resourcepack.warning.missing_game_meta";
+                    default -> null;
+                };
+                if (warningKey != null) {
+                    pseudoClassStateChanged(WARNING, true);
+                    FXUtils.installFastTooltip(this, warningTooltip = new Tooltip(i18n(warningKey)));
+                }
+            }
         }
 
         private void onDelete(ResourcePackFile file) {

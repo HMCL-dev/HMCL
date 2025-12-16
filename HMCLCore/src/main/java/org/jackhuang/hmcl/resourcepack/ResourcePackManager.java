@@ -276,11 +276,23 @@ public final class ResourcePackManager {
         return isIncompatible(resourcePack) == incompatibleResourcePacks.contains(packId);
     }
 
-    public boolean isIncompatible(ResourcePackFile resourcePack) {
-        if (resourcePack.getMeta() == null || resourcePack.getMeta().pack() == null) return true;
-        if (this.requiredVersion.isUnspecified()) return true;
-        PackMcMeta.PackInfo packInfo = resourcePack.getMeta().pack();
-        return !getResourcePackVersionRange(packInfo).contains(this.requiredVersion);
+    public ResourcePackFile.Compatibility getCompatibility(@NotNull ResourcePackFile resourcePack) {
+        if (resourcePack.getMeta() == null || resourcePack.getMeta().pack() == null) return ResourcePackFile.Compatibility.MISSING_PACK_META;
+        if (this.requiredVersion.isUnspecified()) return ResourcePackFile.Compatibility.MISSING_GAME_META;
+        var versionRange = getResourcePackVersionRange(resourcePack.getMeta().pack());
+        if (versionRange.isEmpty()) {
+            return ResourcePackFile.Compatibility.INVALID;
+        } else if (versionRange.getMaximum().compareTo(this.requiredVersion) < 0) {
+            return ResourcePackFile.Compatibility.TOO_OLD;
+        } else if (versionRange.getMinimum().compareTo(this.requiredVersion) > 0) {
+            return ResourcePackFile.Compatibility.TOO_NEW;
+        } else {
+            return ResourcePackFile.Compatibility.COMPATIBLE;
+        }
+    }
+
+    public boolean isIncompatible(@NotNull ResourcePackFile resourcePack) {
+        return getCompatibility(resourcePack) != ResourcePackFile.Compatibility.COMPATIBLE;
     }
 
     @JsonSerializable
