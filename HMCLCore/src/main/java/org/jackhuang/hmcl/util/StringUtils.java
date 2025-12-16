@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.util;
 
+import org.jetbrains.annotations.Contract;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
@@ -527,6 +529,35 @@ public final class StringUtils {
                 return false;
         }
         return true;
+    }
+
+    /// Turns `List.of("a", "b", "c")` into `["a", "b", "c"]`
+    @Contract(pure = true)
+    public static String serializeStringList(List<String> list) {
+        if (list == null || list.isEmpty()) return "[]";
+        StringBuilder sb = new StringBuilder();
+        var it = list.iterator();
+        sb.append("[\"").append(it.next()).append("\"");
+        while (it.hasNext()) {
+            sb.append(",\"").append(it.next()).append("\"");
+        }
+        sb.append("]");
+        return sb.toString();
+    }
+
+    /// Turns `["a", "b", "c"]` into `List.of("a", "b", "c")`
+    @Contract(pure = true)
+    public static List<String> deserializeStringList(String list) {
+        if (list == null || list.isBlank()) return List.of();
+        list = list.trim();
+        if (!list.startsWith("[") || !list.endsWith("]")) return List.of();
+        return Arrays.stream(list.substring(1, list.length() - 1).split(","))
+                .map(String::trim)
+                .filter(StringUtils::isNotBlank)
+                .filter(s -> s.startsWith("\"") && s.endsWith("\""))
+                .map(s -> s.substring(1, s.length() - 1))
+                .filter(StringUtils::isNotBlank)
+                .toList();
     }
 
     public static class LevCalculator {

@@ -1,8 +1,13 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXListView;
+import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Skin;
@@ -15,7 +20,8 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.mod.LocalModFile;
-import org.jackhuang.hmcl.resourcepack.ResourcepackFile;
+import org.jackhuang.hmcl.resourcepack.ResourcePackFile;
+import org.jackhuang.hmcl.resourcepack.ResourcePackManager;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -32,62 +38,54 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class ResourcepackListPage extends ListPageBase<ResourcepackListPage.ResourcepackInfoObject> implements VersionPage.VersionLoadable {
-    private Path resourcepackDirectory;
+public final class ResourcePackListPage extends ListPageBase<ResourcePackListPage.ResourcePackInfoObject> implements VersionPage.VersionLoadable {
+    private Path resourcePackDirectory;
+    private ResourcePackManager resourcePackManager;
 
-    public ResourcepackListPage() {
+    public ResourcePackListPage() {
         FXUtils.applyDragListener(this, file -> file.getFileName().toString().endsWith(".zip"), this::addFiles);
     }
 
     @Override
     protected Skin<?> createDefaultSkin() {
-        return new ResourcepackListPageSkin(this);
+        return new ResourcePackListPageSkin(this);
     }
 
     @Override
     public void loadVersion(Profile profile, String version) {
-        this.resourcepackDirectory = profile.getRepository().getResourcepacksDirectory(version);
+        this.resourcePackDirectory = profile.getRepository().getResourcePackDirectory(version);
+        this.resourcePackManager = new ResourcePackManager(profile.getRepository(), version);
 
         try {
-            if (!Files.exists(resourcepackDirectory)) {
-                Files.createDirectories(resourcepackDirectory);
+            if (!Files.exists(resourcePackDirectory)) {
+                Files.createDirectories(resourcePackDirectory);
             }
         } catch (IOException e) {
-            LOG.warning("Failed to create resourcepack directory" + resourcepackDirectory, e);
+            LOG.warning("Failed to create resource pack directory" + resourcePackDirectory, e);
         }
         refresh();
     }
 
     public void refresh() {
-        if (resourcepackDirectory == null || !Files.isDirectory(resourcepackDirectory)) return;
+        if (resourcePackManager == null || !Files.isDirectory(resourcePackDirectory)) return;
         setLoading(true);
         Task.supplyAsync(Schedulers.io(), () -> {
-            try (Stream<Path> stream = Files.list(resourcepackDirectory)) {
-                return stream.sorted(Comparator.comparing(FileUtils::getName))
-                        .flatMap(item -> {
-                            try {
-                                return Stream.of(ResourcepackFile.parse(item)).filter(Objects::nonNull).map(ResourcepackInfoObject::new);
-                            } catch (IOException e) {
-                                LOG.warning("Failed to load resourcepack " + item, e);
-                                return Stream.empty();
-                            }
-                        })
-                        .toList();
-            }
+            resourcePackManager.refreshResourcePacks();
+            return resourcePackManager.getResourcePacks()
+                    .stream()
+                    .map(ResourcePackInfoObject::new)
+                    .toList();
         }).whenComplete(Schedulers.javafx(), ((result, exception) -> {
             if (exception == null) {
                 getItems().setAll(result);
             } else {
-                LOG.warning("Failed to load resourcepacks", exception);
+                LOG.warning("Failed to load resource packs", exception);
                 getItems().clear();
             }
             setLoading(false);
@@ -95,17 +93,14 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
     }
 
     public void addFiles(List<Path> files) {
-        if (resourcepackDirectory == null) return;
+        if (resourcePackManager == null) return;
 
         try {
             for (Path file : files) {
-                Path target = resourcepackDirectory.resolve(file.getFileName());
-                if (!Files.exists(target)) {
-                    Files.copy(file, target);
-                }
+                resourcePackManager.importResourcePack(file);
             }
         } catch (IOException e) {
-            LOG.warning("Failed to add resourcepacks", e);
+            LOG.warning("Failed to add resource packs", e);
             Controllers.dialog(i18n("resourcepack.add.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
         }
 
@@ -127,10 +122,10 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
         Controllers.navigate(Controllers.getDownloadPage());
     }
 
-    private static final class ResourcepackListPageSkin extends SkinBase<ResourcepackListPage> {
-        private final JFXListView<ResourcepackInfoObject> listView;
+    private static final class ResourcePackListPageSkin extends SkinBase<ResourcePackListPage> {
+        private final JFXListView<ResourcePackInfoObject> listView;
 
-        private ResourcepackListPageSkin(ResourcepackListPage control) {
+        private ResourcePackListPageSkin(ResourcePackListPage control) {
             super(control);
 
             StackPane pane = new StackPane();
@@ -157,7 +152,7 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
             center.loadingProperty().bind(control.loadingProperty());
 
             Holder<Object> lastCell = new Holder<>();
-            listView.setCellFactory(x -> new ResourcepackListCell(listView, lastCell, control));
+            listView.setCellFactory(x -> new ResourcePackListCell(listView, lastCell, control));
             Bindings.bindContent(listView.getItems(), control.getItems());
 
             center.setContent(listView);
@@ -168,16 +163,23 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
         }
     }
 
-    public static class ResourcepackInfoObject {
-        private final ResourcepackFile file;
+    public static class ResourcePackInfoObject {
+        private final ResourcePackFile file;
+        private final BooleanProperty enabled;
         private WeakReference<Image> iconCache;
 
-        public ResourcepackInfoObject(ResourcepackFile file) {
+        public ResourcePackInfoObject(ResourcePackFile file) {
             this.file = file;
+            this.enabled = new SimpleBooleanProperty(this, "enabled", file.isEnabled());
+            this.enabled.addListener(__ -> file.setEnabled(enabled.get()));
         }
 
-        public ResourcepackFile getFile() {
+        public ResourcePackFile getFile() {
             return file;
+        }
+
+        public BooleanProperty enabledProperty() {
+            return enabled;
         }
 
         Image getIcon() {
@@ -190,7 +192,7 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
                 try (ByteArrayInputStream inputStream = new ByteArrayInputStream(iconData)) {
                     image = new Image(inputStream, 64, 64, true, true);
                 } catch (Exception e) {
-                    LOG.warning("Failed to load resourcepack icon " + file.getPath(), e);
+                    LOG.warning("Failed to load resource pack icon " + file.getPath(), e);
                 }
             }
 
@@ -203,14 +205,17 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
         }
     }
 
-    private static final class ResourcepackListCell extends MDListCell<ResourcepackInfoObject> {
+    private static final class ResourcePackListCell extends MDListCell<ResourcePackInfoObject> {
+        private final JFXCheckBox checkBox = new JFXCheckBox();
         private final ImageView imageView = new ImageView();
         private final TwoLineListItem content = new TwoLineListItem();
         private final JFXButton btnReveal = new JFXButton();
         private final JFXButton btnDelete = new JFXButton();
-        private final ResourcepackListPage page;
+        private final ResourcePackListPage page;
 
-        public ResourcepackListCell(JFXListView<ResourcepackInfoObject> listView, Holder<Object> lastCell, ResourcepackListPage page) {
+        private BooleanProperty booleanProperty = null;
+
+        public ResourcePackListCell(JFXListView<ResourcePackInfoObject> listView, Holder<Object> lastCell, ResourcePackListPage page) {
             super(listView, lastCell);
 
             this.page = page;
@@ -221,7 +226,7 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
             HBox left = new HBox(8);
             left.setAlignment(Pos.CENTER);
             FXUtils.limitSize(imageView, 32, 32);
-            left.getChildren().add(imageView);
+            left.getChildren().addAll(checkBox, imageView);
             left.setPadding(new Insets(0, 8, 0, 0));
             FXUtils.setLimitWidth(left, 48);
             root.setLeft(left);
@@ -244,12 +249,12 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
         }
 
         @Override
-        protected void updateControl(ResourcepackListPage.ResourcepackInfoObject item, boolean empty) {
+        protected void updateControl(ResourcePackInfoObject item, boolean empty) {
             if (empty || item == null) {
                 return;
             }
 
-            ResourcepackFile file = item.getFile();
+            ResourcePackFile file = item.getFile();
             imageView.setImage(item.getIcon());
 
             content.setTitle(file.getName());
@@ -262,19 +267,22 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
             btnDelete.setOnAction(event ->
                     Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"),
                             () -> onDelete(file), null));
+
+            if (booleanProperty != null) {
+                checkBox.selectedProperty().unbindBidirectional(booleanProperty);
+            }
+            checkBox.selectedProperty().bindBidirectional(booleanProperty = item.enabledProperty());
         }
 
-        private void onDelete(ResourcepackFile file) {
+        private void onDelete(ResourcePackFile file) {
             try {
-                if (Files.isDirectory(file.getPath())) {
-                    FileUtils.deleteDirectory(file.getPath());
-                } else {
-                    Files.delete(file.getPath());
+                if (page.resourcePackManager != null) {
+                    page.resourcePackManager.removeResourcePacks(file);
+                    page.refresh();
                 }
-                page.refresh();
             } catch (IOException e) {
                 Controllers.dialog(i18n("resourcepack.delete.failed", e.getMessage()), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
-                LOG.warning("Failed to delete resourcepack", e);
+                LOG.warning("Failed to delete resource pack", e);
             }
         }
     }
