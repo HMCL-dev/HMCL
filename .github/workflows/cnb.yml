@@ -9,7 +9,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Mirror GitHub to CNB
+        env:
+          SOURCE_REPO: HMCL-dev/HMCL
+          TARGET_REPO: HMCL-dev/HMCL
         run: |
-          git clone --mirror "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY.git" -- repo
+          git clone --mirror "https://github.com/$SOURCE_REPO.git" -- repo
           cd repo
-          git push --mirror "https://${{ secrets.CNB_SYNC_USERNAME }}:${{ secrets.CNB_SYNC_TOKEN }}@cnb.cool/$GITHUB_REPOSITORY.git"
+          git push --mirror "https://${{ secrets.CNB_SYNC_USERNAME }}:${{ secrets.CNB_SYNC_TOKEN }}@cnb.cool/$TARGET_REPO.git"
