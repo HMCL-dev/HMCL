@@ -21,9 +21,6 @@ import javafx.beans.binding.ObjectBinding;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.AuthenticationException;
-import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorArtifactInfo;
-import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorArtifactProvider;
-import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
 import org.jackhuang.hmcl.auth.yggdrasil.Texture;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.game.Arguments;
@@ -33,12 +30,11 @@ import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutionException;
+import java.util.function.Supplier;
 
 import static java.util.Objects.requireNonNull;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
@@ -50,13 +46,13 @@ import static org.jackhuang.hmcl.util.Pair.pair;
  */
 public class OfflineAccount extends Account {
 
-    private final AuthlibInjectorArtifactProvider downloader;
+    private final Supplier<Path> authlibInjectorArtifactProvider;
     private final String username;
     private final UUID uuid;
     private Skin skin;
 
-    protected OfflineAccount(AuthlibInjectorArtifactProvider downloader, String username, UUID uuid, Skin skin) {
-        this.downloader = requireNonNull(downloader);
+    protected OfflineAccount(Supplier<Path> authlibInjectorArtifactProvider, String username, UUID uuid, Skin skin) {
+        this.authlibInjectorArtifactProvider = requireNonNull(authlibInjectorArtifactProvider);
         this.username = requireNonNull(username);
         this.uuid = requireNonNull(uuid);
         this.skin = skin;
@@ -66,8 +62,8 @@ public class OfflineAccount extends Account {
         }
     }
 
-    public AuthlibInjectorArtifactProvider getDownloader() {
-        return downloader;
+    public Supplier<Path> getAuthlibInjectorArtifactProvider() {
+        return authlibInjectorArtifactProvider;
     }
 
     @Override
@@ -109,51 +105,26 @@ public class OfflineAccount extends Account {
         AuthInfo authInfo = new AuthInfo(username, uuid, UUIDTypeAdapter.fromUUID(UUID.randomUUID()), AuthInfo.USER_TYPE_MSA, "{}");
 
         if (loadAuthlibInjector(skin)) {
-            CompletableFuture<AuthlibInjectorArtifactInfo> artifactTask = CompletableFuture.supplyAsync(() -> {
-                try {
-                    return downloader.getArtifactInfo();
-                } catch (IOException e) {
-                    throw new CompletionException(new AuthlibInjectorDownloadException(e));
-                }
-            });
-
-            AuthlibInjectorArtifactInfo artifact;
-            try {
-                artifact = artifactTask.get();
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new AuthenticationException(e);
-            } catch (ExecutionException e) {
-                if (e.getCause() instanceof AuthenticationException) {
-                    throw (AuthenticationException) e.getCause();
-                } else {
-                    throw new AuthenticationException(e.getCause());
-                }
-            }
-
-            try {
-                return new OfflineAuthInfo(authInfo, artifact);
-            } catch (Exception e) {
-                throw new AuthenticationException(e);
-            }
+            return new OfflineAuthInfo(authInfo, authlibInjectorArtifactProvider.get());
         } else {
             return authInfo;
         }
     }
 
     private class OfflineAuthInfo extends AuthInfo {
-        private final AuthlibInjectorArtifactInfo artifact;
+        private final Path authlibInjectorArtifact;
         private YggdrasilServer server;
 
-        public OfflineAuthInfo(AuthInfo authInfo, AuthlibInjectorArtifactInfo artifact) {
+        public OfflineAuthInfo(AuthInfo authInfo, Path authlibInjectorArtifact) {
             super(authInfo.getUsername(), authInfo.getUUID(), authInfo.getAccessToken(), USER_TYPE_MSA, authInfo.getUserProperties());
 
-            this.artifact = artifact;
+            this.authlibInjectorArtifact = authlibInjectorArtifact;
         }
 
         @Override
         public Arguments getLaunchArguments(LaunchOptions options) throws IOException {
-            if (!options.isDaemon()) return null;
+            if (!options.isDaemon())
+                return null;
 
             server = new YggdrasilServer(0);
             server.start();
@@ -168,9 +139,8 @@ public class OfflineAccount extends Account {
             }
 
             return new Arguments().addJVMArguments(
-                    "-javaagent:" + artifact.getLocation().toString() + "=" + "http://localhost:" + server.getListeningPort(),
-                    "-Dauthlibinjector.side=client"
-            );
+                    "-javaagent:" + authlibInjectorArtifact.toAbsolutePath() + "=" + "http://localhost:" + server.getListeningPort(),
+                    "-Dauthlibinjector.side=client");
         }
 
         @Override
@@ -192,8 +162,7 @@ public class OfflineAccount extends Account {
         return mapOf(
                 pair("uuid", UUIDTypeAdapter.fromUUID(uuid)),
                 pair("username", username),
-                pair("skin", skin == null ? null : skin.toStorage())
-        );
+                pair("skin", skin == null ? null : skin.toStorage()));
     }
 
     @Override

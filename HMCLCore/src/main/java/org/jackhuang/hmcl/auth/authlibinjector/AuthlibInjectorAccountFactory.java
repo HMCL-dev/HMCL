@@ -25,22 +25,24 @@ import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilSession;
 import org.jackhuang.hmcl.util.javafx.ObservableOptionalCache;
 
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 
 public class AuthlibInjectorAccountFactory extends AccountFactory<AuthlibInjectorAccount> {
-    private final AuthlibInjectorArtifactProvider downloader;
+    private final Supplier<Path> artifactProvider;
     private final Function<String, AuthlibInjectorServer> serverLookup;
 
     /**
      * @param serverLookup a function that looks up {@link AuthlibInjectorServer} by url
      */
-    public AuthlibInjectorAccountFactory(AuthlibInjectorArtifactProvider downloader, Function<String, AuthlibInjectorServer> serverLookup) {
-        this.downloader = downloader;
+    public AuthlibInjectorAccountFactory(Supplier<Path> artifactProvider, Function<String, AuthlibInjectorServer> serverLookup) {
+        this.artifactProvider = artifactProvider;
         this.serverLookup = serverLookup;
     }
 
@@ -57,7 +59,7 @@ public class AuthlibInjectorAccountFactory extends AccountFactory<AuthlibInjecto
 
         AuthlibInjectorServer server = (AuthlibInjectorServer) additionalData;
 
-        return new AuthlibInjectorAccount(server, downloader, username, password, selector);
+        return new AuthlibInjectorAccount(server, artifactProvider, username, password, selector);
     }
 
     @Override
@@ -67,10 +69,10 @@ public class AuthlibInjectorAccountFactory extends AccountFactory<AuthlibInjecto
         String apiRoot = tryCast(storage.get("serverBaseURL"), String.class)
                 .orElseThrow(() -> new IllegalArgumentException("storage does not have API root."));
         AuthlibInjectorServer server = serverLookup.apply(apiRoot);
-        return fromStorage(storage, downloader, server);
+        return fromStorage(storage, artifactProvider, server);
     }
 
-    static AuthlibInjectorAccount fromStorage(Map<Object, Object> storage, AuthlibInjectorArtifactProvider downloader, AuthlibInjectorServer server) {
+    static AuthlibInjectorAccount fromStorage(Map<Object, Object> storage, Supplier<Path> artifactProvider, AuthlibInjectorServer server) {
         YggdrasilSession session = YggdrasilSession.fromStorage(storage);
 
         String username = tryCast(storage.get("username"), String.class)
@@ -86,6 +88,6 @@ public class AuthlibInjectorAccountFactory extends AccountFactory<AuthlibInjecto
                     profileRepository.invalidate(selected.getId());
                 });
 
-        return new AuthlibInjectorAccount(server, downloader, username, session);
+        return new AuthlibInjectorAccount(server, artifactProvider, username, session);
     }
 }

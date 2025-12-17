@@ -21,7 +21,6 @@ import com.jfoenix.controls.JFXButton;
 import javafx.stage.Stage;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.*;
-import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
@@ -291,8 +290,6 @@ public final class LauncherHelper {
                                     }
                                 } else if (ex instanceof GameAssetIndexDownloadTask.GameAssetIndexMalformedException) {
                                     message = i18n("assets.index.malformed");
-                                } else if (ex instanceof AuthlibInjectorDownloadException) {
-                                    message = i18n("account.failed.injector_download_failure");
                                 } else if (ex instanceof CharacterDeletedException) {
                                     message = i18n("account.failed.character_deleted");
                                 } else if (ex instanceof ResponseCodeException) {

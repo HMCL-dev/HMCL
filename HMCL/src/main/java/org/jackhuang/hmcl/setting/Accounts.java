@@ -36,16 +36,21 @@ import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
 import org.jackhuang.hmcl.game.OAuthServer;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.FileSaver;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.skin.InvalidSkinException;
 
 import javax.net.ssl.SSLException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Reader;
+import java.io.UncheckedIOException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.Supplier;
 
 import static java.util.stream.Collectors.toList;
 import static javafx.collections.FXCollections.observableArrayList;
@@ -67,12 +72,12 @@ public final class Accounts {
     private Accounts() {
     }
 
-    private static final AuthlibInjectorArtifactProvider AUTHLIB_INJECTOR_DOWNLOADER = createAuthlibInjectorArtifactProvider();
+    private static final Supplier<Path> AUTHLIB_INJECTOR_ARTIFACT_PROVIDER = Accounts::resolveAuthlibInjectorArtifact;
 
     public static final OAuthServer.Factory OAUTH_CALLBACK = new OAuthServer.Factory();
 
-    public static final OfflineAccountFactory FACTORY_OFFLINE = new OfflineAccountFactory(AUTHLIB_INJECTOR_DOWNLOADER);
-    public static final AuthlibInjectorAccountFactory FACTORY_AUTHLIB_INJECTOR = new AuthlibInjectorAccountFactory(AUTHLIB_INJECTOR_DOWNLOADER, Accounts::getOrCreateAuthlibInjectorServer);
+    public static final OfflineAccountFactory FACTORY_OFFLINE = new OfflineAccountFactory(AUTHLIB_INJECTOR_ARTIFACT_PROVIDER);
+    public static final AuthlibInjectorAccountFactory FACTORY_AUTHLIB_INJECTOR = new AuthlibInjectorAccountFactory(AUTHLIB_INJECTOR_ARTIFACT_PROVIDER, Accounts::getOrCreateAuthlibInjectorServer);
     public static final MicrosoftAccountFactory FACTORY_MICROSOFT = new MicrosoftAccountFactory(new MicrosoftService(OAUTH_CALLBACK));
     public static final List<AccountFactory<?>> FACTORIES = immutableListOf(FACTORY_OFFLINE, FACTORY_MICROSOFT, FACTORY_AUTHLIB_INJECTOR);
 
@@ -105,7 +110,7 @@ public final class Accounts {
     }
 
     public static BoundAuthlibInjectorAccountFactory getAccountFactoryByAuthlibInjectorServer(AuthlibInjectorServer server) {
-        return new BoundAuthlibInjectorAccountFactory(AUTHLIB_INJECTOR_DOWNLOADER, server);
+        return new BoundAuthlibInjectorAccountFactory(AUTHLIB_INJECTOR_ARTIFACT_PROVIDER, server);
     }
     // ====
 
@@ -356,20 +361,44 @@ public final class Accounts {
     }
 
     // ==== authlib-injector ====
-    private static AuthlibInjectorArtifactProvider createAuthlibInjectorArtifactProvider() {
-        String authlibinjectorLocation = System.getProperty("hmcl.authlibinjector.location");
-        if (authlibinjectorLocation != null) {
-            LOG.info("Using specified authlib-injector: " + authlibinjectorLocation);
-            return new SimpleAuthlibInjectorArtifactProvider(Paths.get(authlibinjectorLocation));
+    private static Path resolveAuthlibInjectorArtifact() {
+        // 1. Use hmcl.authlibinjector.location if specified
+        String overrideSetting = System.getProperty("hmcl.authlibinjector.location");
+        if (overrideSetting != null) {
+            LOG.info("Using specified authlib-injector: " + overrideSetting);
+            return Paths.get(overrideSetting);
         }
 
-        String authlibInjectorVersion = JarUtils.getAttribute("hmcl.authlib-injector.version", null);
-        if (authlibInjectorVersion == null)
+        // 2. Use bundled authlib-injector
+        String version = JarUtils.getAttribute("hmcl.authlib-injector.version", null);
+        if (version == null)
             throw new AssertionError("Missing hmcl.authlib-injector.version");
 
-        String authlibInjectorFileName = "authlib-injector-" + authlibInjectorVersion + ".jar";
-        return new AuthlibInjectorExtractor(Accounts.class.getResource("/assets/" + authlibInjectorFileName),
-                Metadata.DEPENDENCIES_DIRECTORY.resolve("universal").resolve(authlibInjectorFileName));
+        String filename = "authlib-injector-" + version + ".jar";
+        Path extractDir = Metadata.DEPENDENCIES_DIRECTORY.resolve("universal");
+        Path extractedPath = extractDir.resolve(filename);
+
+        if (Files.isRegularFile(extractedPath)) {
+            // Reuse extracted file
+            LOG.info("Using existing authlib-injector: " + extractedPath);
+            return extractedPath;
+        }
+
+        // Extract bundled authlib-injector
+        URL bundledResource = Accounts.class.getResource("/assets/" + filename);
+        if (bundledResource == null)
+            throw new AssertionError("Missing bundled authlib-injector: " + filename);
+
+        LOG.info("Extracting bundled authlib-injector to: " + extractedPath);
+        try {
+            Files.createDirectories(extractDir);
+            try (InputStream inputStream = bundledResource.openStream()) {
+                FileUtils.saveSafely(extractedPath, inputStream::transferTo);
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to extract bundled authlib-injector", e);
+        }
+        return extractedPath;
     }
 
     private static AuthlibInjectorServer getOrCreateAuthlibInjectorServer(String url) {
@@ -441,8 +470,6 @@ public final class Accounts {
                 }
             }
             return exception.getMessage();
-        } else if (exception instanceof AuthlibInjectorDownloadException) {
-            return i18n("account.failed.injector_download_failure");
         } else if (exception instanceof CharacterDeletedException) {
             return i18n("account.failed.character_deleted");
         } else if (exception instanceof InvalidSkinException) {
