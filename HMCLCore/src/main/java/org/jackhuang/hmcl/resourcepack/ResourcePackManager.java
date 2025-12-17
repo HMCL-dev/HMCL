@@ -59,7 +59,23 @@ public final class ResourcePackManager {
 
     @NotNull
     @Contract(pure = true)
-    public static VersionRange<PackMcMeta.PackVersion> getResourcePackVersionRange(PackMcMeta.PackInfo packInfo) {
+    public static VersionRange<PackMcMeta.PackVersion> getResourcePackVersionRangeOld(PackMcMeta.PackInfo packInfo) {
+        if (packInfo == null) {
+            return VersionRange.empty();
+        }
+        boolean supportedFormatsUnspecified = packInfo.supportedFormats().isUnspecified();
+        if (supportedFormatsUnspecified && packInfo.packFormat() <= 0) {
+            return VersionRange.empty();
+        }
+        if (supportedFormatsUnspecified) {
+            return VersionRange.only(new PackMcMeta.PackVersion(packInfo.packFormat(), 0));
+        }
+        return VersionRange.between(packInfo.supportedFormats().getMin(), packInfo.supportedFormats().getMax());
+    }
+
+    @NotNull
+    @Contract(pure = true)
+    public static VersionRange<PackMcMeta.PackVersion> getResourcePackVersionRangeNew(PackMcMeta.PackInfo packInfo) {
         if (packInfo == null) {
             return VersionRange.empty();
         }
@@ -129,7 +145,10 @@ public final class ResourcePackManager {
 
     private final GameRepository repository;
     private final String id;
+
+    private final Path resourcePackDirectory;
     private final TreeSet<ResourcePackFile> resourcePackFiles = new TreeSet<>();
+
     private final Path optionsFile;
     private final @NotNull PackMcMeta.PackVersion requiredVersion;
 
@@ -138,6 +157,7 @@ public final class ResourcePackManager {
     public ResourcePackManager(GameRepository repository, String id) {
         this.repository = repository;
         this.id = id;
+        this.resourcePackDirectory = this.repository.getResourcePackDirectory(this.id);
         this.optionsFile = repository.getRunDirectory(id).resolve("options.txt");
         this.requiredVersion = getPackVersion(repository.getVersionJar(id));
     }
@@ -185,7 +205,7 @@ public final class ResourcePackManager {
     }
 
     public Path getResourcePackDirectory() {
-        return repository.getResourcePackDirectory(id);
+        return resourcePackDirectory;
     }
 
     private void addResourcePackInfo(Path file) throws IOException {
@@ -196,8 +216,8 @@ public final class ResourcePackManager {
     public void refreshResourcePacks() throws IOException {
         resourcePackFiles.clear();
 
-        if (Files.isDirectory(getResourcePackDirectory())) {
-            try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(getResourcePackDirectory())) {
+        if (Files.isDirectory(resourcePackDirectory)) {
+            try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(resourcePackDirectory)) {
                 for (Path subitem : directoryStream) {
                     addResourcePackInfo(subitem);
                 }
@@ -216,7 +236,6 @@ public final class ResourcePackManager {
         if (!loaded)
             refreshResourcePacks();
 
-        Path resourcePackDirectory = getResourcePackDirectory();
         Files.createDirectories(resourcePackDirectory);
 
         Path newFile = resourcePackDirectory.resolve(file.getFileName());
@@ -258,12 +277,20 @@ public final class ResourcePackManager {
         if (resourcePack.manager != this) return;
         Map<String, String> options = loadOptions();
         String packId = "file/" + resourcePack.getFileName();
+        boolean b = false;
         List<String> resourcePacks = new LinkedList<>(StringUtils.deserializeStringList(options.get("resourcePacks")));
         if (resourcePacks.contains(packId)) {
             resourcePacks.remove(packId);
             options.put("resourcePacks", StringUtils.serializeStringList(resourcePacks));
-            saveOptions(options);
+            b = true;
         }
+        List<String> incompatibleResourcePacks = new LinkedList<>(StringUtils.deserializeStringList(options.get("incompatibleResourcePacks")));
+        if (incompatibleResourcePacks.contains(packId)) {
+            incompatibleResourcePacks.remove(packId);
+            options.put("incompatibleResourcePacks", StringUtils.serializeStringList(incompatibleResourcePacks));
+            b = true;
+        }
+        if (b) saveOptions(options);
     }
 
     public boolean isEnabled(ResourcePackFile resourcePack) {
@@ -279,16 +306,16 @@ public final class ResourcePackManager {
     public ResourcePackFile.Compatibility getCompatibility(@NotNull ResourcePackFile resourcePack) {
         if (resourcePack.getMeta() == null || resourcePack.getMeta().pack() == null) return ResourcePackFile.Compatibility.MISSING_PACK_META;
         if (this.requiredVersion.isUnspecified()) return ResourcePackFile.Compatibility.MISSING_GAME_META;
-        var versionRange = getResourcePackVersionRange(resourcePack.getMeta().pack());
-        if (versionRange.isEmpty()) {
+        var versionRange = requiredVersion.majorVersion() > 64
+                ? getResourcePackVersionRangeNew(resourcePack.getMeta().pack())
+                : getResourcePackVersionRangeOld(resourcePack.getMeta().pack());
+        if (versionRange.isEmpty())
             return ResourcePackFile.Compatibility.INVALID;
-        } else if (versionRange.getMaximum().compareTo(this.requiredVersion) < 0) {
+        if (versionRange.getMaximum().compareTo(this.requiredVersion) < 0)
             return ResourcePackFile.Compatibility.TOO_OLD;
-        } else if (versionRange.getMinimum().compareTo(this.requiredVersion) > 0) {
+        if (versionRange.getMinimum().compareTo(this.requiredVersion) > 0)
             return ResourcePackFile.Compatibility.TOO_NEW;
-        } else {
-            return ResourcePackFile.Compatibility.COMPATIBLE;
-        }
+        return ResourcePackFile.Compatibility.COMPATIBLE;
     }
 
     public boolean isIncompatible(@NotNull ResourcePackFile resourcePack) {

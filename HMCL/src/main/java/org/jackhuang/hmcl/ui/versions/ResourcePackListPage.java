@@ -47,6 +47,8 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     private Path resourcePackDirectory;
     private ResourcePackManager resourcePackManager;
 
+    private boolean warningShown = false;
+
     public ResourcePackListPage() {
         FXUtils.applyDragListener(this, file -> file.getFileName().toString().endsWith(".zip"), this::addFiles);
     }
@@ -58,8 +60,8 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
     @Override
     public void loadVersion(Profile profile, String version) {
-        this.resourcePackDirectory = profile.getRepository().getResourcePackDirectory(version);
         this.resourcePackManager = new ResourcePackManager(profile.getRepository(), version);
+        this.resourcePackDirectory = this.resourcePackManager.getResourcePackDirectory();
 
         try {
             if (!Files.exists(resourcePackDirectory)) {
@@ -207,7 +209,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     private static final class ResourcePackListCell extends MDListCell<ResourcePackInfoObject> {
         private static final PseudoClass WARNING = PseudoClass.getPseudoClass("warning");
 
-        private final JFXCheckBox checkBox = new JFXCheckBox();
+        private final JFXCheckBox checkBox;
         private final ImageView imageView = new ImageView();
         private final TwoLineListItem content = new TwoLineListItem();
         private final JFXButton btnReveal = new JFXButton();
@@ -228,6 +230,21 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             HBox root = new HBox(8);
             root.setPickOnBounds(false);
             root.setAlignment(Pos.CENTER_LEFT);
+
+            checkBox = new JFXCheckBox() {
+                @Override
+                public void fire() {
+                    if (!page.warningShown) {
+                        Controllers.confirm(i18n("resourcepack.warning.manipulate"), i18n("message.warning"),
+                                () -> {
+                                    super.fire();
+                                    page.warningShown = true;
+                                }, null);
+                    } else {
+                        super.fire();
+                    }
+                }
+            };
 
             imageView.setFitWidth(24);
             imageView.setFitHeight(24);
