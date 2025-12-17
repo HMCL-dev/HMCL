@@ -41,6 +41,10 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
         return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteModRepository.Type.MOD, null, ModrinthRemoteModRepository.MODS);
     }
 
+    public static DownloadListPage ofDataPack(DownloadPage.DownloadCallback callback, boolean versionSelection) {
+        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteModRepository.Type.DATA_PACK, CurseForgeRemoteModRepository.DATA_PACKS, ModrinthRemoteModRepository.DATA_PACKS);
+    }
+
     public static DownloadListPage ofModPack(DownloadPage.DownloadCallback callback, boolean versionSelection) {
         return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteModRepository.Type.MODPACK, CurseForgeRemoteModRepository.MODPACKS, ModrinthRemoteModRepository.MODPACKS);
     }

@@ -70,6 +70,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     private final TabHeader.Tab<DownloadListPage> modpackTab = new TabHeader.Tab<>("modpackTab");
     private final TabHeader.Tab<DownloadListPage> resourcePackTab = new TabHeader.Tab<>("resourcePackTab");
     private final TabHeader.Tab<DownloadListPage> shaderTab = new TabHeader.Tab<>("shaderTab");
+    private final TabHeader.Tab<DownloadListPage> datapackTab = new TabHeader.Tab<>("datapackTab");
     private final TabHeader.Tab<DownloadListPage> worldTab = new TabHeader.Tab<>("worldTab");
     private final TransitionPane transitionPane = new TransitionPane();
     private final DownloadNavigator versionPageNavigator = new DownloadNavigator();
@@ -97,8 +98,9 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         modTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofMod((profile, version, file) -> download(profile, version, file, "mods"), true)));
         resourcePackTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofResourcePack((profile, version, file) -> download(profile, version, file, "resourcepacks"), true)));
         shaderTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(ModrinthRemoteModRepository.SHADER_PACKS, (profile, version, file) -> download(profile, version, file, "shaderpacks"), true)));
+        datapackTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofDataPack(null, false)));
         worldTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(CurseForgeRemoteModRepository.WORLDS)));
-        tab = new TabHeader(transitionPane, newGameTab, modpackTab, modTab, resourcePackTab, shaderTab, worldTab);
+        tab = new TabHeader(transitionPane, newGameTab, modpackTab, modTab, resourcePackTab, shaderTab, datapackTab, worldTab);
 
         Profiles.registerVersionsListener(this::loadVersions);
 
@@ -112,6 +114,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                 .addNavigationDrawerTab(tab, modTab, i18n("mods"), SVG.EXTENSION, SVG.EXTENSION_FILL)
                 .addNavigationDrawerTab(tab, resourcePackTab, i18n("resourcepack"), SVG.TEXTURE)
                 .addNavigationDrawerTab(tab, shaderTab, i18n("download.shader"), SVG.WB_SUNNY, SVG.WB_SUNNY_FILL)
+                .addNavigationDrawerTab(tab, datapackTab, "数据包", SVG.CODE_BLOCKS, SVG.CODE_BLOCKS_FILL)
                 .addNavigationDrawerTab(tab, worldTab, i18n("world"), SVG.PUBLIC);
         FXUtils.setLimitWidth(sideBar, 200);
         setLeft(sideBar);
@@ -178,6 +181,9 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                     }
                     if (shaderTab.isInitialized()) {
                         shaderTab.getNode().loadVersion(profile, null);
+                    }
+                    if (datapackTab.isInitialized()) {
+                        datapackTab.getNode().loadVersion(profile, null);
                     }
                     if (worldTab.isInitialized()) {
                         worldTab.getNode().loadVersion(profile, null);

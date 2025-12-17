@@ -48,6 +48,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     public static final ModrinthRemoteModRepository MODPACKS = new ModrinthRemoteModRepository("modpack");
     public static final ModrinthRemoteModRepository RESOURCE_PACKS = new ModrinthRemoteModRepository("resourcepack");
     public static final ModrinthRemoteModRepository SHADER_PACKS = new ModrinthRemoteModRepository("shader");
+    public static final ModrinthRemoteModRepository DATA_PACKS = new ModrinthRemoteModRepository("datapack");
 
     private static final String PREFIX = "https://api.modrinth.com";
 
@@ -521,6 +522,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                         else if ("neoforge".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.NEO_FORGED);
                         else if ("quilt".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.QUILT);
                         else if ("liteloader".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.LITE_LOADER);
+                        else if ("datapack".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.PACK);
                         else return Stream.empty();
                     }).collect(Collectors.toList())
             ));

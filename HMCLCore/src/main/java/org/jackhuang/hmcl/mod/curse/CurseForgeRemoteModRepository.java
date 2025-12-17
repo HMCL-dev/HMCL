@@ -242,6 +242,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     public static final int SECTION_BUKKIT_PLUGIN = 5;
     public static final int SECTION_MOD = 6;
     public static final int SECTION_RESOURCE_PACK = 12;
+    public static final int SECTION_DATA_PACK = 6945;
     public static final int SECTION_WORLD = 17;
     public static final int SECTION_MODPACK = 4471;
     public static final int SECTION_CUSTOMIZATION = 4546;
@@ -253,6 +254,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     public static final CurseForgeRemoteModRepository MODS = new CurseForgeRemoteModRepository(RemoteModRepository.Type.MOD, SECTION_MOD);
     public static final CurseForgeRemoteModRepository MODPACKS = new CurseForgeRemoteModRepository(RemoteModRepository.Type.MODPACK, SECTION_MODPACK);
     public static final CurseForgeRemoteModRepository RESOURCE_PACKS = new CurseForgeRemoteModRepository(RemoteModRepository.Type.RESOURCE_PACK, SECTION_RESOURCE_PACK);
+    public static final CurseForgeRemoteModRepository DATA_PACKS = new CurseForgeRemoteModRepository(Type.DATA_PACK, SECTION_DATA_PACK);
     public static final CurseForgeRemoteModRepository WORLDS = new CurseForgeRemoteModRepository(RemoteModRepository.Type.WORLD, SECTION_WORLD);
     public static final CurseForgeRemoteModRepository CUSTOMIZATIONS = new CurseForgeRemoteModRepository(RemoteModRepository.Type.CUSTOMIZATION, SECTION_CUSTOMIZATION);
 
