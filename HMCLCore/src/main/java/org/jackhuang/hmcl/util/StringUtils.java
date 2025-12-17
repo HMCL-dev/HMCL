@@ -24,6 +24,7 @@ import java.io.StringWriter;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * @author huangyuhui
@@ -535,14 +536,7 @@ public final class StringUtils {
     @Contract(pure = true)
     public static String serializeStringList(List<String> list) {
         if (list == null || list.isEmpty()) return "[]";
-        StringBuilder sb = new StringBuilder();
-        var it = list.iterator();
-        sb.append("[\"").append(it.next()).append("\"");
-        while (it.hasNext()) {
-            sb.append(",\"").append(it.next()).append("\"");
-        }
-        sb.append("]");
-        return sb.toString();
+        return list.stream().collect(Collectors.joining("\",\"", "[\"", "\"]"));
     }
 
     /// Turns `["a", "b", "c"]` into `List.of("a", "b", "c")`
@@ -550,11 +544,10 @@ public final class StringUtils {
     public static List<String> deserializeStringList(String list) {
         if (list == null || list.isBlank()) return List.of();
         list = list.trim();
-        if (!list.startsWith("[") || !list.endsWith("]")) return List.of();
+        if (list.length() < 4 || !list.startsWith("[") || !list.endsWith("]")) return List.of();
         return Arrays.stream(list.substring(1, list.length() - 1).split(","))
                 .map(String::trim)
-                .filter(StringUtils::isNotBlank)
-                .filter(s -> s.startsWith("\"") && s.endsWith("\""))
+                .filter(s -> s.length() >= 2 && s.startsWith("\"") && s.endsWith("\""))
                 .map(s -> s.substring(1, s.length() - 1))
                 .filter(StringUtils::isNotBlank)
                 .toList();
