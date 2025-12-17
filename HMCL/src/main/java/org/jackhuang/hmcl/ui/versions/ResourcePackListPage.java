@@ -2,6 +2,7 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
+import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
@@ -9,16 +10,14 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Skin;
-import javafx.scene.control.SkinBase;
-import javafx.scene.control.Tooltip;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.mod.LocalModFile;
+import javafx.stage.Stage;
 import org.jackhuang.hmcl.resourcepack.ResourcePackFile;
 import org.jackhuang.hmcl.resourcepack.ResourcePackManager;
 import org.jackhuang.hmcl.setting.Profile;
@@ -31,6 +30,7 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -38,12 +38,25 @@ import java.lang.ref.WeakReference;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 
+import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class ResourcePackListPage extends ListPageBase<ResourcePackListPage.ResourcePackInfoObject> implements VersionPage.VersionLoadable {
+    private static @Nullable String getWarningKey(ResourcePackFile.Compatibility compatibility) {
+        return switch (compatibility) {
+            case TOO_NEW -> "resourcepack.warning.too_new";
+            case TOO_OLD -> "resourcepack.warning.too_old";
+            case INVALID -> "resourcepack.warning.invalid";
+            case MISSING_PACK_META -> "resourcepack.warning.missing_pack_meta";
+            case MISSING_GAME_META -> "resourcepack.warning.missing_game_meta";
+            default -> null;
+        };
+    }
+
     private Path resourcePackDirectory;
     private ResourcePackManager resourcePackManager;
 
@@ -214,6 +227,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         private final TwoLineListItem content = new TwoLineListItem();
         private final JFXButton btnReveal = new JFXButton();
         private final JFXButton btnDelete = new JFXButton();
+        private final JFXButton btnInfo = new JFXButton();
         private final ResourcePackListPage page;
 
         private Tooltip warningTooltip = null;
@@ -259,7 +273,10 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             btnDelete.getStyleClass().add("toggle-icon4");
             btnDelete.setGraphic(FXUtils.limitingSize(SVG.DELETE_FOREVER.createIcon(24), 24, 24));
 
-            root.getChildren().setAll(checkBox, imageView, content, btnReveal, btnDelete);
+            btnInfo.getStyleClass().add("toggle-icon4");
+            btnInfo.setGraphic(FXUtils.limitingSize(SVG.INFO.createIcon(24), 24, 24));
+
+            root.getChildren().setAll(checkBox, imageView, content, btnReveal, btnDelete, btnInfo);
 
             setSelectable();
 
@@ -283,11 +300,12 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             imageView.setImage(item.getIcon());
 
             content.setTitle(file.getName());
-            LocalModFile.Description description = file.getDescription();
-            content.setSubtitle(description != null ? description.toString() : "");
+            content.setSubtitle(file.getFileName());
 
             FXUtils.installFastTooltip(btnReveal, i18n("reveal.in_file_manager"));
             btnReveal.setOnAction(event -> FXUtils.showFileInExplorer(file.getPath()));
+
+            btnInfo.setOnAction(e -> Controllers.dialog(new ResourcePackInfoDialog(item)));
 
             btnDelete.setOnAction(event ->
                     Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"),
@@ -299,14 +317,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             checkBox.selectedProperty().bindBidirectional(booleanProperty = item.enabledProperty());
 
             {
-                String warningKey = switch (item.file.getCompatibility()) {
-                    case TOO_NEW -> "resourcepack.warning.too_new";
-                    case TOO_OLD -> "resourcepack.warning.too_old";
-                    case INVALID -> "resourcepack.warning.invalid";
-                    case MISSING_PACK_META -> "resourcepack.warning.missing_pack_meta";
-                    case MISSING_GAME_META -> "resourcepack.warning.missing_game_meta";
-                    default -> null;
-                };
+                String warningKey = getWarningKey(file.getCompatibility());
                 if (warningKey != null) {
                     pseudoClassStateChanged(WARNING, true);
                     FXUtils.installFastTooltip(this, warningTooltip = new Tooltip(i18n(warningKey)));
@@ -324,6 +335,58 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 Controllers.dialog(i18n("resourcepack.delete.failed", e.getMessage()), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
                 LOG.warning("Failed to delete resource pack", e);
             }
+        }
+    }
+
+    private static final class ResourcePackInfoDialog extends JFXDialogLayout {
+
+        ResourcePackInfoDialog(ResourcePackInfoObject packInfoObject) {
+            HBox titleContainer = new HBox();
+            titleContainer.setSpacing(8);
+
+            Stage stage = Controllers.getStage();
+            maxWidthProperty().bind(stage.widthProperty().multiply(0.7));
+
+            ImageView imageView = new ImageView();
+            imageView.setImage(packInfoObject.getIcon());
+            FXUtils.limitSize(imageView, 40, 40);
+
+            TwoLineListItem title = new TwoLineListItem();
+            title.setTitle(packInfoObject.file.getName());
+            title.setSubtitle(packInfoObject.file.getFileName());
+            if (packInfoObject.file.getCompatibility() == ResourcePackFile.Compatibility.COMPATIBLE) {
+                title.addTag(i18n("resourcepack.compatible"));
+            } else {
+                title.addTagWarning(i18n(getWarningKey(packInfoObject.file.getCompatibility())));
+            }
+
+            titleContainer.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), title);
+            setHeading(titleContainer);
+
+            Label description = new Label(Objects.requireNonNullElse(packInfoObject.file.getDescription(), "").toString());
+            description.setWrapText(true);
+            FXUtils.copyOnDoubleClick(description);
+
+            ScrollPane descriptionPane = new ScrollPane(description);
+            FXUtils.smoothScrolling(descriptionPane);
+            descriptionPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+            descriptionPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+            descriptionPane.setFitToWidth(true);
+            description.heightProperty().addListener((obs, oldVal, newVal) -> {
+                double maxHeight = stage.getHeight() * 0.5;
+                double targetHeight = Math.min(newVal.doubleValue(), maxHeight);
+                descriptionPane.setPrefViewportHeight(targetHeight);
+            });
+
+            setBody(descriptionPane);
+
+            JFXButton okButton = new JFXButton();
+            okButton.getStyleClass().add("dialog-accept");
+            okButton.setText(i18n("button.ok"));
+            okButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
+            getActions().add(okButton);
+
+            onEscPressed(this, okButton::fire);
         }
     }
 }
