@@ -1,4 +1,4 @@
-name: cnb.yml
+name: Sync to CNB
 
 on:
   push
@@ -15,4 +15,4 @@ jobs:
         run: |
           git clone --mirror "https://github.com/$SOURCE_REPO.git" -- repo
           cd repo
-          git push --mirror "https://${{ secrets.CNB_SYNC_USERNAME }}:${{ secrets.CNB_SYNC_TOKEN }}@cnb.cool/$TARGET_REPO.git"
+          git push -f --prune "https://${{ secrets.CNB_SYNC_USERNAME }}:${{ secrets.CNB_SYNC_TOKEN }}@cnb.cool/$TARGET_REPO.git" "refs/heads/*:refs/heads/*" "refs/tags/*:refs/tags/*"
