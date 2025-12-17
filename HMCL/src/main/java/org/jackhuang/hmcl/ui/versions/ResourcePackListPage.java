@@ -13,6 +13,8 @@ import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
@@ -40,6 +42,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
 
+import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -148,7 +151,18 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
             ComponentList root = new ComponentList();
             root.getStyleClass().add("no-padding");
+
             listView = new JFXListView<>();
+
+            root.addEventHandler(KeyEvent.KEY_PRESSED, e -> {
+                if (e.getCode() == KeyCode.ESCAPE) {
+                    if (listView.getSelectionModel().getSelectedItem() != null) {
+                        listView.getSelectionModel().clearSelection();
+                        e.consume();
+                    }
+                }
+            });
+            ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
 
             HBox toolbar = new HBox();
             toolbar.setAlignment(Pos.CENTER_LEFT);
