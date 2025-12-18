@@ -144,7 +144,7 @@ final class DatapackInfoDialog extends JFXDialogLayout {
                         });
                         button.setDisable(false);
 
-                        if (!initWhatNeedRemoteModInfo.get()) {
+                        if (!initWhatNeedRemoteModInfo.getAndSet(true)) {
                             ModTranslations.Mod modToOpenInMcMod = ModTranslations.getTranslationsByRepositoryType(repository.getType()).getModByCurseForgeId(remoteMod.getSlug());
                             if (modToOpenInMcMod != null) {
                                 openInMcModButton.setOnAction(e -> {
@@ -167,7 +167,6 @@ final class DatapackInfoDialog extends JFXDialogLayout {
                             joiner.add(remoteMod.getTitle());
                             joiner.add(version.getVersion());
                             titleItem.setSubtitle(joiner.toString());
-                            initWhatNeedRemoteModInfo.set(true);
                         }
                     });
                 });
