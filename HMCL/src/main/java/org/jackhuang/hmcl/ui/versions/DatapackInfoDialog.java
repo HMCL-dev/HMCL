@@ -41,6 +41,8 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.StringJoiner;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
@@ -62,10 +64,11 @@ final class DatapackInfoDialog extends JFXDialogLayout {
             titleContainer.setSpacing(8);
             setHeading(titleContainer);
         }
+        TwoLineListItem titleItem;
         {
-            TwoLineListItem title = new TwoLineListItem();
+            titleItem = new TwoLineListItem();
             {
-                title.setTitle(datapackInfoObject.getTitle());
+                titleItem.setTitle(datapackInfoObject.getTitle());
             }
 
             ImageView imageView = new ImageView();
@@ -74,7 +77,7 @@ final class DatapackInfoDialog extends JFXDialogLayout {
                 datapackInfoObject.loadIcon(imageView, null);
             }
 
-            titleContainer.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), title);
+            titleContainer.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), titleItem);
         }
 
         //body area
@@ -111,6 +114,7 @@ final class DatapackInfoDialog extends JFXDialogLayout {
             });
         }
 
+        AtomicBoolean initWhatNeedRemoteModInfo = new AtomicBoolean(false);
         for (Pair<String, ? extends RemoteModRepository> item : Arrays.asList(
                 pair("mods.curseforge", CurseForgeRemoteModRepository.MODS),
                 pair("mods.modrinth", ModrinthRemoteModRepository.MODS)
@@ -140,13 +144,30 @@ final class DatapackInfoDialog extends JFXDialogLayout {
                         });
                         button.setDisable(false);
 
-                        ModTranslations.Mod modToOpenInMcMod = ModTranslations.getTranslationsByRepositoryType(repository.getType()).getModByCurseForgeId(remoteMod.getSlug());
-                        if (modToOpenInMcMod != null) {
-                            openInMcModButton.setOnAction(e -> {
-                                fireEvent(new DialogCloseEvent());
-                                FXUtils.openLink(ModTranslations.MOD.getMcmodUrl(modToOpenInMcMod));
-                            });
-                            openInMcModButton.setText(i18n("mods.mcmod.page"));
+                        if (!initWhatNeedRemoteModInfo.get()) {
+                            ModTranslations.Mod modToOpenInMcMod = ModTranslations.getTranslationsByRepositoryType(repository.getType()).getModByCurseForgeId(remoteMod.getSlug());
+                            if (modToOpenInMcMod != null) {
+                                openInMcModButton.setOnAction(e -> {
+                                    fireEvent(new DialogCloseEvent());
+                                    FXUtils.openLink(ModTranslations.MOD.getMcmodUrl(modToOpenInMcMod));
+                                });
+                                openInMcModButton.setText(i18n("mods.mcmod.page"));
+                            } else {
+                                openInMcModButton.setOnAction(e -> {
+                                    fireEvent(new DialogCloseEvent());
+                                    FXUtils.openLink(NetworkUtils.withQuery("https://search.mcmod.cn/s", mapOf(
+                                            pair("key", remoteMod.getTitle()),
+                                            pair("site", "all"),
+                                            pair("filter", "0")
+                                    )));
+                                });
+                            }
+
+                            StringJoiner joiner = new StringJoiner(" | ");
+                            joiner.add(remoteMod.getTitle());
+                            joiner.add(version.getVersion());
+                            titleItem.setSubtitle(joiner.toString());
+                            initWhatNeedRemoteModInfo.set(true);
                         }
                     });
                 });
