@@ -100,6 +100,9 @@ jobs:
       - name: Create CNB release
         if: ${{ env.continue == 'true' }}
         run: |
+          git tag "$HMCL_TAG_NAME" "$HMCL_COMMIT_SHA"
+          git push "https://${{ secrets.CNB_SYNC_USERNAME }}:${{ secrets.CNB_SYNC_TOKEN }}@cnb.cool/$CNB_REPO.git" "$HMCL_TAG_NAME"
+          
           ~/go/bin/git-cnb release create \
              --repo "$CNB_REPO" \
              --tag "v$HMCL_VERSION" \
