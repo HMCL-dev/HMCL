@@ -17,10 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXCheckBox;
-import com.jfoenix.controls.JFXListView;
-import com.jfoenix.controls.JFXTextField;
+import com.jfoenix.controls.*;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
@@ -50,10 +47,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.MDListCell;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
-import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jetbrains.annotations.Nullable;
@@ -68,6 +62,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
+import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -199,6 +194,14 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
                 listView.getSelectionModel().select(i);
             }
         };
+
+        listView.setOnContextMenuRequested(event -> {
+            DatapackInfoObject selectedItem = listView.getSelectionModel().getSelectedItem();
+            if (selectedItem != null && listView.getSelectionModel().getSelectedItems().size() == 1) {
+                listView.getSelectionModel().clearSelection();
+                Controllers.dialog(new DatapackInfoDialog(selectedItem));
+            }
+        });
 
         pane.getChildren().setAll(root);
         getChildren().setAll(pane);
@@ -370,5 +373,20 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
         }
         cell.requestFocus();
         mouseEvent.consume();
+    }
+
+    final class DatapackInfoDialog extends JFXDialogLayout {
+        public DatapackInfoDialog(DatapackInfoObject datapackInfoObject) {
+
+            JFXButton okButton = new JFXButton();
+            {
+                okButton.getStyleClass().add("dialog-accept");
+                okButton.setText(i18n("button.ok"));
+                okButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
+                getActions().add(okButton);
+            }
+
+            onEscPressed(this, okButton::fire);
+        }
     }
 }
