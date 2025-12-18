@@ -101,7 +101,7 @@ jobs:
         if: ${{ env.continue == 'true' }}
         run: |
           ~/go/bin/git-cnb release create \
-             --repo HMCL-dev/HMCL \
+             --repo "$CNB_REPO" \
              --tag "v$HMCL_VERSION" \
              --name "HMCL $HMCL_VERSION" \
              --body "$(cat CNB_RELEASE_NOTE)" \
