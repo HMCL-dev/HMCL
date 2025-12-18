@@ -106,6 +106,11 @@ public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.Da
         datapack.loadFromDir();
     }
 
+    public void download() {
+        Controllers.getDownloadPage().showDatapackDownloads();
+        Controllers.navigate(Controllers.getDownloadPage());
+    }
+
     void removeSelected(ObservableList<DatapackListPageSkin.DatapackInfoObject> selectedItems) {
         selectedItems.stream()
                 .map(DatapackListPageSkin.DatapackInfoObject::getPackInfo)

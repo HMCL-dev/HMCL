@@ -219,6 +219,10 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         tab.select(worldTab, false);
     }
 
+    public void showDatapackDownloads() {
+        tab.select(datapackTab, false);
+    }
+
     private static final class DownloadNavigator implements Navigation {
         private final SettingsMap settings = new SettingsMap();
 
