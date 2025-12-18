@@ -26,6 +26,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.game.World;
+import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
@@ -49,6 +50,8 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     private final ObjectProperty<State> state;
     private final World world;
     private final Path backupsDir;
+    private final Profile profile;
+    private final String versionID;
 
     private final TabHeader header;
     private final TabHeader.Tab<WorldInfoPage> worldInfoTab = new TabHeader.Tab<>("worldInfoPage");
@@ -59,13 +62,15 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
     private FileChannel sessionLockChannel;
 
-    public WorldManagePage(World world, Path backupsDir) {
+    public WorldManagePage(World world, Path backupsDir, Profile profile, String versionID) {
         this.world = world;
         this.backupsDir = backupsDir;
+        this.profile = profile;
+        this.versionID = versionID;
 
         this.worldInfoTab.setNodeSupplier(() -> new WorldInfoPage(this));
         this.worldBackupsTab.setNodeSupplier(() -> new WorldBackupsPage(this));
-        this.datapackTab.setNodeSupplier(() -> new DatapackListPage(this));
+        this.datapackTab.setNodeSupplier(() -> new DatapackListPage(this, profile, versionID));
 
         this.state = new SimpleObjectProperty<>(State.fromTitle(i18n("world.manage.title", world.getWorldName())));
         this.header = new TabHeader(transitionPane, worldInfoTab, worldBackupsTab);

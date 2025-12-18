@@ -21,6 +21,7 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.mod.Datapack;
+import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -45,9 +46,13 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.DatapackInfoObject> {
     private final Path worldDir;
     private final Datapack datapack;
+    private final Profile profile;
+    private final String versionID;
 
-    public DatapackListPage(WorldManagePage worldManagePage) {
+    public DatapackListPage(WorldManagePage worldManagePage, Profile profile, String versionID) {
         this.worldDir = worldManagePage.getWorld().getFile();
+        this.profile = profile;
+        this.versionID = versionID;
 
         datapack = new Datapack(worldDir.resolve("datapacks"));
         datapack.loadFromDir();
@@ -56,6 +61,14 @@ public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.Da
 
         FXUtils.applyDragListener(this, it -> Objects.equals("zip", FileUtils.getExtension(it)),
                 mods -> mods.forEach(this::installSingleDatapack), this::refresh);
+    }
+
+    public Profile getProfile() {
+        return profile;
+    }
+
+    public String getVersionID() {
+        return versionID;
     }
 
     private void installSingleDatapack(Path datapack) {
