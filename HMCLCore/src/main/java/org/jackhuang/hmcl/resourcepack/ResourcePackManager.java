@@ -284,6 +284,18 @@ public final class ResourcePackManager {
         }
     }
 
+    public boolean removeResourcePacks(Iterable<ResourcePackFile> resourcePacks) throws IOException {
+        boolean b = false;
+        for (ResourcePackFile resourcePack : resourcePacks) {
+            if (resourcePack != null && resourcePack.manager == this) {
+                resourcePack.delete();
+                resourcePackFiles.remove(resourcePack);
+                b = true;
+            }
+        }
+        return b;
+    }
+
     public void enableResourcePack(ResourcePackFile resourcePack) {
         if (resourcePack.manager != this) return;
         Map<String, String> options = loadOptions();
