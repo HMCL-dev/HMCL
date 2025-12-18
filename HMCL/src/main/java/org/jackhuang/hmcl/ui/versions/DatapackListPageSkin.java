@@ -55,6 +55,7 @@ import org.jackhuang.hmcl.ui.construct.MDListCell;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.Holder;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -341,7 +342,11 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
         protected void updateControl(DatapackInfoObject dataItem, boolean empty) {
             if (empty) return;
             content.setTitle(dataItem.getTitle());
-            content.setSubtitle(dataItem.getSubtitle());
+            String subtitle = dataItem.getSubtitle();
+            if (subtitle.contains("\n")) {
+                subtitle = StringUtils.substringBefore(subtitle, "\n") + "...";
+            }
+            content.setSubtitle(subtitle);
             if (booleanProperty != null) {
                 checkBox.selectedProperty().unbindBidirectional(booleanProperty);
             }
