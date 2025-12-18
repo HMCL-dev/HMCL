@@ -25,7 +25,7 @@ public record QuickPlayOption(Type type, String target) {
         this.type.apply(builder, this.target);
     }
 
-    enum Type {
+    public enum Type {
         SINGLEPLAYER(LaunchOptions.Builder::setWorldFolderName),
         MULTIPLAYER(LaunchOptions.Builder::setServerIp),
         REALM(LaunchOptions.Builder::setRealmID);
@@ -36,7 +36,7 @@ public record QuickPlayOption(Type type, String target) {
             this.setter = setter;
         }
 
-        public void apply(LaunchOptions.Builder builder, String target) {
+        private void apply(LaunchOptions.Builder builder, String target) {
             setter.accept(builder, target);
         }
     }

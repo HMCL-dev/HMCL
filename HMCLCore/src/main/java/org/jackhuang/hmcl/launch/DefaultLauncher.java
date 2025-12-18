@@ -316,7 +316,7 @@ public class DefaultLauncher extends Launcher {
                     res.add(parsed.getPort() >= 0 ? String.valueOf(parsed.getPort()) : "25565");
                 } else {
                     res.add("--quickPlayMultiplayer");
-                    res.add(parsed.getPort() < 0 ? address + ":25565" : address);
+                    res.add(parsed.getPort() >= 0 ? address : parsed.getHost() + ":25565");
                 }
             } catch (IllegalArgumentException e) {
                 LOG.warning("Invalid server address: " + address, e);
