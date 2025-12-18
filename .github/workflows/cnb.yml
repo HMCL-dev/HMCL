@@ -1,0 +1,18 @@
+name: Sync to CNB
+
+on:
+  push
+
+jobs:
+  run:
+    if: ${{ github.repository == 'HMCL-dev/HMCL' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mirror GitHub to CNB
+        env:
+          SOURCE_REPO: HMCL-dev/HMCL
+          TARGET_REPO: HMCL-dev/HMCL
+        run: |
+          git clone --mirror "https://github.com/$SOURCE_REPO.git" -- repo
+          cd repo
+          git push -f --prune "https://${{ secrets.CNB_SYNC_USERNAME }}:${{ secrets.CNB_SYNC_TOKEN }}@cnb.cool/$TARGET_REPO.git" "refs/heads/*:refs/heads/*" "refs/tags/*:refs/tags/*"
