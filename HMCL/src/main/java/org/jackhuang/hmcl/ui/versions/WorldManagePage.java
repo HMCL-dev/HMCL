@@ -138,17 +138,15 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
         left.setBottom(toolbar);
 
-        // Does it need to be done in the background?
-        try {
-            sessionLockChannel = world.lock();
-            LOG.info("Acquired lock on world " + world.getFileName());
-        } catch (IOException ignored) {
-        }
-
+        getSessionLock();
         this.addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
     }
 
     private void onNavigated(Navigator.NavigationEvent event) {
+        getSessionLock();
+    }
+
+    private void getSessionLock() {
         try {
             sessionLockChannel = world.lock();
             LOG.info("Acquired lock on world " + world.getFileName());
