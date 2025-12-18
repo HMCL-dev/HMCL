@@ -186,16 +186,19 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     }
 
     private void removeSelected(List<ResourcePackInfoObject> selectedItems) {
-        try {
-            if (resourcePackManager != null) {
-                if (resourcePackManager.removeResourcePacks(selectedItems.stream().map(ResourcePackInfoObject::getFile).toList())) {
-                    refresh();
-                }
-            }
-        } catch (IOException e) {
-            Controllers.dialog(i18n("resourcepack.delete.failed", e.getMessage()), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
-            LOG.warning("Failed to delete resource packs", e);
-        }
+        Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"),
+                () -> {
+                    try {
+                        if (resourcePackManager != null) {
+                            if (resourcePackManager.removeResourcePacks(selectedItems.stream().map(ResourcePackInfoObject::getFile).toList())) {
+                                refresh();
+                            }
+                        }
+                    } catch (IOException e) {
+                        Controllers.dialog(i18n("resourcepack.delete.failed", e.getMessage()), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                        LOG.warning("Failed to delete resource packs", e);
+                    }
+                }, null);
     }
 
     private static final class ResourcePackListPageSkin extends SkinBase<ResourcePackListPage> {
