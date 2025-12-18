@@ -145,6 +145,8 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
         BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
         left.setBottom(toolbar);
+
+        this.addEventHandler(Navigator.NavigationEvent.EXITED, this::onExited);
     }
 
     @Override
@@ -164,14 +166,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         return sessionLockChannel == null;
     }
 
-    @Override
-    public boolean back() {
-        closePage();
-        return true;
-    }
-
-    @Override
-    public void closePage() {
+    public void onExited(Navigator.NavigationEvent event) {
         if (sessionLockChannel != null) {
             try {
                 sessionLockChannel.close();
@@ -185,13 +180,11 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     }
 
     public void launch() {
-        closePage();
         fireEvent(new PageCloseEvent());
         Versions.launchAndEnterWorld(profile, id, world.getFileName());
     }
 
     public void launchInTestMode() {
-        closePage();
         fireEvent(new PageCloseEvent());
         Versions.launchAndEnterWorldInTestMode(profile, id, world.getFileName());
     }
