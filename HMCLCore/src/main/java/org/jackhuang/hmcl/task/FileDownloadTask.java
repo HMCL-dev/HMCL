@@ -193,7 +193,7 @@ public class FileDownloadTask extends FetchTask<Void> {
         if (integrityCheck != null) {
             algorithm = integrityCheck.getAlgorithm();
             checksum = integrityCheck.getChecksum();
-        } else if (bmclapiHash != null) {
+        } else if (bmclapiHash != null && DigestUtils.isSha1Digest(bmclapiHash)) {
             algorithm = "SHA-1";
             checksum = bmclapiHash;
         } else {
