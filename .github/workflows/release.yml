@@ -94,7 +94,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Install git-cnb
         if: ${{ env.continue == 'true' }}
-        run:  go install "cnb.cool/looc/git-cnb@$GIT_CNB_VERSION"
+        run: go install "cnb.cool/looc/git-cnb@$GIT_CNB_VERSION"
         env:
           GIT_CNB_VERSION: '1.1.2'
       - name: Create CNB release
