@@ -17,7 +17,10 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import com.jfoenix.controls.*;
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXCheckBox;
+import com.jfoenix.controls.JFXListView;
+import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import javafx.animation.PauseTransition;
 import javafx.application.Platform;
@@ -29,8 +32,6 @@ import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SelectionMode;
 import javafx.scene.control.SkinBase;
 import javafx.scene.image.Image;
@@ -41,46 +42,34 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
-import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.mod.Datapack;
-import org.jackhuang.hmcl.mod.RemoteMod;
-import org.jackhuang.hmcl.mod.RemoteModRepository;
-import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
-import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
-import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.ui.construct.ComponentList;
+import org.jackhuang.hmcl.ui.construct.MDListCell;
+import org.jackhuang.hmcl.ui.construct.SpinnerPane;
+import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.Holder;
-import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
-import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
-import static org.jackhuang.hmcl.util.Lang.mapOf;
-import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -358,7 +347,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             checkBox.selectedProperty().bindBidirectional(booleanProperty = dataItem.activeProperty);
             dataItem.loadIcon(imageView, new WeakReference<>(this.itemProperty()));
             revealButton.setOnAction(e -> FXUtils.showFileInExplorer(dataItem.getPackInfo().getPath()));
-            infoButton.setOnAction(e -> Controllers.dialog(new DatapackInfoDialog(dataItem)));
+            infoButton.setOnAction(e -> Controllers.dialog(new DatapackInfoDialog(dataItem, getSkinnable().getProfile(), getSkinnable().getVersionID())));
 
 
         }
@@ -372,7 +361,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
 
         if (mouseEvent.isSecondaryButtonDown()) {
             questForContentMenu.set(true);
-        }else if (mouseEvent.isShiftDown()) {
+        } else if (mouseEvent.isShiftDown()) {
             int currentIndex = cell.getIndex();
             if (lastShiftClickIndex.get() == -1) {
                 lastShiftClickIndex.set(currentIndex);
@@ -402,127 +391,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
     public void handleSelectOnMouseReleased(DatapackInfoListCell cell, MouseEvent mouseEvent) {
         if (questForContentMenu.get()) {
             questForContentMenu.set(false);
-            Controllers.dialog(new DatapackInfoDialog(cell.getItem()));
-        }
-    }
-
-    final class DatapackInfoDialog extends JFXDialogLayout {
-        public DatapackInfoDialog(DatapackInfoObject datapackInfoObject) {
-
-            Stage stage = Controllers.getStage();
-            {
-                maxWidthProperty().bind(stage.widthProperty().multiply(0.7));
-            }
-
-            //heading area
-            HBox titleContainer = new HBox();
-            {
-                titleContainer.setSpacing(8);
-                setHeading(titleContainer);
-            }
-            {
-                TwoLineListItem title = new TwoLineListItem();
-                {
-                    title.setTitle(datapackInfoObject.getTitle());
-                }
-
-                ImageView imageView = new ImageView();
-                {
-                    FXUtils.limitSize(imageView, 40, 40);
-                    datapackInfoObject.loadIcon(imageView, null);
-                }
-
-                titleContainer.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), title);
-            }
-
-            //body area
-            Label description = new Label(datapackInfoObject.getSubtitle());
-            {
-                description.setWrapText(true);
-                FXUtils.copyOnDoubleClick(description);
-            }
-            ScrollPane descriptionPane = new ScrollPane(description);
-            {
-                FXUtils.smoothScrolling(descriptionPane);
-                descriptionPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-                descriptionPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-                descriptionPane.setFitToWidth(true);
-                description.heightProperty().addListener((obs, oldVal, newVal) -> {
-                    double maxHeight = stage.getHeight() * 0.5;
-                    double targetHeight = Math.min(newVal.doubleValue(), maxHeight);
-                    descriptionPane.setPrefViewportHeight(targetHeight);
-                });
-
-                setBody(descriptionPane);
-            }
-
-            //action area
-            JFXHyperlink openInMcModButton = new JFXHyperlink(i18n("mods.mcmod.search"));
-            {
-                openInMcModButton.setOnAction(e -> {
-                    fireEvent(new DialogCloseEvent());
-                    FXUtils.openLink(NetworkUtils.withQuery("https://search.mcmod.cn/s", mapOf(
-                            pair("key", datapackInfoObject.getTitle()),
-                            pair("site", "all"),
-                            pair("filter", "0")
-                    )));
-                });
-            }
-
-            for (Pair<String, ? extends RemoteModRepository> item : Arrays.asList(
-                    pair("mods.curseforge", CurseForgeRemoteModRepository.MODS),
-                    pair("mods.modrinth", ModrinthRemoteModRepository.MODS)
-            )) {
-                RemoteModRepository repository = item.getValue();
-                JFXHyperlink button = new JFXHyperlink(i18n(item.getKey()));
-                Task.runAsync(() -> {
-                    Optional<RemoteMod.Version> versionOptional = repository.getRemoteVersionByLocalFile(null, datapackInfoObject.getPackInfo().getPath());
-                    versionOptional.ifPresent(version -> {
-                        RemoteMod remoteMod;
-                        try {
-                            remoteMod = repository.getModById(version.getModid());
-                        } catch (IOException e) {
-                            LOG.warning("Cannot get remote mod of " + version.getModid(), e);
-                            return;
-                        }
-
-                        FXUtils.runInFX(() -> {
-                            button.setOnAction(e -> {
-                                fireEvent(new DialogCloseEvent());
-                                Controllers.navigate(new DownloadPage(
-                                        repository instanceof CurseForgeRemoteModRepository ? HMCLLocalizedDownloadListPage.ofCurseForgeMod(null, false) : HMCLLocalizedDownloadListPage.ofModrinthMod(null, false),
-                                        remoteMod,
-                                        new Profile.ProfileVersion(getSkinnable().getProfile(), getSkinnable().getVersionID()),
-                                        null
-                                ));
-                            });
-                            button.setDisable(false);
-
-                            ModTranslations.Mod modToOpenInMcMod = ModTranslations.getTranslationsByRepositoryType(repository.getType()).getModByCurseForgeId(remoteMod.getSlug());
-                            if (modToOpenInMcMod != null) {
-                                openInMcModButton.setOnAction(e -> {
-                                    fireEvent(new DialogCloseEvent());
-                                    FXUtils.openLink(ModTranslations.MOD.getMcmodUrl(modToOpenInMcMod));
-                                });
-                                openInMcModButton.setText(i18n("mods.mcmod.page"));
-                            }
-                        });
-                    });
-                }).start();
-                button.setDisable(true);
-                getActions().add(button);
-            }
-
-            JFXButton okButton = new JFXButton();
-            {
-                okButton.getStyleClass().add("dialog-accept");
-                okButton.setText(i18n("button.ok"));
-                okButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
-            }
-
-            getActions().addAll(openInMcModButton, okButton);
-
-            onEscPressed(this, okButton::fire);
+            Controllers.dialog(new DatapackInfoDialog(cell.getItem(), getSkinnable().getProfile(), getSkinnable().getVersionID()));
         }
     }
 }
