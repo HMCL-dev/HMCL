@@ -72,6 +72,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
@@ -99,6 +100,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
     private final JFXTextField searchField;
 
     private static final AtomicInteger lastShiftClickIndex = new AtomicInteger(-1);
+    private static final AtomicBoolean questForContentMenu = new AtomicBoolean(false);
     final Consumer<Integer> toggleSelect;
 
     DatapackListPageSkin(DatapackListPage skinnable) {
@@ -210,14 +212,6 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
                 listView.getSelectionModel().select(i);
             }
         };
-
-        listView.setOnContextMenuRequested(event -> {
-            DatapackInfoObject selectedItem = listView.getSelectionModel().getSelectedItem();
-            if (selectedItem != null && listView.getSelectionModel().getSelectedItems().size() == 1) {
-                listView.getSelectionModel().clearSelection();
-                Controllers.dialog(new DatapackInfoDialog(selectedItem));
-            }
-        });
 
         pane.getChildren().setAll(root);
         getChildren().setAll(pane);
@@ -350,6 +344,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             getContainer().getChildren().setAll(container);
 
             getContainer().getParent().addEventHandler(MouseEvent.MOUSE_PRESSED, mouseEvent -> handleSelect(this, mouseEvent));
+            getContainer().getParent().addEventHandler(MouseEvent.MOUSE_RELEASED, mouseEvent -> handleSelectOnMouseReleased(this, mouseEvent));
         }
 
         @Override
@@ -364,6 +359,8 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             dataItem.loadIcon(imageView, new WeakReference<>(this.itemProperty()));
             revealButton.setOnAction(e -> FXUtils.showFileInExplorer(dataItem.getPackInfo().getPath()));
             infoButton.setOnAction(e -> Controllers.dialog(new DatapackInfoDialog(dataItem)));
+
+
         }
     }
 
@@ -373,7 +370,9 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             return;
         }
 
-        if (mouseEvent.isShiftDown()) {
+        if (mouseEvent.isSecondaryButtonDown()) {
+            questForContentMenu.set(true);
+        }else if (mouseEvent.isShiftDown()) {
             int currentIndex = cell.getIndex();
             if (lastShiftClickIndex.get() == -1) {
                 lastShiftClickIndex.set(currentIndex);
@@ -400,6 +399,13 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
         mouseEvent.consume();
     }
 
+    public void handleSelectOnMouseReleased(DatapackInfoListCell cell, MouseEvent mouseEvent) {
+        if (questForContentMenu.get()) {
+            questForContentMenu.set(false);
+            Controllers.dialog(new DatapackInfoDialog(cell.getItem()));
+        }
+    }
+
     final class DatapackInfoDialog extends JFXDialogLayout {
         public DatapackInfoDialog(DatapackInfoObject datapackInfoObject) {
 
@@ -407,7 +413,6 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             {
                 maxWidthProperty().bind(stage.widthProperty().multiply(0.7));
             }
-
 
             //heading area
             HBox titleContainer = new HBox();
