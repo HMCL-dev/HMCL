@@ -17,11 +17,6 @@
  */
 package org.jackhuang.hmcl.resourcepack;
 
-import com.google.gson.JsonDeserializationContext;
-import com.google.gson.JsonDeserializer;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParseException;
-import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.game.GameRepository;
 import org.jackhuang.hmcl.mod.modinfo.PackMcMeta;
@@ -31,13 +26,13 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.tree.ZipFileTree;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionRange;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
-import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
@@ -46,11 +41,41 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class ResourcePackManager {
 
+    private static final List<String> RESOURCE_PACK_VERSION_OLD = List.of(
+            "13w24a", // 1
+            "15w31a", // 2
+            "16w32a", // 3
+            "17w48a", // 4
+            "18w47b"  // 5
+    );
+
+    public static final String LEAST_MC_VERSION = "13w24a";
+
     @NotNull
-    public static PackMcMeta.PackVersion getPackVersion(Path gameJar) {
+    public static PackMcMeta.PackVersion getPackVersion(GameVersionNumber minecraftVersion, Path gameJar) {
+        for (int i = 0; i < RESOURCE_PACK_VERSION_OLD.size(); i++) {
+            if (minecraftVersion.compareTo(RESOURCE_PACK_VERSION_OLD.get(i)) < 0) {
+                return i == 0 ? PackMcMeta.PackVersion.UNSPECIFIED : new PackMcMeta.PackVersion(i, 0);
+            }
+        }
         try (var zipFileTree = new ZipFileTree(CompressingUtils.openZipFile(gameJar))) {
-            return JsonUtils.fromNonNullJson(zipFileTree.readTextEntry("/version.json"), GameVersionInfo.class)
-                    .packVersionInfo().resource();
+            String versionJson = zipFileTree.readTextEntry("/version.json");
+            try {
+                var info = JsonUtils.fromNonNullJson(versionJson, GameVersionInfo117.class).packVersionInfo();
+                if (info.resourceMajor() > 64) {
+                    return new PackMcMeta.PackVersion(info.resourceMajor(), info.resourceMinor());
+                } else {
+                    return new PackMcMeta.PackVersion(info.resource(), 0);
+                }
+            } catch (Exception e) {
+                LOG.warning("Failed to load Minecraft resource pack version for 25w31a+", e);
+            }
+            try {
+                return new PackMcMeta.PackVersion(JsonUtils.fromNonNullJson(versionJson, GameVersionInfo114.class).packVersion, 0);
+            } catch (Exception e) {
+                LOG.warning("Failed to load Minecraft resource pack version for 18w47b+", e);
+            }
+            return PackMcMeta.PackVersion.UNSPECIFIED;
         } catch (Exception e) {
             LOG.error("Failed to load Minecraft resource pack version", e);
             return PackMcMeta.PackVersion.UNSPECIFIED;
@@ -145,6 +170,7 @@ public final class ResourcePackManager {
 
     private final GameRepository repository;
     private final String id;
+    private final GameVersionNumber minecraftVersion;
 
     private final Path resourcePackDirectory;
     private final TreeSet<ResourcePackFile> resourcePackFiles = new TreeSet<>();
@@ -157,9 +183,10 @@ public final class ResourcePackManager {
     public ResourcePackManager(GameRepository repository, String id) {
         this.repository = repository;
         this.id = id;
+        this.minecraftVersion = GameVersionNumber.asGameVersion(repository.getGameVersion(id));
         this.resourcePackDirectory = this.repository.getResourcePackDirectory(this.id);
         this.optionsFile = repository.getRunDirectory(id).resolve("options.txt");
-        this.requiredVersion = getPackVersion(repository.getVersionJar(id));
+        this.requiredVersion = getPackVersion(minecraftVersion, repository.getVersionJar(id));
     }
 
     @NotNull
@@ -202,6 +229,10 @@ public final class ResourcePackManager {
 
     public String getInstanceId() {
         return id;
+    }
+
+    public GameVersionNumber getMinecraftVersion() {
+        return minecraftVersion;
     }
 
     public Path getResourcePackDirectory() {
@@ -323,18 +354,16 @@ public final class ResourcePackManager {
     }
 
     @JsonSerializable
-    private record GameVersionInfo(@SerializedName("pack_version") PackVersionInfo packVersionInfo) {
+    private record GameVersionInfo114(@SerializedName("pack_version") int packVersion) {
     }
 
     @JsonSerializable
-    @JsonAdapter(PackVersionInfoDeserializer.class)
-    private record PackVersionInfo(PackMcMeta.PackVersion resource) {
+    private record GameVersionInfo117(@SerializedName("pack_version") PackVersionInfo117 packVersionInfo) {
     }
 
-    private static final class PackVersionInfoDeserializer implements JsonDeserializer<PackVersionInfo> {
-        @Override
-        public PackVersionInfo deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-            return new PackVersionInfo(PackMcMeta.PackVersion.fromJson(json.getAsJsonObject().get("resource")));
-        }
+    @JsonSerializable
+    private record PackVersionInfo117(int resource,
+                                      @SerializedName("resource_major") int resourceMajor,
+                                      @SerializedName("resource_minor") int resourceMinor) {
     }
 }

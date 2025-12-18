@@ -91,6 +91,12 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
     public void refresh() {
         if (resourcePackManager == null || !Files.isDirectory(resourcePackDirectory)) return;
+        setDisable(false);
+        if (resourcePackManager.getMinecraftVersion().compareTo(ResourcePackManager.LEAST_MC_VERSION) < 0) {
+            getItems().clear();
+            setDisable(true);
+            return;
+        }
         setLoading(true);
         Task.supplyAsync(Schedulers.io(), () -> {
             resourcePackManager.refreshResourcePacks();
