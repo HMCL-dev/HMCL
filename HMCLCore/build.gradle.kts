@@ -27,6 +27,7 @@ dependencies {
     api(libs.jna)
     api(libs.pci.ids)
     api(libs.commonmark)
+    api(libs.commonmark.autolink)
 
     compileOnlyApi(libs.jetbrains.annotations)
 

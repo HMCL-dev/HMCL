@@ -1578,16 +1578,17 @@ public final class FXUtils {
                 : JFXPopup.PopupVPosition.TOP;    // Show menu above the button, expanding upward
     }
 
-    public static HBox renderModChangelog(String changelogHTML) {
+    public static ScrollPane renderModChangelog(String changelogHTML) {
         HTMLRenderer renderer = HTMLRenderer.openHyperlinkInBrowser();
         renderer.appendNode(Jsoup.parse(changelogHTML));
         renderer.mergeLineBreaks();
 
         var textFlow = renderer.render();
-        textFlow.setPrefWidth(Region.USE_COMPUTED_SIZE);
+        textFlow.getChildren().add(new Text(System.lineSeparator())); // Add a newline at the end to prevent cutoff
 
-        HBox container = new HBox(textFlow);
+        var container = new ScrollPane(textFlow);
         container.getStyleClass().add("mod-changelog");
+        container.setMinHeight(Region.USE_PREF_SIZE);
         return container;
     }
 }

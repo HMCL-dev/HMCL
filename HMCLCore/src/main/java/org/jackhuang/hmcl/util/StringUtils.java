@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.util;
 
+import org.commonmark.ext.autolink.AutolinkExtension;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 import org.jetbrains.annotations.Contract;
@@ -541,7 +542,8 @@ public final class StringUtils {
     @Contract(pure = true, value = "null -> null")
     public static String markdownToHTML(String md) {
         if (md == null) return null;
-        return HtmlRenderer.builder().build().render(Parser.builder().build().parse(md));
+        var extensions = List.of(AutolinkExtension.create());
+        return HtmlRenderer.builder().build().render(Parser.builder().extensions(extensions).build().parse(md));
     }
 
     public static class LevCalculator {
