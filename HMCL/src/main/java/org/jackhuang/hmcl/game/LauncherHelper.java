@@ -115,7 +115,7 @@ public final class LauncherHelper {
     }
 
     public void setQuickEnterWorld(String worldFolderName) {
-        quickPlayOption = new QuickPlayOption(QuickPlayOption.Type.SINGLEPLAYER, worldFolderName);
+        quickPlayOption = new QuickPlayOption.SinglePlayer(worldFolderName);
     }
 
     public void setDisableOfflineSkin() {
@@ -200,9 +200,12 @@ public final class LauncherHelper {
                 .thenComposeAsync(() -> logIn(account).withStage("launch.state.logging_in"))
                 .thenComposeAsync(authInfo -> Task.supplyAsync(() -> {
                     LaunchOptions.Builder launchOptionsBuilder = repository.getLaunchOptions(
-                            selectedVersion, javaVersionRef.get(), profile.getGameDir(), javaAgents, javaArguments, scriptFile != null, quickPlayOption);
+                            selectedVersion, javaVersionRef.get(), profile.getGameDir(), javaAgents, javaArguments, scriptFile != null);
                     if (disableOfflineSkin) {
                         launchOptionsBuilder.setDaemon(false);
+                    }
+                    if (quickPlayOption != null) {
+                        launchOptionsBuilder.setQuickPlayOption(quickPlayOption);
                     }
                     LaunchOptions launchOptions = launchOptionsBuilder.create();
 

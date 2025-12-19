@@ -47,9 +47,7 @@ public class LaunchOptions implements Serializable {
     private Integer width;
     private Integer height;
     private boolean fullscreen;
-    private String serverIp;
-    private String worldFolderName;
-    private String realmID;
+    private QuickPlayOption quickPlayOption;
     private String wrapper;
     private Proxy.Type proxyType;
     private String proxyHost;
@@ -183,25 +181,11 @@ public class LaunchOptions implements Serializable {
         return fullscreen;
     }
 
-    /**
-     * The server ip that will connect to when enter game main menu.
-     */
-    public String getServerIp() {
-        return serverIp;
-    }
-
-    /**
-     * The folder name of a local world that will join when enter game main menu.
-     */
-    public String getWorldFolderName() {
-        return worldFolderName;
-    }
-
-    /**
-     * The realm ID for a Minecraft realm that will connect to when enter game main menu.
-     */
-    public String getRealmID() {
-        return realmID;
+    /// The quick play option.
+    ///
+    /// @see <a href="https://minecraft.wiki/w/Quick_Play">Quick Play - Minecraft Wiki</a>
+    public QuickPlayOption getQuickPlayOption() {
+        return quickPlayOption;
     }
 
     /**
@@ -428,18 +412,8 @@ public class LaunchOptions implements Serializable {
             return this;
         }
 
-        public Builder setServerIp(String serverIp) {
-            options.serverIp = serverIp;
-            return this;
-        }
-
-        public Builder setWorldFolderName(String worldFolderName) {
-            options.worldFolderName = worldFolderName;
-            return this;
-        }
-
-        public Builder setRealmID(String realmID) {
-            options.realmID = realmID;
+        public Builder setQuickPlayOption(QuickPlayOption quickPlayOption) {
+            options.quickPlayOption = quickPlayOption;
             return this;
         }
 

@@ -304,33 +304,31 @@ public class DefaultLauncher extends Launcher {
         if (argumentsFromAuthInfo != null && argumentsFromAuthInfo.getGame() != null && !argumentsFromAuthInfo.getGame().isEmpty())
             res.addAll(Arguments.parseArguments(argumentsFromAuthInfo.getGame(), configuration, features));
 
-        if (StringUtils.isNotBlank(options.getServerIp())) {
-            String address = options.getServerIp();
+        if (options.getQuickPlayOption() instanceof QuickPlayOption.MultiPlayer multiPlayer) {
+            String address = multiPlayer.serverIP();
 
             try {
                 ServerAddress parsed = ServerAddress.parse(address);
-                if (!GameVersionNumber.asGameVersion(gameVersion).isAtLeast("1.20", "23w14a")) {
+                if (GameVersionNumber.asGameVersion(gameVersion).isAtLeast("1.20", "23w14a")) {
+                    res.add("--quickPlayMultiplayer");
+                    res.add(parsed.getPort() >= 0 ? address : parsed.getHost() + ":25565");
+                } else {
                     res.add("--server");
                     res.add(parsed.getHost());
                     res.add("--port");
                     res.add(parsed.getPort() >= 0 ? String.valueOf(parsed.getPort()) : "25565");
-                } else {
-                    res.add("--quickPlayMultiplayer");
-                    res.add(parsed.getPort() >= 0 ? address : parsed.getHost() + ":25565");
                 }
             } catch (IllegalArgumentException e) {
                 LOG.warning("Invalid server address: " + address, e);
             }
-        }
-
-        if (StringUtils.isNotBlank(options.getWorldFolderName()) && GameVersionNumber.asGameVersion(gameVersion).isAtLeast("1.20", "23w14a")) {
+        } else if (options.getQuickPlayOption() instanceof QuickPlayOption.SinglePlayer singlePlayer
+                && GameVersionNumber.asGameVersion(gameVersion).isAtLeast("1.20", "23w14a")) {
             res.add("--quickPlaySingleplayer");
-            res.add(options.getWorldFolderName());
-        }
-
-        if (StringUtils.isNotBlank(options.getRealmID()) && GameVersionNumber.asGameVersion(gameVersion).isAtLeast("1.20", "23w14a")) {
+            res.add(singlePlayer.worldFolderName());
+        } else if (options.getQuickPlayOption() instanceof QuickPlayOption.Realm realm
+                && GameVersionNumber.asGameVersion(gameVersion).isAtLeast("1.20", "23w14a")) {
             res.add("--quickPlayRealms");
-            res.add(options.getRealmID());
+            res.add(realm.realmID());
         }
 
         if (options.isFullscreen())

@@ -388,10 +388,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
     }
 
     public LaunchOptions.Builder getLaunchOptions(String version, JavaRuntime javaVersion, Path gameDir, List<String> javaAgents, List<String> javaArguments, boolean makeLaunchScript) {
-        return getLaunchOptions(version, javaVersion, gameDir, javaAgents, javaArguments, makeLaunchScript, null);
-    }
-
-    public LaunchOptions.Builder getLaunchOptions(String version, JavaRuntime javaVersion, Path gameDir, List<String> javaAgents, List<String> javaArguments, boolean makeLaunchScript, QuickPlayOption quickPlayOption) {
         VersionSetting vs = getVersionSetting(version);
 
         LaunchOptions.Builder builder = new LaunchOptions.Builder()
@@ -438,10 +434,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 .setJavaAgents(javaAgents)
                 .setJavaArguments(javaArguments);
 
-        if (quickPlayOption != null) {
-            quickPlayOption.applyTo(builder);
-        } else {
-            builder.setServerIp(vs.getServerIp());
+        if (StringUtils.isNotBlank(vs.getServerIp())) {
+            builder.setQuickPlayOption(new QuickPlayOption.MultiPlayer(vs.getServerIp()));
         }
 
         if (config().hasProxy()) {

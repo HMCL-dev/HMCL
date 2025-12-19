@@ -17,27 +17,16 @@
  */
 package org.jackhuang.hmcl.game;
 
-import java.util.function.BiConsumer;
-
-public record QuickPlayOption(Type type, String target) {
-
-    public void applyTo(LaunchOptions.Builder builder) {
-        this.type.apply(builder, this.target);
+/// The quick play option.
+///
+/// @see <a href="https://minecraft.wiki/w/Quick_Play">Quick Play - Minecraft Wiki</a>
+public sealed interface QuickPlayOption {
+    record SinglePlayer(String worldFolderName) implements QuickPlayOption {
     }
 
-    public enum Type {
-        SINGLEPLAYER(LaunchOptions.Builder::setWorldFolderName),
-        MULTIPLAYER(LaunchOptions.Builder::setServerIp),
-        REALM(LaunchOptions.Builder::setRealmID);
+    record MultiPlayer(String serverIP) implements QuickPlayOption {
+    }
 
-        private final BiConsumer<LaunchOptions.Builder, String> setter;
-
-        Type(BiConsumer<LaunchOptions.Builder, String> setter) {
-            this.setter = setter;
-        }
-
-        private void apply(LaunchOptions.Builder builder, String target) {
-            setter.accept(builder, target);
-        }
+    record Realm(String realmID) implements QuickPlayOption {
     }
 }
