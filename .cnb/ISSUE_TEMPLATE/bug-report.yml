@@ -20,15 +20,15 @@ body:
       description: |
         请尽可能地详细描述你所遇到的问题，并描述如何重新触发这个问题。
       placeholder: |
-        1. 点击 HMCL 上的某个按钮 | Click a button named ...
-        2. 向下翻页 | Scroll down
+        1. 点击 HMCL 上的某个按钮
+        2. 向下翻页
         3. ...
     validations:
       required: true
   - type: textarea
     id: hmcl-crash-report-or-logs
     attributes:
-      label: 启动器崩溃报告 / 启动器日志文件 | Launcher Crash Report / Launcher Log File
+      label: 启动器崩溃报告 / 启动器日志文件
       description: |
         如果你的启动器崩溃了，请将崩溃报告填入（或将文件拖入）下方。
         如果你的启动器没有崩溃，请在遇到问题后**不要退出启动器**，在启动器的 “设置 → 通用 → 调试” 一栏中点击 “导出启动器日志”，并将导出的日志拖到下方的输入栏中。
