@@ -5,6 +5,10 @@ on:
   workflow_call:
   push:
 
+concurrency:
+  group: mirror-repository
+  cancel-in-progress: true
+
 jobs:
   mirror:
     strategy:
