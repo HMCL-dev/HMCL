@@ -100,7 +100,7 @@ jobs:
       - name: Create CNB release
         if: ${{ env.continue == 'true' }}
         run: |
-          echo "Uploading tags to CNB repository"
+          echo "Uploading tags to CNB"
           git fetch --tags
           git push "https://cnb:${{ secrets.CNB_SYNC_TOKEN }}@cnb.cool/$CNB_REPO.git" "$HMCL_TAG_NAME"
           
