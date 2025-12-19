@@ -149,7 +149,8 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             accountListItem.setOnAction(e -> Controllers.navigate(Controllers.getAccountListPage()));
             accountListItem.setOnMouseClicked(e -> {
                 if (e.getButton() == MouseButton.SECONDARY) {
-                    showAccountListPopupMenu(accountListItem);
+                    if (!Accounts.getAccounts().isEmpty())
+                        showAccountListPopupMenu(accountListItem);
                     e.consume();
                 }
             });
