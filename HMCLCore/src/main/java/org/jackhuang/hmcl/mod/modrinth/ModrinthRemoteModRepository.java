@@ -24,7 +24,11 @@ import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
-import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.DigestUtils;
+import org.jackhuang.hmcl.util.Immutable;
+import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -35,7 +39,13 @@ import java.io.IOException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -126,6 +136,18 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         id = StringUtils.removePrefix(id, "local-");
         Project project = HttpRequest.GET(PREFIX + "/v2/project/" + id).getJson(Project.class);
         return project.toMod();
+    }
+
+    @Override
+    public RemoteMod resolveDependency(String id) throws IOException {
+        try {
+            return getModById(id);
+        } catch (ResponseCodeException e) {
+            if (e.getResponseCode() == 502) {
+                return RemoteMod.BROKEN;
+            }
+            throw e;
+        }
     }
 
     @Override
