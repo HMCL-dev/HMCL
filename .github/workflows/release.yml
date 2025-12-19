@@ -106,7 +106,7 @@ jobs:
           
           ~/go/bin/git-cnb release create \
              --repo "$CNB_REPO" \
-             --tag "v$HMCL_VERSION" \
+             --tag "$HMCL_TAG_NAME" \
              --name "HMCL $HMCL_VERSION" \
              --body "$(cat CNB_RELEASE_NOTE)" \
              --prerelease true
