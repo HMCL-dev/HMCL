@@ -68,17 +68,7 @@ public class AccountAdvancedListItem extends AdvancedListItem {
     };
 
     public AccountAdvancedListItem() {
-        tooltip = new Tooltip();
-        FXUtils.installFastTooltip(this, tooltip);
-
-        canvas = new Canvas(32, 32);
-        setLeftGraphic(canvas);
-
-        setActionButtonVisible(false);
-
-        FXUtils.onScroll(this, Accounts.getAccounts(),
-                accounts -> accounts.indexOf(account.get()),
-                Accounts::setSelectedAccount);
+        this(null);
     }
 
     public AccountAdvancedListItem(Account account) {
@@ -90,7 +80,13 @@ public class AccountAdvancedListItem extends AdvancedListItem {
 
         setActionButtonVisible(false);
 
-        this.accountProperty().set(account);
+        if (account != null) {
+            this.accountProperty().set(account);
+        } else {
+            FXUtils.onScroll(this, Accounts.getAccounts(),
+                    accounts -> accounts.indexOf(accountProperty().get()),
+                    Accounts::setSelectedAccount);
+        }
     }
 
     public ObjectProperty<Account> accountProperty() {
