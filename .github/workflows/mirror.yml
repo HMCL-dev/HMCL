@@ -12,11 +12,11 @@ jobs:
         target:
           - name: Gitee
             repo: gitee.com/huanghongxun/HMCL
-            user: 'GITEE_SYNC_USERNAME'
+            user: 'hmcl-sync'
             token: 'GITEE_SYNC_TOKEN'
           - name: CNB
             repo: cnb.cool/HMCL-dev/HMCL
-            user: 'CNB_SYNC_USERNAME'
+            user: 'cnb'
             token: 'CNB_SYNC_TOKEN'
     name: Mirror to ${{ matrix.target.name }}
     if: ${{ github.repository == 'HMCL-dev/HMCL' }}
@@ -26,4 +26,4 @@ jobs:
         run: |
           git clone --mirror "https://github.com/$GITHUB_REPOSITORY.git" -- repo
           cd repo
-          git push -f --prune "https://${{ secrets[matrix.target.user] }}:${{ secrets[matrix.target.token] }}@${{ matrix.target.repo }}.git" "refs/heads/*:refs/heads/*" "refs/tags/*:refs/tags/*"
+          git push -f --prune "https://${{ matrix.target.user }}:${{ secrets[matrix.target.token] }}@${{ matrix.target.repo }}.git" "refs/heads/*:refs/heads/*" "refs/tags/*:refs/tags/*"
