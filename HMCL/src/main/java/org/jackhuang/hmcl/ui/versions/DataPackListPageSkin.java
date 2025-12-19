@@ -43,7 +43,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.mod.Datapack;
+import org.jackhuang.hmcl.mod.DataPack;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -74,7 +74,7 @@ import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
+final class DataPackListPageSkin extends SkinBase<DataPackListPage> {
 
     private final TransitionPane toolbarPane;
     private final HBox searchBar;
@@ -82,8 +82,8 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
     private final HBox selectingToolbar;
     InvalidationListener updateBarByStateWeakListener;
 
-    private final JFXListView<DatapackInfoObject> listView;
-    private final FilteredList<DatapackInfoObject> filteredList;
+    private final JFXListView<DataPackInfoObject> listView;
+    private final FilteredList<DataPackInfoObject> filteredList;
 
     private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
     private final BooleanProperty isSelecting = new SimpleBooleanProperty(false);
@@ -93,7 +93,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
     private static final AtomicBoolean questForContentMenu = new AtomicBoolean(false);
     final Consumer<Integer> toggleSelect;
 
-    DatapackListPageSkin(DatapackListPage skinnable) {
+    DataPackListPageSkin(DataPackListPage skinnable) {
         super(skinnable);
 
         StackPane pane = new StackPane();
@@ -185,7 +185,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             center.loadingProperty().bind(skinnable.loadingProperty());
 
             Holder<Object> lastCell = new Holder<>();
-            listView.setCellFactory(x -> new DatapackInfoListCell(listView, lastCell));
+            listView.setCellFactory(x -> new DataPackInfoListCell(listView, lastCell));
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
             this.listView.setItems(filteredList);
 
@@ -220,13 +220,13 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
         }
     }
 
-    static class DatapackInfoObject extends RecursiveTreeObject<DatapackInfoObject> {
+    static class DataPackInfoObject extends RecursiveTreeObject<DataPackInfoObject> {
         private final BooleanProperty activeProperty;
-        private final Datapack.Pack packInfo;
+        private final DataPack.Pack packInfo;
 
         private SoftReference<CompletableFuture<Image>> iconCache;
 
-        DatapackInfoObject(Datapack.Pack packInfo) {
+        DataPackInfoObject(DataPack.Pack packInfo) {
             this.packInfo = packInfo;
             this.activeProperty = packInfo.activeProperty();
         }
@@ -239,7 +239,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             return packInfo.getDescription().toString();
         }
 
-        Datapack.Pack getPackInfo() {
+        DataPack.Pack getPackInfo() {
             return packInfo;
         }
 
@@ -274,7 +274,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             }
         }
 
-        public void loadIcon(ImageView imageView, @Nullable WeakReference<ObjectProperty<DatapackInfoObject>> current) {
+        public void loadIcon(ImageView imageView, @Nullable WeakReference<ObjectProperty<DataPackInfoObject>> current) {
             SoftReference<CompletableFuture<Image>> iconCache = this.iconCache;
             CompletableFuture<Image> imageFuture;
             if (iconCache != null && (imageFuture = iconCache.get()) != null) {
@@ -290,7 +290,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             imageView.setImage(FXUtils.newBuiltinImage("/assets/img/unknown_pack.png"));
             imageFuture.thenAcceptAsync(image -> {
                 if (current != null) {
-                    ObjectProperty<DatapackInfoObject> infoObjectProperty = current.get();
+                    ObjectProperty<DataPackInfoObject> infoObjectProperty = current.get();
                     if (infoObjectProperty == null || infoObjectProperty.get() != this) {
                         // The current ListCell has already switched to another object
                         return;
@@ -302,7 +302,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
         }
     }
 
-    private final class DatapackInfoListCell extends MDListCell<DatapackInfoObject> {
+    private final class DataPackInfoListCell extends MDListCell<DataPackInfoObject> {
         final JFXCheckBox checkBox = new JFXCheckBox();
         ImageView imageView = new ImageView();
         final TwoLineListItem content = new TwoLineListItem();
@@ -310,7 +310,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
         JFXButton infoButton = new JFXButton();
         BooleanProperty booleanProperty;
 
-        DatapackInfoListCell(JFXListView<DatapackInfoObject> listView, Holder<Object> lastCell) {
+        DataPackInfoListCell(JFXListView<DataPackInfoObject> listView, Holder<Object> lastCell) {
             super(listView, lastCell);
 
             HBox container = new HBox(8);
@@ -339,7 +339,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
         }
 
         @Override
-        protected void updateControl(DatapackInfoObject dataItem, boolean empty) {
+        protected void updateControl(DataPackInfoObject dataItem, boolean empty) {
             if (empty) return;
             content.setTitle(dataItem.getTitle());
             String subtitle = dataItem.getSubtitle();
@@ -353,13 +353,13 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             checkBox.selectedProperty().bindBidirectional(booleanProperty = dataItem.activeProperty);
             dataItem.loadIcon(imageView, new WeakReference<>(this.itemProperty()));
             revealButton.setOnAction(e -> FXUtils.showFileInExplorer(dataItem.getPackInfo().getPath()));
-            infoButton.setOnAction(e -> Controllers.dialog(new DatapackInfoDialog(dataItem, getSkinnable().getProfile(), getSkinnable().getVersionID())));
+            infoButton.setOnAction(e -> Controllers.dialog(new DataPackInfoDialog(dataItem, getSkinnable().getProfile(), getSkinnable().getVersionID())));
 
 
         }
     }
 
-    public void handleSelect(DatapackInfoListCell cell, MouseEvent mouseEvent) {
+    public void handleSelect(DataPackInfoListCell cell, MouseEvent mouseEvent) {
         if (cell.isEmpty()) {
             mouseEvent.consume();
             return;
@@ -394,10 +394,10 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
         mouseEvent.consume();
     }
 
-    public void handleSelectOnMouseReleased(DatapackInfoListCell cell, MouseEvent mouseEvent) {
+    public void handleSelectOnMouseReleased(DataPackInfoListCell cell, MouseEvent mouseEvent) {
         if (questForContentMenu.get()) {
             questForContentMenu.set(false);
-            Controllers.dialog(new DatapackInfoDialog(cell.getItem(), getSkinnable().getProfile(), getSkinnable().getVersionID()));
+            Controllers.dialog(new DataPackInfoDialog(cell.getItem(), getSkinnable().getProfile(), getSkinnable().getVersionID()));
         }
     }
 }

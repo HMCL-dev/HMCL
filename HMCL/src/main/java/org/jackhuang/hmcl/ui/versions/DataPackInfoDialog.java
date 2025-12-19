@@ -50,8 +50,8 @@ import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-final class DatapackInfoDialog extends JFXDialogLayout {
-    public DatapackInfoDialog(DatapackListPageSkin.DatapackInfoObject datapackInfoObject, Profile profile, String versionID) {
+final class DataPackInfoDialog extends JFXDialogLayout {
+    public DataPackInfoDialog(DataPackListPageSkin.DataPackInfoObject dataPackInfoObject, Profile profile, String versionID) {
 
         Stage stage = Controllers.getStage();
         {
@@ -68,20 +68,20 @@ final class DatapackInfoDialog extends JFXDialogLayout {
         {
             titleItem = new TwoLineListItem();
             {
-                titleItem.setTitle(datapackInfoObject.getTitle());
+                titleItem.setTitle(dataPackInfoObject.getTitle());
             }
 
             ImageView imageView = new ImageView();
             {
                 FXUtils.limitSize(imageView, 40, 40);
-                datapackInfoObject.loadIcon(imageView, null);
+                dataPackInfoObject.loadIcon(imageView, null);
             }
 
             titleContainer.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), titleItem);
         }
 
         //body area
-        Label description = new Label(datapackInfoObject.getSubtitle());
+        Label description = new Label(dataPackInfoObject.getSubtitle());
         {
             description.setWrapText(true);
             FXUtils.copyOnDoubleClick(description);
@@ -107,7 +107,7 @@ final class DatapackInfoDialog extends JFXDialogLayout {
             openInMcModButton.setOnAction(e -> {
                 fireEvent(new DialogCloseEvent());
                 FXUtils.openLink(NetworkUtils.withQuery("https://search.mcmod.cn/s", mapOf(
-                        pair("key", datapackInfoObject.getTitle()),
+                        pair("key", dataPackInfoObject.getTitle()),
                         pair("site", "all"),
                         pair("filter", "0")
                 )));
@@ -122,7 +122,7 @@ final class DatapackInfoDialog extends JFXDialogLayout {
             RemoteModRepository repository = item.getValue();
             JFXHyperlink button = new JFXHyperlink(i18n(item.getKey()));
             Task.runAsync(() -> {
-                Optional<RemoteMod.Version> versionOptional = repository.getRemoteVersionByLocalFile(null, datapackInfoObject.getPackInfo().getPath());
+                Optional<RemoteMod.Version> versionOptional = repository.getRemoteVersionByLocalFile(null, dataPackInfoObject.getPackInfo().getPath());
                 versionOptional.ifPresent(version -> {
                     RemoteMod remoteMod;
                     try {

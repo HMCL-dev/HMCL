@@ -98,7 +98,7 @@ public record PackMcMeta(@SerializedName("pack") PackInfo pack) implements Valid
                     } else if (jsonArray.size() == 2 && jsonArray.get(0) instanceof JsonPrimitive && jsonArray.get(1) instanceof JsonPrimitive) {
                         return new PackVersion(jsonArray.get(0).getAsInt(), jsonArray.get(1).getAsInt());
                     } else {
-                        LOG.warning("Datapack version array must have 1 or 2 elements, but got " + jsonArray.size());
+                        LOG.warning("DataPack version array must have 1 or 2 elements, but got " + jsonArray.size());
                     }
                 }
             } catch (NumberFormatException e) {

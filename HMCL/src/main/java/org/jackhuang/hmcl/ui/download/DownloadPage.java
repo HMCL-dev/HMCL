@@ -80,7 +80,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     private final TabHeader.Tab<DownloadListPage> modpackTab = new TabHeader.Tab<>("modpackTab");
     private final TabHeader.Tab<DownloadListPage> resourcePackTab = new TabHeader.Tab<>("resourcePackTab");
     private final TabHeader.Tab<DownloadListPage> shaderTab = new TabHeader.Tab<>("shaderTab");
-    private final TabHeader.Tab<DownloadListPage> datapackTab = new TabHeader.Tab<>("datapackTab");
+    private final TabHeader.Tab<DownloadListPage> dataPackTab = new TabHeader.Tab<>("dataPackTab");
     private final TabHeader.Tab<DownloadListPage> worldTab = new TabHeader.Tab<>("worldTab");
     private final TransitionPane transitionPane = new TransitionPane();
     private final DownloadNavigator versionPageNavigator = new DownloadNavigator();
@@ -108,9 +108,9 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         modTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofMod((profile, version, file) -> download(profile, version, file, "mods"), true)));
         resourcePackTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofResourcePack((profile, version, file) -> download(profile, version, file, "resourcepacks"), true)));
         shaderTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(ModrinthRemoteModRepository.SHADER_PACKS, (profile, version, file) -> download(profile, version, file, "shaderpacks"), true)));
-        datapackTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofDataPack((profile, version, file) -> downloadForDatapack(profile, version, file, "datapacks"), true)));
+        dataPackTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofDataPack((profile, version, file) -> downloadForDatapack(profile, version, file, "datapacks"), true)));
         worldTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(CurseForgeRemoteModRepository.WORLDS)));
-        tab = new TabHeader(transitionPane, newGameTab, modpackTab, modTab, resourcePackTab, shaderTab, datapackTab, worldTab);
+        tab = new TabHeader(transitionPane, newGameTab, modpackTab, modTab, resourcePackTab, shaderTab, dataPackTab, worldTab);
 
         Profiles.registerVersionsListener(this::loadVersions);
 
@@ -124,7 +124,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                 .addNavigationDrawerTab(tab, modTab, i18n("mods"), SVG.EXTENSION, SVG.EXTENSION_FILL)
                 .addNavigationDrawerTab(tab, resourcePackTab, i18n("resourcepack"), SVG.TEXTURE)
                 .addNavigationDrawerTab(tab, shaderTab, i18n("download.shader"), SVG.WB_SUNNY, SVG.WB_SUNNY_FILL)
-                .addNavigationDrawerTab(tab, datapackTab, i18n("datapack"), SVG.CODE_BLOCKS, SVG.CODE_BLOCKS_FILL)
+                .addNavigationDrawerTab(tab, dataPackTab, i18n("datapack"), SVG.CODE_BLOCKS, SVG.CODE_BLOCKS_FILL)
                 .addNavigationDrawerTab(tab, worldTab, i18n("world"), SVG.PUBLIC);
         FXUtils.setLimitWidth(sideBar, 200);
         setLeft(sideBar);
@@ -226,8 +226,8 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                     if (shaderTab.isInitialized()) {
                         shaderTab.getNode().loadVersion(profile, null);
                     }
-                    if (datapackTab.isInitialized()) {
-                        datapackTab.getNode().loadVersion(profile, null);
+                    if (dataPackTab.isInitialized()) {
+                        dataPackTab.getNode().loadVersion(profile, null);
                     }
                     if (worldTab.isInitialized()) {
                         worldTab.getNode().loadVersion(profile, null);
@@ -264,7 +264,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     }
 
     public void showDatapackDownloads() {
-        tab.select(datapackTab, false);
+        tab.select(dataPackTab, false);
     }
 
     private static final class DownloadNavigator implements Navigation {
