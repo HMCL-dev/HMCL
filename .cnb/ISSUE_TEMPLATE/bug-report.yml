@@ -1,0 +1,37 @@
+name: Bug 反馈
+description: 
+  反馈一个 HMCL 错误。
+title: "[Bug] "
+labels: bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        提交前请确认：
+
+        * 该问题确实是 **HMCL 的错误**，而**不是 Minecraft 非正常退出**，如果你的 Minecraft 非正常退出，请前往 [QQ 群](https://docs.hmcl.net/groups.html)/[Discord 服务器](https://discord.gg/jVvC7HfM6U) 获取帮助。
+        * 你的启动器版本是**最新的预览版本**，可以点击 [此处](https://zkitefly.github.io/HMCL-Snapshot-Update/) 下载最新预览版本。
+
+        如果你的问题并不属于上述两类，你可以选取另一种 Issue 类型，或者直接前往 [QQ 群](https://docs.hmcl.net/groups.html)/[Discord 服务器](https://discord.gg/jVvC7HfM6U) 获取帮助。
+  - type: textarea
+    id: bug-report
+    attributes:
+      label: 问题描述
+      description: |
+        请尽可能地详细描述你所遇到的问题，并描述如何重新触发这个问题。
+      placeholder: |
+        1. 点击 HMCL 上的某个按钮 | Click a button named ...
+        2. 向下翻页 | Scroll down
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: hmcl-crash-report-or-logs
+    attributes:
+      label: 启动器崩溃报告 / 启动器日志文件 | Launcher Crash Report / Launcher Log File
+      description: |
+        如果你的启动器崩溃了，请将崩溃报告填入（或将文件拖入）下方。
+        如果你的启动器没有崩溃，请在遇到问题后**不要退出启动器**，在启动器的 “设置 → 通用 → 调试” 一栏中点击 “导出启动器日志”，并将导出的日志拖到下方的输入栏中。
+        **请注意：启动器崩溃报告或日志文件是诊断问题的重要依据，请务必上传！**
+    validations:
+      required: true
