@@ -63,6 +63,10 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         return Type.MOD;
     }
 
+    public String getProjectType() {
+        return projectType;
+    }
+
     private static String convertSortType(SortType sortType) {
         switch (sortType) {
             case DATE_CREATED:

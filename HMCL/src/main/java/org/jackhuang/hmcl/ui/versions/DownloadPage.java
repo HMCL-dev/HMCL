@@ -37,6 +37,7 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
+import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -95,7 +96,11 @@ public class DownloadPage extends Control implements DecoratorPage {
 
         Task.supplyAsync(() -> {
             Stream<RemoteMod.Version> versions = addon.getData().loadVersions(repository);
-            return sortVersions(versions);
+            Stream<RemoteMod.Version> versionFiltered = versions;
+            if (page.repository instanceof HMCLLocalizedDownloadListPage.Repository repository && repository.getBackedRemoteModRepository() instanceof ModrinthRemoteModRepository modRepository && modRepository.getProjectType().equals("datapack")) {
+                versionFiltered = versions.filter((version) -> version.getLoaders().contains(ModLoaderType.PACK));
+            }
+            return sortVersions(versionFiltered);
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
                 this.versions = result;

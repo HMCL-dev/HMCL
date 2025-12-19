@@ -69,7 +69,7 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
         }
     }
 
-    private class Repository extends LocalizedRemoteModRepository {
+    class Repository extends LocalizedRemoteModRepository {
         private final RemoteModRepository.Type type;
         private final CurseForgeRemoteModRepository curseForge;
         private final ModrinthRemoteModRepository modrinth;
