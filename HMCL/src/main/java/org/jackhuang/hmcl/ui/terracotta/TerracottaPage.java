@@ -68,7 +68,7 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
         left.setTop(sideBar);
 
         AdvancedListBox toolbar = new AdvancedListBox()
-                .addNavigationDrawerItem(i18n("version.launch"), SVG.PLAY_ARROW, () -> {
+                .addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, () -> {
                     Profile profile = Profiles.getSelectedProfile();
                     Versions.launch(profile, profile.getSelectedVersion(), launcherHelper -> {
                         launcherHelper.setKeep();

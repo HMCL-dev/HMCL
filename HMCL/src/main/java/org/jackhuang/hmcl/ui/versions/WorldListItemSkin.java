@@ -117,7 +117,7 @@ public final class WorldListItemSkin extends SkinBase<WorldListItem> {
 
         if (world.getGameVersion() != null && world.getGameVersion().isAtLeast("1.20", "23w14a")) {
 
-            IconedMenuItem launchItem = new IconedMenuItem(SVG.PLAY_ARROW, i18n("version.launch_and_enter_world"), item::launch, popup);
+            IconedMenuItem launchItem = new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("version.launch_and_enter_world"), item::launch, popup);
             launchItem.setDisable(world.isLocked());
             popupMenu.getContent().add(launchItem);
 

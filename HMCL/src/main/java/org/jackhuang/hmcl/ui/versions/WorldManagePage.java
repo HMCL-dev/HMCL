@@ -110,11 +110,11 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
             JFXPopup launchPopup = new JFXPopup(launchMenu);
 
             launchMenu.getContent().addAll(
-                    new IconedMenuItem(SVG.PLAY_ARROW, i18n("version.launch_and_enter_world"), this::launch, launchPopup),
+                    new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("version.launch_and_enter_world"), this::launch, launchPopup),
                     new IconedMenuItem(SVG.TROUBLESHOOT, i18n("version.launch.test_and_enter_world"), this::launchInTestMode, launchPopup)
             );
 
-            toolbar.addNavigationDrawerItem(i18n("version.launch"), SVG.PLAY_ARROW, null, launchMenuItem -> {
+            toolbar.addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, null, launchMenuItem -> {
                 launchMenuItem.setOnAction(e -> launchPopup.show(launchMenuItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, launchMenuItem.getWidth(), 0));
             });
             toolbar.addNavigationDrawerItem(i18n("version.launch_script"), SVG.SCRIPT, this::generateLaunchScript, null);

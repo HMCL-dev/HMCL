@@ -254,7 +254,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                 PopupMenu launchList = new PopupMenu();
                 JFXPopup launchPopup = new JFXPopup(launchList);
                 launchList.getContent().setAll(
-                        new IconedMenuItem(SVG.PLAY_ARROW, i18n("version.launch"), control::launch, launchPopup),
+                        new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("version.launch"), control::launch, launchPopup),
                         new IconedMenuItem(SVG.TROUBLESHOOT, i18n("version.launch.test"), control::testGame, launchPopup)
                 );
 
@@ -292,7 +292,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                         .addNavigationDrawerItem(i18n("version.update"), SVG.UPDATE, control::updateGame, upgradeItem -> {
                             upgradeItem.visibleProperty().bind(control.currentVersionUpgradable);
                         })
-                        .addNavigationDrawerItem(i18n("version.launch.options"), SVG.PLAY_ARROW, null, launchMenuItem -> {
+                        .addNavigationDrawerItem(i18n("version.launch.options"), SVG.ROCKET_LAUNCH, null, launchMenuItem -> {
                             launchMenuItem.setOnAction(e -> launchPopup.show(launchMenuItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, launchMenuItem.getWidth(), 0));
                         })
                         .addNavigationDrawerItem(i18n("settings.game.exploration"), SVG.FOLDER_OPEN, null, browseMenuItem -> {
