@@ -22,6 +22,7 @@ import javafx.stage.Stage;
 import org.jackhuang.hmcl.Launcher;
 import org.jackhuang.hmcl.auth.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDownloadException;
+import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
@@ -82,6 +83,7 @@ public final class LauncherHelper {
     private LauncherVisibility launcherVisibility;
     private boolean showLogs;
     private QuickPlayOption quickPlayOption;
+    private boolean disableOfflineSkin = false;
 
     public LauncherHelper(Profile profile, Account account, String selectedVersion) {
         this.profile = Objects.requireNonNull(profile);
@@ -114,6 +116,10 @@ public final class LauncherHelper {
 
     public void setQuickEnterWorld(String worldFolderName) {
         quickPlayOption = new QuickPlayOption(QuickPlayOption.Type.SINGLEPLAYER, worldFolderName);
+    }
+
+    public void setDisableOfflineSkin() {
+        disableOfflineSkin = true;
     }
 
     public void launch() {
@@ -193,8 +199,12 @@ public final class LauncherHelper {
                 .thenComposeAsync(() -> gameVersion.map(s -> new GameVerificationFixTask(dependencyManager, s, version.get())).orElse(null))
                 .thenComposeAsync(() -> logIn(account).withStage("launch.state.logging_in"))
                 .thenComposeAsync(authInfo -> Task.supplyAsync(() -> {
-                    LaunchOptions launchOptions = repository.getLaunchOptions(
+                    LaunchOptions.Builder launchOptionsBuilder = repository.getLaunchOptions(
                             selectedVersion, javaVersionRef.get(), profile.getGameDir(), javaAgents, javaArguments, scriptFile != null, quickPlayOption);
+                    if (disableOfflineSkin) {
+                        launchOptionsBuilder.setDaemon(false);
+                    }
+                    LaunchOptions launchOptions = launchOptionsBuilder.create();
 
                     LOG.info("Here's the structure of game mod directory:\n" + FileUtils.printFileStructure(repository.getModsDirectory(selectedVersion), 10));
 
@@ -644,10 +654,13 @@ public final class LauncherHelper {
         return future;
     }
 
-    private static Task<AuthInfo> logIn(Account account) {
+    private Task<AuthInfo> logIn(Account account) {
         return Task.composeAsync(() -> {
             try {
-                return Task.completed(account.logIn());
+                if (disableOfflineSkin && account instanceof OfflineAccount offlineAccount)
+                    return Task.completed(offlineAccount.logInWithoutSkin());
+                else
+                    return Task.completed(account.logIn());
             } catch (CredentialExpiredException e) {
                 LOG.info("Credential has expired", e);
 

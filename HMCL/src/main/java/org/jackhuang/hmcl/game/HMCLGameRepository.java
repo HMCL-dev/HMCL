@@ -387,11 +387,11 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             vs.setUsesGlobal(true);
     }
 
-    public LaunchOptions getLaunchOptions(String version, JavaRuntime javaVersion, Path gameDir, List<String> javaAgents, List<String> javaArguments, boolean makeLaunchScript) {
+    public LaunchOptions.Builder getLaunchOptions(String version, JavaRuntime javaVersion, Path gameDir, List<String> javaAgents, List<String> javaArguments, boolean makeLaunchScript) {
         return getLaunchOptions(version, javaVersion, gameDir, javaAgents, javaArguments, makeLaunchScript, null);
     }
 
-    public LaunchOptions getLaunchOptions(String version, JavaRuntime javaVersion, Path gameDir, List<String> javaAgents, List<String> javaArguments, boolean makeLaunchScript, QuickPlayOption quickPlayOption) {
+    public LaunchOptions.Builder getLaunchOptions(String version, JavaRuntime javaVersion, Path gameDir, List<String> javaAgents, List<String> javaArguments, boolean makeLaunchScript, QuickPlayOption quickPlayOption) {
         VersionSetting vs = getVersionSetting(version);
 
         LaunchOptions.Builder builder = new LaunchOptions.Builder()
@@ -470,7 +470,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         if (vs.isAutoMemory() && builder.getJavaArguments().stream().anyMatch(it -> it.startsWith("-Xmx")))
             builder.setMaxMemory(null);
 
-        return builder.create();
+        return builder;
     }
 
     @Override

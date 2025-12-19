@@ -44,6 +44,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -86,8 +87,11 @@ public class PersonalizationPage extends StackPane {
 
             brightnessPane.setLeft(left);
 
-            JFXComboBox<String> cboBrightness = new JFXComboBox<>(
-                    FXCollections.observableArrayList("auto", "light", "dark"));
+            JFXComboBox<String> cboBrightness = new JFXComboBox<>(FXCollections.observableArrayList(
+                    FXUtils.DARK_MODE != null
+                            ? List.of("auto", "light", "dark")
+                            : List.of("light", "dark")
+            ));
             cboBrightness.setConverter(FXUtils.stringConverter(name -> i18n("settings.launcher.brightness." + name)));
             cboBrightness.valueProperty().bindBidirectional(config().themeBrightnessProperty());
             brightnessPane.setRight(cboBrightness);
