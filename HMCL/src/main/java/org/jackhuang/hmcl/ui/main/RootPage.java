@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.ui.main;
 import com.jfoenix.controls.JFXPopup;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.scene.input.MouseButton;
-import javafx.scene.layout.Region;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.event.EventBus;
