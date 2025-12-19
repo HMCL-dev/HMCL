@@ -190,7 +190,7 @@ public record PackMcMeta(@SerializedName("pack") PackInfo pack) implements Valid
         PackMcMeta metadata = JsonUtils.fromNonNullJson(Files.readString(mcmod), PackMcMeta.class);
         return new LocalModFile(
                 modManager,
-                modManager.getLocalMod(FileUtils.getNameWithoutExtension(modFile), ModLoaderType.PACK),
+                modManager.getLocalMod(FileUtils.getNameWithoutExtension(modFile), ModLoaderType.DATA_PACK),
                 modFile,
                 FileUtils.getNameWithoutExtension(modFile),
                 metadata.pack.description,

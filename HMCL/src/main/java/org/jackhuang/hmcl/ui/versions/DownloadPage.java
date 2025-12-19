@@ -98,7 +98,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             Stream<RemoteMod.Version> versions = addon.getData().loadVersions(repository);
             Stream<RemoteMod.Version> versionFiltered = versions;
             if (page.repository instanceof HMCLLocalizedDownloadListPage.Repository repository && repository.getBackedRemoteModRepository() instanceof ModrinthRemoteModRepository modRepository && modRepository.getProjectType().equals("datapack")) {
-                versionFiltered = versions.filter((version) -> version.getLoaders().contains(ModLoaderType.PACK));
+                versionFiltered = versions.filter((version) -> version.getLoaders().contains(ModLoaderType.DATA_PACK));
             }
             return sortVersions(versionFiltered);
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {

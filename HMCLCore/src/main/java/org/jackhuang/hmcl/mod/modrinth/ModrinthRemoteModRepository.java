@@ -526,7 +526,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                         else if ("neoforge".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.NEO_FORGED);
                         else if ("quilt".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.QUILT);
                         else if ("liteloader".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.LITE_LOADER);
-                        else if ("datapack".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.PACK);
+                        else if ("datapack".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.DATA_PACK);
                         else return Stream.empty();
                     }).collect(Collectors.toList())
             ));
