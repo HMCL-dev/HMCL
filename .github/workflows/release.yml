@@ -101,7 +101,7 @@ jobs:
         if: ${{ env.continue == 'true' }}
         run: |
           echo "Uploading tags to CNB repository"
-          git fetch --tags origin "$HMCL_TAG_NAME"
+          git fetch --tags
           git push "https://cnb:${{ secrets.CNB_SYNC_TOKEN }}@cnb.cool/$CNB_REPO.git" "$HMCL_TAG_NAME"
           
           ~/go/bin/git-cnb release create \
