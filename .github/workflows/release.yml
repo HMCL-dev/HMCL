@@ -97,6 +97,9 @@ jobs:
         run: go install "cnb.cool/looc/git-cnb@$GIT_CNB_VERSION"
         env:
           GIT_CNB_VERSION: '1.1.2'
+      - name: Update mirror repositories
+        if: ${{ env.continue == 'true' }}
+        uses: ./.github/workflows/mirror.yml
       - name: Create CNB release
         if: ${{ env.continue == 'true' }}
         run: |
