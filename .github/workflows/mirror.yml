@@ -18,7 +18,7 @@ jobs:
             repo: cnb.cool/HMCL-dev/HMCL
             user: 'CNB_SYNC_USERNAME'
             token: 'CNB_SYNC_TOKEN'
-    if: ${{ github.repository == 'HMCL-dev/HMCL' }}
+    name: Mirror to ${{ matrix.target.name }}
     runs-on: ubuntu-latest
     steps:
       - name: Mirror GitHub to ${{ matrix.target.name }}
