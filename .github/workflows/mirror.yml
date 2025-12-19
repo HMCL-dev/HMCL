@@ -2,8 +2,11 @@ name: Mirror Repository
 
 on:
   workflow_dispatch:
-  workflow_call:
   push:
+
+concurrency:
+  group: mirror-repository
+  cancel-in-progress: true
 
 jobs:
   mirror:
