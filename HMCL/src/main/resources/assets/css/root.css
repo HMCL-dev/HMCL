@@ -253,6 +253,10 @@
     -fx-spacing: 0;
 }
 
+.no-padding .advanced-list-box-content {
+    -fx-padding: 0 0 0 0;
+}
+
 .iconed-item {
     -jfx-rippler-fill: -monet-secondary-container;
 }
