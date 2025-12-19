@@ -104,6 +104,7 @@ jobs:
           git fetch --tags
           git push "https://cnb:${{ secrets.CNB_SYNC_TOKEN }}@cnb.cool/$CNB_REPO.git" "$HMCL_TAG_NAME"
           
+          echo "Creating CNB release"
           ~/go/bin/git-cnb release create \
              --repo "$CNB_REPO" \
              --tag "$HMCL_TAG_NAME" \
