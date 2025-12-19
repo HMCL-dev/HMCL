@@ -74,7 +74,7 @@ public class FeedbackPage extends SpinnerPane {
             cnb.setImage(FXUtils.newBuiltinImage("/assets/img/cnb.png"));
             cnb.setTitle(i18n("contact.feedback.cnb"));
             cnb.setSubtitle(i18n("contact.feedback.cnb.statement"));
-            cnb.setExternalLink("https://cnb.cool/HMCL-dev/HMCL/-/issues/new");
+            cnb.setExternalLink("https://cnb.cool/HMCL-dev/HMCL/-/issues/new/choose");
 
             feedback.getContent().setAll(github, cnb);
         }
