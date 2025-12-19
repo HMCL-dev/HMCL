@@ -97,12 +97,14 @@ jobs:
         run: go install "cnb.cool/looc/git-cnb@$GIT_CNB_VERSION"
         env:
           GIT_CNB_VERSION: '1.1.2'
-      - name: Update mirror repositories
-        if: ${{ env.continue == 'true' }}
-        uses: ./.github/workflows/mirror.yml
       - name: Create CNB release
         if: ${{ env.continue == 'true' }}
         run: |
+          echo "Uploading tags to CNB repository"
+          git clone --mirror "https://github.com/$GITHUB_REPOSITORY.git" -- repo
+          cd repo
+          git push -f --prune "https://cnb:${{ secrets.CNB_SYNC_TOKEN }}@cnb.cool/$CNB_REPO.git" "$HMCL_TAG_NAME"
+          
           ~/go/bin/git-cnb release create \
              --repo "$CNB_REPO" \
              --tag "v$HMCL_VERSION" \
@@ -111,13 +113,13 @@ jobs:
              --prerelease true
 
            echo "Uploading HMCL-$HMCL_VERSION.jar"
-           ~/go/bin/git-cnb release asset-upload --repo="$CNB_REPO" --tag-name "v$HMCL_VERSION" --file-name "HMCL-$HMCL_VERSION.jar"
+           ~/go/bin/git-cnb release asset-upload --repo="$CNB_REPO" --tag-name "$HMCL_TAG_NAME" --file-name "HMCL-$HMCL_VERSION.jar"
 
            echo "Uploading HMCL-$HMCL_VERSION.exe"
-           ~/go/bin/git-cnb release asset-upload --repo="$CNB_REPO" --tag-name "v$HMCL_VERSION" --file-name "HMCL-$HMCL_VERSION.exe"
+           ~/go/bin/git-cnb release asset-upload --repo="$CNB_REPO" --tag-name "$HMCL_TAG_NAME" --file-name "HMCL-$HMCL_VERSION.exe"
 
            echo "Uploading HMCL-$HMCL_VERSION.sh"
-           ~/go/bin/git-cnb release asset-upload --repo="$CNB_REPO" --tag-name "v$HMCL_VERSION" --file-name "HMCL-$HMCL_VERSION.sh"
+           ~/go/bin/git-cnb release asset-upload --repo="$CNB_REPO" --tag-name "$HMCL_TAG_NAME" --file-name "HMCL-$HMCL_VERSION.sh"
         env:
           CNB_TOKEN: ${{ secrets.CNB_SYNC_TOKEN }}
           CNB_REPO: HMCL-dev/HMCL
