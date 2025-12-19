@@ -70,13 +70,7 @@ public class FeedbackPage extends SpinnerPane {
             github.setSubtitle(i18n("contact.feedback.github.statement"));
             github.setExternalLink("https://github.com/HMCL-dev/HMCL/issues/new/choose");
 
-            IconedTwoLineListItem cnb = new IconedTwoLineListItem();
-            cnb.setImage(FXUtils.newBuiltinImage("/assets/img/cnb.png"));
-            cnb.setTitle(i18n("contact.feedback.cnb"));
-            cnb.setSubtitle(i18n("contact.feedback.cnb.statement"));
-            cnb.setExternalLink("https://cnb.cool/HMCL-dev/HMCL/-/issues/new/choose");
-
-            feedback.getContent().setAll(github, cnb);
+            feedback.getContent().setAll(github);
         }
 
         content.getChildren().addAll(
