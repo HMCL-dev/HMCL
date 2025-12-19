@@ -242,9 +242,9 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                                 control.removeSelected(listView.getSelectionModel().getSelectedItems());
                             }, null);
                         }),
-                        createToolbarButton2(i18n("mods.enable"), SVG.CHECK, () ->
+                        createToolbarButton2(i18n("button.enable"), SVG.CHECK, () ->
                                 control.setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), false)),
-                        createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () ->
+                        createToolbarButton2(i18n("button.disable"), SVG.CLOSE, () ->
                                 control.setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), false)),
                         createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () ->
                                 listView.getSelectionModel().selectAll()),
