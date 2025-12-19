@@ -2,7 +2,6 @@ name: Mirror Repository
 
 on:
   workflow_dispatch:
-  workflow_call:
   push:
 
 concurrency:
