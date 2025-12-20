@@ -14,10 +14,10 @@ jobs:
       fail-fast: false
       matrix:
         target:
-          - name: Gitee
-            repo: gitee.com/huanghongxun/HMCL
-            user: 'hmcl-sync'
-            token: 'GITEE_SYNC_TOKEN'
+          #          - name: Gitee
+          #            repo: gitee.com/huanghongxun/HMCL
+          #            user: 'hmcl-sync'
+          #            token: 'GITEE_SYNC_TOKEN'
           - name: CNB
             repo: cnb.cool/HMCL-dev/HMCL
             user: 'cnb'
@@ -31,3 +31,19 @@ jobs:
           git clone --mirror "https://github.com/$GITHUB_REPOSITORY.git" -- repo
           cd repo
           git push -f --prune "https://${{ matrix.target.user }}:${{ secrets[matrix.target.token] }}@${{ matrix.target.repo }}.git" "refs/heads/*:refs/heads/*" "refs/tags/*:refs/tags/*"
+  mirror-gitee:
+    name: Mirror to Gitee
+    if: ${{ github.repository == 'HMCL-dev/HMCL' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mirror GitHub to Gitee
+        uses: Yikun/hub-mirror-action@v1.5
+        with:
+          src: github/HMCL-dev
+          dst: gitee/huanghongxun
+          static_list: 'HMCL'
+          force_update: true
+          debug: true
+          dst_key: ${{ secrets.GITEE_SYNC_BOT_PRIVATE_KEY }}
+          dst_token: ${{ secrets.GITEE_SYNC_TOKEN }}
+          cache_path: /github/workspace/hub-mirror-cache
