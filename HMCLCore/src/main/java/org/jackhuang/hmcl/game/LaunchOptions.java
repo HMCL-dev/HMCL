@@ -61,7 +61,7 @@ public class LaunchOptions implements Serializable {
     private NativesDirectoryType nativesDirType;
     private String nativesDir;
     private ProcessPriority processPriority = ProcessPriority.NORMAL;
-    private Driver driver = Driver.DEFAULT;
+    private Renderer renderer = Renderer.DEFAULT;
     private boolean useNativeGLFW;
     private boolean useNativeOpenAL;
     private boolean daemon;
@@ -270,8 +270,8 @@ public class LaunchOptions implements Serializable {
         return processPriority;
     }
 
-    public Driver getDriver() {
-        return driver;
+    public Renderer getRenderer() {
+        return renderer;
     }
 
     public boolean isUseNativeGLFW() {
@@ -477,8 +477,8 @@ public class LaunchOptions implements Serializable {
             return this;
         }
 
-        public Builder setDriver(@NotNull Driver driver) {
-            options.driver = driver;
+        public Builder setRenderer(@NotNull Renderer renderer) {
+            options.renderer = renderer;
             return this;
         }
 

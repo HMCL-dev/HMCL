@@ -4008,7 +4008,7 @@
         }
       }
     },
-    "software-driver-loader": {
+    "software-renderer-loader": {
       "name": "org.glavo:llvmpipe-loader:1.0",
       "downloads": {
         "artifact": {
