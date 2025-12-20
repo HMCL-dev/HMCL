@@ -569,6 +569,9 @@ public class DownloadPage extends Control implements DecoratorPage {
                     queue.add(Task.supplyAsync(Schedulers.io(), dependency::load)
                             .setSignificance(Task.TaskSignificance.MINOR)
                             .thenAcceptAsync(Schedulers.javafx(), dep -> {
+                                if (dep == RemoteMod.BROKEN) {
+                                    return;
+                                }
                                 DependencyModItem dependencyModItem = new DependencyModItem(selfPage.page, dep, selfPage.version, selfPage.callback);
                                 dependencies.get(dependency.getType()).add(dependencyModItem);
                             })
