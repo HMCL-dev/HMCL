@@ -619,8 +619,8 @@ public class DefaultLauncher extends Launcher {
         if (!usePowerShell) {
             if (isWindows && !scriptExtension.equals("bat"))
                 throw new IllegalArgumentException("The extension of " + scriptFile + " is not 'bat' or 'ps1' in Windows");
-            else if (!isWindows && !scriptExtension.equals("sh"))
-                throw new IllegalArgumentException("The extension of " + scriptFile + " is not 'sh' or 'ps1' in macOS/Linux");
+            else if (!isWindows && !(scriptExtension.equals("sh") || scriptExtension.equals("command")))
+                throw new IllegalArgumentException("The extension of " + scriptFile + " is not 'sh', 'ps1' or 'command' in macOS/Linux");
         }
 
         final Command commandLine = generateCommandLine(nativeFolder);
