@@ -121,11 +121,13 @@ public final class WorldListItemSkin extends SkinBase<WorldListItem> {
             launchItem.setDisable(world.isLocked());
             popupMenu.getContent().add(launchItem);
 
-            popupMenu.getContent().add(new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), item::generateLaunchScript, popup));
+            popupMenu.getContent().addAll(
+                    new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), item::generateLaunchScript, popup),
+                    new MenuSeparator()
+            );
         }
 
         popupMenu.getContent().addAll(
-                new MenuSeparator(),
                 new IconedMenuItem(SVG.SETTINGS, i18n("world.manage.button"), item::showManagePage, popup)
         );
 
