@@ -339,7 +339,6 @@ public class DecoratorController {
             return null;
         }
 
-
         Random rnd = new Random();
         while (!candidates.isEmpty()) {
             int selected = rnd.nextInt(candidates.size());
