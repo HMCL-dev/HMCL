@@ -66,7 +66,6 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     public WorldManagePage(World world, Path backupsDir, Profile profile, String id) {
         this.world = world;
         this.backupsDir = backupsDir;
-
         this.profile = profile;
         this.id = id;
 
@@ -159,18 +158,23 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
         this.addEventHandler(Navigator.NavigationEvent.EXITED, this::onExited);
 
-        getSessionLock();
+        try {
+            WorldManageUIUtils.getSessionLockChannel(world, sessionLockChannel);
+        } catch (IOException ignored) {
+        }
         this.addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
     }
 
     private void onNavigated(Navigator.NavigationEvent event) {
-        getSessionLock();
+        try {
+            WorldManageUIUtils.getSessionLockChannel(world, sessionLockChannel);
+        } catch (IOException ignored) {
+        }
     }
 
-    private void getSessionLock() {
+    public void onExited(Navigator.NavigationEvent event) {
         try {
-            sessionLockChannel = world.lock();
-            LOG.info("Acquired lock on world " + world.getFileName());
+            WorldManageUIUtils.closeSessionLockChannel(world, sessionLockChannel);
         } catch (IOException ignored) {
         }
     }
@@ -190,19 +194,6 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
     public boolean isReadOnly() {
         return sessionLockChannel == null;
-    }
-
-    public void onExited(Navigator.NavigationEvent event) {
-        if (sessionLockChannel != null) {
-            try {
-                sessionLockChannel.close();
-                LOG.info("Releases the lock on world " + world.getFileName());
-            } catch (IOException e) {
-                LOG.warning("Failed to close session lock channel", e);
-            }
-
-            sessionLockChannel = null;
-        }
     }
 
     public void launch() {

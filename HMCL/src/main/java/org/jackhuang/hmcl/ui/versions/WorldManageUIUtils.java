@@ -130,6 +130,8 @@ public final class WorldManageUIUtils {
                             ).whenComplete(Schedulers.javafx(), (exception) -> {
                                 if (exception == null) {
                                     resolve.run();
+                                    System.out.println("resolve success");
+                                    getSessionLockChannel(world, sessionLockChannel);
                                 } else {
                                     reject.accept(i18n("world.duplicate.failed"));
                                 }
@@ -138,13 +140,21 @@ public final class WorldManageUIUtils {
                 }));
     }
 
-    private static void closeSessionLockChannel(World world, FileChannel sessionLockChannel) throws IOException {
+    public static void closeSessionLockChannel(World world, FileChannel sessionLockChannel) throws IOException {
         if (sessionLockChannel != null) {
             try {
                 sessionLockChannel.close();
             } catch (IOException e) {
                 throw new IOException("Failed to close session lock channel of the world " + world.getFile(), e);
             }
+        }
+    }
+
+    public static void getSessionLockChannel(World world, FileChannel sessionLockChannel) throws IOException {
+        try {
+            sessionLockChannel = world.lock();
+            LOG.info("Acquired lock on world " + world.getFileName());
+        } catch (IOException ignored) {
         }
     }
 
