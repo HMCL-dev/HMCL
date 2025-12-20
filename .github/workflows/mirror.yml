@@ -11,6 +11,7 @@ concurrency:
 jobs:
   mirror:
     strategy:
+      fail-fast: false
       matrix:
         target:
           - name: Gitee
