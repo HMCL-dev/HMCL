@@ -70,6 +70,7 @@ public class InputDialogPane extends JFXDialogLayout {
             });
         });
 
+        textField.setOnAction(event -> acceptButton.fire());
         onEscPressed(this, cancelButton::fire);
     }
 
