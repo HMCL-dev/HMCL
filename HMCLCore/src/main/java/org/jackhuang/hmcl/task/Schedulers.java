@@ -77,6 +77,10 @@ public final class Schedulers {
         return NEW_VIRTUAL_THREAD_PER_TASK_EXECUTOR.apply(name);
     }
 
+    public static boolean isVirtualThreadAvailable() {
+        return NEW_VIRTUAL_THREAD_PER_TASK_EXECUTOR != null;
+    }
+
     /// This thread pool is suitable for network and local I/O operations.
     ///
     /// For Java 21 or later, all tasks will be dispatched to virtual threads.

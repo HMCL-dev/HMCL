@@ -27,10 +27,10 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.setting.DownloadProviders;
-import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.util.io.concurrency.DownloadConcurrency;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 
 import java.net.Proxy;
@@ -117,7 +117,7 @@ public class DownloadSettingsPage extends StackPane {
 
                     chkAutoDownloadThreads.selectedProperty().addListener((a, b, newValue) -> {
                         if (newValue) {
-                            config().downloadThreadsProperty().set(FetchTask.DEFAULT_CONCURRENCY);
+                            config().downloadThreadsProperty().set(DownloadConcurrency.DEFAULT_CONCURRENCY);
                         }
                     });
                 }
