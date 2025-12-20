@@ -175,8 +175,8 @@ public final class LocalModFile implements Comparable<LocalModFile> {
     }
 
     public ModUpdate checkUpdates(String gameVersion, RemoteModRepository repository) throws IOException {
-        Optional<RemoteMod.Version> currentVersion = repository.getRemoteVersionByLocalFile(this, file);
-        if (!currentVersion.isPresent()) return null;
+        Optional<RemoteMod.Version> currentVersion = repository.getRemoteVersionByLocalFile(file);
+        if (currentVersion.isEmpty()) return null;
         List<RemoteMod.Version> remoteVersions = repository.getRemoteVersionsById(currentVersion.get().getModid())
                 .filter(version -> version.getGameVersions().contains(gameVersion))
                 .filter(version -> version.getLoaders().contains(getModLoaderType()))

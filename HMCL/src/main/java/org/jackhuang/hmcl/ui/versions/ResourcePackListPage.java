@@ -22,6 +22,10 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.mod.RemoteMod;
+import org.jackhuang.hmcl.mod.RemoteModRepository;
+import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
+import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.resourcepack.ResourcePackFile;
 import org.jackhuang.hmcl.resourcepack.ResourcePackManager;
 import org.jackhuang.hmcl.setting.Profile;
@@ -35,6 +39,7 @@ import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Holder;
+import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
@@ -44,15 +49,14 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
+import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -67,6 +71,9 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             default -> null;
         };
     }
+
+    private Profile profile;
+    private String instanceId;
 
     private Path resourcePackDirectory;
     private ResourcePackManager resourcePackManager;
@@ -84,6 +91,8 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
     @Override
     public void loadVersion(Profile profile, String version) {
+        this.profile = profile;
+        this.instanceId = version;
         this.resourcePackManager = new ResourcePackManager(profile.getRepository(), version);
         this.resourcePackDirectory = this.resourcePackManager.getResourcePackDirectory();
 
@@ -311,7 +320,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                     ResourcePackInfoObject selectedItem = listView.getSelectionModel().getSelectedItem();
                     if (selectedItem != null && listView.getSelectionModel().getSelectedItems().size() == 1) {
                         listView.getSelectionModel().clearSelection();
-                        Controllers.dialog(new ResourcePackInfoDialog(selectedItem));
+                        Controllers.dialog(new ResourcePackInfoDialog(control, selectedItem));
                     }
                 });
 
@@ -418,6 +427,8 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     private static final class ResourcePackListCell extends MDListCell<ResourcePackInfoObject> {
         private static final PseudoClass WARNING = PseudoClass.getPseudoClass("warning");
 
+        private final ResourcePackListPage page;
+
         private final JFXCheckBox checkBox;
         private final ImageView imageView = new ImageView();
         private final TwoLineListItem content = new TwoLineListItem();
@@ -430,6 +441,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
         public ResourcePackListCell(JFXListView<ResourcePackInfoObject> listView, Holder<Object> lastCell, ResourcePackListPage page) {
             super(listView, lastCell);
+            this.page = page;
 
             getStyleClass().add("resource-pack-list-cell");
 
@@ -494,7 +506,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             FXUtils.installFastTooltip(btnReveal, i18n("reveal.in_file_manager"));
             btnReveal.setOnAction(event -> FXUtils.showFileInExplorer(file.getPath()));
 
-            btnInfo.setOnAction(e -> Controllers.dialog(new ResourcePackInfoDialog(item)));
+            btnInfo.setOnAction(e -> Controllers.dialog(new ResourcePackInfoDialog(this.page, item)));
 
             if (booleanProperty != null) {
                 checkBox.selectedProperty().unbindBidirectional(booleanProperty);
@@ -513,7 +525,9 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
     private static final class ResourcePackInfoDialog extends JFXDialogLayout {
 
-        ResourcePackInfoDialog(ResourcePackInfoObject packInfoObject) {
+        ResourcePackInfoDialog(ResourcePackListPage page, ResourcePackInfoObject packInfoObject) {
+            ResourcePackFile pack = packInfoObject.getFile();
+
             HBox titleContainer = new HBox();
             titleContainer.setSpacing(8);
 
@@ -525,9 +539,9 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             FXUtils.limitSize(imageView, 40, 40);
 
             TwoLineListItem title = new TwoLineListItem();
-            title.setTitle(packInfoObject.file.getName());
-            title.setSubtitle(packInfoObject.file.getFileName());
-            if (packInfoObject.file.getCompatibility() == ResourcePackFile.Compatibility.COMPATIBLE) {
+            title.setTitle(pack.getName());
+            title.setSubtitle(pack.getFileName());
+            if (pack.getCompatibility() == ResourcePackFile.Compatibility.COMPATIBLE) {
                 title.addTag(i18n("resourcepack.compatible"));
             } else {
                 title.addTagWarning(i18n(getWarningKey(packInfoObject.file.getCompatibility())));
@@ -536,7 +550,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             titleContainer.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), title);
             setHeading(titleContainer);
 
-            Label description = new Label(Objects.requireNonNullElse(packInfoObject.file.getDescription(), "").toString());
+            Label description = new Label(Objects.requireNonNullElse(pack.getDescription(), "").toString());
             description.setWrapText(true);
             FXUtils.copyOnDoubleClick(description);
 
@@ -552,6 +566,34 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             });
 
             setBody(descriptionPane);
+
+            for (Pair<String, ? extends RemoteModRepository> item : Arrays.asList(
+                    pair("mods.curseforge", CurseForgeRemoteModRepository.RESOURCE_PACKS),
+                    pair("mods.modrinth", ModrinthRemoteModRepository.RESOURCE_PACKS)
+            )) {
+                RemoteModRepository repository = item.getValue();
+                JFXHyperlink button = new JFXHyperlink(i18n(item.getKey()));
+                Task.runAsync(() -> {
+                    Optional<RemoteMod.Version> versionOptional = repository.getRemoteVersionByLocalFile(packInfoObject.getFile().getPath());
+                    if (versionOptional.isPresent()) {
+                        RemoteMod remoteMod = repository.getModById(versionOptional.get().getModid());
+                        FXUtils.runInFX(() -> {
+                            button.setOnAction(e -> {
+                                fireEvent(new DialogCloseEvent());
+                                Controllers.navigate(new DownloadPage(
+                                        repository instanceof CurseForgeRemoteModRepository ? HMCLLocalizedDownloadListPage.ofCurseForgeMod(null, false) : HMCLLocalizedDownloadListPage.ofModrinthMod(null, false),
+                                        remoteMod,
+                                        new Profile.ProfileVersion(page.profile, page.instanceId),
+                                        org.jackhuang.hmcl.ui.download.DownloadPage.FOR_RESOURCE_PACK
+                                ));
+                            });
+                            button.setDisable(false);
+                        });
+                    }
+                }).start();
+                button.setDisable(true);
+                getActions().add(button);
+            }
 
             JFXButton okButton = new JFXButton();
             okButton.getStyleClass().add("dialog-accept");

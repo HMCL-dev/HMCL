@@ -88,7 +88,7 @@ public interface RemoteModRepository {
     SearchResult search(DownloadProvider downloadProvider, String gameVersion, @Nullable Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder)
             throws IOException;
 
-    Optional<RemoteMod.Version> getRemoteVersionByLocalFile(LocalModFile localModFile, Path file) throws IOException;
+    Optional<RemoteMod.Version> getRemoteVersionByLocalFile(Path file) throws IOException;
 
     RemoteMod getModById(String id) throws IOException;
 
