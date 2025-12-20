@@ -233,7 +233,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
             }
             setGraphic(pane);
 
-            twoLineListItem.setTitle(I18n.getDisplaySelfVersion(remoteVersion));
+            twoLineListItem.setTitle(I18n.getDisplayVersion(remoteVersion));
             if (remoteVersion.getReleaseDate() != null) {
                 twoLineListItem.setSubtitle(I18n.formatDateTime(remoteVersion.getReleaseDate()));
             } else {
