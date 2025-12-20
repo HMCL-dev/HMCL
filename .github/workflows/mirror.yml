@@ -31,6 +31,9 @@ jobs:
           git clone --mirror "https://github.com/$GITHUB_REPOSITORY.git" -- repo
           cd repo
           git push -f --prune "https://${{ matrix.target.user }}:${{ secrets[matrix.target.token] }}@${{ matrix.target.repo }}.git" "refs/heads/*:refs/heads/*" "refs/tags/*:refs/tags/*"
+  # The following error occurred when using Token for synchronization:
+  # remote: [session-*******] reject by mode [ja-p]
+  # fatal: unable to access 'https://gitee.com/huanghongxun/HMCL.git/': The requested URL returned error: 400
   mirror-gitee:
     name: Mirror to Gitee
     if: ${{ github.repository == 'HMCL-dev/HMCL' }}
