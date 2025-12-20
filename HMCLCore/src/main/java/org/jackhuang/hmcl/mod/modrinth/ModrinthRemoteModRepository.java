@@ -35,6 +35,7 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -147,6 +148,8 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                 return RemoteMod.BROKEN;
             }
             throw e;
+        } catch (FileNotFoundException e) {
+            return RemoteMod.BROKEN;
         }
     }
 
