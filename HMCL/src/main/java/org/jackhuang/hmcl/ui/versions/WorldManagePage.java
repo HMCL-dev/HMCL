@@ -106,17 +106,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         AdvancedListBox toolbar = new AdvancedListBox();
 
         if (world.getGameVersion() != null && world.getGameVersion().isAtLeast("1.20", "23w14a")) {
-            PopupMenu launchMenu = new PopupMenu();
-            JFXPopup launchPopup = new JFXPopup(launchMenu);
-
-            launchMenu.getContent().addAll(
-                    new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("version.launch_and_enter_world"), this::launch, launchPopup),
-                    new IconedMenuItem(SVG.TROUBLESHOOT, i18n("version.launch.test_and_enter_world"), this::launchInTestMode, launchPopup)
-            );
-
-            toolbar.addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, null, launchMenuItem -> {
-                launchMenuItem.setOnAction(e -> launchPopup.show(launchMenuItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, launchMenuItem.getWidth(), 0));
-            });
+            toolbar.addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, this::launch, null);
             toolbar.addNavigationDrawerItem(i18n("version.launch_script"), SVG.SCRIPT, this::generateLaunchScript, null);
         }
 
@@ -182,11 +172,6 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     public void launch() {
         fireEvent(new PageCloseEvent());
         Versions.launchAndEnterWorld(profile, id, world.getFileName());
-    }
-
-    public void launchInTestMode() {
-        fireEvent(new PageCloseEvent());
-        Versions.launchAndEnterWorldInTestMode(profile, id, world.getFileName());
     }
 
     public void generateLaunchScript() {

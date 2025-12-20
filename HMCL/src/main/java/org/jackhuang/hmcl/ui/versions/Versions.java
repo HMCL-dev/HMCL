@@ -246,10 +246,6 @@ public final class Versions {
         launch(profile, id, launcherHelper -> launcherHelper.setQuickEnterWorld(worldFolderName));
     }
 
-    public static void launchAndEnterWorldInTestMode(Profile profile, String id, String worldFolderName) {
-        launch(profile, id, LauncherHelper::setTestMode, launcherHelper -> launcherHelper.setQuickEnterWorld(worldFolderName));
-    }
-
     public static void generateLaunchScriptForQuickEnterWorld(Profile profile, String id, String worldFolderName) {
         generateLaunchScript(profile, id, launcherHelper -> launcherHelper.setQuickEnterWorld(worldFolderName));
     }

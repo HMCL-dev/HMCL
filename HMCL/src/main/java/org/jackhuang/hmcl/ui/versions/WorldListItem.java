@@ -103,10 +103,6 @@ public final class WorldListItem extends Control {
         Versions.launchAndEnterWorld(profile, id, world.getFileName());
     }
 
-    public void launchInTestMode() {
-        Versions.launchAndEnterWorldInTestMode(profile, id, world.getFileName());
-    }
-
     public void generateLaunchScript() {
         Versions.generateLaunchScriptForQuickEnterWorld(profile, id, world.getFileName());
     }

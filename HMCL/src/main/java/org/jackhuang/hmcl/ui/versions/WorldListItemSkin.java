@@ -121,10 +121,6 @@ public final class WorldListItemSkin extends SkinBase<WorldListItem> {
             launchItem.setDisable(world.isLocked());
             popupMenu.getContent().add(launchItem);
 
-            IconedMenuItem launchInTestModeItem = new IconedMenuItem(SVG.TROUBLESHOOT, i18n("version.launch.test_and_enter_world"), item::launchInTestMode, popup);
-            launchInTestModeItem.setDisable(world.isLocked());
-            popupMenu.getContent().add(launchInTestModeItem);
-
             popupMenu.getContent().add(new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), item::generateLaunchScript, popup));
         }
 
