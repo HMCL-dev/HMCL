@@ -149,7 +149,7 @@ public class DefaultLauncher extends Launcher {
         res.addDefault("-Dcom.sun.jndi.cosnaming.object.trustURLCodebase=", "false");
 
         String formatMsgNoLookups = res.addDefault("-Dlog4j2.formatMsgNoLookups=", "true");
-        if (!"-Dlog4j2.formatMsgNoLookups=false".equals(formatMsgNoLookups) && isUsingLog4j()) {
+        if (isUsingLog4j() && (options.isEnableDebugLogOutput() || !"-Dlog4j2.formatMsgNoLookups=false".equals(formatMsgNoLookups))) {
             res.addDefault("-Dlog4j.configurationFile=", FileUtils.getAbsolutePath(getLog4jConfigurationFile()));
         }
 
@@ -421,14 +421,24 @@ public class DefaultLauncher extends Launcher {
 
     public void extractLog4jConfigurationFile() throws IOException {
         Path targetFile = getLog4jConfigurationFile();
-        InputStream source;
+
+        String sourcePath;
+
         if (GameVersionNumber.asGameVersion(repository.getGameVersion(version)).compareTo("1.12") < 0) {
-            source = DefaultLauncher.class.getResourceAsStream("/assets/game/log4j2-1.7.xml");
+            if (options.isEnableDebugLogOutput()) {
+                sourcePath = "/assets/game/log4j2-1.7-debug.xml";
+            } else {
+                sourcePath = "/assets/game/log4j2-1.7.xml";
+            }
         } else {
-            source = DefaultLauncher.class.getResourceAsStream("/assets/game/log4j2-1.12.xml");
+            if (options.isEnableDebugLogOutput()) {
+                sourcePath = "/assets/game/log4j2-1.12-debug.xml";
+            } else {
+                sourcePath = "/assets/game/log4j2-1.12.xml";
+            }
         }
 
-        try (InputStream input = source) {
+        try (InputStream input = DefaultLauncher.class.getResourceAsStream(sourcePath)) {
             Files.copy(input, targetFile, StandardCopyOption.REPLACE_EXISTING);
         }
     }
