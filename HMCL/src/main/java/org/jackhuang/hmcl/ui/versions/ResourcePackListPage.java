@@ -22,6 +22,7 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
@@ -52,6 +53,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -240,7 +242,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                             }, null);
                         }),
                         createToolbarButton2(i18n("button.enable"), SVG.CHECK, () ->
-                                control.setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), false)),
+                                control.setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), true)),
                         createToolbarButton2(i18n("button.disable"), SVG.CLOSE, () ->
                                 control.setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), false)),
                         createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () ->
@@ -372,9 +374,13 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 // Do we need to search in the background thread?
                 for (ResourcePackInfoObject item : getSkinnable().getItems()) {
                     ResourcePackFile resourcePack = item.getFile();
+                    var description = resourcePack.getDescription();
+                    var descriptionParts = description == null
+                            ? Stream.<String>empty()
+                            : description.getParts().stream().map(LocalModFile.Description.Part::getText);
                     if (predicate.test(resourcePack.getFileName())
                             || predicate.test(resourcePack.getName())
-                            || predicate.test(resourcePack.getFileName())) {
+                            || descriptionParts.anyMatch(predicate)) {
                         listView.getItems().add(item);
                     }
                 }
