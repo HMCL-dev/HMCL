@@ -210,8 +210,8 @@ public final class SettingsPage extends ScrollPane {
             {
                 OptionToggleButton previewPane = new OptionToggleButton();
                 previewPane.setTitle(i18n("update.preview"));
+                previewPane.setSubtitle(i18n("update.preview.subtitle"));
                 previewPane.selectedProperty().bindBidirectional(config().acceptPreviewUpdateProperty());
-                FXUtils.installFastTooltip(previewPane, i18n("update.preview.tooltip"));
 
                 ObjectProperty<UpdateChannel> updateChannel = selectedItemPropertyFor(updateChannelGroup, UpdateChannel.class);
                 updateChannel.set(UpdateChannel.getChannel());

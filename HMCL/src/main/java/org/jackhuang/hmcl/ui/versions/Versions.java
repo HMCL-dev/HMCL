@@ -23,10 +23,7 @@ import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
-import org.jackhuang.hmcl.game.GameDirectoryType;
-import org.jackhuang.hmcl.game.GameRepository;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.game.LauncherHelper;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.*;
@@ -200,7 +197,8 @@ public final class Versions {
         }
     }
 
-    public static void generateLaunchScript(Profile profile, String id) {
+    @SafeVarargs
+    public static void generateLaunchScript(Profile profile, String id, Consumer<LauncherHelper>... injecters) {
         if (!checkVersionForLaunching(profile, id))
             return;
         ensureSelectedAccount(account -> {
@@ -209,29 +207,51 @@ public final class Versions {
             if (Files.isDirectory(repository.getRunDirectory(id)))
                 chooser.setInitialDirectory(repository.getRunDirectory(id).toFile());
             chooser.setTitle(i18n("version.launch_script.save"));
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+                chooser.getExtensionFilters().add(
+                        new FileChooser.ExtensionFilter(i18n("extension.command"), "*.command")
+                );
+            }
             chooser.getExtensionFilters().add(OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
                     ? new FileChooser.ExtensionFilter(i18n("extension.bat"), "*.bat")
                     : new FileChooser.ExtensionFilter(i18n("extension.sh"), "*.sh"));
             chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.ps1"), "*.ps1"));
             Path file = FileUtils.toPath(chooser.showSaveDialog(Controllers.getStage()));
-            if (file != null)
-                new LauncherHelper(profile, account, id).makeLaunchScript(file);
+            if (file != null) {
+                LauncherHelper launcherHelper = new LauncherHelper(profile, account, id);
+                for (Consumer<LauncherHelper> injecter : injecters) {
+                    injecter.accept(launcherHelper);
+                }
+                launcherHelper.makeLaunchScript(file);
+            }
         });
     }
 
-    public static void launch(Profile profile, String id, Consumer<LauncherHelper> injecter) {
+    @SafeVarargs
+    public static void launch(Profile profile, String id, Consumer<LauncherHelper>... injecters) {
         if (!checkVersionForLaunching(profile, id))
             return;
         ensureSelectedAccount(account -> {
             LauncherHelper launcherHelper = new LauncherHelper(profile, account, id);
-            if (injecter != null)
+            for (Consumer<LauncherHelper> injecter : injecters) {
                 injecter.accept(launcherHelper);
+            }
             launcherHelper.launch();
         });
     }
 
     public static void testGame(Profile profile, String id) {
         launch(profile, id, LauncherHelper::setTestMode);
+    }
+
+    public static void launchAndEnterWorld(Profile profile, String id, String worldFolderName) {
+        launch(profile, id, launcherHelper ->
+                launcherHelper.setQuickPlayOption(new QuickPlayOption.SinglePlayer(worldFolderName)));
+    }
+
+    public static void generateLaunchScriptForQuickEnterWorld(Profile profile, String id, String worldFolderName) {
+        generateLaunchScript(profile, id, launcherHelper ->
+                launcherHelper.setQuickPlayOption(new QuickPlayOption.SinglePlayer(worldFolderName)));
     }
 
     private static boolean checkVersionForLaunching(Profile profile, String id) {

@@ -400,6 +400,8 @@ public class GameCrashWindow extends Stage {
                 reasonPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
                 reasonPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
 
+                feedbackTextFlow.getStyleClass().add("crash-reason-text-flow");
+
                 gameDirPane.setPadding(new Insets(8));
                 VBox.setVgrow(gameDirPane, Priority.ALWAYS);
                 FXUtils.onChangeAndOperate(feedbackTextFlow.visibleProperty(), visible -> {

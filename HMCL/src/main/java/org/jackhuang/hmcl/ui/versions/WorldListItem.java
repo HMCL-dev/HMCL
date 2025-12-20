@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.versions;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
 import org.jackhuang.hmcl.game.World;
+import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 
@@ -29,11 +30,15 @@ public final class WorldListItem extends Control {
     private final World world;
     private final Path backupsDir;
     private final WorldListPage parent;
+    private final Profile profile;
+    private final String id;
 
-    public WorldListItem(WorldListPage parent, World world, Path backupsDir) {
+    public WorldListItem(WorldListPage parent, World world, Path backupsDir, Profile profile, String id) {
         this.world = world;
         this.backupsDir = backupsDir;
         this.parent = parent;
+        this.profile = profile;
+        this.id = id;
     }
 
     @Override
@@ -62,6 +67,14 @@ public final class WorldListItem extends Control {
     }
 
     public void showManagePage() {
-        Controllers.navigate(new WorldManagePage(world, backupsDir));
+        Controllers.navigate(new WorldManagePage(world, backupsDir, profile, id));
+    }
+
+    public void launch() {
+        Versions.launchAndEnterWorld(profile, id, world.getFileName());
+    }
+
+    public void generateLaunchScript() {
+        Versions.generateLaunchScriptForQuickEnterWorld(profile, id, world.getFileName());
     }
 }
