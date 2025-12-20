@@ -144,7 +144,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         try {
             return getModById(id);
         } catch (ResponseCodeException e) {
-            if (e.getResponseCode() == 502) {
+            if (e.getResponseCode() == 502 || e.getResponseCode() == 404) {
                 return RemoteMod.BROKEN;
             }
             throw e;
