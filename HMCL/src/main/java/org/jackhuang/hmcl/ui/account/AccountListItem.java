@@ -34,29 +34,32 @@ import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
+import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogController;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.skin.InvalidSkinException;
-import org.jackhuang.hmcl.util.skin.NormalizedSkin;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static java.util.Collections.emptySet;
 import static javafx.beans.binding.Bindings.createBooleanBinding;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class AccountListItem extends RadioButton {
 
@@ -153,6 +156,20 @@ public class AccountListItem extends RadioButton {
             return null;
         }
 
+        AtomicReference<TextureModel> model = new AtomicReference<>();
+        MessageDialogPane.Builder builder = new MessageDialogPane.Builder(i18n("account.skin.model.select"), i18n("account.skin.upload"), MessageDialogPane.MessageType.QUESTION);
+        builder.addAction(i18n("account.skin.model.default"), () -> model.set(TextureModel.WIDE));
+        builder.addAction(i18n("account.skin.model.slim"), () -> model.set(TextureModel.SLIM));
+        builder.addCancel(null);
+
+        Controllers.dialog(builder.build());
+
+        TextureModel selectedModel = model.get();
+
+        if (selectedModel == null) {
+            return null;
+        }
+
         return refreshAsync()
                 .thenRunAsync(() -> {
                     Image skinImg;
@@ -164,10 +181,8 @@ public class AccountListItem extends RadioButton {
                     if (skinImg.isError()) {
                         throw new InvalidSkinException("Failed to read skin image", skinImg.getException());
                     }
-                    NormalizedSkin skin = new NormalizedSkin(skinImg);
-                    String model = skin.isSlim() ? "slim" : "";
-                    LOG.info("Uploading skin [" + selectedFile + "], model [" + model + "]");
-                    account.uploadSkin(skin.isSlim(), selectedFile);
+                    LOG.info("Uploading skin [" + selectedFile + "], model [" + selectedModel.modelName + "]");
+                    account.uploadSkin(Objects.equals(TextureModel.SLIM, selectedModel), selectedFile);
                 })
                 .thenComposeAsync(refreshAsync())
                 .whenComplete(Schedulers.javafx(), e -> {
