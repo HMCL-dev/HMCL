@@ -23,10 +23,7 @@ import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
-import org.jackhuang.hmcl.game.GameDirectoryType;
-import org.jackhuang.hmcl.game.GameRepository;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
-import org.jackhuang.hmcl.game.LauncherHelper;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.*;
@@ -243,11 +240,13 @@ public final class Versions {
     }
 
     public static void launchAndEnterWorld(Profile profile, String id, String worldFolderName) {
-        launch(profile, id, launcherHelper -> launcherHelper.setQuickEnterWorld(worldFolderName));
+        launch(profile, id, launcherHelper ->
+                launcherHelper.setQuickPlayOption(new QuickPlayOption.SinglePlayer(worldFolderName)));
     }
 
     public static void generateLaunchScriptForQuickEnterWorld(Profile profile, String id, String worldFolderName) {
-        generateLaunchScript(profile, id, launcherHelper -> launcherHelper.setQuickEnterWorld(worldFolderName));
+        generateLaunchScript(profile, id, launcherHelper ->
+                launcherHelper.setQuickPlayOption(new QuickPlayOption.SinglePlayer(worldFolderName)));
     }
 
     private static boolean checkVersionForLaunching(Profile profile, String id) {

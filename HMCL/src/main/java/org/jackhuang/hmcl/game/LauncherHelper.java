@@ -114,8 +114,8 @@ public final class LauncherHelper {
         launcherVisibility = LauncherVisibility.KEEP;
     }
 
-    public void setQuickEnterWorld(String worldFolderName) {
-        quickPlayOption = new QuickPlayOption.SinglePlayer(worldFolderName);
+    public void setQuickPlayOption(QuickPlayOption quickPlayOption) {
+        this.quickPlayOption = quickPlayOption;
     }
 
     public void setDisableOfflineSkin() {
