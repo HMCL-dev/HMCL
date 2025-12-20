@@ -1009,6 +1009,10 @@
     -fx-text-fill: -monet-on-surface;
 }
 
+.options-list-item .label.subtitle {
+    -fx-text-fill: -monet-on-surface-variant;
+}
+
 .options-list-item.no-padding {
     -fx-padding: 0;
 }
