@@ -24,7 +24,6 @@ import javafx.geometry.Insets;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.terracotta.TerracottaMetadata;
@@ -71,7 +70,10 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
         AdvancedListBox toolbar = new AdvancedListBox()
                 .addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, () -> {
                     Profile profile = Profiles.getSelectedProfile();
-                    Versions.launch(profile, profile.getSelectedVersion(), LauncherHelper::setKeep);
+                    Versions.launch(profile, profile.getSelectedVersion(), launcherHelper -> {
+                        launcherHelper.setKeep();
+                        launcherHelper.setDisableOfflineSkin();
+                    });
                 }, item -> {
                     instanceChangeListenerHolder = FXUtils.onWeakChangeAndOperate(Profiles.selectedVersionProperty(),
                             instanceName -> item.setSubtitle(StringUtils.isNotBlank(instanceName) ? instanceName : i18n("version.empty"))
