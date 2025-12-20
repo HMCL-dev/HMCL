@@ -87,17 +87,11 @@ public class GameListItemSkin extends SkinBase<GameListItem> {
 
         {
             JFXButton btnLaunch = new JFXButton();
-            btnLaunch.setOnAction(e -> skinnable.launch());
-            btnLaunch.setOnMouseClicked(e -> {
-                if (e.getButton() == MouseButton.SECONDARY) {
-                    skinnable.selectedProperty().set(true);
-                    skinnable.launch();
-                }
-            });
+            btnLaunch.setOnAction(e -> skinnable.testGame());
             btnLaunch.getStyleClass().add("toggle-icon4");
             BorderPane.setAlignment(btnLaunch, Pos.CENTER);
             btnLaunch.setGraphic(FXUtils.limitingSize(SVG.ROCKET_LAUNCH.createIcon(24), 24, 24));
-            FXUtils.installFastTooltip(btnLaunch, i18n("version.launch"));
+            FXUtils.installFastTooltip(btnLaunch, i18n("version.launch.test"));
             right.getChildren().add(btnLaunch);
         }
 
