@@ -254,8 +254,12 @@ public final class SettingsPage extends ScrollPane {
             {
                 BorderPane languagePane = new BorderPane();
 
-                Label left = new Label(i18n("settings.launcher.language"));
-                BorderPane.setAlignment(left, Pos.CENTER_LEFT);
+                VBox left = new VBox();
+                Label title = new Label(i18n("settings.launcher.language"));
+                title.getStyleClass().add("title");
+                Label subtitle = new Label(i18n("settings.take_effect_after_restart"));
+                subtitle.getStyleClass().add("subtitle");
+                left.getChildren().setAll(title, subtitle);
                 languagePane.setLeft(left);
 
                 SupportedLocale currentLocale = I18n.getLocale();
