@@ -200,6 +200,11 @@ public final class Versions {
             if (repository.getRunDirectory(id).isDirectory())
                 chooser.setInitialDirectory(repository.getRunDirectory(id));
             chooser.setTitle(i18n("version.launch_script.save"));
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+                chooser.getExtensionFilters().add(
+                        new FileChooser.ExtensionFilter(i18n("extension.command"), "*.command")
+                );
+            }
             chooser.getExtensionFilters().add(OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
                     ? new FileChooser.ExtensionFilter(i18n("extension.bat"), "*.bat")
                     : new FileChooser.ExtensionFilter(i18n("extension.sh"), "*.sh"));
