@@ -265,6 +265,10 @@
     -fx-spacing: 0;
 }
 
+.no-padding .advanced-list-box-content {
+    -fx-padding: 0 0 0 0;
+}
+
 .iconed-item {
     -jfx-rippler-fill: -monet-secondary-container;
 }
@@ -813,6 +817,10 @@
     -jfx-unchecked-color: transparent;
 }
 
+.table-view .jfx-check-box .jfx-rippler {
+    -jfx-rippler-disabled: true;
+}
+
 /*******************************************************************************
 *                                                                              *
 * JFX Progress Bar                                                             *
@@ -999,6 +1007,10 @@
 
 .options-list-item .label {
     -fx-text-fill: -monet-on-surface;
+}
+
+.options-list-item .label.subtitle {
+    -fx-text-fill: -monet-on-surface-variant;
 }
 
 .options-list-item.no-padding {
@@ -1502,6 +1514,63 @@
 
 .custom-color-dialog .tab-selected-line {
     -fx-background-color: -monet-on-surface;
+}
+
+/*******************************************************************************
+ *                                                                             *
+ * Table View                                                                  *
+ *                                                                             *
+ ******************************************************************************/
+
+/* WE DEFINITELY NEED JFX TABLE-VIEW */
+
+.table-view {
+    -fx-padding: 3;
+    -fx-background-color: -monet-surface-container-low;
+}
+
+.table-view,
+.table-view .column-header,
+.table-view .filler,
+.table-view .column-header-background,
+.table-row-cell {
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+}
+
+.table-view .column-header,
+.table-view .filler {
+    -fx-background-color: transparent;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: -monet-surface-container-highest;
+}
+
+.table-row-cell {
+    -fx-background-color: -monet-surface-container;
+    -fx-table-cell-border-color: -monet-surface-container-lowest;
+}
+
+.table-row-cell:odd {
+    -fx-background-color: -monet-surface-container-high;
+}
+
+.table-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: -monet-on-surface;
+}
+
+.table-view > .virtual-flow > .clipped-container > .sheet > .table-row-cell:filled:selected {
+    -fx-background-color: -monet-secondary-container;
+}
+
+.table-view > .virtual-flow > .scroll-bar {
+    -fx-skin: "org.jackhuang.hmcl.ui.construct.FloatScrollBarSkin";
+}
+
+.table-view > .virtual-flow > .scroll-bar .track {
+    -fx-fill: transparent;
 }
 
 /*******************************************************************************
