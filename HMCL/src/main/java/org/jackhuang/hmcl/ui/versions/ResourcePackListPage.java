@@ -153,18 +153,6 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         Controllers.navigate(Controllers.getDownloadPage());
     }
 
-    private void onDelete(ResourcePackFile file) {
-        try {
-            if (resourcePackManager != null) {
-                resourcePackManager.removeResourcePacks(file);
-                refresh();
-            }
-        } catch (IOException e) {
-            Controllers.dialog(i18n("resourcepack.delete.failed", e.getMessage()), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
-            LOG.warning("Failed to delete resource pack", e);
-        }
-    }
-
     private void onOpenFolder() {
         if (resourcePackDirectory != null) {
             FXUtils.openFolder(resourcePackDirectory);
@@ -434,9 +422,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         private final ImageView imageView = new ImageView();
         private final TwoLineListItem content = new TwoLineListItem();
         private final JFXButton btnReveal = new JFXButton();
-        private final JFXButton btnDelete = new JFXButton();
         private final JFXButton btnInfo = new JFXButton();
-        private final ResourcePackListPage page;
 
         private Tooltip warningTooltip = null;
 
@@ -446,8 +432,6 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             super(listView, lastCell);
 
             getStyleClass().add("resource-pack-list-cell");
-
-            this.page = page;
 
             HBox root = new HBox(8);
             root.setPickOnBounds(false);
@@ -478,13 +462,10 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             btnReveal.getStyleClass().add("toggle-icon4");
             btnReveal.setGraphic(FXUtils.limitingSize(SVG.FOLDER.createIcon(24), 24, 24));
 
-            btnDelete.getStyleClass().add("toggle-icon4");
-            btnDelete.setGraphic(FXUtils.limitingSize(SVG.DELETE_FOREVER.createIcon(24), 24, 24));
-
             btnInfo.getStyleClass().add("toggle-icon4");
             btnInfo.setGraphic(FXUtils.limitingSize(SVG.INFO.createIcon(24), 24, 24));
 
-            root.getChildren().setAll(checkBox, imageView, content, btnReveal, btnDelete, btnInfo);
+            root.getChildren().setAll(checkBox, imageView, content, btnReveal, btnInfo);
 
             setSelectable();
 
@@ -514,10 +495,6 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             btnReveal.setOnAction(event -> FXUtils.showFileInExplorer(file.getPath()));
 
             btnInfo.setOnAction(e -> Controllers.dialog(new ResourcePackInfoDialog(item)));
-
-            btnDelete.setOnAction(event ->
-                    Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"),
-                            () -> page.onDelete(file), null));
 
             if (booleanProperty != null) {
                 checkBox.selectedProperty().unbindBidirectional(booleanProperty);
