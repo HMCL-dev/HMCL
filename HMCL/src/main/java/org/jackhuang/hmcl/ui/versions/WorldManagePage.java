@@ -41,7 +41,6 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * @author Glavo
@@ -79,8 +78,8 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
         // Does it need to be done in the background?
         try {
-            sessionLockChannel = world.lock();
-            LOG.info("Acquired lock on world " + world.getFileName());
+            sessionLockChannel = WorldManageUIUtils.getSessionLockChannel(world);
+            System.out.println("the lock" + sessionLockChannel);
         } catch (IOException ignored) {
         }
 
@@ -106,7 +105,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         AdvancedListBox toolbar = new AdvancedListBox();
 
         if (world.getGameVersion() != null && world.getGameVersion().isAtLeast("1.20", "23w14a")) {
-            toolbar.addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, this::launch, null);
+            toolbar.addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, this::launch, advancedListItem -> advancedListItem.setDisable(isReadOnly()));
             toolbar.addNavigationDrawerItem(i18n("version.launch_script"), SVG.SCRIPT, this::generateLaunchScript, null);
         }
 
@@ -142,14 +141,17 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
             managePopupMenu.getContent().addAll(
                     new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), () -> WorldManageUIUtils.export(world, sessionLockChannel), managePopup),
                     new IconedMenuItem(SVG.DELETE, i18n("world.delete"), () -> WorldManageUIUtils.delete(world, () -> fireEvent(new PageCloseEvent()), sessionLockChannel), managePopup),
-                    new IconedMenuItem(SVG.CONTENT_COPY, i18n("world.duplicate"), () -> WorldManageUIUtils.copyWorld(world, null, sessionLockChannel), managePopup)
+                    new IconedMenuItem(SVG.CONTENT_COPY, i18n("world.duplicate"), () -> WorldManageUIUtils.copyWorld(world, null, sessionLockChannel, lock -> sessionLockChannel = lock), managePopup)
             );
 
             toolbar.addNavigationDrawerItem(i18n("settings.game.management"), SVG.MENU, null, managePopupMenuItem ->
-                    managePopupMenuItem.setOnAction(e ->
-                            managePopup.show(managePopupMenuItem,
-                                    JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT,
-                                    managePopupMenuItem.getWidth(), 0)));
+            {
+                managePopupMenuItem.setOnAction(e ->
+                        managePopup.show(managePopupMenuItem,
+                                JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT,
+                                managePopupMenuItem.getWidth(), 0));
+                managePopupMenuItem.setDisable(isReadOnly());
+            });
 
         }
 
@@ -157,17 +159,14 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         left.setBottom(toolbar);
 
         this.addEventHandler(Navigator.NavigationEvent.EXITED, this::onExited);
-
-        try {
-            WorldManageUIUtils.getSessionLockChannel(world, sessionLockChannel);
-        } catch (IOException ignored) {
-        }
         this.addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
     }
 
     private void onNavigated(Navigator.NavigationEvent event) {
         try {
-            WorldManageUIUtils.getSessionLockChannel(world, sessionLockChannel);
+            if (sessionLockChannel == null || !sessionLockChannel.isOpen()) {
+                sessionLockChannel = WorldManageUIUtils.getSessionLockChannel(world);
+            }
         } catch (IOException ignored) {
         }
     }

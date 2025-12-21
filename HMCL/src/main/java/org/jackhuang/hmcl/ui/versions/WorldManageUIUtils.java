@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -88,10 +89,10 @@ public final class WorldManageUIUtils {
     }
 
     public static void copyWorld(World world, Runnable runnable) {
-        copyWorld(world, runnable, null);
+        copyWorld(world, runnable, null, null);
     }
 
-    public static void copyWorld(World world, Runnable runnable, FileChannel sessionLockChannel) {
+    public static void copyWorld(World world, Runnable runnable, FileChannel sessionLockChannel, Consumer<FileChannel> lockUpdater) {
         Path worldPath = world.getFile();
         Controllers.dialog(new InputDialogPane(
                 i18n("world.duplicate.prompt"),
@@ -131,7 +132,10 @@ public final class WorldManageUIUtils {
                                 if (exception == null) {
                                     resolve.run();
                                     System.out.println("resolve success");
-                                    getSessionLockChannel(world, sessionLockChannel);
+                                    FileChannel newChannel = getSessionLockChannel(world);
+                                    if (lockUpdater != null) {
+                                        lockUpdater.accept(newChannel);
+                                    }
                                 } else {
                                     reject.accept(i18n("world.duplicate.failed"));
                                 }
@@ -144,17 +148,20 @@ public final class WorldManageUIUtils {
         if (sessionLockChannel != null) {
             try {
                 sessionLockChannel.close();
+                LOG.info("Closed session lock channel of the world " + world.getFileName());
             } catch (IOException e) {
                 throw new IOException("Failed to close session lock channel of the world " + world.getFile(), e);
             }
         }
     }
 
-    public static void getSessionLockChannel(World world, FileChannel sessionLockChannel) throws IOException {
+    public static FileChannel getSessionLockChannel(World world) throws IOException {
         try {
-            sessionLockChannel = world.lock();
+            FileChannel lock = world.lock();
             LOG.info("Acquired lock on world " + world.getFileName());
+            return lock;
         } catch (IOException ignored) {
+            return null;
         }
     }
 
