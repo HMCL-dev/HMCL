@@ -11,8 +11,9 @@ concurrency:
 jobs:
   mirror:
     strategy:
+      fail-fast: false
       matrix:
-        target:
+        include:
           - name: Gitee
             repo: gitee.com/huanghongxun/HMCL
             user: 'hmcl-sync'
@@ -27,6 +28,7 @@ jobs:
     steps:
       - name: Mirror GitHub to ${{ matrix.target.name }}
         run: |
-          git clone --mirror "https://github.com/$GITHUB_REPOSITORY.git" -- repo
+          git clone --bare "https://github.com/${{ github.repository }}.git" -- repo
           cd repo
-          git push -f --prune "https://${{ matrix.target.user }}:${{ secrets[matrix.target.token] }}@${{ matrix.target.repo }}.git" "refs/heads/*:refs/heads/*" "refs/tags/*:refs/tags/*"
+          git push --all --force "https://${{ matrix.user }}:${{ secrets[matrix.token] }}@${{ matrix.repo }}.git"
+          git push --tags --force "https://${{ matrix.user }}:${{ secrets[matrix.token] }}@${{ matrix.repo }}.git"
