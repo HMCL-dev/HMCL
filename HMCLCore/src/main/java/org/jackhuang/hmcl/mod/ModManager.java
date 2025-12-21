@@ -276,7 +276,7 @@ public final class ModManager extends LocalFileManager<LocalModFile> {
     }
 
     public static boolean isFileNameMod(Path file) {
-        String name = LocalFileManager.getLocalFileName(file);
+        String name = getLocalFileName(file);
         return name.endsWith(".zip") || name.endsWith(".jar") || name.endsWith(".litemod");
     }
 
