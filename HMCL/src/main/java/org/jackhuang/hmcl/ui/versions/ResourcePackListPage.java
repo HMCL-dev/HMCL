@@ -6,7 +6,6 @@ import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.value.ChangeListener;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -240,9 +239,6 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
         private boolean isSearching;
 
-        @SuppressWarnings({"FieldCanBeLocal", "unused"})
-        private final ChangeListener<Boolean> holder;
-
         private ResourcePackListPageSkin(ResourcePackListPage control) {
             super(control);
 
@@ -254,12 +250,6 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             root.getStyleClass().add("no-padding");
 
             listView = new JFXListView<>();
-
-            this.holder = FXUtils.onWeakChange(control.loadingProperty(), loading -> {
-                if (!loading) {
-                    listView.scrollTo(0);
-                }
-            });
 
             {
 
