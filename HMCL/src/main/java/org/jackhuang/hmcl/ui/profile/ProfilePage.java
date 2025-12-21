@@ -48,7 +48,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class ProfilePage extends BorderPane implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
-    private final BooleanProperty nameManuallyEdited = new SimpleBooleanProperty(false);
+    private final boolean nameManuallyEdited = false;
     private final StringProperty location;
     private final Profile profile;
 
@@ -113,7 +113,7 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
                     gameDir.pathProperty().bindBidirectional(location);
 
                     locationProperty().addListener((observable, oldValue, newValue) -> {
-                        if (nameManuallyEdited.get() && !txtProfileName.getText().isEmpty())
+                        if (nameManuallyEdited && !txtProfileName.getText().isEmpty())
                             return;
 
                         Path newPath = Path.of(newValue);
@@ -129,7 +129,7 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
 
                     txtProfileName.textProperty().addListener((observable, oldValue, newValue) -> {
                         if (txtProfileName.isFocused()) {
-                            nameManuallyEdited.set(true);
+                            nameManuallyEdited = true;
                         }
                     });
 
