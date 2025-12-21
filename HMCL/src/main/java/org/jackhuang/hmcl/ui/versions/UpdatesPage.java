@@ -43,6 +43,7 @@ import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CSVTable;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -310,7 +311,7 @@ public class UpdatesPage<F extends ILocalFile> extends BorderPane implements Dec
                             } else if (!local.keepOldFiles()) {
                                 try {
                                     local.delete();
-                                } catch (Exception e) {
+                                } catch (IOException e) {
                                     // ignore
                                 }
                             }

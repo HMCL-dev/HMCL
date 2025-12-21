@@ -84,7 +84,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     private boolean warningShown = false;
 
     public ResourcePackListPage() {
-        FXUtils.applyDragListener(this, file -> file.getFileName().toString().endsWith(".zip"), this::addFiles);
+        FXUtils.applyDragListener(this, file -> Files.isDirectory(file) || file.getFileName().toString().endsWith(".zip"), this::addFiles);
     }
 
     @Override

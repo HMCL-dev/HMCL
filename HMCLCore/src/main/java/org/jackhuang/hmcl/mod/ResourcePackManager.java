@@ -262,7 +262,11 @@ public final class ResourcePackManager extends LocalFileManager<ResourcePackFile
         Files.createDirectories(resourcePackDirectory);
 
         Path newFile = resourcePackDirectory.resolve(file.getFileName());
-        FileUtils.copyFile(file, newFile);
+        if (Files.isDirectory(file)) {
+            FileUtils.copyDirectory(file, newFile);
+        } else {
+            FileUtils.copyFile(file, newFile);
+        }
 
         addResourcePackInfo(newFile);
     }
