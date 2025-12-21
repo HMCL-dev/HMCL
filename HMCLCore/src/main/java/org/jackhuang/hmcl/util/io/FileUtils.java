@@ -183,9 +183,11 @@ public final class FileUtils {
                     || codePoint == 0xfffe || codePoint == 0xffff)
                 return false;
 
+            if (ch == ':') return false;
+
             // https://learn.microsoft.com/windows/win32/fileio/naming-a-file
             if (os == OperatingSystem.WINDOWS &&
-                    (ch == '<' || ch == '>' || ch == ':' || ch == '"' || ch == '\\' || ch == '|' || ch == '?' || ch == '*')) {
+                    (ch == '<' || ch == '>' || ch == '"' || ch == '\\' || ch == '|' || ch == '?' || ch == '*')) {
                 return false;
             }
         }
