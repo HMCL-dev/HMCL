@@ -18,15 +18,11 @@
 package org.jackhuang.hmcl.ui.download;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXComboBox;
-import com.jfoenix.controls.JFXDialogLayout;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
-import javafx.scene.control.Label;
-import javafx.util.StringConverter;
 import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
 import org.jackhuang.hmcl.game.World;
@@ -45,8 +41,8 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
-import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
 import org.jackhuang.hmcl.ui.construct.TabHeader;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
@@ -60,13 +56,11 @@ import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.Locale;
 import java.util.concurrent.CancellationException;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
@@ -108,7 +102,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         modTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofMod((profile, version, file) -> download(profile, version, file, "mods"), true)));
         resourcePackTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofResourcePack((profile, version, file) -> download(profile, version, file, "resourcepacks"), true)));
         shaderTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(ModrinthRemoteModRepository.SHADER_PACKS, (profile, version, file) -> download(profile, version, file, "shaderpacks"), true)));
-        dataPackTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofDataPack((profile, version, file) -> downloadForDatapack(profile, version, file, "datapacks"), true)));
+        dataPackTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofDataPack((profile, version, file) -> downloadForDataPack(profile, version, file, "datapacks"), true)));
         worldTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(CurseForgeRemoteModRepository.WORLDS)));
         tab = new TabHeader(transitionPane, newGameTab, modpackTab, modTab, resourcePackTab, shaderTab, dataPackTab, worldTab);
 
@@ -175,38 +169,51 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
     }
 
-    public static void downloadForDatapack(Profile profile, @Nullable String version, RemoteMod.Version file, String subdirectoryName) {
+    public static void downloadForDataPack(Profile profile, @Nullable String version, RemoteMod.Version file, String subdirectoryName) {
         if (version == null) version = profile.getSelectedVersion();
 
         Path runDirectory = profile.getRepository().hasVersion(version) ? profile.getRepository().getRunDirectory(version) : profile.getRepository().getBaseDirectory();
 
-        Controllers.dialog(new WorldChooser(runDirectory, (worldName) -> Controllers.prompt(i18n("archive.file.name"), (result, resolve, reject) -> {
-            if (!FileUtils.isNameValid(result)) {
-                reject.accept(i18n("install.new_game.malformed"));
-                return;
-            }
-            Path dest = runDirectory.resolve("saves").resolve(worldName).resolve(subdirectoryName).resolve(result);
-            System.out.println("dest: " + dest);
+        ObservableList<World> worlds = FXCollections.observableArrayList(World.getWorlds(runDirectory.resolve("saves")).toList());
 
-            Controllers.taskDialog(Task.composeAsync(() -> {
-                var task = new FileDownloadTask(file.getFile().getUrl(), dest);
-                task.setName(file.getName());
-                return task;
-            }).whenComplete(Schedulers.javafx(), exception -> {
-                if (exception != null) {
-                    if (exception instanceof CancellationException) {
-                        Controllers.showToast(i18n("message.cancelled"));
-                    } else {
-                        Controllers.dialog(DownloadProviders.localizeErrorMessage(exception), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR);
+        Controllers.prompt(
+                new PromptDialogPane.Builder("安装选项", (result, resolve, reject) -> {
+                    String fileName = ((PromptDialogPane.Builder.StringQuestion) result.get(0)).getValue();
+                    Integer selectWorld = ((PromptDialogPane.Builder.CandidatesQuestion) result.get(1)).getValue();
+
+                    if (selectWorld == null) {
+                        reject.accept(i18n("mods.install.select_world.not_select.hint"));
+                        return;
                     }
-                } else {
-                    Controllers.showToast(i18n("install.success"));
-                }
-            }), i18n("message.downloading"), TaskCancellationAction.NORMAL);
 
-            resolve.run();
-        }, file.getFile().getFilename())));
+                    if (!FileUtils.isNameValid(fileName)) {
+                        reject.accept(i18n("install.new_game.malformed"));
+                        return;
+                    }
 
+                    String selectedWorldFolderName = worlds.get(selectWorld).getFileName();
+                    Path dest = runDirectory.resolve("saves").resolve(selectedWorldFolderName).resolve(subdirectoryName).resolve(fileName);
+
+                    Controllers.taskDialog(Task.composeAsync(() -> {
+                        var task = new FileDownloadTask(file.getFile().getUrl(), dest);
+                        task.setName(file.getName());
+                        return task;
+                    }).whenComplete(Schedulers.javafx(), exception -> {
+                        if (exception != null) {
+                            if (exception instanceof CancellationException) {
+                                Controllers.showToast(i18n("message.cancelled"));
+                            } else {
+                                Controllers.dialog(DownloadProviders.localizeErrorMessage(exception), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR);
+                            }
+                        } else {
+                            Controllers.showToast(i18n("install.success"));
+                        }
+                    }), i18n("message.downloading"), TaskCancellationAction.NORMAL);
+                    resolve.run();
+                })
+                        .addQuestion(new PromptDialogPane.Builder.StringQuestion(i18n("archive.file.name"), file.getFile().getFilename()))
+                        .addQuestion(new PromptDialogPane.Builder.CandidatesQuestion(i18n("mods.install.select_world.title"), worlds.stream().map(World::getWorldName).toArray(String[]::new)))
+        );
     }
 
     private void loadVersions(Profile profile) {
@@ -376,62 +383,6 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         @Override
         public boolean cancel() {
             return true;
-        }
-    }
-
-    private static class WorldChooser extends JFXDialogLayout {
-        public WorldChooser(Path runDirectory, Consumer<String> consumer) {
-            setHeading(new Label(i18n("mods.install.select_world.title", i18n("datapack"))));
-
-            ObservableList<World> worlds = FXCollections.observableArrayList(World.getWorlds(runDirectory.resolve("saves")).toList());
-            JFXComboBox<World> worldListComboBox = getWorldJFXComboBox(worlds);
-
-            setBody(worldListComboBox);
-
-            Label notChooseWorld = new Label("");
-
-            JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
-            cancelButton.getStyleClass().add("dialog-accept");
-            cancelButton.setOnAction(e -> {
-                fireEvent(new DialogCloseEvent());
-            });
-
-            JFXButton okButton = new JFXButton(i18n("button.ok"));
-            okButton.getStyleClass().add("dialog-accept");
-            okButton.setOnAction(e -> {
-
-                if (worldListComboBox.getSelectionModel().getSelectedItem() != null) {
-                    String world = worldListComboBox.getSelectionModel().getSelectedItem().getFileName();
-                    System.out.println("world: " + world);
-                    fireEvent(new DialogCloseEvent());
-                    consumer.accept(world);
-                } else {
-                    notChooseWorld.setText(i18n("mods.install.select_world.not_select.hint"));
-                }
-
-            });
-            setActions(notChooseWorld, okButton, cancelButton);
-        }
-
-        private static @NotNull JFXComboBox<World> getWorldJFXComboBox(ObservableList<World> worlds) {
-            JFXComboBox<World> worldListComboBox = new JFXComboBox<>();
-            worldListComboBox.setItems(worlds);
-            System.out.println("worlds: " + worlds);
-            worldListComboBox.setConverter(new StringConverter<>() {
-                @Override
-                public String toString(World object) {
-                    if (object == null) {
-                        return "";
-                    }
-                    return object.getWorldName();
-                }
-
-                @Override
-                public World fromString(String string) {
-                    return null;
-                }
-            });
-            return worldListComboBox;
         }
     }
 }
