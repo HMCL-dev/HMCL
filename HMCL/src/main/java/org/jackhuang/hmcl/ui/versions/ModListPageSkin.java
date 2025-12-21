@@ -92,8 +92,6 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
     // FXThread
     private boolean isSearching = false;
 
-    @SuppressWarnings({"FieldCanBeLocal", "unused"})
-
     ModListPageSkin(ModListPage skinnable) {
         super(skinnable);
 
