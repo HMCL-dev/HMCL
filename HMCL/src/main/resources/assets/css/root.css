@@ -350,7 +350,7 @@
     -fx-font-size: 15px;
 }
 
-.terracotta-license Text {
+.terracotta-hint Text {
     -fx-fill: -monet-on-surface;
 }
 
