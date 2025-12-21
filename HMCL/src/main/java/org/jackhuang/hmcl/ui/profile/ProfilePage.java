@@ -22,10 +22,7 @@ import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.validation.RequiredFieldValidator;
 import com.jfoenix.validation.base.ValidatorBase;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.beans.property.ReadOnlyObjectWrapper;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.*;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
@@ -44,13 +41,14 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.Optional;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class ProfilePage extends BorderPane implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
+    private final BooleanProperty nameManuallyEdited = new SimpleBooleanProperty(false);
     private final StringProperty location;
     private final Profile profile;
 
@@ -115,20 +113,23 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
                     gameDir.pathProperty().bindBidirectional(location);
 
                     locationProperty().addListener((observable, oldValue, newValue) -> {
-                        LOG.debug("OnChange locationProperty");
+                        if (nameManuallyEdited.get() && !txtProfileName.getText().isEmpty())
+                            return;
 
-                        var folder = new File(newValue);
-                        var oldFolder = new File(oldValue);
-                        File parentFolder = folder.getParentFile();
-                        File parentOldFolder = oldFolder.getParentFile();
-                        // txtProfileName
-                        if (parentFolder != null) {
-                            if (txtProfileName.getText().isEmpty()) {
-                                txtProfileName.setText(parentFolder.getName());
+                        Path newPath = Path.of(newValue);
+                        Path parent = newPath.getParent();
+
+                        if (parent != null) {
+                            Path suggestedName = parent.toAbsolutePath().getFileName();
+                            if (suggestedName != null) {
+                                txtProfileName.setText(suggestedName.toString());
                             }
-                            else if (!parentFolder.getName().equals(parentOldFolder.getName())) {
-                                txtProfileName.setText(parentFolder.getName());
-                            }
+                        }
+                    });
+
+                    txtProfileName.textProperty().addListener((observable, oldValue, newValue) -> {
+                        if (txtProfileName.isFocused()) {
+                            nameManuallyEdited.set(true);
                         }
                     });
 
