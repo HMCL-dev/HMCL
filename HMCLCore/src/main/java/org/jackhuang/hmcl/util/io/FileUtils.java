@@ -177,7 +177,7 @@ public final class FileUtils {
             if (!Character.isValidCodePoint(codePoint)
                     || Character.isISOControl(codePoint)
                     || codePoint == '/' || codePoint == '\0'
-                    || codePoint == ':' ||
+                    || codePoint == ':'
                     // Unicode replacement character
                     || codePoint == 0xfffd
                     // Not Unicode character
