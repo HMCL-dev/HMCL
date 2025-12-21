@@ -79,7 +79,6 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         // Does it need to be done in the background?
         try {
             sessionLockChannel = WorldManageUIUtils.getSessionLockChannel(world);
-            System.out.println("the lock" + sessionLockChannel);
         } catch (IOException ignored) {
         }
 

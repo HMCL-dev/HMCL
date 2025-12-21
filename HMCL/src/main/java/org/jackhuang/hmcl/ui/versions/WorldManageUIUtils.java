@@ -131,13 +131,12 @@ public final class WorldManageUIUtils {
                             ).whenComplete(Schedulers.javafx(), (exception) -> {
                                 if (exception == null) {
                                     resolve.run();
-                                    System.out.println("resolve success");
-                                    FileChannel newChannel = getSessionLockChannel(world);
-                                    if (lockUpdater != null) {
-                                        lockUpdater.accept(newChannel);
-                                    }
                                 } else {
                                     reject.accept(i18n("world.duplicate.failed"));
+                                }
+                                FileChannel newChannel = getSessionLockChannel(world);
+                                if (lockUpdater != null) {
+                                    lockUpdater.accept(newChannel);
                                 }
                             })
                             .start();
