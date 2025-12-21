@@ -26,14 +26,9 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class CheckUpdatesTask extends Task<List<ILocalFile.ModUpdate>> {
-    private final String gameVersion;
-    private final Collection<? extends ILocalFile> mods;
     private final Collection<Collection<Task<ILocalFile.ModUpdate>>> dependents;
 
     public CheckUpdatesTask(String gameVersion, Collection<? extends ILocalFile> mods, RemoteModRepository.Type repoType) {
-        this.gameVersion = gameVersion;
-        this.mods = mods;
-
         dependents = mods.stream()
                 .map(mod ->
                         Arrays.stream(RemoteMod.Type.values())
