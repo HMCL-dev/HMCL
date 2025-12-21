@@ -26,13 +26,11 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
-import javafx.scene.SnapshotParameters;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.effect.BoxBlur;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.image.WritableImage;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -660,45 +658,20 @@ public final class WorldInfoPage extends SpinnerPane {
         File file = fileChooser.showOpenDialog(Controllers.getStage());
         if (file == null) return;
 
-        Image original;
+        Image image;
         try {
-            original = FXUtils.loadImage(file.toPath());
+            image = FXUtils.loadImage(file.toPath());
         } catch (Exception e) {
             LOG.warning("Failed to load image", e);
-            Controllers.dialog(i18n("world.icon.change.fail.text"), i18n("world.icon.change.fail.title"), MessageDialogPane.MessageType.ERROR);
+            Controllers.dialog(i18n("world.icon.change.fail.load.text"), i18n("world.icon.change.fail.load.title"), MessageDialogPane.MessageType.ERROR);
             return;
         }
-        Image squareImage = cropCenterSquare(original);
-
-        Image finalImage;
-        if ((int) squareImage.getWidth() == 64 && (int) squareImage.getHeight() == 64) {
-            finalImage = squareImage;
+        if ((int) image.getWidth() == 64 && (int) image.getHeight() == 64) {
+            Path output = world.getFile().resolve("icon.png");
+            saveImage(image, output);
         } else {
-            finalImage = resizeImage(squareImage, 64, 64);
+            Controllers.dialog(i18n("world.icon.change.fail.not_64x64.text", (int) image.getWidth(), (int) image.getHeight()), i18n("world.icon.change.fail.not_64x64.title"), MessageDialogPane.MessageType.ERROR);
         }
-
-        Path output = world.getFile().resolve("icon.png");
-        saveImage(finalImage, output);
-    }
-
-    private Image cropCenterSquare(Image img) {
-        int w = (int) img.getWidth();
-        int h = (int) img.getHeight();
-        int size = Math.min(w, h);
-        int x = (w - size) / 2;
-        int y = (h - size) / 2;
-
-        return new WritableImage(img.getPixelReader(), x, y, size, size);
-    }
-
-    private Image resizeImage(Image img, int width, int height) {
-        ImageView view = new ImageView(img);
-        view.setFitWidth(width);
-        view.setFitHeight(height);
-        view.setPreserveRatio(false);
-
-        SnapshotParameters params = new SnapshotParameters();
-        return view.snapshot(params, null);
     }
 
     private void saveImage(Image image, Path path) {
