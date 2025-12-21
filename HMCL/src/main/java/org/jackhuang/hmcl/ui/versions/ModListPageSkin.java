@@ -23,7 +23,6 @@ import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
-import javafx.beans.value.ChangeListener;
 import javafx.collections.ListChangeListener;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
@@ -93,9 +92,6 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
     // FXThread
     private boolean isSearching = false;
 
-    @SuppressWarnings({"FieldCanBeLocal", "unused"})
-    private final ChangeListener<Boolean> holder;
-
     ModListPageSkin(ModListPage skinnable) {
         super(skinnable);
 
@@ -106,12 +102,6 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         ComponentList root = new ComponentList();
         root.getStyleClass().add("no-padding");
         listView = new JFXListView<>();
-
-        this.holder = FXUtils.onWeakChange(skinnable.loadingProperty(), loading -> {
-            if (!loading) {
-                listView.scrollTo(0);
-            }
-        });
 
         {
             toolbarPane = new TransitionPane();
