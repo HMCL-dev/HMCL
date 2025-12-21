@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.mod;
 import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -193,17 +194,56 @@ public final class RemoteMod {
     }
 
     public enum Type {
-        CURSEFORGE(CurseForgeRemoteModRepository.MODS),
-        MODRINTH(ModrinthRemoteModRepository.MODS);
+        CURSEFORGE(
+                CurseForgeRemoteModRepository.MODS,
+                CurseForgeRemoteModRepository.RESOURCE_PACKS,
+                null,
+                CurseForgeRemoteModRepository.WORLDS,
+                CurseForgeRemoteModRepository.MODPACKS,
+                CurseForgeRemoteModRepository.CUSTOMIZATIONS
+        ),
+        MODRINTH(
+                ModrinthRemoteModRepository.MODS,
+                ModrinthRemoteModRepository.RESOURCE_PACKS,
+                ModrinthRemoteModRepository.SHADER_PACKS,
+                null,
+                ModrinthRemoteModRepository.MODPACKS,
+                null
+        );
 
-        private final RemoteModRepository remoteModRepository;
+        public final RemoteModRepository modRepo;
+        public final RemoteModRepository resourcePackRepo;
+        public final RemoteModRepository shaderPackRepo;
+        public final RemoteModRepository worldRepo;
+        public final RemoteModRepository modpackRepo;
+        public final RemoteModRepository customizationRepo;
 
-        public RemoteModRepository getRemoteModRepository() {
-            return this.remoteModRepository;
+        @Nullable
+        public RemoteModRepository getRepoForType(RemoteModRepository.Type type) {
+            return switch (type) {
+                case MOD -> modRepo;
+                case RESOURCE_PACK -> resourcePackRepo;
+                case SHADER -> shaderPackRepo;
+                case WORLD -> worldRepo;
+                case MODPACK -> modpackRepo;
+                case CUSTOMIZATION -> customizationRepo;
+            };
         }
 
-        Type(RemoteModRepository remoteModRepository) {
-            this.remoteModRepository = remoteModRepository;
+        Type(
+                RemoteModRepository modRepo,
+                RemoteModRepository resourcePackRepo,
+                RemoteModRepository shaderPackRepo,
+                RemoteModRepository worldRepo,
+                RemoteModRepository modpackRepo,
+                RemoteModRepository customizationRepo
+        ) {
+            this.modRepo = modRepo;
+            this.resourcePackRepo = resourcePackRepo;
+            this.shaderPackRepo = shaderPackRepo;
+            this.worldRepo = worldRepo;
+            this.modpackRepo = modpackRepo;
+            this.customizationRepo = customizationRepo;
         }
     }
 

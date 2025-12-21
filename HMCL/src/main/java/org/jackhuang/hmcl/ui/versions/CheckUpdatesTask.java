@@ -17,19 +17,20 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import org.jackhuang.hmcl.mod.LocalModFile;
+import org.jackhuang.hmcl.mod.ILocalFile;
 import org.jackhuang.hmcl.mod.RemoteMod;
+import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.task.Task;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class ModCheckUpdatesTask extends Task<List<LocalModFile.ModUpdate>> {
+public class CheckUpdatesTask extends Task<List<ILocalFile.ModUpdate>> {
     private final String gameVersion;
-    private final Collection<LocalModFile> mods;
-    private final Collection<Collection<Task<LocalModFile.ModUpdate>>> dependents;
+    private final Collection<? extends ILocalFile> mods;
+    private final Collection<Collection<Task<ILocalFile.ModUpdate>>> dependents;
 
-    public ModCheckUpdatesTask(String gameVersion, Collection<LocalModFile> mods) {
+    public CheckUpdatesTask(String gameVersion, Collection<? extends ILocalFile> mods, RemoteModRepository.Type repoType) {
         this.gameVersion = gameVersion;
         this.mods = mods;
 
@@ -37,7 +38,7 @@ public class ModCheckUpdatesTask extends Task<List<LocalModFile.ModUpdate>> {
                 .map(mod ->
                         Arrays.stream(RemoteMod.Type.values())
                                 .map(type ->
-                                        Task.supplyAsync(() -> mod.checkUpdates(gameVersion, type.getRemoteModRepository()))
+                                        Task.supplyAsync(() -> mod.checkUpdates(gameVersion, type.getRepoForType(repoType)))
                                                 .setSignificance(TaskSignificance.MAJOR)
                                                 .setName(String.format("%s (%s)", mod.getFileName(), type.name())).withCounter("update.checking")
                                 )
@@ -75,8 +76,8 @@ public class ModCheckUpdatesTask extends Task<List<LocalModFile.ModUpdate>> {
                 .map(tasks -> tasks.stream()
                         .filter(task -> task.getResult() != null)
                         .map(Task::getResult)
-                        .filter(modUpdate -> !modUpdate.getCandidates().isEmpty())
-                        .max(Comparator.comparing((LocalModFile.ModUpdate modUpdate) -> modUpdate.getCandidates().get(0).getDatePublished()))
+                        .filter(modUpdate -> !modUpdate.candidates().isEmpty())
+                        .max(Comparator.comparing((ILocalFile.ModUpdate modUpdate) -> modUpdate.candidates().get(0).getDatePublished()))
                         .orElse(null)
                 )
                 .filter(Objects::nonNull)

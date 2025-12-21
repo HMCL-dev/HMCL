@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.resourcepack;
+package org.jackhuang.hmcl.mod;
 
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.game.GameRepository;
@@ -39,7 +39,7 @@ import java.util.*;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class ResourcePackManager {
+public final class ResourcePackManager extends LocalFileManager<ResourcePackFile> {
 
     private static final List<String> RESOURCE_PACK_VERSION_OLD = List.of(
             "13w24a", // 1
@@ -168,12 +168,9 @@ public final class ResourcePackManager {
         }
     }
 
-    private final GameRepository repository;
-    private final String id;
     private final GameVersionNumber minecraftVersion;
 
     private final Path resourcePackDirectory;
-    private final TreeSet<ResourcePackFile> resourcePackFiles = new TreeSet<>();
 
     private final Path optionsFile;
     private final @NotNull PackMcMeta.PackVersion requiredVersion;
@@ -181,12 +178,12 @@ public final class ResourcePackManager {
     private boolean loaded = false;
 
     public ResourcePackManager(GameRepository repository, String id) {
-        this.repository = repository;
-        this.id = id;
+        super(repository, id);
         this.minecraftVersion = GameVersionNumber.asGameVersion(repository.getGameVersion(id));
         this.resourcePackDirectory = this.repository.getResourcePackDirectory(this.id);
         this.optionsFile = repository.getRunDirectory(id).resolve("options.txt");
         this.requiredVersion = getPackVersion(minecraftVersion, repository.getVersionJar(id));
+
     }
 
     @NotNull
@@ -223,29 +220,23 @@ public final class ResourcePackManager {
         }
     }
 
-    public GameRepository getRepository() {
-        return repository;
-    }
-
-    public String getInstanceId() {
-        return id;
-    }
-
     public GameVersionNumber getMinecraftVersion() {
         return minecraftVersion;
     }
 
-    public Path getResourcePackDirectory() {
+    @Override
+    public Path getDirectory() {
         return resourcePackDirectory;
     }
 
     private void addResourcePackInfo(Path file) throws IOException {
         ResourcePackFile resourcePack = ResourcePackFile.parse(this, file);
-        if (resourcePack != null) resourcePackFiles.add(resourcePack);
+        if (resourcePack != null) localFiles.add(resourcePack);
     }
 
-    public void refreshResourcePacks() throws IOException {
-        resourcePackFiles.clear();
+    @Override
+    public void refresh() throws IOException {
+        localFiles.clear();
 
         if (Files.isDirectory(resourcePackDirectory)) {
             try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(resourcePackDirectory)) {
@@ -257,15 +248,16 @@ public final class ResourcePackManager {
         loaded = true;
     }
 
-    public @Unmodifiable List<ResourcePackFile> getResourcePacks() throws IOException {
+    @Override
+    public @Unmodifiable List<ResourcePackFile> getLocalFiles() throws IOException {
         if (!loaded)
-            refreshResourcePacks();
-        return List.copyOf(resourcePackFiles);
+            refresh();
+        return super.getLocalFiles();
     }
 
     public void importResourcePack(Path file) throws IOException {
         if (!loaded)
-            refreshResourcePacks();
+            refresh();
 
         Files.createDirectories(resourcePackDirectory);
 
@@ -275,21 +267,12 @@ public final class ResourcePackManager {
         addResourcePackInfo(newFile);
     }
 
-    public void removeResourcePacks(ResourcePackFile... resourcePacks) throws IOException {
-        for (ResourcePackFile resourcePack : resourcePacks) {
-            if (resourcePack != null && resourcePack.manager == this) {
-                resourcePack.delete();
-                resourcePackFiles.remove(resourcePack);
-            }
-        }
-    }
-
     public boolean removeResourcePacks(Iterable<ResourcePackFile> resourcePacks) throws IOException {
         boolean b = false;
         for (ResourcePackFile resourcePack : resourcePacks) {
             if (resourcePack != null && resourcePack.manager == this) {
                 resourcePack.delete();
-                resourcePackFiles.remove(resourcePack);
+                localFiles.remove(resourcePack);
                 b = true;
             }
         }
@@ -299,7 +282,7 @@ public final class ResourcePackManager {
     public void enableResourcePack(ResourcePackFile resourcePack) {
         if (resourcePack.manager != this) return;
         Map<String, String> options = loadOptions();
-        String packId = "file/" + resourcePack.getFileName();
+        String packId = "file/" + resourcePack.getFileNameWithExtension();
         boolean b = false;
         List<String> resourcePacks = new LinkedList<>(StringUtils.deserializeStringList(options.get("resourcePacks")));
         if (!resourcePacks.contains(packId)) {
@@ -319,7 +302,7 @@ public final class ResourcePackManager {
     public void disableResourcePack(ResourcePackFile resourcePack) {
         if (resourcePack.manager != this) return;
         Map<String, String> options = loadOptions();
-        String packId = "file/" + resourcePack.getFileName();
+        String packId = "file/" + resourcePack.getFileNameWithExtension();
         boolean b = false;
         List<String> resourcePacks = new LinkedList<>(StringUtils.deserializeStringList(options.get("resourcePacks")));
         if (resourcePacks.contains(packId)) {
@@ -339,7 +322,7 @@ public final class ResourcePackManager {
     public boolean isEnabled(ResourcePackFile resourcePack) {
         if (resourcePack.manager != this) return false;
         Map<String, String> options = loadOptions();
-        String packId = "file/" + resourcePack.getFileName();
+        String packId = "file/" + resourcePack.getFileNameWithExtension();
         List<String> resourcePacks = StringUtils.deserializeStringList(options.get("resourcePacks"));
         if (!resourcePacks.contains(packId)) return false;
         List<String> incompatibleResourcePacks = StringUtils.deserializeStringList(options.get("incompatibleResourcePacks"));

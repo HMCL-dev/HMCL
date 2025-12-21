@@ -1,4 +1,4 @@
-package org.jackhuang.hmcl.resourcepack;
+package org.jackhuang.hmcl.mod;
 
 import org.jackhuang.hmcl.mod.modinfo.PackMcMeta;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -10,6 +10,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -56,7 +60,20 @@ final class ResourcePackZipFile extends ResourcePackFile {
 
     @Override
     public void delete() throws IOException {
-        Files.deleteIfExists(path);
+        Files.deleteIfExists(file);
+    }
+
+    @Override
+    public ModUpdate checkUpdates(String gameVersion, RemoteModRepository repository) throws IOException {
+        Optional<RemoteMod.Version> currentVersion = repository.getRemoteVersionByLocalFile(file);
+        if (currentVersion.isEmpty()) return null;
+        List<RemoteMod.Version> remoteVersions = repository.getRemoteVersionsById(currentVersion.get().getModid())
+                .filter(version -> version.getGameVersions().contains(gameVersion))
+                .filter(version -> version.getDatePublished().compareTo(currentVersion.get().getDatePublished()) > 0)
+                .sorted(Comparator.comparing(RemoteMod.Version::getDatePublished).reversed())
+                .collect(Collectors.toList());
+        if (remoteVersions.isEmpty()) return null;
+        return new ModUpdate(this, currentVersion.get(), remoteVersions);
     }
 }
 

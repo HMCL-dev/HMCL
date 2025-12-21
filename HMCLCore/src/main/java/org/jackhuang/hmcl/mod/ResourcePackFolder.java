@@ -1,4 +1,4 @@
-package org.jackhuang.hmcl.resourcepack;
+package org.jackhuang.hmcl.mod;
 
 import org.jackhuang.hmcl.mod.modinfo.PackMcMeta;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -48,6 +48,11 @@ final class ResourcePackFolder extends ResourcePackFile {
 
     @Override
     public void delete() throws IOException {
-        FileUtils.deleteDirectory(path);
+        FileUtils.deleteDirectory(file);
+    }
+
+    @Override
+    public ModUpdate checkUpdates(String gameVersion, RemoteModRepository repository) {
+        return null;
     }
 }

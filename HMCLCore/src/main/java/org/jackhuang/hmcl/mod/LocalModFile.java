@@ -32,7 +32,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  *
  * @author huangyuhui
  */
-public final class LocalModFile implements Comparable<LocalModFile> {
+public final class LocalModFile implements Comparable<LocalModFile>, ILocalFile {
 
     private Path file;
     private final ModManager modManager;
@@ -81,7 +81,7 @@ public final class LocalModFile implements Comparable<LocalModFile> {
             }
         };
 
-        fileName = FileUtils.getNameWithoutExtension(ModManager.getModName(file));
+        fileName = FileUtils.getNameWithoutExtension(LocalFileManager.getLocalFileName(file));
 
         if (isOld()) {
             mod.getOldFiles().add(this);
@@ -150,8 +150,14 @@ public final class LocalModFile implements Comparable<LocalModFile> {
         activeProperty.set(active);
     }
 
+    @Override
     public String getFileName() {
         return fileName;
+    }
+
+    @Override
+    public boolean keepOldFiles() {
+        return true;
     }
 
     public boolean isOld() {
@@ -170,10 +176,15 @@ public final class LocalModFile implements Comparable<LocalModFile> {
         }
     }
 
-    public void disable() throws IOException {
+    public void markDisabled() throws IOException {
         file = modManager.disableMod(file);
     }
 
+    public void delete() throws IOException {
+        modManager.removeMods(this);
+    }
+
+    @Override
     public ModUpdate checkUpdates(String gameVersion, RemoteModRepository repository) throws IOException {
         Optional<RemoteMod.Version> currentVersion = repository.getRemoteVersionByLocalFile(file);
         if (currentVersion.isEmpty()) return null;
@@ -200,30 +211,6 @@ public final class LocalModFile implements Comparable<LocalModFile> {
     @Override
     public int hashCode() {
         return Objects.hash(getFileName());
-    }
-
-    public static class ModUpdate {
-        private final LocalModFile localModFile;
-        private final RemoteMod.Version currentVersion;
-        private final List<RemoteMod.Version> candidates;
-
-        public ModUpdate(LocalModFile localModFile, RemoteMod.Version currentVersion, List<RemoteMod.Version> candidates) {
-            this.localModFile = localModFile;
-            this.currentVersion = currentVersion;
-            this.candidates = candidates;
-        }
-
-        public LocalModFile getLocalMod() {
-            return localModFile;
-        }
-
-        public RemoteMod.Version getCurrentVersion() {
-            return currentVersion;
-        }
-
-        public List<RemoteMod.Version> getCandidates() {
-            return candidates;
-        }
     }
 
     public static class Description {

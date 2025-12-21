@@ -29,9 +29,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import org.jackhuang.hmcl.mod.LocalModFile;
-import org.jackhuang.hmcl.mod.ModManager;
-import org.jackhuang.hmcl.mod.RemoteMod;
+import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -59,14 +57,14 @@ import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class ModUpdatesPage extends BorderPane implements DecoratorPage {
+public class UpdatesPage<F extends ILocalFile> extends BorderPane implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(DecoratorPage.State.fromTitle(i18n("mods.check_updates")));
 
-    private final ModManager modManager;
+    private final LocalFileManager<F> modManager;
     private final ObservableList<ModUpdateObject> objects;
 
     @SuppressWarnings("unchecked")
-    public ModUpdatesPage(ModManager modManager, List<LocalModFile.ModUpdate> updates) {
+    public UpdatesPage(LocalFileManager<F> modManager, List<ILocalFile.ModUpdate> updates) {
         this.modManager = modManager;
 
         getStyleClass().add("gray-background");
@@ -130,18 +128,18 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
     }
 
     private void updateMods() {
-        ModUpdateTask task = new ModUpdateTask(
-                modManager,
+        UpdateTask task = new UpdateTask(
+                modManager.getDirectory(),
                 objects.stream()
                         .filter(o -> o.enabled.get())
-                        .map(object -> pair(object.data.getLocalMod(), object.data.getCandidates().get(0)))
-                        .collect(Collectors.toList()));
+                        .map(object -> pair(object.data.localFile(), object.data.candidates().get(0)))
+                        .toList());
         Controllers.taskDialog(
                 task.whenComplete(Schedulers.javafx(), exception -> {
                     fireEvent(new PageCloseEvent());
                     if (!task.getFailedMods().isEmpty()) {
                         Controllers.dialog(i18n("mods.check_updates.failed_download") + "\n" +
-                                        task.getFailedMods().stream().map(LocalModFile::getFileName).collect(Collectors.joining("\n")),
+                                        task.getFailedMods().stream().map(ILocalFile::getFileName).collect(Collectors.joining("\n")),
                                 i18n("install.failed"),
                                 MessageDialogPane.MessageType.ERROR);
                     }
@@ -190,21 +188,21 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
     }
 
     private static final class ModUpdateObject {
-        final LocalModFile.ModUpdate data;
+        final ILocalFile.ModUpdate data;
         final BooleanProperty enabled = new SimpleBooleanProperty();
         final StringProperty fileName = new SimpleStringProperty();
         final StringProperty currentVersion = new SimpleStringProperty();
         final StringProperty targetVersion = new SimpleStringProperty();
         final StringProperty source = new SimpleStringProperty();
 
-        public ModUpdateObject(LocalModFile.ModUpdate data) {
+        public ModUpdateObject(ILocalFile.ModUpdate data) {
             this.data = data;
 
-            enabled.set(!data.getLocalMod().getModManager().isDisabled(data.getLocalMod().getFile()));
-            fileName.set(data.getLocalMod().getFileName());
-            currentVersion.set(data.getCurrentVersion().getVersion());
-            targetVersion.set(data.getCandidates().get(0).getVersion());
-            switch (data.getCurrentVersion().getSelf().getType()) {
+            enabled.set(!data.localFile().isDisabled());
+            fileName.set(data.localFile().getFileName());
+            currentVersion.set(data.currentVersion().getVersion());
+            targetVersion.set(data.candidates().get(0).getVersion());
+            switch (data.currentVersion().getSelf().getType()) {
                 case CURSEFORGE:
                     source.set(i18n("mods.curseforge"));
                     break;
@@ -274,19 +272,19 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         }
     }
 
-    public static class ModUpdateTask extends Task<Void> {
+    public static class UpdateTask extends Task<Void> {
         private final Collection<Task<?>> dependents;
-        private final List<LocalModFile> failedMods = new ArrayList<>();
+        private final List<ILocalFile> failedMods = new ArrayList<>();
 
-        ModUpdateTask(ModManager modManager, List<Pair<LocalModFile, RemoteMod.Version>> mods) {
+        UpdateTask(Path modDirectory, List<Pair<ILocalFile, RemoteMod.Version>> mods) {
             setStage("mods.check_updates.confirm");
             getProperties().put("total", mods.size());
 
             this.dependents = new ArrayList<>();
-            for (Pair<LocalModFile, RemoteMod.Version> mod : mods) {
-                LocalModFile local = mod.getKey();
+            for (Pair<ILocalFile, RemoteMod.Version> mod : mods) {
+                ILocalFile local = mod.getKey();
                 RemoteMod.Version remote = mod.getValue();
-                boolean isDisabled = local.getModManager().isDisabled(local.getFile());
+                boolean isDisabled = local.isDisabled();
 
                 dependents.add(Task
                         .runAsync(Schedulers.javafx(), () -> local.setOld(true))
@@ -297,7 +295,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
 
                             var task = new FileDownloadTask(
                                     remote.getFile().getUrl(),
-                                    modManager.getModsDirectory().resolve(fileName));
+                                    modDirectory.resolve(fileName));
 
                             task.setName(remote.getName());
                             return task;
@@ -307,15 +305,21 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                                 // restore state if failed
                                 local.setOld(false);
                                 if (isDisabled)
-                                    local.disable();
+                                    local.markDisabled();
                                 failedMods.add(local);
+                            } else if (!local.keepOldFiles()) {
+                                try {
+                                    local.delete();
+                                } catch (Exception e) {
+                                    // ignore
+                                }
                             }
                         })
                         .withCounter("mods.check_updates.confirm"));
             }
         }
 
-        public List<LocalModFile> getFailedMods() {
+        public List<ILocalFile> getFailedMods() {
             return failedMods;
         }
 

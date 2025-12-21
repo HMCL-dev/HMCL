@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.ModManager;
+import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -103,8 +104,8 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         CompletableFuture.supplyAsync(() -> {
             lock.lock();
             try {
-                modManager.refreshMods();
-                return modManager.getMods().stream().map(ModListPageSkin.ModInfoObject::new).toList();
+                modManager.refresh();
+                return modManager.getLocalFiles().stream().map(ModListPageSkin.ModInfoObject::new).toList();
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             } finally {
@@ -234,7 +235,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                         .composeAsync(() -> {
                             Optional<String> gameVersion = profile.getRepository().getGameVersion(instanceId);
                             if (gameVersion.isPresent()) {
-                                return new ModCheckUpdatesTask(gameVersion.get(), modManager.getMods());
+                                return new CheckUpdatesTask(gameVersion.get(), modManager.getLocalFiles(), RemoteModRepository.Type.MOD);
                             }
                             return null;
                         })
@@ -244,7 +245,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                             } else if (result.isEmpty()) {
                                 Controllers.dialog(i18n("mods.check_updates.empty"));
                             } else {
-                                Controllers.navigateForward(new ModUpdatesPage(modManager, result));
+                                Controllers.navigateForward(new UpdatesPage<>(modManager, result));
                             }
                         })
                         .withStagesHint(Collections.singletonList("update.checking")),

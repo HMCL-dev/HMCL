@@ -27,8 +27,8 @@ import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
-import org.jackhuang.hmcl.resourcepack.ResourcePackFile;
-import org.jackhuang.hmcl.resourcepack.ResourcePackManager;
+import org.jackhuang.hmcl.mod.ResourcePackFile;
+import org.jackhuang.hmcl.mod.ResourcePackManager;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -42,6 +42,7 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -96,7 +97,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         this.profile = profile;
         this.instanceId = version;
         this.resourcePackManager = new ResourcePackManager(profile.getRepository(), version);
-        this.resourcePackDirectory = this.resourcePackManager.getResourcePackDirectory();
+        this.resourcePackDirectory = this.resourcePackManager.getDirectory();
 
         try {
             if (!Files.exists(resourcePackDirectory)) {
@@ -118,8 +119,8 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         }
         setLoading(true);
         Task.supplyAsync(Schedulers.io(), () -> {
-            resourcePackManager.refreshResourcePacks();
-            return resourcePackManager.getResourcePacks()
+            resourcePackManager.refresh();
+            return resourcePackManager.getLocalFiles()
                     .stream()
                     .map(ResourcePackInfoObject::new)
                     .toList();
@@ -185,19 +186,47 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     }
 
     private void removeSelected(List<ResourcePackInfoObject> selectedItems) {
-        Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"),
-                () -> {
-                    try {
-                        if (resourcePackManager != null) {
-                            if (resourcePackManager.removeResourcePacks(selectedItems.stream().map(ResourcePackInfoObject::getFile).toList())) {
-                                refresh();
+        try {
+            if (resourcePackManager != null) {
+                if (resourcePackManager.removeResourcePacks(selectedItems.stream().map(ResourcePackInfoObject::getFile).toList())) {
+                    refresh();
+                }
+            }
+        } catch (IOException e) {
+            Controllers.dialog(i18n("resourcepack.delete.failed", e.getMessage()), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+            LOG.warning("Failed to delete resource packs", e);
+        }
+    }
+
+    public void checkUpdates() {
+        Runnable action = () -> Controllers.taskDialog(Task
+                        .composeAsync(() -> {
+                            Optional<String> gameVersion = profile.getRepository().getGameVersion(instanceId);
+                            if (gameVersion.isPresent()) {
+                                return new CheckUpdatesTask(gameVersion.get(), resourcePackManager.getLocalFiles(), RemoteModRepository.Type.RESOURCE_PACK);
                             }
-                        }
-                    } catch (IOException e) {
-                        Controllers.dialog(i18n("resourcepack.delete.failed", e.getMessage()), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
-                        LOG.warning("Failed to delete resource packs", e);
-                    }
-                }, null);
+                            return null;
+                        })
+                        .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                            if (exception != null || result == null) {
+                                Controllers.dialog(i18n("mods.check_updates.failed_check"), i18n("message.failed"), MessageDialogPane.MessageType.ERROR);
+                            } else if (result.isEmpty()) {
+                                Controllers.dialog(i18n("mods.check_updates.empty"));
+                            } else {
+                                Controllers.navigateForward(new UpdatesPage<>(resourcePackManager, result));
+                            }
+                        })
+                        .withStagesHint(Collections.singletonList("update.checking")),
+                i18n("mods.check_updates"), TaskCancellationAction.NORMAL);
+
+        if (profile.getRepository().isModpack(instanceId)) {
+            Controllers.confirm(
+                    i18n("mods.update_modpack_mod.warning"), null,
+                    MessageDialogPane.MessageType.WARNING,
+                    action, null);
+        } else {
+            action.run();
+        }
     }
 
     private static final class ResourcePackListPageSkin extends SkinBase<ResourcePackListPage> {
@@ -283,6 +312,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                         createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, control::refresh),
                         createToolbarButton2(i18n("resourcepack.add"), SVG.ADD, control::onAddFiles),
                         createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, control::onOpenFolder),
+                        createToolbarButton2(i18n("mods.check_updates.button"), SVG.UPDATE, control::checkUpdates),
                         createToolbarButton2(i18n("download"), SVG.DOWNLOAD, control::onDownload),
                         createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar))
                 );
@@ -378,8 +408,8 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                     var descriptionParts = description == null
                             ? Stream.<String>empty()
                             : description.getParts().stream().map(LocalModFile.Description.Part::getText);
-                    if (predicate.test(resourcePack.getFileName())
-                            || predicate.test(resourcePack.getName())
+                    if (predicate.test(resourcePack.getFileNameWithExtension())
+                            || predicate.test(resourcePack.getFileName())
                             || descriptionParts.anyMatch(predicate)) {
                         listView.getItems().add(item);
                     }
@@ -417,7 +447,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 try (ByteArrayInputStream inputStream = new ByteArrayInputStream(iconData)) {
                     image = new Image(inputStream, 64, 64, true, true);
                 } catch (Exception e) {
-                    LOG.warning("Failed to load resource pack icon " + file.getPath(), e);
+                    LOG.warning("Failed to load resource pack icon " + file.getFile(), e);
                 }
             }
 
@@ -506,11 +536,11 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             ResourcePackFile file = item.getFile();
             imageView.setImage(item.getIcon());
 
-            content.setTitle(file.getName());
-            content.setSubtitle(file.getFileName());
+            content.setTitle(file.getFileName());
+            content.setSubtitle(file.getFileNameWithExtension());
 
             FXUtils.installFastTooltip(btnReveal, i18n("reveal.in_file_manager"));
-            btnReveal.setOnAction(event -> FXUtils.showFileInExplorer(file.getPath()));
+            btnReveal.setOnAction(event -> FXUtils.showFileInExplorer(file.getFile()));
 
             btnInfo.setOnAction(e -> Controllers.dialog(new ResourcePackInfoDialog(this.page, item)));
 
@@ -545,8 +575,8 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             FXUtils.limitSize(imageView, 40, 40);
 
             TwoLineListItem title = new TwoLineListItem();
-            title.setTitle(pack.getName());
-            title.setSubtitle(pack.getFileName());
+            title.setTitle(pack.getFileName());
+            title.setSubtitle(pack.getFileNameWithExtension());
             if (pack.getCompatibility() == ResourcePackFile.Compatibility.COMPATIBLE) {
                 title.addTag(i18n("resourcepack.compatible"));
             } else {
@@ -580,7 +610,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 RemoteModRepository repository = item.getValue();
                 JFXHyperlink button = new JFXHyperlink(i18n(item.getKey()));
                 Task.runAsync(() -> {
-                    Optional<RemoteMod.Version> versionOptional = repository.getRemoteVersionByLocalFile(packInfoObject.getFile().getPath());
+                    Optional<RemoteMod.Version> versionOptional = repository.getRemoteVersionByLocalFile(packInfoObject.getFile().getFile());
                     if (versionOptional.isPresent()) {
                         RemoteMod remoteMod = repository.getModById(versionOptional.get().getModid());
                         FXUtils.runInFX(() -> {
