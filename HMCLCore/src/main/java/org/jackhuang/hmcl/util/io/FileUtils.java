@@ -177,13 +177,12 @@ public final class FileUtils {
             if (!Character.isValidCodePoint(codePoint)
                     || Character.isISOControl(codePoint)
                     || codePoint == '/' || codePoint == '\0'
+                    || codePoint == ':' ||
                     // Unicode replacement character
                     || codePoint == 0xfffd
                     // Not Unicode character
                     || codePoint == 0xfffe || codePoint == 0xffff)
                 return false;
-
-            if (ch == ':') return false;
 
             // https://learn.microsoft.com/windows/win32/fileio/naming-a-file
             if (os == OperatingSystem.WINDOWS &&
