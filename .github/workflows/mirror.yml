@@ -10,9 +10,6 @@ concurrency:
 
 jobs:
   mirror:
-    env:
-      CNB_REPO: https://cnb:${{ secrets.CNB_SYNC_TOKEN }}@cnb.cool/HMCL-dev/HMCL.git
-      GITEE_REPO: https://hmcl-sync:${{ secrets.GITEE_SYNC_TOKEN }}@gitee.com/huanghongxun/HMCL.git
     strategy:
       fail-fast: false
       matrix:
