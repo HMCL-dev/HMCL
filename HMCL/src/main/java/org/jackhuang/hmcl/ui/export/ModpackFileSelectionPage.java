@@ -43,7 +43,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
@@ -93,9 +92,22 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         ModAdviser.ModSuggestion state = ModAdviser.ModSuggestion.SUGGESTED;
         if (basePath.length() > "minecraft/".length()) {
             state = adviser.advise(StringUtils.substringAfter(basePath, "minecraft/") + (isDirectory ? "/" : ""), isDirectory);
-            if (!isDirectory && Objects.equals(FileUtils.getNameWithoutExtension(file), version))
-                state = ModAdviser.ModSuggestion.HIDDEN;
-            if (isDirectory && Objects.equals(FileUtils.getName(file), version + "-natives")) // Ignore <version>-natives
+
+            String fileName = FileUtils.getName(file);
+
+            if (!isDirectory) {
+                switch (fileName) {
+                    case ".DS_Store", // macOS system file
+                         "desktop.ini", "Thumbs.db" // Windows system files
+                            -> state = ModAdviser.ModSuggestion.HIDDEN;
+                }
+                if (fileName.startsWith("._")) // macOS system file
+                    state = ModAdviser.ModSuggestion.HIDDEN;
+                if (FileUtils.getNameWithoutExtension(file).equals(version))
+                    state = ModAdviser.ModSuggestion.HIDDEN;
+            }
+
+            if (isDirectory && fileName.equals(version + "-natives")) // Ignore <version>-natives
                 state = ModAdviser.ModSuggestion.HIDDEN;
             if (state == ModAdviser.ModSuggestion.HIDDEN)
                 return null;
