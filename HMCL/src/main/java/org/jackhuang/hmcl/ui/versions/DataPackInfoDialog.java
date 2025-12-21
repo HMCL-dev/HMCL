@@ -136,7 +136,7 @@ final class DataPackInfoDialog extends JFXDialogLayout {
                         button.setOnAction(e -> {
                             fireEvent(new DialogCloseEvent());
                             Controllers.navigate(new DownloadPage(
-                                    repository instanceof CurseForgeRemoteModRepository ? HMCLLocalizedDownloadListPage.ofCurseForgeMod(null, false) : HMCLLocalizedDownloadListPage.ofModrinthMod(null, false),
+                                    HMCLLocalizedDownloadListPage.ofDataPack(null, false),
                                     remoteMod,
                                     new Profile.ProfileVersion(profile, versionID),
                                     null
