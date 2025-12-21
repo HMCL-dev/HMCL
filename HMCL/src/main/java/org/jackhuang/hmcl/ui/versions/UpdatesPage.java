@@ -60,12 +60,12 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 public class UpdatesPage<F extends ILocalFile> extends BorderPane implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(DecoratorPage.State.fromTitle(i18n("mods.check_updates")));
 
-    private final LocalFileManager<F> modManager;
+    private final LocalFileManager<F> localFileManager;
     private final ObservableList<ModUpdateObject> objects;
 
     @SuppressWarnings("unchecked")
-    public UpdatesPage(LocalFileManager<F> modManager, List<ILocalFile.ModUpdate> updates) {
-        this.modManager = modManager;
+    public UpdatesPage(LocalFileManager<F> localFileManager, List<ILocalFile.ModUpdate> updates) {
+        this.localFileManager = localFileManager;
 
         getStyleClass().add("gray-background");
 
@@ -112,7 +112,7 @@ public class UpdatesPage<F extends ILocalFile> extends BorderPane implements Dec
         exportListButton.setOnAction(e -> exportList());
 
         JFXButton nextButton = FXUtils.newRaisedButton(i18n("mods.check_updates.confirm"));
-        nextButton.setOnAction(e -> updateMods());
+        nextButton.setOnAction(e -> updateFiles());
 
         JFXButton cancelButton = FXUtils.newRaisedButton(i18n("button.cancel"));
         cancelButton.setOnAction(e -> fireEvent(new PageCloseEvent()));
@@ -127,9 +127,9 @@ public class UpdatesPage<F extends ILocalFile> extends BorderPane implements Dec
         column.setCellValueFactory(param -> mapper.apply(param.getValue()));
     }
 
-    private void updateMods() {
+    private void updateFiles() {
         UpdateTask task = new UpdateTask(
-                modManager.getDirectory(),
+                localFileManager.getDirectory(),
                 objects.stream()
                         .filter(o -> o.enabled.get())
                         .map(object -> pair(object.data.localFile(), object.data.candidates().get(0)))
