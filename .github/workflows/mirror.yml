@@ -10,6 +10,9 @@ concurrency:
 
 jobs:
   mirror:
+    env:
+      CNB_REPO: https://cnb:${{ secrets.CNB_SYNC_TOKEN }}@cnb.cool/HMCL-dev/HMCL.git
+      GITEE_REPO: https://hmcl-sync:${{ secrets.GITEE_SYNC_TOKEN }}@gitee.com/huanghongxun/HMCL.git
     strategy:
       fail-fast: false
       matrix:
@@ -28,7 +31,6 @@ jobs:
     steps:
       - name: Mirror GitHub to ${{ matrix.name }}
         run: |
-          git clone --bare "https://github.com/${{ github.repository }}.git" -- repo
+          git clone --mirror "https://github.com/${{ github.repository }}.git" -- repo
           cd repo
-          git push --prune --all --force "https://${{ matrix.user }}:${{ secrets[matrix.token] }}@${{ matrix.repo }}.git"
-          git push --tags --force "https://${{ matrix.user }}:${{ secrets[matrix.token] }}@${{ matrix.repo }}.git"
+          git push -f --prune "https://${{ matrix.user }}:${{ secrets[matrix.token] }}@${{ matrix.repo }}.git" "refs/heads/*:refs/heads/*" "refs/tags/*:refs/tags/*"
