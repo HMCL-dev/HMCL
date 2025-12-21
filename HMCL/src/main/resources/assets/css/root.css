@@ -265,6 +265,10 @@
     -fx-spacing: 0;
 }
 
+.no-padding .advanced-list-box-content {
+    -fx-padding: 0 0 0 0;
+}
+
 .iconed-item {
     -jfx-rippler-fill: -monet-secondary-container;
 }
@@ -346,7 +350,7 @@
     -fx-font-size: 15px;
 }
 
-.terracotta-license Text {
+.terracotta-hint Text {
     -fx-fill: -monet-on-surface;
 }
 
@@ -1003,6 +1007,10 @@
 
 .options-list-item .label {
     -fx-text-fill: -monet-on-surface;
+}
+
+.options-list-item .label.subtitle {
+    -fx-text-fill: -monet-on-surface-variant;
 }
 
 .options-list-item.no-padding {

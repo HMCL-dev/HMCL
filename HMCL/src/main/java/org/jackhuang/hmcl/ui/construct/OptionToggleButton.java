@@ -51,8 +51,9 @@ public class OptionToggleButton extends StackPane {
         Label titleLabel = new Label();
         titleLabel.textProperty().bind(title);
         Label subtitleLabel = new Label();
-        subtitleLabel.setMouseTransparent(true);
         subtitleLabel.setWrapText(true);
+        subtitleLabel.setMouseTransparent(true);
+        subtitleLabel.getStyleClass().add("subtitle");
         subtitleLabel.textProperty().bind(subtitle);
         pane.setCenter(left);
         left.setAlignment(Pos.CENTER_LEFT);

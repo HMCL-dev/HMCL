@@ -51,7 +51,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     private final World world;
     private final Path backupsDir;
     private final Profile profile;
-    private final String versionID;
+    private final String id;
 
     private final TabHeader header;
     private final TabHeader.Tab<WorldInfoPage> worldInfoTab = new TabHeader.Tab<>("worldInfoPage");
@@ -62,11 +62,14 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
     private FileChannel sessionLockChannel;
 
-    public WorldManagePage(World world, Path backupsDir, Profile profile, String versionID) {
+    public WorldManagePage(World world, Path backupsDir, Profile profile, String id) {
         this.world = world;
         this.backupsDir = backupsDir;
         this.profile = profile;
         this.versionID = versionID;
+
+        this.profile = profile;
+        this.id = id;
 
         this.worldInfoTab.setNodeSupplier(() -> new WorldInfoPage(this));
         this.worldBackupsTab.setNodeSupplier(() -> new WorldBackupsPage(this));
@@ -75,6 +78,13 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         this.state = new SimpleObjectProperty<>(State.fromTitle(i18n("world.manage.title", world.getWorldName())));
         this.header = new TabHeader(transitionPane, worldInfoTab, worldBackupsTab);
         header.select(worldInfoTab);
+
+        // Does it need to be done in the background?
+        try {
+            sessionLockChannel = world.lock();
+            LOG.info("Acquired lock on world " + world.getFileName());
+        } catch (IOException ignored) {
+        }
 
         setCenter(transitionPane);
 
@@ -96,6 +106,12 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         left.setTop(sideBar);
 
         AdvancedListBox toolbar = new AdvancedListBox();
+
+        if (world.getGameVersion() != null && world.getGameVersion().isAtLeast("1.20", "23w14a")) {
+            toolbar.addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, this::launch, null);
+            toolbar.addNavigationDrawerItem(i18n("version.launch_script"), SVG.SCRIPT, this::generateLaunchScript, null);
+        }
+
         if (ChunkBaseApp.isSupported(world)) {
             PopupMenu popupMenu = new PopupMenu();
             JFXPopup popup = new JFXPopup(popupMenu);
@@ -122,12 +138,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
         left.setBottom(toolbar);
 
-        // Does it need to be done in the background?
-        try {
-            sessionLockChannel = world.lock();
-            LOG.info("Acquired lock on world " + world.getFileName());
-        } catch (IOException ignored) {
-        }
+        this.addEventHandler(Navigator.NavigationEvent.EXITED, this::onExited);
     }
 
     @Override
@@ -147,14 +158,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         return sessionLockChannel == null;
     }
 
-    @Override
-    public boolean back() {
-        closePage();
-        return true;
-    }
-
-    @Override
-    public void closePage() {
+    public void onExited(Navigator.NavigationEvent event) {
         if (sessionLockChannel != null) {
             try {
                 sessionLockChannel.close();
@@ -165,5 +169,14 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
             sessionLockChannel = null;
         }
+    }
+
+    public void launch() {
+        fireEvent(new PageCloseEvent());
+        Versions.launchAndEnterWorld(profile, id, world.getFileName());
+    }
+
+    public void generateLaunchScript() {
+        Versions.generateLaunchScriptForQuickEnterWorld(profile, id, world.getFileName());
     }
 }
