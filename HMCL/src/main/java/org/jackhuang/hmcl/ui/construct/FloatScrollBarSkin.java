@@ -28,6 +28,8 @@ import javafx.scene.layout.Region;
 import javafx.scene.shape.Rectangle;
 import org.jackhuang.hmcl.util.Lang;
 
+// Referenced in root.css
+@SuppressWarnings("unused")
 public class FloatScrollBarSkin implements Skin<ScrollBar> {
     private ScrollBar scrollBar;
     private Region group;

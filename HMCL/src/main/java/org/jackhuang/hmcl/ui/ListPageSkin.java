@@ -27,7 +27,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 
 public class ListPageSkin extends SkinBase<ListPage<?>> {
@@ -67,7 +66,7 @@ public class ListPageSkin extends SkinBase<ListPage<?>> {
                 JFXButton btnAdd = FXUtils.newRaisedButton("");
                 FXUtils.setLimitWidth(btnAdd, 40);
                 FXUtils.setLimitHeight(btnAdd, 40);
-                btnAdd.setGraphic(SVG.ADD.createIcon(Theme.whiteFill(), -1));
+                btnAdd.setGraphic(SVG.ADD.createIcon());
                 btnAdd.setOnAction(e -> skinnable.add());
 
                 JFXButton btnRefresh = new JFXButton();
@@ -75,7 +74,7 @@ public class ListPageSkin extends SkinBase<ListPage<?>> {
                 FXUtils.setLimitHeight(btnRefresh, 40);
                 btnRefresh.getStyleClass().add("jfx-button-raised-round");
                 btnRefresh.setButtonType(JFXButton.ButtonType.RAISED);
-                btnRefresh.setGraphic(SVG.REFRESH.createIcon(Theme.whiteFill(), -1));
+                btnRefresh.setGraphic(SVG.REFRESH.createIcon());
                 btnRefresh.setOnAction(e -> skinnable.refresh());
 
                 vBox.getChildren().setAll(btnAdd);

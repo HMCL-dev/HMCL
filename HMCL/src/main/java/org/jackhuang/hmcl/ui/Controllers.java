@@ -49,6 +49,8 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.account.AccountListPage;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
+import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
+import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.decorator.DecoratorController;
@@ -90,7 +92,7 @@ public final class Controllers {
 
     private static Scene scene;
     private static Stage stage;
-    private static Lazy<VersionPage> versionPage = new Lazy<>(VersionPage::new);
+    private static VersionPage versionPage;
     private static Lazy<GameListPage> gameListPage = new Lazy<>(() -> {
         GameListPage gameListPage = new GameListPage();
         gameListPage.selectedProfileProperty().bindBidirectional(Profiles.selectedProfileProperty());
@@ -127,7 +129,18 @@ public final class Controllers {
 
     // FXThread
     public static VersionPage getVersionPage() {
-        return versionPage.get();
+        if (versionPage == null) {
+            versionPage = new VersionPage();
+        }
+        return versionPage;
+    }
+
+    @FXThread
+    public static void prepareVersionPage() {
+        if (versionPage == null) {
+            LOG.info("Prepare the version page");
+            versionPage = FXUtils.prepareNode(new VersionPage());
+        }
     }
 
     // FXThread
@@ -328,16 +341,16 @@ public final class Controllers {
         if (AnimationUtils.playWindowAnimation()) {
             Timeline timeline = new Timeline(
                     new KeyFrame(Duration.millis(0),
-                            new KeyValue(decorator.getDecorator().opacityProperty(), 0, FXUtils.EASE),
-                            new KeyValue(decorator.getDecorator().scaleXProperty(), 0.8, FXUtils.EASE),
-                            new KeyValue(decorator.getDecorator().scaleYProperty(), 0.8, FXUtils.EASE),
-                            new KeyValue(decorator.getDecorator().scaleZProperty(), 0.8, FXUtils.EASE)
+                            new KeyValue(decorator.getDecorator().opacityProperty(), 0, Motion.EASE),
+                            new KeyValue(decorator.getDecorator().scaleXProperty(), 0.8, Motion.EASE),
+                            new KeyValue(decorator.getDecorator().scaleYProperty(), 0.8, Motion.EASE),
+                            new KeyValue(decorator.getDecorator().scaleZProperty(), 0.8, Motion.EASE)
                     ),
                     new KeyFrame(Duration.millis(600),
-                            new KeyValue(decorator.getDecorator().opacityProperty(), 1, FXUtils.EASE),
-                            new KeyValue(decorator.getDecorator().scaleXProperty(), 1, FXUtils.EASE),
-                            new KeyValue(decorator.getDecorator().scaleYProperty(), 1, FXUtils.EASE),
-                            new KeyValue(decorator.getDecorator().scaleZProperty(), 1, FXUtils.EASE)
+                            new KeyValue(decorator.getDecorator().opacityProperty(), 1, Motion.EASE),
+                            new KeyValue(decorator.getDecorator().scaleXProperty(), 1, Motion.EASE),
+                            new KeyValue(decorator.getDecorator().scaleYProperty(), 1, Motion.EASE),
+                            new KeyValue(decorator.getDecorator().scaleZProperty(), 1, Motion.EASE)
                     )
             );
             timeline.play();
@@ -520,7 +533,11 @@ public final class Controllers {
     }
 
     public static void navigate(Node node) {
-        decorator.navigate(node);
+        decorator.navigate(node, ContainerAnimations.NAVIGATION, Motion.SHORT4, Motion.EASE);
+    }
+
+    public static void navigateForward(Node node) {
+        decorator.navigate(node, ContainerAnimations.FORWARD, Motion.SHORT4, Motion.EASE);
     }
 
     public static void showToast(String content) {
