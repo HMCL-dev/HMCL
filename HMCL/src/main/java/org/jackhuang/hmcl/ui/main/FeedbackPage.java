@@ -43,34 +43,41 @@ public class FeedbackPage extends SpinnerPane {
         FXUtils.smoothScrolling(scrollPane);
         setContent(scrollPane);
 
-        ComponentList community = new ComponentList();
+        ComponentList groups = new ComponentList();
         {
             IconedTwoLineListItem users = new IconedTwoLineListItem();
             users.setImage(FXUtils.newBuiltinImage("/assets/img/icon.png"));
-            users.setTitle(i18n("feedback.qq_group"));
-            users.setSubtitle(i18n("feedback.qq_group.statement"));
+            users.setTitle(i18n("contact.chat.qq_group"));
+            users.setSubtitle(i18n("contact.chat.qq_group.statement"));
             users.setExternalLink(Metadata.GROUPS_URL);
 
+            IconedTwoLineListItem discord = new IconedTwoLineListItem();
+            discord.setImage(FXUtils.newBuiltinImage("/assets/img/discord.png"));
+            discord.setTitle(i18n("contact.chat.discord"));
+            discord.setSubtitle(i18n("contact.chat.discord.statement"));
+            discord.setExternalLink("https://discord.gg/jVvC7HfM6U");
+
+            groups.getContent().setAll(users, discord);
+        }
+
+        ComponentList feedback = new ComponentList();
+        {
             IconedTwoLineListItem github = new IconedTwoLineListItem();
             github.imageProperty().bind(Bindings.when(Themes.darkModeProperty())
                     .then(FXUtils.newBuiltinImage("/assets/img/github-white.png"))
                     .otherwise(FXUtils.newBuiltinImage("/assets/img/github.png")));
-            github.setTitle(i18n("feedback.github"));
-            github.setSubtitle(i18n("feedback.github.statement"));
+            github.setTitle(i18n("contact.feedback.github"));
+            github.setSubtitle(i18n("contact.feedback.github.statement"));
             github.setExternalLink("https://github.com/HMCL-dev/HMCL/issues/new/choose");
 
-            IconedTwoLineListItem discord = new IconedTwoLineListItem();
-            discord.setImage(FXUtils.newBuiltinImage("/assets/img/discord.png"));
-            discord.setTitle(i18n("feedback.discord"));
-            discord.setSubtitle(i18n("feedback.discord.statement"));
-            discord.setExternalLink("https://discord.gg/jVvC7HfM6U");
-
-            community.getContent().setAll(users, github, discord);
+            feedback.getContent().setAll(github);
         }
 
         content.getChildren().addAll(
-                ComponentList.createComponentListTitle(i18n("feedback.channel")),
-                community
+                ComponentList.createComponentListTitle(i18n("contact.chat")),
+                groups,
+                ComponentList.createComponentListTitle(i18n("contact.feedback")),
+                feedback
         );
 
         this.setContent(content);

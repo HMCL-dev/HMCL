@@ -52,6 +52,7 @@ import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.nio.file.AccessDeniedException;
@@ -61,7 +62,6 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
-import java.lang.ref.WeakReference;
 
 import static javafx.application.Platform.runLater;
 import static javafx.application.Platform.setImplicitExit;
@@ -82,6 +82,7 @@ public final class LauncherHelper {
     private final VersionSetting setting;
     private LauncherVisibility launcherVisibility;
     private boolean showLogs;
+    private QuickPlayOption quickPlayOption;
     private boolean disableOfflineSkin = false;
 
     public LauncherHelper(Profile profile, Account account, String selectedVersion) {
@@ -111,6 +112,10 @@ public final class LauncherHelper {
 
     public void setKeep() {
         launcherVisibility = LauncherVisibility.KEEP;
+    }
+
+    public void setQuickPlayOption(QuickPlayOption quickPlayOption) {
+        this.quickPlayOption = quickPlayOption;
     }
 
     public void setDisableOfflineSkin() {
@@ -198,6 +203,9 @@ public final class LauncherHelper {
                             selectedVersion, javaVersionRef.get(), profile.getGameDir(), javaAgents, javaArguments, scriptFile != null);
                     if (disableOfflineSkin) {
                         launchOptionsBuilder.setDaemon(false);
+                    }
+                    if (quickPlayOption != null) {
+                        launchOptionsBuilder.setQuickPlayOption(quickPlayOption);
                     }
                     LaunchOptions launchOptions = launchOptionsBuilder.create();
 
