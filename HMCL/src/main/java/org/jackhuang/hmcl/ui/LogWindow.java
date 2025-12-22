@@ -204,6 +204,7 @@ public final class LogWindow extends Stage {
         LogWindowImpl() {
             getStyleClass().add("log-window");
 
+            listView.getProperties().put("no-smooth-scrolling", true);
             listView.setItems(FXCollections.observableList(new CircularArrayList<>(logs.size())));
 
             for (int i = 0; i < LEVELS.length; i++) {
