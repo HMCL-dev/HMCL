@@ -23,7 +23,6 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.shape.SVGPath;
 import org.jackhuang.hmcl.mod.ModpackExportInfo;
 import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackExportTask;
 import org.jackhuang.hmcl.mod.multimc.MultiMCModpackExportTask;
@@ -77,8 +76,7 @@ public final class ModpackTypeSelectionPage extends VBox implements WizardPage {
         graphic.setMouseTransparent(true);
         graphic.setLeft(new TwoLineListItem(i18n("modpack.type." + type), i18n("modpack.type." + type + ".export")));
 
-        SVGPath arrow = new SVGPath();
-        arrow.setContent(SVG.ARROW_FORWARD.getPath());
+        var arrow = SVG.ARROW_FORWARD.createIcon();
         BorderPane.setAlignment(arrow, Pos.CENTER);
         graphic.setRight(arrow);
 
