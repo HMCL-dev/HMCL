@@ -220,18 +220,18 @@ public final class World {
                     && worldGenSettingsTag.get("dimensions") instanceof CompoundTag dimensionsTag
                     && dimensionsTag.get("minecraft:overworld") instanceof CompoundTag overworldTag
                     && overworldTag.get("generator") instanceof CompoundTag generatorTag) {
-                if (generatorTag.get("settings") instanceof StringTag settingsTag) { //Valid after 1.16.2
-                    largeBiomes = "minecraft:large_biomes".equals(settingsTag.getValue());
-                }
                 if (generatorTag.get("biome_source") instanceof CompoundTag biomeSourceTag
                         && biomeSourceTag.get("large_biomes") instanceof ByteTag largeBiomesTag) { //Valid between 1.16 and 1.16.2
                     largeBiomes = largeBiomesTag.getValue() == (byte) 1;
+                } else if (generatorTag.get("settings") instanceof StringTag settingsTag) { //Valid after 1.16.2
+                    largeBiomes = "minecraft:large_biomes".equals(settingsTag.getValue());
+                } else {
+                    largeBiomes = false;
                 }
             } else {
                 largeBiomes = false;
             }
         }
-        System.out.println("largeBiomes: " + largeBiomes);
     }
 
     public void rename(String newName) throws IOException {
