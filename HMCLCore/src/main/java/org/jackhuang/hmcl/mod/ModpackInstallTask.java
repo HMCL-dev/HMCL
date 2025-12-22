@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.mod;
 
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
 
 import java.nio.charset.Charset;
@@ -46,6 +47,7 @@ public class ModpackInstallTask<T> extends Task<Void> {
     /// @param subDirectories   the subdirectory of zip file to unpack
     /// @param callback         test whether the file (given full path) in zip file should be unpacked or not
     /// @param oldConfiguration old modpack information if upgrade
+    /// @param iconFile         icon file for the modpack (optional)
     public ModpackInstallTask(Path modpackFile, Path dest, Charset charset, List<String> subDirectories, Predicate<String> callback, ModpackConfiguration<T> oldConfiguration, Path iconFile) {
         this.modpackFile = modpackFile;
         this.dest = dest;
@@ -104,10 +106,13 @@ public class ModpackInstallTask<T> extends Task<Void> {
                 Files.deleteIfExists(original);
         }
 
-        if (iconFile != null) {
-            try {
-                Files.copy(iconFile, dest.resolve("icon.png"));
-            } catch (FileAlreadyExistsException ignored) { // Icon exists and we do not want to overwrite it
+        {
+            Path iconDest = dest.resolve("icon." + FileUtils.getExtension(iconFile));
+            if (iconFile != null && Files.isRegularFile(iconFile) && Files.notExists(iconDest)) {
+                try {
+                    Files.copy(iconFile, iconDest);
+                } catch (FileAlreadyExistsException ignored) { // Should be impossible
+                }
             }
         }
     }

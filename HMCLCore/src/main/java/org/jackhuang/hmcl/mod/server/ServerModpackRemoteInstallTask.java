@@ -40,12 +40,14 @@ public class ServerModpackRemoteInstallTask extends Task<Void> {
     private final List<Task<?>> dependencies = new ArrayList<>(1);
     private final List<Task<?>> dependents = new ArrayList<>(1);
     private final ServerModpackManifest manifest;
+    private final Path iconFile;
 
-    public ServerModpackRemoteInstallTask(DefaultDependencyManager dependencyManager, ServerModpackManifest manifest, String name) {
+    public ServerModpackRemoteInstallTask(DefaultDependencyManager dependencyManager, ServerModpackManifest manifest, String name, Path iconFile) {
         this.name = name;
         this.dependency = dependencyManager;
         this.repository = dependencyManager.getGameRepository();
         this.manifest = manifest;
+        this.iconFile = iconFile;
 
         Path json = repository.getModpackConfiguration(name);
         if (repository.hasVersion(name) && Files.notExists(json))
@@ -86,7 +88,7 @@ public class ServerModpackRemoteInstallTask extends Task<Void> {
 
     @Override
     public void execute() throws Exception {
-        dependencies.add(new ServerModpackCompletionTask(dependency, name, new ModpackConfiguration<>(manifest, MODPACK_TYPE, manifest.getName(), manifest.getVersion(), Collections.emptyList())));
+        dependencies.add(new ServerModpackCompletionTask(dependency, name, new ModpackConfiguration<>(manifest, MODPACK_TYPE, manifest.getName(), manifest.getVersion(), Collections.emptyList()), iconFile));
     }
 
     public static final String MODPACK_TYPE = "Server";

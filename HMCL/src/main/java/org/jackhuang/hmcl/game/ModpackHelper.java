@@ -165,7 +165,7 @@ public final class ModpackHelper {
             }
         };
 
-        return new ServerModpackRemoteInstallTask(profile.getDependency(), manifest, name)
+        return new ServerModpackRemoteInstallTask(profile.getDependency(), manifest, name, iconFile)
                 .whenComplete(Schedulers.defaultScheduler(), success, failure)
                 .withStagesHint(Arrays.asList("hmcl.modpack", "hmcl.modpack.download"));
     }
@@ -226,7 +226,7 @@ public final class ModpackHelper {
     public static Task<Void> getUpdateTask(Profile profile, ServerModpackManifest manifest, Charset charset, String name, ModpackConfiguration<?> configuration, Path iconFile) throws UnsupportedModpackException {
         switch (configuration.getType()) {
             case ServerModpackRemoteInstallTask.MODPACK_TYPE:
-                return new ModpackUpdateTask(profile.getRepository(), name, new ServerModpackRemoteInstallTask(profile.getDependency(), manifest, name))
+                return new ModpackUpdateTask(profile.getRepository(), name, new ServerModpackRemoteInstallTask(profile.getDependency(), manifest, name, iconFile))
                         .withStagesHint(Arrays.asList("hmcl.modpack", "hmcl.modpack.download"));
             default:
                 throw new UnsupportedModpackException();

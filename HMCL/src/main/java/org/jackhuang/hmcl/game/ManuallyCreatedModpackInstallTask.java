@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.game;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
 
 import java.nio.charset.Charset;
@@ -57,10 +58,14 @@ public class ManuallyCreatedModpackInstallTask extends Task<Path> {
                 .setTerminateIfSubDirectoryNotExists()
                 .setEncoding(charset)
                 .unzip();
-        if (iconFile != null) {
-            try {
-                Files.copy(iconFile, dest.resolve("icon.png"));
-            } catch (FileAlreadyExistsException ignored) { // Icon exists and we do not want to overwrite it
+
+        {
+            Path iconDest = dest.resolve("icon." + FileUtils.getExtension(iconFile));
+            if (iconFile != null && Files.isRegularFile(iconFile) && Files.notExists(iconDest)) {
+                try {
+                    Files.copy(iconFile, iconDest);
+                } catch (FileAlreadyExistsException ignored) { // Should be impossible
+                }
             }
         }
     }

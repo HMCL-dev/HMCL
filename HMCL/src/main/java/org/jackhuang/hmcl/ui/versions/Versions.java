@@ -332,12 +332,12 @@ public final class Versions {
         Controllers.navigate(Controllers.getVersionPage());
     }
 
-    private static class ModpackDownloadTask extends FileDownloadTask {
+    private static class ModpackDownloadTask extends Task<Void> {
 
         private final Set<FileDownloadTask> dependents = new HashSet<>();
 
         public ModpackDownloadTask(URI uri, Path path, URI iconUri, Path iconPath) {
-            super(uri, path);
+            dependents.add(new FileDownloadTask(uri, path));
             if (iconUri != null && iconPath != null) {
                 dependents.add(new FileDownloadTask(iconUri, iconPath));
             }
@@ -346,6 +346,12 @@ public final class Versions {
         @Override
         public Collection<? extends Task<?>> getDependents() {
             return dependents;
+        }
+
+        @Override
+        public void execute() throws Exception {
+            if (!isDependentsSucceeded())
+                throw getException();
         }
     }
 }

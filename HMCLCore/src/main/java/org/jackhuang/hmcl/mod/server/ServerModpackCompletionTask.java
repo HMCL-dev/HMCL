@@ -29,8 +29,10 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
+import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -48,15 +50,17 @@ public class ServerModpackCompletionTask extends Task<Void> {
     private GetTask dependent;
     private ServerModpackManifest remoteManifest;
     private final List<Task<?>> dependencies = new ArrayList<>();
+    private final Path iconFile;
 
     public ServerModpackCompletionTask(DefaultDependencyManager dependencyManager, String version) {
-        this(dependencyManager, version, null);
+        this(dependencyManager, version, null, null);
     }
 
-    public ServerModpackCompletionTask(DefaultDependencyManager dependencyManager, String version, ModpackConfiguration<ServerModpackManifest> manifest) {
+    public ServerModpackCompletionTask(DefaultDependencyManager dependencyManager, String version, ModpackConfiguration<ServerModpackManifest> manifest, Path iconFile) {
         this.dependencyManager = dependencyManager;
         this.repository = dependencyManager.getGameRepository();
         this.version = version;
+        this.iconFile = iconFile;
 
         if (manifest == null) {
             try {
@@ -174,6 +178,16 @@ public class ServerModpackCompletionTask extends Task<Void> {
             Path actualPath = rootPath.resolve(file.getPath());
             if (Files.exists(actualPath) && !remoteFiles.contains(file.getPath()))
                 Files.deleteIfExists(actualPath);
+        }
+
+        {
+            Path iconDest = rootPath.resolve("icon." + FileUtils.getExtension(iconFile));
+            if (iconFile != null && Files.isRegularFile(iconFile) && Files.notExists(iconDest)) {
+                try {
+                    Files.copy(iconFile, iconDest);
+                } catch (FileAlreadyExistsException ignored) { // Should be impossible
+                }
+            }
         }
 
         getProperties().put("total", dependencies.size());
