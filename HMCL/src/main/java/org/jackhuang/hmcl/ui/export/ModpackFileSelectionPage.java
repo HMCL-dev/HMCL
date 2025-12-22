@@ -156,6 +156,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         if (TRANSLATION.containsKey(basePath)) {
             Label comment = new Label(TRANSLATION.get(basePath));
             comment.setStyle("-fx-text-fill: -monet-on-surface-variant;");
+            comment.setMouseTransparent(true);
             graphic.getChildren().add(comment);
         }
         graphic.setPickOnBounds(false);
