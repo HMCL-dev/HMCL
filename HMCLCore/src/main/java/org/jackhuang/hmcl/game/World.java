@@ -18,10 +18,7 @@
 package org.jackhuang.hmcl.game;
 
 import com.github.steveice10.opennbt.NBTIO;
-import com.github.steveice10.opennbt.tag.builtin.CompoundTag;
-import com.github.steveice10.opennbt.tag.builtin.LongTag;
-import com.github.steveice10.opennbt.tag.builtin.StringTag;
-import com.github.steveice10.opennbt.tag.builtin.Tag;
+import com.github.steveice10.opennbt.tag.builtin.*;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.util.io.*;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -50,6 +47,7 @@ public final class World {
     private String fileName;
     private String worldName;
     private GameVersionNumber gameVersion;
+    private CompoundTag levelData;
     private long lastPlayed;
     private Image icon;
     private Long seed;
@@ -65,24 +63,6 @@ public final class World {
             loadFromZip();
         else
             throw new IOException("Path " + file + " cannot be recognized as a Minecraft world");
-    }
-
-    private void loadFromDirectory() throws IOException {
-        fileName = FileUtils.getName(file);
-        Path levelDat = file.resolve("level.dat");
-        loadWorldInfo(levelDat);
-        isLocked = isLocked(getSessionLockFile());
-
-        Path iconFile = file.resolve("icon.png");
-        if (Files.isRegularFile(iconFile)) {
-            try (InputStream inputStream = Files.newInputStream(iconFile)) {
-                icon = new Image(inputStream, 64, 64, true, false);
-                if (icon.isError())
-                    throw icon.getException();
-            } catch (Exception e) {
-                LOG.warning("Failed to load world icon", e);
-            }
-        }
     }
 
     public Path getFile() {
@@ -109,6 +89,10 @@ public final class World {
         return file.resolve("session.lock");
     }
 
+    public CompoundTag getLevelData() {
+        return levelData;
+    }
+
     public long getLastPlayed() {
         return lastPlayed;
     }
@@ -131,6 +115,24 @@ public final class World {
 
     public boolean isLocked() {
         return isLocked;
+    }
+
+    private void loadFromDirectory() throws IOException {
+        fileName = FileUtils.getName(file);
+        Path levelDat = file.resolve("level.dat");
+        loadWorldInfo(levelDat);
+        isLocked = isLocked(getSessionLockFile());
+
+        Path iconFile = file.resolve("icon.png");
+        if (Files.isRegularFile(iconFile)) {
+            try (InputStream inputStream = Files.newInputStream(iconFile)) {
+                icon = new Image(inputStream, 64, 64, true, false);
+                if (icon.isError())
+                    throw icon.getException();
+            } catch (Exception e) {
+                LOG.warning("Failed to load world icon", e);
+            }
+        }
     }
 
     private void loadFromZipImpl(Path root) throws IOException {
@@ -173,6 +175,7 @@ public final class World {
 
     private void loadWorldInfo(Path levelDat) throws IOException {
         CompoundTag nbt = parseLevelDat(levelDat);
+        levelData = nbt;
 
         CompoundTag data = nbt.get("Data");
         if (data == null)
@@ -210,12 +213,25 @@ public final class World {
             }
         }
 
-        // FIXME: Only work for 1.15 and below
-        if (data.get("generatorName") instanceof StringTag) {
+        if (data.get("generatorName") instanceof StringTag) { //Valid before 1.16
             largeBiomes = "largeBiomes".equals(data.<StringTag>get("generatorName").getValue());
         } else {
-            largeBiomes = false;
+            if (data.get("WorldGenSettings") instanceof CompoundTag worldGenSettingsTag
+                    && worldGenSettingsTag.get("dimensions") instanceof CompoundTag dimensionsTag
+                    && dimensionsTag.get("minecraft:overworld") instanceof CompoundTag overworldTag
+                    && overworldTag.get("generator") instanceof CompoundTag generatorTag) {
+                if (generatorTag.get("settings") instanceof StringTag settingsTag) { //Valid after 1.16.2
+                    largeBiomes = "minecraft:large_biomes".equals(settingsTag.getValue());
+                }
+                if (generatorTag.get("biome_source") instanceof CompoundTag biomeSourceTag
+                        && biomeSourceTag.get("large_biomes") instanceof ByteTag largeBiomesTag) { //Valid between 1.16 and 1.16.2
+                    largeBiomes = largeBiomesTag.getValue() == (byte) 1;
+                }
+            } else {
+                largeBiomes = false;
+            }
         }
+        System.out.println("largeBiomes: " + largeBiomes);
     }
 
     public void rename(String newName) throws IOException {
@@ -223,10 +239,9 @@ public final class World {
             throw new IOException("Not a valid world directory");
 
         // Change the name recorded in level.dat
-        CompoundTag nbt = readLevelDat();
-        CompoundTag data = nbt.get("Data");
+        CompoundTag data = levelData.get("Data");
         data.put(new StringTag("LevelName", newName));
-        writeLevelDat(nbt);
+        writeLevelDat(levelData);
 
         // then change the folder's name
         Files.move(file, file.resolveSibling(newName));
@@ -295,13 +310,6 @@ public final class World {
         FileUtils.copyDirectory(file, newPath);
         World newWorld = new World(newPath);
         newWorld.rename(newName);
-    }
-
-    public CompoundTag readLevelDat() throws IOException {
-        if (!Files.isDirectory(file))
-            throw new IOException("Not a valid world directory");
-
-        return parseLevelDat(getLevelDatFile());
     }
 
     public FileChannel lock() throws WorldLockedException {

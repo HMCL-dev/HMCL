@@ -92,7 +92,7 @@ public final class WorldInfoPage extends SpinnerPane {
         if (!Files.isDirectory(world.getFile()))
             throw new IOException("Not a valid world directory");
 
-        return world.readLevelDat();
+        return world.getLevelData();
     }
 
     private void updateControls() {
@@ -191,10 +191,7 @@ public final class WorldInfoPage extends SpinnerPane {
                     FXUtils.copyOnDoubleClick(seedLabel);
                     BorderPane.setAlignment(seedLabel, Pos.CENTER_RIGHT);
 
-                    Tag tag = worldGenSettings != null ? worldGenSettings.get("seed") : dataTag.get("RandomSeed");
-                    if (tag instanceof LongTag) {
-                        seedLabel.setText(tag.getValue().toString());
-                    }
+                    seedLabel.setText(world.getSeed() != null ? world.getSeed().toString() : "");
 
                     BoxBlur blur = new BoxBlur();
                     blur.setIterations(3);
