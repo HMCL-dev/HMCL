@@ -25,7 +25,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
-import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.effect.BoxBlur;
@@ -149,26 +148,32 @@ public final class WorldInfoPage extends SpinnerPane {
             {
                 setLeftLabel(iconPane, "world.icon");
 
-                FXUtils.limitSize(iconImageView, 32, 32);
-                iconImageView.setImage(world.getIcon() == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : world.getIcon());
-                iconImageView.setCursor(Cursor.HAND);
-                iconImageView.setDisable(worldManagePage.isReadOnly());
-
-                Node editIcon = SVG.EDIT.createIcon(12);
-                editIcon.setDisable(worldManagePage.isReadOnly());
-                editIcon.setCursor(Cursor.HAND);
                 Runnable onClickAction = () -> Controllers.confirm(
                         i18n("world.icon.change.tip"), i18n("world.icon.change"), MessageDialogPane.MessageType.INFO,
                         this::changeWorldIcon,
                         null
                 );
-                FXUtils.onClicked(editIcon, onClickAction);
-                FXUtils.onClicked(iconImageView, onClickAction);
-                FXUtils.installFastTooltip(editIcon, i18n("world.icon.change"));
+
+                FXUtils.limitSize(iconImageView, 32, 32);
+                {
+                    iconImageView.setImage(world.getIcon() == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : world.getIcon());
+                }
+
+                StackPane editIconButton = new StackPane();
+                {
+                    editIconButton.setCursor(Cursor.HAND);
+                    editIconButton.setAlignment(Pos.CENTER_LEFT);
+                    FXUtils.setLimitWidth(editIconButton, 12);
+                    FXUtils.setLimitHeight(editIconButton, 12);
+                    editIconButton.getChildren().setAll(SVG.EDIT.createIcon(12));
+                    editIconButton.setDisable(worldManagePage.isReadOnly());
+                    FXUtils.onClicked(editIconButton, onClickAction);
+                    FXUtils.installFastTooltip(editIconButton, i18n("world.icon.change"));
+                }
 
                 HBox hBox = new HBox(8);
                 hBox.setAlignment(Pos.CENTER_LEFT);
-                hBox.getChildren().addAll(editIcon, iconImageView);
+                hBox.getChildren().addAll(editIconButton, iconImageView);
 
                 iconPane.setRight(hBox);
             }
@@ -181,6 +186,7 @@ public final class WorldInfoPage extends SpinnerPane {
                 StackPane visibilityButton = new StackPane();
                 {
                     visibilityButton.setCursor(Cursor.HAND);
+                    visibilityButton.setAlignment(Pos.BOTTOM_RIGHT);
                     FXUtils.setLimitWidth(visibilityButton, 12);
                     FXUtils.setLimitHeight(visibilityButton, 12);
                     FXUtils.onClicked(visibilityButton, () -> visibility.set(!visibility.get()));
@@ -189,7 +195,7 @@ public final class WorldInfoPage extends SpinnerPane {
                 Label seedLabel = new Label();
                 {
                     FXUtils.copyOnDoubleClick(seedLabel);
-                    BorderPane.setAlignment(seedLabel, Pos.CENTER_RIGHT);
+                    seedLabel.setAlignment(Pos.CENTER_RIGHT);
 
                     seedLabel.setText(world.getSeed() != null ? world.getSeed().toString() : "");
 
