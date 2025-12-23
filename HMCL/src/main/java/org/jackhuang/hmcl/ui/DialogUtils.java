@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-public class DialogUtils {
+public final class DialogUtils {
     private DialogUtils() {
     }
 
