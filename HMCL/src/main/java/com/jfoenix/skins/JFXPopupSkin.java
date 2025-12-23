@@ -54,7 +54,7 @@ public class JFXPopupSkin implements Skin<JFXPopup> {
         this.control = control;
         // set scale y to 0.01 instead of 0 to allow layout of the content,
         // otherwise it will cause exception in traverse engine, when focusing the 1st node
-        scale = new Scale(0, 0, 0, 0);
+        scale = new Scale(1.0, 0.01, 0, 0);
         popupContent = control.getPopupContent();
         container.getStyleClass().add("jfx-popup-container");
         container.getChildren().add(popupContent);
@@ -123,7 +123,7 @@ public class JFXPopupSkin implements Skin<JFXPopup> {
     public void init() {
         animation.stop();
         container.setOpacity(0);
-        scale.setX(0);
-        scale.setY(0);
+        scale.setX(1.0);
+        scale.setY(0.01);
     }
 }
