@@ -29,15 +29,21 @@ public class CheckUpdatesTask extends Task<List<ILocalFile.ModUpdate>> {
     private final Collection<Collection<Task<ILocalFile.ModUpdate>>> dependents;
 
     public CheckUpdatesTask(String gameVersion, Collection<? extends ILocalFile> mods, RemoteModRepository.Type repoType) {
+        Map<String, RemoteModRepository> repos = new LinkedHashMap<>(2);
+        for (RemoteMod.Type modType : RemoteMod.Type.values()) {
+            RemoteModRepository repo = modType.getRepoForType(repoType);
+            if (repo != null) {
+                repos.put(modType.name(), repo);
+            }
+        }
         dependents = mods.stream()
                 .map(mod ->
-                        Arrays.stream(RemoteMod.Type.values())
-                                .map(type ->
-                                        Task.supplyAsync(() -> mod.checkUpdates(gameVersion, type.getRepoForType(repoType)))
+                        repos.entrySet().stream()
+                                .map(entry ->
+                                        Task.supplyAsync(() -> mod.checkUpdates(gameVersion, entry.getValue()))
                                                 .setSignificance(TaskSignificance.MAJOR)
-                                                .setName(String.format("%s (%s)", mod.getFileName(), type.name())).withCounter("update.checking")
-                                )
-                                .collect(Collectors.toList())
+                                                .setName(String.format("%s (%s)", mod.getFileName(), entry.getKey())).withCounter("update.checking")
+                                ).toList()
                 )
                 .collect(Collectors.toList());
 
