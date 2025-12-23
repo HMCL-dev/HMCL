@@ -37,6 +37,8 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  * @author Glavo
  */
 public final class HTMLRenderer {
+    private static final String INDENTATION = "    ";
+
     private static URI resolveLink(Node linkNode) {
         String href = linkNode.absUrl("href");
         if (href.isEmpty())
@@ -59,6 +61,8 @@ public final class HTMLRenderer {
     private boolean highlight;
     private String headerLevel;
     private Node hyperlink;
+
+    private int indentationLevel = 0;
 
     private final Consumer<URI> onClickHyperlink;
 
@@ -147,6 +151,9 @@ public final class HTMLRenderer {
     }
 
     private void appendText(String text) {
+        if (indentationLevel > 0) {
+            text = text.replaceAll("\n", INDENTATION.repeat(indentationLevel) + "\n");
+        }
         Text textNode = new Text(text);
         applyStyle(textNode);
         children.add(textNode);
@@ -208,32 +215,22 @@ public final class HTMLRenderer {
     }
 
     public void appendNode(Node node) {
-        if (node instanceof TextNode) {
-            appendText(((TextNode) node).text());
+        if (node instanceof TextNode textNode) {
+            appendText(textNode.text());
         }
 
         String name = node.nodeName();
         switch (name) {
-            case "img":
-                appendImage(node);
-                break;
-            case "li":
-                appendText("\n \u2022 ");
-                break;
-            case "dt":
-                appendText(" ");
-                break;
-            case "p":
-            case "h1":
-            case "h2":
-            case "h3":
-            case "h4":
-            case "h5":
-            case "h6":
-            case "tr":
+            case "img" -> appendImage(node);
+            case "li" -> {
+                appendText("\n" + INDENTATION.repeat(indentationLevel) + " • ");
+                indentationLevel++;
+            }
+            case "dt" -> appendText(" ");
+            case "p", "h1", "h2", "h3", "h4", "h5", "h6", "tr" -> {
                 if (!children.isEmpty())
                     appendAutoLineBreak("\n\n");
-                break;
+            }
         }
 
         if (node.childNodeSize() > 0) {
@@ -245,17 +242,8 @@ public final class HTMLRenderer {
         }
 
         switch (name) {
-            case "br":
-            case "dd":
-            case "p":
-            case "h1":
-            case "h2":
-            case "h3":
-            case "h4":
-            case "h5":
-            case "h6":
-                appendAutoLineBreak("\n");
-                break;
+            case "li" -> indentationLevel--;
+            case "br", "dd", "p", "h1", "h2", "h3", "h4", "h5", "h6" -> appendAutoLineBreak("\n");
         }
     }
 
