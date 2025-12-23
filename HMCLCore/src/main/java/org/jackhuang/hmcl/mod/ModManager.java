@@ -51,7 +51,7 @@ public final class ModManager {
                 pair(ForgeOldModMetadata::fromFile, ModLoaderType.FORGE),
                 pair(FabricModMetadata::fromFile, ModLoaderType.FABRIC),
                 pair(QuiltModMetadata::fromFile, ModLoaderType.QUILT),
-                pair(PackMcMeta::fromFile, ModLoaderType.PACK)
+                pair(PackMcMeta::fromFile, ModLoaderType.DATA_PACK)
         );
 
         map.put("zip", zipReaders);

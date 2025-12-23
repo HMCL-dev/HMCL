@@ -37,6 +37,7 @@ import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
+import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -95,7 +96,11 @@ public class DownloadPage extends Control implements DecoratorPage {
 
         Task.supplyAsync(() -> {
             Stream<RemoteMod.Version> versions = addon.getData().loadVersions(repository);
-            return sortVersions(versions);
+            Stream<RemoteMod.Version> versionFiltered = versions;
+            if (page.repository instanceof HMCLLocalizedDownloadListPage.Repository repository && repository.getBackedRemoteModRepository() instanceof ModrinthRemoteModRepository modRepository && modRepository.getProjectType().equals("datapack")) {
+                versionFiltered = versions.filter((version) -> version.getLoaders().contains(ModLoaderType.DATA_PACK));
+            }
+            return sortVersions(versionFiltered);
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
                 this.versions = result;
@@ -407,24 +412,12 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                     for (ModLoaderType modLoaderType : dataItem.getLoaders()) {
                         switch (modLoaderType) {
-                            case FORGE:
-                                content.addTag(i18n("install.installer.forge"));
-                                break;
-                            case CLEANROOM:
-                                content.addTag(i18n("install.installer.cleanroom"));
-                                break;
-                            case NEO_FORGED:
-                                content.addTag(i18n("install.installer.neoforge"));
-                                break;
-                            case FABRIC:
-                                content.addTag(i18n("install.installer.fabric"));
-                                break;
-                            case LITE_LOADER:
-                                content.addTag(i18n("install.installer.liteloader"));
-                                break;
-                            case QUILT:
-                                content.addTag(i18n("install.installer.quilt"));
-                                break;
+                            case FORGE -> content.addTag(i18n("install.installer.forge"));
+                            case CLEANROOM -> content.addTag(i18n("install.installer.cleanroom"));
+                            case NEO_FORGED -> content.addTag(i18n("install.installer.neoforge"));
+                            case FABRIC -> content.addTag(i18n("install.installer.fabric"));
+                            case LITE_LOADER -> content.addTag(i18n("install.installer.liteloader"));
+                            case QUILT -> content.addTag(i18n("install.installer.quilt"));
                         }
                     }
 
@@ -447,22 +440,13 @@ public class DownloadPage extends Control implements DecoratorPage {
         public ModVersion(RemoteMod.Version version, DownloadPage selfPage) {
             RemoteModRepository.Type type = selfPage.repository.getType();
 
-            String title;
-            switch (type) {
-                case WORLD:
-                    title = "world.download.title";
-                    break;
-                case MODPACK:
-                    title = "modpack.download.title";
-                    break;
-                case RESOURCE_PACK:
-                    title = "resourcepack.download.title";
-                    break;
-                case MOD:
-                default:
-                    title = "mods.download.title";
-                    break;
-            }
+            String title = switch (type) {
+                case WORLD -> "world.download.title";
+                case MODPACK -> "modpack.download.title";
+                case RESOURCE_PACK -> "resourcepack.download.title";
+                case DATA_PACK -> "datapack.download.title";
+                default -> "mods.download.title";
+            };
             this.setHeading(new HBox(new Label(i18n(title, version.getName()))));
 
             VBox box = new VBox(8);

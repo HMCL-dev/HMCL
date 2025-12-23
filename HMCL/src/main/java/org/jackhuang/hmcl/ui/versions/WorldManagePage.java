@@ -56,7 +56,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     private final TabHeader header;
     private final TabHeader.Tab<WorldInfoPage> worldInfoTab = new TabHeader.Tab<>("worldInfoPage");
     private final TabHeader.Tab<WorldBackupsPage> worldBackupsTab = new TabHeader.Tab<>("worldBackupsPage");
-    private final TabHeader.Tab<DatapackListPage> datapackTab = new TabHeader.Tab<>("datapackListPage");
+    private final TabHeader.Tab<DataPackListPage> dataPackTab = new TabHeader.Tab<>("dataPackListPage");
 
     private final TransitionPane transitionPane = new TransitionPane();
 
@@ -65,13 +65,12 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     public WorldManagePage(World world, Path backupsDir, Profile profile, String id) {
         this.world = world;
         this.backupsDir = backupsDir;
-
         this.profile = profile;
         this.id = id;
 
         this.worldInfoTab.setNodeSupplier(() -> new WorldInfoPage(this));
         this.worldBackupsTab.setNodeSupplier(() -> new WorldBackupsPage(this));
-        this.datapackTab.setNodeSupplier(() -> new DatapackListPage(this));
+        this.dataPackTab.setNodeSupplier(() -> new DataPackListPage(this, profile, id));
 
         this.state = new SimpleObjectProperty<>(State.fromTitle(i18n("world.manage.title", world.getWorldName())));
         this.header = new TabHeader(transitionPane, worldInfoTab, worldBackupsTab);
@@ -97,8 +96,8 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
         if (world.getGameVersion() != null && // old game will not write game version to level.dat
                 world.getGameVersion().isAtLeast("1.13", "17w43a")) {
-            header.getTabs().add(datapackTab);
-            sideBar.addNavigationDrawerTab(header, datapackTab, i18n("world.datapack"), SVG.EXTENSION, SVG.EXTENSION_FILL);
+            header.getTabs().add(dataPackTab);
+            sideBar.addNavigationDrawerTab(header, dataPackTab, i18n("world.datapack"), SVG.EXTENSION, SVG.EXTENSION_FILL);
         }
 
         left.setTop(sideBar);

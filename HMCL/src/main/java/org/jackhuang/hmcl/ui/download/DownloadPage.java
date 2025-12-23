@@ -20,9 +20,12 @@ package org.jackhuang.hmcl.ui.download;
 import com.jfoenix.controls.JFXButton;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
+import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
@@ -39,6 +42,7 @@ import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
 import org.jackhuang.hmcl.ui.construct.TabHeader;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
@@ -70,6 +74,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
     private final TabHeader.Tab<DownloadListPage> modpackTab = new TabHeader.Tab<>("modpackTab");
     private final TabHeader.Tab<DownloadListPage> resourcePackTab = new TabHeader.Tab<>("resourcePackTab");
     private final TabHeader.Tab<DownloadListPage> shaderTab = new TabHeader.Tab<>("shaderTab");
+    private final TabHeader.Tab<DownloadListPage> dataPackTab = new TabHeader.Tab<>("dataPackTab");
     private final TabHeader.Tab<DownloadListPage> worldTab = new TabHeader.Tab<>("worldTab");
     private final TransitionPane transitionPane = new TransitionPane();
     private final DownloadNavigator versionPageNavigator = new DownloadNavigator();
@@ -97,8 +102,9 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         modTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofMod((profile, version, file) -> download(profile, version, file, "mods"), true)));
         resourcePackTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofResourcePack((profile, version, file) -> download(profile, version, file, "resourcepacks"), true)));
         shaderTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(ModrinthRemoteModRepository.SHADER_PACKS, (profile, version, file) -> download(profile, version, file, "shaderpacks"), true)));
+        dataPackTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofDataPack((profile, version, file) -> downloadForDataPack(profile, version, file, "datapacks"), true)));
         worldTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(CurseForgeRemoteModRepository.WORLDS)));
-        tab = new TabHeader(transitionPane, newGameTab, modpackTab, modTab, resourcePackTab, shaderTab, worldTab);
+        tab = new TabHeader(transitionPane, newGameTab, modpackTab, modTab, resourcePackTab, shaderTab, dataPackTab, worldTab);
 
         Profiles.registerVersionsListener(this::loadVersions);
 
@@ -112,6 +118,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                 .addNavigationDrawerTab(tab, modTab, i18n("mods"), SVG.EXTENSION, SVG.EXTENSION_FILL)
                 .addNavigationDrawerTab(tab, resourcePackTab, i18n("resourcepack"), SVG.TEXTURE)
                 .addNavigationDrawerTab(tab, shaderTab, i18n("download.shader"), SVG.WB_SUNNY, SVG.WB_SUNNY_FILL)
+                .addNavigationDrawerTab(tab, dataPackTab, i18n("datapack"), SVG.CODE_BLOCKS, SVG.CODE_BLOCKS_FILL)
                 .addNavigationDrawerTab(tab, worldTab, i18n("world"), SVG.PUBLIC);
         FXUtils.setLimitWidth(sideBar, 200);
         setLeft(sideBar);
@@ -162,6 +169,53 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
     }
 
+    public static void downloadForDataPack(Profile profile, @Nullable String version, RemoteMod.Version file, String subdirectoryName) {
+        if (version == null) version = profile.getSelectedVersion();
+
+        Path runDirectory = profile.getRepository().hasVersion(version) ? profile.getRepository().getRunDirectory(version) : profile.getRepository().getBaseDirectory();
+
+        ObservableList<World> worlds = FXCollections.observableArrayList(World.getWorlds(runDirectory.resolve("saves")).toList());
+
+        Controllers.prompt(
+                new PromptDialogPane.Builder("安装选项", (result, resolve, reject) -> {
+                    String fileName = ((PromptDialogPane.Builder.StringQuestion) result.get(0)).getValue();
+                    Integer selectWorld = ((PromptDialogPane.Builder.CandidatesQuestion) result.get(1)).getValue();
+
+                    if (selectWorld == null) {
+                        reject.accept(i18n("mods.install.select_world.not_select.hint"));
+                        return;
+                    }
+
+                    if (!FileUtils.isNameValid(fileName)) {
+                        reject.accept(i18n("install.new_game.malformed"));
+                        return;
+                    }
+
+                    String selectedWorldFolderName = worlds.get(selectWorld).getFileName();
+                    Path dest = runDirectory.resolve("saves").resolve(selectedWorldFolderName).resolve(subdirectoryName).resolve(fileName);
+
+                    Controllers.taskDialog(Task.composeAsync(() -> {
+                        var task = new FileDownloadTask(file.getFile().getUrl(), dest);
+                        task.setName(file.getName());
+                        return task;
+                    }).whenComplete(Schedulers.javafx(), exception -> {
+                        if (exception != null) {
+                            if (exception instanceof CancellationException) {
+                                Controllers.showToast(i18n("message.cancelled"));
+                            } else {
+                                Controllers.dialog(DownloadProviders.localizeErrorMessage(exception), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR);
+                            }
+                        } else {
+                            Controllers.showToast(i18n("install.success"));
+                        }
+                    }), i18n("message.downloading"), TaskCancellationAction.NORMAL);
+                    resolve.run();
+                })
+                        .addQuestion(new PromptDialogPane.Builder.StringQuestion(i18n("archive.file.name"), file.getFile().getFilename()))
+                        .addQuestion(new PromptDialogPane.Builder.CandidatesQuestion(i18n("mods.install.select_world.title"), worlds.stream().map(World::getWorldName).toArray(String[]::new)))
+        );
+    }
+
     private void loadVersions(Profile profile) {
         listenerHolder = new WeakListenerHolder();
         runInFX(() -> {
@@ -178,6 +232,9 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                     }
                     if (shaderTab.isInitialized()) {
                         shaderTab.getNode().loadVersion(profile, null);
+                    }
+                    if (dataPackTab.isInitialized()) {
+                        dataPackTab.getNode().loadVersion(profile, null);
                     }
                     if (worldTab.isInitialized()) {
                         worldTab.getNode().loadVersion(profile, null);
@@ -211,6 +268,10 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
     public void showWorldDownloads() {
         tab.select(worldTab, false);
+    }
+
+    public void showDatapackDownloads() {
+        tab.select(dataPackTab, false);
     }
 
     private static final class DownloadNavigator implements Navigation {
