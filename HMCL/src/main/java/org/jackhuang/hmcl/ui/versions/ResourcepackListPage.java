@@ -24,7 +24,6 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.ListPageBase;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.ByteArrayInputStream;
