@@ -340,7 +340,7 @@ public final class WorldInfoPage extends SpinnerPane {
                 setRightTextLabel(spawnPane, spawnLabel, () -> {
 
                     Dimension dimension;
-                    if (player.get("respawn") instanceof CompoundTag respawnTag) { //Valid after 25w07a
+                    if (player.get("respawn") instanceof CompoundTag respawnTag && respawnTag.get("dimension") != null) { //Valid after 25w07a
                         dimension = Dimension.of(respawnTag.get("dimension"));
                         Tag posTag = respawnTag.get("pos");
 
@@ -462,7 +462,7 @@ public final class WorldInfoPage extends SpinnerPane {
     }
 
     private void setRightTextField(BorderPane borderPane, JFXTextField textField, int perfWidth) {
-        textField.setDisable(worldManagePage.isDisable());
+        textField.setDisable(worldManagePage.isReadOnly());
         textField.setPrefWidth(perfWidth);
         textField.setAlignment(Pos.CENTER_RIGHT);
         borderPane.setRight(textField);

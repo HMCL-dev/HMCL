@@ -154,7 +154,7 @@ public final class WorldManageUIUtils {
         }
     }
 
-    public static FileChannel getSessionLockChannel(World world) throws IOException {
+    public static FileChannel getSessionLockChannel(World world) {
         try {
             FileChannel lock = world.lock();
             LOG.info("Acquired lock on world " + world.getFileName());

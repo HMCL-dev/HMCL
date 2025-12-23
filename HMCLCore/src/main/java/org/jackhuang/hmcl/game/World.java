@@ -303,8 +303,13 @@ public final class World {
     }
 
     public void copy(String newName) throws IOException {
-        if (!Files.isDirectory(file))
+        if (!Files.isDirectory(file)) {
             throw new IOException();
+        }
+
+        if (isLocked()) {
+            throw new WorldLockedException("The world " + getFile() + " has been locked");
+        }
 
         Path newPath = file.resolveSibling(newName);
         FileUtils.copyDirectory(file, newPath);

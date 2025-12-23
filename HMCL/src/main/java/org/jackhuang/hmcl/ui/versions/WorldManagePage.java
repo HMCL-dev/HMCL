@@ -77,10 +77,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         header.select(worldInfoTab);
 
         // Does it need to be done in the background?
-        try {
-            sessionLockChannel = WorldManageUIUtils.getSessionLockChannel(world);
-        } catch (IOException ignored) {
-        }
+        sessionLockChannel = WorldManageUIUtils.getSessionLockChannel(world);
 
         setCenter(transitionPane);
 
@@ -162,11 +159,8 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     }
 
     private void onNavigated(Navigator.NavigationEvent event) {
-        try {
-            if (sessionLockChannel == null || !sessionLockChannel.isOpen()) {
-                sessionLockChannel = WorldManageUIUtils.getSessionLockChannel(world);
-            }
-        } catch (IOException ignored) {
+        if (sessionLockChannel == null || !sessionLockChannel.isOpen()) {
+            sessionLockChannel = WorldManageUIUtils.getSessionLockChannel(world);
         }
     }
 
