@@ -90,8 +90,7 @@ public final class NBTEditorPage extends SpinnerPane implements DecoratorPage {
                     if (exception == null) {
                         setLoading(false);
                         NBTTreeView view = new NBTTreeView(result);
-                        // Keep bottom as 5 since there will be more buttons beneath (probably)
-                        BorderPane.setMargin(view, new Insets(10, 10, 5, 10));
+                        BorderPane.setMargin(view, new Insets(10));
                         onEscPressed(view, cancelButton::fire);
                         root.setCenter(view);
                     } else {
