@@ -18,10 +18,10 @@
 package org.jackhuang.hmcl.ui.export;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXTreeView;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.CheckBox;
 import javafx.scene.control.CheckBoxTreeItem;
 import javafx.scene.control.Label;
 import javafx.scene.control.TreeItem;
@@ -44,6 +44,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -67,6 +68,8 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         rootNode = getTreeItem(profile.getRepository().getRunDirectory(version), "minecraft");
         treeView.setRoot(rootNode);
         treeView.setSelectionModel(new NoneMultipleSelectionModel<>());
+        onEscPressed(treeView, () -> controller.onPrev(true));
+        setMargin(treeView, new Insets(10, 10, 5, 10));
         this.setCenter(treeView);
 
         HBox nextPane = new HBox();
@@ -142,15 +145,14 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         }
 
         HBox graphic = new HBox();
-        CheckBox checkBox = new CheckBox();
+        JFXCheckBox checkBox = new JFXCheckBox();
         checkBox.selectedProperty().bindBidirectional(node.selectedProperty());
         checkBox.indeterminateProperty().bindBidirectional(node.indeterminateProperty());
         graphic.getChildren().add(checkBox);
 
         if (TRANSLATION.containsKey(basePath)) {
-            Label comment = new Label();
-            comment.setText(TRANSLATION.get(basePath));
-            comment.setStyle("-fx-text-fill: gray;");
+            Label comment = new Label(TRANSLATION.get(basePath));
+            comment.setStyle("-fx-text-fill: -monet-on-surface-variant;");
             comment.setMouseTransparent(true);
             graphic.getChildren().add(comment);
         }
