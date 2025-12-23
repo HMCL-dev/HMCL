@@ -297,6 +297,8 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                 else
                     twoLineListItem.addTag(remoteVersion.getGameVersion());
             }
+
+            FXUtils.updateFixedCellSize(getListView(), this);
         }
     }
 
@@ -396,7 +398,6 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
                     {
                         list = new JFXListView<>();
                         list.getStyleClass().add("jfx-list-view-float");
-                        list.setFixedCellSize(65);
                         VBox.setVgrow(list, Priority.ALWAYS);
 
                         control.versions.addListener((InvalidationListener) o -> updateList());

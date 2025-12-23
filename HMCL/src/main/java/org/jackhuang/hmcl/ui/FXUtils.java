@@ -397,6 +397,17 @@ public final class FXUtils {
         return pane;
     }
 
+    public static void updateFixedCellSize(ListView<?> listView, ListCell<?> cell) {
+        if (!Boolean.TRUE.equals(listView.getProperties().put("FXUtils.updateFixedCellSize", Boolean.TRUE))) {
+            Platform.runLater(() -> {
+                double height = cell.getHeight();
+                if (height > 0) {
+                    listView.setFixedCellSize(height);
+                }
+            });
+        }
+    }
+
     public static void smoothScrolling(ScrollPane scrollPane) {
         if (AnimationUtils.isAnimationEnabled())
             ScrollUtils.addSmoothScrolling(scrollPane);
