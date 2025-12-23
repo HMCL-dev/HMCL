@@ -32,6 +32,7 @@ import javafx.scene.control.Skin;
 import javafx.scene.layout.*;
 import javafx.scene.transform.Scale;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.Motion;
 
 /// # Material Design Popup Skin
@@ -61,7 +62,7 @@ public class JFXPopupSkin implements Skin<JFXPopup> {
         container.getTransforms().add(scale);
         container.setOpacity(0);
         root = JFXDepthManager.createMaterialNode(container, 4);
-        animation = getAnimation();
+        animation = AnimationUtils.isAnimationEnabled() ? getAnimation() : null;
     }
 
     public void reset(PopupVPosition vAlign, PopupHPosition hAlign, double offsetX, double offsetY) {
@@ -73,9 +74,16 @@ public class JFXPopupSkin implements Skin<JFXPopup> {
     }
 
     public final void animate() {
-        if (animation.getStatus() == Status.STOPPED) {
+        if (animation != null) {
+            if (animation.getStatus() == Status.STOPPED) {
+                container.setOpacity(1);
+                animation.playFromStart();
+            }
+        } else {
             container.setOpacity(1);
-            animation.playFromStart();
+            popupContent.setOpacity(1);
+            scale.setX(1.0);
+            scale.setY(1.0);
         }
     }
 
@@ -91,8 +99,10 @@ public class JFXPopupSkin implements Skin<JFXPopup> {
 
     @Override
     public void dispose() {
-        animation.stop();
-        animation = null;
+        if (animation != null) {
+            animation.stop();
+            animation = null;
+        }
         container = null;
         control = null;
         popupContent = null;
@@ -101,7 +111,6 @@ public class JFXPopupSkin implements Skin<JFXPopup> {
 
     protected Animation getAnimation() {
         Interpolator interpolator = Motion.EASE;
-
         return new Timeline(
                 new KeyFrame(
                         Duration.ZERO,
@@ -121,7 +130,8 @@ public class JFXPopupSkin implements Skin<JFXPopup> {
     }
 
     public void init() {
-        animation.stop();
+        if (animation != null)
+            animation.stop();
         container.setOpacity(0);
         scale.setX(1.0);
         scale.setY(0.01);
