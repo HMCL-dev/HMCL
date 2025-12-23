@@ -156,8 +156,7 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
             center.getStyleClass().add("large-spinner-pane");
             center.loadingProperty().bind(control.loadingProperty());
 
-            Holder<Object> lastCell = new Holder<>();
-            listView.setCellFactory(x -> new ResourcepackListCell(listView, lastCell, control));
+            listView.setCellFactory(x -> new ResourcepackListCell(listView, control));
             Bindings.bindContent(listView.getItems(), control.getItems());
 
             center.setContent(listView);
@@ -210,8 +209,8 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
         private final JFXButton btnDelete = new JFXButton();
         private final ResourcepackListPage page;
 
-        public ResourcepackListCell(JFXListView<ResourcepackInfoObject> listView, Holder<Object> lastCell, ResourcepackListPage page) {
-            super(listView, lastCell);
+        public ResourcepackListCell(JFXListView<ResourcepackInfoObject> listView, ResourcepackListPage page) {
+            super(listView);
 
             this.page = page;
 

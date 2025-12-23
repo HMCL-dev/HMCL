@@ -42,10 +42,9 @@ public final class NBTTreeView extends TreeView<Tag> {
     }
 
     private static Callback<TreeView<Tag>, TreeCell<Tag>> cellFactory() {
-        Holder<Object> lastCell = new Holder<>();
         EnumMap<NBTTagType, Image> icons = new EnumMap<>(NBTTagType.class);
 
-        return view -> new TreeCell<Tag>() {
+        return view -> new TreeCell<>() {
             private void setTagText(String text) {
                 String name = ((Item) getTreeItem()).getName();
 
@@ -65,11 +64,6 @@ public final class NBTTreeView extends TreeView<Tag> {
             @Override
             public void updateItem(Tag item, boolean empty) {
                 super.updateItem(item, empty);
-
-                // https://mail.openjdk.org/pipermail/openjfx-dev/2022-July/034764.html
-                if (this == lastCell.value && !isVisible())
-                    return;
-                lastCell.value = this;
 
                 ImageView imageView = (ImageView) this.getGraphic();
                 if (imageView == null) {

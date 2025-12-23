@@ -180,8 +180,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             center.getStyleClass().add("large-spinner-pane");
             center.loadingProperty().bind(skinnable.loadingProperty());
 
-            Holder<Object> lastCell = new Holder<>();
-            listView.setCellFactory(x -> new DatapackInfoListCell(listView, lastCell));
+            listView.setCellFactory(x -> new DatapackInfoListCell(listView));
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
             this.listView.setItems(filteredList);
 
@@ -304,8 +303,8 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
         final TwoLineListItem content = new TwoLineListItem();
         BooleanProperty booleanProperty;
 
-        DatapackInfoListCell(JFXListView<DatapackInfoObject> listView, Holder<Object> lastCell) {
-            super(listView, lastCell);
+        DatapackInfoListCell(JFXListView<DatapackInfoObject> listView) {
+            super(listView);
 
             HBox container = new HBox(8);
             container.setPickOnBounds(false);
