@@ -20,22 +20,18 @@
  */
 package com.jfoenix.skins;
 
-import com.jfoenix.adapters.skins.ListViewSkin;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.scene.control.ListCell;
+import javafx.scene.control.skin.ListViewSkin;
 import javafx.scene.control.skin.VirtualFlow;
 import org.jackhuang.hmcl.ui.FXUtils;
 
-// https://github.com/HMCL-dev/HMCL/issues/4720
 public class JFXListViewSkin<T> extends ListViewSkin<T> {
 
-    private final VirtualFlow<ListCell<T>> flow;
-
-    @SuppressWarnings("unchecked")
     public JFXListViewSkin(final JFXListView<T> listView) {
         super(listView);
-        flow = (VirtualFlow<ListCell<T>>) getChildren().get(0);
+        VirtualFlow<ListCell<T>> flow = getVirtualFlow();
         JFXDepthManager.setDepth(flow, listView.depthProperty().get());
         listView.depthProperty().addListener((o, oldVal, newVal) -> JFXDepthManager.setDepth(flow, newVal));
 
