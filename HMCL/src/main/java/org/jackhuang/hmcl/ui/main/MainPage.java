@@ -391,7 +391,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         Node contentNode;
         if (menu.getContent().isEmpty()) {
             Label placeholder = new Label(i18n("version.empty"));
-            placeholder.setStyle("-fx-padding: 10px; -fx-text-fill: gray; -fx-font-style: italic;");
+            placeholder.setStyle("-fx-padding: 10px; -fx-text-fill: -monet-on-surface-variant; -fx-font-style: italic;");
             contentNode = placeholder;
         } else {
             contentNode = menu;
