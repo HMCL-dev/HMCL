@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui.export;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXCheckBox;
-import com.jfoenix.controls.JFXTreeCell;
 import com.jfoenix.controls.JFXTreeView;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -66,7 +65,6 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         this.adviser = adviser;
 
         JFXTreeView<String> treeView = new JFXTreeView<>();
-        treeView.setCellFactory((view) -> new JFXTreeCell<>());
 
         rootNode = getTreeItem(profile.getRepository().getRunDirectory(version), "minecraft");
         treeView.setRoot(rootNode);

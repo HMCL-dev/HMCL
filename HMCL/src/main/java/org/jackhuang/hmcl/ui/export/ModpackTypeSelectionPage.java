@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.export;
 import com.jfoenix.controls.JFXButton;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
@@ -76,7 +77,7 @@ public final class ModpackTypeSelectionPage extends VBox implements WizardPage {
         graphic.setMouseTransparent(true);
         graphic.setLeft(new TwoLineListItem(i18n("modpack.type." + type), i18n("modpack.type." + type + ".export")));
 
-        var arrow = SVG.ARROW_FORWARD.createIcon();
+        Node arrow = SVG.ARROW_FORWARD.createIcon();
         BorderPane.setAlignment(arrow, Pos.CENTER);
         graphic.setRight(arrow);
 
