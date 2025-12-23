@@ -27,7 +27,6 @@ import javafx.scene.control.TreeView;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.util.Callback;
-import org.jackhuang.hmcl.util.Holder;
 
 import java.lang.reflect.Array;
 import java.util.EnumMap;
@@ -45,7 +44,6 @@ public final class NBTTreeView extends JFXTreeView<Tag> {
     }
 
     private static Callback<TreeView<Tag>, TreeCell<Tag>> cellFactory() {
-        Holder<Object> lastCell = new Holder<>();
         EnumMap<NBTTagType, Image> icons = new EnumMap<>(NBTTagType.class);
 
         return view -> new TreeCell<>() {
@@ -68,11 +66,6 @@ public final class NBTTreeView extends JFXTreeView<Tag> {
             @Override
             public void updateItem(Tag item, boolean empty) {
                 super.updateItem(item, empty);
-
-                // https://mail.openjdk.org/pipermail/openjfx-dev/2022-July/034764.html
-                if (this == lastCell.value && !isVisible())
-                    return;
-                lastCell.value = this;
 
                 ImageView imageView = (ImageView) this.getGraphic();
                 if (imageView == null) {

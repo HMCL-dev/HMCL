@@ -46,7 +46,6 @@ import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.construct.NoneMultipleSelectionModel;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
-import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.CircularArrayList;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
@@ -344,8 +343,7 @@ public final class LogWindow extends Stage {
 
                 listView.setStyle("-fx-font-family: \"" + Lang.requireNonNullElse(config().getFontFamily(), FXUtils.DEFAULT_MONOSPACE_FONT)
                         + "\"; -fx-font-size: " + config().getFontSize() + "px;");
-                Holder<Object> lastCell = new Holder<>();
-                listView.setCellFactory(x -> new ListCell<Log>() {
+                listView.setCellFactory(x -> new ListCell<>() {
                     {
                         x.setSelectionModel(new NoneMultipleSelectionModel<>());
                         getStyleClass().add("log-window-list-cell");
@@ -388,11 +386,6 @@ public final class LogWindow extends Stage {
                     @Override
                     protected void updateItem(Log item, boolean empty) {
                         super.updateItem(item, empty);
-
-                        // https://mail.openjdk.org/pipermail/openjfx-dev/2022-July/034764.html
-                        if (this == lastCell.value && !isVisible())
-                            return;
-                        lastCell.value = this;
 
                         pseudoClassStateChanged(EMPTY, empty);
                         pseudoClassStateChanged(FATAL, !empty && item.getLevel() == Log4jLevel.FATAL);
