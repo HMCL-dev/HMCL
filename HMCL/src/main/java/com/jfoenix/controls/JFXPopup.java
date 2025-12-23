@@ -32,13 +32,11 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.stage.Window;
 
-/**
- * JFXPopup is the material design implementation of a popup.
- *
- * @author Shadi Shaheen
- * @version 2.0
- * @since 2017-03-01
- */
+/// JFXPopup is the material design implementation of a popup.
+///
+/// @author Shadi Shaheen
+/// @version 2.0
+/// @since 2017-03-01
 @DefaultProperty(value = "popupContent")
 public class JFXPopup extends PopupControl {
 
@@ -50,18 +48,14 @@ public class JFXPopup extends PopupControl {
         TOP, BOTTOM
     }
 
-    /**
-     * Creates empty popup.
-     */
+    /// Creates empty popup.
     public JFXPopup() {
         this(null);
     }
 
-    /**
-     * creates popup with a specified container and content
-     *
-     * @param content the node that will be shown in the popup
-     */
+    /// creates popup with a specified container and content
+    ///
+    /// @param content the node that will be shown in the popup
     public JFXPopup(Region content) {
         setPopupContent(content);
         initialize();
@@ -106,31 +100,25 @@ public class JFXPopup extends PopupControl {
      *                                                                         *
      **************************************************************************/
 
-    /**
-     * show the popup using the default position
-     */
+    /// show the popup using the default position
     public void show(Node node) {
         this.show(node, PopupVPosition.TOP, PopupHPosition.LEFT, 0, 0);
     }
 
-    /**
-     * show the popup according to the specified position
-     *
-     * @param vAlign can be TOP/BOTTOM
-     * @param hAlign can be LEFT/RIGHT
-     */
+    /// show the popup according to the specified position
+    ///
+    /// @param vAlign can be TOP/BOTTOM
+    /// @param hAlign can be LEFT/RIGHT
     public void show(Node node, PopupVPosition vAlign, PopupHPosition hAlign) {
         this.show(node, vAlign, hAlign, 0, 0);
     }
 
-    /**
-     * show the popup according to the specified position with a certain offset
-     *
-     * @param vAlign      can be TOP/BOTTOM
-     * @param hAlign      can be LEFT/RIGHT
-     * @param initOffsetX on the x axis
-     * @param initOffsetY on the y axis
-     */
+    /// show the popup according to the specified position with a certain offset
+    ///
+    /// @param vAlign      can be TOP/BOTTOM
+    /// @param hAlign      can be LEFT/RIGHT
+    /// @param initOffsetX on the x-axis
+    /// @param initOffsetY on the y-axis
     public void show(Node node, PopupVPosition vAlign, PopupHPosition hAlign, double initOffsetX, double initOffsetY) {
         if (!isShowing()) {
             if (node.getScene() == null || node.getScene().getWindow() == null) {
@@ -175,11 +163,9 @@ public class JFXPopup extends PopupControl {
      *                                                                         *
      **************************************************************************/
 
-    /**
-     * Initialize the style class to 'jfx-popup'.
-     * <p>
-     * This is the selector class from which CSS can be used to style
-     * this control.
-     */
+    /// Initialize the style class to 'jfx-popup'.
+    ///
+    /// This is the selector class from which CSS can be used to style
+    /// this control.
     private static final String DEFAULT_STYLE_CLASS = "jfx-popup";
 }
