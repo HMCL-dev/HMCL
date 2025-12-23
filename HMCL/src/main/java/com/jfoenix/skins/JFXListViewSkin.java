@@ -39,7 +39,10 @@ public class JFXListViewSkin<T> extends ListViewSkin<T> {
         flow = (VirtualFlow<ListCell<T>>) getChildren().get(0);
         JFXDepthManager.setDepth(flow, listView.depthProperty().get());
         listView.depthProperty().addListener((o, oldVal, newVal) -> JFXDepthManager.setDepth(flow, newVal));
-        FXUtils.smoothScrolling(flow);
+
+        if (!Boolean.TRUE.equals(listView.getProperties().get("no-smooth-scrolling"))) {
+            FXUtils.smoothScrolling(flow);
+        }
     }
 
     @Override
