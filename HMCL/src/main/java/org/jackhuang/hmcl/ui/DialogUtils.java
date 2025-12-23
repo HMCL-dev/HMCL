@@ -18,6 +18,9 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 public class DialogUtils {
+    private DialogUtils() {
+    }
+
     public static final String PROPERTY_DIALOG_INSTANCE = DialogUtils.class.getName() + ".dialog.instance";
     public static final String PROPERTY_DIALOG_PANE_INSTANCE = DialogUtils.class.getName() + ".dialog.pane.instance";
     public static final String PROPERTY_DIALOG_CLOSE_HANDLER = DialogUtils.class.getName() + ".dialog.closeListener";
