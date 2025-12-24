@@ -89,6 +89,32 @@ public final class EntryPoint {
             }
         }
 
+        // Enable HiDPI support for JavaFX
+        System.getProperties().putIfAbsent("prism.allowhidpi", "true");
+
+        // Check if running in Wayland session
+        boolean isWayland = "wayland".equalsIgnoreCase(System.getenv("XDG_SESSION_TYPE"))
+                || System.getenv("WAYLAND_DISPLAY") != null;
+
+        if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && isWayland) {
+            LOG.info("Detected Wayland session");
+            // On Wayland, ensure JavaFX can properly detect the scale factor
+            // by setting jdk.gtk.version to 3 which has better Wayland support
+            System.getProperties().putIfAbsent("jdk.gtk.version", "3");
+
+            // Try to detect GNOME scale factor from monitors.xml if no manual scale is set
+            String uiScaleEnv = System.getProperty("hmcl.uiScale", System.getenv("HMCL_UI_SCALE"));
+            if (uiScaleEnv == null) {
+                Double gnomeScale = detectGnomeWaylandScale();
+                if (gnomeScale != null && gnomeScale > 1.0) {
+                    LOG.info("Detected GNOME Wayland scale factor: " + gnomeScale);
+                    String scaleStr = String.valueOf(gnomeScale);
+                    System.getProperties().putIfAbsent("glass.gtk.uiScale", scaleStr);
+                    System.getProperties().putIfAbsent("prism.uiscale", scaleStr);
+                }
+            }
+        }
+
         String uiScale = System.getProperty("hmcl.uiScale", System.getenv("HMCL_UI_SCALE"));
         if (uiScale != null) {
             uiScale = uiScale.trim();
@@ -123,7 +149,10 @@ public final class EntryPoint {
                     } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
                         LOG.warning("macOS does not support setting UI scale, so it will be ignored");
                     } else {
+                        // For Linux (both X11 and Wayland), set the GTK UI scale
                         System.getProperties().putIfAbsent("glass.gtk.uiScale", uiScale);
+                        // Also set prism.uiscale as a fallback for some JavaFX versions
+                        System.getProperties().putIfAbsent("prism.uiscale", String.valueOf(scaleValue));
                     }
                 } else {
                     LOG.warning("UI scale out of range: " + uiScale);
@@ -273,5 +302,58 @@ public final class EntryPoint {
     private static void showErrorAndExit(String message) {
         SwingUtils.showErrorDialog(message);
         exit(1);
+    }
+
+    /**
+     * Detects the GNOME Wayland scale factor from monitors.xml configuration file.
+     * This is necessary because JavaFX running through XWayland cannot detect
+     * the Wayland fractional scaling factor automatically.
+     *
+     * @return the scale factor, or null if it cannot be detected
+     */
+    private static Double detectGnomeWaylandScale() {
+        try {
+            // GNOME stores monitor configuration in ~/.config/monitors.xml
+            Path monitorsXml = Path.of(System.getProperty("user.home"), ".config", "monitors.xml");
+            if (!Files.exists(monitorsXml)) {
+                return null;
+            }
+
+            String content = Files.readString(monitorsXml);
+            // Look for the scale value in the current configuration
+            // The format is: <scale>1.75</scale> or similar
+            // We need to find the scale within the <configuration> block that has <current/> tag
+            
+            // Simple regex-based parsing to find scale values
+            java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("<scale>([0-9.]+)</scale>");
+            java.util.regex.Matcher matcher = pattern.matcher(content);
+            
+            // Find the configuration block with <current/> tag
+            int currentConfigStart = content.indexOf("<configuration>");
+            int currentTagPos = content.indexOf("<current/>");
+            
+            if (currentTagPos < 0) {
+                // No current configuration found, try to use the first scale value
+                if (matcher.find()) {
+                    return Double.parseDouble(matcher.group(1));
+                }
+                return null;
+            }
+            
+            // Find the configuration block containing <current/>
+            int configStart = content.lastIndexOf("<configuration>", currentTagPos);
+            int configEnd = content.indexOf("</configuration>", currentTagPos);
+            
+            if (configStart >= 0 && configEnd > configStart) {
+                String currentConfig = content.substring(configStart, configEnd);
+                java.util.regex.Matcher configMatcher = pattern.matcher(currentConfig);
+                if (configMatcher.find()) {
+                    return Double.parseDouble(configMatcher.group(1));
+                }
+            }
+        } catch (Exception e) {
+            LOG.warning("Failed to detect GNOME Wayland scale factor", e);
+        }
+        return null;
     }
 }
