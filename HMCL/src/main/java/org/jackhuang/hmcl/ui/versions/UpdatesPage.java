@@ -29,7 +29,10 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import org.jackhuang.hmcl.mod.*;
+import org.jackhuang.hmcl.mod.LocalFile;
+import org.jackhuang.hmcl.mod.LocalFileManager;
+import org.jackhuang.hmcl.mod.ModManager;
+import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -58,14 +61,14 @@ import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class UpdatesPage<F extends ILocalFile> extends BorderPane implements DecoratorPage {
+public class UpdatesPage<F extends LocalFile> extends BorderPane implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(DecoratorPage.State.fromTitle(i18n("mods.check_updates")));
 
     private final LocalFileManager<F> localFileManager;
     private final ObservableList<ModUpdateObject> objects;
 
     @SuppressWarnings("unchecked")
-    public UpdatesPage(LocalFileManager<F> localFileManager, List<ILocalFile.ModUpdate> updates) {
+    public UpdatesPage(LocalFileManager<F> localFileManager, List<LocalFile.ModUpdate> updates) {
         this.localFileManager = localFileManager;
 
         getStyleClass().add("gray-background");
@@ -140,7 +143,7 @@ public class UpdatesPage<F extends ILocalFile> extends BorderPane implements Dec
                     fireEvent(new PageCloseEvent());
                     if (!task.getFailedMods().isEmpty()) {
                         Controllers.dialog(i18n("mods.check_updates.failed_download") + "\n" +
-                                        task.getFailedMods().stream().map(ILocalFile::getFileName).collect(Collectors.joining("\n")),
+                                        task.getFailedMods().stream().map(LocalFile::getFileName).collect(Collectors.joining("\n")),
                                 i18n("install.failed"),
                                 MessageDialogPane.MessageType.ERROR);
                     }
@@ -189,14 +192,14 @@ public class UpdatesPage<F extends ILocalFile> extends BorderPane implements Dec
     }
 
     private static final class ModUpdateObject {
-        final ILocalFile.ModUpdate data;
+        final LocalFile.ModUpdate data;
         final BooleanProperty enabled = new SimpleBooleanProperty();
         final StringProperty fileName = new SimpleStringProperty();
         final StringProperty currentVersion = new SimpleStringProperty();
         final StringProperty targetVersion = new SimpleStringProperty();
         final StringProperty source = new SimpleStringProperty();
 
-        public ModUpdateObject(ILocalFile.ModUpdate data) {
+        public ModUpdateObject(LocalFile.ModUpdate data) {
             this.data = data;
 
             enabled.set(!data.localFile().isDisabled());
@@ -275,15 +278,15 @@ public class UpdatesPage<F extends ILocalFile> extends BorderPane implements Dec
 
     public static class UpdateTask extends Task<Void> {
         private final Collection<Task<?>> dependents;
-        private final List<ILocalFile> failedMods = new ArrayList<>();
+        private final List<LocalFile> failedMods = new ArrayList<>();
 
-        UpdateTask(Path modDirectory, List<Pair<ILocalFile, RemoteMod.Version>> mods) {
+        UpdateTask(Path modDirectory, List<Pair<LocalFile, RemoteMod.Version>> mods) {
             setStage("mods.check_updates.confirm");
             getProperties().put("total", mods.size());
 
             this.dependents = new ArrayList<>();
-            for (Pair<ILocalFile, RemoteMod.Version> mod : mods) {
-                ILocalFile local = mod.getKey();
+            for (Pair<LocalFile, RemoteMod.Version> mod : mods) {
+                LocalFile local = mod.getKey();
                 RemoteMod.Version remote = mod.getValue();
                 boolean isDisabled = local.isDisabled();
 
@@ -320,7 +323,7 @@ public class UpdatesPage<F extends ILocalFile> extends BorderPane implements Dec
             }
         }
 
-        public List<ILocalFile> getFailedMods() {
+        public List<LocalFile> getFailedMods() {
             return failedMods;
         }
 

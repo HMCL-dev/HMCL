@@ -13,7 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
 
-public sealed abstract class ResourcePackFile implements Comparable<ResourcePackFile>, ILocalFile permits ResourcePackFolder, ResourcePackZipFile {
+public sealed abstract class ResourcePackFile extends LocalFile implements Comparable<ResourcePackFile> permits ResourcePackFolder, ResourcePackZipFile {
     static ResourcePackFile parse(ResourcePackManager manager, Path path) throws IOException {
         String fileName = LocalFileManager.getLocalFileName(path);
         if (Files.isRegularFile(path) && fileName.toLowerCase(Locale.ROOT).endsWith(".zip")) {
@@ -32,6 +32,7 @@ public sealed abstract class ResourcePackFile implements Comparable<ResourcePack
     private ObjectProperty<Compatibility> compatibility = null;
 
     protected ResourcePackFile(ResourcePackManager manager, Path file) {
+        super(false);
         this.manager = manager;
         this.file = file;
         this.fileName = LocalFileManager.getLocalFileName(file);
@@ -69,11 +70,6 @@ public sealed abstract class ResourcePackFile implements Comparable<ResourcePack
         } else {
             manager.disableResourcePack(this);
         }
-    }
-
-    @Override
-    public boolean keepOldFiles() {
-        return false;
     }
 
     @Override

@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import org.jackhuang.hmcl.mod.ILocalFile;
+import org.jackhuang.hmcl.mod.LocalFile;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.task.Task;
@@ -25,10 +25,10 @@ import org.jackhuang.hmcl.task.Task;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class CheckUpdatesTask extends Task<List<ILocalFile.ModUpdate>> {
-    private final Collection<Collection<Task<ILocalFile.ModUpdate>>> dependents;
+public class CheckUpdatesTask extends Task<List<LocalFile.ModUpdate>> {
+    private final Collection<Collection<Task<LocalFile.ModUpdate>>> dependents;
 
-    public CheckUpdatesTask(String gameVersion, Collection<? extends ILocalFile> mods, RemoteModRepository.Type repoType) {
+    public CheckUpdatesTask(String gameVersion, Collection<? extends LocalFile> mods, RemoteModRepository.Type repoType) {
         Map<String, RemoteModRepository> repos = new LinkedHashMap<>(2);
         for (RemoteMod.Type modType : RemoteMod.Type.values()) {
             RemoteModRepository repo = modType.getRepoForType(repoType);
@@ -78,7 +78,7 @@ public class CheckUpdatesTask extends Task<List<ILocalFile.ModUpdate>> {
                         .filter(task -> task.getResult() != null)
                         .map(Task::getResult)
                         .filter(modUpdate -> !modUpdate.candidates().isEmpty())
-                        .max(Comparator.comparing((ILocalFile.ModUpdate modUpdate) -> modUpdate.candidates().get(0).getDatePublished()))
+                        .max(Comparator.comparing((LocalFile.ModUpdate modUpdate) -> modUpdate.candidates().get(0).getDatePublished()))
                         .orElse(null)
                 )
                 .filter(Objects::nonNull)

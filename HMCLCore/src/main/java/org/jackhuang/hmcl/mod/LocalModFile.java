@@ -33,7 +33,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  *
  * @author huangyuhui
  */
-public final class LocalModFile implements Comparable<LocalModFile>, ILocalFile {
+public final class LocalModFile extends LocalFile implements Comparable<LocalModFile> {
 
     private Path file;
     private final ModManager modManager;
@@ -53,6 +53,7 @@ public final class LocalModFile implements Comparable<LocalModFile>, ILocalFile 
     }
 
     public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description, String authors, String version, String gameVersion, String url, String logoPath) {
+        super(true);
         this.modManager = modManager;
         this.mod = mod;
         this.file = file;
@@ -154,11 +155,6 @@ public final class LocalModFile implements Comparable<LocalModFile>, ILocalFile 
     @Override
     public String getFileName() {
         return fileName;
-    }
-
-    @Override
-    public boolean keepOldFiles() {
-        return true;
     }
 
     public boolean isOld() {

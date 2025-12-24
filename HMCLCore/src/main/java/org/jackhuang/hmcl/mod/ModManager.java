@@ -209,7 +209,7 @@ public final class ModManager extends LocalFileManager<LocalModFile> {
 
     public void removeMods(LocalModFile... localModFiles) throws IOException {
         for (LocalModFile localModFile : localModFiles) {
-            Files.deleteIfExists(localModFile.getFile());
+            localModFile.delete();
         }
     }
 

@@ -9,9 +9,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.*;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
-public abstract class LocalFileManager<T extends ILocalFile> {
+public abstract class LocalFileManager<T extends LocalFile> {
 
     public static final String DISABLED_EXTENSION = ".disabled";
     public static final String OLD_EXTENSION = ".old";
