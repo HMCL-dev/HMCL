@@ -189,8 +189,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             center.getStyleClass().add("large-spinner-pane");
             center.loadingProperty().bind(skinnable.loadingProperty());
 
-            Holder<Object> lastCell = new Holder<>();
-            listView.setCellFactory(x -> new ModInfoListCell(listView, lastCell));
+            listView.setCellFactory(x -> new ModInfoListCell(listView));
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
             Bindings.bindContent(listView.getItems(), skinnable.getItems());
             skinnable.getItems().addListener((ListChangeListener<? super ModInfoObject>) c -> {
@@ -562,8 +561,8 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
         Tooltip warningTooltip;
 
-        ModInfoListCell(JFXListView<ModInfoObject> listView, Holder<Object> lastCell) {
-            super(listView, lastCell);
+        ModInfoListCell(JFXListView<ModInfoObject> listView) {
+            super(listView);
 
             this.getStyleClass().add("mod-info-list-cell");
 
