@@ -41,6 +41,14 @@
     -fx-text-fill: -monet-on-surface-variant;
 }
 
+.hyperlink {
+    -fx-text-fill: -monet-primary;
+}
+
+.hyperlink:focused {
+    -fx-border-color: -monet-primary;
+}
+
 .hint {
     -fx-background-radius: 5;
     -fx-border-width: 1;
@@ -160,7 +168,11 @@
 }
 
 .rippler-container {
-    -jfx-rippler-fill: #a2a2a2;
+    -jfx-rippler-fill: -monet-on-surface-variant;
+}
+
+.advanced-list-item .rippler-container {
+    -jfx-rippler-fill: -monet-on-secondary-container;
 }
 
 .advanced-list-item > .rippler-container > .container {
@@ -253,6 +265,10 @@
     -fx-spacing: 0;
 }
 
+.no-padding .advanced-list-box-content {
+    -fx-padding: 0 0 0 0;
+}
+
 .iconed-item {
     -jfx-rippler-fill: -monet-secondary-container;
 }
@@ -334,7 +350,7 @@
     -fx-font-size: 15px;
 }
 
-.terracotta-license Text {
+.terracotta-hint Text {
     -fx-fill: -monet-on-surface;
 }
 
@@ -427,17 +443,6 @@
 
 .launch-pane > Rectangle {
     -fx-fill: -monet-primary-container;
-}
-
-/*******************************************************************************
- *                                                                             *
- * Tooltip                                                                     *
- *                                                                             *
- ******************************************************************************/
-
-.tooltip {
-    -fx-text-fill: -monet-inverse-on-surface;
-    -fx-background-color: -monet-inverse-surface;
 }
 
 /*******************************************************************************
@@ -674,11 +679,6 @@
     -fx-padding: 10.0;
 }
 
-.jfx-tool-bar-button .jfx-rippler {
-    -jfx-rippler-fill: -monet-on-surface;
-    -jfx-mask-type: CIRCLE;
-}
-
 .jfx-decorator-button {
     -fx-max-width: 40px;
     -fx-background-radius: 5px;
@@ -763,7 +763,7 @@
 }
 
 .jfx-button .jfx-rippler {
-    -jfx-rippler-fill: -monet-on-primary;
+    -jfx-rippler-fill: -monet-on-surface;
     -jfx-mask-type: CIRCLE;
     -fx-padding: 0.0;
 }
@@ -773,6 +773,7 @@
 }
 
 .jfx-button-raised .jfx-rippler {
+    -jfx-rippler-fill: -monet-on-primary;
     -jfx-mask-type: CIRCLE;
     -fx-padding: 0.0;
 }
@@ -814,6 +815,10 @@
     -fx-text-fill: -monet-on-surface;
     -jfx-checked-color: -monet-primary;
     -jfx-unchecked-color: transparent;
+}
+
+.table-view .jfx-check-box .jfx-rippler {
+    -jfx-rippler-disabled: true;
 }
 
 /*******************************************************************************
@@ -1002,6 +1007,10 @@
 
 .options-list-item .label {
     -fx-text-fill: -monet-on-surface;
+}
+
+.options-list-item .label.subtitle {
+    -fx-text-fill: -monet-on-surface-variant;
 }
 
 .options-list-item.no-padding {
@@ -1508,6 +1517,104 @@
 }
 
 /*******************************************************************************
+ *                                                                             *
+ * Table View                                                                  *
+ *                                                                             *
+ ******************************************************************************/
+
+/* WE DEFINITELY NEED JFX TABLE-VIEW */
+
+.table-view {
+    -fx-padding: 3;
+    -fx-background-color: -monet-surface-container-low;
+}
+
+.table-view,
+.table-view .column-header,
+.table-view .filler,
+.table-view .column-header-background,
+.table-row-cell {
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+}
+
+.table-view .column-header,
+.table-view .filler {
+    -fx-background-color: transparent;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: -monet-surface-container-highest;
+}
+
+.table-row-cell {
+    -fx-background-color: -monet-surface-container;
+    -fx-table-cell-border-color: -monet-surface-container-lowest;
+}
+
+.table-row-cell:odd {
+    -fx-background-color: -monet-surface-container-high;
+}
+
+.table-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: -monet-on-surface;
+}
+
+.table-view > .virtual-flow > .clipped-container > .sheet > .table-row-cell:filled:selected {
+    -fx-background-color: -monet-secondary-container;
+}
+
+.table-view > .virtual-flow > .scroll-bar {
+    -fx-skin: "org.jackhuang.hmcl.ui.construct.FloatScrollBarSkin";
+}
+
+.table-view > .virtual-flow > .scroll-bar .track {
+    -fx-fill: transparent;
+}
+
+/*******************************************************************************
+ *                                                                             *
+ * JFX Tree View                                                               *
+ *                                                                             *
+ ******************************************************************************/
+
+.tree-view {
+    -fx-padding: 5;
+    -fx-background-radius: 6;
+    -fx-background-color: -monet-surface-container-low;
+    -fx-border-radius: 6;
+}
+
+.tree-cell {
+    -fx-padding: 5;
+    -fx-background-radius: 6;
+    -fx-background-color: transparent;
+    -fx-text-fill: -monet-on-surface;
+    -fx-border-radius: 6;
+}
+
+.tree-cell:focused {
+    -fx-background-color: -monet-secondary-container;
+}
+
+.tree-cell .arrow {
+    -fx-background-color: -monet-on-surface;
+}
+
+.tree-cell .jfx-rippler {
+    -jfx-rippler-disabled: true;
+}
+
+.tree-view > .virtual-flow > .scroll-bar {
+    -fx-skin: "org.jackhuang.hmcl.ui.construct.FloatScrollBarSkin";
+}
+
+.tree-view > .virtual-flow > .scroll-bar .track {
+    -fx-fill: transparent;
+}
+
+/*******************************************************************************
 *                                                                              *
 * JFX Decorator                                                                *
 *                                                                              *
@@ -1548,7 +1655,6 @@
  * Scroll Bar			                                                       *
  *                                                                             *
  ******************************************************************************/
-/* unsued? */
 
 .scroll-bar:vertical > .track-background, .scroll-bar:horizontal > .track-background {
     -fx-background-color: #F1F1F1;
@@ -1579,6 +1685,14 @@
 
 .scroll-bar > .decrement-button > .decrement-arrow {
     -fx-shape: "M298 598l214-214 214 214h-428z";
+}
+
+.jfx-combo-box .scroll-bar {
+    -fx-skin: "org.jackhuang.hmcl.ui.construct.FloatScrollBarSkin";
+}
+
+.jfx-combo-box .scroll-bar .track {
+    -fx-fill: transparent;
 }
 
 /*******************************************************************************
@@ -1682,4 +1796,19 @@
 
 .html-italic {
     -fx-font-style: italic;
+}
+
+/*******************************************************************************
+ *                                                                             *
+ * Tooltip                                                                     *
+ *                                                                             *
+ ******************************************************************************/
+
+.tooltip {
+    -fx-text-fill: -monet-inverse-on-surface;
+    -fx-background-color: -monet-inverse-surface;
+}
+
+.tooltip .text {
+    -fx-fill: -monet-inverse-on-surface;
 }

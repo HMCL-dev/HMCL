@@ -373,9 +373,8 @@ public class DecoratorController {
         if (navigator.getCurrentPage() instanceof DecoratorPage) {
             DecoratorPage page = (DecoratorPage) navigator.getCurrentPage();
 
-            // FIXME: Get WorldPage working first, and revisit this later
-            page.closePage();
             if (page.isPageCloseable()) {
+                page.closePage();
                 return;
             }
         }
