@@ -109,7 +109,6 @@ jobs:
         run: |
           komac update ${{ matrix.winget-gh-release }} --version ${{ env.HMCL_VERSION }} --urls ${{ env.GH_DOWNLOAD_URL }} --submit --token ${{ secrets.KOMAC_TOKEN }}
         env:
-          KOMAC_TOKEN: ${{ secrets.KOMAC_TOKEN }}
           GH_DOWNLOAD_URL: https://github.com/${{ github.repository }}/releases/download/v${{ env.HMCL_VERSION }}/HMCL-${{ env.HMCL_VERSION }}.exe
       - name: Install git-cnb
         if: ${{ env.continue == 'true' }}
@@ -148,5 +147,4 @@ jobs:
         run: |
           komac update ${{ matrix.winget-cnb-release }} --version ${{ env.HMCL_VERSION }} --urls ${{ env.CNB_DOWNLOAD_URL }} --submit --token ${{ secrets.KOMAC_TOKEN }}
         env:
-          KOMAC_TOKEN: ${{ secrets.KOMAC_TOKEN }}
           CNB_DOWNLOAD_URL: https://cnb.cool/HMCL-dev/HMCL/-/releases/download/v${{ env.HMCL_VERSION }}/HMCL-${{ env.HMCL_VERSION }}.exe
