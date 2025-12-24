@@ -38,7 +38,6 @@ import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.MDListCell;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
-import org.jackhuang.hmcl.util.Holder;
 
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -90,9 +89,8 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
         ComponentList.setVgrow(center, Priority.ALWAYS);
         center.getStyleClass().add("large-spinner-pane");
         center.setContent(listView);
-        Holder<Object> lastCell = new Holder<>();
         listView.setItems(filteredList);
-        listView.setCellFactory(x -> new GameRuleListCell(listView, lastCell));
+        listView.setCellFactory(x -> new GameRuleListCell(listView));
         FXUtils.ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
         root.getContent().add(center);
 
@@ -103,8 +101,8 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
 
     static class GameRuleListCell extends MDListCell<GameRuleInfo> {
 
-        public GameRuleListCell(JFXListView<GameRuleInfo> listView, Holder<Object> lastCell) {
-            super(listView, lastCell);
+        public GameRuleListCell(JFXListView<GameRuleInfo> listView) {
+            super(listView);
         }
 
         @Override
