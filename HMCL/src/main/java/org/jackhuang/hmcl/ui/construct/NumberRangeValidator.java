@@ -21,22 +21,24 @@ import com.jfoenix.validation.base.ValidatorBase;
 import javafx.beans.NamedArg;
 import javafx.scene.control.TextInputControl;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.StringUtils;
 
+/// NumberRangeValidator only check whether inputted number is in range, but not if it is a number,
+/// if the input is not a number, NumberRangeValidator will not show error message
 public class NumberRangeValidator extends ValidatorBase {
-    private final String notNumberMessage;
-    private final String outOfLimitMessage;
-    private final boolean nullable;
     private final int minValue;
     private final int maxValue;
 
-    public NumberRangeValidator(@NamedArg("notNumberMessage") String notNumberMessage, @NamedArg("outOfLimitMessage") String outOfLimitMessage, @NamedArg("minValue") int minValue, @NamedArg("maxValue") int maxValue, @NamedArg("nullable") boolean nullable) {
-        super(notNumberMessage);
-        this.notNumberMessage = notNumberMessage;
-        this.outOfLimitMessage = outOfLimitMessage;
-        this.nullable = nullable;
+    public NumberRangeValidator(@NamedArg("outOfLimitMessage") String outOfLimitMessage, @NamedArg("minValue") int minValue, @NamedArg("maxValue") int maxValue) {
+        super(outOfLimitMessage);
         this.minValue = minValue;
         this.maxValue = maxValue;
+        if (srcControl.get() instanceof TextInputControl textInputControl) {
+            textInputControl.tooltipProperty().addListener((ov, t, t1) -> {
+                if (t1 != null) {
+                    System.out.println("new tooltip is " + t1.getText());
+                }
+            });
+        }
     }
 
     @Override
@@ -48,20 +50,12 @@ public class NumberRangeValidator extends ValidatorBase {
 
     private void evalTextInputField() {
         TextInputControl textField = ((TextInputControl) srcControl.get());
+        Double intOrNull = Lang.toDoubleOrNull(textField.getText());
 
-        if (StringUtils.isBlank(textField.getText()))
-            hasErrors.set(!nullable);
-        else {
-            Integer intOrNull = Lang.toIntOrNull(textField.getText());
-            if (intOrNull == null) {
-                setMessage(notNumberMessage);
-                hasErrors.set(true);
-            } else if (intOrNull > maxValue || intOrNull < minValue) {
-                setMessage(outOfLimitMessage);
-                hasErrors.set(true);
-            } else {
-                hasErrors.set(false);
-            }
+        if (intOrNull == null) {
+            hasErrors.set(false);
+        } else {
+            hasErrors.set(intOrNull > maxValue || intOrNull < minValue);
         }
     }
 }

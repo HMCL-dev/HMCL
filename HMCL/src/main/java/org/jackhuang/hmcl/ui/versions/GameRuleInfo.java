@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.gamerule.GameRuleNBT;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.NumberRangeValidator;
+import org.jackhuang.hmcl.ui.construct.NumberValidator;
 import org.jackhuang.hmcl.ui.construct.OptionToggleButton;
 import org.jackhuang.hmcl.util.Lang;
 
@@ -165,7 +166,9 @@ public abstract class GameRuleInfo {
             {
                 textField.textProperty().set(currentValue.toString());
                 FXUtils.setValidateWhileTextChanged(textField, true);
-                textField.setValidators(new NumberRangeValidator(i18n("input.integer"), i18n("input.number_range", minValue, maxValue), minValue, maxValue, false));
+                textField.setValidators(
+                        new NumberValidator(i18n("input.integer"), false),
+                        new NumberRangeValidator(i18n("input.number_range", minValue, maxValue), minValue, maxValue));
                 textField.textProperty().addListener((observable, oldValue, newValue) -> {
                     Integer value = Lang.toIntOrNull(newValue);
                     if (value == null) {
