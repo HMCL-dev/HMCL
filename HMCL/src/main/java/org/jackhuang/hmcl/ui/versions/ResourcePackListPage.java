@@ -38,7 +38,6 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
@@ -333,8 +332,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 center.getStyleClass().add("large-spinner-pane");
                 center.loadingProperty().bind(control.loadingProperty());
 
-                Holder<Object> lastCell = new Holder<>();
-                listView.setCellFactory(x -> new ResourcePackListCell(listView, lastCell, control));
+                listView.setCellFactory(x -> new ResourcePackListCell(listView, control));
                 listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
                 Bindings.bindContent(listView.getItems(), control.getItems());
 
@@ -465,8 +463,8 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
         private BooleanProperty booleanProperty = null;
 
-        public ResourcePackListCell(JFXListView<ResourcePackInfoObject> listView, Holder<Object> lastCell, ResourcePackListPage page) {
-            super(listView, lastCell);
+        public ResourcePackListCell(JFXListView<ResourcePackInfoObject> listView, ResourcePackListPage page) {
+            super(listView);
             this.page = page;
 
             getStyleClass().add("resource-pack-list-cell");
