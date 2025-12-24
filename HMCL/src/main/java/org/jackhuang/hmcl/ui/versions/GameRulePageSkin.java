@@ -36,6 +36,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.MDListCell;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.util.Holder;
 
@@ -62,7 +63,7 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
 
         {
             JFXButton resetAllButton = createToolbarButton2(i18n("gamerule.restore_default_values_all"), SVG.RESTORE, () -> {
-                Controllers.confirm(i18n("gamerule.restore_default_values_all.confirm"), null, skinnable::resettingAllGameRule, null);
+                Controllers.confirm(i18n("gamerule.restore_default_values_all.confirm"), i18n("message.warning"), MessageDialogPane.MessageType.WARNING, skinnable::resettingAllGameRule, null);
             });
 
             searchBar = new HBox();
