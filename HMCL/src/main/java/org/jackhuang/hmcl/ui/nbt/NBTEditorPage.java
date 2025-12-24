@@ -89,7 +89,10 @@ public final class NBTEditorPage extends SpinnerPane implements DecoratorPage {
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
                     if (exception == null) {
                         setLoading(false);
-                        root.setCenter(new NBTTreeView(result));
+                        NBTTreeView view = new NBTTreeView(result);
+                        BorderPane.setMargin(view, new Insets(10));
+                        onEscPressed(view, cancelButton::fire);
+                        root.setCenter(view);
                     } else {
                         LOG.warning("Fail to open nbt file", exception);
                         Controllers.dialog(i18n("nbt.open.failed") + "\n\n" + StringUtils.getStackTrace(exception), null, MessageDialogPane.MessageType.WARNING, cancelButton::fire);

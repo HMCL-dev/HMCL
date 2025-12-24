@@ -1309,16 +1309,10 @@ public final class FXUtils {
     }
 
     public static <T> Callback<ListView<T>, ListCell<T>> jfxListCellFactory(Function<T, Node> graphicBuilder) {
-        Holder<Object> lastCell = new Holder<>();
         return view -> new JFXListCell<T>() {
             @Override
             public void updateItem(T item, boolean empty) {
                 super.updateItem(item, empty);
-
-                // https://mail.openjdk.org/pipermail/openjfx-dev/2022-July/034764.html
-                if (this == lastCell.value && !isVisible())
-                    return;
-                lastCell.value = this;
 
                 if (!empty) {
                     setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
