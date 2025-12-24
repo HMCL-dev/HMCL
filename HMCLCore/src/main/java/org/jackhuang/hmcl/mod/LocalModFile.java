@@ -173,10 +173,12 @@ public final class LocalModFile extends LocalFile implements Comparable<LocalMod
         }
     }
 
+    @Override
     public void markDisabled() throws IOException {
         file = modManager.disableMod(file);
     }
 
+    @Override
     public void delete() throws IOException {
         Files.deleteIfExists(file);
     }

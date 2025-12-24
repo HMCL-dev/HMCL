@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.util;
 
+import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jetbrains.annotations.Contract;
 
 import java.io.PrintWriter;
@@ -24,7 +25,6 @@ import java.io.StringWriter;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * @author huangyuhui
@@ -535,22 +535,23 @@ public final class StringUtils {
     /// Turns `List.of("a", "b", "c")` into `["a", "b", "c"]`
     @Contract(pure = true)
     public static String serializeStringList(List<String> list) {
-        if (list == null || list.isEmpty()) return "[]";
-        return list.stream().collect(Collectors.joining("\",\"", "[\"", "\"]"));
+        if (list == null) return "[]";
+        try {
+            return JsonUtils.UGLY_GSON.toJson(list.stream().filter(Objects::nonNull).toList(), JsonUtils.listTypeOf(String.class).getType());
+        } catch (Exception e) {
+            return "[]";
+        }
     }
 
     /// Turns `["a", "b", "c"]` into `List.of("a", "b", "c")`
     @Contract(pure = true)
     public static List<String> deserializeStringList(String list) {
         if (list == null || list.isBlank()) return List.of();
-        list = list.trim();
-        if (list.length() < 4 || !list.startsWith("[") || !list.endsWith("]")) return List.of();
-        return Arrays.stream(list.substring(1, list.length() - 1).split(","))
-                .map(String::trim)
-                .filter(s -> s.length() >= 2 && s.startsWith("\"") && s.endsWith("\""))
-                .map(s -> s.substring(1, s.length() - 1))
-                .filter(StringUtils::isNotBlank)
-                .toList();
+        try {
+            return JsonUtils.fromNonNullJson(list, JsonUtils.listTypeOf(String.class));
+        } catch (Exception e) {
+            return List.of();
+        }
     }
 
     public static class LevCalculator {

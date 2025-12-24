@@ -82,7 +82,7 @@ public record PackMcMeta(@SerializedName("pack") PackInfo pack) implements Valid
                     }
                 }
             } catch (NumberFormatException e) {
-                LOG.warning("Failed to parse datapack version component as a number. Value: " + element, e);
+                LOG.warning("Failed to parse pack version component as a number. Value: " + element, e);
             }
 
             return UNSPECIFIED;

@@ -22,7 +22,7 @@ public sealed abstract class LocalFile permits LocalModFile, ResourcePackFile {
     public abstract String getFileName();
 
     public boolean isDisabled() {
-        return FileUtils.getName(getFile()).endsWith(ModManager.DISABLED_EXTENSION);
+        return FileUtils.getName(getFile()).endsWith(LocalFileManager.DISABLED_EXTENSION);
     }
 
     public abstract void markDisabled() throws IOException;

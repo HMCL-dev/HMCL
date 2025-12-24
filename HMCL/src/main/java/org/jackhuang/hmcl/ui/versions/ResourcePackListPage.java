@@ -102,7 +102,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 Files.createDirectories(resourcePackDirectory);
             }
         } catch (IOException e) {
-            LOG.warning("Failed to create resource pack directory" + resourcePackDirectory, e);
+            LOG.warning("Failed to create resource pack directory: " + resourcePackDirectory, e);
         }
         refresh();
     }

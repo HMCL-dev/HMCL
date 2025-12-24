@@ -120,7 +120,7 @@ public final class ResourcePackManager extends LocalFileManager<ResourcePackFile
                     return VersionRange.empty();
                 }
 
-                if (!packFormatUnspecified && isPackFormatInvalidate(minMajor, maxMajor, packInfo.packFormat())) {
+                if (!packFormatUnspecified && isPackFormatInvalid(minMajor, maxMajor, packInfo.packFormat())) {
                     return VersionRange.empty();
                 }
             } else {
@@ -135,7 +135,7 @@ public final class ResourcePackManager extends LocalFileManager<ResourcePackFile
                     return VersionRange.empty();
                 }
                 if (packFormatUnspecified) return VersionRange.empty();
-                if (isPackFormatInvalidate(minMajor, maxMajor, packInfo.packFormat())) return VersionRange.empty();
+                if (isPackFormatInvalid(minMajor, maxMajor, packInfo.packFormat())) return VersionRange.empty();
             }
 
             return VersionRange.between(packInfo.minPackVersion(), packInfo.maxPackVersion());
@@ -147,20 +147,20 @@ public final class ResourcePackManager extends LocalFileManager<ResourcePackFile
                 return VersionRange.empty();
             } else {
                 if (packFormatUnspecified) return VersionRange.empty();
-                if (isPackFormatInvalidate(min, max, packInfo.packFormat())) return VersionRange.empty();
+                if (isPackFormatInvalid(min, max, packInfo.packFormat())) return VersionRange.empty();
             }
 
             return VersionRange.between(supportedFormats.getMin(), supportedFormats.getMax());
         } else if (!packFormatUnspecified) {
             int packFormat = packInfo.packFormat();
             PackMcMeta.PackVersion packVersion = new PackMcMeta.PackVersion(packFormat, 0);
-            return packFormat > 64 ? VersionRange.empty() : VersionRange.between(packVersion, packVersion);
+            return packFormat > 64 ? VersionRange.empty() : VersionRange.only(packVersion);
         }
         return VersionRange.empty();
     }
 
     @Contract(pure = true)
-    private static boolean isPackFormatInvalidate(int i, int j, int k) {
+    private static boolean isPackFormatInvalid(int i, int j, int k) {
         if (k >= i && k <= j) {
             return k < 15;
         } else {
@@ -272,55 +272,55 @@ public final class ResourcePackManager extends LocalFileManager<ResourcePackFile
     }
 
     public boolean removeResourcePacks(Iterable<ResourcePackFile> resourcePacks) throws IOException {
-        boolean b = false;
+        boolean modified = false;
         for (ResourcePackFile resourcePack : resourcePacks) {
             if (resourcePack != null && resourcePack.manager == this) {
                 resourcePack.delete();
                 localFiles.remove(resourcePack);
-                b = true;
+                modified = true;
             }
         }
-        return b;
+        return modified;
     }
 
     public void enableResourcePack(ResourcePackFile resourcePack) {
         if (resourcePack.manager != this) return;
         Map<String, String> options = loadOptions();
         String packId = "file/" + resourcePack.getFileNameWithExtension();
-        boolean b = false;
-        List<String> resourcePacks = new LinkedList<>(StringUtils.deserializeStringList(options.get("resourcePacks")));
+        boolean modified = false;
+        List<String> resourcePacks = new ArrayList<>(StringUtils.deserializeStringList(options.get("resourcePacks")));
         if (!resourcePacks.contains(packId)) {
             resourcePacks.add(packId);
             options.put("resourcePacks", StringUtils.serializeStringList(resourcePacks));
-            b = true;
+            modified = true;
         }
-        List<String> incompatibleResourcePacks = new LinkedList<>(StringUtils.deserializeStringList(options.get("incompatibleResourcePacks")));
+        List<String> incompatibleResourcePacks = new ArrayList<>(StringUtils.deserializeStringList(options.get("incompatibleResourcePacks")));
         if (!incompatibleResourcePacks.contains(packId) && isIncompatible(resourcePack)) {
             incompatibleResourcePacks.add(packId);
             options.put("incompatibleResourcePacks", StringUtils.serializeStringList(incompatibleResourcePacks));
-            b = true;
+            modified = true;
         }
-        if (b) saveOptions(options);
+        if (modified) saveOptions(options);
     }
 
     public void disableResourcePack(ResourcePackFile resourcePack) {
         if (resourcePack.manager != this) return;
         Map<String, String> options = loadOptions();
         String packId = "file/" + resourcePack.getFileNameWithExtension();
-        boolean b = false;
-        List<String> resourcePacks = new LinkedList<>(StringUtils.deserializeStringList(options.get("resourcePacks")));
+        boolean modified = false;
+        List<String> resourcePacks = new ArrayList<>(StringUtils.deserializeStringList(options.get("resourcePacks")));
         if (resourcePacks.contains(packId)) {
             resourcePacks.remove(packId);
             options.put("resourcePacks", StringUtils.serializeStringList(resourcePacks));
-            b = true;
+            modified = true;
         }
-        List<String> incompatibleResourcePacks = new LinkedList<>(StringUtils.deserializeStringList(options.get("incompatibleResourcePacks")));
+        List<String> incompatibleResourcePacks = new ArrayList<>(StringUtils.deserializeStringList(options.get("incompatibleResourcePacks")));
         if (incompatibleResourcePacks.contains(packId)) {
             incompatibleResourcePacks.remove(packId);
             options.put("incompatibleResourcePacks", StringUtils.serializeStringList(incompatibleResourcePacks));
-            b = true;
+            modified = true;
         }
-        if (b) saveOptions(options);
+        if (modified) saveOptions(options);
     }
 
     public boolean isEnabled(ResourcePackFile resourcePack) {
