@@ -126,7 +126,7 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
     /// Used for unified changing operations back to NBT format.
     ///
     /// @see GameRuleNBT
-    public static Optional<GameRuleNBT> createGameRuleNbt(Tag tag) {
+    public static Optional<GameRuleNBT<?, ? extends Tag>> createGameRuleNbt(Tag tag) {
         if (tag instanceof StringTag stringTag && (tag.getValue().equals("true") || tag.getValue().equals("false"))) {
             return Optional.of(new GameRuleNBT.StringByteGameRuleNBT(stringTag));
         } else if (tag instanceof StringTag stringTag && Lang.toIntOrNull(stringTag.getValue()) != null) {

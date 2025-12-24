@@ -38,10 +38,10 @@ import java.util.Optional;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public abstract class GameRuleInfo {
+public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRuleInfo, GameRuleInfo.IntGameRuleInfo {
     private String ruleKey;
     private String displayName;
-    private GameRuleNBT gameRuleNBT;
+    private GameRuleNBT<T, ? extends Tag> gameRuleNBT;
 
     //Due to the significant difference in skin between BooleanGameRuleInfo and IntGameRuleInfo, which are essentially two completely different styles, it is not suitable to update each other in Cell#updateControl. Therefore, they are directly integrated into the info.
     private HBox container = new HBox();
@@ -68,11 +68,11 @@ public abstract class GameRuleInfo {
         this.ruleKey = ruleKey;
     }
 
-    public GameRuleNBT getGameRuleNBT() {
+    public GameRuleNBT<T, ? extends Tag> getGameRuleNBT() {
         return gameRuleNBT;
     }
 
-    public void setGameRuleNBT(GameRuleNBT gameRuleNBT) {
+    public void setGameRuleNBT(GameRuleNBT<T, ? extends Tag> gameRuleNBT) {
         this.gameRuleNBT = gameRuleNBT;
     }
 
@@ -92,7 +92,7 @@ public abstract class GameRuleInfo {
         this.setToDefault = setToDefault;
     }
 
-    static class BooleanGameRuleInfo extends GameRuleInfo {
+    static final class BooleanGameRuleInfo extends GameRuleInfo<Boolean> {
 
         public BooleanGameRuleInfo(String ruleKey, String displayName, Boolean onValue, Optional<Boolean> defaultValue, GameRuleNBT<Boolean, Tag> gameRuleNBT, Runnable onSave) {
             this.setRuleKey(ruleKey);
@@ -122,13 +122,9 @@ public abstract class GameRuleInfo {
                 resetButton.setGraphic(SVG.RESTORE.createIcon(24));
                 defaultValue.ifPresentOrElse(value -> {
                     setSetToDefault(() -> toggleButton.selectedProperty().set(value));
-                    resetButton.setOnAction(event -> {
-                        getSetToDefault().run();
-                    });
+                    resetButton.setOnAction(event -> getSetToDefault().run());
                     FXUtils.installSlowTooltip(resetButton, i18n("gamerule.restore_default_values.tooltip", value));
-                }, () -> {
-                    resetButton.setDisable(true);
-                });
+                }, () -> resetButton.setDisable(true));
             }
 
             getContainer().getChildren().addAll(toggleButton, resetButton);
@@ -136,7 +132,7 @@ public abstract class GameRuleInfo {
 
     }
 
-    static class IntGameRuleInfo extends GameRuleInfo {
+    static final class IntGameRuleInfo extends GameRuleInfo<String> {
 
         public IntGameRuleInfo(String ruleKey, String displayName, Integer currentValue, int minValue, int maxValue, Optional<Integer> defaultValue, GameRuleNBT<String, Tag> gameRuleNBT, Runnable onSave) {
             this.setRuleKey(ruleKey);
@@ -190,13 +186,9 @@ public abstract class GameRuleInfo {
                 resetButton.setGraphic(SVG.RESTORE.createIcon(24));
                 defaultValue.ifPresentOrElse(value -> {
                     setSetToDefault(() -> textField.textProperty().set(String.valueOf(value)));
-                    resetButton.setOnAction(event -> {
-                        getSetToDefault().run();
-                    });
+                    resetButton.setOnAction(event -> getSetToDefault().run());
                     FXUtils.installSlowTooltip(resetButton, i18n("gamerule.restore_default_values.tooltip", value));
-                }, () -> {
-                    resetButton.setDisable(true);
-                });
+                }, () -> resetButton.setDisable(true));
 
                 resetButton.setAlignment(Pos.BOTTOM_CENTER);
             }

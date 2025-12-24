@@ -18,11 +18,13 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.github.steveice10.opennbt.tag.builtin.CompoundTag;
+import com.github.steveice10.opennbt.tag.builtin.Tag;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Skin;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.gamerule.GameRule;
+import org.jackhuang.hmcl.gamerule.GameRuleNBT;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -40,7 +42,7 @@ import java.util.regex.Pattern;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class GameRulePage extends ListPageBase<GameRuleInfo> {
+public class GameRulePage extends ListPageBase<GameRuleInfo<?>> {
 
     private WorldManagePage worldManagePage;
     private World world;
@@ -48,7 +50,7 @@ public class GameRulePage extends ListPageBase<GameRuleInfo> {
 
     Map<String, GameRule> gameRuleMap = GameRule.getCloneGameRuleMap();
 
-    ObservableList<GameRuleInfo> gameRuleList;
+    ObservableList<GameRuleInfo<?>> gameRuleList;
     private boolean isResettingAll = false;
 
     public GameRulePage(WorldManagePage worldManagePage) {
@@ -97,9 +99,15 @@ public class GameRulePage extends ListPageBase<GameRuleInfo> {
                         LOG.warning("Failed to get i18n text for key: " + gameRule.getDisplayI18nKey(), e);
                     }
                     if (gameRule instanceof GameRule.IntGameRule intGameRule) {
-                        gameRuleList.add(new GameRuleInfo.IntGameRuleInfo(intGameRule.getRuleKey().get(0), displayText, intGameRule.getValue(), intGameRule.getMinValue(), intGameRule.getMaxValue(), intGameRule.getDefaultValue(), gameRuleNBT, this::saveLevelDatIfNotResettingAll));
+                        @SuppressWarnings("unchecked")
+                        GameRuleNBT<String, Tag> typedGameRuleNBT = (GameRuleNBT<String, Tag>) gameRuleNBT;
+
+                        gameRuleList.add(new GameRuleInfo.IntGameRuleInfo(intGameRule.getRuleKey().get(0), displayText, intGameRule.getValue(), intGameRule.getMinValue(), intGameRule.getMaxValue(), intGameRule.getDefaultValue(), typedGameRuleNBT, this::saveLevelDatIfNotResettingAll));
                     } else if (gameRule instanceof GameRule.BooleanGameRule booleanGameRule) {
-                        gameRuleList.add(new GameRuleInfo.BooleanGameRuleInfo(booleanGameRule.getRuleKey().get(0), displayText, booleanGameRule.getValue(), booleanGameRule.getDefaultValue(), gameRuleNBT, this::saveLevelDatIfNotResettingAll));
+                        @SuppressWarnings("unchecked")
+                        GameRuleNBT<Boolean, Tag> typedGameRuleNBT = (GameRuleNBT<Boolean, Tag>) gameRuleNBT;
+
+                        gameRuleList.add(new GameRuleInfo.BooleanGameRuleInfo(booleanGameRule.getRuleKey().get(0), displayText, booleanGameRule.getValue(), booleanGameRule.getDefaultValue(), typedGameRuleNBT, this::saveLevelDatIfNotResettingAll));
                     }
                 });
             });
@@ -144,7 +152,7 @@ public class GameRulePage extends ListPageBase<GameRuleInfo> {
 
     void resettingAllGameRule() {
         isResettingAll = true;
-        for (GameRuleInfo gameRuleInfo : getItems()) {
+        for (GameRuleInfo<?> gameRuleInfo : getItems()) {
             gameRuleInfo.resetValue();
         }
         saveLevelDat();
@@ -152,7 +160,7 @@ public class GameRulePage extends ListPageBase<GameRuleInfo> {
         Controllers.showToast(i18n("gamerule.restore_default_values_all.finish.toast"));
     }
 
-    @NotNull Predicate<GameRuleInfo> updateSearchPredicate(String queryString) {
+    @NotNull Predicate<GameRuleInfo<?>> updateSearchPredicate(String queryString) {
         if (queryString.isBlank()) {
             return gameRuleInfo -> true;
         }

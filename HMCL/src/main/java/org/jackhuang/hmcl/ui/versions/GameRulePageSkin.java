@@ -46,8 +46,8 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
 
     private final HBox searchBar;
     private final JFXTextField searchField;
-    JFXListView<GameRuleInfo> listView = new JFXListView<>();
-    private final FilteredList<GameRuleInfo> filteredList;
+    JFXListView<GameRuleInfo<?>> listView = new JFXListView<>();
+    private final FilteredList<GameRuleInfo<?>> filteredList;
 
     GameRulePageSkin(GameRulePage skinnable) {
         super(skinnable);
@@ -99,14 +99,14 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
 
     }
 
-    static class GameRuleListCell extends MDListCell<GameRuleInfo> {
+    static class GameRuleListCell extends MDListCell<GameRuleInfo<?>> {
 
-        public GameRuleListCell(JFXListView<GameRuleInfo> listView) {
+        public GameRuleListCell(JFXListView<GameRuleInfo<?>> listView) {
             super(listView);
         }
 
         @Override
-        protected void updateControl(GameRuleInfo item, boolean empty) {
+        protected void updateControl(GameRuleInfo<?> item, boolean empty) {
             if (empty) return;
             getContainer().getChildren().setAll(item.getContainer());
         }
