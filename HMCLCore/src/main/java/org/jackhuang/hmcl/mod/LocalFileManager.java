@@ -43,7 +43,7 @@ public abstract class LocalFileManager<T extends ILocalFile> {
     public abstract void refresh() throws IOException;
 
     public @Unmodifiable List<T> getLocalFiles() throws IOException {
-        return List.copyOf(localFiles);
+        return localFiles.stream().sorted().toList();
     }
 
     public Path setOld(T modFile, boolean old) throws IOException {
