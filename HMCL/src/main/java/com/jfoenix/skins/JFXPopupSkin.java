@@ -118,11 +118,11 @@ public class JFXPopupSkin implements Skin<JFXPopup> {
                         new KeyValue(scale.xProperty(), 0, interpolator),
                         new KeyValue(scale.yProperty(), 0, interpolator)
                 ),
-                new KeyFrame(Duration.millis(280),
+                new KeyFrame(Motion.SHORT4,
                         new KeyValue(popupContent.opacityProperty(), 0, interpolator),
                         new KeyValue(scale.xProperty(), 1, interpolator)
                 ),
-                new KeyFrame(Duration.millis(400),
+                new KeyFrame(Motion.MEDIUM2,
                         new KeyValue(popupContent.opacityProperty(), 1, interpolator),
                         new KeyValue(scale.yProperty(), 1, interpolator)
                 )
