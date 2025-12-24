@@ -116,9 +116,9 @@ public class JFXCustomColorPickerDialog extends StackPane {
         Tab hexTab = new Tab("HEX");
         hexTab.setContent(hexField);
 
+        tabs.getTabs().add(hexTab);
         tabs.getTabs().add(rgbTab);
         tabs.getTabs().add(hsbTab);
-        tabs.getTabs().add(hexTab);
 
         curvedColorPicker.selectedPath.addListener((o, oldVal, newVal) -> {
             if (paraTransition != null) {
