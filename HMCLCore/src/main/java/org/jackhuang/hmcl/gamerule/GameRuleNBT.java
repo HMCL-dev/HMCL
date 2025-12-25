@@ -23,21 +23,13 @@ import com.github.steveice10.opennbt.tag.builtin.StringTag;
 import com.github.steveice10.opennbt.tag.builtin.Tag;
 import org.jackhuang.hmcl.util.Lang;
 
-/**
- * An abstract representation of a Minecraft game rule stored as an NBT tag.
- * <p>
- * This class acts as a generic wrapper for a specific game rule's NBT tag,
- * providing a unified interface to modify its value. It abstracts the underlying
- * NBT tag implementation, allowing different types of game rule values (like integers,
- * booleans, or strings) to be handled consistently.
- * <p>
- * Subclasses must implement the {@link #changeValue(Object)} method to define
- * how an input value of type {@code T} is converted and applied to the wrapped
- * NBT tag of type {@code V}.
- *
- * @param <T> The type of the value used to update the game rule (e.g., {@link String}, {@link Boolean}).
- * @param <V> The specific {@link Tag} subtype being wrapped (e.g., {@link IntTag}, {@link ByteTag}).
- */
+/// A sealed abstract wrapper for a game rule stored in NBT.
+///
+/// This class **holds a single NBT `Tag` instance** (`gameRuleTag`) and provides a unified API ([#changeValue(Object)])
+/// to update that tag’s underlying value from a higher-level Java value.
+///
+/// @param <T> The Java type used to represent the game rule's value (e.g., [String], [Boolean]).
+/// @param <V> The specific NBT [Tag] type that this object wraps and persists.
 public sealed abstract class GameRuleNBT<T, V extends Tag> permits GameRuleNBT.IntGameRuleNBT, GameRuleNBT.ByteGameRuleNBT, GameRuleNBT.StringIntGameRuleNBT, GameRuleNBT.StringByteGameRuleNBT {
 
     private final V gameRuleTag;

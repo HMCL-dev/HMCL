@@ -115,7 +115,7 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
     ///
     /// @see GameRuleNBT
     public static Optional<GameRuleNBT<?, ? extends Tag>> createGameRuleNBT(Tag tag) {
-        if (tag instanceof StringTag stringTag && (tag.getValue().equals("true") || tag.getValue().equals("false"))) {
+        if (tag instanceof StringTag stringTag && (stringTag.getValue().equals("true") || stringTag.getValue().equals("false"))) {
             return Optional.of(new GameRuleNBT.StringByteGameRuleNBT(stringTag));
         } else if (tag instanceof StringTag stringTag && Lang.toIntOrNull(stringTag.getValue()) != null) {
             return Optional.of(new GameRuleNBT.StringIntGameRuleNBT(stringTag));
@@ -148,14 +148,8 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
 
     /// Implementation of a boolean-based GameRule.
     public static final class BooleanGameRule extends GameRule {
-        private Boolean value = false;
+        private boolean value = false;
         private Boolean defaultValue;
-
-        private BooleanGameRule(List<String> ruleKey, String displayI18nKey, Boolean value, Boolean defaultValue) {
-            super(ruleKey, displayI18nKey);
-            this.value = value;
-            this.defaultValue = defaultValue;
-        }
 
         private BooleanGameRule(List<String> ruleKey, boolean value) {
             super(ruleKey, "");
@@ -194,18 +188,10 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
     /// Implementation of an integer-based GameRule.
     /// supports min/max value validation.
     public static final class IntGameRule extends GameRule {
-        private Integer value = 0;
+        private int value = 0;
         private Integer defaultValue;
         private int maxValue = 0;
         private int minValue = 0;
-
-        private IntGameRule(List<String> ruleKey, String displayI18nKey, Integer value, Integer defaultValue, int maxValue, int minValue) {
-            super(ruleKey, displayI18nKey);
-            this.value = value;
-            this.defaultValue = defaultValue;
-            this.maxValue = maxValue;
-            this.minValue = minValue;
-        }
 
         private IntGameRule(List<String> ruleKey, int value) {
             super(ruleKey, "");
