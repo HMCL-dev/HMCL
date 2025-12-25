@@ -54,8 +54,6 @@ import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.MDListCell;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
-import org.jackhuang.hmcl.util.Holder;
-import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -181,8 +179,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             center.getStyleClass().add("large-spinner-pane");
             center.loadingProperty().bind(skinnable.loadingProperty());
 
-            Holder<Object> lastCell = new Holder<>();
-            listView.setCellFactory(x -> new DatapackInfoListCell(listView, lastCell));
+            listView.setCellFactory(x -> new DatapackInfoListCell(listView));
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
             this.listView.setItems(filteredList);
 
@@ -233,7 +230,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
         }
 
         String getSubtitle() {
-            return StringUtils.parseColorEscapes(packInfo.getDescription().toString());
+            return packInfo.getDescription().toString();
         }
 
         Datapack.Pack getPackInfo() {
@@ -305,8 +302,8 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
         final TwoLineListItem content = new TwoLineListItem();
         BooleanProperty booleanProperty;
 
-        DatapackInfoListCell(JFXListView<DatapackInfoObject> listView, Holder<Object> lastCell) {
-            super(listView, lastCell);
+        DatapackInfoListCell(JFXListView<DatapackInfoObject> listView) {
+            super(listView);
 
             HBox container = new HBox(8);
             container.setPickOnBounds(false);

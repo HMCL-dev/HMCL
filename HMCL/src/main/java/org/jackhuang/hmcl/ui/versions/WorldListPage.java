@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
@@ -49,7 +50,7 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
     private List<World> worlds;
     private Profile profile;
     private String id;
-    private String gameVersion;
+    private GameVersionNumber gameVersion;
 
     public WorldListPage() {
         FXUtils.applyDragListener(this, it -> "zip".equals(FileUtils.getExtension(it)), modpacks -> {
@@ -60,7 +61,7 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
             if (worlds != null)
                 itemsProperty().setAll(worlds.stream()
                         .filter(world -> isShowAll() || world.getGameVersion() == null || world.getGameVersion().equals(gameVersion))
-                        .map(world -> new WorldListItem(this, world, backupsDir)).toList());
+                        .map(world -> new WorldListItem(this, world, backupsDir, profile, id)).toList());
         });
     }
 
@@ -87,7 +88,7 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
             return;
 
         setLoading(true);
-        Task.runAsync(() -> gameVersion = profile.getRepository().getGameVersion(id).orElse(null))
+        Task.runAsync(() -> gameVersion = profile.getRepository().getGameVersion(id).map(GameVersionNumber::asGameVersion).orElse(null))
                 .thenApplyAsync(unused -> {
                     try (Stream<World> stream = World.getWorlds(savesDir)) {
                         return stream.parallel().collect(Collectors.toList());
@@ -99,7 +100,7 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
                     if (exception == null) {
                         itemsProperty().setAll(result.stream()
                                 .filter(world -> isShowAll() || world.getGameVersion() == null || world.getGameVersion().equals(gameVersion))
-                                .map(world -> new WorldListItem(this, world, backupsDir))
+                                .map(world -> new WorldListItem(this, world, backupsDir, profile, id))
                                 .collect(Collectors.toList()));
                     } else {
                         LOG.warning("Failed to load world list page", exception);
@@ -130,7 +131,7 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
                     Controllers.prompt(i18n("world.name.enter"), (name, resolve, reject) -> {
                         Task.runAsync(() -> world.install(savesDir, name))
                                 .whenComplete(Schedulers.javafx(), () -> {
-                                    itemsProperty().add(new WorldListItem(this, new World(savesDir.resolve(name)), backupsDir));
+                                    itemsProperty().add(new WorldListItem(this, new World(savesDir.resolve(name)), backupsDir, profile, id));
                                     resolve.run();
                                 }, e -> {
                                     if (e instanceof FileAlreadyExistsException)

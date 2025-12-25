@@ -23,13 +23,21 @@ import com.jfoenix.controls.events.JFXDialogEvent;
 import com.jfoenix.converters.DialogTransitionConverter;
 import com.jfoenix.effects.JFXDepthManager;
 import com.jfoenix.transitions.CachedTransition;
-import javafx.animation.*;
+import javafx.animation.Interpolator;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
+import javafx.animation.Transition;
 import javafx.beans.DefaultProperty;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ObjectPropertyBase;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.css.*;
+import javafx.css.CssMetaData;
+import javafx.css.SimpleStyleableObjectProperty;
+import javafx.css.Styleable;
+import javafx.css.StyleableObjectProperty;
+import javafx.css.StyleableProperty;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.geometry.Pos;
@@ -39,7 +47,11 @@ import javafx.scene.SnapshotParameters;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.WritableImage;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.*;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.CornerRadii;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.animation.Motion;
@@ -71,8 +83,7 @@ public class JFXDialog extends StackPane {
 
     private StackPane dialogContainer;
     private Region content;
-    private Transition showAnimation;
-    private Transition hideAnimation;
+    private Transition animation;
 
     private final EventHandler<? super MouseEvent> closeHandler = e -> close();
 
@@ -116,7 +127,6 @@ public class JFXDialog extends StackPane {
     ///   - RIGHT
     ///   - BOTTOM
     ///   - LEFT
-    ///
     public JFXDialog(StackPane dialogContainer, Region content, DialogTransition transitionType, boolean overlayClose) {
         setOverlayClose(overlayClose);
         initialize();
@@ -141,8 +151,7 @@ public class JFXDialog extends StackPane {
         this.setVisible(false);
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
         this.transitionType.addListener((o, oldVal, newVal) -> {
-            showAnimation = getShowAnimation(transitionType.get());
-            hideAnimation = getHideAnimation(transitionType.get());
+            animation = getShowAnimation(transitionType.get());
         });
 
         contentHolder = new StackPane();
@@ -182,8 +191,7 @@ public class JFXDialog extends StackPane {
             // FIXME: need to be improved to consider only the parent boundary
             offsetX = dialogContainer.getBoundsInLocal().getWidth();
             offsetY = dialogContainer.getBoundsInLocal().getHeight();
-            showAnimation = getShowAnimation(transitionType.get());
-            hideAnimation = getHideAnimation(transitionType.get());
+            animation = getShowAnimation(transitionType.get());
         }
     }
 
@@ -273,8 +281,8 @@ public class JFXDialog extends StackPane {
             dialogContainer.getChildren().add(this);
         }
 
-        if (showAnimation != null) {
-            showAnimation.play();
+        if (animation != null) {
+            animation.play();
         } else {
             setVisible(true);
             setOpacity(1);
@@ -286,8 +294,12 @@ public class JFXDialog extends StackPane {
      * close the dialog
      */
     public void close() {
-        if (hideAnimation != null) {
-            hideAnimation.play();
+        if (animation != null) {
+            animation.setRate(-2);
+            animation.play();
+            animation.setOnFinished(e -> {
+                closeDialog();
+            });
         } else {
             setOpacity(0);
             setVisible(false);
@@ -336,52 +348,12 @@ public class JFXDialog extends StackPane {
         return animation;
     }
 
-    private Transition getHideAnimation(DialogTransition transitionType) {
-        Transition animation = null;
-        if (contentHolder != null) {
-            animation = switch (transitionType) {
-                case CENTER -> new HideTransition();
-                case NONE -> null;
-            };
-        }
-        if (animation != null) {
-            animation.setOnFinished(finish -> closeDialog());
-        }
-        return animation;
-    }
-
     private void resetProperties() {
         this.setVisible(false);
         contentHolder.setTranslateX(0);
         contentHolder.setTranslateY(0);
         contentHolder.setScaleX(1);
         contentHolder.setScaleY(1);
-    }
-
-    private final class HideTransition extends CachedTransition {
-        private static final Interpolator INTERPOLATOR = Motion.EMPHASIZED_ACCELERATE;
-
-        public HideTransition() {
-            super(contentHolder, new Timeline(
-                    new KeyFrame(Duration.ZERO,
-                            new KeyValue(contentHolder.scaleXProperty(), 1, INTERPOLATOR),
-                            new KeyValue(contentHolder.scaleYProperty(), 1, INTERPOLATOR),
-                            new KeyValue(JFXDialog.this.opacityProperty(), 1, INTERPOLATOR),
-                            new KeyValue(JFXDialog.this.visibleProperty(), true, Motion.LINEAR)
-                    ),
-                    new KeyFrame(Motion.LONG2.subtract(Duration.millis(10)),
-                            new KeyValue(JFXDialog.this.visibleProperty(), false, Motion.LINEAR),
-                            new KeyValue(JFXDialog.this.opacityProperty(), 0, INTERPOLATOR)
-                    ),
-                    new KeyFrame(Motion.LONG2,
-                            new KeyValue(contentHolder.scaleXProperty(), INITIAL_SCALE, INTERPOLATOR),
-                            new KeyValue(contentHolder.scaleYProperty(), INITIAL_SCALE, INTERPOLATOR)
-                    ))
-            );
-            // reduce the number to increase the shifting , increase number to reduce shifting
-            setCycleDuration(Duration.seconds(0.4));
-            setDelay(Duration.ZERO);
-        }
     }
 
     private final class CenterTransition extends CachedTransition {
@@ -401,6 +373,7 @@ public class JFXDialog extends StackPane {
                     new KeyFrame(Motion.EXTRA_LONG4,
                             new KeyValue(contentHolder.scaleXProperty(), 1, INTERPOLATOR),
                             new KeyValue(contentHolder.scaleYProperty(), 1, INTERPOLATOR),
+                            new KeyValue(JFXDialog.this.visibleProperty(), true, Motion.LINEAR),
                             new KeyValue(JFXDialog.this.opacityProperty(), 1, INTERPOLATOR)
                     ))
             );
@@ -430,7 +403,6 @@ public class JFXDialog extends StackPane {
     ///   - BOTTOM
     ///   - LEFT
     ///   - NONE
-    ///
     private final StyleableObjectProperty<DialogTransition> transitionType = new SimpleStyleableObjectProperty<>(
             StyleableProperties.DIALOG_TRANSITION,
             JFXDialog.this,
@@ -526,8 +498,7 @@ public class JFXDialog extends StackPane {
         return onDialogClosedProperty().get();
     }
 
-
-    private final ObjectProperty<EventHandler<? super JFXDialogEvent>> onDialogOpenedProperty = new ObjectPropertyBase<EventHandler<? super JFXDialogEvent>>() {
+    private final ObjectProperty<EventHandler<? super JFXDialogEvent>> onDialogOpenedProperty = new ObjectPropertyBase<>() {
         @Override
         protected void invalidated() {
             setEventHandler(JFXDialogEvent.OPENED, get());

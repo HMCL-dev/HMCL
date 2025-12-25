@@ -38,7 +38,6 @@ import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -394,15 +393,15 @@ public class DownloadPage extends Control implements DecoratorPage {
                     switch (dataItem.getVersionType()) {
                         case Alpha:
                             content.addTag(i18n("mods.channel.alpha"));
-                            graphicPane.getChildren().setAll(SVG.ALPHA_CIRCLE.createIcon(Theme.blackFill(), 24));
+                            graphicPane.getChildren().setAll(SVG.ALPHA_CIRCLE.createIcon(24));
                             break;
                         case Beta:
                             content.addTag(i18n("mods.channel.beta"));
-                            graphicPane.getChildren().setAll(SVG.BETA_CIRCLE.createIcon(Theme.blackFill(), 24));
+                            graphicPane.getChildren().setAll(SVG.BETA_CIRCLE.createIcon(24));
                             break;
                         case Release:
                             content.addTag(i18n("mods.channel.release"));
-                            graphicPane.getChildren().setAll(SVG.RELEASE_CIRCLE.createIcon(Theme.blackFill(), 24));
+                            graphicPane.getChildren().setAll(SVG.RELEASE_CIRCLE.createIcon(24));
                             break;
                     }
 

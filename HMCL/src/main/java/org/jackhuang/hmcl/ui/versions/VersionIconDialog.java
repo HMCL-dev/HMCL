@@ -23,7 +23,6 @@ import javafx.scene.layout.FlowPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -93,7 +92,7 @@ public class VersionIconDialog extends DialogPane {
     }
 
     private Node createCustomIcon() {
-        Node shape = SVG.ADD_CIRCLE.createIcon(Theme.blackFill(), 32);
+        Node shape = SVG.ADD_CIRCLE.createIcon(32);
         shape.setMouseTransparent(true);
         RipplerContainer container = new RipplerContainer(shape);
         FXUtils.setLimitWidth(container, 36);
