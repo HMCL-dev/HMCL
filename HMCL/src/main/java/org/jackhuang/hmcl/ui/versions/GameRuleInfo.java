@@ -206,10 +206,10 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
                 HBox.setHgrow(displayInfoVBox, Priority.ALWAYS);
             }
 
-            HBox hBox = new HBox();
+            HBox rightHBox = new HBox();
             {
-                hBox.setSpacing(12);
-                hBox.setAlignment(Pos.CENTER_LEFT);
+                rightHBox.setSpacing(12);
+                rightHBox.setAlignment(Pos.CENTER_LEFT);
             }
 
             JFXButton resetButton = new JFXButton();
@@ -251,8 +251,8 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
                 resetButton.setAlignment(Pos.BOTTOM_CENTER);
             }
 
-            hBox.getChildren().addAll(textField, wrapperPane);
-            getContainer().getChildren().addAll(displayInfoVBox, hBox);
+            rightHBox.getChildren().addAll(textField, wrapperPane);
+            getContainer().getChildren().addAll(displayInfoVBox, rightHBox);
         }
 
         public boolean shouldResetButtonDisabled(int newValue) {

@@ -35,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Locale;
-import java.util.Map;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
@@ -47,8 +46,6 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> {
     private final WorldManagePage worldManagePage;
     private final World world;
     private CompoundTag levelDat;
-
-    Map<String, GameRule> gameRuleMap = GameRule.getCloneGameRuleMap();
 
     ObservableList<GameRuleInfo<?>> gameRuleList;
     private boolean isResettingAll = false;
@@ -88,8 +85,8 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> {
         }
 
         gameRuleCompoundTag.iterator().forEachRemaining(gameRuleTag -> {
-            GameRule.createGameRuleNbt(gameRuleTag).ifPresent(gameRuleNBT -> {
-                GameRule.getFullGameRule(gameRuleTag, gameRuleMap).ifPresent(gameRule -> {
+            GameRule.createGameRuleNBT(gameRuleTag).ifPresent(gameRuleNBT -> {
+                GameRule.getFullGameRule(gameRuleTag).ifPresent(gameRule -> {
                     if (gameRule instanceof GameRule.IntGameRule intGameRule) {
                         @SuppressWarnings("unchecked")
                         GameRuleNBT<String, Tag> typedGameRuleNBT = (GameRuleNBT<String, Tag>) gameRuleNBT;
