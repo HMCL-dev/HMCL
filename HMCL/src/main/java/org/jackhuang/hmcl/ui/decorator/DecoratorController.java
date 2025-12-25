@@ -79,9 +79,6 @@ public class DecoratorController {
     private final Decorator decorator;
     private final Navigator navigator;
 
-    private JFXDialog dialog;
-    private JFXDialogPane dialogPane;
-
     public DecoratorController(Stage stage, Node mainPage) {
         decorator = new Decorator(stage);
         decorator.setOnCloseButtonAction(() -> {

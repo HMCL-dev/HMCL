@@ -123,6 +123,8 @@ public final class DialogUtils {
                 if (container != null) {
                     container.getProperties().remove(PROPERTY_DIALOG_INSTANCE);
                     container.getProperties().remove(PROPERTY_DIALOG_PANE_INSTANCE);
+                    container.getProperties().remove(PROPERTY_PARENT_DIALOG_REF);
+                    container.getProperties().remove(PROPERTY_PARENT_PANE_REF);
                 }
             } else {
                 pane.pop(content);
