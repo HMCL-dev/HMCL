@@ -62,8 +62,8 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
                     Controllers.dialog(new MessageDialogPane.Builder(i18n("install.installer.fabric-quilt-api.warning"), i18n("message.warning"), MessageDialogPane.MessageType.WARNING)
                             .ok(null)
                             .addCancel(i18n("button.do_not_show_again"), () ->
-                                    config().getShownTips().put(FABRIC_QUILT_API_TIP, false)
-                            .build()));
+                                    config().getShownTips().put(FABRIC_QUILT_API_TIP, false))
+                            .build());
                 }
 
                 if (!(library.resolvedStateProperty().get() instanceof InstallerItem.IncompatibleState))
