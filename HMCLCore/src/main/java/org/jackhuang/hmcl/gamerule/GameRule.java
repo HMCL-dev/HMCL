@@ -206,7 +206,7 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         }
 
         public Optional<Boolean> getDefaultValue() {
-            return Optional.ofNullable(defaultValue.getValue());
+            return Optional.ofNullable(defaultValue).map(BooleanProperty::get);
         }
 
         public Optional<BooleanProperty> defaultValueProperty() {

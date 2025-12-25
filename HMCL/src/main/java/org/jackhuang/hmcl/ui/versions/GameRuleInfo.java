@@ -23,9 +23,7 @@ import com.jfoenix.controls.JFXTextField;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import org.jackhuang.hmcl.gamerule.GameRule;
 import org.jackhuang.hmcl.gamerule.GameRuleNBT;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -102,21 +100,26 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
         this.setToDefault = setToDefault;
     }
 
+    public void setFatherValue(GameRule gameRule) {
+        setRuleKey(gameRule.getRuleKey().get(0));
+        String displayName = "";
+        try {
+            if (StringUtils.isNotBlank(gameRule.getDisplayI18nKey())) {
+                displayName = i18n(gameRule.getDisplayI18nKey());
+            }
+        } catch (Exception e) {
+            LOG.warning("Failed to get i18n text for key: " + gameRule.getDisplayI18nKey(), e);
+        }
+        setDisplayName(displayName);
+        setDisplayName(displayName);
+    }
+
     static final class BooleanGameRuleInfo extends GameRuleInfo<Boolean> {
         boolean currentValue;
         Boolean defaultValue;
 
         public BooleanGameRuleInfo(GameRule.BooleanGameRule booleanGameRule, GameRuleNBT<Boolean, Tag> gameRuleNBT, Runnable onSave) {
-            this.setRuleKey(booleanGameRule.getRuleKey().get(0));
-            String displayName = "";
-            try {
-                if (StringUtils.isNotBlank(booleanGameRule.getDisplayI18nKey())) {
-                    displayName = i18n(booleanGameRule.getDisplayI18nKey());
-                }
-            } catch (Exception e) {
-                LOG.warning("Failed to get i18n text for key: " + booleanGameRule.getDisplayI18nKey(), e);
-            }
-            this.setDisplayName(displayName);
+            setFatherValue(booleanGameRule);
             this.currentValue = booleanGameRule.getValue();
             this.defaultValue = booleanGameRule.getDefaultValue().orElse(null);
             this.setGameRuleNBT(gameRuleNBT);
@@ -132,6 +135,8 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
                 getContainer().setPadding(new Insets(0, 8, 0, 0));
             }
 
+            JFXButton resetButton = new JFXButton();
+            StackPane wrapperPane = new StackPane(resetButton);
             OptionToggleButton toggleButton = new OptionToggleButton();
             {
                 toggleButton.setTitle(getDisplayName());
@@ -140,23 +145,31 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
                 toggleButton.selectedProperty().addListener((observable, oldValue, newValue) -> {
                     getGameRuleNBT().changeValue(newValue);
                     getOnSave().run();
+                    resetButton.setDisable(shouldResetButtonDisabled(newValue));
                 });
                 HBox.setHgrow(toggleButton, Priority.ALWAYS);
             }
-
-            JFXButton resetButton = new JFXButton();
             {
+                wrapperPane.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+                resetButton.setFocusTraversable(false);
+                resetButton.setDisable(shouldResetButtonDisabled(currentValue));
                 resetButton.setGraphic(SVG.RESTORE.createIcon(24));
                 if (defaultValue != null) {
                     setSetToDefault(() -> toggleButton.selectedProperty().set(defaultValue));
                     resetButton.setOnAction(event -> getSetToDefault().run());
-                    FXUtils.installSlowTooltip(resetButton, i18n("gamerule.restore_default_values.tooltip", defaultValue));
+                    FXUtils.installFastTooltip(resetButton, i18n("gamerule.restore_default_values.tooltip", defaultValue));
+                    FXUtils.installFastTooltip(wrapperPane, i18n("gamerule.now_is_default_values.tooltip"));
                 } else {
                     resetButton.setDisable(true);
+                    FXUtils.installFastTooltip(wrapperPane, i18n("gamerule.not_have_default_values.tooltip"));
                 }
             }
 
-            getContainer().getChildren().addAll(toggleButton, resetButton);
+            getContainer().getChildren().addAll(toggleButton, wrapperPane);
+        }
+
+        public boolean shouldResetButtonDisabled(boolean newValue) {
+            return defaultValue == null || newValue == defaultValue;
         }
 
     }
@@ -168,16 +181,7 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
         Integer defaultValue;
 
         public IntGameRuleInfo(GameRule.IntGameRule intGameRule, GameRuleNBT<String, Tag> gameRuleNBT, Runnable onSave) {
-            this.setRuleKey(intGameRule.getRuleKey().get(0));
-            String displayName = "";
-            try {
-                if (StringUtils.isNotBlank(intGameRule.getDisplayI18nKey())) {
-                    displayName = i18n(intGameRule.getDisplayI18nKey());
-                }
-            } catch (Exception e) {
-                LOG.warning("Failed to get i18n text for key: " + intGameRule.getDisplayI18nKey(), e);
-            }
-            this.setDisplayName(displayName);
+            setFatherValue(intGameRule);
             currentValue = intGameRule.getValue();
             minValue = intGameRule.getMinValue();
             maxValue = intGameRule.getMaxValue();
@@ -208,6 +212,8 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
                 hBox.setAlignment(Pos.CENTER_LEFT);
             }
 
+            JFXButton resetButton = new JFXButton();
+            StackPane wrapperPane = new StackPane(resetButton);
             JFXTextField textField = new JFXTextField();
             {
                 textField.textProperty().set(Integer.toString(currentValue));
@@ -220,29 +226,37 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
                     if (value != null && value >= minValue && value <= maxValue) {
                         getGameRuleNBT().changeValue(newValue);
                         getOnSave().run();
+                        resetButton.setDisable(shouldResetButtonDisabled(value));
                     }
                 });
 
                 textField.maxWidth(10);
                 textField.minWidth(10);
             }
-
-            JFXButton resetButton = new JFXButton();
             {
+                wrapperPane.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+                resetButton.setFocusTraversable(false);
+                resetButton.setDisable(shouldResetButtonDisabled(currentValue));
                 resetButton.setGraphic(SVG.RESTORE.createIcon(24));
                 if (defaultValue != null) {
                     setSetToDefault(() -> textField.textProperty().set(String.valueOf(defaultValue)));
                     resetButton.setOnAction(event -> getSetToDefault().run());
-                    FXUtils.installSlowTooltip(resetButton, i18n("gamerule.restore_default_values.tooltip", defaultValue));
+                    FXUtils.installFastTooltip(resetButton, i18n("gamerule.restore_default_values.tooltip", defaultValue));
+                    FXUtils.installFastTooltip(wrapperPane, i18n("gamerule.now_is_default_values.tooltip"));
                 } else {
                     resetButton.setDisable(true);
+                    FXUtils.installFastTooltip(wrapperPane, i18n("gamerule.not_have_default_values.tooltip"));
                 }
 
                 resetButton.setAlignment(Pos.BOTTOM_CENTER);
             }
 
-            hBox.getChildren().addAll(textField, resetButton);
+            hBox.getChildren().addAll(textField, wrapperPane);
             getContainer().getChildren().addAll(displayInfoVBox, hBox);
+        }
+
+        public boolean shouldResetButtonDisabled(int newValue) {
+            return defaultValue == null || newValue == defaultValue;
         }
     }
 }
