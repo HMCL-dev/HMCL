@@ -49,7 +49,12 @@ public final class ResourcePackManager extends LocalFileManager<ResourcePackFile
             "18w47b"  // 5
     );
 
-    public static final String LEAST_MC_VERSION = "13w24a";
+    public static final String LEAST_MC_VERSION_RELEASE = "1.6.1";
+    public static final String LEAST_MC_VERSION_SNAPSHOT = "13w24a";
+
+    public static boolean isMcVersionSupported(@NotNull GameVersionNumber version) {
+        return version.isAtLeast(ResourcePackManager.LEAST_MC_VERSION_RELEASE, ResourcePackManager.LEAST_MC_VERSION_SNAPSHOT);
+    }
 
     @NotNull
     public static PackMcMeta.PackVersion getPackVersion(GameVersionNumber minecraftVersion, Path gameJar) {
