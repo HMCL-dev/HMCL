@@ -323,5 +323,4 @@ public final class Versions {
         // VersionPage.loadVersion will be invoked after navigation
         Controllers.navigate(Controllers.getVersionPage());
     }
-
 }
