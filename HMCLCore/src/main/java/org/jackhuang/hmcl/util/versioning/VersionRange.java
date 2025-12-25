@@ -33,7 +33,7 @@ public final class VersionRange<T extends Comparable<T>> {
         return new VersionRange<>(null, maximum);
     }
 
-    public static <T extends Comparable<T>> VersionRange<T> only(T version) {
+    public static <T extends Comparable<T>> VersionRange<T> is(T version) {
         assert version != null;
         return new VersionRange<>(version, version);
     }

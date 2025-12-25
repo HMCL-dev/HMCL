@@ -1,7 +1,5 @@
 package org.jackhuang.hmcl.mod;
 
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
 import org.jackhuang.hmcl.mod.modinfo.PackMcMeta;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Contract;
@@ -29,7 +27,7 @@ public sealed abstract class ResourcePackFile extends LocalFile implements Compa
     protected final String name;
     protected final String fileName;
 
-    private ObjectProperty<Compatibility> compatibility = null;
+    private Compatibility compatibility = null;
 
     protected ResourcePackFile(ResourcePackManager manager, Path file) {
         super(false);
@@ -55,9 +53,9 @@ public sealed abstract class ResourcePackFile extends LocalFile implements Compa
 
     public Compatibility getCompatibility() {
         if (compatibility == null) {
-            compatibility = new SimpleObjectProperty<>(this, "compatibility", manager.getCompatibility(this));
+            compatibility = manager.getCompatibility(this);
         }
-        return compatibility.get();
+        return compatibility;
     }
 
     public boolean isEnabled() {

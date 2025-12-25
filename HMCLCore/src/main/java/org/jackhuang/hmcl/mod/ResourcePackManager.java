@@ -98,7 +98,7 @@ public final class ResourcePackManager extends LocalFileManager<ResourcePackFile
             return VersionRange.empty();
         }
         if (supportedFormatsUnspecified) {
-            return VersionRange.only(new PackMcMeta.PackVersion(packInfo.packFormat(), 0));
+            return VersionRange.is(new PackMcMeta.PackVersion(packInfo.packFormat(), 0));
         }
         return VersionRange.between(packInfo.supportedFormats().getMin(), packInfo.supportedFormats().getMax());
     }
@@ -159,7 +159,7 @@ public final class ResourcePackManager extends LocalFileManager<ResourcePackFile
         } else if (!packFormatUnspecified) {
             int packFormat = packInfo.packFormat();
             PackMcMeta.PackVersion packVersion = new PackMcMeta.PackVersion(packFormat, 0);
-            return packFormat > 64 ? VersionRange.empty() : VersionRange.only(packVersion);
+            return packFormat > 64 ? VersionRange.empty() : VersionRange.is(packVersion);
         }
         return VersionRange.empty();
     }
