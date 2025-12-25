@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.decorator;
 
-import com.jfoenix.controls.JFXDialog;
 import com.jfoenix.controls.JFXSnackbar;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
