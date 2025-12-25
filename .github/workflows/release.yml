@@ -8,6 +8,9 @@ on:
 permissions:
   contents: write
 
+env:
+  KOMAC_DEB_DOWNLOAD_URL: https://github.com/russellbanks/Komac/releases/download/v2.14.0/komac_2.14.0-1_amd64.deb
+
 jobs:
   check-update:
     if: ${{ github.repository_owner == 'HMCL-dev' }}
@@ -18,8 +21,9 @@ jobs:
         include:
           - channel: dev
             task: checkUpdateDev
-            winget-gh-release: HMCL.HMCL.Dev
-            winget-cnb-release: HMCL.HMCL.Dev.CNB
+            winget-identifier-gh: HMCL.HMCL.Dev
+            winget-identifier-cnb: HMCL.HMCL.Dev.CNB
+            winget-name: Hello Minecraft! Launcher Dev
           - channel: stable
             task: checkUpdateStable
     runs-on: ubuntu-latest
@@ -54,10 +58,12 @@ jobs:
           export JAR_SHA256=$(cat HMCL-$HMCL_VERSION.jar.sha256 | tr -d '\n')
           export EXE_SHA256=$(cat HMCL-$HMCL_VERSION.exe.sha256 | tr -d '\n')
           export SH_SHA256=$(cat HMCL-$HMCL_VERSION.sh.sha256 | tr -d '\n')
-          
+
           echo "$JAR_SHA256  HMCL-$HMCL_VERSION.jar" | sha256sum -c
           echo "$EXE_SHA256  HMCL-$HMCL_VERSION.exe" | sha256sum -c
           echo "$SH_SHA256  HMCL-$HMCL_VERSION.sh" | sha256sum -c
+
+          echo "EXE_SHA256=$EXE_SHA256" >> $GITHUB_ENV
       - name: Generate release note
         if: ${{ env.continue == 'true' }}
         run: |
@@ -94,22 +100,26 @@ jobs:
             --prerelease
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Install komac
+      - name: Prepare komac
         if: ${{ env.continue == 'true' && matrix.channel == 'dev' }}
         continue-on-error: true
         run: |
           wget -O komac.deb ${{ env.KOMAC_DEB_DOWNLOAD_URL }}
           sudo apt install ./komac.deb -y
           rm ./komac.deb
-        env:
-          KOMAC_DEB_DOWNLOAD_URL: https://github.com/russellbanks/Komac/releases/download/v2.14.0/komac_2.14.0-1_amd64.deb
-      - name: Publish winget package from GitHub Releases
+          chmod +x .github/scripts/publish_winget_manifest.sh
+      - name: Publish a winget manifest from GitHub Releases
         if: ${{ env.continue == 'true' && matrix.channel == 'dev' }}
         continue-on-error: true
-        run: |
-          komac update ${{ matrix.winget-gh-release }} --version ${{ env.HMCL_VERSION }} --urls ${{ env.GH_DOWNLOAD_URL }} --submit --token ${{ secrets.KOMAC_TOKEN }}
+        run: .github/scripts/publish_winget_manifest.sh
         env:
-          GH_DOWNLOAD_URL: https://github.com/${{ github.repository }}/releases/download/v${{ env.HMCL_VERSION }}/HMCL-${{ env.HMCL_VERSION }}.exe
+          PACKAGE_IDENTIFIER: ${{ matrix.winget-identifier-gh }}
+          PACKAGE_NAME: ${{ matrix.winget-name }}
+          PACKAGE_VERSION: ${{ env.HMCL_VERSION }}
+          PACKAGE_CHANNEL: ${{ matrix.channel }}
+          PACKAGE_INSTALLER_URL: https://github.com/${{ github.repository }}/releases/download/v${{ env.HMCL_VERSION }}/HMCL-${{ env.HMCL_VERSION }}.exe
+          PACKAGE_INSTALLER_SHA256: ${{ env.EXE_SHA256 }}
+          KOMAC_TOKEN: ${{ secrets.KOMAC_TOKEN }}
       - name: Install git-cnb
         if: ${{ env.continue == 'true' }}
         run: go install "cnb.cool/looc/git-cnb@$GIT_CNB_VERSION"
@@ -141,10 +151,15 @@ jobs:
         env:
           CNB_TOKEN: ${{ secrets.CNB_SYNC_TOKEN }}
           CNB_REPO: HMCL-dev/HMCL
-      - name: Publish winget package from CNB Releases
+      - name: Publish a winget manifest from CNB Releases
         if: ${{ env.continue == 'true' && matrix.channel == 'dev' }}
         continue-on-error: true
-        run: |
-          komac update ${{ matrix.winget-cnb-release }} --version ${{ env.HMCL_VERSION }} --urls ${{ env.CNB_DOWNLOAD_URL }} --submit --token ${{ secrets.KOMAC_TOKEN }}
+        run: .github/scripts/publish_winget_manifest.sh
         env:
-          CNB_DOWNLOAD_URL: https://cnb.cool/HMCL-dev/HMCL/-/releases/download/v${{ env.HMCL_VERSION }}/HMCL-${{ env.HMCL_VERSION }}.exe
+          PACKAGE_IDENTIFIER: ${{ matrix.winget-identifier-cnb }}
+          PACKAGE_NAME: ${{ matrix.winget-name }}
+          PACKAGE_VERSION: ${{ env.HMCL_VERSION }}
+          PACKAGE_CHANNEL: ${{ matrix.channel }}
+          PACKAGE_INSTALLER_URL: https://cnb.cool/HMCL-dev/HMCL/-/releases/download/v${{ env.HMCL_VERSION }}/HMCL-${{ env.HMCL_VERSION }}.exe
+          PACKAGE_INSTALLER_SHA256: ${{ env.EXE_SHA256 }}
+          KOMAC_TOKEN: ${{ secrets.KOMAC_TOKEN }}
