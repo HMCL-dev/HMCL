@@ -235,7 +235,7 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
     /// Wraps values in [IntegerProperty] and supports min/max value validation.
     public static final class IntGameRule extends GameRule {
         private final IntegerProperty value = new SimpleIntegerProperty(0);
-        private Optional<IntegerProperty> defaultValue = Optional.empty();
+        private IntegerProperty defaultValue;
         private int maxValue = 0;
         private int minValue = 0;
 
@@ -268,15 +268,15 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         }
 
         public Optional<Integer> getDefaultValue() {
-            return defaultValue.map(IntegerProperty::getValue);
+            return Optional.ofNullable(defaultValue.getValue());
         }
 
         public Optional<IntegerProperty> defaultValueProperty() {
-            return defaultValue;
+            return Optional.ofNullable(defaultValue);
         }
 
         private void setDefaultValue(int value) {
-            defaultValue.ifPresentOrElse(defaultValue -> defaultValue.set(value), () -> defaultValue = Optional.of(new SimpleIntegerProperty(value)));
+            defaultValueProperty().ifPresentOrElse(defaultValue -> defaultValue.set(value), () -> defaultValue = new SimpleIntegerProperty(value));
         }
 
         public int getValue() {

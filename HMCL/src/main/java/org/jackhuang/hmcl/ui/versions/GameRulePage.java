@@ -90,24 +90,16 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> {
         gameRuleCompoundTag.iterator().forEachRemaining(gameRuleTag -> {
             GameRule.createGameRuleNbt(gameRuleTag).ifPresent(gameRuleNBT -> {
                 GameRule.getFullGameRule(gameRuleTag, gameRuleMap).ifPresent(gameRule -> {
-                    String displayText = "";
-                    try {
-                        if (StringUtils.isNotBlank(gameRule.getDisplayI18nKey())) {
-                            displayText = i18n(gameRule.getDisplayI18nKey());
-                        }
-                    } catch (Exception e) {
-                        LOG.warning("Failed to get i18n text for key: " + gameRule.getDisplayI18nKey(), e);
-                    }
                     if (gameRule instanceof GameRule.IntGameRule intGameRule) {
                         @SuppressWarnings("unchecked")
                         GameRuleNBT<String, Tag> typedGameRuleNBT = (GameRuleNBT<String, Tag>) gameRuleNBT;
 
-                        gameRuleList.add(new GameRuleInfo.IntGameRuleInfo(intGameRule.getRuleKey().get(0), displayText, intGameRule.getValue(), intGameRule.getMinValue(), intGameRule.getMaxValue(), intGameRule.getDefaultValue(), typedGameRuleNBT, this::saveLevelDatIfNotResettingAll));
+                        gameRuleList.add(new GameRuleInfo.IntGameRuleInfo(intGameRule, typedGameRuleNBT, this::saveLevelDatIfNotResettingAll));
                     } else if (gameRule instanceof GameRule.BooleanGameRule booleanGameRule) {
                         @SuppressWarnings("unchecked")
                         GameRuleNBT<Boolean, Tag> typedGameRuleNBT = (GameRuleNBT<Boolean, Tag>) gameRuleNBT;
 
-                        gameRuleList.add(new GameRuleInfo.BooleanGameRuleInfo(booleanGameRule.getRuleKey().get(0), displayText, booleanGameRule.getValue(), booleanGameRule.getDefaultValue(), typedGameRuleNBT, this::saveLevelDatIfNotResettingAll));
+                        gameRuleList.add(new GameRuleInfo.BooleanGameRuleInfo(booleanGameRule, typedGameRuleNBT, this::saveLevelDatIfNotResettingAll));
                     }
                 });
             });
