@@ -174,47 +174,35 @@ public final class World {
     }
 
     private void loadWorldInfo(Path levelDat) throws IOException {
-        CompoundTag nbt = parseLevelDat(levelDat);
-        levelData = nbt;
-
-        CompoundTag data = nbt.get("Data");
+        this.levelData = parseLevelDat(levelDat);
+        CompoundTag data = levelData.get("Data");
         if (data == null)
             throw new IOException("level.dat missing Data");
 
-        if (data.get("LevelName") instanceof StringTag)
-            worldName = data.<StringTag>get("LevelName").getValue();
+        if (data.get("LevelName") instanceof StringTag levelNameTag)
+            worldName = levelNameTag.getValue();
         else
             throw new IOException("level.dat missing LevelName");
 
-        if (data.get("LastPlayed") instanceof LongTag)
-            lastPlayed = data.<LongTag>get("LastPlayed").getValue();
+        if (data.get("LastPlayed") instanceof LongTag lastPlayedTag)
+            lastPlayed = lastPlayedTag.getValue();
         else
             throw new IOException("level.dat missing LastPlayed");
 
         gameVersion = null;
-        if (data.get("Version") instanceof CompoundTag) {
-            CompoundTag version = data.get("Version");
-
-            if (version.get("Name") instanceof StringTag)
-                gameVersion = GameVersionNumber.asGameVersion(version.<StringTag>get("Name").getValue());
+        if (data.get("Version") instanceof CompoundTag versionTag && versionTag.get("Name") instanceof StringTag nameTag) {
+            gameVersion = GameVersionNumber.asGameVersion(nameTag.getValue());
         }
 
-        Tag worldGenSettings = data.get("WorldGenSettings");
-        if (worldGenSettings instanceof CompoundTag) {
-            Tag seedTag = ((CompoundTag) worldGenSettings).get("seed");
-            if (seedTag instanceof LongTag) {
-                seed = ((LongTag) seedTag).getValue();
-            }
-        }
-        if (seed == null) {
-            Tag seedTag = data.get("RandomSeed");
-            if (seedTag instanceof LongTag) {
-                seed = ((LongTag) seedTag).getValue();
-            }
+        if (data.get("WorldGenSettings") instanceof CompoundTag worldGenSettingsTag && worldGenSettingsTag.get("seed") instanceof LongTag seedTag) { //Valid after 1.16
+            seed = seedTag.getValue();
+        } else if (data.get("RandomSeed") instanceof LongTag seedTag) { //Valid before 1.16
+            seed = seedTag.getValue();
         }
 
-        if (data.get("generatorName") instanceof StringTag) { //Valid before 1.16
-            largeBiomes = "largeBiomes".equals(data.<StringTag>get("generatorName").getValue());
+
+        if (data.get("generatorName") instanceof StringTag generatorNameTag) { //Valid before 1.16
+            largeBiomes = "largeBiomes".equals(generatorNameTag.getValue());
         } else {
             if (data.get("WorldGenSettings") instanceof CompoundTag worldGenSettingsTag
                     && worldGenSettingsTag.get("dimensions") instanceof CompoundTag dimensionsTag
