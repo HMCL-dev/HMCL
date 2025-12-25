@@ -29,16 +29,15 @@ import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.TextFlow;
 import javafx.util.Duration;
@@ -102,10 +101,14 @@ public final class MainPage extends StackPane implements DecoratorPage {
     private final BooleanProperty showUpdate = new SimpleBooleanProperty(this, "showUpdate");
     private final ObjectProperty<RemoteVersion> latestVersion = new SimpleObjectProperty<>(this, "latestVersion");
     private final ObservableList<Version> versions = FXCollections.observableArrayList();
+    private final ObservableList<String> pinnedVersions = FXCollections.observableArrayList();
     private final ObservableList<Node> versionNodes;
+    private final ObservableList<Node> pinnedVersionNodes;
     private Profile profile;
 
     private TransitionPane announcementPane;
+    private final VBox pinnedVersionsBox = new VBox(16);
+    private final ScrollPane pinnedVersionsScroll = new ScrollPane(pinnedVersionsBox);
     private final StackPane updatePane;
     private final JFXButton menuButton;
 
@@ -126,7 +129,9 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
         state.setValue(new State(null, titleNode, false, false, true));
 
-        setPadding(new Insets(20));
+        pinnedVersionsScroll.setFitToWidth(true);
+        FXUtils.smoothScrolling(pinnedVersionsScroll);
+        pinnedVersionsBox.setPadding(new Insets(20, 20, 80, 20));
 
         if (Metadata.isNightly() || (Metadata.isDev() && !Objects.equals(Metadata.VERSION, config().getShownTips().get(ANNOUNCEMENT)))) {
             String title;
@@ -169,8 +174,18 @@ public final class MainPage extends StackPane implements DecoratorPage {
             announcementPane = new TransitionPane();
             announcementPane.setContent(announcementBox, ContainerAnimations.NONE);
 
-            getChildren().add(announcementPane);
+            pinnedVersionsBox.getChildren().add(announcementPane);
         }
+
+        this.pinnedVersionNodes = MappedObservableList.create(pinnedVersions, this::createQuickLaunch);
+        FlowPane pane = new FlowPane();
+        pane.setHgap(8);
+        pane.setVgap(8);
+        Bindings.bindContent(pane.getChildren(), pinnedVersionNodes);
+        Label text = new Label(i18n("version.pinned"));
+        text.setStyle("-fx-font-size: 15px; -fx-font-weight: bold");
+        text.visibleProperty().bind(Bindings.createBooleanBinding(() -> !pinnedVersions.isEmpty(), pinnedVersions));
+        pinnedVersionsBox.getChildren().addAll(text, pane);
 
         updatePane = new StackPane();
         updatePane.setVisible(false);
@@ -180,7 +195,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
         StackPane.setAlignment(updatePane, Pos.TOP_RIGHT);
         FXUtils.onClicked(updatePane, this::onUpgrade);
         FXUtils.onChange(showUpdateProperty(), this::showUpdate);
-
         {
             HBox hBox = new HBox();
             hBox.setSpacing(12);
@@ -292,9 +306,10 @@ public final class MainPage extends StackPane implements DecoratorPage {
             menuButton.addEventHandler(MouseEvent.MOUSE_CLICKED, secondaryClickHandle);
 
             launchPane.getChildren().setAll(launchButton, separator, menuButton);
+            StackPane.setMargin(launchPane, new Insets(20));
         }
 
-        getChildren().addAll(updatePane, launchPane);
+        getChildren().addAll(pinnedVersionsScroll, updatePane, launchPane);
 
         menu.setMaxHeight(365);
         menu.setMaxWidth(545);
@@ -309,6 +324,38 @@ public final class MainPage extends StackPane implements DecoratorPage {
             return node;
         });
         Bindings.bindContent(menu.getContent(), versionNodes);
+    }
+
+    private Node createQuickLaunch(String versionName) {
+        Version version = profile.getRepository().getVersion(versionName);
+        VBox card = new VBox();
+        card.getStyleClass().add("card");
+        card.setSpacing(16);
+        card.setPrefHeight(100);
+        card.setPrefWidth(100);
+        card.alignmentProperty().set(Pos.CENTER);
+        card.setCursor(Cursor.HAND);
+        ImageView image = new ImageView(profile.getRepository().getVersionIconImage(versionName));
+        image.setScaleX(1.5);
+        image.setScaleY(1.5);
+        image.setScaleZ(1.5);
+        Label name = new Label(version.getId());
+        VBox.setMargin(image, new Insets(4, 0, 0, 0));
+        VBox.setMargin(name, new Insets(4, 0, 0, 0));
+        name.setStyle("-fx-font-size: 13px; -fx-font-weight: bold");
+        card.getChildren().addAll(image, name);
+        card.setOnMouseClicked(e -> {
+            if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 2) {
+                if (e.isShiftDown()) {
+                    Versions.testGame(Profiles.getSelectedProfile(), versionName);
+                    return;
+                }
+                Versions.launch(Profiles.getSelectedProfile(), versionName, null);
+            }
+        });
+        FXUtils.installFastTooltip(card, i18n("version.doubleClickToLaunch"));
+
+        return card;
     }
 
     private void showUpdate(boolean show) {
@@ -477,5 +524,9 @@ public final class MainPage extends StackPane implements DecoratorPage {
         FXUtils.checkFxUserThread();
         this.profile = profile;
         this.versions.setAll(versions);
+        Bindings.bindContent(
+                this.pinnedVersions,
+                profile.getPinnedVersions()
+        );
     }
 }
