@@ -98,7 +98,7 @@ jobs:
         if: ${{ env.continue == 'true' && matrix.channel == 'dev' }}
         continue-on-error: true
         run: |
-          wget -O komac.deb ${{ KOMAC_DEB_DOWNLOAD_URL }}
+          wget -O komac.deb ${{ env.KOMAC_DEB_DOWNLOAD_URL }}
           sudo apt install ./komac.deb -y
           rm ./komac.deb
         env:
