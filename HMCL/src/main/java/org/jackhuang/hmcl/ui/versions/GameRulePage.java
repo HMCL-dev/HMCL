@@ -44,8 +44,8 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class GameRulePage extends ListPageBase<GameRuleInfo<?>> {
 
-    private WorldManagePage worldManagePage;
-    private World world;
+    private final WorldManagePage worldManagePage;
+    private final World world;
     private CompoundTag levelDat;
 
     Map<String, GameRule> gameRuleMap = GameRule.getCloneGameRuleMap();
@@ -111,7 +111,7 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> {
         return new GameRulePageSkin(this);
     }
 
-    public boolean isIsResettingAll() {
+    public boolean isResettingAll() {
         return isResettingAll;
     }
 

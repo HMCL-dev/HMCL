@@ -61,7 +61,9 @@ public sealed abstract class GameRuleNBT<T, V extends Tag> permits GameRuleNBT.I
         @Override
         public void changeValue(String newValue) {
             Integer value = Lang.toIntOrNull(newValue);
-            getGameRuleTag().setValue(value);
+            if (value != null) {
+                getGameRuleTag().setValue(value);
+            }
         }
     }
 

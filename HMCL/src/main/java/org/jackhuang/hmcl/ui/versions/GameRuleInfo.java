@@ -217,11 +217,7 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
                         new NumberRangeValidator(i18n("input.number_range", minValue, maxValue), minValue, maxValue));
                 textField.textProperty().addListener((observable, oldValue, newValue) -> {
                     Integer value = Lang.toIntOrNull(newValue);
-                    if (value == null) {
-                        return;
-                    } else if (value > maxValue || value < minValue) {
-                        return;
-                    } else {
+                    if (value != null && value >= minValue && value <= maxValue) {
                         getGameRuleNBT().changeValue(newValue);
                         getOnSave().run();
                     }

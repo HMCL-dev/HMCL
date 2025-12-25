@@ -27,7 +27,6 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.value.ObservableBooleanValue;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -180,7 +179,7 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
     /// Wraps values in [BooleanProperty] for UI binding.
     public static final class BooleanGameRule extends GameRule {
         private final BooleanProperty value = new SimpleBooleanProperty(false);
-        private Optional<BooleanProperty> defaultValue = Optional.empty();
+        private BooleanProperty defaultValue;
 
         private BooleanGameRule(List<String> ruleKey, String displayI18nKey, boolean value) {
             super(ruleKey, displayI18nKey);
@@ -207,15 +206,15 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         }
 
         public Optional<Boolean> getDefaultValue() {
-            return defaultValue.map(ObservableBooleanValue::get);
+            return Optional.ofNullable(defaultValue.getValue());
         }
 
         public Optional<BooleanProperty> defaultValueProperty() {
-            return defaultValue;
+            return Optional.ofNullable(defaultValue);
         }
 
         private void setDefaultValue(boolean value) {
-            this.defaultValue.ifPresentOrElse(defaultValue -> defaultValue.setValue(value), () -> defaultValue = Optional.of(new SimpleBooleanProperty(value)));
+            defaultValueProperty().ifPresentOrElse(defaultValue -> defaultValue.setValue(value), () -> defaultValue = new SimpleBooleanProperty(value));
         }
 
         public boolean getValue() {
