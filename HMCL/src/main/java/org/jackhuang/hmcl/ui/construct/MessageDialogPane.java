@@ -43,7 +43,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public final class MessageDialogPane extends HBox {
+public final class MessageDialogPane extends VBox {
 
     public enum MessageType {
         ERROR(SVG.ERROR),
@@ -75,42 +75,34 @@ public final class MessageDialogPane extends HBox {
         this.setSpacing(8);
         this.getStyleClass().add("jfx-dialog-layout");
 
+        HBox titlePane = new HBox();
+
         Label graphic = new Label();
-        graphic.setTranslateX(10);
-        graphic.setTranslateY(10);
-        graphic.setMinSize(40, 40);
-        graphic.setMaxSize(40, 40);
-        graphic.setGraphic(type.getIcon().createIcon(40));
+        graphic.setGraphic(type.getIcon().createIcon(24));
 
-        VBox vbox = new VBox();
-        HBox.setHgrow(vbox, Priority.ALWAYS);
-        {
-            StackPane titlePane = new StackPane();
-            titlePane.getStyleClass().addAll("jfx-layout-heading", "title");
-            titlePane.getChildren().setAll(new Label(title != null ? title : i18n("message.info")));
+        titlePane.setSpacing(4);
+        titlePane.getStyleClass().addAll("jfx-layout-heading", "title");
+        titlePane.getChildren().setAll(graphic, new Label(title != null ? title : i18n(type.getDisplayName())));
 
-            StackPane content = new StackPane();
-            content.getStyleClass().add("jfx-layout-body");
-            EnhancedTextFlow textFlow = new EnhancedTextFlow(text);
-            textFlow.setStyle("-fx-font-size: 14px;");
-            if (textFlow.computePrefHeight(400.0) <= 350.0)
-                content.getChildren().setAll(textFlow);
-            else {
-                ScrollPane scrollPane = new ScrollPane(textFlow);
-                FXUtils.smoothScrolling(scrollPane);
-                scrollPane.setPrefHeight(350);
-                VBox.setVgrow(scrollPane, Priority.ALWAYS);
-                scrollPane.setFitToWidth(true);
-                content.getChildren().setAll(scrollPane);
-            }
-
-            actions = new HBox();
-            actions.getStyleClass().add("jfx-layout-actions");
-
-            vbox.getChildren().setAll(titlePane, content, actions);
+        StackPane content = new StackPane();
+        content.getStyleClass().add("jfx-layout-body");
+        EnhancedTextFlow textFlow = new EnhancedTextFlow(text);
+        textFlow.setStyle("-fx-font-size: 14px;");
+        if (textFlow.computePrefHeight(400.0) <= 350.0)
+            content.getChildren().setAll(textFlow);
+        else {
+            ScrollPane scrollPane = new ScrollPane(textFlow);
+            FXUtils.smoothScrolling(scrollPane);
+            scrollPane.setPrefHeight(350);
+            VBox.setVgrow(scrollPane, Priority.ALWAYS);
+            scrollPane.setFitToWidth(true);
+            content.getChildren().setAll(scrollPane);
         }
 
-        this.getChildren().setAll(graphic, vbox);
+        actions = new HBox();
+        actions.getStyleClass().add("jfx-layout-actions");
+
+        this.getChildren().setAll(titlePane, content, actions);
 
         onEscPressed(this, () -> {
             if (cancelButton != null) {

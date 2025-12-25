@@ -510,7 +510,7 @@
 }
 
 .jfx-layout-body Text {
-    -fx-fill: -monet-on-surface;
+    -fx-fill: -monet-on-surface-variant;
 }
 
 .jfx-layout-actions {
