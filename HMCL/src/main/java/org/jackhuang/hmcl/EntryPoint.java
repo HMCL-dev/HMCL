@@ -100,7 +100,6 @@ public final class EntryPoint {
             LOG.info("Detected Wayland session");
             // On Wayland, ensure JavaFX can properly detect the scale factor
             // by setting jdk.gtk.version to 3 which has better Wayland support
-            System.getProperties().putIfAbsent("jdk.gtk.version", "3");
 
             // Try to detect GNOME scale factor from monitors.xml if no manual scale is set
             String uiScaleEnv = System.getProperty("hmcl.uiScale", System.getenv("HMCL_UI_SCALE"));
