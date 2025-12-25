@@ -11,7 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
 
-public sealed abstract class ResourcePackFile extends LocalFile implements Comparable<ResourcePackFile> permits ResourcePackFolder, ResourcePackZipFile {
+public sealed abstract class ResourcePackFile extends LocalAddonFile implements Comparable<ResourcePackFile> permits ResourcePackFolder, ResourcePackZipFile {
     static ResourcePackFile parse(ResourcePackManager manager, Path path) throws IOException {
         String fileName = LocalFileManager.getLocalFileName(path);
         if (Files.isRegularFile(path) && fileName.toLowerCase(Locale.ROOT).endsWith(".zip")) {

@@ -8,11 +8,11 @@ import java.nio.file.Path;
 import java.util.List;
 
 /// Should implement `Comparable`
-public sealed abstract class LocalFile permits LocalModFile, ResourcePackFile {
+public sealed abstract class LocalAddonFile permits LocalModFile, ResourcePackFile {
 
     private final boolean keepOldFiles;
 
-    protected LocalFile(boolean keepOldFiles) {
+    protected LocalAddonFile(boolean keepOldFiles) {
         this.keepOldFiles = keepOldFiles;
     }
 
@@ -38,7 +38,7 @@ public sealed abstract class LocalFile permits LocalModFile, ResourcePackFile {
     @Nullable
     public abstract ModUpdate checkUpdates(String gameVersion, RemoteModRepository repository) throws IOException;
 
-    public record ModUpdate(LocalFile localFile, RemoteMod.Version currentVersion,
+    public record ModUpdate(LocalAddonFile localFile, RemoteMod.Version currentVersion,
                             List<RemoteMod.Version> candidates) {
     }
 

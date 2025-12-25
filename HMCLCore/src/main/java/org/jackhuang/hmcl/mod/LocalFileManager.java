@@ -13,7 +13,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-public abstract class LocalFileManager<T extends LocalFile> {
+public abstract class LocalFileManager<T extends LocalAddonFile> {
 
     public static final String DISABLED_EXTENSION = ".disabled";
     public static final String OLD_EXTENSION = ".old";
