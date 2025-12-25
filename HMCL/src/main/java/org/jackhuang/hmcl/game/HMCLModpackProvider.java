@@ -48,7 +48,7 @@ public final class HMCLModpackProvider implements ModpackProvider {
     }
 
     @Override
-    public Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, String name, Path zipFile, Modpack modpack, Path iconFile) throws MismatchedModpackTypeException {
+    public Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, String name, Path zipFile, Modpack modpack) throws MismatchedModpackTypeException {
         if (!(modpack.getManifest() instanceof HMCLModpackManifest))
             throw new MismatchedModpackTypeException(getName(), modpack.getManifest().getProvider().getName());
 
@@ -58,7 +58,7 @@ public final class HMCLModpackProvider implements ModpackProvider {
 
         Profile profile = repository.getProfile();
 
-        return new ModpackUpdateTask(dependencyManager.getGameRepository(), name, new HMCLModpackInstallTask(profile, zipFile, modpack, name, iconFile));
+        return new ModpackUpdateTask(dependencyManager.getGameRepository(), name, new HMCLModpackInstallTask(profile, zipFile, modpack, name));
     }
 
     @Override
@@ -79,8 +79,8 @@ public final class HMCLModpackProvider implements ModpackProvider {
 
     private final static class HMCLModpack extends Modpack {
         @Override
-        public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, String name, Path iconFile) {
-            return new HMCLModpackInstallTask(((HMCLGameRepository) dependencyManager.getGameRepository()).getProfile(), zipFile, this, name, iconFile);
+        public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, String name) {
+            return new HMCLModpackInstallTask(((HMCLGameRepository) dependencyManager.getGameRepository()).getProfile(), zipFile, this, name);
         }
     }
 

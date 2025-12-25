@@ -19,11 +19,9 @@ package org.jackhuang.hmcl.mod;
 
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
 
 import java.nio.charset.Charset;
-import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -33,7 +31,6 @@ public class ModpackInstallTask<T> extends Task<Void> {
 
     private final Path modpackFile;
     private final Path dest;
-    private final Path iconFile;
     private final Charset charset;
     private final List<String> subDirectories;
     private final List<ModpackConfiguration.FileInformation> overrides;
@@ -47,11 +44,9 @@ public class ModpackInstallTask<T> extends Task<Void> {
     /// @param subDirectories   the subdirectory of zip file to unpack
     /// @param callback         test whether the file (given full path) in zip file should be unpacked or not
     /// @param oldConfiguration old modpack information if upgrade
-    /// @param iconFile         icon file for the modpack (optional)
-    public ModpackInstallTask(Path modpackFile, Path dest, Charset charset, List<String> subDirectories, Predicate<String> callback, ModpackConfiguration<T> oldConfiguration, Path iconFile) {
+    public ModpackInstallTask(Path modpackFile, Path dest, Charset charset, List<String> subDirectories, Predicate<String> callback, ModpackConfiguration<T> oldConfiguration) {
         this.modpackFile = modpackFile;
         this.dest = dest;
-        this.iconFile = iconFile;
         this.charset = charset;
         this.subDirectories = subDirectories;
         this.callback = callback;
@@ -104,16 +99,6 @@ public class ModpackInstallTask<T> extends Task<Void> {
             Path original = dest.resolve(file.getPath());
             if (Files.exists(original) && !entries.contains(file.getPath()))
                 Files.deleteIfExists(original);
-        }
-
-        {
-            Path iconDest = dest.resolve("icon." + FileUtils.getExtension(iconFile));
-            if (iconFile != null && Files.isRegularFile(iconFile) && Files.notExists(iconDest)) {
-                try {
-                    Files.copy(iconFile, iconDest);
-                } catch (FileAlreadyExistsException ignored) { // Should be impossible
-                }
-            }
         }
     }
 }

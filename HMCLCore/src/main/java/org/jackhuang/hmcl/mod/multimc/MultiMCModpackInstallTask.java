@@ -81,19 +81,17 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
     private final MultiMCInstanceConfiguration manifest;
     private final String name;
     private final DefaultGameRepository repository;
-    private final Path iconFile;
     private final List<Task<?>> dependents = new ArrayList<>();
     private final List<Task<?>> dependencies = new ArrayList<>();
     private final DefaultDependencyManager dependencyManager;
 
-    public MultiMCModpackInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, Modpack modpack, MultiMCInstanceConfiguration manifest, String name, Path iconFile) {
+    public MultiMCModpackInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, Modpack modpack, MultiMCInstanceConfiguration manifest, String name) {
         this.zipFile = zipFile;
         this.modpack = modpack;
         this.manifest = manifest;
         this.name = name;
         this.dependencyManager = dependencyManager;
         this.repository = dependencyManager.getGameRepository();
-        this.iconFile = iconFile;
 
         Path json = repository.getModpackConfiguration(name);
         if (repository.hasVersion(name) && Files.notExists(json))
@@ -134,7 +132,7 @@ public final class MultiMCModpackInstallTask extends Task<MultiMCInstancePatch.R
             }
 
             // TODO: Optimize unbearably slow ModpackInstallTask
-            dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), Collections.singletonList(mcDirectory), any -> true, config, iconFile).withStage("hmcl.modpack"));
+            dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), Collections.singletonList(mcDirectory), any -> true, config).withStage("hmcl.modpack"));
             dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), Collections.singletonList(mcDirectory), manifest, MultiMCModpackProvider.INSTANCE, manifest.getName(), null, repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
         }
 

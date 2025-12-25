@@ -46,11 +46,11 @@ public final class ModrinthModpackProvider implements ModpackProvider {
     }
 
     @Override
-    public Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, String name, Path zipFile, Modpack modpack, Path iconFile) throws MismatchedModpackTypeException {
+    public Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, String name, Path zipFile, Modpack modpack) throws MismatchedModpackTypeException {
         if (!(modpack.getManifest() instanceof ModrinthManifest modrinthManifest))
             throw new MismatchedModpackTypeException(getName(), modpack.getManifest().getProvider().getName());
 
-        return new ModpackUpdateTask(dependencyManager.getGameRepository(), name, new ModrinthInstallTask(dependencyManager, zipFile, modpack, modrinthManifest, name, iconFile));
+        return new ModpackUpdateTask(dependencyManager.getGameRepository(), name, new ModrinthInstallTask(dependencyManager, zipFile, modpack, modrinthManifest, name));
     }
 
     @Override
@@ -58,8 +58,8 @@ public final class ModrinthModpackProvider implements ModpackProvider {
         ModrinthManifest manifest = JsonUtils.fromNonNullJson(CompressingUtils.readTextZipEntry(zip, "modrinth.index.json"), ModrinthManifest.class);
         return new Modpack(manifest.getName(), "", manifest.getVersionId(), manifest.getGameVersion(), manifest.getSummary(), encoding, manifest) {
             @Override
-            public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, String name, Path iconFile) {
-                return new ModrinthInstallTask(dependencyManager, zipFile, this, manifest, name, iconFile);
+            public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, String name) {
+                return new ModrinthInstallTask(dependencyManager, zipFile, this, manifest, name);
             }
         };
     }

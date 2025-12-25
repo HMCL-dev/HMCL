@@ -33,7 +33,7 @@ public interface ModpackProvider {
 
     Task<?> createCompletionTask(DefaultDependencyManager dependencyManager, String version);
 
-    Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, String name, Path zipFile, Modpack modpack, Path iconFile) throws MismatchedModpackTypeException;
+    Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, String name, Path zipFile, Modpack modpack) throws MismatchedModpackTypeException;
 
     /**
      * @param zipFile the opened modpack zip file.

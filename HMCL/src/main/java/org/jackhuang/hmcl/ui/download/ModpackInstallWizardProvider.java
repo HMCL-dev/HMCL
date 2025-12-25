@@ -26,17 +26,22 @@ import org.jackhuang.hmcl.mod.ModpackCompletionException;
 import org.jackhuang.hmcl.mod.UnsupportedModpackException;
 import org.jackhuang.hmcl.mod.server.ServerModpackManifest;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.SettingsMap;
+import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -45,7 +50,7 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
     private final Profile profile;
     private final Path file;
     private final String updateVersion;
-    private final Path iconFile;
+    private final URI iconURL;
 
     public ModpackInstallWizardProvider(Profile profile) {
         this(profile, null, null, null);
@@ -59,11 +64,11 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         this(profile, null, updateVersion, null);
     }
 
-    public ModpackInstallWizardProvider(Profile profile, Path modpackFile, String updateVersion, Path iconFile) {
+    public ModpackInstallWizardProvider(Profile profile, Path modpackFile, String updateVersion, URI iconURL) {
         this.profile = profile;
         this.file = modpackFile;
         this.updateVersion = updateVersion;
-        this.iconFile = iconFile;
+        this.iconURL = iconURL;
     }
 
     @Override
@@ -72,8 +77,8 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
             settings.put(LocalModpackPage.MODPACK_FILE, file);
         if (updateVersion != null)
             settings.put(LocalModpackPage.MODPACK_NAME, updateVersion);
-        if (iconFile != null)
-            settings.put(LocalModpackPage.MODPACK_ICON_FILE, iconFile);
+        if (iconURL != null)
+            settings.put(LocalModpackPage.MODPACK_ICON_URL, iconURL);
         settings.put(ModpackPage.PROFILE, profile);
     }
 
@@ -83,11 +88,27 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         Modpack modpack = settings.get(LocalModpackPage.MODPACK_MANIFEST);
         String name = settings.get(LocalModpackPage.MODPACK_NAME);
         Charset charset = settings.get(LocalModpackPage.MODPACK_CHARSET);
+        URI iconURL = settings.get(LocalModpackPage.MODPACK_ICON_URL);
         boolean isManuallyCreated = settings.getOrDefault(LocalModpackPage.MODPACK_MANUALLY_CREATED, false);
-        Path iconFile = settings.get(LocalModpackPage.MODPACK_ICON_FILE);
+
+        ExceptionalSupplier<Task<Void>, Exception> iconTaskSupplier = () -> {
+            if (iconURL == null) return null;
+            String url = iconURL.toString();
+            if (FXUtils.IMAGE_EXTENSIONS.stream().map(s -> "." + s).noneMatch(url::endsWith)) {
+                return null;
+            }
+            Path versionRoot = profile.getRepository().getVersionRoot(name);
+            boolean hasIcon = FXUtils.IMAGE_EXTENSIONS.stream()
+                    .map(s -> versionRoot.resolve("icon." + s))
+                    .anyMatch(Files::exists);
+            if (hasIcon) return null;
+            Path iconDest = versionRoot.resolve("icon" + url.substring(url.lastIndexOf('.')));
+            return new FileDownloadTask(iconURL, iconDest);
+        };
 
         if (isManuallyCreated) {
-            return ModpackHelper.getInstallManuallyCreatedModpackTask(profile, selected, name, charset, iconFile);
+            return ModpackHelper.getInstallManuallyCreatedModpackTask(profile, selected, name, charset)
+                    .thenComposeAsync(Schedulers.javafx(), iconTaskSupplier);
         }
 
         if ((selected == null && serverModpackManifest == null) || modpack == null || name == null) return null;
@@ -99,9 +120,11 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
             }
             try {
                 if (serverModpackManifest != null) {
-                    return ModpackHelper.getUpdateTask(profile, serverModpackManifest, modpack.getEncoding(), name, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(name)), iconFile);
+                    return ModpackHelper.getUpdateTask(profile, serverModpackManifest, modpack.getEncoding(), name, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(name)))
+                            .thenComposeAsync(Schedulers.javafx(), iconTaskSupplier);
                 } else {
-                    return ModpackHelper.getUpdateTask(profile, selected, modpack.getEncoding(), name, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(name)), iconFile);
+                    return ModpackHelper.getUpdateTask(profile, selected, modpack.getEncoding(), name, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(name)))
+                            .thenComposeAsync(Schedulers.javafx(), iconTaskSupplier);
                 }
             } catch (UnsupportedModpackException | ManuallyCreatedModpackException e) {
                 Controllers.dialog(i18n("modpack.unsupported"), i18n("message.error"), MessageType.ERROR);
@@ -113,10 +136,12 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
             return null;
         } else {
             if (serverModpackManifest != null) {
-                return ModpackHelper.getInstallTask(profile, serverModpackManifest, name, modpack, iconFile)
+                return ModpackHelper.getInstallTask(profile, serverModpackManifest, name, modpack)
+                        .thenComposeAsync(Schedulers.javafx(), iconTaskSupplier)
                         .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
             } else {
-                return ModpackHelper.getInstallTask(profile, selected, name, modpack, iconFile)
+                return ModpackHelper.getInstallTask(profile, selected, name, modpack)
+                        .thenComposeAsync(Schedulers.javafx(), iconTaskSupplier)
                         .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
             }
         }
