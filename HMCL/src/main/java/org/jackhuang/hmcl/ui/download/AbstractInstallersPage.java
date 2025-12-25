@@ -63,7 +63,7 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
                             .ok(null)
                             .addCancel(i18n("button.do_not_show_again"), () ->
                                     config().getShownTips().put(FABRIC_QUILT_API_TIP, false)
-                            .build());
+                            .build()));
                 }
 
                 if (!(library.resolvedStateProperty().get() instanceof InstallerItem.IncompatibleState))
