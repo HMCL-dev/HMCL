@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.mod.ResourcePackFile;
 import org.jackhuang.hmcl.mod.ResourcePackManager;
+import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -78,8 +79,6 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
     private Path resourcePackDirectory;
     private ResourcePackManager resourcePackManager;
-
-    private boolean warningShown = false;
 
     public ResourcePackListPage() {
         FXUtils.applyDragListener(this, file -> Files.isDirectory(file) || file.getFileName().toString().endsWith(".zip"), this::addFiles);
@@ -170,10 +169,10 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     }
 
     private void setSelectedEnabled(List<ResourcePackInfoObject> selectedItems, boolean enabled) {
-        if (!warningShown) {
+        if (!ConfigHolder.globalConfig().isResourcePackWarningShown()) {
             Controllers.confirm(i18n("resourcepack.warning.manipulate"), i18n("message.warning"),
                     () -> {
-                        warningShown = true;
+                        ConfigHolder.globalConfig().onResourcePackWarningShown();
                         setSelectedEnabled(selectedItems, enabled);
                     }, null);
         } else {
@@ -476,11 +475,11 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             checkBox = new JFXCheckBox() {
                 @Override
                 public void fire() {
-                    if (!page.warningShown) {
+                    if (!ConfigHolder.globalConfig().isResourcePackWarningShown()) {
                         Controllers.confirm(i18n("resourcepack.warning.manipulate"), i18n("message.warning"),
                                 () -> {
                                     super.fire();
-                                    page.warningShown = true;
+                                    ConfigHolder.globalConfig().onResourcePackWarningShown();
                                 }, null);
                     } else {
                         super.fire();
