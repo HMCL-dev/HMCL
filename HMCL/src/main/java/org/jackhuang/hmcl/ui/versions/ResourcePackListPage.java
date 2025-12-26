@@ -170,7 +170,11 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
     private void setSelectedEnabled(List<ResourcePackInfoObject> selectedItems, boolean enabled) {
         if (!ConfigHolder.globalConfig().isResourcePackWarningShown()) {
-            Controllers.confirm(i18n("resourcepack.warning.manipulate"), i18n("message.warning"),
+            Controllers.confirmWithCountdown(
+                    i18n("resourcepack.warning.manipulate"),
+                    i18n("message.warning"),
+                    5,
+                    MessageDialogPane.MessageType.WARNING,
                     () -> {
                         ConfigHolder.globalConfig().onResourcePackWarningShown();
                         setSelectedEnabled(selectedItems, enabled);
@@ -476,7 +480,11 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 @Override
                 public void fire() {
                     if (!ConfigHolder.globalConfig().isResourcePackWarningShown()) {
-                        Controllers.confirm(i18n("resourcepack.warning.manipulate"), i18n("message.warning"),
+                        Controllers.confirmWithCountdown(
+                                i18n("resourcepack.warning.manipulate"),
+                                i18n("message.warning"),
+                                5,
+                                MessageDialogPane.MessageType.WARNING,
                                 () -> {
                                     super.fire();
                                     ConfigHolder.globalConfig().onResourcePackWarningShown();
