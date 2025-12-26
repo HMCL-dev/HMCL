@@ -27,10 +27,9 @@ import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.util.ToStringBuilder;
 import org.jackhuang.hmcl.util.function.ExceptionalSupplier;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionException;
-import java.util.concurrent.ExecutionException;
+import java.util.function.Supplier;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.emptySet;
@@ -38,18 +37,18 @@ import static java.util.Collections.unmodifiableSet;
 
 public class AuthlibInjectorAccount extends YggdrasilAccount {
     private final AuthlibInjectorServer server;
-    private AuthlibInjectorArtifactProvider downloader;
+    private final Supplier<Path> artifactProvider;
 
-    public AuthlibInjectorAccount(AuthlibInjectorServer server, AuthlibInjectorArtifactProvider downloader, String username, String password, CharacterSelector selector) throws AuthenticationException {
+    public AuthlibInjectorAccount(AuthlibInjectorServer server, Supplier<Path> artifactProvider, String username, String password, CharacterSelector selector) throws AuthenticationException {
         super(server.getYggdrasilService(), username, password, selector);
         this.server = server;
-        this.downloader = downloader;
+        this.artifactProvider = artifactProvider;
     }
 
-    public AuthlibInjectorAccount(AuthlibInjectorServer server, AuthlibInjectorArtifactProvider downloader, String username, YggdrasilSession session) {
+    public AuthlibInjectorAccount(AuthlibInjectorServer server, Supplier<Path> artifactProvider, String username, YggdrasilSession session) {
         super(server.getYggdrasilService(), username, session);
         this.server = server;
-        this.downloader = downloader;
+        this.artifactProvider = artifactProvider;
     }
 
     @Override
@@ -65,64 +64,39 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
     @Override
     public AuthInfo playOffline() throws AuthenticationException {
         AuthInfo auth = super.playOffline();
-        Optional<AuthlibInjectorArtifactInfo> artifact = downloader.getArtifactInfoImmediately();
         Optional<String> prefetchedMeta = server.getMetadataResponse();
 
-        if (artifact.isPresent() && prefetchedMeta.isPresent()) {
-            return new AuthlibInjectorAuthInfo(auth, artifact.get(), server, prefetchedMeta.get());
+        if (prefetchedMeta.isPresent()) {
+            Path artifactPath = artifactProvider.get();
+            return new AuthlibInjectorAuthInfo(auth, artifactPath, server, prefetchedMeta.get());
         } else {
             throw new NotLoggedInException();
         }
     }
 
     private AuthInfo inject(ExceptionalSupplier<AuthInfo, AuthenticationException> loginAction) throws AuthenticationException {
-        CompletableFuture<String> prefetchedMetaTask = CompletableFuture.supplyAsync(() -> {
-            try {
-                return server.fetchMetadataResponse();
-            } catch (IOException e) {
-                throw new CompletionException(new ServerDisconnectException(e));
-            }
-        });
-
-        CompletableFuture<AuthlibInjectorArtifactInfo> artifactTask = CompletableFuture.supplyAsync(() -> {
-            try {
-                return downloader.getArtifactInfo();
-            } catch (IOException e) {
-                throw new CompletionException(new AuthlibInjectorDownloadException(e));
-            }
-        });
-
-        AuthInfo auth = loginAction.get();
         String prefetchedMeta;
-        AuthlibInjectorArtifactInfo artifact;
-
         try {
-            prefetchedMeta = prefetchedMetaTask.get();
-            artifact = artifactTask.get();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new AuthenticationException(e);
-        } catch (ExecutionException e) {
-            if (e.getCause() instanceof AuthenticationException) {
-                throw (AuthenticationException) e.getCause();
-            } else {
-                throw new AuthenticationException(e.getCause());
-            }
+            prefetchedMeta = server.fetchMetadataResponse();
+        } catch (IOException e) {
+            throw new ServerDisconnectException(e);
         }
 
-        return new AuthlibInjectorAuthInfo(auth, artifact, server, prefetchedMeta);
+        AuthInfo auth = loginAction.get();
+        Path artifactPath = artifactProvider.get();
+        return new AuthlibInjectorAuthInfo(auth, artifactPath, server, prefetchedMeta);
     }
 
     private static class AuthlibInjectorAuthInfo extends AuthInfo {
 
-        private final AuthlibInjectorArtifactInfo artifact;
+        private final Path artifactPath;
         private final AuthlibInjectorServer server;
         private final String prefetchedMeta;
 
-        public AuthlibInjectorAuthInfo(AuthInfo authInfo, AuthlibInjectorArtifactInfo artifact, AuthlibInjectorServer server, String prefetchedMeta) {
+        public AuthlibInjectorAuthInfo(AuthInfo authInfo, Path artifactPath, AuthlibInjectorServer server, String prefetchedMeta) {
             super(authInfo.getUsername(), authInfo.getUUID(), authInfo.getAccessToken(), authInfo.getUserType(), authInfo.getUserProperties());
 
-            this.artifact = artifact;
+            this.artifactPath = artifactPath;
             this.server = server;
             this.prefetchedMeta = prefetchedMeta;
         }
@@ -130,7 +104,7 @@ public class AuthlibInjectorAccount extends YggdrasilAccount {
         @Override
         public Arguments getLaunchArguments(LaunchOptions options) {
             return new Arguments().addJVMArguments(
-                    "-javaagent:" + artifact.getLocation().toString() + "=" + server.getUrl(),
+                    "-javaagent:" + artifactPath.toAbsolutePath() + "=" + server.getUrl(),
                     "-Dauthlibinjector.side=client",
                     "-Dauthlibinjector.yggdrasil.prefetched=" + Base64.getEncoder().encodeToString(prefetchedMeta.getBytes(UTF_8)));
         }
