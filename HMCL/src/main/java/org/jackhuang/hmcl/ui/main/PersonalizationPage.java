@@ -173,6 +173,7 @@ public class PersonalizationPage extends StackPane {
                 slider.setMinorTickCount(1);
                 slider.setBlockIncrement(5);
                 slider.setSnapToTicks(true);
+                slider.setPadding(new Insets(9, 0, 0, 0));
                 HBox.setHgrow(slider, Priority.ALWAYS);
 
                 if (config().getBackgroundImageType() == EnumBackgroundImage.TRANSLUCENT) {
