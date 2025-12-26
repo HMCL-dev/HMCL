@@ -269,8 +269,9 @@ public final class RemoteMod {
         private final List<Dependency> dependencies;
         private final List<String> gameVersions;
         private final List<ModLoaderType> loaders;
+        private final RemoteModRepository.Type repoType;
 
-        public Version(IVersion self, String modid, String name, String version, String changelog, Instant datePublished, VersionType versionType, File file, List<Dependency> dependencies, List<String> gameVersions, List<ModLoaderType> loaders) {
+        public Version(IVersion self, String modid, String name, String version, String changelog, Instant datePublished, VersionType versionType, File file, List<Dependency> dependencies, List<String> gameVersions, List<ModLoaderType> loaders, RemoteModRepository.Type repoType) {
             this.self = self;
             this.modid = modid;
             this.name = name;
@@ -282,6 +283,7 @@ public final class RemoteMod {
             this.dependencies = dependencies;
             this.gameVersions = gameVersions;
             this.loaders = loaders;
+            this.repoType = repoType;
         }
 
         public IVersion getSelf() {
@@ -326,6 +328,10 @@ public final class RemoteMod {
 
         public List<ModLoaderType> getLoaders() {
             return loaders;
+        }
+
+        public RemoteModRepository.Type getRepoType() {
+            return repoType;
         }
     }
 

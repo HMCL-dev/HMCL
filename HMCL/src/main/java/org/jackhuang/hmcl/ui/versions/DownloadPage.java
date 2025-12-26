@@ -289,13 +289,23 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                                 resolve:
                                 for (RemoteMod.Version modVersion : modVersions) {
-                                    for (ModLoaderType loader : modVersion.getLoaders()) {
-                                        if (targetLoaders.contains(loader)) {
+                                    if (getSkinnable().type == RemoteModRepository.Type.MOD) {
+                                        for (ModLoaderType loader : modVersion.getLoaders()) {
+                                            if (targetLoaders.contains(loader)) {
+                                                list.getContent().addAll(
+                                                        ComponentList.createComponentListTitle(i18n("mods.download.recommend", gameVersion)),
+                                                        new ModItem(modVersion, control)
+                                                );
+                                                break resolve;
+                                            }
+                                        }
+                                    } else {
+                                        if (modVersion.getRepoType() == getSkinnable().type) {
                                             list.getContent().addAll(
                                                     ComponentList.createComponentListTitle(i18n("mods.download.recommend", gameVersion)),
                                                     new ModItem(modVersion, control)
                                             );
-                                            break resolve;
+                                            break;
                                         }
                                     }
                                 }
