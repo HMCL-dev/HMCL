@@ -62,7 +62,6 @@ import org.jackhuang.hmcl.upgrade.IntegrityChecker;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
-import org.jackhuang.hmcl.util.logging.Logger;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
