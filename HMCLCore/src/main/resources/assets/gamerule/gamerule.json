@@ -57,7 +57,8 @@
   {
     "ruleKey": [
       "minecraft:command_blocks_work",
-      "commandBlocksEnabled"
+      "commandBlocksEnabled",
+      "enableCommandBlocks"
     ],
     "displayI18nKey": "gamerule.rule.command_blocks_work",
     "defaultValue": true
@@ -198,7 +199,8 @@
   {
     "ruleKey": [
       "minecraft:locator_bar",
-      "locatorBar"
+      "locatorBar",
+      "useLocatorBar"
     ],
     "displayI18nKey": "gamerule.rule.locator_bar",
     "defaultValue": true
@@ -218,7 +220,7 @@
     ],
     "displayI18nKey": "gamerule.rule.max_block_modifications",
     "defaultValue": 32768,
-    "minValue": -1
+    "minValue": 1
   },
   {
     "ruleKey": [
