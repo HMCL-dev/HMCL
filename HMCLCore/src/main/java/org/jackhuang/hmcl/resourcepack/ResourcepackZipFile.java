@@ -51,7 +51,7 @@ public final class ResourcepackZipFile implements ResourcepackFile {
 
     @Override
     public String getName() {
-        return name;
+        return name.replaceAll("§[0-9a-fk-or]", "");
     }
 
     @Override

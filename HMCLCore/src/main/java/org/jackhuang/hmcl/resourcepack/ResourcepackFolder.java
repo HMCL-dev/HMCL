@@ -40,7 +40,7 @@ public final class ResourcepackFolder implements ResourcepackFile {
 
     @Override
     public String getName() {
-        return path.getFileName().toString();
+        return path.getFileName().toString().replaceAll("§[0-9a-fk-or]", "");
     }
 
     @Override
