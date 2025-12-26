@@ -863,6 +863,16 @@
     -jfx-unfocus-color: transparent;
 }
 
+.jfx-text-field .context-menu {
+    -fx-background-color: -monet-surface-container;
+    -fx-text-fill: -monet-on-surface;
+}
+
+.jfx-text-field .context-menu .menu-item:focused {
+    -fx-background-color: -monet-secondary-container;
+    -fx-text-fill: -monet-on-secondary-container;
+}
+
 /*******************************************************************************
 *                                                                              *
 * JFX List View                                                                *
