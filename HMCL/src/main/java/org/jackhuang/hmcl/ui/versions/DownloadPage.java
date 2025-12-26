@@ -43,6 +43,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.HTMLRenderer;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
@@ -62,6 +63,8 @@ import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class DownloadPage extends Control implements DecoratorPage {
+    private static final WeakHashMap<RemoteMod.Version, String> changelogCache = new WeakHashMap<>();
+
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     private final BooleanProperty loaded = new SimpleBooleanProperty(false);
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
@@ -299,7 +302,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                     for (String gameVersion : control.versions.keys().stream()
                             .sorted(Collections.reverseOrder(GameVersionNumber::compare))
-                            .collect(Collectors.toList())) {
+                            .toList()) {
                         List<RemoteMod.Version> versions = control.versions.get(gameVersion);
                         if (versions == null || versions.isEmpty()) {
                             continue;
@@ -447,22 +450,12 @@ public class DownloadPage extends Control implements DecoratorPage {
         public ModVersion(RemoteMod.Version version, DownloadPage selfPage) {
             RemoteModRepository.Type type = selfPage.repository.getType();
 
-            String title;
-            switch (type) {
-                case WORLD:
-                    title = "world.download.title";
-                    break;
-                case MODPACK:
-                    title = "modpack.download.title";
-                    break;
-                case RESOURCE_PACK:
-                    title = "resourcepack.download.title";
-                    break;
-                case MOD:
-                default:
-                    title = "mods.download.title";
-                    break;
-            }
+            String title = switch (type) {
+                case WORLD -> "world.download.title";
+                case MODPACK -> "modpack.download.title";
+                case RESOURCE_PACK -> "resourcepack.download.title";
+                default -> "mods.download.title";
+            };
             this.setHeading(new HBox(new Label(i18n(title, version.getName()))));
 
             VBox box = new VBox(8);
@@ -470,13 +463,14 @@ public class DownloadPage extends Control implements DecoratorPage {
             ModItem modItem = new ModItem(version, selfPage);
             modItem.setMouseTransparent(true); // Item is displayed for info, clicking shouldn't open the dialog again
             box.getChildren().setAll(modItem);
+
             SpinnerPane spinnerPane = new SpinnerPane();
             ScrollPane scrollPane = new ScrollPane();
-            ComponentList dependenciesList = new ComponentList(Lang::immutableListOf);
-            loadDependencies(version, selfPage, spinnerPane, dependenciesList);
-            spinnerPane.setOnFailedAction(e -> loadDependencies(version, selfPage, spinnerPane, dependenciesList));
+            ComponentList changelogAndDependenciesList = new ComponentList(Lang::immutableListOf);
+            loadChangelogAndDependencies(version, selfPage, spinnerPane, changelogAndDependenciesList);
+            spinnerPane.setOnFailedAction(e -> loadChangelogAndDependencies(version, selfPage, spinnerPane, changelogAndDependenciesList));
 
-            scrollPane.setContent(dependenciesList);
+            scrollPane.setContent(changelogAndDependenciesList);
             scrollPane.setFitToWidth(true);
             scrollPane.setFitToHeight(true);
             spinnerPane.setContent(scrollPane);
@@ -522,9 +516,22 @@ public class DownloadPage extends Control implements DecoratorPage {
             onEscPressed(this, cancelButton::fire);
         }
 
-        private void loadDependencies(RemoteMod.Version version, DownloadPage selfPage, SpinnerPane spinnerPane, ComponentList dependenciesList) {
+        private void loadChangelogAndDependencies(RemoteMod.Version version, DownloadPage selfPage, SpinnerPane spinnerPane, ComponentList dependenciesList) {
             spinnerPane.setLoading(true);
             Task.supplyAsync(() -> {
+                Optional<String> changelog;
+                if (changelogCache.containsKey(version)) {
+                    changelog = Optional.ofNullable(changelogCache.get(version));
+                } else if (version.getChangelog() != null) {
+                    changelog = StringUtils.nullIfBlank(version.getChangelog());
+                } else {
+                    try {
+                        changelog = StringUtils.nullIfBlank(selfPage.repository.getModChangelog(version.getModid(), version.getVersionId()));
+                    } catch (UnsupportedOperationException e) {
+                        changelog = Optional.empty();
+                    }
+                }
+
                 EnumMap<RemoteMod.DependencyType, List<Node>> dependencies = new EnumMap<>(RemoteMod.DependencyType.class);
                 for (RemoteMod.Dependency dependency : version.getDependencies()) {
                     if (dependency.getType() == RemoteMod.DependencyType.INCOMPATIBLE || dependency.getType() == RemoteMod.DependencyType.BROKEN) {
@@ -532,26 +539,35 @@ public class DownloadPage extends Control implements DecoratorPage {
                     }
 
                     if (!dependencies.containsKey(dependency.getType())) {
-                        List<Node> list = new ArrayList<>();
+                        List<Node> list = new LinkedList<>();
                         Label title = new Label(i18n(DependencyModItem.I18N_KEY.get(dependency.getType())));
                         title.setPadding(new Insets(0, 8, 0, 8));
-                        list.add(title);
+                        list.add(new HBox(title));
                         dependencies.put(dependency.getType(), list);
                     }
                     DependencyModItem dependencyModItem = new DependencyModItem(selfPage.page, dependency.load(), selfPage.version, selfPage.callback);
                     dependencies.get(dependency.getType()).add(dependencyModItem);
                 }
 
-                return dependencies.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+                return new Pair<>(changelog, dependencies.values().stream().flatMap(Collection::stream).collect(Collectors.toList()));
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
-                spinnerPane.setLoading(false);
                 if (exception == null) {
-                    dependenciesList.getContent().setAll(result);
+                    List<Node> nodes = new LinkedList<>();
+                    result.getKey().ifPresent(s -> {
+                        if (!HTMLRenderer.isHTML(s)) {
+                            s = StringUtils.markdownToHTML(s);
+                        }
+                        changelogCache.put(version, s);
+                        nodes.add(FXUtils.renderModChangelog(s));
+                    });
+                    nodes.addAll(result.getValue());
+                    dependenciesList.getContent().setAll(nodes);
                     spinnerPane.setFailedReason(null);
                 } else {
                     dependenciesList.getContent().setAll();
                     spinnerPane.setFailedReason(i18n("download.failed.refresh"));
                 }
+                spinnerPane.setLoading(false);
             }).start();
         }
     }

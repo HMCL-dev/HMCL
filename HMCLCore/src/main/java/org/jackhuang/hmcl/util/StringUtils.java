@@ -17,6 +17,11 @@
  */
 package org.jackhuang.hmcl.util;
 
+import org.commonmark.ext.autolink.AutolinkExtension;
+import org.commonmark.parser.Parser;
+import org.commonmark.renderer.html.HtmlRenderer;
+import org.jetbrains.annotations.Contract;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
@@ -527,6 +532,18 @@ public final class StringUtils {
                 return false;
         }
         return true;
+    }
+
+    @Contract(pure = true)
+    public static Optional<String> nullIfBlank(String str) {
+        return Optional.ofNullable(str).map(s -> s.isBlank() ? null : s);
+    }
+
+    @Contract(pure = true, value = "null -> null")
+    public static String markdownToHTML(String md) {
+        if (md == null) return null;
+        var extensions = List.of(AutolinkExtension.create());
+        return HtmlRenderer.builder().build().render(Parser.builder().extensions(extensions).build().parse(md));
     }
 
     public static class LevCalculator {
