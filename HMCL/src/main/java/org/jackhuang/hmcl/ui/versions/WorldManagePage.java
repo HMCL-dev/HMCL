@@ -34,13 +34,13 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.ChunkBaseApp;
+import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * @author Glavo
@@ -65,7 +65,6 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     public WorldManagePage(World world, Path backupsDir, Profile profile, String id) {
         this.world = world;
         this.backupsDir = backupsDir;
-
         this.profile = profile;
         this.id = id;
 
@@ -73,16 +72,12 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         this.worldBackupsTab.setNodeSupplier(() -> new WorldBackupsPage(this));
         this.datapackTab.setNodeSupplier(() -> new DatapackListPage(this));
 
-        this.state = new SimpleObjectProperty<>(State.fromTitle(i18n("world.manage.title", world.getWorldName())));
+        this.state = new SimpleObjectProperty<>(State.fromTitle(i18n("world.manage.title", StringUtils.parseColorEscapes(world.getWorldName()))));
         this.header = new TabHeader(transitionPane, worldInfoTab, worldBackupsTab);
         header.select(worldInfoTab);
 
         // Does it need to be done in the background?
-        try {
-            sessionLockChannel = world.lock();
-            LOG.info("Acquired lock on world " + world.getFileName());
-        } catch (IOException ignored) {
-        }
+        sessionLockChannel = WorldManageUIUtils.getSessionLockChannel(world);
 
         setCenter(transitionPane);
 
@@ -106,37 +101,74 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         AdvancedListBox toolbar = new AdvancedListBox();
 
         if (world.getGameVersion() != null && world.getGameVersion().isAtLeast("1.20", "23w14a")) {
-            toolbar.addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, this::launch, null);
+            toolbar.addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, this::launch, advancedListItem -> advancedListItem.setDisable(isReadOnly()));
             toolbar.addNavigationDrawerItem(i18n("version.launch_script"), SVG.SCRIPT, this::generateLaunchScript, null);
         }
 
         if (ChunkBaseApp.isSupported(world)) {
-            PopupMenu popupMenu = new PopupMenu();
-            JFXPopup popup = new JFXPopup(popupMenu);
+            PopupMenu chunkBasePopupMenu = new PopupMenu();
+            JFXPopup chunkBasePopup = new JFXPopup(chunkBasePopupMenu);
 
-            popupMenu.getContent().addAll(
-                    new IconedMenuItem(SVG.EXPLORE, i18n("world.chunkbase.seed_map"), () -> ChunkBaseApp.openSeedMap(world), popup),
-                    new IconedMenuItem(SVG.VISIBILITY, i18n("world.chunkbase.stronghold"), () -> ChunkBaseApp.openStrongholdFinder(world), popup),
-                    new IconedMenuItem(SVG.FORT, i18n("world.chunkbase.nether_fortress"), () -> ChunkBaseApp.openNetherFortressFinder(world), popup)
+
+            chunkBasePopupMenu.getContent().addAll(
+                    new IconedMenuItem(SVG.EXPLORE, i18n("world.chunkbase.seed_map"), () -> ChunkBaseApp.openSeedMap(world), chunkBasePopup),
+                    new IconedMenuItem(SVG.VISIBILITY, i18n("world.chunkbase.stronghold"), () -> ChunkBaseApp.openStrongholdFinder(world), chunkBasePopup),
+                    new IconedMenuItem(SVG.FORT, i18n("world.chunkbase.nether_fortress"), () -> ChunkBaseApp.openNetherFortressFinder(world), chunkBasePopup)
             );
 
             if (world.getGameVersion() != null && world.getGameVersion().compareTo("1.13") >= 0) {
-                popupMenu.getContent().add(
-                        new IconedMenuItem(SVG.LOCATION_CITY, i18n("world.chunkbase.end_city"), () -> ChunkBaseApp.openEndCityFinder(world), popup));
+                chunkBasePopupMenu.getContent().add(
+                        new IconedMenuItem(SVG.LOCATION_CITY, i18n("world.chunkbase.end_city"), () -> ChunkBaseApp.openEndCityFinder(world), chunkBasePopup));
             }
 
             toolbar.addNavigationDrawerItem(i18n("world.chunkbase"), SVG.EXPLORE, null, chunkBaseMenuItem ->
                     chunkBaseMenuItem.setOnAction(e ->
-                            popup.show(chunkBaseMenuItem,
+                            chunkBasePopup.show(chunkBaseMenuItem,
                                     JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT,
                                     chunkBaseMenuItem.getWidth(), 0)));
         }
+
         toolbar.addNavigationDrawerItem(i18n("settings.game.exploration"), SVG.FOLDER_OPEN, () -> FXUtils.openFolder(world.getFile()), null);
+
+        {
+            PopupMenu managePopupMenu = new PopupMenu();
+            JFXPopup managePopup = new JFXPopup(managePopupMenu);
+
+            managePopupMenu.getContent().addAll(
+                    new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), () -> WorldManageUIUtils.export(world, sessionLockChannel), managePopup),
+                    new IconedMenuItem(SVG.DELETE, i18n("world.delete"), () -> WorldManageUIUtils.delete(world, () -> fireEvent(new PageCloseEvent()), sessionLockChannel), managePopup),
+                    new IconedMenuItem(SVG.CONTENT_COPY, i18n("world.duplicate"), () -> WorldManageUIUtils.copyWorld(world, null, sessionLockChannel, lock -> sessionLockChannel = lock), managePopup)
+            );
+
+            toolbar.addNavigationDrawerItem(i18n("settings.game.management"), SVG.MENU, null, managePopupMenuItem ->
+            {
+                managePopupMenuItem.setOnAction(e ->
+                        managePopup.show(managePopupMenuItem,
+                                JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT,
+                                managePopupMenuItem.getWidth(), 0));
+                managePopupMenuItem.setDisable(isReadOnly());
+            });
+
+        }
 
         BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
         left.setBottom(toolbar);
 
         this.addEventHandler(Navigator.NavigationEvent.EXITED, this::onExited);
+        this.addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
+    }
+
+    private void onNavigated(Navigator.NavigationEvent event) {
+        if (sessionLockChannel == null || !sessionLockChannel.isOpen()) {
+            sessionLockChannel = WorldManageUIUtils.getSessionLockChannel(world);
+        }
+    }
+
+    public void onExited(Navigator.NavigationEvent event) {
+        try {
+            WorldManageUIUtils.closeSessionLockChannel(world, sessionLockChannel);
+        } catch (IOException ignored) {
+        }
     }
 
     @Override
@@ -154,19 +186,6 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
     public boolean isReadOnly() {
         return sessionLockChannel == null;
-    }
-
-    public void onExited(Navigator.NavigationEvent event) {
-        if (sessionLockChannel != null) {
-            try {
-                sessionLockChannel.close();
-                LOG.info("Releases the lock on world " + world.getFileName());
-            } catch (IOException e) {
-                LOG.warning("Failed to close session lock channel", e);
-            }
-
-            sessionLockChannel = null;
-        }
     }
 
     public void launch() {

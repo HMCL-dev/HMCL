@@ -18,10 +18,7 @@
 package org.jackhuang.hmcl.game;
 
 import com.github.steveice10.opennbt.NBTIO;
-import com.github.steveice10.opennbt.tag.builtin.CompoundTag;
-import com.github.steveice10.opennbt.tag.builtin.LongTag;
-import com.github.steveice10.opennbt.tag.builtin.StringTag;
-import com.github.steveice10.opennbt.tag.builtin.Tag;
+import com.github.steveice10.opennbt.tag.builtin.*;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.util.io.*;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -50,6 +47,7 @@ public final class World {
     private String fileName;
     private String worldName;
     private GameVersionNumber gameVersion;
+    private CompoundTag levelData;
     private long lastPlayed;
     private Image icon;
     private Long seed;
@@ -67,24 +65,6 @@ public final class World {
             throw new IOException("Path " + file + " cannot be recognized as a Minecraft world");
     }
 
-    private void loadFromDirectory() throws IOException {
-        fileName = FileUtils.getName(file);
-        Path levelDat = file.resolve("level.dat");
-        loadWorldInfo(levelDat);
-        isLocked = isLocked(getSessionLockFile());
-
-        Path iconFile = file.resolve("icon.png");
-        if (Files.isRegularFile(iconFile)) {
-            try (InputStream inputStream = Files.newInputStream(iconFile)) {
-                icon = new Image(inputStream, 64, 64, true, false);
-                if (icon.isError())
-                    throw icon.getException();
-            } catch (Exception e) {
-                LOG.warning("Failed to load world icon", e);
-            }
-        }
-    }
-
     public Path getFile() {
         return file;
     }
@@ -97,12 +77,20 @@ public final class World {
         return worldName;
     }
 
+    public void setWorldName(String worldName) {
+        this.worldName = worldName;
+    }
+
     public Path getLevelDatFile() {
         return file.resolve("level.dat");
     }
 
     public Path getSessionLockFile() {
         return file.resolve("session.lock");
+    }
+
+    public CompoundTag getLevelData() {
+        return levelData;
     }
 
     public long getLastPlayed() {
@@ -127,6 +115,24 @@ public final class World {
 
     public boolean isLocked() {
         return isLocked;
+    }
+
+    private void loadFromDirectory() throws IOException {
+        fileName = FileUtils.getName(file);
+        Path levelDat = file.resolve("level.dat");
+        loadWorldInfo(levelDat);
+        isLocked = isLocked(getSessionLockFile());
+
+        Path iconFile = file.resolve("icon.png");
+        if (Files.isRegularFile(iconFile)) {
+            try (InputStream inputStream = Files.newInputStream(iconFile)) {
+                icon = new Image(inputStream, 64, 64, true, false);
+                if (icon.isError())
+                    throw icon.getException();
+            } catch (Exception e) {
+                LOG.warning("Failed to load world icon", e);
+            }
+        }
     }
 
     private void loadFromZipImpl(Path root) throws IOException {
@@ -168,49 +174,51 @@ public final class World {
     }
 
     private void loadWorldInfo(Path levelDat) throws IOException {
-        CompoundTag nbt = parseLevelDat(levelDat);
-
-        CompoundTag data = nbt.get("Data");
+        this.levelData = parseLevelDat(levelDat);
+        CompoundTag data = levelData.get("Data");
         if (data == null)
             throw new IOException("level.dat missing Data");
 
-        if (data.get("LevelName") instanceof StringTag)
-            worldName = data.<StringTag>get("LevelName").getValue();
+        if (data.get("LevelName") instanceof StringTag levelNameTag)
+            worldName = levelNameTag.getValue();
         else
             throw new IOException("level.dat missing LevelName");
 
-        if (data.get("LastPlayed") instanceof LongTag)
-            lastPlayed = data.<LongTag>get("LastPlayed").getValue();
+        if (data.get("LastPlayed") instanceof LongTag lastPlayedTag)
+            lastPlayed = lastPlayedTag.getValue();
         else
             throw new IOException("level.dat missing LastPlayed");
 
         gameVersion = null;
-        if (data.get("Version") instanceof CompoundTag) {
-            CompoundTag version = data.get("Version");
-
-            if (version.get("Name") instanceof StringTag)
-                gameVersion = GameVersionNumber.asGameVersion(version.<StringTag>get("Name").getValue());
+        if (data.get("Version") instanceof CompoundTag versionTag && versionTag.get("Name") instanceof StringTag nameTag) {
+            gameVersion = GameVersionNumber.asGameVersion(nameTag.getValue());
         }
 
-        Tag worldGenSettings = data.get("WorldGenSettings");
-        if (worldGenSettings instanceof CompoundTag) {
-            Tag seedTag = ((CompoundTag) worldGenSettings).get("seed");
-            if (seedTag instanceof LongTag) {
-                seed = ((LongTag) seedTag).getValue();
-            }
-        }
-        if (seed == null) {
-            Tag seedTag = data.get("RandomSeed");
-            if (seedTag instanceof LongTag) {
-                seed = ((LongTag) seedTag).getValue();
-            }
+        if (data.get("WorldGenSettings") instanceof CompoundTag worldGenSettingsTag && worldGenSettingsTag.get("seed") instanceof LongTag seedTag) { //Valid after 1.16
+            seed = seedTag.getValue();
+        } else if (data.get("RandomSeed") instanceof LongTag seedTag) { //Valid before 1.16
+            seed = seedTag.getValue();
         }
 
-        // FIXME: Only work for 1.15 and below
-        if (data.get("generatorName") instanceof StringTag) {
-            largeBiomes = "largeBiomes".equals(data.<StringTag>get("generatorName").getValue());
+
+        if (data.get("generatorName") instanceof StringTag generatorNameTag) { //Valid before 1.16
+            largeBiomes = "largeBiomes".equals(generatorNameTag.getValue());
         } else {
-            largeBiomes = false;
+            if (data.get("WorldGenSettings") instanceof CompoundTag worldGenSettingsTag
+                    && worldGenSettingsTag.get("dimensions") instanceof CompoundTag dimensionsTag
+                    && dimensionsTag.get("minecraft:overworld") instanceof CompoundTag overworldTag
+                    && overworldTag.get("generator") instanceof CompoundTag generatorTag) {
+                if (generatorTag.get("biome_source") instanceof CompoundTag biomeSourceTag
+                        && biomeSourceTag.get("large_biomes") instanceof ByteTag largeBiomesTag) { //Valid between 1.16 and 1.16.2
+                    largeBiomes = largeBiomesTag.getValue() == (byte) 1;
+                } else if (generatorTag.get("settings") instanceof StringTag settingsTag) { //Valid after 1.16.2
+                    largeBiomes = "minecraft:large_biomes".equals(settingsTag.getValue());
+                } else {
+                    largeBiomes = false;
+                }
+            } else {
+                largeBiomes = false;
+            }
         }
     }
 
@@ -219,10 +227,9 @@ public final class World {
             throw new IOException("Not a valid world directory");
 
         // Change the name recorded in level.dat
-        CompoundTag nbt = readLevelDat();
-        CompoundTag data = nbt.get("Data");
+        CompoundTag data = levelData.get("Data");
         data.put(new StringTag("LevelName", newName));
-        writeLevelDat(nbt);
+        writeLevelDat(levelData);
 
         // then change the folder's name
         Files.move(file, file.resolveSibling(newName));
@@ -283,11 +290,19 @@ public final class World {
         FileUtils.forceDelete(file);
     }
 
-    public CompoundTag readLevelDat() throws IOException {
-        if (!Files.isDirectory(file))
-            throw new IOException("Not a valid world directory");
+    public void copy(String newName) throws IOException {
+        if (!Files.isDirectory(file)) {
+            throw new IOException();
+        }
 
-        return parseLevelDat(getLevelDatFile());
+        if (isLocked()) {
+            throw new WorldLockedException("The world " + getFile() + " has been locked");
+        }
+
+        Path newPath = file.resolveSibling(newName);
+        FileUtils.copyDirectory(file, newPath);
+        World newWorld = new World(newPath);
+        newWorld.rename(newName);
     }
 
     public FileChannel lock() throws WorldLockedException {

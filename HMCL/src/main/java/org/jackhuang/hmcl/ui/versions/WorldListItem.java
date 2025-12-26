@@ -19,22 +19,12 @@ package org.jackhuang.hmcl.ui.versions;
 
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
-import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.World;
-import org.jackhuang.hmcl.game.WorldLockedException;
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
-import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
-import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.nio.file.Path;
-
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class WorldListItem extends Control {
     private final World world;
@@ -61,34 +51,15 @@ public final class WorldListItem extends Control {
     }
 
     public void export() {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle(i18n("world.export.title"));
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("world"), "*.zip"));
-        fileChooser.setInitialFileName(world.getWorldName());
-        Path file = FileUtils.toPath(fileChooser.showSaveDialog(Controllers.getStage()));
-        if (file == null) {
-            return;
-        }
-
-        Controllers.getDecorator().startWizard(new SinglePageWizardProvider(controller -> new WorldExportPage(world, file, controller::onFinish)));
+        WorldManageUIUtils.export(world);
     }
 
     public void delete() {
-        Controllers.confirm(
-                i18n("button.remove.confirm"),
-                i18n("world.delete"),
-                () -> Task.runAsync(world::delete)
-                        .whenComplete(Schedulers.javafx(), (result, exception) -> {
-                            if (exception == null) {
-                                parent.remove(this);
-                            } else if (exception instanceof WorldLockedException) {
-                                Controllers.dialog(i18n("world.locked.failed"), null, MessageType.WARNING);
-                            } else {
-                                Controllers.dialog(i18n("world.delete.failed", StringUtils.getStackTrace(exception)), null, MessageType.WARNING);
-                            }
-                        }).start(),
-                null
-        );
+        WorldManageUIUtils.delete(world, () -> parent.remove(this));
+    }
+
+    public void copy() {
+        WorldManageUIUtils.copyWorld(world, parent::refresh);
     }
 
     public void reveal() {

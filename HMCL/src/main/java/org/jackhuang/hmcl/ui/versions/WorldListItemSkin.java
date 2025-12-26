@@ -35,6 +35,7 @@ import org.jackhuang.hmcl.util.ChunkBaseApp;
 import org.jackhuang.hmcl.util.i18n.I18n;
 
 import java.time.Instant;
+import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 import static org.jackhuang.hmcl.util.StringUtils.parseColorEscapes;
@@ -143,11 +144,24 @@ public final class WorldListItemSkin extends SkinBase<WorldListItem> {
             }
         }
 
+        IconedMenuItem exportMenuItem = new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), item::export, popup);
+        IconedMenuItem deleteMenuItem = new IconedMenuItem(SVG.DELETE, i18n("world.delete"), item::delete, popup);
+        IconedMenuItem duplicateMenuItem = new IconedMenuItem(SVG.CONTENT_COPY, i18n("world.duplicate"), item::copy, popup);
+        boolean worldLocked = world.isLocked();
+        Stream.of(exportMenuItem, deleteMenuItem, duplicateMenuItem)
+                .forEach(iconedMenuItem -> iconedMenuItem.setDisable(worldLocked));
+
         popupMenu.getContent().addAll(
                 new MenuSeparator(),
-                new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), item::export, popup),
-                new IconedMenuItem(SVG.DELETE, i18n("world.delete"), item::delete, popup),
-                new IconedMenuItem(SVG.FOLDER_OPEN, i18n("folder.world"), item::reveal, popup));
+                exportMenuItem,
+                deleteMenuItem,
+                duplicateMenuItem
+        );
+
+        popupMenu.getContent().addAll(
+                new MenuSeparator(),
+                new IconedMenuItem(SVG.FOLDER_OPEN, i18n("folder.world"), item::reveal, popup)
+        );
 
         JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(root, popup);
 
