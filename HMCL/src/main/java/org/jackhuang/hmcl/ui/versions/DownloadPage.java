@@ -300,13 +300,11 @@ public class DownloadPage extends Control implements DecoratorPage {
                                             }
                                         }
                                     } else {
-                                        if (modVersion.getRepoType() == getSkinnable().type) {
-                                            list.getContent().addAll(
-                                                    ComponentList.createComponentListTitle(i18n("mods.download.recommend", gameVersion)),
-                                                    new ModItem(modVersion, control)
-                                            );
-                                            break;
-                                        }
+                                        list.getContent().addAll(
+                                                ComponentList.createComponentListTitle(i18n("mods.download.recommend", gameVersion)),
+                                                new ModItem(modVersion, control)
+                                        );
+                                        break;
                                     }
                                 }
                             }
