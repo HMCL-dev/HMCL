@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.ui.construct.NumberValidator;
 import org.jackhuang.hmcl.ui.construct.OptionToggleButton;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -42,6 +43,7 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
     private String displayName;
     private GameRuleNBT<T, ? extends Tag> gameRuleNBT;
     private Runnable onSave;
+    private GameVersionNumber gameVersionNumber;
 
     //Due to the significant difference in skin between BooleanGameRuleInfo and IntGameRuleInfo, which are essentially two completely different styles, it is not suitable to update each other in Cell#updateControl. Therefore, they are directly integrated into the info.
     private HBox container = new HBox();
@@ -100,7 +102,7 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
         this.setToDefault = setToDefault;
     }
 
-    public void setFatherValue(GameRule gameRule) {
+    public void setFatherValue(GameRule gameRule, GameVersionNumber gameVersionNumber) {
         setRuleKey(gameRule.getRuleKey().get(0));
         String displayName = "";
         try {
@@ -112,16 +114,17 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
         }
         setDisplayName(displayName);
         setDisplayName(displayName);
+        this.gameVersionNumber = gameVersionNumber;
     }
 
     static final class BooleanGameRuleInfo extends GameRuleInfo<Boolean> {
         boolean currentValue;
         Boolean defaultValue;
 
-        public BooleanGameRuleInfo(GameRule.BooleanGameRule booleanGameRule, GameRuleNBT<Boolean, Tag> gameRuleNBT, Runnable onSave) {
-            setFatherValue(booleanGameRule);
+        public BooleanGameRuleInfo(GameRule.BooleanGameRule booleanGameRule, GameRuleNBT<Boolean, Tag> gameRuleNBT, Runnable onSave, GameVersionNumber gameVersionNumber) {
+            setFatherValue(booleanGameRule, gameVersionNumber);
             this.currentValue = booleanGameRule.getValue();
-            this.defaultValue = booleanGameRule.getDefaultValue().orElse(null);
+            this.defaultValue = booleanGameRule.getDefaultValue(gameVersionNumber).orElse(null);
             this.setGameRuleNBT(gameRuleNBT);
             this.setOnSave(onSave);
 
@@ -180,12 +183,12 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
         int maxValue;
         Integer defaultValue;
 
-        public IntGameRuleInfo(GameRule.IntGameRule intGameRule, GameRuleNBT<String, Tag> gameRuleNBT, Runnable onSave) {
-            setFatherValue(intGameRule);
+        public IntGameRuleInfo(GameRule.IntGameRule intGameRule, GameRuleNBT<String, Tag> gameRuleNBT, Runnable onSave, GameVersionNumber gameVersionNumber) {
+            setFatherValue(intGameRule, gameVersionNumber);
             currentValue = intGameRule.getValue();
-            minValue = intGameRule.getMinValue();
-            maxValue = intGameRule.getMaxValue();
-            defaultValue = intGameRule.getDefaultValue().orElse(null);
+            minValue = intGameRule.getMinValue(gameVersionNumber);
+            maxValue = intGameRule.getMaxValue(gameVersionNumber);
+            defaultValue = intGameRule.getDefaultValue(gameVersionNumber).orElse(null);
             this.setGameRuleNBT(gameRuleNBT);
             this.setOnSave(onSave);
 

@@ -91,12 +91,12 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> {
                         @SuppressWarnings("unchecked")
                         GameRuleNBT<String, Tag> typedGameRuleNBT = (GameRuleNBT<String, Tag>) gameRuleNBT;
 
-                        gameRuleList.add(new GameRuleInfo.IntGameRuleInfo(intGameRule, typedGameRuleNBT, this::saveLevelDatIfNotResettingAll));
+                        gameRuleList.add(new GameRuleInfo.IntGameRuleInfo(intGameRule, typedGameRuleNBT, this::saveLevelDatIfNotResettingAll, world.getGameVersion()));
                     } else if (gameRule instanceof GameRule.BooleanGameRule booleanGameRule) {
                         @SuppressWarnings("unchecked")
                         GameRuleNBT<Boolean, Tag> typedGameRuleNBT = (GameRuleNBT<Boolean, Tag>) gameRuleNBT;
 
-                        gameRuleList.add(new GameRuleInfo.BooleanGameRuleInfo(booleanGameRule, typedGameRuleNBT, this::saveLevelDatIfNotResettingAll));
+                        gameRuleList.add(new GameRuleInfo.BooleanGameRuleInfo(booleanGameRule, typedGameRuleNBT, this::saveLevelDatIfNotResettingAll, world.getGameVersion()));
                     }
                 });
             });
