@@ -21,15 +21,16 @@ import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleWrapper;
-import javafx.beans.value.ObservableValue;
+import javafx.beans.value.ObservableDoubleValue;
 import org.jackhuang.hmcl.terracotta.profile.TerracottaProfile;
-import org.jackhuang.hmcl.terracotta.provider.ITerracottaProvider;
+import org.jackhuang.hmcl.terracotta.provider.AbstractTerracottaProvider;
 import org.jackhuang.hmcl.util.gson.JsonSubtype;
 import org.jackhuang.hmcl.util.gson.JsonType;
 import org.jackhuang.hmcl.util.gson.TolerableValidationException;
 import org.jackhuang.hmcl.util.gson.Validation;
 
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract sealed class TerracottaState {
@@ -63,32 +64,38 @@ public abstract sealed class TerracottaState {
         }
     }
 
-    public static final class Preparing extends TerracottaState implements ITerracottaProvider.Context {
+    public static final class Preparing extends TerracottaState implements AbstractTerracottaProvider.DownloadContext {
         private final ReadOnlyDoubleWrapper progress;
 
-        private final AtomicBoolean installFence = new AtomicBoolean(false);
+        private final AtomicBoolean hasInstallFence;
 
-        Preparing(ReadOnlyDoubleWrapper progress) {
+        Preparing(ReadOnlyDoubleWrapper progress, boolean hasInstallFence) {
             this.progress = progress;
+            this.hasInstallFence = new AtomicBoolean(hasInstallFence);
         }
 
         public ReadOnlyDoubleProperty progressProperty() {
             return progress.getReadOnlyProperty();
         }
 
-        @Override
-        public void bindProgress(ObservableValue<? extends Number> value) {
-            progress.bind(value);
-        }
-
-        @Override
         public boolean requestInstallFence() {
-            return installFence.compareAndSet(false, true);
+            return hasInstallFence.compareAndSet(true, false);
+        }
+
+        public boolean hasInstallFence() {
+            return hasInstallFence.get();
         }
 
         @Override
-        public boolean hasInstallFence() {
-            return !installFence.get();
+        public void bindProgress(ObservableDoubleValue progress) {
+            this.progress.bind(progress);
+        }
+
+        @Override
+        public void checkCancellation() {
+            if (!hasInstallFence()) {
+                throw new CancellationException("User has installed terracotta from local archives.");
+            }
         }
     }
 
@@ -112,7 +119,7 @@ public abstract sealed class TerracottaState {
                     @JsonSubtype(clazz = HostScanning.class, name = "host-scanning"),
                     @JsonSubtype(clazz = HostStarting.class, name = "host-starting"),
                     @JsonSubtype(clazz = HostOK.class, name = "host-ok"),
-                    @JsonSubtype(clazz = GuestStarting.class, name = "guest-connecting"),
+                    @JsonSubtype(clazz = GuestConnecting.class, name = "guest-connecting"),
                     @JsonSubtype(clazz = GuestStarting.class, name = "guest-starting"),
                     @JsonSubtype(clazz = GuestOK.class, name = "guest-ok"),
                     @JsonSubtype(clazz = Exception.class, name = "exception"),
@@ -202,9 +209,31 @@ public abstract sealed class TerracottaState {
         }
     }
 
-    public static final class GuestStarting extends Ready {
-        GuestStarting(int port, int index, String state) {
+    public static final class GuestConnecting extends Ready {
+        GuestConnecting(int port, int index, String state) {
             super(port, index, state);
+        }
+    }
+
+    public static final class GuestStarting extends Ready {
+        public enum Difficulty {
+            UNKNOWN,
+            EASIEST,
+            SIMPLE,
+            MEDIUM,
+            TOUGH
+        }
+
+        @SerializedName("difficulty")
+        private final Difficulty difficulty;
+
+        GuestStarting(int port, int index, String state, Difficulty difficulty) {
+            super(port, index, state);
+            this.difficulty = difficulty;
+        }
+
+        public Difficulty getDifficulty() {
+            return difficulty;
         }
     }
 

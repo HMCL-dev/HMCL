@@ -19,103 +19,77 @@ package org.jackhuang.hmcl.terracotta.provider;
 
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.terracotta.TerracottaNative;
+import org.jackhuang.hmcl.terracotta.TerracottaBundle;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
-import org.jackhuang.hmcl.util.tree.TarFileTree;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.PosixFilePermission;
 import java.util.List;
-import java.util.Set;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class MacOSProvider implements ITerracottaProvider {
-    public final TerracottaNative installer, binary;
+public final class MacOSProvider extends AbstractTerracottaProvider {
+    private final Path executable, installer;
 
-    public MacOSProvider(TerracottaNative installer, TerracottaNative binary) {
+    public MacOSProvider(TerracottaBundle bundle, Path executable, Path installer) {
+        super(bundle);
+        this.executable = executable;
         this.installer = installer;
-        this.binary = binary;
     }
 
     @Override
     public Status status() throws IOException {
-        assert binary != null;
-
         if (!Files.exists(Path.of("/Applications/terracotta.app"))) {
             return Status.NOT_EXIST;
         }
 
-        return binary.status();
+        return bundle.status();
     }
 
     @Override
-    public Task<?> install(Context context, @Nullable TarFileTree tree) throws IOException {
-        assert installer != null && binary != null;
+    public Task<?> install(Path pkg) throws IOException {
+        return super.install(pkg).thenComposeAsync(() -> {
+            Path osascript = SystemUtils.which("osascript");
+            if (osascript == null) {
+                throw new IllegalStateException("Cannot locate 'osascript' system executable on MacOS for installing Terracotta.");
+            }
 
-        Task<?> installerTask = installer.install(context, tree);
-        Task<?> binaryTask = binary.install(context, tree);
-        context.bindProgress(installerTask.progressProperty().add(binaryTask.progressProperty()).multiply(0.4)); // (1 + 1) * 0.4 = 0.8
+            Path movedInstaller = Files.createTempDirectory(Metadata.HMCL_GLOBAL_DIRECTORY, "terracotta-pkg")
+                    .toRealPath()
+                    .resolve(FileUtils.getName(installer));
+            Files.copy(installer, movedInstaller, StandardCopyOption.REPLACE_EXISTING);
 
-        return Task.allOf(
-                installerTask.thenComposeAsync(() -> {
-                    Path osascript = SystemUtils.which("osascript");
-                    if (osascript == null) {
-                        throw new IllegalStateException("Cannot locate 'osascript' system executable on MacOS for installing Terracotta.");
-                    }
+            ManagedProcess process = new ManagedProcess(new ProcessBuilder(
+                    osascript.toString(), "-e", String.format(
+                    "do shell script \"installer -pkg '%s' -target /\" with prompt \"%s\" with administrator privileges",
+                    movedInstaller, i18n("terracotta.sudo_installing")
+            )));
+            process.pumpInputStream(SystemUtils::onLogLine);
+            process.pumpErrorStream(SystemUtils::onLogLine);
 
-                    Path pkg = Files.createTempDirectory(Metadata.HMCL_GLOBAL_DIRECTORY, "terracotta-pkg")
-                            .toRealPath()
-                            .resolve(FileUtils.getName(installer.getPath()));
-                    Files.copy(installer.getPath(), pkg, StandardCopyOption.REPLACE_EXISTING);
+            return Task.fromCompletableFuture(process.getProcess().onExit()).thenRunAsync(() -> {
+                try {
+                    FileUtils.cleanDirectory(movedInstaller.getParent());
+                } catch (IOException e) {
+                    LOG.warning("Cannot remove temporary Terracotta package file.", e);
+                }
 
-                    ManagedProcess process = new ManagedProcess(new ProcessBuilder(
-                            osascript.toString(), "-e", String.format(
-                            "do shell script \"installer -pkg '%s' -target /\" with prompt \"%s\" with administrator privileges",
-                            pkg, i18n("terracotta.sudo_installing")
-                    )));
-                    process.pumpInputStream(SystemUtils::onLogLine);
-                    process.pumpErrorStream(SystemUtils::onLogLine);
-
-                    return Task.fromCompletableFuture(process.getProcess().onExit()).thenRunAsync(() -> {
-                        try {
-                            FileUtils.cleanDirectory(pkg.getParent());
-                        } catch (IOException e) {
-                            LOG.warning("Cannot remove temporary Terracotta package file.", e);
-                        }
-
-                        if (process.getExitCode() != 0) {
-                            throw new IllegalStateException(String.format(
-                                    "Cannot install Terracotta %s: system installer exited with code %d",
-                                    pkg,
-                                    process.getExitCode()
-                            ));
-                        }
-                    });
-                }),
-                binaryTask.thenRunAsync(() -> Files.setPosixFilePermissions(binary.getPath(), Set.of(
-                        PosixFilePermission.OWNER_READ,
-                        PosixFilePermission.OWNER_WRITE,
-                        PosixFilePermission.OWNER_EXECUTE,
-                        PosixFilePermission.GROUP_READ,
-                        PosixFilePermission.GROUP_EXECUTE,
-                        PosixFilePermission.OTHERS_READ,
-                        PosixFilePermission.OTHERS_EXECUTE
-                )))
-        );
+                if (process.getExitCode() != 0) {
+                    throw new IllegalStateException(String.format(
+                            "Cannot install Terracotta %s: system installer exited with code %d", movedInstaller, process.getExitCode()
+                    ));
+                }
+            });
+        });
     }
 
     @Override
     public List<String> ofCommandLine(Path path) {
-        assert binary != null;
-
-        return List.of(binary.getPath().toString(), "--hmcl", path.toString());
+        return List.of(executable.toString(), "--hmcl", path.toString());
     }
 }
