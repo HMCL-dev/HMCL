@@ -69,7 +69,6 @@ public final class TerracottaMetadata {
 
     private record Config(
             @SerializedName("version_legacy") String legacy,
-            @SerializedName("version_recent") List<String> recent,
             @SerializedName("version_latest") String latest,
 
             @SerializedName("packages") Map<String, Package> pkgs,
@@ -110,7 +109,6 @@ public final class TerracottaMetadata {
     ));
 
     private static final Pattern LEGACY;
-    private static final List<String> RECENT;
     private static final String LATEST;
 
     static {
@@ -122,7 +120,6 @@ public final class TerracottaMetadata {
         }
 
         LEGACY = Pattern.compile(config.legacy);
-        RECENT = config.recent;
         LATEST = config.latest;
 
         Options options = new Options(config.latest, OperatingSystem.CURRENT_OS.getCheckedName() + "-" + Architecture.SYSTEM_ARCH.getCheckedName());
