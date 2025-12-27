@@ -29,7 +29,6 @@ import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.io.concurrency.ConcurrencyGuard;
-import org.jackhuang.hmcl.util.io.concurrency.DownloadConcurrency;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
@@ -55,7 +54,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
 
     private static final String PREFIX = "https://api.curseforge.com";
     private static final String apiKey = System.getProperty("hmcl.curseforge.apikey", JarUtils.getAttribute("hmcl.curseforge.apikey", ""));
-    private static final ConcurrencyGuard SEMAPHORE = DownloadConcurrency.of();
+    private static final ConcurrencyGuard SEMAPHORE = new ConcurrencyGuard(16);
 
     private static final int WORD_PERFECT_MATCH_WEIGHT = 5;
 

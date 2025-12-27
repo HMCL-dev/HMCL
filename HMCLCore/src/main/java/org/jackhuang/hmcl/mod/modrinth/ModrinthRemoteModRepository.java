@@ -34,7 +34,6 @@ import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jackhuang.hmcl.util.io.concurrency.ConcurrencyGuard;
-import org.jackhuang.hmcl.util.io.concurrency.DownloadConcurrency;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -61,7 +60,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     public static final ModrinthRemoteModRepository RESOURCE_PACKS = new ModrinthRemoteModRepository("resourcepack");
     public static final ModrinthRemoteModRepository SHADER_PACKS = new ModrinthRemoteModRepository("shader");
 
-    private static final ConcurrencyGuard SEMAPHORE = DownloadConcurrency.of();
+    private static final ConcurrencyGuard SEMAPHORE = new ConcurrencyGuard(16);
 
     private static final String PREFIX = "https://api.modrinth.com";
 

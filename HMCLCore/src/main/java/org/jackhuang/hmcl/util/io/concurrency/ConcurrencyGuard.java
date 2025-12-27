@@ -6,21 +6,19 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class ConcurrencyGuard {
     private final Semaphore semaphore;
 
-    public ConcurrencyGuard(Semaphore semaphore) {
-        this.semaphore = semaphore;
+    public ConcurrencyGuard(int permits) {
+        this.semaphore = new Semaphore(permits);
     }
 
     public Token acquire() {
         semaphore.acquireUninterruptibly();
-        return new Token(semaphore);
+        return new Token();
     }
 
-    public static final class Token implements AutoCloseable {
-        private final Semaphore semaphore;
+    public final class Token implements AutoCloseable {
         private final AtomicBoolean closed = new AtomicBoolean();
 
-        public Token(Semaphore semaphore) {
-            this.semaphore = semaphore;
+        private Token() {
         }
 
         @Override

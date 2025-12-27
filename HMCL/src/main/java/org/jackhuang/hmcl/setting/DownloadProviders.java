@@ -20,11 +20,11 @@ package org.jackhuang.hmcl.setting;
 import javafx.beans.InvalidationListener;
 import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.task.DownloadException;
+import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
-import org.jackhuang.hmcl.util.io.concurrency.DownloadConcurrency;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
 
 import javax.net.ssl.SSLHandshakeException;
@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.concurrent.CancellationException;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.task.FetchTask.DEFAULT_CONCURRENCY;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -80,11 +81,9 @@ public final class DownloadProviders {
 
     static void init() {
         InvalidationListener onChangeDownloadThreads = observable -> {
-            if (ConfigHolder.config().getAutoDownloadThreads()) {
-                DownloadConcurrency.set(DownloadConcurrency.DEFAULT_CONCURRENCY);
-            } else {
-                DownloadConcurrency.set(config().getDownloadThreads());
-            }
+            FetchTask.setDownloadExecutorConcurrency(config().getAutoDownloadThreads()
+                    ? DEFAULT_CONCURRENCY
+                    : config().getDownloadThreads());
         };
         config().autoDownloadThreadsProperty().addListener(onChangeDownloadThreads);
         config().downloadThreadsProperty().addListener(onChangeDownloadThreads);

@@ -20,25 +20,15 @@ package org.jackhuang.hmcl.task;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.EventManager;
-import org.jackhuang.hmcl.util.CacheRepository;
-import org.jackhuang.hmcl.util.DigestUtils;
-import org.jackhuang.hmcl.util.FXThread;
-import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.ToStringBuilder;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.io.ContentEncoding;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
-import org.jackhuang.hmcl.util.io.concurrency.ConcurrencyGuard;
-import org.jackhuang.hmcl.util.io.concurrency.DownloadConcurrency;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Closeable;
-import java.io.FileNotFoundException;
-import java.io.FilterInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URLConnection;
@@ -47,16 +37,8 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.jackhuang.hmcl.util.Lang.threadPool;
@@ -121,7 +103,9 @@ public abstract class FetchTask<T> extends Task<T> {
 
         ArrayList<DownloadException> exceptions = null;
 
-        try (var ignored = SEMAPHORE != null ? SEMAPHORE.acquire() : null) {
+        if (SEMAPHORE != null)
+            SEMAPHORE.acquire();
+        try {
             for (URI uri : uris) {
                 try {
                     if (NetworkUtils.isHttpUri(uri))
@@ -137,6 +121,9 @@ public abstract class FetchTask<T> extends Task<T> {
             }
         } catch (InterruptedException ignored) {
             // Cancelled
+        } finally {
+            if (SEMAPHORE != null)
+                SEMAPHORE.release();
         }
 
         if (exceptions != null) {
@@ -454,26 +441,54 @@ public abstract class FetchTask<T> extends Task<T> {
             return HttpResponse.BodySubscribers.replacing(null);
     };
 
+    public static int DEFAULT_CONCURRENCY = Math.min(Runtime.getRuntime().availableProcessors() * 4, 64);
+    private static int downloadExecutorConcurrency = DEFAULT_CONCURRENCY;
+
     // For Java 21 or later, DOWNLOAD_EXECUTOR dispatches tasks to virtual threads, and concurrency is controlled by SEMAPHORE.
     // For versions earlier than Java 21, DOWNLOAD_EXECUTOR is a ThreadPoolExecutor, SEMAPHORE is null, and concurrency is controlled by the thread pool size.
 
     private static final ExecutorService DOWNLOAD_EXECUTOR;
-    private static final @Nullable ConcurrencyGuard SEMAPHORE;
+    private static final @Nullable Semaphore SEMAPHORE;
 
     static {
         ExecutorService executorService = Schedulers.newVirtualThreadPerTaskExecutor("Download");
         if (executorService != null) {
             DOWNLOAD_EXECUTOR = executorService;
-            SEMAPHORE = DownloadConcurrency.of();
+            SEMAPHORE = new Semaphore(DEFAULT_CONCURRENCY);
         } else {
-            DOWNLOAD_EXECUTOR = threadPool("Download", true, DownloadConcurrency.DEFAULT_CONCURRENCY, 10, TimeUnit.SECONDS);
+            DOWNLOAD_EXECUTOR = threadPool("Download", true, downloadExecutorConcurrency, 10, TimeUnit.SECONDS);
             SEMAPHORE = null;
         }
     }
 
     @FXThread
     public static void setDownloadExecutorConcurrency(int concurrency) {
-        if (SEMAPHORE == null) {
+        concurrency = Math.max(concurrency, 1);
+
+        int prevDownloadExecutorConcurrency = downloadExecutorConcurrency;
+        int change = concurrency - prevDownloadExecutorConcurrency;
+        if (change == 0)
+            return;
+
+        downloadExecutorConcurrency = concurrency;
+        if (SEMAPHORE != null) {
+            if (change > 0) {
+                SEMAPHORE.release(change);
+            } else {
+                int permits = -change;
+                if (!SEMAPHORE.tryAcquire(permits)) {
+                    Schedulers.io().execute(() -> {
+                        try {
+                            for (int i = 0; i < permits; i++) {
+                                SEMAPHORE.acquire();
+                            }
+                        } catch (InterruptedException e) {
+                            throw new AssertionError("Unreachable", e);
+                        }
+                    });
+                }
+            }
+        } else {
             var downloadExecutor = (ThreadPoolExecutor) DOWNLOAD_EXECUTOR;
 
             if (downloadExecutor.getMaximumPoolSize() <= concurrency) {
@@ -484,6 +499,10 @@ public abstract class FetchTask<T> extends Task<T> {
                 downloadExecutor.setMaximumPoolSize(concurrency);
             }
         }
+    }
+
+    public static int getDownloadExecutorConcurrency() {
+        return downloadExecutorConcurrency;
     }
 
     private static volatile boolean initialized = false;
