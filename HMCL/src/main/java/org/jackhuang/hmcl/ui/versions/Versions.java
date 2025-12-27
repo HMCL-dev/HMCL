@@ -76,26 +76,29 @@ public final class Versions {
         try {
             downloadURL = NetworkUtils.toURI(file.getFile().getUrl());
             modpack = Files.createTempFile("modpack", ".zip");
-            if (StringUtils.isNotBlank(addon.getIconUrl())) {
-                int i = addon.getIconUrl().lastIndexOf('.');
-                if (i < 0 || i >= addon.getIconUrl().length() - 1) {
-                    iconURL = null;
-                } else {
-                    String extension = addon.getIconUrl().substring(i + 1);
-                    if (!FXUtils.IMAGE_EXTENSIONS.contains(extension)) {
-                        iconURL = null;
-                    } else {
-                        iconURL = NetworkUtils.toURI(addon.getIconUrl());
-                    }
-                }
-            } else {
-                iconURL = null;
-            }
         } catch (IOException | IllegalArgumentException e) {
             Controllers.dialog(
                     i18n("install.failed.downloading.detail", file.getFile().getUrl()) + "\n" + StringUtils.getStackTrace(e),
                     i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);
             return;
+        }
+        {
+            URI uri = null;
+            String uriString = addon.getIconUrl();
+            if (StringUtils.isNotBlank(uriString)) {
+                int i = uriString.lastIndexOf('.');
+                if (i >= 0 && i < uriString.length() - 1) {
+                    String extension = uriString.substring(i + 1);
+                    if (FXUtils.IMAGE_EXTENSIONS.contains(extension)) {
+                        try {
+                            uri = NetworkUtils.toURI(uriString);
+                        } catch (IllegalArgumentException e) {
+                            LOG.warning("Failed to parse modpack icon URL: " + uriString, e);
+                        }
+                    }
+                }
+            }
+            iconURL = uri;
         }
         Controllers.taskDialog(
                 new FileDownloadTask(downloadURL, modpack)
