@@ -20,6 +20,10 @@ package org.jackhuang.hmcl.ui.versions;
 import com.github.steveice10.opennbt.tag.builtin.Tag;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXTextField;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
@@ -35,6 +39,9 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
+import java.util.Objects;
+import java.util.function.BooleanSupplier;
+
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -48,6 +55,7 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
     private HBox container = new HBox();
     private Runnable setToDefault = () -> {
     };
+    private BooleanSupplier isDefault = () -> true;
 
     private GameRuleInfo(GameRule gameRule, GameRuleNBT<T, ? extends Tag> gameRuleNBT, Runnable onSave) {
         setRuleKey(gameRule.getRuleKey().get(0));
@@ -117,16 +125,33 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
         this.setToDefault = setToDefault;
     }
 
+    public BooleanSupplier getIsDefault() {
+        return isDefault;
+    }
+
+    public void setIsDefault(BooleanSupplier isDefault) {
+        this.isDefault = isDefault;
+    }
+
     static final class BooleanGameRuleInfo extends GameRuleInfo<Boolean> {
-        boolean currentValue;
+        //boolean currentValue;
+        BooleanProperty currentValue;
         Boolean defaultValue;
 
         public BooleanGameRuleInfo(GameRule.BooleanGameRule booleanGameRule, GameRuleNBT<Boolean, Tag> gameRuleNBT, Runnable onSave, GameVersionNumber gameVersionNumber) {
             super(booleanGameRule, gameRuleNBT, onSave);
-            this.currentValue = booleanGameRule.getValue();
+            this.currentValue = new SimpleBooleanProperty(booleanGameRule.getValue());
             this.defaultValue = booleanGameRule.getDefaultValue(gameVersionNumber).orElse(null);
 
             buildNodes();
+        }
+
+        public boolean getValue() {
+            return currentValue.get();
+        }
+
+        public boolean getDefaultValue() {
+            return defaultValue;
         }
 
         public void buildNodes() {
@@ -142,7 +167,7 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
             {
                 toggleButton.setTitle(getDisplayName());
                 toggleButton.setSubtitle(getRuleKey());
-                toggleButton.setSelected(currentValue);
+                toggleButton.selectedProperty().bindBidirectional(currentValue);
                 toggleButton.selectedProperty().addListener((observable, oldValue, newValue) -> {
                     getGameRuleNBT().changeValue(newValue);
                     getOnSave().run();
@@ -153,11 +178,12 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
             {
                 wrapperPane.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
                 resetButton.setFocusTraversable(false);
-                resetButton.setDisable(shouldResetButtonDisabled(currentValue));
+                resetButton.setDisable(shouldResetButtonDisabled(currentValue.getValue()));
                 resetButton.setGraphic(SVG.RESTORE.createIcon(24));
                 if (defaultValue != null) {
                     setSetToDefault(() -> toggleButton.selectedProperty().set(defaultValue));
                     resetButton.setOnAction(event -> getSetToDefault().run());
+                    setIsDefault(() -> toggleButton.isSelected() == defaultValue);
                     FXUtils.installFastTooltip(resetButton, i18n("gamerule.restore_default_values.tooltip", defaultValue));
                     FXUtils.installFastTooltip(wrapperPane, i18n("gamerule.now_is_default_values.tooltip"));
                 } else {
@@ -176,19 +202,27 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
     }
 
     static final class IntGameRuleInfo extends GameRuleInfo<String> {
-        int currentValue;
+        StringProperty currentValue;
         int minValue;
         int maxValue;
         Integer defaultValue;
 
         public IntGameRuleInfo(GameRule.IntGameRule intGameRule, GameRuleNBT<String, Tag> gameRuleNBT, Runnable onSave, GameVersionNumber gameVersionNumber) {
             super(intGameRule, gameRuleNBT, onSave);
-            currentValue = intGameRule.getValue();
+            currentValue = new SimpleStringProperty(String.valueOf(intGameRule.getValue()));
             minValue = intGameRule.getMinValue(gameVersionNumber);
             maxValue = intGameRule.getMaxValue(gameVersionNumber);
             defaultValue = intGameRule.getDefaultValue(gameVersionNumber).orElse(null);
 
             buildNodes();
+        }
+
+        public String getValue() {
+            return currentValue.get();
+        }
+
+        public String getDefaultValue() {
+            return defaultValue == null ? null : defaultValue.toString();
         }
 
         public void buildNodes() {
@@ -215,7 +249,7 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
             StackPane wrapperPane = new StackPane(resetButton);
             JFXTextField textField = new JFXTextField();
             {
-                textField.textProperty().set(Integer.toString(currentValue));
+                textField.textProperty().bindBidirectional(currentValue);
                 FXUtils.setValidateWhileTextChanged(textField, true);
                 textField.setValidators(
                         new NumberValidator(i18n("input.integer"), false),
@@ -225,7 +259,7 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
                     if (value != null && value >= minValue && value <= maxValue) {
                         getGameRuleNBT().changeValue(newValue);
                         getOnSave().run();
-                        resetButton.setDisable(shouldResetButtonDisabled(value));
+                        resetButton.setDisable(shouldResetButtonDisabled(value.toString()));
                     }
                 });
 
@@ -235,11 +269,12 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
             {
                 wrapperPane.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
                 resetButton.setFocusTraversable(false);
-                resetButton.setDisable(shouldResetButtonDisabled(currentValue));
+                resetButton.setDisable(shouldResetButtonDisabled(currentValue.getValue()));
                 resetButton.setGraphic(SVG.RESTORE.createIcon(24));
                 if (defaultValue != null) {
                     setSetToDefault(() -> textField.textProperty().set(String.valueOf(defaultValue)));
                     resetButton.setOnAction(event -> getSetToDefault().run());
+                    setIsDefault(() -> textField.textProperty().get().equals(String.valueOf(defaultValue)));
                     FXUtils.installFastTooltip(resetButton, i18n("gamerule.restore_default_values.tooltip", defaultValue));
                     FXUtils.installFastTooltip(wrapperPane, i18n("gamerule.now_is_default_values.tooltip"));
                 } else {
@@ -254,8 +289,8 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
             getContainer().getChildren().addAll(displayInfoVBox, rightHBox);
         }
 
-        public boolean shouldResetButtonDisabled(int newValue) {
-            return defaultValue == null || newValue == defaultValue;
+        public boolean shouldResetButtonDisabled(String newValue) {
+            return defaultValue == null || Objects.equals(Lang.toIntOrNull(newValue), defaultValue);
         }
     }
 }

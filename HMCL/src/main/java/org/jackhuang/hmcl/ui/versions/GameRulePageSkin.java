@@ -18,26 +18,27 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXTextField;
 import javafx.animation.PauseTransition;
 import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SkinBase;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.*;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.MDListCell;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
+import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.util.StringUtils;
+
+import java.util.List;
 
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -62,7 +63,8 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
 
         {
             JFXButton resetAllButton = createToolbarButton2(i18n("gamerule.restore_default_values_all"), SVG.RESTORE, () -> {
-                Controllers.confirm(i18n("gamerule.restore_default_values_all.confirm"), i18n("message.warning"), MessageDialogPane.MessageType.WARNING, skinnable::resettingAllGameRule, null);
+                //Controllers.confirm(i18n("gamerule.restore_default_values_all.confirm"), i18n("message.warning"), MessageDialogPane.MessageType.WARNING, skinnable::resettingAllGameRule, null);
+                Controllers.dialog(new ResetDefaultValuesLayout(skinnable::resettingAllGameRule, skinnable.getItems()));
             });
 
             searchBar = new HBox();
@@ -109,6 +111,59 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
         protected void updateControl(GameRuleInfo<?> item, boolean empty) {
             if (empty) return;
             getContainer().getChildren().setAll(item.getContainer());
+        }
+    }
+
+    static class ResetDefaultValuesLayout extends JFXDialogLayout {
+        public ResetDefaultValuesLayout(Runnable resettingAllGameRule, List<GameRuleInfo<?>> gameRules) {
+            setHeading(new Label(i18n("message.warning")));
+            Label warnLabel = new Label(i18n("gamerule.restore_default_values_all.confirm"));
+            MenuUpDownButton menuUpDownButton = new MenuUpDownButton();
+            {
+                menuUpDownButton.setText("查看具体变更");
+                menuUpDownButton.setMaxWidth(USE_PREF_SIZE);
+            }
+            ScrollPane scrollPane = new ScrollPane();
+            GridPane gridPane = new GridPane();
+            {
+                gridPane.setHgap(10);
+                gridPane.setVgap(10);
+                scrollPane.setContent(gridPane);
+                scrollPane.visibleProperty().bind(menuUpDownButton.selectedProperty());
+                scrollPane.managedProperty().bind(menuUpDownButton.selectedProperty());
+                int index = 1;
+                gridPane.addRow(0, new Label("名称"), new Label("当前值"), new Label("->"), new Label("默认值"));
+                for (GameRuleInfo<?> gameRule : gameRules) {
+                    if (!gameRule.getIsDefault().getAsBoolean()) {
+                        String oldValue = "";
+                        String newValue = "";
+                        if (gameRule instanceof GameRuleInfo.BooleanGameRuleInfo booleanGameRuleInfo) {
+                            oldValue = String.valueOf(booleanGameRuleInfo.getValue());
+                            newValue = String.valueOf(booleanGameRuleInfo.getDefaultValue());
+                        } else if (gameRule instanceof GameRuleInfo.IntGameRuleInfo intGameRuleInfo) {
+                            oldValue = intGameRuleInfo.getValue();
+                            newValue = intGameRuleInfo.getDefaultValue();
+                        }
+                        gridPane.addRow(index, new Label(StringUtils.isNotBlank(gameRule.getDisplayName()) ? gameRule.getDisplayName() : gameRule.getRuleKey()), new Label(oldValue), new Label("->"), new Label(newValue));
+                        index++;
+                    }
+                }
+                if (index == 1) {
+                    gridPane.addRow(1, new Label("无变更"));
+                }
+            }
+            VBox vBox = new VBox();
+            vBox.setAlignment(Pos.TOP_LEFT);
+            vBox.getChildren().addAll(warnLabel, menuUpDownButton, scrollPane);
+            setBody(vBox);
+            JFXButton accept = new JFXButton(i18n("button.ok"));
+            JFXButton reject = new JFXButton(i18n("button.cancel"));
+            accept.setOnAction(event -> {
+                resettingAllGameRule.run();
+                fireEvent(new DialogCloseEvent());
+            });
+            reject.setOnAction(event -> fireEvent(new DialogCloseEvent()));
+            setActions(accept, reject);
         }
     }
 }
