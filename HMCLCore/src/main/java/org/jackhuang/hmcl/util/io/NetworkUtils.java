@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.util.io;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.*;
@@ -61,6 +62,16 @@ public final class NetworkUtils {
 
     public static boolean isHttpUri(URI uri) {
         return "http".equals(uri.getScheme()) || "https".equals(uri.getScheme());
+    }
+
+    public static String addHttpsIfMissing(String url) {
+        if (Pattern.compile("^(?<scheme>[a-zA-Z][a-zA-Z0-9+.-]*)://").matcher(url).find())
+            return url;
+
+        if (url.startsWith("//"))
+            return "https:" + url;
+        else
+            return "https://" + url;
     }
 
     public static String withQuery(String baseUrl, Map<String, String> params) {
@@ -126,11 +137,15 @@ public final class NetworkUtils {
     }
 
     public static URLConnection createConnection(URI uri) throws IOException {
-        URLConnection connection = uri.toURL().openConnection();
+        URLConnection connection;
+        try {
+            connection = uri.toURL().openConnection();
+        } catch (IllegalArgumentException | MalformedURLException e) {
+            throw new IOException(e);
+        }
         connection.setConnectTimeout(TIME_OUT);
         connection.setReadTimeout(TIME_OUT);
-        if (connection instanceof HttpURLConnection) {
-            var httpConnection = (HttpURLConnection) connection;
+        if (connection instanceof HttpURLConnection httpConnection) {
             httpConnection.setRequestProperty("Accept-Language", Locale.getDefault().toLanguageTag());
             httpConnection.setInstanceFollowRedirects(false);
         }
@@ -261,7 +276,11 @@ public final class NetworkUtils {
     }
 
     public static String doGet(URI uri) throws IOException {
-        return readFullyAsString(resolveConnection(createHttpConnection(uri)));
+        URLConnection connection = createConnection(uri);
+        if (connection instanceof HttpURLConnection httpURLConnection) {
+            connection = resolveConnection(httpURLConnection);
+        }
+        return readFullyAsString(connection);
     }
 
     public static String doGet(List<URI> uris) throws IOException {
@@ -401,6 +420,15 @@ public final class NetworkUtils {
     public static @NotNull URI toURI(@NotNull URL url) {
         return toURI(url.toExternalForm());
     }
-    // ====
 
+    public static @Nullable URI toURIOrNull(String uri) {
+        if (StringUtils.isNotBlank(uri)) {
+            try {
+                return toURI(uri);
+            } catch (Exception ignored) {
+            }
+        }
+
+        return null;
+    }
 }

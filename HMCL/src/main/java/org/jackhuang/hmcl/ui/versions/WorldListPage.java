@@ -28,8 +28,8 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.InvalidPathException;
@@ -39,8 +39,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class WorldListPage extends ListPageBase<WorldListItem> implements VersionPage.VersionLoadable {
     private final BooleanProperty showAll = new SimpleBooleanProperty(this, "showAll", false);
@@ -50,7 +50,7 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
     private List<World> worlds;
     private Profile profile;
     private String id;
-    private String gameVersion;
+    private GameVersionNumber gameVersion;
 
     public WorldListPage() {
         FXUtils.applyDragListener(this, it -> "zip".equals(FileUtils.getExtension(it)), modpacks -> {
@@ -61,7 +61,7 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
             if (worlds != null)
                 itemsProperty().setAll(worlds.stream()
                         .filter(world -> isShowAll() || world.getGameVersion() == null || world.getGameVersion().equals(gameVersion))
-                        .map(world -> new WorldListItem(world, backupsDir)).collect(Collectors.toList()));
+                        .map(world -> new WorldListItem(this, world, backupsDir, profile, id)).toList());
         });
     }
 
@@ -79,12 +79,16 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
         refresh();
     }
 
+    public void remove(WorldListItem item) {
+        itemsProperty().remove(item);
+    }
+
     public void refresh() {
         if (profile == null || id == null)
             return;
 
         setLoading(true);
-        Task.runAsync(() -> gameVersion = profile.getRepository().getGameVersion(id).orElse(null))
+        Task.runAsync(() -> gameVersion = profile.getRepository().getGameVersion(id).map(GameVersionNumber::asGameVersion).orElse(null))
                 .thenApplyAsync(unused -> {
                     try (Stream<World> stream = World.getWorlds(savesDir)) {
                         return stream.parallel().collect(Collectors.toList());
@@ -94,14 +98,13 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
                     worlds = result;
                     setLoading(false);
                     if (exception == null) {
-                        itemsProperty().setAll(result.stream().filter(world -> isShowAll() || world.getGameVersion() == null || world.getGameVersion().equals(gameVersion))
-                                .map(world -> new WorldListItem(world, backupsDir)).collect(Collectors.toList()));
+                        itemsProperty().setAll(result.stream()
+                                .filter(world -> isShowAll() || world.getGameVersion() == null || world.getGameVersion().equals(gameVersion))
+                                .map(world -> new WorldListItem(this, world, backupsDir, profile, id))
+                                .collect(Collectors.toList()));
                     } else {
                         LOG.warning("Failed to load world list page", exception);
                     }
-
-                    // https://github.com/HMCL-dev/HMCL/issues/938
-                    System.gc();
                 }).start();
     }
 
@@ -109,7 +112,7 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("world.import.choose"));
         chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(i18n("world.extension"), "*.zip"));
-        List<File> res = chooser.showOpenMultipleDialog(Controllers.getStage());
+        List<Path> res = FileUtils.toPaths(chooser.showOpenMultipleDialog(Controllers.getStage()));
 
         if (res == null || res.isEmpty()) return;
         installWorld(res.get(0));
@@ -120,15 +123,15 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
         Controllers.navigate(Controllers.getDownloadPage());
     }
 
-    private void installWorld(File zipFile) {
+    private void installWorld(Path zipFile) {
         // Only accept one world file because user is required to confirm the new world name
         // Or too many input dialogs are popped.
-        Task.supplyAsync(() -> new World(zipFile.toPath()))
+        Task.supplyAsync(() -> new World(zipFile))
                 .whenComplete(Schedulers.javafx(), world -> {
                     Controllers.prompt(i18n("world.name.enter"), (name, resolve, reject) -> {
                         Task.runAsync(() -> world.install(savesDir, name))
                                 .whenComplete(Schedulers.javafx(), () -> {
-                                    itemsProperty().add(new WorldListItem(new World(savesDir.resolve(name)), backupsDir));
+                                    itemsProperty().add(new WorldListItem(this, new World(savesDir.resolve(name)), backupsDir, profile, id));
                                     resolve.run();
                                 }, e -> {
                                     if (e instanceof FileAlreadyExistsException)

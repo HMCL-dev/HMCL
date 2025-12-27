@@ -27,13 +27,14 @@ import javafx.scene.layout.HBox;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.StringUtils;
 
-import java.io.*;
+import java.io.IOException;
 import java.nio.file.Path;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -68,9 +69,7 @@ public final class NBTEditorPage extends SpinnerPane implements DecoratorPage {
         actions.setPadding(new Insets(8));
         actions.setAlignment(Pos.CENTER_RIGHT);
 
-        JFXButton saveButton = new JFXButton(i18n("button.save"));
-        saveButton.getStyleClass().add("jfx-button-raised");
-        saveButton.setButtonType(JFXButton.ButtonType.RAISED);
+        JFXButton saveButton = FXUtils.newRaisedButton(i18n("button.save"));
         saveButton.setOnAction(e -> {
             try {
                 save();
@@ -80,9 +79,7 @@ public final class NBTEditorPage extends SpinnerPane implements DecoratorPage {
             }
         });
 
-        JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
-        cancelButton.getStyleClass().add("jfx-button-raised");
-        cancelButton.setButtonType(JFXButton.ButtonType.RAISED);
+        JFXButton cancelButton = FXUtils.newRaisedButton(i18n("button.cancel"));
         cancelButton.setOnAction(e -> fireEvent(new PageCloseEvent()));
         onEscPressed(this, cancelButton::fire);
 
@@ -92,7 +89,10 @@ public final class NBTEditorPage extends SpinnerPane implements DecoratorPage {
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
                     if (exception == null) {
                         setLoading(false);
-                        root.setCenter(new NBTTreeView(result));
+                        NBTTreeView view = new NBTTreeView(result);
+                        BorderPane.setMargin(view, new Insets(10));
+                        onEscPressed(view, cancelButton::fire);
+                        root.setCenter(view);
                     } else {
                         LOG.warning("Fail to open nbt file", exception);
                         Controllers.dialog(i18n("nbt.open.failed") + "\n\n" + StringUtils.getStackTrace(exception), null, MessageDialogPane.MessageType.WARNING, cancelButton::fire);

@@ -41,9 +41,12 @@ import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
-import org.jackhuang.hmcl.util.*;
-import org.jackhuang.hmcl.util.logging.Logger;
+import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.Log4jLevel;
+import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.platform.*;
 
 import java.io.IOException;
@@ -59,9 +62,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class GameCrashWindow extends Stage {
     private final Version version;
@@ -90,7 +93,7 @@ public class GameCrashWindow extends Stage {
         this.logs = logs;
         this.analyzer = LibraryAnalyzer.analyze(version, repository.getGameVersion(version).orElse(null));
 
-        memory = Optional.ofNullable(launchOptions.getMaxMemory()).map(i -> i + " MB").orElse("-");
+        memory = Optional.ofNullable(launchOptions.getMaxMemory()).map(i -> i + " " + i18n("settings.memory.unit.mib")).orElse("-");
 
         total_memory = MEGABYTES.formatBytes(SystemInfo.getTotalMemorySize());
 
@@ -129,7 +132,7 @@ public class GameCrashWindow extends Stage {
 
             return pair(CrashReportAnalyzer.analyze(rawLog), crashReport != null ? CrashReportAnalyzer.findKeywordsFromCrashReport(crashReport) : new HashSet<>());
         }), Task.supplyAsync(() -> {
-            Path latestLog = repository.getRunDirectory(version.getId()).toPath().resolve("logs/latest.log");
+            Path latestLog = repository.getRunDirectory(version.getId()).resolve("logs/latest.log");
             if (!Files.isReadable(latestLog)) {
                 return pair(new HashSet<CrashReportAnalyzer.Result>(), new HashSet<String>());
             }
@@ -283,13 +286,13 @@ public class GameCrashWindow extends Stage {
                     alert.showAndWait();
 
                     return null;
-                });
+                }, Schedulers.javafx());
     }
 
     private final class View extends VBox {
 
         View() {
-            setStyle("-fx-background-color: white");
+            this.getStyleClass().add("game-crash-window");
 
             HBox titlePane = new HBox();
             {
@@ -379,7 +382,7 @@ public class GameCrashWindow extends Stage {
                 TwoLineListItem gameDir = new TwoLineListItem();
                 gameDir.getStyleClass().setAll("two-line-item-second-large");
                 gameDir.setTitle(i18n("game.directory"));
-                gameDir.setSubtitle(launchOptions.getGameDir().getAbsolutePath());
+                gameDir.setSubtitle(launchOptions.getGameDir().toAbsolutePath().toString());
                 FXUtils.installFastTooltip(gameDir, i18n("game.directory"));
 
                 TwoLineListItem javaDir = new TwoLineListItem();
@@ -392,9 +395,12 @@ public class GameCrashWindow extends Stage {
                 reasonTitle.getStyleClass().add("two-line-item-second-large-title");
 
                 ScrollPane reasonPane = new ScrollPane(reasonTextFlow);
+                reasonTextFlow.getStyleClass().add("crash-reason-text-flow");
                 reasonPane.setFitToWidth(true);
                 reasonPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
                 reasonPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+
+                feedbackTextFlow.getStyleClass().add("crash-reason-text-flow");
 
                 gameDirPane.setPadding(new Insets(8));
                 VBox.setVgrow(gameDirPane, Priority.ALWAYS);
@@ -408,6 +414,7 @@ public class GameCrashWindow extends Stage {
             }
 
             HBox toolBar = new HBox();
+            VBox.setMargin(toolBar, new Insets(0, 0, 4, 0));
             {
                 JFXButton exportGameCrashInfoButton = FXUtils.newRaisedButton(i18n("logwindow.export_game_crash_logs"));
                 exportGameCrashInfoButton.setOnAction(e -> exportGameCrashInfo());
@@ -418,7 +425,6 @@ public class GameCrashWindow extends Stage {
                 JFXButton helpButton = FXUtils.newRaisedButton(i18n("help"));
                 helpButton.setOnAction(e -> FXUtils.openLink(Metadata.CONTACT_URL));
                 FXUtils.installFastTooltip(helpButton, i18n("logwindow.help"));
-
 
                 toolBar.setPadding(new Insets(8));
                 toolBar.setSpacing(8);

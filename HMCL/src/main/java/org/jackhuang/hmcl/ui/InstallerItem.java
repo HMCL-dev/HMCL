@@ -22,6 +22,7 @@ import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ChangeListener;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -35,7 +36,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -138,6 +138,9 @@ public class InstallerItem extends Control {
             case "forge":
                 iconType = VersionIconType.FORGE;
                 break;
+            case "cleanroom":
+                iconType = VersionIconType.CLEANROOM;
+                break;
             case "liteloader":
                 iconType = VersionIconType.CHICKEN;
                 break;
@@ -232,6 +235,7 @@ public class InstallerItem extends Control {
             InstallerItem fabric = new InstallerItem(FABRIC, style);
             InstallerItem fabricApi = new InstallerItem(FABRIC_API, style);
             InstallerItem forge = new InstallerItem(FORGE, style);
+            InstallerItem cleanroom = new InstallerItem(CLEANROOM, style);
             InstallerItem neoForge = new InstallerItem(NEO_FORGE, style);
             InstallerItem liteLoader = new InstallerItem(LITELOADER, style);
             InstallerItem optiFine = new InstallerItem(OPTIFINE, style);
@@ -239,11 +243,11 @@ public class InstallerItem extends Control {
             InstallerItem quiltApi = new InstallerItem(QUILT_API, style);
 
             Map<InstallerItem, Set<InstallerItem>> incompatibleMap = new HashMap<>();
-            mutualIncompatible(incompatibleMap, forge, fabric, quilt, neoForge);
-            addIncompatibles(incompatibleMap, liteLoader, fabric, quilt, neoForge);
-            addIncompatibles(incompatibleMap, optiFine, fabric, quilt, neoForge);
-            addIncompatibles(incompatibleMap, fabricApi, forge, quiltApi, neoForge, liteLoader, optiFine);
-            addIncompatibles(incompatibleMap, quiltApi, forge, fabric, fabricApi, neoForge, liteLoader, optiFine);
+            mutualIncompatible(incompatibleMap, forge, fabric, quilt, neoForge, cleanroom);
+            addIncompatibles(incompatibleMap, liteLoader, fabric, quilt, neoForge, cleanroom);
+            addIncompatibles(incompatibleMap, optiFine, fabric, quilt, neoForge, cleanroom);
+            addIncompatibles(incompatibleMap, fabricApi, forge, quiltApi, neoForge, liteLoader, optiFine, cleanroom);
+            addIncompatibles(incompatibleMap, quiltApi, forge, fabric, fabricApi, neoForge, liteLoader, optiFine, cleanroom);
 
             for (Map.Entry<InstallerItem, Set<InstallerItem>> entry : incompatibleMap.entrySet()) {
                 InstallerItem item = entry.getKey();
@@ -277,7 +281,7 @@ public class InstallerItem extends Control {
                 game.versionProperty.set(new InstalledState(gameVersion, false, false));
             }
 
-            InstallerItem[] all = {game, forge, neoForge, liteLoader, optiFine, fabric, fabricApi, quilt, quiltApi};
+            InstallerItem[] all = {game, forge, neoForge, liteLoader, optiFine, fabric, fabricApi, quilt, quiltApi, cleanroom};
 
             for (InstallerItem item : all) {
                 if (!item.resolvedStateProperty.isBound()) {
@@ -293,6 +297,8 @@ public class InstallerItem extends Control {
 
             if (gameVersion == null) {
                 this.libraries = all;
+            } else if (gameVersion.equals("1.12.2")) {
+                this.libraries = new InstallerItem[]{game, forge, cleanroom, liteLoader, optiFine};
             } else if (GameVersionNumber.compare(gameVersion, "1.13") < 0) {
                 this.libraries = new InstallerItem[]{game, forge, liteLoader, optiFine};
             } else {
@@ -312,7 +318,9 @@ public class InstallerItem extends Control {
     private static final class InstallerItemSkin extends SkinBase<InstallerItem> {
         private static final PseudoClass LIST_ITEM = PseudoClass.getPseudoClass("list-item");
         private static final PseudoClass CARD = PseudoClass.getPseudoClass("card");
-        private static final WeakListenerHolder holder = new WeakListenerHolder();
+
+        @SuppressWarnings({"FieldCanBeLocal", "unused"})
+        private final ChangeListener<Number> holder;
 
         InstallerItemSkin(InstallerItem control) {
             super(control);
@@ -320,9 +328,10 @@ public class InstallerItem extends Control {
             Pane pane;
             if (control.style == Style.CARD) {
                 pane = new VBox();
-                holder.add(FXUtils.onWeakChange(pane.widthProperty(), v -> FXUtils.setLimitHeight(pane, v.doubleValue() * 0.7)));
+                holder = FXUtils.onWeakChangeAndOperate(pane.widthProperty(), v -> FXUtils.setLimitHeight(pane, v.doubleValue() * 0.7));
             } else {
                 pane = new HBox();
+                holder = null;
             }
             pane.getStyleClass().add("installer-item");
             RipplerContainer container = new RipplerContainer(pane);
@@ -386,7 +395,7 @@ public class InstallerItem extends Control {
             pane.getChildren().add(buttonsContainer);
 
             JFXButton removeButton = new JFXButton();
-            removeButton.setGraphic(SVG.CLOSE.createIcon(Theme.blackFill(), -1));
+            removeButton.setGraphic(SVG.CLOSE.createIcon());
             removeButton.getStyleClass().add("toggle-icon4");
             if (control.id.equals(MINECRAFT.getPatchId())) {
                 removeButton.setVisible(false);
@@ -407,8 +416,8 @@ public class InstallerItem extends Control {
             JFXButton installButton = new JFXButton();
             installButton.graphicProperty().bind(Bindings.createObjectBinding(() ->
                             control.resolvedStateProperty.get() instanceof InstallableState ?
-                                    SVG.ARROW_FORWARD.createIcon(Theme.blackFill(), -1) :
-                                    SVG.UPDATE.createIcon(Theme.blackFill(), -1),
+                                    SVG.ARROW_FORWARD.createIcon() :
+                                    SVG.UPDATE.createIcon(),
                     control.resolvedStateProperty
             ));
             installButton.getStyleClass().add("toggle-icon4");

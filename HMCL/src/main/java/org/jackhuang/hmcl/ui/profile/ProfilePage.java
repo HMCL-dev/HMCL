@@ -22,7 +22,10 @@ import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.validation.RequiredFieldValidator;
 import com.jfoenix.validation.base.ValidatorBase;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.*;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
@@ -41,14 +44,12 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.util.Optional;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class ProfilePage extends BorderPane implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
-    private boolean nameManuallyEdited = false;
     private final StringProperty location;
     private final Profile profile;
 
@@ -111,27 +112,6 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
                     gameDir.setName(i18n("profile.instance_directory"));
                     gameDir.setTitle(i18n("profile.instance_directory.choose"));
                     gameDir.pathProperty().bindBidirectional(location);
-
-                    locationProperty().addListener((observable, oldValue, newValue) -> {
-                        if (nameManuallyEdited && !txtProfileName.getText().isEmpty())
-                            return;
-
-                        Path newPath = Path.of(newValue);
-                        Path parent = newPath.getParent();
-
-                        if (parent != null) {
-                            Path suggestedName = parent.toAbsolutePath().getFileName();
-                            if (suggestedName != null) {
-                                txtProfileName.setText(suggestedName.toString());
-                            }
-                        }
-                    });
-
-                    txtProfileName.textProperty().addListener((observable, oldValue, newValue) -> {
-                        if (txtProfileName.isFocused()) {
-                            nameManuallyEdited = true;
-                        }
-                    });
 
                     toggleUseRelativePath = new OptionToggleButton();
                     toggleUseRelativePath.setTitle(i18n("profile.use_relative_path"));

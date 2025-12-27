@@ -35,7 +35,6 @@ import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.DownloadProviders;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
@@ -45,13 +44,14 @@ import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.UnsupportedPlatformException;
 import org.jackhuang.hmcl.util.tree.ArchiveFileTree;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 
-import java.io.*;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -79,19 +79,19 @@ public final class JavaManagementPage extends ListPageBase<JavaManagementPage.Ja
         }
 
         FXUtils.applyDragListener(this, it -> {
-            String name = it.getName();
-            return it.isDirectory() || name.endsWith(".zip") || name.endsWith(".tar.gz") || name.equals(OperatingSystem.CURRENT_OS.getJavaExecutable());
+            String name = FileUtils.getName(it);
+            return Files.isDirectory(it) || name.endsWith(".zip") || name.endsWith(".tar.gz") || name.equals(OperatingSystem.CURRENT_OS.getJavaExecutable());
         }, files -> {
-            for (File file : files) {
-                if (file.isDirectory()) {
-                    onAddJavaHome(file.toPath());
+            for (Path file : files) {
+                if (Files.isDirectory(file)) {
+                    onAddJavaHome(file);
                 } else {
-                    String fileName = file.getName();
+                    String fileName = FileUtils.getName(file);
 
                     if (fileName.equals(OperatingSystem.CURRENT_OS.getJavaExecutable())) {
-                        onAddJavaBinary(file.toPath());
+                        onAddJavaBinary(file);
                     } else if (fileName.endsWith(".zip") || fileName.endsWith(".tar.gz")) {
-                        onInstallArchive(file.toPath());
+                        onInstallArchive(file);
                     } else {
                         throw new AssertionError("Unreachable code");
                     }
@@ -110,9 +110,9 @@ public final class JavaManagementPage extends ListPageBase<JavaManagementPage.Ja
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
             chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Java", "java.exe"));
         chooser.setTitle(i18n("settings.game.java_directory.choose"));
-        File file = chooser.showOpenDialog(Controllers.getStage());
+        Path file = FileUtils.toPath(chooser.showOpenDialog(Controllers.getStage()));
         if (file != null) {
-            JavaManager.getAddJavaTask(file.toPath()).whenComplete(Schedulers.javafx(), exception -> {
+            JavaManager.getAddJavaTask(file).whenComplete(Schedulers.javafx(), exception -> {
                 if (exception != null) {
                     LOG.warning("Failed to add java", exception);
                     Controllers.dialog(i18n("java.add.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
@@ -122,7 +122,7 @@ public final class JavaManagementPage extends ListPageBase<JavaManagementPage.Ja
     }
 
     void onShowRestoreJavaPage() {
-        Controllers.navigate(new JavaRestorePage(ConfigHolder.globalConfig().getDisabledJava()));
+        Controllers.navigateForward(new JavaRestorePage(ConfigHolder.globalConfig().getDisabledJava()));
     }
 
     private void onAddJavaBinary(Path file) {
@@ -250,9 +250,9 @@ public final class JavaManagementPage extends ListPageBase<JavaManagementPage.Ja
             TwoLineListItem item = new TwoLineListItem();
             item.setTitle((java.isJDK() ? "JDK" : "JRE") + " " + java.getVersion());
             item.setSubtitle(java.getBinary().toString());
-            item.getTags().add(i18n("java.info.architecture") + ": " + java.getArchitecture().getDisplayName());
+            item.addTag(i18n("java.info.architecture") + ": " + java.getArchitecture().getDisplayName());
             if (vendor != null)
-                item.getTags().add(i18n("java.info.vendor") + ": " + vendor);
+                item.addTag(i18n("java.info.vendor") + ": " + vendor);
             BorderPane.setAlignment(item, Pos.CENTER);
             center.getChildren().setAll(item);
             root.setCenter(center);
@@ -262,7 +262,7 @@ public final class JavaManagementPage extends ListPageBase<JavaManagementPage.Ja
             {
                 JFXButton revealButton = new JFXButton();
                 revealButton.getStyleClass().add("toggle-icon4");
-                revealButton.setGraphic(FXUtils.limitingSize(SVG.FOLDER_OPEN.createIcon(Theme.blackFill(), 24), 24, 24));
+                revealButton.setGraphic(FXUtils.limitingSize(SVG.FOLDER_OPEN.createIcon(24), 24, 24));
                 revealButton.setOnAction(e -> control.onReveal());
                 FXUtils.installFastTooltip(revealButton, i18n("reveal.in_file_manager"));
 
@@ -275,12 +275,12 @@ public final class JavaManagementPage extends ListPageBase<JavaManagementPage.Ja
                         null
                 ));
                 if (java.isManaged()) {
-                    removeButton.setGraphic(FXUtils.limitingSize(SVG.DELETE_FOREVER.createIcon(Theme.blackFill(), 24), 24, 24));
+                    removeButton.setGraphic(FXUtils.limitingSize(SVG.DELETE_FOREVER.createIcon(24), 24, 24));
                     FXUtils.installFastTooltip(removeButton, i18n("java.uninstall"));
                     if (JavaRuntime.CURRENT_JAVA != null && java.getBinary().equals(JavaRuntime.CURRENT_JAVA.getBinary()))
                         removeButton.setDisable(true);
                 } else {
-                    removeButton.setGraphic(FXUtils.limitingSize(SVG.DELETE.createIcon(Theme.blackFill(), 24), 24, 24));
+                    removeButton.setGraphic(FXUtils.limitingSize(SVG.DELETE.createIcon(24), 24, 24));
                     FXUtils.installFastTooltip(removeButton, i18n("java.disable"));
                 }
 

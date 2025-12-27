@@ -33,10 +33,10 @@ import javafx.scene.layout.BorderPane;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.InstallerItem;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
-
-import java.util.Map;
+import org.jackhuang.hmcl.util.SettingsMap;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -61,7 +61,16 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
                 }
 
                 if (!(library.resolvedStateProperty().get() instanceof InstallerItem.IncompatibleState))
-                    controller.onNext(new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer." + libraryId)), gameVersion, downloadProvider, libraryId, () -> controller.onPrev(false)));
+                    controller.onNext(
+                            new VersionsPage(
+                                    controller,
+                                    i18n("install.installer.choose", i18n("install.installer." + libraryId)),
+                                    gameVersion,
+                                    downloadProvider,
+                                    libraryId,
+                                    () -> controller.onPrev(false, Navigation.NavigationDirection.NEXT)
+                            ), Navigation.NavigationDirection.NEXT
+                    );
             });
             library.setOnRemove(() -> {
                 controller.getSettings().remove(libraryId);
@@ -80,12 +89,12 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
     protected abstract void reload();
 
     @Override
-    public void onNavigate(Map<String, Object> settings) {
+    public void onNavigate(SettingsMap settings) {
         reload();
     }
 
     @Override
-    public abstract void cleanup(Map<String, Object> settings);
+    public abstract void cleanup(SettingsMap settings);
 
     protected abstract void onInstall();
 
@@ -120,20 +129,15 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
             {
                 InstallerItem[] libraries = control.group.getLibraries();
 
-                FlowPane libraryPane = new FlowPane(libraries);
-                libraryPane.setVgap(16);
-                libraryPane.setHgap(16);
+                FlowPane libraryPane = new FlowPane(16, 16, libraries);
+                ScrollPane scrollPane = new ScrollPane(libraryPane);
+                scrollPane.setFitToWidth(true);
+                scrollPane.setFitToHeight(true);
+                BorderPane.setMargin(scrollPane, new Insets(16, 0, 16, 0));
+                root.setCenter(scrollPane);
 
-                if (libraries.length <= 8) {
-                    BorderPane.setMargin(libraryPane, new Insets(16, 0, 16, 0));
-                    root.setCenter(libraryPane);
-                } else {
-                    ScrollPane scrollPane = new ScrollPane(libraryPane);
-                    scrollPane.setFitToWidth(true);
-                    scrollPane.setFitToHeight(true);
-                    BorderPane.setMargin(scrollPane, new Insets(16, 0, 16, 0));
-                    root.setCenter(scrollPane);
-                }
+                if (libraries.length <= 8)
+                    scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             }
 
             {

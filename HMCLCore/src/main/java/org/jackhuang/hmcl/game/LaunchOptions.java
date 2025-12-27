@@ -20,9 +20,9 @@ package org.jackhuang.hmcl.game;
 import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.Serializable;
 import java.net.Proxy;
+import java.nio.file.Path;
 import java.util.*;
 
 /**
@@ -31,7 +31,7 @@ import java.util.*;
  */
 public class LaunchOptions implements Serializable {
 
-    private File gameDir;
+    private Path gameDir;
     private JavaRuntime java;
     private String versionName;
     private String versionType;
@@ -47,7 +47,7 @@ public class LaunchOptions implements Serializable {
     private Integer width;
     private Integer height;
     private boolean fullscreen;
-    private String serverIp;
+    private QuickPlayOption quickPlayOption;
     private String wrapper;
     private Proxy.Type proxyType;
     private String proxyHost;
@@ -55,6 +55,7 @@ public class LaunchOptions implements Serializable {
     private String proxyUser;
     private String proxyPass;
     private boolean noGeneratedJVMArgs;
+    private boolean noGeneratedOptimizingJVMArgs;
     private String preLaunchCommand;
     private String postExitCommand;
     private NativesDirectoryType nativesDirType;
@@ -63,12 +64,13 @@ public class LaunchOptions implements Serializable {
     private Renderer renderer = Renderer.DEFAULT;
     private boolean useNativeGLFW;
     private boolean useNativeOpenAL;
+    private boolean enableDebugLogOutput;
     private boolean daemon;
 
     /**
      * The game directory
      */
-    public File getGameDir() {
+    public Path getGameDir() {
         return gameDir;
     }
 
@@ -179,11 +181,11 @@ public class LaunchOptions implements Serializable {
         return fullscreen;
     }
 
-    /**
-     * The server ip that will connect to when enter game main menu.
-     */
-    public String getServerIp() {
-        return serverIp;
+    /// The quick play option.
+    ///
+    /// @see <a href="https://minecraft.wiki/w/Quick_Play">Quick Play - Minecraft Wiki</a>
+    public QuickPlayOption getQuickPlayOption() {
+        return quickPlayOption;
     }
 
     /**
@@ -224,6 +226,13 @@ public class LaunchOptions implements Serializable {
      */
     public boolean isNoGeneratedJVMArgs() {
         return noGeneratedJVMArgs;
+    }
+
+    /**
+     * Prevent game launcher from generating optimizing JVM arguments.
+     */
+    public boolean isNoGeneratedOptimizingJVMArgs() {
+        return noGeneratedOptimizingJVMArgs;
     }
 
     /**
@@ -274,6 +283,10 @@ public class LaunchOptions implements Serializable {
         return useNativeOpenAL;
     }
 
+    public boolean isEnableDebugLogOutput() {
+        return enableDebugLogOutput;
+    }
+
     /**
      * Will launcher keeps alive after game launched or not.
      */
@@ -281,7 +294,7 @@ public class LaunchOptions implements Serializable {
         return daemon;
     }
 
-    public static class Builder {
+    public static final class Builder {
 
         private final LaunchOptions options = new LaunchOptions();
 
@@ -314,7 +327,7 @@ public class LaunchOptions implements Serializable {
             return options.javaAgents;
         }
 
-        public Builder setGameDir(File gameDir) {
+        public Builder setGameDir(Path gameDir) {
             options.gameDir = gameDir;
             return this;
         }
@@ -399,8 +412,8 @@ public class LaunchOptions implements Serializable {
             return this;
         }
 
-        public Builder setServerIp(String serverIp) {
-            options.serverIp = serverIp;
+        public Builder setQuickPlayOption(QuickPlayOption quickPlayOption) {
+            options.quickPlayOption = quickPlayOption;
             return this;
         }
 
@@ -436,6 +449,11 @@ public class LaunchOptions implements Serializable {
 
         public Builder setNoGeneratedJVMArgs(boolean noGeneratedJVMArgs) {
             options.noGeneratedJVMArgs = noGeneratedJVMArgs;
+            return this;
+        }
+
+        public Builder setNoGeneratedOptimizingJVMArgs(boolean noGeneratedOptimizingJVMArgs) {
+            options.noGeneratedOptimizingJVMArgs = noGeneratedOptimizingJVMArgs;
             return this;
         }
 
@@ -484,5 +502,9 @@ public class LaunchOptions implements Serializable {
             return this;
         }
 
+        public Builder setEnableDebugLogOutput(boolean u) {
+            options.enableDebugLogOutput = u;
+            return this;
+        }
     }
 }

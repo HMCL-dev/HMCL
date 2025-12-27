@@ -33,6 +33,7 @@ import javafx.scene.control.ListCell;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
+import org.jackhuang.hmcl.download.cleanroom.CleanroomInstallTask;
 import org.jackhuang.hmcl.download.fabric.FabricAPIInstallTask;
 import org.jackhuang.hmcl.download.fabric.FabricInstallTask;
 import org.jackhuang.hmcl.download.forge.ForgeNewInstallTask;
@@ -63,7 +64,6 @@ import org.jackhuang.hmcl.mod.multimc.MultiMCModpackInstallTask;
 import org.jackhuang.hmcl.mod.server.ServerModpackCompletionTask;
 import org.jackhuang.hmcl.mod.server.ServerModpackExportTask;
 import org.jackhuang.hmcl.mod.server.ServerModpackLocalInstallTask;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
@@ -91,8 +91,6 @@ public final class TaskListPane extends StackPane {
     private final Map<String, StageNode> stageNodes = new HashMap<>();
     private final ObjectProperty<Insets> progressNodePadding = new SimpleObjectProperty<>(Insets.EMPTY);
     private final DoubleProperty cellWidth = new SimpleDoubleProperty();
-
-    private Cell lastCell;
 
     public TaskListPane() {
         listView.setPadding(new Insets(12, 0, 0, 0));
@@ -164,6 +162,8 @@ public final class TaskListPane extends StackPane {
                     if (task.getInheritedStage() != null && task.getInheritedStage().startsWith("hmcl.install.game"))
                         return;
                     task.setName(i18n("install.installer.install", i18n("install.installer.game")));
+                } else if (task instanceof CleanroomInstallTask) {
+                    task.setName(i18n("install.installer.install", i18n("install.installer.cleanroom")));
                 } else if (task instanceof ForgeNewInstallTask || task instanceof ForgeOldInstallTask) {
                     task.setName(i18n("install.installer.install", i18n("install.installer.forge")));
                 } else if (task instanceof NeoForgeInstallTask || task instanceof NeoForgeOldInstallTask) {
@@ -307,17 +307,12 @@ public final class TaskListPane extends StackPane {
         }
 
         private void updateLeftIcon(StageNode.Status status) {
-            left.getChildren().setAll(status.svg.createIcon(Theme.blackFill(), STATUS_ICON_SIZE));
+            left.getChildren().setAll(status.svg.createIcon(STATUS_ICON_SIZE));
         }
 
         @Override
         protected void updateItem(Node item, boolean empty) {
             super.updateItem(item, empty);
-
-            // https://mail.openjdk.org/pipermail/openjfx-dev/2022-July/034764.html
-            if (this == lastCell && !isVisible())
-                return;
-            lastCell = this;
 
             pane.paddingProperty().unbind();
             title.textProperty().unbind();
@@ -439,6 +434,7 @@ public final class TaskListPane extends StackPane {
                 case "hmcl.install.libraries":  message = i18n("libraries.download"); break;
                 case "hmcl.install.game":       message = i18n("install.installer.install", i18n("install.installer.game") + " " + stageValue); break;
                 case "hmcl.install.forge":      message = i18n("install.installer.install", i18n("install.installer.forge") + " " + stageValue); break;
+                case "hmcl.install.cleanroom":  message = i18n("install.installer.install", i18n("install.installer.cleanroom") + " " + stageValue); break;
                 case "hmcl.install.neoforge":   message = i18n("install.installer.install", i18n("install.installer.neoforge") + " " + stageValue); break;
                 case "hmcl.install.liteloader": message = i18n("install.installer.install", i18n("install.installer.liteloader") + " " + stageValue); break;
                 case "hmcl.install.optifine":   message = i18n("install.installer.install", i18n("install.installer.optifine") + " " + stageValue); break;

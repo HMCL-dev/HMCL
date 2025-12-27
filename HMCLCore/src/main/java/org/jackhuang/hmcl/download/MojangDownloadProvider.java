@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.jackhuang.hmcl.download.cleanroom.CleanroomVersionList;
 import org.jackhuang.hmcl.download.fabric.FabricAPIVersionList;
 import org.jackhuang.hmcl.download.fabric.FabricVersionList;
 import org.jackhuang.hmcl.download.forge.ForgeVersionList;
@@ -26,6 +27,10 @@ import org.jackhuang.hmcl.download.neoforge.NeoForgeOfficialVersionList;
 import org.jackhuang.hmcl.download.optifine.OptiFineBMCLVersionList;
 import org.jackhuang.hmcl.download.quilt.QuiltAPIVersionList;
 import org.jackhuang.hmcl.download.quilt.QuiltVersionList;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
+
+import java.net.URI;
+import java.util.List;
 
 /**
  * @author huangyuhui
@@ -37,6 +42,7 @@ public class MojangDownloadProvider implements DownloadProvider {
     private final FabricAPIVersionList fabricApi;
     private final ForgeVersionList forge;
     private final NeoForgeOfficialVersionList neoforge;
+    private final CleanroomVersionList cleanroom;
     private final LiteLoaderVersionList liteLoader;
     private final OptiFineBMCLVersionList optifine;
     private final QuiltVersionList quilt;
@@ -51,6 +57,7 @@ public class MojangDownloadProvider implements DownloadProvider {
         this.fabricApi = new FabricAPIVersionList(this);
         this.forge = new ForgeVersionList(this);
         this.neoforge = new NeoForgeOfficialVersionList(this);
+        this.cleanroom = new CleanroomVersionList(this);
         this.liteLoader = new LiteLoaderVersionList(this);
         this.optifine = new OptiFineBMCLVersionList(apiRoot);
         this.quilt = new QuiltVersionList(this);
@@ -58,13 +65,13 @@ public class MojangDownloadProvider implements DownloadProvider {
     }
 
     @Override
-    public String getVersionListURL() {
-        return "https://piston-meta.mojang.com/mc/game/version_manifest.json";
+    public List<URI> getVersionListURLs() {
+        return List.of(URI.create("https://piston-meta.mojang.com/mc/game/version_manifest.json"));
     }
 
     @Override
-    public String getAssetBaseURL() {
-        return "https://resources.download.minecraft.net/";
+    public List<URI> getAssetObjectCandidates(String assetObjectLocation) {
+        return List.of(NetworkUtils.toURI("https://resources.download.minecraft.net/" + assetObjectLocation));
     }
 
     @Override
@@ -78,6 +85,8 @@ public class MojangDownloadProvider implements DownloadProvider {
                 return fabricApi;
             case "forge":
                 return forge;
+            case "cleanroom":
+                return cleanroom;
             case "neoforge":
                 return neoforge;
             case "liteloader":

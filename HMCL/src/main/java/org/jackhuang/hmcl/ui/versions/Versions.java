@@ -23,9 +23,7 @@ import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
-import org.jackhuang.hmcl.game.GameDirectoryType;
-import org.jackhuang.hmcl.game.GameRepository;
-import org.jackhuang.hmcl.game.LauncherHelper;
+import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.task.*;
@@ -40,10 +38,10 @@ import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.export.ExportWizardProvider;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
@@ -88,9 +86,9 @@ public final class Versions {
                         .whenComplete(Schedulers.javafx(), e -> {
                             if (e == null) {
                                 if (version != null) {
-                                    Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile, modpack.toFile(), version));
+                                    Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile, modpack, version));
                                 } else {
-                                    Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile, modpack.toFile()));
+                                    Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile, modpack));
                                 }
                             } else if (e instanceof CancellationException) {
                                 Controllers.showToast(i18n("message.cancelled"));
@@ -112,14 +110,21 @@ public final class Versions {
 
         JFXButton deleteButton = new JFXButton(i18n("button.delete"));
         deleteButton.getStyleClass().add("dialog-error");
-        deleteButton.setOnAction(e -> profile.getRepository().removeVersionFromDisk(version));
+        deleteButton.setOnAction(e -> {
+            Task.supplyAsync(Schedulers.io(), () -> profile.getRepository().removeVersionFromDisk(version))
+                    .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                        if (exception != null || !Boolean.TRUE.equals(result)) {
+                            Controllers.dialog(i18n("version.manage.remove.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                        }
+                    }).start();
+        });
 
         Controllers.confirmAction(message, i18n("message.warning"), MessageDialogPane.MessageType.WARNING, deleteButton);
     }
 
     public static CompletableFuture<String> renameVersion(Profile profile, String version) {
         return Controllers.prompt(i18n("version.manage.rename.message"), (newName, resolve, reject) -> {
-            if (!OperatingSystem.isNameValid(newName)) {
+            if (!HMCLGameRepository.isValidVersionId(newName)) {
                 reject.accept(i18n("install.new_game.malformed"));
                 return;
             }
@@ -150,6 +155,10 @@ public final class Versions {
                 new PromptDialogPane.Builder(i18n("version.manage.duplicate.prompt"), (res, resolve, reject) -> {
                     String newVersionName = ((PromptDialogPane.Builder.StringQuestion) res.get(1)).getValue();
                     boolean copySaves = ((PromptDialogPane.Builder.BooleanQuestion) res.get(2)).getValue();
+                    if (!HMCLGameRepository.isValidVersionId(newVersionName)) {
+                        reject.accept(i18n("install.new_game.malformed"));
+                        return;
+                    }
                     Task.runAsync(() -> profile.getRepository().duplicateVersion(version, newVersionName, copySaves))
                             .thenComposeAsync(profile.getRepository().refreshVersionsAsync())
                             .whenComplete(Schedulers.javafx(), (result, exception) -> {
@@ -157,13 +166,15 @@ public final class Versions {
                                     resolve.run();
                                 } else {
                                     reject.accept(StringUtils.getStackTrace(exception));
-                                    profile.getRepository().removeVersionFromDisk(newVersionName);
+                                    if (!profile.getRepository().versionIdConflicts(newVersionName)) {
+                                        profile.getRepository().removeVersionFromDisk(newVersionName);
+                                    }
                                 }
                             }).start();
                 })
                         .addQuestion(new PromptDialogPane.Builder.HintQuestion(i18n("version.manage.duplicate.confirm")))
                         .addQuestion(new PromptDialogPane.Builder.StringQuestion(null, version,
-                                new Validator(i18n("install.new_game.already_exists"), newVersionName -> !profile.getRepository().hasVersion(newVersionName))))
+                                new Validator(i18n("install.new_game.already_exists"), newVersionName -> !profile.getRepository().versionIdConflicts(newVersionName))))
                         .addQuestion(new PromptDialogPane.Builder.BooleanQuestion(i18n("version.manage.duplicate.duplicate_save"), false)));
     }
 
@@ -186,32 +197,45 @@ public final class Versions {
         }
     }
 
-    public static void generateLaunchScript(Profile profile, String id) {
+    @SafeVarargs
+    public static void generateLaunchScript(Profile profile, String id, Consumer<LauncherHelper>... injecters) {
         if (!checkVersionForLaunching(profile, id))
             return;
         ensureSelectedAccount(account -> {
             GameRepository repository = profile.getRepository();
             FileChooser chooser = new FileChooser();
-            if (repository.getRunDirectory(id).isDirectory())
-                chooser.setInitialDirectory(repository.getRunDirectory(id));
+            if (Files.isDirectory(repository.getRunDirectory(id)))
+                chooser.setInitialDirectory(repository.getRunDirectory(id).toFile());
             chooser.setTitle(i18n("version.launch_script.save"));
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+                chooser.getExtensionFilters().add(
+                        new FileChooser.ExtensionFilter(i18n("extension.command"), "*.command")
+                );
+            }
             chooser.getExtensionFilters().add(OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
                     ? new FileChooser.ExtensionFilter(i18n("extension.bat"), "*.bat")
                     : new FileChooser.ExtensionFilter(i18n("extension.sh"), "*.sh"));
             chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.ps1"), "*.ps1"));
-            File file = chooser.showSaveDialog(Controllers.getStage());
-            if (file != null)
-                new LauncherHelper(profile, account, id).makeLaunchScript(file);
+            Path file = FileUtils.toPath(chooser.showSaveDialog(Controllers.getStage()));
+            if (file != null) {
+                LauncherHelper launcherHelper = new LauncherHelper(profile, account, id);
+                for (Consumer<LauncherHelper> injecter : injecters) {
+                    injecter.accept(launcherHelper);
+                }
+                launcherHelper.makeLaunchScript(file);
+            }
         });
     }
 
-    public static void launch(Profile profile, String id, Consumer<LauncherHelper> injecter) {
+    @SafeVarargs
+    public static void launch(Profile profile, String id, Consumer<LauncherHelper>... injecters) {
         if (!checkVersionForLaunching(profile, id))
             return;
         ensureSelectedAccount(account -> {
             LauncherHelper launcherHelper = new LauncherHelper(profile, account, id);
-            if (injecter != null)
+            for (Consumer<LauncherHelper> injecter : injecters) {
                 injecter.accept(launcherHelper);
+            }
             launcherHelper.launch();
         });
     }
@@ -220,11 +244,26 @@ public final class Versions {
         launch(profile, id, LauncherHelper::setTestMode);
     }
 
+    public static void launchAndEnterWorld(Profile profile, String id, String worldFolderName) {
+        launch(profile, id, launcherHelper ->
+                launcherHelper.setQuickPlayOption(new QuickPlayOption.SinglePlayer(worldFolderName)));
+    }
+
+    public static void generateLaunchScriptForQuickEnterWorld(Profile profile, String id, String worldFolderName) {
+        generateLaunchScript(profile, id, launcherHelper ->
+                launcherHelper.setQuickPlayOption(new QuickPlayOption.SinglePlayer(worldFolderName)));
+    }
+
     private static boolean checkVersionForLaunching(Profile profile, String id) {
         if (id == null || !profile.getRepository().isLoaded() || !profile.getRepository().hasVersion(id)) {
-            Controllers.dialog(i18n("version.empty.launch"), i18n("launch.failed"), MessageDialogPane.MessageType.ERROR, () -> {
-                Controllers.navigate(Controllers.getDownloadPage());
-            });
+            JFXButton gotoDownload = new JFXButton(i18n("version.empty.launch.goto_download"));
+            gotoDownload.getStyleClass().add("dialog-accept");
+            gotoDownload.setOnAction(e -> Controllers.navigate(Controllers.getDownloadPage()));
+
+            Controllers.confirmAction(i18n("version.empty.launch"), i18n("launch.failed"),
+                    MessageDialogPane.MessageType.ERROR,
+                    gotoDownload,
+                    null);
             return false;
         } else {
             return true;
@@ -268,6 +307,7 @@ public final class Versions {
 
     public static void modifyGameSettings(Profile profile, String version) {
         Controllers.getVersionPage().setVersion(version, profile);
+        Controllers.getVersionPage().showInstanceSettings();
         // VersionPage.loadVersion will be invoked after navigation
         Controllers.navigate(Controllers.getVersionPage());
     }

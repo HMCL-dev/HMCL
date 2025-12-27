@@ -23,7 +23,6 @@ import javafx.scene.layout.FlowPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -31,9 +30,10 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.DialogPane;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
+import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -65,6 +65,7 @@ public class VersionIconDialog extends DialogPane {
                 createIcon(VersionIconType.CRAFT_TABLE),
                 createIcon(VersionIconType.FABRIC),
                 createIcon(VersionIconType.FORGE),
+                createIcon(VersionIconType.CLEANROOM),
                 createIcon(VersionIconType.NEO_FORGE),
                 createIcon(VersionIconType.FURNACE),
                 createIcon(VersionIconType.QUILT)
@@ -74,7 +75,7 @@ public class VersionIconDialog extends DialogPane {
     private void exploreIcon() {
         FileChooser chooser = new FileChooser();
         chooser.getExtensionFilters().add(FXUtils.getImageExtensionFilter());
-        File selectedFile = chooser.showOpenDialog(Controllers.getStage());
+        Path selectedFile = FileUtils.toPath(chooser.showOpenDialog(Controllers.getStage()));
         if (selectedFile != null) {
             try {
                 profile.getRepository().setVersionIconFile(versionId, selectedFile);
@@ -91,7 +92,7 @@ public class VersionIconDialog extends DialogPane {
     }
 
     private Node createCustomIcon() {
-        Node shape = SVG.ADD_CIRCLE.createIcon(Theme.blackFill(), 32);
+        Node shape = SVG.ADD_CIRCLE.createIcon(32);
         shape.setMouseTransparent(true);
         RipplerContainer container = new RipplerContainer(shape);
         FXUtils.setLimitWidth(container, 36);

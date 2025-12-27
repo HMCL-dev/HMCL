@@ -20,13 +20,11 @@ package org.jackhuang.hmcl.util.platform.hardware;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.management.ManagementFactory;
-import java.lang.management.OperatingSystemMXBean;
 import java.util.List;
 
 /**
  * @author Glavo
  */
-@SuppressWarnings("ALL")
 public class HardwareDetector {
     private static final boolean USE_FAST_FETCH = "true".equalsIgnoreCase(System.getProperty("hmcl.hardware.fastfetch", "true"));
 
@@ -40,9 +38,8 @@ public class HardwareDetector {
 
     public long getTotalMemorySize() {
         try {
-            OperatingSystemMXBean bean = ManagementFactory.getOperatingSystemMXBean();
-            if (bean instanceof com.sun.management.OperatingSystemMXBean) {
-                return ((com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean()).getTotalPhysicalMemorySize();
+            if (ManagementFactory.getOperatingSystemMXBean() instanceof com.sun.management.OperatingSystemMXBean bean) {
+                return bean.getTotalMemorySize();
             }
         } catch (NoClassDefFoundError ignored) {
         }
@@ -52,9 +49,8 @@ public class HardwareDetector {
 
     public long getFreeMemorySize() {
         try {
-            OperatingSystemMXBean bean = ManagementFactory.getOperatingSystemMXBean();
-            if (bean instanceof com.sun.management.OperatingSystemMXBean) {
-                return ((com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean()).getFreePhysicalMemorySize();
+            if (ManagementFactory.getOperatingSystemMXBean() instanceof com.sun.management.OperatingSystemMXBean bean) {
+                return bean.getFreeMemorySize();
             }
         } catch (NoClassDefFoundError ignored) {
         }
