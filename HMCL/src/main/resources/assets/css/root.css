@@ -442,7 +442,7 @@
 }
 
 .launch-pane > Rectangle {
-    -fx-fill: -monet-primary-container;
+    -fx-fill: -monet-on-surface-variant;
 }
 
 /*******************************************************************************

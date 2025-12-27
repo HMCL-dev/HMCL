@@ -208,90 +208,91 @@ public final class MainPage extends StackPane implements DecoratorPage {
         }
 
         StackPane launchPane = new StackPane();
-        launchPane.getStyleClass().add("launch-pane");
         launchPane.setMaxWidth(230);
         launchPane.setMaxHeight(55);
         FXUtils.onScroll(launchPane, versions, list -> {
             String currentId = getCurrentGame();
             return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
         }, it -> profile.setSelectedVersion(it.getId()));
-
         StackPane.setAlignment(launchPane, Pos.BOTTOM_RIGHT);
+
         {
-            JFXButton launchButton = new JFXButton();
-            launchButton.setPrefWidth(230);
-            launchButton.setPrefHeight(55);
-            //launchButton.setButtonType(JFXButton.ButtonType.RAISED);
-            launchButton.setDefaultButton(true);
-            launchButton.setClip(new Rectangle(-100, -100, 310, 200));
+            HBox hBox = new HBox();
+            hBox.getStyleClass().add("launch-pane");
+            hBox.setMaxWidth(230);
+            hBox.setMaxHeight(55);
+
             {
-                VBox graphic = new VBox();
-                graphic.setAlignment(Pos.CENTER);
-                graphic.setTranslateX(-7);
-                graphic.setMaxWidth(200);
-                Label launchLabel = new Label();
-                launchLabel.setStyle("-fx-font-size: 16px;");
-                Label currentLabel = new Label();
-                currentLabel.setStyle("-fx-font-size: 12px;");
+                JFXButton launchButton = new JFXButton();
+                launchButton.setMaxWidth(208);
+                launchButton.setPrefHeight(55);
+                launchButton.setStyle("-fx-background-radius: 4px 0 0 4px");
+                launchButton.setDefaultButton(true);
+                {
+                    VBox graphic = new VBox();
+                    graphic.setAlignment(Pos.CENTER);
+                    graphic.setMaxWidth(208);
+                    graphic.setMinWidth(208);
+                    Label launchLabel = new Label();
+                    launchLabel.setStyle("-fx-font-size: 16px;");
+                    Label currentLabel = new Label();
+                    currentLabel.setStyle("-fx-font-size: 12px;");
 
-                FXUtils.onChangeAndOperate(currentGameProperty(), new Consumer<>() {
-                    private Tooltip tooltip;
+                    FXUtils.onChangeAndOperate(currentGameProperty(), new Consumer<>() {
+                        private Tooltip tooltip;
 
-                    @Override
-                    public void accept(String currentGame) {
-                        if (currentGame == null) {
-                            launchLabel.setText(i18n("version.launch.empty"));
-                            currentLabel.setText(null);
-                            graphic.getChildren().setAll(launchLabel);
-                            launchButton.setOnAction(e -> MainPage.this.launchNoGame());
-                            if (tooltip == null)
-                                tooltip = new Tooltip(i18n("version.launch.empty.tooltip"));
-                            FXUtils.installFastTooltip(launchButton, tooltip);
-                        } else {
-                            launchLabel.setText(i18n("version.launch"));
-                            currentLabel.setText(currentGame);
-                            graphic.getChildren().setAll(launchLabel, currentLabel);
-                            launchButton.setOnAction(e -> MainPage.this.launch());
-                            if (tooltip != null)
-                                Tooltip.uninstall(launchButton, tooltip);
+                        @Override
+                        public void accept(String currentGame) {
+                            if (currentGame == null) {
+                                launchLabel.setText(i18n("version.launch.empty"));
+                                currentLabel.setText(null);
+                                graphic.getChildren().setAll(launchLabel);
+                                launchButton.setOnAction(e -> MainPage.this.launchNoGame());
+                                if (tooltip == null)
+                                    tooltip = new Tooltip(i18n("version.launch.empty.tooltip"));
+                                FXUtils.installFastTooltip(launchButton, tooltip);
+                            } else {
+                                launchLabel.setText(i18n("version.launch"));
+                                currentLabel.setText(currentGame);
+                                graphic.getChildren().setAll(launchLabel, currentLabel);
+                                launchButton.setOnAction(e -> MainPage.this.launch());
+                                if (tooltip != null)
+                                    Tooltip.uninstall(launchButton, tooltip);
+                            }
                         }
-                    }
-                });
+                    });
 
-                launchButton.setGraphic(graphic);
+                    launchButton.setGraphic(graphic);
+                }
+
+                Rectangle separator = new Rectangle();
+                separator.setWidth(2);
+                separator.setHeight(57);
+                separator.setTranslateY(-1);
+                separator.setMouseTransparent(true);
+
+                menuButton = new JFXButton();
+                menuButton.setPrefHeight(55);
+                menuButton.setStyle("-fx-background-radius: 0 4px 4px 0");
+                menuButton.setMaxWidth(20);
+                menuButton.setMinWidth(20);
+                menuButton.setOnAction(e -> onMenu());
+                FXUtils.installFastTooltip(menuButton, i18n("version.switch"));
+                menuButton.setGraphic(SVG.ARROW_DROP_UP.createIcon(30));
+
+                EventHandler<MouseEvent> secondaryClickHandle = event -> {
+                    if (event.getButton() == MouseButton.SECONDARY && event.getClickCount() == 1) {
+                        menuButton.fire();
+                        event.consume();
+                    }
+                };
+                launchButton.addEventHandler(MouseEvent.MOUSE_CLICKED, secondaryClickHandle);
+                menuButton.addEventHandler(MouseEvent.MOUSE_CLICKED, secondaryClickHandle);
+
+                hBox.getChildren().setAll(launchButton, separator, menuButton);
             }
 
-            Rectangle separator = new Rectangle();
-            separator.setWidth(1);
-            separator.setHeight(57);
-            separator.setTranslateX(95);
-            separator.setMouseTransparent(true);
-
-            menuButton = new JFXButton();
-            menuButton.setPrefHeight(55);
-            menuButton.setPrefWidth(230);
-            //menuButton.setButtonType(JFXButton.ButtonType.RAISED);
-            menuButton.setStyle("-fx-font-size: 15px;");
-            menuButton.setOnAction(e -> onMenu());
-            menuButton.setClip(new Rectangle(211, -100, 100, 200));
-            StackPane graphic = new StackPane();
-            Node svg = SVG.ARROW_DROP_UP.createIcon(30);
-            StackPane.setAlignment(svg, Pos.CENTER_RIGHT);
-            graphic.getChildren().setAll(svg);
-            graphic.setTranslateX(6);
-            FXUtils.installFastTooltip(menuButton, i18n("version.switch"));
-            menuButton.setGraphic(graphic);
-
-            EventHandler<MouseEvent> secondaryClickHandle = event -> {
-                if (event.getButton() == MouseButton.SECONDARY && event.getClickCount() == 1) {
-                    menuButton.fire();
-                    event.consume();
-                }
-            };
-            launchButton.addEventHandler(MouseEvent.MOUSE_CLICKED, secondaryClickHandle);
-            menuButton.addEventHandler(MouseEvent.MOUSE_CLICKED, secondaryClickHandle);
-
-            launchPane.getChildren().setAll(launchButton, separator, menuButton);
+            launchPane.getChildren().setAll(hBox);
         }
 
         getChildren().addAll(updatePane, launchPane);
