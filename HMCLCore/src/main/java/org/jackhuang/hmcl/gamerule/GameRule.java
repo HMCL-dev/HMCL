@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jackhuang.hmcl.util.versioning.VersionedValue;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,7 +39,7 @@ import java.util.*;
 /// This class handles the logic for:
 /// * Defining rule types (Boolean or Integer).
 /// * Parsing rules from NBT tags (read from `level.dat`).
-/// * Serializing/Deserializing rules via GSON.
+/// * Deserializing rules form `resources/assets/gamerule/gamerule.json`
 ///
 /// It is a sealed class permitting only [BooleanGameRule] and [IntGameRule].
 @JsonSerializable
@@ -131,6 +132,8 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
     /// Copies metadata (e.g., descriptions, ranges) from the source rule to this instance.
     public abstract void applyMetadata(GameRule metadataSource);
 
+    public abstract GameRule deserialize(JsonObject jsonObject, Type type, JsonDeserializationContext context);
+
     public void setRuleKey(List<String> ruleKey) {
         this.ruleKey = ruleKey;
     }
@@ -150,7 +153,7 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
     /// Implementation of a boolean-based GameRule.
     public static final class BooleanGameRule extends GameRule {
         private boolean value = false;
-        private final TreeMap<GameVersionNumber, Boolean> defaultValueMap = new TreeMap<>();
+        private final VersionedValue<Boolean> defaultValue = new VersionedValue<>();
 
         private BooleanGameRule(List<String> ruleKey, boolean value) {
             super(ruleKey, "");
@@ -165,20 +168,37 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         public void applyMetadata(GameRule metadataSource) {
             if (metadataSource instanceof BooleanGameRule source) {
                 this.setDisplayI18nKey(source.getDisplayI18nKey());
-                this.defaultValueMap.putAll(source.defaultValueMap);
+                this.defaultValue.addAll(source.defaultValue);
             }
         }
 
+        @Override
+        public GameRule deserialize(JsonObject jsonObject, Type type, JsonDeserializationContext context) {
+            Type listType = JsonUtils.listTypeOf(String.class).getType();
+            this.setRuleKey(context.deserialize(jsonObject.get("ruleKey"), listType));
+            this.setDisplayI18nKey(jsonObject.get("displayI18nKey").getAsString());
+            JsonElement defaultValue = jsonObject.get("defaultValue");
+            if (defaultValue instanceof JsonPrimitive p && p.isBoolean()) {
+                this.addDefaultValue(p.getAsBoolean());
+            } else {
+                if (defaultValue instanceof JsonObject o) {
+                    o.asMap().forEach((key, value) -> this.addDefaultValue(key, value.getAsBoolean()));
+                }
+            }
+
+            return this;
+        }
+
         public Optional<Boolean> getDefaultValue(GameVersionNumber gameVersionNumber) {
-            return Optional.ofNullable(defaultValueMap.floorEntry(gameVersionNumber).getValue());
+            return defaultValue.getValue(gameVersionNumber);
         }
 
         private void addDefaultValue(boolean value) {
-            defaultValueMap.put(GameVersionNumber.asGameVersion("1.4.2"), value);
+            defaultValue.addValueInMinVersion("1.4.2", value);
         }
 
         private void addDefaultValue(String versionName, boolean value) {
-            defaultValueMap.put(GameVersionNumber.asGameVersion(versionName), value);
+            defaultValue.addValueInMinVersion(versionName, value);
         }
 
         public boolean getValue() {
@@ -194,9 +214,9 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
     /// supports min/max value validation.
     public static final class IntGameRule extends GameRule {
         private int value = 0;
-        private final TreeMap<GameVersionNumber, Integer> defaultValueMap = new TreeMap<>();
-        private final TreeMap<GameVersionNumber, Integer> maxValueMap = new TreeMap<>();
-        private final TreeMap<GameVersionNumber, Integer> minValueMap = new TreeMap<>();
+        private final VersionedValue<Integer> defaultValue = new VersionedValue<>();
+        private final VersionedValue<Integer> minValue = new VersionedValue<>();
+        private final VersionedValue<Integer> maxValue = new VersionedValue<>();
 
         private IntGameRule(List<String> ruleKey, int value) {
             super(ruleKey, "");
@@ -211,22 +231,62 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         public void applyMetadata(GameRule metadataSource) {
             if (metadataSource instanceof IntGameRule source) {
                 this.setDisplayI18nKey(source.getDisplayI18nKey());
-                this.defaultValueMap.putAll(source.defaultValueMap);
-                this.maxValueMap.putAll(source.maxValueMap);
-                this.minValueMap.putAll(source.minValueMap);
+                this.defaultValue.addAll(source.defaultValue);
+                this.maxValue.addAll(source.maxValue);
+                this.minValue.addAll(source.minValue);
             }
         }
 
+        @Override
+        public GameRule deserialize(JsonObject jsonObject, Type type, JsonDeserializationContext context) {
+            Type listType = JsonUtils.listTypeOf(String.class).getType();
+            this.setRuleKey(context.deserialize(jsonObject.get("ruleKey"), listType));
+            this.setDisplayI18nKey(jsonObject.get("displayI18nKey").getAsString());
+
+            if (jsonObject.get("defaultValue") instanceof JsonPrimitive p && p.isNumber()) {
+                this.addDefaultValue(p.getAsInt());
+            } else {
+                if (jsonObject.get("defaultValue") instanceof JsonObject o) {
+                    o.asMap().forEach((key, value) -> this.addDefaultValue(key, value.getAsInt()));
+                }
+            }
+
+            if (jsonObject.get("maxValue") instanceof JsonPrimitive jsonPrimitive) {
+                this.addMaxValue(jsonPrimitive.getAsInt());
+            } else if (jsonObject.get("maxValue") instanceof JsonObject o) {
+                o.asMap().forEach((key, value) -> {
+                    JsonPrimitive primitive = value.getAsJsonPrimitive();
+                    int maxValue = primitive.isNumber() ? primitive.getAsInt() : Integer.MAX_VALUE;
+                    this.addMaxValue(key, maxValue);
+                });
+            } else {
+                this.addMaxValue(Integer.MAX_VALUE);
+            }
+
+            if (jsonObject.get("minValue") instanceof JsonPrimitive jsonPrimitive) {
+                this.addMinValue(jsonPrimitive.getAsInt());
+            } else if (jsonObject.get("minValue") instanceof JsonObject o) {
+                o.asMap().forEach((key, value) -> {
+                    JsonPrimitive primitive = value.getAsJsonPrimitive();
+                    int minValue = primitive.isNumber() ? primitive.getAsInt() : Integer.MIN_VALUE;
+                    this.addMinValue(key, minValue);
+                });
+            } else {
+                this.addMinValue(Integer.MIN_VALUE);
+            }
+            return this;
+        }
+
         public Optional<Integer> getDefaultValue(GameVersionNumber gameVersionNumber) {
-            return Optional.ofNullable(defaultValueMap.floorEntry(gameVersionNumber).getValue());
+            return defaultValue.getValue(gameVersionNumber);
         }
 
         private void addDefaultValue(int value) {
-            this.defaultValueMap.put(GameVersionNumber.asGameVersion("1.4.2"), value);
+            this.defaultValue.addValueInMinVersion("1.4.2", value);
         }
 
         private void addDefaultValue(String versionName, int value) {
-            this.defaultValueMap.put(GameVersionNumber.asGameVersion(versionName), value);
+            this.defaultValue.addValueInMinVersion(versionName, value);
         }
 
         public int getValue() {
@@ -238,27 +298,27 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         }
 
         public int getMaxValue(GameVersionNumber gameVersionNumber) {
-            return Optional.ofNullable(maxValueMap.floorEntry(gameVersionNumber).getValue()).orElse(Integer.MAX_VALUE);
+            return this.maxValue.getValue(gameVersionNumber).orElse(Integer.MAX_VALUE);
         }
 
         public void addMaxValue(int maxValue) {
-            this.maxValueMap.put(GameVersionNumber.asGameVersion("1.4.2"), maxValue);
+            this.maxValue.addValueInMinVersion("1.4.2", maxValue);
         }
 
         public void addMaxValue(String versionName, int maxValue) {
-            this.maxValueMap.put(GameVersionNumber.asGameVersion(versionName), maxValue);
+            this.maxValue.addValueInMinVersion(versionName, maxValue);
         }
 
         public int getMinValue(GameVersionNumber gameVersionNumber) {
-            return Optional.ofNullable(minValueMap.floorEntry(gameVersionNumber).getValue()).orElse(Integer.MIN_VALUE);
+            return minValue.getValue(gameVersionNumber).orElse(Integer.MIN_VALUE);
         }
 
         public void addMinValue(int minValue) {
-            this.minValueMap.put(GameVersionNumber.asGameVersion("1.4.2"), minValue);
+            this.minValue.addValueInMinVersion("1.4.2", minValue);
         }
 
         public void addMinValue(String versionName, int minValue) {
-            this.minValueMap.put(GameVersionNumber.asGameVersion(versionName), minValue);
+            this.minValue.addValueInMinVersion(versionName, minValue);
         }
     }
 
@@ -270,70 +330,9 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         public GameRule deserialize(JsonElement jsonElement, Type type, JsonDeserializationContext context) throws JsonParseException {
             JsonObject jsonObject = jsonElement.getAsJsonObject();
 
-            GameRule gameRule = createRuleFromDefaultValue(jsonObject);
-            gameRule.displayI18nKey = jsonObject.get("displayI18nKey").getAsString();
-
-            Type listType = JsonUtils.listTypeOf(String.class).getType();
-            gameRule.ruleKey = context.deserialize(jsonObject.get("ruleKey"), listType);
-
-            if (gameRule instanceof IntGameRule intGameRule) {
-                if (jsonObject.get("maxValue") instanceof JsonPrimitive jsonPrimitive) {
-                    intGameRule.addMaxValue(jsonPrimitive.getAsInt());
-                } else if (jsonObject.get("maxValue") instanceof JsonObject jsonJsonObject) {
-                    jsonJsonObject.asMap().forEach((key, value) -> {
-                        JsonPrimitive primitive = value.getAsJsonPrimitive();
-                        int maxValue = primitive.isNumber() ? primitive.getAsInt() : Integer.MAX_VALUE;
-                        intGameRule.addMaxValue(key, maxValue);
-                    });
-                } else {
-                    intGameRule.addMaxValue(Integer.MAX_VALUE);
-                }
-
-                if (jsonObject.get("minValue") instanceof JsonPrimitive jsonPrimitive) {
-                    intGameRule.addMinValue(jsonPrimitive.getAsInt());
-                } else if (jsonObject.get("minValue") instanceof JsonObject jsonJsonObject) {
-                    jsonJsonObject.asMap().forEach((key, value) -> {
-                        JsonPrimitive primitive = value.getAsJsonPrimitive();
-                        int minValue = primitive.isNumber() ? primitive.getAsInt() : Integer.MIN_VALUE;
-                        intGameRule.addMinValue(key, minValue);
-                    });
-                } else {
-                    intGameRule.addMinValue(Integer.MIN_VALUE);
-                }
-            }
-
-            return gameRule;
-        }
-
-        private GameRule createRuleFromDefaultValue(JsonObject jsonObject) {
             boolean isInt = jsonObject.get("type").getAsString().equals("int");
-            if (isInt) {
-                IntGameRule rule = new IntGameRule();
-                JsonElement defaultValue = jsonObject.get("defaultValue");
-                if (defaultValue instanceof JsonPrimitive p && p.isNumber()) {
-                    rule.addDefaultValue(p.getAsInt());
-                    return rule;
-                } else {
-                    if (defaultValue instanceof JsonObject o) {
-                        o.asMap().forEach((key, value) -> rule.addDefaultValue(key, value.getAsInt()));
-                        return rule;
-                    }
-                }
-            } else {
-                BooleanGameRule rule = new BooleanGameRule();
-                JsonElement defaultValue = jsonObject.get("defaultValue");
-                if (defaultValue instanceof JsonPrimitive p && p.isBoolean()) {
-                    rule.addDefaultValue(p.getAsBoolean());
-                    return rule;
-                } else {
-                    if (defaultValue instanceof JsonObject o) {
-                        o.asMap().forEach((key, value) -> rule.addDefaultValue(key, value.getAsBoolean()));
-                        return rule;
-                    }
-                }
-            }
-
-            return null;
+            GameRule gameRule = isInt ? new IntGameRule() : new BooleanGameRule();
+            return gameRule.deserialize(jsonObject, type, context);
         }
     }
 

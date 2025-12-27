@@ -43,12 +43,27 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
     private String displayName;
     private GameRuleNBT<T, ? extends Tag> gameRuleNBT;
     private Runnable onSave;
-    private GameVersionNumber gameVersionNumber;
 
     //Due to the significant difference in skin between BooleanGameRuleInfo and IntGameRuleInfo, which are essentially two completely different styles, it is not suitable to update each other in Cell#updateControl. Therefore, they are directly integrated into the info.
     private HBox container = new HBox();
     private Runnable setToDefault = () -> {
     };
+
+    private GameRuleInfo(GameRule gameRule, GameRuleNBT<T, ? extends Tag> gameRuleNBT, Runnable onSave) {
+        setRuleKey(gameRule.getRuleKey().get(0));
+        String displayName = "";
+        try {
+            if (StringUtils.isNotBlank(gameRule.getDisplayI18nKey())) {
+                displayName = i18n(gameRule.getDisplayI18nKey());
+            }
+        } catch (Exception e) {
+            LOG.warning("Failed to get i18n text for key: " + gameRule.getDisplayI18nKey(), e);
+        }
+        setDisplayName(displayName);
+        setDisplayName(displayName);
+        setGameRuleNBT(gameRuleNBT);
+        setOnSave(onSave);
+    }
 
     public void resetValue() {
         setToDefault.run();
@@ -102,31 +117,14 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
         this.setToDefault = setToDefault;
     }
 
-    public void setFatherValue(GameRule gameRule, GameVersionNumber gameVersionNumber) {
-        setRuleKey(gameRule.getRuleKey().get(0));
-        String displayName = "";
-        try {
-            if (StringUtils.isNotBlank(gameRule.getDisplayI18nKey())) {
-                displayName = i18n(gameRule.getDisplayI18nKey());
-            }
-        } catch (Exception e) {
-            LOG.warning("Failed to get i18n text for key: " + gameRule.getDisplayI18nKey(), e);
-        }
-        setDisplayName(displayName);
-        setDisplayName(displayName);
-        this.gameVersionNumber = gameVersionNumber;
-    }
-
     static final class BooleanGameRuleInfo extends GameRuleInfo<Boolean> {
         boolean currentValue;
         Boolean defaultValue;
 
         public BooleanGameRuleInfo(GameRule.BooleanGameRule booleanGameRule, GameRuleNBT<Boolean, Tag> gameRuleNBT, Runnable onSave, GameVersionNumber gameVersionNumber) {
-            setFatherValue(booleanGameRule, gameVersionNumber);
+            super(booleanGameRule, gameRuleNBT, onSave);
             this.currentValue = booleanGameRule.getValue();
             this.defaultValue = booleanGameRule.getDefaultValue(gameVersionNumber).orElse(null);
-            this.setGameRuleNBT(gameRuleNBT);
-            this.setOnSave(onSave);
 
             buildNodes();
         }
@@ -184,13 +182,11 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
         Integer defaultValue;
 
         public IntGameRuleInfo(GameRule.IntGameRule intGameRule, GameRuleNBT<String, Tag> gameRuleNBT, Runnable onSave, GameVersionNumber gameVersionNumber) {
-            setFatherValue(intGameRule, gameVersionNumber);
+            super(intGameRule, gameRuleNBT, onSave);
             currentValue = intGameRule.getValue();
             minValue = intGameRule.getMinValue(gameVersionNumber);
             maxValue = intGameRule.getMaxValue(gameVersionNumber);
             defaultValue = intGameRule.getDefaultValue(gameVersionNumber).orElse(null);
-            this.setGameRuleNBT(gameRuleNBT);
-            this.setOnSave(onSave);
 
             buildNodes();
         }
