@@ -28,7 +28,6 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.SVG;
 
 import java.util.Locale;
 
@@ -45,28 +44,7 @@ public class HintPane extends VBox {
         setFillWidth(true);
         getStyleClass().addAll("hint", type.name().toLowerCase(Locale.ROOT));
 
-        SVG svg;
-        switch (type) {
-            case INFO:
-                svg = SVG.INFO;
-                break;
-            case ERROR:
-                svg = SVG.ERROR;
-                break;
-            case SUCCESS:
-                svg = SVG.CHECK_CIRCLE;
-                break;
-            case WARNING:
-                svg = SVG.WARNING;
-                break;
-            case QUESTION:
-                svg = SVG.HELP;
-                break;
-            default:
-                throw new IllegalArgumentException("Unrecognized message box message type " + type);
-        }
-
-        HBox hbox = new HBox(svg.createIcon(16), new Text(type.getDisplayName()));
+        HBox hbox = new HBox(type.getIcon().createIcon(16), new Text(type.getDisplayName()));
         hbox.setAlignment(Pos.CENTER_LEFT);
         hbox.setSpacing(2);
         flow.getChildren().setAll(label);

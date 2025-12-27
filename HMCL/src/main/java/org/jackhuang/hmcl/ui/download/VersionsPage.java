@@ -57,7 +57,6 @@ import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
-import org.jackhuang.hmcl.util.Holder;
 import org.jackhuang.hmcl.util.NativePatcher;
 import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -164,10 +163,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         private final ImageView imageView = new ImageView();
         private final StackPane pane = new StackPane();
 
-        private final Holder<RemoteVersionListCell> lastCell;
-
-        RemoteVersionListCell(Holder<RemoteVersionListCell> lastCell, VersionsPage control) {
-            this.lastCell = lastCell;
+        RemoteVersionListCell(VersionsPage control) {
             this.control = control;
 
             HBox hbox = new HBox(16);
@@ -222,18 +218,13 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         public void updateItem(RemoteVersion remoteVersion, boolean empty) {
             super.updateItem(remoteVersion, empty);
 
-            // https://mail.openjdk.org/pipermail/openjfx-dev/2022-July/034764.html
-            if (this == lastCell.value && !isVisible())
-                return;
-            lastCell.value = this;
-
             if (empty) {
                 setGraphic(null);
                 return;
             }
             setGraphic(pane);
 
-            twoLineListItem.setTitle(I18n.getDisplaySelfVersion(remoteVersion));
+            twoLineListItem.setTitle(I18n.getDisplayVersion(remoteVersion));
             if (remoteVersion.getReleaseDate() != null) {
                 twoLineListItem.setSubtitle(I18n.formatDateTime(remoteVersion.getReleaseDate()));
             } else {
@@ -398,8 +389,7 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
 
                         control.versions.addListener((InvalidationListener) o -> updateList());
 
-                        Holder<RemoteVersionListCell> lastCell = new Holder<>();
-                        list.setCellFactory(listView -> new RemoteVersionListCell(lastCell, control));
+                        list.setCellFactory(listView -> new RemoteVersionListCell(control));
 
                         ComponentList.setVgrow(list, Priority.ALWAYS);
 

@@ -155,7 +155,7 @@ public class TerracottaControllerPage extends StackPane {
                 progressProperty.set(0);
 
                 TextFlow body = FXUtils.segmentToTextFlow(i18n("terracotta.confirm.desc"), Controllers::onHyperlinkAction);
-                body.getStyleClass().add("terracotta-license");
+                body.getStyleClass().add("terracotta-hint");
                 body.setLineSpacing(4);
 
                 LineButton download = LineButton.of();
@@ -199,7 +199,7 @@ public class TerracottaControllerPage extends StackPane {
                 progressProperty.set(1);
 
                 TextFlow flow = FXUtils.segmentToTextFlow(i18n("terracotta.confirm.desc"), Controllers::onHyperlinkAction);
-                flow.getStyleClass().add("terracotta-license");
+                flow.getStyleClass().add("terracotta-hint");
                 flow.setLineSpacing(4);
 
                 LineButton host = LineButton.of();
@@ -220,7 +220,10 @@ public class TerracottaControllerPage extends StackPane {
                                 MessageDialogPane.MessageType.QUESTION
                         ).addAction(i18n("version.launch"), () -> {
                             Profile profile = Profiles.getSelectedProfile();
-                            Versions.launch(profile, profile.getSelectedVersion(), LauncherHelper::setKeep);
+                            Versions.launch(profile, profile.getSelectedVersion(), launcherHelper -> {
+                                launcherHelper.setKeep();
+                                launcherHelper.setDisableOfflineSkin();
+                            });
                         }).addCancel(i18n("terracotta.status.waiting.host.launch.skip"), () -> {
                             TerracottaState.HostScanning s1 = TerracottaManager.setScanning();
                             if (s1 != null) {
@@ -271,6 +274,7 @@ public class TerracottaControllerPage extends StackPane {
                 progressProperty.set(-1);
 
                 TextFlow body = FXUtils.segmentToTextFlow(i18n("terracotta.status.scanning.desc"), Controllers::onHyperlinkAction);
+                body.getStyleClass().add("terracotta-hint");
                 body.setLineSpacing(4);
 
                 LineButton room = LineButton.of();

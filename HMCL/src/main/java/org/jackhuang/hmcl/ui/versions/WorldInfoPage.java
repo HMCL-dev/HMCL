@@ -122,7 +122,8 @@ public final class WorldInfoPage extends SpinnerPane {
 
                 Label gameVersionLabel = new Label();
                 FXUtils.copyOnDoubleClick(gameVersionLabel);
-                gameVersionLabel.setText(world.getGameVersion());
+                if (world.getGameVersion() != null)
+                    gameVersionLabel.setText(world.getGameVersion().toNormalizedString());
                 BorderPane.setAlignment(gameVersionLabel, Pos.CENTER_RIGHT);
                 gameVersionPane.setRight(gameVersionLabel);
             }

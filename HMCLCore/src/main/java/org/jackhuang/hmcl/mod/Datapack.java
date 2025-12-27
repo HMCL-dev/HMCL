@@ -219,7 +219,7 @@ public class Datapack {
     private Optional<Pack> parsePack(Path datapackPath, boolean isDirectory, String name, Path mcmetaPath) {
         try {
             PackMcMeta mcMeta = JsonUtils.fromNonNullJson(Files.readString(mcmetaPath), PackMcMeta.class);
-            return Optional.of(new Pack(datapackPath, isDirectory, name, mcMeta.getPackInfo().getDescription(), this));
+            return Optional.of(new Pack(datapackPath, isDirectory, name, mcMeta.pack().description(), this));
         } catch (JsonParseException e) {
             LOG.warning("Invalid pack.mcmeta format in " + datapackPath, e);
         } catch (IOException e) {
