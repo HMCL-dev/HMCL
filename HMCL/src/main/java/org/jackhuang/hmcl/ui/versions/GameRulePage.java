@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.github.steveice10.opennbt.tag.builtin.CompoundTag;
 import com.github.steveice10.opennbt.tag.builtin.Tag;
+import javafx.beans.Observable;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Skin;
@@ -54,7 +55,14 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> {
         this.worldManagePage = worldManagePage;
         this.world = worldManagePage.getWorld();
 
-        gameRuleList = FXCollections.observableArrayList();
+        gameRuleList = FXCollections.observableArrayList(gamerule -> {
+            if (gamerule instanceof GameRuleInfo.BooleanGameRuleInfo booleanGameRuleInfo) {
+                return new Observable[]{booleanGameRuleInfo.currentValueProperty()};
+            } else if (gamerule instanceof GameRuleInfo.IntGameRuleInfo intGameRuleInfo) {
+                return new Observable[]{intGameRuleInfo.currentValueProperty()};
+            }
+            return new Observable[]{};
+        });
         setItems(gameRuleList);
 
         this.setLoading(true);

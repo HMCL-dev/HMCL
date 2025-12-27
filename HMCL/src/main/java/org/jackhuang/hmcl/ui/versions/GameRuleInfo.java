@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.versions;
 import com.github.steveice10.opennbt.tag.builtin.Tag;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXTextField;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
@@ -51,11 +52,12 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
     private GameRuleNBT<T, ? extends Tag> gameRuleNBT;
     private Runnable onSave;
 
-    //Due to the significant difference in skin between BooleanGameRuleInfo and IntGameRuleInfo, which are essentially two completely different styles, it is not suitable to update each other in Cell#updateControl. Therefore, they are directly integrated into the info.
-    private HBox container = new HBox();
     private Runnable setToDefault = () -> {
     };
     private BooleanSupplier isDefault = () -> true;
+
+    //Due to the significant difference in skin between BooleanGameRuleInfo and IntGameRuleInfo, which are essentially two completely different styles, it is not suitable to update each other in Cell#updateControl. Therefore, they are directly integrated into the info.
+    private HBox container = new HBox();
 
     private GameRuleInfo(GameRule gameRule, GameRuleNBT<T, ? extends Tag> gameRuleNBT, Runnable onSave) {
         setRuleKey(gameRule.getRuleKey().get(0));
@@ -68,10 +70,13 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
             LOG.warning("Failed to get i18n text for key: " + gameRule.getDisplayI18nKey(), e);
         }
         setDisplayName(displayName);
-        setDisplayName(displayName);
         setGameRuleNBT(gameRuleNBT);
         setOnSave(onSave);
     }
+
+    public abstract String getCurrentValueText();
+
+    public abstract String getDefaultValueText();
 
     public void resetValue() {
         setToDefault.run();
@@ -134,9 +139,8 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
     }
 
     static final class BooleanGameRuleInfo extends GameRuleInfo<Boolean> {
-        //boolean currentValue;
-        BooleanProperty currentValue;
-        Boolean defaultValue;
+        private final BooleanProperty currentValue;
+        private final Boolean defaultValue;
 
         public BooleanGameRuleInfo(GameRule.BooleanGameRule booleanGameRule, GameRuleNBT<Boolean, Tag> gameRuleNBT, Runnable onSave, GameVersionNumber gameVersionNumber) {
             super(booleanGameRule, gameRuleNBT, onSave);
@@ -146,12 +150,18 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
             buildNodes();
         }
 
-        public boolean getValue() {
-            return currentValue.get();
+        @Override
+        public String getCurrentValueText() {
+            return currentValue.getValue().toString();
         }
 
-        public boolean getDefaultValue() {
-            return defaultValue;
+        @Override
+        public String getDefaultValueText() {
+            return defaultValue == null ? "" : defaultValue.toString();
+        }
+
+        public BooleanProperty currentValueProperty() {
+            return currentValue;
         }
 
         public void buildNodes() {
@@ -168,21 +178,20 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
                 toggleButton.setTitle(getDisplayName());
                 toggleButton.setSubtitle(getRuleKey());
                 toggleButton.selectedProperty().bindBidirectional(currentValue);
-                toggleButton.selectedProperty().addListener((observable, oldValue, newValue) -> {
+                currentValue.addListener((observable, oldValue, newValue) -> {
                     getGameRuleNBT().changeValue(newValue);
                     getOnSave().run();
-                    resetButton.setDisable(shouldResetButtonDisabled(newValue));
                 });
                 HBox.setHgrow(toggleButton, Priority.ALWAYS);
             }
             {
                 wrapperPane.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
                 resetButton.setFocusTraversable(false);
-                resetButton.setDisable(shouldResetButtonDisabled(currentValue.getValue()));
                 resetButton.setGraphic(SVG.RESTORE.createIcon(24));
                 if (defaultValue != null) {
                     setSetToDefault(() -> toggleButton.selectedProperty().set(defaultValue));
                     resetButton.setOnAction(event -> getSetToDefault().run());
+                    resetButton.disableProperty().bind(Bindings.createBooleanBinding(() -> currentValue.getValue() == defaultValue, currentValue));
                     setIsDefault(() -> toggleButton.isSelected() == defaultValue);
                     FXUtils.installFastTooltip(resetButton, i18n("gamerule.restore_default_values.tooltip", defaultValue));
                     FXUtils.installFastTooltip(wrapperPane, i18n("gamerule.now_is_default_values.tooltip"));
@@ -194,35 +203,36 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
 
             getContainer().getChildren().addAll(toggleButton, wrapperPane);
         }
-
-        public boolean shouldResetButtonDisabled(boolean newValue) {
-            return defaultValue == null || newValue == defaultValue;
-        }
-
     }
 
     static final class IntGameRuleInfo extends GameRuleInfo<String> {
-        StringProperty currentValue;
-        int minValue;
-        int maxValue;
-        Integer defaultValue;
+        private final StringProperty currentValue;
+        private final Integer defaultValue;
+        private final int minValue;
+        private final int maxValue;
 
         public IntGameRuleInfo(GameRule.IntGameRule intGameRule, GameRuleNBT<String, Tag> gameRuleNBT, Runnable onSave, GameVersionNumber gameVersionNumber) {
             super(intGameRule, gameRuleNBT, onSave);
             currentValue = new SimpleStringProperty(String.valueOf(intGameRule.getValue()));
+            defaultValue = intGameRule.getDefaultValue(gameVersionNumber).orElse(null);
             minValue = intGameRule.getMinValue(gameVersionNumber);
             maxValue = intGameRule.getMaxValue(gameVersionNumber);
-            defaultValue = intGameRule.getDefaultValue(gameVersionNumber).orElse(null);
 
             buildNodes();
         }
 
-        public String getValue() {
-            return currentValue.get();
+        @Override
+        public String getCurrentValueText() {
+            return currentValue.getValue();
         }
 
-        public String getDefaultValue() {
+        @Override
+        public String getDefaultValueText() {
             return defaultValue == null ? null : defaultValue.toString();
+        }
+
+        public StringProperty currentValueProperty() {
+            return currentValue;
         }
 
         public void buildNodes() {
@@ -254,12 +264,11 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
                 textField.setValidators(
                         new NumberValidator(i18n("input.integer"), false),
                         new NumberRangeValidator(i18n("input.number_range", minValue, maxValue), minValue, maxValue));
-                textField.textProperty().addListener((observable, oldValue, newValue) -> {
+                currentValue.addListener((observable, oldValue, newValue) -> {
                     Integer value = Lang.toIntOrNull(newValue);
                     if (value != null && value >= minValue && value <= maxValue) {
                         getGameRuleNBT().changeValue(newValue);
                         getOnSave().run();
-                        resetButton.setDisable(shouldResetButtonDisabled(value.toString()));
                     }
                 });
 
@@ -269,7 +278,6 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
             {
                 wrapperPane.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
                 resetButton.setFocusTraversable(false);
-                resetButton.setDisable(shouldResetButtonDisabled(currentValue.getValue()));
                 resetButton.setGraphic(SVG.RESTORE.createIcon(24));
                 if (defaultValue != null) {
                     setSetToDefault(() -> textField.textProperty().set(String.valueOf(defaultValue)));
@@ -277,6 +285,7 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
                     setIsDefault(() -> textField.textProperty().get().equals(String.valueOf(defaultValue)));
                     FXUtils.installFastTooltip(resetButton, i18n("gamerule.restore_default_values.tooltip", defaultValue));
                     FXUtils.installFastTooltip(wrapperPane, i18n("gamerule.now_is_default_values.tooltip"));
+                    resetButton.disableProperty().bind(Bindings.createBooleanBinding(() -> Objects.equals(Lang.toIntOrNull(currentValue.getValue()), defaultValue), currentValue));
                 } else {
                     resetButton.setDisable(true);
                     FXUtils.installFastTooltip(wrapperPane, i18n("gamerule.not_have_default_values.tooltip"));
@@ -287,10 +296,6 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
 
             rightHBox.getChildren().addAll(textField, wrapperPane);
             getContainer().getChildren().addAll(displayInfoVBox, rightHBox);
-        }
-
-        public boolean shouldResetButtonDisabled(String newValue) {
-            return defaultValue == null || Objects.equals(Lang.toIntOrNull(newValue), defaultValue);
         }
     }
 }

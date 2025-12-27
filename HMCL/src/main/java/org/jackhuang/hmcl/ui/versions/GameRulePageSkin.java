@@ -31,14 +31,13 @@ import javafx.scene.control.SkinBase;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
+import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.StringUtils;
-
-import java.util.List;
 
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -49,6 +48,7 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
     private final JFXTextField searchField;
     JFXListView<GameRuleInfo<?>> listView = new JFXListView<>();
     private final FilteredList<GameRuleInfo<?>> filteredList;
+    private final FilteredList<GameRuleInfo<?>> notInDefaultValueList;
 
     GameRulePageSkin(GameRulePage skinnable) {
         super(skinnable);
@@ -60,11 +60,13 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
         root.getStyleClass().add("no-padding");
 
         filteredList = new FilteredList<>(skinnable.getItems());
+        notInDefaultValueList = new FilteredList<>(skinnable.getItems());
+        notInDefaultValueList.setPredicate(gameRuleInfo -> !gameRuleInfo.getIsDefault().getAsBoolean());
 
         {
             JFXButton resetAllButton = createToolbarButton2(i18n("gamerule.restore_default_values_all"), SVG.RESTORE, () -> {
                 //Controllers.confirm(i18n("gamerule.restore_default_values_all.confirm"), i18n("message.warning"), MessageDialogPane.MessageType.WARNING, skinnable::resettingAllGameRule, null);
-                Controllers.dialog(new ResetDefaultValuesLayout(skinnable::resettingAllGameRule, skinnable.getItems()));
+                Controllers.dialog(new ResetDefaultValuesLayout(skinnable::resettingAllGameRule, notInDefaultValueList));
             });
 
             searchBar = new HBox();
@@ -115,55 +117,90 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
     }
 
     static class ResetDefaultValuesLayout extends JFXDialogLayout {
-        public ResetDefaultValuesLayout(Runnable resettingAllGameRule, List<GameRuleInfo<?>> gameRules) {
-            setHeading(new Label(i18n("message.warning")));
-            Label warnLabel = new Label(i18n("gamerule.restore_default_values_all.confirm"));
-            MenuUpDownButton menuUpDownButton = new MenuUpDownButton();
+        public ResetDefaultValuesLayout(Runnable resettingAllGameRule, FilteredList<GameRuleInfo<?>> notInDefaultValueList) {
+
             {
-                menuUpDownButton.setText("查看具体变更");
-                menuUpDownButton.setMaxWidth(USE_PREF_SIZE);
+                Stage stage = Controllers.getStage();
+                maxWidthProperty().bind(stage.widthProperty().multiply(0.7));
+                maxHeightProperty().bind(stage.heightProperty().multiply(0.7));
             }
-            ScrollPane scrollPane = new ScrollPane();
-            GridPane gridPane = new GridPane();
+
+            setHeading(new Label(i18n("gamerule.restore_default_values_all")));
+
+            VBox vBox = new VBox();
             {
-                gridPane.setHgap(10);
-                gridPane.setVgap(10);
-                scrollPane.setContent(gridPane);
-                scrollPane.visibleProperty().bind(menuUpDownButton.selectedProperty());
-                scrollPane.managedProperty().bind(menuUpDownButton.selectedProperty());
-                int index = 1;
-                gridPane.addRow(0, new Label("名称"), new Label("当前值"), new Label("->"), new Label("默认值"));
-                for (GameRuleInfo<?> gameRule : gameRules) {
-                    if (!gameRule.getIsDefault().getAsBoolean()) {
-                        String oldValue = "";
-                        String newValue = "";
-                        if (gameRule instanceof GameRuleInfo.BooleanGameRuleInfo booleanGameRuleInfo) {
-                            oldValue = String.valueOf(booleanGameRuleInfo.getValue());
-                            newValue = String.valueOf(booleanGameRuleInfo.getDefaultValue());
-                        } else if (gameRule instanceof GameRuleInfo.IntGameRuleInfo intGameRuleInfo) {
-                            oldValue = intGameRuleInfo.getValue();
-                            newValue = intGameRuleInfo.getDefaultValue();
+                vBox.setSpacing(10);
+                setBody(vBox);
+            }
+            {
+                Label warnLabel = notInDefaultValueList.isEmpty() ? new Label(i18n("gamerule.all_is_default")) : new Label(i18n("gamerule.restore_default_values_all.confirm"));
+                vBox.getChildren().add(warnLabel);
+
+                if (!notInDefaultValueList.isEmpty()) {
+
+                    MenuUpDownButton showDetailButton = new MenuUpDownButton();
+                    {
+                        showDetailButton.setText(i18n("gamerule.show_modified_details.button"));
+                        showDetailButton.setMaxWidth(USE_PREF_SIZE);
+                    }
+
+                    ScrollPane scrollPane = new ScrollPane();
+                    GridPane gridPane = new GridPane();
+                    {
+                        gridPane.setHgap(10);
+                        gridPane.setVgap(10);
+                        scrollPane.setContent(gridPane);
+                        scrollPane.visibleProperty().bind(showDetailButton.selectedProperty());
+                        scrollPane.managedProperty().bind(showDetailButton.selectedProperty());
+                        FXUtils.smoothScrolling(scrollPane);
+
+                        VBox.setMargin(scrollPane, new Insets(5, 10, 5, 10));
+                        vBox.getChildren().addAll(showDetailButton, scrollPane);
+                    }
+                    {
+                        gridPane.addRow(0,
+                                new Label(i18n("gamerule.column.name")),
+                                new Label(i18n("gamerule.column.current")),
+                                new Label("->"),
+                                new Label(i18n("gamerule.column.default")));
+
+                        for (int i = 0; i < notInDefaultValueList.size(); i++) {
+                            GameRuleInfo<?> gameRuleInfo = notInDefaultValueList.get(i);
+                            String oldValue = gameRuleInfo.getCurrentValueText();
+                            String newValue = gameRuleInfo.getDefaultValueText();
+                            gridPane.addRow(i + 1,
+                                    new Label(StringUtils.isNotBlank(gameRuleInfo.getDisplayName()) ? gameRuleInfo.getDisplayName() : gameRuleInfo.getRuleKey()),
+                                    new Label(oldValue),
+                                    new Label("->"),
+                                    new Label(newValue));
                         }
-                        gridPane.addRow(index, new Label(StringUtils.isNotBlank(gameRule.getDisplayName()) ? gameRule.getDisplayName() : gameRule.getRuleKey()), new Label(oldValue), new Label("->"), new Label(newValue));
-                        index++;
+
                     }
                 }
-                if (index == 1) {
-                    gridPane.addRow(1, new Label("无变更"));
+            }
+
+            JFXButton accept = new JFXButton(i18n("button.ok"));
+            {
+                accept.getStyleClass().add("dialog-accept");
+                if (!notInDefaultValueList.isEmpty()) {
+                    accept.setOnAction(event -> {
+                        resettingAllGameRule.run();
+                        fireEvent(new DialogCloseEvent());
+                    });
+                } else {
+                    accept.setOnAction(event -> {
+                        fireEvent(new DialogCloseEvent());
+                    });
                 }
             }
-            VBox vBox = new VBox();
-            vBox.setAlignment(Pos.TOP_LEFT);
-            vBox.getChildren().addAll(warnLabel, menuUpDownButton, scrollPane);
-            setBody(vBox);
-            JFXButton accept = new JFXButton(i18n("button.ok"));
             JFXButton reject = new JFXButton(i18n("button.cancel"));
-            accept.setOnAction(event -> {
-                resettingAllGameRule.run();
-                fireEvent(new DialogCloseEvent());
-            });
-            reject.setOnAction(event -> fireEvent(new DialogCloseEvent()));
+            {
+                reject.setOnAction(event -> fireEvent(new DialogCloseEvent()));
+                reject.getStyleClass().add("dialog-cancel");
+            }
             setActions(accept, reject);
+
+            FXUtils.onEscPressed(this, reject::fire);
         }
     }
 }
