@@ -1,6 +1,7 @@
 package org.jackhuang.hmcl.mod;
 
 import org.jackhuang.hmcl.mod.modinfo.PackMcMeta;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +35,7 @@ public sealed abstract class ResourcePackFile extends LocalAddonFile implements 
         this.manager = manager;
         this.file = file;
         this.fileName = LocalFileManager.getLocalFileName(file);
-        this.name = FileUtils.getNameWithoutExtension(fileName);
+        this.name = StringUtils.parseColorEscapes(FileUtils.getNameWithoutExtension(fileName));
     }
 
     @Override
