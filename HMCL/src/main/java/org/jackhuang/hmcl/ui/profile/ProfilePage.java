@@ -48,7 +48,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class ProfilePage extends BorderPane implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
-    private final boolean nameManuallyEdited = false;
+    private boolean nameManuallyEdited = false;
     private final StringProperty location;
     private final Profile profile;
 
