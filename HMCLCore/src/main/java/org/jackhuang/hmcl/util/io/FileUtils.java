@@ -177,6 +177,7 @@ public final class FileUtils {
             if (!Character.isValidCodePoint(codePoint)
                     || Character.isISOControl(codePoint)
                     || codePoint == '/' || codePoint == '\0'
+                    || codePoint == ':'
                     // Unicode replacement character
                     || codePoint == 0xfffd
                     // Not Unicode character
@@ -185,7 +186,7 @@ public final class FileUtils {
 
             // https://learn.microsoft.com/windows/win32/fileio/naming-a-file
             if (os == OperatingSystem.WINDOWS &&
-                    (ch == '<' || ch == '>' || ch == ':' || ch == '"' || ch == '\\' || ch == '|' || ch == '?' || ch == '*')) {
+                    (ch == '<' || ch == '>' || ch == '"' || ch == '\\' || ch == '|' || ch == '?' || ch == '*')) {
                 return false;
             }
         }

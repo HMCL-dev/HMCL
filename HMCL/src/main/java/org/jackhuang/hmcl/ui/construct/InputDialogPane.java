@@ -30,7 +30,7 @@ import java.util.concurrent.CompletableFuture;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class InputDialogPane extends JFXDialogLayout {
+public class InputDialogPane extends JFXDialogLayout implements DialogAware {
     private final CompletableFuture<String> future = new CompletableFuture<>();
 
     private final JFXTextField textField;
@@ -70,7 +70,13 @@ public class InputDialogPane extends JFXDialogLayout {
             });
         });
 
+        textField.setOnAction(event -> acceptButton.fire());
         onEscPressed(this, cancelButton::fire);
+    }
+
+    @Override
+    public void onDialogShown() {
+        textField.requestFocus();
     }
 
     public CompletableFuture<String> getCompletableFuture() {

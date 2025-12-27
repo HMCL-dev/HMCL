@@ -93,7 +93,7 @@ public class GameCrashWindow extends Stage {
         this.logs = logs;
         this.analyzer = LibraryAnalyzer.analyze(version, repository.getGameVersion(version).orElse(null));
 
-        memory = Optional.ofNullable(launchOptions.getMaxMemory()).map(i -> i + " MB").orElse("-");
+        memory = Optional.ofNullable(launchOptions.getMaxMemory()).map(i -> i + " " + i18n("settings.memory.unit.mib")).orElse("-");
 
         total_memory = MEGABYTES.formatBytes(SystemInfo.getTotalMemorySize());
 

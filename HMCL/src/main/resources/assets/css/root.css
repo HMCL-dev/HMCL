@@ -350,7 +350,7 @@
     -fx-font-size: 15px;
 }
 
-.terracotta-license Text {
+.terracotta-hint Text {
     -fx-fill: -monet-on-surface;
 }
 
@@ -1570,6 +1570,47 @@
 }
 
 .table-view > .virtual-flow > .scroll-bar .track {
+    -fx-fill: transparent;
+}
+
+/*******************************************************************************
+ *                                                                             *
+ * JFX Tree View                                                               *
+ *                                                                             *
+ ******************************************************************************/
+
+.tree-view {
+    -fx-padding: 5;
+    -fx-background-radius: 6;
+    -fx-background-color: -monet-surface-container-low;
+    -fx-border-radius: 6;
+}
+
+.tree-cell {
+    -fx-padding: 5;
+    -fx-background-radius: 6;
+    -fx-background-color: transparent;
+    -fx-text-fill: -monet-on-surface;
+    -fx-border-radius: 6;
+}
+
+.tree-cell:focused {
+    -fx-background-color: -monet-secondary-container;
+}
+
+.tree-cell .arrow {
+    -fx-background-color: -monet-on-surface;
+}
+
+.tree-cell .jfx-rippler {
+    -jfx-rippler-disabled: true;
+}
+
+.tree-view > .virtual-flow > .scroll-bar {
+    -fx-skin: "org.jackhuang.hmcl.ui.construct.FloatScrollBarSkin";
+}
+
+.tree-view > .virtual-flow > .scroll-bar .track {
     -fx-fill: transparent;
 }
 

@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXPopup;
 import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.scene.control.Label;
 import javafx.scene.input.MouseButton;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.Account;
@@ -149,8 +150,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             accountListItem.setOnAction(e -> Controllers.navigate(Controllers.getAccountListPage()));
             accountListItem.setOnMouseClicked(e -> {
                 if (e.getButton() == MouseButton.SECONDARY) {
-                    if (!Accounts.getAccounts().isEmpty())
-                        showAccountListPopupMenu(accountListItem);
+                    showAccountListPopupMenu(accountListItem);
                     e.consume();
                 }
             });
@@ -265,13 +265,19 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             scrollPane.setPrefHeight(-1);
             scrollPane.setMaxHeight(260);
 
-            for (Account account : Accounts.getAccounts()) {
-                AccountAdvancedListItem item = new AccountAdvancedListItem(account);
-                item.setOnAction(e -> {
-                    Accounts.setSelectedAccount(account);
-                    popup.hide();
-                });
-                scrollPane.add(item);
+            if (Accounts.getAccounts().isEmpty()) {
+                Label placeholder = new Label(i18n("account.empty"));
+                placeholder.setStyle("-fx-padding: 10px; -fx-text-fill: -monet-on-surface-variant; -fx-font-style: italic;");
+                scrollPane.add(placeholder);
+            } else {
+                for (Account account : Accounts.getAccounts()) {
+                    AccountAdvancedListItem item = new AccountAdvancedListItem(account);
+                    item.setOnAction(e -> {
+                        Accounts.setSelectedAccount(account);
+                        popup.hide();
+                    });
+                    scrollPane.add(item);
+                }
             }
 
             popupMenu.getContent().add(scrollPane);
