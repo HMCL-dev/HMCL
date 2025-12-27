@@ -98,12 +98,19 @@
   },
   {
     "ruleKey": [
-      "minecraft:elytra_movement_check",
-      "disableElytraMovementCheck"
+      "minecraft:elytra_movement_check"
     ],
     "type": "boolean",
     "displayI18nKey": "gamerule.rule.elytra_movement_check",
     "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "disableElytraMovementCheck"
+    ],
+    "type": "boolean",
+    "displayI18nKey": "gamerule.rule.disable_elytra_movement_check",
+    "defaultValue": false
   },
   {
     "ruleKey": [
