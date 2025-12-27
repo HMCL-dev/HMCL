@@ -327,7 +327,6 @@ public final class RemoteMod {
         public List<ModLoaderType> getLoaders() {
             return loaders;
         }
-
     }
 
     public static class File {
