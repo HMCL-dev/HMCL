@@ -23,6 +23,7 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.terracotta.provider.AbstractTerracottaProvider;
 import org.jackhuang.hmcl.terracotta.provider.GeneralProvider;
 import org.jackhuang.hmcl.terracotta.provider.MacOSProvider;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
@@ -52,21 +53,27 @@ public final class TerracottaMetadata {
     private TerracottaMetadata() {
     }
 
-    public record Link(@SerializedName("desc") LocalizedText description, String link) {
-    }
-
     public record Options(String version, String classifier) {
         public String replace(String value) {
             return value.replace("${version}", version).replace("${classifier}", classifier);
         }
     }
 
+    @JsonSerializable
+    public record Link(
+            @SerializedName("desc") LocalizedText description,
+            @SerializedName("link") String link
+    ) {
+    }
+
+    @JsonSerializable
     private record Package(
             @SerializedName("hash") String hash,
             @SerializedName("files") Map<String, String> files
     ) {
     }
 
+    @JsonSerializable
     private record Config(
             @SerializedName("version_legacy") String legacy,
             @SerializedName("version_latest") String latest,
