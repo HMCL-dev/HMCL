@@ -452,7 +452,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                     RemoteModRepository repository = item.getValue();
                     JFXHyperlink button = new JFXHyperlink(i18n(item.getKey()));
                     Task.runAsync(() -> {
-                        Optional<RemoteMod.Version> versionOptional = repository.getRemoteVersionByLocalFile(modInfo.getModInfo(), modInfo.getModInfo().getFile());
+                        Optional<RemoteMod.Version> versionOptional = repository.getRemoteVersionByLocalFile(modInfo.getModInfo().getFile());
                         if (versionOptional.isPresent()) {
                             RemoteMod remoteMod = repository.getModById(versionOptional.get().getModid());
                             FXUtils.runInFX(() -> {
@@ -493,7 +493,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                                             repository instanceof CurseForgeRemoteModRepository ? HMCLLocalizedDownloadListPage.ofCurseForgeMod(null, false) : HMCLLocalizedDownloadListPage.ofModrinthMod(null, false),
                                             remoteMod,
                                             new Profile.ProfileVersion(ModListPageSkin.this.getSkinnable().getProfile(), ModListPageSkin.this.getSkinnable().getInstanceId()),
-                                            (profile, version, file) -> org.jackhuang.hmcl.ui.download.DownloadPage.download(profile, version, file, "mods")
+                                            org.jackhuang.hmcl.ui.download.DownloadPage.FOR_MOD
                                     ));
                                 });
                                 button.setDisable(false);

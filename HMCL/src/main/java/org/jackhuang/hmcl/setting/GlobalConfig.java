@@ -148,6 +148,17 @@ public final class GlobalConfig extends ObservableSetting {
         return disabledJava;
     }
 
+    @SerializedName("resourcePackWarningShown")
+    private final BooleanProperty resourcePackWarningShown = new SimpleBooleanProperty(false);
+
+    public boolean isResourcePackWarningShown() {
+        return resourcePackWarningShown.get();
+    }
+
+    public void onResourcePackWarningShown() {
+        resourcePackWarningShown.set(true);
+    }
+
     static final class Adapter extends ObservableSetting.Adapter<GlobalConfig> {
         @Override
         protected GlobalConfig createInstance() {

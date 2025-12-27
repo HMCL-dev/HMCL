@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.mod.modrinth;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
@@ -53,13 +52,21 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
 
     private final String projectType;
 
+    private final RemoteModRepository.Type type;
+
     private ModrinthRemoteModRepository(String projectType) {
         this.projectType = projectType;
+        this.type = switch (projectType) {
+            case "modpack" -> Type.MODPACK;
+            case "resourcepack" -> Type.RESOURCE_PACK;
+            case "shader" -> Type.SHADER;
+            default -> Type.MOD;
+        };
     }
 
     @Override
     public Type getType() {
-        return Type.MOD;
+        return this.type;
     }
 
     private static String convertSortType(SortType sortType) {
@@ -102,7 +109,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     }
 
     @Override
-    public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(LocalModFile localModFile, Path file) throws IOException {
+    public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(Path file) throws IOException {
         String sha1 = DigestUtils.digestToString("SHA-1", file);
 
         try {
@@ -138,7 +145,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         id = StringUtils.removePrefix(id, "local-");
         List<ProjectVersion> versions = HttpRequest.GET(PREFIX + "/v2/project/" + id + "/version")
                 .getJson(listTypeOf(ProjectVersion.class));
-        return versions.stream().map(ProjectVersion::toVersion).flatMap(Lang::toStream);
+        return versions.stream().map(projVersion -> projVersion.toVersion()).flatMap(Lang::toStream);
     }
 
     public List<Category> getCategoriesImpl() throws IOException {
@@ -307,6 +314,12 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         }
 
         public RemoteMod toMod() {
+            RemoteModRepository.Type type = switch (projectType) {
+                case "modpack" -> RemoteModRepository.Type.MODPACK;
+                case "resourcepack" -> RemoteModRepository.Type.RESOURCE_PACK;
+                case "shader" -> RemoteModRepository.Type.SHADER;
+                default -> RemoteModRepository.Type.MOD;
+            };
             return new RemoteMod(
                     slug,
                     "",
@@ -315,7 +328,8 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                     categories,
                     String.format("https://modrinth.com/%s/%s", projectType, id),
                     iconUrl,
-                    this
+                    this,
+                    type
             );
         }
     }
@@ -686,6 +700,12 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         }
 
         public RemoteMod toMod() {
+            RemoteModRepository.Type type = switch (projectType) {
+                case "modpack" -> RemoteModRepository.Type.MODPACK;
+                case "resourcepack" -> RemoteModRepository.Type.RESOURCE_PACK;
+                case "shader" -> RemoteModRepository.Type.SHADER;
+                default -> RemoteModRepository.Type.MOD;
+            };
             return new RemoteMod(
                     slug,
                     author,
@@ -694,7 +714,8 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                     categories,
                     String.format("https://modrinth.com/%s/%s", projectType, projectId),
                     iconUrl,
-                    this
+                    this,
+                    type
             );
         }
     }
