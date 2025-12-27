@@ -20,10 +20,9 @@ package org.jackhuang.hmcl.terracotta;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.terracotta.provider.AbstractTerracottaProvider;
 import org.jackhuang.hmcl.terracotta.provider.GeneralProvider;
-import org.jackhuang.hmcl.terracotta.provider.ITerracottaProvider;
 import org.jackhuang.hmcl.terracotta.provider.MacOSProvider;
-import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.i18n.LocalizedText;
@@ -40,11 +39,12 @@ import java.net.URI;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -55,43 +55,53 @@ public final class TerracottaMetadata {
     public record Link(@SerializedName("desc") LocalizedText description, String link) {
     }
 
+    public record Options(String version, String classifier) {
+        public String replace(String value) {
+            return value.replace("${version}", version).replace("${classifier}", classifier);
+        }
+    }
+
+    private record Package(
+            @SerializedName("hash") String hash,
+            @SerializedName("files") Map<String, String> files
+    ) {
+    }
+
     private record Config(
             @SerializedName("version_legacy") String legacy,
             @SerializedName("version_recent") List<String> recent,
             @SerializedName("version_latest") String latest,
 
-            @SerializedName("classifiers") Map<String, String> classifiers,
+            @SerializedName("packages") Map<String, Package> pkgs,
             @SerializedName("downloads") List<String> downloads,
             @SerializedName("downloads_CN") List<String> downloadsCN,
             @SerializedName("links") List<Link> links
     ) {
-        private @Nullable TerracottaNative of(String classifier) {
-            String hash = this.classifiers.get(classifier);
-            if (hash == null)
+        private @Nullable TerracottaBundle resolve(Options options) {
+            Package pkg = pkgs.get(options.classifier);
+            if (pkg == null) {
                 return null;
-
-            if (!hash.startsWith("sha256:"))
-                throw new IllegalArgumentException(String.format("Invalid hash value %s for classifier %s.", hash, classifier));
-            hash = hash.substring("sha256:".length());
-
-            List<URI> links = new ArrayList<>(this.downloads.size() + this.downloadsCN.size());
-            for (String download : LocaleUtils.IS_CHINA_MAINLAND
-                    ? Lang.merge(this.downloadsCN, this.downloads)
-                    : Lang.merge(this.downloads, this.downloadsCN)) {
-                links.add(URI.create(download.replace("${version}", this.latest).replace("${classifier}", classifier)));
             }
 
-            return new TerracottaNative(
-                    Collections.unmodifiableList(links),
-                    Metadata.DEPENDENCIES_DIRECTORY.resolve(
-                            String.format("terracotta/%s/terracotta-%s-%s", this.latest, this.latest, classifier)
-                    ).toAbsolutePath(),
-                    new FileDownloadTask.IntegrityCheck("SHA-256", hash)
+            Stream<String> stream = downloads.stream(), streamCN = downloadsCN.stream();
+            List<URI> links = (LocaleUtils.IS_CHINA_MAINLAND ? Stream.concat(streamCN, stream) : Stream.concat(stream, streamCN))
+                    .map(link -> URI.create(options.replace(link)))
+                    .toList();
+
+            Map<String, FileDownloadTask.IntegrityCheck> files = pkg.files.entrySet().stream().collect(Collectors.toUnmodifiableMap(
+                    Map.Entry::getKey,
+                    entry -> new FileDownloadTask.IntegrityCheck("SHA-512", entry.getValue())
+            ));
+
+            return new TerracottaBundle(
+                    Metadata.DEPENDENCIES_DIRECTORY.resolve(options.replace("terracotta/${version}")).toAbsolutePath(),
+                    links, new FileDownloadTask.IntegrityCheck("SHA-512", pkg.hash),
+                    files, options
             );
         }
     }
 
-    public static final ITerracottaProvider PROVIDER;
+    public static final AbstractTerracottaProvider PROVIDER;
     public static final String PACKAGE_NAME;
     public static final List<Link> PACKAGE_LINKS;
     public static final String FEEDBACK_LINK = NetworkUtils.withQuery("https://docs.hmcl.net/multiplayer/feedback.html", Map.of(
@@ -115,72 +125,47 @@ public final class TerracottaMetadata {
         RECENT = config.recent;
         LATEST = config.latest;
 
-        ProviderContext context = locateProvider(config);
-        PROVIDER = context != null ? context.provider() : null;
-        PACKAGE_NAME = context != null ? String.format("terracotta-%s-%s-pkg.tar.gz", config.latest, context.branch) : null;
+        Options options = new Options(config.latest, OperatingSystem.CURRENT_OS.getCheckedName() + "-" + Architecture.SYSTEM_ARCH.getCheckedName());
+        TerracottaBundle bundle = config.resolve(options);
+        AbstractTerracottaProvider provider;
+        if (bundle == null || (provider = locateProvider(bundle)) == null) {
+            PROVIDER = null;
+            PACKAGE_NAME = null;
+            PACKAGE_LINKS = null;
+        } else {
+            PROVIDER = provider;
+            PACKAGE_NAME = options.replace("terracotta-${version}-${classifier}-pkg.tar.gz");
 
-        if (context != null) {
-            List<Link> packageLinks = new ArrayList<>(config.links.size());
-            for (Link link : config.links) {
-                packageLinks.add(new Link(
-                        link.description,
-                        link.link.replace("${version}", LATEST)
-                                .replace("${classifier}", context.branch)
-                ));
-            }
-
+            List<Link> packageLinks = config.links.stream()
+                    .map(link -> new Link(link.description, options.replace(link.link)))
+                    .collect(Collectors.toList());
             Collections.shuffle(packageLinks);
             PACKAGE_LINKS = Collections.unmodifiableList(packageLinks);
-        } else {
-            PACKAGE_LINKS = null;
-        }
-    }
-
-    private record ProviderContext(ITerracottaProvider provider, String branch) {
-        ProviderContext(ITerracottaProvider provider, String system, String arch) {
-            this(provider, system + "-" + arch);
         }
     }
 
     @Nullable
-    private static ProviderContext locateProvider(Config config) {
-        String arch = Architecture.SYSTEM_ARCH.getCheckedName();
+    private static AbstractTerracottaProvider locateProvider(TerracottaBundle bundle) {
+        String prefix = "terracotta-${version}-${classifier}";
+
         return switch (OperatingSystem.CURRENT_OS) {
             case WINDOWS -> {
                 if (!OperatingSystem.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_10))
                     yield null;
 
-                TerracottaNative target = config.of("windows-%s.exe".formatted(arch));
-                yield target != null
-                        ? new ProviderContext(new GeneralProvider(target), "windows", arch)
-                        : null;
+                yield new GeneralProvider(bundle, bundle.locate(prefix + ".exe"));
             }
-            case LINUX -> {
-                TerracottaNative target = config.of("linux-%s".formatted(arch));
-                yield target != null
-                        ? new ProviderContext(new GeneralProvider(target), "linux", arch)
-                        : null;
-            }
-            case MACOS -> {
-                TerracottaNative installer = config.of("macos-%s.pkg".formatted(arch));
-                TerracottaNative binary = config.of("macos-%s".formatted(arch));
-
-                yield installer != null && binary != null
-                        ? new ProviderContext(new MacOSProvider(installer, binary), "macos", arch)
-                        : null;
-            }
+            case LINUX, FREEBSD -> new GeneralProvider(bundle, bundle.locate(prefix));
+            case MACOS -> new MacOSProvider(
+                    bundle, bundle.locate(prefix), bundle.locate(prefix + ".pkg")
+            );
             default -> null;
         };
     }
 
     public static void removeLegacyVersionFiles() throws IOException {
-        try (DirectoryStream<Path> terracotta = Files.newDirectoryStream(Metadata.DEPENDENCIES_DIRECTORY.resolve("terracotta").toAbsolutePath())) {
+        try (DirectoryStream<Path> terracotta = collectLegacyVersionFiles()) {
             for (Path path : terracotta) {
-                String name = FileUtils.getName(path);
-                if (LATEST.equals(name) || RECENT.contains(name) || !LEGACY.matcher(name).matches()) {
-                    continue;
-                }
-
                 try {
                     FileUtils.deleteDirectory(path);
                 } catch (IOException e) {
@@ -191,15 +176,15 @@ public final class TerracottaMetadata {
     }
 
     public static boolean hasLegacyVersionFiles() throws IOException {
-        try (DirectoryStream<Path> terracotta = Files.newDirectoryStream(Metadata.DEPENDENCIES_DIRECTORY.resolve("terracotta").toAbsolutePath())) {
-            for (Path path : terracotta) {
-                String name = FileUtils.getName(path);
-                if (!LATEST.equals(name) && (RECENT.contains(name) || LEGACY.matcher(name).matches())) {
-                    return true;
-                }
-            }
+        try (DirectoryStream<Path> terracotta = collectLegacyVersionFiles()) {
+            return terracotta.iterator().hasNext();
         }
+    }
 
-        return false;
+    private static DirectoryStream<Path> collectLegacyVersionFiles() throws IOException {
+        return Files.newDirectoryStream(Metadata.DEPENDENCIES_DIRECTORY.resolve("terracotta"), path -> {
+            String name = FileUtils.getName(path);
+            return !LATEST.equals(name) && LEGACY.matcher(name).matches();
+        });
     }
 }

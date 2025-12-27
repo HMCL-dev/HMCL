@@ -29,7 +29,7 @@ import org.jackhuang.hmcl.task.DownloadException;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.terracotta.provider.ITerracottaProvider;
+import org.jackhuang.hmcl.terracotta.provider.AbstractTerracottaProvider;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.InvocationDispatcher;
 import org.jackhuang.hmcl.util.Lang;
@@ -38,8 +38,6 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
-import org.jackhuang.hmcl.util.tree.TarFileTree;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.URI;
@@ -73,6 +71,7 @@ public final class TerracottaManager {
                     case READY -> launch(setState(new TerracottaState.Launching()));
                 }
             } catch (Exception e) {
+                LOG.warning("Cannot initialize Terracotta.", e);
                 compareAndSet(TerracottaState.Bootstrap.INSTANCE, new TerracottaState.Fatal(TerracottaState.Fatal.Type.UNKNOWN));
             }
         });
@@ -123,73 +122,94 @@ public final class TerracottaManager {
         }, "Terracotta Background Daemon", true);
     }
 
-    public static boolean validate(Path file) {
-        return FileUtils.getName(file).equalsIgnoreCase(TerracottaMetadata.PACKAGE_NAME);
-    }
-
-    public static TerracottaState.Preparing install(@Nullable Path file) {
-        FXUtils.checkFxUserThread();
-
-        TerracottaState state = STATE_V.get();
-        if (!(state instanceof TerracottaState.Uninitialized ||
-                state instanceof TerracottaState.Preparing preparing && preparing.hasInstallFence() ||
-                state instanceof TerracottaState.Fatal && ((TerracottaState.Fatal) state).isRecoverable())
-        ) {
-            return null;
-        }
-
-        if (file != null && !FileUtils.getName(file).equalsIgnoreCase(TerracottaMetadata.PACKAGE_NAME)) {
-            return null;
-        }
-
-        TerracottaState.Preparing preparing = new TerracottaState.Preparing(new ReadOnlyDoubleWrapper(-1));
-
-        Task.supplyAsync(Schedulers.io(), () -> {
-            return file != null ? TarFileTree.open(file) : null;
-        }).thenComposeAsync(Schedulers.javafx(), tree -> {
-            return getProvider().install(preparing, tree).whenComplete(exception -> {
-                if (tree != null) {
-                    tree.close();
-                }
-                if (exception != null) {
-                    throw exception;
-                }
-            });
-        }).whenComplete(exception -> {
-            if (exception == null) {
-                try {
-                    TerracottaMetadata.removeLegacyVersionFiles();
-                } catch (IOException e) {
-                    LOG.warning("Unable to remove legacy terracotta files.", e);
-                }
-
-                TerracottaState.Launching launching = new TerracottaState.Launching();
-                if (compareAndSet(preparing, launching)) {
-                    launch(launching);
-                }
-            } else if (exception instanceof CancellationException) {
-            } else if (exception instanceof ITerracottaProvider.ArchiveFileMissingException) {
-                LOG.warning("Cannot install terracotta from local package.", exception);
-                compareAndSet(preparing, new TerracottaState.Fatal(TerracottaState.Fatal.Type.INSTALL));
-            } else if (exception instanceof DownloadException) {
-                compareAndSet(preparing, new TerracottaState.Fatal(TerracottaState.Fatal.Type.NETWORK));
-            } else {
-                compareAndSet(preparing, new TerracottaState.Fatal(TerracottaState.Fatal.Type.INSTALL));
-            }
-        }).start();
-
-        return compareAndSet(state, preparing) ? preparing : null;
-    }
-
-    private static ITerracottaProvider getProvider() {
-        ITerracottaProvider provider = TerracottaMetadata.PROVIDER;
+    private static AbstractTerracottaProvider getProvider() {
+        AbstractTerracottaProvider provider = TerracottaMetadata.PROVIDER;
         if (provider == null) {
             throw new AssertionError("Terracotta Provider must NOT be null.");
         }
         return provider;
     }
 
-    public static TerracottaState recover(@Nullable Path file) {
+    public static boolean isValidBundle(Path file) {
+        return FileUtils.getName(file).equalsIgnoreCase(TerracottaMetadata.PACKAGE_NAME);
+    }
+
+    public static TerracottaState.Preparing download() {
+        FXUtils.checkFxUserThread();
+
+        TerracottaState state = STATE_V.get();
+        if (!(state instanceof TerracottaState.Uninitialized || state instanceof TerracottaState.Fatal && ((TerracottaState.Fatal) state).isRecoverable())
+        ) {
+            return null;
+        }
+
+        TerracottaState.Preparing preparing = new TerracottaState.Preparing(new ReadOnlyDoubleWrapper(-1), true);
+
+        Task.composeAsync(() -> getProvider().download(preparing))
+                .thenComposeAsync(pkg -> {
+                    if (!preparing.requestInstallFence()) {
+                        return null;
+                    }
+
+                    return getProvider().install(pkg).thenRunAsync(() -> {
+                        try {
+                            TerracottaMetadata.removeLegacyVersionFiles();
+                        } catch (IOException e) {
+                            LOG.warning("Unable to remove legacy terracotta files.", e);
+                        }
+
+                        TerracottaState.Launching launching = new TerracottaState.Launching();
+                        if (compareAndSet(preparing, launching)) {
+                            launch(launching);
+                        }
+                    });
+                }).whenComplete(exception -> {
+                    if (exception instanceof CancellationException) {
+                        // no-op
+                    } else if (exception instanceof DownloadException) {
+                        compareAndSet(preparing, new TerracottaState.Fatal(TerracottaState.Fatal.Type.NETWORK));
+                    } else {
+                        compareAndSet(preparing, new TerracottaState.Fatal(TerracottaState.Fatal.Type.INSTALL));
+                    }
+                }).start();
+
+        return compareAndSet(state, preparing) ? preparing : null;
+    }
+
+    public static TerracottaState.Preparing install(Path bundle) {
+        FXUtils.checkFxUserThread();
+
+        TerracottaState state = STATE_V.get();
+        TerracottaState.Preparing preparing;
+        if (state instanceof TerracottaState.Preparing previousPreparing && previousPreparing.requestInstallFence()) {
+            preparing = previousPreparing;
+        } else if (state instanceof TerracottaState.Uninitialized || state instanceof TerracottaState.Fatal && ((TerracottaState.Fatal) state).isRecoverable()) {
+            preparing = new TerracottaState.Preparing(new ReadOnlyDoubleWrapper(-1), false);
+        } else {
+            return null;
+        }
+
+        Task.composeAsync(() -> getProvider().install(bundle))
+                .thenRunAsync(() -> {
+                    try {
+                        TerracottaMetadata.removeLegacyVersionFiles();
+                    } catch (IOException e) {
+                        LOG.warning("Unable to remove legacy terracotta files.", e);
+                    }
+
+                    TerracottaState.Launching launching = new TerracottaState.Launching();
+                    if (compareAndSet(preparing, launching)) {
+                        launch(launching);
+                    }
+                })
+                .whenComplete(exception -> {
+                    compareAndSet(preparing, new TerracottaState.Fatal(TerracottaState.Fatal.Type.INSTALL));
+                }).start();
+
+        return state != preparing && compareAndSet(state, preparing) ? preparing : null;
+    }
+
+    public static TerracottaState recover() {
         FXUtils.checkFxUserThread();
 
         TerracottaState state = STATE_V.get();
@@ -199,7 +219,7 @@ public final class TerracottaManager {
 
         try {
             return switch (getProvider().status()) {
-                case NOT_EXIST, LEGACY_VERSION -> install(file);
+                case NOT_EXIST, LEGACY_VERSION -> download();
                 case READY -> {
                     TerracottaState.Launching launching = setState(new TerracottaState.Launching());
                     launch(launching);

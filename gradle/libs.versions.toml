@@ -18,6 +18,8 @@ pci-ids = "0.4.0"
 java-info = "1.0"
 authlib-injector = "1.2.6"
 monet-fx = "0.4.0"
+terracotta-latest = "0.4.1-rc.1"
+terracotta-legacy = "0\\.3\\.([89]-rc\\.([0-9]|10)|(1[0-4]))"
 
 # testing
 junit = "6.0.1"
@@ -49,9 +51,28 @@ java-info = { module = "org.glavo:java-info", version.ref = "java-info" }
 authlib-injector = { module = "org.glavo.hmcl:authlib-injector", version.ref = "authlib-injector" }
 monet-fx = { module = "org.glavo:MonetFX", version.ref = "monet-fx" }
 
+# terracotta
+terracotta-windows-x86_64 = { module = "net.burningtnt.terracotta:windows-x86_64", version.ref = "terracotta-latest"}
+terracotta-windows-arm64 = { module = "net.burningtnt.terracotta:windows-arm64", version.ref = "terracotta-latest"}
+terracotta-macos-x86_64 = { module = "net.burningtnt.terracotta:macos-x86_64", version.ref = "terracotta-latest"}
+terracotta-macos-arm64 = { module = "net.burningtnt.terracotta:macos-arm64", version.ref = "terracotta-latest"}
+terracotta-linux-x86_64 = { module = "net.burningtnt.terracotta:linux-x86_64", version.ref = "terracotta-latest"}
+terracotta-linux-arm64 = { module = "net.burningtnt.terracotta:linux-arm64", version.ref = "terracotta-latest"}
+terracotta-linux-loongarch64 = { module = "net.burningtnt.terracotta:linux-loongarch64", version.ref = "terracotta-latest"}
+terracotta-linux-riscv64 = { module = "net.burningtnt.terracotta:linux-riscv64", version.ref = "terracotta-latest"}
+terracotta-freebsd-x86_64 = { module = "net.burningtnt.terracotta:freebsd-x86_64", version.ref = "terracotta-latest"}
+
 # testing
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
 jimfs = { module = "com.google.jimfs:jimfs", version.ref = "jimfs" }
 
 [plugins]
 shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
+
+[bundles]
+terracotta = [
+    "terracotta-windows-x86_64", "terracotta-windows-arm64",
+    "terracotta-macos-x86_64", "terracotta-macos-arm64",
+    "terracotta-linux-x86_64", "terracotta-linux-arm64", "terracotta-linux-loongarch64", "terracotta-linux-riscv64",
+    "terracotta-freebsd-x86_64"
+]

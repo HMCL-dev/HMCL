@@ -107,7 +107,7 @@ public class TerracottaControllerPage extends StackPane {
 
             if (state instanceof TerracottaState.Uninitialized ||
                     state instanceof TerracottaState.Preparing preparing && preparing.hasInstallFence() ||
-                    state instanceof TerracottaState.Fatal fatal && fatal.getType() == TerracottaState.Fatal.Type.NETWORK
+                    state instanceof TerracottaState.Fatal fatal && fatal.isRecoverable()
             ) {
                 return Files.isReadable(path) && FileUtils.getName(path).toLowerCase(Locale.ROOT).endsWith(".tar.gz");
             } else {
@@ -116,7 +116,7 @@ public class TerracottaControllerPage extends StackPane {
         }, files -> {
             Path path = files.get(0);
 
-            if (!TerracottaManager.validate(path)) {
+            if (!TerracottaManager.isValidBundle(path)) {
                 Controllers.dialog(
                         i18n("terracotta.from_local.file_name_mismatch", TerracottaMetadata.PACKAGE_NAME, FileUtils.getName(path)),
                         i18n("message.error"),
@@ -125,27 +125,15 @@ public class TerracottaControllerPage extends StackPane {
                 return;
             }
 
-            TerracottaState state = UI_STATE.get(), next;
-            if (state instanceof TerracottaState.Uninitialized || state instanceof TerracottaState.Preparing preparing && preparing.hasInstallFence()) {
-                if (state instanceof TerracottaState.Uninitialized uninitialized && !uninitialized.hasLegacy()) {
-                    Controllers.confirmWithCountdown(i18n("terracotta.confirm.desc"), i18n("terracotta.confirm.title"), 5,
-                            MessageDialogPane.MessageType.INFO, () -> {
-                                TerracottaState.Preparing s = TerracottaManager.install(path);
-                                if (s != null) {
-                                    UI_STATE.set(s);
-                                }
-                            }, null);
-                    return;
+            TerracottaState state = UI_STATE.get();
+            if (state instanceof TerracottaState.Uninitialized ||
+                    state instanceof TerracottaState.Preparing preparing && preparing.hasInstallFence() ||
+                    state instanceof TerracottaState.Fatal fatal && fatal.isRecoverable()
+            ) {
+                TerracottaState.Preparing next = TerracottaManager.install(path);
+                if (next != null) {
+                    UI_STATE.set(next);
                 }
-
-                next = TerracottaManager.install(path);
-            } else if (state instanceof TerracottaState.Fatal fatal && fatal.getType() == TerracottaState.Fatal.Type.NETWORK) {
-                next = TerracottaManager.recover(path);
-            } else {
-                return;
-            }
-            if (next != null) {
-                UI_STATE.set(next);
             }
         });
 
@@ -176,7 +164,7 @@ public class TerracottaControllerPage extends StackPane {
                 download.setSubtitle(i18n("terracotta.status.uninitialized.desc"));
                 download.setRightIcon(SVG.ARROW_FORWARD);
                 FXUtils.onClicked(download, () -> {
-                    TerracottaState.Preparing s = TerracottaManager.install(null);
+                    TerracottaState.Preparing s = TerracottaManager.download();
                     if (s != null) {
                         UI_STATE.set(s);
                     }
@@ -501,7 +489,7 @@ public class TerracottaControllerPage extends StackPane {
                     retry.setTitle(i18n("terracotta.status.fatal.retry"));
                     retry.setSubtitle(message);
                     FXUtils.onClicked(retry, () -> {
-                        TerracottaState s = TerracottaManager.recover(null);
+                        TerracottaState s = TerracottaManager.recover();
                         if (s != null) {
                             UI_STATE.set(s);
                         }
