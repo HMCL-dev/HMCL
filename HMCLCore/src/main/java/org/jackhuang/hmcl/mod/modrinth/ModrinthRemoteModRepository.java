@@ -116,7 +116,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
             ProjectVersion mod = HttpRequest.GET(PREFIX + "/v2/version_file/" + sha1,
                             pair("algorithm", "sha1"))
                     .getJson(ProjectVersion.class);
-            return mod.toVersion(type);
+            return mod.toVersion();
         } catch (ResponseCodeException e) {
             if (e.getResponseCode() == 404) {
                 return Optional.empty();
@@ -145,7 +145,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         id = StringUtils.removePrefix(id, "local-");
         List<ProjectVersion> versions = HttpRequest.GET(PREFIX + "/v2/project/" + id + "/version")
                 .getJson(listTypeOf(ProjectVersion.class));
-        return versions.stream().map(projVersion -> projVersion.toVersion(type)).flatMap(Lang::toStream);
+        return versions.stream().map(projVersion -> projVersion.toVersion()).flatMap(Lang::toStream);
     }
 
     public List<Category> getCategoriesImpl() throws IOException {
@@ -492,7 +492,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
             return RemoteMod.Type.MODRINTH;
         }
 
-        public Optional<RemoteMod.Version> toVersion(RemoteModRepository.Type repoType) {
+        public Optional<RemoteMod.Version> toVersion() {
             RemoteMod.VersionType type;
             if ("release".equals(versionType)) {
                 type = RemoteMod.VersionType.Release;
@@ -536,8 +536,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                         else if ("quilt".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.QUILT);
                         else if ("liteloader".equalsIgnoreCase(loader)) return Stream.of(ModLoaderType.LITE_LOADER);
                         else return Stream.empty();
-                    }).collect(Collectors.toList()),
-                    repoType
+                    }).collect(Collectors.toList())
             ));
         }
     }

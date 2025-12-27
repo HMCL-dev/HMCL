@@ -553,7 +553,7 @@ public class CurseAddon implements RemoteMod.IMod {
             return RemoteMod.Type.CURSEFORGE;
         }
 
-        public RemoteMod.Version toVersion(RemoteModRepository.Type repoType) {
+        public RemoteMod.Version toVersion() {
             RemoteMod.VersionType versionType;
             switch (getReleaseType()) {
                 case 1:
@@ -592,8 +592,7 @@ public class CurseAddon implements RemoteMod.IMod {
                         else if ("quilt".equalsIgnoreCase(version)) return Stream.of(ModLoaderType.QUILT);
                         else if ("neoforge".equalsIgnoreCase(version)) return Stream.of(ModLoaderType.NEO_FORGED);
                         else return Stream.empty();
-                    }).collect(Collectors.toList()),
-                    repoType
+                    }).collect(Collectors.toList())
             );
         }
     }

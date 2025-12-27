@@ -180,7 +180,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
             return Optional.empty();
         }
 
-        return Optional.of(response.getData().getExactMatches().get(0).getFile().toVersion(type));
+        return Optional.of(response.getData().getExactMatches().get(0).getFile().toVersion());
     }
 
     @Override
@@ -194,7 +194,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     public RemoteMod.File getModFile(String modId, String fileId) throws IOException {
         Response<CurseAddon.LatestFile> response = withApiKey(HttpRequest.GET(String.format("%s/v1/mods/%s/files/%s", PREFIX, modId, fileId)))
                 .getJson(Response.typeOf(CurseAddon.LatestFile.class));
-        return response.getData().toVersion(type).getFile();
+        return response.getData().toVersion().getFile();
     }
 
     @Override
@@ -202,7 +202,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
         Response<List<CurseAddon.LatestFile>> response = withApiKey(HttpRequest.GET(PREFIX + "/v1/mods/" + id + "/files",
                 pair("pageSize", "10000")))
                 .getJson(Response.typeOf(listTypeOf(CurseAddon.LatestFile.class)));
-        return response.getData().stream().map(file -> file.toVersion(type));
+        return response.getData().stream().map(CurseAddon.LatestFile::toVersion);
     }
 
     public List<CurseAddon.Category> getCategoriesImpl() throws IOException {
