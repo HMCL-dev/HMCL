@@ -85,17 +85,11 @@ public final class Versions {
         {
             URI uri = null;
             String uriString = addon.getIconUrl();
-            if (StringUtils.isNotBlank(uriString)) {
-                int i = uriString.lastIndexOf('.');
-                if (i >= 0 && i < uriString.length() - 1) {
-                    String extension = uriString.substring(i + 1);
-                    if (FXUtils.IMAGE_EXTENSIONS.contains(extension)) {
-                        try {
-                            uri = NetworkUtils.toURI(uriString);
-                        } catch (IllegalArgumentException e) {
-                            LOG.warning("Failed to parse modpack icon URL: " + uriString, e);
-                        }
-                    }
+            if (uriString != null) {
+                try {
+                    uri = NetworkUtils.toURI(uriString);
+                } catch (IllegalArgumentException e) {
+                    LOG.warning("Failed to parse modpack icon URL: " + uriString, e);
                 }
             }
             iconURL = uri;

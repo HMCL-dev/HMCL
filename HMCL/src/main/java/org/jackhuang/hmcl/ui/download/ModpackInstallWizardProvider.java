@@ -81,20 +81,18 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         settings.put(ModpackPage.PROFILE, profile);
     }
 
-    private <T> Task<Void> composeIconTask(SettingsMap settings, Task<T> task) {
-        String name = settings.get(LocalModpackPage.MODPACK_NAME);
-        URI iconURL = settings.get(LocalModpackPage.MODPACK_ICON_URL);
+    private <T> Task<Void> withIconDownloadTask(SettingsMap settings, Task<T> task) {
         return task.thenComposeAsync(Schedulers.javafx(), result -> {
+            URI iconURL = settings.get(LocalModpackPage.MODPACK_ICON_URL);
             if (iconURL == null) return null;
             String url = iconURL.toString();
-            if (FXUtils.IMAGE_EXTENSIONS.stream().map(s -> "." + s).noneMatch(url::endsWith)) {
-                return null;
-            }
+            if (FXUtils.IMAGE_EXTENSIONS.stream().map(s -> "." + s).noneMatch(url::endsWith)) return null;
+
             Path versionRoot;
             if (result instanceof Path resPath) {
                 versionRoot = resPath;
             } else {
-                versionRoot = profile.getRepository().getVersionRoot(name);
+                versionRoot = profile.getRepository().getVersionRoot(settings.get(LocalModpackPage.MODPACK_NAME));
             }
             boolean hasIcon = FXUtils.IMAGE_EXTENSIONS.stream()
                     .map(s -> versionRoot.resolve("icon." + s))
@@ -114,7 +112,7 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         boolean isManuallyCreated = settings.getOrDefault(LocalModpackPage.MODPACK_MANUALLY_CREATED, false);
 
         if (isManuallyCreated) {
-            return composeIconTask(settings, ModpackHelper.getInstallManuallyCreatedModpackTask(profile, selected, name, charset));
+            return withIconDownloadTask(settings, ModpackHelper.getInstallManuallyCreatedModpackTask(profile, selected, name, charset));
         }
 
         if ((selected == null && serverModpackManifest == null) || modpack == null || name == null) return null;
@@ -126,9 +124,9 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
             }
             try {
                 if (serverModpackManifest != null) {
-                    return composeIconTask(settings, ModpackHelper.getUpdateTask(profile, serverModpackManifest, modpack.getEncoding(), name, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(name))));
+                    return withIconDownloadTask(settings, ModpackHelper.getUpdateTask(profile, serverModpackManifest, modpack.getEncoding(), name, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(name))));
                 } else {
-                    return composeIconTask(settings, ModpackHelper.getUpdateTask(profile, selected, modpack.getEncoding(), name, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(name))));
+                    return withIconDownloadTask(settings, ModpackHelper.getUpdateTask(profile, selected, modpack.getEncoding(), name, ModpackHelper.readModpackConfiguration(profile.getRepository().getModpackConfiguration(name))));
                 }
             } catch (UnsupportedModpackException | ManuallyCreatedModpackException e) {
                 Controllers.dialog(i18n("modpack.unsupported"), i18n("message.error"), MessageType.ERROR);
@@ -140,10 +138,10 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
             return null;
         } else {
             if (serverModpackManifest != null) {
-                return composeIconTask(settings, ModpackHelper.getInstallTask(profile, serverModpackManifest, name, modpack))
+                return withIconDownloadTask(settings, ModpackHelper.getInstallTask(profile, serverModpackManifest, name, modpack))
                         .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
             } else {
-                return composeIconTask(settings, ModpackHelper.getInstallTask(profile, selected, name, modpack))
+                return withIconDownloadTask(settings, ModpackHelper.getInstallTask(profile, selected, name, modpack))
                         .thenRunAsync(Schedulers.javafx(), () -> profile.setSelectedVersion(name));
             }
         }
