@@ -120,6 +120,9 @@ public final class World {
     private void loadFromDirectory() throws IOException {
         fileName = FileUtils.getName(file);
         Path levelDat = file.resolve("level.dat");
+        if (!Files.exists(levelDat)) { // version 20w14infinite
+            levelDat = file.resolve("special_level.dat");
+        }
         loadWorldInfo(levelDat);
         isLocked = isLocked(getSessionLockFile());
 
@@ -137,8 +140,12 @@ public final class World {
 
     private void loadFromZipImpl(Path root) throws IOException {
         Path levelDat = root.resolve("level.dat");
-        if (!Files.exists(levelDat))
-            throw new IOException("Not a valid world zip file since level.dat cannot be found.");
+        if (!Files.exists(levelDat)) { //version 20w14infinite
+            levelDat = root.resolve("special_level.dat");
+        }
+        if (!Files.exists(levelDat)) {
+            throw new IOException("Not a valid world zip file since level.dat or special_level.dat cannot be found.");
+        }
 
         loadWorldInfo(levelDat);
 
