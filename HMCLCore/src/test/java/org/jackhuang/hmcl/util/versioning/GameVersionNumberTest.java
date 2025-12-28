@@ -459,6 +459,7 @@ public final class GameVersionNumberTest {
         assertNormalized("1.18_experimental-snapshot-7", "1.18 experimental snapshot 7");
         assertNormalized("1.19_deep_dark_experimental_snapshot-1", "Deep Dark Experimental Snapshot 1");
         assertNormalized("20w14infinite", "20w14~");
+        assertNormalized("22w13oneblockatatime", "22w13oneBlockAtATime");
     }
 
     @Test
