@@ -14,7 +14,7 @@ import java.util.Locale;
 
 public sealed abstract class ResourcePackFile extends LocalAddonFile implements Comparable<ResourcePackFile> permits ResourcePackFolder, ResourcePackZipFile {
     static ResourcePackFile parse(ResourcePackManager manager, Path path) throws IOException {
-        String fileName = LocalFileManager.getLocalFileName(path);
+        String fileName = path.getFileName().toString();
         if (Files.isRegularFile(path) && fileName.toLowerCase(Locale.ROOT).endsWith(".zip")) {
             return new ResourcePackZipFile(manager, path);
         } else if (Files.isDirectory(path) && Files.exists(path.resolve("pack.mcmeta"))) {
@@ -25,8 +25,8 @@ public sealed abstract class ResourcePackFile extends LocalAddonFile implements 
 
     protected final ResourcePackManager manager;
     protected Path file;
-    protected final String name;
     protected final String fileName;
+    protected final String fileNameWithExtension;
 
     private Compatibility compatibility = null;
 
@@ -34,8 +34,8 @@ public sealed abstract class ResourcePackFile extends LocalAddonFile implements 
         super(false);
         this.manager = manager;
         this.file = file;
-        this.fileName = LocalFileManager.getLocalFileName(file);
-        this.name = StringUtils.parseColorEscapes(FileUtils.getNameWithoutExtension(fileName));
+        this.fileNameWithExtension = file.getFileName().toString();
+        this.fileName = StringUtils.parseColorEscapes(FileUtils.getNameWithoutExtension(fileNameWithExtension));
     }
 
     @Override
@@ -45,11 +45,11 @@ public sealed abstract class ResourcePackFile extends LocalAddonFile implements 
 
     @Override
     public String getFileName() {
-        return name;
+        return fileName;
     }
 
     public String getFileNameWithExtension() {
-        return getFile().getFileName().toString();
+        return fileNameWithExtension;
     }
 
     public Compatibility getCompatibility() {
@@ -94,7 +94,7 @@ public sealed abstract class ResourcePackFile extends LocalAddonFile implements 
 
     @Override
     public int compareTo(@NotNull ResourcePackFile other) {
-        return this.getFileNameWithExtension().compareToIgnoreCase(other.getFileNameWithExtension());
+        return this.fileNameWithExtension.compareTo(other.fileNameWithExtension);
     }
 
     public enum Compatibility {
