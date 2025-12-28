@@ -25,10 +25,10 @@ import org.jackhuang.hmcl.task.Task;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class CheckUpdatesTask extends Task<List<LocalAddonFile.ModUpdate>> {
+public class CheckUpdatesTask<T extends LocalAddonFile> extends Task<List<LocalAddonFile.ModUpdate>> {
     private final Collection<Collection<Task<LocalAddonFile.ModUpdate>>> dependents;
 
-    public CheckUpdatesTask(String gameVersion, Collection<? extends LocalAddonFile> mods, RemoteModRepository.Type repoType) {
+    public CheckUpdatesTask(String gameVersion, Collection<T> mods, RemoteModRepository.Type repoType) {
         Map<String, RemoteModRepository> repos = new LinkedHashMap<>(2);
         for (RemoteMod.Type modType : RemoteMod.Type.values()) {
             RemoteModRepository repo = modType.getRepoForType(repoType);
