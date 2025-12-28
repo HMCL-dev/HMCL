@@ -50,11 +50,9 @@ public final class ModManager extends LocalFileManager<LocalModFile> {
                 pair(ForgeNewModMetadata::fromNeoForgeFile, ModLoaderType.NEO_FORGED),
                 pair(ForgeOldModMetadata::fromFile, ModLoaderType.FORGE),
                 pair(FabricModMetadata::fromFile, ModLoaderType.FABRIC),
-                pair(QuiltModMetadata::fromFile, ModLoaderType.QUILT),
-                pair(PackMcMeta::fromFile, ModLoaderType.PACK)
+                pair(QuiltModMetadata::fromFile, ModLoaderType.QUILT)
         );
 
-        map.put("zip", zipReaders);
         map.put("jar", zipReaders);
         map.put("litemod", List.of(pair(LiteModMetadata::fromFile, ModLoaderType.LITE_LOADER)));
 
