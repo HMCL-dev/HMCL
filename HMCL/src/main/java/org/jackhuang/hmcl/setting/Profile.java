@@ -23,6 +23,8 @@ import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.*;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.event.EventBus;
@@ -37,7 +39,9 @@ import org.jackhuang.hmcl.util.javafx.ObservableHelper;
 
 import java.lang.reflect.Type;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onInvalidating;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
@@ -103,7 +107,7 @@ public final class Profile implements Observable {
         this.name.set(name);
     }
 
-    private final BooleanProperty useRelativePath = new SimpleBooleanProperty(this, "useRelativePath", false);
+    private BooleanProperty useRelativePath = new SimpleBooleanProperty(this, "useRelativePath", false);
 
     public BooleanProperty useRelativePathProperty() {
         return useRelativePath;
@@ -117,6 +121,12 @@ public final class Profile implements Observable {
         this.useRelativePath.set(useRelativePath);
     }
 
+    private final ObservableList<String> pinnedVersions = FXCollections.observableArrayList();
+
+    public ObservableList<String> getPinnedVersions() {
+        return pinnedVersions;
+    }
+
     public Profile(String name) {
         this(name, Path.of(".minecraft"));
     }
@@ -126,13 +136,16 @@ public final class Profile implements Observable {
     }
 
     public Profile(String name, Path initialGameDir, VersionSetting global) {
-        this(name, initialGameDir, global, null, false);
+        this(name, initialGameDir, global, null, false, null);
     }
 
-    public Profile(String name, Path initialGameDir, VersionSetting global, String selectedVersion, boolean useRelativePath) {
+    public Profile(String name, Path initialGameDir, VersionSetting global, String selectedVersion, boolean useRelativePath, List<String> pinnedVersions) {
         this.name = new SimpleStringProperty(this, "name", name);
         gameDir = new SimpleObjectProperty<>(this, "gameDir", initialGameDir);
         repository = new HMCLGameRepository(this, initialGameDir);
+        if (pinnedVersions != null) {
+            this.pinnedVersions.addAll(pinnedVersions);
+        }
         this.global.set(global == null ? new VersionSetting() : global);
         this.selectedVersion.set(selectedVersion);
         this.useRelativePath.set(useRelativePath);
@@ -140,8 +153,16 @@ public final class Profile implements Observable {
         gameDir.addListener((a, b, newValue) -> repository.changeDirectory(newValue));
         this.selectedVersion.addListener(o -> checkSelectedVersion());
         listenerHolder.add(EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> checkSelectedVersion(), EventPriority.HIGHEST));
-
+        this.pinnedVersions.addListener((InvalidationListener) o -> checkPinnedVersion());
+        listenerHolder.add(EventBus.EVENT_BUS.channel(RefreshedVersionsEvent.class).registerWeak(event -> checkPinnedVersion(), EventPriority.HIGHEST));
         addPropertyChangedListener(onInvalidating(this::invalidate));
+    }
+
+    private void checkPinnedVersion() {
+        runInFX(() -> {
+            if (!repository.isLoaded()) return;
+            pinnedVersions.removeIf(pinnedVersion -> !repository.hasVersion(pinnedVersion));
+        });
     }
 
     private void checkSelectedVersion() {
@@ -237,7 +258,11 @@ public final class Profile implements Observable {
             jsonObject.addProperty("gameDir", src.getGameDir().toString());
             jsonObject.addProperty("useRelativePath", src.isUseRelativePath());
             jsonObject.addProperty("selectedMinecraftVersion", src.getSelectedVersion());
-
+            JsonArray jsonArray = new JsonArray();
+            for (String pinnedVersion : src.pinnedVersions) {
+                jsonArray.add(pinnedVersion);
+            }
+            jsonObject.add("pinnedVersions", jsonArray);
             return jsonObject;
         }
 
@@ -250,7 +275,14 @@ public final class Profile implements Observable {
                     Path.of(gameDir),
                     context.deserialize(obj.get("global"), VersionSetting.class),
                     Optional.ofNullable(obj.get("selectedMinecraftVersion")).map(JsonElement::getAsString).orElse(""),
-                    Optional.ofNullable(obj.get("useRelativePath")).map(JsonElement::getAsBoolean).orElse(false));
+                    Optional.ofNullable(obj.get("useRelativePath")).map(JsonElement::getAsBoolean).orElse(false),
+                    Optional.ofNullable(obj.get("pinnedVersions")).map(it -> {
+                        if (it.isJsonArray()) {
+                            return it.getAsJsonArray().asList().stream().map(JsonElement::getAsString).collect(Collectors.toList());
+                        }
+                        return null;
+                    }).orElse(null)
+            );
         }
 
     }

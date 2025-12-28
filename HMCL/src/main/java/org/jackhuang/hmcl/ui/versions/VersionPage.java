@@ -59,6 +59,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
     private final TabHeader.Tab<ResourcepackListPage> resourcePackTab = new TabHeader.Tab<>("resourcePackTab");
     private final TransitionPane transitionPane = new TransitionPane();
     private final BooleanProperty currentVersionUpgradable = new SimpleBooleanProperty();
+    private final BooleanProperty currentVersionPinned = new SimpleBooleanProperty();
     private final ObjectProperty<Profile.ProfileVersion> version = new SimpleObjectProperty<>();
     private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
 
@@ -139,6 +140,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
         if (schematicsTab.isInitialized())
             schematicsTab.getNode().loadVersion(profile, version);
         currentVersionUpgradable.set(profile.getRepository().isModpack(version));
+        currentVersionPinned.set(profile.getPinnedVersions().contains(version));
     }
 
     private void onNavigated(Navigator.NavigationEvent event) {
@@ -182,6 +184,16 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
 
     private void testGame() {
         Versions.testGame(getProfile(), getVersion());
+    }
+
+    private void pinVersion() {
+        if (currentVersionPinned.get()) {
+            currentVersionPinned.set(false);
+            getProfile().getPinnedVersions().remove(getVersion());
+            return;
+        }
+        currentVersionPinned.set(true);
+        getProfile().getPinnedVersions().add(getVersion());
     }
 
     private void updateGame() {
@@ -282,6 +294,15 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                         .addNavigationDrawerItem(i18n("version.update"), SVG.UPDATE, control::updateGame, upgradeItem -> {
                             upgradeItem.visibleProperty().bind(control.currentVersionUpgradable);
                         })
+                        .addNavigationDrawerItem("", SVG.THUMBTACK, control::pinVersion, pinVersionItem -> {
+                            pinVersionItem.titleProperty().bind(
+                                    Bindings.createStringBinding(
+                                            () -> control.currentVersionPinned.get() ? i18n("version.unpin") : i18n("version.pin"),
+                                            control.currentVersionPinned
+                                    )
+                            );
+                            pinVersionItem.activeProperty().bindBidirectional(control.currentVersionPinned);
+                        })
                         .addNavigationDrawerItem(i18n("version.launch.test"), SVG.ROCKET_LAUNCH, control::testGame)
                         .addNavigationDrawerItem(i18n("settings.game.exploration"), SVG.FOLDER_OPEN, null, browseMenuItem -> {
                             browseMenuItem.setOnAction(e -> browsePopup.show(browseMenuItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, browseMenuItem.getWidth(), 0));
@@ -290,7 +311,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                             managementItem.setOnAction(e -> managementPopup.show(managementItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, managementItem.getWidth(), 0));
                         });
                 toolbar.getStyleClass().add("advanced-list-box-clear-padding");
-                FXUtils.setLimitHeight(toolbar, 40 * 4 + 12 * 2);
+                FXUtils.setLimitHeight(toolbar, 40 * 5 + 12 * 2);
 
                 setLeft(sideBar, toolbar);
             }
