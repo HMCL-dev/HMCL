@@ -35,7 +35,7 @@ public sealed abstract class ResourcePackFile extends LocalAddonFile implements 
         this.manager = manager;
         this.file = file;
         this.fileNameWithExtension = file.getFileName().toString();
-        this.fileName = StringUtils.parseColorEscapes(FileUtils.getNameWithoutExtension(fileNameWithExtension));
+        this.fileName = StringUtils.parseColorEscapes(FileUtils.getNameWithoutExtension(file));
     }
 
     @Override
