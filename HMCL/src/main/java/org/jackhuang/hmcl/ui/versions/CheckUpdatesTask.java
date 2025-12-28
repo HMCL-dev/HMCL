@@ -43,7 +43,8 @@ public class CheckUpdatesTask<T extends LocalAddonFile> extends Task<List<LocalA
                                         Task.supplyAsync(() -> mod.checkUpdates(gameVersion, entry.getValue()))
                                                 .setSignificance(TaskSignificance.MAJOR)
                                                 .setName(String.format("%s (%s)", mod.getFileName(), entry.getKey())).withCounter("update.checking")
-                                ).collect(Collectors.toList())
+                                )
+                                .collect(Collectors.toList())
                 )
                 .collect(Collectors.toList());
 
