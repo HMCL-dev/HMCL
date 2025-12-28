@@ -132,6 +132,9 @@ public class InstallersPage extends AbstractInstallersPage {
                     case CLEANROOM:
                         loaderName = i18n("install.installer.cleanroom");
                         break;
+                    case LEGACY_FABRIC:
+                        loaderName = i18n("install.installer.legacyfabric").replace(" ","_");
+                        break;
                     case FABRIC:
                         loaderName = i18n("install.installer.fabric");
                         break;

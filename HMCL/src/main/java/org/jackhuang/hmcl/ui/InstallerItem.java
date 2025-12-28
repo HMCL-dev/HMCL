@@ -135,6 +135,10 @@ public class InstallerItem extends Control {
             case "fabric-api":
                 iconType = VersionIconType.FABRIC;
                 break;
+            case "legacyfabric":
+            case "legacyfabric-api":
+                iconType = VersionIconType.LEGACY_FABRIC;
+                break;
             case "forge":
                 iconType = VersionIconType.FORGE;
                 break;
@@ -236,6 +240,8 @@ public class InstallerItem extends Control {
             InstallerItem fabricApi = new InstallerItem(FABRIC_API, style);
             InstallerItem forge = new InstallerItem(FORGE, style);
             InstallerItem cleanroom = new InstallerItem(CLEANROOM, style);
+            InstallerItem legacyfabric = new InstallerItem(LEGACY_FABRIC, style);
+            InstallerItem legacyfabricApi = new InstallerItem(LEGACY_FABRIC_API, style);
             InstallerItem neoForge = new InstallerItem(NEO_FORGE, style);
             InstallerItem liteLoader = new InstallerItem(LITELOADER, style);
             InstallerItem optiFine = new InstallerItem(OPTIFINE, style);
@@ -243,11 +249,11 @@ public class InstallerItem extends Control {
             InstallerItem quiltApi = new InstallerItem(QUILT_API, style);
 
             Map<InstallerItem, Set<InstallerItem>> incompatibleMap = new HashMap<>();
-            mutualIncompatible(incompatibleMap, forge, fabric, quilt, neoForge, cleanroom);
-            addIncompatibles(incompatibleMap, liteLoader, fabric, quilt, neoForge, cleanroom);
-            addIncompatibles(incompatibleMap, optiFine, fabric, quilt, neoForge, cleanroom);
-            addIncompatibles(incompatibleMap, fabricApi, forge, quiltApi, neoForge, liteLoader, optiFine, cleanroom);
-            addIncompatibles(incompatibleMap, quiltApi, forge, fabric, fabricApi, neoForge, liteLoader, optiFine, cleanroom);
+            mutualIncompatible(incompatibleMap, forge, fabric, quilt, neoForge, cleanroom, legacyfabric);
+            addIncompatibles(incompatibleMap, liteLoader, fabric, quilt, neoForge, cleanroom, legacyfabric);
+            addIncompatibles(incompatibleMap, optiFine, fabric, quilt, neoForge, cleanroom, liteLoader, legacyfabric);
+            addIncompatibles(incompatibleMap, fabricApi, forge, quiltApi, neoForge, liteLoader, optiFine, cleanroom, legacyfabricApi, legacyfabricApi);
+            addIncompatibles(incompatibleMap, quiltApi, forge, fabric, fabricApi, neoForge, liteLoader, optiFine, cleanroom, legacyfabric, legacyfabricApi);
 
             for (Map.Entry<InstallerItem, Set<InstallerItem>> entry : incompatibleMap.entrySet()) {
                 InstallerItem item = entry.getKey();
@@ -281,7 +287,7 @@ public class InstallerItem extends Control {
                 game.versionProperty.set(new InstalledState(gameVersion, false, false));
             }
 
-            InstallerItem[] all = {game, forge, neoForge, liteLoader, optiFine, fabric, fabricApi, quilt, quiltApi, cleanroom};
+            InstallerItem[] all = {game, forge, neoForge, liteLoader, optiFine, fabric, fabricApi, quilt, quiltApi, legacyfabric, legacyfabricApi, cleanroom};
 
             for (InstallerItem item : all) {
                 if (!item.resolvedStateProperty.isBound()) {
@@ -298,9 +304,9 @@ public class InstallerItem extends Control {
             if (gameVersion == null) {
                 this.libraries = all;
             } else if (gameVersion.equals("1.12.2")) {
-                this.libraries = new InstallerItem[]{game, forge, cleanroom, liteLoader, optiFine};
-            } else if (GameVersionNumber.compare(gameVersion, "1.13") < 0) {
-                this.libraries = new InstallerItem[]{game, forge, liteLoader, optiFine};
+                this.libraries = new InstallerItem[]{game, forge, cleanroom, liteLoader, legacyfabric, legacyfabricApi, optiFine};
+            } else if (GameVersionNumber.compare(gameVersion, "1.13.2") <= 0) {
+                this.libraries = new InstallerItem[]{game, forge, liteLoader, optiFine, legacyfabric, legacyfabricApi};
             } else {
                 this.libraries = new InstallerItem[]{game, forge, neoForge, optiFine, fabric, fabricApi, quilt, quiltApi};
             }

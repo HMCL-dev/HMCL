@@ -22,6 +22,8 @@ import org.jackhuang.hmcl.download.fabric.FabricAPIVersionList;
 import org.jackhuang.hmcl.download.fabric.FabricVersionList;
 import org.jackhuang.hmcl.download.forge.ForgeVersionList;
 import org.jackhuang.hmcl.download.game.GameVersionList;
+import org.jackhuang.hmcl.download.legacyfabric.LegacyFabricAPIVersionList;
+import org.jackhuang.hmcl.download.legacyfabric.LegacyFabricVersionList;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderVersionList;
 import org.jackhuang.hmcl.download.neoforge.NeoForgeOfficialVersionList;
 import org.jackhuang.hmcl.download.optifine.OptiFineBMCLVersionList;
@@ -47,6 +49,8 @@ public class MojangDownloadProvider implements DownloadProvider {
     private final OptiFineBMCLVersionList optifine;
     private final QuiltVersionList quilt;
     private final QuiltAPIVersionList quiltApi;
+    private final LegacyFabricVersionList legacyFabric;
+    private final LegacyFabricAPIVersionList legacyFabricApi;
 
     public MojangDownloadProvider() {
         // If there is no official download channel available, fallback to BMCLAPI.
@@ -62,6 +66,8 @@ public class MojangDownloadProvider implements DownloadProvider {
         this.optifine = new OptiFineBMCLVersionList(apiRoot);
         this.quilt = new QuiltVersionList(this);
         this.quiltApi = new QuiltAPIVersionList(this);
+        this.legacyFabric = new LegacyFabricVersionList(this);
+        this.legacyFabricApi = new LegacyFabricAPIVersionList(this);
     }
 
     @Override
@@ -97,6 +103,10 @@ public class MojangDownloadProvider implements DownloadProvider {
                 return quilt;
             case "quilt-api":
                 return quiltApi;
+            case "legacyfabric":
+                return legacyFabric;
+            case "legacyfabric-api":
+                return legacyFabricApi;
             default:
                 throw new IllegalArgumentException("Unrecognized version list id: " + id);
         }

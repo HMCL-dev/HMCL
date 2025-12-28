@@ -465,6 +465,9 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                                         case CLEANROOM:
                                             loaderName = i18n("install.installer.cleanroom");
                                             break;
+                                        case LEGACY_FABRIC:
+                                            loaderName = i18n("install.installer.legacyfabric");
+                                            break;
                                         case NEO_FORGED:
                                             loaderName = i18n("install.installer.neoforge");
                                             break;
@@ -653,6 +656,9 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                 switch (dataItem.getModInfo().getModLoaderType()) {
                     case FORGE:
                         content.addTagWarning(i18n("install.installer.forge"));
+                        break;
+                    case LEGACY_FABRIC:
+                        content.addTagWarning(i18n("install.installer.legacyfabric"));
                         break;
                     case CLEANROOM:
                         content.addTagWarning(i18n("install.installer.cleanroom"));

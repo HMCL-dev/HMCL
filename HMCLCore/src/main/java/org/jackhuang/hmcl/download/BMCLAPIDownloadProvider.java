@@ -22,6 +22,8 @@ import org.jackhuang.hmcl.download.fabric.FabricAPIVersionList;
 import org.jackhuang.hmcl.download.fabric.FabricVersionList;
 import org.jackhuang.hmcl.download.forge.ForgeBMCLVersionList;
 import org.jackhuang.hmcl.download.game.GameVersionList;
+import org.jackhuang.hmcl.download.legacyfabric.LegacyFabricAPIVersionList;
+import org.jackhuang.hmcl.download.legacyfabric.LegacyFabricVersionList;
 import org.jackhuang.hmcl.download.liteloader.LiteLoaderBMCLVersionList;
 import org.jackhuang.hmcl.download.neoforge.NeoForgeBMCLVersionList;
 import org.jackhuang.hmcl.download.optifine.OptiFineBMCLVersionList;
@@ -47,6 +49,8 @@ public final class BMCLAPIDownloadProvider implements DownloadProvider {
     private final FabricAPIVersionList fabricApi;
     private final ForgeBMCLVersionList forge;
     private final CleanroomVersionList cleanroom;
+    private final LegacyFabricVersionList legacyFabric;
+    private final LegacyFabricAPIVersionList legacyFabricApi;
     private final NeoForgeBMCLVersionList neoforge;
     private final LiteLoaderBMCLVersionList liteLoader;
     private final OptiFineBMCLVersionList optifine;
@@ -66,6 +70,9 @@ public final class BMCLAPIDownloadProvider implements DownloadProvider {
         this.optifine = new OptiFineBMCLVersionList(apiRoot);
         this.quilt = new QuiltVersionList(this);
         this.quiltApi = new QuiltAPIVersionList(this);
+        this.legacyFabric = new LegacyFabricVersionList(this);
+        this.legacyFabricApi = new LegacyFabricAPIVersionList(this);
+
         this.replacement = Arrays.asList(
                 pair("https://bmclapi2.bangbang93.com", apiRoot),
                 pair("https://launchermeta.mojang.com", apiRoot),
@@ -133,6 +140,10 @@ public final class BMCLAPIDownloadProvider implements DownloadProvider {
                 return quilt;
             case "quilt-api":
                 return quiltApi;
+            case "legacyfabric":
+                return legacyFabric;
+            case "legacyfabric-api":
+                return legacyFabricApi;
             default:
                 throw new IllegalArgumentException("Unrecognized version list id: " + id);
         }
