@@ -518,7 +518,7 @@ public abstract class FetchTask<T> extends Task<T> {
 
         static {
             if (!initialized) {
-                throw new AssertionError();
+                throw new AssertionError("FetchTask.Holder accessed before ProxyManager initialization.");
             }
 
             boolean useHttp2 = !"false".equalsIgnoreCase(System.getProperty("hmcl.http2"));
