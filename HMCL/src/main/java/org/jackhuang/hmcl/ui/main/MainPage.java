@@ -256,10 +256,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
             menuButton = new JFXButton();
             menuButton.getStyleClass().add("menu-button");
             menuButton.setOnAction(e -> onMenu());
-            Node svg = SVG.ARROW_DROP_UP.createIcon(30);
-            StackPane.setAlignment(svg, Pos.CENTER_RIGHT);
             FXUtils.installFastTooltip(menuButton, i18n("version.switch"));
-            menuButton.setGraphic(svg);
+            menuButton.setGraphic(SVG.ARROW_DROP_UP.createIcon(30));
 
             EventHandler<MouseEvent> secondaryClickHandle = event -> {
                 if (event.getButton() == MouseButton.SECONDARY && event.getClickCount() == 1) {
