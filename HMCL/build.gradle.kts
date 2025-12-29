@@ -1,6 +1,4 @@
-import com.google.gson.Gson
-import com.google.gson.JsonObject
-import com.google.gson.annotations.SerializedName
+import org.jackhuang.hmcl.gradle.TerracottaConfigUpgradeTask
 import org.jackhuang.hmcl.gradle.ci.GitHubActionUtils
 import org.jackhuang.hmcl.gradle.ci.JenkinsUtils
 import org.jackhuang.hmcl.gradle.l10n.CheckTranslations
@@ -17,7 +15,6 @@ import java.security.MessageDigest
 import java.security.Signature
 import java.security.spec.PKCS8EncodedKeySpec
 import java.util.zip.ZipFile
-import kotlin.jvm.java
 
 plugins {
     alias(libs.plugins.shadow)
@@ -55,23 +52,6 @@ if (buildNumber != null) {
 }
 
 val embedResources by configurations.registering
-val terracottaPackages by configurations.registering
-val terracottaConfigurationSource = layout.projectDirectory.file("terracotta.json");
-
-repositories {
-    if (JenkinsUtils.IS_ON_CI) {
-        listOf("https://gitee.com/", "https://github.com/")
-    } else {
-        listOf("https://github.com/", "https://gitee.com/")
-    }.forEach { link ->
-        ivy {
-            url = URI.create(link)
-            patternLayout { artifact("/burningtnt/Terracotta/releases/download/v[revision]/terracotta-[revision]-[artifact]-pkg.tar.gz") }
-            metadataSources { artifact() }
-            content { includeGroup("net.burningtnt.terracotta") }
-        }
-    }
-}
 
 dependencies {
     implementation(project(":HMCLCore"))
@@ -86,7 +66,6 @@ dependencies {
     }
 
     embedResources(libs.authlib.injector)
-    terracottaPackages(libs.bundles.terracotta)
 }
 
 fun digest(algorithm: String, bytes: ByteArray): ByteArray = MessageDigest.getInstance(algorithm).digest(bytes)
@@ -194,38 +173,6 @@ val createPropertiesFile by tasks.registering {
     }
 }
 
-
-val terracottaConfigurationFile = layout.buildDirectory.file("terracotta.json")
-val createTerracottaConfiguration by tasks.registering {
-    inputs.file(terracottaConfigurationSource)
-    outputs.file(terracottaConfigurationFile)
-
-    doLast {
-        data class TerracottaPackage(
-            @SerializedName("hash") val hash: String,
-            @SerializedName("files") val files: Map<String, String>
-        )
-
-        val packages = terracottaPackages.get().resolvedConfiguration.resolvedArtifacts.associate { artifact ->
-            val hash = digest("SHA-512", artifact.file.readBytes())
-            val bundle = tarTree(resources.gzip(artifact.file))
-
-            artifact.moduleVersion.id.name to TerracottaPackage(
-                hash.toHexString(),
-                bundle.files.associate { f -> f.name to digest("SHA-512", f.readBytes()).toHexString() }
-            )
-        }
-
-        val gson = Gson()
-        val content = gson.fromJson(terracottaConfigurationSource.asFile.readText(), JsonObject::class.java)
-        content.addProperty("version_legacy", libs.versions.terracotta.legacy.get())
-        content.addProperty("version_latest", libs.versions.terracotta.latest.get())
-        content.add("packages", gson.toJsonTree(packages))
-
-        terracottaConfigurationFile.get().asFile.writeText(gson.toJson(content))
-    }
-}
-
 tasks.jar {
     enabled = false
     dependsOn(tasks["shadowJar"])
@@ -283,12 +230,10 @@ tasks.processResources {
     dependsOn(upsideDownTranslate)
     dependsOn(createLocaleNamesResourceBundle)
     dependsOn(createLanguageList)
-    dependsOn(createTerracottaConfiguration)
 
     into("assets/") {
         from(hmclPropertiesFile)
         from(embedResources)
-        from(terracottaConfigurationFile)
     }
 
     into("assets/lang") {
@@ -416,6 +361,27 @@ tasks.register<JavaExec>("run") {
         logger.quiet("HMCL_JAVA_OPTS: {}", vmOptions)
         logger.quiet("HMCL_JAVA_HOME: {}", hmclJavaHome ?: System.getProperty("java.home"))
     }
+}
+
+// terracotta
+
+tasks.register<TerracottaConfigUpgradeTask>("upgradeTerracottaConfig") {
+    val destination = layout.projectDirectory.file("src/main/resources/assets/terracotta.json")
+    val source = layout.projectDirectory.file("terracotta.json");
+
+    classifiers.set(listOf(
+        "windows-x86_64", "windows-arm64",
+        "macos-x86_64", "macos-arm64",
+        "linux-x86_64", "linux-arm64", "linux-loongarch64", "linux-riscv64",
+        "freebsd-x86_64"
+    ))
+
+    version.set(libs.versions.terracotta.latest)
+    legacyVersionPattern.set(libs.versions.terracotta.legacy)
+    downloadURL.set($$"https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}-pkg.tar.gz")
+
+    templateFile.set(source)
+    outputFile.set(destination)
 }
 
 // Check Translations

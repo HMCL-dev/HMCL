@@ -126,7 +126,6 @@ public final class TerracottaBundle {
 
                     String hash = HexFormat.of().formatHex(digest.digest());
                     if (!check.getChecksum().equalsIgnoreCase(hash)) {
-                        FileUtils.deleteDirectory(root);
                         throw new ChecksumMismatchException(check.getAlgorithm(), check.getChecksum(), hash);
                     }
 
@@ -136,6 +135,10 @@ public final class TerracottaBundle {
                     } catch (UnsupportedOperationException ignored) {
                     }
                 }
+            }
+        }).whenComplete(exception -> {
+            if (exception != null) {
+                FileUtils.deleteDirectory(root);
             }
         });
     }

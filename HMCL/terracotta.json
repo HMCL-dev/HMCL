@@ -1,4 +1,6 @@
 {
+  "__comment__": "Run upgradeTerracottaConfig task with Gradle to resolve this template.",
+
   "version_legacy": "@script_generated",
   "version_latest": "@script_generated",
 
