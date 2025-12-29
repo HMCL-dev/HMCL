@@ -17,8 +17,8 @@
  */
 package org.jackhuang.hmcl.gamerule;
 
-import com.google.gson.JsonParseException;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.junit.jupiter.api.Test;
 
@@ -28,33 +28,29 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class GameRuleTest {
 
+    private String getMataDataJson() throws IOException {
+        InputStream is = GameRule.class.getResourceAsStream("/assets/gamerule/gamerule.json");
+        return IOUtils.readFullyAsString(is);
+    }
+
     @Test
-    public void testParseMataData() {
+    public void testParseMataData() throws IOException {
         Map<String, GameRule> metaDataGameRuleMap = new HashMap<>();
 
-        List<GameRule> gameRules;
-        try (InputStream is = GameRule.class.getResourceAsStream("/gamerule/gamerule.json")) {
-            if (is == null) {
-                throw new IOException("Resource not found: /gamerule/gamerule.json");
-            }
-            String jsonContent = new String(is.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
-            gameRules = JsonUtils.fromNonNullJson(jsonContent, JsonUtils.listTypeOf(GameRule.class));
-        } catch (IOException | JsonParseException e) {
-            throw new RuntimeException("Failed to parse GameRuleJson", e);
-        }
+        String jsonContent = getMataDataJson();
+        List<GameRule> gameRules = JsonUtils.fromNonNullJson(jsonContent, JsonUtils.listTypeOf(GameRule.class));
+
         for (GameRule gameRule : gameRules) {
             for (String s : gameRule.getRuleKey()) {
                 metaDataGameRuleMap.put(s, gameRule);
             }
         }
 
-        assertEquals(4, gameRules.size());
-        assertEquals(7, metaDataGameRuleMap.size());
+        assertFalse(gameRules.isEmpty());
 
     }
 

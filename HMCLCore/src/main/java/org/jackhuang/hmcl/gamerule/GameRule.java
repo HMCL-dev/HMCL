@@ -26,6 +26,7 @@ import com.google.gson.annotations.JsonAdapter;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionedValue;
 
@@ -33,6 +34,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.util.*;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// Represents an abstract game rule in Minecraft (e.g., `doDaylightCycle`, `randomTickSpeed`).
 ///
@@ -340,22 +343,20 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         private static final Map<String, GameRule> metaDataGameRuleMap = new HashMap<>();
 
         static {
-            List<GameRule> gameRules;
-            try (InputStream is = GameRule.class.getResourceAsStream("/assets/gamerule/gamerule.json")) {
-                if (is == null) {
-                    throw new IOException("Resource not found: /assets/gamerule/gamerule.json");
+            try {
+                InputStream is = GameRule.class.getResourceAsStream("/assets/gamerule/gamerule.json");
+                String jsonContent = IOUtils.readFullyAsString(is);
+                List<GameRule> gameRules = JsonUtils.fromNonNullJson(jsonContent, JsonUtils.listTypeOf(GameRule.class));
+
+                for (GameRule gameRule : gameRules) {
+                    for (String s : gameRule.ruleKey) {
+                        metaDataGameRuleMap.put(s, gameRule);
+                    }
                 }
-                String jsonContent = new String(is.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
-                gameRules = JsonUtils.fromNonNullJson(jsonContent, JsonUtils.listTypeOf(GameRule.class));
             } catch (IOException e) {
-                throw new RuntimeException("Failed to initialize GameRuleHolder", e);
+                LOG.warning("Cannot read gamerule.json" + e.getMessage());
             } catch (JsonParseException e) {
-                throw new RuntimeException("Failed to parse GameRuleHolder", e);
-            }
-            for (GameRule gameRule : gameRules) {
-                for (String s : gameRule.ruleKey) {
-                    metaDataGameRuleMap.put(s, gameRule);
-                }
+                LOG.warning("Cannot parse gamerule.json" + e.getMessage());
             }
         }
 
