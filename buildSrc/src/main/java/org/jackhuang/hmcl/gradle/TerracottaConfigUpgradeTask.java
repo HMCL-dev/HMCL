@@ -64,14 +64,15 @@ public abstract class TerracottaConfigUpgradeTask extends DefaultTask {
     public abstract RegularFileProperty getOutputFile();
 
     @TaskAction
-    public void run() throws IOException, InterruptedException, ExecutionException, NoSuchAlgorithmException {
+    public void run() throws Exception {
         JsonObject config = GSON.fromJson(
                 Files.readString(getTemplateFile().get().getAsFile().toPath(), StandardCharsets.UTF_8),
                 JsonObject.class
         );
 
         Map<String, Path> files = new LinkedHashMap<>();
-        try (HttpClient client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS).build()) {
+        HttpClient client = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.ALWAYS).build();
+        try {
             List<CompletableFuture<HttpResponse<Path>>> tasks = new ArrayList<>();
             for (String classifier : getClassifiers().get()) {
                 Path path = Files.createTempFile("terracotta-bundle-", ".tar.gz");
@@ -89,6 +90,10 @@ public abstract class TerracottaConfigUpgradeTask extends DefaultTask {
                 if (response.statusCode() != 200) {
                     throw new IOException(String.format("Unable to request %s: %d", response.uri(), response.statusCode()));
                 }
+            }
+        } finally {
+            if (client instanceof AutoCloseable) { // Since Java21, HttpClient implements AutoCloseable: https://bugs.openjdk.org/browse/JDK-8304165
+                ((AutoCloseable) client).close();
             }
         }
 
