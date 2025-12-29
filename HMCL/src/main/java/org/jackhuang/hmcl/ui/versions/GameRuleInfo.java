@@ -49,11 +49,11 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
     private final String ruleKey;
     private final String displayName;
     private final GameRuleNBT<T, ? extends Tag> gameRuleNBT;
+    private final BooleanProperty modified = new SimpleBooleanProperty(this, "modified", false);
 
     private final Runnable onSave;
     private Runnable resetValue = () -> {
     };
-    private final BooleanProperty modified = new SimpleBooleanProperty(this, "modified1", false);
 
     //Due to the significant difference in skin between BooleanGameRuleInfo and IntGameRuleInfo, which are essentially two completely different styles, it is not suitable to update each other in Cell#updateControl. Therefore, they are directly integrated into the info.
     private final HBox container = new HBox();
