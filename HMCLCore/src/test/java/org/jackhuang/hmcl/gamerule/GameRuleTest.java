@@ -83,11 +83,11 @@ public class GameRuleTest {
                 """
                         {
                           "ruleKey": [
-                            "minecraft:max_snow_accumulation_height",
-                            "snowAccumulationHeight"
+                            "minecraft:test",
+                            "test"
                           ],
                           "type": "int",
-                          "displayI18nKey": "gamerule.rule.max_snow_accumulation_height",
+                          "displayI18nKey": "gamerule.rule.test",
                           "defaultValue": 1,
                           "minValue": {
                             "22w44a": "INT_MIN",
@@ -99,7 +99,7 @@ public class GameRuleTest {
                           }
                         }
                         """,
-                List.of("minecraft:max_snow_accumulation_height", "snowAccumulationHeight"),
+                List.of("minecraft:test", "test"),
                 Map.of("25w45a", 1),
                 Map.of("23w44a", Integer.MIN_VALUE, "25w45a", 0),
                 Map.of("23w44a", Integer.MAX_VALUE, "25w45a", 8)
@@ -108,16 +108,19 @@ public class GameRuleTest {
                 """
                           {
                             "ruleKey": [
-                              "minecraft:reduced_debug_info",
-                              "reducedDebugInfo"
+                              "minecraft:test",
+                              "test"
                             ],
                             "type": "boolean",
-                            "displayI18nKey": "gamerule.rule.reduced_debug_info",
-                            "defaultValue": false
+                            "displayI18nKey": "gamerule.rule.test",
+                            "defaultValue": {
+                              "22w44a": true,
+                              "25w44a": false
+                            }
                           }
                         """,
-                List.of("minecraft:reduced_debug_info", "reducedDebugInfo"),
-                Map.of("25w45a", false)
+                List.of("minecraft:test", "test"),
+                Map.of("25w45a", false, "23w44a", true)
         );
     }
 }

@@ -172,10 +172,11 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
                     {
                         gridPane.setHgap(10);
                         gridPane.setVgap(10);
+                        gridPane.setPadding(new Insets(0, 5, 10, 0));
 
                         scrollPane.visibleProperty().bind(showDetailButton.selectedProperty());
                         scrollPane.managedProperty().bind(showDetailButton.selectedProperty());
-                        VBox.setMargin(scrollPane, new Insets(5, 10, 5, 10));
+                        VBox.setMargin(scrollPane, new Insets(5, 8, 5, 8));
                         FXUtils.smoothScrolling(scrollPane);
 
                         vBox.getChildren().addAll(scrollPane);
