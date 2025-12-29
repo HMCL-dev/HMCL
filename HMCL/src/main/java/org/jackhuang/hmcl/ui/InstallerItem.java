@@ -128,39 +128,16 @@ public class InstallerItem extends Control {
         this.style = style;
 
         switch (id) {
-            case "game":
-                iconType = VersionIconType.GRASS;
-                break;
-            case "fabric":
-            case "fabric-api":
-                iconType = VersionIconType.FABRIC;
-                break;
-            case "legacyfabric":
-            case "legacyfabric-api":
-                iconType = VersionIconType.LEGACY_FABRIC;
-                break;
-            case "forge":
-                iconType = VersionIconType.FORGE;
-                break;
-            case "cleanroom":
-                iconType = VersionIconType.CLEANROOM;
-                break;
-            case "liteloader":
-                iconType = VersionIconType.CHICKEN;
-                break;
-            case "optifine":
-                iconType = VersionIconType.OPTIFINE;
-                break;
-            case "quilt":
-            case "quilt-api":
-                iconType = VersionIconType.QUILT;
-                break;
-            case "neoforge":
-                iconType = VersionIconType.NEO_FORGE;
-                break;
-            default:
-                iconType = null;
-                break;
+            case "game" -> iconType = VersionIconType.GRASS;
+            case "fabric", "fabric-api" -> iconType = VersionIconType.FABRIC;
+            case "legacyfabric", "legacyfabric-api" -> iconType = VersionIconType.LEGACY_FABRIC;
+            case "forge" -> iconType = VersionIconType.FORGE;
+            case "cleanroom" -> iconType = VersionIconType.CLEANROOM;
+            case "liteloader" -> iconType = VersionIconType.CHICKEN;
+            case "optifine" -> iconType = VersionIconType.OPTIFINE;
+            case "quilt", "quilt-api" -> iconType = VersionIconType.QUILT;
+            case "neoforge" -> iconType = VersionIconType.NEO_FORGE;
+            default -> iconType = null;
         }
     }
 

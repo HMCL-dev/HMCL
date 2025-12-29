@@ -459,29 +459,16 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                                 for (ModLoaderType modLoaderType : versionOptional.get().getLoaders()) {
                                     String loaderName;
                                     switch (modLoaderType) {
-                                        case FORGE:
-                                            loaderName = i18n("install.installer.forge");
-                                            break;
-                                        case CLEANROOM:
-                                            loaderName = i18n("install.installer.cleanroom");
-                                            break;
-                                        case LEGACY_FABRIC:
-                                            loaderName = i18n("install.installer.legacyfabric");
-                                            break;
-                                        case NEO_FORGED:
-                                            loaderName = i18n("install.installer.neoforge");
-                                            break;
-                                        case FABRIC:
-                                            loaderName = i18n("install.installer.fabric");
-                                            break;
-                                        case LITE_LOADER:
-                                            loaderName = i18n("install.installer.liteloader");
-                                            break;
-                                        case QUILT:
-                                            loaderName = i18n("install.installer.quilt");
-                                            break;
-                                        default:
+                                        case FORGE -> loaderName = i18n("install.installer.forge");
+                                        case CLEANROOM -> loaderName = i18n("install.installer.cleanroom");
+                                        case LEGACY_FABRIC -> loaderName = i18n("install.installer.legacyfabric");
+                                        case NEO_FORGED -> loaderName = i18n("install.installer.neoforge");
+                                        case FABRIC -> loaderName = i18n("install.installer.fabric");
+                                        case LITE_LOADER -> loaderName = i18n("install.installer.liteloader");
+                                        case QUILT -> loaderName = i18n("install.installer.quilt");
+                                        default -> {
                                             continue;
+                                        }
                                     }
                                     if (title.getTags()
                                             .stream()
@@ -654,27 +641,13 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             } else if (!ModListPageSkin.this.getSkinnable().supportedLoaders.contains(modLoaderType)) {
                 warning.add(i18n("mods.warning.loader_mismatch"));
                 switch (dataItem.getModInfo().getModLoaderType()) {
-                    case FORGE:
-                        content.addTagWarning(i18n("install.installer.forge"));
-                        break;
-                    case LEGACY_FABRIC:
-                        content.addTagWarning(i18n("install.installer.legacyfabric"));
-                        break;
-                    case CLEANROOM:
-                        content.addTagWarning(i18n("install.installer.cleanroom"));
-                        break;
-                    case NEO_FORGED:
-                        content.addTagWarning(i18n("install.installer.neoforge"));
-                        break;
-                    case FABRIC:
-                        content.addTagWarning(i18n("install.installer.fabric"));
-                        break;
-                    case LITE_LOADER:
-                        content.addTagWarning(i18n("install.installer.liteloader"));
-                        break;
-                    case QUILT:
-                        content.addTagWarning(i18n("install.installer.quilt"));
-                        break;
+                    case FORGE -> content.addTagWarning(i18n("install.installer.forge"));
+                    case LEGACY_FABRIC -> content.addTagWarning(i18n("install.installer.legacyfabric"));
+                    case CLEANROOM -> content.addTagWarning(i18n("install.installer.cleanroom"));
+                    case NEO_FORGED -> content.addTagWarning(i18n("install.installer.neoforge"));
+                    case FABRIC -> content.addTagWarning(i18n("install.installer.fabric"));
+                    case LITE_LOADER -> content.addTagWarning(i18n("install.installer.liteloader"));
+                    case QUILT -> content.addTagWarning(i18n("install.installer.quilt"));
                 }
             }
 

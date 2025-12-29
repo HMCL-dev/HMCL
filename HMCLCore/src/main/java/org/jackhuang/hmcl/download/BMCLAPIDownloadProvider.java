@@ -119,34 +119,21 @@ public final class BMCLAPIDownloadProvider implements DownloadProvider {
 
     @Override
     public VersionList<?> getVersionListById(String id) {
-        switch (id) {
-            case "game":
-                return game;
-            case "fabric":
-                return fabric;
-            case "fabric-api":
-                return fabricApi;
-            case "forge":
-                return forge;
-            case "cleanroom":
-                return cleanroom;
-            case "neoforge":
-                return neoforge;
-            case "liteloader":
-                return liteLoader;
-            case "optifine":
-                return optifine;
-            case "quilt":
-                return quilt;
-            case "quilt-api":
-                return quiltApi;
-            case "legacyfabric":
-                return legacyFabric;
-            case "legacyfabric-api":
-                return legacyFabricApi;
-            default:
-                throw new IllegalArgumentException("Unrecognized version list id: " + id);
-        }
+        return switch (id) {
+            case "game" -> game;
+            case "fabric" -> fabric;
+            case "fabric-api" -> fabricApi;
+            case "forge" -> forge;
+            case "cleanroom" -> cleanroom;
+            case "neoforge" -> neoforge;
+            case "liteloader" -> liteLoader;
+            case "optifine" -> optifine;
+            case "quilt" -> quilt;
+            case "quilt-api" -> quiltApi;
+            case "legacyfabric" -> legacyFabric;
+            case "legacyfabric-api" -> legacyFabricApi;
+            default -> throw new IllegalArgumentException("Unrecognized version list id: " + id);
+        };
     }
 
     @Override

@@ -22,6 +22,7 @@ import com.google.gson.JsonObject;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.download.UnsupportedInstallationException;
+import org.jackhuang.hmcl.download.fabric.FabricInstallTask;
 import org.jackhuang.hmcl.game.Arguments;
 import org.jackhuang.hmcl.game.Artifact;
 import org.jackhuang.hmcl.game.Library;
@@ -79,13 +80,13 @@ public final class LegacyFabricInstallTask extends Task<Version> {
 
     @Override
     public void execute() {
-        setResult(getPatch(JsonUtils.GSON.fromJson(launchMetaTask.getResult(), LegacyFabricInfo.class), remote.getGameVersion(), remote.getSelfVersion()));
+        setResult(getPatch(JsonUtils.GSON.fromJson(launchMetaTask.getResult(), FabricInstallTask.FabricInfo.class), remote.getGameVersion(), remote.getSelfVersion()));
 
         dependencies.add(dependencyManager.checkLibraryCompletionAsync(getResult(), true));
     }
 
-    private Version getPatch(LegacyFabricInfo legacyFabricInfo, String gameVersion, String loaderVersion) {
-        JsonObject launcherMeta = legacyFabricInfo.launcherMeta;
+    private Version getPatch(FabricInstallTask.FabricInfo legacyFabricInfo, String gameVersion, String loaderVersion) {
+        JsonObject launcherMeta = legacyFabricInfo.getLauncherMeta();
         Arguments arguments = new Arguments();
 
         String mainClass;
@@ -112,105 +113,18 @@ public final class LegacyFabricInstallTask extends Task<Version> {
         }
 
         // libraries.add(new Library(Artifact.fromDescriptor(legacyFabricInfo.hashed.maven), getMavenRepositoryByGroup(legacyFabricInfo.hashed.maven), null));
-        libraries.add(new Library(Artifact.fromDescriptor(legacyFabricInfo.intermediary.maven), getMavenRepositoryByGroup(legacyFabricInfo.intermediary.maven), null));
-        libraries.add(new Library(Artifact.fromDescriptor(legacyFabricInfo.loader.maven), getMavenRepositoryByGroup(legacyFabricInfo.loader.maven), null));
+        libraries.add(new Library(Artifact.fromDescriptor(legacyFabricInfo.getIntermediary().getMaven()), getMavenRepositoryByGroup(legacyFabricInfo.getIntermediary().getMaven()), null));
+        libraries.add(new Library(Artifact.fromDescriptor(legacyFabricInfo.getLoader().getMaven()), getMavenRepositoryByGroup(legacyFabricInfo.getLoader().getMaven()), null));
 
         return new Version(LibraryAnalyzer.LibraryType.LEGACY_FABRIC.getPatchId(), loaderVersion, Version.PRIORITY_LOADER, arguments, mainClass, libraries);
     }
 
     private static String getMavenRepositoryByGroup(String maven) {
         Artifact artifact = Artifact.fromDescriptor(maven);
-        switch (artifact.getGroup()) {
-            case "net.fabricmc":
-                return "https://maven.fabricmc.net/";
-            case "net.legacyfabric":
-                return "https://maven.legacyfabric.net/";
-            default:
-                return "https://maven.fabricmc.net/";
-        }
-    }
-
-    public static class LegacyFabricInfo {
-        private final LoaderInfo loader;
-        private final IntermediaryInfo hashed;
-        private final IntermediaryInfo intermediary;
-        private final JsonObject launcherMeta;
-
-        public LegacyFabricInfo(LoaderInfo loader, IntermediaryInfo hashed, IntermediaryInfo intermediary, JsonObject launcherMeta) {
-            this.loader = loader;
-            this.hashed = hashed;
-            this.intermediary = intermediary;
-            this.launcherMeta = launcherMeta;
-        }
-
-        public LoaderInfo getLoader() {
-            return loader;
-        }
-
-        public IntermediaryInfo getHashed() {
-            return hashed;
-        }
-
-        public IntermediaryInfo getIntermediary() {
-            return intermediary;
-        }
-
-        public JsonObject getLauncherMeta() {
-            return launcherMeta;
-        }
-    }
-
-    public static class LoaderInfo {
-        private final String separator;
-        private final int build;
-        private final String maven;
-        private final String version;
-        private final boolean stable;
-
-        public LoaderInfo(String separator, int build, String maven, String version, boolean stable) {
-            this.separator = separator;
-            this.build = build;
-            this.maven = maven;
-            this.version = version;
-            this.stable = stable;
-        }
-
-        public String getSeparator() {
-            return separator;
-        }
-
-        public int getBuild() {
-            return build;
-        }
-
-        public String getMaven() {
-            return maven;
-        }
-
-        public String getVersion() {
-            return version;
-        }
-
-        public boolean isStable() {
-            return stable;
-        }
-    }
-
-    public static class IntermediaryInfo {
-        private final String maven;
-        private final String version;
-
-        public IntermediaryInfo(String maven, String version) {
-            this.maven = maven;
-            this.version = version;
-        }
-
-        public String getMaven() {
-            return maven;
-        }
-
-        public String getVersion() {
-            return version;
-        }
+        return switch (artifact.getGroup()) {
+            case "net.fabricmc" -> "https://maven.fabricmc.net/";
+            case "net.legacyfabric" -> "https://maven.legacyfabric.net/";
+            default -> "https://maven.fabricmc.net/";
+        };
     }
 }
