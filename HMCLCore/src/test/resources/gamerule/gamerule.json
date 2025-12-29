@@ -1,0 +1,46 @@
+[
+  {
+    "ruleKey": [
+      "minecraft:advance_weather",
+      "doWeatherCycle"
+    ],
+    "type": "boolean",
+    "displayI18nKey": "gamerule.rule.advance_weather",
+    "defaultValue": true
+  },
+  {
+    "ruleKey": [
+      "minecraft:fire_spread_radius_around_player"
+    ],
+    "type": "int",
+    "displayI18nKey": "gamerule.rule.fire_spread_radius_around_player",
+    "defaultValue": 128,
+    "minValue": -1
+  },
+  {
+    "ruleKey": [
+      "minecraft:max_snow_accumulation_height",
+      "snowAccumulationHeight"
+    ],
+    "type": "int",
+    "displayI18nKey": "gamerule.rule.max_snow_accumulation_height",
+    "defaultValue": 1,
+    "minValue": {
+      "22w44a": "INT_MIN",
+      "25w44a": 0
+    },
+    "maxValue": {
+      "22w44a": "INT_MAX",
+      "25w44a": 8
+    }
+  },
+  {
+    "ruleKey": [
+      "minecraft:reduced_debug_info",
+      "reducedDebugInfo"
+    ],
+    "type": "boolean",
+    "displayI18nKey": "gamerule.rule.reduced_debug_info",
+    "defaultValue": false
+  }
+]

@@ -57,11 +57,11 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         this.displayI18nKey = displayI18nKey;
     }
 
-    public static GameRule createSimpleGameRule(String ruleKey, boolean value) {
+    private static GameRule createSimpleGameRule(String ruleKey, boolean value) {
         return new BooleanGameRule(Collections.singletonList(ruleKey), value);
     }
 
-    public static GameRule createSimpleGameRule(String ruleKey, int value) {
+    private static GameRule createSimpleGameRule(String ruleKey, int value) {
         IntGameRule intGameRule = new IntGameRule(Collections.singletonList(ruleKey), value);
         intGameRule.addMaxValue(Integer.MAX_VALUE);
         intGameRule.addMinValue(Integer.MIN_VALUE);
@@ -77,7 +77,7 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
     ///
     /// @param tag The NBT tag to parse.
     /// @return An Optional containing the GameRule if parsing was successful.
-    private static Optional<GameRule> createSimpleRuleFromTag(Tag tag) {
+    public static Optional<GameRule> createSimpleRuleFromTag(Tag tag) {
         String name = tag.getName();
 
         if (tag instanceof IntTag intTag) {
@@ -349,6 +349,8 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
                 gameRules = JsonUtils.fromNonNullJson(jsonContent, JsonUtils.listTypeOf(GameRule.class));
             } catch (IOException e) {
                 throw new RuntimeException("Failed to initialize GameRuleHolder", e);
+            } catch (JsonParseException e) {
+                throw new RuntimeException("Failed to parse GameRuleHolder", e);
             }
             for (GameRule gameRule : gameRules) {
                 for (String s : gameRule.ruleKey) {
