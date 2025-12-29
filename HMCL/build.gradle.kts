@@ -241,6 +241,11 @@ tasks.processResources {
         from(upsideDownTranslate.map { it.outputFile })
         from(createLocaleNamesResourceBundle.map { it.outputDirectory })
     }
+
+    inputs.property("terracotta_version", libs.versions.terracotta.latest)
+    doLast {
+        upgradeTerracottaConfig.get().checkValid()
+    }
 }
 
 val makeExecutables by tasks.registering {
@@ -365,7 +370,7 @@ tasks.register<JavaExec>("run") {
 
 // terracotta
 
-tasks.register<TerracottaConfigUpgradeTask>("upgradeTerracottaConfig") {
+val upgradeTerracottaConfig = tasks.register<TerracottaConfigUpgradeTask>("upgradeTerracottaConfig") {
     val destination = layout.projectDirectory.file("src/main/resources/assets/terracotta.json")
     val source = layout.projectDirectory.file("terracotta.json");
 

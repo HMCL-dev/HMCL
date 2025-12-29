@@ -8,6 +8,7 @@ import com.google.gson.annotations.SerializedName;
 import kala.compress.archivers.tar.TarArchiveEntry;
 import kala.compress.archivers.tar.TarArchiveReader;
 import org.gradle.api.DefaultTask;
+import org.gradle.api.GradleException;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
@@ -37,6 +38,7 @@ import java.util.HexFormat;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.zip.GZIPInputStream;
@@ -144,6 +146,21 @@ public abstract class TerracottaConfigUpgradeTask extends DefaultTask {
         config.add("packages", GSON.toJsonTree(bundles));
 
         Files.writeString(getOutputFile().get().getAsFile().toPath(), GSON.toJson(config), StandardCharsets.UTF_8);
+    }
+
+    public void checkValid() throws IOException {
+        Path output = getOutputFile().get().getAsFile().toPath();
+        if (Files.isReadable(output)) {
+            String version = GSON.fromJson(Files.readString(output, StandardCharsets.UTF_8), JsonObject.class)
+                    .get("version_latest").getAsJsonPrimitive().getAsString();
+            if (Objects.equals(version, getVersion().get())) {
+                return;
+            }
+        }
+
+        throw new GradleException("Terracotta config isn't up-to-date! " +
+                "You might have just edited the version number in libs.version.toml. " +
+                "Please run task :%s:%s to resolve the new config.");
     }
 
     private record Bundle(
