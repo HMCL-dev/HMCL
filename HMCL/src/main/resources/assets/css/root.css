@@ -421,28 +421,50 @@
  *                                                                             *
  ******************************************************************************/
 
+.launch-pane {
+    -fx-spacing: 4px;
+    -fx-max-height: 55px;
+    -fx-min-height: 55px;
+    -fx-max-width: 230px;
+    -fx-min-width: 230px;
+    -fx-background-color: -monet-on-surface-variant;
+}
+
 .launch-pane > .jfx-button {
+    -fx-translate-y: 1px;
+    -fx-max-height: 53px;
+    -fx-min-height: 53px;
     -fx-background-color: -monet-primary-container;
     -fx-cursor: hand;
+}
+
+.launch-pane > .jfx-button.launch-button {
+    -fx-max-width: 206px;
+    -fx-min-width: 206px;
+    -fx-background-radius: 2px 0 0 2px;
+}
+
+.launch-pane > .jfx-button.menu-button {
+    -fx-max-width: 20px;
+    -fx-min-width: 20px;
+    -fx-font-size: 15px;
+    -fx-background-radius: 0 2px 2px 0;
 }
 
 .launch-pane > .jfx-button > StackPane > .jfx-rippler {
     -jfx-rippler-fill: -monet-on-primary-container;
     -jfx-mask-type: CIRCLE;
-    -fx-padding: 0.0;
+    -fx-padding: 0;
 }
 
-.launch-pane > .jfx-button, .jfx-button * {
+.launch-pane > .jfx-button,
+.launch-pane > .jfx-button * {
     -fx-text-fill: -monet-on-primary-container;
     -fx-font-size: 14px;
 }
 
 .launch-pane .svg {
     -fx-fill: -monet-on-primary-container;
-}
-
-.launch-pane > Rectangle {
-    -fx-fill: -monet-on-surface-variant;
 }
 
 /*******************************************************************************
