@@ -171,7 +171,7 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         public void applyMetadata(GameRule metadataSource) {
             if (metadataSource instanceof BooleanGameRule source) {
                 this.setDisplayI18nKey(source.getDisplayI18nKey());
-                this.defaultValue.addAll(source.defaultValue);
+                this.defaultValue.putAll(source.defaultValue);
             }
         }
 
@@ -197,11 +197,11 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         }
 
         private void addDefaultValue(boolean value) {
-            defaultValue.addValueInMinVersion("1.4.2", value);
+            defaultValue.putMinVersion("1.4.2", value);
         }
 
         private void addDefaultValue(String versionName, boolean value) {
-            defaultValue.addValueInMinVersion(versionName, value);
+            defaultValue.putMinVersion(versionName, value);
         }
 
         public boolean getValue() {
@@ -234,9 +234,9 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         public void applyMetadata(GameRule metadataSource) {
             if (metadataSource instanceof IntGameRule source) {
                 this.setDisplayI18nKey(source.getDisplayI18nKey());
-                this.defaultValue.addAll(source.defaultValue);
-                this.maxValue.addAll(source.maxValue);
-                this.minValue.addAll(source.minValue);
+                this.defaultValue.putAll(source.defaultValue);
+                this.maxValue.putAll(source.maxValue);
+                this.minValue.putAll(source.minValue);
             }
         }
 
@@ -285,11 +285,11 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         }
 
         private void addDefaultValue(int value) {
-            this.defaultValue.addValueInMinVersion("1.4.2", value);
+            this.defaultValue.putMinVersion("1.4.2", value);
         }
 
         private void addDefaultValue(String versionName, int value) {
-            this.defaultValue.addValueInMinVersion(versionName, value);
+            this.defaultValue.putMinVersion(versionName, value);
         }
 
         public int getValue() {
@@ -301,27 +301,27 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         }
 
         public int getMaxValue(GameVersionNumber gameVersionNumber) {
-            return this.maxValue.getValue(gameVersionNumber).orElse(Integer.MAX_VALUE);
+            return this.maxValue.getValue(gameVersionNumber, Integer.MAX_VALUE);
         }
 
         public void addMaxValue(int maxValue) {
-            this.maxValue.addValueInMinVersion("1.4.2", maxValue);
+            this.maxValue.putMinVersion("1.4.2", maxValue);
         }
 
         public void addMaxValue(String versionName, int maxValue) {
-            this.maxValue.addValueInMinVersion(versionName, maxValue);
+            this.maxValue.putMinVersion(versionName, maxValue);
         }
 
         public int getMinValue(GameVersionNumber gameVersionNumber) {
-            return minValue.getValue(gameVersionNumber).orElse(Integer.MIN_VALUE);
+            return minValue.getValue(gameVersionNumber, Integer.MIN_VALUE);
         }
 
         public void addMinValue(int minValue) {
-            this.minValue.addValueInMinVersion("1.4.2", minValue);
+            this.minValue.putMinVersion("1.4.2", minValue);
         }
 
         public void addMinValue(String versionName, int minValue) {
-            this.minValue.addValueInMinVersion(versionName, minValue);
+            this.minValue.putMinVersion(versionName, minValue);
         }
     }
 

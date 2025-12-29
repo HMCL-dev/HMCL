@@ -37,27 +37,35 @@ public class VersionedValue<T> {
     public VersionedValue() {
     }
 
-    public VersionedValue(String version, T value) {
-        versionValues.put(GameVersionNumber.asGameVersion(version), value);
+    public VersionedValue(String minVersion, T value) {
+        versionValues.put(GameVersionNumber.asGameVersion(minVersion), value);
     }
 
-    public void addValueInMinVersion(String version, T value) {
+    public void putMinVersion(String version, T value) {
         versionValues.put(GameVersionNumber.asGameVersion(version), value);
     }
 
     public Optional<T> getValue(String version) {
-        return Optional.ofNullable(versionValues.floorEntry(GameVersionNumber.asGameVersion(version))).map(Map.Entry::getValue);
+        return getValue(GameVersionNumber.asGameVersion(version));
     }
 
     public Optional<T> getValue(GameVersionNumber version) {
         return Optional.ofNullable(versionValues.floorEntry(version)).map(Map.Entry::getValue);
     }
 
-    public TreeMap<GameVersionNumber, T> getVersionValue() {
+    public T getValue(String version, T defaultValue) {
+        return getValue(version).orElse(defaultValue);
+    }
+
+    public T getValue(GameVersionNumber version, T defaultValue) {
+        return getValue(version).orElse(defaultValue);
+    }
+
+    public TreeMap<GameVersionNumber, T> asMap() {
         return versionValues;
     }
 
-    public void addAll(VersionedValue<T> v) {
-        versionValues.putAll(v.getVersionValue());
+    public void putAll(VersionedValue<T> other) {
+        versionValues.putAll(other.asMap());
     }
 }

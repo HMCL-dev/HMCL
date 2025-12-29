@@ -49,7 +49,7 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> {
     private CompoundTag levelDat;
 
     ObservableList<GameRuleInfo<?>> gameRuleList;
-    private boolean isResettingAll = false;
+    private boolean batchUpdating = false;
 
     public GameRulePage(WorldManagePage worldManagePage) {
         this.worldManagePage = worldManagePage;
@@ -81,8 +81,7 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> {
 
     public void updateControls() {
         CompoundTag dataTag = levelDat.get("Data");
-        CompoundTag gameRuleCompoundTag;
-        gameRuleCompoundTag = dataTag.get("game_rules");
+        CompoundTag gameRuleCompoundTag = dataTag.get("game_rules");
         if (gameRuleCompoundTag == null) {
             gameRuleCompoundTag = dataTag.get("GameRules");
         }
@@ -96,15 +95,11 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> {
             GameRule.createGameRuleNBT(gameRuleTag).ifPresent(gameRuleNBT -> {
                 GameRule.getFullGameRule(gameRuleTag).ifPresent(gameRule -> {
                     if (gameRule instanceof GameRule.IntGameRule intGameRule) {
-                        @SuppressWarnings("unchecked")
-                        GameRuleNBT<String, Tag> typedGameRuleNBT = (GameRuleNBT<String, Tag>) gameRuleNBT;
-
-                        gameRuleList.add(new GameRuleInfo.IntGameRuleInfo(intGameRule, typedGameRuleNBT, this::saveLevelDatIfNotResettingAll, world.getGameVersion()));
+                        @SuppressWarnings("unchecked") GameRuleNBT<String, Tag> typedGameRuleNBT = (GameRuleNBT<String, Tag>) gameRuleNBT;
+                        gameRuleList.add(new GameRuleInfo.IntGameRuleInfo(intGameRule, typedGameRuleNBT, this::saveLevelDatIfNotInBatchUpdating, world.getGameVersion()));
                     } else if (gameRule instanceof GameRule.BooleanGameRule booleanGameRule) {
-                        @SuppressWarnings("unchecked")
-                        GameRuleNBT<Boolean, Tag> typedGameRuleNBT = (GameRuleNBT<Boolean, Tag>) gameRuleNBT;
-
-                        gameRuleList.add(new GameRuleInfo.BooleanGameRuleInfo(booleanGameRule, typedGameRuleNBT, this::saveLevelDatIfNotResettingAll, world.getGameVersion()));
+                        @SuppressWarnings("unchecked") GameRuleNBT<Boolean, Tag> typedGameRuleNBT = (GameRuleNBT<Boolean, Tag>) gameRuleNBT;
+                        gameRuleList.add(new GameRuleInfo.BooleanGameRuleInfo(booleanGameRule, typedGameRuleNBT, this::saveLevelDatIfNotInBatchUpdating, world.getGameVersion()));
                     }
                 });
             });
@@ -116,12 +111,12 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> {
         return new GameRulePageSkin(this);
     }
 
-    public boolean isResettingAll() {
-        return isResettingAll;
+    public boolean isBatchUpdating() {
+        return batchUpdating;
     }
 
-    public void setIsResettingAll(boolean isResettingAll) {
-        this.isResettingAll = isResettingAll;
+    public void setBatchUpdating(boolean isResettingAll) {
+        this.batchUpdating = isResettingAll;
     }
 
     private CompoundTag loadWorldInfo() throws IOException {
@@ -141,24 +136,24 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> {
                 })).start();
     }
 
-    void saveLevelDatIfNotResettingAll() {
-        if (!isResettingAll) {
+    void saveLevelDatIfNotInBatchUpdating() {
+        if (!batchUpdating) {
             saveLevelDat();
         }
     }
 
     void resettingAllGameRule() {
-        isResettingAll = true;
+        batchUpdating = true;
         for (GameRuleInfo<?> gameRuleInfo : getItems()) {
             gameRuleInfo.resetValue();
         }
         saveLevelDat();
-        isResettingAll = false;
+        batchUpdating = false;
         Controllers.showToast(i18n("gamerule.restore_default_values_all.finish.toast"));
     }
 
     @NotNull Predicate<GameRuleInfo<?>> updateSearchPredicate(String queryString) {
-        if (queryString.isBlank()) {
+        if (StringUtils.isBlank(queryString)) {
             return gameRuleInfo -> true;
         }
 
@@ -168,7 +163,7 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> {
                 Pattern pattern = Pattern.compile(StringUtils.substringAfter(queryString, "regex:"));
                 stringPredicate = s -> s != null && pattern.matcher(s).find();
             } catch (Exception e) {
-                return dataPack -> false;
+                return gameRuleInfo -> false;
             }
         } else {
             String lowerCaseFilter = queryString.toLowerCase(Locale.ROOT);

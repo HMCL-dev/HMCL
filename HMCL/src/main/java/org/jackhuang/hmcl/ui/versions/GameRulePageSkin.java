@@ -44,63 +44,64 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 class GameRulePageSkin extends SkinBase<GameRulePage> {
 
-    private final HBox searchBar;
+    private final HBox toolBar;
     private final JFXTextField searchField;
     JFXListView<GameRuleInfo<?>> listView = new JFXListView<>();
-    private final FilteredList<GameRuleInfo<?>> filteredList;
-    private final FilteredList<GameRuleInfo<?>> notInDefaultValueList;
+    private final FilteredList<GameRuleInfo<?>> displayedItems;
+    private final FilteredList<GameRuleInfo<?>> modifiedItems;
 
     GameRulePageSkin(GameRulePage skinnable) {
         super(skinnable);
-        StackPane pane = new StackPane();
-        pane.setPadding(new Insets(10));
-        pane.getStyleClass().addAll("notice-pane");
-
         ComponentList root = new ComponentList();
-        root.getStyleClass().add("no-padding");
+        StackPane pane = new StackPane(root);
+        {
+            pane.setPadding(new Insets(10));
+            pane.getStyleClass().addAll("notice-pane");
+            root.getStyleClass().add("no-padding");
 
-        filteredList = new FilteredList<>(skinnable.getItems());
-        notInDefaultValueList = new FilteredList<>(skinnable.getItems());
-        notInDefaultValueList.setPredicate(gameRuleInfo -> !gameRuleInfo.getIsDefault().getAsBoolean());
+            getChildren().add(pane);
+        }
+
+        displayedItems = new FilteredList<>(skinnable.getItems());
+        modifiedItems = new FilteredList<>(skinnable.getItems(), GameRuleInfo::getModified);
 
         {
-            JFXButton resetAllButton = createToolbarButton2(i18n("gamerule.restore_default_values_all"), SVG.RESTORE, () -> {
-                //Controllers.confirm(i18n("gamerule.restore_default_values_all.confirm"), i18n("message.warning"), MessageDialogPane.MessageType.WARNING, skinnable::resettingAllGameRule, null);
-                Controllers.dialog(new ResetDefaultValuesLayout(skinnable::resettingAllGameRule, notInDefaultValueList));
-            });
+            toolBar = new HBox();
+            toolBar.setAlignment(Pos.CENTER);
+            toolBar.setPadding(new Insets(0, 5, 0, 5));
 
-            searchBar = new HBox();
-            searchBar.setAlignment(Pos.CENTER);
-            searchBar.setPadding(new Insets(0, 5, 0, 5));
+            JFXButton resetAllButton = createToolbarButton2(i18n("gamerule.restore_default_values_all"), SVG.RESTORE,
+                    () -> Controllers.dialog(new ResetDefaultValuesLayout(skinnable::resettingAllGameRule, modifiedItems)));
+
             searchField = new JFXTextField();
-            searchField.setPromptText(i18n("search"));
-            PauseTransition pause = new PauseTransition(Duration.millis(100));
-            pause.setOnFinished(event -> filteredList.setPredicate(skinnable.updateSearchPredicate(searchField.getText())));
-            searchField.textProperty().addListener((observable) -> {
-                pause.setRate(1);
-                pause.playFromStart();
-            });
-            HBox.setHgrow(searchField, Priority.ALWAYS);
+            {
+                searchField.setPromptText(i18n("search"));
+                PauseTransition pause = new PauseTransition(Duration.millis(100));
+                pause.setOnFinished(event -> displayedItems.setPredicate(skinnable.updateSearchPredicate(searchField.getText())));
+                searchField.textProperty().addListener((observable) -> {
+                    pause.setRate(1);
+                    pause.playFromStart();
+                });
+                HBox.setHgrow(searchField, Priority.ALWAYS);
+            }
 
-            JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE,
-                    searchField::clear);
+            JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE, searchField::clear);
             FXUtils.onEscPressed(searchField, closeSearchBar::fire);
-            searchBar.getChildren().addAll(resetAllButton, searchField, closeSearchBar);
-            root.getContent().add(searchBar);
+
+            toolBar.getChildren().addAll(resetAllButton, searchField, closeSearchBar);
+            root.getContent().add(toolBar);
         }
 
         SpinnerPane center = new SpinnerPane();
-        ComponentList.setVgrow(center, Priority.ALWAYS);
-        center.getStyleClass().add("large-spinner-pane");
-        center.setContent(listView);
-        listView.setItems(filteredList);
-        listView.setCellFactory(x -> new GameRuleListCell(listView));
-        FXUtils.ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
-        root.getContent().add(center);
-
-        pane.getChildren().add(root);
-        getChildren().add(pane);
-
+        {
+            ComponentList.setVgrow(center, Priority.ALWAYS);
+            center.getStyleClass().add("large-spinner-pane");
+            center.setContent(listView);
+            listView.setItems(displayedItems);
+            listView.setCellFactory(x -> new GameRuleListCell(listView));
+            FXUtils.ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
+            root.getContent().add(center);
+        }
     }
 
     static class GameRuleListCell extends MDListCell<GameRuleInfo<?>> {
@@ -117,7 +118,7 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
     }
 
     static class ResetDefaultValuesLayout extends JFXDialogLayout {
-        public ResetDefaultValuesLayout(Runnable resettingAllGameRule, FilteredList<GameRuleInfo<?>> notInDefaultValueList) {
+        public ResetDefaultValuesLayout(Runnable resettingAllGameRule, FilteredList<GameRuleInfo<?>> modifiedItems) {
 
             {
                 Stage stage = Controllers.getStage();
@@ -125,38 +126,30 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
                 maxHeightProperty().bind(stage.heightProperty().multiply(0.7));
             }
 
+            //heading area
             setHeading(new Label(i18n("gamerule.restore_default_values_all")));
 
+            //body area
             VBox vBox = new VBox();
             {
                 vBox.setSpacing(10);
                 setBody(vBox);
             }
             {
-                Label warnLabel = notInDefaultValueList.isEmpty() ? new Label(i18n("gamerule.all_is_default")) : new Label(i18n("gamerule.restore_default_values_all.confirm"));
+                Label warnLabel = modifiedItems.isEmpty() ? new Label(i18n("gamerule.all_is_default")) : new Label(i18n("gamerule.restore_default_values_all.confirm"));
                 vBox.getChildren().add(warnLabel);
 
-                if (!notInDefaultValueList.isEmpty()) {
+                if (!modifiedItems.isEmpty()) {
 
                     MenuUpDownButton showDetailButton = new MenuUpDownButton();
                     {
                         showDetailButton.setText(i18n("gamerule.show_modified_details.button"));
                         showDetailButton.setMaxWidth(USE_PREF_SIZE);
+
+                        vBox.getChildren().add(showDetailButton);
                     }
 
-                    ScrollPane scrollPane = new ScrollPane();
                     GridPane gridPane = new GridPane();
-                    {
-                        gridPane.setHgap(10);
-                        gridPane.setVgap(10);
-                        scrollPane.setContent(gridPane);
-                        scrollPane.visibleProperty().bind(showDetailButton.selectedProperty());
-                        scrollPane.managedProperty().bind(showDetailButton.selectedProperty());
-                        FXUtils.smoothScrolling(scrollPane);
-
-                        VBox.setMargin(scrollPane, new Insets(5, 10, 5, 10));
-                        vBox.getChildren().addAll(showDetailButton, scrollPane);
-                    }
                     {
                         gridPane.addRow(0,
                                 new Label(i18n("gamerule.column.name")),
@@ -164,39 +157,49 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
                                 new Label("->"),
                                 new Label(i18n("gamerule.column.default")));
 
-                        for (int i = 0; i < notInDefaultValueList.size(); i++) {
-                            GameRuleInfo<?> gameRuleInfo = notInDefaultValueList.get(i);
-                            String oldValue = gameRuleInfo.getCurrentValueText();
-                            String newValue = gameRuleInfo.getDefaultValueText();
+                        for (int i = 0; i < modifiedItems.size(); i++) {
+                            GameRuleInfo<?> gameRuleInfo = modifiedItems.get(i);
+                            String displayName = StringUtils.isNotBlank(gameRuleInfo.getDisplayName()) ? gameRuleInfo.getDisplayName() : gameRuleInfo.getRuleKey();
                             gridPane.addRow(i + 1,
-                                    new Label(StringUtils.isNotBlank(gameRuleInfo.getDisplayName()) ? gameRuleInfo.getDisplayName() : gameRuleInfo.getRuleKey()),
-                                    new Label(oldValue),
+                                    new Label(displayName),
+                                    new Label(gameRuleInfo.getCurrentValueText()),
                                     new Label("->"),
-                                    new Label(newValue));
+                                    new Label(gameRuleInfo.getDefaultValueText()));
                         }
+                    }
 
+                    ScrollPane scrollPane = new ScrollPane(gridPane);
+                    {
+                        gridPane.setHgap(10);
+                        gridPane.setVgap(10);
+
+                        scrollPane.visibleProperty().bind(showDetailButton.selectedProperty());
+                        scrollPane.managedProperty().bind(showDetailButton.selectedProperty());
+                        VBox.setMargin(scrollPane, new Insets(5, 10, 5, 10));
+                        FXUtils.smoothScrolling(scrollPane);
+
+                        vBox.getChildren().addAll(scrollPane);
                     }
                 }
             }
 
+            //action area
             JFXButton accept = new JFXButton(i18n("button.ok"));
             {
                 accept.getStyleClass().add("dialog-accept");
-                if (!notInDefaultValueList.isEmpty()) {
+                if (!modifiedItems.isEmpty()) {
                     accept.setOnAction(event -> {
                         resettingAllGameRule.run();
                         fireEvent(new DialogCloseEvent());
                     });
                 } else {
-                    accept.setOnAction(event -> {
-                        fireEvent(new DialogCloseEvent());
-                    });
+                    accept.setOnAction(event -> fireEvent(new DialogCloseEvent()));
                 }
             }
             JFXButton reject = new JFXButton(i18n("button.cancel"));
             {
-                reject.setOnAction(event -> fireEvent(new DialogCloseEvent()));
                 reject.getStyleClass().add("dialog-cancel");
+                reject.setOnAction(event -> fireEvent(new DialogCloseEvent()));
             }
             setActions(accept, reject);
 
