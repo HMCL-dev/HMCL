@@ -450,7 +450,7 @@ public final class GameVersionNumberTest {
         assertNormalized("1.16_combat-4", "Combat Test 8");
         assertNormalized("1.16_combat-5", "Combat Test 8b");
         assertNormalized("1.16_combat-6", "Combat Test 8c");
-        assertNormalized("1.18_experimental-snapshot-1", "1.18 experimental snapshot 1");
+        assertNormalized("1.18_experimental-snapshot-1", "1.18 Experimental Snapshot 1");
         assertNormalized("1.18_experimental-snapshot-2", "1.18 experimental snapshot 2");
         assertNormalized("1.18_experimental-snapshot-3", "1.18 experimental snapshot 3");
         assertNormalized("1.18_experimental-snapshot-4", "1.18 experimental snapshot 4");
