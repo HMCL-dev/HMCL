@@ -126,8 +126,8 @@ public abstract class TerracottaConfigUpgradeTask extends DefaultTask {
                     }
                     String name = split[0];
 
-                    try (InputStream is = reader.getInputStream(archiveEntry); OutputStream os = new DigestOutputStream(OutputStream.nullOutputStream(), digest)) {
-                        is.transferTo(os);
+                    try (InputStream is = new DigestInputStream(reader.getInputStream(archiveEntry), digest)) {
+                        is.transferTo(OutputStream.nullOutputStream());
                     }
                     String hash = hexFormat.formatHex(digest.digest());
 
@@ -136,6 +136,9 @@ public abstract class TerracottaConfigUpgradeTask extends DefaultTask {
             }
 
             bundles.put(classifier, new Bundle(bundleHash, bundleContents));
+
+            Files.delete(bundle);
+            Files.delete(decompressedBundle);
         }
 
         config.add("__comment__", new JsonPrimitive("THIS FILE IS MACHINE GENERATED! DO NOT EDIT!"));
