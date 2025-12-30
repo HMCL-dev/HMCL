@@ -18,12 +18,11 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.*;
-import com.jfoenix.controls.datamodels.treetable.RecursiveTreeObject;
 import javafx.animation.PauseTransition;
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
-import javafx.beans.value.ChangeListener;
 import javafx.collections.ListChangeListener;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
@@ -46,7 +45,6 @@ import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -61,7 +59,6 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
@@ -95,9 +92,6 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
     // FXThread
     private boolean isSearching = false;
 
-    @SuppressWarnings({"FieldCanBeLocal", "unused"})
-    private final ChangeListener<Boolean> holder;
-
     ModListPageSkin(ModListPage skinnable) {
         super(skinnable);
 
@@ -108,12 +102,6 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         ComponentList root = new ComponentList();
         root.getStyleClass().add("no-padding");
         listView = new JFXListView<>();
-
-        this.holder = FXUtils.onWeakChange(skinnable.loadingProperty(), loading -> {
-            if (!loading) {
-                listView.scrollTo(0);
-            }
-        });
 
         {
             toolbarPane = new TransitionPane();
@@ -152,8 +140,8 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             toolbarNormal.getChildren().setAll(
                     createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
                     createToolbarButton2(i18n("mods.add"), SVG.ADD, skinnable::add),
-                    createToolbarButton2(i18n("folder.mod"), SVG.FOLDER_OPEN, skinnable::openModFolder),
-                    createToolbarButton2(i18n("mods.check_updates"), SVG.UPDATE, skinnable::checkUpdates),
+                    createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, skinnable::openModFolder),
+                    createToolbarButton2(i18n("mods.check_updates.button"), SVG.UPDATE, skinnable::checkUpdates),
                     createToolbarButton2(i18n("download"), SVG.DOWNLOAD, skinnable::download),
                     createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar))
             );
@@ -201,8 +189,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             center.getStyleClass().add("large-spinner-pane");
             center.loadingProperty().bind(skinnable.loadingProperty());
 
-            Holder<Object> lastCell = new Holder<>();
-            listView.setCellFactory(x -> new ModInfoListCell(listView, lastCell));
+            listView.setCellFactory(x -> new ModInfoListCell(listView));
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
             Bindings.bindContent(listView.getItems(), skinnable.getItems());
             skinnable.getItems().addListener((ListChangeListener<? super ModInfoObject>) c -> {
@@ -243,7 +230,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         if (newToolbar != oldToolbar) {
             toolbarPane.setContent(newToolbar, ContainerAnimations.FADE);
             if (newToolbar == searchBar) {
-                searchField.requestFocus();
+                Platform.runLater(searchField::requestFocus);
             }
         }
     }
@@ -289,7 +276,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         }
     }
 
-    static final class ModInfoObject extends RecursiveTreeObject<ModInfoObject> implements Comparable<ModInfoObject> {
+    static final class ModInfoObject {
         private final BooleanProperty active;
         private final LocalModFile localModFile;
         private final @Nullable ModTranslations.Mod modTranslations;
@@ -402,12 +389,6 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
                 imageView.setImage(image);
             }, Schedulers.javafx());
-        }
-
-        @Override
-        public int compareTo(@NotNull ModListPageSkin.ModInfoObject o) {
-            return localModFile.getFileName().toLowerCase(Locale.ROOT)
-                    .compareTo(o.localModFile.getFileName().toLowerCase(Locale.ROOT));
         }
     }
 
@@ -580,8 +561,8 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
         Tooltip warningTooltip;
 
-        ModInfoListCell(JFXListView<ModInfoObject> listView, Holder<Object> lastCell) {
-            super(listView, lastCell);
+        ModInfoListCell(JFXListView<ModInfoObject> listView) {
+            super(listView);
 
             this.getStyleClass().add("mod-info-list-cell");
 
@@ -598,15 +579,15 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             imageView.setImage(VersionIconType.COMMAND.getIcon());
 
             restoreButton.getStyleClass().add("toggle-icon4");
-            restoreButton.setGraphic(FXUtils.limitingSize(SVG.RESTORE.createIcon(Theme.blackFill(), 24), 24, 24));
+            restoreButton.setGraphic(FXUtils.limitingSize(SVG.RESTORE.createIcon(24), 24, 24));
 
             FXUtils.installFastTooltip(restoreButton, i18n("mods.restore"));
 
             revealButton.getStyleClass().add("toggle-icon4");
-            revealButton.setGraphic(FXUtils.limitingSize(SVG.FOLDER.createIcon(Theme.blackFill(), 24), 24, 24));
+            revealButton.setGraphic(FXUtils.limitingSize(SVG.FOLDER.createIcon(24), 24, 24));
 
             infoButton.getStyleClass().add("toggle-icon4");
-            infoButton.setGraphic(FXUtils.limitingSize(SVG.INFO.createIcon(Theme.blackFill(), 24), 24, 24));
+            infoButton.setGraphic(FXUtils.limitingSize(SVG.INFO.createIcon(24), 24, 24));
 
             container.getChildren().setAll(checkBox, imageView, content, restoreButton, revealButton, infoButton);
 
@@ -630,6 +611,8 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
             LocalModFile modInfo = dataItem.getModInfo();
             ModTranslations.Mod modTranslations = dataItem.getModTranslations();
+
+            ModLoaderType modLoaderType = modInfo.getModLoaderType();
 
             dataItem.loadIcon(imageView, new WeakReference<>(this.itemProperty()));
 
@@ -656,16 +639,16 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             content.setTitle(displayName);
 
             StringJoiner joiner = new StringJoiner(" | ");
-
-            if (StringUtils.isNotBlank(modInfo.getId()))
+            if (modLoaderType != ModLoaderType.UNKNOWN && StringUtils.isNotBlank(modInfo.getId()))
                 joiner.add(modInfo.getId());
 
             joiner.add(FileUtils.getName(modInfo.getFile()));
 
             content.setSubtitle(joiner.toString());
 
-            ModLoaderType modLoaderType = modInfo.getModLoaderType();
-            if (!ModListPageSkin.this.getSkinnable().supportedLoaders.contains(modLoaderType)) {
+            if (modLoaderType == ModLoaderType.UNKNOWN) {
+                content.addTagWarning(i18n("mods.unknown"));
+            } else if (!ModListPageSkin.this.getSkinnable().supportedLoaders.contains(modLoaderType)) {
                 warning.add(i18n("mods.warning.loader_mismatch"));
                 switch (dataItem.getModInfo().getModLoaderType()) {
                     case FORGE:

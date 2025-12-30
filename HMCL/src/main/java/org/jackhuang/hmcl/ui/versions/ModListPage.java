@@ -104,7 +104,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
             lock.lock();
             try {
                 modManager.refreshMods();
-                return modManager.getMods();
+                return modManager.getMods().stream().map(ModListPageSkin.ModInfoObject::new).toList();
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             } finally {
@@ -114,7 +114,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
             updateSupportedLoaders(modManager);
 
             if (exception == null) {
-                getItems().setAll(list.stream().map(ModListPageSkin.ModInfoObject::new).toList());
+                getItems().setAll(list);
             } else {
                 LOG.warning("Failed to load mods", exception);
                 getItems().clear();
@@ -244,11 +244,11 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                             } else if (result.isEmpty()) {
                                 Controllers.dialog(i18n("mods.check_updates.empty"));
                             } else {
-                                Controllers.navigate(new ModUpdatesPage(modManager, result));
+                                Controllers.navigateForward(new ModUpdatesPage(modManager, result));
                             }
                         })
-                        .withStagesHint(Collections.singletonList("mods.check_updates")),
-                i18n("update.checking"), TaskCancellationAction.NORMAL);
+                        .withStagesHint(Collections.singletonList("update.checking")),
+                i18n("mods.check_updates"), TaskCancellationAction.NORMAL);
 
         if (profile.getRepository().isModpack(instanceId)) {
             Controllers.confirm(

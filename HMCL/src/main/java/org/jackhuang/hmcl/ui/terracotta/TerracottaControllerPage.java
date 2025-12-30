@@ -34,22 +34,17 @@ import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.Clipboard;
-import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.terracotta.TerracottaManager;
@@ -62,14 +57,10 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.ComponentSublist;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
-import org.jackhuang.hmcl.ui.construct.RipplerContainer;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
-import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
 import org.jackhuang.hmcl.util.logging.Logger;
@@ -86,7 +77,6 @@ import java.util.Locale;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class TerracottaControllerPage extends StackPane {
@@ -138,13 +128,13 @@ public class TerracottaControllerPage extends StackPane {
             TerracottaState state = UI_STATE.get(), next;
             if (state instanceof TerracottaState.Uninitialized || state instanceof TerracottaState.Preparing preparing && preparing.hasInstallFence()) {
                 if (state instanceof TerracottaState.Uninitialized uninitialized && !uninitialized.hasLegacy()) {
-                    Controllers.confirmActionDanger(i18n("terracotta.confirm.desc"), i18n("terracotta.confirm.title"), () -> {
-                        TerracottaState.Preparing s = TerracottaManager.install(path);
-                        if (s != null) {
-                            UI_STATE.set(s);
-                        }
-                    }, () -> {
-                    });
+                    Controllers.confirmWithCountdown(i18n("terracotta.confirm.desc"), i18n("terracotta.confirm.title"), 5,
+                            MessageDialogPane.MessageType.INFO, () -> {
+                                TerracottaState.Preparing s = TerracottaManager.install(path);
+                                if (s != null) {
+                                    UI_STATE.set(s);
+                                }
+                            }, null);
                     return;
                 }
 
@@ -177,6 +167,7 @@ public class TerracottaControllerPage extends StackPane {
                 progressProperty.set(0);
 
                 TextFlow body = FXUtils.segmentToTextFlow(i18n("terracotta.confirm.desc"), Controllers::onHyperlinkAction);
+                body.getStyleClass().add("terracotta-hint");
                 body.setLineSpacing(4);
 
                 LineButton download = LineButton.of();
@@ -185,31 +176,20 @@ public class TerracottaControllerPage extends StackPane {
                 download.setSubtitle(i18n("terracotta.status.uninitialized.desc"));
                 download.setRightIcon(SVG.ARROW_FORWARD);
                 FXUtils.onClicked(download, () -> {
-                    if (globalConfig().getTerracottaAgreementVersion() >= 1) {
-                        TerracottaState.Preparing s = TerracottaManager.install(null);
-                        if (s != null) {
-                            UI_STATE.set(s);
-                        }
+                    TerracottaState.Preparing s = TerracottaManager.install(null);
+                    if (s != null) {
+                        UI_STATE.set(s);
+                    }
 
-                        if (uninitialized.hasLegacy() && I18n.isUseChinese()) {
-                            Object feedback = config().getShownTips().get(FEEDBACK_TIP);
-                            if (!(feedback instanceof Number number) || number.intValue() < 1) {
-                                Controllers.confirm(i18n("terracotta.feedback.desc"), i18n("terracotta.feedback.title"), () -> {
-                                    FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK);
-                                    config().getShownTips().put(FEEDBACK_TIP, 1);
-                                }, () -> {
-                                });
-                            }
+                    if (uninitialized.hasLegacy() && I18n.isUseChinese()) {
+                        Object feedback = config().getShownTips().get(FEEDBACK_TIP);
+                        if (!(feedback instanceof Number number) || number.intValue() < 1) {
+                            Controllers.confirm(i18n("terracotta.feedback.desc"), i18n("terracotta.feedback.title"), () -> {
+                                FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK);
+                                config().getShownTips().put(FEEDBACK_TIP, 1);
+                            }, () -> {
+                            });
                         }
-                    } else {
-                        Controllers.confirmActionDanger(i18n("terracotta.confirm.desc"), i18n("terracotta.confirm.title"), () -> {
-                            globalConfig().setTerracottaAgreementVersion(1);
-                            TerracottaState.Preparing s = TerracottaManager.install(null);
-                            if (s != null) {
-                                UI_STATE.set(s);
-                            }
-                        }, () -> {
-                        });
                     }
                 });
 
@@ -231,6 +211,7 @@ public class TerracottaControllerPage extends StackPane {
                 progressProperty.set(1);
 
                 TextFlow flow = FXUtils.segmentToTextFlow(i18n("terracotta.confirm.desc"), Controllers::onHyperlinkAction);
+                flow.getStyleClass().add("terracotta-hint");
                 flow.setLineSpacing(4);
 
                 LineButton host = LineButton.of();
@@ -251,7 +232,10 @@ public class TerracottaControllerPage extends StackPane {
                                 MessageDialogPane.MessageType.QUESTION
                         ).addAction(i18n("version.launch"), () -> {
                             Profile profile = Profiles.getSelectedProfile();
-                            Versions.launch(profile, profile.getSelectedVersion(), LauncherHelper::setKeep);
+                            Versions.launch(profile, profile.getSelectedVersion(), launcherHelper -> {
+                                launcherHelper.setKeep();
+                                launcherHelper.setDisableOfflineSkin();
+                            });
                         }).addCancel(i18n("terracotta.status.waiting.host.launch.skip"), () -> {
                             TerracottaState.HostScanning s1 = TerracottaManager.setScanning();
                             if (s1 != null) {
@@ -302,6 +286,7 @@ public class TerracottaControllerPage extends StackPane {
                 progressProperty.set(-1);
 
                 TextFlow body = FXUtils.segmentToTextFlow(i18n("terracotta.status.scanning.desc"), Controllers::onHyperlinkAction);
+                body.getStyleClass().add("terracotta-hint");
                 body.setLineSpacing(4);
 
                 LineButton room = LineButton.of();
@@ -342,6 +327,7 @@ public class TerracottaControllerPage extends StackPane {
                     return;
                 } else {
                     String cs = hostOK.getCode();
+                    copyCode(cs);
 
                     statusProperty.set(i18n("terracotta.status.host_ok"));
                     progressProperty.set(1);
@@ -350,36 +336,24 @@ public class TerracottaControllerPage extends StackPane {
                     code.setAlignment(Pos.CENTER);
                     {
                         Label desc = new Label(i18n("terracotta.status.host_ok.code"));
-                        {
-                            ClipboardContent cp = new ClipboardContent();
-                            cp.putString(cs);
-                            Clipboard.getSystemClipboard().setContent(cp);
-                        }
+                        desc.setMouseTransparent(true);
 
-                        // FIXME: The implementation to display Room Code is ambiguous. Consider using a clearer JavaFX Element in the future.
-                        TextField label = new TextField(cs);
-                        label.setEditable(false);
-                        label.setFocusTraversable(false);
+                        Label label = new Label(cs);
+                        label.setMouseTransparent(true);
+                        label.setStyle("-fx-font-size: 24");
                         label.setAlignment(Pos.CENTER);
-                        label.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
                         VBox.setMargin(label, new Insets(10, 0, 10, 0));
-                        label.setScaleX(1.8);
-                        label.setScaleY(1.8);
-                        holder.add(FXUtils.onWeakChange(label.selectedTextProperty(), string -> {
-                            if (string != null && !string.isEmpty() && !cs.equals(string)) {
-                                label.selectAll();
-                            }
-                        }));
 
                         code.getChildren().setAll(desc, label);
                     }
-                    FXUtils.onClicked(code, () -> FXUtils.copyText(cs));
+                    code.setCursor(Cursor.HAND);
+                    FXUtils.onClicked(code, () -> copyCode(cs));
 
                     LineButton copy = LineButton.of();
                     copy.setLeftIcon(SVG.CONTENT_COPY);
                     copy.setTitle(i18n("terracotta.status.host_ok.code.copy"));
                     copy.setSubtitle(i18n("terracotta.status.host_ok.code.desc"));
-                    FXUtils.onClicked(copy, () -> FXUtils.copyText(cs));
+                    FXUtils.onClicked(copy, () -> copyCode(cs));
 
                     LineButton back = LineButton.of();
                     back.setLeftIcon(SVG.ARROW_BACK);
@@ -549,14 +523,20 @@ public class TerracottaControllerPage extends StackPane {
                 children.addAll(nodesProperty);
             }
 
-            transition.setContent(components, ContainerAnimations.SWIPE_LEFT_FADE_SHORT);
+            transition.setContent(components, ContainerAnimations.SLIDE_UP_FADE_IN);
         };
         listener.changed(UI_STATE, null, UI_STATE.get());
         holder.add(listener);
         UI_STATE.addListener(new WeakChangeListener<>(listener));
 
         VBox content = new VBox(10);
-        content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("terracotta.status")), transition);
+        content.getChildren().add(ComponentList.createComponentListTitle(i18n("terracotta.status")));
+        if (!LocaleUtils.IS_CHINA_MAINLAND) {
+            HintPane hintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
+            hintPane.setText(i18n("terracotta.unsupported.region"));
+            content.getChildren().add(hintPane);
+        }
+        content.getChildren().add(transition);
         content.setPadding(new Insets(10));
         content.setFillWidth(true);
 
@@ -585,7 +565,7 @@ public class TerracottaControllerPage extends StackPane {
             Label description = new Label(link.description().getText(I18n.getLocale().getCandidateLocales()));
             HBox placeholder = new HBox();
             HBox.setHgrow(placeholder, Priority.ALWAYS);
-            Node icon = SVG.OPEN_IN_NEW.createIcon(Theme.blackFill(), 16);
+            Node icon = SVG.OPEN_IN_NEW.createIcon(16);
             node.getChildren().setAll(description, placeholder, icon);
 
             String url = link.link();
@@ -599,6 +579,10 @@ public class TerracottaControllerPage extends StackPane {
             locals.getContent().add(container);
         }
         return locals;
+    }
+
+    private void copyCode(String code) {
+        FXUtils.copyText(code, i18n("terracotta.status.host_ok.code.copy.toast"));
     }
 
     private static final class LineButton extends RipplerContainer {
@@ -647,9 +631,9 @@ public class TerracottaControllerPage extends StackPane {
                         }
 
                         HBox secondLine = new HBox();
+                        secondLine.getStyleClass().add("second-line");
                         {
                             Text text = new Text(button.subTitle.get());
-                            text.setFill(new Color(0, 0, 0, 0.5));
 
                             TextFlow lblSubtitle = new TextFlow(text);
                             lblSubtitle.getStyleClass().add("subtitle");
@@ -692,11 +676,11 @@ public class TerracottaControllerPage extends StackPane {
         }
 
         public void setLeftIcon(SVG left) {
-            this.left.set(left.createIcon(Theme.blackFill(), 28));
+            this.left.set(left.createIcon(28));
         }
 
         public void setRightIcon(SVG right) {
-            this.right.set(right.createIcon(Theme.blackFill(), 28));
+            this.right.set(right.createIcon(28));
         }
     }
 
@@ -728,7 +712,7 @@ public class TerracottaControllerPage extends StackPane {
                 pane.getChildren().add(item);
             }
 
-            this.transition.setContent(pane, ContainerAnimations.SWIPE_LEFT_FADE_SHORT);
+            this.transition.setContent(pane, ContainerAnimations.SLIDE_UP_FADE_IN);
         }
     }
 }

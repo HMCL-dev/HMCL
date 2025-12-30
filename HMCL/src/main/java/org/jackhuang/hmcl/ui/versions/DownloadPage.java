@@ -38,7 +38,6 @@ import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -219,8 +218,10 @@ public class DownloadPage extends Control implements DecoratorPage {
             BorderPane.setMargin(descriptionPane, new Insets(11, 11, 0, 11));
             {
                 ImageView imageView = new ImageView();
+                imageView.setFitWidth(40);
+                imageView.setFitHeight(40);
                 if (StringUtils.isNotBlank(getSkinnable().addon.getIconUrl())) {
-                    imageView.imageProperty().bind(FXUtils.newRemoteImage(getSkinnable().addon.getIconUrl(), 40, 40, true, true));
+                    imageView.imageProperty().bind(FXUtils.newRemoteImage(getSkinnable().addon.getIconUrl(), 80, 80, true, true));
                 }
                 descriptionPane.getChildren().add(FXUtils.limitingSize(imageView, 40, 40));
 
@@ -341,6 +342,8 @@ public class DownloadPage extends Control implements DecoratorPage {
             TwoLineListItem content = new TwoLineListItem();
             HBox.setHgrow(content, Priority.ALWAYS);
             ImageView imageView = new ImageView();
+            imageView.setFitWidth(40);
+            imageView.setFitHeight(40);
             pane.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), content);
 
             RipplerContainer container = new RipplerContainer(pane);
@@ -358,12 +361,12 @@ public class DownloadPage extends Control implements DecoratorPage {
                         .map(page::getLocalizedCategory)
                         .forEach(content::addTag);
                 if (StringUtils.isNotBlank(addon.getIconUrl())) {
-                    imageView.imageProperty().bind(FXUtils.newRemoteImage(addon.getIconUrl(), 40, 40, true, true));
+                    imageView.imageProperty().bind(FXUtils.newRemoteImage(addon.getIconUrl(), 80, 80, true, true));
                 }
             } else {
                 content.setTitle(i18n("mods.broken_dependency.title"));
                 content.setSubtitle(i18n("mods.broken_dependency.desc"));
-                imageView.setImage(FXUtils.newBuiltinImage("/assets/img/icon@8x.png", 40, 40, true, true));
+                imageView.setImage(FXUtils.newBuiltinImage("/assets/img/icon@4x.png"));
             }
         }
     }
@@ -390,15 +393,15 @@ public class DownloadPage extends Control implements DecoratorPage {
                     switch (dataItem.getVersionType()) {
                         case Alpha:
                             content.addTag(i18n("mods.channel.alpha"));
-                            graphicPane.getChildren().setAll(SVG.ALPHA_CIRCLE.createIcon(Theme.blackFill(), 24));
+                            graphicPane.getChildren().setAll(SVG.ALPHA_CIRCLE.createIcon(24));
                             break;
                         case Beta:
                             content.addTag(i18n("mods.channel.beta"));
-                            graphicPane.getChildren().setAll(SVG.BETA_CIRCLE.createIcon(Theme.blackFill(), 24));
+                            graphicPane.getChildren().setAll(SVG.BETA_CIRCLE.createIcon(24));
                             break;
                         case Release:
                             content.addTag(i18n("mods.channel.release"));
-                            graphicPane.getChildren().setAll(SVG.RELEASE_CIRCLE.createIcon(Theme.blackFill(), 24));
+                            graphicPane.getChildren().setAll(SVG.RELEASE_CIRCLE.createIcon(24));
                             break;
                     }
 

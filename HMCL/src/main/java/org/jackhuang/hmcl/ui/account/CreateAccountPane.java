@@ -50,7 +50,6 @@ import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.game.OAuthServer;
 import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.setting.Accounts;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
@@ -264,10 +263,12 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         };
 
         if (factory instanceof OfflineAccountFactory && username != null && (!USERNAME_CHECKER_PATTERN.matcher(username).matches() || username.length() > 16)) {
-            Controllers.confirmActionDanger(i18n("account.methods.offline.name.invalid"), i18n("message.warning"), doCreate, () -> {
-                body.setDisable(false);
-                spinner.hideSpinner();
-            });
+            Controllers.confirmWithCountdown(i18n("account.methods.offline.name.invalid"), i18n("message.warning"), 10,
+                    MessageDialogPane.MessageType.WARNING,
+                    doCreate, () -> {
+                        body.setDisable(false);
+                        spinner.hideSpinner();
+                    });
         } else {
             doCreate.run();
         }
@@ -463,7 +464,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 linksContainer.setMinWidth(USE_PREF_SIZE);
 
                 JFXButton btnAddServer = new JFXButton();
-                btnAddServer.setGraphic(SVG.ADD.createIcon(Theme.blackFill(), 20));
+                btnAddServer.setGraphic(SVG.ADD.createIcon(20));
                 btnAddServer.getStyleClass().add("toggle-icon4");
                 btnAddServer.setOnAction(e -> {
                     Controllers.dialog(new AddAuthlibInjectorServerPane());

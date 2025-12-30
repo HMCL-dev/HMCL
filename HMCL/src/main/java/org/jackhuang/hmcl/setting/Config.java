@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.setting;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
-import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
@@ -35,21 +34,18 @@ import org.hildan.fxgson.factories.JavaFxPropertyTypeAdapterFactory;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.java.JavaRuntime;
+import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.gson.*;
 import org.jackhuang.hmcl.util.i18n.SupportedLocale;
-import org.jackhuang.hmcl.util.javafx.DirtyTracker;
-import org.jackhuang.hmcl.util.javafx.ObservableHelper;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.invoke.MethodHandles;
-import java.lang.reflect.*;
 import java.net.Proxy;
 import java.nio.file.Path;
 import java.util.*;
 
 @JsonAdapter(value = Config.Adapter.class)
-public final class Config implements Observable {
+public final class Config extends ObservableSetting {
 
     public static final int CURRENT_VERSION = 2;
     public static final int CURRENT_UI_VERSION = 0;
@@ -67,54 +63,15 @@ public final class Config implements Observable {
             .setObjectToNumberStrategy(ToNumberPolicy.LONG_OR_DOUBLE)
             .create();
 
-    private static final List<ObservableField<Config>> FIELDS;
-
-    static {
-        final MethodHandles.Lookup lookup = MethodHandles.lookup();
-        Field[] fields = Config.class.getDeclaredFields();
-
-        var configFields = new ArrayList<ObservableField<Config>>(fields.length);
-        for (Field field : fields) {
-            int modifiers = field.getModifiers();
-            if (Modifier.isTransient(modifiers) || Modifier.isStatic(modifiers))
-                continue;
-
-            configFields.add(ObservableField.of(lookup, field));
-        }
-        FIELDS = List.copyOf(configFields);
-    }
-
     @Nullable
     public static Config fromJson(String json) throws JsonParseException {
         return CONFIG_GSON.fromJson(json, Config.class);
     }
 
-    private transient final ObservableHelper helper = new ObservableHelper(this);
-    private transient final DirtyTracker tracker = new DirtyTracker();
-    private transient final Map<String, JsonElement> unknownFields = new HashMap<>();
-
     public Config() {
-        var shouldBeWrite = Collections.<Observable>newSetFromMap(new IdentityHashMap<>());
-        Collections.addAll(shouldBeWrite, configVersion, uiVersion);
-
-        for (var field : FIELDS) {
-            Observable observable = field.get(this);
-            if (shouldBeWrite.contains(observable))
-                tracker.markDirty(observable);
-            else
-                tracker.track(observable);
-            observable.addListener(helper);
-        }
-    }
-
-    @Override
-    public void addListener(InvalidationListener listener) {
-        helper.addListener(listener);
-    }
-
-    @Override
-    public void removeListener(InvalidationListener listener) {
-        helper.removeListener(listener);
+        tracker.markDirty(configVersion);
+        tracker.markDirty(uiVersion);
+        register();
     }
 
     public String toJson() {
@@ -319,19 +276,34 @@ public final class Config implements Observable {
 
     // UI
 
+    @SerializedName("themeBrightness")
+    private final StringProperty themeBrightness = new SimpleStringProperty("light");
+
+    public StringProperty themeBrightnessProperty() {
+        return themeBrightness;
+    }
+
+    public String getThemeBrightness() {
+        return themeBrightness.get();
+    }
+
+    public void setThemeBrightness(String themeBrightness) {
+        this.themeBrightness.set(themeBrightness);
+    }
+
     @SerializedName("theme")
-    private final ObjectProperty<Theme> theme = new SimpleObjectProperty<>();
+    private final ObjectProperty<ThemeColor> themeColor = new SimpleObjectProperty<>(ThemeColor.DEFAULT);
 
-    public ObjectProperty<Theme> themeProperty() {
-        return theme;
+    public ObjectProperty<ThemeColor> themeColorProperty() {
+        return themeColor;
     }
 
-    public Theme getTheme() {
-        return theme.get();
+    public ThemeColor getThemeColor() {
+        return themeColor.get();
     }
 
-    public void setTheme(Theme theme) {
-        this.theme.set(theme);
+    public void setThemeColor(ThemeColor themeColor) {
+        this.themeColor.set(themeColor);
     }
 
     @SerializedName("fontFamily")
@@ -521,7 +493,7 @@ public final class Config implements Observable {
     }
 
     @SerializedName("downloadType")
-    private final StringProperty downloadType = new SimpleStringProperty(DownloadProviders.DEFAULT_RAW_PROVIDER_ID);
+    private final StringProperty downloadType = new SimpleStringProperty(DownloadProviders.DEFAULT_DIRECT_PROVIDER_ID);
 
     public StringProperty downloadTypeProperty() {
         return downloadType;
@@ -551,7 +523,7 @@ public final class Config implements Observable {
     }
 
     @SerializedName("versionListSource")
-    private final StringProperty versionListSource = new SimpleStringProperty("balanced");
+    private final StringProperty versionListSource = new SimpleStringProperty(DownloadProviders.DEFAULT_AUTO_PROVIDER_ID);
 
     public StringProperty versionListSourceProperty() {
         return versionListSource;
@@ -775,53 +747,10 @@ public final class Config implements Observable {
         return configurations;
     }
 
-    public static final class Adapter implements JsonSerializer<Config>, JsonDeserializer<Config> {
-
+    public static final class Adapter extends ObservableSetting.Adapter<Config> {
         @Override
-        public JsonElement serialize(Config config, Type typeOfSrc, JsonSerializationContext context) {
-            if (config == null)
-                return JsonNull.INSTANCE;
-
-            JsonObject result = new JsonObject();
-            for (var field : FIELDS) {
-                Observable observable = field.get(config);
-                if (config.tracker.isDirty(observable)) {
-                    field.serialize(result, config, context);
-                }
-            }
-            config.unknownFields.forEach(result::add);
-            return result;
-        }
-
-        @Override
-        public Config deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-            if (json == null || json.isJsonNull())
-                return null;
-
-            if (!json.isJsonObject())
-                throw new JsonParseException("Config is not an object: " + json);
-
-            Config config = new Config();
-
-            var values = new LinkedHashMap<>(json.getAsJsonObject().asMap());
-            for (ObservableField<Config> field : FIELDS) {
-                JsonElement value = values.remove(field.getSerializedName());
-                if (value == null) {
-                    for (String alternateName : field.getAlternateNames()) {
-                        value = values.remove(alternateName);
-                        if (value != null)
-                            break;
-                    }
-                }
-
-                if (value != null) {
-                    config.tracker.markDirty(field.get(config));
-                    field.deserialize(config, value, context);
-                }
-            }
-
-            config.unknownFields.putAll(values);
-            return config;
+        protected Config createInstance() {
+            return new Config();
         }
     }
 }

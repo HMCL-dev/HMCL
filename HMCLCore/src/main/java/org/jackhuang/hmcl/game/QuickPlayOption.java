@@ -1,6 +1,6 @@
 /*
  * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ * Copyright (C) 2025 huangyuhui <huanghongxun2008@126.com> and contributors
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,18 +15,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.ui.animation;
+package org.jackhuang.hmcl.game;
 
-import javafx.scene.Node;
-import javafx.scene.layout.Pane;
-import javafx.util.Duration;
+/// The quick play option.
+///
+/// @see <a href="https://minecraft.wiki/w/Quick_Play">Quick Play - Minecraft Wiki</a>
+public sealed interface QuickPlayOption {
+    record SinglePlayer(String worldFolderName) implements QuickPlayOption {
+    }
 
-public interface AnimationHandler {
-    Duration getDuration();
+    record MultiPlayer(String serverIP) implements QuickPlayOption {
+    }
 
-    Pane getCurrentRoot();
-
-    Node getPreviousNode();
-
-    Node getCurrentNode();
+    record Realm(String realmID) implements QuickPlayOption {
+    }
 }

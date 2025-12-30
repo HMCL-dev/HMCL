@@ -2,6 +2,7 @@
 
 <!-- #BEGIN COPY -->
 <!-- #PROPERTY NAME=BADGES -->
+[![CNB](https://img.shields.io/badge/cnb-mirror-ff6200?logo=cloudnativebuild)](https://cnb.cool/HMCL-dev/HMCL)
 [![Downloads](https://img.shields.io/github/downloads/HMCL-dev/HMCL/total?label=Downloads&style=flat)](https://github.com/HMCL-dev/HMCL/releases)
 ![Stars](https://img.shields.io/github/stars/HMCL-dev/HMCL?style=flat)
 [![Discord](https://img.shields.io/discord/995291757799538688.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/jVvC7HfM6U)
@@ -47,15 +48,9 @@ HMCL 有着强大的跨平台能力。它不仅支持 Windows、Linux、macOS、
 * IDE：IntelliJ IDEA
 * 编译器：Java 17+
 
-### 编译
+### 构建 HMCL
 
-于项目根文件夹执行以下命令：
-
-```bash
-./gradlew clean build
-```
-
-请确保你至少安装了 JDK 17 或更高版本。
+参见[构建指南](./Building_zh.md)页面。
 
 ## JVM 选项 (用于调试)
 

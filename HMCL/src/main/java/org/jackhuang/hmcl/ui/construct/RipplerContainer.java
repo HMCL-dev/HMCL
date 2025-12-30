@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXRippler;
-import javafx.animation.Interpolator;
 import javafx.animation.Transition;
 import javafx.beans.DefaultProperty;
 import javafx.beans.InvalidationListener;
@@ -39,7 +38,9 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
+import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.util.Lang;
 
 import java.util.List;
@@ -50,7 +51,7 @@ public class RipplerContainer extends StackPane {
     private static final Duration DURATION = Duration.millis(200);
 
     private final ObjectProperty<Node> container = new SimpleObjectProperty<>(this, "container", null);
-    private final StyleableObjectProperty<Paint> ripplerFill = new SimpleStyleableObjectProperty<>(StyleableProperties.RIPPLER_FILL,this, "ripplerFill", null);
+    private final StyleableObjectProperty<Paint> ripplerFill = new SimpleStyleableObjectProperty<>(StyleableProperties.RIPPLER_FILL, this, "ripplerFill", null);
     private final BooleanProperty selected = new SimpleBooleanProperty(this, "selected", false);
 
     private final StackPane buttonContainer = new StackPane();
@@ -109,7 +110,7 @@ public class RipplerContainer extends StackPane {
             setOnMouseEntered(e -> new Transition() {
                 {
                     setCycleDuration(DURATION);
-                    setInterpolator(Interpolator.EASE_IN);
+                    setInterpolator(Motion.EASE_IN);
                 }
 
                 @Override
@@ -121,7 +122,7 @@ public class RipplerContainer extends StackPane {
             setOnMouseExited(e -> new Transition() {
                 {
                     setCycleDuration(DURATION);
-                    setInterpolator(Interpolator.EASE_OUT);
+                    setInterpolator(Motion.EASE_OUT);
                 }
 
                 @Override
@@ -136,7 +137,10 @@ public class RipplerContainer extends StackPane {
     }
 
     private void interpolateBackground(double frac) {
-        setBackground(new Background(new BackgroundFill(Color.rgb(0, 0, 0, frac * 0.04), CornerRadii.EMPTY, Insets.EMPTY)));
+        Color onSurface = Themes.getColorScheme().getOnSurface();
+        setBackground(new Background(new BackgroundFill(
+                Color.color(onSurface.getRed(), onSurface.getGreen(), onSurface.getBlue(), frac * 0.04),
+                CornerRadii.EMPTY, Insets.EMPTY)));
     }
 
     protected void updateChildren() {

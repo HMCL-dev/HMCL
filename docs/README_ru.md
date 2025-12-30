@@ -2,6 +2,7 @@
 
 <!-- #BEGIN COPY -->
 <!-- #PROPERTY NAME=BADGES -->
+[![CNB](https://img.shields.io/badge/cnb-mirror-ff6200?logo=cloudnativebuild)](https://cnb.cool/HMCL-dev/HMCL)
 [![Downloads](https://img.shields.io/github/downloads/HMCL-dev/HMCL/total?label=Downloads&style=flat)](https://github.com/HMCL-dev/HMCL/releases)
 ![Stars](https://img.shields.io/github/stars/HMCL-dev/HMCL?style=flat)
 [![Discord](https://img.shields.io/discord/995291757799538688.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/jVvC7HfM6U)
@@ -41,13 +42,7 @@ HMCL обладает отличной кроссплатформенность�
 
 ### Сборка
 
-Выполните следующую команду в корневой директории проекта:
-
-```bash
-./gradlew clean build
-```
-
-Убедитесь, что у вас установлена Java 17 или новее.
+См. страницу [Руководство по сборке](./Building.md).
 
 ## Параметры JVM (для отладки)
 
