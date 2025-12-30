@@ -38,8 +38,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * @author Glavo
@@ -64,6 +64,19 @@ public final class NBTEditorPage extends SpinnerPane implements DecoratorPage {
 
         setContent(root);
         setLoading(true);
+
+        FXUtils.applyDragListener(this,
+                NBTFileType::isNBTFileByExtension,
+                paths -> {
+                    Path path = paths.get(0);
+                    try {
+                        Controllers.navigate(new NBTEditorPage(path));
+                    } catch (Throwable e) {
+                        LOG.warning("Fail to open nbt file", e);
+                        Controllers.dialog(i18n("nbt.open.failed") + "\n\n" + StringUtils.getStackTrace(e),
+                                i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                    }
+                });
 
         HBox actions = new HBox(8);
         actions.setPadding(new Insets(8));

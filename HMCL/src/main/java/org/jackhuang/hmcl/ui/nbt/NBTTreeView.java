@@ -26,7 +26,12 @@ import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
+import javafx.scene.input.KeyEvent;
 import javafx.util.Callback;
+import org.jackhuang.hmcl.ui.FXUtils;
 
 import java.lang.reflect.Array;
 import java.util.EnumMap;
@@ -37,26 +42,51 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
  * @author Glavo
  */
 public final class NBTTreeView extends JFXTreeView<Tag> {
+    final KeyCombination COPY_COMBO = new KeyCodeCombination(KeyCode.C, KeyCombination.SHORTCUT_DOWN);
 
     public NBTTreeView(NBTTreeView.Item tree) {
         this.setRoot(tree);
         this.setCellFactory(cellFactory());
+
+        this.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+            if (!COPY_COMBO.match(event)) return;
+
+            TreeItem<Tag> current = getSelectionModel().getSelectedItem();
+
+            if (current instanceof Item item && item.getText() != null) {
+                FXUtils.copyText(item.getText());
+                event.consume();
+            }
+        });
     }
 
     private static Callback<TreeView<Tag>, TreeCell<Tag>> cellFactory() {
         EnumMap<NBTTagType, Image> icons = new EnumMap<>(NBTTagType.class);
 
         return view -> new TreeCell<>() {
-            private void setTagText(String text) {
-                String name = ((Item) getTreeItem()).getName();
+            final ImageView imageView;
 
+            {
+                imageView = new ImageView();
+                this.setGraphic(imageView);
+                imageView.setFitHeight(16);
+                imageView.setFitWidth(16);
+            }
+
+            private void setTagText(String text) {
+                Item item = (Item) getTreeItem();
+                String name = item.getName();
+
+                String displayText;
                 if (name == null) {
-                    setText(text);
+                    displayText = text;
                 } else if (text == null) {
-                    setText(name);
+                    displayText = name;
                 } else {
-                    setText(name + ": " + text);
+                    displayText = name + ": " + text;
                 }
+                item.setText(displayText);
+                setText(displayText);
             }
 
             private void setTagText(int nEntries) {
@@ -67,12 +97,6 @@ public final class NBTTreeView extends JFXTreeView<Tag> {
             public void updateItem(Tag item, boolean empty) {
                 super.updateItem(item, empty);
 
-                ImageView imageView = (ImageView) this.getGraphic();
-                if (imageView == null) {
-                    imageView = new ImageView();
-                    this.setGraphic(imageView);
-                }
-
                 if (item == null) {
                     imageView.setImage(null);
                     setText(null);
@@ -81,35 +105,16 @@ public final class NBTTreeView extends JFXTreeView<Tag> {
 
                 NBTTagType tagType = NBTTagType.typeOf(item);
                 imageView.setImage(icons.computeIfAbsent(tagType, type -> new Image(type.getIconUrl())));
-                imageView.setFitHeight(16);
-                imageView.setFitWidth(16);
 
                 if (((Item) getTreeItem()).getText() != null) {
                     setText(((Item) getTreeItem()).getText());
                 } else {
                     switch (tagType) {
-                        case BYTE:
-                        case SHORT:
-                        case INT:
-                        case LONG:
-                        case FLOAT:
-                        case DOUBLE:
-                        case STRING:
-                            setTagText(item.getValue().toString());
-                            break;
-                        case BYTE_ARRAY:
-                        case INT_ARRAY:
-                        case LONG_ARRAY:
-                            setTagText(Array.getLength(item.getValue()));
-                            break;
-                        case LIST:
-                            setTagText(((ListTag) item).size());
-                            break;
-                        case COMPOUND:
-                            setTagText(((CompoundTag) item).size());
-                            break;
-                        default:
-                            setTagText(null);
+                        case BYTE, SHORT, INT, LONG, FLOAT, DOUBLE, STRING -> setTagText(item.getValue().toString());
+                        case BYTE_ARRAY, INT_ARRAY, LONG_ARRAY -> setTagText(Array.getLength(item.getValue()));
+                        case LIST -> setTagText(((ListTag) item).size());
+                        case COMPOUND -> setTagText(((CompoundTag) item).size());
+                        default -> setTagText(null);
                     }
                 }
             }

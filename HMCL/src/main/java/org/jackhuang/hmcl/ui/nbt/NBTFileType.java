@@ -41,7 +41,7 @@ import java.util.zip.InflaterInputStream;
  * @author Glavo
  */
 public enum NBTFileType {
-    COMPRESSED("dat", "dat_old") {
+    COMPRESSED("dat", "dat_old", "litematic", "nbt", "schematic", "schem") {
         @Override
         public Tag read(Path file) throws IOException {
             try (BufferedInputStream fileInputStream = new BufferedInputStream(Files.newInputStream(file))) {
@@ -109,20 +109,20 @@ public enum NBTFileType {
                     input = new BoundedInputStream(input, chunkLength - 1);
 
                     switch (buffer[4]) {
-                        case 0x01:
+                        case 0x01 -> {
                             // GZip
                             input = new GZIPInputStream(input);
-                            break;
-                        case 0x02:
+                        }
+                        case 0x02 -> {
                             // Zlib
                             inflater.reset();
                             input = new InflaterInputStream(input, inflater);
-                            break;
-                        case 0x03:
+                        }
+                        case 0x03 -> {
                             // Uncompressed
-                            break;
-                        default:
-                            throw new IOException("Unsupported compression method: " + Integer.toHexString(buffer[4] & 0xff));
+                        }
+                        default ->
+                                throw new IOException("Unsupported compression method: " + Integer.toHexString(buffer[4] & 0xff));
                     }
 
                     try (InputStream in = input) {
