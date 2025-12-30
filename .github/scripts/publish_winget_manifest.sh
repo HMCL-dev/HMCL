@@ -57,6 +57,6 @@ EOF
 echo "$PACKAGE_IDENTIFIER.installer.yaml"
 cat $PACKAGE_IDENTIFIER/$PACKAGE_IDENTIFIER.installer.yaml
 
-komac submit --token $KOMAC_TOKEN $PACKAGE_IDENTIFIER
+komac submit $PACKAGE_IDENTIFIER --submit --token $KOMAC_TOKEN
 
 rm -rf $PACKAGE_IDENTIFIER
