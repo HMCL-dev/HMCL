@@ -18,24 +18,13 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.github.steveice10.opennbt.tag.builtin.Tag;
-import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXTextField;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.control.Label;
-import javafx.scene.layout.*;
 import org.jackhuang.hmcl.gamerule.GameRule;
 import org.jackhuang.hmcl.gamerule.GameRuleNBT;
-import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.construct.NumberRangeValidator;
-import org.jackhuang.hmcl.ui.construct.NumberValidator;
-import org.jackhuang.hmcl.ui.construct.OptionToggleButton;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -54,9 +43,6 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
     private final Runnable onSave;
     private Runnable resetValue = () -> {
     };
-
-    //Due to the significant difference in skin between BooleanGameRuleInfo and IntGameRuleInfo, which are essentially two completely different styles, it is not suitable to update each other in Cell#updateControl. Therefore, they are directly integrated into the info.
-    private final HBox container = new HBox();
 
     private GameRuleInfo(GameRule gameRule, GameRuleNBT<T, ? extends Tag> gameRuleNBT, Runnable onSave) {
         ruleKey = gameRule.getRuleKey().get(0);
@@ -101,10 +87,6 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
         return onSave;
     }
 
-    public HBox getContainer() {
-        return container;
-    }
-
     public Runnable getResetValue() {
         return resetValue;
     }
@@ -130,7 +112,16 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
             this.currentValue = new SimpleBooleanProperty(booleanGameRule.getValue());
             this.defaultValue = booleanGameRule.getDefaultValue(gameVersionNumber).orElse(null);
 
-            buildNodes();
+            currentValue.addListener((observable, oldValue, newValue) -> {
+                getGameRuleNBT().changeValue(newValue);
+                save();
+            });
+
+            if (defaultValue != null) {
+                setResetValue(() -> currentValue.set(defaultValue));
+                modifiedProperty().bind(Bindings.createBooleanBinding(() -> currentValue.getValue() != defaultValue, currentValue));
+            }
+
         }
 
         @Override
@@ -145,47 +136,6 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
 
         public BooleanProperty currentValueProperty() {
             return currentValue;
-        }
-
-        public void buildNodes() {
-            {
-                HBox.setHgrow(getContainer(), Priority.ALWAYS);
-                getContainer().setAlignment(Pos.CENTER_LEFT);
-                getContainer().setPadding(new Insets(0, 8, 0, 0));
-            }
-
-            OptionToggleButton toggleButton = new OptionToggleButton();
-            {
-                toggleButton.setTitle(getDisplayName());
-                toggleButton.setSubtitle(getRuleKey());
-                HBox.setHgrow(toggleButton, Priority.ALWAYS);
-                toggleButton.selectedProperty().bindBidirectional(currentValue);
-                currentValue.addListener((observable, oldValue, newValue) -> {
-                    getGameRuleNBT().changeValue(newValue);
-                    save();
-                });
-            }
-
-            JFXButton resetButton = new JFXButton();
-            StackPane wrapperPane = new StackPane(resetButton);
-            {
-                wrapperPane.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
-                resetButton.setFocusTraversable(false);
-                resetButton.setGraphic(SVG.RESTORE.createIcon(24));
-                if (defaultValue != null) {
-                    setResetValue(() -> currentValue.set(defaultValue));
-                    resetButton.setOnAction(event -> resetValue());
-                    modifiedProperty().bind(Bindings.createBooleanBinding(() -> currentValue.getValue() != defaultValue, currentValue));
-                    resetButton.disableProperty().bind(modifiedProperty().not());
-                    FXUtils.installFastTooltip(resetButton, i18n("gamerule.restore_default_values.tooltip", defaultValue));
-                    FXUtils.installFastTooltip(wrapperPane, i18n("gamerule.now_is_default_values.tooltip"));
-                } else {
-                    resetButton.setDisable(true);
-                    FXUtils.installFastTooltip(wrapperPane, i18n("gamerule.not_have_default_values.tooltip"));
-                }
-            }
-
-            getContainer().getChildren().addAll(toggleButton, wrapperPane);
         }
     }
 
@@ -202,7 +152,18 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
             minValue = intGameRule.getMinValue(gameVersionNumber);
             maxValue = intGameRule.getMaxValue(gameVersionNumber);
 
-            buildNodes();
+            currentValue.addListener((observable, oldValue, newValue) -> {
+                Integer value = Lang.toIntOrNull(newValue);
+                if (value != null && value >= minValue && value <= maxValue) {
+                    getGameRuleNBT().changeValue(newValue);
+                    save();
+                }
+            });
+
+            if (defaultValue != null) {
+                setResetValue(() -> currentValue.set(String.valueOf(defaultValue)));
+                modifiedProperty().bind(Bindings.createBooleanBinding(() -> !Objects.equals(Lang.toIntOrNull(currentValue.getValue()), defaultValue), currentValue));
+            }
         }
 
         @Override
@@ -219,68 +180,12 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
             return currentValue;
         }
 
-        public void buildNodes() {
-            {
-                getContainer().setPadding(new Insets(8, 8, 8, 16));
-                HBox.setHgrow(getContainer(), Priority.ALWAYS);
-                getContainer().setAlignment(Pos.CENTER_LEFT);
-            }
+        public int getMinValue() {
+            return minValue;
+        }
 
-            VBox displayInfoVBox = new VBox();
-            {
-                displayInfoVBox.getChildren().addAll(new Label(getDisplayName()), new Label(getRuleKey()));
-                displayInfoVBox.setAlignment(Pos.CENTER_LEFT);
-                HBox.setHgrow(displayInfoVBox, Priority.ALWAYS);
-            }
-
-            HBox rightHBox = new HBox();
-            {
-                rightHBox.setSpacing(12);
-                rightHBox.setAlignment(Pos.CENTER_LEFT);
-            }
-
-            JFXTextField textField = new JFXTextField();
-            {
-                textField.textProperty().bindBidirectional(currentValue);
-                FXUtils.setValidateWhileTextChanged(textField, true);
-                textField.setValidators(
-                        new NumberValidator(i18n("input.integer"), false),
-                        new NumberRangeValidator(i18n("input.number_range", minValue, maxValue), minValue, maxValue));
-                currentValue.addListener((observable, oldValue, newValue) -> {
-                    Integer value = Lang.toIntOrNull(newValue);
-                    if (value != null && value >= minValue && value <= maxValue) {
-                        getGameRuleNBT().changeValue(newValue);
-                        save();
-                    }
-                });
-
-                textField.maxWidth(10);
-                textField.minWidth(10);
-            }
-
-            JFXButton resetButton = new JFXButton();
-            StackPane wrapperPane = new StackPane(resetButton);
-            {
-                wrapperPane.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
-                resetButton.setFocusTraversable(false);
-                resetButton.setGraphic(SVG.RESTORE.createIcon(24));
-                if (defaultValue != null) {
-                    setResetValue(() -> currentValue.set(String.valueOf(defaultValue)));
-                    resetButton.setOnAction(event -> resetValue());
-                    modifiedProperty().bind(Bindings.createBooleanBinding(() -> !Objects.equals(Lang.toIntOrNull(currentValue.getValue()), defaultValue), currentValue));
-                    resetButton.disableProperty().bind(modifiedProperty().not());
-                    FXUtils.installFastTooltip(resetButton, i18n("gamerule.restore_default_values.tooltip", defaultValue));
-                    FXUtils.installFastTooltip(wrapperPane, i18n("gamerule.now_is_default_values.tooltip"));
-                } else {
-                    resetButton.setDisable(true);
-                    FXUtils.installFastTooltip(wrapperPane, i18n("gamerule.not_have_default_values.tooltip"));
-                }
-
-                resetButton.setAlignment(Pos.BOTTOM_CENTER);
-            }
-
-            rightHBox.getChildren().addAll(textField, wrapperPane);
-            getContainer().getChildren().addAll(displayInfoVBox, rightHBox);
+        public int getMaxValue() {
+            return maxValue;
         }
     }
 }

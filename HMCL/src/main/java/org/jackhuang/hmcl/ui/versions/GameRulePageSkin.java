@@ -39,6 +39,9 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.StringUtils;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -46,9 +49,10 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
 
     private final HBox toolBar;
     private final JFXTextField searchField;
-    JFXListView<GameRuleInfo<?>> listView = new JFXListView<>();
+    private final JFXListView<GameRuleInfo<?>> listView = new JFXListView<>();
     private final FilteredList<GameRuleInfo<?>> displayedItems;
     private final FilteredList<GameRuleInfo<?>> modifiedItems;
+    private final Map<String, HBox> cellMap = new HashMap<>();
 
     GameRulePageSkin(GameRulePage skinnable) {
         super(skinnable);
@@ -98,22 +102,114 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
             center.getStyleClass().add("large-spinner-pane");
             center.setContent(listView);
             listView.setItems(displayedItems);
-            listView.setCellFactory(x -> new GameRuleListCell(listView));
+            listView.setCellFactory(x -> new GameRuleListCell(listView, cellMap));
             FXUtils.ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
             root.getContent().add(center);
         }
     }
 
     static class GameRuleListCell extends MDListCell<GameRuleInfo<?>> {
+        private final Map<String, HBox> cellMap;
 
-        public GameRuleListCell(JFXListView<GameRuleInfo<?>> listView) {
+        public GameRuleListCell(JFXListView<GameRuleInfo<?>> listView, Map<String, HBox> cellMap) {
             super(listView);
+            this.cellMap = cellMap;
         }
 
         @Override
         protected void updateControl(GameRuleInfo<?> item, boolean empty) {
             if (empty) return;
-            getContainer().getChildren().setAll(item.getContainer());
+
+            HBox hBox = cellMap.computeIfAbsent(item.getRuleKey(), key -> {
+                if (item instanceof GameRuleInfo.IntGameRuleInfo intInfo) {
+                    return buildNodeForIntGameRule(intInfo);
+                } else if (item instanceof GameRuleInfo.BooleanGameRuleInfo booleanInfo) {
+                    return buildNodeForBooleanGameRule(booleanInfo);
+                }
+                return null;
+            });
+            if (hBox != null) {
+                getContainer().getChildren().setAll(hBox);
+            }
+        }
+
+        private HBox buildNodeForIntGameRule(GameRuleInfo.IntGameRuleInfo gameRule) {
+            HBox cellBox = new HBox();
+            {
+                cellBox.setPadding(new Insets(8, 8, 8, 16));
+                HBox.setHgrow(cellBox, Priority.ALWAYS);
+                cellBox.setAlignment(Pos.CENTER_LEFT);
+            }
+
+            VBox displayInfoVBox = new VBox();
+            {
+                displayInfoVBox.getChildren().addAll(new Label(gameRule.getDisplayName()), new Label(gameRule.getRuleKey()));
+                displayInfoVBox.setAlignment(Pos.CENTER_LEFT);
+                HBox.setHgrow(displayInfoVBox, Priority.ALWAYS);
+            }
+
+            HBox rightHBox = new HBox();
+            {
+                rightHBox.setSpacing(12);
+                rightHBox.setAlignment(Pos.CENTER_LEFT);
+            }
+
+            JFXTextField textField = new JFXTextField();
+            {
+                textField.textProperty().bindBidirectional(gameRule.currentValueProperty());
+                FXUtils.setValidateWhileTextChanged(textField, true);
+                textField.setValidators(
+                        new NumberValidator(i18n("input.integer"), false),
+                        new NumberRangeValidator(i18n("input.number_range", gameRule.getMinValue(), gameRule.getMaxValue()), gameRule.getMinValue(), gameRule.getMaxValue()));
+
+                textField.setPrefWidth(120);
+            }
+
+            rightHBox.getChildren().addAll(textField, buildResetButton(gameRule));
+            cellBox.getChildren().addAll(displayInfoVBox, rightHBox);
+
+            return cellBox;
+        }
+
+        private HBox buildNodeForBooleanGameRule(GameRuleInfo.BooleanGameRuleInfo gameRule) {
+            HBox cellBox = new HBox();
+            {
+                HBox.setHgrow(cellBox, Priority.ALWAYS);
+                cellBox.setAlignment(Pos.CENTER_LEFT);
+                cellBox.setPadding(new Insets(0, 8, 0, 0));
+            }
+
+            OptionToggleButton toggleButton = new OptionToggleButton();
+            {
+                toggleButton.setTitle(gameRule.getDisplayName());
+                toggleButton.setSubtitle(gameRule.getRuleKey());
+                HBox.setHgrow(toggleButton, Priority.ALWAYS);
+                toggleButton.selectedProperty().bindBidirectional(gameRule.currentValueProperty());
+            }
+
+            cellBox.getChildren().addAll(toggleButton, buildResetButton(gameRule));
+
+            return cellBox;
+        }
+
+        private StackPane buildResetButton(GameRuleInfo<?> gameRule) {
+            JFXButton resetButton = new JFXButton();
+            StackPane wrapperPane = new StackPane(resetButton);
+            {
+                wrapperPane.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
+                resetButton.setFocusTraversable(false);
+                resetButton.setGraphic(SVG.RESTORE.createIcon(24));
+                if (StringUtils.isNotBlank(gameRule.getDefaultValueText())) {
+                    resetButton.setOnAction(event -> gameRule.resetValue());
+                    resetButton.disableProperty().bind(gameRule.modifiedProperty().not());
+                    FXUtils.installFastTooltip(resetButton, i18n("gamerule.restore_default_values.tooltip", gameRule.getDefaultValueText()));
+                    FXUtils.installFastTooltip(wrapperPane, i18n("gamerule.now_is_default_values.tooltip"));
+                } else {
+                    resetButton.setDisable(true);
+                    FXUtils.installFastTooltip(wrapperPane, i18n("gamerule.not_have_default_values.tooltip"));
+                }
+            }
+            return wrapperPane;
         }
     }
 
