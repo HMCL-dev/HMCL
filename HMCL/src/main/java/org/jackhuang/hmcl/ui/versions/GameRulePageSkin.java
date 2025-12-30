@@ -162,7 +162,7 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
                         new NumberValidator(i18n("input.integer"), false),
                         new NumberRangeValidator(i18n("input.number_range", gameRule.getMinValue(), gameRule.getMaxValue()), gameRule.getMinValue(), gameRule.getMaxValue()));
 
-                textField.setPrefWidth(120);
+                textField.setPrefWidth(150);
             }
 
             rightHBox.getChildren().addAll(textField, buildResetButton(gameRule));

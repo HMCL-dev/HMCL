@@ -257,11 +257,7 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
             if (jsonObject.get("maxValue") instanceof JsonPrimitive jsonPrimitive) {
                 this.addMaxValue(jsonPrimitive.getAsInt());
             } else if (jsonObject.get("maxValue") instanceof JsonObject o) {
-                o.asMap().forEach((key, value) -> {
-                    JsonPrimitive primitive = value.getAsJsonPrimitive();
-                    int maxValue = primitive.isNumber() ? primitive.getAsInt() : Integer.MAX_VALUE;
-                    this.addMaxValue(key, maxValue);
-                });
+                o.asMap().forEach((key, value) -> this.addMaxValue(key, parseValue(value)));
             } else {
                 this.addMaxValue(Integer.MAX_VALUE);
             }
@@ -269,15 +265,23 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
             if (jsonObject.get("minValue") instanceof JsonPrimitive jsonPrimitive) {
                 this.addMinValue(jsonPrimitive.getAsInt());
             } else if (jsonObject.get("minValue") instanceof JsonObject o) {
-                o.asMap().forEach((key, value) -> {
-                    JsonPrimitive primitive = value.getAsJsonPrimitive();
-                    int minValue = primitive.isNumber() ? primitive.getAsInt() : Integer.MIN_VALUE;
-                    this.addMinValue(key, minValue);
-                });
+                o.asMap().forEach((key, value) -> this.addMinValue(key, parseValue(value)));
             } else {
                 this.addMinValue(Integer.MIN_VALUE);
             }
             return this;
+        }
+
+        private int parseValue(JsonElement jsonElement) {
+            JsonPrimitive primitive = jsonElement.getAsJsonPrimitive();
+            int value;
+            if (primitive.isNumber()) {
+                value = primitive.getAsInt();
+            } else {
+                String str = primitive.getAsString();
+                value = "INT_MAX".equals(str) ? Integer.MAX_VALUE : Integer.MIN_VALUE;
+            }
+            return value;
         }
 
         public Optional<Integer> getDefaultValue(GameVersionNumber gameVersionNumber) {
