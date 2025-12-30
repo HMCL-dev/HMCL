@@ -19,10 +19,12 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.github.steveice10.opennbt.tag.builtin.CompoundTag;
 import com.github.steveice10.opennbt.tag.builtin.Tag;
+import javafx.animation.PauseTransition;
 import javafx.beans.Observable;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Skin;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.gamerule.GameRule;
 import org.jackhuang.hmcl.gamerule.GameRuleNBT;
@@ -50,6 +52,7 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> {
 
     ObservableList<GameRuleInfo<?>> gameRuleList;
     private boolean batchUpdating = false;
+    private final PauseTransition pause;
 
     public GameRulePage(WorldManagePage worldManagePage) {
         this.worldManagePage = worldManagePage;
@@ -77,6 +80,9 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> {
                         setFailedReason(i18n("world.info.failed"));
                     }
                 })).start();
+
+        pause = new PauseTransition(Duration.millis(300));
+        pause.setOnFinished(event -> saveLevelDat());
     }
 
     public void updateControls() {
@@ -136,9 +142,13 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> {
                 })).start();
     }
 
+    void requestSaveLevelDat() {
+        pause.playFromStart();
+    }
+
     void saveLevelDatIfNotInBatchUpdating() {
         if (!batchUpdating) {
-            saveLevelDat();
+            requestSaveLevelDat();
         }
     }
 
