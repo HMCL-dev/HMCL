@@ -439,8 +439,8 @@
 }
 
 .launch-pane > .jfx-button.launch-button {
-    -fx-max-width: 206px;
-    -fx-min-width: 206px;
+    -fx-max-width: 207px;
+    -fx-min-width: 207px;
     -fx-background-radius: 2px 0 0 2px;
 }
 
