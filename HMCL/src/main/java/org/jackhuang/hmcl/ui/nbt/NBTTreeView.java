@@ -20,18 +20,20 @@ package org.jackhuang.hmcl.ui.nbt;
 import com.github.steveice10.opennbt.tag.builtin.CompoundTag;
 import com.github.steveice10.opennbt.tag.builtin.ListTag;
 import com.github.steveice10.opennbt.tag.builtin.Tag;
+import com.jfoenix.controls.JFXPopup;
 import com.jfoenix.controls.JFXTreeView;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyCodeCombination;
-import javafx.scene.input.KeyCombination;
-import javafx.scene.input.KeyEvent;
+import javafx.scene.input.*;
 import javafx.util.Callback;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
+import org.jackhuang.hmcl.ui.construct.PopupMenu;
 
 import java.lang.reflect.Array;
 import java.util.EnumMap;
@@ -58,12 +60,45 @@ public final class NBTTreeView extends JFXTreeView<Tag> {
                 event.consume();
             }
         });
+
+        this.setOnContextMenuRequested(event -> {
+
+            TreeItem<Tag> current = getSelectionModel().getSelectedItem();
+
+            if (current instanceof Item item) {
+                showPopupMenu(item, event);
+            }
+        });
+    }
+
+    private void showPopupMenu(Item item, ContextMenuEvent event) {
+        PopupMenu menu = new PopupMenu();
+        JFXPopup popup = new JFXPopup(menu);
+
+        IconedMenuItem copyShownItem = new IconedMenuItem(SVG.CONTENT_COPY, "copy shown", () -> {
+            String tagValue = item.getText();
+            FXUtils.copyText(tagValue);
+        }, popup);
+
+        IconedMenuItem copyRawItem = new IconedMenuItem(SVG.CONTENT_COPY, "copy detail", () -> {
+            String tagValue = item.getValue().toString();
+            FXUtils.copyText(tagValue);
+        }, popup);
+
+        menu.getContent().addAll(
+                copyShownItem,
+                copyRawItem
+        );
+
+        popup.show(Controllers.getStage(), event.getSceneX(), event.getSceneY(), JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, 0, 0);
     }
 
     private static Callback<TreeView<Tag>, TreeCell<Tag>> cellFactory() {
         EnumMap<NBTTagType, Image> icons = new EnumMap<>(NBTTagType.class);
 
+
         return view -> new TreeCell<>() {
+
             final ImageView imageView;
 
             {
