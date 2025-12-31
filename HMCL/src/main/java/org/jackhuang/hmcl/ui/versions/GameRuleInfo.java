@@ -59,6 +59,17 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
         this.onSave = onSave;
     }
 
+    public static GameRuleInfo<?> createGameRuleInfo(GameRule gameRule, GameRuleNBT<?, ? extends Tag> gameRuleNBT, Runnable onSave, GameVersionNumber gameVersion) {
+        if (gameRule instanceof GameRule.IntGameRule intGameRule) {
+            @SuppressWarnings("unchecked") var typedGameRuleNBT = (GameRuleNBT<String, Tag>) gameRuleNBT;
+            return new GameRuleInfo.IntGameRuleInfo(intGameRule, typedGameRuleNBT, onSave, gameVersion);
+        } else if (gameRule instanceof GameRule.BooleanGameRule booleanGameRule) {
+            @SuppressWarnings("unchecked") var typedGameRuleNBT = (GameRuleNBT<Boolean, Tag>) gameRuleNBT;
+            return new GameRuleInfo.BooleanGameRuleInfo(booleanGameRule, typedGameRuleNBT, onSave, gameVersion);
+        }
+        return null;
+    }
+
     public abstract String getCurrentValueText();
 
     public abstract String getDefaultValueText();

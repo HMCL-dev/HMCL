@@ -32,13 +32,6 @@ public class NumberRangeValidator extends ValidatorBase {
         super(outOfLimitMessage);
         this.minValue = minValue;
         this.maxValue = maxValue;
-        if (srcControl.get() instanceof TextInputControl textInputControl) {
-            textInputControl.tooltipProperty().addListener((ov, t, t1) -> {
-                if (t1 != null) {
-                    System.out.println("new tooltip is " + t1.getText());
-                }
-            });
-        }
     }
 
     @Override

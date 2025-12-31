@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.github.steveice10.opennbt.tag.builtin.CompoundTag;
-import com.github.steveice10.opennbt.tag.builtin.Tag;
 import javafx.animation.PauseTransition;
 import javafx.beans.Observable;
 import javafx.collections.FXCollections;
@@ -27,7 +26,6 @@ import javafx.scene.control.Skin;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.gamerule.GameRule;
-import org.jackhuang.hmcl.gamerule.GameRuleNBT;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -50,7 +48,7 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> {
     private final World world;
     private CompoundTag levelDat;
 
-    ObservableList<GameRuleInfo<?>> gameRuleList;
+    private final ObservableList<GameRuleInfo<?>> gameRuleList;
     private boolean batchUpdating = false;
     private final PauseTransition pause;
 
@@ -100,13 +98,7 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> {
         gameRuleCompoundTag.iterator().forEachRemaining(gameRuleTag -> {
             GameRule.createGameRuleNBT(gameRuleTag).ifPresent(gameRuleNBT -> {
                 GameRule.getFullGameRule(gameRuleTag).ifPresent(gameRule -> {
-                    if (gameRule instanceof GameRule.IntGameRule intGameRule) {
-                        @SuppressWarnings("unchecked") GameRuleNBT<String, Tag> typedGameRuleNBT = (GameRuleNBT<String, Tag>) gameRuleNBT;
-                        gameRuleList.add(new GameRuleInfo.IntGameRuleInfo(intGameRule, typedGameRuleNBT, this::saveLevelDatIfNotInBatchUpdating, world.getGameVersion()));
-                    } else if (gameRule instanceof GameRule.BooleanGameRule booleanGameRule) {
-                        @SuppressWarnings("unchecked") GameRuleNBT<Boolean, Tag> typedGameRuleNBT = (GameRuleNBT<Boolean, Tag>) gameRuleNBT;
-                        gameRuleList.add(new GameRuleInfo.BooleanGameRuleInfo(booleanGameRule, typedGameRuleNBT, this::saveLevelDatIfNotInBatchUpdating, world.getGameVersion()));
-                    }
+                    gameRuleList.add(GameRuleInfo.createGameRuleInfo(gameRule, gameRuleNBT, this::saveLevelDatIfNotInBatchUpdating, world.getGameVersion()));
                 });
             });
         });
