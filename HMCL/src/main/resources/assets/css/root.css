@@ -422,7 +422,7 @@
  ******************************************************************************/
 
 .launch-pane {
-    -fx-spacing: 4px;
+    -fx-spacing: 3px;
     -fx-max-height: 55px;
     -fx-min-height: 55px;
     -fx-max-width: 230px;
