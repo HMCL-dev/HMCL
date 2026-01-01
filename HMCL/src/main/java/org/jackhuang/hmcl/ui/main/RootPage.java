@@ -267,7 +267,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
 
             if (Accounts.getAccounts().isEmpty()) {
                 Label placeholder = new Label(i18n("account.empty"));
-                placeholder.setStyle("-fx-padding: 10px; -fx-text-fill: gray; -fx-font-style: italic;");
+                placeholder.setStyle("-fx-padding: 10px; -fx-text-fill: -monet-on-surface-variant; -fx-font-style: italic;");
                 scrollPane.add(placeholder);
             } else {
                 for (Account account : Accounts.getAccounts()) {
