@@ -88,7 +88,7 @@ public final class SettingsPage extends ScrollPane {
         this.setFitToWidth(true);
 
         VBox rootPane = new VBox();
-        rootPane.setPadding(new Insets(32, 10, 32, 10));
+        rootPane.setPadding(new Insets(10));
         this.setContent(rootPane);
         FXUtils.smoothScrolling(this);
 

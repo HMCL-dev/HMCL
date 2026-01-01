@@ -81,6 +81,8 @@ public final class NBTTreeView extends JFXTreeView<Tag> {
 
                 NBTTagType tagType = NBTTagType.typeOf(item);
                 imageView.setImage(icons.computeIfAbsent(tagType, type -> new Image(type.getIconUrl())));
+                imageView.setFitHeight(16);
+                imageView.setFitWidth(16);
 
                 if (((Item) getTreeItem()).getText() != null) {
                     setText(((Item) getTreeItem()).getText());
