@@ -23,7 +23,7 @@ PublisherSupportUrl: https://github.com/HMCL-dev/HMCL/issues
 PackageName: $PACKAGE_NAME
 PackageUrl: https://github.com/HMCL-dev/HMCL
 License: GPL-3.0
-Copyright: Copyright (C) 2025 huangyuhui
+Copyright: Copyright (C) 2026 huangyuhui
 ShortDescription: A Minecraft Launcher which is multi-functional, cross-platform and popular
 Tags:
 - javafx
