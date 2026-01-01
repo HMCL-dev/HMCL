@@ -100,6 +100,7 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
         return mod;
     }
 
+    @Override
     public Path getFile() {
         return file;
     }
@@ -161,6 +162,7 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
         return modManager.isOld(file);
     }
 
+    @Override
     public void setOld(boolean old) throws IOException {
         file = modManager.setOld(this, old);
 

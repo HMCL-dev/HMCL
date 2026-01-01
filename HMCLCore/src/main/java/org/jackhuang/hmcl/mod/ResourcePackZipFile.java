@@ -24,28 +24,27 @@ final class ResourcePackZipFile extends ResourcePackFile {
     public ResourcePackZipFile(ResourcePackManager manager, Path path) throws IOException {
         super(manager, path);
 
-        PackMcMeta meta = null;
-        byte[] icon = null;
+        PackMcMeta metaTemp = null;
+        byte[] iconTemp = null;
 
         try (var zipFileTree = new ZipFileTree(CompressingUtils.openZipFile(path))) {
             try {
-                meta = JsonUtils.fromNonNullJson(zipFileTree.readTextEntry("/pack.mcmeta"), PackMcMeta.class);
+                metaTemp = JsonUtils.fromNonNullJson(zipFileTree.readTextEntry("/pack.mcmeta"), PackMcMeta.class);
             } catch (Exception e) {
                 LOG.warning("Failed to parse resource pack meta", e);
             }
-            this.meta = meta;
 
             var iconEntry = zipFileTree.getEntry("/pack.png");
             if (iconEntry != null) {
                 try (InputStream is = zipFileTree.getInputStream(iconEntry)) {
-                    icon = is.readAllBytes();
+                    iconTemp = is.readAllBytes();
                 } catch (Exception e) {
                     LOG.warning("Failed to load resource pack icon", e);
                 }
             }
         }
-
-        this.icon = icon;
+        this.meta = metaTemp;
+        this.icon = iconTemp;
     }
 
     @Override
