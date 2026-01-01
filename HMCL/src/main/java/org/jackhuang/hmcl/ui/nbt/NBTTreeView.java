@@ -20,11 +20,13 @@ package org.jackhuang.hmcl.ui.nbt;
 import com.github.steveice10.opennbt.tag.builtin.CompoundTag;
 import com.github.steveice10.opennbt.tag.builtin.ListTag;
 import com.github.steveice10.opennbt.tag.builtin.Tag;
-import javafx.scene.control.*;
+import com.jfoenix.controls.JFXTreeView;
+import javafx.scene.control.TreeCell;
+import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeView;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.util.Callback;
-import org.jackhuang.hmcl.util.Holder;
 
 import java.lang.reflect.Array;
 import java.util.EnumMap;
@@ -34,7 +36,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 /**
  * @author Glavo
  */
-public final class NBTTreeView extends TreeView<Tag> {
+public final class NBTTreeView extends JFXTreeView<Tag> {
 
     public NBTTreeView(NBTTreeView.Item tree) {
         this.setRoot(tree);
@@ -42,10 +44,9 @@ public final class NBTTreeView extends TreeView<Tag> {
     }
 
     private static Callback<TreeView<Tag>, TreeCell<Tag>> cellFactory() {
-        Holder<Object> lastCell = new Holder<>();
         EnumMap<NBTTagType, Image> icons = new EnumMap<>(NBTTagType.class);
 
-        return view -> new TreeCell<Tag>() {
+        return view -> new TreeCell<>() {
             private void setTagText(String text) {
                 String name = ((Item) getTreeItem()).getName();
 
@@ -66,11 +67,6 @@ public final class NBTTreeView extends TreeView<Tag> {
             public void updateItem(Tag item, boolean empty) {
                 super.updateItem(item, empty);
 
-                // https://mail.openjdk.org/pipermail/openjfx-dev/2022-July/034764.html
-                if (this == lastCell.value && !isVisible())
-                    return;
-                lastCell.value = this;
-
                 ImageView imageView = (ImageView) this.getGraphic();
                 if (imageView == null) {
                     imageView = new ImageView();
@@ -85,6 +81,8 @@ public final class NBTTreeView extends TreeView<Tag> {
 
                 NBTTagType tagType = NBTTagType.typeOf(item);
                 imageView.setImage(icons.computeIfAbsent(tagType, type -> new Image(type.getIconUrl())));
+                imageView.setFitHeight(16);
+                imageView.setFitWidth(16);
 
                 if (((Item) getTreeItem()).getText() != null) {
                     setText(((Item) getTreeItem()).getText());

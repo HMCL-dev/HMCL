@@ -45,6 +45,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
@@ -141,12 +142,7 @@ public final class TerracottaManager {
             return null;
         }
 
-        TerracottaState.Preparing preparing;
-        if (state instanceof TerracottaState.Preparing it) {
-            preparing = it;
-        } else {
-            preparing = new TerracottaState.Preparing(new ReadOnlyDoubleWrapper(-1));
-        }
+        TerracottaState.Preparing preparing = new TerracottaState.Preparing(new ReadOnlyDoubleWrapper(-1));
 
         Task.supplyAsync(Schedulers.io(), () -> {
             return file != null ? TarFileTree.open(file) : null;
@@ -171,6 +167,7 @@ public final class TerracottaManager {
                 if (compareAndSet(preparing, launching)) {
                     launch(launching);
                 }
+            } else if (exception instanceof CancellationException) {
             } else if (exception instanceof ITerracottaProvider.ArchiveFileMissingException) {
                 LOG.warning("Cannot install terracotta from local package.", exception);
                 compareAndSet(preparing, new TerracottaState.Fatal(TerracottaState.Fatal.Type.INSTALL));
@@ -181,7 +178,7 @@ public final class TerracottaManager {
             }
         }).start();
 
-        return setState(preparing);
+        return compareAndSet(state, preparing) ? preparing : null;
     }
 
     private static ITerracottaProvider getProvider() {

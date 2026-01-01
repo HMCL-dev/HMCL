@@ -1,6 +1,12 @@
 package org.jackhuang.hmcl.mod.modinfo;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
+import com.google.gson.annotations.JsonAdapter;
 import com.moandjiezana.toml.Toml;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
@@ -13,10 +19,15 @@ import org.jackhuang.hmcl.util.io.CompressingUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.*;
+import java.lang.reflect.Type;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.StringJoiner;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
@@ -68,6 +79,7 @@ public final class ForgeNewModMetadata {
         private final String displayName;
         private final String side;
         private final String displayURL;
+        @JsonAdapter(AuthorDeserializer.class)
         private final String authors;
         private final String description;
 
@@ -111,6 +123,29 @@ public final class ForgeNewModMetadata {
 
         public String getDescription() {
             return description;
+        }
+
+        static final class AuthorDeserializer implements JsonDeserializer<String> {
+            @Override
+            public String deserialize(JsonElement authors, Type type, JsonDeserializationContext context) throws JsonParseException {
+                if (authors == null || authors.isJsonNull()) {
+                    return null;
+                } else if (authors instanceof JsonPrimitive primitive) {
+                    return primitive.getAsString();
+                } else if (authors instanceof JsonArray array) {
+                    var joiner = new StringJoiner(", ");
+                    for (int i = 0; i < array.size(); i++) {
+                        if (!(array.get(i) instanceof JsonPrimitive element)) {
+                            return authors.toString();
+                        }
+
+                        joiner.add(element.getAsString());
+                    }
+                    return joiner.toString();
+                }
+
+                return authors.toString();
+            }
         }
     }
 
