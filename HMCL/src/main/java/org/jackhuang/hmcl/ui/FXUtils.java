@@ -1088,16 +1088,13 @@ public final class FXUtils {
 
     public static void setIcon(Stage stage) {
         Runnable updateIcon = () -> {
-            String iconPath;
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                iconPath = "/assets/img/icon.png";
-            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && Themes.darkModeProperty().get()) {
-                iconPath = "/assets/img/icon-mac-dark.png";
-            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
-                iconPath = "/assets/img/icon-mac.png";
-            } else {
-                iconPath = "/assets/img/icon@4x.png";
-            }
+            String iconPath = switch (OperatingSystem.CURRENT_OS) {
+                case WINDOWS -> "/assets/img/icon.png";
+                case MACOS -> Themes.darkModeProperty().get()
+                        ? "/assets/img/icon-mac-dark.png"
+                        : "/assets/img/icon-mac.png";
+                default -> "/assets/img/icon@4x.png";
+            };
 
             Image fxImage = newBuiltinImage(iconPath);
             if (fxImage != null) {
@@ -1109,7 +1106,7 @@ public final class FXUtils {
             }
         };
 
-        updateIcon.run();
+        Platform.runLater(updateIcon);
 
         if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
             Themes.darkModeProperty().addListener((obs, oldDark, newDark) ->
