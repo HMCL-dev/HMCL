@@ -422,18 +422,16 @@
  ******************************************************************************/
 
 .launch-pane {
-    -fx-spacing: 3px;
-    -fx-max-height: 55px;
-    -fx-min-height: 55px;
+    -fx-max-height: 57px;
+    -fx-min-height: 57px;
     -fx-max-width: 230px;
     -fx-min-width: 230px;
-    -fx-background-color: -monet-on-surface-variant;
 }
 
 .launch-pane > .jfx-button {
     -fx-translate-y: 1px;
-    -fx-max-height: 53px;
-    -fx-min-height: 53px;
+    -fx-max-height: 55px;
+    -fx-min-height: 55px;
     -fx-background-color: -monet-primary-container;
     -fx-cursor: hand;
 }
@@ -441,14 +439,16 @@
 .launch-pane > .jfx-button.launch-button {
     -fx-max-width: 207px;
     -fx-min-width: 207px;
-    -fx-background-radius: 2px 0 0 2px;
+    -fx-border-width: 0 3px 0 0;
+    -fx-border-color: -monet-on-surface-variant;
+    -fx-background-radius: 4px 0 0 4px;
 }
 
 .launch-pane > .jfx-button.menu-button {
     -fx-max-width: 20px;
     -fx-min-width: 20px;
     -fx-font-size: 15px;
-    -fx-background-radius: 0 2px 2px 0;
+    -fx-background-radius: 0 4px 4px 0;
 }
 
 .launch-pane > .jfx-button > StackPane > .jfx-rippler {
