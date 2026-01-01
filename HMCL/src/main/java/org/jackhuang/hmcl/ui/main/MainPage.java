@@ -298,7 +298,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
         menu.setMaxHeight(365);
         menu.setMaxWidth(545);
-        menu.setAlwaysShowingVBar(true);
+        menu.setAlwaysShowingVBar(false);
         FXUtils.onClicked(menu, popup::hide);
         versionNodes = MappedObservableList.create(versions, version -> {
             Node node = PopupMenu.wrapPopupMenuItem(new GameItem(profile, version.getId()));
