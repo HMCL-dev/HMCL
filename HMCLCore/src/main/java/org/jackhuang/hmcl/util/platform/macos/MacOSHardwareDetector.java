@@ -171,7 +171,7 @@ public final class MacOSHardwareDetector extends HardwareDetector {
 
             if (statistics != null) {
                 Matcher matcher = pageSizePattern.matcher(statistics);
-                if (matcher.matches()) {
+                if (matcher.find()) {
                     pageSize = Long.parseLong(matcher.group("size"));
                 } else {
                     break vmStat;
@@ -194,21 +194,21 @@ public final class MacOSHardwareDetector extends HardwareDetector {
                 break vmStat;
             }
 
-            String pageSpeculativeStr = stats.get("Pages speculative");
-            if (pageSpeculativeStr != null && pageSpeculativeStr.endsWith(".")) {
-                pagesSpeculative = Long.parseLong(pageSpeculativeStr.substring(0, pageSpeculativeStr.length() - 1));
+            String pagesSpeculativeStr = stats.get("Pages speculative");
+            if (pagesSpeculativeStr != null && pagesSpeculativeStr.endsWith(".")) {
+                pagesSpeculative = Long.parseUnsignedLong(pagesSpeculativeStr, 0, pagesSpeculativeStr.length() - 1, 10);
             } else {
                 break vmStat;
             }
 
-            String pagePurgeableStr = stats.get("Pages purgeable");
-            if (pagePurgeableStr != null && pageSpeculativeStr.endsWith(".")) {
-                pagesPurgeable = Long.parseLong(pagePurgeableStr.substring(0, pagePurgeableStr.length() - 1));
+            String pagesPurgeableStr = stats.get("Pages purgeable");
+            if (pagesPurgeableStr != null && pagesPurgeableStr.endsWith(".")) {
+                pagesPurgeable = Long.parseUnsignedLong(pagesPurgeableStr, 0, pagesPurgeableStr.length() - 1, 10);
             } else {
                 break vmStat;
             }
 
-            long available = (pagesFree - pagesSpeculative + pagesInactive + pagesPurgeable) * pageSize;
+            long available = (pagesFree + pagesSpeculative + pagesInactive + pagesPurgeable) * pageSize;
             if (available > 0) {
                 return available;
             }
