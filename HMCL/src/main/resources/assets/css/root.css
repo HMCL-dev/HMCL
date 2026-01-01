@@ -457,8 +457,7 @@
     -fx-padding: 0;
 }
 
-.launch-pane > .jfx-button,
-.launch-pane > .jfx-button * {
+.launch-pane > .jfx-button, .jfx-button * {
     -fx-text-fill: -monet-on-primary-container;
     -fx-font-size: 14px;
 }
