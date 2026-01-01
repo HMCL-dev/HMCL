@@ -41,7 +41,6 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 
@@ -181,5 +180,5 @@ public final class LocalModpackPage extends ModpackPage {
     public static final SettingsMap.Key<Modpack> MODPACK_MANIFEST = new SettingsMap.Key<>("MODPACK_MANIFEST");
     public static final SettingsMap.Key<Charset> MODPACK_CHARSET = new SettingsMap.Key<>("MODPACK_CHARSET");
     public static final SettingsMap.Key<Boolean> MODPACK_MANUALLY_CREATED = new SettingsMap.Key<>("MODPACK_MANUALLY_CREATED");
-    public static final SettingsMap.Key<URI> MODPACK_ICON_URL = new SettingsMap.Key<>("MODPACK_ICON_URL");
+    public static final SettingsMap.Key<String> MODPACK_ICON_URL = new SettingsMap.Key<>("MODPACK_ICON_URL");
 }

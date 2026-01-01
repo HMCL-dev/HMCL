@@ -72,7 +72,6 @@ public final class Versions {
     public static void downloadModpackImpl(Profile profile, String version, RemoteMod.Version file, RemoteMod addon) {
         Path modpack;
         URI downloadURL;
-        URI iconURL;
         try {
             downloadURL = NetworkUtils.toURI(file.getFile().getUrl());
             modpack = Files.createTempFile("modpack", ".zip");
@@ -82,23 +81,11 @@ public final class Versions {
                     i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);
             return;
         }
-        {
-            URI uri = null;
-            String uriString = addon.getIconUrl();
-            if (uriString != null) {
-                try {
-                    uri = NetworkUtils.toURI(uriString);
-                } catch (IllegalArgumentException e) {
-                    LOG.warning("Failed to parse modpack icon URL: " + uriString, e);
-                }
-            }
-            iconURL = uri;
-        }
         Controllers.taskDialog(
                 new FileDownloadTask(downloadURL, modpack)
                         .whenComplete(Schedulers.javafx(), e -> {
                             if (e == null) {
-                                Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile, modpack, version, iconURL));
+                                Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile, modpack, version, addon.getIconUrl()));
                             } else if (e instanceof CancellationException) {
                                 Controllers.showToast(i18n("message.cancelled"));
                             } else {

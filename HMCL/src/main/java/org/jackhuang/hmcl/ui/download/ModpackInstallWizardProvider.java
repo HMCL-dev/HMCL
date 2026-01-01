@@ -35,6 +35,7 @@ import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.SettingsMap;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -50,7 +51,7 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
     private final Profile profile;
     private final Path file;
     private final String updateVersion;
-    private final URI iconURL;
+    private final String iconURL;
 
     public ModpackInstallWizardProvider(Profile profile) {
         this(profile, null, null, null);
@@ -64,7 +65,7 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         this(profile, null, updateVersion, null);
     }
 
-    public ModpackInstallWizardProvider(Profile profile, Path modpackFile, String updateVersion, URI iconURL) {
+    public ModpackInstallWizardProvider(Profile profile, Path modpackFile, String updateVersion, String iconURL) {
         this.profile = profile;
         this.file = modpackFile;
         this.updateVersion = updateVersion;
@@ -84,13 +85,19 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
 
     private <T> Task<Void> withIconDownloadTask(SettingsMap settings, Task<T> task) {
         return task.thenComposeAsync(Schedulers.javafx(), result -> {
-            URI iconURL = settings.get(LocalModpackPage.MODPACK_ICON_URL);
-            if (iconURL == null) return null;
-            String url = iconURL.getPath().toLowerCase(Locale.ROOT);
-            if (url.endsWith("/")) {
-                url = url.substring(0, url.length() - 1);
+            String rawURL = settings.get(LocalModpackPage.MODPACK_ICON_URL);
+            if (rawURL == null) return null;
+            URI uri;
+            try {
+                uri = NetworkUtils.toURI(rawURL);
+            } catch (IllegalArgumentException e) {
+                return null;
             }
-            if (FXUtils.IMAGE_EXTENSIONS.stream().map(s -> "." + s).noneMatch(url::endsWith)) return null;
+            String urlPath = uri.getPath().toLowerCase(Locale.ROOT);
+            if (urlPath.endsWith("/")) {
+                urlPath = urlPath.substring(0, urlPath.length() - 1);
+            }
+            if (FXUtils.IMAGE_EXTENSIONS.stream().map(s -> "." + s).noneMatch(urlPath::endsWith)) return null;
 
             Path versionRoot;
             if (result instanceof Path resPath) {
@@ -102,8 +109,8 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
                     .map(s -> versionRoot.resolve("icon." + s))
                     .anyMatch(Files::exists);
             if (hasIcon) return null;
-            Path iconDest = versionRoot.resolve("icon" + url.substring(url.lastIndexOf('.')));
-            return new FileDownloadTask(iconURL, iconDest);
+            Path iconDest = versionRoot.resolve("icon" + urlPath.substring(urlPath.lastIndexOf('.')));
+            return new FileDownloadTask(rawURL, iconDest);
         });
     }
 
