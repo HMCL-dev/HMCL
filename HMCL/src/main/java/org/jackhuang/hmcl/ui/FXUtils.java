@@ -1105,7 +1105,7 @@ public final class FXUtils {
                 stage.getIcons().setAll(fxImage);
             }
 
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && !EntryPoint.isInsideMacAppBundle()) {
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && !OperatingSystem.isInsideMacAppBundle()) {
                 setTaskbarIcon(EntryPoint.class, iconPath);
             }
         };

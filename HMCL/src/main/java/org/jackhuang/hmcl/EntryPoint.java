@@ -21,8 +21,6 @@ import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.SelfDependencyPatcher;
 import org.jackhuang.hmcl.util.SwingUtils;
 import org.jackhuang.hmcl.java.JavaRuntime;
-import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
@@ -30,7 +28,6 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.concurrent.CancellationException;
 
 import static org.jackhuang.hmcl.util.AppIconManager.setTaskbarIcon;
@@ -53,7 +50,7 @@ public final class EntryPoint {
         setupJavaFXVMOptions();
         checkDirectoryPath();
 
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && !isInsideMacAppBundle())
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && !OperatingSystem.isInsideMacAppBundle())
             setTaskbarIcon(EntryPoint.class, "/assets/img/icon-mac.png");
 
         checkJavaFX();
@@ -161,25 +158,6 @@ public final class EntryPoint {
                 LOG.warning("Failed to create HMCL global directory " + Metadata.HMCL_GLOBAL_DIRECTORY, e);
             }
         }
-    }
-
-    public static boolean isInsideMacAppBundle() {
-        Path thisJar = JarUtils.thisJarPath();
-        if (thisJar == null)
-            return false;
-
-        for (Path current = thisJar.getParent();
-             current != null && current.getParent() != null;
-             current = current.getParent()
-        ) {
-            if ("Contents".equals(FileUtils.getName(current))
-                    && FileUtils.getName(current.getParent()).endsWith(".app")
-                    && Files.exists(current.resolve("Info.plist"))
-            ) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private static void checkDirectoryPath() {
