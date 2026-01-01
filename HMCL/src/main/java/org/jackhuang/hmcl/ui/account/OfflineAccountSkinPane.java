@@ -184,6 +184,7 @@ public class OfflineAccountSkinPane extends StackPane {
                     gridPane.addRow(0, hint);
                     break;
                 case LOCAL_FILE:
+                    gridPane.setPadding(new Insets(0, 0, 0, 10));
                     gridPane.addRow(0, new Label(i18n("account.skin.model")), modelCombobox);
                     gridPane.addRow(1, new Label(i18n("account.skin")), skinSelector);
                     gridPane.addRow(2, new Label(i18n("account.cape")), capeSelector);
