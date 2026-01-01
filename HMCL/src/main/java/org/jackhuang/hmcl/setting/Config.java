@@ -210,7 +210,7 @@ public final class Config extends ObservableSetting {
     @SerializedName("translateModDescription")
     private final BooleanProperty translateModDescription = new SimpleBooleanProperty(false);
 
-    public BooleanProperty translateModDescriptionProperty() {
+    public BooleanProperty autoTranslateModDescriptionProperty() {
         return translateModDescription;
     }
 
