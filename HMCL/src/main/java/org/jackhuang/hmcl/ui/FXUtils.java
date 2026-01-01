@@ -56,7 +56,6 @@ import javafx.stage.*;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
-import org.jackhuang.hmcl.EntryPoint;
 import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -1106,7 +1105,7 @@ public final class FXUtils {
             }
 
             if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && !OperatingSystem.isInsideMacAppBundle()) {
-                setTaskbarIcon(EntryPoint.class, iconPath);
+                setTaskbarIcon(iconPath);
             }
         };
 

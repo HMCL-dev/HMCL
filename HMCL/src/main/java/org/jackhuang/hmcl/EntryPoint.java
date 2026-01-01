@@ -51,7 +51,7 @@ public final class EntryPoint {
         checkDirectoryPath();
 
         if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && !OperatingSystem.isInsideMacAppBundle())
-            setTaskbarIcon(EntryPoint.class, "/assets/img/icon-mac.png");
+            setTaskbarIcon("/assets/img/icon-mac.png");
 
         checkJavaFX();
         verifyJavaFX();

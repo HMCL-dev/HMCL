@@ -23,15 +23,15 @@ import java.net.URL;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class AppIconManager {
-    public static void setTaskbarIcon(Class<?> resourceLoader, String iconPath) {
+    public static void setTaskbarIcon(String iconPath) {
         if (!java.awt.Taskbar.isTaskbarSupported()) {
             return;
         }
 
         try {
-            URL resource = resourceLoader.getResource(iconPath);
+            URL resource = AppIconManager.class.getResource(iconPath);
             if (resource == null) {
-                LOG.warning("Icon resource not found: " + iconPath + " (using loader: " + resourceLoader + ")");
+                LOG.warning("Icon resource not found: " + iconPath);
                 return;
             }
 
