@@ -42,6 +42,7 @@ import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Locale;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -85,7 +86,10 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         return task.thenComposeAsync(Schedulers.javafx(), result -> {
             URI iconURL = settings.get(LocalModpackPage.MODPACK_ICON_URL);
             if (iconURL == null) return null;
-            String url = iconURL.toString();
+            String url = iconURL.getPath().toLowerCase(Locale.ROOT);
+            if (url.endsWith("/")) {
+                url = url.substring(0, url.length() - 1);
+            }
             if (FXUtils.IMAGE_EXTENSIONS.stream().map(s -> "." + s).noneMatch(url::endsWith)) return null;
 
             Path versionRoot;
