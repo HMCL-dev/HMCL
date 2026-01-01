@@ -33,6 +33,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.CancellationException;
 
+import static org.jackhuang.hmcl.util.AppIconManager.setTaskbarIcon;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -53,7 +54,7 @@ public final class EntryPoint {
         checkDirectoryPath();
 
         if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && !isInsideMacAppBundle())
-            initIcon();
+            setTaskbarIcon(EntryPoint.class, "/assets/img/icon-mac.png");
 
         checkJavaFX();
         verifyJavaFX();
@@ -162,7 +163,7 @@ public final class EntryPoint {
         }
     }
 
-    private static boolean isInsideMacAppBundle() {
+    public static boolean isInsideMacAppBundle() {
         Path thisJar = JarUtils.thisJarPath();
         if (thisJar == null)
             return false;
@@ -179,17 +180,6 @@ public final class EntryPoint {
             }
         }
         return false;
-    }
-
-    private static void initIcon() {
-        try {
-            if (java.awt.Taskbar.isTaskbarSupported()) {
-                var image = java.awt.Toolkit.getDefaultToolkit().getImage(EntryPoint.class.getResource("/assets/img/icon-mac.png"));
-                java.awt.Taskbar.getTaskbar().setIconImage(image);
-            }
-        } catch (Throwable e) {
-            LOG.warning("Failed to set application icon", e);
-        }
     }
 
     private static void checkDirectoryPath() {

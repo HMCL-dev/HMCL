@@ -56,10 +56,12 @@ import javafx.stage.*;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
+import org.jackhuang.hmcl.EntryPoint;
 import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.image.ImageLoader;
 import org.jackhuang.hmcl.ui.image.ImageUtils;
@@ -100,6 +102,7 @@ import java.util.function.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.jackhuang.hmcl.util.AppIconManager.setTaskbarIcon;
 import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -1085,15 +1088,35 @@ public final class FXUtils {
     }
 
     public static void setIcon(Stage stage) {
-        String icon;
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-            icon = "/assets/img/icon.png";
-        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
-            icon = "/assets/img/icon-mac.png";
-        } else {
-            icon = "/assets/img/icon@4x.png";
+        Runnable updateIcon = () -> {
+            String iconPath;
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                iconPath = "/assets/img/icon.png";
+            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && Themes.darkModeProperty().get()) {
+                iconPath = "/assets/img/icon-mac-dark.png";
+            } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+                iconPath = "/assets/img/icon-mac.png";
+            } else {
+                iconPath = "/assets/img/icon@4x.png";
+            }
+
+            Image fxImage = newBuiltinImage(iconPath);
+            if (fxImage != null) {
+                stage.getIcons().setAll(fxImage);
+            }
+
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && !EntryPoint.isInsideMacAppBundle()) {
+                setTaskbarIcon(EntryPoint.class, iconPath);
+            }
+        };
+
+        updateIcon.run();
+
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+            Themes.darkModeProperty().addListener((obs, oldDark, newDark) ->
+                    Platform.runLater(updateIcon)
+            );
         }
-        stage.getIcons().add(newBuiltinImage(icon));
     }
 
     public static Image loadImage(Path path) throws Exception {
