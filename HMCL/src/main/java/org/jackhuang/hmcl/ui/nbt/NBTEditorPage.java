@@ -18,8 +18,10 @@
 package org.jackhuang.hmcl.ui.nbt;
 
 import com.jfoenix.controls.JFXButton;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
 import javafx.scene.layout.BorderPane;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -48,11 +50,12 @@ public final class NBTEditorPage extends SpinnerPane implements DecoratorPage {
     private final NBTFileType type;
 
     private final BorderPane root = new BorderPane();
+    JFXButton cancelButton;
 
     public NBTEditorPage(Path file) throws IOException {
         getStyleClass().add("gray-background");
 
-        this.state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("nbt.title", file.toString())));
+        this.state = new ReadOnlyObjectWrapper<>(new State(i18n("nbt.title", file.toString()), null, true, true, true));
         this.file = file;
         this.type = NBTFileType.ofFile(file);
 
@@ -68,6 +71,7 @@ public final class NBTEditorPage extends SpinnerPane implements DecoratorPage {
                 paths -> {
                     Path path = paths.get(0);
                     try {
+                        fireEvent(new PageCloseEvent());
                         Controllers.navigate(new NBTEditorPage(path));
                     } catch (Throwable e) {
                         LOG.warning("Fail to open nbt file", e);
@@ -76,10 +80,14 @@ public final class NBTEditorPage extends SpinnerPane implements DecoratorPage {
                     }
                 });
 
-        JFXButton cancelButton = FXUtils.newRaisedButton(i18n("button.cancel"));
+        cancelButton = FXUtils.newRaisedButton(i18n("button.cancel"));
         cancelButton.setOnAction(e -> fireEvent(new PageCloseEvent()));
         onEscPressed(this, cancelButton::fire);
 
+        loadTree();
+    }
+
+    public void loadTree() {
         Task.supplyAsync(() -> type.readAsTree(file))
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
                     if (exception == null) {
@@ -98,5 +106,17 @@ public final class NBTEditorPage extends SpinnerPane implements DecoratorPage {
     @Override
     public ReadOnlyObjectProperty<State> stateProperty() {
         return state;
+    }
+
+    @Override
+    public void refresh() {
+        root.setCenter(null);
+        setLoading(true);
+        loadTree();
+    }
+
+    @Override
+    public BooleanProperty refreshableProperty() {
+        return new SimpleBooleanProperty(true);
     }
 }

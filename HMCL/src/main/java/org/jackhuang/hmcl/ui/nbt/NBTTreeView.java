@@ -31,6 +31,7 @@ import javafx.scene.input.*;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
+import org.jackhuang.hmcl.ui.construct.MenuSeparator;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.util.StringUtils;
 
@@ -56,7 +57,7 @@ public final class NBTTreeView extends JFXTreeView<Tag> {
             TreeItem<Tag> current = getSelectionModel().getSelectedItem();
 
             if (current instanceof Item item && item.getText() != null) {
-                FXUtils.copyText(item.getText());
+                FXUtils.copyText(NBTUtils.getSNBT(item.getValue()));
                 event.consume();
             }
         });
@@ -64,7 +65,6 @@ public final class NBTTreeView extends JFXTreeView<Tag> {
         this.setOnContextMenuRequested(event -> {
 
             TreeItem<Tag> current = getSelectionModel().getSelectedItem();
-
             if (current instanceof Item item) {
                 showPopupMenu(item, event, this);
             }
@@ -89,6 +89,19 @@ public final class NBTTreeView extends JFXTreeView<Tag> {
                 copyShownItem,
                 copyRawItem
         );
+
+        if (!item.isLeaf()) {
+            IconedMenuItem expandItem;
+            if (item.isExpanded()) {
+                expandItem = new IconedMenuItem(SVG.REMOVE, "fold", () -> item.setExpanded(false), popup);
+            } else {
+                expandItem = new IconedMenuItem(SVG.ADD, "expand", () -> item.setExpanded(true), popup);
+            }
+            menu.getContent().addAll(
+                    new MenuSeparator(),
+                    expandItem
+            );
+        }
 
         popup.show(node, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, event.getX(), event.getY());
     }
