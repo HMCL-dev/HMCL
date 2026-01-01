@@ -158,9 +158,9 @@ public abstract class TerracottaConfigUpgradeTask extends DefaultTask {
             }
         }
 
-        throw new GradleException("Terracotta config isn't up-to-date! " +
+        throw new GradleException(String.format("Terracotta config isn't up-to-date! " +
                 "You might have just edited the version number in libs.version.toml. " +
-                "Please run task :%s:%s to resolve the new config.");
+                "Please run task %s to resolve the new config.", getPath()));
     }
 
     private record Bundle(
