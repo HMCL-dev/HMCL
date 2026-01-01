@@ -21,9 +21,7 @@ import com.jfoenix.controls.JFXButton;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -78,25 +76,9 @@ public final class NBTEditorPage extends SpinnerPane implements DecoratorPage {
                     }
                 });
 
-        HBox actions = new HBox(8);
-        actions.setPadding(new Insets(8));
-        actions.setAlignment(Pos.CENTER_RIGHT);
-
-        JFXButton saveButton = FXUtils.newRaisedButton(i18n("button.save"));
-        saveButton.setOnAction(e -> {
-            try {
-                save();
-            } catch (IOException ex) {
-                LOG.warning("Failed to save NBT file", ex);
-                Controllers.dialog(i18n("nbt.save.failed") + "\n\n" + StringUtils.getStackTrace(ex));
-            }
-        });
-
         JFXButton cancelButton = FXUtils.newRaisedButton(i18n("button.cancel"));
         cancelButton.setOnAction(e -> fireEvent(new PageCloseEvent()));
         onEscPressed(this, cancelButton::fire);
-
-        actions.getChildren().setAll(saveButton, cancelButton);
 
         Task.supplyAsync(() -> type.readAsTree(file))
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
@@ -111,10 +93,6 @@ public final class NBTEditorPage extends SpinnerPane implements DecoratorPage {
                         Controllers.dialog(i18n("nbt.open.failed") + "\n\n" + StringUtils.getStackTrace(exception), null, MessageDialogPane.MessageType.WARNING, cancelButton::fire);
                     }
                 }).start();
-    }
-
-    public void save() throws IOException {
-        // TODO
     }
 
     @Override

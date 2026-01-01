@@ -25,11 +25,7 @@ import com.github.steveice10.opennbt.tag.builtin.Tag;
 import kala.compress.utils.BoundedInputStream;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -190,7 +186,7 @@ public enum NBTFileType {
 
     public NBTTreeView.Item readAsTree(Path file) throws IOException {
         NBTTreeView.Item root = NBTTreeView.buildTree(read(file));
-        root.setName(file.getFileName().toString());
+        root.setCustomName(file.getFileName().toString());
         return root;
     }
 }
