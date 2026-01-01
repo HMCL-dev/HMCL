@@ -1334,6 +1334,10 @@
     -fx-stroke: -monet-primary-container;
 }
 
+.jfx-spinner .arc {
+    -fx-stroke-line-cap: round;
+}
+
 .first-spinner {
     -jfx-radius: 20;
 }
