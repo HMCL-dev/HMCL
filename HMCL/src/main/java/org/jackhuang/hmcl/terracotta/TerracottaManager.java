@@ -44,10 +44,10 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 
@@ -90,12 +90,18 @@ public final class TerracottaManager {
     private static volatile boolean daemonRunning = false;
 
     private static void runBackground() {
-        long interval = Duration.ofMillis(500).toNanos();
+        final long ACTIVE = TimeUnit.MILLISECONDS.toNanos(500);
+        final long BACKGROUND = TimeUnit.SECONDS.toMillis(15);
+
         while (true) {
-            while (!daemonRunning) {
-                LockSupport.park();
+            if (daemonRunning) {
+                LockSupport.parkNanos(ACTIVE);
+            } else {
+                long deadline = System.currentTimeMillis() + BACKGROUND;
+                do {
+                    LockSupport.parkUntil(deadline);
+                } while (!daemonRunning && System.currentTimeMillis() < deadline - 100);
             }
-            LockSupport.parkNanos(interval);
 
             if (!(STATE_V.get() instanceof TerracottaState.PortSpecific state)) {
                 continue;
