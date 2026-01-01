@@ -676,12 +676,14 @@ public final class WorldInfoPage extends SpinnerPane {
     }
 
     private void saveImage(Image image, Path path) {
+        Image oldImage = iconImageView.getImage();
         try {
             PNGJavaFXUtils.writeImage(image, path);
             iconImageView.setImage(image);
             Controllers.showToast(i18n("world.icon.change.succeed.toast"));
         } catch (IOException e) {
             LOG.warning(e.getMessage());
+            iconImageView.setImage(oldImage);
         }
     }
 }
