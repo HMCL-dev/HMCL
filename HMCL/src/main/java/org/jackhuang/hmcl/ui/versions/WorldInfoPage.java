@@ -125,7 +125,6 @@ public final class WorldInfoPage extends SpinnerPane {
                     worldNameField.textProperty().addListener((observable, oldValue, newValue) -> {
                         if (newValue != null) {
                             try {
-                                stringTag.setValue(newValue);
                                 world.setWorldName(newValue);
                             } catch (Throwable ignored) {
                             }
@@ -349,7 +348,7 @@ public final class WorldInfoPage extends SpinnerPane {
                         dimension = Dimension.of(respawnTag.get("dimension"));
                         Tag posTag = respawnTag.get("pos");
 
-                        if (posTag instanceof IntArrayTag intArrayTag) {
+                        if (posTag instanceof IntArrayTag intArrayTag && intArrayTag.length() >= 3) {
                             return dimension.formatPosition(intArrayTag.getValue(0), intArrayTag.getValue(1), intArrayTag.getValue(2));
                         }
                     } else if (player.get("SpawnX") instanceof IntTag intX
@@ -417,7 +416,7 @@ public final class WorldInfoPage extends SpinnerPane {
 
                 Tag tag = player.get("Health");
                 if (tag instanceof FloatTag floatTag) {
-                    setTagAndTextFiled(floatTag, healthField);
+                    setTagAndTextField(floatTag, healthField);
                 } else {
                     healthField.setDisable(true);
                 }
@@ -431,7 +430,7 @@ public final class WorldInfoPage extends SpinnerPane {
 
                 Tag tag = player.get("foodLevel");
                 if (tag instanceof IntTag intTag) {
-                    setTagAndTextFiled(intTag, foodLevelField);
+                    setTagAndTextField(intTag, foodLevelField);
                 } else {
                     foodLevelField.setDisable(true);
                 }
@@ -445,7 +444,7 @@ public final class WorldInfoPage extends SpinnerPane {
 
                 Tag tag = player.get("XpLevel");
                 if (tag instanceof IntTag intTag) {
-                    setTagAndTextFiled(intTag, xpLevelField);
+                    setTagAndTextField(intTag, xpLevelField);
                 } else {
                     xpLevelField.setDisable(true);
                 }
@@ -506,7 +505,7 @@ public final class WorldInfoPage extends SpinnerPane {
         }
     }
 
-    private void setTagAndTextFiled(IntTag intTag, JFXTextField jfxTextField) {
+    private void setTagAndTextField(IntTag intTag, JFXTextField jfxTextField) {
         jfxTextField.setText(String.valueOf(intTag.getValue()));
 
         jfxTextField.textProperty().addListener((o, oldValue, newValue) -> {
@@ -524,7 +523,7 @@ public final class WorldInfoPage extends SpinnerPane {
         jfxTextField.setValidators(new NumberValidator(i18n("input.number"), true));
     }
 
-    private void setTagAndTextFiled(FloatTag floatTag, JFXTextField jfxTextField) {
+    private void setTagAndTextField(FloatTag floatTag, JFXTextField jfxTextField) {
         jfxTextField.setText(new DecimalFormat("#").format(floatTag.getValue().floatValue()));
 
         jfxTextField.textProperty().addListener((o, oldValue, newValue) -> {

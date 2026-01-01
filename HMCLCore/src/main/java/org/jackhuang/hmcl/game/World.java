@@ -293,7 +293,7 @@ public final class World {
 
     public void copy(String newName) throws IOException {
         if (!Files.isDirectory(file)) {
-            throw new IOException();
+            throw new IOException("Not a valid world directory");
         }
 
         if (isLocked()) {
