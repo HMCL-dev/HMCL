@@ -127,7 +127,6 @@ public final class WorldInfoPage extends SpinnerPane {
                             try {
                                 stringTag.setValue(newValue);
                                 world.setWorldName(newValue);
-                                saveLevelDat();
                             } catch (Throwable ignored) {
                             }
                         }

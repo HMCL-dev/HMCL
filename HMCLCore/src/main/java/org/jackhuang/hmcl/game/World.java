@@ -45,13 +45,8 @@ public final class World {
 
     private final Path file;
     private String fileName;
-    private String worldName;
-    private GameVersionNumber gameVersion;
     private CompoundTag levelData;
-    private long lastPlayed;
     private Image icon;
-    private Long seed;
-    private boolean largeBiomes;
     private boolean isLocked;
 
     public World(Path file) throws IOException {
@@ -74,11 +69,17 @@ public final class World {
     }
 
     public String getWorldName() {
-        return worldName;
+        CompoundTag data = levelData.get("Data");
+        StringTag levelNameTag = data.get("LevelName");
+        return levelNameTag.getValue();
     }
 
-    public void setWorldName(String worldName) {
-        this.worldName = worldName;
+    public void setWorldName(String worldName) throws IOException {
+
+        if (levelData.get("Data") instanceof CompoundTag data && data.get("LevelName") instanceof StringTag levelNameTag) {
+            levelNameTag.setValue(worldName);
+            writeLevelDat(levelData);
+        }
     }
 
     public Path getLevelDatFile() {
@@ -94,19 +95,48 @@ public final class World {
     }
 
     public long getLastPlayed() {
-        return lastPlayed;
+        CompoundTag data = levelData.get("Data");
+        LongTag lastPlayedTag = data.get("LastPlayed");
+        return lastPlayedTag.getValue();
     }
 
     public @Nullable GameVersionNumber getGameVersion() {
-        return gameVersion;
+        if (levelData.get("Data") instanceof CompoundTag data &&
+                data.get("Version") instanceof CompoundTag versionTag &&
+                versionTag.get("Name") instanceof StringTag nameTag) {
+            return GameVersionNumber.asGameVersion(nameTag.getValue());
+        }
+        return null;
     }
 
     public @Nullable Long getSeed() {
-        return seed;
+        CompoundTag data = levelData.get("Data");
+        if (data.get("WorldGenSettings") instanceof CompoundTag worldGenSettingsTag && worldGenSettingsTag.get("seed") instanceof LongTag seedTag) { //Valid after 1.16
+            return seedTag.getValue();
+        } else if (data.get("RandomSeed") instanceof LongTag seedTag) { //Valid before 1.16
+            return seedTag.getValue();
+        }
+        return null;
     }
 
     public boolean isLargeBiomes() {
-        return largeBiomes;
+        CompoundTag data = levelData.get("Data");
+        if (data.get("generatorName") instanceof StringTag generatorNameTag) { //Valid before 1.16
+            return "largeBiomes".equals(generatorNameTag.getValue());
+        } else {
+            if (data.get("WorldGenSettings") instanceof CompoundTag worldGenSettingsTag
+                    && worldGenSettingsTag.get("dimensions") instanceof CompoundTag dimensionsTag
+                    && dimensionsTag.get("minecraft:overworld") instanceof CompoundTag overworldTag
+                    && overworldTag.get("generator") instanceof CompoundTag generatorTag) {
+                if (generatorTag.get("biome_source") instanceof CompoundTag biomeSourceTag
+                        && biomeSourceTag.get("large_biomes") instanceof ByteTag largeBiomesTag) { //Valid between 1.16 and 1.16.2
+                    return largeBiomesTag.getValue() == (byte) 1;
+                } else if (generatorTag.get("settings") instanceof StringTag settingsTag) { //Valid after 1.16.2
+                    return "minecraft:large_biomes".equals(settingsTag.getValue());
+                }
+            }
+            return false;
+        }
     }
 
     public Image getIcon() {
@@ -186,47 +216,11 @@ public final class World {
         if (data == null)
             throw new IOException("level.dat missing Data");
 
-        if (data.get("LevelName") instanceof StringTag levelNameTag)
-            worldName = levelNameTag.getValue();
-        else
+        if (!(data.get("LevelName") instanceof StringTag))
             throw new IOException("level.dat missing LevelName");
 
-        if (data.get("LastPlayed") instanceof LongTag lastPlayedTag)
-            lastPlayed = lastPlayedTag.getValue();
-        else
+        if (!(data.get("LastPlayed") instanceof LongTag))
             throw new IOException("level.dat missing LastPlayed");
-
-        gameVersion = null;
-        if (data.get("Version") instanceof CompoundTag versionTag && versionTag.get("Name") instanceof StringTag nameTag) {
-            gameVersion = GameVersionNumber.asGameVersion(nameTag.getValue());
-        }
-
-        if (data.get("WorldGenSettings") instanceof CompoundTag worldGenSettingsTag && worldGenSettingsTag.get("seed") instanceof LongTag seedTag) { //Valid after 1.16
-            seed = seedTag.getValue();
-        } else if (data.get("RandomSeed") instanceof LongTag seedTag) { //Valid before 1.16
-            seed = seedTag.getValue();
-        }
-
-
-        if (data.get("generatorName") instanceof StringTag generatorNameTag) { //Valid before 1.16
-            largeBiomes = "largeBiomes".equals(generatorNameTag.getValue());
-        } else {
-            if (data.get("WorldGenSettings") instanceof CompoundTag worldGenSettingsTag
-                    && worldGenSettingsTag.get("dimensions") instanceof CompoundTag dimensionsTag
-                    && dimensionsTag.get("minecraft:overworld") instanceof CompoundTag overworldTag
-                    && overworldTag.get("generator") instanceof CompoundTag generatorTag) {
-                if (generatorTag.get("biome_source") instanceof CompoundTag biomeSourceTag
-                        && biomeSourceTag.get("large_biomes") instanceof ByteTag largeBiomesTag) { //Valid between 1.16 and 1.16.2
-                    largeBiomes = largeBiomesTag.getValue() == (byte) 1;
-                } else if (generatorTag.get("settings") instanceof StringTag settingsTag) { //Valid after 1.16.2
-                    largeBiomes = "minecraft:large_biomes".equals(settingsTag.getValue());
-                } else {
-                    largeBiomes = false;
-                }
-            } else {
-                largeBiomes = false;
-            }
-        }
     }
 
     public void rename(String newName) throws IOException {
