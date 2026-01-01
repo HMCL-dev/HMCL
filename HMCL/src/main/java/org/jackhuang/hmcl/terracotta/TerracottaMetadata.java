@@ -53,7 +53,7 @@ public final class TerracottaMetadata {
     private TerracottaMetadata() {
     }
 
-    public record Options(String version, String classifier) {
+    private record Options(String version, String classifier) {
         public String replace(String value) {
             return value.replace("${version}", version).replace("${classifier}", classifier);
         }
@@ -102,7 +102,7 @@ public final class TerracottaMetadata {
             return new TerracottaBundle(
                     Metadata.DEPENDENCIES_DIRECTORY.resolve(options.replace("terracotta/${version}")).toAbsolutePath(),
                     links, new FileDownloadTask.IntegrityCheck("SHA-512", pkg.hash),
-                    files, options
+                    files
             );
         }
     }
@@ -132,7 +132,7 @@ public final class TerracottaMetadata {
         Options options = new Options(config.latest, OperatingSystem.CURRENT_OS.getCheckedName() + "-" + Architecture.SYSTEM_ARCH.getCheckedName());
         TerracottaBundle bundle = config.resolve(options);
         AbstractTerracottaProvider provider;
-        if (bundle == null || (provider = locateProvider(bundle)) == null) {
+        if (bundle == null || (provider = locateProvider(bundle, options)) == null) {
             PROVIDER = null;
             PACKAGE_NAME = null;
             PACKAGE_LINKS = null;
@@ -149,9 +149,11 @@ public final class TerracottaMetadata {
     }
 
     @Nullable
-    private static AbstractTerracottaProvider locateProvider(TerracottaBundle bundle) {
-        String prefix = "terracotta-${version}-${classifier}";
+    private static AbstractTerracottaProvider locateProvider(TerracottaBundle bundle, Options options) {
+        String prefix = options.replace("terracotta-${version}-${classifier}");
 
+        // FIXME: As HMCL is a cross-platform application, developers may mistakenly locate
+        //        non-existent files in non-native platform logic without assertion errors during debugging.
         return switch (OperatingSystem.CURRENT_OS) {
             case WINDOWS -> {
                 if (!OperatingSystem.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_10))
@@ -167,7 +169,7 @@ public final class TerracottaMetadata {
         };
     }
 
-    public static void removeLegacyVersionFiles() throws IOException {
+    public static void removeLegacyVersionFiles() {
         try (DirectoryStream<Path> terracotta = collectLegacyVersionFiles()) {
             for (Path path : terracotta) {
                 try {
@@ -176,6 +178,8 @@ public final class TerracottaMetadata {
                     LOG.warning(String.format("Unable to remove legacy terracotta files: %s", path), e);
                 }
             }
+        } catch (IOException e) {
+            LOG.warning("Unable to remove legacy terracotta files.", e);
         }
     }
 

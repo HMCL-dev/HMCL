@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.terracotta;
 
 import com.google.gson.JsonObject;
-import com.google.gson.reflect.TypeToken;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.beans.property.ReadOnlyObjectProperty;
@@ -31,10 +30,12 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.terracotta.provider.AbstractTerracottaProvider;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.InvocationDispatcher;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
@@ -43,6 +44,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicReference;
@@ -81,45 +84,55 @@ public final class TerracottaManager {
         return STATE.getReadOnlyProperty();
     }
 
-    static {
-        Lang.thread(() -> {
-            while (true) {
-                TerracottaState state = STATE_V.get();
-                if (!(state instanceof TerracottaState.PortSpecific portSpecific)) {
-                    LockSupport.parkNanos(500_000);
+    private static final Thread DAEMON = Lang.thread(TerracottaManager::runBackground, "Terracotta Background Daemon", true);
+
+    @FXThread // Written in FXThread, read-only on background daemon
+    private static volatile boolean daemonRunning = false;
+
+    private static void runBackground() {
+        long interval = Duration.ofMillis(500).toNanos();
+        while (true) {
+            while (!daemonRunning) {
+                LockSupport.park();
+            }
+            LockSupport.parkNanos(interval);
+
+            if (!(STATE_V.get() instanceof TerracottaState.PortSpecific state)) {
+                continue;
+            }
+            int port = state.port;
+            int index = state instanceof TerracottaState.Ready ready ? ready.index : Integer.MIN_VALUE;
+
+            TerracottaState next;
+            try {
+                TerracottaState.Ready object = HttpRequest.GET(String.format("http://127.0.0.1:%d/state", port))
+                        .retry(5)
+                        .getJson(TerracottaState.Ready.class);
+                if (object.index <= index) {
                     continue;
                 }
-
-                int port = portSpecific.port;
-                int index = state instanceof TerracottaState.Ready ready ? ready.index : Integer.MIN_VALUE;
-
-                TerracottaState next;
-                try {
-                    next = new GetTask(URI.create(String.format("http://127.0.0.1:%d/state", port)))
-                            .setSignificance(Task.TaskSignificance.MINOR)
-                            .thenApplyAsync(jsonString -> {
-                                TerracottaState.Ready object = JsonUtils.fromNonNullJson(jsonString, TypeToken.get(TerracottaState.Ready.class));
-                                if (object.index <= index) {
-                                    return null;
-                                }
-
-                                object.port = port;
-                                return object;
-                            })
-                            .setSignificance(Task.TaskSignificance.MINOR)
-                            .run();
-                } catch (Exception e) {
-                    LOG.warning("Cannot fetch state from Terracotta.", e);
-                    next = new TerracottaState.Fatal(TerracottaState.Fatal.Type.TERRACOTTA);
-                }
-
-                if (next != null) {
-                    compareAndSet(state, next);
-                }
-
-                LockSupport.parkNanos(500_000);
+                object.port = port;
+                next = object;
+            } catch (Exception e) {
+                LOG.warning("Cannot fetch state from Terracotta.", e);
+                next = new TerracottaState.Fatal(TerracottaState.Fatal.Type.TERRACOTTA);
             }
-        }, "Terracotta Background Daemon", true);
+
+            compareAndSet(state, next);
+        }
+    }
+
+    @FXThread
+    public static void switchDaemon(boolean active) {
+        FXUtils.checkFxUserThread();
+
+        boolean dr = daemonRunning;
+        if (dr != active) {
+            daemonRunning = active;
+            if (active) {
+                LockSupport.unpark(DAEMON);
+            }
+        }
     }
 
     private static AbstractTerracottaProvider getProvider() {
@@ -130,10 +143,11 @@ public final class TerracottaManager {
         return provider;
     }
 
-    public static boolean isValidBundle(Path file) {
-        return FileUtils.getName(file).equalsIgnoreCase(TerracottaMetadata.PACKAGE_NAME);
+    public static boolean isInvalidBundle(Path file) {
+        return !FileUtils.getName(file).equalsIgnoreCase(TerracottaMetadata.PACKAGE_NAME);
     }
 
+    @FXThread
     public static TerracottaState.Preparing download() {
         FXUtils.checkFxUserThread();
 
@@ -152,11 +166,7 @@ public final class TerracottaManager {
                     }
 
                     return getProvider().install(pkg).thenRunAsync(() -> {
-                        try {
-                            TerracottaMetadata.removeLegacyVersionFiles();
-                        } catch (IOException e) {
-                            LOG.warning("Unable to remove legacy terracotta files.", e);
-                        }
+                        TerracottaMetadata.removeLegacyVersionFiles();
 
                         TerracottaState.Launching launching = new TerracottaState.Launching();
                         if (compareAndSet(preparing, launching)) {
@@ -176,8 +186,12 @@ public final class TerracottaManager {
         return compareAndSet(state, preparing) ? preparing : null;
     }
 
+    @FXThread
     public static TerracottaState.Preparing install(Path bundle) {
         FXUtils.checkFxUserThread();
+        if (isInvalidBundle(bundle)) {
+            return null;
+        }
 
         TerracottaState state = STATE_V.get();
         TerracottaState.Preparing preparing;
@@ -191,11 +205,7 @@ public final class TerracottaManager {
 
         Task.composeAsync(() -> getProvider().install(bundle))
                 .thenRunAsync(() -> {
-                    try {
-                        TerracottaMetadata.removeLegacyVersionFiles();
-                    } catch (IOException e) {
-                        LOG.warning("Unable to remove legacy terracotta files.", e);
-                    }
+                    TerracottaMetadata.removeLegacyVersionFiles();
 
                     TerracottaState.Launching launching = new TerracottaState.Launching();
                     if (compareAndSet(preparing, launching)) {
@@ -209,6 +219,7 @@ public final class TerracottaManager {
         return state != preparing && compareAndSet(state, preparing) ? preparing : null;
     }
 
+    @FXThread
     public static TerracottaState recover() {
         FXUtils.checkFxUserThread();
 
@@ -218,6 +229,8 @@ public final class TerracottaManager {
         }
 
         try {
+            // FIXME: A temporary limit has been employed in TerracottaBundle#checkExisting, making
+            //        hash check accept 50MB at most. Calling it on JavaFX should be safe.
             return switch (getProvider().status()) {
                 case NOT_EXIST, LEGACY_VERSION -> download();
                 case READY -> {
@@ -226,7 +239,7 @@ public final class TerracottaManager {
                     yield launching;
                 }
             };
-        } catch (NullPointerException | IOException e) {
+        } catch (RuntimeException | IOException e) {
             LOG.warning("Cannot determine Terracotta state.", e);
             return setState(new TerracottaState.Fatal(TerracottaState.Fatal.Type.UNKNOWN));
         }
@@ -292,10 +305,11 @@ public final class TerracottaManager {
     public static TerracottaState.HostScanning setScanning() {
         TerracottaState state = STATE_V.get();
         if (state instanceof TerracottaState.PortSpecific portSpecific) {
-            new GetTask(NetworkUtils.toURI(String.format(
-                    "http://127.0.0.1:%d/state/scanning?player=%s", portSpecific.port, getPlayerName()))
-            ).setSignificance(Task.TaskSignificance.MINOR).start();
+            String uri = NetworkUtils.withQuery(String.format("http://127.0.0.1:%d/state/scanning", portSpecific.port), Map.of(
+                    "player", getPlayerName()
+            ));
 
+            new GetTask(uri).setSignificance(Task.TaskSignificance.MINOR).start();
             return new TerracottaState.HostScanning(-1, -1, null);
         }
         return null;
@@ -304,9 +318,12 @@ public final class TerracottaManager {
     public static Task<TerracottaState.GuestConnecting> setGuesting(String room) {
         TerracottaState state = STATE_V.get();
         if (state instanceof TerracottaState.PortSpecific portSpecific) {
-            return new GetTask(NetworkUtils.toURI(String.format(
-                    "http://127.0.0.1:%d/state/guesting?room=%s&player=%s", portSpecific.port, room, getPlayerName()
-            )))
+            String uri = NetworkUtils.withQuery(String.format("http://127.0.0.1:%d/state/guesting", portSpecific.port), Map.of(
+                    "room", room,
+                    "player", getPlayerName()
+            ));
+
+            return new GetTask(uri)
                     .setSignificance(Task.TaskSignificance.MINOR)
                     .thenSupplyAsync(() -> new TerracottaState.GuestConnecting(-1, -1, null))
                     .setSignificance(Task.TaskSignificance.MINOR);

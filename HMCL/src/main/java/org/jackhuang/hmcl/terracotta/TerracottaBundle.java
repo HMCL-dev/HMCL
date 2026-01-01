@@ -38,6 +38,7 @@ import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
+import java.security.DigestInputStream;
 import java.security.DigestOutputStream;
 import java.security.MessageDigest;
 import java.util.EnumSet;
@@ -54,14 +55,11 @@ public final class TerracottaBundle {
 
     private final Map<String, FileDownloadTask.IntegrityCheck> files;
 
-    private final TerracottaMetadata.Options options;
-
-    public TerracottaBundle(Path root, List<URI> links, FileDownloadTask.IntegrityCheck hash, Map<String, FileDownloadTask.IntegrityCheck> files, TerracottaMetadata.Options options) {
+    public TerracottaBundle(Path root, List<URI> links, FileDownloadTask.IntegrityCheck hash, Map<String, FileDownloadTask.IntegrityCheck> files) {
         this.root = root;
         this.links = links;
         this.hash = hash;
         this.files = files;
-        this.options = options;
     }
 
     public Task<Path> download(AbstractTerracottaProvider.DownloadContext context) {
@@ -144,8 +142,6 @@ public final class TerracottaBundle {
     }
 
     public Path locate(String file) {
-        file = options.replace(file);
-
         FileDownloadTask.IntegrityCheck check = files.get(file);
         if (check == null) {
             throw new AssertionError(String.format("Expecting %s file in terracotta bundle.", file));
@@ -154,22 +150,8 @@ public final class TerracottaBundle {
     }
 
     public AbstractTerracottaProvider.Status status() throws IOException {
-        if (Files.exists(root)) {
-            boolean matched = true;
-            for (Map.Entry<String, FileDownloadTask.IntegrityCheck> entry : files.entrySet()) {
-                String file = entry.getKey();
-                FileDownloadTask.IntegrityCheck check = entry.getValue();
-
-                Path path = root.resolve(file);
-                if (!Files.isReadable(path) || !DigestUtils.digestToString(check.getAlgorithm(), path).equalsIgnoreCase(check.getChecksum())) {
-                    matched = false;
-                    break;
-                }
-            }
-
-            if (matched) {
-                return AbstractTerracottaProvider.Status.READY;
-            }
+        if (Files.exists(root) && isLocalBundleValid()) {
+            return AbstractTerracottaProvider.Status.READY;
         }
 
         try {
@@ -177,8 +159,36 @@ public final class TerracottaBundle {
                 return AbstractTerracottaProvider.Status.LEGACY_VERSION;
             }
         } catch (IOException e) {
-            Logger.LOG.warning("Cannot determine whether legacy versions exist.");
+            Logger.LOG.warning("Cannot determine whether legacy versions exist.", e);
         }
         return AbstractTerracottaProvider.Status.NOT_EXIST;
+    }
+
+    private boolean isLocalBundleValid() throws IOException { // FIXME: Make control flow clearer.
+        long total = 0;
+        byte[] buffer = new byte[8192];
+
+        for (Map.Entry<String, FileDownloadTask.IntegrityCheck> entry : files.entrySet()) {
+            Path path = root.resolve(entry.getKey());
+            FileDownloadTask.IntegrityCheck check = entry.getValue();
+            if (!Files.isReadable(path)) {
+                return false;
+            }
+
+            MessageDigest digest = DigestUtils.getDigest(check.getAlgorithm());
+            try (InputStream is = new DigestInputStream(Files.newInputStream(path), digest)) {
+                int n;
+                while ((n = is.read(buffer)) >= 0) {
+                    total += n;
+                    if (total >= 50 * 1024 * 1024) { // >=50MB
+                        return false;
+                    }
+                }
+            }
+            if (!HexFormat.of().formatHex(digest.digest()).equalsIgnoreCase(check.getChecksum())) {
+                return false;
+            }
+        }
+        return true;
     }
 }

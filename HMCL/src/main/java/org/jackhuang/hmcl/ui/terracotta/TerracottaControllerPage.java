@@ -57,7 +57,13 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.ui.construct.ComponentList;
+import org.jackhuang.hmcl.ui.construct.ComponentSublist;
+import org.jackhuang.hmcl.ui.construct.HintPane;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.RipplerContainer;
+import org.jackhuang.hmcl.ui.construct.SpinnerPane;
+import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
@@ -96,6 +102,11 @@ public class TerracottaControllerPage extends StackPane {
     /* FIXME: It's sucked to have such a long logic, containing UI for all states defined in TerracottaState, with unclear control flows.
          Consider moving UI into multiple files for each state respectively. */
     public TerracottaControllerPage() {
+        holder.add(FXUtils.observeWeak(() -> {
+            // Run daemon process only if HMCL is focused and is displaying current node.
+            TerracottaManager.switchDaemon(getScene() != null && Controllers.getStage().isFocused());
+        }, this.sceneProperty(), Controllers.getStage().focusedProperty()));
+
         TransitionPane transition = new TransitionPane();
 
         ObjectProperty<String> statusProperty = new SimpleObjectProperty<>();
@@ -116,7 +127,7 @@ public class TerracottaControllerPage extends StackPane {
         }, files -> {
             Path path = files.get(0);
 
-            if (!TerracottaManager.isValidBundle(path)) {
+            if (TerracottaManager.isInvalidBundle(path)) {
                 Controllers.dialog(
                         i18n("terracotta.from_local.file_name_mismatch", TerracottaMetadata.PACKAGE_NAME, FileUtils.getName(path)),
                         i18n("message.error"),
@@ -125,15 +136,9 @@ public class TerracottaControllerPage extends StackPane {
                 return;
             }
 
-            TerracottaState state = UI_STATE.get();
-            if (state instanceof TerracottaState.Uninitialized ||
-                    state instanceof TerracottaState.Preparing preparing && preparing.hasInstallFence() ||
-                    state instanceof TerracottaState.Fatal fatal && fatal.isRecoverable()
-            ) {
-                TerracottaState.Preparing next = TerracottaManager.install(path);
-                if (next != null) {
-                    UI_STATE.set(next);
-                }
+            TerracottaState.Preparing next = TerracottaManager.install(path);
+            if (next != null) {
+                UI_STATE.set(next);
             }
         });
 
