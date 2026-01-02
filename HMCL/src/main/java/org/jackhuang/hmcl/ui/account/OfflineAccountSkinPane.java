@@ -51,6 +51,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class OfflineAccountSkinPane extends StackPane {
+    private static final int DIALOG_ACTION_AREA_HEIGHT = 45 ;
     private final OfflineAccount account;
 
     private final MultiFileItem<Skin.Type> skinItem = new MultiFileItem<>();
@@ -158,10 +159,10 @@ public class OfflineAccountSkinPane extends StackPane {
         }, skinItem.selectedDataProperty(), cslApiField.textProperty(), modelCombobox.valueProperty(), skinSelector.valueProperty(), capeSelector.valueProperty());
 
         FXUtils.onChangeAndOperate(skinItem.selectedDataProperty(), selectedData -> {
-            // In the place where the gridPane is created, increase the bottom padding to leave space for the height of the actions area.
             GridPane gridPane = new GridPane();
             // Increase bottom padding to prevent the prompt from overlapping with the dialog action area
-            gridPane.setPadding(new Insets(0, 0, 48, 10));
+
+            gridPane.setPadding(new Insets(0, 0, DIALOG_ACTION_AREA_HEIGHT, 10));
             gridPane.setHgap(16);
             gridPane.setVgap(8);
             gridPane.getColumnConstraints().setAll(new ColumnConstraints(), FXUtils.getColumnHgrowing());
@@ -174,7 +175,7 @@ public class OfflineAccountSkinPane extends StackPane {
                 case LITTLE_SKIN:
                     HintPane hint = new HintPane(MessageDialogPane.MessageType.INFO);
                     hint.setText(i18n("account.skin.type.little_skin.hint"));
-                    // Allow the tooltip to span two columns and expand horizontally to avoid overlapping with the conversation action area/top-right help button
+                    // Allow the tooltip to span two columns and expand horizontally to avoid overlapping with the dialog action area/top-right help button
                     GridPane.setColumnSpan(hint, 2);
                     GridPane.setHgrow(hint, Priority.ALWAYS);
                     hint.setMaxWidth(Double.MAX_VALUE);
