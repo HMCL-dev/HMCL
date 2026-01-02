@@ -104,10 +104,10 @@ public final class DialogUtils {
     private static void handleDialogShown(JFXDialog dialog, Node node) {
         if (dialog.isVisible()) {
             dialog.requestFocus();
-            if (node instanceof DialogAware)
-                ((DialogAware) node).onDialogShown();
+            if (node instanceof DialogAware dialogAware)
+                dialogAware.onDialogShown();
         } else {
-            dialog.visibleProperty().addListener(new ChangeListener<Boolean>() {
+            dialog.visibleProperty().addListener(new ChangeListener<>() {
                 @Override
                 public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
                     if (newValue) {
@@ -147,8 +147,8 @@ public final class DialogUtils {
                 pane.pop(content);
             }
 
-            if (content instanceof DialogAware) {
-                ((DialogAware) content).onDialogClosed();
+            if (content instanceof DialogAware dialogAware) {
+                dialogAware.onDialogClosed();
             }
         }
     }
