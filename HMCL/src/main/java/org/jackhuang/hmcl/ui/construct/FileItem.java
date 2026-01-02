@@ -45,9 +45,10 @@ public class FileItem extends BorderPane {
 
     private final SimpleStringProperty name = new SimpleStringProperty(this, "name");
     private final SimpleStringProperty title = new SimpleStringProperty(this, "title");
-    private final SimpleStringProperty tooltip = new SimpleStringProperty(this, "tooltip");
+    private final SimpleStringProperty tooltipContent = new SimpleStringProperty(this, "tooltip");
     private final SimpleStringProperty path = new SimpleStringProperty(this, "path");
     private final SimpleBooleanProperty convertToRelativePath = new SimpleBooleanProperty(this, "convertToRelativePath");
+    private final Tooltip tooltip = new Tooltip();
 
     public FileItem() {
         VBox left = new VBox();
@@ -65,9 +66,15 @@ public class FileItem extends BorderPane {
         FXUtils.installFastTooltip(right, i18n("button.edit"));
         setRight(right);
 
-        Tooltip tip = new Tooltip();
-        tip.textProperty().bind(tooltipProperty());
-        Tooltip.install(this, tip);
+        tooltip.textProperty().bind(tooltipContent);
+
+        tooltip.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue.isEmpty()) {
+                Tooltip.install(this, tooltip);
+            } else {
+                Tooltip.uninstall(this, tooltip);
+            }
+        });
 
         convertToRelativePath.addListener(onInvalidating(() -> path.set(processPath(path.get()))));
     }
@@ -142,16 +149,16 @@ public class FileItem extends BorderPane {
         this.title.set(title);
     }
 
-    public String getTooltip() {
-        return tooltip.get();
+    public String getTooltipContent() {
+        return tooltipContent.get();
     }
 
-    public StringProperty tooltipProperty() {
-        return tooltip;
+    public StringProperty tooltipContentProperty() {
+        return tooltipContent;
     }
 
-    public void setTooltip(String tooltip) {
-        this.tooltip.set(tooltip);
+    public void setTooltipContent(String tooltipContent) {
+        this.tooltipContent.set(tooltipContent);
     }
 
     public String getPath() {
