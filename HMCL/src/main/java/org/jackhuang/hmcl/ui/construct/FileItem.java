@@ -23,7 +23,6 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.scene.control.Label;
-import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
@@ -45,7 +44,6 @@ public class FileItem extends BorderPane {
 
     private final SimpleStringProperty name = new SimpleStringProperty(this, "name");
     private final SimpleStringProperty title = new SimpleStringProperty(this, "title");
-    private final SimpleStringProperty tooltip = new SimpleStringProperty(this, "tooltip");
     private final SimpleStringProperty path = new SimpleStringProperty(this, "path");
     private final SimpleBooleanProperty convertToRelativePath = new SimpleBooleanProperty(this, "convertToRelativePath");
 
@@ -64,10 +62,6 @@ public class FileItem extends BorderPane {
         right.setOnAction(e -> onExplore());
         FXUtils.installFastTooltip(right, i18n("button.edit"));
         setRight(right);
-
-        Tooltip tip = new Tooltip();
-        tip.textProperty().bind(tooltipProperty());
-        Tooltip.install(this, tip);
 
         convertToRelativePath.addListener(onInvalidating(() -> path.set(processPath(path.get()))));
     }
@@ -140,18 +134,6 @@ public class FileItem extends BorderPane {
 
     public void setTitle(String title) {
         this.title.set(title);
-    }
-
-    public String getTooltip() {
-        return tooltip.get();
-    }
-
-    public StringProperty tooltipProperty() {
-        return tooltip;
-    }
-
-    public void setTooltip(String tooltip) {
-        this.tooltip.set(tooltip);
     }
 
     public String getPath() {

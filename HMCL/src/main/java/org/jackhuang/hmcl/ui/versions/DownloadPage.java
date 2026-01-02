@@ -474,7 +474,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 case WORLD -> "world.download.title";
                 case MODPACK -> "modpack.download.title";
                 case RESOURCE_PACK -> "resourcepack.download.title";
-                case SHADER -> "download.shader.title";
+                case SHADER_PACK -> "shaderpack.download.title";
                 default -> "mods.download.title";
             };
             this.setHeading(new HBox(new Label(i18n(title, version.getName()))));
