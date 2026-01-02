@@ -112,8 +112,8 @@ public final class DialogUtils {
                 public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
                     if (newValue) {
                         dialog.requestFocus();
-                        if (node instanceof DialogAware)
-                            ((DialogAware) node).onDialogShown();
+                        if (node instanceof DialogAware dialogAware)
+                            dialogAware.onDialogShown();
                         observable.removeListener(this);
                     }
                 }
