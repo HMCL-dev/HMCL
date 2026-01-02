@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.logging.Logger;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.tree.TarFileTree;
 
 import java.io.IOException;
@@ -37,11 +38,9 @@ import java.net.URI;
 import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.PosixFilePermission;
 import java.security.DigestInputStream;
 import java.security.DigestOutputStream;
 import java.security.MessageDigest;
-import java.util.EnumSet;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
@@ -127,10 +126,8 @@ public final class TerracottaBundle {
                         throw new ChecksumMismatchException(check.getAlgorithm(), check.getChecksum(), hash);
                     }
 
-                    EnumSet<PosixFilePermission> permission = FileUtils.parsePosixFilePermission(archive.getMode());
-                    try {
-                        Files.setPosixFilePermissions(path, permission);
-                    } catch (UnsupportedOperationException ignored) {
+                    switch (OperatingSystem.CURRENT_OS) {
+                        case LINUX, MACOS, FREEBSD -> Files.setPosixFilePermissions(path, FileUtils.parsePosixFilePermission(archive.getMode()));
                     }
                 }
             }
