@@ -48,6 +48,7 @@ public final class World {
     private CompoundTag levelData;
     private Image icon;
     private boolean isLocked;
+    private Path levelDataPath;
 
     public World(Path file) throws IOException {
         this.file = file;
@@ -152,7 +153,8 @@ public final class World {
         if (!Files.exists(levelDat)) { // version 20w14infinite
             levelDat = file.resolve("special_level.dat");
         }
-        loadWorldInfo(levelDat);
+        loadAndCheckLevelDat(levelDat);
+        this.levelDataPath = levelDat;
         isLocked = isLocked(getSessionLockFile());
 
         Path iconFile = file.resolve("icon.png");
@@ -176,7 +178,7 @@ public final class World {
             throw new IOException("Not a valid world zip file since level.dat or special_level.dat cannot be found.");
         }
 
-        loadWorldInfo(levelDat);
+        loadAndCheckLevelDat(levelDat);
 
         Path iconFile = root.resolve("icon.png");
         if (Files.isRegularFile(iconFile)) {
@@ -209,7 +211,7 @@ public final class World {
         }
     }
 
-    private void loadWorldInfo(Path levelDat) throws IOException {
+    private void loadAndCheckLevelDat(Path levelDat) throws IOException {
         this.levelData = parseLevelDat(levelDat);
         CompoundTag data = levelData.get("Data");
         if (data == null)
@@ -220,6 +222,12 @@ public final class World {
 
         if (!(data.get("LastPlayed") instanceof LongTag))
             throw new IOException("level.dat missing LastPlayed");
+    }
+
+    public void reloadLevelDat() throws IOException {
+        if (levelDataPath != null) {
+            loadAndCheckLevelDat(this.levelDataPath);
+        }
     }
 
     public void rename(String newName) throws IOException {
