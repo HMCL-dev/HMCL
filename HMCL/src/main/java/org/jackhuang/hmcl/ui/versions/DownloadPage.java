@@ -543,7 +543,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                         List<Node> list = new ArrayList<>();
                         Label title = new Label(i18n(DependencyModItem.I18N_KEY.get(dependency.getType())));
                         title.setPadding(new Insets(0, 8, 0, 8));
-                        list.add(new HBox(title));
+                        list.add(new HBox(title)); // So that it stays on the left
                         dependencies.put(dependency.getType(), list);
                     }
                     DependencyModItem dependencyModItem = new DependencyModItem(selfPage.page, dependency.load(), selfPage.version, selfPage.callback);
