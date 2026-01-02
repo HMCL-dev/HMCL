@@ -50,9 +50,12 @@ import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.platform.*;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.FileTime;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -269,8 +272,30 @@ public class GameCrashWindow extends Stage {
 
         CompletableFuture.supplyAsync(() ->
                         logs.stream().map(Log::getLog).collect(Collectors.joining("\n")))
-                .thenComposeAsync(logs ->
-                        LogExporter.exportLogs(logFile, repository, launchOptions.getVersionName(), logs, new CommandBuilder().addAll(managedProcess.getCommands()).toString()))
+                .thenComposeAsync(logs -> {
+                    long processStartTime = managedProcess.getProcess().info()
+                            .startInstant()
+                            .map(Instant::toEpochMilli).orElseGet(() -> {
+                                try {
+                                    return ManagementFactory.getRuntimeMXBean().getStartTime();
+                                } catch (Throwable e) {
+                                    LOG.warning("Failed to get process start time", e);
+                                    return 0L;
+                                }
+                            });
+
+                    return LogExporter.exportLogs(logFile, repository, launchOptions.getVersionName(), logs,
+                            new CommandBuilder().addAll(managedProcess.getCommands()).toString(),
+                            path -> {
+                                try {
+                                    FileTime lastModifiedTime = Files.getLastModifiedTime(path);
+                                    return lastModifiedTime.toMillis() >= processStartTime;
+                                } catch (Throwable e) {
+                                    LOG.warning("Failed to read file attributes", e);
+                                    return false;
+                                }
+                            });
+                })
                 .handleAsync((result, exception) -> {
                     Alert alert;
 
