@@ -66,19 +66,19 @@ public final class NBTEditorPage extends SpinnerPane implements DecoratorPage {
         setContent(root);
         setLoading(true);
 
-        FXUtils.applyDragListener(this,
-                NBTFileType::isNBTFileByExtension,
-                paths -> {
-                    Path path = paths.get(0);
-                    try {
-                        fireEvent(new PageCloseEvent());
-                        Controllers.navigate(new NBTEditorPage(path));
-                    } catch (Throwable e) {
-                        LOG.warning("Fail to open nbt file", e);
-                        Controllers.dialog(i18n("nbt.open.failed") + "\n\n" + StringUtils.getStackTrace(e),
-                                i18n("message.error"), MessageDialogPane.MessageType.ERROR);
-                    }
-                });
+//        FXUtils.applyDragListener(this,
+//                NBTFileType::isNBTFileByExtension,
+//                paths -> {
+//                    Path path = paths.get(0);
+//                    try {
+//                        fireEvent(new PageCloseEvent());
+//                        Controllers.navigate(new NBTEditorPage(path));
+//                    } catch (Throwable e) {
+//                        LOG.warning("Fail to open nbt file", e);
+//                        Controllers.dialog(i18n("nbt.open.failed") + "\n\n" + StringUtils.getStackTrace(e),
+//                                i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+//                    }
+//                });
 
         cancelButton = FXUtils.newRaisedButton(i18n("button.cancel"));
         cancelButton.setOnAction(e -> fireEvent(new PageCloseEvent()));
