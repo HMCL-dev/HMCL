@@ -223,7 +223,7 @@ public final class RemoteMod {
             return switch (type) {
                 case MOD -> modRepo;
                 case RESOURCE_PACK -> resourcePackRepo;
-                case SHADER -> shaderPackRepo;
+                case SHADER_PACK -> shaderPackRepo;
                 case WORLD -> worldRepo;
                 case MODPACK -> modpackRepo;
                 case CUSTOMIZATION -> customizationRepo;

@@ -365,7 +365,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             DownloadCallback callback = switch (type) {
                 case MOD -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_MOD;
                 case RESOURCE_PACK -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_RESOURCE_PACK;
-                case SHADER -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_SHADER;
+                case SHADER_PACK -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_SHADER;
                 default -> null;
             };
 

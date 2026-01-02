@@ -59,7 +59,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         this.type = switch (projectType) {
             case "modpack" -> Type.MODPACK;
             case "resourcepack" -> Type.RESOURCE_PACK;
-            case "shader" -> Type.SHADER;
+            case "shader" -> Type.SHADER_PACK;
             default -> Type.MOD;
         };
     }
@@ -317,7 +317,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
             RemoteModRepository.Type type = switch (projectType) {
                 case "modpack" -> RemoteModRepository.Type.MODPACK;
                 case "resourcepack" -> RemoteModRepository.Type.RESOURCE_PACK;
-                case "shader" -> RemoteModRepository.Type.SHADER;
+                case "shader" -> RemoteModRepository.Type.SHADER_PACK;
                 default -> RemoteModRepository.Type.MOD;
             };
             return new RemoteMod(
@@ -703,7 +703,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
             RemoteModRepository.Type type = switch (projectType) {
                 case "modpack" -> RemoteModRepository.Type.MODPACK;
                 case "resourcepack" -> RemoteModRepository.Type.RESOURCE_PACK;
-                case "shader" -> RemoteModRepository.Type.SHADER;
+                case "shader" -> RemoteModRepository.Type.SHADER_PACK;
                 default -> RemoteModRepository.Type.MOD;
             };
             return new RemoteMod(
