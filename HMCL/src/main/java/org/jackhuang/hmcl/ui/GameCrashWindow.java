@@ -24,11 +24,11 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
@@ -40,6 +40,7 @@ import org.jackhuang.hmcl.launch.ProcessListener;
 import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
@@ -84,6 +85,7 @@ public class GameCrashWindow extends Stage {
     private final ProcessListener.ExitType exitType;
     private final LaunchOptions launchOptions;
     private final View view;
+    private final StackPane stackPane;
 
     private final List<Log> logs;
 
@@ -106,9 +108,10 @@ public class GameCrashWindow extends Stage {
 
         this.view = new View();
 
+        this.stackPane = new StackPane(view);
         this.feedbackTextFlow.getChildren().addAll(FXUtils.parseSegment(i18n("game.crash.feedback"), Controllers::onHyperlinkAction));
 
-        setScene(new Scene(view, 800, 480));
+        setScene(new Scene(stackPane, 800, 480));
         StyleSheets.init(getScene());
         setTitle(i18n("game.crash.title"));
         FXUtils.setIcon(this);
@@ -297,18 +300,15 @@ public class GameCrashWindow extends Stage {
                             });
                 })
                 .handleAsync((result, exception) -> {
-                    Alert alert;
-
                     if (exception == null) {
                         FXUtils.showFileInExplorer(logFile);
-                        alert = new Alert(Alert.AlertType.INFORMATION, i18n("settings.launcher.launcher_log.export.success", logFile));
+                        var dialog = new MessageDialogPane.Builder(i18n("settings.launcher.launcher_log.export.success", logFile), i18n("message.success"), MessageDialogPane.MessageType.SUCCESS).ok(null).build();
+                        DialogUtils.show(stackPane, dialog);
                     } else {
                         LOG.warning("Failed to export game crash info", exception);
-                        alert = new Alert(Alert.AlertType.WARNING, i18n("settings.launcher.launcher_log.export.failed") + "\n" + StringUtils.getStackTrace(exception));
+                        var dialog = new MessageDialogPane.Builder(i18n("settings.launcher.launcher_log.export.failed") + "\n" + StringUtils.getStackTrace(exception), i18n("message.error"), MessageDialogPane.MessageType.ERROR).ok(null).build();
+                        DialogUtils.show(stackPane, dialog);
                     }
-
-                    alert.setTitle(i18n("settings.launcher.launcher_log.export"));
-                    alert.showAndWait();
 
                     return null;
                 }, Schedulers.javafx());
