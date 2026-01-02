@@ -29,8 +29,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.FileTime;
+import java.nio.file.PathMatcher;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -42,7 +41,9 @@ public final class LogExporter {
     private LogExporter() {
     }
 
-    public static CompletableFuture<Void> exportLogs(Path zipFile, DefaultGameRepository gameRepository, String versionId, String logs, String launchScript, long processStartTime) {
+    public static CompletableFuture<Void> exportLogs(
+            Path zipFile, DefaultGameRepository gameRepository, String versionId, String logs, String launchScript,
+            PathMatcher logMatcher) {
         Path runDirectory = gameRepository.getRunDirectory(versionId);
         Path baseDirectory = gameRepository.getBaseDirectory();
         List<String> versions = new ArrayList<>();
@@ -64,10 +65,10 @@ public final class LogExporter {
 
         return CompletableFuture.runAsync(() -> {
             try (Zipper zipper = new Zipper(zipFile)) {
-                processLogs(runDirectory.resolve("liteconfig"), "*.log", "liteconfig", zipper, processStartTime);
-                processLogs(runDirectory.resolve("logs"), "*.log", "logs", zipper, processStartTime);
-                processLogs(runDirectory, "*.log", "runDirectory", zipper, processStartTime);
-                processLogs(runDirectory.resolve("crash-reports"), "*.txt", "crash-reports", zipper, processStartTime);
+                processLogs(runDirectory.resolve("liteconfig"), "*.log", "liteconfig", zipper, logMatcher);
+                processLogs(runDirectory.resolve("logs"), "*.log", "logs", zipper, logMatcher);
+                processLogs(runDirectory, "*.log", "runDirectory", zipper, logMatcher);
+                processLogs(runDirectory.resolve("crash-reports"), "*.txt", "crash-reports", zipper, logMatcher);
 
                 zipper.putTextFile(LOG.getLogs(), "hmcl.log");
                 zipper.putTextFile(logs, "minecraft.log");
@@ -85,12 +86,11 @@ public final class LogExporter {
         });
     }
 
-    private static void processLogs(Path directory, String fileExtension, String logDirectory, Zipper zipper, long processStartTime) {
+    private static void processLogs(Path directory, String fileExtension, String logDirectory, Zipper zipper, PathMatcher logMatcher) {
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory, fileExtension)) {
             for (Path file : stream) {
                 if (Files.isRegularFile(file)) {
-                    FileTime time = Files.readAttributes(file, BasicFileAttributes.class).lastModifiedTime();
-                    if (time.toMillis() >= processStartTime) {
+                    if (logMatcher == null || logMatcher.matches(file)) {
                         try (BufferedReader reader = IOUtils.newBufferedReaderMaybeNativeEncoding(file)) {
                             zipper.putLines(reader.lines().map(Logger::filterForbiddenToken), file.getFileName().toString());
                         } catch (IOException e) {
