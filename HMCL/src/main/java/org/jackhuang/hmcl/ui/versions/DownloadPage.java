@@ -454,6 +454,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 case WORLD -> "world.download.title";
                 case MODPACK -> "modpack.download.title";
                 case RESOURCE_PACK -> "resourcepack.download.title";
+                case SHADER_PACK -> "shaderpack.download.title";
                 default -> "mods.download.title";
             };
             this.setHeading(new HBox(new Label(i18n(title, version.getName()))));
@@ -539,7 +540,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                     }
 
                     if (!dependencies.containsKey(dependency.getType())) {
-                        List<Node> list = new LinkedList<>();
+                        List<Node> list = new ArrayList<>();
                         Label title = new Label(i18n(DependencyModItem.I18N_KEY.get(dependency.getType())));
                         title.setPadding(new Insets(0, 8, 0, 8));
                         list.add(new HBox(title));
