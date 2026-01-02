@@ -453,6 +453,9 @@ public class DownloadPage extends Control implements DecoratorPage {
                 case RESOURCE_PACK:
                     title = "resourcepack.download.title";
                     break;
+                case SHADER_PACK:
+                    title = "shaderpack.download.title";
+                    break;
                 case MOD:
                 default:
                     title = "mods.download.title";

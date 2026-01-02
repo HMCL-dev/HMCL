@@ -25,8 +25,8 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 
 import java.util.MissingResourceException;
 
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
     public static DownloadListPage ofMod(DownloadPage.DownloadCallback callback, boolean versionSelection) {
@@ -47,6 +47,10 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
 
     public static DownloadListPage ofResourcePack(DownloadPage.DownloadCallback callback, boolean versionSelection) {
         return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteModRepository.Type.RESOURCE_PACK, CurseForgeRemoteModRepository.RESOURCE_PACKS, ModrinthRemoteModRepository.RESOURCE_PACKS);
+    }
+
+    public static DownloadListPage ofShaderPack(DownloadPage.DownloadCallback callback, boolean versionSelection) {
+        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteModRepository.Type.SHADER_PACK, null, ModrinthRemoteModRepository.SHADER_PACKS);
     }
 
     private HMCLLocalizedDownloadListPage(DownloadPage.DownloadCallback callback, boolean versionSelection, RemoteModRepository.Type type, CurseForgeRemoteModRepository curseForge, ModrinthRemoteModRepository modrinth) {
