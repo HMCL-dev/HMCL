@@ -66,6 +66,7 @@ public class JFXPopupSkin implements Skin<JFXPopup> {
     }
 
     public void reset(PopupVPosition vAlign, PopupHPosition hAlign, double offsetX, double offsetY) {
+        // postion the popup according to its animation
         scale.setPivotX(hAlign == PopupHPosition.RIGHT ? container.getWidth() : 0);
         scale.setPivotY(vAlign == PopupVPosition.BOTTOM ? container.getHeight() : 0);
         control.setX(control.getX() + (hAlign == PopupHPosition.RIGHT ? -container.getWidth() + offsetX : offsetX));
