@@ -110,7 +110,7 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
                     .anyMatch(Files::exists);
             if (hasIcon) return null;
             Path iconDest = versionRoot.resolve("icon" + urlPath.substring(urlPath.lastIndexOf('.')));
-            return new FileDownloadTask(rawURL, iconDest);
+            return new FileDownloadTask(uri, iconDest);
         });
     }
 
