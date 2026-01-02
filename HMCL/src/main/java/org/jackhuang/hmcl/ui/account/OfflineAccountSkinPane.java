@@ -157,11 +157,10 @@ public class OfflineAccountSkinPane extends StackPane {
                     }).start();
         }, skinItem.selectedDataProperty(), cslApiField.textProperty(), modelCombobox.valueProperty(), skinSelector.valueProperty(), capeSelector.valueProperty());
 
-
         FXUtils.onChangeAndOperate(skinItem.selectedDataProperty(), selectedData -> {
-            // 在创建 gridPane 的地方，把底部 padding 增大，留出 actions 区的高度空间
+            // In the place where the gridPane is created, increase the bottom padding to leave space for the height of the actions area.
             GridPane gridPane = new GridPane();
-            // 增加底部内边距，避免提示与对话动作区重叠
+            // Increase bottom padding to prevent the prompt from overlapping with the dialog action area
             gridPane.setPadding(new Insets(0, 0, 48, 10));
             gridPane.setHgap(16);
             gridPane.setVgap(8);
@@ -175,8 +174,7 @@ public class OfflineAccountSkinPane extends StackPane {
                 case LITTLE_SKIN:
                     HintPane hint = new HintPane(MessageDialogPane.MessageType.INFO);
                     hint.setText(i18n("account.skin.type.little_skin.hint"));
-
-                    // 让提示横跨两列并可水平扩展以避免与对话动作区/右上帮助按钮重叠
+                    // Allow the tooltip to span two columns and expand horizontally to avoid overlapping with the conversation action area/top-right help button
                     GridPane.setColumnSpan(hint, 2);
                     GridPane.setHgrow(hint, Priority.ALWAYS);
                     hint.setMaxWidth(Double.MAX_VALUE);
