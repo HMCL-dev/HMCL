@@ -51,7 +51,6 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class OfflineAccountSkinPane extends StackPane {
-    private static final int DIALOG_ACTION_AREA_HEIGHT = 45 ;
     private final OfflineAccount account;
 
     private final MultiFileItem<Skin.Type> skinItem = new MultiFileItem<>();
@@ -162,7 +161,7 @@ public class OfflineAccountSkinPane extends StackPane {
             GridPane gridPane = new GridPane();
             // Increase bottom padding to prevent the prompt from overlapping with the dialog action area
 
-            gridPane.setPadding(new Insets(0, 0, DIALOG_ACTION_AREA_HEIGHT, 10));
+            gridPane.setPadding(new Insets(0, 0, 45, 10));
             gridPane.setHgap(16);
             gridPane.setVgap(8);
             gridPane.getColumnConstraints().setAll(new ColumnConstraints(), FXUtils.getColumnHgrowing());
