@@ -30,6 +30,7 @@ subprojects {
                 maven(url = repo)
         }
 
+        maven(url = "https://repo.viaversion.com")
         maven(url = "https://jitpack.io")
         maven(url = "https://libraries.minecraft.net")
     }
