@@ -18,19 +18,19 @@
 package org.jackhuang.hmcl.mod.modrinth;
 
 import com.google.gson.JsonParseException;
-import javafx.scene.image.Image;
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.task.CacheFileTask;
-import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
-import org.jackhuang.hmcl.util.logging.Logger;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -115,8 +115,10 @@ public class ModrinthInstallTask extends Task<Void> {
         List<String> subDirectories = Arrays.asList("/client-overrides", "/overrides");
         dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), subDirectories, any -> true, config).withStage("hmcl.modpack"));
         dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), subDirectories, manifest, ModrinthModpackProvider.INSTANCE, manifest.getName(), manifest.getVersionId(), repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
-        if (StringUtils.isNotBlank(iconUrl)) {
-            String ext = StringUtils.substringAfter(iconUrl, '.');
+
+        URI iconUri = NetworkUtils.toURIOrNull(iconUrl);
+        if (iconUri != null) {
+            String ext = FileUtils.getExtension(StringUtils.substringAfter(iconUri.getPath(), '/'));
             if (SUPPORTED_ICON_EXTS.contains(ext)) {
                 iconExt = ext;
                 dependents.add(downloadIconTask = new CacheFileTask(iconUrl));
