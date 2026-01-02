@@ -31,6 +31,7 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.util.StringUtils;
 
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
@@ -67,10 +68,9 @@ public class FileItem extends BorderPane {
         setRight(right);
 
         tooltip.textProperty().bind(tooltipContent);
-
         tooltip.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (!newValue.isEmpty()) {
-                Tooltip.install(this, tooltip);
+            if (StringUtils.isNotBlank(newValue)) {
+                FXUtils.installFastTooltip(this, tooltip);
             } else {
                 Tooltip.uninstall(this, tooltip);
             }
