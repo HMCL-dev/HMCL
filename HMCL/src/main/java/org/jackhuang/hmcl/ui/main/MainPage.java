@@ -384,7 +384,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 JFXPopup.PopupVPosition.BOTTOM,
                 JFXPopup.PopupHPosition.RIGHT,
                 0,
-                -menuButton.getHeight()
+                -menuButton.getHeight() - 8
         );
     }
 
