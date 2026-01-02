@@ -154,7 +154,7 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
             lastlyOpenedURL = url;
 
             try {
-                Thread.sleep(3000);
+                Thread.sleep(1500);
             } catch (InterruptedException ignored) {
             }
 
