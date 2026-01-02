@@ -460,6 +460,9 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 onChangeAndOperate(cboServers.valueProperty(), server -> {
                     this.server = server;
                     linksContainer.getChildren().setAll(createHyperlinks(server));
+
+                    if (txtUsername != null)
+                        txtUsername.validate();
                 });
                 linksContainer.setMinWidth(USE_PREF_SIZE);
 
@@ -589,6 +592,9 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         private boolean requiresEmailAsUsername() {
             if ((factory instanceof AuthlibInjectorAccountFactory) && this.server != null) {
                 return !server.isNonEmailLogin();
+            }
+            if (factory instanceof BoundAuthlibInjectorAccountFactory bound) {
+                return !bound.getServer().isNonEmailLogin();
             }
             return false;
         }
