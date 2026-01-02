@@ -300,7 +300,7 @@ public final class World {
         }
 
         Path newPath = file.resolveSibling(newName);
-        FileUtils.copyDirectory(file, newPath);
+        FileUtils.copyDirectory(file, newPath, path -> !path.contains("session.lock"));
         World newWorld = new World(newPath);
         newWorld.rename(newName);
     }

@@ -33,7 +33,6 @@ import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -89,10 +88,6 @@ public final class WorldManageUIUtils {
     }
 
     public static void copyWorld(World world, Runnable runnable) {
-        copyWorld(world, runnable, null, null);
-    }
-
-    public static void copyWorld(World world, Runnable runnable, FileChannel sessionLockChannel, Consumer<FileChannel> lockUpdater) {
         Path worldPath = world.getFile();
         Controllers.dialog(new InputDialogPane(
                 i18n("world.duplicate.prompt"),
@@ -114,13 +109,6 @@ public final class WorldManageUIUtils {
                         return;
                     }
 
-                    try {
-                        closeSessionLockChannel(world, sessionLockChannel);
-                    } catch (IOException e) {
-                        Controllers.dialog(i18n("world.locked.failed"), null, MessageDialogPane.MessageType.WARNING);
-                        LOG.warning("unlock world fail", e);
-                    }
-
                     Task.runAsync(Schedulers.io(), () -> world.copy(result))
                             .thenAcceptAsync(Schedulers.javafx(), (Void) -> Controllers.showToast(i18n("world.duplicate.success.toast")))
                             .thenAcceptAsync(Schedulers.javafx(), (Void) -> {
@@ -133,10 +121,6 @@ public final class WorldManageUIUtils {
                                     resolve.run();
                                 } else {
                                     reject.accept(i18n("world.duplicate.failed"));
-                                }
-                                FileChannel newChannel = getSessionLockChannel(world);
-                                if (lockUpdater != null) {
-                                    lockUpdater.accept(newChannel);
                                 }
                             })
                             .start();
