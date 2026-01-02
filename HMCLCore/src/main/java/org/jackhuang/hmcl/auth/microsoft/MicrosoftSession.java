@@ -64,10 +64,6 @@ public class MicrosoftSession {
         return refreshToken;
     }
 
-    public String getAuthorization() {
-        return String.format("%s %s", getTokenType(), getAccessToken());
-    }
-
     public User getUser() {
         return user;
     }
@@ -113,7 +109,7 @@ public class MicrosoftSession {
         return new AuthInfo(profile.getName(), profile.getId(), accessToken, AuthInfo.USER_TYPE_MSA, "{}");
     }
 
-    public static class User {
+    public static final class User {
         private final String id;
 
         public User(String id) {
@@ -125,7 +121,7 @@ public class MicrosoftSession {
         }
     }
 
-    public static class GameProfile {
+    public static final class GameProfile {
         private final UUID id;
         private final String name;
 

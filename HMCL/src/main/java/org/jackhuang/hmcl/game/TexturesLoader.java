@@ -29,6 +29,7 @@ import javafx.scene.image.Image;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
+import org.jackhuang.hmcl.auth.littleskin.LittleSkinAccount;
 import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccount;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.offline.Skin;
@@ -314,7 +315,7 @@ public final class TexturesLoader {
     }
 
     public static void bindAvatar(Canvas canvas, Account account) {
-        if (account instanceof YggdrasilAccount || account instanceof MicrosoftAccount || account instanceof OfflineAccount)
+        if (account instanceof YggdrasilAccount || account instanceof MicrosoftAccount || account instanceof LittleSkinAccount || account instanceof OfflineAccount)
             fxAvatarBinding(canvas, skinBinding(account));
         else {
             unbindAvatar(canvas);

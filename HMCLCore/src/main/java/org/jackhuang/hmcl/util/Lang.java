@@ -26,7 +26,6 @@ import java.util.function.*;
 import java.util.stream.Stream;
 
 /**
- *
  * @author huangyuhui
  */
 public final class Lang {
@@ -136,6 +135,16 @@ public final class Lang {
         } else {
             return Optional.empty();
         }
+    }
+
+    public static <V> V getOrThrow(Map<?, ?> map, String key, Class<V> clazz) {
+        Object value = map.get(key);
+        if (value == null)
+            throw new IllegalArgumentException(key + " is missing");
+        else if (!clazz.isInstance(value))
+            throw new IllegalArgumentException(key + " has the wrong type: expected: " + clazz.getName() + ", actual: " + value.getClass().getName());
+        else
+            return clazz.cast(value);
     }
 
     public static <T> T getOrDefault(List<T> a, int index, T defaultValue) {
