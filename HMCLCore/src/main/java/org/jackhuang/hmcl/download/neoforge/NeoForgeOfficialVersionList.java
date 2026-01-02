@@ -63,7 +63,15 @@ public final class NeoForgeOfficialVersionList extends VersionList<NeoForgeRemot
                         if (majorVersion == 0) { // Snapshot version.
                             mcVersion = version.substring(si1 + 1, si2);
                         } else {
-                            mcVersion = "1." + version.substring(0, Integer.parseInt(version.substring(si1 + 1, si2)) == 0 ? si1 : si2);
+                            String ver = version.substring(0, Integer.parseInt(version.substring(si1 + 1, si2)) == 0 ? si1 : si2);
+                            if (Integer.parseInt(ver.split("\\.")[0]) >= 26) {
+                                var split = version.split("\\+");
+                                if (split.length > 1) {
+                                    mcVersion = ver + "-" + split[1];
+                                } else mcVersion = ver;
+                            } else {
+                                mcVersion = "1." + ver;
+                            }
                         }
                     } catch (RuntimeException e) {
                         LOG.warning(String.format("Cannot parse NeoForge version %s for cracking its mc version.", version), e);
