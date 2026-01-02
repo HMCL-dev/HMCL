@@ -66,9 +66,7 @@ public final class NeoForgeOfficialVersionList extends VersionList<NeoForgeRemot
                             String ver = version.substring(0, Integer.parseInt(version.substring(si1 + 1, si2)) == 0 ? si1 : si2);
                             if (majorVersion >= 26) {
                                 var split = version.split("\\+");
-                                if (split.length > 1) {
-                                    mcVersion = ver + "-" + split[1];
-                                } else mcVersion = ver;
+                                mcVersion = split.length > 1 ? ver + "-" + split[1] : ver;
                             } else {
                                 mcVersion = "1." + ver;
                             }
