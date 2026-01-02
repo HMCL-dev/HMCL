@@ -41,10 +41,12 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogController;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.skin.InvalidSkinException;
+import org.jackhuang.hmcl.util.skin.NormalizedSkin;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -54,7 +56,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.CompletableFuture;
 
 import static java.util.Collections.emptySet;
 import static javafx.beans.binding.Bindings.createBooleanBinding;
@@ -76,9 +78,7 @@ public class AccountListItem extends RadioButton {
         String portableSuffix = account.isPortable() ? ", " + i18n("account.portable") : "";
         if (account instanceof AuthlibInjectorAccount) {
             AuthlibInjectorServer server = ((AuthlibInjectorAccount) account).getServer();
-            subtitle.bind(Bindings.concat(
-                    loginTypeName, ", ", i18n("account.injector.server"), ": ",
-                    Bindings.createStringBinding(server::getName, server), portableSuffix));
+            subtitle.bind(Bindings.concat(loginTypeName, ", ", i18n("account.injector.server"), ": ", Bindings.createStringBinding(server::getName, server), portableSuffix));
         } else {
             subtitle.set(loginTypeName + portableSuffix);
         }
@@ -87,9 +87,7 @@ public class AccountListItem extends RadioButton {
         if (account instanceof OfflineAccount) {
             title.bind(characterName);
         } else {
-            title.bind(
-                    account.getUsername().isEmpty() ? characterName :
-                            Bindings.concat(account.getUsername(), " - ", characterName));
+            title.bind(account.getUsername().isEmpty() ? characterName : Bindings.concat(account.getUsername(), " - ", characterName));
         }
     }
 
@@ -123,9 +121,7 @@ public class AccountListItem extends RadioButton {
         if (account instanceof AuthlibInjectorAccount aiAccount) {
             ObjectBinding<Optional<CompleteGameProfile>> profile = aiAccount.getYggdrasilService().getProfileRepository().binding(aiAccount.getUUID());
             return createBooleanBinding(() -> {
-                Set<TextureType> uploadableTextures = profile.get()
-                        .map(AuthlibInjectorAccount::getUploadableTextures)
-                        .orElse(emptySet());
+                Set<TextureType> uploadableTextures = profile.get().map(AuthlibInjectorAccount::getUploadableTextures).orElse(emptySet());
                 return uploadableTextures.contains(TextureType.SKIN);
             }, profile);
         } else if (account instanceof OfflineAccount || account.canUploadSkin()) {
@@ -156,40 +152,60 @@ public class AccountListItem extends RadioButton {
             return null;
         }
 
-        AtomicReference<TextureModel> model = new AtomicReference<>();
-        MessageDialogPane.Builder builder = new MessageDialogPane.Builder(i18n("account.skin.model.select"), i18n("account.skin.upload"), MessageDialogPane.MessageType.QUESTION);
-        builder.addAction(i18n("account.skin.model.default"), () -> model.set(TextureModel.WIDE));
-        builder.addAction(i18n("account.skin.model.slim"), () -> model.set(TextureModel.SLIM));
-        builder.addCancel(null);
+        return refreshAsync().thenSupplyAsync(() -> {
+            Image skinImg;
+            try (var input = Files.newInputStream(selectedFile)) {
+                skinImg = new Image(input);
+            } catch (IOException e) {
+                throw new InvalidSkinException("Failed to read skin image", e);
+            }
+            if (skinImg.isError()) {
+                throw new InvalidSkinException("Failed to read skin image", skinImg.getException());
+            }
 
-        Controllers.dialog(builder.build());
+            return new NormalizedSkin(skinImg);
+        }).thenApplyAsync(Schedulers.javafx(), (normalizedSkin) -> {
+            boolean isSlim = normalizedSkin.isSlim();
 
-        TextureModel selectedModel = model.get();
+            CompletableFuture<TextureModel> modelFuture = new CompletableFuture<>();
 
-        if (selectedModel == null) {
+            FXUtils.runInFX(() -> {
+                MessageDialogPane.Builder builder = new MessageDialogPane.Builder(
+                        i18n("account.skin.model.select"),
+                        i18n("account.skin.upload"),
+                        MessageDialogPane.MessageType.QUESTION
+                );
+
+                if (isSlim) {
+                    builder.addAction(i18n("account.skin.model.slim") + " " + i18n("account.skin.model.auto"),
+                            () -> modelFuture.complete(TextureModel.SLIM));
+                    builder.addAction(i18n("account.skin.model.default"),
+                            () -> modelFuture.complete(TextureModel.WIDE));
+                } else {
+                    builder.addAction(i18n("account.skin.model.default") + " " + i18n("account.skin.model.auto"),
+                            () -> modelFuture.complete(TextureModel.WIDE));
+                    builder.addAction(i18n("account.skin.model.slim"),
+                            () -> modelFuture.complete(TextureModel.SLIM));
+                }
+
+                builder.addCancel(() -> modelFuture.complete(null));
+                Controllers.dialog(builder.build());
+            });
+
+            return modelFuture;
+        }).thenApplyAsync((future) -> {
+            if (future == null) {
+                return null;
+            }
+            TextureModel model = future.get();
+            LOG.info("Uploading skin [" + selectedFile + "], model [" + model.modelName + "]");
+            account.uploadSkin(Objects.equals(TextureModel.SLIM, model), selectedFile);
             return null;
-        }
-
-        return refreshAsync()
-                .thenRunAsync(() -> {
-                    Image skinImg;
-                    try (var input = Files.newInputStream(selectedFile)) {
-                        skinImg = new Image(input);
-                    } catch (IOException e) {
-                        throw new InvalidSkinException("Failed to read skin image", e);
-                    }
-                    if (skinImg.isError()) {
-                        throw new InvalidSkinException("Failed to read skin image", skinImg.getException());
-                    }
-                    LOG.info("Uploading skin [" + selectedFile + "], model [" + selectedModel.modelName + "]");
-                    account.uploadSkin(Objects.equals(TextureModel.SLIM, selectedModel), selectedFile);
-                })
-                .thenComposeAsync(refreshAsync())
-                .whenComplete(Schedulers.javafx(), e -> {
-                    if (e != null) {
-                        Controllers.dialog(Accounts.localizeErrorMessage(e), i18n("account.skin.upload.failed"), MessageType.ERROR);
-                    }
-                });
+        }).thenComposeAsync(refreshAsync()).whenComplete(Schedulers.javafx(), e -> {
+            if (e != null) {
+                Controllers.dialog(Accounts.localizeErrorMessage(e), i18n("account.skin.upload.failed"), MessageType.ERROR);
+            }
+        });
     }
 
     public void remove() {
