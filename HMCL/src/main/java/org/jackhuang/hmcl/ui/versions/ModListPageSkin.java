@@ -23,7 +23,6 @@ import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
-import javafx.beans.value.ChangeListener;
 import javafx.collections.ListChangeListener;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
@@ -93,9 +92,6 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
     // FXThread
     private boolean isSearching = false;
 
-    @SuppressWarnings({"FieldCanBeLocal", "unused"})
-    private final ChangeListener<Boolean> holder;
-
     ModListPageSkin(ModListPage skinnable) {
         super(skinnable);
 
@@ -106,12 +102,6 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         ComponentList root = new ComponentList();
         root.getStyleClass().add("no-padding");
         listView = new JFXListView<>();
-
-        this.holder = FXUtils.onWeakChange(skinnable.loadingProperty(), loading -> {
-            if (!loading) {
-                listView.scrollTo(0);
-            }
-        });
 
         {
             toolbarPane = new TransitionPane();
@@ -199,8 +189,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             center.getStyleClass().add("large-spinner-pane");
             center.loadingProperty().bind(skinnable.loadingProperty());
 
-            Holder<Object> lastCell = new Holder<>();
-            listView.setCellFactory(x -> new ModInfoListCell(listView, lastCell));
+            listView.setCellFactory(x -> new ModInfoListCell(listView));
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
             Bindings.bindContent(listView.getItems(), skinnable.getItems());
             skinnable.getItems().addListener((ListChangeListener<? super ModInfoObject>) c -> {
@@ -572,8 +561,8 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
         Tooltip warningTooltip;
 
-        ModInfoListCell(JFXListView<ModInfoObject> listView, Holder<Object> lastCell) {
-            super(listView, lastCell);
+        ModInfoListCell(JFXListView<ModInfoObject> listView) {
+            super(listView);
 
             this.getStyleClass().add("mod-info-list-cell");
 

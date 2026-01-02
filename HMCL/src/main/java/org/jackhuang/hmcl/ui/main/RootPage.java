@@ -17,9 +17,12 @@
  */
 package org.jackhuang.hmcl.ui.main;
 
+import com.jfoenix.controls.JFXPopup;
 import javafx.beans.property.ReadOnlyObjectProperty;
-
+import javafx.scene.control.Label;
+import javafx.scene.input.MouseButton;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -39,6 +42,7 @@ import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
@@ -64,8 +68,8 @@ import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
     private MainPage mainPage = null;
@@ -144,6 +148,12 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             // first item in left sidebar
             AccountAdvancedListItem accountListItem = new AccountAdvancedListItem();
             accountListItem.setOnAction(e -> Controllers.navigate(Controllers.getAccountListPage()));
+            accountListItem.setOnMouseClicked(e -> {
+                if (e.getButton() == MouseButton.SECONDARY) {
+                    showAccountListPopupMenu(accountListItem);
+                    e.consume();
+                }
+            });
             accountListItem.accountProperty().bind(Accounts.selectedAccountProperty());
 
             // second item in left sidebar
@@ -234,13 +244,45 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                     .startCategory(i18n("settings.launcher.general").toUpperCase(Locale.ROOT))
                     .add(launcherSettingsItem)
                     .add(terracottaItem)
-                    .addNavigationDrawerItem(i18n("chat"), SVG.CHAT, () -> FXUtils.openLink(Metadata.GROUPS_URL));
+                    .addNavigationDrawerItem(i18n("contact.chat"), SVG.CHAT, () -> {
+                        Controllers.getSettingsPage().showFeedback();
+                        Controllers.navigate(Controllers.getSettingsPage());
+                    });
 
             // the root page, with the sidebar in left, navigator in center.
             setLeft(sideBar);
             setCenter(getSkinnable().getMainPage());
         }
 
+        public void showAccountListPopupMenu(
+                AccountAdvancedListItem accountListItem
+        ) {
+            PopupMenu popupMenu = new PopupMenu();
+            JFXPopup popup = new JFXPopup(popupMenu);
+            AdvancedListBox scrollPane = new AdvancedListBox();
+            scrollPane.getStyleClass().add("no-padding");
+            scrollPane.setPrefWidth(220);
+            scrollPane.setPrefHeight(-1);
+            scrollPane.setMaxHeight(260);
+
+            if (Accounts.getAccounts().isEmpty()) {
+                Label placeholder = new Label(i18n("account.empty"));
+                placeholder.setStyle("-fx-padding: 10px; -fx-text-fill: -monet-on-surface-variant; -fx-font-style: italic;");
+                scrollPane.add(placeholder);
+            } else {
+                for (Account account : Accounts.getAccounts()) {
+                    AccountAdvancedListItem item = new AccountAdvancedListItem(account);
+                    item.setOnAction(e -> {
+                        Accounts.setSelectedAccount(account);
+                        popup.hide();
+                    });
+                    scrollPane.add(item);
+                }
+            }
+
+            popupMenu.getContent().add(scrollPane);
+            popup.show(accountListItem, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, accountListItem.getWidth(), 0);
+        }
     }
 
     private boolean checkedModpack = false;

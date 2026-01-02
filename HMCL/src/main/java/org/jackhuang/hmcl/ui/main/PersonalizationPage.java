@@ -44,6 +44,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -86,8 +87,11 @@ public class PersonalizationPage extends StackPane {
 
             brightnessPane.setLeft(left);
 
-            JFXComboBox<String> cboBrightness = new JFXComboBox<>(
-                    FXCollections.observableArrayList("auto", "light", "dark"));
+            JFXComboBox<String> cboBrightness = new JFXComboBox<>(FXCollections.observableArrayList(
+                    FXUtils.DARK_MODE != null
+                            ? List.of("auto", "light", "dark")
+                            : List.of("light", "dark")
+            ));
             cboBrightness.setConverter(FXUtils.stringConverter(name -> i18n("settings.launcher.brightness." + name)));
             cboBrightness.valueProperty().bindBidirectional(config().themeBrightnessProperty());
             brightnessPane.setRight(cboBrightness);
@@ -122,6 +126,7 @@ public class PersonalizationPage extends StackPane {
             themeList.getContent().add(animationButton);
             animationButton.selectedProperty().bindBidirectional(config().animationDisabledProperty());
             animationButton.setTitle(i18n("settings.launcher.turn_off_animations"));
+            animationButton.setSubtitle(i18n("settings.take_effect_after_restart"));
         }
         content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.appearance")), themeList);
 
@@ -168,6 +173,7 @@ public class PersonalizationPage extends StackPane {
                 slider.setMinorTickCount(1);
                 slider.setBlockIncrement(5);
                 slider.setSnapToTicks(true);
+                slider.setPadding(new Insets(9, 0, 0, 0));
                 HBox.setHgrow(slider, Priority.ALWAYS);
 
                 if (config().getBackgroundImageType() == EnumBackgroundImage.TRANSLUCENT) {
@@ -295,8 +301,12 @@ public class PersonalizationPage extends StackPane {
             {
                 BorderPane fontAntiAliasingPane = new BorderPane();
                 {
-                    Label left = new Label(i18n("settings.launcher.font.anti_aliasing"));
-                    BorderPane.setAlignment(left, Pos.CENTER_LEFT);
+                    VBox left = new VBox();
+                    Label title = new Label(i18n("settings.launcher.font.anti_aliasing"));
+                    title.getStyleClass().add("title");
+                    Label subtitle = new Label(i18n("settings.take_effect_after_restart"));
+                    subtitle.getStyleClass().add("subtitle");
+                    left.getChildren().setAll(title, subtitle);
                     fontAntiAliasingPane.setLeft(left);
                 }
 

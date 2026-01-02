@@ -88,7 +88,7 @@ public final class SettingsPage extends ScrollPane {
         this.setFitToWidth(true);
 
         VBox rootPane = new VBox();
-        rootPane.setPadding(new Insets(32, 10, 32, 10));
+        rootPane.setPadding(new Insets(10));
         this.setContent(rootPane);
         FXUtils.smoothScrolling(this);
 
@@ -210,8 +210,8 @@ public final class SettingsPage extends ScrollPane {
             {
                 OptionToggleButton previewPane = new OptionToggleButton();
                 previewPane.setTitle(i18n("update.preview"));
+                previewPane.setSubtitle(i18n("update.preview.subtitle"));
                 previewPane.selectedProperty().bindBidirectional(config().acceptPreviewUpdateProperty());
-                FXUtils.installFastTooltip(previewPane, i18n("update.preview.tooltip"));
 
                 ObjectProperty<UpdateChannel> updateChannel = selectedItemPropertyFor(updateChannelGroup, UpdateChannel.class);
                 updateChannel.set(UpdateChannel.getChannel());
@@ -254,8 +254,12 @@ public final class SettingsPage extends ScrollPane {
             {
                 BorderPane languagePane = new BorderPane();
 
-                Label left = new Label(i18n("settings.launcher.language"));
-                BorderPane.setAlignment(left, Pos.CENTER_LEFT);
+                VBox left = new VBox();
+                Label title = new Label(i18n("settings.launcher.language"));
+                title.getStyleClass().add("title");
+                Label subtitle = new Label(i18n("settings.take_effect_after_restart"));
+                subtitle.getStyleClass().add("subtitle");
+                left.getChildren().setAll(title, subtitle);
                 languagePane.setLeft(left);
 
                 SupportedLocale currentLocale = I18n.getLocale();

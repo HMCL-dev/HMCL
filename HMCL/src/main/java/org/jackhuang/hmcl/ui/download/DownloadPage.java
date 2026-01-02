@@ -25,7 +25,6 @@ import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
-import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
@@ -96,7 +95,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         }));
         modTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofMod((profile, version, mod, file) -> download(profile, version, file, "mods"), true)));
         resourcePackTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofResourcePack((profile, version, mod, file) -> download(profile, version, file, "resourcepacks"), true)));
-        shaderTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(ModrinthRemoteModRepository.SHADER_PACKS, (profile, version, mod, file) -> download(profile, version, file, "shaderpacks"), true)));
+        shaderTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofShaderPack((profile, version, mod, file) -> download(profile, version, file, "shaderpacks"), true)));
         worldTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(CurseForgeRemoteModRepository.WORLDS)));
         tab = new TabHeader(transitionPane, newGameTab, modpackTab, modTab, resourcePackTab, shaderTab, worldTab);
 

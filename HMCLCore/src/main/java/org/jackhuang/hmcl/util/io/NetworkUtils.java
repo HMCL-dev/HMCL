@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.util.io;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.*;
@@ -419,6 +420,15 @@ public final class NetworkUtils {
     public static @NotNull URI toURI(@NotNull URL url) {
         return toURI(url.toExternalForm());
     }
-    // ====
 
+    public static @Nullable URI toURIOrNull(String uri) {
+        if (StringUtils.isNotBlank(uri)) {
+            try {
+                return toURI(uri);
+            } catch (Exception ignored) {
+            }
+        }
+
+        return null;
+    }
 }

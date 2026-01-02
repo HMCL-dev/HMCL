@@ -647,7 +647,7 @@
 1.18.2-pre3
 1.18.2-rc1
 1.18.2
-22w13oneblockatatime
+22w13oneBlockAtATime
 22w11a
 22w12a
 22w13a
@@ -891,3 +891,5 @@
 1.21.11-rc1_unobfuscated
 1.21.11-rc2
 1.21.11-rc2_unobfuscated
+1.21.11
+1.21.11_unobfuscated
