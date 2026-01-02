@@ -92,8 +92,6 @@ public final class TaskListPane extends StackPane {
     private final ObjectProperty<Insets> progressNodePadding = new SimpleObjectProperty<>(Insets.EMPTY);
     private final DoubleProperty cellWidth = new SimpleDoubleProperty();
 
-    private Cell lastCell;
-
     public TaskListPane() {
         listView.setPadding(new Insets(12, 0, 0, 0));
         listView.setCellFactory(l -> new Cell());
@@ -315,11 +313,6 @@ public final class TaskListPane extends StackPane {
         @Override
         protected void updateItem(Node item, boolean empty) {
             super.updateItem(item, empty);
-
-            // https://mail.openjdk.org/pipermail/openjfx-dev/2022-July/034764.html
-            if (this == lastCell && !isVisible())
-                return;
-            lastCell = this;
 
             pane.paddingProperty().unbind();
             title.textProperty().unbind();

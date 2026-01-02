@@ -47,7 +47,7 @@ public class LaunchOptions implements Serializable {
     private Integer width;
     private Integer height;
     private boolean fullscreen;
-    private String serverIp;
+    private QuickPlayOption quickPlayOption;
     private String wrapper;
     private Proxy.Type proxyType;
     private String proxyHost;
@@ -181,11 +181,11 @@ public class LaunchOptions implements Serializable {
         return fullscreen;
     }
 
-    /**
-     * The server ip that will connect to when enter game main menu.
-     */
-    public String getServerIp() {
-        return serverIp;
+    /// The quick play option.
+    ///
+    /// @see <a href="https://minecraft.wiki/w/Quick_Play">Quick Play - Minecraft Wiki</a>
+    public QuickPlayOption getQuickPlayOption() {
+        return quickPlayOption;
     }
 
     /**
@@ -412,8 +412,8 @@ public class LaunchOptions implements Serializable {
             return this;
         }
 
-        public Builder setServerIp(String serverIp) {
-            options.serverIp = serverIp;
+        public Builder setQuickPlayOption(QuickPlayOption quickPlayOption) {
+            options.quickPlayOption = quickPlayOption;
             return this;
         }
 

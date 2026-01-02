@@ -25,20 +25,20 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventManager;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.mod.ModAdviser;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.mod.ModpackProvider;
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -55,8 +55,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class HMCLGameRepository extends DefaultGameRepository {
     private final Profile profile;
@@ -174,7 +174,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
         Files.copy(fromJson, toJson);
 
-        JsonUtils.writeToJsonFile(toJson, fromVersion.setId(dstId));
+        JsonUtils.writeToJsonFile(toJson, fromVersion.setId(dstId).setJar(dstId));
 
         VersionSetting oldVersionSetting = getVersionSetting(srcId).clone();
         GameDirectoryType originalGameDirType = oldVersionSetting.getGameDirType();
@@ -418,7 +418,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 .setWidth(vs.getWidth())
                 .setHeight(vs.getHeight())
                 .setFullscreen(vs.isFullscreen())
-                .setServerIp(vs.getServerIp())
                 .setWrapper(vs.getWrapper())
                 .setPreLaunchCommand(vs.getPreLaunchCommand())
                 .setPostExitCommand(vs.getPostExitCommand())
@@ -434,6 +433,10 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 .setDaemon(!makeLaunchScript && vs.getLauncherVisibility().isDaemon())
                 .setJavaAgents(javaAgents)
                 .setJavaArguments(javaArguments);
+
+        if (StringUtils.isNotBlank(vs.getServerIp())) {
+            builder.setQuickPlayOption(new QuickPlayOption.MultiPlayer(vs.getServerIp()));
+        }
 
         if (config().hasProxy()) {
             builder.setProxyType(config().getProxyType());

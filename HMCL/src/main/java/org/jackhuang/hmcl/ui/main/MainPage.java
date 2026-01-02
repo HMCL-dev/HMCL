@@ -39,7 +39,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.shape.Rectangle;
 import javafx.scene.text.TextFlow;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.Metadata;
@@ -207,10 +206,8 @@ public final class MainPage extends StackPane implements DecoratorPage {
             updatePane.getChildren().setAll(hBox, closeUpdateButton);
         }
 
-        StackPane launchPane = new StackPane();
+        HBox launchPane = new HBox();
         launchPane.getStyleClass().add("launch-pane");
-        launchPane.setMaxWidth(230);
-        launchPane.setMaxHeight(55);
         FXUtils.onScroll(launchPane, versions, list -> {
             String currentId = getCurrentGame();
             return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
@@ -219,16 +216,11 @@ public final class MainPage extends StackPane implements DecoratorPage {
         StackPane.setAlignment(launchPane, Pos.BOTTOM_RIGHT);
         {
             JFXButton launchButton = new JFXButton();
-            launchButton.setPrefWidth(230);
-            launchButton.setPrefHeight(55);
-            //launchButton.setButtonType(JFXButton.ButtonType.RAISED);
+            launchButton.getStyleClass().add("launch-button");
             launchButton.setDefaultButton(true);
-            launchButton.setClip(new Rectangle(-100, -100, 310, 200));
             {
                 VBox graphic = new VBox();
                 graphic.setAlignment(Pos.CENTER);
-                graphic.setTranslateX(-7);
-                graphic.setMaxWidth(200);
                 Label launchLabel = new Label();
                 launchLabel.setStyle("-fx-font-size: 16px;");
                 Label currentLabel = new Label();
@@ -261,26 +253,11 @@ public final class MainPage extends StackPane implements DecoratorPage {
                 launchButton.setGraphic(graphic);
             }
 
-            Rectangle separator = new Rectangle();
-            separator.setWidth(1);
-            separator.setHeight(57);
-            separator.setTranslateX(95);
-            separator.setMouseTransparent(true);
-
             menuButton = new JFXButton();
-            menuButton.setPrefHeight(55);
-            menuButton.setPrefWidth(230);
-            //menuButton.setButtonType(JFXButton.ButtonType.RAISED);
-            menuButton.setStyle("-fx-font-size: 15px;");
+            menuButton.getStyleClass().add("menu-button");
             menuButton.setOnAction(e -> onMenu());
-            menuButton.setClip(new Rectangle(211, -100, 100, 200));
-            StackPane graphic = new StackPane();
-            Node svg = SVG.ARROW_DROP_UP.createIcon(30);
-            StackPane.setAlignment(svg, Pos.CENTER_RIGHT);
-            graphic.getChildren().setAll(svg);
-            graphic.setTranslateX(6);
             FXUtils.installFastTooltip(menuButton, i18n("version.switch"));
-            menuButton.setGraphic(graphic);
+            menuButton.setGraphic(SVG.ARROW_DROP_UP.createIcon(30));
 
             EventHandler<MouseEvent> secondaryClickHandle = event -> {
                 if (event.getButton() == MouseButton.SECONDARY && event.getClickCount() == 1) {
@@ -291,14 +268,14 @@ public final class MainPage extends StackPane implements DecoratorPage {
             launchButton.addEventHandler(MouseEvent.MOUSE_CLICKED, secondaryClickHandle);
             menuButton.addEventHandler(MouseEvent.MOUSE_CLICKED, secondaryClickHandle);
 
-            launchPane.getChildren().setAll(launchButton, separator, menuButton);
+            launchPane.getChildren().setAll(launchButton, menuButton);
         }
 
         getChildren().addAll(updatePane, launchPane);
 
         menu.setMaxHeight(365);
         menu.setMaxWidth(545);
-        menu.setAlwaysShowingVBar(true);
+        menu.setAlwaysShowingVBar(false);
         FXUtils.onClicked(menu, popup::hide);
         versionNodes = MappedObservableList.create(versions, version -> {
             Node node = PopupMenu.wrapPopupMenuItem(new GameItem(profile, version.getId()));
@@ -346,7 +323,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
     private void launch() {
         Profile profile = Profiles.getSelectedProfile();
-        Versions.launch(profile, profile.getSelectedVersion(), null);
+        Versions.launch(profile, profile.getSelectedVersion());
     }
 
     private void launchNoGame() {
@@ -391,7 +368,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         Node contentNode;
         if (menu.getContent().isEmpty()) {
             Label placeholder = new Label(i18n("version.empty"));
-            placeholder.setStyle("-fx-padding: 10px; -fx-text-fill: gray; -fx-font-style: italic;");
+            placeholder.setStyle("-fx-padding: 10px; -fx-text-fill: -monet-on-surface-variant; -fx-font-style: italic;");
             contentNode = placeholder;
         } else {
             contentNode = menu;
