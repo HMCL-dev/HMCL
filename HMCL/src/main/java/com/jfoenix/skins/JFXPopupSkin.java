@@ -35,6 +35,12 @@ import javafx.util.Duration;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.Motion;
 
+/// # Material Design Popup Skin
+/// TODO: REWORK
+///
+/// @author Shadi Shaheen
+/// @version 2.0
+/// @since 2017-03-01
 public class JFXPopupSkin implements Skin<JFXPopup> {
 
     protected JFXPopup control;
