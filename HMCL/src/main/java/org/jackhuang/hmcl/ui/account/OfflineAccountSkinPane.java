@@ -157,9 +157,12 @@ public class OfflineAccountSkinPane extends StackPane {
                     }).start();
         }, skinItem.selectedDataProperty(), cslApiField.textProperty(), modelCombobox.valueProperty(), skinSelector.valueProperty(), capeSelector.valueProperty());
 
+
         FXUtils.onChangeAndOperate(skinItem.selectedDataProperty(), selectedData -> {
+            // 在创建 gridPane 的地方，把底部 padding 增大，留出 actions 区的高度空间
             GridPane gridPane = new GridPane();
-            gridPane.setPadding(new Insets(0, 0, 0, 10));
+            // 增加底部内边距，避免提示与对话动作区重叠
+            gridPane.setPadding(new Insets(0, 0, 48, 10));
             gridPane.setHgap(16);
             gridPane.setVgap(8);
             gridPane.getColumnConstraints().setAll(new ColumnConstraints(), FXUtils.getColumnHgrowing());
@@ -172,9 +175,16 @@ public class OfflineAccountSkinPane extends StackPane {
                 case LITTLE_SKIN:
                     HintPane hint = new HintPane(MessageDialogPane.MessageType.INFO);
                     hint.setText(i18n("account.skin.type.little_skin.hint"));
+
+                    // 让提示横跨两列并可水平扩展以避免与对话动作区/右上帮助按钮重叠
+                    GridPane.setColumnSpan(hint, 2);
+                    GridPane.setHgrow(hint, Priority.ALWAYS);
+                    hint.setMaxWidth(Double.MAX_VALUE);
+
                     gridPane.addRow(0, hint);
                     break;
                 case LOCAL_FILE:
+                    gridPane.setPadding(new Insets(0, 0, 0, 10));
                     gridPane.addRow(0, new Label(i18n("account.skin.model")), modelCombobox);
                     gridPane.addRow(1, new Label(i18n("account.skin")), skinSelector);
                     gridPane.addRow(2, new Label(i18n("account.cape")), capeSelector);
