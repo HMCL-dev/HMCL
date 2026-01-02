@@ -140,7 +140,7 @@ public final class WorldInfoPage extends SpinnerPane {
             {
                 setLeftLabel(gameVersionPane, "world.info.game_version");
                 Label gameVersionLabel = new Label();
-                setRightTextLabel(gameVersionPane, gameVersionLabel, () -> world.getGameVersion().toNormalizedString());
+                setRightTextLabel(gameVersionPane, gameVersionLabel, () -> world.getGameVersion() == null ? "" : world.getGameVersion().toNormalizedString());
             }
 
             BorderPane iconPane = new BorderPane();

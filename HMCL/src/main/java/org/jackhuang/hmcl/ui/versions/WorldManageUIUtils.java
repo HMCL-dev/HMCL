@@ -116,11 +116,12 @@ public final class WorldManageUIUtils {
                                             runnable.run();
                                         }
                                     }
-                            ).whenComplete(Schedulers.javafx(), (exception) -> {
-                                if (exception == null) {
+                            ).whenComplete(Schedulers.javafx(), (throwable) -> {
+                                if (throwable == null) {
                                     resolve.run();
                                 } else {
                                     reject.accept(i18n("world.duplicate.failed"));
+                                    LOG.warning("Failed to duplicate world " + world.getFile(), throwable);
                                 }
                             })
                             .start();
