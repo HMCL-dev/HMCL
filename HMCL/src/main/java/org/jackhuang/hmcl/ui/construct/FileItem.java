@@ -23,7 +23,6 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.scene.control.Label;
-import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
@@ -31,7 +30,6 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.util.StringUtils;
 
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
@@ -46,10 +44,8 @@ public class FileItem extends BorderPane {
 
     private final SimpleStringProperty name = new SimpleStringProperty(this, "name");
     private final SimpleStringProperty title = new SimpleStringProperty(this, "title");
-    private final SimpleStringProperty tooltipContent = new SimpleStringProperty(this, "tooltip");
     private final SimpleStringProperty path = new SimpleStringProperty(this, "path");
     private final SimpleBooleanProperty convertToRelativePath = new SimpleBooleanProperty(this, "convertToRelativePath");
-    private final Tooltip tooltip = new Tooltip();
 
     public FileItem() {
         VBox left = new VBox();
@@ -66,15 +62,6 @@ public class FileItem extends BorderPane {
         right.setOnAction(e -> onExplore());
         FXUtils.installFastTooltip(right, i18n("button.edit"));
         setRight(right);
-
-        tooltip.textProperty().bind(tooltipContent);
-        tooltip.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (StringUtils.isNotBlank(newValue)) {
-                FXUtils.installFastTooltip(this, tooltip);
-            } else {
-                Tooltip.uninstall(this, tooltip);
-            }
-        });
 
         convertToRelativePath.addListener(onInvalidating(() -> path.set(processPath(path.get()))));
     }
@@ -147,18 +134,6 @@ public class FileItem extends BorderPane {
 
     public void setTitle(String title) {
         this.title.set(title);
-    }
-
-    public String getTooltipContent() {
-        return tooltipContent.get();
-    }
-
-    public StringProperty tooltipContentProperty() {
-        return tooltipContent;
-    }
-
-    public void setTooltipContent(String tooltipContent) {
-        this.tooltipContent.set(tooltipContent);
     }
 
     public String getPath() {
