@@ -62,8 +62,8 @@ public class EditHistoryManager {
         }
 
         public void undo() {
-            for (NBTEditCommand cmd : commands.reversed()) {
-                cmd.undo();
+            for (int i = commands.size() - 1; i >= 0; i--) {
+                commands.get(i).undo();
             }
         }
     }
