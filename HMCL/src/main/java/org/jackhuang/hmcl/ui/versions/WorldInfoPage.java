@@ -126,7 +126,8 @@ public final class WorldInfoPage extends SpinnerPane {
                         if (newValue != null) {
                             try {
                                 world.setWorldName(newValue);
-                            } catch (Throwable ignored) {
+                            } catch (Exception e) {
+                                LOG.warning("Failed to set world name", e);
                             }
                         }
                     });

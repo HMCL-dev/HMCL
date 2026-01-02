@@ -75,7 +75,6 @@ public final class World {
     }
 
     public void setWorldName(String worldName) throws IOException {
-
         if (levelData.get("Data") instanceof CompoundTag data && data.get("LevelName") instanceof StringTag levelNameTag) {
             levelNameTag.setValue(worldName);
             writeLevelDat(levelData);
