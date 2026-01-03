@@ -62,7 +62,7 @@ public final class Zipper implements Closeable {
     }
 
     private ZipEntry newEntry(String name) throws IOException {
-        if (entryNames == null || entryNames.add(name))
+        if (entryNames == null || name.endsWith("/") || entryNames.add(name))
             return new ZipEntry(name);
 
         for (int i = 1; i < 10; i++) {
@@ -126,7 +126,7 @@ public final class Zipper implements Closeable {
                     return FileVisitResult.SKIP_SUBTREE;
                 }
                 try {
-                    zos.putNextEntry(newEntry(resolve(root, relativePath) + "/"));
+                    zos.putNextEntry(new ZipEntry(resolve(root, relativePath) + "/"));
                     zos.closeEntry();
                 } catch (ZipException ignored) {
                     // Directory already exists
@@ -149,7 +149,6 @@ public final class Zipper implements Closeable {
         if (attrs.isDirectory()) {
             try {
                 zos.putNextEntry(entry);
-                entryNames.add(entry.getName());
                 zos.closeEntry();
             } catch (ZipException ignored) {
                 // Directory already exists
