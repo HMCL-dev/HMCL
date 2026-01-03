@@ -23,6 +23,8 @@ import com.jfoenix.validation.RequiredFieldValidator;
 import com.jfoenix.validation.base.ValidatorBase;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
@@ -41,6 +43,7 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Optional;
 
@@ -53,7 +56,6 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
     private final JFXTextField txtProfileName;
     private final FileItem gameDir;
     private final OptionToggleButton toggleUseRelativePath;
-    private boolean nameManuallyEdited = false;
 
     /**
      * @param profile null if creating a new profile.
@@ -145,25 +147,35 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
                     txtProfileName.textProperty(), location));
         }
 
+        ChangeListener<String> locationChangeListener = (observable, oldValue, newValue) -> {
+            Path newPath;
+            try {
+                newPath = FileUtils.toAbsolute(Path.of(newValue));
+            } catch (InvalidPathException ignored) {
+                return;
+            }
 
-        locationProperty().addListener((observable, oldValue, newValue) -> {
-            if (nameManuallyEdited && !txtProfileName.getText().isEmpty())
+            if (!".minecraft".equals(FileUtils.getName(newPath)))
                 return;
 
-            Path newPath = Path.of(newValue);
             Path parent = newPath.getParent();
+            if (parent == null)
+                return;
 
-            if (parent != null) {
-                Path suggestedName = parent.toAbsolutePath().getFileName();
-                if (suggestedName != null) {
-                    txtProfileName.setText(suggestedName.toString());
-                }
+            String suggestedName = FileUtils.getName(parent);
+            if (!suggestedName.isBlank()) {
+                txtProfileName.setText(suggestedName);
             }
-        });
+        };
+        locationProperty().addListener(locationChangeListener);
 
-        txtProfileName.textProperty().addListener((observable, oldValue, newValue) -> {
-            if (txtProfileName.isFocused()) {
-                nameManuallyEdited = true;
+        txtProfileName.textProperty().addListener(new ChangeListener<>() {
+            @Override
+            public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+                if (txtProfileName.isFocused()) {
+                    txtProfileName.textProperty().removeListener(this);
+                    locationProperty().removeListener(locationChangeListener);
+                }
             }
         });
     }
