@@ -91,10 +91,7 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
             addServerPane.setActions(lblCreationWarning, actions);
 
             txtServerUrl.getValidators().add(new URLValidator());
-            txtServerUrl.textProperty().addListener((observable, oldValue, newValue) -> {
-                btnAddNext.setDisable(!txtServerUrl.validate());
-            });
-            btnAddNext.setDisable(!txtServerUrl.validate());
+            btnAddNext.disableProperty().bind(txtServerUrl.activeValidatorProperty().isNotNull());
         }
 
         confirmServerPane = new JFXDialogLayout();
