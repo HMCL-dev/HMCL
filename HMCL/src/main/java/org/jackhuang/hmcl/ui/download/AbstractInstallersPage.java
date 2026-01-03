@@ -74,7 +74,7 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
                                     gameVersion,
                                     downloadProvider,
                                     libraryId,
-                                    () -> controller.onPrev(false, Navigation.NavigationDirection.NEXT)
+                                    () -> controller.onPrev(false, Navigation.NavigationDirection.PREVIOUS)
                             ), Navigation.NavigationDirection.NEXT
                     );
             });

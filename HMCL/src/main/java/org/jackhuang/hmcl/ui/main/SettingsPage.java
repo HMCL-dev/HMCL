@@ -88,7 +88,7 @@ public final class SettingsPage extends ScrollPane {
         this.setFitToWidth(true);
 
         VBox rootPane = new VBox();
-        rootPane.setPadding(new Insets(32, 10, 32, 10));
+        rootPane.setPadding(new Insets(10));
         this.setContent(rootPane);
         FXUtils.smoothScrolling(this);
 
@@ -226,7 +226,6 @@ public final class SettingsPage extends ScrollPane {
 
             {
                 MultiFileItem<EnumCommonDirectory> fileCommonLocation = new MultiFileItem<>();
-                fileCommonLocation.selectedDataProperty().bindBidirectional(config().commonDirTypeProperty());
                 fileCommonLocation.loadChildren(Arrays.asList(
                         new MultiFileItem.Option<>(i18n("launcher.cache_directory.default"), EnumCommonDirectory.DEFAULT),
                         new MultiFileItem.FileOption<>(i18n("settings.custom"), EnumCommonDirectory.CUSTOM)
@@ -234,6 +233,7 @@ public final class SettingsPage extends ScrollPane {
                                 .setDirectory(true)
                                 .bindBidirectional(config().commonDirectoryProperty())
                 ));
+                fileCommonLocation.selectedDataProperty().bindBidirectional(config().commonDirTypeProperty());
 
                 ComponentSublist fileCommonLocationSublist = new ComponentSublist();
                 fileCommonLocationSublist.getContent().add(fileCommonLocation);

@@ -25,7 +25,6 @@ import org.jackhuang.hmcl.download.*;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
-import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
@@ -40,6 +39,7 @@ import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.TabHeader;
+import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.versions.DownloadListPage;
@@ -96,7 +96,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         }));
         modTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofMod((profile, version, file) -> download(profile, version, file, "mods"), true)));
         resourcePackTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofResourcePack((profile, version, file) -> download(profile, version, file, "resourcepacks"), true)));
-        shaderTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(ModrinthRemoteModRepository.SHADER_PACKS, (profile, version, file) -> download(profile, version, file, "shaderpacks"), true)));
+        shaderTab.setNodeSupplier(loadVersionFor(() -> HMCLLocalizedDownloadListPage.ofShaderPack((profile, version, file) -> download(profile, version, file, "shaderpacks"), true)));
         worldTab.setNodeSupplier(loadVersionFor(() -> new DownloadListPage(CurseForgeRemoteModRepository.WORLDS)));
         tab = new TabHeader(transitionPane, newGameTab, modpackTab, modTab, resourcePackTab, shaderTab, worldTab);
 
@@ -135,10 +135,6 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         Path runDirectory = profile.getRepository().hasVersion(version) ? profile.getRepository().getRunDirectory(version) : profile.getRepository().getBaseDirectory();
 
         Controllers.prompt(i18n("archive.file.name"), (result, resolve, reject) -> {
-            if (!FileUtils.isNameValid(result)) {
-                reject.accept(i18n("install.new_game.malformed"));
-                return;
-            }
             Path dest = runDirectory.resolve(subdirectoryName).resolve(result);
 
             Controllers.taskDialog(Task.composeAsync(() -> {
@@ -156,9 +152,8 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                     Controllers.showToast(i18n("install.success"));
                 }
             }), i18n("message.downloading"), TaskCancellationAction.NORMAL);
-
             resolve.run();
-        }, file.getFile().getFilename());
+        }, file.getFile().getFilename(), new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid));
 
     }
 

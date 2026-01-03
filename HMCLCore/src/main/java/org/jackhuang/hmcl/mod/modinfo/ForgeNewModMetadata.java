@@ -277,7 +277,12 @@ public final class ForgeNewModMetadata {
     }
 
     private static ModLoaderType analyzeLoader(Toml toml, String modID, ModLoaderType loader) throws IOException {
-        List<HashMap<String, Object>> dependencies = toml.getList("dependencies." + modID);
+        List<HashMap<String, Object>> dependencies = null;
+        try {
+            dependencies = toml.getList("dependencies." + modID);
+        } catch (ClassCastException ignored) { // https://github.com/HMCL-dev/HMCL/issues/5068
+        }
+
         if (dependencies == null) {
             try {
                 dependencies = toml.getList("dependencies"); // ??? I have no idea why some of the Forge mods use [[dependencies]]
