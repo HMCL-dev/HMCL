@@ -59,7 +59,7 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
             if (libraryId.equals(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId())) continue;
             library.setOnInstall(() -> {
                 if (!Boolean.FALSE.equals(config().getShownTips().get(FABRIC_QUILT_API_TIP)) && (LibraryAnalyzer.LibraryType.FABRIC_API.getPatchId().equals(libraryId) || LibraryAnalyzer.LibraryType.QUILT_API.getPatchId().equals(libraryId))) {
-                    Controllers.dialog(new MessageDialogPane.Builder(i18n("install.installer.fabric-quilt-api.warning"), i18n("message.warning"), MessageDialogPane.MessageType.WARNING)
+                    Controllers.dialog(new MessageDialogPane.Builder(i18n("install.installer.fabric-quilt-api.warning", i18n("install.installer." + libraryId), i18n("install.installer." + libraryId)), i18n("message.warning"), MessageDialogPane.MessageType.WARNING)
                             .ok(null)
                             .addCancel(i18n("button.do_not_show_again"), () ->
                                     config().getShownTips().put(FABRIC_QUILT_API_TIP, false))
