@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.download;
 
+import org.jackhuang.hmcl.download.cleanroom.CleanroomInstallTask;
 import org.jackhuang.hmcl.download.forge.ForgeInstallTask;
 import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.download.game.GameDownloadTask;
@@ -28,9 +29,10 @@ import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.game.Library;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -79,11 +81,11 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
     public Task<?> checkGameCompletionAsync(Version version, boolean integrityCheck) {
         return Task.allOf(
                 Task.composeAsync(() -> {
-                    File versionJar = repository.getVersionJar(version);
-                    if (!versionJar.exists() || versionJar.length() == 0)
-                        return new GameDownloadTask(this, null, version);
-                    else
-                        return null;
+                    Path versionJar = repository.getVersionJar(version);
+
+                    return Files.notExists(versionJar) || FileUtils.size(versionJar) == 0L
+                            ? new GameDownloadTask(this, null, version)
+                            : null;
                 }).thenComposeAsync(checkPatchCompletionAsync(version, integrityCheck)),
                 new GameAssetDownloadTask(this, version, GameAssetDownloadTask.DOWNLOAD_INDEX_IF_NECESSARY, integrityCheck)
                         .setSignificance(Task.TaskSignificance.MODERATE),
@@ -134,7 +136,7 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
                         if (GameLibrariesTask.shouldDownloadLibrary(repository, version, installer, integrityCheck)) {
                             tasks.add(installLibraryAsync(gameVersion, original, "optifine", optifinePatchVersion));
                         } else {
-                            tasks.add(OptiFineInstallTask.install(this, original, repository.getLibraryFile(version, installer).toPath()));
+                            tasks.add(OptiFineInstallTask.install(this, original, repository.getLibraryFile(version, installer)));
                         }
                     }
                 }
@@ -181,6 +183,11 @@ public class DefaultDependencyManager extends AbstractDependencyManager {
 
         return Task
                 .composeAsync(() -> {
+                    try {
+                        return CleanroomInstallTask.install(this, oldVersion, installer);
+                    } catch (IOException ignore) {
+                    }
+
                     try {
                         return NeoForgeInstallTask.install(this, oldVersion, installer);
                     } catch (IOException ignore) {

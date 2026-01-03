@@ -38,7 +38,6 @@ import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -49,11 +48,12 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -172,14 +172,14 @@ public class DownloadPage extends Control implements DecoratorPage {
         fileChooser.setTitle(i18n("button.save_as"));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("file"), "*." + extension));
         fileChooser.setInitialFileName(file.getFile().getFilename());
-        File dest = fileChooser.showSaveDialog(Controllers.getStage());
+        Path dest = FileUtils.toPath(fileChooser.showSaveDialog(Controllers.getStage()));
         if (dest == null) {
             return;
         }
 
         Controllers.taskDialog(
                 Task.composeAsync(() -> {
-                    var task = new FileDownloadTask(file.getFile().getUrl(), dest.toPath(), file.getFile().getIntegrityCheck());
+                    var task = new FileDownloadTask(file.getFile().getUrl(), dest, file.getFile().getIntegrityCheck());
                     task.setName(file.getName());
                     return task;
                 }),
@@ -218,8 +218,10 @@ public class DownloadPage extends Control implements DecoratorPage {
             BorderPane.setMargin(descriptionPane, new Insets(11, 11, 0, 11));
             {
                 ImageView imageView = new ImageView();
+                imageView.setFitWidth(40);
+                imageView.setFitHeight(40);
                 if (StringUtils.isNotBlank(getSkinnable().addon.getIconUrl())) {
-                    imageView.imageProperty().bind(FXUtils.newRemoteImage(getSkinnable().addon.getIconUrl(), 40, 40, true, true));
+                    imageView.imageProperty().bind(FXUtils.newRemoteImage(getSkinnable().addon.getIconUrl(), 80, 80, true, true));
                 }
                 descriptionPane.getChildren().add(FXUtils.limitingSize(imageView, 40, 40));
 
@@ -340,6 +342,8 @@ public class DownloadPage extends Control implements DecoratorPage {
             TwoLineListItem content = new TwoLineListItem();
             HBox.setHgrow(content, Priority.ALWAYS);
             ImageView imageView = new ImageView();
+            imageView.setFitWidth(40);
+            imageView.setFitHeight(40);
             pane.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), content);
 
             RipplerContainer container = new RipplerContainer(pane);
@@ -357,12 +361,12 @@ public class DownloadPage extends Control implements DecoratorPage {
                         .map(page::getLocalizedCategory)
                         .forEach(content::addTag);
                 if (StringUtils.isNotBlank(addon.getIconUrl())) {
-                    imageView.imageProperty().bind(FXUtils.newRemoteImage(addon.getIconUrl(), 40, 40, true, true));
+                    imageView.imageProperty().bind(FXUtils.newRemoteImage(addon.getIconUrl(), 80, 80, true, true));
                 }
             } else {
                 content.setTitle(i18n("mods.broken_dependency.title"));
                 content.setSubtitle(i18n("mods.broken_dependency.desc"));
-                imageView.setImage(FXUtils.newBuiltinImage("/assets/img/icon@8x.png", 40, 40, true, true));
+                imageView.setImage(FXUtils.newBuiltinImage("/assets/img/icon@4x.png"));
             }
         }
     }
@@ -389,15 +393,15 @@ public class DownloadPage extends Control implements DecoratorPage {
                     switch (dataItem.getVersionType()) {
                         case Alpha:
                             content.addTag(i18n("mods.channel.alpha"));
-                            graphicPane.getChildren().setAll(SVG.ALPHA_CIRCLE.createIcon(Theme.blackFill(), 24));
+                            graphicPane.getChildren().setAll(SVG.ALPHA_CIRCLE.createIcon(24));
                             break;
                         case Beta:
                             content.addTag(i18n("mods.channel.beta"));
-                            graphicPane.getChildren().setAll(SVG.BETA_CIRCLE.createIcon(Theme.blackFill(), 24));
+                            graphicPane.getChildren().setAll(SVG.BETA_CIRCLE.createIcon(24));
                             break;
                         case Release:
                             content.addTag(i18n("mods.channel.release"));
-                            graphicPane.getChildren().setAll(SVG.RELEASE_CIRCLE.createIcon(Theme.blackFill(), 24));
+                            graphicPane.getChildren().setAll(SVG.RELEASE_CIRCLE.createIcon(24));
                             break;
                     }
 
@@ -443,22 +447,13 @@ public class DownloadPage extends Control implements DecoratorPage {
         public ModVersion(RemoteMod.Version version, DownloadPage selfPage) {
             RemoteModRepository.Type type = selfPage.repository.getType();
 
-            String title;
-            switch (type) {
-                case WORLD:
-                    title = "world.download.title";
-                    break;
-                case MODPACK:
-                    title = "modpack.download.title";
-                    break;
-                case RESOURCE_PACK:
-                    title = "resourcepack.download.title";
-                    break;
-                case MOD:
-                default:
-                    title = "mods.download.title";
-                    break;
-            }
+            String title = switch (type) {
+                case WORLD -> "world.download.title";
+                case MODPACK -> "modpack.download.title";
+                case RESOURCE_PACK -> "resourcepack.download.title";
+                case SHADER_PACK -> "shaderpack.download.title";
+                default -> "mods.download.title";
+            };
             this.setHeading(new HBox(new Label(i18n(title, version.getName()))));
 
             VBox box = new VBox(8);

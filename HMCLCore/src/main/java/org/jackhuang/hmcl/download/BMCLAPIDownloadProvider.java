@@ -28,7 +28,9 @@ import org.jackhuang.hmcl.download.optifine.OptiFineBMCLVersionList;
 import org.jackhuang.hmcl.download.quilt.QuiltAPIVersionList;
 import org.jackhuang.hmcl.download.quilt.QuiltVersionList;
 import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 
+import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 
@@ -82,7 +84,8 @@ public final class BMCLAPIDownloadProvider implements DownloadProvider {
                 pair("https://authlib-injector.yushi.moe", apiRoot + "/mirrors/authlib-injector"),
                 pair("https://repo1.maven.org/maven2", "https://mirrors.cloud.tencent.com/nexus/repository/maven-public"),
                 pair("https://repo.maven.apache.org/maven2", "https://mirrors.cloud.tencent.com/nexus/repository/maven-public"),
-                pair("https://hmcl-dev.github.io/metadata/cleanroom", "https://alist.8mi.tech/d/mirror/HMCL-Metadata/Auto/cleanroom"),
+                pair("https://hmcl.glavo.site/metadata/cleanroom", "https://alist.8mi.tech/d/mirror/HMCL-Metadata/Auto/cleanroom"),
+                pair("https://hmcl.glavo.site/metadata/fmllibs", "https://alist.8mi.tech/d/mirror/HMCL-Metadata/Auto/fmllibs"),
                 pair("https://zkitefly.github.io/unlisted-versions-of-minecraft", "https://alist.8mi.tech/d/mirror/unlisted-versions-of-minecraft/Auto")
 //                // https://github.com/mcmod-info-mirror/mcim-rust-api
 //                pair("https://api.modrinth.com", "https://mod.mcimirror.top/modrinth"),
@@ -98,13 +101,13 @@ public final class BMCLAPIDownloadProvider implements DownloadProvider {
     }
 
     @Override
-    public String getVersionListURL() {
-        return apiRoot + "/mc/game/version_manifest.json";
+    public List<URI> getVersionListURLs() {
+        return List.of(URI.create(apiRoot + "/mc/game/version_manifest.json"));
     }
 
     @Override
-    public String getAssetBaseURL() {
-        return apiRoot + "/assets/";
+    public List<URI> getAssetObjectCandidates(String assetObjectLocation) {
+        return List.of(NetworkUtils.toURI(apiRoot + "/assets/" + assetObjectLocation));
     }
 
     @Override

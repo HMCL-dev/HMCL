@@ -20,11 +20,12 @@ package org.jackhuang.hmcl.ui.decorator;
 import javafx.scene.Node;
 import javafx.scene.control.SkinBase;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.construct.Navigator;
 import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
 import org.jackhuang.hmcl.ui.wizard.*;
+import org.jackhuang.hmcl.util.SettingsMap;
 
-import java.util.Map;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class DecoratorWizardDisplayer extends DecoratorTransitionPage implements WizardDisplayer {
@@ -74,7 +75,7 @@ public class DecoratorWizardDisplayer extends DecoratorTransitionPage implements
     @Override
     public void navigateTo(Node page, Navigation.NavigationDirection nav) {
         displayer.navigateTo(page, nav);
-        navigate(page, nav.getAnimation());
+        navigate(page, nav.getAnimation(), Motion.SHORT4, Motion.EASE);
 
         String prefix = category == null ? "" : category + " - ";
 
@@ -94,7 +95,7 @@ public class DecoratorWizardDisplayer extends DecoratorTransitionPage implements
     }
 
     @Override
-    public void handleTask(Map<String, Object> settings, Task<?> task) {
+    public void handleTask(SettingsMap settings, Task<?> task) {
         displayer.handleTask(settings, task);
     }
 

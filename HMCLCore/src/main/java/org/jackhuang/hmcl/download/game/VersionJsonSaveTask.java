@@ -51,7 +51,7 @@ public final class VersionJsonSaveTask extends Task<Version> {
 
     @Override
     public void execute() throws Exception {
-        Path json = repository.getVersionJson(version.getId()).toPath().toAbsolutePath();
+        Path json = repository.getVersionJson(version.getId()).toAbsolutePath();
         Files.createDirectories(json.getParent());
         JsonUtils.writeToJsonFile(json, version);
     }

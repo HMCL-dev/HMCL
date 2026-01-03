@@ -26,7 +26,7 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
-import java.net.URLConnection;
+import java.net.http.HttpResponse;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -185,7 +185,7 @@ public class FileDownloadTask extends FetchTask<Void> {
     }
 
     @Override
-    protected Context getContext(URLConnection connection, boolean checkETag, String bmclapiHash) throws IOException {
+    protected Context getContext(HttpResponse<?> response, boolean checkETag, String bmclapiHash) throws IOException {
         Path temp = Files.createTempFile(null, null);
 
         String algorithm;
@@ -193,7 +193,7 @@ public class FileDownloadTask extends FetchTask<Void> {
         if (integrityCheck != null) {
             algorithm = integrityCheck.getAlgorithm();
             checksum = integrityCheck.getChecksum();
-        } else if (bmclapiHash != null) {
+        } else if (bmclapiHash != null && DigestUtils.isSha1Digest(bmclapiHash)) {
             algorithm = "SHA-1";
             checksum = bmclapiHash;
         } else {
@@ -260,7 +260,7 @@ public class FileDownloadTask extends FetchTask<Void> {
                 }
 
                 if (checkETag) {
-                    repository.cacheRemoteFile(connection, file);
+                    repository.cacheRemoteFile(response, file);
                 }
             }
         };

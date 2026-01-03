@@ -1,6 +1,76 @@
 {
   "versions": [
     {
+      "id": "1.21.11_unobfuscated",
+      "type": "unobfuscated",
+      "url": "https://piston-meta.mojang.com/v1/packages/327be7759157b04495c591dbb721875e341877af/1.21.11_unobfuscated.json",
+      "time": "2025-12-09T12:43:15+00:00",
+      "releaseTime": "2025-12-09T12:43:15+00:00"
+    },
+    {
+      "id": "1.21.11-rc2_unobfuscated",
+      "type": "unobfuscated",
+      "url": "https://piston-meta.mojang.com/v1/packages/9282a3fb154d2a425086c62c11827281308bf93b/1.21.11-rc2_unobfuscated.json",
+      "time": "2025-12-05T11:57:45+00:00",
+      "releaseTime": "2025-12-05T11:57:45+00:00"
+    },
+    {
+      "id": "1.21.11-rc1_unobfuscated",
+      "type": "unobfuscated",
+      "url": "https://piston-meta.mojang.com/v1/packages/5d3ee0ef1f0251cf7e073354ca9e085a884a643d/1.21.11-rc1_unobfuscated.json",
+      "time": "2025-12-04T15:56:55+00:00",
+      "releaseTime": "2025-12-04T15:56:55+00:00"
+    },
+    {
+      "id": "1.21.11-pre5_unobfuscated",
+      "type": "unobfuscated",
+      "url": "https://piston-meta.mojang.com/v1/packages/1028441ca6d288bbf2103e773196bf524f7260fd/1.21.11-pre5_unobfuscated.json",
+      "time": "2025-12-03T13:34:06+00:00",
+      "releaseTime": "2025-12-03T13:34:06+00:00"
+    },
+    {
+      "id": "1.21.11-pre4_unobfuscated",
+      "type": "unobfuscated",
+      "url": "https://piston-meta.mojang.com/v1/packages/410ce37a2506adcfd54ef7d89168cfbe89cac4cb/1.21.11-pre4_unobfuscated.json",
+      "time": "2025-12-01T13:40:12+00:00",
+      "releaseTime": "2025-12-01T13:40:12+00:00"
+    },
+    {
+      "id": "1.21.11-pre3_unobfuscated",
+      "type": "unobfuscated",
+      "url": "https://piston-meta.mojang.com/v1/packages/579bf3428f72b5ea04883d202e4831bfdcb2aa8d/1.21.11-pre3_unobfuscated.json",
+      "time": "2025-11-25T14:14:30+00:00",
+      "releaseTime": "2025-11-25T14:14:30+00:00"
+    },
+    {
+      "id": "1.21.11-pre2_unobfuscated",
+      "type": "unobfuscated",
+      "url": "https://piston-meta.mojang.com/v1/packages/2955ce0af0512fdfe53ff0740b017344acf6f397/1.21.11-pre2_unobfuscated.json",
+      "time": "2025-11-21T12:07:21+00:00",
+      "releaseTime": "2025-11-21T12:07:21+00:00"
+    },
+    {
+      "id": "1.21.11-pre1_unobfuscated",
+      "type": "unobfuscated",
+      "url": "https://piston-meta.mojang.com/v1/packages/9c267f8dda2728bae55201a753cdd07b584709f1/1.21.11-pre1_unobfuscated.json",
+      "time": "2025-11-19T08:30:46+00:00",
+      "releaseTime": "2025-11-19T08:30:46+00:00"
+    },
+    {
+      "id": "25w46a_unobfuscated",
+      "type": "unobfuscated",
+      "url": "https://piston-meta.mojang.com/v1/packages/314ade2afeada364047798e163ef8e82427c69e1/25w46a_unobfuscated.json",
+      "time": "2025-11-11T13:20:54+00:00",
+      "releaseTime": "2025-11-11T13:20:54+00:00"
+    },
+    {
+      "id": "25w45a_unobfuscated",
+      "type": "unobfuscated",
+      "url": "https://piston-meta.mojang.com/v1/packages/7a3c149f148b6aa5ac3af48c4f701adea7e5b615/25w45a_unobfuscated.json",
+      "time": "2025-11-04T14:07:08+00:00",
+      "releaseTime": "2025-11-04T14:07:08+00:00"
+    },
+    {
       "id": "1.19_deep_dark_experimental_snapshot-1",
       "type": "pending",
       "url": "https://zkitefly.github.io/unlisted-versions-of-minecraft/files/1_19_deep_dark_experimental_snapshot-1/1_19_deep_dark_experimental_snapshot-1.json",
@@ -57,63 +127,63 @@
       "releaseTime": "2021-07-13T12:54:19+00:00"
     },
     {
-      "id": "1_16_combat-6",
+      "id": "1.16_combat-6",
       "type": "pending",
       "url": "https://zkitefly.github.io/unlisted-versions-of-minecraft/files/1_16_combat-6/1_16_combat-6.json",
       "time": "2020-08-26T06:24:28+00:00",
       "releaseTime": "2020-08-26T06:24:28+00:00"
     },
     {
-      "id": "1_16_combat-5",
+      "id": "1.16_combat-5",
       "type": "pending",
       "url": "https://zkitefly.github.io/unlisted-versions-of-minecraft/files/1_16_combat-5/1_16_combat-5.json",
       "time": "2020-08-21T09:23:13+00:00",
       "releaseTime": "2020-08-21T09:23:13+00:00"
     },
     {
-      "id": "1_16_combat-4",
+      "id": "1.16_combat-4",
       "type": "pending",
       "url": "https://zkitefly.github.io/unlisted-versions-of-minecraft/files/1_16_combat-4/1_16_combat-4.json",
       "time": "2020-08-19T11:14:58+00:00",
       "releaseTime": "2020-08-19T11:14:58+00:00"
     },
     {
-      "id": "1_16_combat-3",
+      "id": "1.16_combat-3",
       "type": "pending",
       "url": "https://zkitefly.github.io/unlisted-versions-of-minecraft/files/1_16_combat-3/1_16_combat-3.json",
       "time": "2020-08-14T09:02:15+00:00",
       "releaseTime": "2020-08-14T09:02:15+00:00"
     },
     {
-      "id": "1_16_combat-2",
+      "id": "1.16_combat-2",
       "type": "pending",
       "url": "https://zkitefly.github.io/unlisted-versions-of-minecraft/files/1_16_combat-2/1_16_combat-2.json",
       "time": "2020-08-13T11:56:30+00:00",
       "releaseTime": "2020-08-13T11:56:30+00:00"
     },
     {
-      "id": "1_16_combat-1",
+      "id": "1.16_combat-1",
       "type": "pending",
       "url": "https://zkitefly.github.io/unlisted-versions-of-minecraft/files/1_16_combat-1/1_16_combat-1.json",
       "time": "2020-08-12T14:07:25+00:00",
       "releaseTime": "2020-08-12T14:07:25+00:00"
     },
     {
-      "id": "1_16_combat-0",
+      "id": "1.16_combat-0",
       "type": "pending",
       "url": "https://zkitefly.github.io/unlisted-versions-of-minecraft/files/1_16_combat-0/1_16_combat-0.json",
       "time": "2020-08-07T10:44:47+00:00",
       "releaseTime": "2020-08-07T10:44:47+00:00"
     },
     {
-      "id": "1_15_combat-6",
+      "id": "1.15_combat-6",
       "type": "pending",
       "url": "https://zkitefly.github.io/unlisted-versions-of-minecraft/files/1_15_combat-6/1_15_combat-6.json",
       "time": "2020-01-15T09:46:35+00:00",
       "releaseTime": "2020-01-15T09:46:35+00:00"
     },
     {
-      "id": "1_15_combat-1",
+      "id": "1.15_combat-1",
       "type": "pending",
       "url": "https://zkitefly.github.io/unlisted-versions-of-minecraft/files/1_15_combat-1/1_15_combat-1.json",
       "time": "2019-11-29T15:41:39+00:00",

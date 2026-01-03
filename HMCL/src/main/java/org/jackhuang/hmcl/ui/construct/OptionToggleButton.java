@@ -49,14 +49,17 @@ public class OptionToggleButton extends StackPane {
         Label titleLabel = new Label();
         titleLabel.textProperty().bind(title);
         Label subtitleLabel = new Label();
-        subtitleLabel.setMouseTransparent(true);
         subtitleLabel.setWrapText(true);
+        subtitleLabel.setMouseTransparent(true);
+        subtitleLabel.getStyleClass().add("subtitle");
         subtitleLabel.textProperty().bind(subtitle);
         pane.setCenter(left);
         left.setAlignment(Pos.CENTER_LEFT);
 
         JFXToggleButton toggleButton = new JFXToggleButton();
-        pane.setRight(toggleButton);
+        StackPane right = new StackPane(toggleButton);
+        right.setAlignment(Pos.CENTER);
+        pane.setRight(right);
         toggleButton.selectedProperty().bindBidirectional(selected);
         toggleButton.setSize(8);
         FXUtils.setLimitHeight(toggleButton, 30);

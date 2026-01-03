@@ -19,9 +19,10 @@ package org.jackhuang.hmcl.util.i18n;
 
 import org.jackhuang.hmcl.download.RemoteVersion;
 import org.jackhuang.hmcl.download.game.GameRemoteVersion;
-import org.jackhuang.hmcl.util.i18n.Locales.SupportedLocale;
+import org.jackhuang.hmcl.util.i18n.translator.Translator;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.PropertyKey;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,7 +35,7 @@ public final class I18n {
     private I18n() {
     }
 
-    private static volatile SupportedLocale locale = Locales.DEFAULT;
+    private static volatile SupportedLocale locale = SupportedLocale.DEFAULT;
 
     public static void setLocale(SupportedLocale locale) {
         I18n.locale = locale;
@@ -44,34 +45,44 @@ public final class I18n {
         return locale;
     }
 
+    public static boolean isUpsideDown() {
+        return LocaleUtils.getScript(locale.getDisplayLocale()).equals("Qabs");
+    }
+
     public static boolean isUseChinese() {
-        return LocaleUtils.isChinese(locale.getLocale());
+        return LocaleUtils.isChinese(locale.getDisplayLocale());
     }
 
     public static ResourceBundle getResourceBundle() {
         return locale.getResourceBundle();
     }
 
-    public static String i18n(String key, Object... formatArgs) {
+    public static Translator getTranslator() {
+        return locale.getTranslator();
+    }
+
+    public static String i18n(@PropertyKey(resourceBundle = "assets.lang.I18N") String key, Object... formatArgs) {
         return locale.i18n(key, formatArgs);
     }
 
-    public static String i18n(String key) {
+    public static String i18n(@PropertyKey(resourceBundle = "assets.lang.I18N") String key) {
         return locale.i18n(key);
     }
 
     public static String formatDateTime(TemporalAccessor time) {
-        return locale.formatDateTime(time);
+        return getTranslator().formatDateTime(time);
     }
 
-    public static String getDisplaySelfVersion(RemoteVersion version) {
-        if (locale.getLocale().getLanguage().equals("lzh")) {
-            if (version instanceof GameRemoteVersion)
-                return WenyanUtils.translateGameVersion(GameVersionNumber.asGameVersion(version.getSelfVersion()));
-            else
-                return WenyanUtils.translateGenericVersion(version.getSelfVersion());
-        }
-        return version.getSelfVersion();
+    public static String formatSpeed(long bytes) {
+        return getTranslator().formatSpeed(bytes);
+    }
+
+    public static String getDisplayVersion(RemoteVersion version) {
+        return getTranslator().getDisplayVersion(version);
+    }
+
+    public static String getDisplayVersion(GameVersionNumber version) {
+        return getTranslator().getDisplayVersion(version);
     }
 
     /// Find the builtin localized resource with given name and suffix.
