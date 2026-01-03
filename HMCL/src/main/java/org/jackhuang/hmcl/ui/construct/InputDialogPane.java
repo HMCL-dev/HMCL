@@ -21,14 +21,11 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXTextField;
 import com.jfoenix.validation.base.ValidatorBase;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.util.FutureCallback;
 
-import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
