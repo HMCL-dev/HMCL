@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
+import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
@@ -141,7 +142,7 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
                                     else
                                         reject.accept(i18n("world.import.failed", e.getClass().getName() + ": " + e.getLocalizedMessage()));
                                 }).start();
-                    }, world.getWorldName());
+                    }, world.getWorldName(), new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid));
                 }, e -> {
                     LOG.warning("Unable to parse world file " + zipFile, e);
                     Controllers.dialog(i18n("world.import.invalid"));

@@ -58,11 +58,12 @@ public final class ImagePickerItem extends BorderPane {
         selectButton.getStyleClass().add("toggle-icon4");
 
         JFXButton deleteButton = new JFXButton();
-        deleteButton.setGraphic(SVG.CLOSE.createIcon(20));
+        deleteButton.setGraphic(SVG.RESTORE.createIcon(20));
         deleteButton.onActionProperty().bind(onDeleteButtonClicked);
         deleteButton.getStyleClass().add("toggle-icon4");
 
         FXUtils.installFastTooltip(selectButton, i18n("button.edit"));
+        FXUtils.installFastTooltip(deleteButton, i18n("button.reset"));
 
         HBox hBox = new HBox();
         hBox.getChildren().setAll(imageView, selectButton, deleteButton);

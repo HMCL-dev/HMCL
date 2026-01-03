@@ -159,7 +159,9 @@ public class OfflineAccountSkinPane extends StackPane {
 
         FXUtils.onChangeAndOperate(skinItem.selectedDataProperty(), selectedData -> {
             GridPane gridPane = new GridPane();
-            gridPane.setPadding(new Insets(0, 0, 0, 10));
+            // Increase bottom padding to prevent the prompt from overlapping with the dialog action area
+
+            gridPane.setPadding(new Insets(0, 0, 45, 10));
             gridPane.setHgap(16);
             gridPane.setVgap(8);
             gridPane.getColumnConstraints().setAll(new ColumnConstraints(), FXUtils.getColumnHgrowing());
@@ -172,9 +174,15 @@ public class OfflineAccountSkinPane extends StackPane {
                 case LITTLE_SKIN:
                     HintPane hint = new HintPane(MessageDialogPane.MessageType.INFO);
                     hint.setText(i18n("account.skin.type.little_skin.hint"));
+                    // Allow the tooltip to span two columns and expand horizontally to avoid overlapping with the dialog action area/top-right help button
+                    GridPane.setColumnSpan(hint, 2);
+                    GridPane.setHgrow(hint, Priority.ALWAYS);
+                    hint.setMaxWidth(Double.MAX_VALUE);
+
                     gridPane.addRow(0, hint);
                     break;
                 case LOCAL_FILE:
+                    gridPane.setPadding(new Insets(0, 0, 0, 10));
                     gridPane.addRow(0, new Label(i18n("account.skin.model")), modelCombobox);
                     gridPane.addRow(1, new Label(i18n("account.skin")), skinSelector);
                     gridPane.addRow(2, new Label(i18n("account.cape")), capeSelector);
