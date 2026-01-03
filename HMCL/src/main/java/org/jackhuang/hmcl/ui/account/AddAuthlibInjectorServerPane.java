@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.DialogAware;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
+import org.jackhuang.hmcl.ui.construct.URLValidator;
 import org.jackhuang.hmcl.util.Lang;
 
 import javax.net.ssl.SSLException;
@@ -88,6 +89,12 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
 
             addServerPane.setBody(txtServerUrl);
             addServerPane.setActions(lblCreationWarning, actions);
+
+            txtServerUrl.getValidators().add(new URLValidator());
+            txtServerUrl.textProperty().addListener((observable, oldValue, newValue) -> {
+                btnAddNext.setDisable(!txtServerUrl.validate());
+            });
+            btnAddNext.setDisable(!txtServerUrl.validate());
         }
 
         confirmServerPane = new JFXDialogLayout();
@@ -149,7 +156,6 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
         this.setContent(addServerPane, ContainerAnimations.NONE);
 
         lblCreationWarning.maxWidthProperty().bind(((FlowPane) lblCreationWarning.getParent()).widthProperty());
-        btnAddNext.disableProperty().bind(txtServerUrl.textProperty().isEmpty());
         nextPane.hideSpinner();
 
         onEscPressed(this, this::onAddCancel);

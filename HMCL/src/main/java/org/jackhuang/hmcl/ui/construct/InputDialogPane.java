@@ -20,11 +20,15 @@ package org.jackhuang.hmcl.ui.construct;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXTextField;
+import com.jfoenix.validation.base.ValidatorBase;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.util.FutureCallback;
 
+import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -36,6 +40,16 @@ public class InputDialogPane extends JFXDialogLayout implements DialogAware {
     private final JFXTextField textField;
     private final Label lblCreationWarning;
     private final SpinnerPane acceptPane;
+    private final JFXButton acceptButton;
+
+    public InputDialogPane(String text, String initialValue, FutureCallback<String> onResult, ValidatorBase... validators) {
+        this(text, initialValue, onResult);
+        textField.getValidators().addAll(validators);
+        textField.textProperty().addListener((observable, oldValue, newValue) -> {
+            acceptButton.setDisable(!textField.validate());
+        });
+        acceptButton.setDisable(!textField.validate());
+    }
 
     public InputDialogPane(String text, String initialValue, FutureCallback<String> onResult) {
         textField = new JFXTextField(initialValue);
@@ -47,7 +61,7 @@ public class InputDialogPane extends JFXDialogLayout implements DialogAware {
 
         acceptPane = new SpinnerPane();
         acceptPane.getStyleClass().add("small-spinner-pane");
-        JFXButton acceptButton = new JFXButton(i18n("button.ok"));
+        acceptButton = new JFXButton(i18n("button.ok"));
         acceptButton.getStyleClass().add("dialog-accept");
         acceptPane.setContent(acceptButton);
 
@@ -69,7 +83,6 @@ public class InputDialogPane extends JFXDialogLayout implements DialogAware {
                 lblCreationWarning.setText(msg);
             });
         });
-
         textField.setOnAction(event -> acceptButton.fire());
         onEscPressed(this, cancelButton::fire);
     }
