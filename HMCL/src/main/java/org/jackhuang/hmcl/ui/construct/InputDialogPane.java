@@ -41,11 +41,10 @@ public class InputDialogPane extends JFXDialogLayout implements DialogAware {
 
     public InputDialogPane(String text, String initialValue, FutureCallback<String> onResult, ValidatorBase... validators) {
         this(text, initialValue, onResult);
-        textField.getValidators().addAll(validators);
-        textField.textProperty().addListener((observable, oldValue, newValue) -> {
-            acceptButton.setDisable(!textField.validate());
-        });
-        acceptButton.setDisable(!textField.validate());
+        if (validators != null) {
+            textField.getValidators().addAll(validators);
+            acceptButton.disableProperty().bind(textField.activeValidatorProperty().isNotNull());
+        }
     }
 
     public InputDialogPane(String text, String initialValue, FutureCallback<String> onResult) {
