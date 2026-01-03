@@ -18,12 +18,12 @@
 package org.jackhuang.hmcl.ui.nbt;
 
 import com.jfoenix.controls.JFXButton;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -38,8 +38,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * @author Glavo
@@ -50,11 +50,12 @@ public final class NBTEditorPage extends SpinnerPane implements DecoratorPage {
     private final NBTFileType type;
 
     private final BorderPane root = new BorderPane();
+    JFXButton cancelButton;
 
     public NBTEditorPage(Path file) throws IOException {
         getStyleClass().add("gray-background");
 
-        this.state = new ReadOnlyObjectWrapper<>(State.fromTitle(i18n("nbt.title", file.toString())));
+        this.state = new ReadOnlyObjectWrapper<>(new State(i18n("nbt.title", file.toString()), null, true, true, true));
         this.file = file;
         this.type = NBTFileType.ofFile(file);
 
@@ -65,26 +66,28 @@ public final class NBTEditorPage extends SpinnerPane implements DecoratorPage {
         setContent(root);
         setLoading(true);
 
-        HBox actions = new HBox(8);
-        actions.setPadding(new Insets(8));
-        actions.setAlignment(Pos.CENTER_RIGHT);
+//        FXUtils.applyDragListener(this,
+//                NBTFileType::isNBTFileByExtension,
+//                paths -> {
+//                    Path path = paths.get(0);
+//                    try {
+//                        fireEvent(new PageCloseEvent());
+//                        Controllers.navigate(new NBTEditorPage(path));
+//                    } catch (Throwable e) {
+//                        LOG.warning("Fail to open nbt file", e);
+//                        Controllers.dialog(i18n("nbt.open.failed") + "\n\n" + StringUtils.getStackTrace(e),
+//                                i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+//                    }
+//                });
 
-        JFXButton saveButton = FXUtils.newRaisedButton(i18n("button.save"));
-        saveButton.setOnAction(e -> {
-            try {
-                save();
-            } catch (IOException ex) {
-                LOG.warning("Failed to save NBT file", ex);
-                Controllers.dialog(i18n("nbt.save.failed") + "\n\n" + StringUtils.getStackTrace(ex));
-            }
-        });
-
-        JFXButton cancelButton = FXUtils.newRaisedButton(i18n("button.cancel"));
+        cancelButton = FXUtils.newRaisedButton(i18n("button.cancel"));
         cancelButton.setOnAction(e -> fireEvent(new PageCloseEvent()));
         onEscPressed(this, cancelButton::fire);
 
-        actions.getChildren().setAll(saveButton, cancelButton);
+        loadTree();
+    }
 
+    public void loadTree() {
         Task.supplyAsync(() -> type.readAsTree(file))
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
                     if (exception == null) {
@@ -100,12 +103,20 @@ public final class NBTEditorPage extends SpinnerPane implements DecoratorPage {
                 }).start();
     }
 
-    public void save() throws IOException {
-        // TODO
-    }
-
     @Override
     public ReadOnlyObjectProperty<State> stateProperty() {
         return state;
+    }
+
+    @Override
+    public void refresh() {
+        root.setCenter(null);
+        setLoading(true);
+        loadTree();
+    }
+
+    @Override
+    public BooleanProperty refreshableProperty() {
+        return new SimpleBooleanProperty(true);
     }
 }

@@ -25,11 +25,7 @@ import com.github.steveice10.opennbt.tag.builtin.Tag;
 import kala.compress.utils.BoundedInputStream;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -41,7 +37,7 @@ import java.util.zip.InflaterInputStream;
  * @author Glavo
  */
 public enum NBTFileType {
-    COMPRESSED("dat", "dat_old") {
+    COMPRESSED("dat", "dat_old", "litematic", "nbt", "schematic", "schem") {
         @Override
         public Tag read(Path file) throws IOException {
             try (BufferedInputStream fileInputStream = new BufferedInputStream(Files.newInputStream(file))) {
@@ -109,20 +105,20 @@ public enum NBTFileType {
                     input = new BoundedInputStream(input, chunkLength - 1);
 
                     switch (buffer[4]) {
-                        case 0x01:
+                        case 0x01 -> {
                             // GZip
                             input = new GZIPInputStream(input);
-                            break;
-                        case 0x02:
+                        }
+                        case 0x02 -> {
                             // Zlib
                             inflater.reset();
                             input = new InflaterInputStream(input, inflater);
-                            break;
-                        case 0x03:
+                        }
+                        case 0x03 -> {
                             // Uncompressed
-                            break;
-                        default:
-                            throw new IOException("Unsupported compression method: " + Integer.toHexString(buffer[4] & 0xff));
+                        }
+                        default ->
+                                throw new IOException("Unsupported compression method: " + Integer.toHexString(buffer[4] & 0xff));
                     }
 
                     try (InputStream in = input) {
@@ -190,7 +186,7 @@ public enum NBTFileType {
 
     public NBTTreeView.Item readAsTree(Path file) throws IOException {
         NBTTreeView.Item root = NBTTreeView.buildTree(read(file));
-        root.setName(file.getFileName().toString());
+        root.setCustomName(file.getFileName().toString());
         return root;
     }
 }
