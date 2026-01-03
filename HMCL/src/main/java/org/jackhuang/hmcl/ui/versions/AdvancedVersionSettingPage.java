@@ -47,6 +47,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
     private final OptionToggleButton noJVMArgsPane;
     private final OptionToggleButton noOptimizingJVMArgsPane;
     private final OptionToggleButton noGameCheckPane;
+    private final OptionToggleButton noModpackCheckPane;
     private final OptionToggleButton noJVMCheckPane;
     private final OptionToggleButton noNativesPatchPane;
     private final OptionToggleButton useNativeGLFWPane;
@@ -193,6 +194,9 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
             noGameCheckPane = new OptionToggleButton();
             noGameCheckPane.setTitle(i18n("settings.advanced.dont_check_game_completeness"));
 
+            noModpackCheckPane = new OptionToggleButton();
+            noModpackCheckPane.setTitle(i18n("settings.advanced.dont_check_modpack_completeness"));
+
             noJVMCheckPane = new OptionToggleButton();
             noJVMCheckPane.setTitle(i18n("settings.advanced.dont_check_jvm_validity"));
 
@@ -206,7 +210,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
             useNativeOpenALPane.setTitle(i18n("settings.advanced.use_native_openal"));
 
             workaroundPane.getContent().setAll(
-                    nativesDirSublist, rendererPane, noJVMArgsPane, noOptimizingJVMArgsPane, noGameCheckPane,
+                    nativesDirSublist, rendererPane, noJVMArgsPane, noOptimizingJVMArgsPane, noGameCheckPane, noModpackCheckPane,
                     noJVMCheckPane, noNativesPatchPane
             );
 
@@ -240,6 +244,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
         FXUtils.bindString(txtPostExitCommand, versionSetting.postExitCommandProperty());
         FXUtils.bindEnum(cboRenderer, versionSetting.rendererProperty());
         noGameCheckPane.selectedProperty().bindBidirectional(versionSetting.notCheckGameProperty());
+        noModpackCheckPane.selectedProperty().bindBidirectional(versionSetting.notCheckModpackProperty());
         noJVMCheckPane.selectedProperty().bindBidirectional(versionSetting.notCheckJVMProperty());
         noJVMArgsPane.selectedProperty().bindBidirectional(versionSetting.noJVMArgsProperty());
         noOptimizingJVMArgsPane.selectedProperty().bindBidirectional(versionSetting.noOptimizingJVMArgsProperty());
@@ -282,6 +287,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
         FXUtils.unbind(txtPostExitCommand, versionSetting.postExitCommandProperty());
         FXUtils.unbindEnum(cboRenderer, versionSetting.rendererProperty());
         noGameCheckPane.selectedProperty().unbindBidirectional(versionSetting.notCheckGameProperty());
+        noModpackCheckPane.selectedProperty().unbindBidirectional(versionSetting.notCheckModpackProperty());
         noJVMCheckPane.selectedProperty().unbindBidirectional(versionSetting.notCheckJVMProperty());
         noJVMArgsPane.selectedProperty().unbindBidirectional(versionSetting.noJVMArgsProperty());
         noOptimizingJVMArgsPane.selectedProperty().unbindBidirectional(versionSetting.noOptimizingJVMArgsProperty());

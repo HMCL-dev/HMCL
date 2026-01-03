@@ -428,6 +428,23 @@ public final class VersionSetting implements Cloneable, Observable {
         notCheckGameProperty.set(notCheckGame);
     }
 
+    private final BooleanProperty notCheckModpackProperty = new SimpleBooleanProperty(this, "notCheckModpackMod", false);
+
+    public BooleanProperty notCheckModpackProperty() {
+        return notCheckModpackProperty;
+    }
+
+    /**
+     * True if HMCL does not check ModpackMod's completeness.
+     */
+    public boolean isNotCheckpackMod() {
+        return notCheckModpackProperty.get();
+    }
+
+    public void setNotCheckModpack(boolean notCheckModpackMod) {
+        notCheckModpackProperty.set(notCheckModpackMod);
+    }
+
     private final BooleanProperty notPatchNativesProperty = new SimpleBooleanProperty(this, "notPatchNatives", false);
 
     public BooleanProperty notPatchNativesProperty() {
