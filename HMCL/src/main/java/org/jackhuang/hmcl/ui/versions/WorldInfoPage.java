@@ -162,16 +162,15 @@ public final class WorldInfoPage extends SpinnerPane {
                 JFXButton editIconButton = new JFXButton();
                 JFXButton resetIconButton = new JFXButton();
                 {
-                    //editIconButton.setAlignment(Pos.CENTER_LEFT);
                     editIconButton.setGraphic(SVG.EDIT.createIcon(20));
                     editIconButton.setDisable(worldManagePage.isReadOnly());
                     FXUtils.onClicked(editIconButton, onClickAction);
-                    FXUtils.installFastTooltip(editIconButton, i18n("world.icon.change"));
+                    FXUtils.installFastTooltip(editIconButton, i18n("button.edit"));
 
                     resetIconButton.setGraphic(SVG.RESTORE.createIcon(20));
                     resetIconButton.setDisable(worldManagePage.isReadOnly());
                     FXUtils.onClicked(resetIconButton, this::clearWorldIcon);
-                    FXUtils.installFastTooltip(resetIconButton, i18n("world.icon.reset"));
+                    FXUtils.installFastTooltip(resetIconButton, i18n("button.reset"));
                 }
 
                 HBox hBox = new HBox(8);
