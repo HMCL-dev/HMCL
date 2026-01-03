@@ -72,7 +72,7 @@ public final class Versions {
         }
     }
 
-    public static void downloadModpackImpl(Profile profile, String version, RemoteMod.Version file) {
+    public static void downloadModpackImpl(Profile profile, String version, RemoteMod mod, RemoteMod.Version file) {
         Path modpack;
         URI downloadURL;
         try {
@@ -88,11 +88,14 @@ public final class Versions {
                 new FileDownloadTask(downloadURL, modpack)
                         .whenComplete(Schedulers.javafx(), e -> {
                             if (e == null) {
-                                if (version != null) {
-                                    Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile, modpack, version));
-                                } else {
-                                    Controllers.getDecorator().startWizard(new ModpackInstallWizardProvider(profile, modpack));
-                                }
+                                ModpackInstallWizardProvider installWizardProvider;
+                                if (version != null)
+                                    installWizardProvider = new ModpackInstallWizardProvider(profile, modpack, version);
+                                else
+                                    installWizardProvider = new ModpackInstallWizardProvider(profile, modpack);
+                                if (StringUtils.isNotBlank(mod.getIconUrl()))
+                                    installWizardProvider.setIconUrl(mod.getIconUrl());
+                                Controllers.getDecorator().startWizard(installWizardProvider);
                             } else if (e instanceof CancellationException) {
                                 Controllers.showToast(i18n("message.cancelled"));
                             } else {
