@@ -24,6 +24,7 @@ import com.jfoenix.validation.base.ValidatorBase;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.FutureCallback;
 
 import java.util.concurrent.CompletableFuture;
@@ -41,8 +42,9 @@ public class InputDialogPane extends JFXDialogLayout implements DialogAware {
 
     public InputDialogPane(String text, String initialValue, FutureCallback<String> onResult, ValidatorBase... validators) {
         this(text, initialValue, onResult);
-        if (validators != null) {
+        if (validators != null && validators.length > 0) {
             textField.getValidators().addAll(validators);
+            FXUtils.setValidateWhileTextChanged(textField, true);
             acceptButton.disableProperty().bind(textField.activeValidatorProperty().isNotNull());
         }
     }
