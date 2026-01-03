@@ -22,7 +22,7 @@ final class ResourcePackFolder extends ResourcePackFile {
         try {
             meta = JsonUtils.fromJsonFile(path.resolve("pack.mcmeta"), PackMcMeta.class);
         } catch (Exception e) {
-            LOG.warning("Failed to parse resource pack meta", e);
+            LOG.error("Failed to parse resource pack meta", e);
         }
         this.meta = meta;
 

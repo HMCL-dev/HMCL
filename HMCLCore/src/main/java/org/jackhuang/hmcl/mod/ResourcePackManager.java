@@ -261,9 +261,10 @@ public final class ResourcePackManager extends LocalFileManager<ResourcePackFile
     }
 
     public void importResourcePack(Path file) throws IOException {
+        if (!ResourcePackFile.isFileResourcePack(file)) return;
+
         if (!loaded)
             refresh();
-
         Files.createDirectories(resourcePackDirectory);
 
         Path newFile = resourcePackDirectory.resolve(file.getFileName());

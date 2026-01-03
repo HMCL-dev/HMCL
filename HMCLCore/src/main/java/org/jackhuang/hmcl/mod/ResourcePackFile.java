@@ -14,13 +14,14 @@ import java.util.Locale;
 
 public sealed abstract class ResourcePackFile extends LocalAddonFile implements Comparable<ResourcePackFile> permits ResourcePackFolder, ResourcePackZipFile {
     static ResourcePackFile parse(ResourcePackManager manager, Path path) throws IOException {
-        String fileName = path.getFileName().toString();
-        if (Files.isRegularFile(path) && fileName.toLowerCase(Locale.ROOT).endsWith(".zip")) {
-            return new ResourcePackZipFile(manager, path);
-        } else if (Files.isDirectory(path) && Files.exists(path.resolve("pack.mcmeta"))) {
-            return new ResourcePackFolder(manager, path);
+        if (isFileResourcePack(path)) {
+            return Files.isRegularFile(path) ? new ResourcePackZipFile(manager, path) : new ResourcePackFolder(manager, path);
         }
         return null;
+    }
+
+    public static boolean isFileResourcePack(Path file) {
+        return Files.exists(file) && (file.toString().toLowerCase(Locale.ROOT).endsWith(".zip") || Files.isRegularFile(file.resolve("pack.mcmeta")));
     }
 
     protected final ResourcePackManager manager;

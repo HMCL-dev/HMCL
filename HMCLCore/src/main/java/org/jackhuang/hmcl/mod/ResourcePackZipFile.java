@@ -31,7 +31,7 @@ final class ResourcePackZipFile extends ResourcePackFile {
             try {
                 metaTemp = JsonUtils.fromNonNullJson(zipFileTree.readTextEntry("/pack.mcmeta"), PackMcMeta.class);
             } catch (Exception e) {
-                LOG.warning("Failed to parse resource pack meta", e);
+                LOG.error("Failed to parse resource pack meta", e);
             }
 
             var iconEntry = zipFileTree.getEntry("/pack.png");
