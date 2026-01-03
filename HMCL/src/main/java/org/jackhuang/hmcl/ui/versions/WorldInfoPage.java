@@ -166,11 +166,13 @@ public final class WorldInfoPage extends SpinnerPane {
                     editIconButton.setDisable(worldManagePage.isReadOnly());
                     FXUtils.onClicked(editIconButton, onClickAction);
                     FXUtils.installFastTooltip(editIconButton, i18n("button.edit"));
+                    editIconButton.getStyleClass().add("toggle-icon4");
 
                     resetIconButton.setGraphic(SVG.RESTORE.createIcon(20));
                     resetIconButton.setDisable(worldManagePage.isReadOnly());
                     FXUtils.onClicked(resetIconButton, this::clearWorldIcon);
                     FXUtils.installFastTooltip(resetIconButton, i18n("button.reset"));
+                    resetIconButton.getStyleClass().add("toggle-icon4");
                 }
 
                 HBox hBox = new HBox(8);
