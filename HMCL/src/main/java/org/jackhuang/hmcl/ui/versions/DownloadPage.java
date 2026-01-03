@@ -43,7 +43,6 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.HTMLRenderer;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
@@ -376,6 +375,10 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     private static final class ModItem extends StackPane {
 
+        ModItem(RemoteMod.Version dataItem) {
+            this(dataItem, null);
+        }
+
         ModItem(RemoteMod.Version dataItem, DownloadPage selfPage) {
             VBox pane = new VBox(8);
             pane.setPadding(new Insets(8, 0, 8, 0));
@@ -438,7 +441,9 @@ public class DownloadPage extends Control implements DecoratorPage {
             }
 
             RipplerContainer container = new RipplerContainer(pane);
-            FXUtils.onClicked(container, () -> Controllers.dialog(new ModVersion(dataItem, selfPage)));
+            if (selfPage != null) {
+                FXUtils.onClicked(container, () -> Controllers.dialog(new ModVersion(dataItem, selfPage)));
+            }
             getChildren().setAll(container);
 
             // Workaround for https://github.com/HMCL-dev/HMCL/issues/2129
@@ -447,6 +452,8 @@ public class DownloadPage extends Control implements DecoratorPage {
     }
 
     private static final class ModVersion extends JFXDialogLayout {
+        private final String title;
+
         public ModVersion(RemoteMod.Version version, DownloadPage selfPage) {
             RemoteModRepository.Type type = selfPage.repository.getType();
 
@@ -457,25 +464,26 @@ public class DownloadPage extends Control implements DecoratorPage {
                 case SHADER_PACK -> "shaderpack.download.title";
                 default -> "mods.download.title";
             };
-            this.setHeading(new HBox(new Label(i18n(title, version.getName()))));
+            this.title = i18n(title, version.getName());
+            this.setHeading(new HBox(new Label(this.title)));
 
             VBox box = new VBox(8);
             box.setPadding(new Insets(8));
-            ModItem modItem = new ModItem(version, selfPage);
-            modItem.setMouseTransparent(true); // Item is displayed for info, clicking shouldn't open the dialog again
-            box.getChildren().setAll(modItem);
+            box.getChildren().setAll(new ModItem(version));
 
+            Button changelogButton = new JFXButton(i18n("mods.show_detail"));
+            changelogButton.getStyleClass().add("dialog-accept");
             SpinnerPane spinnerPane = new SpinnerPane();
             ScrollPane scrollPane = new ScrollPane();
-            ComponentList changelogAndDependenciesList = new ComponentList(Lang::immutableListOf);
-            loadChangelogAndDependencies(version, selfPage, spinnerPane, changelogAndDependenciesList);
-            spinnerPane.setOnFailedAction(e -> loadChangelogAndDependencies(version, selfPage, spinnerPane, changelogAndDependenciesList));
+            ComponentList dependenciesList = new ComponentList(Lang::immutableListOf);
+            loadChangelogAndDependencies(version, selfPage, spinnerPane, dependenciesList, changelogButton);
+            spinnerPane.setOnFailedAction(e -> loadChangelogAndDependencies(version, selfPage, spinnerPane, dependenciesList, changelogButton));
 
-            scrollPane.setContent(changelogAndDependenciesList);
+            scrollPane.setContent(dependenciesList);
             scrollPane.setFitToWidth(true);
             scrollPane.setFitToHeight(true);
             spinnerPane.setContent(scrollPane);
-            box.getChildren().add(spinnerPane);
+            box.getChildren().addAll(spinnerPane);
             VBox.setVgrow(spinnerPane, Priority.SOMETIMES);
 
             this.setBody(box);
@@ -506,9 +514,9 @@ public class DownloadPage extends Control implements DecoratorPage {
             cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
 
             if (downloadButton == null) {
-                this.setActions(saveAsButton, cancelButton);
+                this.setActions(changelogButton, saveAsButton, cancelButton);
             } else {
-                this.setActions(downloadButton, saveAsButton, cancelButton);
+                this.setActions(changelogButton, downloadButton, saveAsButton, cancelButton);
             }
 
             this.prefWidthProperty().bind(BindingMapping.of(Controllers.getStage().widthProperty()).map(w -> w.doubleValue() * 0.7));
@@ -517,8 +525,9 @@ public class DownloadPage extends Control implements DecoratorPage {
             onEscPressed(this, cancelButton::fire);
         }
 
-        private void loadChangelogAndDependencies(RemoteMod.Version version, DownloadPage selfPage, SpinnerPane spinnerPane, ComponentList dependenciesList) {
+        private void loadChangelogAndDependencies(RemoteMod.Version version, DownloadPage selfPage, SpinnerPane spinnerPane, ComponentList dependenciesList, Button changelogButton) {
             spinnerPane.setLoading(true);
+            changelogButton.setDisable(true);
             Task.supplyAsync(() -> {
                 Optional<String> changelog;
                 if (changelogCache.containsKey(version)) {
@@ -553,23 +562,57 @@ public class DownloadPage extends Control implements DecoratorPage {
                 return new Pair<>(changelog, dependencies.values().stream().flatMap(Collection::stream).collect(Collectors.toList()));
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
-                    List<Node> nodes = new LinkedList<>();
-                    result.getKey().ifPresent(s -> {
-                        if (!HTMLRenderer.isHTML(s)) {
-                            s = StringUtils.markdownToHTML(s);
-                        }
+                    if (result.getKey().isPresent()) {
+                        String s = StringUtils.markdownToHTML(result.getKey().get());
                         changelogCache.put(version, s);
-                        nodes.add(FXUtils.renderModChangelog(s));
-                    });
-                    nodes.addAll(result.getValue());
-                    dependenciesList.getContent().setAll(nodes);
+                        changelogButton.setDisable(false);
+                        changelogButton.setOnAction(e -> Controllers.dialog(new ModChangelog(ModVersion.this.title, s)));
+                    } else {
+                        changelogCache.put(version, null);
+                        changelogButton.setOnAction(null);
+                    }
+                    dependenciesList.getContent().setAll(result.getValue());
                     spinnerPane.setFailedReason(null);
                 } else {
+                    changelogButton.setOnAction(null);
                     dependenciesList.getContent().setAll();
                     spinnerPane.setFailedReason(i18n("download.failed.refresh"));
                 }
                 spinnerPane.setLoading(false);
             }).start();
+        }
+    }
+
+    private static final class ModChangelog extends JFXDialogLayout {
+
+        public ModChangelog(String title, String changelog) {
+            setHeading(new HBox(new Label(title)));
+
+            VBox box = new VBox(8);
+            box.setPadding(new Insets(8));
+
+            SpinnerPane spinnerPane = new SpinnerPane();
+            ScrollPane scrollPane = new ScrollPane();
+            scrollPane.getStyleClass().add("mod-changelog");
+            scrollPane.setFitToWidth(true);
+            scrollPane.setContent(FXUtils.renderModChangelog(changelog));
+
+            spinnerPane.setContent(scrollPane);
+            box.getChildren().add(spinnerPane);
+            VBox.setVgrow(spinnerPane, Priority.SOMETIMES);
+
+            this.setBody(box);
+
+            JFXButton closeButton = new JFXButton(i18n("button.ok"));
+            closeButton.getStyleClass().add("dialog-accept");
+            closeButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
+
+            setActions(closeButton);
+
+            this.prefWidthProperty().bind(BindingMapping.of(Controllers.getStage().widthProperty()).map(w -> w.doubleValue() * 0.7));
+            this.prefHeightProperty().bind(BindingMapping.of(Controllers.getStage().heightProperty()).map(w -> w.doubleValue() * 0.7));
+
+            onEscPressed(this, closeButton::fire);
         }
     }
 

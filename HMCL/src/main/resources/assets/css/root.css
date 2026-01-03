@@ -1833,9 +1833,12 @@
     -fx-font-style: italic;
 }
 
-.mod-changelog .html,
-.mod-changelog .text {
+.mod-changelog .html {
+    -fx-background-color: -monet-surface;
+    -fx-background-radius: 4;
+    -fx-padding: 10;
     -fx-font-size: 12;
+    -fx-text-fill: -monet-on-surface;
 }
 
 .mod-changelog .html-h1 {

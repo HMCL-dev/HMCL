@@ -34,7 +34,6 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.HTMLRenderer;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
@@ -110,7 +109,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
             });
             return cell;
         });
-        detailColumn.setCellValueFactory(it -> new SimpleStringProperty(i18n("mods.check_updates.show_detail")));
+        detailColumn.setCellValueFactory(it -> new SimpleStringProperty(i18n("mods.show_detail")));
 
         objects = FXCollections.observableList(updates.stream().map(ModUpdateObject::new).collect(Collectors.toList()));
         FXUtils.bindAllEnabled(allEnabledBox.selectedProperty(), objects.stream().map(o -> o.enabled).toArray(BooleanProperty[]::new));
@@ -380,13 +379,12 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
 
             SpinnerPane spinnerPane = new SpinnerPane();
             ScrollPane scrollPane = new ScrollPane();
-            ComponentList changelogComponent = new ComponentList(null);
-            loadChangelog(object, spinnerPane, changelogComponent);
-            spinnerPane.setOnFailedAction(e -> loadChangelog(object, spinnerPane, changelogComponent));
-
-            scrollPane.setContent(changelogComponent);
+            scrollPane.getStyleClass().add("mod-changelog");
             scrollPane.setFitToWidth(true);
-            scrollPane.setFitToHeight(true);
+
+            loadChangelog(object, spinnerPane, scrollPane);
+            spinnerPane.setOnFailedAction(e -> loadChangelog(object, spinnerPane, scrollPane));
+
             spinnerPane.setContent(scrollPane);
             box.getChildren().add(spinnerPane);
             VBox.setVgrow(spinnerPane, Priority.SOMETIMES);
@@ -405,7 +403,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
             onEscPressed(this, closeButton::fire);
         }
 
-        private void loadChangelog(ModUpdateObject object, SpinnerPane spinnerPane, ComponentList componentList) {
+        private void loadChangelog(ModUpdateObject object, SpinnerPane spinnerPane, ScrollPane scrollPane) {
             spinnerPane.setLoading(true);
             Task.supplyAsync(() -> {
                 if (object.changelog != null) {
@@ -422,12 +420,9 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                 }
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
-                    result.ifPresent(s -> {
-                        if (!HTMLRenderer.isHTML(s)) {
-                            s = StringUtils.markdownToHTML(s);
-                        }
+                    result.map(StringUtils::markdownToHTML).ifPresent(s -> {
                         object.changelog = s;
-                        componentList.getContent().setAll(FXUtils.renderModChangelog(s));
+                        scrollPane.setContent(FXUtils.renderModChangelog(s));
                     });
                     spinnerPane.setFailedReason(null);
                 } else {

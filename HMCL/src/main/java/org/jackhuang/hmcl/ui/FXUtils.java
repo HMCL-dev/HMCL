@@ -1572,17 +1572,10 @@ public final class FXUtils {
                 : JFXPopup.PopupVPosition.TOP;    // Show menu above the button, expanding upward
     }
 
-    public static ScrollPane renderModChangelog(String changelogHTML) {
+    public static TextFlow renderModChangelog(String changelogHTML) {
         HTMLRenderer renderer = HTMLRenderer.openHyperlinkInBrowser();
         renderer.appendNode(Jsoup.parse(changelogHTML));
         renderer.mergeLineBreaks();
-
-        var textFlow = renderer.render();
-        textFlow.getChildren().add(new Text(System.lineSeparator())); // Add a newline at the end to prevent cutoff
-
-        var container = new ScrollPane(textFlow);
-        container.getStyleClass().add("mod-changelog");
-        container.setMinHeight(Region.USE_PREF_SIZE);
-        return container;
+        return renderer.render();
     }
 }
