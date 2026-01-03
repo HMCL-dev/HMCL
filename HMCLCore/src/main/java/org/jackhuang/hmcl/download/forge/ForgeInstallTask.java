@@ -177,6 +177,6 @@ public final class ForgeInstallTask extends Task<Version> {
     }
 
     private static String modifyVersion(String gameVersion, String version) {
-        return removeSuffix(removePrefix(removeSuffix(removePrefix(version.replace(gameVersion, "").trim(), "-"), "-"), "_"), "_");
+        return removePrefix(removeSuffix(removePrefix(removeSuffix(removePrefix(version.replace(gameVersion, "").trim(), "-"), "-"), "_"), "_"), "forge-");
     }
 }

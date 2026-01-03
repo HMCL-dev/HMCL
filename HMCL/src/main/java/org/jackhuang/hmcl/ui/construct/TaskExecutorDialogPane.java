@@ -50,6 +50,8 @@ public class TaskExecutorDialogPane extends BorderPane {
     private final TaskListPane taskListPane;
 
     public TaskExecutorDialogPane(@NotNull TaskCancellationAction cancel) {
+        this.getStyleClass().add("task-executor-dialog-layout");
+
         FXUtils.setLimitWidth(this, 500);
         FXUtils.setLimitHeight(this, 300);
 
@@ -74,6 +76,7 @@ public class TaskExecutorDialogPane extends BorderPane {
             bottom.setLeft(lblProgress);
 
             btnCancel = new JFXButton(i18n("button.cancel"));
+            btnCancel.getStyleClass().add("dialog-cancel");
             bottom.setRight(btnCancel);
         }
 

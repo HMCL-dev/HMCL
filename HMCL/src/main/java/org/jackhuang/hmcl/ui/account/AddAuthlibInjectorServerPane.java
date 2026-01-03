@@ -25,11 +25,10 @@ import javafx.scene.layout.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.DialogAware;
-import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Lang;
 
 import javax.net.ssl.SSLException;
@@ -88,6 +87,10 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
 
             addServerPane.setBody(txtServerUrl);
             addServerPane.setActions(lblCreationWarning, actions);
+
+            txtServerUrl.getValidators().addAll(new RequiredValidator(), new URLValidator());
+            FXUtils.setValidateWhileTextChanged(txtServerUrl, true);
+            btnAddNext.disableProperty().bind(txtServerUrl.activeValidatorProperty().isNotNull());
         }
 
         confirmServerPane = new JFXDialogLayout();
@@ -149,7 +152,6 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
         this.setContent(addServerPane, ContainerAnimations.NONE);
 
         lblCreationWarning.maxWidthProperty().bind(((FlowPane) lblCreationWarning.getParent()).widthProperty());
-        btnAddNext.disableProperty().bind(txtServerUrl.textProperty().isEmpty());
         nextPane.hideSpinner();
 
         onEscPressed(this, this::onAddCancel);

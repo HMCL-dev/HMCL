@@ -31,7 +31,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.game.WorldLockedException;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
@@ -40,6 +39,7 @@ import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.*;
@@ -246,7 +246,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                 item.setSubtitle(formatDateTime(skinnable.getBackupTime()) + (skinnable.count == 0 ? "" : " (" + skinnable.count + ")"));
 
                 if (world.getGameVersion() != null)
-                    item.addTag(world.getGameVersion());
+                    item.addTag(I18n.getDisplayVersion(world.getGameVersion()));
             }
 
             {
@@ -258,14 +258,14 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                 right.getChildren().add(btnReveal);
                 FXUtils.installFastTooltip(btnReveal, i18n("reveal.in_file_manager"));
                 btnReveal.getStyleClass().add("toggle-icon4");
-                btnReveal.setGraphic(SVG.FOLDER_OPEN.createIcon(Theme.blackFill(), -1));
+                btnReveal.setGraphic(SVG.FOLDER_OPEN.createIcon());
                 btnReveal.setOnAction(event -> skinnable.onReveal());
 
                 JFXButton btnDelete = new JFXButton();
                 right.getChildren().add(btnDelete);
                 FXUtils.installFastTooltip(btnDelete, i18n("world.backup.delete"));
                 btnDelete.getStyleClass().add("toggle-icon4");
-                btnDelete.setGraphic(SVG.DELETE.createIcon(Theme.blackFill(), -1));
+                btnDelete.setGraphic(SVG.DELETE.createIcon());
                 btnDelete.setOnAction(event -> Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), skinnable::onDelete, null));
             }
 

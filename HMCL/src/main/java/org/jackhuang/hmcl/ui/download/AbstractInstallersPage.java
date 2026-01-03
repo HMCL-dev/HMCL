@@ -33,6 +33,7 @@ import javafx.scene.layout.BorderPane;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.InstallerItem;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.SettingsMap;
@@ -60,7 +61,16 @@ public abstract class AbstractInstallersPage extends Control implements WizardPa
                 }
 
                 if (!(library.resolvedStateProperty().get() instanceof InstallerItem.IncompatibleState))
-                    controller.onNext(new VersionsPage(controller, i18n("install.installer.choose", i18n("install.installer." + libraryId)), gameVersion, downloadProvider, libraryId, () -> controller.onPrev(false)));
+                    controller.onNext(
+                            new VersionsPage(
+                                    controller,
+                                    i18n("install.installer.choose", i18n("install.installer." + libraryId)),
+                                    gameVersion,
+                                    downloadProvider,
+                                    libraryId,
+                                    () -> controller.onPrev(false, Navigation.NavigationDirection.PREVIOUS)
+                            ), Navigation.NavigationDirection.NEXT
+                    );
             });
             library.setOnRemove(() -> {
                 controller.getSettings().remove(libraryId);

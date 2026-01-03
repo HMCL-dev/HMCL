@@ -64,7 +64,6 @@ import org.jackhuang.hmcl.mod.multimc.MultiMCModpackInstallTask;
 import org.jackhuang.hmcl.mod.server.ServerModpackCompletionTask;
 import org.jackhuang.hmcl.mod.server.ServerModpackExportTask;
 import org.jackhuang.hmcl.mod.server.ServerModpackLocalInstallTask;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
@@ -92,8 +91,6 @@ public final class TaskListPane extends StackPane {
     private final Map<String, StageNode> stageNodes = new HashMap<>();
     private final ObjectProperty<Insets> progressNodePadding = new SimpleObjectProperty<>(Insets.EMPTY);
     private final DoubleProperty cellWidth = new SimpleDoubleProperty();
-
-    private Cell lastCell;
 
     public TaskListPane() {
         listView.setPadding(new Insets(12, 0, 0, 0));
@@ -310,17 +307,12 @@ public final class TaskListPane extends StackPane {
         }
 
         private void updateLeftIcon(StageNode.Status status) {
-            left.getChildren().setAll(status.svg.createIcon(Theme.blackFill(), STATUS_ICON_SIZE));
+            left.getChildren().setAll(status.svg.createIcon(STATUS_ICON_SIZE));
         }
 
         @Override
         protected void updateItem(Node item, boolean empty) {
             super.updateItem(item, empty);
-
-            // https://mail.openjdk.org/pipermail/openjfx-dev/2022-July/034764.html
-            if (this == lastCell && !isVisible())
-                return;
-            lastCell = this;
 
             pane.paddingProperty().unbind();
             title.textProperty().unbind();

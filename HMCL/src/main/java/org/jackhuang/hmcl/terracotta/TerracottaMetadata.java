@@ -147,7 +147,7 @@ public final class TerracottaMetadata {
         String arch = Architecture.SYSTEM_ARCH.getCheckedName();
         return switch (OperatingSystem.CURRENT_OS) {
             case WINDOWS -> {
-                if (!OperatingSystem.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_8_1))
+                if (!OperatingSystem.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_10))
                     yield null;
 
                 TerracottaNative target = config.of("windows-%s.exe".formatted(arch));

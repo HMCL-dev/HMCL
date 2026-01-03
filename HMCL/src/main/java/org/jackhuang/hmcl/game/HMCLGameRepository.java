@@ -25,22 +25,23 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventManager;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.mod.ModAdviser;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.mod.ModpackProvider;
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,8 +55,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class HMCLGameRepository extends DefaultGameRepository {
     private final Profile profile;
@@ -173,7 +174,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
         Files.copy(fromJson, toJson);
 
-        JsonUtils.writeToJsonFile(toJson, fromVersion.setId(dstId));
+        JsonUtils.writeToJsonFile(toJson, fromVersion.setId(dstId).setJar(dstId));
 
         VersionSetting oldVersionSetting = getVersionSetting(srcId).clone();
         GameDirectoryType originalGameDirType = oldVersionSetting.getGameDirType();
@@ -318,23 +319,32 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version, null);
                 if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FABRIC))
                     return VersionIconType.FABRIC.getIcon();
+                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.QUILT))
+                    return VersionIconType.QUILT.getIcon();
+                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE))
+                    return VersionIconType.NEO_FORGE.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FORGE))
                     return VersionIconType.FORGE.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM))
                     return VersionIconType.CLEANROOM.getIcon();
-                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE))
-                    return VersionIconType.NEO_FORGE.getIcon();
-                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.QUILT))
-                    return VersionIconType.QUILT.getIcon();
-                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.OPTIFINE))
-                    return VersionIconType.OPTIFINE.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.LITELOADER))
                     return VersionIconType.CHICKEN.getIcon();
-                else
-                    return VersionIconType.FURNACE.getIcon();
+                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.OPTIFINE))
+                    return VersionIconType.OPTIFINE.getIcon();
             }
 
-            return VersionIconType.DEFAULT.getIcon();
+            String gameVersion = getGameVersion(version).orElse(null);
+            if (gameVersion != null) {
+                GameVersionNumber versionNumber = GameVersionNumber.asGameVersion(gameVersion);
+                if (versionNumber.isAprilFools()) {
+                    return VersionIconType.APRIL_FOOLS.getIcon();
+                } else if (versionNumber instanceof GameVersionNumber.LegacySnapshot) {
+                    return VersionIconType.COMMAND.getIcon();
+                } else if (versionNumber instanceof GameVersionNumber.Old) {
+                    return VersionIconType.CRAFT_TABLE.getIcon();
+                }
+            }
+            return VersionIconType.GRASS.getIcon();
         } else {
             return iconType.getIcon();
         }
@@ -377,7 +387,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             vs.setUsesGlobal(true);
     }
 
-    public LaunchOptions getLaunchOptions(String version, JavaRuntime javaVersion, Path gameDir, List<String> javaAgents, List<String> javaArguments, boolean makeLaunchScript) {
+    public LaunchOptions.Builder getLaunchOptions(String version, JavaRuntime javaVersion, Path gameDir, List<String> javaAgents, List<String> javaArguments, boolean makeLaunchScript) {
         VersionSetting vs = getVersionSetting(version);
 
         LaunchOptions.Builder builder = new LaunchOptions.Builder()
@@ -408,7 +418,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 .setWidth(vs.getWidth())
                 .setHeight(vs.getHeight())
                 .setFullscreen(vs.isFullscreen())
-                .setServerIp(vs.getServerIp())
                 .setWrapper(vs.getWrapper())
                 .setPreLaunchCommand(vs.getPreLaunchCommand())
                 .setPostExitCommand(vs.getPostExitCommand())
@@ -418,11 +427,16 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 .setNativesDir(vs.getNativesDir())
                 .setProcessPriority(vs.getProcessPriority())
                 .setRenderer(vs.getRenderer())
+                .setEnableDebugLogOutput(vs.isEnableDebugLogOutput())
                 .setUseNativeGLFW(vs.isUseNativeGLFW())
                 .setUseNativeOpenAL(vs.isUseNativeOpenAL())
                 .setDaemon(!makeLaunchScript && vs.getLauncherVisibility().isDaemon())
                 .setJavaAgents(javaAgents)
                 .setJavaArguments(javaArguments);
+
+        if (StringUtils.isNotBlank(vs.getServerIp())) {
+            builder.setQuickPlayOption(new QuickPlayOption.MultiPlayer(vs.getServerIp()));
+        }
 
         if (config().hasProxy()) {
             builder.setProxyType(config().getProxyType());
@@ -450,7 +464,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         if (vs.isAutoMemory() && builder.getJavaArguments().stream().anyMatch(it -> it.startsWith("-Xmx")))
             builder.setMaxMemory(null);
 
-        return builder.create();
+        return builder;
     }
 
     @Override

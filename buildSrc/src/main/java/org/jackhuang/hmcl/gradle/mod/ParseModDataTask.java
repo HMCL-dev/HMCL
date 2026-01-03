@@ -58,16 +58,20 @@ public abstract class ParseModDataTask extends DefaultTask {
     private static final String MOD_SEPARATOR = ",";
 
     private static final Pattern[] CURSEFORGE_PATTERNS = {
-            Pattern.compile("^/(minecraft|Minecraft|minecraft-bedrock)/(mc-mods|data-packs|modpacks|customization|mc-addons|texture-packs|customization/configuration|addons)/+(?<modid>[\\w-]+)(/(.*?))?$"),
+            Pattern.compile("^/(minecraft|Minecraft|minecraft-bedrock)/(mc-mods|data-packs|modpacks|customization|mc-addons|texture-packs|customization/configuration|addons|scripts)/+(?<modid>[\\w-]+)(/(.*?))?$"),
             Pattern.compile("^/projects/(?<modid>[\\w-]+)(/(.*?))?$"),
             Pattern.compile("^/mc-mods/minecraft/(?<modid>[\\w-]+)(/(.*?))?$"),
             Pattern.compile("^/legacy/mc-mods/minecraft/(\\d+)-(?<modid>[\\w-]+)"),
     };
 
     private static String parseCurseforge(String url) {
-        URI res = URI.create(url);
+        URI res = URI.create(url.replace(" ", "%20"));
 
         if (!"http".equals(res.getScheme()) && !"https".equals(res.getScheme())) {
+            return "";
+        }
+
+        if ("edge.forgecdn.net".equals(res.getHost())) {
             return "";
         }
 
