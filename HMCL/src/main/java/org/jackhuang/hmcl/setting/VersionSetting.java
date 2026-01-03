@@ -435,9 +435,9 @@ public final class VersionSetting implements Cloneable, Observable {
     }
 
     /**
-     * True if HMCL does not check ModpackMod's completeness.
+     * True if HMCL does not check modpack's completeness.
      */
-    public boolean isNotCheckpackMod() {
+    public boolean isNotCheckpack() {
         return notCheckModpackProperty.get();
     }
 

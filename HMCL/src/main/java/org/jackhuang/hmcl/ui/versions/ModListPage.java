@@ -250,7 +250,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                         .withStagesHint(Collections.singletonList("update.checking")),
                 i18n("mods.check_updates"), TaskCancellationAction.NORMAL);
 
-        if (!(profile.getVersionSetting(instanceId).isNotCheckpackMod()) && profile.getRepository().isModpack(instanceId)) {
+        if (!(profile.getVersionSetting(instanceId).isNotCheckpack()) && profile.getRepository().isModpack(instanceId)) {
             Controllers.confirm(
                     i18n("mods.update_modpack_mod.warning"), null,
                     MessageDialogPane.MessageType.WARNING,

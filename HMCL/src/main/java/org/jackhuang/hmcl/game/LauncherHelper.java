@@ -187,7 +187,7 @@ public final class LauncherHelper {
                     );
                 }).withStage("launch.state.dependencies")
                 .thenComposeAsync(() -> {
-                    if (setting.isNotCheckpackMod()){
+                    if (setting.isNotCheckpack()){
                         return null;
                     }
                     return Task.composeAsync(() -> {
