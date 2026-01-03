@@ -29,11 +29,14 @@ import javafx.scene.shape.SVGPath;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.mod.server.ServerModpackManifest;
-import org.jackhuang.hmcl.task.*;
+import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.task.GetTask;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.ui.construct.URLValidator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.SettingsMap;
@@ -161,7 +164,7 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
             } catch (IOException e) {
                 reject.accept(e.getMessage());
             }
-        });
+        }, "", new URLValidator());
     }
 
     public void onChooseRepository() {

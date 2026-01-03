@@ -26,7 +26,10 @@ import org.jackhuang.hmcl.download.game.GameAssetDownloadTask;
 import org.jackhuang.hmcl.game.*;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.setting.*;
-import org.jackhuang.hmcl.task.*;
+import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.account.CreateAccountPane;
@@ -50,8 +53,8 @@ import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class Versions {
     private Versions() {
@@ -124,10 +127,6 @@ public final class Versions {
 
     public static CompletableFuture<String> renameVersion(Profile profile, String version) {
         return Controllers.prompt(i18n("version.manage.rename.message"), (newName, resolve, reject) -> {
-            if (!HMCLGameRepository.isValidVersionId(newName)) {
-                reject.accept(i18n("install.new_game.malformed"));
-                return;
-            }
             if (profile.getRepository().renameVersion(version, newName)) {
                 resolve.run();
                 profile.getRepository().refreshVersionsAsync()
@@ -139,7 +138,8 @@ public final class Versions {
             } else {
                 reject.accept(i18n("version.manage.rename.fail"));
             }
-        }, version);
+        }, version, new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId),
+            new Validator(i18n("install.new_game.already_exists"), newVersionName -> !profile.getRepository().versionIdConflicts(newVersionName)));
     }
 
     public static void exportVersion(Profile profile, String version) {
@@ -155,10 +155,6 @@ public final class Versions {
                 new PromptDialogPane.Builder(i18n("version.manage.duplicate.prompt"), (res, resolve, reject) -> {
                     String newVersionName = ((PromptDialogPane.Builder.StringQuestion) res.get(1)).getValue();
                     boolean copySaves = ((PromptDialogPane.Builder.BooleanQuestion) res.get(2)).getValue();
-                    if (!HMCLGameRepository.isValidVersionId(newVersionName)) {
-                        reject.accept(i18n("install.new_game.malformed"));
-                        return;
-                    }
                     Task.runAsync(() -> profile.getRepository().duplicateVersion(version, newVersionName, copySaves))
                             .thenComposeAsync(profile.getRepository().refreshVersionsAsync())
                             .whenComplete(Schedulers.javafx(), (result, exception) -> {
@@ -174,6 +170,7 @@ public final class Versions {
                 })
                         .addQuestion(new PromptDialogPane.Builder.HintQuestion(i18n("version.manage.duplicate.confirm")))
                         .addQuestion(new PromptDialogPane.Builder.StringQuestion(null, version,
+                                new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId),
                                 new Validator(i18n("install.new_game.already_exists"), newVersionName -> !profile.getRepository().versionIdConflicts(newVersionName))))
                         .addQuestion(new PromptDialogPane.Builder.BooleanQuestion(i18n("version.manage.duplicate.duplicate_save"), false)));
     }
