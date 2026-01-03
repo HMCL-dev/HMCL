@@ -260,21 +260,24 @@ public final class ResourcePackManager extends LocalFileManager<ResourcePackFile
         return super.getLocalFiles();
     }
 
-    public void importResourcePack(Path file) throws IOException {
-        if (!ResourcePackFile.isFileResourcePack(file)) return;
+    public void importResourcePack(Path file) throws IOException, IllegalArgumentException {
+        if (ResourcePackFile.isFileResourcePack(file)) {
+            if (!loaded)
+                refresh();
+            Files.createDirectories(resourcePackDirectory);
 
-        if (!loaded)
-            refresh();
-        Files.createDirectories(resourcePackDirectory);
+            Path newFile = resourcePackDirectory.resolve(file.getFileName());
+            if (Files.isDirectory(file)) {
+                FileUtils.copyDirectory(file, newFile);
+            } else {
+                FileUtils.copyFile(file, newFile);
+            }
 
-        Path newFile = resourcePackDirectory.resolve(file.getFileName());
-        if (Files.isDirectory(file)) {
-            FileUtils.copyDirectory(file, newFile);
+            addResourcePackInfo(newFile);
         } else {
-            FileUtils.copyFile(file, newFile);
+            throw new IllegalArgumentException("File '" + file + "' is not a resource pack");
         }
 
-        addResourcePackInfo(newFile);
     }
 
     public boolean removeResourcePacks(Iterable<ResourcePackFile> resourcePacks) throws IOException {

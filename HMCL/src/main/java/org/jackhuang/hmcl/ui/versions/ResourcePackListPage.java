@@ -21,13 +21,9 @@ import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.mod.LocalModFile;
-import org.jackhuang.hmcl.mod.RemoteMod;
-import org.jackhuang.hmcl.mod.RemoteModRepository;
+import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
-import org.jackhuang.hmcl.mod.ResourcePackFile;
-import org.jackhuang.hmcl.mod.ResourcePackManager;
 import org.jackhuang.hmcl.setting.ConfigHolder;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -81,7 +77,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     private ResourcePackManager resourcePackManager;
 
     public ResourcePackListPage() {
-        FXUtils.applyDragListener(this, file -> Files.isDirectory(file) || file.getFileName().toString().endsWith(".zip"), this::addFiles);
+        FXUtils.applyDragListener(this, ResourcePackFile::isFileResourcePack, this::addFiles);
     }
 
     @Override
@@ -135,13 +131,21 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     public void addFiles(List<Path> files) {
         if (resourcePackManager == null) return;
 
-        try {
-            for (Path file : files) {
+        List<Path> failures = new ArrayList<>();
+        for (Path file : files) {
+            try {
                 resourcePackManager.importResourcePack(file);
+            } catch (Exception e) {
+                LOG.warning("Failed to add resource pack", e);
+                failures.add(file);
             }
-        } catch (IOException e) {
-            LOG.warning("Failed to add resource packs", e);
-            Controllers.dialog(i18n("resourcepack.add.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+        }
+        if (!failures.isEmpty()) {
+            StringBuilder failure = new StringBuilder(i18n("resourcepack.add.failed"));
+            for (Path file: failures) {
+                failure.append(System.lineSeparator()).append(file.toString());
+            }
+            Controllers.dialog(failure.toString(), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
         }
 
         refresh();
