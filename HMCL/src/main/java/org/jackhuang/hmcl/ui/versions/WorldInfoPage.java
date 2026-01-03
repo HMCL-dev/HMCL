@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.github.steveice10.opennbt.tag.builtin.*;
+import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXTextField;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -158,21 +159,24 @@ public final class WorldInfoPage extends SpinnerPane {
                     iconImageView.setImage(world.getIcon() == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : world.getIcon());
                 }
 
-                StackPane editIconButton = new StackPane();
+                JFXButton editIconButton = new JFXButton();
+                JFXButton resetIconButton = new JFXButton();
                 {
-                    editIconButton.setCursor(Cursor.HAND);
-                    editIconButton.setAlignment(Pos.CENTER_LEFT);
-                    FXUtils.setLimitWidth(editIconButton, 12);
-                    FXUtils.setLimitHeight(editIconButton, 12);
-                    editIconButton.getChildren().setAll(SVG.EDIT.createIcon(12));
+                    //editIconButton.setAlignment(Pos.CENTER_LEFT);
+                    editIconButton.setGraphic(SVG.EDIT.createIcon(20));
                     editIconButton.setDisable(worldManagePage.isReadOnly());
                     FXUtils.onClicked(editIconButton, onClickAction);
                     FXUtils.installFastTooltip(editIconButton, i18n("world.icon.change"));
+
+                    resetIconButton.setGraphic(SVG.RESTORE.createIcon(20));
+                    resetIconButton.setDisable(worldManagePage.isReadOnly());
+                    FXUtils.onClicked(resetIconButton, this::clearWorldIcon);
+                    FXUtils.installFastTooltip(resetIconButton, i18n("world.icon.reset"));
                 }
 
                 HBox hBox = new HBox(8);
                 hBox.setAlignment(Pos.CENTER_LEFT);
-                hBox.getChildren().addAll(editIconButton, iconImageView);
+                hBox.getChildren().addAll(iconImageView, editIconButton, resetIconButton);
 
                 iconPane.setRight(hBox);
             }
@@ -683,8 +687,18 @@ public final class WorldInfoPage extends SpinnerPane {
             iconImageView.setImage(image);
             Controllers.showToast(i18n("world.icon.change.succeed.toast"));
         } catch (IOException e) {
-            LOG.warning(e.getMessage());
+            LOG.warning("Fail to save world icon " + e.getMessage());
             iconImageView.setImage(oldImage);
+        }
+    }
+
+    private void clearWorldIcon() {
+        Path output = world.getFile().resolve("icon.png");
+        try {
+            Files.deleteIfExists(output);
+            iconImageView.setImage(FXUtils.newBuiltinImage("/assets/img/unknown_server.png"));
+        } catch (IOException e) {
+            LOG.warning("Fail to delete world icon " + e.getMessage());
         }
     }
 }
