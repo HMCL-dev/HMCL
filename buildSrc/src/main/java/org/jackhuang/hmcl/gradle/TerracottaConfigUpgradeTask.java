@@ -51,9 +51,6 @@ public abstract class TerracottaConfigUpgradeTask extends DefaultTask {
     public abstract Property<@NotNull String> getVersion();
 
     @Input
-    public abstract Property<@NotNull String> getLegacyVersionPattern();
-
-    @Input
     public abstract Property<@NotNull String> getDownloadURL();
 
     @InputFile
@@ -141,7 +138,6 @@ public abstract class TerracottaConfigUpgradeTask extends DefaultTask {
         }
 
         config.add("__comment__", new JsonPrimitive("THIS FILE IS MACHINE GENERATED! DO NOT EDIT!"));
-        config.add("version_legacy", new JsonPrimitive(getLegacyVersionPattern().get()));
         config.add("version_latest", new JsonPrimitive(getVersion().get()));
         config.add("packages", GSON.toJsonTree(bundles));
 

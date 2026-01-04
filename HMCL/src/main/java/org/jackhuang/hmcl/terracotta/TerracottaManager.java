@@ -71,7 +71,7 @@ public final class TerracottaManager {
                 switch (TerracottaMetadata.PROVIDER.status()) {
                     case NOT_EXIST -> setState(new TerracottaState.Uninitialized(false));
                     case LEGACY_VERSION -> setState(new TerracottaState.Uninitialized(true));
-                    case READY -> launch(setState(new TerracottaState.Launching()));
+                    case READY -> launch(setState(new TerracottaState.Launching()), false);
                 }
             } catch (Exception e) {
                 LOG.warning("Cannot initialize Terracotta.", e);
@@ -172,11 +172,9 @@ public final class TerracottaManager {
                     }
 
                     return getProvider().install(pkg).thenRunAsync(() -> {
-                        TerracottaMetadata.removeLegacyVersionFiles();
-
                         TerracottaState.Launching launching = new TerracottaState.Launching();
                         if (compareAndSet(preparing, launching)) {
-                            launch(launching);
+                            launch(launching, true);
                         }
                     });
                 }).whenComplete(exception -> {
@@ -211,11 +209,9 @@ public final class TerracottaManager {
 
         Task.composeAsync(() -> getProvider().install(bundle))
                 .thenRunAsync(() -> {
-                    TerracottaMetadata.removeLegacyVersionFiles();
-
                     TerracottaState.Launching launching = new TerracottaState.Launching();
                     if (compareAndSet(preparing, launching)) {
-                        launch(launching);
+                        launch(launching, true);
                     }
                 })
                 .whenComplete(exception -> {
@@ -241,7 +237,7 @@ public final class TerracottaManager {
                 case NOT_EXIST, LEGACY_VERSION -> download();
                 case READY -> {
                     TerracottaState.Launching launching = setState(new TerracottaState.Launching());
-                    launch(launching);
+                    launch(launching, false);
                     yield launching;
                 }
             };
@@ -251,7 +247,7 @@ public final class TerracottaManager {
         }
     }
 
-    private static void launch(TerracottaState.Launching state) {
+    private static void launch(TerracottaState.Launching state, boolean removeLegacy) {
         Task.supplyAsync(() -> {
             Path path = Files.createTempDirectory(String.format("hmcl-terracotta-%d", ThreadLocalRandom.current().nextLong())).resolve("http").toAbsolutePath();
             ManagedProcess process = new ManagedProcess(new ProcessBuilder(getProvider().ofCommandLine(path)));
@@ -277,6 +273,9 @@ public final class TerracottaManager {
             TerracottaState next;
             if (exception == null) {
                 next = new TerracottaState.Unknown(port);
+                if (removeLegacy) {
+                    TerracottaMetadata.removeLegacyVersionFiles();
+                }
             } else {
                 next = new TerracottaState.Fatal(TerracottaState.Fatal.Type.TERRACOTTA);
             }

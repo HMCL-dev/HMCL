@@ -242,7 +242,7 @@ tasks.processResources {
         from(createLocaleNamesResourceBundle.map { it.outputDirectory })
     }
 
-    inputs.property("terracotta_version", libs.versions.terracotta.latest)
+    inputs.property("terracotta_version", libs.versions.terracotta)
     doLast {
         upgradeTerracottaConfig.get().checkValid()
     }
@@ -381,8 +381,7 @@ val upgradeTerracottaConfig = tasks.register<TerracottaConfigUpgradeTask>("upgra
         "freebsd-x86_64"
     ))
 
-    version.set(libs.versions.terracotta.latest)
-    legacyVersionPattern.set(libs.versions.terracotta.legacy)
+    version.set(libs.versions.terracotta)
     downloadURL.set($$"https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}-pkg.tar.gz")
 
     templateFile.set(source)

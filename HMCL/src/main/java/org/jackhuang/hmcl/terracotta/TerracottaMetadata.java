@@ -32,6 +32,8 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OSVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.versioning.VersionNumber;
+import org.jackhuang.hmcl.util.versioning.VersionRange;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -43,7 +45,6 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -75,7 +76,6 @@ public final class TerracottaMetadata {
 
     @JsonSerializable
     private record Config(
-            @SerializedName("version_legacy") String legacy,
             @SerializedName("version_latest") String latest,
 
             @SerializedName("packages") Map<String, Package> pkgs,
@@ -115,7 +115,6 @@ public final class TerracottaMetadata {
             "launcher_version", Metadata.VERSION
     ));
 
-    private static final Pattern LEGACY;
     private static final String LATEST;
 
     static {
@@ -126,7 +125,6 @@ public final class TerracottaMetadata {
             throw new ExceptionInInitializerError(e);
         }
 
-        LEGACY = Pattern.compile(config.legacy);
         LATEST = config.latest;
 
         Options options = new Options(config.latest, OperatingSystem.CURRENT_OS.getCheckedName() + "-" + Architecture.SYSTEM_ARCH.getCheckedName());
@@ -190,9 +188,10 @@ public final class TerracottaMetadata {
     }
 
     private static DirectoryStream<Path> collectLegacyVersionFiles() throws IOException {
+        VersionRange<VersionNumber> range = VersionNumber.atMost(LATEST);
         return Files.newDirectoryStream(Metadata.DEPENDENCIES_DIRECTORY.resolve("terracotta"), path -> {
             String name = FileUtils.getName(path);
-            return !LATEST.equals(name) && LEGACY.matcher(name).matches();
+            return !LATEST.equals(name) && range.contains(VersionNumber.asVersion(name));
         });
     }
 }
