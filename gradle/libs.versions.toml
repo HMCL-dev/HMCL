@@ -25,6 +25,7 @@ jimfs = "1.3.0"
 
 # plugins
 shadow = "9.0.1"
+sass = "9.1.0"
 
 [libraries]
 hmclauncher = { module = "org.glavo.hmcl:HMCLauncher", version.ref = "hmclauncher" }
@@ -55,3 +56,4 @@ jimfs = { module = "com.google.jimfs:jimfs", version.ref = "jimfs" }
 
 [plugins]
 shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
+sass = { id = "io.freefair.sass-base", version.ref = "sass" }

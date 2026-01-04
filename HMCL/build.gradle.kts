@@ -1,3 +1,5 @@
+import com.sass_lang.embedded_protocol.OutputStyle
+import io.freefair.gradle.plugins.sass.SassCompile
 import org.jackhuang.hmcl.gradle.ci.GitHubActionUtils
 import org.jackhuang.hmcl.gradle.ci.JenkinsUtils
 import org.jackhuang.hmcl.gradle.l10n.CheckTranslations
@@ -17,6 +19,7 @@ import java.util.zip.ZipFile
 
 plugins {
     alias(libs.plugins.shadow)
+    alias(libs.plugins.sass)
 }
 
 val projectConfig = PropertiesUtils.load(rootProject.file("config/project.properties").toPath())
@@ -139,7 +142,63 @@ val addOpens = listOf(
     "jdk.attach/sun.tools.attach",
 )
 
+val sassCLI: Provider<String> = providers.gradleProperty("sassCLI")
+    .orElse(providers.environmentVariable("SASS_CLI"))
+    .orElse("")
+
+val useSassCLI: Provider<Boolean> = sassCLI.map { it.isNotBlank() }
+
+val scssDir = file("src/main/scss")
+val scssDestinationDir = file("src/main/resources/assets/css")
+
+val buildCssBySassCLI by tasks.registering(Exec::class) {
+    commandLine(sassCLI.get(), "$scssDir:$scssDestinationDir", "--style=compressed", "--no-source-map")
+    inputs.dir(scssDir)
+    outputs.dir(scssDestinationDir)
+}
+
+val buildCssByEmbeddedSass by tasks.registering(SassCompile::class) {
+    source = fileTree(scssDir) {
+        include("**/*.scss")
+    }
+    sourceMapEnabled = false
+    outputStyle = OutputStyle.COMPRESSED
+    destinationDir = scssDestinationDir
+    inputs.dir(scssDir)
+    outputs.dir(scssDestinationDir)
+}
+
+val buildCss by tasks.registering {
+    val sha256File = file("$scssDir/scss.sha256")
+
+    val historySha256 = if (sha256File.exists()) sha256File.readText() else null
+
+    val digest = MessageDigest.getInstance("SHA-256")
+    val files = scssDir.walkTopDown()
+        .filter { it.isFile && it != sha256File }
+        .sortedBy { it.relativeTo(scssDir).path }
+
+    for (file in files) {
+        digest.update(file.relativeTo(scssDir).path.toByteArray())
+        digest.update(file.readBytes())
+    }
+
+    val hashBytes = digest.digest()
+    val sha256 = BigInteger(1, hashBytes).toString(16).padStart(64, '0')
+
+    if (historySha256 == null || sha256 != historySha256) {
+        sha256File.writeText(sha256)
+
+        if (useSassCLI.orNull == true) {
+            dependsOn(buildCssBySassCLI)
+        } else {
+            dependsOn(buildCssByEmbeddedSass)
+        }
+    }
+}
+
 tasks.compileJava {
+    dependsOn(buildCss)
     options.compilerArgs.addAll(addOpens.map { "--add-exports=$it=ALL-UNNAMED" })
 }
 
@@ -225,6 +284,7 @@ tasks.shadowJar {
 }
 
 tasks.processResources {
+    dependsOn(buildCss)
     dependsOn(createPropertiesFile)
     dependsOn(upsideDownTranslate)
     dependsOn(createLocaleNamesResourceBundle)
