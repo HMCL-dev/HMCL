@@ -20,9 +20,11 @@ package org.jackhuang.hmcl.ui.construct;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXTextField;
+import com.jfoenix.validation.base.ValidatorBase;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.FutureCallback;
 
 import java.util.concurrent.CompletableFuture;
@@ -36,6 +38,16 @@ public class InputDialogPane extends JFXDialogLayout implements DialogAware {
     private final JFXTextField textField;
     private final Label lblCreationWarning;
     private final SpinnerPane acceptPane;
+    private final JFXButton acceptButton;
+
+    public InputDialogPane(String text, String initialValue, FutureCallback<String> onResult, ValidatorBase... validators) {
+        this(text, initialValue, onResult);
+        if (validators != null && validators.length > 0) {
+            textField.getValidators().addAll(validators);
+            FXUtils.setValidateWhileTextChanged(textField, true);
+            acceptButton.disableProperty().bind(textField.activeValidatorProperty().isNotNull());
+        }
+    }
 
     public InputDialogPane(String text, String initialValue, FutureCallback<String> onResult) {
         textField = new JFXTextField(initialValue);
@@ -47,7 +59,7 @@ public class InputDialogPane extends JFXDialogLayout implements DialogAware {
 
         acceptPane = new SpinnerPane();
         acceptPane.getStyleClass().add("small-spinner-pane");
-        JFXButton acceptButton = new JFXButton(i18n("button.ok"));
+        acceptButton = new JFXButton(i18n("button.ok"));
         acceptButton.getStyleClass().add("dialog-accept");
         acceptPane.setContent(acceptButton);
 
@@ -69,7 +81,6 @@ public class InputDialogPane extends JFXDialogLayout implements DialogAware {
                 lblCreationWarning.setText(msg);
             });
         });
-
         textField.setOnAction(event -> acceptButton.fire());
         onEscPressed(this, cancelButton::fire);
     }

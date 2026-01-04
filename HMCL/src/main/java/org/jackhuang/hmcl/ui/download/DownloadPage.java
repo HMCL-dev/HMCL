@@ -39,6 +39,7 @@ import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.TabHeader;
+import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.versions.DownloadListPage;
@@ -63,11 +64,11 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage {
     public static final org.jackhuang.hmcl.ui.versions.DownloadPage.DownloadCallback FOR_MOD =
-            (profile, version, file) -> download(profile, version, file, "mods");
+            (profile, version, mod, file) -> download(profile, version, file, "mods");
     public static final org.jackhuang.hmcl.ui.versions.DownloadPage.DownloadCallback FOR_RESOURCE_PACK =
-            (profile, version, file) -> download(profile, version, file, "resourcepacks");
+            (profile, version, mod, file) -> download(profile, version, file, "resourcepacks");
     public static final org.jackhuang.hmcl.ui.versions.DownloadPage.DownloadCallback FOR_SHADER =
-            (profile, version, file) -> download(profile, version, file, "shaderpacks");
+            (profile, version, mod, file) -> download(profile, version, file, "shaderpacks");
 
     private final ReadOnlyObjectWrapper<DecoratorPage.State> state = new ReadOnlyObjectWrapper<>(DecoratorPage.State.fromTitle(i18n("download"), -1));
     private final TabHeader tab;
@@ -90,8 +91,8 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         newGameTab.setNodeSupplier(loadVersionFor(() -> new VersionsPage(versionPageNavigator, i18n("install.installer.choose", i18n("install.installer.game")), "", DownloadProviders.getDownloadProvider(),
                 "game", versionPageNavigator::onGameSelected)));
         modpackTab.setNodeSupplier(loadVersionFor(() -> {
-            DownloadListPage page = HMCLLocalizedDownloadListPage.ofModPack((profile, __, file) -> {
-                Versions.downloadModpackImpl(profile, uploadVersion, file);
+            DownloadListPage page = HMCLLocalizedDownloadListPage.ofModPack((profile, __, mod, file) -> {
+                Versions.downloadModpackImpl(profile, uploadVersion, mod, file);
             }, false);
 
             JFXButton installLocalModpackButton = FXUtils.newRaisedButton(i18n("install.modpack"));
@@ -141,10 +142,6 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         Path runDirectory = profile.getRepository().hasVersion(version) ? profile.getRepository().getRunDirectory(version) : profile.getRepository().getBaseDirectory();
 
         Controllers.prompt(i18n("archive.file.name"), (result, resolve, reject) -> {
-            if (!FileUtils.isNameValid(result)) {
-                reject.accept(i18n("install.new_game.malformed"));
-                return;
-            }
             Path dest = runDirectory.resolve(subdirectoryName).resolve(result);
 
             Controllers.taskDialog(Task.composeAsync(() -> {
@@ -162,9 +159,8 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
                     Controllers.showToast(i18n("install.success"));
                 }
             }), i18n("message.downloading"), TaskCancellationAction.NORMAL);
-
             resolve.run();
-        }, file.getFile().getFilename());
+        }, file.getFile().getFilename(), new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid));
 
     }
 

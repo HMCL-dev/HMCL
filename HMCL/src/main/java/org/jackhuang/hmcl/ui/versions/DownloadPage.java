@@ -163,15 +163,15 @@ public class DownloadPage extends Control implements DecoratorPage {
         this.failed.set(failed);
     }
 
-    public void download(RemoteMod.Version file) {
+    public void download(RemoteMod mod, RemoteMod.Version file) {
         if (this.callback == null) {
-            saveAs(file);
+            saveAs(mod, file);
         } else {
-            this.callback.download(version.getProfile(), version.getVersion(), file);
+            this.callback.download(version.getProfile(), version.getVersion(), mod, file);
         }
     }
 
-    public void saveAs(RemoteMod.Version file) {
+    public void saveAs(RemoteMod mod, RemoteMod.Version file) {
         String extension = StringUtils.substringAfterLast(file.getFile().getFilename(), '.');
 
         FileChooser fileChooser = new FileChooser();
@@ -294,7 +294,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                                             if (targetLoaders.contains(loader)) {
                                                 list.getContent().addAll(
                                                         ComponentList.createComponentListTitle(i18n("mods.download.recommend", gameVersion)),
-                                                        new ModItem(modVersion, control)
+                                                        new ModItem(control.addon, modVersion, control)
                                                 );
                                                 break resolve;
                                             }
@@ -322,7 +322,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                         ComponentList sublist = new ComponentList(() -> {
                             ArrayList<ModItem> items = new ArrayList<>(versions.size());
                             for (RemoteMod.Version v : versions) {
-                                items.add(new ModItem(v, control));
+                                items.add(new ModItem(control.addon, v, control));
                             }
                             return items;
                         });
@@ -396,7 +396,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     private static final class ModItem extends StackPane {
 
-        ModItem(RemoteMod.Version dataItem, DownloadPage selfPage) {
+        ModItem(RemoteMod mod, RemoteMod.Version dataItem, DownloadPage selfPage) {
             VBox pane = new VBox(8);
             pane.setPadding(new Insets(8, 0, 8, 0));
 
@@ -458,7 +458,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             }
 
             RipplerContainer container = new RipplerContainer(pane);
-            FXUtils.onClicked(container, () -> Controllers.dialog(new ModVersion(dataItem, selfPage)));
+            FXUtils.onClicked(container, () -> Controllers.dialog(new ModVersion(mod, dataItem, selfPage)));
             getChildren().setAll(container);
 
             // Workaround for https://github.com/HMCL-dev/HMCL/issues/2129
@@ -467,7 +467,7 @@ public class DownloadPage extends Control implements DecoratorPage {
     }
 
     private static final class ModVersion extends JFXDialogLayout {
-        public ModVersion(RemoteMod.Version version, DownloadPage selfPage) {
+        public ModVersion(RemoteMod mod, RemoteMod.Version version, DownloadPage selfPage) {
             RemoteModRepository.Type type = selfPage.type;
 
             String title = switch (type) {
@@ -481,7 +481,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             VBox box = new VBox(8);
             box.setPadding(new Insets(8));
-            ModItem modItem = new ModItem(version, selfPage);
+            ModItem modItem = new ModItem(mod, version, selfPage);
             modItem.setMouseTransparent(true); // Item is displayed for info, clicking shouldn't open the dialog again
             box.getChildren().setAll(modItem);
             SpinnerPane spinnerPane = new SpinnerPane();
@@ -507,7 +507,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                     if (type == RemoteModRepository.Type.MODPACK || !spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
                         fireEvent(new DialogCloseEvent());
                     }
-                    selfPage.download(version);
+                    selfPage.download(mod, version);
                 });
             }
 
@@ -517,7 +517,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 if (!spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
                     fireEvent(new DialogCloseEvent());
                 }
-                selfPage.saveAs(version);
+                selfPage.saveAs(mod, version);
             });
 
             JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
@@ -571,6 +571,6 @@ public class DownloadPage extends Control implements DecoratorPage {
     }
 
     public interface DownloadCallback {
-        void download(Profile profile, @Nullable String version, RemoteMod.Version file);
+        void download(Profile profile, @Nullable String version, RemoteMod mod, RemoteMod.Version file);
     }
 }
