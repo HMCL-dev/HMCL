@@ -372,7 +372,7 @@ tasks.register<JavaExec>("run") {
 
 val upgradeTerracottaConfig = tasks.register<TerracottaConfigUpgradeTask>("upgradeTerracottaConfig") {
     val destination = layout.projectDirectory.file("src/main/resources/assets/terracotta.json")
-    val source = layout.projectDirectory.file("terracotta.json");
+    val source = layout.projectDirectory.file("terracotta-template.json");
 
     classifiers.set(listOf(
         "windows-x86_64", "windows-arm64",
