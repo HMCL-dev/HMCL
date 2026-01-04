@@ -162,7 +162,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     }
 
     private void onDownload() {
-        Controllers.getDownloadPage().showResourcepackDownloads();
+        Controllers.getDownloadPage().showResourcePackDownloads();
         Controllers.navigate(Controllers.getDownloadPage());
     }
 

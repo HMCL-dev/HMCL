@@ -78,14 +78,10 @@ public class DownloadPage extends Control implements DecoratorPage {
     private SimpleMultimap<String, RemoteMod.Version, List<RemoteMod.Version>> versions;
 
     public DownloadPage(DownloadListPage page, RemoteMod addon, Profile.ProfileVersion version, @Nullable DownloadCallback callback) {
-        this(page, addon, version, callback, null);
-    }
-
-    public DownloadPage(DownloadListPage page, RemoteMod addon, Profile.ProfileVersion version, @Nullable DownloadCallback callback, @Nullable RemoteModRepository.Type type) {
         this.page = page;
         this.repository = page.repository;
         this.addon = addon;
-        this.type = Objects.requireNonNullElse(type, repository.getType());
+        this.type = Objects.requireNonNullElse(addon.getRepositoryType(), repository.getType());
         this.translations = ModTranslations.getTranslationsByRepositoryType(this.type);
         this.mod = translations.getModByCurseForgeId(addon.getSlug());
         this.version = version;
@@ -165,13 +161,13 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     public void download(RemoteMod mod, RemoteMod.Version file) {
         if (this.callback == null) {
-            saveAs(mod, file);
+            saveAs(file);
         } else {
             this.callback.download(version.getProfile(), version.getVersion(), mod, file);
         }
     }
 
-    public void saveAs(RemoteMod mod, RemoteMod.Version file) {
+    public void saveAs(RemoteMod.Version file) {
         String extension = StringUtils.substringAfterLast(file.getFile().getFilename(), '.');
 
         FileChooser fileChooser = new FileChooser();
@@ -302,7 +298,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                                     } else {
                                         list.getContent().addAll(
                                                 ComponentList.createComponentListTitle(i18n("mods.download.recommend", gameVersion)),
-                                                new ModItem(modVersion, control)
+                                                new ModItem(control.addon, modVersion, control)
                                         );
                                         break;
                                     }
@@ -311,26 +307,24 @@ public class DownloadPage extends Control implements DecoratorPage {
                         }
                     }
 
-                    for (String gameVersion : control.versions.keys().stream()
+                    control.versions.keys().stream()
                             .sorted(Collections.reverseOrder(GameVersionNumber::compare))
-                            .collect(Collectors.toList())) {
-                        List<RemoteMod.Version> versions = control.versions.get(gameVersion);
-                        if (versions == null || versions.isEmpty()) {
-                            continue;
-                        }
-
-                        ComponentList sublist = new ComponentList(() -> {
-                            ArrayList<ModItem> items = new ArrayList<>(versions.size());
-                            for (RemoteMod.Version v : versions) {
-                                items.add(new ModItem(control.addon, v, control));
-                            }
-                            return items;
-                        });
-                        sublist.getStyleClass().add("no-padding");
-                        sublist.setTitle("Minecraft " + gameVersion);
-
-                        list.getContent().add(sublist);
-                    }
+                            .forEach(gameVersion -> {
+                                List<RemoteMod.Version> versions = control.versions.get(gameVersion);
+                                if (versions == null || versions.isEmpty()) {
+                                    return;
+                                }
+                                ComponentList sublist = new ComponentList(() -> {
+                                    ArrayList<ModItem> items = new ArrayList<>(versions.size());
+                                    for (RemoteMod.Version v : versions) {
+                                        items.add(new ModItem(control.addon, v, control));
+                                    }
+                                    return items;
+                                });
+                                sublist.getStyleClass().add("no-padding");
+                                sublist.setTitle("Minecraft " + gameVersion);
+                                list.getContent().add(sublist);
+                            });
                 });
             }
 
@@ -366,13 +360,13 @@ public class DownloadPage extends Control implements DecoratorPage {
                 case MOD -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_MOD;
                 case RESOURCE_PACK -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_RESOURCE_PACK;
                 case SHADER_PACK -> org.jackhuang.hmcl.ui.download.DownloadPage.FOR_SHADER;
-                default -> null;
+                default -> null; // Dependencies should not be modpacks, worlds or customized stuff
             };
 
             RipplerContainer container = new RipplerContainer(pane);
             FXUtils.onClicked(container, () -> {
                 fireEvent(new DialogCloseEvent());
-                Controllers.navigate(new DownloadPage(page, addon, version, callback, type));
+                Controllers.navigate(new DownloadPage(page, addon, version, callback));
             });
             getChildren().setAll(container);
 
@@ -517,7 +511,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 if (!spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
                     fireEvent(new DialogCloseEvent());
                 }
-                selfPage.saveAs(mod, version);
+                selfPage.saveAs(version);
             });
 
             JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
