@@ -17,18 +17,24 @@
  */
 package org.jackhuang.hmcl.util.io;
 
+import kala.compress.archivers.zip.ZipArchiveEntry;
+import kala.compress.archivers.zip.ZipArchiveReader;
+import org.jackhuang.hmcl.util.StringUtils;
+
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
 
 public final class Unzipper {
     private final Path zipFile, dest;
     private boolean replaceExistentFile = false;
     private boolean terminateIfSubDirectoryNotExists = false;
     private String subDirectory = "/";
-    private FileFilter filter = null;
+    private EntryFilter filter;
+
+    // We now automatically detect encoding, so is it still necessary to keep this option?
     private Charset encoding = StandardCharsets.UTF_8;
 
     /**
@@ -55,17 +61,17 @@ public final class Unzipper {
      * Will be called for every entry in the zip file.
      * Callback returns false if you want leave the specific file uncompressed.
      */
-    public Unzipper setFilter(FileFilter filter) {
+    public Unzipper setFilter(EntryFilter filter) {
         this.filter = filter;
         return this;
     }
 
     /**
      * Will only uncompress files in the "subDirectory", their path will be also affected.
-     *
+     * <p>
      * For example, if you set subDirectory to /META-INF, files in /META-INF/ will be
      * uncompressed to the destination directory without creating META-INF folder.
-     *
+     * <p>
      * Default value: "/"
      */
     public Unzipper setSubDirectory(String subDirectory) {
@@ -89,47 +95,59 @@ public final class Unzipper {
      * @throws IOException if zip file is malformed or filesystem error.
      */
     public void unzip() throws IOException {
-        Files.createDirectories(dest);
-        try (FileSystem fs = CompressingUtils.readonly(zipFile).setEncoding(encoding).setAutoDetectEncoding(true).build()) {
-            Path root = fs.getPath(subDirectory);
-            if (!root.isAbsolute() || (subDirectory.length() > 1 && subDirectory.endsWith("/")))
-                throw new IllegalArgumentException("Subdirectory for unzipper must be absolute");
+        Path destDir = this.dest.toAbsolutePath().normalize();
+        Files.createDirectories(destDir);
 
-            if (terminateIfSubDirectoryNotExists && Files.notExists(root))
-                return;
+        CopyOption[] copyOptions = replaceExistentFile
+                ? new CopyOption[]{StandardCopyOption.REPLACE_EXISTING}
+                : new CopyOption[]{};
 
-            Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
-                @Override
-                public FileVisitResult visitFile(Path file,
-                                                 BasicFileAttributes attrs) throws IOException {
-                    String relativePath = root.relativize(file).toString();
-                    Path destFile = dest.resolve(relativePath);
-                    if (filter != null && !filter.accept(file, false, destFile, relativePath))
-                        return FileVisitResult.CONTINUE;
-                    try {
-                        Files.copy(file, destFile, replaceExistentFile ? new CopyOption[]{StandardCopyOption.REPLACE_EXISTING} : new CopyOption[]{});
+        long countEntry = 0L;
+        try (ZipArchiveReader reader = CompressingUtils.openZipFile(zipFile)) {
+            String pathPrefix = StringUtils.addSuffix(subDirectory, "/");
+
+            for (ZipArchiveEntry entry : reader.getEntries()) {
+                String normalizedPath = FileUtils.normalizePath(entry.getName());
+                if (!normalizedPath.startsWith(pathPrefix)) {
+                    continue;
+                }
+
+                String relativePath = normalizedPath.substring(pathPrefix.length());
+                Path destFile = destDir.resolve(relativePath).toAbsolutePath().normalize();
+                if (!destDir.startsWith(destDir)) {
+                    throw new IOException("Zip entry is trying to write outside of the destination directory: " + entry.getName());
+                }
+
+                if (filter != null && !filter.accept(entry, destFile, relativePath)) {
+                    continue;
+                }
+
+                countEntry++;
+
+                if (entry.isDirectory()) {
+                    Files.createDirectories(destFile);
+                } else {
+                    Files.createDirectories(destFile.getParent());
+                    try (InputStream input = reader.getInputStream(entry)) {
+                        Files.copy(input, destFile, copyOptions);
                     } catch (FileAlreadyExistsException e) {
                         if (replaceExistentFile)
                             throw e;
                     }
-                    return FileVisitResult.CONTINUE;
                 }
+            }
 
-                @Override
-                public FileVisitResult preVisitDirectory(Path dir,
-                                                         BasicFileAttributes attrs) throws IOException {
-                    String relativePath = root.relativize(dir).toString();
-                    Path dirToCreate = dest.resolve(relativePath);
-                    if (filter != null && !filter.accept(dir, true, dirToCreate, relativePath))
-                        return FileVisitResult.SKIP_SUBTREE;
-                    Files.createDirectories(dirToCreate);
-                    return FileVisitResult.CONTINUE;
-                }
-            });
+            if (countEntry == 0 && !terminateIfSubDirectoryNotExists) {
+                throw new IOException("Subdirectory " + subDirectory + " does not exist in the zip file.");
+            }
         }
     }
 
     public interface FileFilter {
         boolean accept(Path zipEntry, boolean isDirectory, Path destFile, String entryPath) throws IOException;
+    }
+
+    public interface EntryFilter {
+        boolean accept(ZipArchiveEntry zipArchiveEntry, Path destFile, String relativePath) throws IOException;
     }
 }
