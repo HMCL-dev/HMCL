@@ -1833,6 +1833,27 @@
     -fx-font-style: italic;
 }
 
+/*******************************************************************************
+ *                                                                             *
+ * Tooltip                                                                     *
+ *                                                                             *
+ ******************************************************************************/
+
+.tooltip {
+    -fx-text-fill: -monet-inverse-on-surface;
+    -fx-background-color: -monet-inverse-surface;
+}
+
+.tooltip .text {
+    -fx-fill: -monet-inverse-on-surface;
+}
+
+/*******************************************************************************
+ *                                                                             *
+ * Mod Changelog                                                               *
+ *                                                                             *
+ ******************************************************************************/
+
 .mod-changelog .html {
     -fx-background-color: -monet-surface;
     -fx-background-radius: 4;
@@ -1853,17 +1874,6 @@
     -fx-font-size: 13.5;
 }
 
-/*******************************************************************************
- *                                                                             *
- * Tooltip                                                                     *
- *                                                                             *
- ******************************************************************************/
-
-.tooltip {
-    -fx-text-fill: -monet-inverse-on-surface;
-    -fx-background-color: -monet-inverse-surface;
-}
-
-.tooltip .text {
-    -fx-fill: -monet-inverse-on-surface;
+.mod-changelog-table-cell {
+    -fx-text-fill: -monet-primary;
 }

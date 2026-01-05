@@ -96,27 +96,31 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         TableColumn<ModUpdateObject, String> sourceColumn = new TableColumn<>(i18n("mods.check_updates.source"));
         setupCellValueFactory(sourceColumn, ModUpdateObject::sourceProperty);
 
-        TableColumn<ModUpdateObject, String> detailColumn = new TableColumn<>();
-        detailColumn.setCellFactory(param -> {
-            TableCell<ModUpdateObject, String> cell = (TableCell<ModUpdateObject, String>) TableColumn.DEFAULT_CELL_FACTORY.call(param);
-            cell.setOnMouseClicked(event -> {
-                List<ModUpdateObject> items = cell.getTableColumn().getTableView().getItems();
-                if (cell.getIndex() >= items.size()) {
-                    return;
-                }
-                ModUpdateObject object = items.get(cell.getIndex());
-                Controllers.dialog(new ModDetail(object));
+        TableColumn<ModUpdateObject, String> changelogColumn = new TableColumn<>();
+        {
+            var oldCellFactory = changelogColumn.getCellFactory();
+            changelogColumn.setCellFactory(param -> {
+                TableCell<ModUpdateObject, String> cell = oldCellFactory.call(param);
+                cell.getStyleClass().add("mod-changelog-table-cell");
+                cell.setOnMouseClicked(event -> {
+                    List<ModUpdateObject> items = cell.getTableColumn().getTableView().getItems();
+                    if (cell.getIndex() >= items.size()) {
+                        return;
+                    }
+                    ModUpdateObject object = items.get(cell.getIndex());
+                    Controllers.dialog(new ModDetail(object));
+                });
+                return cell;
             });
-            return cell;
-        });
-        detailColumn.setCellValueFactory(it -> new SimpleStringProperty(i18n("mods.changelog")));
+        }
+        changelogColumn.setCellValueFactory(__ -> new SimpleStringProperty(i18n("mods.changelog")));
 
         objects = FXCollections.observableList(updates.stream().map(ModUpdateObject::new).collect(Collectors.toList()));
         FXUtils.bindAllEnabled(allEnabledBox.selectedProperty(), objects.stream().map(o -> o.enabled).toArray(BooleanProperty[]::new));
 
         TableView<ModUpdateObject> table = new TableView<>(objects);
         table.setEditable(true);
-        table.getColumns().setAll(enabledColumn, fileNameColumn, currentVersionColumn, targetVersionColumn, sourceColumn, detailColumn);
+        table.getColumns().setAll(enabledColumn, fileNameColumn, currentVersionColumn, targetVersionColumn, sourceColumn, changelogColumn);
         setMargin(table, new Insets(10, 10, 5, 10));
 
         setCenter(table);
