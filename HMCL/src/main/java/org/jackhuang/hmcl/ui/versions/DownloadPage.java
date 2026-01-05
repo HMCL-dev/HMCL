@@ -469,7 +469,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             box.setPadding(new Insets(8));
             box.getChildren().setAll(new AddonItem(mod, version));
 
-            Button changelogButton = new JFXButton(i18n("mods.show_detail"));
+            Button changelogButton = new JFXButton(i18n("mods.changelog"));
             changelogButton.getStyleClass().add("dialog-accept");
             SpinnerPane spinnerPane = new SpinnerPane();
             ScrollPane scrollPane = new ScrollPane();
