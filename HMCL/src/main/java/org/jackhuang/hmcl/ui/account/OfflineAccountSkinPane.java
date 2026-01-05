@@ -24,6 +24,7 @@ import com.jfoenix.controls.JFXTextField;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.geometry.Insets;
+import javafx.geometry.VPos;
 import javafx.scene.control.Label;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.TransferMode;
@@ -174,10 +175,18 @@ public class OfflineAccountSkinPane extends StackPane {
                 case LITTLE_SKIN:
                     HintPane hint = new HintPane(MessageDialogPane.MessageType.INFO);
                     hint.setText(i18n("account.skin.type.little_skin.hint"));
-                    // Allow the tooltip to span two columns and expand horizontally to avoid overlapping with the dialog action area/top-right help button
+
+                    // Spanning two columns and expanding horizontally
                     GridPane.setColumnSpan(hint, 2);
                     GridPane.setHgrow(hint, Priority.ALWAYS);
                     hint.setMaxWidth(Double.MAX_VALUE);
+
+                    // Force top alignment within cells (to avoid vertical offset caused by the baseline)
+                    GridPane.setValignment(hint, VPos.TOP);
+
+                    // Set a fixed height as the preferred height to prevent the GridPane from stretching or leaving empty space.
+                    hint.setMaxHeight(Region.USE_PREF_SIZE);
+                    hint.setMinHeight(Region.USE_PREF_SIZE);
 
                     gridPane.addRow(0, hint);
                     break;
