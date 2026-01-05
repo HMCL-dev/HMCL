@@ -41,6 +41,7 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Path;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * @author Glavo
@@ -68,6 +69,14 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         this.profile = profile;
         this.id = id;
 
+        sessionLockChannel = WorldManageUIUtils.getSessionLockChannel(world);
+        try {
+            world.reloadLevelDat();
+            System.out.println("reload level dat");
+        } catch (IOException e) {
+            LOG.warning("Can not load world level.dat of world:" + world.getFile() + e.getMessage());
+        }
+
         this.worldInfoTab.setNodeSupplier(() -> new WorldInfoPage(this));
         this.worldBackupsTab.setNodeSupplier(() -> new WorldBackupsPage(this));
         this.datapackTab.setNodeSupplier(() -> new DatapackListPage(this));
@@ -75,9 +84,6 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         this.state = new SimpleObjectProperty<>(State.fromTitle(i18n("world.manage.title", StringUtils.parseColorEscapes(world.getWorldName()))));
         this.header = new TabHeader(transitionPane, worldInfoTab, worldBackupsTab);
         header.select(worldInfoTab);
-
-        // Does it need to be done in the background?
-        sessionLockChannel = WorldManageUIUtils.getSessionLockChannel(world);
 
         setCenter(transitionPane);
 

@@ -24,11 +24,7 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 
-import java.io.IOException;
 import java.nio.file.Path;
-
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class WorldListItem extends Control {
     private final World world;
@@ -71,14 +67,7 @@ public final class WorldListItem extends Control {
     }
 
     public void showManagePage() {
-        try {
-            world.reloadLevelDat();
-            Controllers.navigate(new WorldManagePage(world, backupsDir, profile, id));
-        } catch (IOException e) {
-            LOG.warning("Failed to load level dat of world " + world.getFile(), e);
-            Controllers.showToast(i18n("world.load.fail"));
-            parent.refresh();
-        }
+        Controllers.navigate(new WorldManagePage(world, backupsDir, profile, id));
     }
 
     public void launch() {
