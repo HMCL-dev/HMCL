@@ -72,7 +72,6 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         sessionLockChannel = WorldManageUIUtils.getSessionLockChannel(world);
         try {
             world.reloadLevelDat();
-            System.out.println("reload level dat");
         } catch (IOException e) {
             LOG.warning("Can not load world level.dat of world:" + world.getFile() + e.getMessage());
         }
