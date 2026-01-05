@@ -231,7 +231,7 @@ public final class ForgeNewModMetadata {
         if (embeddedDependenciesMod != null) {
             ZipArchiveEntry embeddedModFile = tree.getEntry(embeddedDependenciesMod);
             if (embeddedModFile == null) {
-                LOG.warning("Missing embedded-dependencies-mod: " + modFile);
+                LOG.warning("Missing embedded-dependencies-mod: " + embeddedDependenciesMod);
                 throw new IOException();
             }
             embeddedModFiles = List.of(embeddedModFile);
