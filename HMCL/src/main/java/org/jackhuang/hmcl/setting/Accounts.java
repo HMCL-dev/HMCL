@@ -414,6 +414,12 @@ public final class Accounts {
             return i18n("account.failed.no_character");
         } else if (exception instanceof ServerDisconnectException) {
             if (exception.getCause() instanceof SSLException) {
+                if (exception.getCause().getMessage().contains("terminated")) {
+                    return i18n("account.failed.connect_authentication_server");
+                }
+                if (exception.getCause().getMessage().contains("No name matching")) {
+                    return i18n("account.failed.dns");
+                }
                 return i18n("account.failed.ssl");
             } else {
                 return i18n("account.failed.connect_authentication_server");

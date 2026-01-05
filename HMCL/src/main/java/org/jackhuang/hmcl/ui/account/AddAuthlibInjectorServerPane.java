@@ -164,6 +164,12 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
 
     private String resolveFetchExceptionMessage(Throwable exception) {
         if (exception instanceof SSLException) {
+            if (exception.getMessage().contains("terminated")) {
+                return i18n("account.failed.connect_injector_server");
+            }
+            if (exception.getCause().getMessage().contains("No name matching")) {
+                return i18n("account.failed.dns");
+            }
             return i18n("account.failed.ssl");
         } else if (exception instanceof IOException) {
             return i18n("account.failed.connect_injector_server");
