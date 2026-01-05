@@ -284,6 +284,8 @@ public abstract class FetchTask<T> extends Task<T> {
                         contentLength,
                         contentEncoding);
                 return;
+            } catch (InterruptedException e) {
+                throw e;
             } catch (FileNotFoundException ex) {
                 LOG.warning("Failed to download " + uri + ", not found" + (redirects == null ? "" : ", redirects: " + redirects), ex);
                 throw toDownloadException(uri, ex, exceptions); // we will not try this URL again
@@ -317,6 +319,8 @@ public abstract class FetchTask<T> extends Task<T> {
                         conn.getContentLengthLong(),
                         ContentEncoding.fromConnection(conn));
                 return;
+            } catch (InterruptedException e) {
+                throw e;
             } catch (FileNotFoundException ex) {
                 LOG.warning("Failed to download " + uri + ", not found", ex);
 
