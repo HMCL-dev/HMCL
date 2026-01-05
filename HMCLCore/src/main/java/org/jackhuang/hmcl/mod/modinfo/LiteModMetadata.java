@@ -112,7 +112,7 @@ public final class LiteModMetadata {
     public static LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree) throws IOException, JsonParseException {
         ZipArchiveEntry entry = tree.getEntry("litemod.json");
         if (entry == null)
-            throw new IOException("File " + modFile + "is not a LiteLoader mod.");
+            throw new IOException("File " + modFile + " is not a LiteLoader mod.");
         LiteModMetadata metadata = JsonUtils.fromJsonFully(tree.getInputStream(entry), LiteModMetadata.class);
         if (metadata == null)
             throw new IOException("Mod " + modFile + " `litemod.json` is malformed.");
