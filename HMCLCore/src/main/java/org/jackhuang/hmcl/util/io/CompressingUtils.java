@@ -21,6 +21,7 @@ import kala.compress.archivers.zip.ZipArchiveEntry;
 import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.tree.ZipFileTree;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -125,6 +126,10 @@ public final class CompressingUtils {
         }
 
         throw new IOException("Cannot find suitable encoding for the zip.");
+    }
+
+    public static ZipFileTree openZipTree(Path zipFile) throws IOException {
+        return new ZipFileTree(openZipFile(zipFile));
     }
 
     public static ZipArchiveReader openZipFile(Path zipFile) throws IOException {

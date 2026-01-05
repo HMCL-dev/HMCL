@@ -23,10 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 
-import java.io.Closeable;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -150,6 +147,17 @@ public abstract class ArchiveFileTree<R, E extends ArchiveEntry> implements Clos
         if (entry == null)
             throw new FileNotFoundException("Entry not found: " + entryPath);
         return getInputStream(entry);
+    }
+
+    public BufferedReader getBufferedReader(@NotNull E entry) throws IOException {
+        return new BufferedReader(new InputStreamReader(getInputStream(entry), StandardCharsets.UTF_8));
+    }
+
+    public @NotNull BufferedReader getBufferedReader(String entryPath) throws IOException {
+        E entry = getEntry(entryPath);
+        if (entry == null)
+            throw new FileNotFoundException("Entry not found: " + entryPath);
+        return getBufferedReader(entry);
     }
 
     public byte[] readBinaryEntry(@NotNull E entry) throws IOException {
