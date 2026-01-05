@@ -21,20 +21,13 @@ import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.mod.LocalModFile;
-import org.jackhuang.hmcl.mod.ModLoaderType;
-import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.Validation;
-import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,6 +43,7 @@ public record PackMcMeta(@SerializedName("pack") PackInfo pack) implements Valid
 
     @JsonAdapter(PackInfoDeserializer.class)
     public record PackInfo(@SerializedName("pack_format") int packFormat,
+                           @SerializedName("supported_formats") SupportedFormats supportedFormats,
                            @SerializedName("min_format") PackVersion minPackVersion,
                            @SerializedName("max_format") PackVersion maxPackVersion,
                            @SerializedName("description") LocalModFile.Description description) {
@@ -62,12 +56,51 @@ public record PackMcMeta(@SerializedName("pack") PackInfo pack) implements Valid
         }
     }
 
+    public record SupportedFormats(int min, int max) {
+
+        public static final SupportedFormats UNSPECIFIED = new SupportedFormats(-1, -1);
+
+        public static SupportedFormats fromJson(JsonElement element) {
+            if (element == null || element.isJsonNull()) {
+                return UNSPECIFIED;
+            }
+
+            try {
+                if (element instanceof JsonArray jsonArray) {
+                    if (jsonArray.size() == 2 && jsonArray.get(0) instanceof JsonPrimitive && jsonArray.get(1) instanceof JsonPrimitive) {
+                        return new SupportedFormats(jsonArray.get(0).getAsInt(), jsonArray.get(1).getAsInt());
+                    } else {
+                        LOG.warning("Supported formats array must have 2 elements, but got " + jsonArray.size());
+                    }
+                }
+            } catch (NumberFormatException e) {
+                LOG.warning("Failed to parse pack version component as a number. Value: " + element, e);
+            }
+
+            return UNSPECIFIED;
+        }
+
+        public boolean isUnspecified() {
+            return getMin().isUnspecified() || getMax().isUnspecified() || getMin().compareTo(getMax()) > 0;
+        }
+
+        public PackVersion getMin() {
+            return new PackVersion(min, 0);
+        }
+
+        public PackVersion getMax() {
+            return new PackVersion(max, 0);
+        }
+
+    }
+
     public record PackVersion(int majorVersion, int minorVersion) implements Comparable<PackVersion> {
 
-        public static final PackVersion UNSPECIFIED = new PackVersion(0, 0);
+        public static final PackVersion UNSPECIFIED = new PackVersion(-1, -1);
 
         @Override
-        public String toString() {
+        public @NotNull String toString() {
+            if (isUnspecified()) return "UNSPECIFIED";
             return minorVersion != 0 ? majorVersion + "." + minorVersion : String.valueOf(majorVersion);
         }
 
@@ -81,7 +114,7 @@ public record PackMcMeta(@SerializedName("pack") PackInfo pack) implements Valid
         }
 
         public boolean isUnspecified() {
-            return this.equals(UNSPECIFIED);
+            return this.majorVersion < 0 || this.minorVersion < 0;
         }
 
         public static PackVersion fromJson(JsonElement element) throws JsonParseException {
@@ -175,25 +208,13 @@ public record PackMcMeta(@SerializedName("pack") PackInfo pack) implements Valid
             } else {
                 packFormat = 0;
             }
+            SupportedFormats supportedFormats = SupportedFormats.fromJson(packInfo.get("supported_formats"));
             PackVersion minVersion = PackVersion.fromJson(packInfo.get("min_format"));
             PackVersion maxVersion = PackVersion.fromJson(packInfo.get("max_format"));
 
             List<LocalModFile.Description.Part> parts = parseDescription(packInfo.get("description"));
-            return new PackInfo(packFormat, minVersion, maxVersion, new LocalModFile.Description(parts));
+            return new PackInfo(packFormat, supportedFormats, minVersion, maxVersion, new LocalModFile.Description(parts));
         }
     }
 
-    public static LocalModFile fromFile(ModManager modManager, Path modFile, FileSystem fs) throws IOException, JsonParseException {
-        Path mcmod = fs.getPath("pack.mcmeta");
-        if (Files.notExists(mcmod))
-            throw new IOException("File " + modFile + " is not a resource pack.");
-        PackMcMeta metadata = JsonUtils.fromNonNullJson(Files.readString(mcmod), PackMcMeta.class);
-        return new LocalModFile(
-                modManager,
-                modManager.getLocalMod(FileUtils.getNameWithoutExtension(modFile), ModLoaderType.PACK),
-                modFile,
-                FileUtils.getNameWithoutExtension(modFile),
-                metadata.pack.description,
-                "", "", "", "", "");
-    }
 }

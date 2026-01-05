@@ -17,36 +17,39 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import org.jackhuang.hmcl.mod.LocalModFile;
+import org.jackhuang.hmcl.mod.LocalAddonFile;
 import org.jackhuang.hmcl.mod.RemoteMod;
+import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.task.Task;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class ModCheckUpdatesTask extends Task<List<LocalModFile.ModUpdate>> {
-    private final String gameVersion;
-    private final Collection<LocalModFile> mods;
-    private final Collection<Collection<Task<LocalModFile.ModUpdate>>> dependents;
+public class CheckUpdatesTask<T extends LocalAddonFile> extends Task<List<LocalAddonFile.ModUpdate>> {
+    private final Collection<Collection<Task<LocalAddonFile.ModUpdate>>> dependents;
 
-    public ModCheckUpdatesTask(String gameVersion, Collection<LocalModFile> mods) {
-        this.gameVersion = gameVersion;
-        this.mods = mods;
-
+    public CheckUpdatesTask(String gameVersion, Collection<T> mods, RemoteModRepository.Type repoType) {
+        Map<String, RemoteModRepository> repos = new LinkedHashMap<>(2);
+        for (RemoteMod.Type modType : RemoteMod.Type.values()) {
+            RemoteModRepository repo = modType.getRepoForType(repoType);
+            if (repo != null) {
+                repos.put(modType.name(), repo);
+            }
+        }
         dependents = mods.stream()
                 .map(mod ->
-                        Arrays.stream(RemoteMod.Type.values())
-                                .map(type ->
-                                        Task.supplyAsync(() -> mod.checkUpdates(gameVersion, type.getRemoteModRepository()))
+                        repos.entrySet().stream()
+                                .map(entry ->
+                                        Task.supplyAsync(() -> mod.checkUpdates(gameVersion, entry.getValue()))
                                                 .setSignificance(TaskSignificance.MAJOR)
-                                                .setName(String.format("%s (%s)", mod.getFileName(), type.name())).withCounter("update.checking")
+                                                .setName(String.format("%s (%s)", mod.getFileName(), entry.getKey())).withCounter("update.checking")
                                 )
                                 .collect(Collectors.toList())
                 )
                 .collect(Collectors.toList());
 
         setStage("update.checking");
-        getProperties().put("total", dependents.size() * RemoteMod.Type.values().length);
+        getProperties().put("total", dependents.size() * repos.size());
     }
 
     @Override
@@ -75,8 +78,8 @@ public class ModCheckUpdatesTask extends Task<List<LocalModFile.ModUpdate>> {
                 .map(tasks -> tasks.stream()
                         .filter(task -> task.getResult() != null)
                         .map(Task::getResult)
-                        .filter(modUpdate -> !modUpdate.getCandidates().isEmpty())
-                        .max(Comparator.comparing((LocalModFile.ModUpdate modUpdate) -> modUpdate.getCandidates().get(0).getDatePublished()))
+                        .filter(modUpdate -> !modUpdate.candidates().isEmpty())
+                        .max(Comparator.comparing((LocalAddonFile.ModUpdate modUpdate) -> modUpdate.candidates().get(0).getDatePublished()))
                         .orElse(null)
                 )
                 .filter(Objects::nonNull)
