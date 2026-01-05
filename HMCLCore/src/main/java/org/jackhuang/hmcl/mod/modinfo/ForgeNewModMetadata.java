@@ -250,7 +250,7 @@ public final class ForgeNewModMetadata {
                     if (path != null) {
                         embeddedModFiles.add(path);
                     } else {
-                        LOG.warning("Missing embedded-dependencies-mod: " + path);
+                        LOG.warning("Missing embedded-dependencies-mod: " + jar.path);
                     }
                 }
             }
