@@ -114,7 +114,7 @@ public final class Unzipper {
 
                 String relativePath = normalizedPath.substring(pathPrefix.length());
                 Path destFile = destDir.resolve(relativePath).toAbsolutePath().normalize();
-                if (!destDir.startsWith(destDir)) {
+                if (!destFile.startsWith(destDir)) {
                     throw new IOException("Zip entry is trying to write outside of the destination directory: " + entry.getName());
                 }
 
