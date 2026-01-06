@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXPopup;
+import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -27,6 +28,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
@@ -54,6 +56,8 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     private final Profile profile;
     private final String id;
 
+    private boolean loadFailed = false;
+
     private final TabHeader header;
     private final TabHeader.Tab<WorldInfoPage> worldInfoTab = new TabHeader.Tab<>("worldInfoPage");
     private final TabHeader.Tab<WorldBackupsPage> worldBackupsTab = new TabHeader.Tab<>("worldBackupsPage");
@@ -74,6 +78,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
             world.reloadLevelDat();
         } catch (IOException e) {
             LOG.warning("Can not load world level.dat of world: " + world.getFile(), e);
+            loadFailed = true;
         }
 
         this.worldInfoTab.setNodeSupplier(() -> new WorldInfoPage(this));
@@ -164,6 +169,12 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     }
 
     private void onNavigated(Navigator.NavigationEvent event) {
+        if (loadFailed) {
+            Platform.runLater(() -> {
+                fireEvent(new PageCloseEvent());
+                Controllers.dialog(i18n("world.load.fail"), null, MessageDialogPane.MessageType.ERROR);
+            });
+        }
         if (sessionLockChannel == null || !sessionLockChannel.isOpen()) {
             sessionLockChannel = WorldManageUIUtils.getSessionLockChannel(world);
         }
