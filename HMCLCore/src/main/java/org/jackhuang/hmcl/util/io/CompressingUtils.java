@@ -133,12 +133,25 @@ public final class CompressingUtils {
     }
 
     public static ZipArchiveReader openZipFile(Path zipFile) throws IOException {
+        return openZipFileWithPossibleEncoding(zipFile, StandardCharsets.UTF_8);
+    }
+
+    public static ZipArchiveReader openZipFile(Path zipFile, Charset charset) throws IOException {
+        return new ZipArchiveReader(zipFile, charset);
+    }
+
+    public static ZipArchiveReader openZipFileWithPossibleEncoding(Path zipFile, Charset possibleEncoding) throws IOException {
         ZipArchiveReader zipReader = new ZipArchiveReader(Files.newByteChannel(zipFile));
+
         Charset suitableEncoding;
         try {
-            suitableEncoding = findSuitableEncoding(zipReader);
-            if (suitableEncoding == StandardCharsets.UTF_8)
-                return zipReader;
+            if (possibleEncoding != StandardCharsets.UTF_8 && CompressingUtils.testEncoding(zipReader, possibleEncoding)) {
+                suitableEncoding = possibleEncoding;
+            } else {
+                suitableEncoding = CompressingUtils.findSuitableEncoding(zipReader);
+                if (suitableEncoding == StandardCharsets.UTF_8)
+                    return zipReader;
+            }
         } catch (Throwable e) {
             IOUtils.closeQuietly(zipReader, e);
             throw e;
@@ -146,10 +159,6 @@ public final class CompressingUtils {
 
         zipReader.close();
         return new ZipArchiveReader(Files.newByteChannel(zipFile), suitableEncoding);
-    }
-
-    public static ZipArchiveReader openZipFile(Path zipFile, Charset charset) throws IOException {
-        return new ZipArchiveReader(zipFile, charset);
     }
 
     public static final class Builder {
