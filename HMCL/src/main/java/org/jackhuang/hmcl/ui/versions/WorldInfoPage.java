@@ -329,7 +329,7 @@ public final class WorldInfoPage extends SpinnerPane {
                 setLeftLabel(lastDeathLocationPane, "world.info.player.last_death_location");
                 Label lastDeathLocationLabel = new Label();
                 setRightTextLabel(lastDeathLocationPane, lastDeathLocationLabel, () -> {
-                    Tag tag = player.get("LastDeathLocation");//Valid after 22w14a; prior to this version, the game did not record the last death location data.
+                    Tag tag = player.get("LastDeathLocation");// Valid after 22w14a; prior to this version, the game did not record the last death location data.
                     if (tag instanceof CompoundTag compoundTag) {
                         Dimension dim = Dimension.of(compoundTag.get("dimension"));
                         if (dim != null) {
@@ -350,7 +350,7 @@ public final class WorldInfoPage extends SpinnerPane {
                 setRightTextLabel(spawnPane, spawnLabel, () -> {
 
                     Dimension dimension;
-                    if (player.get("respawn") instanceof CompoundTag respawnTag && respawnTag.get("dimension") != null) { //Valid after 25w07a
+                    if (player.get("respawn") instanceof CompoundTag respawnTag && respawnTag.get("dimension") != null) { // Valid after 25w07a
                         dimension = Dimension.of(respawnTag.get("dimension"));
                         Tag posTag = respawnTag.get("pos");
 
@@ -359,8 +359,8 @@ public final class WorldInfoPage extends SpinnerPane {
                         }
                     } else if (player.get("SpawnX") instanceof IntTag intX
                             && player.get("SpawnY") instanceof IntTag intY
-                            && player.get("SpawnZ") instanceof IntTag intZ) { //Valid before 25w07a
-                        //SpawnDimension tag is valid after 20w12a. Prior to this version, the game did not record the respawn point dimension and respawned in the Overworld.
+                            && player.get("SpawnZ") instanceof IntTag intZ) { // Valid before 25w07a
+                        // SpawnDimension tag is valid after 20w12a. Prior to this version, the game did not record the respawn point dimension and respawned in the Overworld.
                         dimension = Dimension.of(player.get("SpawnDimension") == null ? new IntTag("SpawnDimension", 0) : player.get("SpawnDimension"));
                         if (dimension == null) {
                             return "";
