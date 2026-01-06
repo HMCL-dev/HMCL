@@ -150,7 +150,7 @@ public final class Unzipper {
                             throw new IOException("Zip entry has an invalid symlink target: " + entry.getName(), e);
                         }
 
-                        if (!dest.getParent().resolve(targetPath).toAbsolutePath().normalize().startsWith(destDir)) {
+                        if (!destFile.getParent().resolve(targetPath).toAbsolutePath().normalize().startsWith(destDir)) {
                             throw new IOException("Zip entry is trying to create a symlink outside of the destination directory: " + entry.getName());
                         }
 
