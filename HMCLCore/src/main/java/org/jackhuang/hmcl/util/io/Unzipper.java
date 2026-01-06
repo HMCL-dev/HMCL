@@ -174,7 +174,7 @@ public final class Unzipper {
             }
 
             if (entryCount == 0 && !terminateIfSubDirectoryNotExists) {
-                throw new IOException("Subdirectory " + subDirectory + " does not exist in the zip file.");
+                throw new NoSuchFileException("Subdirectory " + subDirectory + " does not exist in the zip file.");
             }
         }
     }
