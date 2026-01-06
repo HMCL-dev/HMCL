@@ -141,6 +141,9 @@ public final class CompressingUtils {
     }
 
     public static ZipArchiveReader openZipFileWithPossibleEncoding(Path zipFile, Charset possibleEncoding) throws IOException {
+        if (possibleEncoding == null)
+            possibleEncoding = StandardCharsets.UTF_8;
+
         ZipArchiveReader zipReader = new ZipArchiveReader(Files.newByteChannel(zipFile));
 
         Charset suitableEncoding;

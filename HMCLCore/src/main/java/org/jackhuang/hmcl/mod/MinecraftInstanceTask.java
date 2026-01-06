@@ -17,11 +17,15 @@
  */
 package org.jackhuang.hmcl.mod;
 
+import kala.compress.archivers.zip.ZipArchiveEntry;
+import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.tree.ArchiveFileTree;
+import org.jackhuang.hmcl.util.tree.ZipFileTree;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,6 +60,15 @@ public final class MinecraftInstanceTask<T> extends Task<ModpackConfiguration<T>
     @Override
     public void execute() throws Exception {
         List<ModpackConfiguration.FileInformation> overrides = new ArrayList<>();
+
+        try (var tree = new ZipFileTree(CompressingUtils.openZipFileWithPossibleEncoding(zipFile, encoding))) {
+            for (String subDirectory : subDirectories) {
+                ArchiveFileTree.Dir<ZipArchiveEntry> dir = tree.getDirectory(subDirectory);
+                if (dir != null) {
+                    // TODO
+                }
+            }
+        }
 
         try (FileSystem fs = CompressingUtils.readonly(zipFile).setEncoding(encoding).build()) {
             for (String subDirectory : subDirectories) {
