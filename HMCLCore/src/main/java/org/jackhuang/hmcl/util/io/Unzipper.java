@@ -35,43 +35,35 @@ public final class Unzipper {
     private EntryFilter filter;
     private Charset encoding = StandardCharsets.UTF_8;
 
-    /**
-     * Decompress the given zip file to a directory.
-     *
-     * @param zipFile the input zip file to be uncompressed
-     * @param destDir the dest directory to hold uncompressed files
-     */
+    /// Decompress the given zip file to a directory.
+    ///
+    /// @param zipFile the input zip file to be uncompressed
+    /// @param destDir the dest directory to hold uncompressed files
     public Unzipper(Path zipFile, Path destDir) {
         this.zipFile = zipFile;
         this.dest = destDir;
     }
 
-    /**
-     * True if replace the existent files in destination directory,
-     * otherwise those conflict files will be ignored.
-     */
+    /// True if replace the existent files in destination directory,
+    /// otherwise those conflict files will be ignored.
     public Unzipper setReplaceExistentFile(boolean replaceExistentFile) {
         this.replaceExistentFile = replaceExistentFile;
         return this;
     }
 
-    /**
-     * Will be called for every entry in the zip file.
-     * Callback returns false if you want leave the specific file uncompressed.
-     */
+    /// Will be called for every entry in the zip file.
+    /// Callback returns false if you want leave the specific file uncompressed.
     public Unzipper setFilter(EntryFilter filter) {
         this.filter = filter;
         return this;
     }
 
-    /**
-     * Will only uncompress files in the "subDirectory", their path will be also affected.
-     * <p>
-     * For example, if you set subDirectory to /META-INF, files in /META-INF/ will be
-     * uncompressed to the destination directory without creating META-INF folder.
-     * <p>
-     * Default value: "/"
-     */
+    /// Will only uncompress files in the "subDirectory", their path will be also affected.
+    ///
+    /// For example, if you set subDirectory to /META-INF, files in /META-INF/ will be
+    /// uncompressed to the destination directory without creating META-INF folder.
+    ///
+    /// Default value: "/"
     public Unzipper setSubDirectory(String subDirectory) {
         this.subDirectory = FileUtils.normalizePath(subDirectory);
         return this;
@@ -108,11 +100,9 @@ public final class Unzipper {
         return new ZipArchiveReader(Files.newByteChannel(zipFile), suitableEncoding);
     }
 
-    /**
-     * Decompress the given zip file to a directory.
-     *
-     * @throws IOException if zip file is malformed or filesystem error.
-     */
+    /// Decompress the given zip file to a directory.
+    ///
+    /// @throws IOException if zip file is malformed or filesystem error.
     public void unzip() throws IOException {
         Path destDir = this.dest.toAbsolutePath().normalize();
         Files.createDirectories(destDir);
@@ -162,6 +152,7 @@ public final class Unzipper {
         }
     }
 
+    @FunctionalInterface
     public interface EntryFilter {
         boolean accept(ZipArchiveEntry zipArchiveEntry, Path destFile, String relativePath) throws IOException;
     }
