@@ -73,7 +73,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         try {
             world.reloadLevelDat();
         } catch (IOException e) {
-            LOG.warning("Can not load world level.dat of world:" + world.getFile() + e.getMessage());
+            LOG.warning("Can not load world level.dat of world: " + world.getFile(), e);
         }
 
         this.worldInfoTab.setNodeSupplier(() -> new WorldInfoPage(this));
