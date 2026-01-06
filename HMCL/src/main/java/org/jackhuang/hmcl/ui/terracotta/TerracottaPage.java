@@ -24,7 +24,6 @@ import javafx.geometry.Insets;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.terracotta.TerracottaMetadata;
@@ -71,7 +70,10 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
         AdvancedListBox toolbar = new AdvancedListBox()
                 .addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, () -> {
                     Profile profile = Profiles.getSelectedProfile();
-                    Versions.launch(profile, profile.getSelectedVersion(), LauncherHelper::setKeep);
+                    Versions.launch(profile, profile.getSelectedVersion(), launcherHelper -> {
+                        launcherHelper.setKeep();
+                        launcherHelper.setDisableOfflineSkin();
+                    });
                 }, item -> {
                     instanceChangeListenerHolder = FXUtils.onWeakChangeAndOperate(Profiles.selectedVersionProperty(),
                             instanceName -> item.setSubtitle(StringUtils.isNotBlank(instanceName) ? instanceName : i18n("version.empty"))
@@ -83,8 +85,7 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
                         return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
                     }, it -> mainPage.getProfile().setSelectedVersion(it.getId()));
                 })
-                .addNavigationDrawerItem(i18n("terracotta.feedback.title"), SVG.FEEDBACK, () -> FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK))
-                .addNavigationDrawerItem(i18n("terracotta.easytier"), SVG.HOST, () -> FXUtils.openLink("https://easytier.cn/"));
+                .addNavigationDrawerItem(i18n("terracotta.feedback.title"), SVG.FEEDBACK, () -> FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK));
         BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
         left.setBottom(toolbar);
 

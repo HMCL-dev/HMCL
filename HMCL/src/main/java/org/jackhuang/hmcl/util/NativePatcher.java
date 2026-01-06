@@ -249,7 +249,7 @@ public final class NativePatcher {
 
         if (minVersion != null) {
             if (gameVersion.compareTo(minVersion) >= 0) {
-                if (maxVersion != null && gameVersion.compareTo(maxVersion) >= 0)
+                if (maxVersion != null && gameVersion.compareTo(maxVersion) > 0)
                     return SupportStatus.UNSUPPORTED;
 
                 String[] defaultGameVersions = GameVersionNumber.getDefaultGameVersions();

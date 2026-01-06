@@ -57,7 +57,6 @@ import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 import org.jackhuang.hmcl.setting.StyleSheets;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -135,6 +134,7 @@ public final class FXUtils {
     public static final @Nullable ObservableMap<String, Object> PREFERENCES;
     public static final @Nullable ObservableBooleanValue DARK_MODE;
     public static final @Nullable Boolean REDUCED_MOTION;
+    public static final @Nullable ReadOnlyObjectProperty<Color> ACCENT_COLOR;
 
     public static final @Nullable MethodHandle TEXT_TRUNCATED_PROPERTY;
 
@@ -151,6 +151,7 @@ public final class FXUtils {
 
         ObservableMap<String, Object> preferences = null;
         ObservableBooleanValue darkMode = null;
+        ReadOnlyObjectProperty<Color> accentColorProperty = null;
         Boolean reducedMotion = null;
         if (JAVAFX_MAJOR_VERSION >= 22) {
             try {
@@ -162,13 +163,18 @@ public final class FXUtils {
                 preferences = preferences0;
 
                 @SuppressWarnings("unchecked")
-                var colorSchemeProperty =
-                        (ReadOnlyObjectProperty<? extends Enum<?>>)
-                                lookup.findVirtual(preferencesClass, "colorSchemeProperty", MethodType.methodType(ReadOnlyObjectProperty.class))
-                                        .invoke(preferences);
+                var colorSchemeProperty = (ReadOnlyObjectProperty<? extends Enum<?>>)
+                        lookup.findVirtual(preferencesClass, "colorSchemeProperty", MethodType.methodType(ReadOnlyObjectProperty.class))
+                                .invoke(preferences);
 
                 darkMode = Bindings.createBooleanBinding(() ->
                         "DARK".equals(colorSchemeProperty.get().name()), colorSchemeProperty);
+
+                @SuppressWarnings("unchecked")
+                var accentColorProperty0 = (ReadOnlyObjectProperty<Color>)
+                        lookup.findVirtual(preferencesClass, "accentColorProperty", MethodType.methodType(ReadOnlyObjectProperty.class))
+                                .invoke(preferences);
+                accentColorProperty = accentColorProperty0;
 
                 if (JAVAFX_MAJOR_VERSION >= 24) {
                     reducedMotion = (boolean)
@@ -182,6 +188,7 @@ public final class FXUtils {
         PREFERENCES = preferences;
         DARK_MODE = darkMode;
         REDUCED_MOTION = reducedMotion;
+        ACCENT_COLOR = accentColorProperty;
 
         MethodHandle textTruncatedProperty = null;
         if (JAVAFX_MAJOR_VERSION >= 23) {
@@ -1181,7 +1188,14 @@ public final class FXUtils {
 
     public static Task<Image> getRemoteImageTask(String url, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
         return new CacheFileTask(url)
-                .thenApplyAsync(file -> loadImage(file, requestedWidth, requestedHeight, preserveRatio, smooth));
+                .thenApplyAsync(file -> loadImage(file, requestedWidth, requestedHeight, preserveRatio, smooth))
+                .setSignificance(Task.TaskSignificance.MINOR);
+    }
+
+    public static Task<Image> getRemoteImageTask(URI uri, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
+        return new CacheFileTask(uri)
+                .thenApplyAsync(file -> loadImage(file, requestedWidth, requestedHeight, preserveRatio, smooth))
+                .setSignificance(Task.TaskSignificance.MINOR);
     }
 
     public static ObservableValue<Image> newRemoteImage(String url, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
@@ -1214,7 +1228,7 @@ public final class FXUtils {
     public static JFXButton newToggleButton4(SVG icon) {
         JFXButton button = new JFXButton();
         button.getStyleClass().add("toggle-icon4");
-        button.setGraphic(icon.createIcon(Theme.blackFill(), -1));
+        button.setGraphic(icon.createIcon());
         return button;
     }
 
@@ -1295,16 +1309,10 @@ public final class FXUtils {
     }
 
     public static <T> Callback<ListView<T>, ListCell<T>> jfxListCellFactory(Function<T, Node> graphicBuilder) {
-        Holder<Object> lastCell = new Holder<>();
         return view -> new JFXListCell<T>() {
             @Override
             public void updateItem(T item, boolean empty) {
                 super.updateItem(item, empty);
-
-                // https://mail.openjdk.org/pipermail/openjfx-dev/2022-July/034764.html
-                if (this == lastCell.value && !isVisible())
-                    return;
-                lastCell.value = this;
 
                 if (!empty) {
                     setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
@@ -1350,7 +1358,7 @@ public final class FXUtils {
 
     public static void onClicked(Node node, Runnable action) {
         node.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
-            if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 1) {
+            if (e.getButton() == MouseButton.PRIMARY) {
                 action.run();
                 e.consume();
             }
@@ -1447,11 +1455,11 @@ public final class FXUtils {
             for (int i = 0; i < children.getLength(); i++) {
                 org.w3c.dom.Node node = children.item(i);
 
-                if (node instanceof Element) {
-                    Element element = (Element) node;
+                if (node instanceof Element element) {
                     if ("a".equals(element.getTagName())) {
                         String href = element.getAttribute("href");
                         Text text = new Text(element.getTextContent());
+                        text.getStyleClass().add("hyperlink");
                         onClicked(text, () -> {
                             String link = href;
                             try {
@@ -1461,7 +1469,6 @@ public final class FXUtils {
                             hyperlinkAction.accept(link);
                         });
                         text.setCursor(Cursor.HAND);
-                        text.setFill(Color.web("#0070E0"));
                         text.setUnderline(true);
                         texts.add(text);
                     } else if ("b".equals(element.getTagName())) {
