@@ -143,8 +143,19 @@ public final class Unzipper {
                         if (replaceExistentFile)
                             Files.deleteIfExists(destFile);
 
+                        Path targetPath;
                         try {
-                            Files.createSymbolicLink(destFile, Path.of(linkTarget));
+                            targetPath = Path.of(linkTarget);
+                        } catch (InvalidPathException e) {
+                            throw new IOException("Zip entry has an invalid symlink target: " + entry.getName(), e);
+                        }
+
+                        if (!dest.getParent().resolve(targetPath).toAbsolutePath().normalize().startsWith(destDir)) {
+                            throw new IOException("Zip entry is trying to create a symlink outside of the destination directory: " + entry.getName());
+                        }
+
+                        try {
+                            Files.createSymbolicLink(destFile, targetPath);
                         } catch (FileAlreadyExistsException ignored) {
                         }
                     } else {
