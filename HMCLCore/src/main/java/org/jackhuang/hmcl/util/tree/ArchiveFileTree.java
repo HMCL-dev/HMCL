@@ -69,11 +69,11 @@ public abstract class ArchiveFileTree<R, E extends ArchiveEntry> implements Clos
 
     public @Nullable E getEntry(@NotNull String entryPath) {
         Dir<E> dir = root;
-        String fileName;
         if (entryPath.indexOf('/') < 0) {
-            fileName = entryPath;
-            if (fileName.isEmpty())
+            if (entryPath.isEmpty())
                 return root.getEntry();
+            else
+                return dir.getFiles().get(entryPath);
         } else {
             String[] path = entryPath.split("/");
             if (path.length == 0)
@@ -88,14 +88,14 @@ public abstract class ArchiveFileTree<R, E extends ArchiveEntry> implements Clos
                     return null;
             }
 
-            fileName = path[path.length - 1];
+            String fileName = path[path.length - 1];
             E entry = dir.getFiles().get(fileName);
             if (entry != null)
                 return entry;
-        }
 
-        Dir<E> subDir = dir.getSubDirs().get(fileName);
-        return subDir != null ? subDir.getEntry() : null;
+            Dir<E> subDir = dir.getSubDirs().get(fileName);
+            return subDir != null ? subDir.getEntry() : null;
+        }
     }
 
     protected void addEntry(E entry) throws IOException {
