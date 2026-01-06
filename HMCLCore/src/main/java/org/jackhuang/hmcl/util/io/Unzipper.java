@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.util.io;
 import kala.compress.archivers.zip.ZipArchiveEntry;
 import kala.compress.archivers.zip.ZipArchiveReader;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -137,11 +138,26 @@ public final class Unzipper {
                     Files.createDirectories(destFile);
                 } else {
                     Files.createDirectories(destFile.getParent());
-                    try (InputStream input = reader.getInputStream(entry)) {
-                        Files.copy(input, destFile, copyOptions);
-                    } catch (FileAlreadyExistsException e) {
+                    if (entry.isUnixSymlink()) {
+                        String linkTarget = reader.getUnixSymlink(entry);
                         if (replaceExistentFile)
-                            throw e;
+                            Files.deleteIfExists(destFile);
+
+                        try {
+                            Files.createSymbolicLink(destFile, Path.of(linkTarget));
+                        } catch (FileAlreadyExistsException ignored) {
+                        }
+                    } else {
+                        try (InputStream input = reader.getInputStream(entry)) {
+                            Files.copy(input, destFile, copyOptions);
+                        } catch (FileAlreadyExistsException e) {
+                            if (replaceExistentFile)
+                                throw e;
+                        }
+
+                        if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS) {
+                            Files.setPosixFilePermissions(destFile, FileUtils.parsePosixFilePermission(entry.getUnixMode()));
+                        }
                     }
                 }
             }
