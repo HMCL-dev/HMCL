@@ -688,7 +688,7 @@ public final class WorldInfoPage extends SpinnerPane {
             iconImageView.setImage(image);
             Controllers.showToast(i18n("world.icon.change.succeed.toast"));
         } catch (IOException e) {
-            LOG.warning("Fail to save world icon " + e.getMessage());
+            LOG.warning("Failed to save world icon " + e.getMessage());
             iconImageView.setImage(oldImage);
         }
     }
@@ -699,7 +699,7 @@ public final class WorldInfoPage extends SpinnerPane {
             Files.deleteIfExists(output);
             iconImageView.setImage(FXUtils.newBuiltinImage("/assets/img/unknown_server.png"));
         } catch (IOException e) {
-            LOG.warning("Fail to delete world icon " + e.getMessage());
+            LOG.warning("Failed to delete world icon " + e.getMessage());
         }
     }
 }
