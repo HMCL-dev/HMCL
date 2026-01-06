@@ -80,27 +80,6 @@ public final class Unzipper {
         return this;
     }
 
-    private ZipArchiveReader openReader() throws IOException {
-        ZipArchiveReader zipReader = new ZipArchiveReader(Files.newByteChannel(zipFile));
-
-        Charset suitableEncoding;
-        try {
-            if (encoding != StandardCharsets.UTF_8 && CompressingUtils.testEncoding(zipReader, encoding)) {
-                suitableEncoding = encoding;
-            } else {
-                suitableEncoding = CompressingUtils.findSuitableEncoding(zipReader);
-                if (suitableEncoding == StandardCharsets.UTF_8)
-                    return zipReader;
-            }
-        } catch (Throwable e) {
-            IOUtils.closeQuietly(zipReader, e);
-            throw e;
-        }
-
-        zipReader.close();
-        return new ZipArchiveReader(Files.newByteChannel(zipFile), suitableEncoding);
-    }
-
     /// Decompress the given zip file to a directory.
     ///
     /// @throws IOException if zip file is malformed or filesystem error.
@@ -113,7 +92,7 @@ public final class Unzipper {
                 : new CopyOption[]{};
 
         long entryCount = 0L;
-        try (ZipArchiveReader reader = openReader()) {
+        try (ZipArchiveReader reader = CompressingUtils.openZipFileWithPossibleEncoding(zipFile, encoding)) {
             String pathPrefix = StringUtils.addSuffix(subDirectory, "/");
 
             for (ZipArchiveEntry entry : reader.getEntries()) {
