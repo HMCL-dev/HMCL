@@ -60,7 +60,7 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
         StackPane pane = new StackPane(root);
         {
             pane.setPadding(new Insets(10));
-            pane.getStyleClass().addAll("notice-pane");
+            pane.getStyleClass().add("notice-pane");
             root.getStyleClass().add("no-padding");
 
             getChildren().add(pane);
@@ -101,9 +101,11 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
             ComponentList.setVgrow(center, Priority.ALWAYS);
             center.getStyleClass().add("large-spinner-pane");
             center.setContent(listView);
+
             listView.setItems(displayedItems);
             listView.setCellFactory(x -> new GameRuleListCell(listView, cellMap));
             FXUtils.ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
+
             root.getContent().add(center);
         }
     }
@@ -143,7 +145,10 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
 
             VBox displayInfoVBox = new VBox();
             {
-                displayInfoVBox.getChildren().addAll(new Label(gameRule.getDisplayName()), new Label(gameRule.getRuleKey()));
+                Label displayNameLabel = new Label(gameRule.getDisplayName());
+                Label ruleKeyLabel = new Label(gameRule.getRuleKey());
+                ruleKeyLabel.getStyleClass().add("subtitle");
+                displayInfoVBox.getChildren().addAll(displayNameLabel, ruleKeyLabel);
                 displayInfoVBox.setAlignment(Pos.CENTER_LEFT);
                 HBox.setHgrow(displayInfoVBox, Priority.ALWAYS);
             }
@@ -236,7 +241,6 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
                 vBox.getChildren().add(warnLabel);
 
                 if (!modifiedItems.isEmpty()) {
-
                     MenuUpDownButton showDetailButton = new MenuUpDownButton();
                     {
                         showDetailButton.setText(i18n("gamerule.show_modified_details.button"));
@@ -247,7 +251,6 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
 
                     GridPane gridPane = new GridPane();
                     {
-
                         gridPane.addRow(0,
                                 new Label(i18n("gamerule.column.name")),
                                 new Label(i18n("gamerule.column.current")),
@@ -276,7 +279,7 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
                         VBox.setMargin(scrollPane, new Insets(5, 8, 5, 8));
                         FXUtils.smoothScrolling(scrollPane);
 
-                        vBox.getChildren().addAll(scrollPane);
+                        vBox.getChildren().add(scrollPane);
                     }
                 }
             }
