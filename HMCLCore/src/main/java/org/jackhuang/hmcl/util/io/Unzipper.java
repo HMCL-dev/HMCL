@@ -155,7 +155,7 @@ public final class Unzipper {
                                 throw e;
                         }
 
-                        if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS) {
+                        if (entry.getUnixMode() != 0 && OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS) {
                             Files.setPosixFilePermissions(destFile, FileUtils.parsePosixFilePermission(entry.getUnixMode()));
                         }
                     }
