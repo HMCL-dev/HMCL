@@ -33,8 +33,6 @@ public final class Unzipper {
     private boolean terminateIfSubDirectoryNotExists = false;
     private String subDirectory = "/";
     private EntryFilter filter;
-
-    // We now automatically detect encoding, so is it still necessary to keep this option?
     private Charset encoding = StandardCharsets.UTF_8;
 
     /**
