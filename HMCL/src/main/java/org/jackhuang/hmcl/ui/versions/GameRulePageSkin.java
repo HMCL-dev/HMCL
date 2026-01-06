@@ -247,10 +247,11 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
 
                     GridPane gridPane = new GridPane();
                     {
+
                         gridPane.addRow(0,
                                 new Label(i18n("gamerule.column.name")),
                                 new Label(i18n("gamerule.column.current")),
-                                new Label("->"),
+                                new Label("", SVG.ARROW_FORWARD.createIcon(12)),
                                 new Label(i18n("gamerule.column.default")));
 
                         for (int i = 0; i < modifiedItems.size(); i++) {
@@ -259,7 +260,7 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
                             gridPane.addRow(i + 1,
                                     new Label(displayName),
                                     new Label(gameRuleInfo.getCurrentValueText()),
-                                    new Label("->"),
+                                    new Label("", SVG.ARROW_FORWARD.createIcon(12)),
                                     new Label(gameRuleInfo.getDefaultValueText()));
                         }
                     }
