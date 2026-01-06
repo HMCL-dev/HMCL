@@ -174,6 +174,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                 fireEvent(new PageCloseEvent());
                 Controllers.dialog(i18n("world.load.fail"), null, MessageDialogPane.MessageType.ERROR);
             });
+            return;
         }
         if (sessionLockChannel == null || !sessionLockChannel.isOpen()) {
             sessionLockChannel = WorldManageUIUtils.getSessionLockChannel(world);
