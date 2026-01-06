@@ -89,6 +89,27 @@ public final class Unzipper {
         return this;
     }
 
+    private ZipArchiveReader openReader() throws IOException {
+        ZipArchiveReader zipReader = new ZipArchiveReader(Files.newByteChannel(zipFile));
+
+        Charset suitableEncoding;
+        try {
+            if (encoding != StandardCharsets.UTF_8 && CompressingUtils.testEncoding(zipReader, encoding)) {
+                suitableEncoding = encoding;
+            } else {
+                suitableEncoding = CompressingUtils.findSuitableEncoding(zipReader);
+                if (suitableEncoding == StandardCharsets.UTF_8)
+                    return zipReader;
+            }
+        } catch (Throwable e) {
+            IOUtils.closeQuietly(zipReader, e);
+            throw e;
+        }
+
+        zipReader.close();
+        return new ZipArchiveReader(Files.newByteChannel(zipFile), suitableEncoding);
+    }
+
     /**
      * Decompress the given zip file to a directory.
      *
@@ -103,7 +124,7 @@ public final class Unzipper {
                 : new CopyOption[]{};
 
         long countEntry = 0L;
-        try (ZipArchiveReader reader = CompressingUtils.openZipFile(zipFile)) {
+        try (ZipArchiveReader reader = openReader()) {
             String pathPrefix = StringUtils.addSuffix(subDirectory, "/");
 
             for (ZipArchiveEntry entry : reader.getEntries()) {
@@ -141,10 +162,6 @@ public final class Unzipper {
                 throw new IOException("Subdirectory " + subDirectory + " does not exist in the zip file.");
             }
         }
-    }
-
-    public interface FileFilter {
-        boolean accept(Path zipEntry, boolean isDirectory, Path destFile, String entryPath) throws IOException;
     }
 
     public interface EntryFilter {
