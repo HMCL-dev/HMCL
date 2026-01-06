@@ -112,7 +112,7 @@ public final class Unzipper {
                 ? new CopyOption[]{StandardCopyOption.REPLACE_EXISTING}
                 : new CopyOption[]{};
 
-        long countEntry = 0L;
+        long entryCount = 0L;
         try (ZipArchiveReader reader = openReader()) {
             String pathPrefix = StringUtils.addSuffix(subDirectory, "/");
 
@@ -132,7 +132,7 @@ public final class Unzipper {
                     continue;
                 }
 
-                countEntry++;
+                entryCount++;
 
                 if (entry.isDirectory()) {
                     Files.createDirectories(destFile);
@@ -173,7 +173,7 @@ public final class Unzipper {
                 }
             }
 
-            if (countEntry == 0 && !terminateIfSubDirectoryNotExists) {
+            if (entryCount == 0 && !terminateIfSubDirectoryNotExists) {
                 throw new IOException("Subdirectory " + subDirectory + " does not exist in the zip file.");
             }
         }
