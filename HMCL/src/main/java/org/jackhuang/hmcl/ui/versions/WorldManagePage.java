@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXPopup;
+import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -27,6 +28,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
@@ -34,6 +36,7 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.ChunkBaseApp;
+import org.jackhuang.hmcl.util.StringUtils;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
@@ -53,6 +56,8 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     private final Profile profile;
     private final String id;
 
+    private boolean loadFailed = false;
+
     private final TabHeader header;
     private final TabHeader.Tab<WorldInfoPage> worldInfoTab = new TabHeader.Tab<>("worldInfoPage");
     private final TabHeader.Tab<GameRulePage> gameRuleTab = new TabHeader.Tab<>("gameRulePage");
@@ -66,25 +71,25 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     public WorldManagePage(World world, Path backupsDir, Profile profile, String id) {
         this.world = world;
         this.backupsDir = backupsDir;
-
         this.profile = profile;
         this.id = id;
+
+        sessionLockChannel = WorldManageUIUtils.getSessionLockChannel(world);
+        try {
+            world.reloadLevelDat();
+        } catch (IOException e) {
+            LOG.warning("Can not load world level.dat of world: " + world.getFile(), e);
+            loadFailed = true;
+        }
 
         this.worldInfoTab.setNodeSupplier(() -> new WorldInfoPage(this));
         gameRuleTab.setNodeSupplier(() -> new GameRulePage(this));
         this.worldBackupsTab.setNodeSupplier(() -> new WorldBackupsPage(this));
         this.datapackTab.setNodeSupplier(() -> new DatapackListPage(this));
 
-        this.state = new SimpleObjectProperty<>(State.fromTitle(i18n("world.manage.title", world.getWorldName())));
+        this.state = new SimpleObjectProperty<>(State.fromTitle(i18n("world.manage.title", StringUtils.parseColorEscapes(world.getWorldName()))));
         this.header = new TabHeader(transitionPane, worldInfoTab, gameRuleTab, worldBackupsTab);
         header.select(worldInfoTab);
-
-        // Does it need to be done in the background?
-        try {
-            sessionLockChannel = world.lock();
-            LOG.info("Acquired lock on world " + world.getFileName());
-        } catch (IOException ignored) {
-        }
 
         setCenter(transitionPane);
 
@@ -109,37 +114,81 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         AdvancedListBox toolbar = new AdvancedListBox();
 
         if (world.getGameVersion() != null && world.getGameVersion().isAtLeast("1.20", "23w14a")) {
-            toolbar.addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, this::launch, null);
+            toolbar.addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, this::launch, advancedListItem -> advancedListItem.setDisable(isReadOnly()));
             toolbar.addNavigationDrawerItem(i18n("version.launch_script"), SVG.SCRIPT, this::generateLaunchScript, null);
         }
 
         if (ChunkBaseApp.isSupported(world)) {
-            PopupMenu popupMenu = new PopupMenu();
-            JFXPopup popup = new JFXPopup(popupMenu);
+            PopupMenu chunkBasePopupMenu = new PopupMenu();
+            JFXPopup chunkBasePopup = new JFXPopup(chunkBasePopupMenu);
 
-            popupMenu.getContent().addAll(
-                    new IconedMenuItem(SVG.EXPLORE, i18n("world.chunkbase.seed_map"), () -> ChunkBaseApp.openSeedMap(world), popup),
-                    new IconedMenuItem(SVG.VISIBILITY, i18n("world.chunkbase.stronghold"), () -> ChunkBaseApp.openStrongholdFinder(world), popup),
-                    new IconedMenuItem(SVG.FORT, i18n("world.chunkbase.nether_fortress"), () -> ChunkBaseApp.openNetherFortressFinder(world), popup)
+
+            chunkBasePopupMenu.getContent().addAll(
+                    new IconedMenuItem(SVG.EXPLORE, i18n("world.chunkbase.seed_map"), () -> ChunkBaseApp.openSeedMap(world), chunkBasePopup),
+                    new IconedMenuItem(SVG.VISIBILITY, i18n("world.chunkbase.stronghold"), () -> ChunkBaseApp.openStrongholdFinder(world), chunkBasePopup),
+                    new IconedMenuItem(SVG.FORT, i18n("world.chunkbase.nether_fortress"), () -> ChunkBaseApp.openNetherFortressFinder(world), chunkBasePopup)
             );
 
             if (world.getGameVersion() != null && world.getGameVersion().compareTo("1.13") >= 0) {
-                popupMenu.getContent().add(
-                        new IconedMenuItem(SVG.LOCATION_CITY, i18n("world.chunkbase.end_city"), () -> ChunkBaseApp.openEndCityFinder(world), popup));
+                chunkBasePopupMenu.getContent().add(
+                        new IconedMenuItem(SVG.LOCATION_CITY, i18n("world.chunkbase.end_city"), () -> ChunkBaseApp.openEndCityFinder(world), chunkBasePopup));
             }
 
             toolbar.addNavigationDrawerItem(i18n("world.chunkbase"), SVG.EXPLORE, null, chunkBaseMenuItem ->
                     chunkBaseMenuItem.setOnAction(e ->
-                            popup.show(chunkBaseMenuItem,
+                            chunkBasePopup.show(chunkBaseMenuItem,
                                     JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT,
                                     chunkBaseMenuItem.getWidth(), 0)));
         }
+
         toolbar.addNavigationDrawerItem(i18n("settings.game.exploration"), SVG.FOLDER_OPEN, () -> FXUtils.openFolder(world.getFile()), null);
+
+        {
+            PopupMenu managePopupMenu = new PopupMenu();
+            JFXPopup managePopup = new JFXPopup(managePopupMenu);
+
+            managePopupMenu.getContent().addAll(
+                    new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), () -> WorldManageUIUtils.export(world, sessionLockChannel), managePopup),
+                    new IconedMenuItem(SVG.DELETE, i18n("world.delete"), () -> WorldManageUIUtils.delete(world, () -> fireEvent(new PageCloseEvent()), sessionLockChannel), managePopup),
+                    new IconedMenuItem(SVG.CONTENT_COPY, i18n("world.duplicate"), () -> WorldManageUIUtils.copyWorld(world, null), managePopup)
+            );
+
+            toolbar.addNavigationDrawerItem(i18n("settings.game.management"), SVG.MENU, null, managePopupMenuItem ->
+            {
+                managePopupMenuItem.setOnAction(e ->
+                        managePopup.show(managePopupMenuItem,
+                                JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT,
+                                managePopupMenuItem.getWidth(), 0));
+                managePopupMenuItem.setDisable(isReadOnly());
+            });
+
+        }
 
         BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
         left.setBottom(toolbar);
 
         this.addEventHandler(Navigator.NavigationEvent.EXITED, this::onExited);
+        this.addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
+    }
+
+    private void onNavigated(Navigator.NavigationEvent event) {
+        if (loadFailed) {
+            Platform.runLater(() -> {
+                fireEvent(new PageCloseEvent());
+                Controllers.dialog(i18n("world.load.fail"), null, MessageDialogPane.MessageType.ERROR);
+            });
+            return;
+        }
+        if (sessionLockChannel == null || !sessionLockChannel.isOpen()) {
+            sessionLockChannel = WorldManageUIUtils.getSessionLockChannel(world);
+        }
+    }
+
+    public void onExited(Navigator.NavigationEvent event) {
+        try {
+            WorldManageUIUtils.closeSessionLockChannel(world, sessionLockChannel);
+        } catch (IOException ignored) {
+        }
     }
 
     @Override
@@ -157,19 +206,6 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
     public boolean isReadOnly() {
         return sessionLockChannel == null;
-    }
-
-    public void onExited(Navigator.NavigationEvent event) {
-        if (sessionLockChannel != null) {
-            try {
-                sessionLockChannel.close();
-                LOG.info("Releases the lock on world " + world.getFileName());
-            } catch (IOException e) {
-                LOG.warning("Failed to close session lock channel", e);
-            }
-
-            sessionLockChannel = null;
-        }
     }
 
     public void launch() {

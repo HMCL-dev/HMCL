@@ -22,15 +22,23 @@ import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.download.GameBuilder;
 import org.jackhuang.hmcl.game.DefaultGameRepository;
 import org.jackhuang.hmcl.mod.*;
+import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+
 public class ModrinthInstallTask extends Task<Void> {
+    private static final Set<String> SUPPORTED_ICON_EXTS = Set.of("png", "jpg", "jpeg", "bmp", "gif", "webp", "apng");
 
     private final DefaultDependencyManager dependencyManager;
     private final DefaultGameRepository repository;
@@ -38,17 +46,21 @@ public class ModrinthInstallTask extends Task<Void> {
     private final Modpack modpack;
     private final ModrinthManifest manifest;
     private final String name;
+    private final String iconUrl;
     private final Path run;
     private final ModpackConfiguration<ModrinthManifest> config;
+    private String iconExt;
+    private Task<Path> downloadIconTask;
     private final List<Task<?>> dependents = new ArrayList<>(4);
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
-    public ModrinthInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, Modpack modpack, ModrinthManifest manifest, String name) {
+    public ModrinthInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, Modpack modpack, ModrinthManifest manifest, String name, String iconUrl) {
         this.dependencyManager = dependencyManager;
         this.zipFile = zipFile;
         this.modpack = modpack;
         this.manifest = manifest;
         this.name = name;
+        this.iconUrl = iconUrl;
         this.repository = dependencyManager.getGameRepository();
         this.run = repository.getRunDirectory(name);
 
@@ -104,6 +116,14 @@ public class ModrinthInstallTask extends Task<Void> {
         dependents.add(new ModpackInstallTask<>(zipFile, run, modpack.getEncoding(), subDirectories, any -> true, config).withStage("hmcl.modpack"));
         dependents.add(new MinecraftInstanceTask<>(zipFile, modpack.getEncoding(), subDirectories, manifest, ModrinthModpackProvider.INSTANCE, manifest.getName(), manifest.getVersionId(), repository.getModpackConfiguration(name)).withStage("hmcl.modpack"));
 
+        URI iconUri = NetworkUtils.toURIOrNull(iconUrl);
+        if (iconUri != null) {
+            String ext = FileUtils.getExtension(StringUtils.substringAfter(iconUri.getPath(), '/')).toLowerCase(Locale.ROOT);
+            if (SUPPORTED_ICON_EXTS.contains(ext)) {
+                iconExt = ext;
+                dependents.add(downloadIconTask = new CacheFileTask(iconUrl));
+            }
+        }
         dependencies.add(new ModrinthCompletionTask(dependencyManager, name, manifest));
     }
 
@@ -133,5 +153,13 @@ public class ModrinthInstallTask extends Task<Void> {
         Path root = repository.getVersionRoot(name);
         Files.createDirectories(root);
         JsonUtils.writeToJsonFile(root.resolve("modrinth.index.json"), manifest);
+
+        if (iconExt != null) {
+            try {
+                Files.copy(downloadIconTask.getResult(), root.resolve("icon." + iconExt));
+            } catch (Exception e) {
+                LOG.warning("Failed to copy modpack icon", e);
+            }
+        }
     }
 }

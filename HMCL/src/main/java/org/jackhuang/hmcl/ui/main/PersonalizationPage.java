@@ -173,6 +173,7 @@ public class PersonalizationPage extends StackPane {
                 slider.setMinorTickCount(1);
                 slider.setBlockIncrement(5);
                 slider.setSnapToTicks(true);
+                slider.setPadding(new Insets(9, 0, 0, 0));
                 HBox.setHgrow(slider, Priority.ALWAYS);
 
                 if (config().getBackgroundImageType() == EnumBackgroundImage.TRANSLUCENT) {
@@ -285,6 +286,8 @@ public class PersonalizationPage extends StackPane {
                         clearButton.getStyleClass().add("toggle-icon4");
                         clearButton.setGraphic(SVG.RESTORE.createIcon());
                         clearButton.setOnAction(e -> cboFont.setValue(null));
+
+                        FXUtils.installFastTooltip(clearButton, i18n("button.reset"));
 
                         hBox.getChildren().setAll(cboFont, clearButton);
 
