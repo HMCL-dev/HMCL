@@ -1,6 +1,6 @@
 # 贡献指南
 
-<h2 id="buliding">构建 HMCL</h2>
+## 构建 HMCL
 
 ### 环境需求
 
@@ -53,7 +53,7 @@ OpenJDK 64-Bit Server VM (build 25+37-LTS, mixed mode, sharing)
 
 构建出的 HMCL 程序文件位于根目录下的 `HMCL/build/libs` 子目录中。
 
-<h2 id="debug-options">调试选项</h2>
+## 调试选项
 
 > [!WARNING]
 > 本文介绍的是 HMCL 的内部功能，我们不保证这些功能的稳定性，并且随时可能修改或删除这些功能。

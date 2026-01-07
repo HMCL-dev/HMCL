@@ -55,10 +55,10 @@ HMCL 是一个社区驱动的开源项目，欢迎任何人参与贡献代码或
 
 在参与贡献前，请阅读[贡献指南](./Contribute_zh.md)，其中包含以下内容：
 
-- [如何从源码构建并运行 HMCL](./Contribute_zh.md#building)
-- [调试选项](./Contribute_zh.md#debug-options)
+- [如何从源码构建并运行 HMCL](./Contribute_zh.md#构建-hmcl)
+- [通过调试选项调整 HMCL 的行为](./Contribute_zh.md#调试选项)
 
-### 贡献者
+## 贡献者
 
 自 2015 年以来，HMCL 已经有超过 110 位贡献者参与其中，感谢他们的辛勤付出！
 
