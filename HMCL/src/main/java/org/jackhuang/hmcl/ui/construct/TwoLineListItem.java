@@ -23,6 +23,7 @@ import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
@@ -78,8 +79,12 @@ public class TwoLineListItem extends VBox {
         getChildren().setAll(firstLine, secondLine);
 
         FXUtils.onChangeAndOperate(subtitle, subtitleString -> {
-            if (subtitleString == null) getChildren().setAll(firstLine);
-            else getChildren().setAll(firstLine, secondLine);
+            if (subtitleString == null || subtitleString.isEmpty()) {
+                getChildren().setAll(firstLine);
+                setAlignment(Pos.CENTER);
+            } else {
+                getChildren().setAll(firstLine, secondLine);
+            }
         });
 
         getStyleClass().add(DEFAULT_STYLE_CLASS);
