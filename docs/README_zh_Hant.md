@@ -22,6 +22,8 @@
 </div>
 <!-- #END COPY -->
 
+---
+
 <!-- #BEGIN LANGUAGE_SWITCHER -->
 English ([Standard](README.md), [uʍoᗡ ǝpᴉsd∩](README_en_Qabs.md)) | **中文** ([简体](README_zh.md), **繁體**, [文言](README_lzh.md)) | [日本語](README_ja.md) | [español](README_es.md) | [русский](README_ru.md) | [українська](README_uk.md)
 <!-- #END LANGUAGE_SWITCHER -->
@@ -36,11 +38,31 @@ HMCL 有著強大的跨平臺能力。它不僅支援 Windows、Linux、macOS、
 
 ## 下載
 
-請從 [HMCL 官網](https://hmcl.huangyuhui.net/download) 下載最新版本的 HMCL。
+你可以從這些渠道下載 HMCL：
 
-你也可以在 [GitHub Releases](https://github.com/HMCL-dev/HMCL/releases) 中下載最新版本的 HMCL。
+- [HMCL 官方網站](https://hmcl.huangyuhui.net/download)
+- [GitHub Release](https://github.com/HMCL-dev/HMCL/releases)
+- [CNB Release](https://cnb.cool/HMCL-dev/HMCL/-/releases)
 
-雖然並不強制，但仍建議透過 HMCL 官網下載啟動器。
+## 參與貢獻
+
+HMCL 是一個社區驅動的開源項目，歡迎任何人參與貢獻程式碼或提出建議。
+
+你可以通過以下方式參與 HMCL 的開發：
+
+- 通過在 GitHub 上[創建 Issue](https://github.com/HMCL-dev/HMCL/issues/new/choose) 來報告 Bug 或提出功能請求。
+- 通過在 GitHub 上 Fork 倉庫並[提交 Pull Request](https://github.com/HMCL-dev/HMCL/compare) 來貢獻程式碼。
+
+在參與貢獻前，請閱讀[貢獻指南](./Contributing_zh.md)，其中包含以下內容：
+
+- [如何從原始碼構建並運行 HMCL](./Contributing_zh.md#构建-hmcl)
+- [通過調試選項調整 HMCL 的行為](./Contributing_zh.md#调试选项)
+
+## 貢獻者
+
+自 2015 年以來，HMCL 已經有超過 110 位貢獻者參與其中，感謝他們的辛勤付出！
+
+[![Contributors](https://contrib.rocks/image?repo=HMCL-dev/HMCL)](https://github.com/HMCL-dev/HMCL/graphs/contributors)
 
 ## 開源協議
 
@@ -53,31 +75,3 @@ HMCL 有著強大的跨平臺能力。它不僅支援 Windows、Linux、macOS、
    該程式的名稱及版本號可在 [此處](https://github.com/HMCL-dev/HMCL/blob/javafx/HMCL/src/main/java/org/jackhuang/hmcl/Metadata.java#L33-L35) 修改。
 
 2. 你不得移除該程式所顯示的版權宣告。(依據 [GPLv3, 7(b)](https://github.com/HMCL-dev/HMCL/blob/11820e31a85d8989e41d97476712b07e7094b190/LICENSE#L368-L370))
-
-## 貢獻
-
-如果你想提交一個 Pull Request，必須遵守如下要求：
-
-* IDE：IntelliJ IDEA
-* 編譯器：Java 17+
-
-### 編譯
-
-參閱[構建指南](./Building_zh.md)頁面。
-
-## JVM 選項 (用於除錯)
-
-| 參數                                         | 簡介                                                                 |
-| -------------------------------------------- | -------------------------------------------------------------------- |
-| `-Dhmcl.home=<path>`                         | 覆蓋 HMCL 使用者目錄                                                 |
-| `-Dhmcl.self_integrity_check.disable=true`   | 檢查更新時不檢查本體完整性                                           |
-| `-Dhmcl.bmclapi.override=<url>`              | 覆蓋 BMCLAPI 的 API Root，預設值為 `https://bmclapi2.bangbang93.com` |
-| `-Dhmcl.font.override=<font family>`         | 覆蓋字族                                                             |
-| `-Dhmcl.version.override=<version>`          | 覆蓋版本號                                                           |
-| `-Dhmcl.update_source.override=<url>`        | 覆蓋 HMCL 更新來源                                                   |
-| `-Dhmcl.authlibinjector.location=<path>`     | 使用指定的 authlib-injector (而非下載一個)                           |
-| `-Dhmcl.openjfx.repo=<maven repository url>` | 添加用於下載 OpenJFX 的自訂 Maven 倉庫                               |
-| `-Dhmcl.native.encoding=<encoding>`          | 覆蓋原生編碼                                                         |
-| `-Dhmcl.microsoft.auth.id=<App ID>`          | 覆蓋 Microsoft OAuth App ID                                          |
-| `-Dhmcl.microsoft.auth.secret=<App Secret>`  | 覆蓋 Microsoft OAuth App 金鑰                                        |
-| `-Dhmcl.curseforge.apikey=<Api Key>`         | 覆蓋 CurseForge API 金鑰                                        |

@@ -38,11 +38,31 @@ For systems and CPU architectures supported by HMCL, please refer to [this table
 
 ## Download
 
-Download the latest version from the [official website](https://hmcl.huangyuhui.net/download).
+You can download HMCL from the following sources:
 
-You can also find the latest version of HMCL in [GitHub Releases](https://github.com/HMCL-dev/HMCL/releases).
+- [HMCL Official Website](https://hmcl.huangyuhui.net/download)
+- [GitHub Release](https://github.com/HMCL-dev/HMCL/releases)
+- [CNB Release](https://cnb.cool/HMCL-dev/HMCL/-/releases)
 
-Although not necessary, it is recommended only to download releases from the official websites listed above.
+## Contributing
+
+HMCL is a community-driven open-source project, and everyone is welcome to contribute code or provide suggestions.
+
+You can contribute to HMCL development in the following ways:
+
+- Report bugs or request features by [creating an issue](https://github.com/HMCL-dev/HMCL/issues/new/choose) on GitHub.
+- Contribute code by forking the repository on GitHub and [submitting a pull request](https://github.com/HMCL-dev/HMCL/compare).
+
+Before contributing, please read the [Contributing Guide](./Contributing_zh.md), which includes the following:
+
+- [How to build and run HMCL from source](./Contributing.md#build-hmcl)
+- [Adjusting HMCL behavior using debug options](./Contributing.md#debug-options)
+
+## Contributors
+
+Since 2015, more than 110 contributors have participated in HMCL. Thank you for your hard work!
+
+[![Contributors](https://contrib.rocks/image?repo=HMCL-dev/HMCL)](https://github.com/HMCL-dev/HMCL/graphs/contributors)
 
 ## License
 
