@@ -38,11 +38,31 @@ HMCL 有着强大的跨平台能力。它不仅支持 Windows、Linux、macOS、
 
 ## 下载
 
-请从 [HMCL 官网](https://hmcl.huangyuhui.net/download) 下载最新版本的 HMCL。
+你可以从这些渠道下载 HMCL：
 
-你也可以在 [GitHub Releases](https://github.com/HMCL-dev/HMCL/releases) 中下载最新版本的 HMCL。
+- [HMCL 官方网站](https://hmcl.huangyuhui.net/download)
+- [GitHub Release](https://github.com/HMCL-dev/HMCL/releases)
+- [CNB Release](https://cnb.cool/HMCL-dev/HMCL/-/releases)
 
-虽然并不强制，但仍建议通过 HMCL 官网下载启动器。
+## 参与贡献
+
+HMCL 是一个社区驱动的开源项目，欢迎任何人参与贡献代码或提出建议。
+
+你可以通过以下方式参与 HMCL 的开发：
+
+- 通过在 GitHub 上[创建 Issue](https://github.com/HMCL-dev/HMCL/issues/new/choose) 来报告 Bug 或提出功能请求。
+- 通过在 GitHub 上 Fork 仓库并[提交 Pull Request](https://github.com/HMCL-dev/HMCL/compare) 来贡献代码。
+
+在参与贡献前，请阅读[贡献指南](./Contribute_zh.md)，其中包含以下内容：
+
+- [如何从源码构建并运行 HMCL](./Contribute_zh.md#building)
+- [调试选项](./Contribute_zh.md#debug-options)
+
+### 贡献者
+
+自 2015 年以来，HMCL 已经有超过 110 位贡献者参与其中，感谢他们的辛勤付出！
+
+[![Contributors](https://contrib.rocks/image?repo=HMCL-dev/HMCL)](https://github.com/HMCL-dev/HMCL/graphs/contributors)
 
 ## 开源协议
 
@@ -56,31 +76,3 @@ HMCL 有着强大的跨平台能力。它不仅支持 Windows、Linux、macOS、
    该程序的名称及版本号可在 [此处](https://github.com/HMCL-dev/HMCL/blob/javafx/HMCL/src/main/java/org/jackhuang/hmcl/Metadata.java#L33-L35) 修改。
 
 2. 你不得移除该程序所显示的版权声明。(依据 [GPLv3, 7(b)](https://github.com/HMCL-dev/HMCL/blob/11820e31a85d8989e41d97476712b07e7094b190/LICENSE#L368-L370))
-
-## 贡献
-
-如果你想提交一个 Pull Request，必须遵守如下要求：
-
-* IDE：IntelliJ IDEA
-* 编译器：Java 17+
-
-### 构建 HMCL
-
-参见[构建指南](./Building_zh.md)页面。
-
-## JVM 选项 (用于调试)
-
-| 参数                                           | 简介                                                           |
-|----------------------------------------------|--------------------------------------------------------------|
-| `-Dhmcl.home=<path>`                         | 覆盖 HMCL 数据文件夹                                                |
-| `-Dhmcl.self_integrity_check.disable=true`   | 检查更新时不检查本体完整性                                                |
-| `-Dhmcl.bmclapi.override=<url>`              | 覆盖 BMCLAPI 的 API Root，默认值为 `https://bmclapi2.bangbang93.com` |
-| `-Dhmcl.font.override=<font family>`         | 覆盖字族                                                         |
-| `-Dhmcl.version.override=<version>`          | 覆盖版本号                                                        |
-| `-Dhmcl.update_source.override=<url>`        | 覆盖 HMCL 更新源                                                  |
-| `-Dhmcl.authlibinjector.location=<path>`     | 使用指定的 authlib-injector (而非下载一个)                              |
-| `-Dhmcl.openjfx.repo=<maven repository url>` | 添加用于下载 OpenJFX 的自定义 Maven 仓库                                 |
-| `-Dhmcl.native.encoding=<encoding>`          | 覆盖原生编码                                                       |
-| `-Dhmcl.microsoft.auth.id=<App ID>`          | 覆盖 Microsoft OAuth App ID                                    |
-| `-Dhmcl.microsoft.auth.secret=<App Secret>`  | 覆盖 Microsoft OAuth App 密钥                                    |
-| `-Dhmcl.curseforge.apikey=<Api Key>`         | 覆盖 CurseForge API 密钥                                         |
