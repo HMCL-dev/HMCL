@@ -1,6 +1,7 @@
 # 贡献指南
 
 <!-- #BEGIN LANGUAGE_SWITCHER -->
+[English](Contributing.md) | **中文**
 <!-- #END LANGUAGE_SWITCHER -->
 
 ## 构建 HMCL

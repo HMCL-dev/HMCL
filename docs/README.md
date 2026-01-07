@@ -53,7 +53,7 @@ You can contribute to HMCL development in the following ways:
 - Report bugs or request features by [creating an issue](https://github.com/HMCL-dev/HMCL/issues/new/choose) on GitHub.
 - Contribute code by forking the repository on GitHub and [submitting a pull request](https://github.com/HMCL-dev/HMCL/compare).
 
-Before contributing, please read the [Contributing Guide](./Contributing_zh.md), which includes the following:
+Before contributing, please read the [Contributing Guide](./Contributing.md), which includes the following:
 
 - [How to build and run HMCL from source](./Contributing.md#build-hmcl)
 - [Adjusting HMCL behavior using debug options](./Contributing.md#debug-options)

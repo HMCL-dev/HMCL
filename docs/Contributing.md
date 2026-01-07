@@ -1,6 +1,7 @@
 # Contributing Guide
 
 <!-- #BEGIN LANGUAGE_SWITCHER -->
+**English** | [中文](Contributing_zh.md)
 <!-- #END LANGUAGE_SWITCHER -->
 
 ## Build HMCL
