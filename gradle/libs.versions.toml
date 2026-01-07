@@ -18,6 +18,7 @@ pci-ids = "0.4.0"
 java-info = "1.0"
 authlib-injector = "1.2.7"
 monet-fx = "0.4.0"
+terracotta = "0.4.1"
 
 # testing
 junit = "6.0.1"
