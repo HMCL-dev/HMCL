@@ -127,18 +127,18 @@ public class InstallerItem extends Control {
         this.id = id;
         this.style = style;
 
-        switch (id) {
-            case "game" -> iconType = VersionIconType.GRASS;
-            case "fabric", "fabric-api" -> iconType = VersionIconType.FABRIC;
-            case "legacyfabric", "legacyfabric-api" -> iconType = VersionIconType.LEGACY_FABRIC;
-            case "forge" -> iconType = VersionIconType.FORGE;
-            case "cleanroom" -> iconType = VersionIconType.CLEANROOM;
-            case "liteloader" -> iconType = VersionIconType.CHICKEN;
-            case "optifine" -> iconType = VersionIconType.OPTIFINE;
-            case "quilt", "quilt-api" -> iconType = VersionIconType.QUILT;
-            case "neoforge" -> iconType = VersionIconType.NEO_FORGE;
-            default -> iconType = null;
-        }
+        iconType = switch (id) {
+            case "game" -> VersionIconType.GRASS;
+            case "fabric", "fabric-api" -> VersionIconType.FABRIC;
+            case "legacyfabric", "legacyfabric-api" -> VersionIconType.LEGACY_FABRIC;
+            case "forge" -> VersionIconType.FORGE;
+            case "cleanroom" -> VersionIconType.CLEANROOM;
+            case "liteloader" -> VersionIconType.CHICKEN;
+            case "optifine" -> VersionIconType.OPTIFINE;
+            case "quilt", "quilt-api" -> VersionIconType.QUILT;
+            case "neoforge" -> VersionIconType.NEO_FORGE;
+            default -> null;
+        };
     }
 
     public String getLibraryId() {
