@@ -121,17 +121,12 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> {
         if (!Files.isDirectory(world.getFile()))
             throw new IOException("Not a valid world directory");
 
-        return world.readLevelDat();
+        return world.getLevelData();
     }
 
     void saveLevelDat() {
         LOG.info("Saving level.dat of world " + world.getWorldName());
-        Task.runAsync(Schedulers.io(), () -> this.world.writeLevelDat(levelDat))
-                .whenComplete(Schedulers.defaultScheduler(), ((result, exception) -> {
-                    if (exception != null) {
-                        LOG.warning("Failed to save level.dat of world " + world.getWorldName(), exception);
-                    }
-                })).start();
+        world.writeLevelDatAsync();
     }
 
     void requestSaveLevelDat() {
