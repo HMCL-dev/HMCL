@@ -457,19 +457,18 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                             RemoteMod remoteMod = repository.getModById(versionOptional.get().getModid());
                             FXUtils.runInFX(() -> {
                                 for (ModLoaderType modLoaderType : versionOptional.get().getLoaders()) {
-                                    String loaderName;
-                                    switch (modLoaderType) {
-                                        case FORGE -> loaderName = i18n("install.installer.forge");
-                                        case CLEANROOM -> loaderName = i18n("install.installer.cleanroom");
-                                        case LEGACY_FABRIC -> loaderName = i18n("install.installer.legacyfabric");
-                                        case NEO_FORGED -> loaderName = i18n("install.installer.neoforge");
-                                        case FABRIC -> loaderName = i18n("install.installer.fabric");
-                                        case LITE_LOADER -> loaderName = i18n("install.installer.liteloader");
-                                        case QUILT -> loaderName = i18n("install.installer.quilt");
-                                        default -> {
-                                            continue;
-                                        }
-                                    }
+                                    String loaderName = switch (modLoaderType) {
+                                        case FORGE -> i18n("install.installer.forge");
+                                        case CLEANROOM -> i18n("install.installer.cleanroom");
+                                        case LEGACY_FABRIC -> i18n("install.installer.legacyfabric");
+                                        case NEO_FORGED -> i18n("install.installer.neoforge");
+                                        case FABRIC -> i18n("install.installer.fabric");
+                                        case LITE_LOADER -> i18n("install.installer.liteloader");
+                                        case QUILT -> i18n("install.installer.quilt");
+                                        default -> null;
+                                    };
+                                    if (loaderName == null)
+                                        continue;
                                     if (title.getTags()
                                             .stream()
                                             .noneMatch(it -> it.getText().equals(loaderName))) {
