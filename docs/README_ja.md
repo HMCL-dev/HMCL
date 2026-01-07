@@ -45,31 +45,3 @@ HMCLが対応しているシステムやCPUアーキテクチャについては�
 ## ライセンス
 
 ライセンスについては [README.md](README.md#license) をご参照ください。
-
-## コントリビューション
-
-プルリクエストを送信したい場合、以下の要件を満たしてください。
-
-* IDE：IntelliJ IDEA
-* コンパイラ：Java 17以上
-
-### コンパイル方法
-
-ビルド方法については、[ビルドガイド](./Building.md)ページをご覧ください。
-
-## JVMオプション（デバッグ用）
-
-| パラメータ                                        | 説明                                                                          |
-|----------------------------------------------|-----------------------------------------------------------------------------|
-| `-Dhmcl.home=<path>`                         | HMCLディレクトリを上書きします                                                           |
-| `-Dhmcl.self_integrity_check.disable=true`   | アップデート時の自己整合性チェックをバイパスします                                                   |
-| `-Dhmcl.bmclapi.override=<url>`              | BMCLAPIダウンロードプロバイダーのAPIルートを上書きします。デフォルトは`https://bmclapi2.bangbang93.com`です |
-| `-Dhmcl.font.override=<font family>`         | フォントファミリーを上書きします                                                            |
-| `-Dhmcl.version.override=<version>`          | バージョン番号を上書きします                                                              |
-| `-Dhmcl.update_source.override=<url>`        | HMCL本体のアップデートソースを上書きします                                                     |
-| `-Dhmcl.authlibinjector.location=<path>`     | 指定したauthlib-injectorを使用します（ダウンロードせずに）                                       |
-| `-Dhmcl.openjfx.repo=<maven repository url>` | OpenJFXダウンロード用のカスタムMavenリポジトリを追加します                                         |
-| `-Dhmcl.native.encoding=<encoding>`          | ネイティブエンコーディングを上書きします                                                        |
-| `-Dhmcl.microsoft.auth.id=<App ID>`          | Microsoft OAuthアプリIDを上書きします                                                 |
-| `-Dhmcl.microsoft.auth.secret=<App Secret>`  | Microsoft OAuthアプリシークレットを上書きします                                             |
-| `-Dhmcl.curseforge.apikey=<Api Key>`         | CurseForge APIキーを上書きします                                                     |

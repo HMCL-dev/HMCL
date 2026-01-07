@@ -1,5 +1,8 @@
 # 贡献指南
 
+<!-- #BEGIN LANGUAGE_SWITCHER -->
+<!-- #END LANGUAGE_SWITCHER -->
+
 ## 构建 HMCL
 
 ### 环境需求

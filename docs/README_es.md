@@ -46,31 +46,3 @@ Aunque no es necesario, se recomienda descargar las versiones solo de los sitios
 ## Licencia
 
 Consulta [README.md](README.md#license).
-
-## Contribución
-
-Si deseas enviar un pull request, aquí tienes algunos requisitos:
-
-* IDE: IntelliJ IDEA
-* Compilador: Java 17+
-
-### Compilación
-
-Consulta la página de la [Guía de compilación](./Building.md).
-
-## Opciones de JVM (para depuración)
-
-| Parámetro                                         | Descripción                                                                                                     |
-|---------------------------------------------------|-----------------------------------------------------------------------------------------------------------------|
-| `-Dhmcl.home=<ruta>`                              | Sobrescribe el directorio de HMCL                                                                               |
-| `-Dhmcl.self_integrity_check.disable=true`        | Omite la verificación de integridad propia al buscar actualizaciones                                            |
-| `-Dhmcl.bmclapi.override=<url>`                   | Sobrescribe la raíz de la API del proveedor de descargas BMCLAPI. Por defecto `https://bmclapi2.bangbang93.com` |
-| `-Dhmcl.font.override=<familia de fuente>`        | Sobrescribe la familia de fuente                                                                                |
-| `-Dhmcl.version.override=<versión>`               | Sobrescribe el número de versión                                                                                |
-| `-Dhmcl.update_source.override=<url>`             | Sobrescribe la fuente de actualizaciones de HMCL                                                                |
-| `-Dhmcl.authlibinjector.location=<ruta>`          | Usa el authlib-injector especificado (en vez de descargar uno)                                                  |
-| `-Dhmcl.openjfx.repo=<url del repositorio maven>` | Añade un repositorio Maven personalizado para descargar OpenJFX                                                 |
-| `-Dhmcl.native.encoding=<codificación>`           | Sobrescribe la codificación nativa                                                                              |
-| `-Dhmcl.microsoft.auth.id=<ID de App>`            | Sobrescribe el ID de la App OAuth de Microsoft                                                                  |
-| `-Dhmcl.microsoft.auth.secret=<Secreto de App>`   | Sobrescribe el secreto de la App OAuth de Microsoft                                                             |
-| `-Dhmcl.curseforge.apikey=<Clave API>`            | Sobrescribe la clave API de CurseForge                                                                          |
