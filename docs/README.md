@@ -1,12 +1,24 @@
-# Hello Minecraft! Launcher
+<!-- #BEGIN BLOCK -->
+<!-- #PROPERTY NAME=TITLE -->
+<div align="center">
+    <img src="/HMCL/src/main/resources/assets/img/icon@8x.png" alt="HMCL Logo" width="64"/>
+</div>
+
+<h1 align="center">Hello Minecraft! Launcher</h1>
+<!-- #END BLOCK -->
 
 <!-- #BEGIN BLOCK -->
 <!-- #PROPERTY NAME=BADGES -->
+<div align="center">
+
 [![CNB](https://img.shields.io/badge/cnb-mirror-ff6200?logo=cloudnativebuild)](https://cnb.cool/HMCL-dev/HMCL)
 [![Downloads](https://img.shields.io/github/downloads/HMCL-dev/HMCL/total?label=Downloads&style=flat)](https://github.com/HMCL-dev/HMCL/releases)
 ![Stars](https://img.shields.io/github/stars/HMCL-dev/HMCL?style=flat)
+
 [![Discord](https://img.shields.io/discord/995291757799538688.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/jVvC7HfM6U)
 [![QQ Group](https://img.shields.io/badge/QQ-HMCL-bright?label=&logo=qq&logoColor=ffffff&color=1EBAFC&labelColor=1DB0EF&logoSize=auto)](https://docs.hmcl.net/groups.html)
+
+</div>
 <!-- #END BLOCK -->
 
 <!-- #BEGIN LANGUAGE_SWITCHER -->
