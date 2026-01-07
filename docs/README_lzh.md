@@ -39,40 +39,33 @@ HMCL 跨域甚廣。無論 Windows、Linux、macOS、FreeBSD 諸常見械綱，�
 
 ## 下載
 
-請自 [HMCL 官網](https://hmcl.huangyuhui.net/download) 取其最新版。
+君可自此數途引 HMCL：
 
-亦可於 [GitHub Releases](https://github.com/HMCL-dev/HMCL/releases) 得其新者。
+- [HMCL 官方網站](https://hmcl.huangyuhui.net/download)
+- [GitHub Release](https://github.com/HMCL-dev/HMCL/releases)
+- [CNB Release](https://cnb.cool/HMCL-dev/HMCL/-/releases)
 
-雖非強制，然猶勸自官網取之。
+## 與貢
+
+HMCL 為社群所驅之開源計畫，迎諸君貢獻其碼，或建言於此。
+
+君可由此數途參與 HMCL 之開發：
+
+- 於 GitHub 上[創建 Issue](https://github.com/HMCL-dev/HMCL/issues/new/choose)，以報告謬誤，或請求功能。
+- 於 GitHub 上 Fork 倉庫，並[提交 Pull Request](https://github.com/HMCL-dev/HMCL/compare)，以貢獻其碼。
+
+參與貢獻之前，請閱[貢獻指南](./Contributing_zh.md)，其中載有如下：
+
+- [如何自源碼構建並運行 HMCL](./Contributing_zh.md#构建-hmcl)
+- [以調試選項調整 HMCL 之行為](./Contributing_zh.md#调试选项)
+
+## 貢獻者
+
+自公元二〇一五年以來，參與 HMCL 者已逾百十，謝其勤勞！
+
+[![Contributors](https://contrib.rocks/image?repo=HMCL-dev/HMCL)](https://github.com/HMCL-dev/HMCL/graphs/contributors)
 
 ## 開源之約
 
 詳見 [README_zh_Hant.md](README_zh_Hant.md#開源協議)。
 
-## 貢獻
-
-若欲獻 Pull Request，須遵下列：
-
-* IDE 用 IntelliJ IDEA
-* 編譯器用爪哇十七以上
-
-### 編造
-
-請觀[編造指南](./Building_zh.md)。
-
-## 爪哇虛機之通弦（以資勘誤）
-
-| 參數                                           | 解釋                                                      |
-|----------------------------------------------|---------------------------------------------------------|
-| `-Dhmcl.home=<path>`                         | 易 HMCL 之用戶目錄                                            |
-| `-Dhmcl.self_integrity_check.disable=true`   | 檢查更新時不驗本體之全                                             |
-| `-Dhmcl.bmclapi.override=<url>`              | 易 BMCLAPI 之 API 根，預設為 `https://bmclapi2.bangbang93.com` |
-| `-Dhmcl.font.override=<font family>`         | 易書體                                                     |
-| `-Dhmcl.version.override=<version>`          | 易版                                                      |
-| `-Dhmcl.update_source.override=<url>`        | 易 HMCL 之更新所                                             |
-| `-Dhmcl.authlibinjector.location=<path>`     | 用所指之 authlib-injector，毋需下載                              |
-| `-Dhmcl.openjfx.repo=<maven repository url>` | 增 OpenJFX 下載之自定 Maven 庫                                 |
-| `-Dhmcl.native.encoding=<encoding>`          | 易本地編碼                                                   |
-| `-Dhmcl.microsoft.auth.id=<App ID>`          | 易 Microsoft OAuth 之 App ID                              |
-| `-Dhmcl.microsoft.auth.secret=<App Secret>`  | 易 Microsoft OAuth 之金鑰                                   |
-| `-Dhmcl.curseforge.apikey=<Api Key>`         | 易 CurseForge 之 API 金鑰                                   |
