@@ -336,7 +336,12 @@
 }
 
 .two-line-list-item > .first-line > .tags-bar > .collapsed-indicator {
-    -fx-fill: -monet-on-secondary-container;
+    -fx-fill: -monet-on-surface;
+    -fx-font-size: 12px;
+}
+
+.tags-bar > .collapsed-indicator {
+    -fx-fill: -monet-on-surface;
     -fx-font-size: 12px;
 }
 

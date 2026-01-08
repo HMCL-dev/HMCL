@@ -51,7 +51,7 @@ public class TagsBar extends Pane {
     public TagsBar() {
         getStyleClass().add(DEFAULT_STYLE_CLASS);
 
-        collapsedIndicator.getStyleClass().add("collapsed-indicator");
+        collapsedIndicator.getStyleClass().addAll("tag", "collapsed-indicator");
         collapsedIndicator.setManaged(false);
         collapsedIndicator.setVisible(false);
         getChildren().add(collapsedIndicator);
@@ -145,7 +145,7 @@ public class TagsBar extends Pane {
 
     @Override
     protected void layoutChildren() {
-        if (tags.isEmpty()) {
+        if (tagLabels.isEmpty()) {
             collapsedIndicator.setVisible(false);
             return;
         }
@@ -163,27 +163,26 @@ public class TagsBar extends Pane {
         visibleTagCount = 0;
         double currentWidth = 0;
 
-        // First, calculate the collapsed indicator width for the worst case
-        collapsedIndicator.setText("+" + tags.size());
-        double collapsedWidth = collapsedIndicator.prefWidth(-1);
 
         // Try to fit as many tags as possible
         for (int i = 0; i < tagLabels.size(); i++) {
             double tagWidth = tagWidths[i];
             double spacing = (visibleTagCount > 0) ? TAG_SPACING : 0;
-            // Calculate how many tags would be hidden if we stop here (including current tag)
-            int hiddenCount = tagLabels.size() - i;
 
             if (i < tagLabels.size() - 1) {
-                // Not the last tag - need to check if we can fit this tag + collapsed indicator
-                collapsedIndicator.setText("+" + hiddenCount);
-                double neededCollapsedWidth = collapsedIndicator.prefWidth(-1) + TAG_SPACING;
+                // Not the last tag
+                // If tag i fits but next doesn't, we need space for "+(size-i-1)"
+                int hiddenIfNextFails = tagLabels.size() - i - 1;
+                collapsedIndicator.setText("+" + hiddenIfNextFails);
+                double collapsedWidthIfNextFails = collapsedIndicator.prefWidth(-1) + TAG_SPACING;
 
-                if (currentWidth + spacing + tagWidth + neededCollapsedWidth <= availableWidth) {
+                // Check if we can fit tag i + collapsed indicator for remaining tags
+                if (currentWidth + spacing + tagWidth + collapsedWidthIfNextFails <= availableWidth) {
                     currentWidth += spacing + tagWidth;
                     visibleTagCount++;
                 } else {
-                    // Can't fit this tag plus the collapsed indicator
+                    // Tag i doesn't fit with its associated indicator
+                    // We'll show indicator for (size - i) hidden tags instead
                     break;
                 }
             } else {
@@ -195,14 +194,9 @@ public class TagsBar extends Pane {
             }
         }
 
-        // Special case: if no tags can be shown but we have space for the indicator, show only indicator
-        boolean showingCollapsedIndicator;
-        if (visibleTagCount == 0 && !tags.isEmpty()) {
-            collapsedIndicator.setText("+" + tags.size());
-            showingCollapsedIndicator = collapsedWidth <= availableWidth;
-        } else {
-            showingCollapsedIndicator = visibleTagCount < tagLabels.size();
-        }
+        // Determine if we need to show collapsed indicator
+        boolean showingCollapsedIndicator = visibleTagCount < tagLabels.size();
+
 
         // Layout visible tags
         double x = 0;
@@ -220,11 +214,16 @@ public class TagsBar extends Pane {
 
         // Layout collapsed indicator
         if (showingCollapsedIndicator) {
-            int hiddenCount = tags.size() - visibleTagCount;
+            int hiddenCount = tagLabels.size() - visibleTagCount;
             collapsedIndicator.setText("+" + hiddenCount);
             collapsedIndicator.setVisible(true);
             double indicatorWidth = collapsedIndicator.prefWidth(-1);
-            layoutInArea(collapsedIndicator, x, 0, indicatorWidth, height, 0, HPos.LEFT, VPos.CENTER);
+
+            // Ensure indicator doesn't exceed available width
+            double indicatorX = Math.min(x, availableWidth - indicatorWidth);
+            indicatorX = Math.max(0, indicatorX); // Don't go negative
+
+            layoutInArea(collapsedIndicator, indicatorX, 0, indicatorWidth, height, 0, HPos.LEFT, VPos.CENTER);
 
             // Update tooltip with hidden tags
             updateCollapsedTooltip();
@@ -235,7 +234,7 @@ public class TagsBar extends Pane {
 
     private void updateCollapsedTooltip() {
         StringBuilder sb = new StringBuilder();
-        for (int i = visibleTagCount; i < tags.size(); i++) {
+        for (int i = visibleTagCount; i < tagLabels.size(); i++) {
             if (!sb.isEmpty()) {
                 sb.append("\n");
             }
