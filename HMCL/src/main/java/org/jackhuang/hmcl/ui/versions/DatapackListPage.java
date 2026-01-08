@@ -51,7 +51,7 @@ public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.Da
         datapack = new Datapack(worldDir.resolve("datapacks"));
         setItems(MappedObservableList.create(datapack.getPacks(), DatapackListPageSkin.DatapackInfoObject::new));
         FXUtils.applyDragListener(this, it -> Objects.equals("zip", FileUtils.getExtension(it)),
-                dataPacks -> dataPacks.forEach(this::installSingleDatapack), this::refresh);
+                mods -> mods.forEach(this::installSingleDatapack), this::refresh);
 
         refresh();
     }
