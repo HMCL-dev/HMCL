@@ -145,10 +145,15 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
 
             VBox displayInfoVBox = new VBox();
             {
-                Label displayNameLabel = new Label(gameRule.getDisplayName());
-                Label ruleKeyLabel = new Label(gameRule.getRuleKey());
-                ruleKeyLabel.getStyleClass().add("subtitle");
-                displayInfoVBox.getChildren().addAll(displayNameLabel, ruleKeyLabel);
+                if (StringUtils.isNotBlank(gameRule.getDisplayName())) {
+                    Label displayNameLabel = new Label(gameRule.getDisplayName());
+                    Label ruleKeyLabel = new Label(gameRule.getRuleKey());
+                    ruleKeyLabel.getStyleClass().add("subtitle");
+
+                    displayInfoVBox.getChildren().addAll(displayNameLabel, ruleKeyLabel);
+                } else {
+                    displayInfoVBox.getChildren().addAll(new Label(gameRule.getRuleKey()));
+                }
                 displayInfoVBox.setAlignment(Pos.CENTER_LEFT);
                 HBox.setHgrow(displayInfoVBox, Priority.ALWAYS);
             }
@@ -186,8 +191,12 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
 
             OptionToggleButton toggleButton = new OptionToggleButton();
             {
-                toggleButton.setTitle(gameRule.getDisplayName());
-                toggleButton.setSubtitle(gameRule.getRuleKey());
+                if (StringUtils.isNotBlank(gameRule.getDisplayName())) {
+                    toggleButton.setTitle(gameRule.getDisplayName());
+                    toggleButton.setSubtitle(gameRule.getRuleKey());
+                } else {
+                    toggleButton.setTitle(gameRule.getRuleKey());
+                }
                 HBox.setHgrow(toggleButton, Priority.ALWAYS);
                 toggleButton.selectedProperty().bindBidirectional(gameRule.currentValueProperty());
             }
@@ -204,6 +213,7 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
                 wrapperPane.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
                 resetButton.setFocusTraversable(false);
                 resetButton.setGraphic(SVG.RESTORE.createIcon(24));
+                resetButton.getStyleClass().add("toggle-icon4");
                 if (StringUtils.isNotBlank(gameRule.getDefaultValueText())) {
                     resetButton.setOnAction(event -> gameRule.resetValue());
                     resetButton.disableProperty().bind(gameRule.modifiedProperty().not());
