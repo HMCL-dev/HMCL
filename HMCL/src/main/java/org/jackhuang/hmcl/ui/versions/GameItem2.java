@@ -17,29 +17,28 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import com.google.gson.JsonParseException;
-import javafx.application.Platform;
 import javafx.beans.property.*;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.MINECRAFT;
-import static org.jackhuang.hmcl.util.Lang.handleUncaught;
 import static org.jackhuang.hmcl.util.Lang.threadPool;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class GameItem2 {
-    private static final ThreadPoolExecutor POOL_VERSION_RESOLVE = threadPool("VersionResolve", true, 1, 1, TimeUnit.SECONDS);
-
     private final Profile profile;
     private final String id;
 
@@ -64,36 +63,53 @@ public final class GameItem2 {
         subtitle = new SimpleStringProperty();
         image = new SimpleObjectProperty<>();
 
-        // GameVersion.minecraftVersion() is a time-costing job (up to ~200 ms)
-        CompletableFuture.supplyAsync(() -> profile.getRepository().getGameVersion(id), POOL_VERSION_RESOLVE)
-                .thenAcceptAsync(game -> {
-                    StringBuilder libraries = new StringBuilder(game.orElse(i18n("message.unknown")));
-                    LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(profile.getRepository().getResolvedPreservingPatchesVersion(id), game.orElse(null));
-                    for (LibraryAnalyzer.LibraryMark mark : analyzer) {
-                        String libraryId = mark.getLibraryId();
-                        String libraryVersion = mark.getLibraryVersion();
-                        if (libraryId.equals(MINECRAFT.getPatchId())) continue;
-                        if (I18n.hasKey("install.installer." + libraryId)) {
-                            libraries.append(", ").append(i18n("install.installer." + libraryId));
-                            if (libraryVersion != null)
-                                libraries.append(": ").append(libraryVersion.replaceAll("(?i)" + libraryId, ""));
-                        }
-                    }
+        record Result(@Nullable String gameVersion, @Nullable String tag) {
+        }
 
-                    subtitle.set(libraries.toString());
-                }, Platform::runLater)
-                .exceptionally(handleUncaught);
+        CompletableFuture.supplyAsync(() -> {
+                    // GameVersion.minecraftVersion() is a time-costing job (up to ~200 ms)
+                    Optional<String> gameVersion = profile.getRepository().getGameVersion(id);
 
-        CompletableFuture.runAsync(() -> {
+                    String modPackVersion = null;
                     try {
                         ModpackConfiguration<?> config = profile.getRepository().readModpackConfiguration(id);
-                        if (config == null) return;
-                        tag.set(config.getVersion());
-                    } catch (IOException | JsonParseException e) {
+                        modPackVersion = config != null ? config.getVersion() : null;
+                    } catch (IOException e) {
                         LOG.warning("Failed to read modpack configuration from " + id, e);
                     }
-                }, Platform::runLater)
-                .exceptionally(handleUncaught);
+
+                    return new Result(
+                            gameVersion.orElse(null),
+                            modPackVersion
+                    );
+                }, Schedulers.io())
+                .whenCompleteAsync((result, exception) -> {
+                    if (exception == null) {
+                        if (result.gameVersion != null) {
+                            title.set(result.gameVersion);
+                        }
+                        if (result.tag != null) {
+                            tag.set(result.tag);
+                        }
+
+                        StringBuilder libraries = new StringBuilder(Objects.requireNonNullElse(result.gameVersion, i18n("message.unknown")));
+                        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(profile.getRepository().getResolvedPreservingPatchesVersion(id), result.gameVersion);
+                        for (LibraryAnalyzer.LibraryMark mark : analyzer) {
+                            String libraryId = mark.getLibraryId();
+                            String libraryVersion = mark.getLibraryVersion();
+                            if (libraryId.equals(MINECRAFT.getPatchId())) continue;
+                            if (I18n.hasKey("install.installer." + libraryId)) {
+                                libraries.append(", ").append(i18n("install.installer." + libraryId));
+                                if (libraryVersion != null)
+                                    libraries.append(": ").append(libraryVersion.replaceAll("(?i)" + libraryId, ""));
+                            }
+                        }
+
+                        subtitle.set(libraries.toString());
+                    } else {
+                        LOG.warning("Failed to read version info from " + id, exception);
+                    }
+                }, Schedulers.javafx());
 
         title.set(id);
         image.set(profile.getRepository().getVersionIconImage(id));
