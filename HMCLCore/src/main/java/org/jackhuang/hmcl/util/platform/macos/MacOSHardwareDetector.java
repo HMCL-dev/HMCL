@@ -152,7 +152,7 @@ public final class MacOSHardwareDetector extends HardwareDetector {
         return Collections.emptyList();
     }
 
-    private static final Pattern pageSizePattern = Pattern.compile("\\(page size of (?<size>\\d+) bytes\\)");
+    private static final Pattern PAGE_SIZE_PATTERN = Pattern.compile("\\(page size of (?<size>\\d+) bytes\\)");
 
     @Override
     public long getFreeMemorySize() {
@@ -170,7 +170,7 @@ public final class MacOSHardwareDetector extends HardwareDetector {
             long pagesPurgeable;
 
             if (statistics != null) {
-                Matcher matcher = pageSizePattern.matcher(statistics);
+                Matcher matcher = PAGE_SIZE_PATTERN.matcher(statistics);
                 if (matcher.find()) {
                     pageSize = Long.parseLong(matcher.group("size"));
                 } else {
