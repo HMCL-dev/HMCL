@@ -285,7 +285,7 @@ public enum OperatingSystem {
     }
 
     public static boolean isInsideMacAppBundle() {
-        if (OperatingSystem.CURRENT_OS == MACOS) return false;
+        if (OperatingSystem.CURRENT_OS != MACOS) return false;
 
         Path thisJar = JarUtils.thisJarPath();
         if (thisJar == null)
