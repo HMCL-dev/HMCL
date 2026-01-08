@@ -50,7 +50,7 @@ public final class EntryPoint {
         setupJavaFXVMOptions();
         checkDirectoryPath();
 
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && !OperatingSystem.isInsideMacAppBundle())
+        if (!OperatingSystem.isInsideMacAppBundle())
             setTaskbarIcon("/assets/img/icon-mac.png");
 
         checkJavaFX();
