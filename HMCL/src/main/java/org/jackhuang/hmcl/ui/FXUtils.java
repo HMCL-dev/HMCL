@@ -101,7 +101,6 @@ import java.util.function.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.jackhuang.hmcl.util.AppIconManager.setTaskbarIcon;
 import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -1102,7 +1101,7 @@ public final class FXUtils {
             }
 
             if (!OperatingSystem.isInsideMacAppBundle()) {
-                setTaskbarIcon(iconPath);
+                TaskbarIconManager.setIcon(iconPath);
             }
         };
 

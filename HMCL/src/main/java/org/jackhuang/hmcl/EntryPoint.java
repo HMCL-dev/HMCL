@@ -21,6 +21,7 @@ import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.SelfDependencyPatcher;
 import org.jackhuang.hmcl.util.SwingUtils;
 import org.jackhuang.hmcl.java.JavaRuntime;
+import org.jackhuang.hmcl.util.TaskbarIconManager;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
@@ -30,7 +31,6 @@ import java.lang.invoke.MethodType;
 import java.nio.file.Files;
 import java.util.concurrent.CancellationException;
 
-import static org.jackhuang.hmcl.util.AppIconManager.setTaskbarIcon;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -51,7 +51,7 @@ public final class EntryPoint {
         checkDirectoryPath();
 
         if (!OperatingSystem.isInsideMacAppBundle())
-            setTaskbarIcon("/assets/img/icon-mac.png");
+            TaskbarIconManager.setIcon("/assets/img/icon-mac.png");
 
         checkJavaFX();
         verifyJavaFX();
