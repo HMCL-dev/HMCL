@@ -495,7 +495,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                                     }
                                     if (title.getTags()
                                             .stream()
-                                            .noneMatch(it -> it.getText().equals(loaderName))) {
+                                            .noneMatch(it -> it.text().equals(loaderName))) {
                                         title.addTag(loaderName);
                                     }
                                 }

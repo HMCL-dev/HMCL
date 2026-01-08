@@ -17,34 +17,25 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.geometry.Insets;
-import javafx.scene.Node;
+import javafx.geometry.HPos;
+import javafx.geometry.VPos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.util.AggregatedObservableList;
 
 public class TwoLineListItem extends VBox {
     private static final String DEFAULT_STYLE_CLASS = "two-line-list-item";
-
-    private static Label createTagLabel(String tag) {
-        Label tagLabel = new Label();
-        tagLabel.setText(tag);
-        HBox.setMargin(tagLabel, new Insets(0, 8, 0, 0));
-        return tagLabel;
-    }
+    private static final double TITLE_TAGS_SPACING = 8.0;
 
     private final StringProperty title = new SimpleStringProperty(this, "title");
-    private final ObservableList<Label> tags = FXCollections.observableArrayList();
     private final StringProperty subtitle = new SimpleStringProperty(this, "subtitle");
 
-    private final AggregatedObservableList<Node> firstLineChildren;
+    private final TagsBar tagsBar = new TagsBar();
 
     public TwoLineListItem(String titleString, String subtitleString) {
         this();
@@ -56,17 +47,82 @@ public class TwoLineListItem extends VBox {
     public TwoLineListItem() {
         setMouseTransparent(true);
 
-        HBox firstLine = new HBox();
-        firstLine.getStyleClass().add("first-line");
-
         Label lblTitle = new Label();
         lblTitle.getStyleClass().add("title");
         lblTitle.textProperty().bind(title);
 
-        firstLineChildren = new AggregatedObservableList<>();
-        firstLineChildren.appendList(FXCollections.singletonObservableList(lblTitle));
-        firstLineChildren.appendList(tags);
-        Bindings.bindContent(firstLine.getChildren(), firstLineChildren.getAggregatedList());
+        // Custom first line layout that prioritizes lblTitle but ensures +N is visible
+        Pane firstLine = new Pane() {
+            @Override
+            protected void layoutChildren() {
+                double width = getWidth();
+                double height = getHeight();
+
+                double titlePrefWidth = lblTitle.prefWidth(-1);
+                double tagsMinWidth = tagsBar.minWidth(-1);
+                double tagsPrefWidth = tagsBar.prefWidth(-1);
+
+                double titleWidth;
+                double tagsWidth;
+
+                if (tagsBar.getTags().isEmpty()) {
+                    // No tags, give all space to title
+                    titleWidth = Math.min(titlePrefWidth, width);
+                    tagsWidth = 0;
+                } else if (titlePrefWidth + TITLE_TAGS_SPACING + tagsPrefWidth <= width) {
+                    // Everything fits
+                    titleWidth = titlePrefWidth;
+                    tagsWidth = tagsPrefWidth;
+                } else if (titlePrefWidth + TITLE_TAGS_SPACING + tagsMinWidth <= width) {
+                    // Title fits fully, tags get remaining space
+                    titleWidth = titlePrefWidth;
+                    tagsWidth = width - titleWidth - TITLE_TAGS_SPACING;
+                } else {
+                    // Need to shrink title to make room for +N indicator
+                    tagsWidth = tagsMinWidth;
+                    titleWidth = Math.max(0, width - tagsMinWidth - TITLE_TAGS_SPACING);
+                }
+
+                layoutInArea(lblTitle, 0, 0, titleWidth, height, 0, HPos.LEFT, VPos.CENTER);
+
+                if (tagsWidth > 0) {
+                    double tagsX = titleWidth + TITLE_TAGS_SPACING;
+                    layoutInArea(tagsBar, tagsX, 0, tagsWidth, height, 0, HPos.LEFT, VPos.CENTER);
+                }
+            }
+
+            @Override
+            protected double computePrefWidth(double height) {
+                double titleWidth = lblTitle.prefWidth(-1);
+                double tagsWidth = tagsBar.prefWidth(-1);
+                if (tagsBar.getTags().isEmpty()) {
+                    return titleWidth;
+                }
+                return titleWidth + TITLE_TAGS_SPACING + tagsWidth;
+            }
+
+            @Override
+            protected double computePrefHeight(double width) {
+                return Math.max(lblTitle.prefHeight(-1), tagsBar.prefHeight(-1));
+            }
+
+            @Override
+            protected double computeMinWidth(double height) {
+                // Minimum is enough for +N indicator
+                double tagsMin = tagsBar.minWidth(-1);
+                if (tagsBar.getTags().isEmpty()) {
+                    return 0;
+                }
+                return tagsMin;
+            }
+
+            @Override
+            protected double computeMinHeight(double width) {
+                return computePrefHeight(width);
+            }
+        };
+        firstLine.getStyleClass().add("first-line");
+        firstLine.getChildren().addAll(lblTitle, tagsBar);
 
         Label lblSubtitle = new Label();
         lblSubtitle.getStyleClass().add("subtitle");
@@ -110,19 +166,19 @@ public class TwoLineListItem extends VBox {
     }
 
     public void addTag(String tag) {
-        Label tagLabel = createTagLabel(tag);
-        tagLabel.getStyleClass().add("tag");
-        getTags().add(tagLabel);
+        tagsBar.addTag(tag);
     }
 
     public void addTagWarning(String tag) {
-        Label tagLabel = createTagLabel(tag);
-        tagLabel.getStyleClass().add("tag-warning");
-        getTags().add(tagLabel);
+        tagsBar.addTagWarning(tag);
     }
 
-    public ObservableList<Label> getTags() {
-        return tags;
+    public ObservableList<TagsBar.Tag> getTags() {
+        return tagsBar.getTags();
+    }
+
+    public TagsBar getTagsBar() {
+        return tagsBar;
     }
 
     @Override

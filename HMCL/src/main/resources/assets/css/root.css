@@ -319,6 +319,27 @@
     -fx-fill: -monet-on-surface-variant;
 }
 
+.two-line-list-item > .first-line > .tags-bar > .tag {
+    -fx-text-fill: -monet-on-secondary-container;
+    -fx-background-color: -monet-secondary-container;
+    -fx-padding: 2;
+    -fx-font-weight: normal;
+    -fx-font-size: 12px;
+}
+
+.two-line-list-item > .first-line > .tags-bar > .tag-warning {
+    -fx-text-fill: -monet-on-error-container;
+    -fx-background-color: -fixed-warning-tag-background;
+    -fx-padding: 2;
+    -fx-font-weight: normal;
+    -fx-font-size: 12px;
+}
+
+.two-line-list-item > .first-line > .tags-bar > .collapsed-indicator {
+    -fx-fill: -monet-on-secondary-container;
+    -fx-font-size: 12px;
+}
+
 .two-line-list-item > .first-line > .tag {
     -fx-text-fill: -monet-on-secondary-container;
     -fx-background-color: -monet-secondary-container;
