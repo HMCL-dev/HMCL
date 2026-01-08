@@ -30,12 +30,14 @@ public class GameListItem extends Control {
     private final boolean isModpack;
     private final ToggleGroup toggleGroup;
     private final BooleanProperty selected = new SimpleBooleanProperty();
+    private final GameItem2 gameItem;
 
     public GameListItem(ToggleGroup toggleGroup, Profile profile, String id) {
         this.profile = profile;
         this.version = id;
         this.toggleGroup = toggleGroup;
         this.isModpack = profile.getRepository().isModpack(id);
+        this.gameItem = new GameItem2(profile, id);
 
         selected.set(id.equals(profile.getSelectedVersion()));
     }
@@ -59,6 +61,10 @@ public class GameListItem extends Control {
 
     public BooleanProperty selectedProperty() {
         return selected;
+    }
+
+    public GameItem2 getGameItem() {
+        return gameItem;
     }
 
     public void checkSelection() {
