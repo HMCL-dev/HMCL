@@ -83,18 +83,15 @@ public final class GameListPopupMenu extends StackPane {
 
             this.imageView = new ImageView();
             FXUtils.limitSize(imageView, 32, 32);
-            // imageView.imageProperty().bind(skinnable.imageProperty());
             imageViewContainer.getChildren().setAll(imageView);
 
             this.content = new TwoLineListItem();
-            // content.titleProperty().bind(skinnable.titleProperty());
             FXUtils.onChangeAndOperate(tag, tag -> {
                 content.getTags().clear();
                 if (StringUtils.isNotBlank(tag)) {
                     content.addTag(tag);
                 }
             });
-            // content.subtitleProperty().bind(skinnable.subtitleProperty());
             BorderPane.setAlignment(content, Pos.CENTER);
             root.getChildren().setAll(imageView, content);
 
