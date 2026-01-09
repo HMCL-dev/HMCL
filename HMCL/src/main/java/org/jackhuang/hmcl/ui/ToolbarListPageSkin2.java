@@ -18,17 +18,20 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXListView;
+import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 
 import java.util.List;
 
+// TODO: Replace ToolbarListPageSkin with this class gradually
 public abstract class ToolbarListPageSkin2<E, P extends ListPageBase<E>> extends SkinBase<P> {
 
     protected final JFXListView<E> listView;
@@ -57,6 +60,8 @@ public abstract class ToolbarListPageSkin2<E, P extends ListPageBase<E>> extends
 
         {
             this.listView = new JFXListView<>();
+            ComponentList.setVgrow(listView, Priority.ALWAYS);
+            Bindings.bindContent(this.listView.getItems(), skinnable.itemsProperty());
             root.getContent().add(listView);
         }
 
@@ -64,7 +69,6 @@ public abstract class ToolbarListPageSkin2<E, P extends ListPageBase<E>> extends
 
         getChildren().setAll(spinnerPane);
     }
-
 
     protected abstract List<Node> initializeToolbar(P skinnable);
 }

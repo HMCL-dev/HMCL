@@ -24,6 +24,7 @@ import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
@@ -41,7 +42,7 @@ import java.util.function.Consumer;
 import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public final class GameListCell extends JFXListCell<GameListItem> {
+public final class GameListCell extends ListCell<GameListItem> {
 
     private final Region graphic;
 
