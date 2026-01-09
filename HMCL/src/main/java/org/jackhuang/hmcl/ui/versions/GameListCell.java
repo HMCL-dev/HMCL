@@ -20,11 +20,13 @@ package org.jackhuang.hmcl.ui.versions;
 import com.jfoenix.controls.*;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
@@ -66,7 +68,18 @@ public final class GameListCell extends ListCell<GameListItem> {
         this.graphic = container;
 
         {
-            this.chkSelected = new JFXRadioButton();
+            this.chkSelected = new JFXRadioButton() {
+                @Override
+                public void fire() {
+                    if (!isDisable() && !isSelected()) {
+                        fireEvent(new ActionEvent());
+                        GameListItem item = GameListCell.this.getItem();
+                        if (item != null) {
+                            item.getProfile().setSelectedVersion(item.getId());
+                        }
+                    }
+                }
+            };
             root.setLeft(chkSelected);
             BorderPane.setAlignment(chkSelected, Pos.CENTER);
         }
@@ -181,7 +194,7 @@ public final class GameListCell extends ListCell<GameListItem> {
         } else {
             setGraphic(this.graphic);
 
-            this.chkSelected.selectedProperty().bindBidirectional(item.selectedProperty());
+            this.chkSelected.selectedProperty().bind(item.selectedProperty());
             this.imageView.imageProperty().bind(item.imageProperty());
             this.content.titleProperty().bind(item.titleProperty());
             this.content.subtitleProperty().bind(item.subtitleProperty());

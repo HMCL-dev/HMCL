@@ -28,8 +28,6 @@ public class GameListItem extends GameItem2 {
     public GameListItem(Profile profile, String id) {
         super(profile, id);
         this.isModpack = profile.getRepository().isModpack(id);
-
-        selected.set(id.equals(profile.getSelectedVersion()));
     }
 
     public BooleanProperty selectedProperty() {

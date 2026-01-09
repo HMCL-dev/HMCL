@@ -19,14 +19,12 @@ package org.jackhuang.hmcl.ui.versions;
 
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
-import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.ui.*;
@@ -42,7 +40,6 @@ import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 import java.util.Collections;
 import java.util.List;
 
-import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.createSelectedItemPropertyFor;
 
@@ -148,17 +145,9 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             }
             setLoading(false);
 
-            ChangeListener<Boolean> selectionListener = listenerHolder.weak((property, oldValue, newValue) -> {
-                if (!newValue || updatingSelection) return;
-
-                GameListItem item = (GameListItem) ((Property<?>) property).getBean();
-                profile.setSelectedVersion(item.getId());
-            });
-
             String selectedId = profile.getSelectedVersion();
             for (GameListItem child : children) {
                 child.selectedProperty().set(child.getId().equals(selectedId));
-                child.selectedProperty().addListener(selectionListener);
             }
 
             profile.selectedVersionProperty().addListener(listenerHolder.weak((a, b, newValue) -> {
