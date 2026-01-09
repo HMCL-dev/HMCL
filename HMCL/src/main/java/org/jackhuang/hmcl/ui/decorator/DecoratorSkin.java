@@ -101,7 +101,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         // https://github.com/HMCL-dev/HMCL/issues/4290
         if (OperatingSystem.CURRENT_OS != OperatingSystem.MACOS) {
             onWindowsStatusChange = observable -> {
-                if (primaryStage.isIconified() || primaryStage.isFullScreen() || primaryStage.isMaximized()) {
+                if (primaryStage.isIconified() || primaryStage.isFullScreen()) {
                     root.removeEventFilter(MouseEvent.MOUSE_RELEASED, onMouseReleased);
                     root.removeEventFilter(MouseEvent.MOUSE_DRAGGED, onMouseDragged);
                     root.removeEventFilter(MouseEvent.MOUSE_MOVED, onMouseMoved);
@@ -444,6 +444,11 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             stageInitY = primaryStage.getY();
             stageInitWidth = primaryStage.getWidth();
             stageInitHeight = primaryStage.getHeight();
+        }
+
+        if (primaryStage.isMaximized()) {
+            primaryStage.setMaximized(false);
+            mouseInitX = primaryStage.getWidth() / 2;
         }
 
         if (primaryStage.isFullScreen() || !mouseEvent.isPrimaryButtonDown() || mouseEvent.isStillSincePress())
