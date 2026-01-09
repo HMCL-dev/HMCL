@@ -144,19 +144,6 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                 setFailedReason(i18n("version.empty.hint"));
             }
             setLoading(false);
-
-            String selectedId = profile.getSelectedVersion();
-            for (GameListItem child : children) {
-                child.selectedProperty().set(child.getId().equals(selectedId));
-            }
-
-            profile.selectedVersionProperty().addListener(listenerHolder.weak((a, b, newValue) -> {
-                updatingSelection = true;
-                for (GameListItem child : children) {
-                    child.selectedProperty().set(child.getId().equals(newValue));
-                }
-                updatingSelection = false;
-            }));
         }
 
         public void refreshList() {

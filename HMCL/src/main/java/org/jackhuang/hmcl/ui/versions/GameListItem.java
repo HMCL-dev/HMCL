@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import org.jackhuang.hmcl.setting.Profile;
 
@@ -28,9 +29,10 @@ public class GameListItem extends GameItem2 {
     public GameListItem(Profile profile, String id) {
         super(profile, id);
         this.isModpack = profile.getRepository().isModpack(id);
+        selected.bind(profile.selectedVersionProperty().isEqualTo(id));
     }
 
-    public BooleanProperty selectedProperty() {
+    public ReadOnlyBooleanProperty selectedProperty() {
         return selected;
     }
 
