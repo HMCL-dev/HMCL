@@ -24,6 +24,7 @@ import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
@@ -46,9 +47,13 @@ public final class GameListPopupMenu extends StackPane {
 
     public GameListPopupMenu() {
         this.setMaxHeight(365);
-        this.setMaxWidth(545);
+        this.getStyleClass().add("popup-menu-content");
 
         listView.setCellFactory(listView -> new Cell());
+        listView.setFixedCellSize(60);
+        listView.setPrefWidth(300);
+
+        listView.prefHeightProperty().bind(Bindings.size(getItems()).multiply(60).add(2));
 
         Label placeholder = new Label(i18n("version.empty"));
         placeholder.setStyle("-fx-padding: 10px; -fx-text-fill: -monet-on-surface-variant; -fx-font-style: italic;");
@@ -72,6 +77,7 @@ public final class GameListPopupMenu extends StackPane {
         private final StringProperty tag = new SimpleStringProperty();
 
         public Cell() {
+            this.setPadding(Insets.EMPTY);
             HBox root = new HBox();
 
             root.setSpacing(8);
