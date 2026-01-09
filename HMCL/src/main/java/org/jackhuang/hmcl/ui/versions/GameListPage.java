@@ -23,7 +23,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -40,7 +39,6 @@ import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -52,8 +50,6 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
     @SuppressWarnings("FieldCanBeLocal")
     private final ObservableList<ProfileListItem> profileListItems;
     private final ObjectProperty<Profile> selectedProfile;
-
-    private ToggleGroup toggleGroup;
 
     public GameListPage() {
         profileListItems = MappedObservableList.create(profilesProperty(), profile -> {
@@ -124,6 +120,8 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
     }
 
     private class GameList extends ListPageBase<GameListItem> {
+        private final ObjectProperty<GameListItem> selectedItem = new SimpleObjectProperty<>();
+
         public GameList() {
             super();
 
@@ -136,14 +134,12 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             setLoading(true);
             setFailedReason(null);
             HMCLGameRepository repository = profile.getRepository();
-            toggleGroup = new ToggleGroup();
             WeakListenerHolder listenerHolder = new WeakListenerHolder();
-            toggleGroup.getProperties().put("ReferenceHolder", listenerHolder);
             runInFX(() -> {
                 if (profile == Profiles.getSelectedProfile()) {
                     setLoading(false);
                     List<GameListItem> children = repository.getDisplayVersions()
-                            .map(version -> new GameListItem(toggleGroup, profile, version.getId()))
+                            .map(version -> new GameListItem(profile, version.getId()))
                             .toList();
                     itemsProperty().setAll(children);
                     children.forEach(GameListItem::checkSelection);
@@ -153,18 +149,15 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                     }
 
                     profile.selectedVersionProperty().addListener(listenerHolder.weak((a, b, newValue) -> {
-                        FXUtils.checkFxUserThread();
-                        children.forEach(it -> it.selectedProperty().set(false));
-                        children.stream()
-                                .filter(it -> it.getVersion().equals(newValue))
-                                .findFirst()
-                                .ifPresent(it -> it.selectedProperty().set(true));
+                        for (GameListItem child : children) {
+                            child.selectedProperty().set(child.getId().equals(newValue));
+                        }
                     }));
                 }
                 toggleGroup.selectedToggleProperty().addListener((o, a, toggle) -> {
                     if (toggle == null) return;
                     GameListItem model = (GameListItem) toggle.getUserData();
-                    model.getProfile().setSelectedVersion(model.getVersion());
+                    model.getProfile().setSelectedVersion(model.getId());
                 });
             });
         }

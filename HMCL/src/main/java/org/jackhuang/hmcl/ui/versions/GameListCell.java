@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.*;
-import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
@@ -69,7 +68,6 @@ public final class GameListCell extends ListCell<GameListItem> {
         {
             this.chkSelected = new JFXRadioButton();
             root.setLeft(chkSelected);
-
             BorderPane.setAlignment(chkSelected, Pos.CENTER);
         }
 
@@ -175,16 +173,24 @@ public final class GameListCell extends ListCell<GameListItem> {
         this.content.titleProperty().unbind();
         this.content.subtitleProperty().unbind();
         this.tag.unbind();
+        this.right.getChildren().clear();
+        this.chkSelected.selectedProperty().unbind();
 
         if (empty || item == null) {
             setGraphic(null);
         } else {
             setGraphic(this.graphic);
 
-            this.imageView.imageProperty().bind(item.getGameItem().imageProperty());
-            this.content.titleProperty().bind(item.getGameItem().titleProperty());
-            this.content.subtitleProperty().bind(item.getGameItem().subtitleProperty());
-            this.tag.bind(item.getGameItem().tagProperty());
+            this.chkSelected.selectedProperty().bindBidirectional(item.selectedProperty());
+
+            this.imageView.imageProperty().bind(item.imageProperty());
+            this.content.titleProperty().bind(item.titleProperty());
+            this.content.subtitleProperty().bind(item.subtitleProperty());
+            this.tag.bind(item.tagProperty());
+            if (item.canUpdate()) {
+                this.right.getChildren().add(btnUpgrade);
+            }
+            this.right.getChildren().addAll(btnLaunch, btnManage);
         }
     }
 

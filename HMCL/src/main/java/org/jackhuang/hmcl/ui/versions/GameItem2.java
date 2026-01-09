@@ -35,9 +35,9 @@ import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.MINECRAFT;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class GameItem2 {
-    private final Profile profile;
-    private final String id;
+public class GameItem2 {
+    protected final Profile profile;
+    protected final String id;
 
     private boolean initialized = false;
     private StringProperty title;
@@ -48,6 +48,14 @@ public final class GameItem2 {
     public GameItem2(Profile profile, String id) {
         this.profile = profile;
         this.id = id;
+    }
+
+    public Profile getProfile() {
+        return profile;
+    }
+
+    public String getId() {
+        return id;
     }
 
     private void init() {
