@@ -18,20 +18,23 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.*;
+import javafx.beans.binding.Bindings;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.control.ListView;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
-import org.jackhuang.hmcl.ui.construct.MenuSeparator;
-import org.jackhuang.hmcl.ui.construct.PopupMenu;
-import org.jackhuang.hmcl.ui.construct.RipplerContainer;
+import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.util.StringUtils;
 
 import java.util.function.Consumer;
 
@@ -42,12 +45,17 @@ public final class GameListCell extends JFXListCell<GameListItem> {
 
     private final Region graphic;
 
+    private final ImageView imageView;
+    private final TwoLineListItem content;
+
     private final JFXRadioButton chkSelected;
     private final JFXButton btnUpgrade;
     private final JFXButton btnLaunch;
     private final JFXButton btnManage;
 
     private final HBox right;
+
+    private final StringProperty tag = new SimpleStringProperty();
 
     public GameListCell() {
         BorderPane root = new BorderPane();
@@ -64,9 +72,31 @@ public final class GameListCell extends JFXListCell<GameListItem> {
             BorderPane.setAlignment(chkSelected, Pos.CENTER);
         }
 
-//        GameItem gameItem = new GameItem(skinnable.getProfile(), skinnable.getVersion());
-//        gameItem.setMouseTransparent(true);
-//        root.setCenter(gameItem);
+        {
+            HBox center = new HBox();
+            root.setCenter(center);
+            center.setSpacing(8);
+            center.setAlignment(Pos.CENTER_LEFT);
+
+            StackPane imageViewContainer = new StackPane();
+            FXUtils.setLimitWidth(imageViewContainer, 32);
+            FXUtils.setLimitHeight(imageViewContainer, 32);
+
+            this.imageView = new ImageView();
+            FXUtils.limitSize(imageView, 32, 32);
+            imageViewContainer.getChildren().setAll(imageView);
+
+            this.content = new TwoLineListItem();
+            BorderPane.setAlignment(content, Pos.CENTER);
+
+            FXUtils.onChangeAndOperate(tag, tag -> {
+                content.getTags().clear();
+                if (StringUtils.isNotBlank(tag))
+                    content.addTag(tag);
+            });
+
+            center.getChildren().setAll(imageView, content);
+        }
 
         {
             this.right = new HBox();
@@ -139,6 +169,22 @@ public final class GameListCell extends JFXListCell<GameListItem> {
     @Override
     public void updateItem(GameListItem item, boolean empty) {
         super.updateItem(item, empty);
+
+        this.imageView.imageProperty().unbind();
+        this.content.titleProperty().unbind();
+        this.content.subtitleProperty().unbind();
+        this.tag.unbind();
+
+        if (empty || item == null) {
+            setGraphic(null);
+        } else {
+            setGraphic(this.graphic);
+
+            this.imageView.imageProperty().bind(item.getGameItem().imageProperty());
+            this.content.titleProperty().bind(item.getGameItem().titleProperty());
+            this.content.subtitleProperty().bind(item.getGameItem().subtitleProperty());
+            this.tag.bind(item.getGameItem().tagProperty());
+        }
     }
 
     // Popup Menu

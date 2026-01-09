@@ -144,7 +144,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                     setLoading(false);
                     List<GameListItem> children = repository.getDisplayVersions()
                             .map(version -> new GameListItem(toggleGroup, profile, version.getId()))
-                            .collect(Collectors.toList());
+                            .toList();
                     itemsProperty().setAll(children);
                     children.forEach(GameListItem::checkSelection);
 
@@ -182,6 +182,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
 
             public GameListSkin() {
                 super(GameList.this);
+
             }
 
             @Override
