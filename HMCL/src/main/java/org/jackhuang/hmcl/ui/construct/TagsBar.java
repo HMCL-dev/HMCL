@@ -27,7 +27,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.Pane;
 import javafx.scene.text.Text;
-import org.jackhuang.hmcl.ui.FXUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +43,7 @@ public class TagsBar extends Pane {
     private final ObservableList<Tag> tags = FXCollections.observableArrayList();
     private final List<Label> tagLabels = new ArrayList<>();
     private final Text collapsedIndicator = new Text();
+    private final Text measureText = new Text(); // For measuring width without affecting display
     private final Tooltip collapsedTooltip = new Tooltip();
 
     private int visibleTagCount = 0;
@@ -51,13 +51,13 @@ public class TagsBar extends Pane {
     public TagsBar() {
         getStyleClass().add(DEFAULT_STYLE_CLASS);
 
-        collapsedIndicator.getStyleClass().addAll("tag", "collapsed-indicator");
+        collapsedIndicator.getStyleClass().add("collapsed-indicator");
         collapsedIndicator.setManaged(false);
         collapsedIndicator.setVisible(false);
         getChildren().add(collapsedIndicator);
 
-        // Install tooltip on collapsed indicator
-        FXUtils.installFastTooltip(collapsedIndicator, collapsedTooltip);
+        // Copy style from collapsedIndicator for accurate measurement
+        measureText.getStyleClass().add("collapsed-indicator");
 
         tags.addListener((ListChangeListener<Tag>) c -> {
             rebuildTagLabels();
@@ -100,6 +100,13 @@ public class TagsBar extends Pane {
         tags.add(new Tag(text, true));
     }
 
+    public Tooltip getCollapsedTooltip() {
+        return collapsedTooltip;
+    }
+
+    public Text getCollapsedIndicator() {
+        return collapsedIndicator;
+    }
 
     @Override
     protected double computeMinWidth(double height) {
@@ -107,9 +114,9 @@ public class TagsBar extends Pane {
         if (tags.isEmpty()) {
             return 0;
         }
-        // Estimate the width of "+N" where N is the total tag count
-        collapsedIndicator.setText("+" + tags.size());
-        return snapSizeX(collapsedIndicator.prefWidth(-1));
+        // Use measureText to avoid affecting collapsedIndicator's display
+        measureText.setText("+" + tags.size());
+        return snapSizeX(measureText.prefWidth(-1));
     }
 
     @Override
@@ -138,7 +145,8 @@ public class TagsBar extends Pane {
             maxHeight = Math.max(maxHeight, label.prefHeight(-1));
         }
         if (maxHeight == 0) {
-            maxHeight = collapsedIndicator.prefHeight(-1);
+            measureText.setText("+1");
+            maxHeight = measureText.prefHeight(-1);
         }
         return snapSizeY(maxHeight);
     }
@@ -159,10 +167,16 @@ public class TagsBar extends Pane {
             tagWidths[i] = tagLabels.get(i).prefWidth(-1);
         }
 
+        // Pre-calculate collapsed indicator widths for all possible hidden counts using measureText
+        double[] collapsedWidths = new double[tagLabels.size() + 1];
+        for (int n = 1; n <= tagLabels.size(); n++) {
+            measureText.setText("+" + n);
+            collapsedWidths[n] = measureText.prefWidth(-1);
+        }
+
         // Calculate how many tags can fit
         visibleTagCount = 0;
         double currentWidth = 0;
-
 
         // Try to fit as many tags as possible
         for (int i = 0; i < tagLabels.size(); i++) {
@@ -173,8 +187,7 @@ public class TagsBar extends Pane {
                 // Not the last tag
                 // If tag i fits but next doesn't, we need space for "+(size-i-1)"
                 int hiddenIfNextFails = tagLabels.size() - i - 1;
-                collapsedIndicator.setText("+" + hiddenIfNextFails);
-                double collapsedWidthIfNextFails = collapsedIndicator.prefWidth(-1) + TAG_SPACING;
+                double collapsedWidthIfNextFails = collapsedWidths[hiddenIfNextFails] + TAG_SPACING;
 
                 // Check if we can fit tag i + collapsed indicator for remaining tags
                 if (currentWidth + spacing + tagWidth + collapsedWidthIfNextFails <= availableWidth) {
@@ -182,7 +195,6 @@ public class TagsBar extends Pane {
                     visibleTagCount++;
                 } else {
                     // Tag i doesn't fit with its associated indicator
-                    // We'll show indicator for (size - i) hidden tags instead
                     break;
                 }
             } else {
@@ -195,8 +207,8 @@ public class TagsBar extends Pane {
         }
 
         // Determine if we need to show collapsed indicator
-        boolean showingCollapsedIndicator = visibleTagCount < tagLabels.size();
-
+        int hiddenCount = tagLabels.size() - visibleTagCount;
+        boolean showingCollapsedIndicator = hiddenCount > 0;
 
         // Layout visible tags
         double x = 0;
@@ -214,10 +226,9 @@ public class TagsBar extends Pane {
 
         // Layout collapsed indicator
         if (showingCollapsedIndicator) {
-            int hiddenCount = tagLabels.size() - visibleTagCount;
             collapsedIndicator.setText("+" + hiddenCount);
             collapsedIndicator.setVisible(true);
-            double indicatorWidth = collapsedIndicator.prefWidth(-1);
+            double indicatorWidth = collapsedWidths[hiddenCount];
 
             // Ensure indicator doesn't exceed available width
             double indicatorX = Math.min(x, availableWidth - indicatorWidth);

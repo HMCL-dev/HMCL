@@ -51,6 +51,10 @@ public class TwoLineListItem extends VBox {
         lblTitle.getStyleClass().add("title");
         lblTitle.textProperty().bind(title);
 
+        // Allow tagsBar to receive mouse events for tooltip
+        tagsBar.setMouseTransparent(false);
+        FXUtils.installFastTooltip(tagsBar.getCollapsedIndicator(), tagsBar.getCollapsedTooltip());
+
         // Custom first line layout that prioritizes lblTitle but ensures +N is visible
         Pane firstLine = new Pane() {
             @Override
