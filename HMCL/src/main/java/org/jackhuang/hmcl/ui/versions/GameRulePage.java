@@ -56,10 +56,10 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> {
         this.worldManagePage = worldManagePage;
         this.world = worldManagePage.getWorld();
 
-        gameRuleList = FXCollections.observableArrayList(gamerule -> {
-            if (gamerule instanceof GameRuleInfo.BooleanGameRuleInfo booleanGameRuleInfo) {
+        gameRuleList = FXCollections.observableArrayList(gameRule -> {
+            if (gameRule instanceof GameRuleInfo.BooleanGameRuleInfo booleanGameRuleInfo) {
                 return new Observable[]{booleanGameRuleInfo.currentValueProperty()};
-            } else if (gamerule instanceof GameRuleInfo.IntGameRuleInfo intGameRuleInfo) {
+            } else if (gameRule instanceof GameRuleInfo.IntGameRuleInfo intGameRuleInfo) {
                 return new Observable[]{intGameRuleInfo.currentValueProperty()};
             }
             return new Observable[]{};
