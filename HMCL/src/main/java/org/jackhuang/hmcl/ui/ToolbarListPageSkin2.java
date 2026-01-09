@@ -1,0 +1,70 @@
+/*
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+package org.jackhuang.hmcl.ui;
+
+import com.jfoenix.controls.JFXListView;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Node;
+import javafx.scene.control.SkinBase;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
+import org.jackhuang.hmcl.ui.construct.ComponentList;
+import org.jackhuang.hmcl.ui.construct.SpinnerPane;
+
+import java.util.List;
+
+public abstract class ToolbarListPageSkin2<E, P extends ListPageBase<E>> extends SkinBase<P> {
+
+    protected final JFXListView<E> listView;
+
+    public ToolbarListPageSkin2(P skinnable) {
+        super(skinnable);
+
+        SpinnerPane spinnerPane = new SpinnerPane();
+        spinnerPane.loadingProperty().bind(skinnable.loadingProperty());
+        spinnerPane.failedReasonProperty().bind(skinnable.failedReasonProperty());
+        spinnerPane.onFailedActionProperty().bind(skinnable.onFailedActionProperty());
+        spinnerPane.getStyleClass().add("large-spinner-pane");
+
+        ComponentList root = new ComponentList();
+        root.getStyleClass().add("no-padding");
+        StackPane.setMargin(root, new Insets(10));
+
+        List<Node> toolbarButtons = initializeToolbar(skinnable);
+        if (!toolbarButtons.isEmpty()) {
+            HBox toolbar = new HBox();
+            toolbar.setAlignment(Pos.CENTER_LEFT);
+            toolbar.setPickOnBounds(false);
+            toolbar.getChildren().setAll(toolbarButtons);
+            root.getContent().add(toolbar);
+        }
+
+        {
+            this.listView = new JFXListView<>();
+            root.getContent().add(listView);
+        }
+
+        spinnerPane.setContent(root);
+
+        getChildren().setAll(spinnerPane);
+    }
+
+
+    protected abstract List<Node> initializeToolbar(P skinnable);
+}

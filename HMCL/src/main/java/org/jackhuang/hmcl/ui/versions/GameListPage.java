@@ -178,11 +178,11 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             return new GameListSkin();
         }
 
-        private class GameListSkin extends ToolbarListPageSkin<GameList> {
+        private class GameListSkin extends ToolbarListPageSkin2<GameListItem, GameList> {
 
             public GameListSkin() {
                 super(GameList.this);
-
+                this.listView.setCellFactory(listView -> new GameListCell());
             }
 
             @Override
