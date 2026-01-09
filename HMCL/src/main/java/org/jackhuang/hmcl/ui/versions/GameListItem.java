@@ -23,7 +23,7 @@ import org.jackhuang.hmcl.setting.Profile;
 
 public class GameListItem extends GameItem2 {
     private final boolean isModpack;
-    private final BooleanProperty selected = new SimpleBooleanProperty();
+    private final BooleanProperty selected = new SimpleBooleanProperty(this, "selected");
 
     public GameListItem(Profile profile, String id) {
         super(profile, id);
@@ -34,10 +34,6 @@ public class GameListItem extends GameItem2 {
 
     public BooleanProperty selectedProperty() {
         return selected;
-    }
-
-    public void checkSelection() {
-        selected.set(id.equals(profile.getSelectedVersion()));
     }
 
     public void rename() {

@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.versions;
 
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
+import javafx.beans.value.ChangeListener;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
@@ -35,6 +36,7 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.profile.ProfileListItem;
 import org.jackhuang.hmcl.ui.profile.ProfilePage;
+import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
 import java.util.Collections;
@@ -119,47 +121,57 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
         return state.getReadOnlyProperty();
     }
 
-    private class GameList extends ListPageBase<GameListItem> {
-        private final ObjectProperty<GameListItem> selectedItem = new SimpleObjectProperty<>();
+    private static class GameList extends ListPageBase<GameListItem> {
+        private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
+        private boolean updatingSelection = false;
 
         public GameList() {
             super();
 
-            Profiles.registerVersionsListener(this::loadVersions);
+            Profiles.registerVersionsListener(profile -> FXUtils.runInFX(() -> loadVersions(profile)));
 
             setOnFailedAction(e -> Controllers.navigate(Controllers.getDownloadPage()));
         }
 
+        @FXThread
         private void loadVersions(Profile profile) {
             setLoading(true);
             setFailedReason(null);
-            HMCLGameRepository repository = profile.getRepository();
-            WeakListenerHolder listenerHolder = new WeakListenerHolder();
-            runInFX(() -> {
-                if (profile == Profiles.getSelectedProfile()) {
-                    setLoading(false);
-                    List<GameListItem> children = repository.getDisplayVersions()
-                            .map(version -> new GameListItem(profile, version.getId()))
-                            .toList();
-                    itemsProperty().setAll(children);
-                    children.forEach(GameListItem::checkSelection);
+            if (profile == Profiles.getSelectedProfile()) {
+                ObservableList<GameListItem> children = FXCollections.observableList(profile.getRepository().getDisplayVersions()
+                        .map(version -> new GameListItem(profile, version.getId()))
+                        .toList());
+                setItems(children);
+                setLoading(false);
 
-                    if (children.isEmpty()) {
-                        setFailedReason(i18n("version.empty.hint"));
-                    }
+                ChangeListener<Boolean> selectionListener = listenerHolder.weak((property, a, b) -> {
+                    if (updatingSelection) return;
+                    updatingSelection = true;
 
-                    profile.selectedVersionProperty().addListener(listenerHolder.weak((a, b, newValue) -> {
-                        for (GameListItem child : children) {
-                            child.selectedProperty().set(child.getId().equals(newValue));
-                        }
-                    }));
-                }
-                toggleGroup.selectedToggleProperty().addListener((o, a, toggle) -> {
-                    if (toggle == null) return;
-                    GameListItem model = (GameListItem) toggle.getUserData();
-                    model.getProfile().setSelectedVersion(model.getId());
+                    GameListItem item = (GameListItem) ((Property<?>) property).getBean();
+                    profile.setSelectedVersion(item.getId());
+
+                    updatingSelection = false;
                 });
-            });
+
+                String selectedId = profile.getSelectedVersion();
+                for (GameListItem child : children) {
+                    child.selectedProperty().set(child.getId().equals(selectedId));
+                    child.selectedProperty().addListener(selectionListener);
+                }
+
+                if (children.isEmpty()) {
+                    setFailedReason(i18n("version.empty.hint"));
+                }
+
+                profile.selectedVersionProperty().addListener(listenerHolder.weak((a, b, newValue) -> {
+                    updatingSelection = true;
+                    for (GameListItem child : children) {
+                        child.selectedProperty().set(child.getId().equals(newValue));
+                    }
+                    updatingSelection = false;
+                }));
+            }
         }
 
         public void refreshList() {
