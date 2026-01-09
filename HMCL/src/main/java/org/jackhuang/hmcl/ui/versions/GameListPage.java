@@ -126,8 +126,6 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
         private boolean updatingSelection = false;
 
         public GameList() {
-            super();
-
             Profiles.registerVersionsListener(profile -> FXUtils.runInFX(() -> loadVersions(profile)));
 
             setOnFailedAction(e -> Controllers.navigate(Controllers.getDownloadPage()));
@@ -152,12 +150,9 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
 
             ChangeListener<Boolean> selectionListener = listenerHolder.weak((property, oldValue, newValue) -> {
                 if (!newValue || updatingSelection) return;
-                updatingSelection = true;
 
                 GameListItem item = (GameListItem) ((Property<?>) property).getBean();
                 profile.setSelectedVersion(item.getId());
-
-                updatingSelection = false;
             });
 
             String selectedId = profile.getSelectedVersion();

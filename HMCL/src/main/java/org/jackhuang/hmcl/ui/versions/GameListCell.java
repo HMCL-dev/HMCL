@@ -182,7 +182,6 @@ public final class GameListCell extends ListCell<GameListItem> {
             setGraphic(this.graphic);
 
             this.chkSelected.selectedProperty().bindBidirectional(item.selectedProperty());
-
             this.imageView.imageProperty().bind(item.imageProperty());
             this.content.titleProperty().bind(item.titleProperty());
             this.content.subtitleProperty().bind(item.subtitleProperty());
