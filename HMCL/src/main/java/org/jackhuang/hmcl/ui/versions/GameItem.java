@@ -72,49 +72,43 @@ public class GameItem {
         }
 
         CompletableFuture.supplyAsync(() -> {
-                    // GameVersion.minecraftVersion() is a time-costing job (up to ~200 ms)
-                    Optional<String> gameVersion = profile.getRepository().getGameVersion(id);
+            // GameVersion.minecraftVersion() is a time-costing job (up to ~200 ms)
+            Optional<String> gameVersion = profile.getRepository().getGameVersion(id);
+            String modPackVersion = null;
+            try {
+                ModpackConfiguration<?> config = profile.getRepository().readModpackConfiguration(id);
+                modPackVersion = config != null ? config.getVersion() : null;
+            } catch (IOException e) {
+                LOG.warning("Failed to read modpack configuration from " + id, e);
+            }
+            return new Result(gameVersion.orElse(null), modPackVersion);
+        }, Schedulers.io()).whenCompleteAsync((result, exception) -> {
+            if (exception == null) {
+                if (result.gameVersion != null) {
+                    title.set(result.gameVersion);
+                }
+                if (result.tag != null) {
+                    tag.set(result.tag);
+                }
 
-                    String modPackVersion = null;
-                    try {
-                        ModpackConfiguration<?> config = profile.getRepository().readModpackConfiguration(id);
-                        modPackVersion = config != null ? config.getVersion() : null;
-                    } catch (IOException e) {
-                        LOG.warning("Failed to read modpack configuration from " + id, e);
+                StringBuilder libraries = new StringBuilder(Objects.requireNonNullElse(result.gameVersion, i18n("message.unknown")));
+                LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(profile.getRepository().getResolvedPreservingPatchesVersion(id), result.gameVersion);
+                for (LibraryAnalyzer.LibraryMark mark : analyzer) {
+                    String libraryId = mark.getLibraryId();
+                    String libraryVersion = mark.getLibraryVersion();
+                    if (libraryId.equals(MINECRAFT.getPatchId())) continue;
+                    if (I18n.hasKey("install.installer." + libraryId)) {
+                        libraries.append(", ").append(i18n("install.installer." + libraryId));
+                        if (libraryVersion != null)
+                            libraries.append(": ").append(libraryVersion.replaceAll("(?i)" + libraryId, ""));
                     }
+                }
 
-                    return new Result(
-                            gameVersion.orElse(null),
-                            modPackVersion
-                    );
-                }, Schedulers.io())
-                .whenCompleteAsync((result, exception) -> {
-                    if (exception == null) {
-                        if (result.gameVersion != null) {
-                            title.set(result.gameVersion);
-                        }
-                        if (result.tag != null) {
-                            tag.set(result.tag);
-                        }
-
-                        StringBuilder libraries = new StringBuilder(Objects.requireNonNullElse(result.gameVersion, i18n("message.unknown")));
-                        LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(profile.getRepository().getResolvedPreservingPatchesVersion(id), result.gameVersion);
-                        for (LibraryAnalyzer.LibraryMark mark : analyzer) {
-                            String libraryId = mark.getLibraryId();
-                            String libraryVersion = mark.getLibraryVersion();
-                            if (libraryId.equals(MINECRAFT.getPatchId())) continue;
-                            if (I18n.hasKey("install.installer." + libraryId)) {
-                                libraries.append(", ").append(i18n("install.installer." + libraryId));
-                                if (libraryVersion != null)
-                                    libraries.append(": ").append(libraryVersion.replaceAll("(?i)" + libraryId, ""));
-                            }
-                        }
-
-                        subtitle.set(libraries.toString());
-                    } else {
-                        LOG.warning("Failed to read version info from " + id, exception);
-                    }
-                }, Schedulers.javafx());
+                subtitle.set(libraries.toString());
+            } else {
+                LOG.warning("Failed to read version info from " + id, exception);
+            }
+        }, Schedulers.javafx());
 
         title.set(id);
         image.set(profile.getRepository().getVersionIconImage(id));
