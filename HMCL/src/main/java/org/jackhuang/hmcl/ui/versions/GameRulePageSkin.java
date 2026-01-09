@@ -19,8 +19,6 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.*;
 import javafx.animation.PauseTransition;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -38,11 +36,8 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.StringUtils;
 
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -52,9 +47,6 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
     private final HBox toolBar;
     private final JFXTextField searchField;
     private final JFXListView<GameRuleInfo<?>> listView = new JFXListView<>();
-    private final ObservableList<GameRuleInfo<?>> modifiedList = FXCollections.observableArrayList();
-    private final FilteredList<GameRuleInfo<?>> displayedItems;
-    private final FilteredList<GameRuleInfo<?>> modifiedItems;
     private final Map<String, HBox> cellMap = new HashMap<>();
 
     GameRulePageSkin(GameRulePage skinnable) {
@@ -69,39 +61,30 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
             getChildren().add(pane);
         }
 
-        modifiedList.setAll(getSkinnable().getItems());
-        displayedItems = new FilteredList<>(modifiedList);
-        modifiedItems = new FilteredList<>(skinnable.getItems(), GameRuleInfo::getModified);
-
         {
             toolBar = new HBox();
             toolBar.setAlignment(Pos.CENTER);
             toolBar.setPadding(new Insets(0, 5, 0, 5));
             toolBar.setSpacing(5);
 
-            JFXComboBox<RuleModifiedType> viewFilterComboBox = new JFXComboBox<>(RuleModifiedType.items);
+            JFXComboBox<GameRulePage.RuleModifiedType> viewFilterComboBox = new JFXComboBox<>(GameRulePage.RuleModifiedType.items);
+            viewFilterComboBox.setValue(GameRulePage.RuleModifiedType.ALL);
             // Changes to the modifiedList are only applied at the time a type is manually selected; this is by design.
             viewFilterComboBox.valueProperty().addListener((observable, oldValue, newValue) -> {
-                applyModifiedFilter(newValue);
+                getSkinnable().applyModifiedFilter(newValue);
             });
-            viewFilterComboBox.setValue(RuleModifiedType.ALL);
 
             searchField = new JFXTextField();
             {
                 searchField.setPromptText(i18n("search"));
-                PauseTransition pause = new PauseTransition(Duration.millis(100));
-                pause.setOnFinished(event -> displayedItems.setPredicate(skinnable.updateSearchPredicate(searchField.getText())));
-                searchField.textProperty().addListener((observable) -> {
-                    pause.setRate(1);
-                    pause.playFromStart();
-                });
+                PauseTransition searchPause = new PauseTransition(Duration.millis(1000));
+                searchPause.setOnFinished(event -> getSkinnable().updateSearchPredicate(searchField.getText()));
+                searchField.textProperty().addListener((observable) -> searchPause.playFromStart());
                 HBox.setHgrow(searchField, Priority.ALWAYS);
             }
-            //JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE, searchField::clear);
-            //FXUtils.onEscPressed(searchField, searchField::clear);
 
             JFXButton resetAllButton = createToolbarButton2(i18n("gamerule.restore_default_values_all"), SVG.RESTORE,
-                    () -> Controllers.dialog(new ResetDefaultValuesLayout(skinnable::resettingAllGameRule, modifiedItems, () -> applyModifiedFilter(viewFilterComboBox.getSelectionModel().getSelectedItem()))));
+                    () -> Controllers.dialog(new ResetDefaultValuesLayout(skinnable::resettingAllGameRule, getSkinnable().getModifiedItems(), () -> getSkinnable().applyModifiedFilter(viewFilterComboBox.getSelectionModel().getSelectedItem()))));
 
             toolBar.getChildren().addAll(searchField, new Label(i18n("gamerule.filter")), viewFilterComboBox, resetAllButton);
             root.getContent().add(toolBar);
@@ -113,23 +96,11 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
             center.getStyleClass().add("large-spinner-pane");
             center.setContent(listView);
 
-            listView.setItems(displayedItems);
+            listView.setItems(getSkinnable().getDisplayedItems());
             listView.setCellFactory(x -> new GameRuleListCell(listView, cellMap));
             FXUtils.ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
 
             root.getContent().add(center);
-        }
-    }
-
-    private void applyModifiedFilter(RuleModifiedType type) {
-        switch (type) {
-            case ALL -> modifiedList.setAll(getSkinnable().getItems());
-            case MODIFIED -> modifiedList.setAll(modifiedItems);
-            case UNMODIFIED -> {
-                modifiedList.setAll(getSkinnable().getItems().stream()
-                        .filter(gameRuleInfo -> !modifiedItems.contains(gameRuleInfo))
-                        .collect(Collectors.toSet()));
-            }
         }
     }
 
@@ -248,17 +219,6 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
                 }
             }
             return wrapperPane;
-        }
-    }
-
-    enum RuleModifiedType {
-        ALL, MODIFIED, UNMODIFIED;
-
-        static final ObservableList<RuleModifiedType> items = FXCollections.observableList(Arrays.asList(values()));
-
-        @Override
-        public String toString() {
-            return i18n("gamerule.filter." + name().toLowerCase(Locale.ROOT));
         }
     }
 

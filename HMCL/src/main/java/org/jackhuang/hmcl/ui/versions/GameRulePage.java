@@ -22,6 +22,7 @@ import javafx.animation.PauseTransition;
 import javafx.beans.Observable;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.scene.control.Skin;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.game.World;
@@ -35,9 +36,11 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -49,8 +52,12 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> {
     private CompoundTag levelDat;
 
     private final ObservableList<GameRuleInfo<?>> gameRuleList;
+    private final FilteredList<GameRuleInfo<?>> modifiedItems = new FilteredList<>(getItems(), GameRuleInfo::getModified);
+    private final ObservableList<GameRuleInfo<?>> modifiedList = FXCollections.observableArrayList();
+    private final FilteredList<GameRuleInfo<?>> displayedItems = new FilteredList<>(modifiedList);
+
     private boolean batchUpdating = false;
-    private final PauseTransition pause;
+    private final PauseTransition saveLevelDatPause;
 
     public GameRulePage(WorldManagePage worldManagePage) {
         this.worldManagePage = worldManagePage;
@@ -79,8 +86,8 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> {
                     }
                 })).start();
 
-        pause = new PauseTransition(Duration.millis(300));
-        pause.setOnFinished(event -> saveLevelDat());
+        saveLevelDatPause = new PauseTransition(Duration.millis(300));
+        saveLevelDatPause.setOnFinished(event -> saveLevelDat());
     }
 
     public void updateControls() {
@@ -102,11 +109,36 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> {
                 });
             });
         });
+        applyModifiedFilter(RuleModifiedType.ALL);
     }
 
     @Override
     protected Skin<?> createDefaultSkin() {
         return new GameRulePageSkin(this);
+    }
+
+    public ObservableList<GameRuleInfo<?>> getModifiedList() {
+        return modifiedList;
+    }
+
+    public void applyModifiedFilter(RuleModifiedType type) {
+        switch (type) {
+            case ALL -> modifiedList.setAll(getItems());
+            case MODIFIED -> modifiedList.setAll(modifiedItems);
+            case UNMODIFIED -> {
+                modifiedList.setAll(getItems().stream()
+                        .filter(gameRuleInfo -> !modifiedItems.contains(gameRuleInfo))
+                        .collect(Collectors.toSet()));
+            }
+        }
+    }
+
+    public FilteredList<GameRuleInfo<?>> getModifiedItems() {
+        return modifiedItems;
+    }
+
+    public FilteredList<GameRuleInfo<?>> getDisplayedItems() {
+        return displayedItems;
     }
 
     public boolean isBatchUpdating() {
@@ -130,7 +162,7 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> {
     }
 
     void requestSaveLevelDat() {
-        pause.playFromStart();
+        saveLevelDatPause.playFromStart();
     }
 
     void saveLevelDatIfNotInBatchUpdating() {
@@ -149,7 +181,11 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> {
         Controllers.showToast(i18n("gamerule.restore_default_values_all.finish.toast"));
     }
 
-    @NotNull Predicate<GameRuleInfo<?>> updateSearchPredicate(String queryString) {
+    void updateSearchPredicate(String queryString) {
+        displayedItems.setPredicate(updatePredicate(queryString));
+    }
+
+    @NotNull private Predicate<GameRuleInfo<?>> updatePredicate(String queryString) {
         if (StringUtils.isBlank(queryString)) {
             return gameRuleInfo -> true;
         }
@@ -168,5 +204,16 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> {
         }
 
         return gameRuleInfo -> stringPredicate.test(gameRuleInfo.getDisplayName()) || stringPredicate.test(gameRuleInfo.getRuleKey());
+    }
+
+    enum RuleModifiedType {
+        ALL, MODIFIED, UNMODIFIED;
+
+        static final ObservableList<RuleModifiedType> items = FXCollections.observableList(Arrays.asList(values()));
+
+        @Override
+        public String toString() {
+            return i18n("gamerule.filter." + name().toLowerCase(Locale.ROOT));
+        }
     }
 }

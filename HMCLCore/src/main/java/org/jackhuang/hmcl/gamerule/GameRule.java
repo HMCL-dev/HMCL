@@ -60,49 +60,6 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         this.displayI18nKey = displayI18nKey;
     }
 
-    private static GameRule createSimpleGameRule(String ruleKey, boolean value) {
-        return new BooleanGameRule(Collections.singletonList(ruleKey), value);
-    }
-
-    private static GameRule createSimpleGameRule(String ruleKey, int value) {
-        IntGameRule intGameRule = new IntGameRule(Collections.singletonList(ruleKey), value);
-        intGameRule.addMaxValue(Integer.MAX_VALUE);
-        intGameRule.addMinValue(Integer.MIN_VALUE);
-        return intGameRule;
-    }
-
-    /// Parses an NBT Tag to create a corresponding [GameRule].
-    ///
-    /// This method handles type coercion:
-    /// * [IntTag] -> [IntGameRule]
-    /// * [ByteTag] -> [BooleanGameRule]
-    /// * [StringTag] -> Tries to parse as [BooleanGameRule] ("true"/"false") or [IntGameRule].
-    ///
-    /// @param tag The NBT tag to parse.
-    /// @return An Optional containing the GameRule if parsing was successful.
-    public static Optional<GameRule> createSimpleRuleFromTag(Tag tag) {
-        String name = tag.getName();
-
-        if (tag instanceof IntTag intTag) {
-            return Optional.of(createSimpleGameRule(name, intTag.getValue()));
-        }
-        if (tag instanceof ByteTag byteTag) {
-            return Optional.of(createSimpleGameRule(name, byteTag.getValue() == 1));
-        }
-        if (tag instanceof StringTag stringTag) {
-            String value = stringTag.getValue();
-            if ("true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value)) {
-                return Optional.of(createSimpleGameRule(name, Boolean.parseBoolean(value)));
-            }
-            Integer intValue = Lang.toIntOrNull(value);
-            if (intValue != null) {
-                return Optional.of(createSimpleGameRule(name, intValue));
-            }
-        }
-
-        return Optional.empty();
-    }
-
     /// Retrieves a fully populated GameRule based on an NBT tag.
     ///
     /// This combines parsing the tag [#createGameRuleNBT(Tag)] and applying known metadata
@@ -115,24 +72,54 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         });
     }
 
+    /// Parses an NBT Tag to create a corresponding [GameRule].
+    ///
+    /// This method handles type coercion:
+    /// * [IntTag] -> [IntGameRule]
+    /// * [ByteTag] -> [BooleanGameRule]
+    /// * [StringTag] -> Tries to parse as [BooleanGameRule] ("true"/"false") or [IntGameRule].
+    ///
+    /// @param tag The NBT tag to parse.
+    /// @return An Optional containing the GameRule if parsing was successful.
+    private static Optional<GameRule> createSimpleRuleFromTag(Tag tag) {
+        String name = tag.getName();
+
+        if (tag instanceof IntTag intTag) {
+            return Optional.of(new IntGameRule(name, intTag.getValue()));
+        } else if (tag instanceof ByteTag byteTag) {
+            return Optional.of(new BooleanGameRule(name, byteTag.getValue() == 1));
+        } else if (tag instanceof StringTag stringTag) {
+            String value = stringTag.getValue();
+            if ("true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value)) {
+                return Optional.of(new BooleanGameRule(name, Boolean.parseBoolean(value)));
+            }
+            Integer intValue = Lang.toIntOrNull(value);
+            if (intValue != null) {
+                return Optional.of(new IntGameRule(name, intValue));
+            }
+        }
+
+        return Optional.empty();
+    }
+
     /// Creates a [GameRuleNBT] wrapper around an NBT Tag.
     /// Used for unified changing operations back to NBT format.
     ///
     /// @see GameRuleNBT
     public static Optional<GameRuleNBT<?, ? extends Tag>> createGameRuleNBT(Tag tag) {
-        if (tag instanceof StringTag stringTag && (stringTag.getValue().equals("true") || stringTag.getValue().equals("false"))) {
-            return Optional.of(new GameRuleNBT.StringByteGameRuleNBT(stringTag));
-        } else if (tag instanceof StringTag stringTag && Lang.toIntOrNull(stringTag.getValue()) != null) {
-            return Optional.of(new GameRuleNBT.StringIntGameRuleNBT(stringTag));
-        } else if (tag instanceof IntTag intTag) {
+        if (tag instanceof IntTag intTag) {
             return Optional.of(new GameRuleNBT.IntGameRuleNBT(intTag));
         } else if (tag instanceof ByteTag byteTag) {
             return Optional.of(new GameRuleNBT.ByteGameRuleNBT(byteTag));
+        } else if (tag instanceof StringTag stringTag && (stringTag.getValue().equals("true") || stringTag.getValue().equals("false"))) {
+            return Optional.of(new GameRuleNBT.StringByteGameRuleNBT(stringTag));
+        } else if (tag instanceof StringTag stringTag && Lang.toIntOrNull(stringTag.getValue()) != null) {
+            return Optional.of(new GameRuleNBT.StringIntGameRuleNBT(stringTag));
         }
         return Optional.empty();
     }
 
-    /// Copies metadata (e.g., descriptions, ranges) from the source rule to this instance.
+    /// Copies metadata (descriptions, default value and ranges) from the source rule to this instance.
     public abstract void applyMetadata(GameRule metadataSource);
 
     public abstract GameRule deserialize(JsonObject jsonObject, Type type, JsonDeserializationContext context);
@@ -158,13 +145,12 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         private boolean value = false;
         private final VersionedValue<Boolean> defaultValue = new VersionedValue<>();
 
-        private BooleanGameRule(List<String> ruleKey, boolean value) {
-            super(ruleKey, "");
-            this.value = value;
+        private BooleanGameRule() {
         }
 
-        private BooleanGameRule() {
-
+        private BooleanGameRule(String ruleKey, boolean value) {
+            super(Collections.singletonList(ruleKey), "");
+            this.value = value;
         }
 
         @Override
@@ -177,16 +163,13 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
 
         @Override
         public GameRule deserialize(JsonObject jsonObject, Type type, JsonDeserializationContext context) {
-            Type listType = JsonUtils.listTypeOf(String.class).getType();
-            this.setRuleKey(context.deserialize(jsonObject.get("ruleKey"), listType));
+            this.setRuleKey(JsonUtils.fromNonNullJson(jsonObject.get("ruleKey").toString(), JsonUtils.listTypeOf(String.class)));
             this.setDisplayI18nKey(jsonObject.get("displayI18nKey").getAsString());
             JsonElement defaultValue = jsonObject.get("defaultValue");
             if (defaultValue instanceof JsonPrimitive p && p.isBoolean()) {
                 this.addDefaultValue(p.getAsBoolean());
-            } else {
-                if (defaultValue instanceof JsonObject o) {
-                    o.asMap().forEach((key, value) -> this.addDefaultValue(key, value.getAsBoolean()));
-                }
+            } else if (defaultValue instanceof JsonObject o) {
+                o.asMap().forEach((key, value) -> this.addDefaultValue(key, value.getAsBoolean()));
             }
 
             return this;
@@ -221,13 +204,14 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         private final VersionedValue<Integer> minValue = new VersionedValue<>();
         private final VersionedValue<Integer> maxValue = new VersionedValue<>();
 
-        private IntGameRule(List<String> ruleKey, int value) {
-            super(ruleKey, "");
-            this.value = value;
+        private IntGameRule() {
         }
 
-        private IntGameRule() {
-
+        private IntGameRule(String ruleKey, int value) {
+            super(Collections.singletonList(ruleKey), "");
+            this.value = value;
+            addMaxValue(Integer.MAX_VALUE);
+            addMinValue(Integer.MIN_VALUE);
         }
 
         @Override
@@ -242,16 +226,13 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
 
         @Override
         public GameRule deserialize(JsonObject jsonObject, Type type, JsonDeserializationContext context) {
-            Type listType = JsonUtils.listTypeOf(String.class).getType();
-            this.setRuleKey(context.deserialize(jsonObject.get("ruleKey"), listType));
+            this.setRuleKey(JsonUtils.fromNonNullJson(jsonObject.get("ruleKey").toString(), JsonUtils.listTypeOf(String.class)));
             this.setDisplayI18nKey(jsonObject.get("displayI18nKey").getAsString());
 
             if (jsonObject.get("defaultValue") instanceof JsonPrimitive p && p.isNumber()) {
                 this.addDefaultValue(p.getAsInt());
-            } else {
-                if (jsonObject.get("defaultValue") instanceof JsonObject o) {
-                    o.asMap().forEach((key, value) -> this.addDefaultValue(key, value.getAsInt()));
-                }
+            } else if (jsonObject.get("defaultValue") instanceof JsonObject o) {
+                o.asMap().forEach((key, value) -> this.addDefaultValue(key, value.getAsInt()));
             }
 
             if (jsonObject.get("maxValue") instanceof JsonPrimitive jsonPrimitive) {
@@ -274,14 +255,12 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
 
         private int parseValue(JsonElement jsonElement) {
             JsonPrimitive primitive = jsonElement.getAsJsonPrimitive();
-            int value;
             if (primitive.isNumber()) {
-                value = primitive.getAsInt();
+                return primitive.getAsInt();
             } else {
                 String str = primitive.getAsString();
-                value = "INT_MAX".equals(str) ? Integer.MAX_VALUE : Integer.MIN_VALUE;
+                return "INT_MAX".equals(str) ? Integer.MAX_VALUE : Integer.MIN_VALUE;
             }
-            return value;
         }
 
         public Optional<Integer> getDefaultValue(GameVersionNumber gameVersionNumber) {
@@ -336,9 +315,12 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
         @Override
         public GameRule deserialize(JsonElement jsonElement, Type type, JsonDeserializationContext context) throws JsonParseException {
             JsonObject jsonObject = jsonElement.getAsJsonObject();
-
-            boolean isInt = jsonObject.get("type").getAsString().equals("int");
-            GameRule gameRule = isInt ? new IntGameRule() : new BooleanGameRule();
+            GameRule gameRule;
+            switch (jsonObject.get("type").getAsString()) {
+                case "int" -> gameRule = new IntGameRule();
+                case "boolean" -> gameRule = new BooleanGameRule();
+                default -> throw new JsonParseException("Unknown GameRule type: " + jsonObject.get("type").getAsString());
+            }
             return gameRule.deserialize(jsonObject, type, context);
         }
     }
