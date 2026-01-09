@@ -22,7 +22,7 @@ import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import org.jackhuang.hmcl.setting.Profile;
 
-public class GameListItem extends GameItem2 {
+public class GameListItem extends GameItem {
     private final boolean isModpack;
     private final BooleanProperty selected = new SimpleBooleanProperty(this, "selected");
 

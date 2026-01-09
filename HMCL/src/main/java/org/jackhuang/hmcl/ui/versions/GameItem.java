@@ -35,7 +35,7 @@ import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.MINECRAFT;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class GameItem2 {
+public class GameItem {
     protected final Profile profile;
     protected final String id;
 
@@ -45,7 +45,7 @@ public class GameItem2 {
     private StringProperty subtitle;
     private ObjectProperty<Image> image;
 
-    public GameItem2(Profile profile, String id) {
+    public GameItem(Profile profile, String id) {
         this.profile = profile;
         this.id = id;
     }
