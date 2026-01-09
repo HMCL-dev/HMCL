@@ -135,43 +135,44 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
 
         @FXThread
         private void loadVersions(Profile profile) {
+            listenerHolder.clear();
             setLoading(true);
             setFailedReason(null);
-            if (profile == Profiles.getSelectedProfile()) {
-                ObservableList<GameListItem> children = FXCollections.observableList(profile.getRepository().getDisplayVersions()
-                        .map(version -> new GameListItem(profile, version.getId()))
-                        .toList());
-                setItems(children);
-                setLoading(false);
+            if (profile != Profiles.getSelectedProfile())
+                return;
 
-                ChangeListener<Boolean> selectionListener = listenerHolder.weak((property, a, b) -> {
-                    if (updatingSelection) return;
-                    updatingSelection = true;
-
-                    GameListItem item = (GameListItem) ((Property<?>) property).getBean();
-                    profile.setSelectedVersion(item.getId());
-
-                    updatingSelection = false;
-                });
-
-                String selectedId = profile.getSelectedVersion();
-                for (GameListItem child : children) {
-                    child.selectedProperty().set(child.getId().equals(selectedId));
-                    child.selectedProperty().addListener(selectionListener);
-                }
-
-                if (children.isEmpty()) {
-                    setFailedReason(i18n("version.empty.hint"));
-                }
-
-                profile.selectedVersionProperty().addListener(listenerHolder.weak((a, b, newValue) -> {
-                    updatingSelection = true;
-                    for (GameListItem child : children) {
-                        child.selectedProperty().set(child.getId().equals(newValue));
-                    }
-                    updatingSelection = false;
-                }));
+            ObservableList<GameListItem> children = FXCollections.observableList(profile.getRepository().getDisplayVersions()
+                    .map(instance -> new GameListItem(profile, instance.getId()))
+                    .toList());
+            setItems(children);
+            if (children.isEmpty()) {
+                setFailedReason(i18n("version.empty.hint"));
             }
+            setLoading(false);
+
+            ChangeListener<Boolean> selectionListener = listenerHolder.weak((property, oldValue, newValue) -> {
+                if (!newValue || updatingSelection) return;
+                updatingSelection = true;
+
+                GameListItem item = (GameListItem) ((Property<?>) property).getBean();
+                profile.setSelectedVersion(item.getId());
+
+                updatingSelection = false;
+            });
+
+            String selectedId = profile.getSelectedVersion();
+            for (GameListItem child : children) {
+                child.selectedProperty().set(child.getId().equals(selectedId));
+                child.selectedProperty().addListener(selectionListener);
+            }
+
+            profile.selectedVersionProperty().addListener(listenerHolder.weak((a, b, newValue) -> {
+                updatingSelection = true;
+                for (GameListItem child : children) {
+                    child.selectedProperty().set(child.getId().equals(newValue));
+                }
+                updatingSelection = false;
+            }));
         }
 
         public void refreshList() {
