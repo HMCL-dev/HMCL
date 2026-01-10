@@ -237,13 +237,13 @@ public final class FontManager {
         return fontProperty.get();
     }
 
-    public static void setFont(FontReference font) {
-        fontProperty.set(font);
+    public static void setFont(String fontFamily) {
+        config().setLauncherFontFamily(fontFamily);
+        fontProperty.set(computeEffectiveFont());
     }
 
     public static void setFontFamily(String fontFamily) {
-        config().setLauncherFontFamily(fontFamily);
-        setFont(computeEffectiveFont());
+        setFont(fontFamily);
     }
 
     // https://github.com/HMCL-dev/HMCL/issues/4072
