@@ -95,17 +95,15 @@ public final class FontManager {
             return null;
     });
 
-    private static final ObjectProperty<FontReference> fontProperty;
+    private static final ObjectProperty<FontReference> font = new SimpleObjectProperty<>();
 
     static {
-        FontReference fontReference = computeEffectiveFont();
+        updateFont();
 
-        fontProperty = new SimpleObjectProperty<>(fontReference);
-
-        LOG.info("Font: " + (fontReference != null ? fontReference.getFamily() : "System"));
+        LOG.info("Font: " + (font.get() != null ? font.get().getFamily() : "System"));
     }
 
-    private static FontReference computeEffectiveFont() {
+    private static void updateFont() {
         String fontFamily = config().getLauncherFontFamily();
         if (fontFamily == null)
             fontFamily = System.getProperty("hmcl.font.override");
@@ -114,9 +112,9 @@ public final class FontManager {
 
         if (fontFamily == null) {
             Font defaultFont = DEFAULT_FONT.get();
-            return defaultFont != null ? new FontReference(defaultFont) : null;
+            font.set(defaultFont != null ? new FontReference(defaultFont) : null);
         } else {
-            return new FontReference(fontFamily);
+            font.set(new FontReference(fontFamily));
         }
     }
 
@@ -231,16 +229,16 @@ public final class FontManager {
     }
 
     public static ReadOnlyObjectProperty<FontReference> fontProperty() {
-        return fontProperty;
+        return font;
     }
 
     public static FontReference getFont() {
-        return fontProperty.get();
+        return font.get();
     }
 
     public static void setFontFamily(String fontFamily) {
         config().setLauncherFontFamily(fontFamily);
-        fontProperty.set(computeEffectiveFont());
+        updateFont();
     }
 
     // https://github.com/HMCL-dev/HMCL/issues/4072
