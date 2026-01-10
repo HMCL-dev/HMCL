@@ -1471,6 +1471,10 @@
     -fx-text-fill: -monet-on-surface;
 }
 
+.no-padding .jfx-combo-box .list-cell {
+    -fx-padding: 4;
+}
+
 .combo-box-popup .list-view {
     -fx-background-color: -monet-surface-container;
 }
@@ -1479,6 +1483,7 @@
     -fx-background-color: -monet-surface-container;
     -fx-text-fill: -monet-on-surface;
     -fx-background-insets: 0.0;
+    -fx-padding: 8 0 8 12;
 }
 
 .combo-box-popup .list-view .list-cell:odd:selected > .jfx-rippler > StackPane,

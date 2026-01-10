@@ -73,6 +73,7 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
             viewFilterComboBox.valueProperty().addListener((observable, oldValue, newValue) -> {
                 getSkinnable().applyModifiedFilter(newValue);
             });
+            viewFilterComboBox.setPrefWidth(100);
 
             searchField = new JFXTextField();
             {

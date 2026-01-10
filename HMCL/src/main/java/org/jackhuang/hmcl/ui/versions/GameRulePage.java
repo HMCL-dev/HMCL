@@ -52,7 +52,7 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> {
     private CompoundTag levelDat;
 
     private final ObservableList<GameRuleInfo<?>> gameRuleList;
-    private final FilteredList<GameRuleInfo<?>> modifiedItems = new FilteredList<>(getItems(), GameRuleInfo::getModified);
+    private final FilteredList<GameRuleInfo<?>> modifiedItems;
     private final ObservableList<GameRuleInfo<?>> modifiedList = FXCollections.observableArrayList();
     private final FilteredList<GameRuleInfo<?>> displayedItems = new FilteredList<>(modifiedList);
 
@@ -72,6 +72,7 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> {
             return new Observable[]{};
         });
         setItems(gameRuleList);
+        modifiedItems = new FilteredList<>(getItems(), GameRuleInfo::getModified);
 
         this.setLoading(true);
         Task.supplyAsync(this::loadWorldInfo)
@@ -185,7 +186,8 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> {
         displayedItems.setPredicate(updatePredicate(queryString));
     }
 
-    @NotNull private Predicate<GameRuleInfo<?>> updatePredicate(String queryString) {
+    @NotNull
+    private Predicate<GameRuleInfo<?>> updatePredicate(String queryString) {
         if (StringUtils.isBlank(queryString)) {
             return gameRuleInfo -> true;
         }
