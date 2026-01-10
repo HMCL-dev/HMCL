@@ -144,10 +144,18 @@ public class RipplerContainer extends StackPane {
     }
 
     protected void updateChildren() {
-        getChildren().addAll(buttonContainer, getContainer());
+        if (buttonRippler.getPosition() == JFXRippler.RipplerPos.BACK)
+            getChildren().setAll(buttonContainer, getContainer());
+        else
+            getChildren().setAll(getContainer(), buttonContainer);
 
         for (int i = 1; i < getChildren().size(); ++i)
             getChildren().get(i).setPickOnBounds(false);
+    }
+
+    public void setPosition(JFXRippler.RipplerPos pos) {
+        buttonRippler.setPosition(pos);
+        updateChildren();
     }
 
     public Node getContainer() {
