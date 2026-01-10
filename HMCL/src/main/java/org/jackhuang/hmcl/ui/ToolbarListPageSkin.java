@@ -89,10 +89,7 @@ public abstract class ToolbarListPageSkin<T extends ListPageBase<? extends Node>
         ret.getStyleClass().add("jfx-tool-bar-button");
         ret.setGraphic(wrap(svg.createIcon()));
         ret.setText(text);
-        ret.setOnAction(e -> {
-            onClick.run();
-            FXUtils.clearFocus(ret);
-        });
+        ret.setOnAction(e -> onClick.run());
         return ret;
     }
 
