@@ -36,6 +36,9 @@ import javafx.scene.paint.Color;
  * @since 2016-03-09
  */
 public class JFXDepthManager {
+    private JFXDepthManager() {
+        throw new AssertionError();
+    }
 
     private static final DropShadow[] depth = new DropShadow[] {
             new DropShadow(BlurType.GAUSSIAN, Color.TRANSPARENT, 0, 0, 0, 0),
@@ -77,7 +80,7 @@ public class JFXDepthManager {
      * (which makes it looks as a real shadow)
      */
     public static Node createMaterialNode(Node control, int level) {
-        Node container = new Pane(control){
+        Node container = new Pane(control) {
             @Override
             protected double computeMaxWidth(double height) {
                 return computePrefWidth(height);
@@ -116,3 +119,4 @@ public class JFXDepthManager {
     }
 
 }
+
