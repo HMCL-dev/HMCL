@@ -34,6 +34,7 @@ import javafx.geometry.Bounds;
 import javafx.scene.CacheHint;
 import javafx.scene.Group;
 import javafx.scene.Node;
+import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
@@ -255,10 +256,15 @@ public class JFXRippler extends StackPane {
         if (getChildren().contains(control)) {
             control.boundsInParentProperty().addListener(observable -> resetRippler());
         }
-        control.addEventHandler(MouseEvent.MOUSE_PRESSED,
-                (event) -> createRipple(event.getX(), event.getY()));
+        control.addEventHandler(MouseEvent.MOUSE_PRESSED, event -> {
+            if (event.getButton() == MouseButton.PRIMARY)
+                createRipple(event.getX(), event.getY());
+        });
         // create fade out transition for the ripple
-        control.addEventHandler(MouseEvent.MOUSE_RELEASED, e -> releaseRipple());
+        control.addEventHandler(MouseEvent.MOUSE_RELEASED, event -> {
+            if (event.getButton() == MouseButton.PRIMARY)
+                releaseRipple();
+        });
     }
 
     /**
