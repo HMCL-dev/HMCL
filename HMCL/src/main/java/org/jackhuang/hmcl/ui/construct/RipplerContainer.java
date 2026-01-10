@@ -153,7 +153,7 @@ public class RipplerContainer extends StackPane {
             getChildren().get(i).setPickOnBounds(false);
     }
 
-    public void setPosision(JFXRippler.RipplerPos pos) {
+    public void setPosition(JFXRippler.RipplerPos pos) {
         buttonRippler.setPosition(pos);
         updateChildren();
     }
