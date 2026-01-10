@@ -659,6 +659,20 @@ public final class Config extends ObservableSetting {
         this.disableAutoGameOptions.set(disableAutoGameOptions);
     }
 
+    @SerializedName("gcAlgorithm")
+    private final StringProperty gcAlgorithm = new SimpleStringProperty(getGCAlgorithm());
+
+    public String getGCAlgorithm() {
+        if (gcAlgorithm != null) {
+            return gcAlgorithm.get();
+        }
+        return "G1GC";
+    }
+
+    public void setGcAlgorithm(String gcAlgorithm) {
+        this.gcAlgorithm.set(String.valueOf(gcAlgorithm));
+    }
+
     // Accounts
 
     @SerializedName("authlibInjectorServers")
