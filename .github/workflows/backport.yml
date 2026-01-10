@@ -89,25 +89,25 @@ jobs:
       const version = "${{ steps.extract.outputs.version }}";
       const title = `[Backport/${version}] ${{ steps.pr_info.outputs.title }}`;
       const body = `Automated backport of #${originalPrNumber} to \`${{ steps.extract.outputs.branch }}\`.
-
-Original PR: #${originalPrNumber}
-Commit: ${{ steps.pr_info.outputs.head_sha }}`;
-  
-  try {
-  await github.rest.pulls.create({
-  owner,
-  repo,
-  title,
-  head: "${{ steps.push.outputs.backport_branch }}",
-  base: "${{ steps.extract.outputs.branch }}",
-  body
-});
-  console.log("Backport PR created successfully.");
-} catch (error) {
-  const msg = error.message || '';
-  if (error.status === 422 && msg.includes('A pull request already exists')) {
-  console.log("Backport PR already exists. Skipping.");
-} else {
-  throw error;
-}
-}
+      
+      Original PR: #${originalPrNumber}
+      Commit: ${{ steps.pr_info.outputs.head_sha }}`;
+        
+        try {
+        await github.rest.pulls.create({
+        owner,
+        repo,
+        title,
+        head: "${{ steps.push.outputs.backport_branch }}",
+        base: "${{ steps.extract.outputs.branch }}",
+        body
+      });
+        console.log("Backport PR created successfully.");
+      } catch (error) {
+        const msg = error.message || '';
+        if (error.status === 422 && msg.includes('A pull request already exists')) {
+        console.log("Backport PR already exists. Skipping.");
+      } else {
+        throw error;
+      }
+      }
