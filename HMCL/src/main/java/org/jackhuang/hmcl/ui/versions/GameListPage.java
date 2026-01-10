@@ -21,6 +21,7 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.Priority;
@@ -120,7 +121,6 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
 
     private static class GameList extends ListPageBase<GameListItem> {
         private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
-        private boolean updatingSelection = false;
 
         public GameList() {
             Profiles.registerVersionsListener(profile -> FXUtils.runInFX(() -> loadVersions(profile)));

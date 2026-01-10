@@ -60,6 +60,7 @@ public abstract class ToolbarListPageSkin2<E, P extends ListPageBase<E>> extends
 
         {
             this.listView = new JFXListView<>();
+            this.listView.setPadding(Insets.EMPTY);
             ComponentList.setVgrow(listView, Priority.ALWAYS);
             Bindings.bindContent(this.listView.getItems(), skinnable.itemsProperty());
             root.getContent().add(listView);
