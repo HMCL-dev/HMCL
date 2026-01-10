@@ -30,12 +30,17 @@ import java.io.IOException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.MINECRAFT;
+import static org.jackhuang.hmcl.util.Lang.threadPool;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class GameItem {
+    private static final ThreadPoolExecutor POOL_VERSION_RESOLVE = threadPool("VersionResolve", true, 1, 10, TimeUnit.SECONDS);
+
     protected final Profile profile;
     protected final String id;
 
@@ -82,7 +87,7 @@ public class GameItem {
                 LOG.warning("Failed to read modpack configuration from " + id, e);
             }
             return new Result(gameVersion.orElse(null), modPackVersion);
-        }, Schedulers.io()).whenCompleteAsync((result, exception) -> {
+        }, POOL_VERSION_RESOLVE).whenCompleteAsync((result, exception) -> {
             if (exception == null) {
                 if (result.gameVersion != null) {
                     title.set(result.gameVersion);
