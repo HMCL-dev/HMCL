@@ -31,7 +31,6 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -89,13 +88,8 @@ public final class GameListCell extends ListCell<GameListItem> {
             center.setSpacing(8);
             center.setAlignment(Pos.CENTER_LEFT);
 
-            StackPane imageViewContainer = new StackPane();
-            FXUtils.setLimitWidth(imageViewContainer, 32);
-            FXUtils.setLimitHeight(imageViewContainer, 32);
-
             this.imageView = new ImageView();
             FXUtils.limitSize(imageView, 32, 32);
-            imageViewContainer.getChildren().setAll(imageView);
 
             this.content = new TwoLineListItem();
             BorderPane.setAlignment(content, Pos.CENTER);
