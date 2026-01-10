@@ -484,6 +484,37 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     showAdvancedSettingPane
             );
         }
+        {
+            ComponentSublist gcAlgorithmPane = new ComponentSublist();
+            gcAlgorithmPane.setTitle("垃圾回收算法设置");
+
+            VBox gcContent = new VBox();
+            gcContent.setSpacing(8);
+
+            JFXComboBox<String> gcAlgorithmSelect = new JFXComboBox<>();
+            gcAlgorithmSelect.getItems().addAll("G1GC", "ZGC", "Shenandoah GC");
+
+            String GcAlgorithm = Settings.instance().getGCAlgorithm();
+            if (GcAlgorithm == null || GcAlgorithm.isEmpty()) {
+                GcAlgorithm = "G1GC";
+                Settings.instance().setGCAlgorithm(GcAlgorithm);
+            }
+
+            gcAlgorithmSelect.setValue(Settings.instance().getGCAlgorithm());
+
+            gcAlgorithmSelect.setOnAction(event -> {
+                String selectedAlgorithm = gcAlgorithmSelect.getValue();
+                Settings.instance().setGCAlgorithm(selectedAlgorithm);
+            });
+
+            Label gcSubtitle = new Label("选择适合您的垃圾回收算法，默认 G1GC。");
+            gcSubtitle.getStyleClass().add("subtitle");
+
+            gcContent.getChildren().addAll(gcAlgorithmSelect, gcSubtitle);
+            gcAlgorithmPane.getContent().add(gcContent);
+
+            componentList.getContent().add(gcAlgorithmPane);
+        }
 
         rootPane.getChildren().add(componentList);
 
