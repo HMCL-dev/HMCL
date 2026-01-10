@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.AuthInfo;
+import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.launch.DefaultLauncher;
 import org.jackhuang.hmcl.launch.ProcessListener;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
@@ -49,6 +50,9 @@ public final class HMCLGameLauncher extends DefaultLauncher {
 
     public HMCLGameLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean daemon) {
         super(repository, version, authInfo, options, listener, daemon);
+
+        // Get GC Algorithm during initialization
+        getGCAlgorithm(options);
     }
 
     @Override
@@ -137,6 +141,15 @@ public final class HMCLGameLauncher extends DefaultLauncher {
             }
             default -> "";
         };
+    }
+
+    private void getGCAlgorithm(LaunchOptions options) {
+        String gcAlgorithm = config().getGCAlgorithm(); // Use the configuration for GC algorithm
+        if (gcAlgorithm == null || gcAlgorithm.isEmpty()) {
+            gcAlgorithm = "G1GC"; // Default to G1GC if not set
+            return;
+        }
+        LaunchOptions.gcAlgorithm = gcAlgorithm;
     }
 
     @Override
