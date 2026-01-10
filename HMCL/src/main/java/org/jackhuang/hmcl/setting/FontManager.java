@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.setting;
 
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.text.Font;
 import org.jackhuang.hmcl.Metadata;
@@ -94,31 +95,27 @@ public final class FontManager {
             return null;
     });
 
-    private static final ObjectProperty<FontReference> fontProperty;
+    private static final ObjectProperty<FontReference> font = new SimpleObjectProperty<>();
 
     static {
+        updateFont();
+
+        LOG.info("Font: " + (font.get() != null ? font.get().getFamily() : "System"));
+    }
+
+    private static void updateFont() {
         String fontFamily = config().getLauncherFontFamily();
         if (fontFamily == null)
             fontFamily = System.getProperty("hmcl.font.override");
         if (fontFamily == null)
             fontFamily = System.getenv("HMCL_FONT");
 
-        FontReference fontReference;
         if (fontFamily == null) {
             Font defaultFont = DEFAULT_FONT.get();
-            fontReference = defaultFont != null ? new FontReference(defaultFont) : null;
-        } else
-            fontReference = new FontReference(fontFamily);
-
-        fontProperty = new SimpleObjectProperty<>(fontReference);
-
-        LOG.info("Font: " + (fontReference != null ? fontReference.getFamily() : "System"));
-        fontProperty.addListener((obs, oldValue, newValue) -> {
-            if (newValue != null)
-                config().setLauncherFontFamily(newValue.getFamily());
-            else
-                config().setLauncherFontFamily(null);
-        });
+            font.set(defaultFont != null ? new FontReference(defaultFont) : null);
+        } else {
+            font.set(new FontReference(fontFamily));
+        }
     }
 
     private static Font tryLoadDefaultFont(Path dir) {
@@ -231,20 +228,17 @@ public final class FontManager {
         }
     }
 
-    public static ObjectProperty<FontReference> fontProperty() {
-        return fontProperty;
+    public static ReadOnlyObjectProperty<FontReference> fontProperty() {
+        return font;
     }
 
     public static FontReference getFont() {
-        return fontProperty.get();
-    }
-
-    public static void setFont(FontReference font) {
-        fontProperty.set(font);
+        return font.get();
     }
 
     public static void setFontFamily(String fontFamily) {
-        setFont(fontFamily != null ? new FontReference(fontFamily) : null);
+        config().setLauncherFontFamily(fontFamily);
+        updateFont();
     }
 
     // https://github.com/HMCL-dev/HMCL/issues/4072
@@ -292,3 +286,4 @@ public final class FontManager {
     private FontManager() {
     }
 }
+
