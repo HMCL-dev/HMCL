@@ -1842,8 +1842,13 @@
 .tooltip {
     -fx-text-fill: -monet-inverse-on-surface;
     -fx-background-color: -monet-inverse-surface;
+
+    -fx-background-radius: 4px;
+    -fx-padding: 8px !important;
+    -fx-min-height: 24px;
 }
 
 .tooltip .text {
     -fx-fill: -monet-inverse-on-surface;
+    -fx-font-size: 12pt;
 }

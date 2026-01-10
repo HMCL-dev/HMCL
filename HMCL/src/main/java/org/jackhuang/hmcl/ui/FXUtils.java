@@ -61,6 +61,7 @@ import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
+import org.jackhuang.hmcl.ui.construct.JFXTooltip;
 import org.jackhuang.hmcl.ui.image.ImageLoader;
 import org.jackhuang.hmcl.ui.image.ImageUtils;
 import org.jackhuang.hmcl.util.*;
@@ -439,7 +440,7 @@ public final class FXUtils {
     }
 
     public static void installFastTooltip(Node node, String tooltip) {
-        installFastTooltip(node, new Tooltip(tooltip));
+        installFastTooltip(node, new JFXTooltip(tooltip));
     }
 
     public static void installSlowTooltip(Node node, Tooltip tooltip) {
@@ -447,7 +448,7 @@ public final class FXUtils {
     }
 
     public static void installSlowTooltip(Node node, String tooltip) {
-        installSlowTooltip(node, new Tooltip(tooltip));
+        installSlowTooltip(node, new JFXTooltip(tooltip));
     }
 
     public static void playAnimation(Node node, String animationKey, Animation animation) {
