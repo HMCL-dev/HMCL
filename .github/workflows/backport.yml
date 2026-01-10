@@ -54,17 +54,12 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          git fetch https://github.com/${{ steps.pr_info.outputs.head_repo }} ${{ steps.pr_info.outputs.head_sha }}
-
-          # Apply changes as a squash (staged but not committed yet)
-          if ! git merge --squash ${{ steps.pr_info.outputs.head_sha }} --no-edit; then
+          git fetch "https://github.com/${{ steps.pr_info.outputs.head_repo }}" "${{ steps.pr_info.outputs.head_sha }}"
+          if ! git merge --squash "${{ steps.pr_info.outputs.head_sha }}" --no-edit; then
             echo "Merge failed (likely due to conflicts). Skipping backport."
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-
-          # Check if there are any staged changes
           if git diff --cached --quiet; then
             echo "No changes to backport."
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
