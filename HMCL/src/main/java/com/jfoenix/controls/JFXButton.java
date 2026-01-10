@@ -16,7 +16,6 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.css.CssMetaData;
 import javafx.css.SimpleStyleableObjectProperty;
-import javafx.css.StyleConverter;
 import javafx.css.Styleable;
 import javafx.css.StyleableObjectProperty;
 import javafx.css.StyleableProperty;
@@ -108,7 +107,7 @@ public class JFXButton extends Button {
         RAISED;
     }
 
-    private static class StyleableProperties {
+    private static final class StyleableProperties {
         private static final CssMetaData<JFXButton, ButtonType> BUTTON_TYPE;
         private static final List<CssMetaData<? extends Styleable, ?>> CHILD_STYLEABLES;
 
