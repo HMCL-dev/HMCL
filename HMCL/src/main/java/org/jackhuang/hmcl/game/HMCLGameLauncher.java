@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.AuthInfo;
-import org.jackhuang.hmcl.game.LaunchOptions;
 import org.jackhuang.hmcl.launch.DefaultLauncher;
 import org.jackhuang.hmcl.launch.ProcessListener;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
