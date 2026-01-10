@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.setting;
 
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.text.Font;
 import org.jackhuang.hmcl.Metadata;
@@ -229,7 +230,7 @@ public final class FontManager {
         }
     }
 
-    public static ObjectProperty<FontReference> fontProperty() {
+    public static ReadOnlyObjectProperty<FontReference> fontProperty() {
         return fontProperty;
     }
 
@@ -237,13 +238,9 @@ public final class FontManager {
         return fontProperty.get();
     }
 
-    public static void setFont(String fontFamily) {
+    public static void setFontFamily(String fontFamily) {
         config().setLauncherFontFamily(fontFamily);
         fontProperty.set(computeEffectiveFont());
-    }
-
-    public static void setFontFamily(String fontFamily) {
-        setFont(fontFamily);
     }
 
     // https://github.com/HMCL-dev/HMCL/issues/4072
