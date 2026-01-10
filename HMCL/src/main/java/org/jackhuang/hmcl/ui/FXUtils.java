@@ -1433,16 +1433,6 @@ public final class FXUtils {
         });
     }
 
-    public static void clearFocus(Node node) {
-//        Scene scene = node.getScene();
-//        if (scene != null) {
-//            Parent root = scene.getRoot();
-//            if (root != null) {
-//                root.requestFocus();
-//            }
-//        }
-    }
-
     public static void copyOnDoubleClick(Labeled label) {
         label.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
             if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 2) {

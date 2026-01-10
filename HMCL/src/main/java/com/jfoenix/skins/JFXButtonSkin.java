@@ -90,14 +90,12 @@ public class JFXButtonSkin extends ButtonSkin {
                 this.clickedAnimation.setRate(1.0F);
                 this.clickedAnimation.play();
             }
-
         });
         button.setOnMouseReleased((e) -> {
             if (this.clickedAnimation != null) {
                 this.clickedAnimation.setRate(-1.0F);
                 this.clickedAnimation.play();
             }
-
         });
 
         ReadOnlyBooleanProperty focusVisibleProperty = FXUtils.focusVisibleProperty(button);
@@ -206,7 +204,17 @@ public class JFXButtonSkin extends ButtonSkin {
 
     private class ButtonClickTransition extends CachedTransition {
         public ButtonClickTransition() {
-            super(JFXButtonSkin.this.buttonContainer, new Timeline(new KeyFrame(Duration.ZERO, new KeyValue(((DropShadow) JFXButtonSkin.this.buttonContainer.getEffect()).radiusProperty(), JFXDepthManager.getShadowAt(2).radiusProperty().get(), Interpolator.EASE_BOTH), new KeyValue(((DropShadow) JFXButtonSkin.this.buttonContainer.getEffect()).spreadProperty(), JFXDepthManager.getShadowAt(2).spreadProperty().get(), Interpolator.EASE_BOTH), new KeyValue(((DropShadow) JFXButtonSkin.this.buttonContainer.getEffect()).offsetXProperty(), JFXDepthManager.getShadowAt(2).offsetXProperty().get(), Interpolator.EASE_BOTH), new KeyValue(((DropShadow) JFXButtonSkin.this.buttonContainer.getEffect()).offsetYProperty(), JFXDepthManager.getShadowAt(2).offsetYProperty().get(), Interpolator.EASE_BOTH)), new KeyFrame(Duration.millis(1000.0F), new KeyValue(((DropShadow) JFXButtonSkin.this.buttonContainer.getEffect()).radiusProperty(), JFXDepthManager.getShadowAt(5).radiusProperty().get(), Interpolator.EASE_BOTH), new KeyValue(((DropShadow) JFXButtonSkin.this.buttonContainer.getEffect()).spreadProperty(), JFXDepthManager.getShadowAt(5).spreadProperty().get(), Interpolator.EASE_BOTH), new KeyValue(((DropShadow) JFXButtonSkin.this.buttonContainer.getEffect()).offsetXProperty(), JFXDepthManager.getShadowAt(5).offsetXProperty().get(), Interpolator.EASE_BOTH), new KeyValue(((DropShadow) JFXButtonSkin.this.buttonContainer.getEffect()).offsetYProperty(), JFXDepthManager.getShadowAt(5).offsetYProperty().get(), Interpolator.EASE_BOTH))));
+            super(JFXButtonSkin.this.buttonContainer, new Timeline(
+                    new KeyFrame(Duration.ZERO,
+                            new KeyValue(((DropShadow) JFXButtonSkin.this.buttonContainer.getEffect()).radiusProperty(), JFXDepthManager.getShadowAt(2).radiusProperty().get(), Interpolator.EASE_BOTH),
+                            new KeyValue(((DropShadow) JFXButtonSkin.this.buttonContainer.getEffect()).spreadProperty(), JFXDepthManager.getShadowAt(2).spreadProperty().get(), Interpolator.EASE_BOTH),
+                            new KeyValue(((DropShadow) JFXButtonSkin.this.buttonContainer.getEffect()).offsetXProperty(), JFXDepthManager.getShadowAt(2).offsetXProperty().get(), Interpolator.EASE_BOTH),
+                            new KeyValue(((DropShadow) JFXButtonSkin.this.buttonContainer.getEffect()).offsetYProperty(), JFXDepthManager.getShadowAt(2).offsetYProperty().get(), Interpolator.EASE_BOTH)),
+                    new KeyFrame(Duration.millis(1000.0F),
+                            new KeyValue(((DropShadow) JFXButtonSkin.this.buttonContainer.getEffect()).radiusProperty(), JFXDepthManager.getShadowAt(5).radiusProperty().get(), Interpolator.EASE_BOTH),
+                            new KeyValue(((DropShadow) JFXButtonSkin.this.buttonContainer.getEffect()).spreadProperty(), JFXDepthManager.getShadowAt(5).spreadProperty().get(), Interpolator.EASE_BOTH),
+                            new KeyValue(((DropShadow) JFXButtonSkin.this.buttonContainer.getEffect()).offsetXProperty(), JFXDepthManager.getShadowAt(5).offsetXProperty().get(), Interpolator.EASE_BOTH),
+                            new KeyValue(((DropShadow) JFXButtonSkin.this.buttonContainer.getEffect()).offsetYProperty(), JFXDepthManager.getShadowAt(5).offsetYProperty().get(), Interpolator.EASE_BOTH))));
             this.setCycleDuration(Duration.seconds(0.2));
             this.setDelay(Duration.seconds(0.0F));
         }
