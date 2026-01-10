@@ -58,8 +58,7 @@ jobs:
           git fetch "https://github.com/${{ steps.pr_info.outputs.head_repo }}" "${{ steps.pr_info.outputs.head_sha }}"
           git merge --squash "${{ steps.pr_info.outputs.head_sha }}" --no-edit || true
           git add -A
-          git commit -m "[release/${{ steps.extract.outputs.version }}] ${{ steps.pr_info.outputs.title }}
-          Backport of PR #${{ github.event.pull_request.number }}." || {
+          git commit -m "[release/${{ steps.extract.outputs.version }}] ${{ steps.pr_info.outputs.title }}" || {
             echo "No changes to commit. Skipping backport PR creation."
             exit 0
           }
@@ -79,7 +78,7 @@ jobs:
             const originalPrNumber = ${{ github.event.pull_request.number }};
             const version = "${{ steps.extract.outputs.version }}";
             const title = `[release/${version}] ${{ steps.pr_info.outputs.title }}`;
-            const body = `[Backport] #${originalPrNumber} -> \`${{ steps.extract.outputs.branch }}\`\n\n> ⚠️ This backport may contain merge conflicts. Please resolve them manually.`;
+            const body = `[Backport] #${originalPrNumber} -> \`${{ steps.extract.outputs.branch }}\``;
             await github.rest.pulls.create({
               owner,
               repo,
