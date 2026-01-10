@@ -16,6 +16,7 @@ import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.animation.Transition;
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -27,6 +28,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Shape;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.ui.FXUtils;
 
 public class JFXButtonSkin extends ButtonSkin {
     private final StackPane buttonContainer = new StackPane();
@@ -97,7 +99,12 @@ public class JFXButtonSkin extends ButtonSkin {
             }
 
         });
-        button.focusedProperty().addListener((o, oldVal, newVal) -> {
+
+        ReadOnlyBooleanProperty focusVisibleProperty = FXUtils.focusVisibleProperty(button);
+        if (focusVisibleProperty == null) {
+            focusVisibleProperty = button.focusedProperty();
+        }
+        focusVisibleProperty.addListener((o, oldVal, newVal) -> {
             if (newVal) {
                 if (!this.getSkinnable().isPressed()) {
                     this.buttonRippler.showOverlay();

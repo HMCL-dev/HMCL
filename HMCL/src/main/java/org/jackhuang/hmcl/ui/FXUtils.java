@@ -1434,13 +1434,13 @@ public final class FXUtils {
     }
 
     public static void clearFocus(Node node) {
-        Scene scene = node.getScene();
-        if (scene != null) {
-            Parent root = scene.getRoot();
-            if (root != null) {
-                root.requestFocus();
-            }
-        }
+//        Scene scene = node.getScene();
+//        if (scene != null) {
+//            Parent root = scene.getRoot();
+//            if (root != null) {
+//                root.requestFocus();
+//            }
+//        }
     }
 
     public static void copyOnDoubleClick(Labeled label) {
