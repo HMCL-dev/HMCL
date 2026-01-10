@@ -22,10 +22,10 @@ jobs:
           LABEL="${{ github.event.label.name }}"
           if [[ "$LABEL" =~ ^backport/3\.([0-9]+)$ ]]; then
             VERSION="3.${BASH_REMATCH[1]}"
-            echo "version=$VERSION" >> $GITHUB_OUTPUT
-            echo "branch=release/$VERSION" >> $GITHUB_OUTPUT
+            echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+            echo "branch=release/$VERSION" >> "$GITHUB_OUTPUT"
           else
-            echo "Invalid label format: $LABEL"
+            echo "Error: Invalid label format '$LABEL'. Expected 'backport/3.X' where X is an integer."
             exit 1
           fi
 
@@ -34,11 +34,10 @@ jobs:
         uses: actions/github-script@v8
         with:
           script: |
-            const prNumber = context.payload.pull_request.number;
             const pr = await github.rest.pulls.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              pull_number: prNumber
+              pull_number: ${{ github.event.pull_request.number }}
             });
             core.setOutput('title', pr.data.title);
             core.setOutput('head_sha', pr.data.head.sha);
@@ -50,46 +49,53 @@ jobs:
           ref: ${{ steps.extract.outputs.branch }}
           fetch-depth: 0
 
-      - name: Fetch and merge PR changes (simulate squash)
+      - name: Fetch PR changes and simulate squash merge
+        id: apply_changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          # Fetch the PR's head commit from its source repo
           git fetch https://github.com/${{ steps.pr_info.outputs.head_repo }} ${{ steps.pr_info.outputs.head_sha }}
 
-          # Create a temporary merge to get the diff as if squashed
-          git merge --squash ${{ steps.pr_info.outputs.head_sha }} --no-edit
+          # Apply changes as a squash (staged but not committed yet)
+          if ! git merge --squash ${{ steps.pr_info.outputs.head_sha }} --no-edit; then
+            echo "Merge failed (likely due to conflicts). Skipping backport."
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
 
-          # If there are no changes, skip backport
-          if ! git diff --cached --quiet; then
+          # Check if there are any staged changes
+          if git diff --cached --quiet; then
+            echo "No changes to backport."
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          else
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
             git commit -m "[Backport/${{ steps.extract.outputs.version }}] ${{ steps.pr_info.outputs.title }}
 
   Backport of PR #${{ github.event.pull_request.number }}."
-  else
-  echo "No changes to backport."
-  exit 0
   fi
 
-- name: Push to backport branch
+- name: Push backport branch
+  if: steps.apply_changes.outputs.has_changes == 'true'
   id: push
   run: |
-    BRANCH="backport/pr-${{ github.event.pull_request.number }}-to-${{ steps.extract.outputs.version }}"
-    git push origin HEAD:$BRANCH
-    echo "backport_branch=$BRANCH" >> $GITHUB_OUTPUT
+    BACKPORT_BRANCH="backport/pr-${{ github.event.pull_request.number }}-to-${{ steps.extract.outputs.version }}"
+    git push origin HEAD:"$BACKPORT_BRANCH"
+    echo "backport_branch=$BACKPORT_BRANCH" >> "$GITHUB_OUTPUT"
 
 - name: Create Backport Pull Request
-  if: success() && env.CHANGES_EXIST != 'false'  # We'll handle no-change case below
+  if: steps.apply_changes.outputs.has_changes == 'true'
   uses: actions/github-script@v8
   with:
     script: |
       const { owner, repo } = context.repo;
-      const prNumber = ${{ github.event.pull_request.number }};
+      const originalPrNumber = ${{ github.event.pull_request.number }};
       const version = "${{ steps.extract.outputs.version }}";
-      const title = "[Backport/${version}] ${{ steps.pr_info.outputs.title }}";
-      const body = `Automated backport of #${prNumber} to \`${{ steps.extract.outputs.branch }}\`.
+      const title = `[Backport/${version}] ${{ steps.pr_info.outputs.title }}`;
+      const body = `Automated backport of #${originalPrNumber} to \`${{ steps.extract.outputs.branch }}\`.
 
-Original PR: #${prNumber}
+Original PR: #${originalPrNumber}
 Commit: ${{ steps.pr_info.outputs.head_sha }}`;
   
   try {
@@ -101,15 +107,12 @@ Commit: ${{ steps.pr_info.outputs.head_sha }}`;
   base: "${{ steps.extract.outputs.branch }}",
   body
 });
+  console.log("Backport PR created successfully.");
 } catch (error) {
-  if (error.status === 422 && error.message.includes('A pull request already exists')) {
-  console.log('Backport PR already exists, skipping.');
+  const msg = error.message || '';
+  if (error.status === 422 && msg.includes('A pull request already exists')) {
+  console.log("Backport PR already exists. Skipping.");
 } else {
   throw error;
 }
 }
-
-  - name: Handle no changes case
-    if: failure()
-    run: |
-      echo "No changes detected or error occurred. Skipping backport PR creation."
