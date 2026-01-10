@@ -166,7 +166,7 @@ public class DefaultLauncher extends Launcher {
                 break;
             default:
                 throw new IllegalArgumentException("Unsupported GC Algorithm: " + gcAlgorithm);
-            }
+        }
 
         // Default JVM Args
         if (!options.isNoGeneratedJVMArgs()) {
