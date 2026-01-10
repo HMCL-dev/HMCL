@@ -25,7 +25,6 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.control.ListCell;
-import javafx.scene.control.ListView;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
@@ -35,8 +34,6 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.StringUtils;
-
-import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -138,9 +135,7 @@ public final class GameListCell extends ListCell<GameListItem> {
                 if (item == null)
                     return;
 
-                preparePopupMenu(item);
-
-                JFXPopup popup = getPopup(getListView());
+                JFXPopup popup = getPopup(item);
                 JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(root, popup);
                 popup.show(root, vPosition, JFXPopup.PopupHPosition.RIGHT, 0, vPosition == JFXPopup.PopupVPosition.TOP ? root.getHeight() : -root.getHeight());
             });
@@ -162,9 +157,7 @@ public final class GameListCell extends ListCell<GameListItem> {
                     item.modifyGameSettings();
                 }
             } else if (e.getButton() == MouseButton.SECONDARY) {
-                preparePopupMenu(item);
-
-                JFXPopup popup = getPopup(getListView());
+                JFXPopup popup = getPopup(item);
                 JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(root, popup);
                 popup.show(root, vPosition, JFXPopup.PopupHPosition.LEFT, e.getX(), vPosition == JFXPopup.PopupVPosition.TOP ? e.getY() : e.getY() - root.getHeight());
             }
@@ -198,42 +191,22 @@ public final class GameListCell extends ListCell<GameListItem> {
         }
     }
 
-    // Popup Menu
+    private static JFXPopup getPopup(GameListItem item) {
+        PopupMenu menu = new PopupMenu();
+        JFXPopup popup = new JFXPopup(menu);
 
-    private static final String POPUP_ITEM_KEY = GameListCell.class.getName() + ".popup.item";
-
-    private void preparePopupMenu(GameListItem item) {
-        this.getListView().getProperties().put(POPUP_ITEM_KEY, item);
-    }
-
-    private static Runnable getAction(ListView<GameListItem> listView, Consumer<GameListItem> action) {
-        return () -> {
-            if (listView.getProperties().get(POPUP_ITEM_KEY) instanceof GameListItem item) {
-                action.accept(item);
-            }
-        };
-    }
-
-    private static JFXPopup getPopup(ListView<GameListItem> listView) {
-        return (JFXPopup) listView.getProperties().computeIfAbsent(GameListCell.class.getName() + ".popup", k -> {
-            PopupMenu menu = new PopupMenu();
-            JFXPopup popup = new JFXPopup(menu);
-
-            menu.getContent().setAll(
-                    new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("version.launch.test"), getAction(listView, GameListItem::testGame), popup),
-                    new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), getAction(listView, GameListItem::generateLaunchScript), popup),
-                    new MenuSeparator(),
-                    new IconedMenuItem(SVG.SETTINGS, i18n("version.manage.manage"), getAction(listView, GameListItem::modifyGameSettings), popup),
-                    new MenuSeparator(),
-                    new IconedMenuItem(SVG.EDIT, i18n("version.manage.rename"), getAction(listView, GameListItem::rename), popup),
-                    new IconedMenuItem(SVG.FOLDER_COPY, i18n("version.manage.duplicate"), getAction(listView, GameListItem::duplicate), popup),
-                    new IconedMenuItem(SVG.DELETE, i18n("version.manage.remove"), getAction(listView, GameListItem::remove), popup),
-                    new IconedMenuItem(SVG.OUTPUT, i18n("modpack.export"), getAction(listView, GameListItem::export), popup),
-                    new MenuSeparator(),
-                    new IconedMenuItem(SVG.FOLDER_OPEN, i18n("folder.game"), getAction(listView, GameListItem::browse), popup));
-
-            popup.setOnHidden(event -> listView.getProperties().remove(POPUP_ITEM_KEY));
-            return popup;
-        });
+        menu.getContent().setAll(
+                new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("version.launch.test"), item::testGame, popup),
+                new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), item::generateLaunchScript, popup),
+                new MenuSeparator(),
+                new IconedMenuItem(SVG.SETTINGS, i18n("version.manage.manage"), item::modifyGameSettings, popup),
+                new MenuSeparator(),
+                new IconedMenuItem(SVG.EDIT, i18n("version.manage.rename"), item::rename, popup),
+                new IconedMenuItem(SVG.FOLDER_COPY, i18n("version.manage.duplicate"), item::duplicate, popup),
+                new IconedMenuItem(SVG.DELETE, i18n("version.manage.remove"), item::remove, popup),
+                new IconedMenuItem(SVG.OUTPUT, i18n("modpack.export"), item::export, popup),
+                new MenuSeparator(),
+                new IconedMenuItem(SVG.FOLDER_OPEN, i18n("folder.game"), item::browse, popup));
+        return popup;
     }
 }
