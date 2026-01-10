@@ -30,6 +30,8 @@ public final class Settings {
 
     private static Settings instance;
 
+    private String gcAlgorithm;
+
     public static Settings instance() {
         if (instance == null) {
             throw new IllegalStateException("Settings hasn't been initialized");
@@ -75,5 +77,14 @@ public final class Settings {
             default:
                 return null;
         }
+    }
+
+    public void setGCAlgorithm(String gcAlgorithm) {
+        this.gcAlgorithm = gcAlgorithm;
+        config().setGcAlgorithm(gcAlgorithm);
+    }
+
+    public String getGCAlgorithm() {
+        return config().getGCAlgorithm();
     }
 }
