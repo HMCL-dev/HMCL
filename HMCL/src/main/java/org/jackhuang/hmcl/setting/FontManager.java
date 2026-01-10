@@ -99,8 +99,7 @@ public final class FontManager {
 
     static {
         updateFont();
-
-        LOG.info("Font: " + (font.get() != null ? font.get().getFamily() : "System"));
+        LOG.info("Font: " + (font.get() != null ? font.get().family() : "System"));
     }
 
     private static void updateFont() {
@@ -242,44 +241,17 @@ public final class FontManager {
     }
 
     // https://github.com/HMCL-dev/HMCL/issues/4072
-    public static final class FontReference {
-        private final @NotNull String family;
-        private final @Nullable String style;
+    public record FontReference(@NotNull String family, @Nullable String style) {
+        public FontReference {
+            Objects.requireNonNull(family);
+        }
 
         public FontReference(@NotNull String family) {
-            this.family = Objects.requireNonNull(family);
-            this.style = null;
+            this(family, null);
         }
 
         public FontReference(@NotNull Font font) {
-            this.family = font.getFamily();
-            this.style = font.getStyle();
-        }
-
-        public @NotNull String getFamily() {
-            return family;
-        }
-
-        public @Nullable String getStyle() {
-            return style;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (!(o instanceof FontReference))
-                return false;
-            FontReference that = (FontReference) o;
-            return Objects.equals(family, that.family) && Objects.equals(style, that.style);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(family, style);
-        }
-
-        @Override
-        public String toString() {
-            return String.format("FontReference[family='%s', style='%s']", family, style);
+            this(font.getFamily(), font.getStyle());
         }
     }
 
