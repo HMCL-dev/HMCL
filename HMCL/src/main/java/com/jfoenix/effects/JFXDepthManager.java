@@ -35,7 +35,7 @@ import javafx.scene.paint.Color;
  * @version 1.0
  * @since 2016-03-09
  */
-public class JFXDepthManager {
+public final class JFXDepthManager {
     private JFXDepthManager() {
         throw new AssertionError();
     }
