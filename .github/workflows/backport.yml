@@ -26,7 +26,7 @@ jobs:
             echo "version=$VERSION" >> "$GITHUB_OUTPUT"
             echo "branch=release/$VERSION" >> "$GITHUB_OUTPUT"
           else
-            echo "Error: Invalid label format '$LABEL'. Expected 'backport/3.X' where X is an integer."
+            echo "Error: Invalid label format '$LABEL'."
             exit 1
           fi
 
@@ -56,22 +56,18 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git fetch "https://github.com/${{ steps.pr_info.outputs.head_repo }}" "${{ steps.pr_info.outputs.head_sha }}"
-          if ! git merge --squash "${{ steps.pr_info.outputs.head_sha }}" --no-edit; then
-            echo "Merge failed (likely due to conflicts). Skipping backport."
+          git merge --squash "${{ steps.pr_info.outputs.head_sha }}" --no-edit || true
+          git add -A
+          git commit -m "[release/${{ steps.extract.outputs.version }}] ${{ steps.pr_info.outputs.title }}
+          Backport of PR #${{ github.event.pull_request.number }}." || {
+            echo "No changes to commit. Skipping backport PR creation."
             exit 0
-          fi
-          if git diff --cached --quiet; then
-            echo "No changes to backport."
-            exit 0
-          else
-            git commit -m "[release/${{ steps.extract.outputs.version }}] ${{ steps.pr_info.outputs.title }}
-            Backport of PR #${{ github.event.pull_request.number }}."
-          fi
+          }
 
       - name: Push backport branch
         id: push
         run: |
-          BACKPORT_BRANCH="release-${{ steps.extract.outputs.version }}/backport/pr-${{ github.event.pull_request.number }}"
+          BACKPORT_BRANCH="pr-backport/${{ steps.extract.outputs.version }}/pr-${{ github.event.pull_request.number }}"
           git push origin HEAD:"$BACKPORT_BRANCH"
           echo "backport_branch=$BACKPORT_BRANCH" >> "$GITHUB_OUTPUT"
 
@@ -83,7 +79,7 @@ jobs:
             const originalPrNumber = ${{ github.event.pull_request.number }};
             const version = "${{ steps.extract.outputs.version }}";
             const title = `[release/${version}] ${{ steps.pr_info.outputs.title }}`;
-            const body = `[Backport] #${originalPrNumber} -> \`${{ steps.extract.outputs.branch }}\``;
+            const body = `[Backport] #${originalPrNumber} -> \`${{ steps.extract.outputs.branch }}\`\n\n> ⚠️ This backport may contain merge conflicts. Please resolve them manually.`;
             await github.rest.pulls.create({
               owner,
               repo,
