@@ -112,7 +112,6 @@ public class JFXButtonSkin extends ButtonSkin {
             } else {
                 this.buttonRippler.hideOverlay();
             }
-
         });
         button.pressedProperty().addListener((o, oldVal, newVal) -> this.buttonRippler.hideOverlay());
         button.setPickOnBounds(false);
@@ -148,22 +147,21 @@ public class JFXButtonSkin extends ButtonSkin {
         for (int i = 1; i < this.getChildren().size(); ++i) {
             this.getChildren().get(i).setMouseTransparent(true);
         }
-
     }
 
     protected void layoutChildren(double x, double y, double w, double h) {
         if (this.invalid) {
             if (((JFXButton) this.getSkinnable()).getRipplerFill() == null) {
                 for (int i = this.getChildren().size() - 1; i >= 1; --i) {
-                    if (this.getChildren().get(i) instanceof Shape) {
-                        this.buttonRippler.setRipplerFill(((Shape) this.getChildren().get(i)).getFill());
-                        ((Shape) this.getChildren().get(i)).fillProperty().addListener((o, oldVal, newVal) -> this.buttonRippler.setRipplerFill(newVal));
+                    if (this.getChildren().get(i) instanceof Shape shape) {
+                        this.buttonRippler.setRipplerFill(shape.getFill());
+                        shape.fillProperty().addListener((o, oldVal, newVal) -> this.buttonRippler.setRipplerFill(newVal));
                         break;
                     }
 
-                    if (this.getChildren().get(i) instanceof Label) {
-                        this.buttonRippler.setRipplerFill(((Label) this.getChildren().get(i)).getTextFill());
-                        ((Label) this.getChildren().get(i)).textFillProperty().addListener((o, oldVal, newVal) -> this.buttonRippler.setRipplerFill(newVal));
+                    if (this.getChildren().get(i) instanceof Label label) {
+                        this.buttonRippler.setRipplerFill(label.getTextFill());
+                        label.textFillProperty().addListener((o, oldVal, newVal) -> this.buttonRippler.setRipplerFill(newVal));
                         break;
                     }
                 }
