@@ -34,3 +34,4 @@ public class JFXTooltip extends Tooltip {
         fadeOut.play();
     }
 }
+
