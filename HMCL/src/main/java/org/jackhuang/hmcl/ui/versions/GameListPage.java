@@ -122,7 +122,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
         private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
 
         public GameList() {
-            Profiles.registerVersionsListener(profile -> FXUtils.runInFX(() -> loadVersions(profile)));
+            Profiles.registerVersionsListener(this::loadVersions);
 
             setOnFailedAction(e -> Controllers.navigate(Controllers.getDownloadPage()));
         }
