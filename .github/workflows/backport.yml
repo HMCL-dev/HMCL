@@ -76,7 +76,7 @@ jobs:
         if: steps.apply_changes.outputs.has_changes == 'true'
         id: push
         run: |
-          BACKPORT_BRANCH="backport/pr-${{ github.event.pull_request.number }}-to-${{ steps.extract.outputs.version }}"
+          BACKPORT_BRANCH="backports/pr-${{ github.event.pull_request.number }}-to-${{ steps.extract.outputs.version }}"
           git push origin HEAD:"$BACKPORT_BRANCH"
           echo "backport_branch=$BACKPORT_BRANCH" >> "$GITHUB_OUTPUT"
 
