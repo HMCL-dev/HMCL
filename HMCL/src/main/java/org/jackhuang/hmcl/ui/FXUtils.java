@@ -1251,7 +1251,7 @@ public final class FXUtils {
 
                 if (newValue) {
                     if (tooltip == null) {
-                        tooltip = new Tooltip();
+                        tooltip = new JFXTooltip();
                         tooltip.textProperty().bind(label.textProperty());
                         label.getProperties().put(LABEL_FULL_TEXT_PROP_KEY, tooltip);
                     }

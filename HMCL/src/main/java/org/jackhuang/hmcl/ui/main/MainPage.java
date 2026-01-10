@@ -58,6 +58,7 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
+import org.jackhuang.hmcl.ui.construct.JFXTooltip;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
@@ -237,7 +238,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
                             graphic.getChildren().setAll(launchLabel);
                             launchButton.setOnAction(e -> MainPage.this.launchNoGame());
                             if (tooltip == null)
-                                tooltip = new Tooltip(i18n("version.launch.empty.tooltip"));
+                                tooltip = new JFXTooltip(i18n("version.launch.empty.tooltip"));
                             FXUtils.installFastTooltip(launchButton, tooltip);
                         } else {
                             launchLabel.setText(i18n("version.launch"));

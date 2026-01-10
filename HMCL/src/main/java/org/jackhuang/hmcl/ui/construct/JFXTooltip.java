@@ -9,6 +9,10 @@ public class JFXTooltip extends Tooltip {
     private static final double FADE_IN_MS = 150;
     private static final double FADE_OUT_MS = 75;
 
+    public JFXTooltip() {
+        this("");
+    }
+
     public JFXTooltip(String text) {
         super(text);
         getScene().getRoot().setOpacity(0.0);

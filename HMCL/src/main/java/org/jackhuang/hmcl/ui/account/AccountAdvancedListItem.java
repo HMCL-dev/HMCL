@@ -31,6 +31,7 @@ import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
+import org.jackhuang.hmcl.ui.construct.JFXTooltip;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
 import static javafx.beans.binding.Bindings.createStringBinding;
@@ -72,7 +73,7 @@ public class AccountAdvancedListItem extends AdvancedListItem {
     }
 
     public AccountAdvancedListItem(Account account) {
-        tooltip = new Tooltip();
+        tooltip = new JFXTooltip();
         FXUtils.installFastTooltip(this, tooltip);
 
         canvas = new Canvas(32, 32);

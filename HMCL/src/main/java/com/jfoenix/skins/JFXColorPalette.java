@@ -41,6 +41,7 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.StrokeType;
+import org.jackhuang.hmcl.ui.construct.JFXTooltip;
 
 import java.util.List;
 
@@ -276,7 +277,7 @@ final class JFXColorPalette extends Region {
             rectangle.setStrokeType(StrokeType.INSIDE);
 
             String tooltipStr = JFXNodeUtils.colorToHex(color);
-            Tooltip.install(this, new Tooltip((tooltipStr == null) ? "" : tooltipStr));
+            Tooltip.install(this, new JFXTooltip((tooltipStr == null) ? "" : tooltipStr));
 
             rectangle.getStyleClass().add("color-rect");
             getChildren().add(rectangle);

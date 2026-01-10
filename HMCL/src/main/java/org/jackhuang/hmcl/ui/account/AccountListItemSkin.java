@@ -41,6 +41,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.construct.JFXTooltip;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
@@ -75,7 +76,7 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         subtitle.getStyleClass().add("subtitle");
         subtitle.textProperty().bind(skinnable.subtitleProperty());
         if (skinnable.getAccount() instanceof AuthlibInjectorAccount) {
-            Tooltip tooltip = new Tooltip();
+            Tooltip tooltip = new JFXTooltip();
             AuthlibInjectorServer server = ((AuthlibInjectorAccount) skinnable.getAccount()).getServer();
             tooltip.textProperty().bind(BindingMapping.of(server, AuthlibInjectorServer::toString));
             FXUtils.installSlowTooltip(subtitle, tooltip);

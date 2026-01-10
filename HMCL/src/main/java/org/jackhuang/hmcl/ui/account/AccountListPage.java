@@ -44,6 +44,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.ui.construct.ClassTitle;
+import org.jackhuang.hmcl.ui.construct.JFXTooltip;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
@@ -169,7 +170,7 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                             LOG.warning("Unparsable authlib-injector server url " + server.getUrl(), e);
                         }
                         item.subtitleProperty().set(host);
-                        Tooltip tooltip = new Tooltip();
+                        Tooltip tooltip = new JFXTooltip();
                         tooltip.textProperty().bind(Bindings.format("%s (%s)", title, server.getUrl()));
                         FXUtils.installFastTooltip(item, tooltip);
 
