@@ -71,7 +71,7 @@ jobs:
       - name: Push backport branch
         id: push
         run: |
-          BACKPORT_BRANCH="backports/pr-${{ github.event.pull_request.number }}-to-${{ steps.extract.outputs.version }}"
+          BACKPORT_BRANCH="release-${{ steps.extract.outputs.version }}/backport/pr-${{ github.event.pull_request.number }}"
           git push origin HEAD:"$BACKPORT_BRANCH"
           echo "backport_branch=$BACKPORT_BRANCH" >> "$GITHUB_OUTPUT"
 
@@ -80,9 +80,10 @@ jobs:
         with:
           script: |
             const { owner, repo } = context.repo;
+            const originalPrNumber = ${{ github.event.pull_request.number }};
             const version = "${{ steps.extract.outputs.version }}";
             const title = `[release/${version}] ${{ steps.pr_info.outputs.title }}`;
-            const body = `[Backport] #${originalPrNumber} -> \`${{ steps.extract.outputs.branch }}\`.
+            const body = `[Backport] #${originalPrNumber} -> \`${{ steps.extract.outputs.branch }}\``;
             await github.rest.pulls.create({
               owner,
               repo,
