@@ -294,6 +294,12 @@ public class LaunchOptions implements Serializable {
         return daemon;
     }
 
+    public static String gcAlgorithm;
+
+    public String getGCAlgorithm() {
+        return gcAlgorithm;
+    }
+
     public static final class Builder {
 
         private final LaunchOptions options = new LaunchOptions();
