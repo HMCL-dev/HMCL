@@ -71,16 +71,14 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
         setLoading(true);
         Task.supplyAsync(Schedulers.io(), () -> {
             try (Stream<Path> stream = Files.list(resourcepackDirectory)) {
-                return stream.sorted(Comparator.comparing(FileUtils::getName))
-                        .flatMap(item -> {
-                            try {
-                                return Stream.of(ResourcepackFile.parse(item)).filter(Objects::nonNull).map(ResourcepackInfoObject::new);
-                            } catch (IOException e) {
-                                LOG.warning("Failed to load resourcepack " + item, e);
-                                return Stream.empty();
-                            }
-                        })
-                        .toList();
+                return stream.sorted(Comparator.comparing(FileUtils::getName)).flatMap(item -> {
+                    try {
+                        return Stream.of(ResourcepackFile.parse(item)).filter(Objects::nonNull).map(ResourcepackInfoObject::new);
+                    } catch (IOException e) {
+                        LOG.warning("Failed to load resourcepack " + item, e);
+                        return Stream.empty();
+                    }
+                }).toList();
             }
         }).whenComplete(Schedulers.javafx(), ((result, exception) -> {
             if (exception == null) {
@@ -143,11 +141,7 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
             HBox toolbar = new HBox();
             toolbar.setAlignment(Pos.CENTER_LEFT);
             toolbar.setPickOnBounds(false);
-            toolbar.getChildren().setAll(
-                    createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, control::refresh),
-                    createToolbarButton2(i18n("resourcepack.add"), SVG.ADD, control::onAddFiles),
-                    createToolbarButton2(i18n("resourcepack.download"), SVG.DOWNLOAD, control::onDownload)
-            );
+            toolbar.getChildren().setAll(createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, control::refresh), createToolbarButton2(i18n("resourcepack.add"), SVG.ADD, control::onAddFiles), createToolbarButton2(i18n("resourcepack.download"), SVG.DOWNLOAD, control::onDownload));
             root.getContent().add(toolbar);
 
             SpinnerPane center = new SpinnerPane();
@@ -192,8 +186,7 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
                 }
             }
 
-            if (image == null || image.isError() || image.getWidth() <= 0 || image.getHeight() <= 0 ||
-                    (Math.abs(image.getWidth() - image.getHeight()) >= 1)) {
+            if (image == null || image.isError() || image.getWidth() <= 0 || image.getHeight() <= 0 || (Math.abs(image.getWidth() - image.getHeight()) >= 1)) {
                 image = FXUtils.newBuiltinImage("/assets/img/unknown_pack.png");
             }
             iconCache = new WeakReference<>(image);
@@ -258,23 +251,25 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
             FXUtils.installFastTooltip(btnReveal, i18n("reveal.in_file_manager"));
             btnReveal.setOnAction(event -> FXUtils.showFileInExplorer(file.getPath()));
 
-            btnDelete.setOnAction(event ->
-                    Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"),
-                            () -> onDelete(file), null));
-        }
-
-        private void onDelete(ResourcepackFile file) {
-            try {
-                if (Files.isDirectory(file.getPath())) {
-                    FileUtils.deleteDirectory(file.getPath());
-                } else {
-                    Files.delete(file.getPath());
-                }
+            btnDelete.setOnAction(event -> {
+                Controllers.deleteConfirm((b) -> {
+                    try {
+                        if (b) {
+                            if (Files.isDirectory(file.getPath())) {
+                                FileUtils.deleteDirectory(file.getPath());
+                            } else {
+                                Files.delete(file.getPath());
+                            }
+                        } else {
+                            FileUtils.moveToTrash(file.getPath());
+                        }
+                    } catch (IOException e) {
+                        Controllers.dialog(i18n("resourcepack.delete.failed", e.getMessage()), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                        LOG.warning("Failed to delete resourcepack", e);
+                    }
+                },file.getPath().getFileName().toString());
                 page.refresh();
-            } catch (IOException e) {
-                Controllers.dialog(i18n("resourcepack.delete.failed", e.getMessage()), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
-                LOG.warning("Failed to delete resourcepack", e);
-            }
+            });
         }
     }
 }

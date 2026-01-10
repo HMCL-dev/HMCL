@@ -112,7 +112,7 @@ public final class Versions {
     public static void deleteVersion(Profile profile, String version) {
         boolean isIndependent = profile.getVersionSetting(version).getGameDirType() == GameDirectoryType.VERSION_FOLDER;
         String message = isIndependent ? i18n("version.manage.remove.confirm.independent", version) :
-                i18n("version.manage.remove.confirm.trash", version, version + "_removed");
+                i18n("version.manage.remove.confirm.trash", version, version);
 
         JFXButton deleteButton = new JFXButton(i18n("button.delete"));
         deleteButton.getStyleClass().add("dialog-error");

@@ -68,6 +68,7 @@ public final class MessageDialogPane extends HBox {
     }
 
     private final HBox actions;
+    private final EnhancedTextFlow textFlow;
 
     private @Nullable ButtonBase cancelButton;
 
@@ -91,7 +92,7 @@ public final class MessageDialogPane extends HBox {
 
             StackPane content = new StackPane();
             content.getStyleClass().add("jfx-layout-body");
-            EnhancedTextFlow textFlow = new EnhancedTextFlow(text);
+            textFlow = new EnhancedTextFlow(text);
             textFlow.setStyle("-fx-font-size: 14px;");
             if (textFlow.computePrefHeight(400.0) <= 350.0)
                 content.getChildren().setAll(textFlow);
@@ -119,6 +120,10 @@ public final class MessageDialogPane extends HBox {
         });
     }
 
+    public void setText(String text) {
+        textFlow.setText(text);
+    }
+
     public void addButton(Node btn) {
         btn.addEventHandler(ActionEvent.ACTION, e -> fireEvent(new DialogCloseEvent()));
         actions.getChildren().add(btn);
@@ -134,7 +139,13 @@ public final class MessageDialogPane extends HBox {
 
     private static final class EnhancedTextFlow extends TextFlow {
         EnhancedTextFlow(String text) {
-            this.getChildren().setAll(FXUtils.parseSegment(text, Controllers::onHyperlinkAction));
+            setText(text);
+        }
+
+        public void setText(String newText) {
+            this.getChildren().setAll(
+                    FXUtils.parseSegment(newText, Controllers::onHyperlinkAction)
+            );
         }
 
         @Override
@@ -154,6 +165,11 @@ public final class MessageDialogPane extends HBox {
             JFXHyperlink link = new JFXHyperlink(text);
             link.setExternalLink(externalLink);
             dialog.actions.getChildren().add(link);
+            return this;
+        }
+
+        public Builder addNode(Node node) {
+            dialog.actions.getChildren().add(node);
             return this;
         }
 

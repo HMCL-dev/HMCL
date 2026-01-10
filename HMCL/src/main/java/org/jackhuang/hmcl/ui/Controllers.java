@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.validation.base.ValidatorBase;
 import javafx.animation.KeyFrame;
@@ -72,6 +73,7 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
@@ -469,6 +471,24 @@ public final class Controllers {
 
     public static void confirmAction(String text, String title, MessageType type, ButtonBase actionButton, Runnable cancel) {
         dialog(new MessageDialogPane.Builder(text, title, type).actionOrCancel(actionButton, cancel).build());
+    }
+
+    public static void deleteConfirm(Consumer<Boolean> action, String name) {
+        JFXCheckBox checkBox = new JFXCheckBox("永久删除");//todo:i18n
+
+        MessageDialogPane pane = new MessageDialogPane.Builder(i18n("button.remove.confirm.trash", name), i18n("button.remove"), MessageType.QUESTION)
+                .addNode(checkBox)
+                .ok(() -> {
+                    action.accept(checkBox.isSelected());
+                })
+                .addCancel(null).build();
+
+        checkBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue) pane.setText(i18n("button.remove.confirm"));
+            else pane.setText(i18n("button.remove.confirm.trash", name));
+        });
+
+        dialog(pane);
     }
 
     public static void confirmWithCountdown(String text, String title, int seconds, MessageType messageType,
