@@ -68,46 +68,46 @@ jobs:
             echo "has_changes=true" >> "$GITHUB_OUTPUT"
             git commit -m "[Backport/${{ steps.extract.outputs.version }}] ${{ steps.pr_info.outputs.title }}
 
-  Backport of PR #${{ github.event.pull_request.number }}."
-  fi
+            Backport of PR #${{ github.event.pull_request.number }}."
+          fi
 
-- name: Push backport branch
-  if: steps.apply_changes.outputs.has_changes == 'true'
-  id: push
-  run: |
-    BACKPORT_BRANCH="backport/pr-${{ github.event.pull_request.number }}-to-${{ steps.extract.outputs.version }}"
-    git push origin HEAD:"$BACKPORT_BRANCH"
-    echo "backport_branch=$BACKPORT_BRANCH" >> "$GITHUB_OUTPUT"
+      - name: Push backport branch
+        if: steps.apply_changes.outputs.has_changes == 'true'
+        id: push
+        run: |
+          BACKPORT_BRANCH="backport/pr-${{ github.event.pull_request.number }}-to-${{ steps.extract.outputs.version }}"
+          git push origin HEAD:"$BACKPORT_BRANCH"
+          echo "backport_branch=$BACKPORT_BRANCH" >> "$GITHUB_OUTPUT"
 
-- name: Create Backport Pull Request
-  if: steps.apply_changes.outputs.has_changes == 'true'
-  uses: actions/github-script@v8
-  with:
-    script: |
-      const { owner, repo } = context.repo;
-      const originalPrNumber = ${{ github.event.pull_request.number }};
-      const version = "${{ steps.extract.outputs.version }}";
-      const title = `[Backport/${version}] ${{ steps.pr_info.outputs.title }}`;
-      const body = `Automated backport of #${originalPrNumber} to \`${{ steps.extract.outputs.branch }}\`.
-      
-      Original PR: #${originalPrNumber}
-      Commit: ${{ steps.pr_info.outputs.head_sha }}`;
-        
-        try {
-        await github.rest.pulls.create({
-        owner,
-        repo,
-        title,
-        head: "${{ steps.push.outputs.backport_branch }}",
-        base: "${{ steps.extract.outputs.branch }}",
-        body
-      });
-        console.log("Backport PR created successfully.");
-      } catch (error) {
-        const msg = error.message || '';
-        if (error.status === 422 && msg.includes('A pull request already exists')) {
-        console.log("Backport PR already exists. Skipping.");
-      } else {
-        throw error;
-      }
-      }
+      - name: Create Backport Pull Request
+        if: steps.apply_changes.outputs.has_changes == 'true'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const originalPrNumber = ${{ github.event.pull_request.number }};
+            const version = "${{ steps.extract.outputs.version }}";
+            const title = `[Backport/${version}] ${{ steps.pr_info.outputs.title }}`;
+            const body = `Automated backport of #${originalPrNumber} to \`${{ steps.extract.outputs.branch }}\`.
+            
+            Original PR: #${originalPrNumber}
+            Commit: ${{ steps.pr_info.outputs.head_sha }}`;
+              
+              try {
+              await github.rest.pulls.create({
+              owner,
+              repo,
+              title,
+              head: "${{ steps.push.outputs.backport_branch }}",
+              base: "${{ steps.extract.outputs.branch }}",
+              body
+            });
+              console.log("Backport PR created successfully.");
+            } catch (error) {
+              const msg = error.message || '';
+              if (error.status === 422 && msg.includes('A pull request already exists')) {
+              console.log("Backport PR already exists. Skipping.");
+            } else {
+              throw error;
+            }
+            }
