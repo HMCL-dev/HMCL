@@ -101,7 +101,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         // https://github.com/HMCL-dev/HMCL/issues/4290
         if (OperatingSystem.CURRENT_OS != OperatingSystem.MACOS) {
             onWindowsStatusChange = observable -> {
-                if (primaryStage.isIconified() || primaryStage.isFullScreen()) {
+                if (primaryStage.isIconified() || primaryStage.isFullScreen() || primaryStage.isMaximized()) {
                     root.removeEventFilter(MouseEvent.MOUSE_RELEASED, onMouseReleased);
                     root.removeEventFilter(MouseEvent.MOUSE_DRAGGED, onMouseDragged);
                     root.removeEventFilter(MouseEvent.MOUSE_MOVED, onMouseMoved);
@@ -328,6 +328,15 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             }
             if (onTitleBarDoubleClick != null)
                 center.setOnMouseClicked(onTitleBarDoubleClick);
+            center.setOnMouseDragged(mouseEvent -> {
+                if (primaryStage.isMaximized()) {
+                    primaryStage.setMaximized(false);
+                    getSkinnable().setDragging(true);
+                    primaryStage.setX(mouseEvent.getScreenX() - (primaryStage.getWidth() / 2));
+                    primaryStage.setY(mouseEvent.getScreenY());
+                    mouseEvent.consume();
+                }
+            });
             navBar.setCenter(center);
 
             if (canRefresh) {
@@ -444,11 +453,6 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             stageInitY = primaryStage.getY();
             stageInitWidth = primaryStage.getWidth();
             stageInitHeight = primaryStage.getHeight();
-        }
-
-        if (primaryStage.isMaximized()) {
-            primaryStage.setMaximized(false);
-            mouseInitX = primaryStage.getWidth() / 2;
         }
 
         if (primaryStage.isFullScreen() || !mouseEvent.isPrimaryButtonDown() || mouseEvent.isStillSincePress())
