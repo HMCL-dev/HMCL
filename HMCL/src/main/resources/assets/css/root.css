@@ -1844,7 +1844,7 @@
     -fx-background-color: -monet-inverse-surface;
 
     -fx-background-radius: 4px;
-    -fx-padding: 8px !important;
+    -fx-padding: 8px;
     -fx-min-height: 24px;
 }
 
