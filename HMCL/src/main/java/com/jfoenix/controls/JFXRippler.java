@@ -79,7 +79,6 @@ public class JFXRippler extends StackPane {
 
     protected static final double RIPPLE_MAX_RADIUS = 300;
 
-    private boolean enabled = true;
     private boolean forceOverlay = false;
     private final Interpolator rippleInterpolator = Interpolator.SPLINE(0.0825,
             0.3025,
@@ -175,10 +174,6 @@ public class JFXRippler extends StackPane {
 
     public Node getControl() {
         return control;
-    }
-
-    public void setEnabled(boolean enable) {
-        this.enabled = enable;
     }
 
     // methods that can be changed by extending the rippler class
@@ -369,25 +364,23 @@ public class JFXRippler extends StackPane {
         }
 
         void createRipple() {
-            if (enabled) {
-                if (!generating.getAndSet(true)) {
-                    // create overlay once then change its color later
-                    createOverlay();
-                    if (this.getClip() == null || (getChildren().size() == 1 && !cacheRipplerClip) || resetClip) {
-                        this.setClip(getMask());
-                    }
-                    this.resetClip = false;
-
-                    // create the ripple effect
-                    final Ripple ripple = new Ripple(generatorCenterX, generatorCenterY);
-                    getChildren().add(ripple);
-                    ripplesQueue.add(ripple);
-
-                    // animate the ripple
-                    overlayRect.outAnimation.stop();
-                    overlayRect.inAnimation.play();
-                    ripple.inAnimation.play();
+            if (!generating.getAndSet(true)) {
+                // create overlay once then change its color later
+                createOverlay();
+                if (this.getClip() == null || (getChildren().size() == 1 && !cacheRipplerClip) || resetClip) {
+                    this.setClip(getMask());
                 }
+                this.resetClip = false;
+
+                // create the ripple effect
+                final Ripple ripple = new Ripple(generatorCenterX, generatorCenterY);
+                getChildren().add(ripple);
+                ripplesQueue.add(ripple);
+
+                // animate the ripple
+                overlayRect.outAnimation.stop();
+                overlayRect.inAnimation.play();
+                ripple.inAnimation.play();
             }
         }
 
