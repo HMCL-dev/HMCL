@@ -153,6 +153,21 @@ public class DefaultLauncher extends Launcher {
             res.addDefault("-Dlog4j.configurationFile=", FileUtils.getAbsolutePath(getLog4jConfigurationFile()));
         }
 
+        String gcAlgorithm = getGCAlgorithm();
+        switch (gcAlgorithm) {
+            case "G1GC":
+                res.add("-XX:+UseG1GC");
+                break;
+            case "ZGC":
+                res.add("-XX:+UseZGC");
+                break;
+            case "Shenandoah GC":
+                res.add("-XX:+UseShenandoahGC");
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported GC Algorithm: " + gcAlgorithm);
+            }
+
         // Default JVM Args
         if (!options.isNoGeneratedJVMArgs()) {
             appendJvmArgs(res);
@@ -356,6 +371,14 @@ public class DefaultLauncher extends Launcher {
 
         res.removeIf(it -> getForbiddens().containsKey(it) && getForbiddens().get(it).get());
         return new Command(res, tempNativeFolder, encoding);
+    }
+
+    private String getGCAlgorithm() {
+        String gcAlgorithm = options.getGCAlgorithm();
+        if (gcAlgorithm != null && !gcAlgorithm.isEmpty()) {
+            return gcAlgorithm;
+        }
+        return "G1GC";
     }
 
     public Map<String, Boolean> getFeatures() {
