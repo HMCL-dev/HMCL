@@ -7,7 +7,6 @@ on:
 jobs:
   backport:
     if: |
-      !github.event.repository.fork &&
       startsWith(github.event.label.name, 'backport/3.') &&
       github.event.action == 'labeled'
     runs-on: ubuntu-latest
