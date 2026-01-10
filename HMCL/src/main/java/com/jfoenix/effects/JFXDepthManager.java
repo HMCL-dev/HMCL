@@ -37,13 +37,14 @@ import javafx.scene.paint.Color;
  */
 public class JFXDepthManager {
 
-    private static DropShadow[] depth = new DropShadow[] {
-            new DropShadow(BlurType.GAUSSIAN, Color.rgb(0, 0, 0, 0), 0, 0, 0, 0),
-            new DropShadow(BlurType.GAUSSIAN, Color.rgb(0, 0, 0, 0.26), 10, 0.12, -1, 2),
-            new DropShadow(BlurType.GAUSSIAN, Color.rgb(0, 0, 0, 0.26), 15, 0.16, 0, 4),
-            new DropShadow(BlurType.GAUSSIAN, Color.rgb(0, 0, 0, 0.26), 20, 0.19, 0, 6),
-            new DropShadow(BlurType.GAUSSIAN, Color.rgb(0, 0, 0, 0.26), 25, 0.25, 0, 8),
-            new DropShadow(BlurType.GAUSSIAN, Color.rgb(0, 0, 0, 0.26), 30, 0.30, 0, 10)};
+    private static final DropShadow[] depth = new DropShadow[] {
+            new DropShadow(BlurType.GAUSSIAN, Color.TRANSPARENT, 0, 0, 0, 0),
+            new DropShadow(BlurType.GAUSSIAN, Color.rgb(0, 0, 0, 0.12), 4, 0, 0, 1),
+            new DropShadow(BlurType.GAUSSIAN, Color.rgb(0, 0, 0, 0.16), 6, 0, 0, 2),
+            new DropShadow(BlurType.GAUSSIAN, Color.rgb(0, 0, 0, 0.20), 10, 0, 0, 3),
+            new DropShadow(BlurType.GAUSSIAN, Color.rgb(0, 0, 0, 0.24), 14, 0, 0, 4),
+            new DropShadow(BlurType.GAUSSIAN, Color.rgb(0, 0, 0, 0.28), 20, 0, 0, 6)
+    };
 
     /**
      * this method is used to add shadow effect to the node,
