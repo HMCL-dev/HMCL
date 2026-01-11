@@ -290,6 +290,14 @@ public final class SettingsPage extends ScrollPane {
             }
 
             {
+                OptionToggleButton autoTranslateModDescriptionOptionsPane = new OptionToggleButton();
+                autoTranslateModDescriptionOptionsPane.setTitle(i18n("settings.launcher.translate_mod_description"));
+                autoTranslateModDescriptionOptionsPane.selectedProperty().bindBidirectional(config().autoTranslateModDescriptionProperty());
+
+                settingsPane.getContent().add(autoTranslateModDescriptionOptionsPane);
+            }
+
+            {
                 BorderPane debugPane = new BorderPane();
 
                 Label left = new Label(i18n("settings.launcher.debug"));
