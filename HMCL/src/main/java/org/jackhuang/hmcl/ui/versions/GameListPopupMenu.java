@@ -28,6 +28,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -49,7 +50,7 @@ public final class GameListPopupMenu extends StackPane {
         this.setMaxHeight(365);
         this.getStyleClass().add("popup-menu-content");
 
-        listView.setCellFactory(listView -> new Cell());
+        listView.setCellFactory(Cell::new);
         listView.setFixedCellSize(60);
         listView.setPrefWidth(300);
 
@@ -76,7 +77,7 @@ public final class GameListPopupMenu extends StackPane {
 
         private final StringProperty tag = new SimpleStringProperty();
 
-        public Cell() {
+        public Cell(ListView<GameItem> listView) {
             this.setPadding(Insets.EMPTY);
             HBox root = new HBox();
 
@@ -116,6 +117,7 @@ public final class GameListPopupMenu extends StackPane {
                 }
             });
             this.graphic = ripplerContainer;
+            ripplerContainer.maxWidthProperty().bind(listView.widthProperty().subtract(5));
         }
 
         @Override
