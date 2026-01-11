@@ -1,5 +1,3 @@
-package com.jfoenix.controls;
-
 /*
  * Copyright (c) 2016 JFoenix
  *
@@ -20,6 +18,8 @@ package com.jfoenix.controls;
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
+
+package com.jfoenix.controls;
 
 import com.jfoenix.svg.SVGGlyph;
 import com.jfoenix.utils.JFXNodeUtils;
