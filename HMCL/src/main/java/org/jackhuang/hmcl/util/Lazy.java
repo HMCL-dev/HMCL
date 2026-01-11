@@ -26,7 +26,7 @@ import java.util.function.Supplier;
  * @param <T> value type
  */
 public final class Lazy<T> {
-    private Supplier<T> supplier;
+    private final Supplier<T> supplier;
     private T value = null;
 
     public Lazy(Supplier<T> supplier) {
@@ -34,10 +34,13 @@ public final class Lazy<T> {
     }
 
     public T get() {
-        if (supplier != null) {
+        if (value == null) {
             value = supplier.get();
-            supplier = null;
         }
         return value;
+    }
+
+    public void reset() {
+        value = null;
     }
 }

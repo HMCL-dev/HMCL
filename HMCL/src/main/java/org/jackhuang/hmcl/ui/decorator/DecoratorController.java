@@ -363,6 +363,10 @@ public class DecoratorController {
 
     // ==== Navigation ====
 
+    public void setRoot(Node node){
+        navigator.setRoot(node);
+    }
+
     public void navigate(Node node, AnimationProducer animationProducer, Duration duration, Interpolator interpolator) {
         navigator.navigate(node, animationProducer, duration, interpolator);
     }
@@ -379,7 +383,7 @@ public class DecoratorController {
         navigator.clear();
     }
 
-    private void back() {
+    public void back() {
         if (navigator.getCurrentPage() instanceof DecoratorPage) {
             DecoratorPage page = (DecoratorPage) navigator.getCurrentPage();
 
