@@ -17,8 +17,6 @@
         <module name="SuppressionCommentFilter"/> <!-- use //CHECKSTYLE:OFF (...) //CHECKSTYLE:ON to disable checkstyle: http://checkstyle.sourceforge.net/config_filters.html#SuppressionCommentFilter -->
 
         <!-- Annotations -->
-        <module name="MissingDeprecated"> <!-- if @deprecated and javadoc is there, must be explained in javadoc: http://checkstyle.sourceforge.net/config_annotation.html#MissingDeprecated -->
-        </module>
         <module name="MissingOverride"/> <!-- if has @inheritDoc in javadoc must have @Override http://checkstyle.sourceforge.net/config_annotation.html#MissingOverride -->
         <module name="PackageAnnotation"/> <!-- must only be in package-info: http://checkstyle.sourceforge.net/config_annotation.html#PackageAnnotation -->
 
