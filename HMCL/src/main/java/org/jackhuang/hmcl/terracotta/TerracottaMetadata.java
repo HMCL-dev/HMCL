@@ -169,6 +169,9 @@ public final class TerracottaMetadata {
 
     public static void removeLegacyVersionFiles() {
         try (DirectoryStream<Path> terracotta = collectLegacyVersionFiles()) {
+            if (terracotta == null)
+                return;
+
             for (Path path : terracotta) {
                 try {
                     FileUtils.deleteDirectory(path);
@@ -183,13 +186,17 @@ public final class TerracottaMetadata {
 
     public static boolean hasLegacyVersionFiles() throws IOException {
         try (DirectoryStream<Path> terracotta = collectLegacyVersionFiles()) {
-            return terracotta.iterator().hasNext();
+            return terracotta != null && terracotta.iterator().hasNext();
         }
     }
 
-    private static DirectoryStream<Path> collectLegacyVersionFiles() throws IOException {
+    private static @Nullable DirectoryStream<Path> collectLegacyVersionFiles() throws IOException {
+        Path terracottaDir = Metadata.DEPENDENCIES_DIRECTORY.resolve("terracotta");
+        if (Files.notExists(terracottaDir))
+            return null;
+
         VersionRange<VersionNumber> range = VersionNumber.atMost(LATEST);
-        return Files.newDirectoryStream(Metadata.DEPENDENCIES_DIRECTORY.resolve("terracotta"), path -> {
+        return Files.newDirectoryStream(terracottaDir, path -> {
             String name = FileUtils.getName(path);
             return !LATEST.equals(name) && range.contains(VersionNumber.asVersion(name));
         });
