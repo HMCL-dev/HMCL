@@ -1217,12 +1217,14 @@ public final class FXUtils {
 
     public static Task<Image> getRemoteImageTask(String url, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
         return new CacheFileTask(url)
+                .setSignificance(Task.TaskSignificance.MINOR)
                 .thenApplyAsync(file -> loadImage(file, requestedWidth, requestedHeight, preserveRatio, smooth))
                 .setSignificance(Task.TaskSignificance.MINOR);
     }
 
     public static Task<Image> getRemoteImageTask(URI uri, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
         return new CacheFileTask(uri)
+                .setSignificance(Task.TaskSignificance.MINOR)
                 .thenApplyAsync(file -> loadImage(file, requestedWidth, requestedHeight, preserveRatio, smooth))
                 .setSignificance(Task.TaskSignificance.MINOR);
     }
@@ -1237,6 +1239,7 @@ public final class FXUtils {
                         LOG.warning("An exception encountered while loading remote image: " + url, exception);
                     }
                 })
+                .setSignificance(Task.TaskSignificance.MINOR)
                 .start();
         return image;
     }

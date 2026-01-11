@@ -509,12 +509,22 @@ public abstract class FetchTask<T> extends Task<T> {
         return downloadExecutorConcurrency;
     }
 
+    private static volatile boolean initialized = false;
+
+    public static void notifyInitialized() {
+        initialized = true;
+    }
+
     /// Ensure that [#HTTP_CLIENT] is initialized after ProxyManager has been initialized.
     private static final class Holder {
         private static final HttpClient HTTP_CLIENT;
         private static final String USER_AGENT = System.getProperty("http.agent", "HMCL");
 
         static {
+            if (!initialized) {
+                throw new AssertionError("FetchTask.Holder accessed before ProxyManager initialization.");
+            }
+
             boolean useHttp2 = !"false".equalsIgnoreCase(System.getProperty("hmcl.http2"));
 
             HTTP_CLIENT = HttpClient.newBuilder()
