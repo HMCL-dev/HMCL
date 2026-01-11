@@ -576,6 +576,9 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
 
         private final List<String> categories;
 
+        @SerializedName("display_categories")
+        private final List<String> displayCategories;
+
         @SerializedName("project_type")
         private final String projectType;
 
@@ -600,11 +603,12 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         @SerializedName("latest_version")
         private final String latestVersion;
 
-        public ProjectSearchResult(String slug, String title, String description, List<String> categories, String projectType, int downloads, String iconUrl, String projectId, String author, List<String> versions, Instant dateCreated, Instant dateModified, String latestVersion) {
+        public ProjectSearchResult(String slug, String title, String description, List<String> categories, List<String> displayCategories, String projectType, int downloads, String iconUrl, String projectId, String author, List<String> versions, Instant dateCreated, Instant dateModified, String latestVersion) {
             this.slug = slug;
             this.title = title;
             this.description = description;
             this.categories = categories;
+            this.displayCategories = displayCategories;
             this.projectType = projectType;
             this.downloads = downloads;
             this.iconUrl = iconUrl;
@@ -630,6 +634,10 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
 
         public List<String> getCategories() {
             return categories;
+        }
+
+        public List<String> getDisplayCategories() {
+            return displayCategories;
         }
 
         public String getProjectType() {
@@ -691,7 +699,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                     author,
                     title,
                     description,
-                    categories,
+                    displayCategories,
                     String.format("https://modrinth.com/%s/%s", projectType, projectId),
                     iconUrl,
                     this
