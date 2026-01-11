@@ -1847,3 +1847,33 @@
 .tooltip .text {
     -fx-fill: -monet-inverse-on-surface;
 }
+
+/*******************************************************************************
+ *                                                                             *
+ * Mod Changelog                                                               *
+ *                                                                             *
+ ******************************************************************************/
+
+.mod-changelog .html {
+    -fx-background-color: -monet-surface;
+    -fx-background-radius: 4;
+    -fx-padding: 10;
+    -fx-font-size: 12;
+    -fx-text-fill: -monet-on-surface;
+}
+
+.mod-changelog .html-h1 {
+    -fx-font-size: 16.5;
+}
+
+.mod-changelog .html-h2 {
+    -fx-font-size: 15;
+}
+
+.mod-changelog .html-h3 {
+    -fx-font-size: 13.5;
+}
+
+.mod-changelog-table-cell {
+    -fx-text-fill: -monet-primary;
+}
