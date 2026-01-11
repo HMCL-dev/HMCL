@@ -48,8 +48,6 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
 import javafx.util.Duration;
 
-import java.util.Set;
-
 /**
  * material design implementation of ListCell
  * <p>
@@ -83,10 +81,7 @@ public class JFXListCell<T> extends ListCell<T> {
         }
     };
 
-    protected Node cellContent;
-    private Rectangle clip;
-
-    //	private Timeline animateGap;
+    
     private Timeline expandAnimation;
     private Timeline gapAnimation;
     private double animatedHeight = 0;
@@ -401,7 +396,6 @@ public class JFXListCell<T> extends ListCell<T> {
         }
     }
 
-
     private void updateClipHeight(double newHeight) {
         clip.setHeight(newHeight - getGap());
     }
@@ -414,6 +408,7 @@ public class JFXListCell<T> extends ListCell<T> {
      **************************************************************************/
 
     // indicate whether the sub list is expanded or not
+
     @Deprecated
     private BooleanProperty expandedProperty = new SimpleBooleanProperty(false);
 
