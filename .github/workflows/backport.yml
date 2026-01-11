@@ -50,25 +50,38 @@ jobs:
           ref: ${{ steps.extract.outputs.branch }}
           fetch-depth: 0
 
-      - name: Fetch PR changes and simulate squash merge
+      - name: Fetch PR changes and merge
         id: apply_changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch "https://github.com/${{ steps.pr_info.outputs.head_repo }}" "${{ steps.pr_info.outputs.head_sha }}"
-          set +e
-          git merge --squash "${{ steps.pr_info.outputs.head_sha }}" --no-edit
-
-          set -e
           
+          echo "Fetching changes from origin PR..."
+          git fetch "https://github.com/${{ steps.pr_info.outputs.head_repo }}" "${{ steps.pr_info.outputs.head_sha }}"
+          
+          set +e 
+          
+          git merge --squash "${{ steps.pr_info.outputs.head_sha }}" --no-edit
+          MERGE_EXIT_CODE=$?
+          
+          set -e
+
+          if [ $MERGE_EXIT_CODE -ne 0 ]; then
+            echo "has_conflicts=true" >> "$GITHUB_OUTPUT"
+            COMMIT_PREFIX="[Conflict] "
+          else
+            echo "has_conflicts=false" >> "$GITHUB_OUTPUT"
+            COMMIT_PREFIX=""
+          fi
+
           git add -A
           
           if git diff --cached --quiet; then
-            echo "No changes to commit. Skipping backport PR creation."
+            echo "No changes to commit. Skipping."
             exit 0
           fi
 
-          COMMIT_MSG="[release/${{ steps.extract.outputs.version }}] ${{ steps.pr_info.outputs.title }}"
+          COMMIT_MSG="${COMMIT_PREFIX}[release/${{ steps.extract.outputs.version }}] ${{ steps.pr_info.outputs.title }}"
           git commit -m "$COMMIT_MSG"
 
       - name: Push backport branch
@@ -85,9 +98,18 @@ jobs:
             const { owner, repo } = context.repo;
             const originalPrNumber = ${{ github.event.pull_request.number }};
             const version = "${{ steps.extract.outputs.version }}";
+            const hasConflicts = "${{ steps.apply_changes.outputs.has_conflicts }}" === "true";
             
             let title = `[release/${version}] ${{ steps.pr_info.outputs.title }}`;
-            let body = `[Backport] #${originalPrNumber} -> \`${{ steps.extract.outputs.branch }}\``;
+            if (hasConflicts) {
+              title = `[Conflict] ${title}`;
+            }
+
+            let body = `[Backport] #${originalPrNumber} -> \`${{ steps.extract.outputs.branch }}\`\n\n`;
+            
+            if (hasConflicts) {
+              body += `> Has Merge Conflicts\n\n`;
+            }
 
             const { data: pr } = await github.rest.pulls.create({
               owner,
@@ -97,4 +119,3 @@ jobs:
               base: "${{ steps.extract.outputs.branch }}",
               body
             });
-            
