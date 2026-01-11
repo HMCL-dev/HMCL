@@ -40,9 +40,11 @@ import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -203,15 +205,14 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
             FXUtils.showFileInExplorer(file);
         }
 
-        void onDelete() {
-            WorldBackupsPage.this.getItems().remove(this);
-            Task.runAsync(() -> Files.delete(file)).start();
-        }
-
         @Override
         public int compareTo(@NotNull WorldBackupsPage.BackupInfo that) {
             int c = this.backupTime.compareTo(that.backupTime);
             return c != 0 ? c : Integer.compare(this.count, that.count);
+        }
+
+        public void refresh() {
+            WorldBackupsPage.this.refresh();
         }
     }
 
@@ -266,7 +267,19 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                 FXUtils.installFastTooltip(btnDelete, i18n("world.backup.delete"));
                 btnDelete.getStyleClass().add("toggle-icon4");
                 btnDelete.setGraphic(SVG.DELETE.createIcon());
-                btnDelete.setOnAction(event -> Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), skinnable::onDelete, null));
+                btnDelete.setOnAction(event -> Controllers.deleteConfirm((b) -> {
+                    Task.runAsync(() -> {
+                        if (b) Files.delete(world.getFile());
+                        else FileUtils.moveToTrash(world.getFile());
+                    }).whenComplete(Schedulers.javafx(), (v, exception) -> {
+                        if (exception != null) {
+                            Controllers.dialog(i18n("message.failed", exception.getMessage()), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
+                            LOG.warning("Failed to delete world backup", exception);
+                        } else {
+                            skinnable.refresh();
+                        }
+                    }).start();
+                }, world.getFile().getFileName().toString()));
             }
 
             getChildren().setAll(new RipplerContainer(root));
