@@ -204,7 +204,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
             }
         },
         LEGACY_FABRIC_API(false, "legacyfabric-api", "net.legacyfabric", "legacyfabric-api", null),
-        FABRIC(true, "fabric", "net.fabricmc", "fabric-loader", ModLoaderType.FABRIC) {
+        FABRIC(true, "fabric", "net\\.fabricmc", "fabric-loader", ModLoaderType.FABRIC) {
             @Override
             protected boolean matchLibrary(Library library, List<Library> libraries) {
                 if (!super.matchLibrary(library, libraries)) {
@@ -218,7 +218,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
                 return true;
             }
         },
-        FABRIC_API(true, "fabric-api", "net.fabricmc", "fabric-api", null),
+        FABRIC_API(true, "fabric-api", "net\\.fabricmc", "fabric-api", null),
         FORGE(true, "forge", "net\\.minecraftforge", "(forge|fmlloader)", ModLoaderType.FORGE) {
             private final Pattern FORGE_VERSION_MATCHER = Pattern.compile("^([0-9.]+)-(?<forge>[0-9.]+)(-([0-9.]+))?$");
 
