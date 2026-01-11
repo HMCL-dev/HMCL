@@ -215,6 +215,10 @@ public class Navigator extends TransitionPane {
         }
     };
 
+    public void setRoot(Node node) {
+        stack.set(0, node);
+    }
+
     public static final class NavigationEvent extends Event {
         public static final EventType<NavigationEvent> EXITED = new EventType<>("EXITED");
         public static final EventType<NavigationEvent> NAVIGATED = new EventType<>("NAVIGATED");

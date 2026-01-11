@@ -192,6 +192,18 @@ public final class Controllers {
         }
     }
 
+    public static void resetPages() {
+        versionPage = null;
+        downloadPage = null;
+        settingsPage = null;
+
+        rootPage.reset();
+        terracottaPage.reset();
+        accountListPage.reset();
+        gameListPage.reset();
+        getDecorator().setRoot(rootPage.get());
+    }
+
     // FXThread
     public static Node getTerracottaPage() {
         return terracottaPage.get();
