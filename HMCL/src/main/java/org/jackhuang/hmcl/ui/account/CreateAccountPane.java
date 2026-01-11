@@ -146,7 +146,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             btnCancel.setOnAction(e -> onCancel());
             onEscPressed(this, btnCancel::fire);
 
-            HBox hbox = new HBox(spinner, btnCancel);
+            HBox hbox = new HBox(btnCancel, spinner);
             hbox.setAlignment(Pos.CENTER_RIGHT);
 
             setActions(lblErrorMessage, hbox);

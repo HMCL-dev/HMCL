@@ -201,14 +201,14 @@ public final class MessageDialogPane extends HBox {
         }
 
         public Builder yesOrNo(@Nullable Runnable yes, @Nullable Runnable no) {
+            addCancel(i18n("button.no"), no);
+
             JFXButton btnYes = new JFXButton(i18n("button.yes"));
             btnYes.getStyleClass().add("dialog-accept");
             if (yes != null) {
                 btnYes.setOnAction(e -> yes.run());
             }
             dialog.addButton(btnYes);
-
-            addCancel(i18n("button.no"), no);
             return this;
         }
 

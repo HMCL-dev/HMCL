@@ -63,7 +63,7 @@ public class DialogPane extends JFXDialogLayout {
         cancelButton.getStyleClass().add("dialog-cancel");
         onEscPressed(this, cancelButton::fire);
 
-        setActions(warningLabel, acceptPane, cancelButton);
+        setActions(warningLabel, cancelButton, acceptPane);
     }
 
     protected JFXProgressBar getProgressBar() {
