@@ -36,7 +36,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
@@ -234,6 +233,10 @@ public class DefaultGameRepository implements GameRepository {
     }
 
     public boolean removeVersionFromDisk(String id) {
+        return removeVersionFromDisk(id, true);
+    }
+
+    public boolean removeVersionFromDisk(String id, boolean trash) {
         if (EventBus.EVENT_BUS.fireEvent(new RemoveVersionEvent(this, id)) == Event.Result.DENY)
             return false;
         if (!versions.containsKey(id))
@@ -242,19 +245,15 @@ public class DefaultGameRepository implements GameRepository {
         if (Files.notExists(file))
             return true;
         // test if no file in this version directory is occupied.
-        Path removedFile = file.toAbsolutePath().resolveSibling(FileUtils.getName(file) + "_removed");
-        try {
-            Files.move(file, removedFile, StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException e) {
-            LOG.warning("Failed to rename file " + file, e);
-            return false;
-        }
+        Path removedFile = file.toAbsolutePath().resolveSibling(FileUtils.getName(file));
 
         try {
             versions.remove(id);
 
-            if (FileUtils.moveToTrash(removedFile)) {
-                return true;
+            if (trash) {
+                if (FileUtils.moveToTrash(removedFile)) {
+                    return true;
+                }
             }
 
             // remove json files first to ensure HMCL will not recognize this folder as a valid version.

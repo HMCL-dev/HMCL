@@ -473,10 +473,10 @@ public final class Controllers {
         dialog(new MessageDialogPane.Builder(text, title, type).actionOrCancel(actionButton, cancel).build());
     }
 
-    public static void deleteConfirm(Consumer<Boolean> action, String name) {
+    public static void deleteConfirm(Consumer<Boolean> action, String body, String bodyTrash) {
         JFXCheckBox checkBox = new JFXCheckBox("永久删除");//todo:i18n
 
-        MessageDialogPane pane = new MessageDialogPane.Builder(i18n("button.remove.confirm.trash", name), i18n("button.remove"), MessageType.QUESTION)
+        MessageDialogPane pane = new MessageDialogPane.Builder(bodyTrash, i18n("button.remove"), MessageType.QUESTION)
                 .addNode(checkBox)
                 .ok(() -> {
                     action.accept(checkBox.isSelected());
@@ -484,11 +484,15 @@ public final class Controllers {
                 .addCancel(null).build();
 
         checkBox.selectedProperty().addListener((observable, oldValue, newValue) -> {
-            if (newValue) pane.setText(i18n("button.remove.confirm"));
-            else pane.setText(i18n("button.remove.confirm.trash", name));
+            if (newValue) pane.setText(body);
+            else pane.setText(bodyTrash);
         });
 
         dialog(pane);
+    }
+
+    public static void deleteConfirm(Consumer<Boolean> action, String name) {
+        deleteConfirm(action, i18n("button.remove.confirm"), i18n("button.remove.confirm.trash", name));
     }
 
     public static void confirmWithCountdown(String text, String title, int seconds, MessageType messageType,
