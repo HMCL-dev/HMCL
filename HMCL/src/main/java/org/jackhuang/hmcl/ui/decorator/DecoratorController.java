@@ -363,7 +363,7 @@ public class DecoratorController {
 
     // ==== Navigation ====
 
-    public void setRoot(Node node){
+    public void setRoot(Node node) {
         navigator.setRoot(node);
     }
 
