@@ -22,6 +22,9 @@ import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXSpinner;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -113,7 +116,12 @@ public final class UpgradeDialog extends JFXDialogLayout {
         cancelButton.getStyleClass().add("dialog-cancel");
         cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
 
-        setActions(openInBrowser, updateButton, cancelButton);
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        HBox hBox = new HBox(openInBrowser, spacer, cancelButton, updateButton);
+
+        setActions(hBox);
         onEscPressed(this, cancelButton::fire);
     }
 }

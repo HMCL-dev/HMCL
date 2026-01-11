@@ -90,7 +90,7 @@ public class ClassicAccountLoginDialog extends StackPane {
             cancelButton.setOnAction(e -> onCancel());
             cancelButton.getStyleClass().add("dialog-cancel");
 
-            dialogLayout.setActions(lblCreationWarning, acceptButton, cancelButton);
+            dialogLayout.setActions(lblCreationWarning, cancelButton, acceptButton);
         }
 
         getChildren().setAll(dialogLayout);

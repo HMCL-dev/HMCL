@@ -218,7 +218,7 @@ public class OfflineAccountSkinPane extends StackPane {
         cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
         onEscPressed(this, cancelButton::fire);
 
-        layout.setActions(littleSkinLink, acceptButton, cancelButton);
+        layout.setActions(littleSkinLink, cancelButton, acceptButton);
     }
 
     private Skin getSkin() {

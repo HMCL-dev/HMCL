@@ -83,7 +83,7 @@ public final class NBTEditorPage extends SpinnerPane implements DecoratorPage {
         cancelButton.setOnAction(e -> fireEvent(new PageCloseEvent()));
         onEscPressed(this, cancelButton::fire);
 
-        actions.getChildren().setAll(saveButton, cancelButton);
+        actions.getChildren().setAll(cancelButton, saveButton);
 
         Task.supplyAsync(() -> type.readAsTree(file))
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
