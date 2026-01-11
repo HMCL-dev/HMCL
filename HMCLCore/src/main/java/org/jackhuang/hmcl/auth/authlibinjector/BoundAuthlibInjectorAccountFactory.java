@@ -21,18 +21,20 @@ import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.CharacterSelector;
 
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 public class BoundAuthlibInjectorAccountFactory extends AccountFactory<AuthlibInjectorAccount> {
-    private final AuthlibInjectorArtifactProvider downloader;
+    private final Supplier<Path> artifactProvider;
     private final AuthlibInjectorServer server;
 
     /**
      * @param server Authlib-Injector Server
      */
-    public BoundAuthlibInjectorAccountFactory(AuthlibInjectorArtifactProvider downloader, AuthlibInjectorServer server) {
-        this.downloader = downloader;
+    public BoundAuthlibInjectorAccountFactory(Supplier<Path> artifactProvider, AuthlibInjectorServer server) {
+        this.artifactProvider = artifactProvider;
         this.server = server;
     }
 
@@ -51,11 +53,11 @@ public class BoundAuthlibInjectorAccountFactory extends AccountFactory<AuthlibIn
         Objects.requireNonNull(username);
         Objects.requireNonNull(password);
 
-        return new AuthlibInjectorAccount(server, downloader, username, password, selector);
+        return new AuthlibInjectorAccount(server, artifactProvider, username, password, selector);
     }
 
     @Override
     public AuthlibInjectorAccount fromStorage(Map<Object, Object> storage) {
-        return AuthlibInjectorAccountFactory.fromStorage(storage, downloader, server);
+        return AuthlibInjectorAccountFactory.fromStorage(storage, artifactProvider, server);
     }
 }

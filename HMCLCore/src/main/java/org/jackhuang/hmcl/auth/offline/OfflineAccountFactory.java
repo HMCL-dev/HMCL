@@ -19,11 +19,12 @@ package org.jackhuang.hmcl.auth.offline;
 
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.CharacterSelector;
-import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorArtifactProvider;
 import org.jackhuang.hmcl.util.gson.UUIDTypeAdapter;
 
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
@@ -33,10 +34,10 @@ import static org.jackhuang.hmcl.util.Lang.tryCast;
  * @author huangyuhui
  */
 public final class OfflineAccountFactory extends AccountFactory<OfflineAccount> {
-    private final AuthlibInjectorArtifactProvider downloader;
+    private final Supplier<Path> authlibInjectorArtifactProvider;
 
-    public OfflineAccountFactory(AuthlibInjectorArtifactProvider downloader) {
-        this.downloader = downloader;
+    public OfflineAccountFactory(Supplier<Path> authlibInjectorArtifactProvider) {
+        this.authlibInjectorArtifactProvider = authlibInjectorArtifactProvider;
     }
 
     @Override
@@ -45,7 +46,7 @@ public final class OfflineAccountFactory extends AccountFactory<OfflineAccount> 
     }
 
     public OfflineAccount create(String username, UUID uuid) {
-        return new OfflineAccount(downloader, username, uuid, null);
+        return new OfflineAccount(authlibInjectorArtifactProvider, username, uuid, null);
     }
 
     @Override
@@ -61,7 +62,7 @@ public final class OfflineAccountFactory extends AccountFactory<OfflineAccount> 
             uuid = getUUIDFromUserName(username);
             skin = null;
         }
-        return new OfflineAccount(downloader, username, uuid, skin);
+        return new OfflineAccount(authlibInjectorArtifactProvider, username, uuid, skin);
     }
 
     @Override
@@ -73,7 +74,7 @@ public final class OfflineAccountFactory extends AccountFactory<OfflineAccount> 
                 .orElse(getUUIDFromUserName(username));
         Skin skin = Skin.fromStorage(tryCast(storage.get("skin"), Map.class).orElse(null));
 
-        return new OfflineAccount(downloader, username, uuid, skin);
+        return new OfflineAccount(authlibInjectorArtifactProvider, username, uuid, skin);
     }
 
     public static UUID getUUIDFromUserName(String username) {
