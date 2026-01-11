@@ -28,7 +28,6 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
-import org.jackhuang.hmcl.util.io.concurrency.ConcurrencyGuard;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
@@ -44,6 +43,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Semaphore;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
@@ -54,7 +54,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
 
     private static final String PREFIX = "https://api.curseforge.com";
     private static final String apiKey = System.getProperty("hmcl.curseforge.apikey", JarUtils.getAttribute("hmcl.curseforge.apikey", ""));
-    private static final ConcurrencyGuard SEMAPHORE = new ConcurrencyGuard(16);
+    private static final Semaphore SEMAPHORE = new Semaphore(16);
 
     private static final int WORD_PERFECT_MATCH_WEIGHT = 5;
 
@@ -119,7 +119,8 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
 
     @Override
     public SearchResult search(DownloadProvider downloadProvider, String gameVersion, @Nullable RemoteModRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder) throws IOException {
-        try (var ignored = SEMAPHORE.acquire()) {
+        SEMAPHORE.acquireUninterruptibly();
+        try {
             int categoryId = 0;
             if (category != null && category.getSelf() instanceof CurseAddon.Category) {
                 categoryId = ((CurseAddon.Category) category.getSelf()).getId();
@@ -160,6 +161,8 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
 
                 return pair(remoteMod, diff);
             }).sorted(Comparator.comparingInt(Pair::getValue)).map(Pair::getKey), response.getData().stream().map(CurseAddon::toMod), calculateTotalPages(response, pageSize));
+        } finally {
+            SEMAPHORE.release();
         }
     }
 
@@ -184,7 +187,8 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
             return Optional.empty();
         }
 
-        try (var ignored = SEMAPHORE.acquire()) {
+        SEMAPHORE.acquireUninterruptibly();
+        try {
             Response<FingerprintMatchesResult> response = withApiKey(HttpRequest.POST(PREFIX + "/v1/fingerprints/432"))
                     .json(mapOf(pair("fingerprints", Collections.singletonList(hash))))
                     .getJson(Response.typeOf(FingerprintMatchesResult.class));
@@ -194,43 +198,57 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
             }
 
             return Optional.of(response.getData().getExactMatches().get(0).getFile().toVersion());
+        } finally {
+            SEMAPHORE.release();
         }
     }
 
     @Override
     public RemoteMod getModById(String id) throws IOException {
-        try (var ignored = SEMAPHORE.acquire()) {
+        SEMAPHORE.acquireUninterruptibly();
+        try {
             Response<CurseAddon> response = withApiKey(HttpRequest.GET(PREFIX + "/v1/mods/" + id))
                     .getJson(Response.typeOf(CurseAddon.class));
             return response.data.toMod();
+        } finally {
+            SEMAPHORE.release();
         }
     }
 
     @Override
     public RemoteMod.File getModFile(String modId, String fileId) throws IOException {
-        try (var ignored = SEMAPHORE.acquire()) {
+        SEMAPHORE.acquireUninterruptibly();
+        try {
             Response<CurseAddon.LatestFile> response = withApiKey(HttpRequest.GET(String.format("%s/v1/mods/%s/files/%s", PREFIX, modId, fileId)))
                     .getJson(Response.typeOf(CurseAddon.LatestFile.class));
             return response.getData().toVersion().getFile();
+        } finally {
+            SEMAPHORE.release();
         }
     }
 
     @Override
     public Stream<RemoteMod.Version> getRemoteVersionsById(String id) throws IOException {
-        try (var ignored = SEMAPHORE.acquire()) {
+        SEMAPHORE.acquireUninterruptibly();
+        try {
             Response<List<CurseAddon.LatestFile>> response = withApiKey(HttpRequest.GET(PREFIX + "/v1/mods/" + id + "/files",
                     pair("pageSize", "10000")))
                     .getJson(Response.typeOf(listTypeOf(CurseAddon.LatestFile.class)));
             return response.getData().stream().map(CurseAddon.LatestFile::toVersion);
+        } finally {
+            SEMAPHORE.release();
         }
     }
 
     @Override
     public Stream<RemoteModRepository.Category> getCategories() throws IOException {
-        try (var ignored = SEMAPHORE.acquire()) {
+        SEMAPHORE.acquireUninterruptibly();
+        try {
             Response<List<CurseAddon.Category>> categories = withApiKey(HttpRequest.GET(PREFIX + "/v1/categories", pair("gameId", "432")))
                     .getJson(Response.typeOf(listTypeOf(CurseAddon.Category.class)));
             return reorganizeCategories(categories.getData(), section).stream().map(CurseAddon.Category::toCategory);
+        } finally {
+            SEMAPHORE.release();
         }
     }
 

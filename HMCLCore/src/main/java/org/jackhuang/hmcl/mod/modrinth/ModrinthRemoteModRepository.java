@@ -33,7 +33,6 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
-import org.jackhuang.hmcl.util.io.concurrency.ConcurrencyGuard;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -47,6 +46,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Semaphore;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -60,7 +60,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     public static final ModrinthRemoteModRepository RESOURCE_PACKS = new ModrinthRemoteModRepository("resourcepack");
     public static final ModrinthRemoteModRepository SHADER_PACKS = new ModrinthRemoteModRepository("shader");
 
-    private static final ConcurrencyGuard SEMAPHORE = new ConcurrencyGuard(16);
+    private static final Semaphore SEMAPHORE = new Semaphore(16);
 
     private static final String PREFIX = "https://api.modrinth.com";
 
@@ -94,7 +94,8 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
 
     @Override
     public SearchResult search(DownloadProvider downloadProvider, String gameVersion, @Nullable RemoteModRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder) throws IOException {
-        try (var ignored = SEMAPHORE.acquire()) {
+        SEMAPHORE.acquireUninterruptibly();
+        try {
             List<List<String>> facets = new ArrayList<>();
             facets.add(Collections.singletonList("project_type:" + projectType));
             if (StringUtils.isNotBlank(gameVersion)) {
@@ -113,6 +114,8 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
             Response<ProjectSearchResult> response = HttpRequest.GET(downloadProvider.injectURL(NetworkUtils.withQuery(PREFIX + "/v2/search", query)))
                     .getJson(Response.typeOf(ProjectSearchResult.class));
             return new SearchResult(response.getHits().stream().map(ProjectSearchResult::toMod), (int) Math.ceil((double) response.totalHits / pageSize));
+        } finally {
+            SEMAPHORE.release();
         }
     }
 
@@ -120,7 +123,8 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(LocalModFile localModFile, Path file) throws IOException {
         String sha1 = DigestUtils.digestToString("SHA-1", file);
 
-        try (var ignored = SEMAPHORE.acquire()) {
+        SEMAPHORE.acquireUninterruptibly();
+        try {
             ProjectVersion mod = HttpRequest.GET(PREFIX + "/v2/version_file/" + sha1,
                             pair("algorithm", "sha1"))
                     .getJson(ProjectVersion.class);
@@ -133,15 +137,20 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
             }
         } catch (NoSuchFileException e) {
             return Optional.empty();
+        } finally {
+            SEMAPHORE.release();
         }
     }
 
     @Override
     public RemoteMod getModById(String id) throws IOException {
-        try (var ignored = SEMAPHORE.acquire()) {
+        SEMAPHORE.acquireUninterruptibly();
+        try {
             id = StringUtils.removePrefix(id, "local-");
             Project project = HttpRequest.GET(PREFIX + "/v2/project/" + id).getJson(Project.class);
             return project.toMod();
+        } finally {
+            SEMAPHORE.release();
         }
     }
 
@@ -152,21 +161,27 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
 
     @Override
     public Stream<RemoteMod.Version> getRemoteVersionsById(String id) throws IOException {
-        try (var ignored = SEMAPHORE.acquire()) {
+        SEMAPHORE.acquireUninterruptibly();
+        try {
             id = StringUtils.removePrefix(id, "local-");
             List<ProjectVersion> versions = HttpRequest.GET(PREFIX + "/v2/project/" + id + "/version")
                     .getJson(listTypeOf(ProjectVersion.class));
             return versions.stream().map(ProjectVersion::toVersion).flatMap(Lang::toStream);
+        } finally {
+            SEMAPHORE.release();
         }
     }
 
     @Override
     public Stream<RemoteModRepository.Category> getCategories() throws IOException {
-        try (var ignored = SEMAPHORE.acquire()) {
+        SEMAPHORE.acquireUninterruptibly();
+        try {
             List<Category> categories = HttpRequest.GET(PREFIX + "/v2/tag/category").getJson(listTypeOf(Category.class));
             return categories.stream()
                     .filter(category -> category.getProjectType().equals(projectType))
                     .map(Category::toCategory);
+        } finally {
+            SEMAPHORE.release();
         }
     }
 
@@ -179,7 +194,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         private final String projectType;
 
         public Category() {
-            this("","","");
+            this("", "", "");
         }
 
         public Category(String icon, String name, String projectType) {
