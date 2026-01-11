@@ -417,7 +417,7 @@ public final class Accounts {
                 if (exception.getCause().getMessage() != null && exception.getCause().getMessage().contains("Remote host terminated")) {
                     return i18n("account.failed.connect_authentication_server");
                 }
-                if (exception.getCause().getMessage() != null && exception.getCause().getMessage().contains("No name matching") || exception.getCause().getMessage().contains("No subject alternative DNS name matching")) {
+                if (exception.getCause().getMessage() != null && (exception.getCause().getMessage().contains("No name matching") || exception.getCause().getMessage().contains("No subject alternative DNS name matching"))) {
                     return i18n("account.failed.dns");
                 }
                 return i18n("account.failed.ssl");
