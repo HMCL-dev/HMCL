@@ -64,7 +64,7 @@ public final class LogExporter {
         }
 
         return CompletableFuture.runAsync(() -> {
-            try (Zipper zipper = new Zipper(zipFile)) {
+            try (Zipper zipper = new Zipper(zipFile, true)) {
                 processLogs(runDirectory.resolve("liteconfig"), "*.log", "liteconfig", zipper, logMatcher);
                 processLogs(runDirectory.resolve("logs"), "*.log", "logs", zipper, logMatcher);
                 processLogs(runDirectory, "*.log", "runDirectory", zipper, logMatcher);
