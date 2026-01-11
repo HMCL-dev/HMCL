@@ -109,6 +109,8 @@ public class McbbsModpackExportTask extends Task<Void> {
                     addons.add(new McbbsModpackManifest.Addon(FABRIC.getPatchId(), fabricVersion)));
             analyzer.getVersion(QUILT).ifPresent(quiltVersion ->
                     addons.add(new McbbsModpackManifest.Addon(QUILT.getPatchId(), quiltVersion)));
+            analyzer.getVersion(LEGACY_FABRIC).ifPresent(legacyfabricVersion ->
+                    addons.add(new McbbsModpackManifest.Addon(LEGACY_FABRIC.getPatchId(), legacyfabricVersion)));
 
             List<Library> libraries = new ArrayList<>();
             // TODO libraries
