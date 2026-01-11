@@ -143,11 +143,15 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
             PopupMenu managePopupMenu = new PopupMenu();
             JFXPopup managePopup = new JFXPopup(managePopupMenu);
 
+            if (world.getGameVersion() != null && world.getGameVersion().isAtLeast("1.20", "23w14a")) {
+                managePopupMenu.getContent().addAll(
+                        new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("version.launch"), this::launch, managePopup),
+                        new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), this::generateLaunchScript, managePopup),
+                        new MenuSeparator()
+                );
+            }
 
             managePopupMenu.getContent().addAll(
-                    new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("version.launch"), this::launch, managePopup),
-                    new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), this::generateLaunchScript, managePopup),
-                    new MenuSeparator(),
                     new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), () -> WorldManageUIUtils.export(world, sessionLockChannel), managePopup),
                     new IconedMenuItem(SVG.DELETE, i18n("world.delete"), () -> WorldManageUIUtils.delete(world, () -> fireEvent(new PageCloseEvent()), sessionLockChannel), managePopup),
                     new IconedMenuItem(SVG.CONTENT_COPY, i18n("world.duplicate"), () -> WorldManageUIUtils.copyWorld(world, null), managePopup)
