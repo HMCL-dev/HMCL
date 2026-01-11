@@ -81,6 +81,8 @@ public class JFXListCell<T> extends ListCell<T> {
         }
     };
 
+    protected Node cellContent;
+    private Rectangle clip;
     
     private Timeline expandAnimation;
     private Timeline gapAnimation;
