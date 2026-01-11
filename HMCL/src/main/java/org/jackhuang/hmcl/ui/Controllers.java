@@ -474,7 +474,7 @@ public final class Controllers {
     }
 
     public static void deleteConfirm(Consumer<Boolean> action, String body, String bodyTrash) {
-        JFXCheckBox checkBox = new JFXCheckBox("永久删除");//todo:i18n
+        JFXCheckBox checkBox = new JFXCheckBox(i18n("button.remove.confirm.notrash"));
 
         MessageDialogPane pane = new MessageDialogPane.Builder(bodyTrash, i18n("button.remove"), MessageType.QUESTION)
                 .addNode(checkBox)
