@@ -287,6 +287,8 @@ public class PersonalizationPage extends StackPane {
                         clearButton.setGraphic(SVG.RESTORE.createIcon());
                         clearButton.setOnAction(e -> cboFont.setValue(null));
 
+                        FXUtils.installFastTooltip(clearButton, i18n("button.reset"));
+
                         hBox.getChildren().setAll(cboFont, clearButton);
 
                         borderPane.setRight(hBox);

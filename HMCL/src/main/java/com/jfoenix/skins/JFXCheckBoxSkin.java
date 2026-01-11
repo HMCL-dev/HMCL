@@ -17,6 +17,7 @@ import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.animation.Transition;
+import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.VPos;
@@ -35,6 +36,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.SVGPath;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.theme.Themes;
+import org.jackhuang.hmcl.ui.FXUtils;
 
 public class JFXCheckBoxSkin extends CheckBoxSkin {
     private final StackPane box = new StackPane();
@@ -75,7 +77,11 @@ public class JFXCheckBoxSkin extends CheckBoxSkin {
             this.updateRippleColor();
             this.playSelectAnimation(newVal);
         });
-        control.focusedProperty().addListener((o, oldVal, newVal) -> {
+
+        ReadOnlyBooleanProperty focusVisibleProperty = FXUtils.focusVisibleProperty(control);
+        if (focusVisibleProperty == null)
+            focusVisibleProperty = control.focusedProperty();
+        focusVisibleProperty.addListener((o, oldVal, newVal) -> {
             if (newVal) {
                 if (!this.getSkinnable().isPressed()) {
                     this.rippler.showOverlay();

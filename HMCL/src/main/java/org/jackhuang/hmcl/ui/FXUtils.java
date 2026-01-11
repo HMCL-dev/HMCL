@@ -137,6 +137,7 @@ public final class FXUtils {
     public static final @Nullable ReadOnlyObjectProperty<Color> ACCENT_COLOR;
 
     public static final @Nullable MethodHandle TEXT_TRUNCATED_PROPERTY;
+    public static final @Nullable MethodHandle FOCUS_VISIBLE_PROPERTY;
 
     static {
         String jfxVersion = System.getProperty("javafx.version");
@@ -203,6 +204,20 @@ public final class FXUtils {
             }
         }
         TEXT_TRUNCATED_PROPERTY = textTruncatedProperty;
+
+        MethodHandle focusVisibleProperty = null;
+        if (JAVAFX_MAJOR_VERSION >= 19) {
+            try {
+                focusVisibleProperty = MethodHandles.publicLookup().findVirtual(
+                        Node.class,
+                        "focusVisibleProperty",
+                        MethodType.methodType(ReadOnlyBooleanProperty.class)
+                );
+            } catch (Throwable e) {
+                LOG.warning("Failed to lookup focusVisibleProperty", e);
+            }
+        }
+        FOCUS_VISIBLE_PROPERTY = focusVisibleProperty;
     }
 
     public static final String DEFAULT_MONOSPACE_FONT = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "Consolas" : "Monospace";
@@ -413,6 +428,20 @@ public final class FXUtils {
         if (TEXT_TRUNCATED_PROPERTY != null) {
             try {
                 return (ReadOnlyBooleanProperty) TEXT_TRUNCATED_PROPERTY.invokeExact(labeled);
+            } catch (RuntimeException | Error e) {
+                throw e;
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            return null;
+        }
+    }
+
+    public static @Nullable ReadOnlyBooleanProperty focusVisibleProperty(Node node) {
+        if (FOCUS_VISIBLE_PROPERTY != null) {
+            try {
+                return (ReadOnlyBooleanProperty) FOCUS_VISIBLE_PROPERTY.invokeExact(node);
             } catch (RuntimeException | Error e) {
                 throw e;
             } catch (Throwable e) {
@@ -1402,16 +1431,6 @@ public final class FXUtils {
             updater.accept(list.get((index + list.size()) % list.size()));
             event.consume();
         });
-    }
-
-    public static void clearFocus(Node node) {
-        Scene scene = node.getScene();
-        if (scene != null) {
-            Parent root = scene.getRoot();
-            if (root != null) {
-                root.requestFocus();
-            }
-        }
     }
 
     public static void copyOnDoubleClick(Labeled label) {

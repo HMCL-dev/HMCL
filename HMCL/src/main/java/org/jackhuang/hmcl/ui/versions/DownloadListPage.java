@@ -208,6 +208,10 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 : i18n("curse.category." + category);
     }
 
+    protected boolean shouldDisplayCategory(String category) {
+        return !"minecraft".equals(category);
+    }
+
     private String getLocalizedCategoryIndent(ModDownloadListPageSkin.CategoryIndented category) {
         return StringUtils.repeats(' ', category.indent * 4) +
                 (category.getCategory() == null
@@ -568,9 +572,10 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                             content.setSubtitle(orignalDescription);
                         }
                         content.getTags().clear();
-                        dataItem.getCategories().stream()
-                                .map(category -> getSkinnable().getLocalizedCategory(category))
-                                .forEach(content::addTag);
+                        for (String category : dataItem.getCategories()) {
+                            if (getSkinnable().shouldDisplayCategory(category))
+                                content.addTag(getSkinnable().getLocalizedCategory(category));
+                        }
                         loadIcon(dataItem);
                     }
 
