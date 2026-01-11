@@ -89,9 +89,6 @@ public class GameItem {
             return new Result(gameVersion.orElse(null), modPackVersion);
         }, POOL_VERSION_RESOLVE).whenCompleteAsync((result, exception) -> {
             if (exception == null) {
-                if (result.gameVersion != null) {
-                    title.set(result.gameVersion);
-                }
                 if (result.tag != null) {
                     tag.set(result.tag);
                 }
