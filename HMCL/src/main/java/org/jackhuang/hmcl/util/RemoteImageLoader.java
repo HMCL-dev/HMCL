@@ -93,10 +93,7 @@ public abstract class RemoteImageLoader {
             if (list != null) {
                 for (WeakReference<WritableValue<Image>> ref : list) {
                     WritableValue<Image> target = ref.get();
-                    if (target == null)
-                        continue;
-
-                    if (reverseLookup.get(target) == uri) {
+                    if (target != null && uri.equals(reverseLookup.get(target))) {
                         reverseLookup.remove(target);
                         target.setValue(image);
                     }
