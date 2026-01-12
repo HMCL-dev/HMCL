@@ -584,15 +584,15 @@ public class JFXRippler extends StackPane {
      * the ripple recenter property, by default it's false.
      * if true the ripple effect will show gravitational pull to the center of its control
      */
-    private StyleableObjectProperty<Boolean> ripplerRecenter;
+    private StyleableBooleanProperty ripplerRecenter;
 
-    public Boolean isRipplerRecenter() {
+    public boolean isRipplerRecenter() {
         return ripplerRecenter != null && ripplerRecenter.get();
     }
 
-    public StyleableObjectProperty<Boolean> ripplerRecenterProperty() {
+    public StyleableBooleanProperty ripplerRecenterProperty() {
         if (this.ripplerRecenter == null) {
-            this.ripplerRecenter = new SimpleStyleableObjectProperty<>(
+            this.ripplerRecenter = new SimpleStyleableBooleanProperty(
                     StyleableProperties.RIPPLER_RECENTER,
                     JFXRippler.this,
                     "ripplerRecenter",
@@ -601,7 +601,7 @@ public class JFXRippler extends StackPane {
         return this.ripplerRecenter;
     }
 
-    public void setRipplerRecenter(Boolean radius) {
+    public void setRipplerRecenter(boolean radius) {
         ripplerRecenterProperty().set(radius);
     }
 
