@@ -22,6 +22,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
@@ -53,9 +54,16 @@ public final class HTMLRenderer {
 
     public static HTMLRenderer openHyperlinkInBrowser() {
         return new HTMLRenderer(uri -> {
-            Controllers.confirm(i18n("web.open_in_browser", uri), i18n("message.confirm"), () -> {
-                FXUtils.openLink(uri.toString());
-            }, null);
+            var dialog =
+                    new MessageDialogPane.Builder(
+                            i18n("web.open_in_browser", uri),
+                            i18n("message.confirm"),
+                            MessageDialogPane.MessageType.QUESTION
+                    )
+                            .addAction(i18n("button.copy"), () -> FXUtils.copyText(uri.toString()))
+                            .yesOrNo(() -> FXUtils.openLink(uri.toString()), null)
+                            .build();
+            Controllers.dialog(dialog);
         });
     }
 
