@@ -24,6 +24,7 @@ import javafx.animation.Timeline;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.css.PseudoClass;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -46,6 +47,8 @@ import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 public class Decorator extends Control {
+    private static final PseudoClass MAXIMIZED = PseudoClass.getPseudoClass("maximized");
+    private static final PseudoClass FULLSCREEN = PseudoClass.getPseudoClass("fullscreen");
     private final ListProperty<Node> drawer = new SimpleListProperty<>(FXCollections.observableArrayList());
     private final ListProperty<Node> content = new SimpleListProperty<>(FXCollections.observableArrayList());
     private final ListProperty<Node> container = new SimpleListProperty<>(FXCollections.observableArrayList());
@@ -77,6 +80,14 @@ public class Decorator extends Control {
         setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, CornerRadii.EMPTY, Insets.EMPTY)));
 
         primaryStage.initStyle(StageStyle.UNDECORATED);
+
+        primaryStage.maximizedProperty().addListener((obs, oldVal, newVal) -> {
+            pseudoClassStateChanged(MAXIMIZED, newVal);
+        });
+
+        primaryStage.fullScreenProperty().addListener((obs, oldVal, newVal) -> {
+            pseudoClassStateChanged(FULLSCREEN, newVal);
+        });
 
         if (AnimationUtils.playWindowAnimation()) {
             FXUtils.onChange(primaryStage.iconifiedProperty(), iconified -> {

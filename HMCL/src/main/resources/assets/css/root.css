@@ -16,7 +16,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-.root {
+.root .window {
+    -fx-background-color: transparent;
+    -fx-padding: 8;
+}
+
+.root:maximized .window,
+.root:fullscreen .window {
+    -fx-padding: 0;
+}
+
+.root .window > .body {
+    -fx-effect: dropshadow(one-pass-box, rgba(0,0,0,0.4), 10, 0.3, 0, 0);
+}
+
+.root:maximized .window > .body,
+.root:fullscreen .window > .body{
+    -fx-effect: null;
 }
 
 .svg {
@@ -1665,11 +1681,6 @@
 
 .jfx-decorator-title {
     -fx-font-size: 14;
-}
-
-.window {
-    -fx-background-color: transparent;
-    -fx-padding: 8;
 }
 
 .debug-border {
