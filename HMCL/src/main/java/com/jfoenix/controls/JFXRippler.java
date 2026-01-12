@@ -601,8 +601,8 @@ public class JFXRippler extends StackPane {
         return this.ripplerRecenter;
     }
 
-    public void setRipplerRecenter(boolean radius) {
-        ripplerRecenterProperty().set(radius);
+    public void setRipplerRecenter(boolean recenter) {
+        ripplerRecenterProperty().set(recenter);
     }
 
     /**
