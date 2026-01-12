@@ -678,24 +678,26 @@ public class JFXRippler extends StackPane {
      * the ripple disable, by default it's false.
      * if true the ripple effect will be hidden
      */
-    private final StyleableBooleanProperty ripplerDisabled = new SimpleStyleableBooleanProperty(
-            StyleableProperties.RIPPLER_DISABLED,
-            JFXRippler.this,
-            "ripplerDisabled",
-            false);
+    private StyleableBooleanProperty ripplerDisabled;
 
-    public Boolean isRipplerDisabled() {
+    public boolean isRipplerDisabled() {
         return ripplerDisabled != null && ripplerDisabled.get();
     }
 
     public StyleableBooleanProperty ripplerDisabledProperty() {
+        if (this.ripplerDisabled == null) {
+            this.ripplerDisabled = new SimpleStyleableBooleanProperty(
+                    StyleableProperties.RIPPLER_DISABLED,
+                    JFXRippler.this,
+                    "ripplerDisabled",
+                    false);
+        }
         return this.ripplerDisabled;
     }
 
-    public void setRipplerDisabled(Boolean disabled) {
-        this.ripplerDisabled.set(disabled);
+    public void setRipplerDisabled(boolean disabled) {
+        ripplerDisabledProperty().set(disabled);
     }
-
 
     /**
      * indicates whether the ripple effect is infront of or behind the node
