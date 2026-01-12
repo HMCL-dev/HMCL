@@ -656,22 +656,26 @@ public class JFXRippler extends StackPane {
 
     /// mask property used for clipping the rippler.
     /// can be either CIRCLE/RECT
-    private final StyleableObjectProperty<RipplerMask> maskType = new SimpleStyleableObjectProperty<>(
-            StyleableProperties.MASK_TYPE,
-            JFXRippler.this,
-            "maskType",
-            RipplerMask.RECT);
+    private StyleableObjectProperty<RipplerMask> maskType;
 
     public RipplerMask getMaskType() {
         return maskType == null ? RipplerMask.RECT : maskType.get();
     }
 
     public StyleableObjectProperty<RipplerMask> maskTypeProperty() {
+        if (this.maskType == null) {
+            this.maskType = new SimpleStyleableObjectProperty<>(
+                    StyleableProperties.MASK_TYPE,
+                    JFXRippler.this,
+                    "maskType",
+                    RipplerMask.RECT);
+        }
         return this.maskType;
     }
 
     public void setMaskType(RipplerMask type) {
-        this.maskType.set(type);
+        if (this.maskType != null || type != RipplerMask.RECT)
+            maskTypeProperty().set(type);
     }
 
     /**
