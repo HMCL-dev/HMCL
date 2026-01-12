@@ -238,7 +238,14 @@ public class PersonalizationPage extends StackPane {
                                 .fallbackTo(12.0)
                                 .asPredicate(Validator.addTo(txtLogFontSize)));
 
-                        hBox.getChildren().setAll(cboLogFont, txtLogFontSize);
+                        JFXButton clearButton = new JFXButton();
+                        clearButton.getStyleClass().add("toggle-icon4");
+                        clearButton.setGraphic(SVG.RESTORE.createIcon());
+                        clearButton.setOnAction(e -> cboLogFont.setValue(null));
+
+                        FXUtils.installFastTooltip(clearButton, i18n("button.reset"));
+
+                        hBox.getChildren().setAll(cboLogFont, txtLogFontSize, clearButton);
 
                         borderPane.setRight(hBox);
                     }

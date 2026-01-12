@@ -17,25 +17,26 @@
  */
 package org.jackhuang.hmcl.ui;
 
-import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXListView;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 
 import java.util.List;
 
-public abstract class ToolbarListPageSkin<T extends ListPageBase<? extends Node>> extends SkinBase<T> {
+// TODO: Replace ToolbarListPageSkin with this class gradually
+public abstract class ToolbarListPageSkin2<E, P extends ListPageBase<E>> extends SkinBase<P> {
 
-    public ToolbarListPageSkin(T skinnable) {
+    protected final JFXListView<E> listView;
+
+    public ToolbarListPageSkin2(P skinnable) {
         super(skinnable);
 
         SpinnerPane spinnerPane = new SpinnerPane();
@@ -58,18 +59,11 @@ public abstract class ToolbarListPageSkin<T extends ListPageBase<? extends Node>
         }
 
         {
-            ScrollPane scrollPane = new ScrollPane();
-            ComponentList.setVgrow(scrollPane, Priority.ALWAYS);
-            scrollPane.setFitToWidth(true);
-
-            VBox content = new VBox();
-
-            Bindings.bindContent(content.getChildren(), skinnable.itemsProperty());
-
-            scrollPane.setContent(content);
-            FXUtils.smoothScrolling(scrollPane);
-
-            root.getContent().add(scrollPane);
+            this.listView = new JFXListView<>();
+            this.listView.setPadding(Insets.EMPTY);
+            ComponentList.setVgrow(listView, Priority.ALWAYS);
+            Bindings.bindContent(this.listView.getItems(), skinnable.itemsProperty());
+            root.getContent().add(listView);
         }
 
         spinnerPane.setContent(root);
@@ -77,30 +71,5 @@ public abstract class ToolbarListPageSkin<T extends ListPageBase<? extends Node>
         getChildren().setAll(spinnerPane);
     }
 
-    public static Node wrap(Node node) {
-        StackPane stackPane = new StackPane();
-        stackPane.setPadding(new Insets(0, 5, 0, 2));
-        stackPane.getChildren().setAll(node);
-        return stackPane;
-    }
-
-    public static JFXButton createToolbarButton2(String text, SVG svg, Runnable onClick) {
-        JFXButton ret = new JFXButton();
-        ret.getStyleClass().add("jfx-tool-bar-button");
-        ret.setGraphic(wrap(svg.createIcon()));
-        ret.setText(text);
-        ret.setOnAction(e -> onClick.run());
-        return ret;
-    }
-
-    public static JFXButton createDecoratorButton(String tooltip, SVG svg, Runnable onClick) {
-        JFXButton ret = new JFXButton();
-        ret.getStyleClass().add("jfx-decorator-button");
-        ret.setGraphic(wrap(svg.createIcon()));
-        FXUtils.installFastTooltip(ret, tooltip);
-        ret.setOnAction(e -> onClick.run());
-        return ret;
-    }
-
-    protected abstract List<Node> initializeToolbar(T skinnable);
+    protected abstract List<Node> initializeToolbar(P skinnable);
 }

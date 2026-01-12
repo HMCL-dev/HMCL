@@ -77,6 +77,8 @@ public class ModrinthInstallTask extends Task<Void> {
                     builder.version("forge", modLoader.getValue());
                     break;
                 case "neoforge":
+                // https://github.com/HMCL-dev/HMCL/pull/5170
+                case "neo-forge":
                     builder.version("neoforge", modLoader.getValue());
                     break;
                 case "fabric-loader":
