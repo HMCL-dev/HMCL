@@ -81,13 +81,9 @@ public class Decorator extends Control {
 
         primaryStage.initStyle(StageStyle.UNDECORATED);
 
-        primaryStage.maximizedProperty().addListener((obs, oldVal, newVal) -> {
-            pseudoClassStateChanged(MAXIMIZED, newVal);
-        });
+        primaryStage.maximizedProperty().addListener((obs, oldVal, newVal) -> pseudoClassStateChanged(MAXIMIZED, newVal));
 
-        primaryStage.fullScreenProperty().addListener((obs, oldVal, newVal) -> {
-            pseudoClassStateChanged(FULLSCREEN, newVal);
-        });
+        primaryStage.fullScreenProperty().addListener((obs, oldVal, newVal) -> pseudoClassStateChanged(FULLSCREEN, newVal));
 
         if (AnimationUtils.playWindowAnimation()) {
             FXUtils.onChange(primaryStage.iconifiedProperty(), iconified -> {
