@@ -78,12 +78,12 @@ public class JFXRippler extends StackPane {
     protected Node control;
 
     protected static final double RIPPLE_MAX_RADIUS = 300;
-
-    private boolean forceOverlay = false;
-    private final Interpolator rippleInterpolator = Interpolator.SPLINE(0.0825,
+    private static final Interpolator RIPPLE_INTERPOLATOR = Interpolator.SPLINE(0.0825,
             0.3025,
             0.0875,
             0.9975); //0.1, 0.54, 0.28, 0.95);
+
+    private boolean forceOverlay = false;
 
     /// creates empty rippler node
     public JFXRippler() {
@@ -483,12 +483,12 @@ public class JFXRippler extends StackPane {
                 KeyValue[] inKeyValues = new KeyValue[isRipplerRecenter() ? 4 : 2];
                 outKeyValues = new KeyValue[isRipplerRecenter() ? 5 : 3];
 
-                inKeyValues[0] = new KeyValue(scaleXProperty(), 0.9, rippleInterpolator);
-                inKeyValues[1] = new KeyValue(scaleYProperty(), 0.9, rippleInterpolator);
+                inKeyValues[0] = new KeyValue(scaleXProperty(), 0.9, RIPPLE_INTERPOLATOR);
+                inKeyValues[1] = new KeyValue(scaleYProperty(), 0.9, RIPPLE_INTERPOLATOR);
 
-                outKeyValues[0] = new KeyValue(this.scaleXProperty(), 1, rippleInterpolator);
-                outKeyValues[1] = new KeyValue(this.scaleYProperty(), 1, rippleInterpolator);
-                outKeyValues[2] = new KeyValue(this.opacityProperty(), 0, rippleInterpolator);
+                outKeyValues[0] = new KeyValue(this.scaleXProperty(), 1, RIPPLE_INTERPOLATOR);
+                outKeyValues[1] = new KeyValue(this.scaleYProperty(), 1, RIPPLE_INTERPOLATOR);
+                outKeyValues[2] = new KeyValue(this.opacityProperty(), 0, RIPPLE_INTERPOLATOR);
 
                 if (isRipplerRecenter()) {
                     double dx = (control.getLayoutBounds().getWidth() / 2 - centerX) / 1.55;
@@ -496,28 +496,28 @@ public class JFXRippler extends StackPane {
                     inKeyValues[2] = outKeyValues[3] = new KeyValue(translateXProperty(),
                             Math.signum(dx) * Math.min(Math.abs(dx),
                                     this.getRadius() / 2),
-                            rippleInterpolator);
+                            RIPPLE_INTERPOLATOR);
                     inKeyValues[3] = outKeyValues[4] = new KeyValue(translateYProperty(),
                             Math.signum(dy) * Math.min(Math.abs(dy),
                                     this.getRadius() / 2),
-                            rippleInterpolator);
+                            RIPPLE_INTERPOLATOR);
                 }
                 inAnimation = new Timeline(new KeyFrame(Duration.ZERO,
                         new KeyValue(scaleXProperty(),
                                 0,
-                                rippleInterpolator),
+                                RIPPLE_INTERPOLATOR),
                         new KeyValue(scaleYProperty(),
                                 0,
-                                rippleInterpolator),
+                                RIPPLE_INTERPOLATOR),
                         new KeyValue(translateXProperty(),
                                 0,
-                                rippleInterpolator),
+                                RIPPLE_INTERPOLATOR),
                         new KeyValue(translateYProperty(),
                                 0,
-                                rippleInterpolator),
+                                RIPPLE_INTERPOLATOR),
                         new KeyValue(opacityProperty(),
                                 1,
-                                rippleInterpolator)
+                                RIPPLE_INTERPOLATOR)
                 ), new KeyFrame(Duration.millis(900), inKeyValues));
 
                 setScaleX(0);
