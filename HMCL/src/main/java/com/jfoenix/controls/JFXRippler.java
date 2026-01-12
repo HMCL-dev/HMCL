@@ -472,8 +472,8 @@ public class JFXRippler extends StackPane {
             private Ripple(double centerX, double centerY) {
                 super(centerX,
                         centerY,
-                        ripplerRadius.get().doubleValue() == Region.USE_COMPUTED_SIZE ?
-                                computeRippleRadius() : ripplerRadius.get().doubleValue(), null);
+                        getRipplerRadius() == Region.USE_COMPUTED_SIZE ?
+                                computeRippleRadius() : getRipplerRadius(), null);
                 setCache(true);
                 setCacheHint(CacheHint.SPEED);
                 setCacheShape(true);
@@ -608,22 +608,25 @@ public class JFXRippler extends StackPane {
     /**
      * the ripple radius size, by default it will be automatically computed.
      */
-    private final StyleableObjectProperty<Number> ripplerRadius = new SimpleStyleableObjectProperty<>(
-            StyleableProperties.RIPPLER_RADIUS,
-            JFXRippler.this,
-            "ripplerRadius",
-            Region.USE_COMPUTED_SIZE);
+    private StyleableDoubleProperty ripplerRadius;
 
-    public Number getRipplerRadius() {
+    public double getRipplerRadius() {
         return ripplerRadius == null ? Region.USE_COMPUTED_SIZE : ripplerRadius.get();
     }
 
-    public StyleableObjectProperty<Number> ripplerRadiusProperty() {
+    public StyleableDoubleProperty ripplerRadiusProperty() {
+        if (this.ripplerRadius == null) {
+            this.ripplerRadius = new SimpleStyleableDoubleProperty(
+                    StyleableProperties.RIPPLER_RADIUS,
+                    JFXRippler.this,
+                    "ripplerRadius",
+                    Region.USE_COMPUTED_SIZE);
+        }
         return this.ripplerRadius;
     }
 
-    public void setRipplerRadius(Number radius) {
-        this.ripplerRadius.set(radius);
+    public void setRipplerRadius(double radius) {
+        ripplerRadiusProperty().set(radius);
     }
 
     /**
