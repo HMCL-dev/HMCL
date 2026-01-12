@@ -106,4 +106,9 @@ public abstract class RemoteImageLoader {
     public void unload(@NotNull WritableValue<Image> writableValue) {
         reverseLookup.remove(writableValue);
     }
+
+    @FXThread
+    public void clearInvalidCache() {
+        cache.entrySet().removeIf(entry -> entry.getValue().get() == null);
+    }
 }

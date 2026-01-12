@@ -238,6 +238,12 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
     private static class ModDownloadListPageSkin extends SkinBase<DownloadListPage> {
         private final JFXListView<RemoteMod> listView = new JFXListView<>();
+        private final RemoteImageLoader iconLoader = new RemoteImageLoader() {
+            @Override
+            protected @NotNull Task<Image> createLoadTask(@NotNull URI uri) {
+                return FXUtils.getRemoteImageTask(uri, 80, 80, true, true);
+            }
+        };
 
         protected ModDownloadListPageSkin(DownloadListPage control) {
             super(control);
@@ -368,6 +374,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 IntegerProperty filterID = new SimpleIntegerProperty(this, "Filter ID", 0);
                 IntegerProperty currentFilterID = new SimpleIntegerProperty(this, "Current Filter ID", -1);
                 EventHandler<ActionEvent> searchAction = e -> {
+                    iconLoader.clearInvalidCache();
                     if (currentFilterID.get() != -1 && currentFilterID.get() != filterID.get()) {
                         control.pageOffset.set(0);
                     }
@@ -527,12 +534,6 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
                 // ListViewBehavior would consume ESC pressed event, preventing us from handling it, so we ignore it here
                 ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
-                var iconLoader = new RemoteImageLoader() {
-                    @Override
-                    protected @NotNull Task<Image> createLoadTask(@NotNull URI uri) {
-                        return FXUtils.getRemoteImageTask(uri, 80, 80, true, true);
-                    }
-                };
 
                 listView.setCellFactory(x -> new FloatListCell<>(listView) {
                     private final TwoLineListItem content = new TwoLineListItem();
