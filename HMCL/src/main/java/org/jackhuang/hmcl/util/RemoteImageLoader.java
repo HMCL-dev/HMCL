@@ -50,6 +50,7 @@ public abstract class RemoteImageLoader {
     public void load(@NotNull WritableValue<Image> writableValue, String url) {
         URI uri = NetworkUtils.toURIOrNull(url);
         if (uri == null) {
+            reverseLookup.remove(writableValue);
             writableValue.setValue(getPlaceholder());
             return;
         }
