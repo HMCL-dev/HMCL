@@ -58,6 +58,7 @@ public abstract class RemoteImageLoader {
         if (reference != null) {
             Image image = reference.get();
             if (image != null) {
+                reverseLookup.remove(writableValue);
                 writableValue.setValue(image);
                 return;
             }
