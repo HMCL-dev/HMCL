@@ -95,6 +95,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         skinnable.getSnackbar().registerSnackbarContainer(parent);
 
         EventHandler<MouseEvent> onMouseReleased = this::onMouseReleased;
+        EventHandler<MouseEvent> onMouseDragged = this::onMouseDragged;
         EventHandler<MouseEvent> onMouseMoved = this::onMouseMoved;
 
         // https://github.com/HMCL-dev/HMCL/issues/4290
@@ -102,9 +103,11 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             onWindowsStatusChange = observable -> {
                 if (primaryStage.isIconified() || primaryStage.isFullScreen() || primaryStage.isMaximized()) {
                     root.removeEventFilter(MouseEvent.MOUSE_RELEASED, onMouseReleased);
+                    root.removeEventFilter(MouseEvent.MOUSE_DRAGGED, onMouseDragged);
                     root.removeEventFilter(MouseEvent.MOUSE_MOVED, onMouseMoved);
                 } else {
                     root.addEventFilter(MouseEvent.MOUSE_RELEASED, onMouseReleased);
+                    root.addEventFilter(MouseEvent.MOUSE_DRAGGED, onMouseDragged);
                     root.addEventFilter(MouseEvent.MOUSE_MOVED, onMouseMoved);
                 }
             };
@@ -123,6 +126,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             onWindowsStatusChange = null;
             onTitleBarDoubleClick = null;
             root.addEventFilter(MouseEvent.MOUSE_RELEASED, onMouseReleased);
+            root.addEventFilter(MouseEvent.MOUSE_DRAGGED, onMouseDragged);
             root.addEventFilter(MouseEvent.MOUSE_MOVED, onMouseMoved);
         }
 
@@ -324,7 +328,18 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             }
             if (onTitleBarDoubleClick != null)
                 center.setOnMouseClicked(onTitleBarDoubleClick);
-            center.setOnMouseDragged(this::onTitleBarDragged);
+            center.setOnMouseDragged(mouseEvent -> {
+                if (!getSkinnable().isDragging() && primaryStage.isMaximized()) {
+                    getSkinnable().setDragging(true);
+                    mouseInitX = mouseEvent.getScreenX();
+                    mouseInitY = mouseEvent.getScreenY();
+                    primaryStage.setMaximized(false);
+                    stageInitWidth = primaryStage.getWidth();
+                    stageInitHeight = primaryStage.getHeight();
+                    primaryStage.setY(stageInitY = 0);
+                    primaryStage.setX(stageInitX = mouseInitX - stageInitWidth / 2);
+                }
+            });
             navBar.setCenter(center);
 
             if (canRefresh) {
@@ -432,17 +447,11 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         getSkinnable().setDragging(false);
     }
 
-    private void onTitleBarDragged(MouseEvent mouseEvent) {
-        if (primaryStage.isFullScreen()) return;
+    private void onMouseDragged(MouseEvent mouseEvent) {
         if (!getSkinnable().isDragging()) {
             getSkinnable().setDragging(true);
             mouseInitX = mouseEvent.getScreenX();
             mouseInitY = mouseEvent.getScreenY();
-            if (primaryStage.isMaximized()) {
-                primaryStage.setMaximized(false);
-                primaryStage.setX(mouseInitX - primaryStage.getWidth() / 2);
-                primaryStage.setY(0);
-            }
             stageInitX = primaryStage.getX();
             stageInitY = primaryStage.getY();
             stageInitWidth = primaryStage.getWidth();
