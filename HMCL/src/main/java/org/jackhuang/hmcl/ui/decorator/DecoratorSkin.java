@@ -82,7 +82,6 @@ public class DecoratorSkin extends SkinBase<Decorator> {
 
         StackPane shadowContainer = new StackPane();
         shadowContainer.getStyleClass().add("body");
-        shadowContainer.setEffect(new DropShadow(BlurType.ONE_PASS_BOX, Color.rgb(0, 0, 0, 0.4), 10, 0.3, 0.0, 0.0));
 
         parent = new StackPane();
         Rectangle clip = new Rectangle();
