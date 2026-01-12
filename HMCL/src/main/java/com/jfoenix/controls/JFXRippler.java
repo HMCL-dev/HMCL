@@ -414,15 +414,15 @@ public class JFXRippler extends StackPane {
                 overlayRect.setClip(getMask());
                 getChildren().add(0, overlayRect);
                 overlayRect.fillProperty().bind(Bindings.createObjectBinding(() -> {
-                    if (ripplerFill.get() instanceof Color) {
-                        return new Color(((Color) ripplerFill.get()).getRed(),
-                                ((Color) ripplerFill.get()).getGreen(),
-                                ((Color) ripplerFill.get()).getBlue(),
+                    if (getRipplerFill() instanceof Color fill) {
+                        return new Color(fill.getRed(),
+                                fill.getGreen(),
+                                fill.getBlue(),
                                 0.2);
                     } else {
                         return Color.TRANSPARENT;
                     }
-                }, ripplerFill));
+                }, ripplerFillProperty()));
             }
         }
 
@@ -522,16 +522,16 @@ public class JFXRippler extends StackPane {
 
                 setScaleX(0);
                 setScaleY(0);
-                if (ripplerFill.get() instanceof Color) {
-                    Color circleColor = new Color(((Color) ripplerFill.get()).getRed(),
-                            ((Color) ripplerFill.get()).getGreen(),
-                            ((Color) ripplerFill.get()).getBlue(),
+                if (getRipplerFill() instanceof Color fill) {
+                    Color circleColor = new Color(fill.getRed(),
+                            fill.getGreen(),
+                            fill.getBlue(),
                             0.3);
                     setStroke(circleColor);
                     setFill(circleColor);
                 } else {
-                    setStroke(ripplerFill.get());
-                    setFill(ripplerFill.get());
+                    setStroke(getRipplerFill());
+                    setFill(getRipplerFill());
                 }
             }
         }
@@ -629,26 +629,29 @@ public class JFXRippler extends StackPane {
         ripplerRadiusProperty().set(radius);
     }
 
+    private static final Color DEFAULT_RIPPLER_FILL = Color.rgb(0, 200, 255);
+
     /**
      * the default color of the ripple effect
      */
-    private final StyleableObjectProperty<Paint> ripplerFill = new SimpleStyleableObjectProperty<>(StyleableProperties.RIPPLER_FILL,
-            JFXRippler.this,
-            "ripplerFill",
-            Color.rgb(0,
-                    200,
-                    255));
+    private StyleableObjectProperty<Paint> ripplerFill;
 
     public Paint getRipplerFill() {
-        return ripplerFill == null ? Color.rgb(0, 200, 255) : ripplerFill.get();
+        return ripplerFill == null ? DEFAULT_RIPPLER_FILL : ripplerFill.get();
     }
 
     public StyleableObjectProperty<Paint> ripplerFillProperty() {
+        if (this.ripplerFill == null) {
+            this.ripplerFill = new SimpleStyleableObjectProperty<>(StyleableProperties.RIPPLER_FILL,
+                    JFXRippler.this,
+                    "ripplerFill",
+                    DEFAULT_RIPPLER_FILL);
+        }
         return this.ripplerFill;
     }
 
     public void setRipplerFill(Paint color) {
-        this.ripplerFill.set(color);
+        ripplerFillProperty().set(color);
     }
 
     /// mask property used for clipping the rippler.
@@ -740,7 +743,7 @@ public class JFXRippler extends StackPane {
                 };
         private static final CssMetaData<JFXRippler, Paint> RIPPLER_FILL =
                 new CssMetaData<>("-jfx-rippler-fill",
-                        PaintConverter.getInstance(), Color.rgb(0, 200, 255)) {
+                        PaintConverter.getInstance(), DEFAULT_RIPPLER_FILL) {
                     @Override
                     public boolean isSettable(JFXRippler control) {
                         return control.ripplerFill == null || !control.ripplerFill.isBound();
