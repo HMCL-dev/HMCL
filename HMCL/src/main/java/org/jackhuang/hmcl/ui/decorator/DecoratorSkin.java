@@ -243,13 +243,19 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 btnMin.getStyleClass().add("jfx-decorator-button");
                 btnMin.setOnAction(e -> skinnable.minimize());
 
+                JFXButton btnMax = new JFXButton();
+                btnMax.setFocusTraversable(false);
+                btnMax.setGraphic(SVG.MINIMIZE.createIcon(Themes.titleFillProperty()));
+                btnMax.getStyleClass().add("jfx-decorator-button");
+                btnMax.setOnAction(e -> primaryStage.setMaximized(!primaryStage.isMaximized()));
+
                 JFXButton btnClose = new JFXButton();
                 btnClose.setFocusTraversable(false);
                 btnClose.setGraphic(SVG.CLOSE.createIcon(Themes.titleFillProperty()));
                 btnClose.getStyleClass().add("jfx-decorator-button");
                 btnClose.setOnAction(e -> skinnable.close());
 
-                buttonsContainer.getChildren().setAll(btnHelp, btnMin, btnClose);
+                buttonsContainer.getChildren().setAll(btnHelp, btnMin, btnMax, btnClose);
             }
             AnchorPane layer = new AnchorPane();
             layer.setPickOnBounds(false);
