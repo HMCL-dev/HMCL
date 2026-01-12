@@ -78,7 +78,6 @@ public abstract class RemoteImageLoader {
             }
         }
 
-
         createLoadTask(uri).whenComplete(Schedulers.javafx(), (result, exception) -> {
             Image image;
             if (exception == null) {
