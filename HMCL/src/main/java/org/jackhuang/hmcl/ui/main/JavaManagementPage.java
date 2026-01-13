@@ -181,7 +181,6 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
             this.setItems(FXCollections.observableArrayList(javaRuntimes));
             this.setLoading(false);
         } else {
-            this.setItems(FXCollections.emptyObservableList());
             this.setLoading(true);
         }
     }
