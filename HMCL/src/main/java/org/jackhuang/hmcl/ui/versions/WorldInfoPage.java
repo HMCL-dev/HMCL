@@ -337,26 +337,20 @@ public final class WorldInfoPage extends SpinnerPane {
                 setLeftLabel(spawnPane, "world.info.player.spawn");
                 setRightTextLabel(spawnPane, () -> {
 
-
                     if (playerTag.get("respawn") instanceof CompoundTag respawnTag
                             && respawnTag.get("dimension") instanceof StringTag dimensionTag
                             && respawnTag.get("pos") instanceof IntArrayTag intArrayTag
-                            && intArrayTag.length() >= 3
-                    ) { // Valid after 25w07a
+                            && intArrayTag.length() >= 3) { // Valid after 25w07a
                         return Dimension.of(dimensionTag).formatPosition(intArrayTag);
-
                     } else if (playerTag.get("SpawnX") instanceof IntTag intX
                             && playerTag.get("SpawnY") instanceof IntTag intY
                             && playerTag.get("SpawnZ") instanceof IntTag intZ) { // Valid before 25w07a
                         Dimension dimension;
                         // SpawnDimension tag is valid after 20w12a. Prior to this version, the game did not record the respawn point dimension and respawned in the Overworld.
-                        if (playerTag.get("SpawnDimension") instanceof StringTag dimensionTag) {
-                            dimension = Dimension.of(dimensionTag);
-                        } else {
-                            dimension = Dimension.of(new StringTag("SpawnDimension", "minecraft:overworld"));
-                        }
-
-                        return dimension.formatPosition(intX.getValue(), intY.getValue(), intZ.getValue());
+                        return Dimension.of(playerTag.get("SpawnDimension") instanceof StringTag dimensionTag
+                                        ? dimensionTag
+                                        : new StringTag("SpawnDimension", "minecraft:overworld"))
+                                .formatPosition(intX.getValue(), intY.getValue(), intZ.getValue());
                     }
 
                     return "";
@@ -426,6 +420,19 @@ public final class WorldInfoPage extends SpinnerPane {
                 }
             }
 
+            BorderPane foodSaturationPane = new BorderPane();
+            {
+                setLeftLabel(foodSaturationPane, "world.info.player.food_saturation_level");
+                JFXTextField foodSaturationField = new JFXTextField();
+                setRightTextField(foodSaturationPane, foodSaturationField, 50);
+
+                if (playerTag.get("foodSaturationLevel") instanceof FloatTag foodSaturationTag) {
+                    bindTagAndTextField(foodSaturationTag, foodSaturationField);
+                } else {
+                    foodSaturationField.setDisable(true);
+                }
+            }
+
             BorderPane xpLevelPane = new BorderPane();
             {
                 setLeftLabel(xpLevelPane, "world.info.player.xp_level");
@@ -440,8 +447,8 @@ public final class WorldInfoPage extends SpinnerPane {
             }
 
             playerInfo.getContent().setAll(
-                    locationPane, lastDeathLocationPane, spawnPane,
-                    playerGameTypePane, healthPane, foodLevelPane, xpLevelPane
+                    locationPane, lastDeathLocationPane, spawnPane, playerGameTypePane,
+                    healthPane, foodLevelPane, foodSaturationPane, xpLevelPane
             );
 
             rootPane.getChildren().addAll(ComponentList.createComponentListTitle(i18n("world.info.player")), playerInfo);
@@ -457,7 +464,7 @@ public final class WorldInfoPage extends SpinnerPane {
     private void setRightTextField(BorderPane borderPane, JFXTextField textField, int perfWidth) {
         textField.setDisable(worldManagePage.isReadOnly());
         textField.setPrefWidth(perfWidth);
-        textField.setAlignment(Pos.CENTER_RIGHT);
+        BorderPane.setAlignment(textField, Pos.CENTER_RIGHT);
         borderPane.setRight(textField);
     }
 
