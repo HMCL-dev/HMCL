@@ -42,7 +42,7 @@ import java.util.regex.Pattern;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.DatapackInfoObject> {
+public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.DatapackInfoObject> implements WorldManagePage.WorldRefreshable {
     private final Path worldDir;
     private final Datapack datapack;
 

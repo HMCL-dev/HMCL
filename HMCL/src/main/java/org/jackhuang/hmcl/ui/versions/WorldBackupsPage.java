@@ -61,7 +61,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /**
  * @author Glavo
  */
-public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.BackupInfo> {
+public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.BackupInfo> implements WorldManagePage.WorldRefreshable {
     static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
 
     private final World world;

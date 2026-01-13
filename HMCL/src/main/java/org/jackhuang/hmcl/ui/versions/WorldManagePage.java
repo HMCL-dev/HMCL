@@ -19,9 +19,7 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXPopup;
 import javafx.application.Platform;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.*;
 import javafx.geometry.Insets;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
@@ -85,7 +83,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         this.worldBackupsTab.setNodeSupplier(() -> new WorldBackupsPage(this));
         this.datapackTab.setNodeSupplier(() -> new DatapackListPage(this));
 
-        this.state = new SimpleObjectProperty<>(State.fromTitle(i18n("world.manage.title", StringUtils.parseColorEscapes(world.getWorldName()))));
+        this.state = new SimpleObjectProperty<>(new State(i18n("world.manage.title", StringUtils.parseColorEscapes(world.getWorldName())), null, true, true, true));
         this.header = new TabHeader(transitionPane, worldInfoTab, worldBackupsTab);
         header.select(worldInfoTab);
 
@@ -169,6 +167,17 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     }
 
     private void onNavigated(Navigator.NavigationEvent event) {
+        if (sessionLockChannel == null || !sessionLockChannel.isOpen()) {
+            sessionLockChannel = WorldManageUIUtils.getSessionLockChannel(world);
+
+            try {
+                world.reloadLevelDat();
+            } catch (IOException e) {
+                LOG.warning("Can not load world level.dat of world: " + world.getFile(), e);
+                loadFailed = true;
+            }
+        }
+
         if (loadFailed) {
             Platform.runLater(() -> {
                 fireEvent(new PageCloseEvent());
@@ -176,9 +185,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
             });
             return;
         }
-        if (sessionLockChannel == null || !sessionLockChannel.isOpen()) {
-            sessionLockChannel = WorldManageUIUtils.getSessionLockChannel(world);
-        }
+        refresh();
     }
 
     public void onExited(Navigator.NavigationEvent event) {
@@ -186,6 +193,25 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
             WorldManageUIUtils.closeSessionLockChannel(world, sessionLockChannel);
         } catch (IOException ignored) {
         }
+    }
+
+    public void refresh() {
+
+        try {
+            world.reloadLevelDat();
+        } catch (IOException e) {
+            LOG.warning("Can not load world level.dat of world: " + world.getFile(), e);
+            Platform.runLater(() -> {
+                fireEvent(new PageCloseEvent());
+                Controllers.dialog(i18n("world.load.fail"), null, MessageDialogPane.MessageType.ERROR);
+            });
+        }
+
+        header.getTabs().forEach(tab -> {
+            if (tab.getNode() instanceof WorldRefreshable worldRefreshable) {
+                worldRefreshable.refresh();
+            }
+        });
     }
 
     @Override
@@ -212,5 +238,14 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
     public void generateLaunchScript() {
         Versions.generateLaunchScriptForQuickEnterWorld(profile, id, world.getFileName());
+    }
+
+    @Override
+    public BooleanProperty refreshableProperty() {
+        return new SimpleBooleanProperty(true);
+    }
+
+    public interface WorldRefreshable {
+        void refresh();
     }
 }

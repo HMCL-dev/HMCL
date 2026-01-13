@@ -65,29 +65,18 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /**
  * @author Glavo
  */
-public final class WorldInfoPage extends SpinnerPane {
-    private final WorldManagePage worldManagePage;
+public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.WorldRefreshable {
+    private final boolean isReadOnly;
     private final World world;
     private CompoundTag levelDat;
 
     ImageView iconImageView = new ImageView();
 
     public WorldInfoPage(WorldManagePage worldManagePage) {
-        this.worldManagePage = worldManagePage;
+        this.isReadOnly = worldManagePage.isReadOnly();
         this.world = worldManagePage.getWorld();
 
-        this.setLoading(true);
-        Task.supplyAsync(this::loadWorldInfo)
-                .whenComplete(Schedulers.javafx(), ((result, exception) -> {
-                    if (exception == null) {
-                        this.levelDat = result;
-                        updateControls();
-                        setLoading(false);
-                    } else {
-                        LOG.warning("Failed to load level.dat", exception);
-                        setFailedReason(i18n("world.info.failed"));
-                    }
-                })).start();
+        refresh();
     }
 
     private CompoundTag loadWorldInfo() throws IOException {
@@ -163,13 +152,13 @@ public final class WorldInfoPage extends SpinnerPane {
                 JFXButton resetIconButton = new JFXButton();
                 {
                     editIconButton.setGraphic(SVG.EDIT.createIcon(20));
-                    editIconButton.setDisable(worldManagePage.isReadOnly());
+                    editIconButton.setDisable(isReadOnly);
                     FXUtils.onClicked(editIconButton, onClickAction);
                     FXUtils.installFastTooltip(editIconButton, i18n("button.edit"));
                     editIconButton.getStyleClass().add("toggle-icon4");
 
                     resetIconButton.setGraphic(SVG.RESTORE.createIcon(20));
-                    resetIconButton.setDisable(worldManagePage.isReadOnly());
+                    resetIconButton.setDisable(isReadOnly);
                     FXUtils.onClicked(resetIconButton, this::clearWorldIcon);
                     FXUtils.installFastTooltip(resetIconButton, i18n("button.reset"));
                     resetIconButton.getStyleClass().add("toggle-icon4");
@@ -259,7 +248,7 @@ public final class WorldInfoPage extends SpinnerPane {
             OptionToggleButton allowCheatsButton = new OptionToggleButton();
             {
                 allowCheatsButton.setTitle(i18n("world.info.allow_cheats"));
-                allowCheatsButton.setDisable(worldManagePage.isReadOnly());
+                allowCheatsButton.setDisable(isReadOnly);
 
                 bindTagAndToggleButton(dataTag.get("allowCommands"), allowCheatsButton);
             }
@@ -267,7 +256,7 @@ public final class WorldInfoPage extends SpinnerPane {
             OptionToggleButton generateFeaturesButton = new OptionToggleButton();
             {
                 generateFeaturesButton.setTitle(i18n("world.info.generate_features"));
-                generateFeaturesButton.setDisable(worldManagePage.isReadOnly());
+                generateFeaturesButton.setDisable(isReadOnly);
 
                 CompoundTag worldGenSettings = dataTag.get("WorldGenSettings");
                 // generate_features was valid after 20w20a and MapFeatures was before that
@@ -280,7 +269,7 @@ public final class WorldInfoPage extends SpinnerPane {
                 setLeftLabel(difficultyPane, "world.info.difficulty");
 
                 JFXComboBox<Difficulty> difficultyBox = new JFXComboBox<>(Difficulty.items);
-                difficultyBox.setDisable(worldManagePage.isReadOnly());
+                difficultyBox.setDisable(isReadOnly);
                 BorderPane.setAlignment(difficultyBox, Pos.CENTER_RIGHT);
                 difficultyPane.setRight(difficultyBox);
 
@@ -305,7 +294,7 @@ public final class WorldInfoPage extends SpinnerPane {
             OptionToggleButton difficultyLockPane = new OptionToggleButton();
             {
                 difficultyLockPane.setTitle(i18n("world.info.difficulty_lock"));
-                difficultyLockPane.setDisable(worldManagePage.isReadOnly());
+                difficultyLockPane.setDisable(isReadOnly);
 
                 bindTagAndToggleButton(dataTag.get("DifficultyLocked"), difficultyLockPane);
             }
@@ -325,10 +314,8 @@ public final class WorldInfoPage extends SpinnerPane {
                 setLeftLabel(locationPane, "world.info.player.location");
                 setRightTextLabel(locationPane, () -> {
                     Dimension dimension = Dimension.of(playerTag.get("Dimension"));
-                    if (dimension != null) {
-                        String posString = dimension.formatPosition(playerTag.get("Pos"));
-                        if (posString != null)
-                            return posString;
+                    if (dimension != null && playerTag.get("Pos") instanceof IntArrayTag posTag) {
+                        return dimension.formatPosition(posTag);
                     }
                     return "";
                 });
@@ -341,10 +328,8 @@ public final class WorldInfoPage extends SpinnerPane {
                     // Valid after 22w14a; prior to this version, the game did not record the last death location data.
                     if (playerTag.get("LastDeathLocation") instanceof CompoundTag LastDeathLocationTag) {
                         Dimension dimension = Dimension.of(LastDeathLocationTag.get("dimension"));
-                        if (dimension != null) {
-                            String posString = dimension.formatPosition(LastDeathLocationTag.get("pos"));
-                            if (posString != null)
-                                return posString;
+                        if (dimension != null && LastDeathLocationTag.get("pos") instanceof IntArrayTag posTag) {
+                            return dimension.formatPosition(posTag);
                         }
                     }
                     return "";
@@ -379,7 +364,7 @@ public final class WorldInfoPage extends SpinnerPane {
                 setLeftLabel(playerGameTypePane, "world.info.player.game_type");
 
                 JFXComboBox<GameType> gameTypeBox = new JFXComboBox<>(GameType.items);
-                gameTypeBox.setDisable(worldManagePage.isReadOnly());
+                gameTypeBox.setDisable(isReadOnly);
                 BorderPane.setAlignment(gameTypeBox, Pos.CENTER_RIGHT);
                 playerGameTypePane.setRight(gameTypeBox);
 
@@ -479,7 +464,7 @@ public final class WorldInfoPage extends SpinnerPane {
     }
 
     private void setRightTextField(BorderPane borderPane, JFXTextField textField, int perfWidth) {
-        textField.setDisable(worldManagePage.isReadOnly());
+        textField.setDisable(isReadOnly);
         textField.setPrefWidth(perfWidth);
         BorderPane.setAlignment(textField, Pos.CENTER_RIGHT);
         borderPane.setRight(textField);
@@ -520,7 +505,7 @@ public final class WorldInfoPage extends SpinnerPane {
     }
 
     private void bindTagAndTextField(IntTag intTag, JFXTextField jfxTextField) {
-        jfxTextField.setText(String.valueOf(intTag.getValue()));
+        jfxTextField.setText(intTag.getValue().toString());
 
         jfxTextField.textProperty().addListener((o, oldValue, newValue) -> {
             if (newValue != null) {
@@ -541,7 +526,7 @@ public final class WorldInfoPage extends SpinnerPane {
     }
 
     private void bindTagAndTextField(FloatTag floatTag, JFXTextField jfxTextField) {
-        jfxTextField.setText(new DecimalFormat("#").format(floatTag.getValue()));
+        jfxTextField.setText(new DecimalFormat("0.#").format(floatTag.getValue()));
 
         jfxTextField.textProperty().addListener((o, oldValue, newValue) -> {
             if (newValue != null) {
@@ -568,6 +553,21 @@ public final class WorldInfoPage extends SpinnerPane {
         } catch (IOException e) {
             LOG.warning("Failed to save level.dat of world " + world.getWorldName(), e);
         }
+    }
+
+    public void refresh() {
+        this.setLoading(true);
+        Task.supplyAsync(this::loadWorldInfo)
+                .whenComplete(Schedulers.javafx(), ((result, exception) -> {
+                    if (exception == null) {
+                        this.levelDat = result;
+                        updateControls();
+                        setLoading(false);
+                    } else {
+                        LOG.warning("Failed to load level.dat", exception);
+                        setFailedReason(i18n("world.info.failed"));
+                    }
+                })).start();
     }
 
     private record Dimension(String name) {
