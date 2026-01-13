@@ -105,9 +105,9 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
 
         setLoading(true);
         Task.runAsync(() -> gameVersion = profile.getRepository().getGameVersion(id).map(GameVersionNumber::asGameVersion).orElse(null))
-                .thenApplyAsync(unused -> {
+                .thenApplyAsync(Schedulers.io(), unused -> {
                     try (Stream<World> stream = World.getWorlds(savesDir)) {
-                        return stream.parallel().collect(Collectors.toList());
+                        return stream.toList();
                     }
                 })
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
