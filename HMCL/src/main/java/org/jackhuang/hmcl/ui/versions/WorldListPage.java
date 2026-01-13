@@ -112,7 +112,6 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                 })
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
                     worlds = result;
-                    setLoading(false);
                     if (exception == null) {
                         itemsProperty().setAll(result.stream()
                                 .filter(world -> isShowAll() || world.getGameVersion() == null || world.getGameVersion().equals(gameVersion))
@@ -120,6 +119,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                     } else {
                         LOG.warning("Failed to load world list page", exception);
                     }
+                    setLoading(false);
                 }).start();
     }
 
