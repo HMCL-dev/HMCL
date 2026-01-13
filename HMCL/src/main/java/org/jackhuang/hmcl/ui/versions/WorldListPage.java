@@ -300,6 +300,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
             this.content.getTags().clear();
 
             if (empty || world == null) {
+                setGraphic(null);
                 imageView.setImage(null);
                 leftTooltip.setText("");
                 content.setTitle("");
@@ -315,6 +316,8 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                     content.addTag(i18n("world.locked"));
 
                 content.setSubtitle(i18n("world.datetime", formatDateTime(Instant.ofEpochMilli(world.getLastPlayed()))));
+
+                setGraphic(graphic);
             }
         }
 
@@ -371,8 +374,8 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                     new IconedMenuItem(SVG.FOLDER_OPEN, i18n("folder.world"), () -> page.reveal(world), popup)
             );
 
-            JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(graphic, popup);
-            popup.show(graphic, vPosition, hPosition, initOffsetX, vPosition == JFXPopup.PopupVPosition.TOP ? initOffsetY : -initOffsetY);
+            JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(this, popup);
+            popup.show(this, vPosition, hPosition, initOffsetX, vPosition == JFXPopup.PopupVPosition.TOP ? initOffsetY : -initOffsetY);
         }
     }
 }
