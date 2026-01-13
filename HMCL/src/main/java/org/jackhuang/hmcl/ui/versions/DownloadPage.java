@@ -301,7 +301,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                     control.versions.keys().stream()
                             .sorted(Collections.reverseOrder(GameVersionNumber::compare))
-                            .forEach(gameVersion -> {
+                            .forEachOrdered(gameVersion -> {
                                 List<RemoteMod.Version> versions = control.versions.get(gameVersion);
                                 if (versions == null || versions.isEmpty()) {
                                     return;
