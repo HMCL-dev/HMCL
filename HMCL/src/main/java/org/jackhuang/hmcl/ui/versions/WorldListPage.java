@@ -115,26 +115,25 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
 
         setLoading(true);
         Task.supplyAsync(Schedulers.io(), () -> {
-                    // Ensure the game version number is parsed
-                    profile.getRepository().getGameVersion(id);
-                    try (Stream<World> stream = World.getWorlds(savesDir)) {
-                        return stream.toList();
-                    }
-                })
-                .whenComplete(Schedulers.javafx(), (result, exception) -> {
-                    if (refreshCount != currentRefresh) {
-                        // A newer refresh task is running, discard this result
-                        return;
-                    }
+            // Ensure the game version number is parsed
+            profile.getRepository().getGameVersion(id);
+            try (Stream<World> stream = World.getWorlds(savesDir)) {
+                return stream.toList();
+            }
+        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            if (refreshCount != currentRefresh) {
+                // A newer refresh task is running, discard this result
+                return;
+            }
 
-                    worlds = result;
-                    updateWorldList();
+            worlds = result;
+            updateWorldList();
 
-                    if (exception != null)
-                        LOG.warning("Failed to load world list page", exception);
+            if (exception != null)
+                LOG.warning("Failed to load world list page", exception);
 
-                    setLoading(false);
-                }).start();
+            setLoading(false);
+        }).start();
     }
 
     public void add() {
