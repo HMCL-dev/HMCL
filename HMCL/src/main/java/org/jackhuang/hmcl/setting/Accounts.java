@@ -414,6 +414,12 @@ public final class Accounts {
             return i18n("account.failed.no_character");
         } else if (exception instanceof ServerDisconnectException) {
             if (exception.getCause() instanceof SSLException) {
+                if (exception.getCause().getMessage() != null && exception.getCause().getMessage().contains("Remote host terminated")) {
+                    return i18n("account.failed.connect_authentication_server");
+                }
+                if (exception.getCause().getMessage() != null && (exception.getCause().getMessage().contains("No name matching") || exception.getCause().getMessage().contains("No subject alternative DNS name matching"))) {
+                    return i18n("account.failed.dns");
+                }
                 return i18n("account.failed.ssl");
             } else {
                 return i18n("account.failed.connect_authentication_server");

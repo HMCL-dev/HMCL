@@ -155,7 +155,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
         }), i18n("world.backup"), null);
     }
 
-    private final class WorldBackupsPageSkin extends ToolbarListPageSkin<WorldBackupsPage> {
+    private final class WorldBackupsPageSkin extends ToolbarListPageSkin<BackupInfo, WorldBackupsPage> {
 
         WorldBackupsPageSkin() {
             super(WorldBackupsPage.this);

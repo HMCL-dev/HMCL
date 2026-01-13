@@ -25,6 +25,7 @@ import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.tree.ZipFileTree;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -38,7 +39,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class ModManager extends LocalFileManager<LocalModFile> {
     @FunctionalInterface
     private interface ModMetadataReader {
-        LocalModFile fromFile(ModManager modManager, Path modFile, FileSystem fs) throws IOException, JsonParseException;
+        LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree) throws IOException, JsonParseException;
     }
 
     private static final Map<String, List<Pair<ModMetadataReader, ModLoaderType>>> READERS;
@@ -112,10 +113,10 @@ public final class ModManager extends LocalFileManager<LocalModFile> {
         LocalModFile modInfo = null;
 
         List<Exception> exceptions = new ArrayList<>();
-        try (FileSystem fs = CompressingUtils.createReadOnlyZipFileSystem(file)) {
+        try (ZipFileTree tree = CompressingUtils.openZipTree(file)) {
             for (ModMetadataReader reader : supportedReaders) {
                 try {
-                    modInfo = reader.fromFile(this, file, fs);
+                    modInfo = reader.fromFile(this, file, tree);
                     break;
                 } catch (Exception e) {
                     exceptions.add(e);
@@ -125,7 +126,7 @@ public final class ModManager extends LocalFileManager<LocalModFile> {
             if (modInfo == null) {
                 for (ModMetadataReader reader : unsupportedReaders) {
                     try {
-                        modInfo = reader.fromFile(this, file, fs);
+                        modInfo = reader.fromFile(this, file, tree);
                         break;
                     } catch (Exception ignored) {
                     }

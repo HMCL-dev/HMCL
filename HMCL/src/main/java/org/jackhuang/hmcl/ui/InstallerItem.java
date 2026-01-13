@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXRippler;
 import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
@@ -62,7 +63,7 @@ public class InstallerItem extends Control {
     private final ObjectProperty<Runnable> onInstall = new SimpleObjectProperty<>(this, "onInstall");
     private final ObjectProperty<Runnable> onRemove = new SimpleObjectProperty<>(this, "onRemove");
 
-    public interface State {
+    public sealed interface State {
     }
 
     public static final class InstallableState implements State {
@@ -72,46 +73,10 @@ public class InstallerItem extends Control {
         }
     }
 
-    public static final class IncompatibleState implements State {
-        private final String incompatibleItemName;
-        private final String incompatibleItemVersion;
-
-        public IncompatibleState(String incompatibleItemName, String incompatibleItemVersion) {
-            this.incompatibleItemName = incompatibleItemName;
-            this.incompatibleItemVersion = incompatibleItemVersion;
-        }
-
-        public String getIncompatibleItemName() {
-            return incompatibleItemName;
-        }
-
-        public String getIncompatibleItemVersion() {
-            return incompatibleItemVersion;
-        }
+    public record IncompatibleState(String incompatibleItemName, String incompatibleItemVersion) implements State {
     }
 
-    public static final class InstalledState implements State {
-        private final String version;
-        private final boolean external;
-        private final boolean incompatibleWithGame;
-
-        public InstalledState(String version, boolean external, boolean incompatibleWithGame) {
-            this.version = version;
-            this.external = external;
-            this.incompatibleWithGame = incompatibleWithGame;
-        }
-
-        public String getVersion() {
-            return version;
-        }
-
-        public boolean isExternal() {
-            return external;
-        }
-
-        public boolean isIncompatibleWithGame() {
-            return incompatibleWithGame;
-        }
+    public record InstalledState(String version, boolean external, boolean incompatibleWithGame) implements State {
     }
 
     public enum Style {
@@ -335,6 +300,7 @@ public class InstallerItem extends Control {
             }
             pane.getStyleClass().add("installer-item");
             RipplerContainer container = new RipplerContainer(pane);
+            container.setPosition(JFXRippler.RipplerPos.FRONT);
             getChildren().setAll(container);
 
             pane.pseudoClassStateChanged(LIST_ITEM, control.style == Style.LIST_ITEM);
@@ -367,21 +333,20 @@ public class InstallerItem extends Control {
             statusLabel.textProperty().bind(Bindings.createStringBinding(() -> {
                 State state = control.resolvedStateProperty.get();
 
-                if (state instanceof InstalledState) {
-                    InstalledState s = (InstalledState) state;
-                    if (s.incompatibleWithGame) {
-                        return i18n("install.installer.change_version", s.version);
+                if (state instanceof InstalledState installedState) {
+                    if (installedState.incompatibleWithGame) {
+                        return i18n("install.installer.change_version", installedState.version);
                     }
-                    if (s.external) {
-                        return i18n("install.installer.external_version", s.version);
+                    if (installedState.external) {
+                        return i18n("install.installer.external_version", installedState.version);
                     }
-                    return i18n("install.installer.version", s.version);
+                    return i18n("install.installer.version", installedState.version);
                 } else if (state instanceof InstallableState) {
                     return control.style == Style.CARD
                             ? i18n("install.installer.do_not_install")
                             : i18n("install.installer.not_installed");
-                } else if (state instanceof IncompatibleState) {
-                    return i18n("install.installer.incompatible", i18n("install.installer." + ((IncompatibleState) state).incompatibleItemName));
+                } else if (state instanceof IncompatibleState incompatibleState) {
+                    return i18n("install.installer.incompatible", i18n("install.installer." + incompatibleState.incompatibleItemName));
                 } else {
                     throw new AssertionError("Unknown state type: " + state.getClass());
                 }
@@ -402,7 +367,7 @@ public class InstallerItem extends Control {
             } else {
                 removeButton.visibleProperty().bind(Bindings.createBooleanBinding(() -> {
                     State state = control.resolvedStateProperty.get();
-                    return state instanceof InstalledState && !((InstalledState) state).external;
+                    return state instanceof InstalledState installedState && !installedState.external;
                 }, control.resolvedStateProperty));
             }
             removeButton.managedProperty().bind(removeButton.visibleProperty());

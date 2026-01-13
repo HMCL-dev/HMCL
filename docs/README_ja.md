@@ -1,13 +1,28 @@
-# Hello Minecraft! Launcher
+<!-- #BEGIN COPY -->
+<!-- #PROPERTY NAME=TITLE -->
+<div align="center">
+    <img src="/HMCL/src/main/resources/assets/img/icon@8x.png" alt="HMCL Logo" width="64"/>
+</div>
+
+<h1 align="center">Hello Minecraft! Launcher</h1>
+<!-- #END COPY -->
 
 <!-- #BEGIN COPY -->
 <!-- #PROPERTY NAME=BADGES -->
-[![CNB](https://img.shields.io/badge/cnb-mirror-ff6200?logo=cloudnativebuild)](https://cnb.cool/HMCL-dev/HMCL)
-[![Downloads](https://img.shields.io/github/downloads/HMCL-dev/HMCL/total?label=Downloads&style=flat)](https://github.com/HMCL-dev/HMCL/releases)
-![Stars](https://img.shields.io/github/stars/HMCL-dev/HMCL?style=flat)
-[![Discord](https://img.shields.io/discord/995291757799538688.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/jVvC7HfM6U)
-[![QQ Group](https://img.shields.io/badge/QQ-HMCL-bright?label=&logo=qq&logoColor=ffffff&color=1EBAFC&labelColor=1DB0EF&logoSize=auto)](https://docs.hmcl.net/groups.html)
+<div align="center">
+
+[![GitHub](https://img.shields.io/badge/GitHub-repo-blue?style=flat-square&logo=github)](https://github.com/HMCL-dev/HMCL)
+[![CNB](https://img.shields.io/badge/CNB-mirror-ff6200?style=flat-square&logo=cloudnativebuild)](https://cnb.cool/HMCL-dev/HMCL)
+[![Gitee](https://img.shields.io/badge/Gitee-mirror-c71d23?style=flat-square&logo=gitee)](https://gitee.com/huanghongxun/HMCL)
+
+[![QQ Group](https://img.shields.io/badge/QQ-gray?style=flat-square&logo=qq&logoColor=ffffff)](https://docs.hmcl.net/groups.html)
+[![Discord](https://img.shields.io/badge/Discord-gray?style=flat-square&logo=discord)](https://discord.gg/jVvC7HfM6U)
+[![Bilibili](https://img.shields.io/badge/Bilibili-gray?style=flat-square&logo=bilibili)](https://space.bilibili.com/20314891)
+
+</div>
 <!-- #END COPY -->
+
+---
 
 <!-- #BEGIN LANGUAGE_SWITCHER -->
 English ([Standard](README.md), [uʍoᗡ ǝpᴉsd∩](README_en_Qabs.md)) | 中文 ([简体](README_zh.md), [繁體](README_zh_Hant.md), [文言](README_lzh.md)) | **日本語** | [español](README_es.md) | [русский](README_ru.md) | [українська](README_uk.md)
@@ -32,31 +47,3 @@ HMCLが対応しているシステムやCPUアーキテクチャについては�
 ## ライセンス
 
 ライセンスについては [README.md](README.md#license) をご参照ください。
-
-## コントリビューション
-
-プルリクエストを送信したい場合、以下の要件を満たしてください。
-
-* IDE：IntelliJ IDEA
-* コンパイラ：Java 17以上
-
-### コンパイル方法
-
-ビルド方法については、[ビルドガイド](./Building.md)ページをご覧ください。
-
-## JVMオプション（デバッグ用）
-
-| パラメータ                                        | 説明                                                                          |
-|----------------------------------------------|-----------------------------------------------------------------------------|
-| `-Dhmcl.home=<path>`                         | HMCLディレクトリを上書きします                                                           |
-| `-Dhmcl.self_integrity_check.disable=true`   | アップデート時の自己整合性チェックをバイパスします                                                   |
-| `-Dhmcl.bmclapi.override=<url>`              | BMCLAPIダウンロードプロバイダーのAPIルートを上書きします。デフォルトは`https://bmclapi2.bangbang93.com`です |
-| `-Dhmcl.font.override=<font family>`         | フォントファミリーを上書きします                                                            |
-| `-Dhmcl.version.override=<version>`          | バージョン番号を上書きします                                                              |
-| `-Dhmcl.update_source.override=<url>`        | HMCL本体のアップデートソースを上書きします                                                     |
-| `-Dhmcl.authlibinjector.location=<path>`     | 指定したauthlib-injectorを使用します（ダウンロードせずに）                                       |
-| `-Dhmcl.openjfx.repo=<maven repository url>` | OpenJFXダウンロード用のカスタムMavenリポジトリを追加します                                         |
-| `-Dhmcl.native.encoding=<encoding>`          | ネイティブエンコーディングを上書きします                                                        |
-| `-Dhmcl.microsoft.auth.id=<App ID>`          | Microsoft OAuthアプリIDを上書きします                                                 |
-| `-Dhmcl.microsoft.auth.secret=<App Secret>`  | Microsoft OAuthアプリシークレットを上書きします                                             |
-| `-Dhmcl.curseforge.apikey=<Api Key>`         | CurseForge APIキーを上書きします                                                     |

@@ -230,12 +230,13 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         FXUtils.openFolder(profile.getRepository().getRunDirectory(instanceId).resolve("mods"));
     }
 
-    public void checkUpdates() {
+    public void checkUpdates(Collection<LocalModFile> mods) {
+        Objects.requireNonNull(mods);
         Runnable action = () -> Controllers.taskDialog(Task
                         .composeAsync(() -> {
                             Optional<String> gameVersion = profile.getRepository().getGameVersion(instanceId);
                             if (gameVersion.isPresent()) {
-                                return new CheckUpdatesTask<>(gameVersion.get(), modManager.getLocalFiles(), RemoteModRepository.Type.MOD);
+                                return new CheckUpdatesTask<>(gameVersion.get(), mods, RemoteModRepository.Type.MOD);
                             }
                             return null;
                         })
