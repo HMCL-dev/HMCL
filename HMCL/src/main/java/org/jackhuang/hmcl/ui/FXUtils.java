@@ -299,16 +299,12 @@ public final class FXUtils {
         });
     }
 
-    private static final double WRAP_WIDTH = 30;
-    private static final double WRAP_HEIGHT = 20;
-    private static final int SVG_ICON_SIZE = 20;
-
     public static Node wrap(Node node) {
-        return limitingSize(node, WRAP_WIDTH, WRAP_HEIGHT);
+        return limitingSize(node, 30, 20);
     }
 
     public static Node wrap(SVG svg) {
-        return wrap(svg.createIcon(SVG_ICON_SIZE));
+        return wrap(svg.createIcon(20));
     }
 
     private static class ListenerPair<T> {
