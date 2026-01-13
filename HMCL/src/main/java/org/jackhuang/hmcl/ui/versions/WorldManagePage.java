@@ -55,6 +55,8 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     private final String id;
 
     private boolean loadFailed = false;
+    private boolean isFirstNavigation = true;
+    private final BooleanProperty refreshableProperty = new SimpleBooleanProperty(true);
 
     private final TabHeader header;
     private final TabHeader.Tab<WorldInfoPage> worldInfoTab = new TabHeader.Tab<>("worldInfoPage");
@@ -171,9 +173,9 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
             closePageForLoadingFail();
             return;
         }
-
-        if (sessionLockChannel == null || !sessionLockChannel.isOpen()) {
-            sessionLockChannel = WorldManageUIUtils.getSessionLockChannel(world);
+        if (isFirstNavigation) {
+            isFirstNavigation = false;
+            return;
         }
         refresh();
     }
@@ -185,7 +187,12 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         }
     }
 
+    @Override
     public void refresh() {
+        if (sessionLockChannel == null || !sessionLockChannel.isOpen()) {
+            sessionLockChannel = WorldManageUIUtils.getSessionLockChannel(world);
+        }
+
         try {
             world.reloadLevelDat();
         } catch (IOException e) {
@@ -236,7 +243,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
     @Override
     public BooleanProperty refreshableProperty() {
-        return new SimpleBooleanProperty(true);
+        return refreshableProperty;
     }
 
     public interface WorldRefreshable {
