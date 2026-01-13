@@ -299,6 +299,18 @@ public final class FXUtils {
         });
     }
 
+    private static final double DEFAULT_WRAP_WIDTH = 30;
+    private static final double DEFAULT_WRAP_HEIGHT = 20;
+    private static final int DEFAULT_SVG_ICON_SIZE = 20;
+
+    public static Node wrap(Node node) {
+        return limitingSize(node, DEFAULT_WRAP_WIDTH, DEFAULT_WRAP_HEIGHT);
+    }
+
+    public static Node wrap(SVG svg) {
+        return wrap(svg.createIcon(DEFAULT_SVG_ICON_SIZE));
+    }
+
     private static class ListenerPair<T> {
         private final ObservableValue<T> value;
         private final ChangeListener<? super T> listener;

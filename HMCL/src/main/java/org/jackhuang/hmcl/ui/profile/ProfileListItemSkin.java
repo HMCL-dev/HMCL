@@ -28,7 +28,6 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
-import org.jackhuang.hmcl.ui.versions.VersionPage;
 
 public class ProfileListItemSkin extends SkinBase<ProfileListItem> {
     private final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
@@ -47,7 +46,7 @@ public class ProfileListItemSkin extends SkinBase<ProfileListItem> {
 
         FXUtils.onClicked(getSkinnable(), () -> getSkinnable().setSelected(true));
 
-        Node left = VersionPage.wrap(SVG.FOLDER);
+        Node left = FXUtils.wrap(SVG.FOLDER);
         root.setLeft(left);
         BorderPane.setAlignment(left, Pos.CENTER_LEFT);
 
