@@ -1,13 +1,28 @@
-# Hello Minecraft! Launcher
+<!-- #BEGIN COPY -->
+<!-- #PROPERTY NAME=TITLE -->
+<div align="center">
+    <img src="/HMCL/src/main/resources/assets/img/icon@8x.png" alt="HMCL Logo" width="64"/>
+</div>
+
+<h1 align="center">Hello Minecraft! Launcher</h1>
+<!-- #END COPY -->
 
 <!-- #BEGIN COPY -->
 <!-- #PROPERTY NAME=BADGES -->
-[![CNB](https://img.shields.io/badge/cnb-mirror-ff6200?logo=cloudnativebuild)](https://cnb.cool/HMCL-dev/HMCL)
-[![Downloads](https://img.shields.io/github/downloads/HMCL-dev/HMCL/total?label=Downloads&style=flat)](https://github.com/HMCL-dev/HMCL/releases)
-![Stars](https://img.shields.io/github/stars/HMCL-dev/HMCL?style=flat)
-[![Discord](https://img.shields.io/discord/995291757799538688.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/jVvC7HfM6U)
-[![QQ Group](https://img.shields.io/badge/QQ-HMCL-bright?label=&logo=qq&logoColor=ffffff&color=1EBAFC&labelColor=1DB0EF&logoSize=auto)](https://docs.hmcl.net/groups.html)
+<div align="center">
+
+[![GitHub](https://img.shields.io/badge/GitHub-repo-blue?style=flat-square&logo=github)](https://github.com/HMCL-dev/HMCL)
+[![CNB](https://img.shields.io/badge/CNB-mirror-ff6200?style=flat-square&logo=cloudnativebuild)](https://cnb.cool/HMCL-dev/HMCL)
+[![Gitee](https://img.shields.io/badge/Gitee-mirror-c71d23?style=flat-square&logo=gitee)](https://gitee.com/huanghongxun/HMCL)
+
+[![QQ Group](https://img.shields.io/badge/QQ-gray?style=flat-square&logo=qq&logoColor=ffffff)](https://docs.hmcl.net/groups.html)
+[![Discord](https://img.shields.io/badge/Discord-gray?style=flat-square&logo=discord)](https://discord.gg/jVvC7HfM6U)
+[![Bilibili](https://img.shields.io/badge/Bilibili-gray?style=flat-square&logo=bilibili)](https://space.bilibili.com/20314891)
+
+</div>
 <!-- #END COPY -->
+
+---
 
 <!-- #BEGIN LANGUAGE_SWITCHER -->
 English ([Standard](README.md), [uʍoᗡ ǝpᴉsd∩](README_en_Qabs.md)) | **中文** (**简体**, [繁體](README_zh_Hant.md), [文言](README_lzh.md)) | [日本語](README_ja.md) | [español](README_es.md) | [русский](README_ru.md) | [українська](README_uk.md)
@@ -23,11 +38,31 @@ HMCL 有着强大的跨平台能力。它不仅支持 Windows、Linux、macOS、
 
 ## 下载
 
-请从 [HMCL 官网](https://hmcl.huangyuhui.net/download) 下载最新版本的 HMCL。
+你可以从这些渠道下载 HMCL：
 
-你也可以在 [GitHub Releases](https://github.com/HMCL-dev/HMCL/releases) 中下载最新版本的 HMCL。
+- [HMCL 官方网站](https://hmcl.huangyuhui.net/download)
+- [GitHub Release](https://github.com/HMCL-dev/HMCL/releases)
+- [CNB Release](https://cnb.cool/HMCL-dev/HMCL/-/releases)
 
-虽然并不强制，但仍建议通过 HMCL 官网下载启动器。
+## 参与贡献
+
+HMCL 是一个社区驱动的开源项目，欢迎任何人参与贡献代码或提出建议。
+
+你可以通过以下方式参与 HMCL 的开发：
+
+- 通过在 GitHub 上[创建 Issue](https://github.com/HMCL-dev/HMCL/issues/new/choose) 来报告 Bug 或提出功能请求。
+- 通过在 GitHub 上 Fork 仓库并[提交 Pull Request](https://github.com/HMCL-dev/HMCL/compare) 来贡献代码。
+
+在参与贡献前，请阅读[贡献指南](./Contributing_zh.md)，其中包含以下内容：
+
+- [如何从源码构建并运行 HMCL](./Contributing_zh.md#构建-hmcl)
+- [通过调试选项调整 HMCL 的行为](./Contributing_zh.md#调试选项)
+
+## 贡献者
+
+自 2015 年以来，HMCL 已经有超过 110 位贡献者参与其中，感谢他们的辛勤付出！
+
+[![Contributors](https://contrib.rocks/image?repo=HMCL-dev/HMCL)](https://github.com/HMCL-dev/HMCL/graphs/contributors)
 
 ## 开源协议
 
@@ -35,36 +70,9 @@ HMCL 有着强大的跨平台能力。它不仅支持 Windows、Linux、macOS、
 
 ### 附加条款 (依据 GPLv3 开源协议第七条)
 
-1. 当你分发该程序的修改版本时，你必须以一种合理的方式修改该程序的名称或版本号，以示其与原始版本不同。(依据 [GPLv3, 7(c)](https://github.com/HMCL-dev/HMCL/blob/11820e31a85d8989e41d97476712b07e7094b190/LICENSE#L372-L374))
+1. 当你分发该程序的修改版本时，你必须以一种合理的方式修改该程序的名称或版本号，以示其与原始版本不同。(
+   依据 [GPLv3, 7(c)](https://github.com/HMCL-dev/HMCL/blob/11820e31a85d8989e41d97476712b07e7094b190/LICENSE#L372-L374))
 
    该程序的名称及版本号可在 [此处](https://github.com/HMCL-dev/HMCL/blob/javafx/HMCL/src/main/java/org/jackhuang/hmcl/Metadata.java#L33-L35) 修改。
 
 2. 你不得移除该程序所显示的版权声明。(依据 [GPLv3, 7(b)](https://github.com/HMCL-dev/HMCL/blob/11820e31a85d8989e41d97476712b07e7094b190/LICENSE#L368-L370))
-
-## 贡献
-
-如果你想提交一个 Pull Request，必须遵守如下要求：
-
-* IDE：IntelliJ IDEA
-* 编译器：Java 17+
-
-### 构建 HMCL
-
-参见[构建指南](./Building_zh.md)页面。
-
-## JVM 选项 (用于调试)
-
-| 参数                                         | 简介                                                                 |
-| -------------------------------------------- | -------------------------------------------------------------------- |
-| `-Dhmcl.home=<path>`                         | 覆盖 HMCL 数据文件夹                                                 |
-| `-Dhmcl.self_integrity_check.disable=true`   | 检查更新时不检查本体完整性                                           |
-| `-Dhmcl.bmclapi.override=<url>`              | 覆盖 BMCLAPI 的 API Root，默认值为 `https://bmclapi2.bangbang93.com` |
-| `-Dhmcl.font.override=<font family>`         | 覆盖字族                                                             |
-| `-Dhmcl.version.override=<version>`          | 覆盖版本号                                                           |
-| `-Dhmcl.update_source.override=<url>`        | 覆盖 HMCL 更新源                                                     |
-| `-Dhmcl.authlibinjector.location=<path>`     | 使用指定的 authlib-injector (而非下载一个)                           |
-| `-Dhmcl.openjfx.repo=<maven repository url>` | 添加用于下载 OpenJFX 的自定义 Maven 仓库                             |
-| `-Dhmcl.native.encoding=<encoding>`          | 覆盖原生编码                                                         |
-| `-Dhmcl.microsoft.auth.id=<App ID>`          | 覆盖 Microsoft OAuth App ID                                          |
-| `-Dhmcl.microsoft.auth.secret=<App Secret>`  | 覆盖 Microsoft OAuth App 密钥                                        |
-| `-Dhmcl.curseforge.apikey=<Api Key>`         | 覆盖 CurseForge API 密钥                                        |

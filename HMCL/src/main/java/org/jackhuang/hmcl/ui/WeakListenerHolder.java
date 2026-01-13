@@ -55,4 +55,8 @@ public class WeakListenerHolder {
     public boolean remove(Object obj) {
         return refs.remove(obj);
     }
+
+    public void clear() {
+        refs.clear();
+    }
 }

@@ -23,10 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 
-import java.io.Closeable;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -72,11 +69,8 @@ public abstract class ArchiveFileTree<R, E extends ArchiveEntry> implements Clos
 
     public @Nullable E getEntry(@NotNull String entryPath) {
         Dir<E> dir = root;
-        String fileName;
         if (entryPath.indexOf('/') < 0) {
-            fileName = entryPath;
-            if (fileName.isEmpty())
-                return root.getEntry();
+            return dir.getFiles().get(entryPath);
         } else {
             String[] path = entryPath.split("/");
             if (path.length == 0)
@@ -91,14 +85,25 @@ public abstract class ArchiveFileTree<R, E extends ArchiveEntry> implements Clos
                     return null;
             }
 
-            fileName = path[path.length - 1];
-            E entry = dir.getFiles().get(fileName);
-            if (entry != null)
-                return entry;
+            String fileName = path[path.length - 1];
+            return dir.getFiles().get(fileName);
         }
+    }
 
-        Dir<E> subDir = dir.getSubDirs().get(fileName);
-        return subDir != null ? subDir.getEntry() : null;
+    public @Nullable Dir<E> getDirectory(@NotNull String dirPath) {
+        Dir<E> dir = root;
+        if (dirPath.isEmpty()) {
+            return dir;
+        }
+        String[] path = dirPath.split("/");
+        for (String item : path) {
+            if (item.isEmpty())
+                continue;
+            dir = dir.getSubDirs().get(item);
+            if (dir == null)
+                return null;
+        }
+        return dir;
     }
 
     protected void addEntry(E entry) throws IOException {
@@ -150,6 +155,17 @@ public abstract class ArchiveFileTree<R, E extends ArchiveEntry> implements Clos
         if (entry == null)
             throw new FileNotFoundException("Entry not found: " + entryPath);
         return getInputStream(entry);
+    }
+
+    public BufferedReader getBufferedReader(@NotNull E entry) throws IOException {
+        return new BufferedReader(new InputStreamReader(getInputStream(entry), StandardCharsets.UTF_8));
+    }
+
+    public @NotNull BufferedReader getBufferedReader(String entryPath) throws IOException {
+        E entry = getEntry(entryPath);
+        if (entry == null)
+            throw new FileNotFoundException("Entry not found: " + entryPath);
+        return getBufferedReader(entry);
     }
 
     public byte[] readBinaryEntry(@NotNull E entry) throws IOException {

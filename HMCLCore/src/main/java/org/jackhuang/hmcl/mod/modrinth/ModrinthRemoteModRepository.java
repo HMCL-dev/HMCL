@@ -49,6 +49,8 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     public static final ModrinthRemoteModRepository RESOURCE_PACKS = new ModrinthRemoteModRepository("resourcepack");
     public static final ModrinthRemoteModRepository SHADER_PACKS = new ModrinthRemoteModRepository("shader");
 
+    private static final Semaphore SEMAPHORE = new Semaphore(16);
+
     private static final String PREFIX = "https://api.modrinth.com";
 
     private final String projectType;
@@ -81,30 +83,36 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
 
     @Override
     public SearchResult search(DownloadProvider downloadProvider, String gameVersion, @Nullable RemoteModRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder) throws IOException {
-        List<List<String>> facets = new ArrayList<>();
-        facets.add(Collections.singletonList("project_type:" + projectType));
-        if (StringUtils.isNotBlank(gameVersion)) {
-            facets.add(Collections.singletonList("versions:" + gameVersion));
+        SEMAPHORE.acquireUninterruptibly();
+        try {
+            List<List<String>> facets = new ArrayList<>();
+            facets.add(Collections.singletonList("project_type:" + projectType));
+            if (StringUtils.isNotBlank(gameVersion)) {
+                facets.add(Collections.singletonList("versions:" + gameVersion));
+            }
+            if (category != null && StringUtils.isNotBlank(category.getId())) {
+                facets.add(Collections.singletonList("categories:" + category.getId()));
+            }
+            Map<String, String> query = mapOf(
+                    pair("query", searchFilter),
+                    pair("facets", JsonUtils.UGLY_GSON.toJson(facets)),
+                    pair("offset", Integer.toString(pageOffset * pageSize)),
+                    pair("limit", Integer.toString(pageSize)),
+                    pair("index", convertSortType(sort))
+            );
+            Response<ProjectSearchResult> response = HttpRequest.GET(downloadProvider.injectURL(NetworkUtils.withQuery(PREFIX + "/v2/search", query)))
+                    .getJson(Response.typeOf(ProjectSearchResult.class));
+            return new SearchResult(response.getHits().stream().map(ProjectSearchResult::toMod), (int) Math.ceil((double) response.totalHits / pageSize));
+        } finally {
+            SEMAPHORE.release();
         }
-        if (category != null && StringUtils.isNotBlank(category.getId())) {
-            facets.add(Collections.singletonList("categories:" + category.getId()));
-        }
-        Map<String, String> query = mapOf(
-                pair("query", searchFilter),
-                pair("facets", JsonUtils.UGLY_GSON.toJson(facets)),
-                pair("offset", Integer.toString(pageOffset * pageSize)),
-                pair("limit", Integer.toString(pageSize)),
-                pair("index", convertSortType(sort))
-        );
-        Response<ProjectSearchResult> response = HttpRequest.GET(downloadProvider.injectURL(NetworkUtils.withQuery(PREFIX + "/v2/search", query)))
-                .getJson(Response.typeOf(ProjectSearchResult.class));
-        return new SearchResult(response.getHits().stream().map(ProjectSearchResult::toMod), (int) Math.ceil((double) response.totalHits / pageSize));
     }
 
     @Override
     public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(LocalModFile localModFile, Path file) throws IOException {
         String sha1 = DigestUtils.digestToString("SHA-1", file);
 
+        SEMAPHORE.acquireUninterruptibly();
         try {
             ProjectVersion mod = HttpRequest.GET(PREFIX + "/v2/version_file/" + sha1,
                             pair("algorithm", "sha1"))
@@ -118,14 +126,21 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
             }
         } catch (NoSuchFileException e) {
             return Optional.empty();
+        } finally {
+            SEMAPHORE.release();
         }
     }
 
     @Override
     public RemoteMod getModById(String id) throws IOException {
-        id = StringUtils.removePrefix(id, "local-");
-        Project project = HttpRequest.GET(PREFIX + "/v2/project/" + id).getJson(Project.class);
-        return project.toMod();
+        SEMAPHORE.acquireUninterruptibly();
+        try {
+            id = StringUtils.removePrefix(id, "local-");
+            Project project = HttpRequest.GET(PREFIX + "/v2/project/" + id).getJson(Project.class);
+            return project.toMod();
+        } finally {
+            SEMAPHORE.release();
+        }
     }
 
     @Override
@@ -135,10 +150,15 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
 
     @Override
     public Stream<RemoteMod.Version> getRemoteVersionsById(String id) throws IOException {
-        id = StringUtils.removePrefix(id, "local-");
-        List<ProjectVersion> versions = HttpRequest.GET(PREFIX + "/v2/project/" + id + "/version")
-                .getJson(listTypeOf(ProjectVersion.class));
-        return versions.stream().map(ProjectVersion::toVersion).flatMap(Lang::toStream);
+        SEMAPHORE.acquireUninterruptibly();
+        try {
+            id = StringUtils.removePrefix(id, "local-");
+            List<ProjectVersion> versions = HttpRequest.GET(PREFIX + "/v2/project/" + id + "/version")
+                    .getJson(listTypeOf(ProjectVersion.class));
+            return versions.stream().map(ProjectVersion::toVersion).flatMap(Lang::toStream);
+        } finally {
+            SEMAPHORE.release();
+        }
     }
 
     @Override
@@ -146,14 +166,17 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         throw new UnsupportedOperationException();
     }
 
-    public List<Category> getCategoriesImpl() throws IOException {
-        List<Category> categories = HttpRequest.GET(PREFIX + "/v2/tag/category").getJson(listTypeOf(Category.class));
-        return categories.stream().filter(category -> category.getProjectType().equals(projectType)).collect(Collectors.toList());
-    }
-
     @Override
     public Stream<RemoteModRepository.Category> getCategories() throws IOException {
-        return getCategoriesImpl().stream().map(Category::toCategory);
+        SEMAPHORE.acquireUninterruptibly();
+        try {
+            List<Category> categories = HttpRequest.GET(PREFIX + "/v2/tag/category").getJson(listTypeOf(Category.class));
+            return categories.stream()
+                    .filter(category -> category.getProjectType().equals(projectType))
+                    .map(Category::toCategory);
+        } finally {
+            SEMAPHORE.release();
+        }
     }
 
     public static class Category {
@@ -165,7 +188,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         private final String projectType;
 
         public Category() {
-            this("","","");
+            this("", "", "");
         }
 
         public Category(String icon, String name, String projectType) {
@@ -582,6 +605,9 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
 
         private final List<String> categories;
 
+        @SerializedName("display_categories")
+        private final List<String> displayCategories;
+
         @SerializedName("project_type")
         private final String projectType;
 
@@ -606,11 +632,12 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         @SerializedName("latest_version")
         private final String latestVersion;
 
-        public ProjectSearchResult(String slug, String title, String description, List<String> categories, String projectType, int downloads, String iconUrl, String projectId, String author, List<String> versions, Instant dateCreated, Instant dateModified, String latestVersion) {
+        public ProjectSearchResult(String slug, String title, String description, List<String> categories, List<String> displayCategories, String projectType, int downloads, String iconUrl, String projectId, String author, List<String> versions, Instant dateCreated, Instant dateModified, String latestVersion) {
             this.slug = slug;
             this.title = title;
             this.description = description;
             this.categories = categories;
+            this.displayCategories = displayCategories;
             this.projectType = projectType;
             this.downloads = downloads;
             this.iconUrl = iconUrl;
@@ -636,6 +663,10 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
 
         public List<String> getCategories() {
             return categories;
+        }
+
+        public List<String> getDisplayCategories() {
+            return displayCategories;
         }
 
         public String getProjectType() {
@@ -697,7 +728,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                     author,
                     title,
                     description,
-                    categories,
+                    displayCategories,
                     String.format("https://modrinth.com/%s/%s", projectType, projectId),
                     iconUrl,
                     this

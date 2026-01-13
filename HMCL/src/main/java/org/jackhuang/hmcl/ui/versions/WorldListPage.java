@@ -21,6 +21,7 @@ import com.jfoenix.controls.JFXCheckBox;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.Node;
+import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.setting.Profile;
@@ -67,7 +68,7 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
     }
 
     @Override
-    protected ToolbarListPageSkin<WorldListPage> createDefaultSkin() {
+    protected Skin<WorldListPage> createDefaultSkin() {
         return new WorldListPageSkin();
     }
 
@@ -161,7 +162,7 @@ public final class WorldListPage extends ListPageBase<WorldListItem> implements 
         this.showAll.set(showAll);
     }
 
-    private final class WorldListPageSkin extends ToolbarListPageSkin<WorldListPage> {
+    private final class WorldListPageSkin extends ToolbarListPageSkin<WorldListItem, WorldListPage> {
 
         WorldListPageSkin() {
             super(WorldListPage.this);
