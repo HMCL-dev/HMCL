@@ -62,19 +62,7 @@ public abstract class ToolbarListPageSkin<E, P extends ListPageBase<E>> extends 
         {
             this.listView = new JFXListView<>();
             this.listView.setPadding(Insets.EMPTY);
-            this.listView.setCellFactory(listView -> new ListCell<>() {
-                @Override
-                protected void updateItem(E item, boolean empty) {
-                    super.updateItem(item, empty);
-                    if (!empty && item instanceof Node node) {
-                        setGraphic(node);
-                        setText(null);
-                    } else {
-                        setGraphic(null);
-                        setText(null);
-                    }
-                }
-            });
+            this.listView.setCellFactory(listView -> createListCell((JFXListView<E>) listView));
             ComponentList.setVgrow(listView, Priority.ALWAYS);
             Bindings.bindContent(this.listView.getItems(), skinnable.itemsProperty());
             root.getContent().add(listView);
@@ -111,4 +99,20 @@ public abstract class ToolbarListPageSkin<E, P extends ListPageBase<E>> extends 
     }
 
     protected abstract List<Node> initializeToolbar(P skinnable);
+
+    protected ListCell<E> createListCell(JFXListView<E> listView) {
+        return new ListCell<>() {
+            @Override
+            protected void updateItem(E item, boolean empty) {
+                super.updateItem(item, empty);
+                if (!empty && item instanceof Node node) {
+                    setGraphic(node);
+                    setText(null);
+                } else {
+                    setGraphic(null);
+                    setText(null);
+                }
+            }
+        };
+    }
 }
