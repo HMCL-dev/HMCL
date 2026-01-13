@@ -295,7 +295,7 @@ public final class JavaManagementPage extends ListPageBase<JavaManagementPage.Ja
         }
     }
 
-    private static final class JavaPageSkin extends ToolbarListPageSkin2<JavaManagementPage.JavaItem, JavaManagementPage> {
+    private static final class JavaPageSkin extends ToolbarListPageSkin<JavaItem, JavaManagementPage> {
 
         JavaPageSkin(JavaManagementPage skinnable) {
             super(skinnable);

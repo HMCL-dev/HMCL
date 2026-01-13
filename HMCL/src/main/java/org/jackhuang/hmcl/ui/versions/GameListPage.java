@@ -154,7 +154,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             return new GameListSkin();
         }
 
-        private class GameListSkin extends ToolbarListPageSkin2<GameListItem, GameList> {
+        private class GameListSkin extends ToolbarListPageSkin<GameListItem, GameList> {
 
             public GameListSkin() {
                 super(GameList.this);
