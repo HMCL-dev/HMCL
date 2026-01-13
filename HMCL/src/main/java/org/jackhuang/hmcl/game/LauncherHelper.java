@@ -389,7 +389,7 @@ public final class LauncherHelper {
                         int targetJavaVersionMajor = Integer.parseInt(setting.getJavaVersion());
                         GameJavaVersion minimumJavaVersion = GameJavaVersion.getMinimumJavaVersion(gameVersion);
 
-                        if (minimumJavaVersion != null && targetJavaVersionMajor < minimumJavaVersion.getMajorVersion()) {
+                        if (minimumJavaVersion != null && targetJavaVersionMajor < minimumJavaVersion.majorVersion()) {
                             Controllers.dialog(
                                     i18n("launch.failed.java_version_too_low"),
                                     i18n("message.error"),
@@ -634,7 +634,7 @@ public final class LauncherHelper {
     private static CompletableFuture<JavaRuntime> downloadJava(GameJavaVersion javaVersion, Profile profile) {
         CompletableFuture<JavaRuntime> future = new CompletableFuture<>();
         Controllers.dialog(new MessageDialogPane.Builder(
-                i18n("launch.advice.require_newer_java_version", javaVersion.getMajorVersion()),
+                i18n("launch.advice.require_newer_java_version", javaVersion.majorVersion()),
                 i18n("message.warning"),
                 MessageType.QUESTION)
                 .yesOrNo(() -> {
