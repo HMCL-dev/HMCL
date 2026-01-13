@@ -53,7 +53,6 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
@@ -70,19 +69,15 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
     private List<World> worlds;
     private Profile profile;
     private String id;
-    private GameVersionNumber gameVersion;
+
+    private int refreshCount = 0;
 
     public WorldListPage() {
         FXUtils.applyDragListener(this, it -> "zip".equals(FileUtils.getExtension(it)), modpacks -> {
             installWorld(modpacks.get(0));
         });
 
-        showAll.addListener(e -> {
-            if (worlds != null)
-                itemsProperty().setAll(worlds.stream()
-                        .filter(world -> isShowAll() || world.getGameVersion() == null || world.getGameVersion().equals(gameVersion))
-                        .toList());
-        });
+        showAll.addListener(e -> updateWorldList());
     }
 
     @Override
@@ -99,26 +94,45 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
         refresh();
     }
 
+    private void updateWorldList() {
+        if (worlds == null) {
+            getItems().clear();
+        } else if (showAll.get()) {
+            getItems().setAll(worlds);
+        } else {
+            GameVersionNumber gameVersion = profile.getRepository().getGameVersion(id).map(GameVersionNumber::asGameVersion).orElse(null);
+            getItems().setAll(worlds.stream()
+                    .filter(world -> world.getGameVersion() == null || world.getGameVersion().equals(gameVersion))
+                    .toList());
+        }
+    }
+
     public void refresh() {
         if (profile == null || id == null)
             return;
 
+        int currentRefresh = ++refreshCount;
+
         setLoading(true);
-        Task.runAsync(() -> gameVersion = profile.getRepository().getGameVersion(id).map(GameVersionNumber::asGameVersion).orElse(null))
-                .thenApplyAsync(Schedulers.io(), unused -> {
+        Task.supplyAsync(Schedulers.io(), () -> {
+                    // Ensure the game version number is parsed
+                    profile.getRepository().getGameVersion(id);
                     try (Stream<World> stream = World.getWorlds(savesDir)) {
                         return stream.toList();
                     }
                 })
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
-                    worlds = result;
-                    if (exception == null) {
-                        itemsProperty().setAll(result.stream()
-                                .filter(world -> isShowAll() || world.getGameVersion() == null || world.getGameVersion().equals(gameVersion))
-                                .toList());
-                    } else {
-                        LOG.warning("Failed to load world list page", exception);
+                    if (refreshCount != currentRefresh) {
+                        // A newer refresh task is running, discard this result
+                        return;
                     }
+
+                    worlds = result;
+                    updateWorldList();
+
+                    if (exception != null)
+                        LOG.warning("Failed to load world list page", exception);
+
                     setLoading(false);
                 }).start();
     }
@@ -191,16 +205,8 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
         Versions.generateLaunchScriptForQuickEnterWorld(profile, id, world.getFileName());
     }
 
-    public boolean isShowAll() {
-        return showAll.get();
-    }
-
     public BooleanProperty showAllProperty() {
         return showAll;
-    }
-
-    public void setShowAll(boolean showAll) {
-        this.showAll.set(showAll);
     }
 
     private final class WorldListPageSkin extends ToolbarListPageSkin<World, WorldListPage> {
