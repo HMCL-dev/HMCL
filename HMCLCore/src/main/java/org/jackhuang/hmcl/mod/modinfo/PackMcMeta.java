@@ -20,24 +20,14 @@ package org.jackhuang.hmcl.mod.modinfo;
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
-import kala.compress.archivers.zip.ZipArchiveEntry;
 import org.jackhuang.hmcl.mod.LocalModFile;
-import org.jackhuang.hmcl.mod.ModLoaderType;
-import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
-import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.Validation;
-import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.tree.ZipFileTree;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
-import java.nio.file.FileSystem;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -227,17 +217,4 @@ public record PackMcMeta(@SerializedName("pack") PackInfo pack) implements Valid
         }
     }
 
-    public static LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree) throws IOException, JsonParseException {
-        ZipArchiveEntry mcmod = tree.getEntry("pack.mcmeta");
-        if (mcmod == null)
-            throw new IOException("File " + modFile + " is not a resource pack.");
-        PackMcMeta metadata = JsonUtils.fromNonNullJsonFully(tree.getInputStream(mcmod), PackMcMeta.class);
-        return new LocalModFile(
-                modManager,
-                modManager.getLocalMod(FileUtils.getNameWithoutExtension(modFile), ModLoaderType.PACK),
-                modFile,
-                FileUtils.getNameWithoutExtension(modFile),
-                metadata.pack.description,
-                "", "", "", "", "");
-    }
 }
