@@ -167,23 +167,13 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     }
 
     private void onNavigated(Navigator.NavigationEvent event) {
-        if (sessionLockChannel == null || !sessionLockChannel.isOpen()) {
-            sessionLockChannel = WorldManageUIUtils.getSessionLockChannel(world);
-
-            try {
-                world.reloadLevelDat();
-            } catch (IOException e) {
-                LOG.warning("Can not load world level.dat of world: " + world.getFile(), e);
-                loadFailed = true;
-            }
+        if (loadFailed) {
+            closePageForLoadingFail();
+            return;
         }
 
-        if (loadFailed) {
-            Platform.runLater(() -> {
-                fireEvent(new PageCloseEvent());
-                Controllers.dialog(i18n("world.load.fail"), null, MessageDialogPane.MessageType.ERROR);
-            });
-            return;
+        if (sessionLockChannel == null || !sessionLockChannel.isOpen()) {
+            sessionLockChannel = WorldManageUIUtils.getSessionLockChannel(world);
         }
         refresh();
     }
@@ -196,21 +186,25 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     }
 
     public void refresh() {
-
         try {
             world.reloadLevelDat();
         } catch (IOException e) {
             LOG.warning("Can not load world level.dat of world: " + world.getFile(), e);
-            Platform.runLater(() -> {
-                fireEvent(new PageCloseEvent());
-                Controllers.dialog(i18n("world.load.fail"), null, MessageDialogPane.MessageType.ERROR);
-            });
+            closePageForLoadingFail();
+            return;
         }
 
         header.getTabs().forEach(tab -> {
             if (tab.getNode() instanceof WorldRefreshable worldRefreshable) {
                 worldRefreshable.refresh();
             }
+        });
+    }
+
+    private void closePageForLoadingFail() {
+        Platform.runLater(() -> {
+            fireEvent(new PageCloseEvent());
+            Controllers.dialog(i18n("world.load.fail"), null, MessageDialogPane.MessageType.ERROR);
         });
     }
 
