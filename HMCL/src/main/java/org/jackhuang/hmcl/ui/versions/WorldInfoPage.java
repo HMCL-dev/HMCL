@@ -52,6 +52,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.DecimalFormat;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Locale;
@@ -217,6 +218,25 @@ public final class WorldInfoPage extends SpinnerPane {
                 }
             }
 
+            BorderPane worldSpawnPoint = new BorderPane();
+            {
+                setLeftLabel(worldSpawnPoint, "world.info.spawn");
+                setRightTextLabel(worldSpawnPoint, () -> {
+                    if (dataTag.get("spawn") instanceof CompoundTag spawnTag && spawnTag.get("pos") instanceof IntArrayTag posTag) {
+                        return Dimension.of(spawnTag.get("dimension") instanceof StringTag dimensionTag
+                                        ? dimensionTag
+                                        : new StringTag("SpawnDimension", "minecraft:overworld"))
+                                .formatPosition(posTag);
+                    } else if (dataTag.get("SpawnX") instanceof IntTag intX
+                            && dataTag.get("SpawnY") instanceof IntTag intY
+                            && dataTag.get("SpawnZ") instanceof IntTag intZ) {
+                        return Dimension.OVERWORLD.formatPosition(intX.getValue(), intY.getValue(), intZ.getValue());
+                    } else {
+                        return "";
+                    }
+                });
+            }
+
             BorderPane lastPlayedPane = new BorderPane();
             {
                 setLeftLabel(lastPlayedPane, "world.info.last_played");
@@ -228,8 +248,8 @@ public final class WorldInfoPage extends SpinnerPane {
                 setLeftLabel(timePane, "world.info.time");
                 setRightTextLabel(timePane, () -> {
                     if (dataTag.get("Time") instanceof LongTag timeTag) {
-                        long days = timeTag.getValue() / 24000;
-                        return i18n("world.info.time.format", days);
+                        Duration duration = Duration.ofSeconds(timeTag.getValue() / 20);
+                        return i18n("world.info.time.format", duration.toDays(), duration.toHoursPart(), duration.toMinutesPart());
                     } else {
                         return "";
                     }
@@ -291,7 +311,7 @@ public final class WorldInfoPage extends SpinnerPane {
             }
 
             worldInfo.getContent().setAll(
-                    worldNamePane, gameVersionPane, iconPane, seedPane, lastPlayedPane, timePane,
+                    worldNamePane, gameVersionPane, iconPane, seedPane, worldSpawnPoint, lastPlayedPane, timePane,
                     allowCheatsButton, generateFeaturesButton, difficultyPane, difficultyLockPane);
 
             rootPane.getChildren().addAll(ComponentList.createComponentListTitle(i18n("world.info")), worldInfo);
@@ -345,11 +365,8 @@ public final class WorldInfoPage extends SpinnerPane {
                     } else if (playerTag.get("SpawnX") instanceof IntTag intX
                             && playerTag.get("SpawnY") instanceof IntTag intY
                             && playerTag.get("SpawnZ") instanceof IntTag intZ) { // Valid before 25w07a
-                        Dimension dimension;
                         // SpawnDimension tag is valid after 20w12a. Prior to this version, the game did not record the respawn point dimension and respawned in the Overworld.
-                        return Dimension.of(playerTag.get("SpawnDimension") instanceof StringTag dimensionTag
-                                        ? dimensionTag
-                                        : new StringTag("SpawnDimension", "minecraft:overworld"))
+                        return (playerTag.get("SpawnDimension") instanceof StringTag dimensionTag ? Dimension.of(dimensionTag) : Dimension.OVERWORLD)
                                 .formatPosition(intX.getValue(), intY.getValue(), intZ.getValue());
                     }
 
