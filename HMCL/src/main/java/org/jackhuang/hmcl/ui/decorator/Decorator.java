@@ -28,6 +28,7 @@ import javafx.css.PseudoClass;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
@@ -37,6 +38,7 @@ import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.util.Duration;
@@ -81,7 +83,16 @@ public class Decorator extends Control {
 
         primaryStage.initStyle(StageStyle.UNDECORATED);
 
-        primaryStage.maximizedProperty().addListener((obs, oldVal, newVal) -> pseudoClassStateChanged(MAXIMIZED, newVal));
+        primaryStage.maximizedProperty().addListener((obs, oldVal, newVal) -> {
+            pseudoClassStateChanged(MAXIMIZED, newVal);
+            if (newVal) {
+                Rectangle2D visualBounds = Screen.getPrimary().getVisualBounds();
+                primaryStage.setX(visualBounds.getMinX());
+                primaryStage.setY(visualBounds.getMinY());
+                primaryStage.setWidth(visualBounds.getWidth());
+                primaryStage.setHeight(visualBounds.getHeight());
+            }
+        });
 
         primaryStage.fullScreenProperty().addListener((obs, oldVal, newVal) -> pseudoClassStateChanged(FULLSCREEN, newVal));
 
