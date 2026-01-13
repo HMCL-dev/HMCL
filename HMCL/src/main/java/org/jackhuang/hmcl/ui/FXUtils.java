@@ -299,16 +299,16 @@ public final class FXUtils {
         });
     }
 
-    private static final double DEFAULT_WRAP_WIDTH = 30;
-    private static final double DEFAULT_WRAP_HEIGHT = 20;
-    private static final int DEFAULT_SVG_ICON_SIZE = 20;
+    private static final double WRAP_WIDTH = 30;
+    private static final double WRAP_HEIGHT = 20;
+    private static final int SVG_ICON_SIZE = 20;
 
     public static Node wrap(Node node) {
-        return limitingSize(node, DEFAULT_WRAP_WIDTH, DEFAULT_WRAP_HEIGHT);
+        return limitingSize(node, WRAP_WIDTH, WRAP_HEIGHT);
     }
 
     public static Node wrap(SVG svg) {
-        return wrap(svg.createIcon(DEFAULT_SVG_ICON_SIZE));
+        return wrap(svg.createIcon(SVG_ICON_SIZE));
     }
 
     private static class ListenerPair<T> {
