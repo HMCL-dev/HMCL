@@ -72,14 +72,8 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         this.profile = profile;
         this.id = id;
 
-        sessionLockChannel = WorldManageUIUtils.getSessionLockChannel(world);
-        isReadOnlyProperty.set(sessionLockChannel == null);
-        try {
-            world.reloadLevelDat();
-        } catch (IOException e) {
-            LOG.warning("Can not load world level.dat of world: " + world.getFile(), e);
-            this.addEventHandler(Navigator.NavigationEvent.NAVIGATED, event -> closePageForLoadingFail());
-        }
+        updateSessionLockChannel();
+        updateWorldLevelDat(false);
 
         worldInfoTab.setNodeSupplier(() -> new WorldInfoPage(this));
         worldBackupsTab.setNodeSupplier(() -> new WorldBackupsPage(this));
@@ -98,18 +92,8 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
     @Override
     public void refresh() {
-        if (sessionLockChannel == null || !sessionLockChannel.isOpen()) {
-            sessionLockChannel = WorldManageUIUtils.getSessionLockChannel(world);
-            isReadOnlyProperty.set(sessionLockChannel == null);
-        }
-
-        try {
-            world.reloadLevelDat();
-        } catch (IOException e) {
-            LOG.warning("Can not load world level.dat of world: " + world.getFile(), e);
-            closePageForLoadingFail();
-            return;
-        }
+        updateSessionLockChannel();
+        updateWorldLevelDat(true);
 
         for (var tab : header.getTabs()) {
             if (tab.getNode() instanceof WorldRefreshable r) {
@@ -123,6 +107,26 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
             fireEvent(new PageCloseEvent());
             Controllers.dialog(i18n("world.load.fail"), null, MessageDialogPane.MessageType.ERROR);
         });
+    }
+
+    private void updateSessionLockChannel() {
+        if (sessionLockChannel == null || !sessionLockChannel.isOpen()) {
+            sessionLockChannel = WorldManageUIUtils.getSessionLockChannel(world);
+            isReadOnlyProperty.set(sessionLockChannel == null);
+        }
+    }
+
+    private void updateWorldLevelDat(boolean PageFullyNavigated) {
+        try {
+            world.reloadLevelDat();
+        } catch (IOException e) {
+            LOG.warning("Can not load world level.dat of world: " + world.getFile(), e);
+            if (PageFullyNavigated) {
+                closePageForLoadingFail();
+            } else {
+                this.addEventHandler(Navigator.NavigationEvent.NAVIGATED, event -> closePageForLoadingFail());
+            }
+        }
     }
 
     private void onNavigated(Navigator.NavigationEvent event) {
@@ -184,16 +188,21 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
             setLeft(getSidebar());
         }
 
-        public BorderPane getSidebar() {
+        private BorderPane getSidebar() {
             BorderPane sidebar = new BorderPane();
             {
                 FXUtils.setLimitWidth(sidebar, 200);
                 VBox.setVgrow(sidebar, Priority.ALWAYS);
             }
 
-            //tab area
+            sidebar.setTop(getTabBar());
+            sidebar.setBottom(getToolBar());
+
+            return sidebar;
+        }
+
+        private AdvancedListBox getTabBar() {
             AdvancedListBox tabBar = new AdvancedListBox();
-            sidebar.setTop(tabBar);
             {
                 getSkinnable().header.getTabs().addAll(getSkinnable().worldInfoTab, getSkinnable().worldBackupsTab);
                 getSkinnable().header.select(getSkinnable().worldInfoTab);
@@ -201,18 +210,18 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                 tabBar.addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldInfoTab, i18n("world.info"), SVG.INFO, SVG.INFO_FILL)
                         .addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE, SVG.ARCHIVE_FILL);
 
-                if (getSkinnable().world.supportsDatapacks()) { // old game will not write game version to level.dat
+                if (getSkinnable().world.supportsDatapacks()) {
                     getSkinnable().header.getTabs().add(getSkinnable().datapackTab);
                     tabBar.addNavigationDrawerTab(getSkinnable().header, getSkinnable().datapackTab, i18n("world.datapack"), SVG.EXTENSION, SVG.EXTENSION_FILL);
                 }
             }
 
-            //tool area
+            return tabBar;
+        }
+
+        private AdvancedListBox getToolBar() {
             AdvancedListBox toolbar = new AdvancedListBox();
-            {
-                BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
-                sidebar.setBottom(toolbar);
-            }
+            BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
             {
                 if (getSkinnable().world.supportsQuickPlay()) {
                     toolbar.addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, () -> getSkinnable().launch(), advancedListItem -> advancedListItem.disableProperty().bind(getSkinnable().readOnlyProperty()));
@@ -270,8 +279,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                     });
                 }
             }
-
-            return sidebar;
+            return toolbar;
         }
     }
 
