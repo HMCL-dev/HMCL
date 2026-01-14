@@ -67,7 +67,7 @@ public final class WorldListItem extends Control {
     }
 
     public void showManagePage() {
-        Controllers.navigate(new WorldManagePage(world, backupsDir, profile, id));
+        Controllers.navigate(new WorldManagePage(world, profile, id));
     }
 
     public void launch() {

@@ -309,7 +309,7 @@ public class DefaultLauncher extends Launcher {
 
             try {
                 ServerAddress parsed = ServerAddress.parse(address);
-                if (GameVersionNumber.asGameVersion(gameVersion).isAtLeast("1.20", "23w14a")) {
+                if (World.supportsQuickPlay(GameVersionNumber.asGameVersion(gameVersion))) {
                     res.add("--quickPlayMultiplayer");
                     res.add(parsed.getPort() >= 0 ? address : parsed.getHost() + ":25565");
                 } else {

@@ -66,7 +66,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     private final TabHeader.Tab<WorldBackupsPage> worldBackupsTab = new TabHeader.Tab<>("worldBackupsPage");
     private final TabHeader.Tab<DatapackListPage> datapackTab = new TabHeader.Tab<>("datapackListPage");
 
-    public WorldManagePage(World world, Path backupsDir, Profile profile, String id) {
+    public WorldManagePage(World world, Profile profile, String id) {
         this.world = world;
         this.backupsDir = profile.getRepository().getBackupsDirectory(id);
         this.profile = profile;
@@ -185,15 +185,15 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         }
 
         public BorderPane getSidebar() {
-            BorderPane Sidebar = new BorderPane();
+            BorderPane sidebar = new BorderPane();
             {
-                FXUtils.setLimitWidth(Sidebar, 200);
-                VBox.setVgrow(Sidebar, Priority.ALWAYS);
+                FXUtils.setLimitWidth(sidebar, 200);
+                VBox.setVgrow(sidebar, Priority.ALWAYS);
             }
 
             //tab area
             AdvancedListBox tabBar = new AdvancedListBox();
-            Sidebar.setTop(tabBar);
+            sidebar.setTop(tabBar);
             {
                 getSkinnable().header.getTabs().addAll(getSkinnable().worldInfoTab, getSkinnable().worldBackupsTab);
                 getSkinnable().header.select(getSkinnable().worldInfoTab);
@@ -211,7 +211,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
             AdvancedListBox toolbar = new AdvancedListBox();
             {
                 BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
-                Sidebar.setBottom(toolbar);
+                sidebar.setBottom(toolbar);
             }
             {
                 if (getSkinnable().world.supportsQuickPlay()) {
@@ -271,7 +271,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                 }
             }
 
-            return Sidebar;
+            return sidebar;
         }
     }
 
