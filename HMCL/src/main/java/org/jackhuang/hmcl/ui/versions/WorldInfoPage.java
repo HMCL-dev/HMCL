@@ -66,16 +66,16 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  * @author Glavo
  */
 public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.WorldRefreshable {
-    private final boolean isReadOnly;
+    private final WorldManagePage worldManagePage;
+    private boolean isReadOnly;
     private final World world;
     private CompoundTag levelDat;
 
     ImageView iconImageView = new ImageView();
 
     public WorldInfoPage(WorldManagePage worldManagePage) {
-        this.isReadOnly = worldManagePage.isReadOnly();
+        this.worldManagePage = worldManagePage;
         this.world = worldManagePage.getWorld();
-
         refresh();
     }
 
@@ -540,6 +540,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
     }
 
     public void refresh() {
+        this.isReadOnly = worldManagePage.isReadOnly();
         this.setLoading(true);
         Task.supplyAsync(this::loadWorldInfo)
                 .whenComplete(Schedulers.javafx(), ((result, exception) -> {

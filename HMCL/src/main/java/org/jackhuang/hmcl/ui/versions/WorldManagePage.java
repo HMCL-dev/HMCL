@@ -57,6 +57,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     private final ObjectProperty<State> state;
     private boolean isFirstNavigation = true;
     private final BooleanProperty refreshableProperty = new SimpleBooleanProperty(true);
+    private final BooleanProperty isReadOnlyProperty = new SimpleBooleanProperty(false);
 
     private final TransitionPane transitionPane = new TransitionPane();
     private final TabHeader header = new TabHeader(transitionPane);
@@ -71,6 +72,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         this.id = id;
 
         sessionLockChannel = WorldManageUIUtils.getSessionLockChannel(world);
+        isReadOnlyProperty.set(sessionLockChannel == null);
         try {
             world.reloadLevelDat();
         } catch (IOException e) {
@@ -97,6 +99,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     public void refresh() {
         if (sessionLockChannel == null || !sessionLockChannel.isOpen()) {
             sessionLockChannel = WorldManageUIUtils.getSessionLockChannel(world);
+            isReadOnlyProperty.set(sessionLockChannel == null);
         }
 
         try {
@@ -159,7 +162,11 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     }
 
     public boolean isReadOnly() {
-        return sessionLockChannel == null;
+        return isReadOnlyProperty.get();
+    }
+
+    public BooleanProperty readOnlyProperty() {
+        return isReadOnlyProperty;
     }
 
     @Override
@@ -208,7 +215,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
             }
             {
                 if (getSkinnable().world.getGameVersion() != null && getSkinnable().world.getGameVersion().isAtLeast("1.20", "23w14a")) {
-                    toolbar.addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, () -> getSkinnable().launch(), advancedListItem -> advancedListItem.setDisable(getSkinnable().isReadOnly()));
+                    toolbar.addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, () -> getSkinnable().launch(), advancedListItem -> advancedListItem.disableProperty().bind(getSkinnable().readOnlyProperty()));
                 }
 
                 if (ChunkBaseApp.isSupported(getSkinnable().world)) {
@@ -259,7 +266,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                                 managePopup.show(managePopupMenuItem,
                                         JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT,
                                         managePopupMenuItem.getWidth(), 0));
-                        managePopupMenuItem.setDisable(getSkinnable().isReadOnly());
+                        managePopupMenuItem.disableProperty().bind(getSkinnable().readOnlyProperty());
                     });
                 }
             }
