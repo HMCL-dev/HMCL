@@ -399,53 +399,25 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
             BorderPane healthPane = new BorderPane();
             {
                 setLeftLabel(healthPane, "world.info.player.health");
-                JFXTextField healthField = new JFXTextField();
-                setRightTextField(healthPane, healthField, 50);
-
-                if (playerTag.get("Health") instanceof FloatTag healthTag) {
-                    bindTagAndTextField(healthTag, healthField);
-                } else {
-                    healthField.setDisable(true);
-                }
+                setRightTextField(healthPane, 50, playerTag.get("Health"));
             }
 
             BorderPane foodLevelPane = new BorderPane();
             {
                 setLeftLabel(foodLevelPane, "world.info.player.food_level");
-                JFXTextField foodLevelField = new JFXTextField();
-                setRightTextField(foodLevelPane, foodLevelField, 50);
-
-                if (playerTag.get("foodLevel") instanceof IntTag foodLevelTag) {
-                    bindTagAndTextField(foodLevelTag, foodLevelField);
-                } else {
-                    foodLevelField.setDisable(true);
-                }
+                setRightTextField(foodLevelPane, 50, playerTag.get("foodLevel"));
             }
 
             BorderPane foodSaturationPane = new BorderPane();
             {
                 setLeftLabel(foodSaturationPane, "world.info.player.food_saturation_level");
-                JFXTextField foodSaturationField = new JFXTextField();
-                setRightTextField(foodSaturationPane, foodSaturationField, 50);
-
-                if (playerTag.get("foodSaturationLevel") instanceof FloatTag foodSaturationTag) {
-                    bindTagAndTextField(foodSaturationTag, foodSaturationField);
-                } else {
-                    foodSaturationField.setDisable(true);
-                }
+                setRightTextField(foodSaturationPane, 50, playerTag.get("foodSaturationLevel"));
             }
 
             BorderPane xpLevelPane = new BorderPane();
             {
                 setLeftLabel(xpLevelPane, "world.info.player.xp_level");
-                JFXTextField xpLevelField = new JFXTextField();
-                setRightTextField(xpLevelPane, xpLevelField, 50);
-
-                if (playerTag.get("XpLevel") instanceof IntTag xpLevelTag) {
-                    bindTagAndTextField(xpLevelTag, xpLevelField);
-                } else {
-                    xpLevelField.setDisable(true);
-                }
+                setRightTextField(xpLevelPane, 50, playerTag.get("XpLevel"));
             }
 
             playerInfo.getContent().setAll(
@@ -461,6 +433,18 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
         Label label = new Label(i18n(key));
         BorderPane.setAlignment(label, Pos.CENTER_LEFT);
         borderPane.setLeft(label);
+    }
+
+    private void setRightTextField(BorderPane borderPane, int perfWidth, Tag tag) {
+        JFXTextField textField = new JFXTextField();
+        setRightTextField(borderPane, textField, perfWidth);
+        if (tag instanceof IntTag intTag) {
+            bindTagAndTextField(intTag, textField);
+        } else if (tag instanceof FloatTag floatTag) {
+            bindTagAndTextField(floatTag, textField);
+        } else {
+            textField.setDisable(true);
+        }
     }
 
     private void setRightTextField(BorderPane borderPane, JFXTextField textField, int perfWidth) {

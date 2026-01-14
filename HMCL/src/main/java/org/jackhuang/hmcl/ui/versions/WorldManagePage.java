@@ -173,23 +173,24 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
             super(control);
 
             setCenter(getSkinnable().transitionPane);
-            setLeftNode();
+            setLeft(getSidebar());
         }
 
-        public void setLeftNode() {
-            BorderPane left = new BorderPane();
+        public BorderPane getSidebar() {
+            BorderPane Sidebar = new BorderPane();
             {
-                FXUtils.setLimitWidth(left, 200);
-                VBox.setVgrow(left, Priority.ALWAYS);
-                setLeft(left);
+                FXUtils.setLimitWidth(Sidebar, 200);
+                VBox.setVgrow(Sidebar, Priority.ALWAYS);
             }
 
+            //tab area
+            AdvancedListBox tabBar = new AdvancedListBox();
+            Sidebar.setTop(tabBar);
             {
                 getSkinnable().header.getTabs().addAll(getSkinnable().worldInfoTab, getSkinnable().worldBackupsTab);
                 getSkinnable().header.select(getSkinnable().worldInfoTab);
 
-                AdvancedListBox tabBar = new AdvancedListBox()
-                        .addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldInfoTab, i18n("world.info"), SVG.INFO, SVG.INFO_FILL)
+                tabBar.addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldInfoTab, i18n("world.info"), SVG.INFO, SVG.INFO_FILL)
                         .addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE, SVG.ARCHIVE_FILL);
 
                 if (getSkinnable().world.getGameVersion() != null && // old game will not write game version to level.dat
@@ -197,14 +198,13 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                     getSkinnable().header.getTabs().add(getSkinnable().datapackTab);
                     tabBar.addNavigationDrawerTab(getSkinnable().header, getSkinnable().datapackTab, i18n("world.datapack"), SVG.EXTENSION, SVG.EXTENSION_FILL);
                 }
-
-                left.setTop(tabBar);
             }
 
+            //tool area
             AdvancedListBox toolbar = new AdvancedListBox();
             {
                 BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
-                left.setBottom(toolbar);
+                Sidebar.setBottom(toolbar);
             }
             {
                 if (getSkinnable().world.getGameVersion() != null && getSkinnable().world.getGameVersion().isAtLeast("1.20", "23w14a")) {
@@ -233,7 +233,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                                             chunkBaseMenuItem.getWidth(), 0)));
                 }
 
-                toolbar.addNavigationDrawerItem(i18n("settings.game.exploration"), SVG.FOLDER_OPEN, () -> FXUtils.openFolder(getSkinnable().world.getFile()), null);
+                toolbar.addNavigationDrawerItem(i18n("settings.game.exploration"), SVG.FOLDER_OPEN, () -> FXUtils.openFolder(getSkinnable().world.getFile()));
 
                 {
                     PopupMenu managePopupMenu = new PopupMenu();
@@ -263,6 +263,8 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                     });
                 }
             }
+
+            return Sidebar;
         }
     }
 
