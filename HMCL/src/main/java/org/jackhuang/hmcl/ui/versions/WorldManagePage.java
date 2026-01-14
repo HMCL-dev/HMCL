@@ -66,7 +66,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
     public WorldManagePage(World world, Path backupsDir, Profile profile, String id) {
         this.world = world;
-        this.backupsDir = backupsDir;
+        this.backupsDir = profile.getRepository().getBackupsDirectory(id);
         this.profile = profile;
         this.id = id;
 
@@ -78,105 +78,19 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
             this.addEventHandler(Navigator.NavigationEvent.NAVIGATED, event -> closePageForLoadingFail());
         }
 
-        this.state = new SimpleObjectProperty<>(new State(i18n("world.manage.title", StringUtils.parseColorEscapes(world.getWorldName())), null, true, true, true));
+        worldInfoTab.setNodeSupplier(() -> new WorldInfoPage(this));
+        worldBackupsTab.setNodeSupplier(() -> new WorldBackupsPage(this));
+        datapackTab.setNodeSupplier(() -> new DatapackListPage(this));
 
-        setCenter(transitionPane);
-        setLeftNode();
+        this.state = new SimpleObjectProperty<>(new State(i18n("world.manage.title", StringUtils.parseColorEscapes(world.getWorldName())), null, true, true, true));
 
         this.addEventHandler(Navigator.NavigationEvent.EXITED, this::onExited);
         this.addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
     }
 
-    public void setLeftNode() {
-        BorderPane left = new BorderPane();
-        {
-            FXUtils.setLimitWidth(left, 200);
-            VBox.setVgrow(left, Priority.ALWAYS);
-            setLeft(left);
-        }
-
-        {
-            this.worldInfoTab.setNodeSupplier(() -> new WorldInfoPage(this));
-            this.worldBackupsTab.setNodeSupplier(() -> new WorldBackupsPage(this));
-            header.getTabs().addAll(worldInfoTab, worldBackupsTab);
-            header.select(worldInfoTab);
-
-            AdvancedListBox tabBar = new AdvancedListBox()
-                    .addNavigationDrawerTab(header, worldInfoTab, i18n("world.info"), SVG.INFO, SVG.INFO_FILL)
-                    .addNavigationDrawerTab(header, worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE, SVG.ARCHIVE_FILL);
-
-            if (world.getGameVersion() != null && // old game will not write game version to level.dat
-                    world.getGameVersion().isAtLeast("1.13", "17w43a")) {
-                this.datapackTab.setNodeSupplier(() -> new DatapackListPage(this));
-                header.getTabs().add(datapackTab);
-                tabBar.addNavigationDrawerTab(header, datapackTab, i18n("world.datapack"), SVG.EXTENSION, SVG.EXTENSION_FILL);
-            }
-
-            left.setTop(tabBar);
-        }
-
-        AdvancedListBox toolbar = new AdvancedListBox();
-        {
-            BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
-            left.setBottom(toolbar);
-        }
-        {
-            if (world.getGameVersion() != null && world.getGameVersion().isAtLeast("1.20", "23w14a")) {
-                toolbar.addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, this::launch, advancedListItem -> advancedListItem.setDisable(isReadOnly()));
-            }
-
-            if (ChunkBaseApp.isSupported(world)) {
-                PopupMenu chunkBasePopupMenu = new PopupMenu();
-                JFXPopup chunkBasePopup = new JFXPopup(chunkBasePopupMenu);
-
-                chunkBasePopupMenu.getContent().addAll(
-                        new IconedMenuItem(SVG.EXPLORE, i18n("world.chunkbase.seed_map"), () -> ChunkBaseApp.openSeedMap(world), chunkBasePopup),
-                        new IconedMenuItem(SVG.VISIBILITY, i18n("world.chunkbase.stronghold"), () -> ChunkBaseApp.openStrongholdFinder(world), chunkBasePopup),
-                        new IconedMenuItem(SVG.FORT, i18n("world.chunkbase.nether_fortress"), () -> ChunkBaseApp.openNetherFortressFinder(world), chunkBasePopup)
-                );
-
-                if (world.getGameVersion() != null && world.getGameVersion().compareTo("1.13") >= 0) {
-                    chunkBasePopupMenu.getContent().add(
-                            new IconedMenuItem(SVG.LOCATION_CITY, i18n("world.chunkbase.end_city"), () -> ChunkBaseApp.openEndCityFinder(world), chunkBasePopup));
-                }
-
-                toolbar.addNavigationDrawerItem(i18n("world.chunkbase"), SVG.EXPLORE, null, chunkBaseMenuItem ->
-                        chunkBaseMenuItem.setOnAction(e ->
-                                chunkBasePopup.show(chunkBaseMenuItem,
-                                        JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT,
-                                        chunkBaseMenuItem.getWidth(), 0)));
-            }
-
-            toolbar.addNavigationDrawerItem(i18n("settings.game.exploration"), SVG.FOLDER_OPEN, () -> FXUtils.openFolder(world.getFile()), null);
-
-            {
-                PopupMenu managePopupMenu = new PopupMenu();
-                JFXPopup managePopup = new JFXPopup(managePopupMenu);
-
-                if (world.getGameVersion() != null && world.getGameVersion().isAtLeast("1.20", "23w14a")) {
-                    managePopupMenu.getContent().addAll(
-                            new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("version.launch"), this::launch, managePopup),
-                            new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), this::generateLaunchScript, managePopup),
-                            new MenuSeparator()
-                    );
-                }
-
-                managePopupMenu.getContent().addAll(
-                        new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), () -> WorldManageUIUtils.export(world, sessionLockChannel), managePopup),
-                        new IconedMenuItem(SVG.DELETE, i18n("world.delete"), () -> WorldManageUIUtils.delete(world, () -> fireEvent(new PageCloseEvent()), sessionLockChannel), managePopup),
-                        new IconedMenuItem(SVG.CONTENT_COPY, i18n("world.duplicate"), () -> WorldManageUIUtils.copyWorld(world, null), managePopup)
-                );
-
-                toolbar.addNavigationDrawerItem(i18n("settings.game.management"), SVG.MENU, null, managePopupMenuItem ->
-                {
-                    managePopupMenuItem.setOnAction(e ->
-                            managePopup.show(managePopupMenuItem,
-                                    JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT,
-                                    managePopupMenuItem.getWidth(), 0));
-                    managePopupMenuItem.setDisable(isReadOnly());
-                });
-            }
-        }
+    @Override
+    protected Skin createDefaultSkin() {
+        return new Skin(this);
     }
 
     @Override
@@ -251,6 +165,105 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     @Override
     public BooleanProperty refreshableProperty() {
         return refreshableProperty;
+    }
+
+    public static class Skin extends DecoratorAnimatedPageSkin<WorldManagePage> {
+
+        protected Skin(WorldManagePage control) {
+            super(control);
+
+            setCenter(getSkinnable().transitionPane);
+            setLeftNode();
+        }
+
+        public void setLeftNode() {
+            BorderPane left = new BorderPane();
+            {
+                FXUtils.setLimitWidth(left, 200);
+                VBox.setVgrow(left, Priority.ALWAYS);
+                setLeft(left);
+            }
+
+            {
+                getSkinnable().header.getTabs().addAll(getSkinnable().worldInfoTab, getSkinnable().worldBackupsTab);
+                getSkinnable().header.select(getSkinnable().worldInfoTab);
+
+                AdvancedListBox tabBar = new AdvancedListBox()
+                        .addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldInfoTab, i18n("world.info"), SVG.INFO, SVG.INFO_FILL)
+                        .addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE, SVG.ARCHIVE_FILL);
+
+                if (getSkinnable().world.getGameVersion() != null && // old game will not write game version to level.dat
+                        getSkinnable().world.getGameVersion().isAtLeast("1.13", "17w43a")) {
+                    getSkinnable().header.getTabs().add(getSkinnable().datapackTab);
+                    tabBar.addNavigationDrawerTab(getSkinnable().header, getSkinnable().datapackTab, i18n("world.datapack"), SVG.EXTENSION, SVG.EXTENSION_FILL);
+                }
+
+                left.setTop(tabBar);
+            }
+
+            AdvancedListBox toolbar = new AdvancedListBox();
+            {
+                BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
+                left.setBottom(toolbar);
+            }
+            {
+                if (getSkinnable().world.getGameVersion() != null && getSkinnable().world.getGameVersion().isAtLeast("1.20", "23w14a")) {
+                    toolbar.addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, () -> getSkinnable().launch(), advancedListItem -> advancedListItem.setDisable(getSkinnable().isReadOnly()));
+                }
+
+                if (ChunkBaseApp.isSupported(getSkinnable().world)) {
+                    PopupMenu chunkBasePopupMenu = new PopupMenu();
+                    JFXPopup chunkBasePopup = new JFXPopup(chunkBasePopupMenu);
+
+                    chunkBasePopupMenu.getContent().addAll(
+                            new IconedMenuItem(SVG.EXPLORE, i18n("world.chunkbase.seed_map"), () -> ChunkBaseApp.openSeedMap(getSkinnable().world), chunkBasePopup),
+                            new IconedMenuItem(SVG.VISIBILITY, i18n("world.chunkbase.stronghold"), () -> ChunkBaseApp.openStrongholdFinder(getSkinnable().world), chunkBasePopup),
+                            new IconedMenuItem(SVG.FORT, i18n("world.chunkbase.nether_fortress"), () -> ChunkBaseApp.openNetherFortressFinder(getSkinnable().world), chunkBasePopup)
+                    );
+
+                    if (getSkinnable().world.getGameVersion() != null && getSkinnable().world.getGameVersion().compareTo("1.13") >= 0) {
+                        chunkBasePopupMenu.getContent().add(
+                                new IconedMenuItem(SVG.LOCATION_CITY, i18n("world.chunkbase.end_city"), () -> ChunkBaseApp.openEndCityFinder(getSkinnable().world), chunkBasePopup));
+                    }
+
+                    toolbar.addNavigationDrawerItem(i18n("world.chunkbase"), SVG.EXPLORE, null, chunkBaseMenuItem ->
+                            chunkBaseMenuItem.setOnAction(e ->
+                                    chunkBasePopup.show(chunkBaseMenuItem,
+                                            JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT,
+                                            chunkBaseMenuItem.getWidth(), 0)));
+                }
+
+                toolbar.addNavigationDrawerItem(i18n("settings.game.exploration"), SVG.FOLDER_OPEN, () -> FXUtils.openFolder(getSkinnable().world.getFile()), null);
+
+                {
+                    PopupMenu managePopupMenu = new PopupMenu();
+                    JFXPopup managePopup = new JFXPopup(managePopupMenu);
+
+                    if (getSkinnable().world.getGameVersion() != null && getSkinnable().world.getGameVersion().isAtLeast("1.20", "23w14a")) {
+                        managePopupMenu.getContent().addAll(
+                                new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("version.launch"), () -> getSkinnable().launch(), managePopup),
+                                new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), () -> getSkinnable().generateLaunchScript(), managePopup),
+                                new MenuSeparator()
+                        );
+                    }
+
+                    managePopupMenu.getContent().addAll(
+                            new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), () -> WorldManageUIUtils.export(getSkinnable().world, getSkinnable().sessionLockChannel), managePopup),
+                            new IconedMenuItem(SVG.DELETE, i18n("world.delete"), () -> WorldManageUIUtils.delete(getSkinnable().world, () -> getSkinnable().fireEvent(new PageCloseEvent()), getSkinnable().sessionLockChannel), managePopup),
+                            new IconedMenuItem(SVG.CONTENT_COPY, i18n("world.duplicate"), () -> WorldManageUIUtils.copyWorld(getSkinnable().world, null), managePopup)
+                    );
+
+                    toolbar.addNavigationDrawerItem(i18n("settings.game.management"), SVG.MENU, null, managePopupMenuItem ->
+                    {
+                        managePopupMenuItem.setOnAction(e ->
+                                managePopup.show(managePopupMenuItem,
+                                        JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT,
+                                        managePopupMenuItem.getWidth(), 0));
+                        managePopupMenuItem.setDisable(getSkinnable().isReadOnly());
+                    });
+                }
+            }
+        }
     }
 
     public interface WorldRefreshable {
