@@ -44,7 +44,9 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.PropertyKey;
 
@@ -111,10 +113,11 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
 
                 if (dataTag.get("LevelName") instanceof StringTag worldNameTag) {
                     worldNameField.setText(worldNameTag.getValue());
-                    worldNameField.textProperty().addListener((observable, oldValue, newValue) -> {
-                        if (newValue != null) {
+                    worldNameField.focusedProperty().addListener((observable, oldValue, newValue) -> {
+                        if (!newValue && StringUtils.isNotBlank(worldNameField.getText())) {
                             try {
-                                world.setWorldName(newValue);
+                                world.setWorldName(worldNameField.getText());
+                                worldManagePage.changeState(new DecoratorPage.State(i18n("world.manage.title", StringUtils.parseColorEscapes(world.getWorldName())), null, true, true, true));
                             } catch (Exception e) {
                                 LOG.warning("Failed to set world name", e);
                             }
