@@ -172,7 +172,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         protected Skin(WorldManagePage control) {
             super(control);
 
-            setCenter(getSkinnable().transitionPane);
+            setCenter(control.transitionPane);
             setLeft(getSidebar());
         }
 

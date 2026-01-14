@@ -314,7 +314,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 setLeftLabel(locationPane, "world.info.player.location");
                 setRightTextLabel(locationPane, () -> {
                     Dimension dimension = Dimension.of(playerTag.get("Dimension"));
-                    if (dimension != null && playerTag.get("Pos") instanceof IntArrayTag posTag) {
+                    if (dimension != null && playerTag.get("Pos") instanceof ListTag posTag) {
                         return dimension.formatPosition(posTag);
                     }
                     return "";
