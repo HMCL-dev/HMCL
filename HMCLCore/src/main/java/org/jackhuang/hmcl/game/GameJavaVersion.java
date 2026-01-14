@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.game;
 
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
@@ -26,6 +27,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+@JsonSerializable
 public record GameJavaVersion(String component, int majorVersion) {
     public static final GameJavaVersion JAVA_25 = new GameJavaVersion("java-runtime-epsilon", 25);
     public static final GameJavaVersion JAVA_21 = new GameJavaVersion("java-runtime-delta", 21);
@@ -88,10 +90,6 @@ public record GameJavaVersion(String component, int majorVersion) {
         return Collections.emptyList();
     }
 
-    public GameJavaVersion() {
-        this("", 0);
-    }
-
     @Override
     public int hashCode() {
         return majorVersion();
@@ -99,9 +97,6 @@ public record GameJavaVersion(String component, int majorVersion) {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof GameJavaVersion)) return false;
-        GameJavaVersion that = (GameJavaVersion) o;
-        return majorVersion == that.majorVersion;
+        return this == o || o instanceof GameJavaVersion that && this.majorVersion == that.majorVersion;
     }
 }
