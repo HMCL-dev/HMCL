@@ -159,8 +159,8 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                     Controllers.prompt(i18n("world.name.enter"), (name, resolve, reject) -> {
                         Task.runAsync(() -> world.install(savesDir, name))
                                 .whenComplete(Schedulers.javafx(), () -> {
-                                    itemsProperty().add(new World(savesDir.resolve(name)));
                                     resolve.run();
+                                    refresh();
                                 }, e -> {
                                     if (e instanceof FileAlreadyExistsException)
                                         reject.accept(i18n("world.import.failed", i18n("world.import.already_exists")));
@@ -185,7 +185,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
     }
 
     public void delete(World world) {
-        WorldManageUIUtils.delete(world, () -> this.getItems().remove(world));
+        WorldManageUIUtils.delete(world, this::refresh);
     }
 
     public void copy(World world) {
