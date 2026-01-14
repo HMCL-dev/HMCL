@@ -147,6 +147,18 @@ public final class World {
         return isLocked;
     }
 
+    public boolean supportsDatapacks() {
+        return getGameVersion() != null && getGameVersion().isAtLeast("1.13", "17w43a");
+    }
+
+    public boolean supportsQuickPlay() {
+        return getGameVersion() != null && getGameVersion().isAtLeast("1.20", "23w14a");
+    }
+
+    public static boolean supportsQuickPlay(GameVersionNumber gameVersionNumber) {
+        return gameVersionNumber != null && gameVersionNumber.isAtLeast("1.20", "23w14a");
+    }
+
     private void loadFromDirectory() throws IOException {
         fileName = FileUtils.getName(file);
         Path levelDat = file.resolve("level.dat");

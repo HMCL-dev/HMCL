@@ -322,11 +322,11 @@ public class DefaultLauncher extends Launcher {
                 LOG.warning("Invalid server address: " + address, e);
             }
         } else if (options.getQuickPlayOption() instanceof QuickPlayOption.SinglePlayer singlePlayer
-                && GameVersionNumber.asGameVersion(gameVersion).isAtLeast("1.20", "23w14a")) {
+                && World.supportsQuickPlay(GameVersionNumber.asGameVersion(gameVersion))) {
             res.add("--quickPlaySingleplayer");
             res.add(singlePlayer.worldFolderName());
         } else if (options.getQuickPlayOption() instanceof QuickPlayOption.Realm realm
-                && GameVersionNumber.asGameVersion(gameVersion).isAtLeast("1.20", "23w14a")) {
+                && World.supportsQuickPlay(GameVersionNumber.asGameVersion(gameVersion))) {
             res.add("--quickPlayRealms");
             res.add(realm.realmID());
         }
