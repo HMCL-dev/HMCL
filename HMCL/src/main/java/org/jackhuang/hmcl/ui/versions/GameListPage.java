@@ -17,11 +17,13 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
+import com.jfoenix.controls.JFXListView;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -154,16 +156,20 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             return new GameListSkin();
         }
 
-        private class GameListSkin extends ToolbarListPageSkin2<GameListItem, GameList> {
+        private class GameListSkin extends ToolbarListPageSkin<GameListItem, GameList> {
 
             public GameListSkin() {
                 super(GameList.this);
-                this.listView.setCellFactory(listView -> new GameListCell());
             }
 
             @Override
             protected List<Node> initializeToolbar(GameList skinnable) {
                 return Collections.emptyList();
+            }
+
+            @Override
+            protected ListCell<GameListItem> createListCell(JFXListView<GameListItem> listView) {
+                return new GameListCell();
             }
         }
     }

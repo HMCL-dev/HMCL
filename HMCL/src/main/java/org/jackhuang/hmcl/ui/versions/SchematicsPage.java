@@ -599,7 +599,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         }
     }
 
-    private final class SchematicsPageSkin extends ToolbarListPageSkin<SchematicsPage> {
+    private final class SchematicsPageSkin extends ToolbarListPageSkin<Item, SchematicsPage> {
         SchematicsPageSkin() {
             super(SchematicsPage.this);
         }
