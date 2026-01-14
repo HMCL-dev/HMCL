@@ -65,7 +65,6 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
     private final BooleanProperty showAll = new SimpleBooleanProperty(this, "showAll", false);
 
     private Path savesDir;
-    private Path backupsDir;
     private List<World> worlds;
     private Profile profile;
     private String id;
@@ -90,7 +89,6 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
         this.profile = profile;
         this.id = id;
         this.savesDir = profile.getRepository().getSavesDirectory(id);
-        this.backupsDir = profile.getRepository().getBackupsDirectory(id);
         refresh();
     }
 
@@ -177,7 +175,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
     }
 
     private void showManagePage(World world) {
-        Controllers.navigate(new WorldManagePage(world, backupsDir, profile, id));
+        Controllers.navigate(new WorldManagePage(world, profile, id));
     }
 
     public void export(World world) {
@@ -332,7 +330,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
             PopupMenu popupMenu = new PopupMenu();
             JFXPopup popup = new JFXPopup(popupMenu);
 
-            if (world.getGameVersion() != null && world.getGameVersion().isAtLeast("1.20", "23w14a")) {
+            if (world.supportsQuickPlay()) {
 
                 IconedMenuItem launchItem = new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("version.launch_and_enter_world"), () -> page.launch(world), popup);
                 launchItem.setDisable(world.isLocked());
@@ -354,7 +352,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                         new IconedMenuItem(SVG.FORT, i18n("world.chunkbase.nether_fortress"), () -> ChunkBaseApp.openNetherFortressFinder(world), popup)
                 );
 
-                if (world.getGameVersion() != null && world.getGameVersion().compareTo("1.13") >= 0) {
+                if (ChunkBaseApp.supportEndCity(world)) {
                     popupMenu.getContent().add(new IconedMenuItem(SVG.LOCATION_CITY, i18n("world.chunkbase.end_city"),
                             () -> ChunkBaseApp.openEndCityFinder(world), popup));
                 }
