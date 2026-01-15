@@ -135,7 +135,9 @@ public final class ExportWizardProvider implements WizardProvider {
                     exported.getAuthlibInjectorServers().setAll(config().getAuthlibInjectorServers());
 
                     zip.putTextFile(exported.toJson(), ".hmcl/hmcl.json");
-                    zip.putFile(tempModpack, Objects.equals(modpackType, "modrinth") ? "modpack.mrpack" : "modpack.zip");
+                    zip.putFile(tempModpack, ModpackTypeSelectionPage.MODPACK_TYPE_MODRINTH.equals(modpackType)
+                            ? "modpack.mrpack"
+                            : "modpack.zip");
 
                     Path bg = Metadata.HMCL_CURRENT_DIRECTORY.resolve("background");
                     if (!Files.isDirectory(bg))
