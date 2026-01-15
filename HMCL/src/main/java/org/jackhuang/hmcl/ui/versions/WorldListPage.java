@@ -205,8 +205,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
 
         @Override
         protected List<Node> initializeToolbar(WorldListPage skinnable) {
-            JFXCheckBox chkShowAll = new JFXCheckBox();
-            chkShowAll.setText(i18n("world.show_all"));
+            JFXCheckBox chkShowAll = new JFXCheckBox(i18n("world.show_all"));
             chkShowAll.selectedProperty().bindBidirectional(skinnable.showAllProperty());
 
             return Arrays.asList(chkShowAll, createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh), createToolbarButton2(i18n("world.add"), SVG.ADD, skinnable::add), createToolbarButton2(i18n("world.download"), SVG.DOWNLOAD, skinnable::download));
