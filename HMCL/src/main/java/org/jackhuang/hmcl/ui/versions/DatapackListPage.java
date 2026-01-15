@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
+import javafx.beans.property.BooleanProperty;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
@@ -45,15 +46,22 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.DatapackInfoObject> implements WorldManagePage.WorldRefreshable {
     private final Path worldDir;
     private final Datapack datapack;
+    final BooleanProperty isReadOnlyProperty;
 
     public DatapackListPage(WorldManagePage worldManagePage) {
         this.worldDir = worldManagePage.getWorld().getFile();
         datapack = new Datapack(worldDir.resolve("datapacks"));
         setItems(MappedObservableList.create(datapack.getPacks(), DatapackListPageSkin.DatapackInfoObject::new));
+        isReadOnlyProperty = worldManagePage.readOnlyProperty();
         FXUtils.applyDragListener(this, it -> Objects.equals("zip", FileUtils.getExtension(it)),
-                mods -> mods.forEach(this::installSingleDatapack), this::refresh);
+                this::installMutiDatapack, this::refresh);
 
         refresh();
+    }
+
+    private void installMutiDatapack(List<Path> datapackPath) {
+        datapackPath.forEach(this::installSingleDatapack);
+        Controllers.showToast(i18n("datapack.reload.toast"));
     }
 
     private void installSingleDatapack(Path datapack) {
@@ -83,7 +91,7 @@ public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.Da
         List<Path> res = FileUtils.toPaths(chooser.showOpenMultipleDialog(Controllers.getStage()));
 
         if (res != null) {
-            res.forEach(this::installSingleDatapack);
+            installMutiDatapack(res);
         }
 
         datapack.loadFromDir();

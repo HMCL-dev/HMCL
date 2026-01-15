@@ -66,6 +66,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -114,16 +115,21 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
                     createToolbarButton2(i18n("search"), SVG.SEARCH, () -> isSearching.set(true))
             );
 
+            JFXButton removeButton = createToolbarButton2(i18n("button.remove"), SVG.DELETE, () -> {
+                Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
+                    skinnable.removeSelected(listView.getSelectionModel().getSelectedItems());
+                }, null);
+            });
+            JFXButton enableButton = createToolbarButton2(i18n("mods.enable"), SVG.CHECK, () ->
+                    skinnable.enableSelected(listView.getSelectionModel().getSelectedItems()));
+            JFXButton disableButton = createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () ->
+                    skinnable.disableSelected(listView.getSelectionModel().getSelectedItems()));
+            Stream.of(removeButton, enableButton, disableButton).forEach((button) -> button.disableProperty().bind(getSkinnable().isReadOnlyProperty));
+
             selectingToolbar.getChildren().addAll(
-                    createToolbarButton2(i18n("button.remove"), SVG.DELETE, () -> {
-                        Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
-                            skinnable.removeSelected(listView.getSelectionModel().getSelectedItems());
-                        }, null);
-                    }),
-                    createToolbarButton2(i18n("mods.enable"), SVG.CHECK, () ->
-                            skinnable.enableSelected(listView.getSelectionModel().getSelectedItems())),
-                    createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () ->
-                            skinnable.disableSelected(listView.getSelectionModel().getSelectedItems())),
+                    removeButton,
+                    enableButton,
+                    disableButton,
                     createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () ->
                             listView.getSelectionModel().selectRange(0, listView.getItems().size())),//reason for not using selectAll() is that selectAll() first clears all selected then selects all, causing the toolbar to flicker
                     createToolbarButton2(i18n("button.cancel"), SVG.CANCEL, () ->
@@ -179,7 +185,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             center.getStyleClass().add("large-spinner-pane");
             center.loadingProperty().bind(skinnable.loadingProperty());
 
-            listView.setCellFactory(x -> new DatapackInfoListCell(listView));
+            listView.setCellFactory(x -> new DatapackInfoListCell(listView, getSkinnable().isReadOnlyProperty));
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
             this.listView.setItems(filteredList);
 
@@ -302,7 +308,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
         final TwoLineListItem content = new TwoLineListItem();
         BooleanProperty booleanProperty;
 
-        DatapackInfoListCell(JFXListView<DatapackInfoObject> listView) {
+        DatapackInfoListCell(JFXListView<DatapackInfoObject> listView, BooleanProperty isReadOnlyProperty) {
             super(listView);
 
             HBox container = new HBox(8);
@@ -311,6 +317,8 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             HBox.setHgrow(content, Priority.ALWAYS);
             content.setMouseTransparent(true);
             setSelectable();
+
+            checkBox.disableProperty().bind(isReadOnlyProperty);
 
             imageView.setFitWidth(32);
             imageView.setFitHeight(32);
