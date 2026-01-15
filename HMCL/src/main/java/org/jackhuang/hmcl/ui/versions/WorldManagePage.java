@@ -52,7 +52,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     private final World world;
     private final Path backupsDir;
     private final Profile profile;
-    private final String id;
+    private final String versionId;
     private FileChannel sessionLockChannel;
 
     private final ObjectProperty<State> state;
@@ -66,11 +66,11 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     private final TabHeader.Tab<WorldBackupsPage> worldBackupsTab = new TabHeader.Tab<>("worldBackupsPage");
     private final TabHeader.Tab<DatapackListPage> datapackTab = new TabHeader.Tab<>("datapackListPage");
 
-    public WorldManagePage(World world, Profile profile, String id) {
+    public WorldManagePage(World world, Profile profile, String versionId) {
         this.world = world;
-        this.backupsDir = profile.getRepository().getBackupsDirectory(id);
+        this.backupsDir = profile.getRepository().getBackupsDirectory(versionId);
         this.profile = profile;
-        this.id = id;
+        this.versionId = versionId;
 
         updateSessionLockChannel();
         updateWorldLevelDat(false);
@@ -146,11 +146,11 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
     public void launch() {
         fireEvent(new PageCloseEvent());
-        Versions.launchAndEnterWorld(profile, id, world.getFileName());
+        Versions.launchAndEnterWorld(profile, versionId, world.getFileName());
     }
 
     public void generateLaunchScript() {
-        Versions.generateLaunchScriptForQuickEnterWorld(profile, id, world.getFileName());
+        Versions.generateLaunchScriptForQuickEnterWorld(profile, versionId, world.getFileName());
     }
 
     @Override

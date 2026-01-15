@@ -67,7 +67,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
     private Path savesDir;
     private List<World> worlds;
     private Profile profile;
-    private String id;
+    private String versionId;
 
     private int refreshCount = 0;
 
@@ -87,7 +87,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
     @Override
     public void loadVersion(Profile profile, String id) {
         this.profile = profile;
-        this.id = id;
+        this.versionId = id;
         this.savesDir = profile.getRepository().getSavesDirectory(id);
         refresh();
     }
@@ -98,20 +98,20 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
         } else if (showAll.get()) {
             getItems().setAll(worlds);
         } else {
-            GameVersionNumber gameVersion = profile.getRepository().getGameVersion(id).map(GameVersionNumber::asGameVersion).orElse(null);
+            GameVersionNumber gameVersion = profile.getRepository().getGameVersion(versionId).map(GameVersionNumber::asGameVersion).orElse(null);
             getItems().setAll(worlds.stream().filter(world -> world.getGameVersion() == null || world.getGameVersion().equals(gameVersion)).toList());
         }
     }
 
     public void refresh() {
-        if (profile == null || id == null) return;
+        if (profile == null || versionId == null) return;
 
         int currentRefresh = ++refreshCount;
 
         setLoading(true);
         Task.runAsync(() -> {
             // Ensure the game version number is parsed
-            profile.getRepository().getGameVersion(id);
+            profile.getRepository().getGameVersion(versionId);
         }).thenSupplyAsync(() -> World.getWorlds(savesDir)).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (refreshCount != currentRefresh) {
                 // A newer refresh task is running, discard this result
@@ -166,7 +166,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
     }
 
     private void showManagePage(World world) {
-        Controllers.navigate(new WorldManagePage(world, profile, id));
+        Controllers.navigate(new WorldManagePage(world, profile, versionId));
     }
 
     public void export(World world) {
@@ -186,11 +186,11 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
     }
 
     public void launch(World world) {
-        Versions.launchAndEnterWorld(profile, id, world.getFileName());
+        Versions.launchAndEnterWorld(profile, versionId, world.getFileName());
     }
 
     public void generateLaunchScript(World world) {
-        Versions.generateLaunchScriptForQuickEnterWorld(profile, id, world.getFileName());
+        Versions.generateLaunchScriptForQuickEnterWorld(profile, versionId, world.getFileName());
     }
 
     public BooleanProperty showAllProperty() {
