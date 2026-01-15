@@ -269,6 +269,16 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                 root.setRight(right);
                 right.setAlignment(Pos.CENTER_RIGHT);
 
+                JFXButton btnLaunch = new JFXButton();
+                right.getChildren().add(btnLaunch);
+                btnLaunch.getStyleClass().add("toggle-icon4");
+                btnLaunch.setGraphic(SVG.ROCKET_LAUNCH.createIcon());
+                btnLaunch.setOnAction(event -> {
+                    World world = getItem();
+                    if (world != null)
+                        page.launch(world);
+                });
+
                 JFXButton btnMore = new JFXButton();
                 right.getChildren().add(btnMore);
                 btnMore.getStyleClass().add("toggle-icon4");
