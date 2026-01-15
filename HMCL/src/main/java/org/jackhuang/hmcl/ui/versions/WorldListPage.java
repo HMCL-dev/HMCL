@@ -99,38 +99,32 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
             getItems().setAll(worlds);
         } else {
             GameVersionNumber gameVersion = profile.getRepository().getGameVersion(id).map(GameVersionNumber::asGameVersion).orElse(null);
-            getItems().setAll(worlds.stream()
-                    .filter(world -> world.getGameVersion() == null || world.getGameVersion().equals(gameVersion))
-                    .toList());
+            getItems().setAll(worlds.stream().filter(world -> world.getGameVersion() == null || world.getGameVersion().equals(gameVersion)).toList());
         }
     }
 
     public void refresh() {
-        if (profile == null || id == null)
-            return;
+        if (profile == null || id == null) return;
 
         int currentRefresh = ++refreshCount;
 
         setLoading(true);
         Task.runAsync(() -> {
-                    // Ensure the game version number is parsed
-                    profile.getRepository().getGameVersion(id);
-                })
-                .thenSupplyAsync(() -> World.getWorlds(savesDir))
-                .whenComplete(Schedulers.javafx(), (result, exception) -> {
-                    if (refreshCount != currentRefresh) {
-                        // A newer refresh task is running, discard this result
-                        return;
-                    }
+            // Ensure the game version number is parsed
+            profile.getRepository().getGameVersion(id);
+        }).thenSupplyAsync(() -> World.getWorlds(savesDir)).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            if (refreshCount != currentRefresh) {
+                // A newer refresh task is running, discard this result
+                return;
+            }
 
-                    worlds = result;
-                    updateWorldList();
+            worlds = result;
+            updateWorldList();
 
-                    if (exception != null)
-                        LOG.warning("Failed to load world list page", exception);
+            if (exception != null) LOG.warning("Failed to load world list page", exception);
 
-                    setLoading(false);
-                }).start();
+            setLoading(false);
+        }).start();
     }
 
     public void add() {
@@ -151,26 +145,24 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
     private void installWorld(Path zipFile) {
         // Only accept one world file because user is required to confirm the new world name
         // Or too many input dialogs are popped.
-        Task.supplyAsync(() -> new World(zipFile))
-                .whenComplete(Schedulers.javafx(), world -> {
-                    Controllers.prompt(i18n("world.name.enter"), (name, resolve, reject) -> {
-                        Task.runAsync(() -> world.install(savesDir, name))
-                                .whenComplete(Schedulers.javafx(), () -> {
-                                    resolve.run();
-                                    refresh();
-                                }, e -> {
-                                    if (e instanceof FileAlreadyExistsException)
-                                        reject.accept(i18n("world.import.failed", i18n("world.import.already_exists")));
-                                    else if (e instanceof IOException && e.getCause() instanceof InvalidPathException)
-                                        reject.accept(i18n("world.import.failed", i18n("install.new_game.malformed")));
-                                    else
-                                        reject.accept(i18n("world.import.failed", e.getClass().getName() + ": " + e.getLocalizedMessage()));
-                                }).start();
-                    }, world.getWorldName(), new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid));
+        Task.supplyAsync(() -> new World(zipFile)).whenComplete(Schedulers.javafx(), world -> {
+            Controllers.prompt(i18n("world.name.enter"), (name, resolve, reject) -> {
+                Task.runAsync(() -> world.install(savesDir, name)).whenComplete(Schedulers.javafx(), () -> {
+                    resolve.run();
+                    refresh();
                 }, e -> {
-                    LOG.warning("Unable to parse world file " + zipFile, e);
-                    Controllers.dialog(i18n("world.import.invalid"));
+                    if (e instanceof FileAlreadyExistsException)
+                        reject.accept(i18n("world.import.failed", i18n("world.import.already_exists")));
+                    else if (e instanceof IOException && e.getCause() instanceof InvalidPathException)
+                        reject.accept(i18n("world.import.failed", i18n("install.new_game.malformed")));
+                    else
+                        reject.accept(i18n("world.import.failed", e.getClass().getName() + ": " + e.getLocalizedMessage()));
                 }).start();
+            }, world.getWorldName(), new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid));
+        }, e -> {
+            LOG.warning("Unable to parse world file " + zipFile, e);
+            Controllers.dialog(i18n("world.import.invalid"));
+        }).start();
     }
 
     private void showManagePage(World world) {
@@ -217,10 +209,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
             chkShowAll.setText(i18n("world.show_all"));
             chkShowAll.selectedProperty().bindBidirectional(skinnable.showAllProperty());
 
-            return Arrays.asList(chkShowAll,
-                    createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
-                    createToolbarButton2(i18n("world.add"), SVG.ADD, skinnable::add),
-                    createToolbarButton2(i18n("world.download"), SVG.DOWNLOAD, skinnable::download));
+            return Arrays.asList(chkShowAll, createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh), createToolbarButton2(i18n("world.add"), SVG.ADD, skinnable::add), createToolbarButton2(i18n("world.download"), SVG.DOWNLOAD, skinnable::download));
         }
 
         @Override
@@ -275,8 +264,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                 FXUtils.installFastTooltip(btnLaunch, i18n("version.launch"));
                 btnLaunch.setOnAction(event -> {
                     World world = getItem();
-                    if (world != null)
-                        page.launch(world);
+                    if (world != null) page.launch(world);
                 });
 
                 JFXButton btnMore = new JFXButton();
@@ -285,22 +273,18 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                 btnMore.setGraphic(SVG.MORE_VERT.createIcon());
                 btnMore.setOnAction(event -> {
                     World world = getItem();
-                    if (world != null)
-                        showPopupMenu(world, JFXPopup.PopupHPosition.RIGHT, 0, root.getHeight());
+                    if (world != null) showPopupMenu(world, JFXPopup.PopupHPosition.RIGHT, 0, root.getHeight());
                 });
             }
 
             this.graphic = new RipplerContainer(root);
             graphic.setOnMouseClicked(event -> {
-                if (event.getClickCount() != 1)
-                    return;
+                if (event.getClickCount() != 1) return;
 
                 World world = getItem();
-                if (world == null)
-                    return;
+                if (world == null) return;
 
-                if (event.getButton() == MouseButton.PRIMARY)
-                    page.showManagePage(world);
+                if (event.getButton() == MouseButton.PRIMARY) page.showManagePage(world);
                 else if (event.getButton() == MouseButton.SECONDARY)
                     showPopupMenu(world, JFXPopup.PopupHPosition.LEFT, event.getX(), event.getY());
             });
@@ -323,10 +307,8 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                 leftTooltip.setText(world.getFile().toString());
                 content.setTitle(world.getWorldName() != null ? parseColorEscapes(world.getWorldName()) : "");
 
-                if (world.getGameVersion() != null)
-                    content.addTag(I18n.getDisplayVersion(world.getGameVersion()));
-                if (world.isLocked())
-                    content.addTag(i18n("world.locked"));
+                if (world.getGameVersion() != null) content.addTag(I18n.getDisplayVersion(world.getGameVersion()));
+                if (world.isLocked()) content.addTag(i18n("world.locked"));
 
                 content.setSubtitle(i18n("world.datetime", formatDateTime(Instant.ofEpochMilli(world.getLastPlayed()))));
 
@@ -346,25 +328,16 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                 launchItem.setDisable(world.isLocked());
                 popupMenu.getContent().add(launchItem);
 
-                popupMenu.getContent().addAll(
-                        new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), () -> page.generateLaunchScript(world), popup),
-                        new MenuSeparator()
-                );
+                popupMenu.getContent().addAll(new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), () -> page.generateLaunchScript(world), popup), new MenuSeparator());
             }
 
             popupMenu.getContent().add(new IconedMenuItem(SVG.SETTINGS, i18n("world.manage.button"), () -> page.showManagePage(world), popup));
 
             if (ChunkBaseApp.isSupported(world)) {
-                popupMenu.getContent().addAll(
-                        new MenuSeparator(),
-                        new IconedMenuItem(SVG.EXPLORE, i18n("world.chunkbase.seed_map"), () -> ChunkBaseApp.openSeedMap(world), popup),
-                        new IconedMenuItem(SVG.VISIBILITY, i18n("world.chunkbase.stronghold"), () -> ChunkBaseApp.openStrongholdFinder(world), popup),
-                        new IconedMenuItem(SVG.FORT, i18n("world.chunkbase.nether_fortress"), () -> ChunkBaseApp.openNetherFortressFinder(world), popup)
-                );
+                popupMenu.getContent().addAll(new MenuSeparator(), new IconedMenuItem(SVG.EXPLORE, i18n("world.chunkbase.seed_map"), () -> ChunkBaseApp.openSeedMap(world), popup), new IconedMenuItem(SVG.VISIBILITY, i18n("world.chunkbase.stronghold"), () -> ChunkBaseApp.openStrongholdFinder(world), popup), new IconedMenuItem(SVG.FORT, i18n("world.chunkbase.nether_fortress"), () -> ChunkBaseApp.openNetherFortressFinder(world), popup));
 
                 if (ChunkBaseApp.supportEndCity(world)) {
-                    popupMenu.getContent().add(new IconedMenuItem(SVG.LOCATION_CITY, i18n("world.chunkbase.end_city"),
-                            () -> ChunkBaseApp.openEndCityFinder(world), popup));
+                    popupMenu.getContent().add(new IconedMenuItem(SVG.LOCATION_CITY, i18n("world.chunkbase.end_city"), () -> ChunkBaseApp.openEndCityFinder(world), popup));
                 }
             }
 
@@ -372,20 +345,11 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
             IconedMenuItem deleteMenuItem = new IconedMenuItem(SVG.DELETE, i18n("world.delete"), () -> page.delete(world), popup);
             IconedMenuItem duplicateMenuItem = new IconedMenuItem(SVG.CONTENT_COPY, i18n("world.duplicate"), () -> page.copy(world), popup);
             boolean worldLocked = world.isLocked();
-            Stream.of(exportMenuItem, deleteMenuItem, duplicateMenuItem)
-                    .forEach(iconedMenuItem -> iconedMenuItem.setDisable(worldLocked));
+            Stream.of(exportMenuItem, deleteMenuItem, duplicateMenuItem).forEach(iconedMenuItem -> iconedMenuItem.setDisable(worldLocked));
 
-            popupMenu.getContent().addAll(
-                    new MenuSeparator(),
-                    exportMenuItem,
-                    deleteMenuItem,
-                    duplicateMenuItem
-            );
+            popupMenu.getContent().addAll(new MenuSeparator(), exportMenuItem, deleteMenuItem, duplicateMenuItem);
 
-            popupMenu.getContent().addAll(
-                    new MenuSeparator(),
-                    new IconedMenuItem(SVG.FOLDER_OPEN, i18n("folder.world"), () -> page.reveal(world), popup)
-            );
+            popupMenu.getContent().addAll(new MenuSeparator(), new IconedMenuItem(SVG.FOLDER_OPEN, i18n("folder.world"), () -> page.reveal(world), popup));
 
             JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(this, popup);
             popup.show(this, vPosition, hPosition, initOffsetX, vPosition == JFXPopup.PopupVPosition.TOP ? initOffsetY : -initOffsetY);
