@@ -112,26 +112,25 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
         int currentRefresh = ++refreshCount;
 
         setLoading(true);
-        Task.supplyAsync(Schedulers.io(), () -> {
-            // Ensure the game version number is parsed
-            profile.getRepository().getGameVersion(id);
-            try (Stream<World> stream = World.getWorlds(savesDir)) {
-                return stream.toList();
-            }
-        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
-            if (refreshCount != currentRefresh) {
-                // A newer refresh task is running, discard this result
-                return;
-            }
+        Task.runAsync(() -> {
+                    // Ensure the game version number is parsed
+                    profile.getRepository().getGameVersion(id);
+                })
+                .thenSupplyAsync(() -> World.getWorlds(savesDir))
+                .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                    if (refreshCount != currentRefresh) {
+                        // A newer refresh task is running, discard this result
+                        return;
+                    }
 
-            worlds = result;
-            updateWorldList();
+                    worlds = result;
+                    updateWorldList();
 
-            if (exception != null)
-                LOG.warning("Failed to load world list page", exception);
+                    if (exception != null)
+                        LOG.warning("Failed to load world list page", exception);
 
-            setLoading(false);
-        }).start();
+                    setLoading(false);
+                }).start();
     }
 
     public void add() {
@@ -273,6 +272,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                 right.getChildren().add(btnLaunch);
                 btnLaunch.getStyleClass().add("toggle-icon4");
                 btnLaunch.setGraphic(SVG.ROCKET_LAUNCH.createIcon());
+                FXUtils.installFastTooltip(btnLaunch, i18n("version.launch"));
                 btnLaunch.setOnAction(event -> {
                     World world = getItem();
                     if (world != null)
