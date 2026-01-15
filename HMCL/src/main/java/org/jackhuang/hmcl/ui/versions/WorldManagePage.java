@@ -118,7 +118,6 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
             PopupMenu chunkBasePopupMenu = new PopupMenu();
             JFXPopup chunkBasePopup = new JFXPopup(chunkBasePopupMenu);
 
-
             chunkBasePopupMenu.getContent().addAll(
                     new IconedMenuItem(SVG.EXPLORE, i18n("world.chunkbase.seed_map"), () -> ChunkBaseApp.openSeedMap(world), chunkBasePopup),
                     new IconedMenuItem(SVG.VISIBILITY, i18n("world.chunkbase.stronghold"), () -> ChunkBaseApp.openStrongholdFinder(world), chunkBasePopup),
