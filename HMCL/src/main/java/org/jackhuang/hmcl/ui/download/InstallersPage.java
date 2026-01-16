@@ -121,32 +121,20 @@ public class InstallersPage extends AbstractInstallersPage {
 
             LibraryAnalyzer.LibraryType libraryType = LibraryAnalyzer.LibraryType.fromPatchId(libraryId);
             if (libraryType != null) {
-                String loaderName;
-                switch (libraryType) {
-                    case FORGE:
-                        loaderName = i18n("install.installer.forge");
-                        break;
-                    case NEO_FORGE:
-                        loaderName = i18n("install.installer.neoforge");
-                        break;
-                    case CLEANROOM:
-                        loaderName = i18n("install.installer.cleanroom");
-                        break;
-                    case FABRIC:
-                        loaderName = i18n("install.installer.fabric");
-                        break;
-                    case LITELOADER:
-                        loaderName = i18n("install.installer.liteloader");
-                        break;
-                    case QUILT:
-                        loaderName = i18n("install.installer.quilt");
-                        break;
-                    case OPTIFINE:
-                        loaderName = i18n("install.installer.optifine");
-                        break;
-                    default:
-                        continue;
-                }
+                String loaderName = switch (libraryType) {
+                    case FORGE -> i18n("install.installer.forge");
+                    case NEO_FORGE -> i18n("install.installer.neoforge");
+                    case CLEANROOM -> i18n("install.installer.cleanroom");
+                    case LEGACY_FABRIC -> i18n("install.installer.legacyfabric").replace(" ", "_");
+                    case FABRIC -> i18n("install.installer.fabric");
+                    case LITELOADER -> i18n("install.installer.liteloader");
+                    case QUILT -> i18n("install.installer.quilt");
+                    case OPTIFINE -> i18n("install.installer.optifine");
+                    default -> null;
+                };
+
+                if (loaderName == null)
+                    continue;
 
                 nameBuilder.append("-").append(loaderName);
             }

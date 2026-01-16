@@ -600,6 +600,9 @@ public class DefaultLauncher extends Launcher {
         if (analyzer.has(LibraryAnalyzer.LibraryType.QUILT)) {
             env.put("INST_QUILT", "1");
         }
+        if (analyzer.has(LibraryAnalyzer.LibraryType.LEGACY_FABRIC)) {
+            env.put("INST_LEGACYFABRIC", "1");
+        }
 
         env.putAll(options.getEnvironmentVariables());
 
