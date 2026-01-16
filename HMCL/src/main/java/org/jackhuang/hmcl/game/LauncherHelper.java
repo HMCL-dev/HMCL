@@ -160,16 +160,6 @@ public final class LauncherHelper {
                     return Task.allOf(
                             dependencyManager.checkGameCompletionAsync(version.get(), integrityCheck),
                             Task.composeAsync(() -> {
-                                try {
-                                    ModpackConfiguration<?> configuration = ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(selectedVersion));
-                                    ModpackProvider provider = ModpackHelper.getProviderByType(configuration.getType());
-                                    if (provider == null) return null;
-                                    else return provider.createCompletionTask(dependencyManager, selectedVersion);
-                                } catch (IOException e) {
-                                    return null;
-                                }
-                            }),
-                            Task.composeAsync(() -> {
                                 Renderer renderer = setting.getRenderer();
                                 if (renderer != Renderer.DEFAULT && OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                                     Library lib = NativePatcher.getWindowsMesaLoader(java, renderer, OperatingSystem.SYSTEM_VERSION);
@@ -195,6 +185,21 @@ public final class LauncherHelper {
                                 }
                             })
                     );
+                }).withStage("launch.state.dependencies")
+                .thenComposeAsync(() -> {
+                    if (setting.isNotCheckpack()) {
+                        return null;
+                    }
+                    return Task.composeAsync(() -> {
+                        try {
+                            ModpackConfiguration<?> configuration = ModpackHelper.readModpackConfiguration(repository.getModpackConfiguration(selectedVersion));
+                            ModpackProvider provider = ModpackHelper.getProviderByType(configuration.getType());
+                            if (provider == null) return null;
+                            else return provider.createCompletionTask(dependencyManager, selectedVersion);
+                        } catch (IOException e) {
+                            return null;
+                        }
+                    });
                 }).withStage("launch.state.dependencies")
                 .thenComposeAsync(() -> gameVersion.map(s -> new GameVerificationFixTask(dependencyManager, s, version.get())).orElse(null))
                 .thenComposeAsync(() -> logIn(account).withStage("launch.state.logging_in"))
