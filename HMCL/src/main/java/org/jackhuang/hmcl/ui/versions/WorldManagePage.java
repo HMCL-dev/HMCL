@@ -60,6 +60,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
     private final TabHeader header;
     private final TabHeader.Tab<WorldInfoPage> worldInfoTab = new TabHeader.Tab<>("worldInfoPage");
+    private final TabHeader.Tab<GameRulePage> gameRuleTab = new TabHeader.Tab<>("gameRulePage");
     private final TabHeader.Tab<WorldBackupsPage> worldBackupsTab = new TabHeader.Tab<>("worldBackupsPage");
     private final TabHeader.Tab<DatapackListPage> datapackTab = new TabHeader.Tab<>("datapackListPage");
 
@@ -82,11 +83,12 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         }
 
         this.worldInfoTab.setNodeSupplier(() -> new WorldInfoPage(this));
+        gameRuleTab.setNodeSupplier(() -> new GameRulePage(this));
         this.worldBackupsTab.setNodeSupplier(() -> new WorldBackupsPage(this));
         this.datapackTab.setNodeSupplier(() -> new DatapackListPage(this));
 
         this.state = new SimpleObjectProperty<>(State.fromTitle(i18n("world.manage.title", StringUtils.parseColorEscapes(world.getWorldName()))));
-        this.header = new TabHeader(transitionPane, worldInfoTab, worldBackupsTab);
+        this.header = new TabHeader(transitionPane, worldInfoTab, gameRuleTab, worldBackupsTab);
         header.select(worldInfoTab);
 
         setCenter(transitionPane);
@@ -98,6 +100,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
         AdvancedListBox sideBar = new AdvancedListBox()
                 .addNavigationDrawerTab(header, worldInfoTab, i18n("world.info"), SVG.INFO, SVG.INFO_FILL)
+                .addNavigationDrawerTab(header, gameRuleTab, i18n("gamerule"), SVG.RULE)
                 .addNavigationDrawerTab(header, worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE, SVG.ARCHIVE_FILL);
 
         if (world.getGameVersion() != null && // old game will not write game version to level.dat
