@@ -67,7 +67,7 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
-import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
+import static org.jackhuang.hmcl.ui.FXUtils.wrap;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -293,11 +293,21 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                 checkedModpack = true;
 
                 if (repository.getVersionCount() == 0) {
-                    Path modpackFile = Metadata.CURRENT_DIRECTORY.resolve("modpack.zip");
-                    if (Files.exists(modpackFile)) {
+                    Path zipModpack = Metadata.CURRENT_DIRECTORY.resolve("modpack.zip");
+                    Path mrpackModpack = Metadata.CURRENT_DIRECTORY.resolve("modpack.mrpack");
+
+                    Path modpackFile;
+                    if (Files.exists(zipModpack)) {
+                        modpackFile = zipModpack;
+                    } else if (Files.exists(mrpackModpack)) {
+                        modpackFile = mrpackModpack;
+                    } else {
+                        modpackFile = null;
+                    }
+
+                    if (modpackFile != null) {
                         Task.supplyAsync(() -> CompressingUtils.findSuitableEncoding(modpackFile))
-                                .thenApplyAsync(
-                                        encoding -> ModpackHelper.readModpackManifest(modpackFile, encoding))
+                                .thenApplyAsync(encoding -> ModpackHelper.readModpackManifest(modpackFile, encoding))
                                 .thenApplyAsync(modpack -> ModpackHelper
                                         .getInstallTask(repository.getProfile(), modpackFile, modpack.getName(), modpack, null)
                                         .executor())

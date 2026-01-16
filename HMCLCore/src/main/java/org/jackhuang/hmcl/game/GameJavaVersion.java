@@ -17,14 +17,18 @@
  */
 package org.jackhuang.hmcl.game;
 
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
-public final class GameJavaVersion {
+@JsonSerializable
+public record GameJavaVersion(String component, int majorVersion) {
     public static final GameJavaVersion JAVA_25 = new GameJavaVersion("java-runtime-epsilon", 25);
     public static final GameJavaVersion JAVA_21 = new GameJavaVersion("java-runtime-delta", 21);
     public static final GameJavaVersion JAVA_17 = new GameJavaVersion("java-runtime-beta", 17);
@@ -86,36 +90,13 @@ public final class GameJavaVersion {
         return Collections.emptyList();
     }
 
-    private final String component;
-    private final int majorVersion;
-
-    public GameJavaVersion() {
-        this("", 0);
-    }
-
-    public GameJavaVersion(String component, int majorVersion) {
-        this.component = component;
-        this.majorVersion = majorVersion;
-    }
-
-    public String getComponent() {
-        return component;
-    }
-
-    public int getMajorVersion() {
-        return majorVersion;
-    }
-
     @Override
     public int hashCode() {
-        return getMajorVersion();
+        return majorVersion();
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof GameJavaVersion)) return false;
-        GameJavaVersion that = (GameJavaVersion) o;
-        return majorVersion == that.majorVersion;
+        return this == o || o instanceof GameJavaVersion that && this.majorVersion == that.majorVersion;
     }
 }
