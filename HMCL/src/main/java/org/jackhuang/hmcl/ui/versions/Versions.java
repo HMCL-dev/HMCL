@@ -111,21 +111,16 @@ public final class Versions {
 
     public static void deleteVersion(Profile profile, String version) {
         boolean isIndependent = profile.getVersionSetting(version).getGameDirType() == GameDirectoryType.VERSION_FOLDER;
-        String message = isIndependent ? i18n("version.manage.remove.confirm.independent", version) :
-                i18n("version.manage.remove.confirm.trash", version, version + "_removed");
-
-        JFXButton deleteButton = new JFXButton(i18n("button.delete"));
-        deleteButton.getStyleClass().add("dialog-error");
-        deleteButton.setOnAction(e -> {
-            Task.supplyAsync(Schedulers.io(), () -> profile.getRepository().removeVersionFromDisk(version))
+        Controllers.deleteConfirm((b) -> {
+            Task.supplyAsync(Schedulers.io(), () -> profile.getRepository().removeVersionFromDisk(version,!b))
                     .whenComplete(Schedulers.javafx(), (result, exception) -> {
                         if (exception != null || !Boolean.TRUE.equals(result)) {
                             Controllers.dialog(i18n("version.manage.remove.failed"), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
                         }
                     }).start();
-        });
-
-        Controllers.confirmAction(message, i18n("message.warning"), MessageDialogPane.MessageType.WARNING, deleteButton);
+        },
+                isIndependent ? i18n("version.manage.remove.confirm.independent", version) : i18n("version.manage.remove.confirm", version),
+                isIndependent ? i18n("version.manage.remove.confirm.independent.trash", version) : i18n("version.manage.remove.confirm.trash", version, version));
     }
 
     public static CompletableFuture<String> renameVersion(Profile profile, String version) {
