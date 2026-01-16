@@ -113,7 +113,7 @@ public final class UpgradeDialog extends JFXDialogLayout {
         cancelButton.getStyleClass().add("dialog-cancel");
         cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
 
-        setActions(openInBrowser, updateButton, cancelButton);
+        setActions(openInBrowser, cancelButton, updateButton);
         onEscPressed(this, cancelButton::fire);
     }
 }
