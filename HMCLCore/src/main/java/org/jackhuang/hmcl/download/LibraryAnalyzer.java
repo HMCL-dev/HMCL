@@ -203,7 +203,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
                 return false;
             }
         },
-        LEGACY_FABRIC_API(false, "legacyfabric-api", "net.legacyfabric", "legacyfabric-api", null),
+        LEGACY_FABRIC_API(false, "legacyfabric-api", "net\\.legacyfabric", "legacyfabric-api", null),
         FABRIC(true, "fabric", "net\\.fabricmc", "fabric-loader", ModLoaderType.FABRIC) {
             @Override
             protected boolean matchLibrary(Library library, List<Library> libraries) {
