@@ -18,15 +18,19 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXListView;
+import com.jfoenix.controls.JFXTextField;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
+import javafx.geometry.Insets;
 import javafx.scene.Node;
+import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
+import javafx.scene.control.TextField;
+import javafx.scene.layout.*;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.ui.*;
@@ -41,6 +45,10 @@ import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.createSelectedItemPropertyFor;
@@ -53,6 +61,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
     private final ObjectProperty<Profile> selectedProfile;
 
     public GameListPage() {
+        TextField searchField = new JFXTextField();
         profileListItems = MappedObservableList.create(profilesProperty(), profile -> {
             ProfileListItem item = new ProfileListItem(profile);
             FXUtils.setLimitWidth(item, 200);
@@ -61,6 +70,30 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
         selectedProfile = createSelectedItemPropertyFor(profileListItems, Profile.class);
 
         GameList gameList = new GameList();
+
+        GridPane searchPane = new GridPane();
+        searchPane.getStyleClass().add("card");
+
+        searchField.setPromptText(i18n("search.enter"));
+
+        ColumnConstraints col1 = new ColumnConstraints();
+        col1.setHgrow(Priority.NEVER);
+
+        ColumnConstraints col2 = new ColumnConstraints();
+        col2.setHgrow(Priority.ALWAYS);
+
+        searchPane.getColumnConstraints().addAll(col1, col2);
+
+        searchPane.addRow(0, new Label(i18n("search")), searchField);
+
+        searchPane.setHgap(16);
+        searchPane.setVgap(10);
+        BorderPane.setMargin(searchPane, new Insets(10, 10, 0, 10));
+        BorderPane borderPane = new BorderPane();
+        borderPane.setTop(searchPane);
+
+        searchField.textProperty().addListener(i -> gameList.filter(searchField.getText()));
+
 
         {
             ScrollPane pane = new ScrollPane();
@@ -92,7 +125,9 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             setLeft(pane, bottomLeftCornerList);
         }
 
-        setCenter(gameList);
+        borderPane.setCenter(gameList);
+
+        setCenter(borderPane);
     }
 
     public ObjectProperty<Profile> selectedProfileProperty() {
@@ -123,7 +158,12 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
     private static class GameList extends ListPageBase<GameListItem> {
         private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
 
+        private final ObservableList<GameListItem> sourceList = FXCollections.observableArrayList();
+        private final FilteredList<GameListItem> filteredList = new FilteredList<>(sourceList);
+
         public GameList() {
+            setItems(filteredList);
+
             Profiles.registerVersionsListener(this::loadVersions);
 
             setOnFailedAction(e -> Controllers.navigate(Controllers.getDownloadPage()));
@@ -134,17 +174,40 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             listenerHolder.clear();
             setLoading(true);
             setFailedReason(null);
-            if (profile != Profiles.getSelectedProfile())
-                return;
 
-            ObservableList<GameListItem> children = FXCollections.observableList(profile.getRepository().getDisplayVersions()
+            List<GameListItem> versionItems = profile.getRepository().getDisplayVersions()
                     .map(instance -> new GameListItem(profile, instance.getId()))
-                    .toList());
-            setItems(children);
-            if (children.isEmpty()) {
+                    .toList();
+
+            sourceList.setAll(versionItems);
+
+            if (versionItems.isEmpty()) {
                 setFailedReason(i18n("version.empty.hint"));
             }
+
             setLoading(false);
+        }
+
+        public void filter(String searchText) {
+            filteredList.setPredicate(createPredicate(searchText));
+        }
+
+        private Predicate<GameListItem> createPredicate(String searchText) {
+            if (searchText == null || searchText.isEmpty()) {
+                return item -> true;
+            }
+
+            if (searchText.startsWith("regex:")) {
+                String regex = searchText.substring("regex:".length());
+                try {
+                    Pattern pattern = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
+                    return item -> pattern.matcher(item.id).find();
+                } catch (PatternSyntaxException e) {
+                    return item -> false;
+                }
+            } else {
+                return item -> item.id.toLowerCase(Locale.ROOT).contains(searchText.toLowerCase(Locale.ROOT));
+            }
         }
 
         public void refreshList() {
