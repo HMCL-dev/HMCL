@@ -256,10 +256,8 @@ public final class SettingsPage extends ScrollPane {
 
                 VBox left = new VBox();
                 Label title = new Label(i18n("settings.launcher.language"));
-                title.getStyleClass().add("title");
-                Label subtitle = new Label(i18n("settings.take_effect_after_restart"));
-                subtitle.getStyleClass().add("subtitle");
-                left.getChildren().setAll(title, subtitle);
+                left.getChildren().setAll(title);
+                left.setAlignment(Pos.CENTER_LEFT);
                 languagePane.setLeft(left);
 
                 SupportedLocale currentLocale = I18n.getLocale();
@@ -274,6 +272,11 @@ public final class SettingsPage extends ScrollPane {
                 }));
                 cboLanguage.getItems().setAll(SupportedLocale.getSupportedLocales());
                 selectedItemPropertyFor(cboLanguage).bindBidirectional(config().localizationProperty());
+                selectedItemPropertyFor(cboLanguage).addListener((observable, oldValue, newValue) -> {
+                    I18n.setLocale(newValue);
+                    Controllers.resetPages();
+                    Controllers.getDecorator().back();
+                });
 
                 FXUtils.setLimitWidth(cboLanguage, 300);
                 languagePane.setRight(cboLanguage);
