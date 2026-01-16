@@ -147,6 +147,18 @@ public final class World {
         return isLocked;
     }
 
+    public boolean supportsDatapacks() {
+        return getGameVersion() != null && getGameVersion().isAtLeast("1.13", "17w43a");
+    }
+
+    public boolean supportsQuickPlay() {
+        return getGameVersion() != null && getGameVersion().isAtLeast("1.20", "23w14a");
+    }
+
+    public static boolean supportsQuickPlay(GameVersionNumber gameVersionNumber) {
+        return gameVersionNumber != null && gameVersionNumber.isAtLeast("1.20", "23w14a");
+    }
+
     private void loadFromDirectory() throws IOException {
         fileName = FileUtils.getName(file);
         Path levelDat = file.resolve("level.dat");
@@ -367,21 +379,21 @@ public final class World {
         }
     }
 
-    public static Stream<World> getWorlds(Path savesDir) {
-        try {
-            if (Files.exists(savesDir)) {
-                return Files.list(savesDir).flatMap(world -> {
+    public static List<World> getWorlds(Path savesDir) {
+        if (Files.exists(savesDir)) {
+            try (Stream<Path> stream = Files.list(savesDir)) {
+                return stream.flatMap(world -> {
                     try {
                         return Stream.of(new World(world.toAbsolutePath()));
                     } catch (IOException e) {
                         LOG.warning("Failed to read world " + world, e);
                         return Stream.empty();
                     }
-                });
+                }).toList();
+            } catch (IOException e) {
+                LOG.warning("Failed to read saves", e);
             }
-        } catch (IOException e) {
-            LOG.warning("Failed to read saves", e);
         }
-        return Stream.empty();
+        return List.of();
     }
 }
