@@ -28,7 +28,19 @@ OpenJDK 64-Bit Server VM (build 25+37-LTS, mixed mode, sharing)
 </details>
 
 <details>
-<summary>Linux/macOS/FreeBSD</summary>
+<summary>macOS</summary>
+
+```
+> /usr/libexec/java_home --exec java -version
+openjdk version "25" 2025-09-16 LTS
+OpenJDK Runtime Environment (build 25+37-LTS)
+OpenJDK 64-Bit Server VM (build 25+37-LTS, mixed mode, sharing)
+```
+
+</details>
+
+<details>
+<summary>Linux/FreeBSD</summary>
 
 ```
 > $JAVA_HOME/bin/java -version
