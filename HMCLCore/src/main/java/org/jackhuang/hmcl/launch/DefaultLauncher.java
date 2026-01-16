@@ -397,9 +397,12 @@ public class DefaultLauncher extends Launcher {
             for (Library library : version.getLibraries())
                 if (library.isNative())
                     new Unzipper(repository.getLibraryFile(version, library), destination)
-                            .setFilter((zipEntry, isDirectory, destFile, path) -> {
-                                if (!isDirectory && Files.isRegularFile(destFile) && Files.size(destFile) == Files.size(zipEntry))
+                            .setFilter((zipEntry, destFile, relativePath) -> {
+                                if (!zipEntry.isDirectory() && !zipEntry.isUnixSymlink()
+                                        && Files.isRegularFile(destFile)
+                                        && zipEntry.getSize() == Files.size(destFile)) {
                                     return false;
+                                }
                                 String ext = FileUtils.getExtension(destFile);
                                 if (ext.equals("sha1") || ext.equals("git"))
                                     return false;
@@ -411,7 +414,7 @@ public class DefaultLauncher extends Launcher {
                                     return false;
                                 }
 
-                                return library.getExtract().shouldExtract(path);
+                                return library.getExtract().shouldExtract(relativePath);
                             })
                             .setReplaceExistentFile(false).unzip();
         } catch (IOException e) {

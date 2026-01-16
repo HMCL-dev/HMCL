@@ -12,6 +12,7 @@ import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
+import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.VPos;
@@ -23,6 +24,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 
 public class JFXRadioButtonSkin extends RadioButtonSkin {
@@ -58,7 +60,12 @@ public class JFXRadioButtonSkin extends RadioButtonSkin {
         AnchorPane.setRightAnchor(this.rippler, this.labelOffset);
 
         this.updateChildren();
-        control.focusedProperty().addListener((o, oldVal, newVal) -> {
+        ReadOnlyBooleanProperty focusVisibleProperty = FXUtils.focusVisibleProperty(control);
+        if (focusVisibleProperty == null) {
+            focusVisibleProperty = control.focusedProperty();
+        }
+
+        focusVisibleProperty.addListener((o, oldVal, newVal) -> {
             if (newVal) {
                 if (!this.getSkinnable().isPressed()) {
                     this.rippler.showOverlay();
@@ -66,7 +73,6 @@ public class JFXRadioButtonSkin extends RadioButtonSkin {
             } else {
                 this.rippler.hideOverlay();
             }
-
         });
         control.pressedProperty().addListener((o, oldVal, newVal) -> this.rippler.hideOverlay());
         this.registerChangeListener(control.selectedColorProperty(), ignored -> updateColors());

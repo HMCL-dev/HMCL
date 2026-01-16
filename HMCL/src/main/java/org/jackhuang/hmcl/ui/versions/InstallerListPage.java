@@ -165,7 +165,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
         executor.start();
     }
 
-    private class InstallerListPageSkin extends ToolbarListPageSkin<InstallerListPage> {
+    private class InstallerListPageSkin extends ToolbarListPageSkin<InstallerItem, InstallerListPage> {
 
         InstallerListPageSkin() {
             super(InstallerListPage.this);

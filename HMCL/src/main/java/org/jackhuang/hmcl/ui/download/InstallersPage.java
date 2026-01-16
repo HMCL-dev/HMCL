@@ -50,7 +50,7 @@ public class InstallersPage extends AbstractInstallersPage {
 
     @Override
     public String getTitle() {
-        return group.getGame().versionProperty().get().getVersion();
+        return group.getGame().versionProperty().get().version();
     }
 
     private String getVersion(String id) {
@@ -111,7 +111,7 @@ public class InstallersPage extends AbstractInstallersPage {
     }
 
     private void setTxtNameWithLoaders() {
-        StringBuilder nameBuilder = new StringBuilder(group.getGame().versionProperty().get().getVersion());
+        StringBuilder nameBuilder = new StringBuilder(group.getGame().versionProperty().get().version());
 
         for (InstallerItem library : group.getLibraries()) {
             String libraryId = library.getLibraryId().replace(LibraryAnalyzer.LibraryType.MINECRAFT.getPatchId(), "");
