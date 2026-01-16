@@ -158,8 +158,8 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         return state;
     }
 
-    public void changeState(State state) {
-        this.state.set(state);
+    public void changeStateTitle(String title) {
+        this.state.set(new DecoratorPage.State(title, null, true, true, true));
     }
 
     public World getWorld() {

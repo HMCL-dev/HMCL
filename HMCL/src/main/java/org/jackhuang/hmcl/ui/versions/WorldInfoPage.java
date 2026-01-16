@@ -36,7 +36,6 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
-import org.glavo.png.javafx.PNGJavaFXUtils;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -44,7 +43,6 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
-import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -117,7 +115,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                         if (!newValue && StringUtils.isNotBlank(worldNameField.getText())) {
                             try {
                                 world.setWorldName(worldNameField.getText());
-                                worldManagePage.changeState(new DecoratorPage.State(i18n("world.manage.title", StringUtils.parseColorEscapes(world.getWorldName())), null, true, true, true));
+                                worldManagePage.changeStateTitle(i18n("world.manage.title", StringUtils.parseColorEscapes(world.getWorldName())));
                             } catch (Exception e) {
                                 LOG.warning("Failed to set world name", e);
                             }
@@ -677,16 +675,16 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
         }
         if ((int) image.getWidth() == 64 && (int) image.getHeight() == 64) {
             Path output = world.getFile().resolve("icon.png");
-            saveImage(image, output);
+            saveWorldIcon(iconPath, image, output);
         } else {
             Controllers.dialog(i18n("world.icon.change.fail.not_64x64.text", (int) image.getWidth(), (int) image.getHeight()), i18n("world.icon.change.fail.not_64x64.title"), MessageDialogPane.MessageType.ERROR);
         }
     }
 
-    private void saveImage(Image image, Path path) {
+    private void saveWorldIcon(Path sourcePath, Image image, Path targetPath) {
         Image oldImage = iconImageView.getImage();
         try {
-            PNGJavaFXUtils.writeImage(image, path);
+            FileUtils.copyFile(sourcePath, targetPath);
             iconImageView.setImage(image);
             Controllers.showToast(i18n("world.icon.change.succeed.toast"));
         } catch (IOException e) {
