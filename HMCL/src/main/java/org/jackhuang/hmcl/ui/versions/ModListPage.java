@@ -31,6 +31,7 @@ import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.CommonListPage;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.ListPageBase;
@@ -49,7 +50,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObject> implements VersionPage.VersionLoadable, PageAware {
+public final class ModListPage extends CommonListPage<ModListPageSkin.ModInfoObject> implements VersionPage.VersionLoadable, PageAware {
     private final BooleanProperty modded = new SimpleBooleanProperty(this, "modded", false);
 
     private final ReentrantLock lock = new ReentrantLock();
@@ -58,6 +59,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     private Profile profile;
     private String instanceId;
     private String gameVersion;
+    private ObservableList<ModListPageSkin.ModInfoObject> modList;
 
     final EnumSet<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
 
@@ -114,10 +116,10 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
             updateSupportedLoaders(modManager);
 
             if (exception == null) {
-                getItems().setAll(list);
+                modList.setAll(list);
             } else {
                 LOG.warning("Failed to load mods", exception);
-                getItems().clear();
+                modList.clear();
             }
             setLoading(false);
         }, Schedulers.javafx());
@@ -293,5 +295,13 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
 
     public String getInstanceId() {
         return this.instanceId;
+    }
+
+    public ObservableList<ModListPageSkin.ModInfoObject> getModList() {
+        return modList;
+    }
+
+    public void setModList(ObservableList<ModListPageSkin.ModInfoObject> modList) {
+        this.modList = modList;
     }
 }

@@ -23,9 +23,10 @@ import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.mod.Datapack;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.CommonListPage;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.ListPageBase;
+import org.jackhuang.hmcl.ui.ListPage;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
@@ -42,14 +43,15 @@ import java.util.regex.Pattern;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.DatapackInfoObject> {
+public final class DatapackListPage extends CommonListPage<DatapackListPageSkin.DatapackInfoObject> {
     private final Path worldDir;
     private final Datapack datapack;
+    private final ObservableList<DatapackListPageSkin.DatapackInfoObject> allDataPackObjects;
 
     public DatapackListPage(WorldManagePage worldManagePage) {
         this.worldDir = worldManagePage.getWorld().getFile();
         datapack = new Datapack(worldDir.resolve("datapacks"));
-        setItems(MappedObservableList.create(datapack.getPacks(), DatapackListPageSkin.DatapackInfoObject::new));
+        allDataPackObjects = MappedObservableList.create(datapack.getPacks(), DatapackListPageSkin.DatapackInfoObject::new);
         FXUtils.applyDragListener(this, it -> Objects.equals("zip", FileUtils.getExtension(it)),
                 mods -> mods.forEach(this::installSingleDatapack), this::refresh);
 
@@ -141,5 +143,9 @@ public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.Da
             String description = dataPack.getPackInfo().getDescription().toString();
             return stringPredicate.test(id) || stringPredicate.test(description);
         };
+    }
+
+    public ObservableList<DatapackListPageSkin.DatapackInfoObject> getAllDataPackObjects() {
+        return allDataPackObjects;
     }
 }
