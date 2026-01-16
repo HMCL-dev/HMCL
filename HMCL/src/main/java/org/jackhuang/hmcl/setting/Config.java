@@ -207,6 +207,21 @@ public final class Config extends ObservableSetting {
         this.promptedVersion.set(promptedVersion);
     }
 
+    @SerializedName("translateModDescription")
+    private final BooleanProperty translateModDescription = new SimpleBooleanProperty(false);
+
+    public BooleanProperty autoTranslateModDescriptionProperty() {
+        return translateModDescription;
+    }
+
+    public boolean getmodDescriptionTranslation() {
+        return translateModDescription.get();
+    }
+
+    public void setmodDescriptionTranslation(boolean translateModDescription) {
+        this.translateModDescription.set(translateModDescription);
+    }
+
     @SerializedName("acceptPreviewUpdate")
     private final BooleanProperty acceptPreviewUpdate = new SimpleBooleanProperty(false);
 
