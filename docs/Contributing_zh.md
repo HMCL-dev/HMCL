@@ -8,7 +8,7 @@
 
 ### 环境需求
 
-构建 HMCL 启动器需要安装 JDK 17 (或更高版本)。你可以从此处下载它: [Download Liberica JDK](https://bell-sw.com/pages/downloads/#jdk-25-lts)。
+构建 HMCL 启动器需要安装 JDK 17 (或更高版本)。你可以从此处下载它(注意安装Full JDK): [Download Liberica JDK](https://bell-sw.com/pages/downloads/#jdk-25-lts)。
 
 在安装 JDK 后，请确保 `JAVA_HOME` 环境变量指向符合需求的 JDK 目录。
 你可以这样查看 `JAVA_HOME` 指向的 JDK 版本:
