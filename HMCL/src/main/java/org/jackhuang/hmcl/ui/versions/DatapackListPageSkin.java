@@ -31,7 +31,6 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
@@ -40,7 +39,10 @@ import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.mod.Datapack;
 import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.ui.*;
+import org.jackhuang.hmcl.ui.CommonListPageSkin;
+import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.MDListCell;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
@@ -97,13 +99,13 @@ final class DatapackListPageSkin extends CommonListPageSkin<DatapackListPageSkin
             selectingToolbar.getChildren().addAll(
                     createToolbarButton2(i18n("button.remove"), SVG.DELETE, () -> {
                         Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
-                            skinnable.removeSelected(getSelectedItem());
+                            skinnable.removeSelected(getSelectedItems());
                         }, null);
                     }),
                     createToolbarButton2(i18n("mods.enable"), SVG.CHECK, () ->
-                            skinnable.enableSelected(getSelectedItem())),
+                            skinnable.enableSelected(getSelectedItems())),
                     createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () ->
-                            skinnable.disableSelected(getSelectedItem())),
+                            skinnable.disableSelected(getSelectedItems())),
                     createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () ->
                             listView.getSelectionModel().selectRange(0, listView.getItems().size())),//reason for not using selectAll() is that selectAll() first clears all selected then selects all, causing the toolbar to flicker
                     createToolbarButton2(i18n("button.cancel"), SVG.CANCEL, () ->
