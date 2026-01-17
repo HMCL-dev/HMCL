@@ -142,6 +142,7 @@ final class DatapackListPageSkin extends CommonListPageSkin<DatapackListPageSkin
         }
     }
 
+    @Override
     public CommonMDListCell<DatapackInfoObject> listCell(JFXListView<DatapackListPageSkin.DatapackInfoObject> listView) {
         return new DatapackInfoListCell(listView);
     }

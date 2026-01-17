@@ -136,7 +136,23 @@ public abstract class CommonListPageSkin<T> extends SkinBase<CommonListPage<T>> 
         return listView.getSelectionModel().selectedItemProperty();
     }
 
-    public abstract CommonMDListCell<T> listCell(JFXListView<T> listView);
+    // Override this method to customize the cell rendering.
+    // Default: Renders the item as a Node if possible.
+    public CommonMDListCell<T> listCell(JFXListView<T> listView) {
+        return new CommonMDListCell<>(listView) {
+            @Override
+            protected void updateControl(T item, boolean empty) {
+                super.updateItem(item, empty);
+                if (!empty && item instanceof Node node) {
+                    setGraphic(node);
+                    setText(null);
+                } else {
+                    setGraphic(null);
+                    setText(null);
+                }
+            }
+        };
+    }
 
     private ListCell<T> createListCell(JFXListView<T> listView) {
         CommonMDListCell<T> commonMDListCell = listCell(listView);
