@@ -534,11 +534,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 } else if (version.getChangelog() != null) {
                     changelog = StringUtils.nullIfBlank(version.getChangelog());
                 } else {
-                    try {
-                        changelog = StringUtils.nullIfBlank(selfPage.repository.getModChangelog(version.getModid(), version.getVersionId()));
-                    } catch (UnsupportedOperationException e) {
-                        changelog = Optional.empty();
-                    }
+                    changelog = StringUtils.nullIfBlank(selfPage.repository.getModChangelog(version.getModid(), version.getVersionId()));
                 }
 
                 EnumMap<RemoteMod.DependencyType, List<Node>> dependencies = new EnumMap<>(RemoteMod.DependencyType.class);

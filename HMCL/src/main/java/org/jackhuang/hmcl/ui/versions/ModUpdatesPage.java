@@ -44,6 +44,7 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.CSVTable;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
+import java.io.FileNotFoundException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
@@ -417,11 +418,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                 if (version.getChangelog() != null) {
                     return StringUtils.nullIfBlank(version.getChangelog());
                 }
-                try {
-                    return StringUtils.nullIfBlank(repository.getModChangelog(version.getModid(), version.getVersionId()));
-                } catch (UnsupportedOperationException e) {
-                    return Optional.<String>empty();
-                }
+                return StringUtils.nullIfBlank(repository.getModChangelog(version.getModid(), version.getVersionId()));
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
                     result.map(StringUtils::markdownToHTML).ifPresent(s -> {

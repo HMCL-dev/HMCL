@@ -163,8 +163,14 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     }
 
     @Override
-    public String getModChangelog(String modId, String fileId) throws IOException {
-        throw new UnsupportedOperationException();
+    public String getModChangelog(String modId, String versionId) throws IOException {
+        SEMAPHORE.acquireUninterruptibly();
+        try {
+            ProjectVersion version = HttpRequest.GET(PREFIX + "/v2/version/" + versionId).getJson(ProjectVersion.class);
+            return version.getChangelog();
+        } finally {
+            SEMAPHORE.release();
+        }
     }
 
     @Override
