@@ -1,3 +1,20 @@
+/*
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2026  huangyuhui <huanghongxun2008@126.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXListView;
@@ -15,8 +32,8 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
+import org.jackhuang.hmcl.ui.construct.CommonMDListCell;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.MDListCell;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -33,8 +50,9 @@ public abstract class CommonListPageSkin<T> extends SkinBase<CommonListPage<T>> 
     private final AtomicBoolean requestMenu = new AtomicBoolean(false);
     private final Consumer<Integer> toggleSelect;
 
-    public CommonListPageSkin(CommonListPage<T> skinnable) {
+    public CommonListPageSkin(CommonListPage<T> skinnable, CommonListPage.SelectionType selectionType) {
         super(skinnable);
+        skinnable.setSelectionType(selectionType);
 
         toggleSelect = i -> {
             if (listView.getSelectionModel().isSelected(i)) {
@@ -80,7 +98,11 @@ public abstract class CommonListPageSkin<T> extends SkinBase<CommonListPage<T>> 
                 // ListViewBehavior would consume ESC pressed event, preventing us from handling it, so we ignore it here
                 FXUtils.ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
                 listView.setCellFactory(listView -> createListCell(getListView()));
-                listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+                if (skinnable.getSelectionType() == CommonListPage.SelectionType.MULTIPLE) {
+                    listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+                } else {
+                    listView.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
+                }
                 this.listView.itemsProperty().bind(skinnable.itemsProperty());
                 center.setContent(listView);
             }
@@ -114,16 +136,29 @@ public abstract class CommonListPageSkin<T> extends SkinBase<CommonListPage<T>> 
         return listView.getSelectionModel().selectedItemProperty();
     }
 
-    public abstract MDListCell<T> listCell(JFXListView<T> listView);
+    public abstract CommonMDListCell<T> listCell(JFXListView<T> listView);
 
     private ListCell<T> createListCell(JFXListView<T> listView) {
-        MDListCell<T> mdListCell = listCell(listView);
-        mdListCell.addCellEventHandler(MouseEvent.MOUSE_PRESSED, mouseEvent -> handleSelect(mdListCell, mouseEvent));
-        mdListCell.addCellEventHandler(MouseEvent.MOUSE_RELEASED, mouseEvent -> handleRelease(mdListCell, mouseEvent));
-        return mdListCell;
+        CommonMDListCell<T> commonMDListCell = listCell(listView);
+        switch (getSkinnable().getSelectionType()) {
+            case SINGLE -> {
+                commonMDListCell.addCellEventHandler(MouseEvent.MOUSE_PRESSED, mouseEvent -> handleSingleSelect(commonMDListCell, mouseEvent));
+            }
+            case MULTIPLE -> {
+                commonMDListCell.addCellEventHandler(MouseEvent.MOUSE_PRESSED, mouseEvent -> handleMultipleSelect(commonMDListCell, mouseEvent));
+                commonMDListCell.addCellEventHandler(MouseEvent.MOUSE_RELEASED, mouseEvent -> handleMultipleRelease(commonMDListCell, mouseEvent));
+            }
+            case NONE -> {
+                commonMDListCell.addCellEventHandler(MouseEvent.MOUSE_PRESSED, mouseEvent -> handleNoneSelect(commonMDListCell, mouseEvent));
+            }
+        }
+        if (getSkinnable().getSelectionType() != CommonListPage.SelectionType.NONE) {
+            commonMDListCell.setSelectable();
+        }
+        return commonMDListCell;
     }
 
-    private void handleSelect(ListCell<?> cell, MouseEvent mouseEvent) {
+    private void handleMultipleSelect(ListCell<?> cell, MouseEvent mouseEvent) {
         if (cell.isEmpty()) {
             mouseEvent.consume();
             return;
@@ -152,7 +187,22 @@ public abstract class CommonListPageSkin<T> extends SkinBase<CommonListPage<T>> 
         mouseEvent.consume();
     }
 
-    private void handleRelease(ListCell<T> cell, MouseEvent mouseEvent) {
+    private void handleSingleSelect(ListCell<?> cell, MouseEvent mouseEvent) {
+        if (cell.isSelected()) {
+            listView.getSelectionModel().clearSelection();
+        } else {
+            listView.getSelectionModel().select(cell.getIndex());
+        }
+        cell.requestFocus();
+        mouseEvent.consume();
+    }
+
+    private void handleNoneSelect(ListCell<?> cell, MouseEvent mouseEvent) {
+        cell.requestFocus();
+        mouseEvent.consume();
+    }
+
+    private void handleMultipleRelease(ListCell<T> cell, MouseEvent mouseEvent) {
         if (!requestMenu.get()) {
             return;
         }

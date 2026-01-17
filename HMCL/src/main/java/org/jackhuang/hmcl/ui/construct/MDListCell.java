@@ -20,9 +20,6 @@ package org.jackhuang.hmcl.ui.construct;
 import com.jfoenix.controls.JFXListView;
 import javafx.beans.binding.DoubleBinding;
 import javafx.css.PseudoClass;
-import javafx.event.Event;
-import javafx.event.EventHandler;
-import javafx.event.EventType;
 import javafx.scene.control.ListCell;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
@@ -74,10 +71,6 @@ public abstract class MDListCell<T> extends ListCell<T> {
         FXUtils.onChangeAndOperate(selectedProperty(), selected -> {
             root.pseudoClassStateChanged(SELECTED, selected);
         });
-    }
-
-    public <N extends Event> void addCellEventHandler(EventType<N> eventType, EventHandler<? super N> eventHandler) {
-        getContainer().getParent().addEventHandler(eventType, eventHandler);
     }
 
     protected abstract void updateControl(T item, boolean empty);

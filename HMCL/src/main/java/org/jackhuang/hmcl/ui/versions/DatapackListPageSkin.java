@@ -39,11 +39,8 @@ import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.mod.Datapack;
 import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.ui.CommonListPageSkin;
-import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.construct.MDListCell;
+import org.jackhuang.hmcl.ui.*;
+import org.jackhuang.hmcl.ui.construct.CommonMDListCell;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jetbrains.annotations.Nullable;
@@ -66,7 +63,6 @@ final class DatapackListPageSkin extends CommonListPageSkin<DatapackListPageSkin
     private final HBox selectingToolbar;
     InvalidationListener updateBarByStateWeakListener;
 
-    private final JFXListView<DatapackInfoObject> listView = getListView();
     private final FilteredList<DatapackInfoObject> filteredList;
 
     private final BooleanProperty isSearching = new SimpleBooleanProperty(false);
@@ -74,7 +70,7 @@ final class DatapackListPageSkin extends CommonListPageSkin<DatapackListPageSkin
     private final JFXTextField searchField;
 
     DatapackListPageSkin(DatapackListPage skinnable) {
-        super(skinnable);
+        super(skinnable, CommonListPage.SelectionType.SINGLE);
         filteredList = new FilteredList<>(skinnable.getAllDataPackObjects());
         skinnable.setItems(filteredList);
         skinnable.setOnSingleCellMenuRequest(event -> {
@@ -107,9 +103,9 @@ final class DatapackListPageSkin extends CommonListPageSkin<DatapackListPageSkin
                     createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () ->
                             skinnable.disableSelected(getSelectedItems())),
                     createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () ->
-                            listView.getSelectionModel().selectRange(0, listView.getItems().size())),//reason for not using selectAll() is that selectAll() first clears all selected then selects all, causing the toolbar to flicker
+                            getListView().getSelectionModel().selectRange(0, getListView().getItems().size())),//reason for not using selectAll() is that selectAll() first clears all selected then selects all, causing the toolbar to flicker
                     createToolbarButton2(i18n("button.cancel"), SVG.CANCEL, () ->
-                            listView.getSelectionModel().clearSelection())
+                            getListView().getSelectionModel().clearSelection())
             );
 
             searchBar.setAlignment(Pos.CENTER);
@@ -146,7 +142,7 @@ final class DatapackListPageSkin extends CommonListPageSkin<DatapackListPageSkin
         }
     }
 
-    public MDListCell<DatapackListPageSkin.DatapackInfoObject> listCell(JFXListView<DatapackListPageSkin.DatapackInfoObject> listView) {
+    public CommonMDListCell<DatapackInfoObject> listCell(JFXListView<DatapackListPageSkin.DatapackInfoObject> listView) {
         return new DatapackInfoListCell(listView);
     }
 
@@ -241,7 +237,7 @@ final class DatapackListPageSkin extends CommonListPageSkin<DatapackListPageSkin
         }
     }
 
-    private final class DatapackInfoListCell extends MDListCell<DatapackInfoObject> {
+    private final class DatapackInfoListCell extends CommonMDListCell<DatapackInfoObject> {
         final JFXCheckBox checkBox = new JFXCheckBox();
         ImageView imageView = new ImageView();
         final TwoLineListItem content = new TwoLineListItem();
@@ -255,7 +251,6 @@ final class DatapackListPageSkin extends CommonListPageSkin<DatapackListPageSkin
             container.setAlignment(Pos.CENTER_LEFT);
             HBox.setHgrow(content, Priority.ALWAYS);
             content.setMouseTransparent(true);
-            setSelectable();
 
             imageView.setFitWidth(32);
             imageView.setFitHeight(32);
