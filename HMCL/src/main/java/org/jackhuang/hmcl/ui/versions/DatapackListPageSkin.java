@@ -72,6 +72,9 @@ final class DatapackListPageSkin extends CommonListPageSkin<DatapackListPageSkin
         super(skinnable);
         filteredList = new FilteredList<>(skinnable.getAllDataPackObjects());
         skinnable.setItems(filteredList);
+        skinnable.setOnSingleCellMenuRequest((event) -> {
+            LOG.trace("onSingleCellMenuRequest");
+        });
 
         {
             searchBar = new HBox();

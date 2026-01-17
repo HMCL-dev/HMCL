@@ -111,14 +111,6 @@ public abstract class CommonListPageSkin<T> extends SkinBase<CommonListPage<T>> 
         }
     }
 
-    private void toggleSelect(int index) {
-        if (listView.getSelectionModel().isSelected(index)) {
-            listView.getSelectionModel().clearSelection(index);
-        } else {
-            listView.getSelectionModel().select(index);
-        }
-    }
-
     public void setToolbar(Node toolbar) {
         Node oldToolbar = getToolBar().getCurrentNode();
         if (toolbar != oldToolbar) {
@@ -165,6 +157,7 @@ public abstract class CommonListPageSkin<T> extends SkinBase<CommonListPage<T>> 
         switch (getSkinnable().getSelectionType()) {
             case SINGLE -> {
                 commonMDListCell.addCellEventHandler(MouseEvent.MOUSE_PRESSED, mouseEvent -> handleSingleSelect(commonMDListCell, mouseEvent));
+                commonMDListCell.addCellEventHandler(MouseEvent.MOUSE_RELEASED, mouseEvent -> handleSingleRelease(commonMDListCell, mouseEvent));
             }
             case MULTIPLE -> {
                 commonMDListCell.addCellEventHandler(MouseEvent.MOUSE_PRESSED, mouseEvent -> handleMultipleSelect(commonMDListCell, mouseEvent));
@@ -178,6 +171,14 @@ public abstract class CommonListPageSkin<T> extends SkinBase<CommonListPage<T>> 
             commonMDListCell.setSelectable();
         }
         return commonMDListCell;
+    }
+
+    private void toggleSelect(int index) {
+        if (listView.getSelectionModel().isSelected(index)) {
+            listView.getSelectionModel().clearSelection(index);
+        } else {
+            listView.getSelectionModel().select(index);
+        }
     }
 
     private void handleMultipleSelect(ListCell<?> cell, MouseEvent mouseEvent) {
@@ -210,7 +211,13 @@ public abstract class CommonListPageSkin<T> extends SkinBase<CommonListPage<T>> 
     }
 
     private void handleSingleSelect(ListCell<?> cell, MouseEvent mouseEvent) {
-        if (cell.isSelected()) {
+        if (cell.isEmpty()) {
+            mouseEvent.consume();
+            return;
+        }
+        if (mouseEvent.isSecondaryButtonDown()) {
+            requestMenu.set(true);
+        } else if (cell.isSelected()) {
             listView.getSelectionModel().clearSelection();
         } else {
             listView.getSelectionModel().select(cell.getIndex());
@@ -243,6 +250,13 @@ public abstract class CommonListPageSkin<T> extends SkinBase<CommonListPage<T>> 
             }
         }
         requestMenu.set(false);
+    }
+
+    private void handleSingleRelease(ListCell<T> cell, MouseEvent mouseEvent) {
+        if (!requestMenu.get()) {
+            return;
+        }
+        getSkinnable().fireEvent(new CommonListPage.CellMenuRequestEvent<>(CommonListPage.CellMenuRequestEvent.SINGLE_CELL, cell, listView));
     }
 
     public static Node wrap(Node node) {
