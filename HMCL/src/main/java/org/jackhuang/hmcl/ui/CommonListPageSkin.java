@@ -66,6 +66,7 @@ public abstract class CommonListPageSkin<T>  extends SkinBase<CommonListPage<T>>
             });
         }
         {
+            toolbarPane.disableProperty().bind(skinnable.loadingProperty());
             SpinnerPane center = new SpinnerPane();
             {
                 ComponentList.setVgrow(center, Priority.ALWAYS);
@@ -73,9 +74,8 @@ public abstract class CommonListPageSkin<T>  extends SkinBase<CommonListPage<T>>
                 center.loadingProperty().bind(skinnable.loadingProperty());
                 center.failedReasonProperty().bind(skinnable.failedReasonProperty());
                 center.onFailedActionProperty().bind(skinnable.onFailedActionProperty());
-            }
-            {
-                toolbarPane.disableProperty().bind(skinnable.loadingProperty());
+
+                root.getContent().addAll(toolbarPane, center);
             }
             {
                 // ListViewBehavior would consume ESC pressed event, preventing us from handling it, so we ignore it here
@@ -84,7 +84,6 @@ public abstract class CommonListPageSkin<T>  extends SkinBase<CommonListPage<T>>
                 listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
                 Bindings.bindContent(this.listView.getItems(), skinnable.itemsProperty());
                 center.setContent(listView);
-                root.getContent().addAll(toolbarPane, center);
             }
         }
     }
