@@ -300,7 +300,7 @@ public class InstallerItem extends Control {
             }
             pane.getStyleClass().add("installer-item");
             RipplerContainer container = new RipplerContainer(pane);
-            container.setPosition(JFXRippler.RipplerPos.FRONT);
+            if (control.style == Style.CARD) container.setPosition(JFXRippler.RipplerPos.FRONT);
             getChildren().setAll(container);
 
             pane.pseudoClassStateChanged(LIST_ITEM, control.style == Style.LIST_ITEM);
