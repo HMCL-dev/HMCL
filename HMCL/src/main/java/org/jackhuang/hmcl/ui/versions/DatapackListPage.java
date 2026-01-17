@@ -53,6 +53,7 @@ public final class DatapackListPage extends CommonListPage<DatapackListPageSkin.
         allDataPackObjects = MappedObservableList.create(datapack.getPacks(), DatapackListPageSkin.DatapackInfoObject::new);
         FXUtils.applyDragListener(this, it -> Objects.equals("zip", FileUtils.getExtension(it)),
                 mods -> mods.forEach(this::installSingleDatapack), this::refresh);
+        setSelectionType(SelectionType.MULTIPLE);
 
         refresh();
     }

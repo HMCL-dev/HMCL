@@ -69,15 +69,9 @@ final class DatapackListPageSkin extends CommonListPageSkin<DatapackListPageSkin
     private final JFXTextField searchField;
 
     DatapackListPageSkin(DatapackListPage skinnable) {
-        super(skinnable, CommonListPage.SelectionType.MULTIPLE);
+        super(skinnable);
         filteredList = new FilteredList<>(skinnable.getAllDataPackObjects());
         skinnable.setItems(filteredList);
-        skinnable.setOnSingleCellMenuRequest(event -> {
-            LOG.trace("CellMenuRequestEvent.SINGLE_CELL received");
-            if (event.getListCell() instanceof DatapackInfoListCell datapackInfoListCell) {
-                LOG.trace("DatapackListPageSkin::updateBarByStateWeakListener");
-            }
-        });
 
         {
             searchBar = new HBox();

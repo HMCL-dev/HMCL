@@ -43,7 +43,6 @@ public class CommonListPage<T> extends ListPageBase<T> {
                     setEventHandler(CellMenuRequestEvent.SINGLE_CELL, get());
                 }
             };
-
         }
         return onSingleCellMenuRequest;
     }
@@ -86,7 +85,7 @@ public class CommonListPage<T> extends ListPageBase<T> {
         this.selectionType = selectionType;
     }
 
-    public static class CellMenuRequestEvent<T> extends Event {
+    public static final class CellMenuRequestEvent<T> extends Event {
 
         public static final EventType<CellMenuRequestEvent<?>> ANY =
                 new EventType<>(Event.ANY, "CELL_MENU_REQUEST");

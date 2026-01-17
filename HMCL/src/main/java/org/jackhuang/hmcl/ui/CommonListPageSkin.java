@@ -50,19 +50,19 @@ public abstract class CommonListPageSkin<T> extends SkinBase<CommonListPage<T>> 
 
     private final AtomicInteger lastNotShiftClickIndex = new AtomicInteger(-1);
     private final AtomicBoolean requestMenu = new AtomicBoolean(false);
-    private final Consumer<Integer> toggleSelect;
+
+    public CommonListPageSkin(CommonListPage<T> skinnable) {
+        super(skinnable);
+        initPane();
+    }
 
     public CommonListPageSkin(CommonListPage<T> skinnable, CommonListPage.SelectionType selectionType) {
         super(skinnable);
         skinnable.setSelectionType(selectionType);
+        initPane();
+    }
 
-        toggleSelect = i -> {
-            if (listView.getSelectionModel().isSelected(i)) {
-                listView.getSelectionModel().clearSelection(i);
-            } else {
-                listView.getSelectionModel().select(i);
-            }
-        };
+    private void initPane() {
 
         StackPane pagePane = new StackPane();
         {
@@ -85,14 +85,14 @@ public abstract class CommonListPageSkin<T> extends SkinBase<CommonListPage<T>> 
             });
         }
         {
-            toolbarPane.disableProperty().bind(skinnable.loadingProperty());
+            toolbarPane.disableProperty().bind(getSkinnable().loadingProperty());
             SpinnerPane center = new SpinnerPane();
             {
                 ComponentList.setVgrow(center, Priority.ALWAYS);
                 center.getStyleClass().add("large-spinner-pane");
-                center.loadingProperty().bind(skinnable.loadingProperty());
-                center.failedReasonProperty().bind(skinnable.failedReasonProperty());
-                center.onFailedActionProperty().bind(skinnable.onFailedActionProperty());
+                center.loadingProperty().bind(getSkinnable().loadingProperty());
+                center.failedReasonProperty().bind(getSkinnable().failedReasonProperty());
+                center.onFailedActionProperty().bind(getSkinnable().onFailedActionProperty());
 
                 rootPane.getContent().addAll(toolbarPane, center);
             }
@@ -100,14 +100,22 @@ public abstract class CommonListPageSkin<T> extends SkinBase<CommonListPage<T>> 
                 // ListViewBehavior would consume ESC pressed event, preventing us from handling it, so we ignore it here
                 FXUtils.ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
                 listView.setCellFactory(listView -> createListCell(getListView()));
-                if (skinnable.getSelectionType() == CommonListPage.SelectionType.MULTIPLE) {
+                if (getSkinnable().getSelectionType() == CommonListPage.SelectionType.MULTIPLE) {
                     listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
                 } else {
                     listView.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
                 }
-                this.listView.itemsProperty().bind(skinnable.itemsProperty());
+                this.listView.itemsProperty().bind(getSkinnable().itemsProperty());
                 center.setContent(listView);
             }
+        }
+    }
+
+    private void toggleSelect(int index) {
+        if (listView.getSelectionModel().isSelected(index)) {
+            listView.getSelectionModel().clearSelection(index);
+        } else {
+            listView.getSelectionModel().select(index);
         }
     }
 
@@ -194,7 +202,7 @@ public abstract class CommonListPageSkin<T> extends SkinBase<CommonListPage<T>> 
                 listView.getSelectionModel().select(currentIndex);
             }
         } else {
-            toggleSelect.accept(cell.getIndex());
+            toggleSelect(cell.getIndex());
             lastNotShiftClickIndex.set(currentIndex);
         }
         cell.requestFocus();
