@@ -52,7 +52,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 
-import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -70,7 +69,7 @@ final class DatapackListPageSkin extends CommonListPageSkin<DatapackListPageSkin
     private final JFXTextField searchField;
 
     DatapackListPageSkin(DatapackListPage skinnable) {
-        super(skinnable, CommonListPage.SelectionType.SINGLE);
+        super(skinnable, CommonListPage.SelectionType.MULTIPLE);
         filteredList = new FilteredList<>(skinnable.getAllDataPackObjects());
         skinnable.setItems(filteredList);
         skinnable.setOnSingleCellMenuRequest(event -> {
@@ -86,25 +85,25 @@ final class DatapackListPageSkin extends CommonListPageSkin<DatapackListPageSkin
             selectingToolbar = new HBox();
 
             normalToolbar.getChildren().addAll(
-                    createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
-                    createToolbarButton2(i18n("datapack.add"), SVG.ADD, skinnable::add),
-                    createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, skinnable::openDataPackFolder),
-                    createToolbarButton2(i18n("search"), SVG.SEARCH, () -> isSearching.set(true))
+                    createToolbarButton(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
+                    createToolbarButton(i18n("datapack.add"), SVG.ADD, skinnable::add),
+                    createToolbarButton(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, skinnable::openDataPackFolder),
+                    createToolbarButton(i18n("search"), SVG.SEARCH, () -> isSearching.set(true))
             );
 
             selectingToolbar.getChildren().addAll(
-                    createToolbarButton2(i18n("button.remove"), SVG.DELETE, () -> {
+                    createToolbarButton(i18n("button.remove"), SVG.DELETE, () -> {
                         Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
                             skinnable.removeSelected(getSelectedItems());
                         }, null);
                     }),
-                    createToolbarButton2(i18n("mods.enable"), SVG.CHECK, () ->
+                    createToolbarButton(i18n("mods.enable"), SVG.CHECK, () ->
                             skinnable.enableSelected(getSelectedItems())),
-                    createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () ->
+                    createToolbarButton(i18n("mods.disable"), SVG.CLOSE, () ->
                             skinnable.disableSelected(getSelectedItems())),
-                    createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () ->
+                    createToolbarButton(i18n("button.select_all"), SVG.SELECT_ALL, () ->
                             getListView().getSelectionModel().selectRange(0, getListView().getItems().size())),//reason for not using selectAll() is that selectAll() first clears all selected then selects all, causing the toolbar to flicker
-                    createToolbarButton2(i18n("button.cancel"), SVG.CANCEL, () ->
+                    createToolbarButton(i18n("button.cancel"), SVG.CANCEL, () ->
                             getListView().getSelectionModel().clearSelection())
             );
 
@@ -119,7 +118,7 @@ final class DatapackListPageSkin extends CommonListPageSkin<DatapackListPageSkin
                 pause.setRate(1);
                 pause.playFromStart();
             });
-            JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE,
+            JFXButton closeSearchBar = createToolbarButton(null, SVG.CLOSE,
                     () -> {
                         isSearching.set(false);
                         searchField.clear();

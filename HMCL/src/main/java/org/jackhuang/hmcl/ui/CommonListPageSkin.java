@@ -17,7 +17,9 @@
  */
 package org.jackhuang.hmcl.ui;
 
+import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXListView;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -140,15 +142,11 @@ public abstract class CommonListPageSkin<T> extends SkinBase<CommonListPage<T>> 
     // Default: Renders the item as a Node if possible.
     public CommonMDListCell<T> listCell(JFXListView<T> listView) {
         return new CommonMDListCell<>(listView) {
+
             @Override
             protected void updateControl(T item, boolean empty) {
-                super.updateItem(item, empty);
                 if (!empty && item instanceof Node node) {
-                    setGraphic(node);
-                    setText(null);
-                } else {
-                    setGraphic(null);
-                    setText(null);
+                    getContainer().getChildren().setAll(node);
                 }
             }
         };
@@ -224,8 +222,10 @@ public abstract class CommonListPageSkin<T> extends SkinBase<CommonListPage<T>> 
         }
 
         switch (getSkinnable().getCellMenuRequestSupportType()) {
-            case SINGLE -> getSkinnable().fireEvent(new CommonListPage.CellMenuRequestEvent<>(CommonListPage.CellMenuRequestEvent.SINGLE_CELL, cell, listView));
-            case MULTIPLE -> getSkinnable().fireEvent(new CommonListPage.CellMenuRequestEvent<>(CommonListPage.CellMenuRequestEvent.MULTIPLE_CELL, cell, listView));
+            case SINGLE ->
+                    getSkinnable().fireEvent(new CommonListPage.CellMenuRequestEvent<>(CommonListPage.CellMenuRequestEvent.SINGLE_CELL, cell, listView));
+            case MULTIPLE ->
+                    getSkinnable().fireEvent(new CommonListPage.CellMenuRequestEvent<>(CommonListPage.CellMenuRequestEvent.MULTIPLE_CELL, cell, listView));
             case BOTH -> {
                 if (listView.getSelectionModel().getSelectedItems().size() > 1) {
                     getSkinnable().fireEvent(new CommonListPage.CellMenuRequestEvent<>(CommonListPage.CellMenuRequestEvent.MULTIPLE_CELL, cell, listView));
@@ -235,5 +235,34 @@ public abstract class CommonListPageSkin<T> extends SkinBase<CommonListPage<T>> 
             }
         }
         requestMenu.set(false);
+    }
+
+    public static Node wrap(Node node) {
+        StackPane stackPane = new StackPane();
+        stackPane.setPadding(new Insets(0, 5, 0, 2));
+        stackPane.getChildren().setAll(node);
+        return stackPane;
+    }
+
+    public static JFXButton createToolbarButton(String text, SVG svg, Runnable onClick, Consumer<JFXButton> initializer) {
+        JFXButton ret = new JFXButton();
+        ret.getStyleClass().add("jfx-tool-bar-button");
+        ret.setGraphic(wrap(svg.createIcon()));
+        ret.setText(text);
+        ret.setOnAction(e -> onClick.run());
+        if (initializer != null) {
+            initializer.accept(ret);
+        }
+        return ret;
+    }
+
+    public static JFXButton createToolbarButton(String text, SVG svg, Runnable onClick) {
+        return createToolbarButton(text, svg, onClick, null);
+    }
+
+    public static JFXButton createToolbarButton(String text, SVG svg, BooleanProperty disableProperty, Runnable onClick) {
+        return createToolbarButton(text, svg, onClick, jfxButton -> {
+            jfxButton.disableProperty().bind(disableProperty);
+        });
     }
 }
