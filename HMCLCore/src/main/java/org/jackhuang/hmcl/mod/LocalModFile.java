@@ -23,11 +23,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -187,7 +183,7 @@ public final class LocalModFile implements Comparable<LocalModFile> {
                 .sorted(Comparator.comparing(RemoteMod.Version::getDatePublished).reversed())
                 .toList();
         if (remoteVersions.isEmpty()) return null;
-        return new ModUpdate(this, currentVersion.get(), remoteVersions.get(0));
+        return new ModUpdate(repository, this, currentVersion.get(), remoteVersions.get(0));
     }
 
     @Override
@@ -206,14 +202,20 @@ public final class LocalModFile implements Comparable<LocalModFile> {
     }
 
     public static class ModUpdate {
+        private final RemoteModRepository repository;
         private final LocalModFile localModFile;
         private final RemoteMod.Version currentVersion;
         private final RemoteMod.Version candidate;
 
-        public ModUpdate(LocalModFile localModFile, RemoteMod.Version currentVersion, RemoteMod.Version candidate) {
+        public ModUpdate(RemoteModRepository repository, LocalModFile localModFile, RemoteMod.Version currentVersion, RemoteMod.Version candidate) {
+            this.repository = repository;
             this.localModFile = localModFile;
             this.currentVersion = currentVersion;
             this.candidate = candidate;
+        }
+
+        public RemoteModRepository getRepository() {
+            return repository;
         }
 
         public LocalModFile getLocalMod() {

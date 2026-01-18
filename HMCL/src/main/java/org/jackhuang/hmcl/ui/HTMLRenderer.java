@@ -22,6 +22,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
@@ -31,12 +32,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * @author Glavo
  */
 public final class HTMLRenderer {
+
     private static URI resolveLink(Node linkNode) {
         String href = linkNode.absUrl("href");
         if (href.isEmpty())
@@ -47,6 +50,21 @@ public final class HTMLRenderer {
         } catch (Throwable e) {
             return null;
         }
+    }
+
+    public static HTMLRenderer openHyperlinkInBrowser() {
+        return new HTMLRenderer(uri -> {
+            var dialog =
+                    new MessageDialogPane.Builder(
+                            i18n("web.open_in_browser", uri),
+                            i18n("message.confirm"),
+                            MessageDialogPane.MessageType.QUESTION
+                    )
+                            .addAction(i18n("button.copy"), () -> FXUtils.copyText(uri.toString()))
+                            .yesOrNo(() -> FXUtils.openLink(uri.toString()), null)
+                            .build();
+            Controllers.dialog(dialog);
+        });
     }
 
     private final List<javafx.scene.Node> children = new ArrayList<>();
