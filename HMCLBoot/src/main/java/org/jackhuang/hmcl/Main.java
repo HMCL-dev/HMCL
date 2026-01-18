@@ -102,7 +102,19 @@ public final class Main {
         System.exit(1);
     }
 
+    private static void checkDirectoryPath() {
+        String currentDir = System.getProperty("user.dir", "");
+        if (currentDir.contains("!")) {
+            SwingUtils.initLookAndFeel();
+            System.err.println("The current working path contains an exclamation mark: " + currentDir);
+            // No Chinese translation because both Swing and JavaFX cannot render Chinese character properly when exclamation mark exists in the path.
+            SwingUtils.showErrorDialog("Exclamation mark(!) is not allowed in the path where HMCL is in.\n" + "The path is " + currentDir, "ERROR");
+            System.exit(1);
+        }
+    }
+
     public static void main(String[] args) throws Throwable {
+        checkDirectoryPath();
         if (getJavaFeatureVersion(System.getProperty("java.version")) >= MINIMUM_JAVA_VERSION) {
             EntryPoint.main(args);
         } else {
