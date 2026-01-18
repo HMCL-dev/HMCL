@@ -61,14 +61,14 @@ import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class UpdatesPage<F extends LocalAddonFile> extends BorderPane implements DecoratorPage {
+public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane implements DecoratorPage {
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(DecoratorPage.State.fromTitle(i18n("mods.check_updates")));
 
     private final LocalFileManager<F> localFileManager;
     private final ObservableList<ModUpdateObject> objects;
 
     @SuppressWarnings("unchecked")
-    public UpdatesPage(LocalFileManager<F> localFileManager, List<LocalAddonFile.ModUpdate> updates) {
+    public AddonUpdatesPage(LocalFileManager<F> localFileManager, List<LocalAddonFile.ModUpdate> updates) {
         this.localFileManager = localFileManager;
 
         getStyleClass().add("gray-background");

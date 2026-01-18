@@ -218,7 +218,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                             } else if (result.isEmpty()) {
                                 Controllers.dialog(i18n("mods.check_updates.empty"));
                             } else {
-                                Controllers.navigateForward(new UpdatesPage<>(resourcePackManager, result));
+                                Controllers.navigateForward(new AddonUpdatesPage<>(resourcePackManager, result));
                             }
                         })
                         .withStagesHint(Collections.singletonList("update.checking")),
@@ -226,7 +226,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
         if (profile.getRepository().isModpack(instanceId)) {
             Controllers.confirm(
-                    i18n("mods.update_modpack_mod.warning"), null,
+                    i18n("resourcepack.update_in_modpack.warning"), null,
                     MessageDialogPane.MessageType.WARNING,
                     action, null);
         } else {
