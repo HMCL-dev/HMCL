@@ -372,7 +372,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
 
         public ModDetail(ModUpdateObject object) {
             this.repository = object.data.getRepository();
-            RemoteMod.Version targetVersion = object.data.getCandidates().get(0);
+            RemoteMod.Version targetVersion = object.data.getCandidate();
             String source = object.getSource();
 
             this.setHeading(new HBox(new Label(i18n("mods.check_updates.update_mod", targetVersion.getName()))));
@@ -413,7 +413,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                 if (object.changelog != null) {
                     return Optional.of(object.changelog);
                 }
-                RemoteMod.Version version = object.data.getCandidates().get(0);
+                RemoteMod.Version version = object.data.getCandidate();
                 if (version.getChangelog() != null) {
                     return StringUtils.nullIfBlank(version.getChangelog());
                 }
