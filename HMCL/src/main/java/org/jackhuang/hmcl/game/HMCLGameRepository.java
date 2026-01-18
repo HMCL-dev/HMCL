@@ -20,6 +20,10 @@ package org.jackhuang.hmcl.game;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
@@ -45,6 +49,7 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
@@ -56,6 +61,7 @@ import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.Pair.pair;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class HMCLGameRepository extends DefaultGameRepository {
@@ -91,6 +97,18 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             case VERSION_FOLDER:
                 return getVersionRoot(id);
             case ROOT_FOLDER:
+                if (Files.exists(Path.of(getVersionRoot(id).toString() + File.separator + "resourcepacks")) ||
+                        Files.exists(Path.of(getVersionRoot(id).toString() + File.separator + "saves")) ||
+                        Files.exists(Path.of(getVersionRoot(id).toString() + File.separator + "mods")) ||
+                        Files.exists(Path.of(getVersionRoot(id).toString() + File.separator + "shaderpacks")) ||
+                        Files.exists(Path.of(getVersionRoot(id).toString() + File.separator + "crash-report"))
+                ) {
+                    Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
+                            i18n("launcher.info.switch_working_directory.content"),
+                            ButtonType.YES, ButtonType.NO, new ButtonType(i18n("Dialog.this_launch_only.button"), ButtonBar.ButtonData.APPLY)
+                    );
+                    alert.showAndWait().orElse(null);
+                }
                 return super.getRunDirectory(id);
             case CUSTOM:
                 try {
