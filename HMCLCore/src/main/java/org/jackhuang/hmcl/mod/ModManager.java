@@ -36,7 +36,7 @@ import java.util.*;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class ModManager {
+public final class ModManager extends LocalFileManager<LocalModFile> {
     @FunctionalInterface
     private interface ModMetadataReader {
         LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree) throws IOException, JsonParseException;
@@ -51,39 +51,26 @@ public final class ModManager {
                 pair(ForgeNewModMetadata::fromNeoForgeFile, ModLoaderType.NEO_FORGED),
                 pair(ForgeOldModMetadata::fromFile, ModLoaderType.FORGE),
                 pair(FabricModMetadata::fromFile, ModLoaderType.FABRIC),
-                pair(QuiltModMetadata::fromFile, ModLoaderType.QUILT),
-                pair(PackMcMeta::fromFile, ModLoaderType.PACK)
+                pair(QuiltModMetadata::fromFile, ModLoaderType.QUILT)
         );
 
-        map.put("zip", zipReaders);
         map.put("jar", zipReaders);
         map.put("litemod", List.of(pair(LiteModMetadata::fromFile, ModLoaderType.LITE_LOADER)));
 
         READERS = map;
     }
 
-    private final GameRepository repository;
-    private final String id;
-    private final TreeSet<LocalModFile> localModFiles = new TreeSet<>();
     private final HashMap<Pair<String, ModLoaderType>, LocalMod> localMods = new HashMap<>();
     private LibraryAnalyzer analyzer;
 
     private boolean loaded = false;
 
     public ModManager(GameRepository repository, String id) {
-        this.repository = repository;
-        this.id = id;
+        super(repository, id);
     }
 
-    public GameRepository getRepository() {
-        return repository;
-    }
-
-    public String getInstanceId() {
-        return id;
-    }
-
-    public Path getModsDirectory() {
+    @Override
+    public Path getDirectory() {
         return repository.getModsDirectory(id);
     }
 
@@ -167,18 +154,19 @@ public final class ModManager {
         }
 
         if (!modInfo.isOld()) {
-            localModFiles.add(modInfo);
+            localFiles.add(modInfo);
         }
     }
 
-    public void refreshMods() throws IOException {
-        localModFiles.clear();
+    @Override
+    public void refresh() throws IOException {
+        localFiles.clear();
         localMods.clear();
 
         analyzer = LibraryAnalyzer.analyze(getRepository().getResolvedPreservingPatchesVersion(id), null);
 
-        if (Files.isDirectory(getModsDirectory())) {
-            try (DirectoryStream<Path> modsDirectoryStream = Files.newDirectoryStream(getModsDirectory())) {
+        if (Files.isDirectory(getDirectory())) {
+            try (DirectoryStream<Path> modsDirectoryStream = Files.newDirectoryStream(getDirectory())) {
                 for (Path subitem : modsDirectoryStream) {
                     if (Files.isDirectory(subitem) && VersionNumber.isIntVersionNumber(FileUtils.getName(subitem))) {
                         // If the folder name is game version, forge will search mod in this subdirectory
@@ -196,10 +184,10 @@ public final class ModManager {
         loaded = true;
     }
 
-    public @Unmodifiable List<LocalModFile> getMods() throws IOException {
+    public @Unmodifiable List<LocalModFile> getLocalFiles() throws IOException {
         if (!loaded)
-            refreshMods();
-        return List.copyOf(localModFiles);
+            refresh();
+        return super.getLocalFiles();
     }
 
     public void addMod(Path file) throws IOException {
@@ -207,9 +195,9 @@ public final class ModManager {
             throw new IllegalArgumentException("File " + file + " is not a valid mod file.");
 
         if (!loaded)
-            refreshMods();
+            refresh();
 
-        Path modsDirectory = getModsDirectory();
+        Path modsDirectory = getDirectory();
         Files.createDirectories(modsDirectory);
 
         Path newFile = modsDirectory.resolve(file.getFileName());
@@ -220,7 +208,7 @@ public final class ModManager {
 
     public void removeMods(LocalModFile... localModFiles) throws IOException {
         for (LocalModFile localModFile : localModFiles) {
-            Files.deleteIfExists(localModFile.getFile());
+            localModFile.delete();
         }
     }
 
@@ -228,7 +216,7 @@ public final class ModManager {
         if (!loaded) {
             throw new IllegalStateException("ModManager Not loaded");
         }
-        if (!localModFiles.contains(from)) {
+        if (!localFiles.contains(from)) {
             throw new IllegalStateException("Rolling back an unknown mod " + from.getFileName());
         }
         if (from.isOld()) {
@@ -258,41 +246,6 @@ public final class ModManager {
         to.setActive(active);
     }
 
-    private Path backupMod(Path file) throws IOException {
-        Path newPath = file.resolveSibling(
-                StringUtils.addSuffix(
-                        StringUtils.removeSuffix(FileUtils.getName(file), DISABLED_EXTENSION),
-                        OLD_EXTENSION
-                )
-        );
-        if (Files.exists(file)) {
-            Files.move(file, newPath, StandardCopyOption.REPLACE_EXISTING);
-        }
-        return newPath;
-    }
-
-    private Path restoreMod(Path file) throws IOException {
-        Path newPath = file.resolveSibling(
-                StringUtils.removeSuffix(FileUtils.getName(file), OLD_EXTENSION)
-        );
-        if (Files.exists(file)) {
-            Files.move(file, newPath, StandardCopyOption.REPLACE_EXISTING);
-        }
-        return newPath;
-    }
-
-    public Path setOld(LocalModFile modFile, boolean old) throws IOException {
-        Path newPath;
-        if (old) {
-            newPath = backupMod(modFile.getFile());
-            localModFiles.remove(modFile);
-        } else {
-            newPath = restoreMod(modFile.getFile());
-            localModFiles.add(modFile);
-        }
-        return newPath;
-    }
-
     public Path disableMod(Path file) throws IOException {
         if (isOld(file)) return file; // no need to disable an old mod.
 
@@ -313,10 +266,6 @@ public final class ModManager {
         return enabled;
     }
 
-    public static String getModName(Path file) {
-        return StringUtils.removeSuffix(FileUtils.getName(file), DISABLED_EXTENSION, OLD_EXTENSION);
-    }
-
     public boolean isOld(Path file) {
         return FileUtils.getName(file).endsWith(OLD_EXTENSION);
     }
@@ -326,7 +275,7 @@ public final class ModManager {
     }
 
     public static boolean isFileNameMod(Path file) {
-        String name = getModName(file);
+        String name = getLocalFileName(file);
         return name.endsWith(".zip") || name.endsWith(".jar") || name.endsWith(".litemod");
     }
 
@@ -370,12 +319,12 @@ public final class ModManager {
      * @return true if the file exists
      */
     public boolean hasSimpleMod(String fileName) {
-        return Files.exists(getModsDirectory().resolve(StringUtils.removeSuffix(fileName, DISABLED_EXTENSION)))
-                || Files.exists(getModsDirectory().resolve(StringUtils.addSuffix(fileName, DISABLED_EXTENSION)));
+        return Files.exists(getDirectory().resolve(StringUtils.removeSuffix(fileName, DISABLED_EXTENSION)))
+                || Files.exists(getDirectory().resolve(StringUtils.addSuffix(fileName, DISABLED_EXTENSION)));
     }
 
     public Path getSimpleModPath(String fileName) {
-        return getModsDirectory().resolve(fileName);
+        return getDirectory().resolve(fileName);
     }
 
     public static final String DISABLED_EXTENSION = ".disabled";
