@@ -312,7 +312,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 JFXComboBox<String> gameVersionField = new JFXComboBox<>();
                 gameVersionField.setMaxWidth(Double.MAX_VALUE);
                 gameVersionField.setEditable(true);
-                gameVersionField.getItems().setAll(GameVersionNumber.getDefaultGameVersions());
+                gameVersionField.getItems().setAll(Arrays.stream(GameVersionNumber.getDefaultGameVersions()).filter(version -> !version.endsWith("_unobfuscated")).toList());
                 Label lblGameVersion = new Label(i18n("world.game_version"));
                 searchPane.addRow(rowIndex++, new Label(i18n("mods.name")), nameField, lblGameVersion, gameVersionField);
 
