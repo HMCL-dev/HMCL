@@ -203,14 +203,11 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         }
     }
 
-    public void checkUpdates() {
+    public void checkUpdates(Collection<ResourcePackFile> resourcePacks) {
         Runnable action = () -> Controllers.taskDialog(Task
                         .composeAsync(() -> {
                             Optional<String> gameVersion = profile.getRepository().getGameVersion(instanceId);
-                            if (gameVersion.isPresent()) {
-                                return new CheckUpdatesTask<>(gameVersion.get(), resourcePackManager.getLocalFiles());
-                            }
-                            return null;
+                            return gameVersion.map(g -> new CheckUpdatesTask<>(g, resourcePacks)).orElse(null);
                         })
                         .whenComplete(Schedulers.javafx(), (result, exception) -> {
                             if (exception != null || result == null) {
@@ -270,6 +267,11 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                                 control.setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), true)),
                         createToolbarButton2(i18n("button.disable"), SVG.CLOSE, () ->
                                 control.setSelectedEnabled(listView.getSelectionModel().getSelectedItems(), false)),
+                        createToolbarButton2(i18n("mods.check_updates.button"), SVG.UPDATE, () ->
+                                control.checkUpdates(
+                                        listView.getSelectionModel().getSelectedItems().stream().map(ResourcePackInfoObject::getFile).toList()
+                                )
+                        ),
                         createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () ->
                                 listView.getSelectionModel().selectAll()),
                         createToolbarButton2(i18n("button.cancel"), SVG.CANCEL, () ->
@@ -308,7 +310,9 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                         createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, control::refresh),
                         createToolbarButton2(i18n("resourcepack.add"), SVG.ADD, control::onAddFiles),
                         createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, control::onOpenFolder),
-                        createToolbarButton2(i18n("mods.check_updates.button"), SVG.UPDATE, control::checkUpdates),
+                        createToolbarButton2(i18n("mods.check_updates.button"), SVG.UPDATE, () ->
+                                control.checkUpdates(listView.getItems().stream().map(ResourcePackInfoObject::getFile).toList())
+                        ),
                         createToolbarButton2(i18n("download"), SVG.DOWNLOAD, control::onDownload),
                         createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar))
                 );
