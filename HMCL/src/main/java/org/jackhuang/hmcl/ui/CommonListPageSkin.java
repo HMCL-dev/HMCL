@@ -109,6 +109,9 @@ public abstract class CommonListPageSkin<T> extends SkinBase<CommonListPage<T>> 
                 center.setContent(listView);
             }
         }
+
+        FXUtils.onChangeAndOperate(getSkinnable().loadingProperty(), (newValue) -> lastNotShiftClickIndex.set(-1));
+        FXUtils.onChangeAndOperate(getSkinnable().itemsProperty(), (newValue) -> lastNotShiftClickIndex.set(-1));
     }
 
     public void setToolbar(Node toolbar) {
