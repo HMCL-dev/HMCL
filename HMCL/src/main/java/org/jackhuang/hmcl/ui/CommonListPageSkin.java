@@ -165,6 +165,7 @@ public abstract class CommonListPageSkin<T> extends SkinBase<CommonListPage<T>> 
             }
             case NONE -> {
                 commonMDListCell.addCellEventHandler(MouseEvent.MOUSE_PRESSED, mouseEvent -> handleNoneSelect(commonMDListCell, mouseEvent));
+                commonMDListCell.addCellEventHandler(MouseEvent.MOUSE_RELEASED, mouseEvent -> handleNoneRelease(commonMDListCell, mouseEvent));
             }
         }
         if (getSkinnable().getSelectionType() != CommonListPage.SelectionType.NONE) {
@@ -227,6 +228,15 @@ public abstract class CommonListPageSkin<T> extends SkinBase<CommonListPage<T>> 
     }
 
     private void handleNoneSelect(ListCell<?> cell, MouseEvent mouseEvent) {
+        if (cell.isEmpty()) {
+            mouseEvent.consume();
+            return;
+        }
+
+        if (mouseEvent.isSecondaryButtonDown()) {
+            requestMenu.set(true);
+        }
+
         cell.requestFocus();
         mouseEvent.consume();
     }
@@ -259,18 +269,19 @@ public abstract class CommonListPageSkin<T> extends SkinBase<CommonListPage<T>> 
         getSkinnable().fireEvent(new CommonListPage.CellMenuRequestEvent<>(CommonListPage.CellMenuRequestEvent.SINGLE_CELL, cell, listView));
     }
 
+    private void handleNoneRelease(ListCell<T> cell, MouseEvent mouseEvent) {
+        handleSingleRelease(cell, mouseEvent);
+    }
+
     public static Node wrap(Node node) {
-        StackPane stackPane = new StackPane();
+        StackPane stackPane = new StackPane(node);
         stackPane.setPadding(new Insets(0, 5, 0, 2));
-        stackPane.getChildren().setAll(node);
         return stackPane;
     }
 
     public static JFXButton createToolbarButton(String text, SVG svg, Runnable onClick, Consumer<JFXButton> initializer) {
-        JFXButton ret = new JFXButton();
+        JFXButton ret = new JFXButton(text, wrap(svg.createIcon()));
         ret.getStyleClass().add("jfx-tool-bar-button");
-        ret.setGraphic(wrap(svg.createIcon()));
-        ret.setText(text);
         ret.setOnAction(e -> onClick.run());
         if (initializer != null) {
             initializer.accept(ret);
@@ -283,8 +294,6 @@ public abstract class CommonListPageSkin<T> extends SkinBase<CommonListPage<T>> 
     }
 
     public static JFXButton createToolbarButton(String text, SVG svg, BooleanProperty disableProperty, Runnable onClick) {
-        return createToolbarButton(text, svg, onClick, jfxButton -> {
-            jfxButton.disableProperty().bind(disableProperty);
-        });
+        return createToolbarButton(text, svg, onClick, jfxButton -> jfxButton.disableProperty().bind(disableProperty));
     }
 }
