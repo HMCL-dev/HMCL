@@ -153,7 +153,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                 modManager,
                 objects.stream()
                         .filter(o -> o.enabled.get())
-                        .map(object -> pair(object.data.getLocalMod(), object.data.getCandidates().get(0)))
+                        .map(object -> pair(object.data.getLocalMod(), object.data.getCandidate()))
                         .collect(Collectors.toList()));
         Controllers.taskDialog(
                 task.whenComplete(Schedulers.javafx(), exception -> {
@@ -223,7 +223,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
             enabled.set(!data.getLocalMod().getModManager().isDisabled(data.getLocalMod().getFile()));
             fileName.set(data.getLocalMod().getFileName());
             currentVersion.set(data.getCurrentVersion().getVersion());
-            targetVersion.set(data.getCandidates().get(0).getVersion());
+            targetVersion.set(data.getCandidate().getVersion());
             switch (data.getCurrentVersion().getSelf().getType()) {
                 case CURSEFORGE:
                     source.set(i18n("mods.curseforge"));

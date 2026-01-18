@@ -21,11 +21,8 @@ import com.jfoenix.controls.JFXPopup;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.layout.Priority;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.EventPriority;
@@ -303,20 +300,6 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
             //FXUtils.setOverflowHidden(control.transitionPane, 8);
             setCenter(control.transitionPane);
         }
-    }
-
-    public static Node wrap(Node node) {
-        StackPane stackPane = new StackPane();
-        stackPane.setAlignment(Pos.CENTER);
-        FXUtils.setLimitWidth(stackPane, 30);
-        FXUtils.setLimitHeight(stackPane, 20);
-        stackPane.setPadding(new Insets(0, 0, 0, 0));
-        stackPane.getChildren().setAll(node);
-        return stackPane;
-    }
-
-    public static Node wrap(SVG svg) {
-        return wrap(svg.createIcon(20));
     }
 
     public interface VersionLoadable {

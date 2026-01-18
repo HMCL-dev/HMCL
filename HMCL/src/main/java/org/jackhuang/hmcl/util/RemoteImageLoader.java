@@ -66,6 +66,8 @@ public abstract class RemoteImageLoader {
             cache.remove(uri);
         }
 
+        writableValue.setValue(getPlaceholder());
+
         {
             List<WeakReference<WritableValue<Image>>> list = pendingRequests.get(uri);
             if (list != null) {
