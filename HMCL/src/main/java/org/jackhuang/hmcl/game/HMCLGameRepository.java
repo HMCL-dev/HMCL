@@ -97,11 +97,11 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             case VERSION_FOLDER:
                 return getVersionRoot(id);
             case ROOT_FOLDER:
-                if (Files.exists(Path.of(getVersionRoot(id).toString() + File.separator + "resourcepacks")) ||
-                        Files.exists(Path.of(getVersionRoot(id).toString() + File.separator + "saves")) ||
-                        Files.exists(Path.of(getVersionRoot(id).toString() + File.separator + "mods")) ||
-                        Files.exists(Path.of(getVersionRoot(id).toString() + File.separator + "shaderpacks")) ||
-                        Files.exists(Path.of(getVersionRoot(id).toString() + File.separator + "crash-report"))
+                if (Files.exists(Path.of(getVersionRoot(id).toString(), "resourcepacks")) ||
+                        Files.exists(Path.of(getVersionRoot(id).toString(), "saves")) ||
+                        Files.exists(Path.of(getVersionRoot(id).toString(), "mods")) ||
+                        Files.exists(Path.of(getVersionRoot(id).toString(), "shaderpacks")) ||
+                        Files.exists(Path.of(getVersionRoot(id).toString(), "crash-report"))
                 ) {
                     Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
                             i18n("launcher.info.switch_working_directory.content"),
