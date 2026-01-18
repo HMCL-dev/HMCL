@@ -172,7 +172,7 @@ public class DefaultLauncher extends Launcher {
 
             Proxy.Type proxyType = options.getProxyType();
             if (proxyType == null) {
-                res.addDefault("-Djava.net.useSystemProxies", "true");
+                res.addDefault("-Djava.net.useSystemProxies=", "true");
             } else {
                 String proxyHost = options.getProxyHost();
                 int proxyPort = options.getProxyPort();
@@ -188,6 +188,33 @@ public class DefaultLauncher extends Launcher {
                         res.addDefault("-DsocksProxyPort=", String.valueOf(proxyPort));
                     }
                 }
+            }
+
+            try {
+                boolean hasIPv4 = false;
+                java.util.Enumeration<java.net.NetworkInterface> nets = java.net.NetworkInterface.getNetworkInterfaces();
+                while (nets != null && nets.hasMoreElements() && !hasIPv4) {
+                    java.net.NetworkInterface nif = nets.nextElement();
+                    try {
+                        if (!nif.isUp() || nif.isLoopback()) continue;
+                    } catch (Throwable ignore) {
+                        // ignore and continue checking other interfaces
+                        continue;
+                    }
+                    java.util.Enumeration<java.net.InetAddress> addrs = nif.getInetAddresses();
+                    while (addrs.hasMoreElements()) {
+                        java.net.InetAddress addr = addrs.nextElement();
+                        if (addr instanceof java.net.Inet4Address && !addr.isLoopbackAddress()) {
+                            hasIPv4 = true;
+                            break;
+                        }
+                    }
+                }
+                if (hasIPv4) {
+                    res.addDefault("-Djava.net.preferIPv4Stack=", "true");
+                }
+            } catch (java.net.SocketException e) {
+                LOG.warning("Failed to detect IPv4 address", e);
             }
 
             final int javaVersion = options.getJava().getParsedVersion();
