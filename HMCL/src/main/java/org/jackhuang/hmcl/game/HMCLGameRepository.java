@@ -107,7 +107,19 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                             i18n("launcher.info.switch_working_directory.content"),
                             ButtonType.YES, ButtonType.NO, new ButtonType(i18n("Dialog.this_launch_only.button"), ButtonBar.ButtonData.APPLY)
                     );
-                    alert.showAndWait().orElse(null);
+                    alert.setTitle(i18n("launcher.info.switch_working_directory.title"));
+                    switch (alert.showAndWait().orElse(ButtonType.YES).getButtonData()){
+                        case YES -> {
+                            getVersionSetting(id).setGameDirType(GameDirectoryType.VERSION_FOLDER);
+                            return getVersionRoot(id);
+                        }
+                        case NO -> {
+                            return super.getRunDirectory(id);
+                        }
+                        case APPLY -> {
+                            return getVersionRoot(id);
+                        }
+                    }
                 }
                 return super.getRunDirectory(id);
             case CUSTOM:
