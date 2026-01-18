@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.FileSystem;
@@ -92,7 +93,10 @@ public final class CleanroomInstallTask extends Task<Version> {
 
     @Override
     public void postExecute() throws Exception {
-        Files.deleteIfExists(installer);
+        if (remote != null) {
+            Files.deleteIfExists(installer);
+        }
+
         setResult(task.getResult());
     }
 
