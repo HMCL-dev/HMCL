@@ -136,7 +136,7 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
                 localFileManager.getDirectory(),
                 objects.stream()
                         .filter(o -> o.enabled.get())
-                        .map(object -> pair(object.data.localFile(), object.data.candidates().get(0)))
+                        .map(object -> pair(object.data.localFile(), object.data.candidate()))
                         .toList());
         Controllers.taskDialog(
                 task.whenComplete(Schedulers.javafx(), exception -> {
@@ -205,7 +205,7 @@ public class AddonUpdatesPage<F extends LocalAddonFile> extends BorderPane imple
             enabled.set(!data.localFile().isDisabled());
             fileName.set(data.localFile().getFileName());
             currentVersion.set(data.currentVersion().getVersion());
-            targetVersion.set(data.candidates().get(0).getVersion());
+            targetVersion.set(data.candidate().getVersion());
             switch (data.currentVersion().getSelf().getType()) {
                 case CURSEFORGE:
                     source.set(i18n("mods.curseforge"));

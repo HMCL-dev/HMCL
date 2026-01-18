@@ -117,16 +117,20 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
             if (category != null && category.getSelf() instanceof CurseAddon.Category) {
                 categoryId = ((CurseAddon.Category) category.getSelf()).getId();
             }
-            Response<List<CurseAddon>> response = withApiKey(HttpRequest.GET(downloadProvider.injectURL(NetworkUtils.withQuery(PREFIX + "/v1/mods/search", mapOf(
-                    pair("gameId", "432"),
-                    pair("classId", Integer.toString(section)),
-                    pair("categoryId", Integer.toString(categoryId)),
-                    pair("gameVersion", gameVersion),
-                    pair("searchFilter", searchFilter),
-                    pair("sortField", Integer.toString(toModsSearchSortField(sortType))),
-                    pair("sortOrder", toSortOrder(sortOrder)),
-                    pair("index", Integer.toString(pageOffset * pageSize)),
-                    pair("pageSize", Integer.toString(pageSize)))))))
+
+            var query = new LinkedHashMap<String, String>();
+            query.put("gameId", "432");
+            query.put("classId", Integer.toString(section));
+            if (categoryId != 0)
+                query.put("categoryId", Integer.toString(categoryId));
+            query.put("gameVersion", gameVersion);
+            query.put("searchFilter", searchFilter);
+            query.put("sortField", Integer.toString(toModsSearchSortField(sortType)));
+            query.put("sortOrder", toSortOrder(sortOrder));
+            query.put("index", Integer.toString(pageOffset * pageSize));
+            query.put("pageSize", Integer.toString(pageSize));
+
+            Response<List<CurseAddon>> response = withApiKey(HttpRequest.GET(downloadProvider.injectURL(NetworkUtils.withQuery(PREFIX + "/v1/mods/search", query))))
                     .getJson(Response.typeOf(listTypeOf(CurseAddon.class)));
             if (searchFilter.isEmpty()) {
                 return new SearchResult(response.getData().stream().map(addon -> addon.toMod(type)), calculateTotalPages(response, pageSize));

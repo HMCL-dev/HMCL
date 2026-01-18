@@ -38,7 +38,10 @@ import org.jackhuang.hmcl.game.GameJavaVersion;
 import org.jackhuang.hmcl.java.JavaInfo;
 import org.jackhuang.hmcl.java.JavaManager;
 import org.jackhuang.hmcl.setting.DownloadProviders;
-import org.jackhuang.hmcl.task.*;
+import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.task.GetTask;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
@@ -116,7 +119,7 @@ public final class JavaDownloadDialog extends StackPane {
             vbox.getChildren().add(prompt);
 
             for (GameJavaVersion version : supportedGameJavaVersions) {
-                JFXRadioButton button = new JFXRadioButton("Java " + version.getMajorVersion());
+                JFXRadioButton button = new JFXRadioButton("Java " + version.majorVersion());
                 button.setUserData(version);
                 vbox.getChildren().add(button);
                 toggleGroup.getToggles().add(button);
@@ -248,7 +251,7 @@ public final class JavaDownloadDialog extends StackPane {
 
                 for (int i = 0; i < versions.size(); i++) {
                     DiscoJavaRemoteVersion version = versions.get(i);
-                    if (version.getJdkVersion() == GameJavaVersion.LATEST.getMajorVersion()) {
+                    if (version.getJdkVersion() == GameJavaVersion.LATEST.majorVersion()) {
                         remoteVersionBox.getSelectionModel().select(i);
                         return;
                     }

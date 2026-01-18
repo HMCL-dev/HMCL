@@ -18,38 +18,48 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import org.jackhuang.hmcl.mod.LocalAddonFile;
+import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class CheckUpdatesTask<T extends LocalAddonFile> extends Task<List<LocalAddonFile.ModUpdate>> {
-    private final Collection<Collection<Task<LocalAddonFile.ModUpdate>>> dependents;
+    private final List<Task<LocalModFile.ModUpdate>> dependents;
 
     public CheckUpdatesTask(String gameVersion, Collection<T> mods, RemoteModRepository.Type repoType) {
-        Map<String, RemoteModRepository> repos = new LinkedHashMap<>(2);
-        for (RemoteMod.Type modType : RemoteMod.Type.values()) {
-            RemoteModRepository repo = modType.getRepoForType(repoType);
-            if (repo != null) {
-                repos.put(modType.name(), repo);
-            }
-        }
-        dependents = mods.stream()
-                .map(mod ->
-                        repos.entrySet().stream()
-                                .map(entry ->
-                                        Task.supplyAsync(() -> mod.checkUpdates(gameVersion, entry.getValue()))
-                                                .setSignificance(TaskSignificance.MAJOR)
-                                                .setName(String.format("%s (%s)", mod.getFileName(), entry.getKey())).withCounter("update.checking")
-                                )
-                                .collect(Collectors.toList())
-                )
-                .collect(Collectors.toList());
+        dependents = mods.stream().map(mod ->
+                Task.supplyAsync(Schedulers.io(), () -> {
+                    LocalModFile.ModUpdate candidate = null;
+                    for (RemoteMod.Type type : RemoteMod.Type.values()) {
+                        LocalModFile.ModUpdate update = null;
+                        try {
+                            update = mod.checkUpdates(gameVersion, type.getRepoForType(repoType));
+                        } catch (IOException e) {
+                            LOG.warning(String.format("Cannot check update for mod %s.", mod.getFileName()), e);
+                        }
+                        if (update == null) {
+                            continue;
+                        }
+
+                        if (candidate == null || candidate.candidate().getDatePublished().isBefore(update.candidate().getDatePublished())) {
+                            candidate = update;
+                        }
+                    }
+
+                    return candidate;
+                }).setName(mod.getFileName()).setSignificance(TaskSignificance.MAJOR).withCounter("update.checking")
+        ).toList();
 
         setStage("update.checking");
-        getProperties().put("total", dependents.size() * repos.size());
+        getProperties().put("total", dependents.size());
     }
 
     @Override
@@ -64,7 +74,7 @@ public class CheckUpdatesTask<T extends LocalAddonFile> extends Task<List<LocalA
 
     @Override
     public Collection<? extends Task<?>> getDependents() {
-        return dependents.stream().flatMap(Collection::stream).collect(Collectors.toList());
+        return dependents;
     }
 
     @Override
@@ -75,14 +85,7 @@ public class CheckUpdatesTask<T extends LocalAddonFile> extends Task<List<LocalA
     @Override
     public void execute() throws Exception {
         setResult(dependents.stream()
-                .map(tasks -> tasks.stream()
-                        .filter(task -> task.getResult() != null)
-                        .map(Task::getResult)
-                        .filter(modUpdate -> !modUpdate.candidates().isEmpty())
-                        .max(Comparator.comparing((LocalAddonFile.ModUpdate modUpdate) -> modUpdate.candidates().get(0).getDatePublished()))
-                        .orElse(null)
-                )
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList()));
+                .map(Task::getResult)
+                .filter(Objects::nonNull).toList());
     }
 }

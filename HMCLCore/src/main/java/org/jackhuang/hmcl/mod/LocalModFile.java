@@ -194,9 +194,9 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
                 .filter(version -> version.getLoaders().contains(getModLoaderType()))
                 .filter(version -> version.getDatePublished().compareTo(currentVersion.get().getDatePublished()) > 0)
                 .sorted(Comparator.comparing(RemoteMod.Version::getDatePublished).reversed())
-                .collect(Collectors.toList());
+                .toList();
         if (remoteVersions.isEmpty()) return null;
-        return new ModUpdate(this, currentVersion.get(), remoteVersions);
+        return new ModUpdate(this, currentVersion.get(), remoteVersions.get(0));
     }
 
     @Override
