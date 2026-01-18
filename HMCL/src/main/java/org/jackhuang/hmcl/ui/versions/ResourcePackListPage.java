@@ -208,7 +208,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                         .composeAsync(() -> {
                             Optional<String> gameVersion = profile.getRepository().getGameVersion(instanceId);
                             if (gameVersion.isPresent()) {
-                                return new CheckUpdatesTask<>(gameVersion.get(), resourcePackManager.getLocalFiles(), RemoteModRepository.Type.RESOURCE_PACK);
+                                return new CheckUpdatesTask<>(gameVersion.get(), resourcePackManager.getLocalFiles());
                             }
                             return null;
                         })

@@ -5,7 +5,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.List;
 
 /// Sub-classes should implement `Comparable`
 public sealed abstract class LocalAddonFile permits LocalModFile, ResourcePackFile {
@@ -36,10 +35,10 @@ public sealed abstract class LocalAddonFile permits LocalModFile, ResourcePackFi
     public abstract void delete() throws IOException;
 
     @Nullable
-    public abstract ModUpdate checkUpdates(String gameVersion, RemoteModRepository repository) throws IOException;
+    public abstract ModUpdate checkUpdates(String gameVersion, RemoteMod.Type type) throws IOException;
 
     public record ModUpdate(LocalAddonFile localFile, RemoteMod.Version currentVersion,
-                            List<RemoteMod.Version> candidates) {
+                            RemoteMod.Version candidate) {
     }
 
 }

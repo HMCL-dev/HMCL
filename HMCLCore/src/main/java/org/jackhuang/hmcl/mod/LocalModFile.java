@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -186,7 +185,9 @@ public final class LocalModFile extends LocalAddonFile implements Comparable<Loc
     }
 
     @Override
-    public ModUpdate checkUpdates(String gameVersion, RemoteModRepository repository) throws IOException {
+    public ModUpdate checkUpdates(String gameVersion, RemoteMod.Type type) throws IOException {
+        RemoteModRepository repository = type.getRepoForType(RemoteModRepository.Type.MOD);
+        if (repository == null) return null;
         Optional<RemoteMod.Version> currentVersion = repository.getRemoteVersionByLocalFile(file);
         if (currentVersion.isEmpty()) return null;
         List<RemoteMod.Version> remoteVersions = repository.getRemoteVersionsById(currentVersion.get().getModid())
