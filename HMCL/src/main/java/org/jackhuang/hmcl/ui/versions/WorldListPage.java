@@ -225,6 +225,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
         private final ImageView imageView;
         private final Tooltip leftTooltip;
         private final TwoLineListItem content;
+        private final JFXButton btnLaunch;
 
         public WorldListCell(WorldListPage page) {
             this.page = page;
@@ -256,14 +257,18 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                 root.setRight(right);
                 right.setAlignment(Pos.CENTER_RIGHT);
 
-                JFXButton btnLaunch = new JFXButton();
+                btnLaunch = new JFXButton();
                 right.getChildren().add(btnLaunch);
                 btnLaunch.getStyleClass().add("toggle-icon4");
                 btnLaunch.setGraphic(SVG.ROCKET_LAUNCH.createIcon());
                 FXUtils.installFastTooltip(btnLaunch, i18n("version.launch"));
                 btnLaunch.setOnAction(event -> {
                     World world = getItem();
-                    if (world != null) page.launch(world);
+                    if (world != null && !world.isLocked()) {
+                        page.launch(world);
+                    } else {
+                        updateItem(world, false);
+                    }
                 });
 
                 JFXButton btnMore = new JFXButton();
@@ -307,7 +312,12 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                 content.setTitle(world.getWorldName() != null ? parseColorEscapes(world.getWorldName()) : "");
 
                 if (world.getGameVersion() != null) content.addTag(I18n.getDisplayVersion(world.getGameVersion()));
-                if (world.isLocked()) content.addTag(i18n("world.locked"));
+                if (world.isLocked()) {
+                    content.addTag(i18n("world.locked"));
+                    btnLaunch.setDisable(true);
+                } else {
+                    btnLaunch.setDisable(false);
+                }
 
                 content.setSubtitle(i18n("world.datetime", formatDateTime(Instant.ofEpochMilli(world.getLastPlayed()))));
 
