@@ -262,7 +262,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 VersionSetting versionSetting = JsonUtils.fromJsonFile(file, VersionSetting.class);
                 initLocalVersionSetting(id, versionSetting);
             } catch (Exception ex) {
-                // If [JsonParseException], [IOException] or [NullPointerException] happens, the json file is malformed and needed to be recreated.
+                // If [JsonParseException], [IOException] or [NullPointerException] happens, the JSON file is malformed and needed to be recreated.
                 initLocalVersionSetting(id, new VersionSetting());
             }
     }
@@ -292,7 +292,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
      * Get the version setting for version id.
      *
      * @param id version id
-     * @return corresponding version setting, null if the version has no its own version setting.
+     * @return corresponding version setting, null if the version does not have its own version setting.
      */
     @Nullable
     public VersionSetting getLocalVersionSetting(String id) {
