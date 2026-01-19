@@ -152,6 +152,10 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
             supportedLoaders.add(ModLoaderType.FABRIC);
         }
 
+        if (analyzer.has(LibraryAnalyzer.LibraryType.LEGACY_FABRIC)) {
+            supportedLoaders.add(ModLoaderType.FABRIC);
+        }
+
         if (analyzer.has(LibraryAnalyzer.LibraryType.FABRIC) && modManager.hasMod("kilt", ModLoaderType.FABRIC)) {
             supportedLoaders.add(ModLoaderType.FORGE);
             supportedLoaders.add(ModLoaderType.NEO_FORGED);
