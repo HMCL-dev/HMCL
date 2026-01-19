@@ -318,13 +318,15 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
         // Popup Menu
 
         public void showPopupMenu(World world, JFXPopup.PopupHPosition hPosition, double initOffsetX, double initOffsetY) {
+            boolean worldLocked = world.isLocked();
+
             PopupMenu popupMenu = new PopupMenu();
             JFXPopup popup = new JFXPopup(popupMenu);
 
             if (world.supportQuickPlay()) {
 
                 IconedMenuItem launchItem = new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("version.launch_and_enter_world"), () -> page.launch(world), popup);
-                launchItem.setDisable(world.isLocked());
+                launchItem.setDisable(worldLocked);
                 popupMenu.getContent().add(launchItem);
 
                 popupMenu.getContent().addAll(new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), () -> page.generateLaunchScript(world), popup), new MenuSeparator());
@@ -343,7 +345,6 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
             IconedMenuItem exportMenuItem = new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), () -> page.export(world), popup);
             IconedMenuItem deleteMenuItem = new IconedMenuItem(SVG.DELETE, i18n("world.delete"), () -> page.delete(world), popup);
             IconedMenuItem duplicateMenuItem = new IconedMenuItem(SVG.CONTENT_COPY, i18n("world.duplicate"), () -> page.copy(world), popup);
-            boolean worldLocked = world.isLocked();
             Stream.of(exportMenuItem, deleteMenuItem, duplicateMenuItem).forEach(iconedMenuItem -> iconedMenuItem.setDisable(worldLocked));
 
             popupMenu.getContent().addAll(new MenuSeparator(), exportMenuItem, deleteMenuItem, duplicateMenuItem);

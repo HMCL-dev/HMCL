@@ -46,7 +46,6 @@ public final class World {
     private String fileName;
     private CompoundTag levelData;
     private Image icon;
-    private boolean isLocked;
     private Path levelDataPath;
 
     public World(Path file) throws IOException {
@@ -143,7 +142,7 @@ public final class World {
     }
 
     public boolean isLocked() {
-        return isLocked;
+        return isLocked(getSessionLockFile());
     }
 
     public boolean supportDatapacks() {
@@ -169,7 +168,6 @@ public final class World {
         }
         loadAndCheckLevelDat(levelDat);
         this.levelDataPath = levelDat;
-        isLocked = isLocked(getSessionLockFile());
 
         Path iconFile = file.resolve("icon.png");
         if (Files.isRegularFile(iconFile)) {
@@ -206,7 +204,6 @@ public final class World {
     }
 
     private void loadFromZip() throws IOException {
-        isLocked = false;
         try (FileSystem fs = CompressingUtils.readonly(file).setAutoDetectEncoding(true).build()) {
             Path levelDatPath = fs.getPath("/level.dat");
             if (Files.isRegularFile(levelDatPath)) {
@@ -243,6 +240,8 @@ public final class World {
         }
     }
 
+    // The rename method is used to rename temporary world object during installation and copying,
+    // so there is no need to modify the `file` field.
     public void rename(String newName) throws IOException {
         if (!Files.isDirectory(file))
             throw new IOException("Not a valid world directory");
