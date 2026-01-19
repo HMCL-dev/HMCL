@@ -56,6 +56,8 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -103,21 +105,50 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                         Files.exists(Path.of(getVersionRoot(id).toString(), "shaderpacks")) ||
                         Files.exists(Path.of(getVersionRoot(id).toString(), "crash-report"))
                 ) {
-                    Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
-                            i18n("launcher.info.switch_working_directory.content"),
-                            ButtonType.YES, ButtonType.NO, new ButtonType(i18n("Dialog.this_launch_only.button"), ButtonBar.ButtonData.APPLY)
-                    );
-                    alert.setTitle(i18n("launcher.info.switch_working_directory.title"));
-                    switch (alert.showAndWait().orElse(ButtonType.YES).getButtonData()){
-                        case YES -> {
-                            getVersionSetting(id).setGameDirType(GameDirectoryType.VERSION_FOLDER);
-                            return getVersionRoot(id);
+                    if (Platform.isFxApplicationThread()) {
+                        // 在JavaFX线程中直接使用原代码
+                        Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
+                                i18n("launcher.info.switch_working_directory.content"),
+                                ButtonType.YES, ButtonType.NO, new ButtonType(i18n("Dialog.this_launch_only.button"), ButtonBar.ButtonData.APPLY)
+                        );
+                        alert.setTitle(i18n("launcher.info.switch_working_directory.title"));
+                        switch (alert.showAndWait().orElse(ButtonType.YES).getButtonData()) {
+                            case YES -> {
+                                getVersionSetting(id).setGameDirType(GameDirectoryType.VERSION_FOLDER);
+                                return getVersionRoot(id);
+                            }
+                            case NO -> super.getRunDirectory(id);
+                            case APPLY -> getVersionRoot(id);
+                            default -> super.getRunDirectory(id);
                         }
-                        case NO -> {
-                            return super.getRunDirectory(id);
+                    } else {
+                        // 在非JavaFX线程中使用上面的代码
+                        CompletableFuture<ButtonBar.ButtonData> buttonDataFuture = new CompletableFuture<>();
+
+                        Platform.runLater(() -> {
+                            Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
+                                    i18n("launcher.info.switch_working_directory.content"),
+                                    ButtonType.YES, ButtonType.NO, new ButtonType(i18n("Dialog.this_launch_only.button"), ButtonBar.ButtonData.APPLY)
+                            );
+                            alert.setTitle(i18n("launcher.info.switch_working_directory.title"));
+                            buttonDataFuture.complete(alert.showAndWait().orElse(ButtonType.YES).getButtonData());
+                        });
+
+                        ButtonBar.ButtonData result;
+                        try {
+                            result = buttonDataFuture.get();
+                        } catch (InterruptedException | ExecutionException e) {
+                            result = ButtonBar.ButtonData.YES;
                         }
-                        case APPLY -> {
-                            return getVersionRoot(id);
+
+                        switch (result) {
+                            case YES -> {
+                                getVersionSetting(id).setGameDirType(GameDirectoryType.VERSION_FOLDER);
+                                return getVersionRoot(id);
+                            }
+                            case NO -> super.getRunDirectory(id);
+                            case APPLY -> getVersionRoot(id);
+                            default -> super.getRunDirectory(id);
                         }
                     }
                 }
