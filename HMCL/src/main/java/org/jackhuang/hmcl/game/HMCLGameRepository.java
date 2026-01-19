@@ -91,12 +91,11 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             case VERSION_FOLDER:
                 return getVersionRoot(id);
             case ROOT_FOLDER:
-                return getBaseDirectory();
+                return super.getRunDirectory(id);
             case CUSTOM:
                 try {
                     return Path.of(getVersionSetting(id).getGameDir());
                 } catch (InvalidPathException ignored) {
-                    getBaseDirectory();
                     return getVersionRoot(id);
                 }
             default:
