@@ -250,10 +250,8 @@ public abstract class CommonListPageSkin<T> extends SkinBase<CommonListPage<T>> 
         }
 
         switch (getSkinnable().getCellMenuRequestSupportType()) {
-            case SINGLE ->
-                    getSkinnable().fireEvent(new CommonListPage.CellMenuRequestEvent<>(CommonListPage.CellMenuRequestEvent.SINGLE_CELL, cell, listView));
-            case MULTIPLE ->
-                    getSkinnable().fireEvent(new CommonListPage.CellMenuRequestEvent<>(CommonListPage.CellMenuRequestEvent.MULTIPLE_CELL, cell, listView));
+            case SINGLE -> getSkinnable().fireEvent(new CommonListPage.CellMenuRequestEvent<>(CommonListPage.CellMenuRequestEvent.SINGLE_CELL, cell, listView));
+            case MULTIPLE -> getSkinnable().fireEvent(new CommonListPage.CellMenuRequestEvent<>(CommonListPage.CellMenuRequestEvent.MULTIPLE_CELL, cell, listView));
             case BOTH -> {
                 if (listView.getSelectionModel().getSelectedItems().size() > 1) {
                     getSkinnable().fireEvent(new CommonListPage.CellMenuRequestEvent<>(CommonListPage.CellMenuRequestEvent.MULTIPLE_CELL, cell, listView));
