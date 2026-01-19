@@ -29,7 +29,6 @@ import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
 
 import java.io.File;
 import java.io.IOException;
