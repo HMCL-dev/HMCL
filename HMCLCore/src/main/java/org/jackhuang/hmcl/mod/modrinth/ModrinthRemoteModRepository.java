@@ -154,7 +154,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         SEMAPHORE.acquireUninterruptibly();
         try {
             id = StringUtils.removePrefix(id, "local-");
-            List<ProjectVersion> versions = HttpRequest.GET(PREFIX + "/v2/project/" + id + "/version")
+            List<ProjectVersion> versions = HttpRequest.GET(PREFIX + "/v2/project/" + id + "/version?include_changelog=false")
                     .getJson(listTypeOf(ProjectVersion.class));
             return versions.stream().map(ProjectVersion::toVersion).flatMap(Lang::toStream);
         } finally {

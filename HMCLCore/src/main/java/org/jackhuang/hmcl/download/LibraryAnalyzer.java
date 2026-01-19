@@ -189,7 +189,35 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
 
     public enum LibraryType {
         MINECRAFT(true, "game", "^$", "^$", null),
-        FABRIC(true, "fabric", "net\\.fabricmc", "fabric-loader", ModLoaderType.FABRIC),
+        LEGACY_FABRIC(true, "legacyfabric", "net\\.fabricmc", "fabric-loader", ModLoaderType.LEGACY_FABRIC) {
+            @Override
+            protected boolean matchLibrary(Library library, List<Library> libraries) {
+                if (!super.matchLibrary(library, libraries)) {
+                    return false;
+                }
+                for (Library l : libraries) {
+                    if ("net.legacyfabric".equals(l.getGroupId())) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+        },
+        LEGACY_FABRIC_API(false, "legacyfabric-api", "net\\.legacyfabric", "legacyfabric-api", null),
+        FABRIC(true, "fabric", "net\\.fabricmc", "fabric-loader", ModLoaderType.FABRIC) {
+            @Override
+            protected boolean matchLibrary(Library library, List<Library> libraries) {
+                if (!super.matchLibrary(library, libraries)) {
+                    return false;
+                }
+                for (Library l : libraries) {
+                    if ("net.legacyfabric".equals(l.getGroupId())) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+        },
         FABRIC_API(true, "fabric-api", "net\\.fabricmc", "fabric-api", null),
         FORGE(true, "forge", "net\\.minecraftforge", "(forge|fmlloader)", ModLoaderType.FORGE) {
             private final Pattern FORGE_VERSION_MATCHER = Pattern.compile("^([0-9.]+)-(?<forge>[0-9.]+)(-([0-9.]+))?$");
@@ -278,6 +306,7 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         private final ModLoaderType modLoaderType;
 
         private static final Map<String, LibraryType> PATCH_ID_MAP = new HashMap<>();
+
         static {
             for (LibraryType type : values()) {
                 PATCH_ID_MAP.put(type.getPatchId(), type);
