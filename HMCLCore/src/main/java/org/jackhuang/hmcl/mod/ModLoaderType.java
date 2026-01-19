@@ -24,5 +24,6 @@ public enum ModLoaderType {
     NEO_FORGED,
     FABRIC,
     QUILT,
-    LITE_LOADER
+    LITE_LOADER,
+    LEGACY_FABRIC
 }
