@@ -82,7 +82,7 @@ public final class GameListCell extends ListCell<GameListItem> {
         {
             HBox center = new HBox();
             root.setCenter(center);
-            center.setPrefWidth(0);
+            center.setPrefWidth(Region.USE_PREF_SIZE);
             center.setSpacing(8);
             center.setAlignment(Pos.CENTER_LEFT);
 
