@@ -29,6 +29,7 @@ import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
 
 import java.io.File;
 import java.io.IOException;
@@ -80,53 +81,53 @@ public final class HMCLGameLauncher extends DefaultLauncher {
                         Files.exists(Path.of(HMCLRepository.getVersionRoot(version.getId()).toString(), "crash-report"))
                 ) {
                     runDir = switchWorkingDirectory(HMCLRepository, version);
-                
+                }
             }
-        }
-        Path optionsFile = runDir.resolve("options.txt");
-        Path configFolder = runDir.resolve("config");
+            Path optionsFile = runDir.resolve("options.txt");
+            Path configFolder = runDir.resolve("config");
 
-        if (Files.exists(optionsFile))
-            return;
+            if (Files.exists(optionsFile))
+                return;
 
-        if (Files.isDirectory(configFolder)) {
-            try (Stream<Path> stream = Files.walk(configFolder, 2, FileVisitOption.FOLLOW_LINKS)) {
-                if (stream.anyMatch(file -> "options.txt".equals(FileUtils.getName(file))))
-                    return;
+            if (Files.isDirectory(configFolder)) {
+                try (Stream<Path> stream = Files.walk(configFolder, 2, FileVisitOption.FOLLOW_LINKS)) {
+                    if (stream.anyMatch(file -> "options.txt".equals(FileUtils.getName(file))))
+                        return;
+                } catch (IOException e) {
+                    LOG.warning("Failed to visit config folder", e);
+                }
+            }
+
+            Locale locale = Locale.getDefault();
+
+            /*
+             *  1.0         : No language option, do not set for these versions
+             *  1.1  ~ 1.5  : zh_CN works fine, zh_cn will crash (the last two letters must be uppercase, otherwise it will cause an NPE crash)
+             *  1.6  ~ 1.10 : zh_CN works fine, zh_cn will automatically switch to English
+             *  1.11 ~ 1.12 : zh_cn works fine, zh_CN will display Chinese but the language setting will incorrectly show English as selected
+             *  1.13+       : zh_cn works fine, zh_CN will automatically switch to English
+             */
+            GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(repository.getGameVersion(version));
+            if (gameVersion.compareTo("1.1") < 0)
+                return;
+
+            String lang = normalizedLanguageTag(locale, gameVersion);
+            if (lang.isEmpty())
+                return;
+
+            if (gameVersion.compareTo("1.11") >= 0)
+                lang = lang.toLowerCase(Locale.ROOT);
+
+            try {
+                Files.createDirectories(optionsFile.getParent());
+                Files.writeString(optionsFile, String.format("lang:%s\n", lang));
             } catch (IOException e) {
-                LOG.warning("Failed to visit config folder", e);
+                LOG.warning("Unable to generate options.txt", e);
             }
-        }
-
-        Locale locale = Locale.getDefault();
-
-        /*
-         *  1.0         : No language option, do not set for these versions
-         *  1.1  ~ 1.5  : zh_CN works fine, zh_cn will crash (the last two letters must be uppercase, otherwise it will cause an NPE crash)
-         *  1.6  ~ 1.10 : zh_CN works fine, zh_cn will automatically switch to English
-         *  1.11 ~ 1.12 : zh_cn works fine, zh_CN will display Chinese but the language setting will incorrectly show English as selected
-         *  1.13+       : zh_cn works fine, zh_CN will automatically switch to English
-         */
-        GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(repository.getGameVersion(version));
-        if (gameVersion.compareTo("1.1") < 0)
-            return;
-
-        String lang = normalizedLanguageTag(locale, gameVersion);
-        if (lang.isEmpty())
-            return;
-
-        if (gameVersion.compareTo("1.11") >= 0)
-            lang = lang.toLowerCase(Locale.ROOT);
-
-        try {
-            Files.createDirectories(optionsFile.getParent());
-            Files.writeString(optionsFile, String.format("lang:%s\n", lang));
-        } catch (IOException e) {
-            LOG.warning("Unable to generate options.txt", e);
         }
     }
 
-    private Path switchWorkingDirectory(HMCLGameRepository HMCLRepository, Version version) {
+    protected Path switchWorkingDirectory(HMCLGameRepository HMCLRepository, Version version) {
         if (Platform.isFxApplicationThread()) {
             // 在JavaFX线程中直接使用原代码
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
