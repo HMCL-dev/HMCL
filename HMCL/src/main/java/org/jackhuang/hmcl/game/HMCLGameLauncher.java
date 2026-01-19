@@ -140,9 +140,9 @@ public final class HMCLGameLauncher extends DefaultLauncher {
                     HMCLRepository.getVersionSetting(version.getId()).setGameDirType(GameDirectoryType.VERSION_FOLDER);
                     return HMCLRepository.getVersionRoot(version.getId());
                 }
-                case NO -> {return HMCLRepository.getBaseDirectory();}
+                case NO -> { return HMCLRepository.getBaseDirectory(); }
                 case APPLY -> HMCLRepository.getVersionRoot(version.getId());
-                default -> {return HMCLRepository.getBaseDirectory();}
+                default -> { return HMCLRepository.getBaseDirectory(); }
             }
         } else {
             // 在非JavaFX线程中使用上面的代码
@@ -169,9 +169,9 @@ public final class HMCLGameLauncher extends DefaultLauncher {
                     HMCLRepository.getVersionSetting(version.getId()).setGameDirType(GameDirectoryType.VERSION_FOLDER);
                     return HMCLRepository.getVersionRoot(version.getId());
                 }
-                case NO -> {return HMCLRepository.getBaseDirectory();}
+                case NO -> { return HMCLRepository.getBaseDirectory(); }
                 case APPLY -> HMCLRepository.getVersionRoot(version.getId());
-                default -> {return HMCLRepository.getBaseDirectory();}
+                default -> { return HMCLRepository.getBaseDirectory(); }
             }
         }
         return HMCLRepository.getVersionRoot(version.getId());

@@ -84,6 +84,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             return getVersionSetting(id).getGameDirType();
         }
     }
+    
     @Override
     public Path getRunDirectory(String id) {
         switch (getGameDirectoryType(id)) {
