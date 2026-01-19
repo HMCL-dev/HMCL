@@ -321,7 +321,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
             PopupMenu popupMenu = new PopupMenu();
             JFXPopup popup = new JFXPopup(popupMenu);
 
-            if (world.supportsQuickPlay()) {
+            if (world.supportQuickPlay()) {
 
                 IconedMenuItem launchItem = new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("version.launch_and_enter_world"), () -> page.launch(world), popup);
                 launchItem.setDisable(world.isLocked());

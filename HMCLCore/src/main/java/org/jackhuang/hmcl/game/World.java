@@ -34,7 +34,6 @@ import java.nio.channels.OverlappingFileLockException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -147,15 +146,15 @@ public final class World {
         return isLocked;
     }
 
-    public boolean supportsDatapacks() {
+    public boolean supportDatapacks() {
         return getGameVersion() != null && getGameVersion().isAtLeast("1.13", "17w43a");
     }
 
-    public boolean supportsQuickPlay() {
+    public boolean supportQuickPlay() {
         return getGameVersion() != null && getGameVersion().isAtLeast("1.20", "23w14a");
     }
 
-    public static boolean supportsQuickPlay(GameVersionNumber gameVersionNumber) {
+    public static boolean supportQuickPlay(GameVersionNumber gameVersionNumber) {
         return gameVersionNumber != null && gameVersionNumber.isAtLeast("1.20", "23w14a");
     }
 
@@ -164,6 +163,9 @@ public final class World {
         Path levelDat = file.resolve("level.dat");
         if (!Files.exists(levelDat)) { // version 20w14infinite
             levelDat = file.resolve("special_level.dat");
+        }
+        if (!Files.exists(levelDat)) {
+            throw new IOException("Not a valid world directory since level.dat or special_level.dat cannot be found.");
         }
         loadAndCheckLevelDat(levelDat);
         this.levelDataPath = levelDat;
@@ -189,7 +191,6 @@ public final class World {
         if (!Files.exists(levelDat)) {
             throw new IOException("Not a valid world zip file since level.dat or special_level.dat cannot be found.");
         }
-
         loadAndCheckLevelDat(levelDat);
 
         Path iconFile = root.resolve("icon.png");
@@ -207,8 +208,8 @@ public final class World {
     private void loadFromZip() throws IOException {
         isLocked = false;
         try (FileSystem fs = CompressingUtils.readonly(file).setAutoDetectEncoding(true).build()) {
-            Path cur = fs.getPath("/level.dat");
-            if (Files.isRegularFile(cur)) {
+            Path levelDatPath = fs.getPath("/level.dat");
+            if (Files.isRegularFile(levelDatPath)) {
                 fileName = FileUtils.getName(file);
                 loadFromZipImpl(fs.getPath("/"));
                 return;
@@ -269,14 +270,14 @@ public final class World {
 
         if (Files.isRegularFile(file)) {
             try (FileSystem fs = CompressingUtils.readonly(file).setAutoDetectEncoding(true).build()) {
-                Path cur = fs.getPath("/level.dat");
-                if (Files.isRegularFile(cur)) {
+                Path levelDatPath = fs.getPath("/level.dat");
+                if (Files.isRegularFile(levelDatPath)) {
                     fileName = FileUtils.getName(file);
 
                     new Unzipper(file, worldDir).unzip();
                 } else {
                     try (Stream<Path> stream = Files.list(fs.getPath("/"))) {
-                        List<Path> subDirs = stream.collect(Collectors.toList());
+                        List<Path> subDirs = stream.toList();
                         if (subDirs.size() != 1) {
                             throw new IOException("World zip malformed");
                         }
@@ -359,8 +360,8 @@ public final class World {
     private static CompoundTag parseLevelDat(Path path) throws IOException {
         try (InputStream is = new GZIPInputStream(Files.newInputStream(path))) {
             Tag nbt = NBTIO.readTag(is);
-            if (nbt instanceof CompoundTag)
-                return (CompoundTag) nbt;
+            if (nbt instanceof CompoundTag compoundTag)
+                return compoundTag;
             else
                 throw new IOException("level.dat malformed");
         }

@@ -214,7 +214,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                 tabBar.addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldInfoTab, i18n("world.info"), SVG.INFO, SVG.INFO_FILL)
                         .addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE, SVG.ARCHIVE_FILL);
 
-                if (getSkinnable().world.supportsDatapacks()) {
+                if (getSkinnable().world.supportDatapacks()) {
                     getSkinnable().header.getTabs().add(getSkinnable().datapackTab);
                     tabBar.addNavigationDrawerTab(getSkinnable().header, getSkinnable().datapackTab, i18n("world.datapack"), SVG.EXTENSION, SVG.EXTENSION_FILL);
                 }
@@ -227,7 +227,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
             AdvancedListBox toolbar = new AdvancedListBox();
             BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
             {
-                if (getSkinnable().world.supportsQuickPlay()) {
+                if (getSkinnable().world.supportQuickPlay()) {
                     toolbar.addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, () -> getSkinnable().launch(), advancedListItem -> advancedListItem.disableProperty().bind(getSkinnable().readOnlyProperty()));
                 }
 
@@ -259,7 +259,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                     PopupMenu managePopupMenu = new PopupMenu();
                     JFXPopup managePopup = new JFXPopup(managePopupMenu);
 
-                    if (getSkinnable().world.supportsQuickPlay()) {
+                    if (getSkinnable().world.supportQuickPlay()) {
                         managePopupMenu.getContent().addAll(
                                 new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("version.launch"), () -> getSkinnable().launch(), managePopup),
                                 new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), () -> getSkinnable().generateLaunchScript(), managePopup),
