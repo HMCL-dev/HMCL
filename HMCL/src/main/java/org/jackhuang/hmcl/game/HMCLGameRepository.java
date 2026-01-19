@@ -20,10 +20,6 @@ package org.jackhuang.hmcl.game;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
-import javafx.application.Platform;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonBar;
-import javafx.scene.control.ButtonType;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
@@ -49,21 +45,17 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.Pair.pair;
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class HMCLGameRepository extends DefaultGameRepository {
@@ -92,71 +84,18 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             return getVersionSetting(id).getGameDirType();
         }
     }
-
     @Override
     public Path getRunDirectory(String id) {
         switch (getGameDirectoryType(id)) {
             case VERSION_FOLDER:
                 return getVersionRoot(id);
             case ROOT_FOLDER:
-                if (Files.exists(Path.of(getVersionRoot(id).toString(), "resourcepacks")) ||
-                        Files.exists(Path.of(getVersionRoot(id).toString(), "saves")) ||
-                        Files.exists(Path.of(getVersionRoot(id).toString(), "mods")) ||
-                        Files.exists(Path.of(getVersionRoot(id).toString(), "shaderpacks")) ||
-                        Files.exists(Path.of(getVersionRoot(id).toString(), "crash-report"))
-                ) {
-                    if (Platform.isFxApplicationThread()) {
-                        // 在JavaFX线程中直接使用原代码
-                        Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
-                                i18n("launcher.info.switch_working_directory.content"),
-                                ButtonType.YES, ButtonType.NO, new ButtonType(i18n("Dialog.this_launch_only.button"), ButtonBar.ButtonData.APPLY)
-                        );
-                        alert.setTitle(i18n("launcher.info.switch_working_directory.title"));
-                        switch (alert.showAndWait().orElse(ButtonType.YES).getButtonData()) {
-                            case YES -> {
-                                getVersionSetting(id).setGameDirType(GameDirectoryType.VERSION_FOLDER);
-                                return getVersionRoot(id);
-                            }
-                            case NO -> super.getRunDirectory(id);
-                            case APPLY -> getVersionRoot(id);
-                            default -> super.getRunDirectory(id);
-                        }
-                    } else {
-                        // 在非JavaFX线程中使用上面的代码
-                        CompletableFuture<ButtonBar.ButtonData> buttonDataFuture = new CompletableFuture<>();
-
-                        Platform.runLater(() -> {
-                            Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
-                                    i18n("launcher.info.switch_working_directory.content"),
-                                    ButtonType.YES, ButtonType.NO, new ButtonType(i18n("Dialog.this_launch_only.button"), ButtonBar.ButtonData.APPLY)
-                            );
-                            alert.setTitle(i18n("launcher.info.switch_working_directory.title"));
-                            buttonDataFuture.complete(alert.showAndWait().orElse(ButtonType.YES).getButtonData());
-                        });
-
-                        ButtonBar.ButtonData result;
-                        try {
-                            result = buttonDataFuture.get();
-                        } catch (InterruptedException | ExecutionException e) {
-                            result = ButtonBar.ButtonData.YES;
-                        }
-
-                        switch (result) {
-                            case YES -> {
-                                getVersionSetting(id).setGameDirType(GameDirectoryType.VERSION_FOLDER);
-                                return getVersionRoot(id);
-                            }
-                            case NO -> super.getRunDirectory(id);
-                            case APPLY -> getVersionRoot(id);
-                            default -> super.getRunDirectory(id);
-                        }
-                    }
-                }
-                return super.getRunDirectory(id);
+                return getBaseDirectory();
             case CUSTOM:
                 try {
                     return Path.of(getVersionSetting(id).getGameDir());
                 } catch (InvalidPathException ignored) {
+                    getBaseDirectory();
                     return getVersionRoot(id);
                 }
             default:

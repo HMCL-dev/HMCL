@@ -17,6 +17,10 @@
  */
 package org.jackhuang.hmcl.game;
 
+import javafx.application.Platform;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.launch.DefaultLauncher;
@@ -26,12 +30,16 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
@@ -62,8 +70,19 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     private void generateOptionsTxt() {
         if (config().isDisableAutoGameOptions())
             return;
-
         Path runDir = repository.getRunDirectory(version.getId());
+        if (repository instanceof HMCLGameRepository HMCLRepository) {
+            if (HMCLRepository.getVersionSetting(version.getId()).getGameDirType() == GameDirectoryType.ROOT_FOLDER) {
+                if (Files.exists(Path.of(HMCLRepository.getVersionRoot(version.getId()).toString(), "resourcepacks")) ||
+                        Files.exists(Path.of(HMCLRepository.getVersionRoot(version.getId()).toString(), "saves")) ||
+                        Files.exists(Path.of(HMCLRepository.getVersionRoot(version.getId()).toString(), "mods")) ||
+                        Files.exists(Path.of(HMCLRepository.getVersionRoot(version.getId()).toString(), "shaderpacks")) ||
+                        Files.exists(Path.of(HMCLRepository.getVersionRoot(version.getId()).toString(), "crash-report"))
+                ) {
+                    runDir = switchWorkingDirectory(HMCLRepository, version);
+                
+            }
+        }
         Path optionsFile = runDir.resolve("options.txt");
         Path configFolder = runDir.resolve("config");
 
@@ -105,6 +124,56 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         } catch (IOException e) {
             LOG.warning("Unable to generate options.txt", e);
         }
+    }
+
+    private Path switchWorkingDirectory(HMCLGameRepository HMCLRepository, Version version) {
+        if (Platform.isFxApplicationThread()) {
+            // 在JavaFX线程中直接使用原代码
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
+                    String.format(i18n("launcher.info.switch_working_directory.content"), File.separatorChar, version.getId()),
+                    ButtonType.YES, ButtonType.NO, new ButtonType(i18n("Dialog.this_launch_only.button"), ButtonBar.ButtonData.APPLY)
+            );
+            alert.setTitle(i18n("launcher.info.switch_working_directory.title"));
+            switch (alert.showAndWait().orElse(ButtonType.YES).getButtonData()) {
+                case YES -> {
+                    HMCLRepository.getVersionSetting(version.getId()).setGameDirType(GameDirectoryType.VERSION_FOLDER);
+                    return HMCLRepository.getVersionRoot(version.getId());
+                }
+                case NO -> {return HMCLRepository.getBaseDirectory();}
+                case APPLY -> HMCLRepository.getVersionRoot(version.getId());
+                default -> {return HMCLRepository.getBaseDirectory();}
+            }
+        } else {
+            // 在非JavaFX线程中使用上面的代码
+            CompletableFuture<ButtonBar.ButtonData> buttonDataFuture = new CompletableFuture<>();
+
+            Platform.runLater(() -> {
+                Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
+                        String.format(i18n("launcher.info.switch_working_directory.content"), File.separatorChar, version.getId()),
+                        ButtonType.YES, ButtonType.NO, new ButtonType(i18n("Dialog.this_launch_only.button"), ButtonBar.ButtonData.APPLY)
+                );
+                alert.setTitle(i18n("launcher.info.switch_working_directory.title"));
+                buttonDataFuture.complete(alert.showAndWait().orElse(ButtonType.YES).getButtonData());
+            });
+
+            ButtonBar.ButtonData result;
+            try {
+                result = buttonDataFuture.get();
+            } catch (InterruptedException | ExecutionException e) {
+                result = ButtonBar.ButtonData.YES;
+            }
+
+            switch (result) {
+                case YES -> {
+                    HMCLRepository.getVersionSetting(version.getId()).setGameDirType(GameDirectoryType.VERSION_FOLDER);
+                    return HMCLRepository.getVersionRoot(version.getId());
+                }
+                case NO -> {return HMCLRepository.getBaseDirectory();}
+                case APPLY -> HMCLRepository.getVersionRoot(version.getId());
+                default -> {return HMCLRepository.getBaseDirectory();}
+            }
+        }
+        return HMCLRepository.getVersionRoot(version.getId());
     }
 
     private static String normalizedLanguageTag(Locale locale, GameVersionNumber gameVersion) {
