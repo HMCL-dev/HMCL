@@ -116,12 +116,12 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         }
     }
 
-    private void updateWorldLevelDat(boolean PageFullyNavigated) {
+    private void updateWorldLevelDat(boolean pageFullyNavigated) {
         try {
             world.reloadLevelDat();
         } catch (IOException e) {
             LOG.warning("Can not load world level.dat of world: " + world.getFile(), e);
-            if (PageFullyNavigated) {
+            if (pageFullyNavigated) {
                 closePageForLoadingFail();
             } else {
                 this.addEventHandler(Navigator.NavigationEvent.NAVIGATED, event -> closePageForLoadingFail());

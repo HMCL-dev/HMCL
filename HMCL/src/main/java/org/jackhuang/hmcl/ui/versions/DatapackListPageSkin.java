@@ -124,7 +124,9 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
                     skinnable.enableSelected(listView.getSelectionModel().getSelectedItems()));
             JFXButton disableButton = createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () ->
                     skinnable.disableSelected(listView.getSelectionModel().getSelectedItems()));
-            Stream.of(removeButton, enableButton, disableButton).forEach((button) -> button.disableProperty().bind(getSkinnable().isReadOnlyProperty));
+            removeButton.disableProperty().bind(getSkinnable().isReadOnlyProperty);
+            enableButton.disableProperty().bind(getSkinnable().isReadOnlyProperty);
+            disableButton.disableProperty().bind(getSkinnable().isReadOnlyProperty);
 
             selectingToolbar.getChildren().addAll(
                     removeButton,
