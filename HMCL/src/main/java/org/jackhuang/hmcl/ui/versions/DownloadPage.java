@@ -588,9 +588,8 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             SpinnerPane spinnerPane = new SpinnerPane();
             ScrollPane scrollPane = new ScrollPane();
-            scrollPane.getStyleClass().add("mod-changelog");
             scrollPane.setFitToWidth(true);
-            scrollPane.setContent(FXUtils.renderModChangelog(changelog));
+            scrollPane.setContent(FXUtils.renderAddonChangelog(changelog));
 
             spinnerPane.setContent(scrollPane);
             box.getChildren().add(spinnerPane);

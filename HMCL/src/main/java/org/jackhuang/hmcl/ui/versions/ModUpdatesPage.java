@@ -101,7 +101,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
             var oldCellFactory = changelogColumn.getCellFactory();
             changelogColumn.setCellFactory(param -> {
                 TableCell<ModUpdateObject, String> cell = oldCellFactory.call(param);
-                cell.getStyleClass().add("mod-changelog-table-cell");
+                cell.getStyleClass().add("addon-changelog-table-cell");
                 cell.setOnMouseClicked(event -> {
                     List<ModUpdateObject> items = cell.getTableColumn().getTableView().getItems();
                     if (cell.getIndex() >= items.size()) {
@@ -383,7 +383,6 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
 
             SpinnerPane spinnerPane = new SpinnerPane();
             ScrollPane scrollPane = new ScrollPane();
-            scrollPane.getStyleClass().add("mod-changelog");
             scrollPane.setFitToWidth(true);
 
             loadChangelog(object, spinnerPane, scrollPane);
@@ -422,7 +421,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                 if (exception == null) {
                     result.map(StringUtils::markdownToHTML).ifPresent(s -> {
                         object.changelog = s;
-                        scrollPane.setContent(FXUtils.renderModChangelog(s));
+                        scrollPane.setContent(FXUtils.renderAddonChangelog(s));
                     });
                     spinnerPane.setFailedReason(null);
                 } else {

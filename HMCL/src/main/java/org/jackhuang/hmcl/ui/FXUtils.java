@@ -1602,10 +1602,12 @@ public final class FXUtils {
                 : JFXPopup.PopupVPosition.TOP;    // Show menu above the button, expanding upward
     }
 
-    public static TextFlow renderModChangelog(String changelogHTML) {
+    public static TextFlow renderAddonChangelog(String changelogHTML) {
         HTMLRenderer renderer = HTMLRenderer.openHyperlinkInBrowser();
         renderer.appendNode(Jsoup.parse(changelogHTML));
         renderer.mergeLineBreaks();
-        return renderer.render();
+        var textFlow = renderer.render();
+        textFlow.getStyleClass().add("addon-changelog");
+        return textFlow;
     }
 }

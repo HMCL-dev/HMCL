@@ -1854,7 +1854,7 @@
  *                                                                             *
  ******************************************************************************/
 
-.mod-changelog .html {
+.addon-changelog {
     -fx-background-color: -monet-surface;
     -fx-background-radius: 4;
     -fx-padding: 10;
@@ -1862,18 +1862,18 @@
     -fx-text-fill: -monet-on-surface;
 }
 
-.mod-changelog .html-h1 {
+.addon-changelog .html-h1 {
     -fx-font-size: 16.5;
 }
 
-.mod-changelog .html-h2 {
+.addon-changelog .html-h2 {
     -fx-font-size: 15;
 }
 
-.mod-changelog .html-h3 {
+.addon-changelog .html-h3 {
     -fx-font-size: 13.5;
 }
 
-.mod-changelog-table-cell {
+.addon-changelog-table-cell {
     -fx-text-fill: -monet-primary;
 }
