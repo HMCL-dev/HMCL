@@ -172,7 +172,7 @@ public class DefaultLauncher extends Launcher {
 
             Proxy.Type proxyType = options.getProxyType();
             if (proxyType == null) {
-                res.addDefault("-Djava.net.useSystemProxies", "true");
+                res.addDefault("-Djava.net.useSystemProxies=", "true");
             } else {
                 String proxyHost = options.getProxyHost();
                 int proxyPort = options.getProxyPort();
