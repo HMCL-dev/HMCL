@@ -108,7 +108,7 @@ public final class Main {
             SwingUtils.initLookAndFeel();
             System.err.println("The current working path contains an exclamation mark: " + currentDir);
             // No Chinese translation because both Swing and JavaFX cannot render Chinese character properly when exclamation mark exists in the path.
-            SwingUtils.showErrorDialog("Exclamation mark(!) is not allowed in the path where HMCL is in.\n" + "The path is " + currentDir, "ERROR");
+            SwingUtils.showErrorDialog("Exclamation mark(!) is not allowed in the path where HMCL is in.\n" + "The path is " + currentDir);
             System.exit(1);
         }
     }
