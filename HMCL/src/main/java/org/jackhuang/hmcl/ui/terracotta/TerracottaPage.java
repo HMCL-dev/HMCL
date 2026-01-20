@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.terracotta;
 
+import com.jfoenix.controls.JFXPopup;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.value.ChangeListener;
@@ -33,6 +34,7 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.account.AccountAdvancedListItem;
+import org.jackhuang.hmcl.ui.account.AccountListPopupMenu;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
@@ -72,12 +74,12 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
 
         AccountAdvancedListItem accountListItem = new AccountAdvancedListItem();
         accountListItem.setOnAction(e -> Controllers.navigate(Controllers.getAccountListPage()));
-//        accountListItem.setOnMouseClicked(e -> {
-//            if (e.getButton() == MouseButton.SECONDARY) {
-//                showAccountListPopupMenu(accountListItem);
-//                e.consume();
-//            }
-//        });
+        accountListItem.setOnMouseClicked(e -> {
+            if (e.getButton() == MouseButton.SECONDARY) {
+                AccountListPopupMenu.show(accountListItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, accountListItem.getWidth(), 0);
+                e.consume();
+            }
+        });
         accountListItem.accountProperty().bind(Accounts.selectedAccountProperty());
 
         AdvancedListBox toolbar = new AdvancedListBox()
