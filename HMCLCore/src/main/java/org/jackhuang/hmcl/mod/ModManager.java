@@ -26,7 +26,6 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.tree.ZipFileTree;
-import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Unmodifiable;
 
 import java.io.IOException;
@@ -177,11 +176,13 @@ public final class ModManager {
 
         analyzer = LibraryAnalyzer.analyze(getRepository().getResolvedPreservingPatchesVersion(id), null);
 
+        boolean supportSubfolders = analyzer.has(LibraryAnalyzer.LibraryType.FORGE)
+                || analyzer.has(LibraryAnalyzer.LibraryType.QUILT);
+
         if (Files.isDirectory(getModsDirectory())) {
             try (DirectoryStream<Path> modsDirectoryStream = Files.newDirectoryStream(getModsDirectory())) {
                 for (Path subitem : modsDirectoryStream) {
-                    if (Files.isDirectory(subitem) && VersionNumber.isIntVersionNumber(FileUtils.getName(subitem))) {
-                        // If the folder name is game version, forge will search mod in this subdirectory
+                    if (supportSubfolders && Files.isDirectory(subitem)) {
                         try (DirectoryStream<Path> subitemDirectoryStream = Files.newDirectoryStream(subitem)) {
                             for (Path subsubitem : subitemDirectoryStream) {
                                 addModInfo(subsubitem);
