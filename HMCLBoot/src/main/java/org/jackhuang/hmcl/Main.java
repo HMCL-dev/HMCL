@@ -104,9 +104,16 @@ public final class Main {
 
     private static void checkDirectoryPath() {
         String currentDir = System.getProperty("user.dir", "");
+        String thisJarPath = Main.class.getProtectionDomain().getCodeSource().getLocation().getPath();
         if (currentDir.contains("!")) {
             SwingUtils.initLookAndFeel();
             System.err.println("The current working path contains an exclamation mark: " + currentDir);
+            // No Chinese translation because both Swing and JavaFX cannot render Chinese character properly when exclamation mark exists in the path.
+            SwingUtils.showErrorDialog("Exclamation mark(!) is not allowed in the working path.\n" + "The path is " + currentDir);
+            System.exit(1);
+        } else if (thisJarPath.contains("!")) {
+            SwingUtils.initLookAndFeel();
+            System.err.println("The jar path contains an exclamation mark: " + thisJarPath);
             // No Chinese translation because both Swing and JavaFX cannot render Chinese character properly when exclamation mark exists in the path.
             SwingUtils.showErrorDialog("Exclamation mark(!) is not allowed in the path where HMCL is in.\n" + "The path is " + currentDir);
             System.exit(1);
