@@ -108,7 +108,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                         return;
                     }
                     ModUpdateObject object = items.get(cell.getIndex());
-                    Controllers.dialog(new ModDetail(object));
+                    Controllers.dialog(new ModChangelog(object));
                 });
                 return cell;
             });
@@ -366,11 +366,11 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         }
     }
 
-    private static final class ModDetail extends JFXDialogLayout {
+    private static final class ModChangelog extends JFXDialogLayout {
 
         private final RemoteModRepository repository;
 
-        public ModDetail(ModUpdateObject object) {
+        public ModChangelog(ModUpdateObject object) {
             this.repository = object.data.getRepository();
             RemoteMod.Version targetVersion = object.data.getCandidate();
             String source = object.getSource();
