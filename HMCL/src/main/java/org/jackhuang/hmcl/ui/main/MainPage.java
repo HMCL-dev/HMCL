@@ -59,7 +59,6 @@ import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.ui.versions.GameItem;
 import org.jackhuang.hmcl.ui.versions.GameListPopupMenu;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.upgrade.RemoteVersion;
@@ -246,7 +245,14 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
             menuButton = new JFXButton();
             menuButton.getStyleClass().add("menu-button");
-            menuButton.setOnAction(e -> onMenu());
+            menuButton.setOnAction(e -> GameListPopupMenu.show(
+                    menuButton,
+                    JFXPopup.PopupVPosition.BOTTOM,
+                    JFXPopup.PopupHPosition.RIGHT,
+                    0,
+                    -menuButton.getHeight(),
+                    profile, versions
+            ));
             FXUtils.installFastTooltip(menuButton, i18n("version.switch"));
             menuButton.setGraphic(SVG.ARROW_DROP_UP.createIcon(30));
 
@@ -340,19 +346,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
                     }
                 });
         Controllers.taskDialog(task, i18n("version.launch.empty.installing"), TaskCancellationAction.NORMAL);
-    }
-
-    private void onMenu() {
-        GameListPopupMenu menu = new GameListPopupMenu();
-        menu.getItems().setAll(versions.stream().map(it -> new GameItem(profile, it.getId())).toList());
-        JFXPopup popup = new JFXPopup(menu);
-        popup.show(
-                menuButton,
-                JFXPopup.PopupVPosition.BOTTOM,
-                JFXPopup.PopupHPosition.RIGHT,
-                0,
-                -menuButton.getHeight()
-        );
     }
 
     private void onUpgrade() {
