@@ -539,12 +539,14 @@ public final class StringUtils {
         return Optional.ofNullable(str).map(s -> s.isBlank() ? null : s);
     }
 
+    private static final HtmlRenderer HTML_RENDERER = HtmlRenderer.builder().build();
+
     private static final Parser MD_PARSER = Parser.builder().extensions(List.of(AutolinkExtension.create())).build();
 
     @Contract(pure = true, value = "null -> null")
     public static String markdownToHTML(String md) {
         if (md == null) return null;
-        return HtmlRenderer.builder().build().render(MD_PARSER.parse(md));
+        return HTML_RENDERER.render(MD_PARSER.parse(md));
     }
 
     public static class LevCalculator {
