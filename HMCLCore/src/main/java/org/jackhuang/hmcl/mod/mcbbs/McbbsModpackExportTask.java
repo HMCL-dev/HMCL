@@ -94,23 +94,11 @@ public class McbbsModpackExportTask extends Task<Void> {
 
             // Mcbbs manifest
             List<McbbsModpackManifest.Addon> addons = new ArrayList<>();
-            addons.add(new McbbsModpackManifest.Addon(MINECRAFT.getPatchId(), gameVersion));
-            analyzer.getVersion(FORGE).ifPresent(forgeVersion ->
-                    addons.add(new McbbsModpackManifest.Addon(FORGE.getPatchId(), forgeVersion)));
-            analyzer.getVersion(CLEANROOM).ifPresent(cleanroomVersion ->
-                    addons.add(new McbbsModpackManifest.Addon(CLEANROOM.getPatchId(), cleanroomVersion)));
-            analyzer.getVersion(NEO_FORGE).ifPresent(neoForgeVersion ->
-                    addons.add(new McbbsModpackManifest.Addon(NEO_FORGE.getPatchId(), neoForgeVersion)));
-            analyzer.getVersion(LITELOADER).ifPresent(liteLoaderVersion ->
-                    addons.add(new McbbsModpackManifest.Addon(LITELOADER.getPatchId(), liteLoaderVersion)));
-            analyzer.getVersion(OPTIFINE).ifPresent(optifineVersion ->
-                    addons.add(new McbbsModpackManifest.Addon(OPTIFINE.getPatchId(), optifineVersion)));
-            analyzer.getVersion(FABRIC).ifPresent(fabricVersion ->
-                    addons.add(new McbbsModpackManifest.Addon(FABRIC.getPatchId(), fabricVersion)));
-            analyzer.getVersion(QUILT).ifPresent(quiltVersion ->
-                    addons.add(new McbbsModpackManifest.Addon(QUILT.getPatchId(), quiltVersion)));
-            analyzer.getVersion(LEGACY_FABRIC).ifPresent(legacyfabricVersion ->
-                    addons.add(new McbbsModpackManifest.Addon(LEGACY_FABRIC.getPatchId(), legacyfabricVersion)));
+
+            for (LibraryAnalyzer.LibraryType type : analyzer.getLibraries()) {
+                if (type == MINECRAFT) addons.add(new McbbsModpackManifest.Addon(MINECRAFT.getPatchId(), gameVersion));
+                else addons.add(new McbbsModpackManifest.Addon(type.getPatchId(), analyzer.getVersion(type).orElseThrow()));
+            }
 
             List<Library> libraries = new ArrayList<>();
             // TODO libraries
