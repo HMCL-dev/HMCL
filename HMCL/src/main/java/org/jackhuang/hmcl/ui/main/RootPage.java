@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.ui.main;
 import com.jfoenix.controls.JFXPopup;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.scene.control.Label;
-import javafx.scene.input.MouseButton;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.event.EventBus;
@@ -49,6 +48,7 @@ import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.nbt.NBTEditorPage;
 import org.jackhuang.hmcl.ui.nbt.NBTFileType;
 import org.jackhuang.hmcl.ui.versions.GameAdvancedListItem;
+import org.jackhuang.hmcl.ui.versions.GameListPopupMenu;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.Lang;
@@ -148,12 +148,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             // first item in left sidebar
             AccountAdvancedListItem accountListItem = new AccountAdvancedListItem();
             accountListItem.setOnAction(e -> Controllers.navigate(Controllers.getAccountListPage()));
-            accountListItem.setOnMouseClicked(e -> {
-                if (e.getButton() == MouseButton.SECONDARY) {
-                    showAccountListPopupMenu(accountListItem);
-                    e.consume();
-                }
-            });
+            FXUtils.onSecondaryButtonClicked(accountListItem, () -> showAccountListPopupMenu(accountListItem));
             accountListItem.accountProperty().bind(Accounts.selectedAccountProperty());
 
             // second item in left sidebar
@@ -174,6 +169,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             if (AnimationUtils.isAnimationEnabled()) {
                 FXUtils.prepareOnMouseEnter(gameListItem, Controllers::prepareVersionPage);
             }
+            FXUtils.onSecondaryButtonClicked(gameListItem, () -> showGameListPopupMenu(gameListItem));
 
             // third item in left sidebar
             AdvancedListItem gameItem = new AdvancedListItem();
@@ -181,6 +177,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             gameItem.setActionButtonVisible(false);
             gameItem.setTitle(i18n("version.manage"));
             gameItem.setOnAction(e -> Controllers.navigate(Controllers.getGameListPage()));
+            FXUtils.onSecondaryButtonClicked(gameItem, () -> showGameListPopupMenu(gameItem));
 
             // forth item in left sidebar
             AdvancedListItem downloadItem = new AdvancedListItem();
@@ -282,6 +279,16 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
 
             popupMenu.getContent().add(scrollPane);
             popup.show(accountListItem, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, accountListItem.getWidth(), 0);
+        }
+
+        public void showGameListPopupMenu(AdvancedListItem gameListItem) {
+            GameListPopupMenu.show(gameListItem,
+                    JFXPopup.PopupVPosition.TOP,
+                    JFXPopup.PopupHPosition.LEFT,
+                    gameListItem.getWidth(),
+                    0,
+                    getSkinnable().getMainPage().getProfile(),
+                    getSkinnable().getMainPage().getVersions());
         }
     }
 

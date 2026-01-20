@@ -1405,6 +1405,15 @@ public final class FXUtils {
         });
     }
 
+    public static void onSecondaryButtonClicked(Node node, Runnable action) {
+        node.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
+            if (e.getButton() == MouseButton.SECONDARY) {
+                action.run();
+                e.consume();
+            }
+        });
+    }
+
     public static <N extends Parent> N prepareNode(N node) {
         Scene dummyScene = new Scene(node);
         StyleSheets.init(dummyScene);
