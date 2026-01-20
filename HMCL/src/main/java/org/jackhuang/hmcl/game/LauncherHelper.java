@@ -325,13 +325,13 @@ public final class LauncherHelper {
                                     message = i18n("launch.failed.command_too_long");
                                 } else if (ex instanceof ExecutionPolicyLimitException) {
                                     Controllers.prompt(new PromptDialogPane.Builder(i18n("launch.failed.execution_policy"),
-                                            (result, resolve, reject) -> {
+                                            (result, handler) -> {
                                                 if (CommandBuilder.setExecutionPolicy()) {
                                                     LOG.info("Set the ExecutionPolicy for the scope 'CurrentUser' to 'RemoteSigned'");
-                                                    resolve.run();
+                                                    handler.accept();
                                                 } else {
                                                     LOG.warning("Failed to set ExecutionPolicy");
-                                                    reject.accept(i18n("launch.failed.execution_policy.failed_to_set"));
+                                                    handler.reject(i18n("launch.failed.execution_policy.failed_to_set"));
                                                 }
                                             })
                                             .addQuestion(new PromptDialogPane.Builder.HintQuestion(i18n("launch.failed.execution_policy.hint")))
