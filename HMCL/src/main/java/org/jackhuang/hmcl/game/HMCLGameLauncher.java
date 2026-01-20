@@ -139,7 +139,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
                 }).addCancel(i18n("Dialog.this_launch_only.button"), () -> {
                     future.complete(repository.getVersionRoot(version.getId()));
                 }).build();
-        FXUtils.runInFX(()-> Controllers.dialog(dialog));
+        FXUtils.runInFX(() -> Controllers.dialog(dialog));
 
         try {
             return future.get();
