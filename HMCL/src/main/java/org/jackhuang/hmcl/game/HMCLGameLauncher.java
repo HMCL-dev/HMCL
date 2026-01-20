@@ -17,14 +17,13 @@
  */
 package org.jackhuang.hmcl.game;
 
-import javafx.application.Platform;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonBar;
-import javafx.scene.control.ButtonType;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.launch.DefaultLauncher;
 import org.jackhuang.hmcl.launch.ProcessListener;
+import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
@@ -32,10 +31,13 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.*;
-import java.util.*;
+import java.nio.file.FileVisitOption;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Locale;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
@@ -71,15 +73,13 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         if (config().isDisableAutoGameOptions())
             return;
         Path runDir = repository.getRunDirectory(version.getId());
-        HMCLGameRepository HMCLRepository = (HMCLGameRepository) repository;
-        if (HMCLRepository.getGameDirectoryType(version.getId()) == GameDirectoryType.ROOT_FOLDER) {
-            if (Files.exists(Path.of(HMCLRepository.getVersionRoot(version.getId()).toString(), "resourcepacks")) ||
-                    Files.exists(Path.of(HMCLRepository.getVersionRoot(version.getId()).toString(), "saves")) ||
-                    Files.exists(Path.of(HMCLRepository.getVersionRoot(version.getId()).toString(), "mods")) ||
-                    Files.exists(Path.of(HMCLRepository.getVersionRoot(version.getId()).toString(), "shaderpacks")) ||
-                    Files.exists(Path.of(HMCLRepository.getVersionRoot(version.getId()).toString(), "crash-report"))
-            ) {
-                runDir = switchWorkingDirectory(HMCLRepository, version);
+        HMCLGameRepository repository = (HMCLGameRepository) this.repository;
+        if (repository.getGameDirectoryType(version.getId()) == GameDirectoryType.ROOT_FOLDER) {
+            Path versionRoot = repository.getVersionRoot(version.getId());
+            String[] subdirs = {"resourcepacks", "saves", "mods", "shaderpacks", "crash-report"};
+
+            if (Arrays.stream(subdirs).anyMatch(dir -> Files.exists(versionRoot.resolve(dir)))) {
+                runDir = switchWorkingDirectory(repository, version);
             }
         }
         Path optionsFile = runDir.resolve("options.txt");
@@ -100,13 +100,13 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         Locale locale = Locale.getDefault();
 
         /*
-             *  1.0         : No language option, do not set for these versions
-             *  1.1  ~ 1.5  : zh_CN works fine, zh_cn will crash (the last two letters must be uppercase, otherwise it will cause an NPE crash)
-             *  1.6  ~ 1.10 : zh_CN works fine, zh_cn will automatically switch to English
-             *  1.11 ~ 1.12 : zh_cn works fine, zh_CN will display Chinese but the language setting will incorrectly show English as selected
-             *  1.13+       : zh_cn works fine, zh_CN will automatically switch to English
-             */
-        GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(repository.getGameVersion(version));
+         *  1.0         : No language option, do not set for these versions
+         *  1.1  ~ 1.5  : zh_CN works fine, zh_cn will crash (the last two letters must be uppercase, otherwise it will cause an NPE crash)
+         *  1.6  ~ 1.10 : zh_CN works fine, zh_cn will automatically switch to English
+         *  1.11 ~ 1.12 : zh_cn works fine, zh_CN will display Chinese but the language setting will incorrectly show English as selected
+         *  1.13+       : zh_cn works fine, zh_CN will automatically switch to English
+         */
+        GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(this.repository.getGameVersion(version));
         if (gameVersion.compareTo("1.1") < 0)
             return;
 
@@ -125,52 +125,27 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         }
     }
 
-    private Path switchWorkingDirectory(HMCLGameRepository HMCLRepository, Version version) {
-        if (Platform.isFxApplicationThread()) {
-            Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
-                    String.format(i18n("launcher.info.switch_working_directory.content"), File.separatorChar, version.getId()),
-                    ButtonType.YES, ButtonType.NO, new ButtonType(i18n("Dialog.this_launch_only.button"), ButtonBar.ButtonData.APPLY)
-            );
-            alert.setTitle(i18n("launcher.info.switch_working_directory.title"));
-            switch (alert.showAndWait().orElse(ButtonType.YES).getButtonData()) {
-                case YES -> {
-                    HMCLRepository.getVersionSetting(version.getId()).setGameDirType(GameDirectoryType.VERSION_FOLDER);
-                    return HMCLRepository.getVersionRoot(version.getId());
-                }
-                case NO -> { return HMCLRepository.getBaseDirectory(); }
-                case APPLY -> HMCLRepository.getVersionRoot(version.getId());
-                default -> { return HMCLRepository.getBaseDirectory(); }
-            }
-        } else {
-            CompletableFuture<ButtonBar.ButtonData> buttonDataFuture = new CompletableFuture<>();
+    private Path switchWorkingDirectory(HMCLGameRepository repository, Version version) {
+        CompletableFuture<Path> future = new CompletableFuture<>();
 
-            Platform.runLater(() -> {
-                Alert alert = new Alert(Alert.AlertType.CONFIRMATION,
-                        String.format(i18n("launcher.info.switch_working_directory.content"), File.separatorChar, version.getId()),
-                        ButtonType.YES, ButtonType.NO, new ButtonType(i18n("Dialog.this_launch_only.button"), ButtonBar.ButtonData.APPLY)
-                );
-                alert.setTitle(i18n("launcher.info.switch_working_directory.title"));
-                buttonDataFuture.complete(alert.showAndWait().orElse(ButtonType.YES).getButtonData());
-            });
+        var dialog = new MessageDialogPane.Builder(
+                i18n("launcher.info.switch_working_directory.content", File.separatorChar, version.getId()),
+                i18n("launcher.info.switch_working_directory.title"), MessageDialogPane.MessageType.QUESTION)
+                .ok(() -> {
+                    repository.getVersionSetting(version.getId()).setGameDirType(GameDirectoryType.VERSION_FOLDER);
+                    future.complete(repository.getVersionRoot(version.getId()));
+                }).addCancel(() -> {
+                    future.complete(repository.getBaseDirectory());
+                }).addCancel(i18n("Dialog.this_launch_only.button"), () -> {
+                    future.complete(repository.getVersionRoot(version.getId()));
+                }).build();
+        FXUtils.runInFX(()-> Controllers.dialog(dialog));
 
-            ButtonBar.ButtonData result;
-            try {
-                result = buttonDataFuture.get();
-            } catch (InterruptedException | ExecutionException e) {
-                result = ButtonBar.ButtonData.YES;
-            }
-
-            switch (result) {
-                case YES -> {
-                    HMCLRepository.getVersionSetting(version.getId()).setGameDirType(GameDirectoryType.VERSION_FOLDER);
-                    return HMCLRepository.getVersionRoot(version.getId());
-                }
-                case NO -> { return HMCLRepository.getBaseDirectory(); }
-                case APPLY -> HMCLRepository.getVersionRoot(version.getId());
-                default -> { return HMCLRepository.getBaseDirectory(); }
-            }
+        try {
+            return future.get();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-        return HMCLRepository.getVersionRoot(version.getId());
     }
 
     private static String normalizedLanguageTag(Locale locale, GameVersionNumber gameVersion) {
