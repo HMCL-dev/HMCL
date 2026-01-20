@@ -15,7 +15,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package org.jackhuang.hmcl.download.quilt;
+package org.jackhuang.hmcl.download.legacyfabric;
 
 import org.jackhuang.hmcl.download.DefaultDependencyManager;
 import org.jackhuang.hmcl.game.Version;
@@ -27,19 +27,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * <b>Note</b>: Quilt should be installed first.
- *
- * @author huangyuhui
- */
-public final class QuiltAPIInstallTask extends Task<Version> {
+public final class LegacyFabricAPIInstallTask extends Task<Version> {
 
     private final DefaultDependencyManager dependencyManager;
     private final Version version;
-    private final QuiltAPIRemoteVersion remote;
+    private final LegacyFabricAPIRemoteVersion remote;
     private final List<Task<?>> dependencies = new ArrayList<>(1);
 
-    public QuiltAPIInstallTask(DefaultDependencyManager dependencyManager, Version version, QuiltAPIRemoteVersion remoteVersion) {
+    public LegacyFabricAPIInstallTask(DefaultDependencyManager dependencyManager, Version version, LegacyFabricAPIRemoteVersion remoteVersion) {
         this.dependencyManager = dependencyManager;
         this.version = version;
         this.remote = remoteVersion;
@@ -59,7 +54,7 @@ public final class QuiltAPIInstallTask extends Task<Version> {
     public void execute() throws IOException {
         dependencies.add(new FileDownloadTask(
                 remote.getVersion().getFile().getUrl(),
-                dependencyManager.getGameRepository().getModsDirectory(version.getId()).resolve("quilt-api-" + remote.getVersion().getVersion() + ".jar"),
+                dependencyManager.getGameRepository().getModsDirectory(version.getId()).resolve("legacy-fabric-api-" + remote.getVersion().getVersion() + ".jar"),
                 remote.getVersion().getFile().getIntegrityCheck())
         );
     }
