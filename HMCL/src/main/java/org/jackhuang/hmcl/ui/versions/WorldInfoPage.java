@@ -540,6 +540,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
         }
     }
 
+    @Override
     public void refresh() {
         this.isReadOnly = worldManagePage.isReadOnly();
         this.setLoading(true);

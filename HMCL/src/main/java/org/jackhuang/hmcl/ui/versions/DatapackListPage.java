@@ -54,12 +54,12 @@ public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.Da
         setItems(MappedObservableList.create(datapack.getPacks(), DatapackListPageSkin.DatapackInfoObject::new));
         isReadOnlyProperty = worldManagePage.readOnlyProperty();
         FXUtils.applyDragListener(this, it -> Objects.equals("zip", FileUtils.getExtension(it)),
-                this::installMutiDatapack, this::refresh);
+                this::installMultiDatapack, this::refresh);
 
         refresh();
     }
 
-    private void installMutiDatapack(List<Path> datapackPath) {
+    private void installMultiDatapack(List<Path> datapackPath) {
         datapackPath.forEach(this::installSingleDatapack);
         Controllers.showToast(i18n("datapack.reload.toast"));
     }
@@ -91,7 +91,7 @@ public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.Da
         List<Path> res = FileUtils.toPaths(chooser.showOpenMultipleDialog(Controllers.getStage()));
 
         if (res != null) {
-            installMutiDatapack(res);
+            installMultiDatapack(res);
         }
 
         datapack.loadFromDir();
