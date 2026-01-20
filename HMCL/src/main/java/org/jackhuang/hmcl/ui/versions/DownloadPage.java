@@ -475,8 +475,9 @@ public class DownloadPage extends Control implements DecoratorPage {
             SpinnerPane spinnerPane = new SpinnerPane();
             ScrollPane scrollPane = new ScrollPane();
             ComponentList dependenciesList = new ComponentList(Lang::immutableListOf);
-            loadChangelogAndDependencies(version, selfPage, spinnerPane, dependenciesList, changelogButton);
-            spinnerPane.setOnFailedAction(e -> loadChangelogAndDependencies(version, selfPage, spinnerPane, dependenciesList, changelogButton));
+            loadDependencies(version, selfPage, spinnerPane, dependenciesList);
+            loadChangelog(version, selfPage, changelogButton);
+            spinnerPane.setOnFailedAction(e -> loadDependencies(version, selfPage, spinnerPane, dependenciesList));
 
             scrollPane.setContent(dependenciesList);
             scrollPane.setFitToWidth(true);
@@ -524,19 +525,9 @@ public class DownloadPage extends Control implements DecoratorPage {
             onEscPressed(this, cancelButton::fire);
         }
 
-        private void loadChangelogAndDependencies(RemoteMod.Version version, DownloadPage selfPage, SpinnerPane spinnerPane, ComponentList dependenciesList, Button changelogButton) {
+        private void loadDependencies(RemoteMod.Version version, DownloadPage selfPage, SpinnerPane spinnerPane, ComponentList dependenciesList) {
             spinnerPane.setLoading(true);
-            changelogButton.setDisable(true);
             Task.supplyAsync(() -> {
-                Optional<String> changelog;
-                if (changelogCache.containsKey(version)) {
-                    changelog = Optional.ofNullable(changelogCache.get(version));
-                } else if (version.getChangelog() != null) {
-                    changelog = StringUtils.nullIfBlank(version.getChangelog());
-                } else {
-                    changelog = StringUtils.nullIfBlank(selfPage.repository.getModChangelog(version.getModid(), version.getVersionId()));
-                }
-
                 EnumMap<RemoteMod.DependencyType, List<Node>> dependencies = new EnumMap<>(RemoteMod.DependencyType.class);
                 for (RemoteMod.Dependency dependency : version.getDependencies()) {
                     if (dependency.getType() == RemoteMod.DependencyType.INCOMPATIBLE || dependency.getType() == RemoteMod.DependencyType.BROKEN) {
@@ -554,11 +545,33 @@ public class DownloadPage extends Control implements DecoratorPage {
                     dependencies.get(dependency.getType()).add(dependencyAddonItem);
                 }
 
-                return new Pair<>(changelog, dependencies.values().stream().flatMap(Collection::stream).collect(Collectors.toList()));
+                return dependencies.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
-                    if (result.getKey().isPresent()) {
-                        String s = StringUtils.markdownToHTML(result.getKey().get());
+                    dependenciesList.getContent().setAll(result);
+                    spinnerPane.setFailedReason(null);
+                } else {
+                    dependenciesList.getContent().setAll();
+                    spinnerPane.setFailedReason(i18n("download.failed.refresh"));
+                }
+                spinnerPane.setLoading(false);
+            }).start();
+        }
+
+        private void loadChangelog(RemoteMod.Version version, DownloadPage selfPage, Button changelogButton) {
+            changelogButton.setDisable(true);
+            Task.supplyAsync(() -> {
+                if (changelogCache.containsKey(version)) {
+                    return Optional.ofNullable(changelogCache.get(version));
+                } else if (version.getChangelog() != null) {
+                    return StringUtils.nullIfBlank(version.getChangelog());
+                } else {
+                    return StringUtils.nullIfBlank(selfPage.repository.getModChangelog(version.getModid(), version.getVersionId()));
+                }
+            }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                if (exception == null) {
+                    if (result.isPresent()) {
+                        String s = StringUtils.markdownToHTML(result.get());
                         changelogCache.put(version, s);
                         changelogButton.setDisable(false);
                         changelogButton.setOnAction(e -> Controllers.dialog(new AddonChangelog(AddonVersion.this.title, s)));
@@ -566,14 +579,9 @@ public class DownloadPage extends Control implements DecoratorPage {
                         changelogCache.put(version, null);
                         changelogButton.setOnAction(null);
                     }
-                    dependenciesList.getContent().setAll(result.getValue());
-                    spinnerPane.setFailedReason(null);
                 } else {
                     changelogButton.setOnAction(null);
-                    dependenciesList.getContent().setAll();
-                    spinnerPane.setFailedReason(i18n("download.failed.refresh"));
                 }
-                spinnerPane.setLoading(false);
             }).start();
         }
     }
