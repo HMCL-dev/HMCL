@@ -21,15 +21,18 @@ import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.value.ChangeListener;
 import javafx.geometry.Insets;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.terracotta.TerracottaMetadata;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.account.AccountAdvancedListItem;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
@@ -67,7 +70,18 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
                 .addNavigationDrawerTab(tab, statusPage, i18n("terracotta.status"), SVG.TUNE);
         left.setTop(sideBar);
 
+        AccountAdvancedListItem accountListItem = new AccountAdvancedListItem();
+        accountListItem.setOnAction(e -> Controllers.navigate(Controllers.getAccountListPage()));
+//        accountListItem.setOnMouseClicked(e -> {
+//            if (e.getButton() == MouseButton.SECONDARY) {
+//                showAccountListPopupMenu(accountListItem);
+//                e.consume();
+//            }
+//        });
+        accountListItem.accountProperty().bind(Accounts.selectedAccountProperty());
+
         AdvancedListBox toolbar = new AdvancedListBox()
+                .add(accountListItem)
                 .addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, () -> {
                     Profile profile = Profiles.getSelectedProfile();
                     Versions.launch(profile, profile.getSelectedVersion(), launcherHelper -> {

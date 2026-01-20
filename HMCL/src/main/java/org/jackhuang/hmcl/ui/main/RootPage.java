@@ -19,10 +19,8 @@ package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXPopup;
 import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.scene.control.Label;
 import javafx.scene.input.MouseButton;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -38,11 +36,11 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.account.AccountAdvancedListItem;
+import org.jackhuang.hmcl.ui.account.AccountListPopupMenu;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
-import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
@@ -150,7 +148,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             accountListItem.setOnAction(e -> Controllers.navigate(Controllers.getAccountListPage()));
             accountListItem.setOnMouseClicked(e -> {
                 if (e.getButton() == MouseButton.SECONDARY) {
-                    showAccountListPopupMenu(accountListItem);
+                    AccountListPopupMenu.show(accountListItem, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, accountListItem.getWidth(), 0);
                     e.consume();
                 }
             });
@@ -254,35 +252,6 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             setCenter(getSkinnable().getMainPage());
         }
 
-        public void showAccountListPopupMenu(
-                AccountAdvancedListItem accountListItem
-        ) {
-            PopupMenu popupMenu = new PopupMenu();
-            JFXPopup popup = new JFXPopup(popupMenu);
-            AdvancedListBox scrollPane = new AdvancedListBox();
-            scrollPane.getStyleClass().add("no-padding");
-            scrollPane.setPrefWidth(220);
-            scrollPane.setPrefHeight(-1);
-            scrollPane.setMaxHeight(260);
-
-            if (Accounts.getAccounts().isEmpty()) {
-                Label placeholder = new Label(i18n("account.empty"));
-                placeholder.setStyle("-fx-padding: 10px; -fx-text-fill: -monet-on-surface-variant; -fx-font-style: italic;");
-                scrollPane.add(placeholder);
-            } else {
-                for (Account account : Accounts.getAccounts()) {
-                    AccountAdvancedListItem item = new AccountAdvancedListItem(account);
-                    item.setOnAction(e -> {
-                        Accounts.setSelectedAccount(account);
-                        popup.hide();
-                    });
-                    scrollPane.add(item);
-                }
-            }
-
-            popupMenu.getContent().add(scrollPane);
-            popup.show(accountListItem, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, accountListItem.getWidth(), 0);
-        }
     }
 
     private boolean checkedModpack = false;
