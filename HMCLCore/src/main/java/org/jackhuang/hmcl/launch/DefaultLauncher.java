@@ -582,6 +582,7 @@ public class DefaultLauncher extends Launcher {
 
         for (ModLoaderType type : analyzer.getModLoaders()) {
             if (type == ModLoaderType.NEO_FORGED) env.put("INST_NEOFORGE", "1");
+            else if (type == ModLoaderType.LEGACY_FABRIC) env.put("INST_LEGACYFABRIC", "1");
             else env.put("INST_" + type.name().toUpperCase(Locale.ROOT), "1");
         }
 
