@@ -243,7 +243,7 @@ public class DefaultLauncher extends Launcher {
                     }
                 }
 
-                if (is64bit && javaVersion == 25) {
+                if (is64bit && (javaVersion >= 25 && javaVersion <= 26)) {
                     res.addUnstableDefault("UseCompactObjectHeaders", true);
                 }
 
