@@ -347,6 +347,7 @@ public class DefaultLauncher extends Launcher {
         if (options.isFullscreen())
             res.add("--fullscreen");
 
+        // https://github.com/HMCL-dev/HMCL/issues/774
         if (options.getProxyOption() instanceof ProxyOption.Socks socksProxy) {
             res.add("--proxyHost");
             res.add(socksProxy.host());
