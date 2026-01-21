@@ -112,8 +112,8 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                 });
                 return cell;
             });
+            changelogColumn.setCellValueFactory(__ -> new SimpleStringProperty(i18n("mods.changelog")));
         }
-        changelogColumn.setCellValueFactory(__ -> new SimpleStringProperty(i18n("mods.changelog")));
 
         objects = FXCollections.observableList(updates.stream().map(ModUpdateObject::new).collect(Collectors.toList()));
         FXUtils.bindAllEnabled(allEnabledBox.selectedProperty(), objects.stream().map(o -> o.enabled).toArray(BooleanProperty[]::new));

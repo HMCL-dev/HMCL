@@ -299,24 +299,24 @@ public class DownloadPage extends Control implements DecoratorPage {
                         }
                     }
 
-                    control.versions.keys().stream()
+                    for (String gameVersion : control.versions.keys().stream()
                             .sorted(Collections.reverseOrder(GameVersionNumber::compare))
-                            .forEachOrdered(gameVersion -> {
-                                List<RemoteMod.Version> versions = control.versions.get(gameVersion);
-                                if (versions == null || versions.isEmpty()) {
-                                    return;
-                                }
-                                ComponentList sublist = new ComponentList(() -> {
-                                    ArrayList<AddonItem> items = new ArrayList<>(versions.size());
-                                    for (RemoteMod.Version v : versions) {
-                                        items.add(new AddonItem(control.addon, v, control));
-                                    }
-                                    return items;
-                                });
-                                sublist.getStyleClass().add("no-padding");
-                                sublist.setTitle("Minecraft " + gameVersion);
-                                list.getContent().add(sublist);
-                            });
+                            .toList()) {
+                        List<RemoteMod.Version> versions = control.versions.get(gameVersion);
+                        if (versions == null || versions.isEmpty()) {
+                            return;
+                        }
+                        ComponentList sublist = new ComponentList(() -> {
+                            ArrayList<AddonItem> items = new ArrayList<>(versions.size());
+                            for (RemoteMod.Version v : versions) {
+                                items.add(new AddonItem(control.addon, v, control));
+                            }
+                            return items;
+                        });
+                        sublist.getStyleClass().add("no-padding");
+                        sublist.setTitle("Minecraft " + gameVersion);
+                        list.getContent().add(sublist);
+                    }
                 });
             }
 
