@@ -46,6 +46,7 @@ import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.net.Proxy;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -421,6 +422,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 .setHeight(vs.getHeight())
                 .setFullscreen(vs.isFullscreen())
                 .setWrapper(vs.getWrapper())
+                .setProxyOption(getProxyOption())
                 .setPreLaunchCommand(vs.getPreLaunchCommand())
                 .setPostExitCommand(vs.getPostExitCommand())
                 .setNoGeneratedJVMArgs(vs.isNoJVMArgs())
@@ -438,17 +440,6 @@ public final class HMCLGameRepository extends DefaultGameRepository {
 
         if (StringUtils.isNotBlank(vs.getServerIp())) {
             builder.setQuickPlayOption(new QuickPlayOption.MultiPlayer(vs.getServerIp()));
-        }
-
-        if (config().hasProxy()) {
-            builder.setProxyType(config().getProxyType());
-            builder.setProxyHost(config().getProxyHost());
-            builder.setProxyPort(config().getProxyPort());
-
-            if (config().hasProxyAuth()) {
-                builder.setProxyUser(config().getProxyUser());
-                builder.setProxyPass(config().getProxyPass());
-            }
         }
 
         Path json = getModpackConfiguration(version);
@@ -559,5 +550,40 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         } else {
             return minimum;
         }
+    }
+
+    public static ProxyOption getProxyOption() {
+        if (!config().hasProxy() || config().getProxyType() == null) {
+            return ProxyOption.Default.INSTANCE;
+        }
+
+        return switch (config().getProxyType()) {
+            case DIRECT -> ProxyOption.Direct.INSTANCE;
+            case HTTP, SOCKS -> {
+                String proxyHost = config().getProxyHost();
+                int proxyPort = config().getProxyPort();
+
+                if (StringUtils.isBlank(proxyHost) || proxyPort < 0 || proxyPort > 0xFFFF) {
+                    yield ProxyOption.Default.INSTANCE;
+                }
+
+                String proxyUser = config().getProxyUser();
+                String proxyPass = config().getProxyPass();
+
+                if (StringUtils.isBlank(proxyUser)) {
+                    proxyUser = null;
+                    proxyPass = null;
+                } else if (proxyPass == null) {
+                    proxyPass = "";
+                }
+
+                if (config().getProxyType() == Proxy.Type.HTTP) {
+                    yield new ProxyOption.Http(proxyHost, proxyPort, proxyUser, proxyPass);
+                } else {
+                    yield new ProxyOption.Socks(proxyHost, proxyPort, proxyUser, proxyPass);
+                }
+            }
+            default -> ProxyOption.Default.INSTANCE;
+        };
     }
 }

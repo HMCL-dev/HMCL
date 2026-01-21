@@ -30,7 +30,6 @@ import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.*;
-import java.net.Proxy;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -170,22 +169,36 @@ public class DefaultLauncher extends Launcher {
             if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS)
                 res.addDefault("-Duser.home=", options.getGameDir().toAbsolutePath().getParent().toString());
 
-            Proxy.Type proxyType = options.getProxyType();
-            if (proxyType == null) {
-                res.addDefault("-Djava.net.useSystemProxies=", "true");
-            } else {
-                String proxyHost = options.getProxyHost();
-                int proxyPort = options.getProxyPort();
+            boolean addProxyOptions = res.noneMatch(arg ->
+                    arg.startsWith("-Djava.net.useSystemProxies=")
+                            || arg.startsWith("-Dhttp.proxy")
+                            || arg.startsWith("-Dhttps.proxy")
+                            || arg.startsWith("-DsocksProxy")
+                            || arg.startsWith("-Djava.net.socks.")
+            );
 
-                if (StringUtils.isNotBlank(proxyHost) && proxyPort >= 0 && proxyPort <= 0xFFFF) {
-                    if (proxyType == Proxy.Type.HTTP) {
-                        res.addDefault("-Dhttp.proxyHost=", proxyHost);
-                        res.addDefault("-Dhttp.proxyPort=", String.valueOf(proxyPort));
-                        res.addDefault("-Dhttps.proxyHost=", proxyHost);
-                        res.addDefault("-Dhttps.proxyPort=", String.valueOf(proxyPort));
-                    } else if (proxyType == Proxy.Type.SOCKS) {
-                        res.addDefault("-DsocksProxyHost=", proxyHost);
-                        res.addDefault("-DsocksProxyPort=", String.valueOf(proxyPort));
+            if (addProxyOptions) {
+                if (options.getProxyOption() == null || options.getProxyOption() == ProxyOption.Default.INSTANCE) {
+                    res.add("-Djava.net.useSystemProxies=", "true");
+                } else if (options.getProxyOption() instanceof ProxyOption.Http httpProxy) {
+                    res.add("-Dhttp.proxyHost=" + httpProxy.host());
+                    res.add("-Dhttp.proxyPort=" + httpProxy.port());
+                    res.add("-Dhttps.proxyHost=" + httpProxy.host());
+                    res.add("-Dhttps.proxyPort=" + httpProxy.port());
+
+                    if (StringUtils.isNotBlank(httpProxy.username())) {
+                        res.add("-Dhttp.proxyUser=" + httpProxy.username());
+                        res.add("-Dhttp.proxyPassword=" + Objects.requireNonNullElse(httpProxy.password(), ""));
+                        res.add("-Dhttps.proxyUser=" + httpProxy.username());
+                        res.add("-Dhttps.proxyPassword=" + Objects.requireNonNullElse(httpProxy.password(), ""));
+                    }
+                } else if (options.getProxyOption() instanceof ProxyOption.Socks socksProxy) {
+                    res.add("-DsocksProxyHost=" + socksProxy.host());
+                    res.add("-DsocksProxyPort=" + socksProxy.port());
+
+                    if (StringUtils.isNotBlank(socksProxy.username())) {
+                        res.add("-Djava.net.socks.username=" + socksProxy.username());
+                        res.add("-Djava.net.socks.password=" + Objects.requireNonNullElse(socksProxy.password(), ""));
                     }
                 }
             }
@@ -334,21 +347,17 @@ public class DefaultLauncher extends Launcher {
         if (options.isFullscreen())
             res.add("--fullscreen");
 
-        if (options.getProxyType() == Proxy.Type.SOCKS) {
-            String proxyHost = options.getProxyHost();
-            int proxyPort = options.getProxyPort();
-
-            if (StringUtils.isNotBlank(proxyHost) && proxyPort >= 0 && proxyPort <= 0xFFFF) {
-                res.add("--proxyHost");
-                res.add(proxyHost);
-                res.add("--proxyPort");
-                res.add(String.valueOf(proxyPort));
-                if (StringUtils.isNotBlank(options.getProxyUser()) && StringUtils.isNotBlank(options.getProxyPass())) {
-                    res.add("--proxyUser");
-                    res.add(options.getProxyUser());
-                    res.add("--proxyPass");
-                    res.add(options.getProxyPass());
-                }
+        // https://github.com/HMCL-dev/HMCL/issues/774
+        if (options.getProxyOption() instanceof ProxyOption.Socks socksProxy) {
+            res.add("--proxyHost");
+            res.add(socksProxy.host());
+            res.add("--proxyPort");
+            res.add(String.valueOf(socksProxy.port()));
+            if (StringUtils.isNotBlank(socksProxy.username())) {
+                res.add("--proxyUser");
+                res.add(socksProxy.username());
+                res.add("--proxyPass");
+                res.add(Objects.requireNonNullElse(socksProxy.password(), ""));
             }
         }
 
