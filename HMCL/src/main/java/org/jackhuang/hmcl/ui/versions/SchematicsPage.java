@@ -569,6 +569,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 FXUtils.limitSize(iconImageView, 32, 32);
 
                 this.iconSVG = new SVGPath();
+                iconSVG.getStyleClass().add("svg");
                 iconSVG.setScaleX(32.0 / SVG.DEFAULT_SIZE);
                 iconSVG.setScaleY(32.0 / SVG.DEFAULT_SIZE);
 
