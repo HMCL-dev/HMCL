@@ -621,7 +621,6 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 if (item != null)
                     item.onClick();
             });
-            this.getChildren().add(graphics);
         }
 
         @Override
