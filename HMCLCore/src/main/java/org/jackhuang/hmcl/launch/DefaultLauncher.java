@@ -72,14 +72,14 @@ public class DefaultLauncher extends Launcher {
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                     // res.add("cmd", "/C", "start", "unused title", "/B", "/high");
                 } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() || OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
-                    res.add("nice", "-n", "-5");
+                    res.addAll("nice", "-n", "-5");
                 }
                 break;
             case ABOVE_NORMAL:
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                     // res.add("cmd", "/C", "start", "unused title", "/B", "/abovenormal");
                 } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() || OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
-                    res.add("nice", "-n", "-1");
+                    res.addAll("nice", "-n", "-1");
                 }
                 break;
             case NORMAL:
@@ -89,14 +89,14 @@ public class DefaultLauncher extends Launcher {
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                     // res.add("cmd", "/C", "start", "unused title", "/B", "/belownormal");
                 } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() || OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
-                    res.add("nice", "-n", "1");
+                    res.addAll("nice", "-n", "1");
                 }
                 break;
             case LOW:
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                     // res.add("cmd", "/C", "start", "unused title", "/B", "/low");
                 } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() || OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
-                    res.add("nice", "-n", "5");
+                    res.addAll("nice", "-n", "5");
                 }
                 break;
         }
@@ -179,7 +179,7 @@ public class DefaultLauncher extends Launcher {
 
             if (addProxyOptions) {
                 if (options.getProxyOption() == null || options.getProxyOption() == ProxyOption.Default.INSTANCE) {
-                    res.add("-Djava.net.useSystemProxies=", "true");
+                    res.add("-Djava.net.useSystemProxies=true");
                 } else if (options.getProxyOption() instanceof ProxyOption.Http httpProxy) {
                     res.add("-Dhttp.proxyHost=" + httpProxy.host());
                     res.add("-Dhttp.proxyPort=" + httpProxy.port());
@@ -737,7 +737,7 @@ public class DefaultLauncher extends Launcher {
                             writer.newLine();
                         }
                         writer.newLine();
-                        writer.write(new CommandBuilder().add("cd", "/D", FileUtils.getAbsolutePath(repository.getRunDirectory(version.getId()))).toString());
+                        writer.write(new CommandBuilder().addAll("cd", "/D", FileUtils.getAbsolutePath(repository.getRunDirectory(version.getId()))).toString());
                     } else {
                         writer.write("#!/usr/bin/env bash");
                         writer.newLine();
@@ -746,10 +746,10 @@ public class DefaultLauncher extends Launcher {
                             writer.newLine();
                         }
                         if (commandLine.tempNativeFolder != null) {
-                            writer.write(new CommandBuilder().add("ln", "-s", FileUtils.getAbsolutePath(nativeFolder), commandLine.tempNativeFolder.toString()).toString());
+                            writer.write(new CommandBuilder().addAll("ln", "-s", FileUtils.getAbsolutePath(nativeFolder), commandLine.tempNativeFolder.toString()).toString());
                             writer.newLine();
                         }
-                        writer.write(new CommandBuilder().add("cd", FileUtils.getAbsolutePath(repository.getRunDirectory(version.getId()))).toString());
+                        writer.write(new CommandBuilder().addAll("cd", FileUtils.getAbsolutePath(repository.getRunDirectory(version.getId()))).toString());
                     }
                     writer.newLine();
                     if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
@@ -769,7 +769,7 @@ public class DefaultLauncher extends Launcher {
                         writer.newLine();
                     }
                     if (commandLine.tempNativeFolder != null) {
-                        writer.write(new CommandBuilder().add("rm", commandLine.tempNativeFolder.toString()).toString());
+                        writer.write(new CommandBuilder().addAll("rm", commandLine.tempNativeFolder.toString()).toString());
                         writer.newLine();
                     }
                 }
