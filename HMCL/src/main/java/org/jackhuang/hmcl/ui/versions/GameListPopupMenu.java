@@ -26,6 +26,7 @@ import javafx.beans.property.StringProperty;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -34,15 +35,29 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
+import org.jackhuang.hmcl.game.Version;
+import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.StringUtils;
 
+import java.util.List;
+
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 /// @author Glavo
 public final class GameListPopupMenu extends StackPane {
+
+    public static void show(Node owner, JFXPopup.PopupVPosition vAlign, JFXPopup.PopupHPosition hAlign,
+                            double initOffsetX, double initOffsetY,
+                            Profile profile, List<Version> versions) {
+        GameListPopupMenu menu = new GameListPopupMenu();
+        menu.getItems().setAll(versions.stream().map(it -> new GameItem(profile, it.getId())).toList());
+        JFXPopup popup = new JFXPopup(menu);
+        popup.show(owner, vAlign, hAlign, initOffsetX, initOffsetY);
+    }
+
     private final JFXListView<GameItem> listView = new JFXListView<>();
     private final BooleanBinding isEmpty = Bindings.isEmpty(listView.getItems());
 
