@@ -572,6 +572,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 this.iconSVG = new SVGPath();
 
                 this.iconSVGWrapper = new StackPane(iconSVG);
+                iconSVGWrapper.setAlignment(Pos.CENTER);
                 FXUtils.setLimitWidth(iconSVGWrapper, 24);
                 FXUtils.setLimitHeight(iconSVGWrapper, 24);
 
