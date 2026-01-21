@@ -27,6 +27,7 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.mod.*;
 import org.jackhuang.hmcl.task.FileDownloadTask;
@@ -34,13 +35,11 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
-import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.CSVTable;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
@@ -294,78 +293,6 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         }
     }
 
-    private static final class ModItem extends StackPane {
-
-        ModItem(RemoteMod.Version targetVersion, String source) {
-            VBox pane = new VBox(8);
-            pane.setPadding(new Insets(8, 0, 8, 0));
-
-            {
-                HBox descPane = new HBox(8);
-                descPane.setPadding(new Insets(0, 8, 0, 8));
-                descPane.setAlignment(Pos.CENTER_LEFT);
-                descPane.setMouseTransparent(true);
-
-                {
-                    StackPane graphicPane = new StackPane();
-                    TwoLineListItem content = new TwoLineListItem();
-                    HBox.setHgrow(content, Priority.ALWAYS);
-                    content.setTitle(targetVersion.getVersion());
-                    content.setSubtitle(I18n.formatDateTime(targetVersion.getDatePublished()));
-
-                    switch (targetVersion.getVersionType()) {
-                        case Alpha:
-                            content.addTag(i18n("mods.channel.alpha"));
-                            graphicPane.getChildren().setAll(SVG.ALPHA_CIRCLE.createIcon(24));
-                            break;
-                        case Beta:
-                            content.addTag(i18n("mods.channel.beta"));
-                            graphicPane.getChildren().setAll(SVG.BETA_CIRCLE.createIcon(24));
-                            break;
-                        case Release:
-                            content.addTag(i18n("mods.channel.release"));
-                            graphicPane.getChildren().setAll(SVG.RELEASE_CIRCLE.createIcon(24));
-                            break;
-                    }
-
-                    for (ModLoaderType modLoaderType : targetVersion.getLoaders()) {
-                        switch (modLoaderType) {
-                            case FORGE:
-                                content.addTag(i18n("install.installer.forge"));
-                                break;
-                            case CLEANROOM:
-                                content.addTag(i18n("install.installer.cleanroom"));
-                                break;
-                            case NEO_FORGED:
-                                content.addTag(i18n("install.installer.neoforge"));
-                                break;
-                            case FABRIC:
-                                content.addTag(i18n("install.installer.fabric"));
-                                break;
-                            case LITE_LOADER:
-                                content.addTag(i18n("install.installer.liteloader"));
-                                break;
-                            case QUILT:
-                                content.addTag(i18n("install.installer.quilt"));
-                                break;
-                        }
-                    }
-
-                    content.addTag(source);
-
-                    descPane.getChildren().setAll(graphicPane, content);
-                }
-
-                pane.getChildren().add(descPane);
-            }
-
-            getChildren().setAll(new RipplerContainer(pane));
-
-            // Workaround for https://github.com/HMCL-dev/HMCL/issues/2129
-            this.setMinHeight(50);
-        }
-    }
-
     private static final class ModChangelog extends JFXDialogLayout {
 
         private final RemoteModRepository repository;
@@ -373,13 +300,11 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         public ModChangelog(ModUpdateObject object) {
             this.repository = object.data.getRepository();
             RemoteMod.Version targetVersion = object.data.getCandidate();
-            String source = object.getSource();
 
-            this.setHeading(new HBox(new Label(i18n("mods.check_updates.update_mod", targetVersion.getName()))));
+            this.setHeading(new HBox(new Label(i18n("mods.changelog") + " - " + targetVersion.getName())));
 
             VBox box = new VBox(8);
             box.setPadding(new Insets(8));
-            box.getChildren().setAll(new ModItem(targetVersion, source));
 
             SpinnerPane spinnerPane = new SpinnerPane();
             ScrollPane scrollPane = new ScrollPane();

@@ -304,7 +304,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                             .toList()) {
                         List<RemoteMod.Version> versions = control.versions.get(gameVersion);
                         if (versions == null || versions.isEmpty()) {
-                            return;
+                            continue;
                         }
                         ComponentList sublist = new ComponentList(() -> {
                             ArrayList<AddonItem> items = new ArrayList<>(versions.size());
@@ -315,6 +315,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                         });
                         sublist.getStyleClass().add("no-padding");
                         sublist.setTitle("Minecraft " + gameVersion);
+
                         list.getContent().add(sublist);
                     }
                 });
@@ -373,10 +374,6 @@ public class DownloadPage extends Control implements DecoratorPage {
     }
 
     private static final class AddonItem extends StackPane {
-
-        AddonItem(RemoteMod mod, RemoteMod.Version dataItem) {
-            this(mod, dataItem, null);
-        }
 
         AddonItem(RemoteMod mod, RemoteMod.Version dataItem, DownloadPage selfPage) {
             VBox pane = new VBox(8);
@@ -440,9 +437,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             }
 
             RipplerContainer container = new RipplerContainer(pane);
-            if (selfPage != null) {
-                FXUtils.onClicked(container, () -> Controllers.dialog(new AddonVersion(mod, dataItem, selfPage)));
-            }
+            FXUtils.onClicked(container, () -> Controllers.dialog(new AddonVersion(mod, dataItem, selfPage)));
             getChildren().setAll(container);
 
             // Workaround for https://github.com/HMCL-dev/HMCL/issues/2129
@@ -451,7 +446,6 @@ public class DownloadPage extends Control implements DecoratorPage {
     }
 
     private static final class AddonVersion extends JFXDialogLayout {
-        private final String title;
 
         public AddonVersion(RemoteMod mod, RemoteMod.Version version, DownloadPage selfPage) {
             RemoteModRepository.Type type = selfPage.repository.getType();
@@ -463,12 +457,13 @@ public class DownloadPage extends Control implements DecoratorPage {
                 case SHADER_PACK -> "shaderpack.download.title";
                 default -> "mods.download.title";
             };
-            this.title = i18n(title, version.getName());
-            this.setHeading(new HBox(new Label(this.title)));
+            this.setHeading(new HBox(new Label(I18n.i18n(title, version.getName()))));
 
             VBox box = new VBox(8);
             box.setPadding(new Insets(8));
-            box.getChildren().setAll(new AddonItem(mod, version));
+            var addonItem = new AddonItem(mod, version, selfPage);
+            addonItem.setMouseTransparent(true); // Item is displayed for info, clicking shouldn't open the dialog again
+            box.getChildren().setAll(addonItem);
 
             Button changelogButton = new JFXButton(i18n("mods.changelog"));
             changelogButton.getStyleClass().add("dialog-accept");
@@ -574,7 +569,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                         String s = StringUtils.markdownToHTML(result.get());
                         changelogCache.put(version, s);
                         changelogButton.setDisable(false);
-                        changelogButton.setOnAction(e -> Controllers.dialog(new AddonChangelog(AddonVersion.this.title, s)));
+                        changelogButton.setOnAction(e -> Controllers.dialog(new AddonChangelog(version, s)));
                     } else {
                         changelogCache.put(version, null);
                         changelogButton.setOnAction(null);
@@ -588,8 +583,8 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     private static final class AddonChangelog extends JFXDialogLayout {
 
-        public AddonChangelog(String title, String changelog) {
-            setHeading(new HBox(new Label(title)));
+        public AddonChangelog(RemoteMod.Version version, String changelog) {
+            setHeading(new HBox(new Label(i18n("mods.changelog") + " - " + version.getName())));
 
             VBox box = new VBox(8);
             box.setPadding(new Insets(8));
