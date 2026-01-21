@@ -189,6 +189,8 @@ public class DefaultLauncher extends Launcher {
                     if (StringUtils.isNotBlank(httpProxy.username())) {
                         res.add("-Dhttp.proxyUser=" + httpProxy.username());
                         res.add("-Dhttp.proxyPassword=" + Objects.requireNonNullElse(httpProxy.password(), ""));
+                        res.add("-Dhttps.proxyUser=" + httpProxy.username());
+                        res.add("-Dhttps.proxyPassword=" + Objects.requireNonNullElse(httpProxy.password(), ""));
                     }
                 } else if (options.getProxyOption() instanceof ProxyOption.Socks socksProxy) {
                     res.add("-DsocksProxyHost=" + socksProxy.host());
