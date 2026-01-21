@@ -22,6 +22,7 @@ import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
@@ -562,19 +563,19 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
             {
                 this.left = new StackPane();
-                FXUtils.setLimitWidth(left, 32);
-                FXUtils.setLimitHeight(left, 32);
                 left.setPadding(new Insets(0, 8, 0, 0));
 
                 this.iconImageView = new ImageView();
-                FXUtils.limitSize(iconImageView, 24, 24);
+                FXUtils.limitSize(iconImageView, 32, 32);
 
                 this.iconSVG = new SVGPath();
+                iconSVG.setScaleX(32.0 / SVG.DEFAULT_SIZE);
+                iconSVG.setScaleY(32.0 / SVG.DEFAULT_SIZE);
 
-                this.iconSVGWrapper = new StackPane(iconSVG);
+                this.iconSVGWrapper = new StackPane(new Group(iconSVG));
                 iconSVGWrapper.setAlignment(Pos.CENTER);
-                FXUtils.setLimitWidth(iconSVGWrapper, 24);
-                FXUtils.setLimitHeight(iconSVGWrapper, 24);
+                FXUtils.setLimitWidth(iconSVGWrapper, 32);
+                FXUtils.setLimitHeight(iconSVGWrapper, 32);
 
                 BorderPane.setAlignment(left, Pos.CENTER);
                 root.setLeft(left);
@@ -611,7 +612,6 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 });
 
                 right.getChildren().setAll(btnReveal, btnDelete);
-                root.setRight(right);
             }
 
             this.graphics = new RipplerContainer(root);
@@ -626,12 +626,13 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         @Override
         protected void updateItem(Item item, boolean empty) {
             super.updateItem(item, empty);
+
+            iconImageView.setImage(null);
+
             if (empty || item == null) {
                 setGraphic(null);
                 center.setTitle("");
                 center.setSubtitle("");
-                iconImageView.setImage(null);
-                iconSVGWrapper.getChildren().clear();
             } else {
                 if (item instanceof LitematicFileItem fileItem && fileItem.getImage() != null) {
                     iconImageView.setImage(fileItem.getImage());
@@ -653,11 +654,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                     Tooltip.uninstall(left, tooltip);
                 }
 
-                if (item instanceof BackItem) {
-                    root.setRight(right);
-                } else {
-                    root.setRight(null);
-                }
+                root.setRight(item instanceof BackItem ? null : right);
 
                 setGraphic(graphics);
             }
