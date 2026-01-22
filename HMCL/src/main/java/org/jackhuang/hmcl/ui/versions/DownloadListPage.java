@@ -551,7 +551,6 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
                         this.graphic = new RipplerContainer(container);
                         graphic.setPosition(JFXRippler.RipplerPos.FRONT);
-                        graphic.setRipplerFill(Color.RED);
                         FXUtils.onClicked(graphic, () -> {
                             RemoteMod item = getItem();
                             if (item != null)
