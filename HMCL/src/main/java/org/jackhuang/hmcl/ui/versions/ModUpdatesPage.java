@@ -343,10 +343,8 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                 return StringUtils.nullIfBlank(repository.getModChangelog(version.getModid(), version.getVersionId()));
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
-                    result.map(StringUtils::markdownToHTML).ifPresent(s -> {
-                        object.changelog = s;
-                        scrollPane.setContent(FXUtils.renderAddonChangelog(s));
-                    });
+                    object.changelog = result.map(StringUtils::markdownToHTML).orElse(i18n("mods.changelog.empty"));
+                    scrollPane.setContent(FXUtils.renderAddonChangelog(object.changelog));
                     spinnerPane.setFailedReason(null);
                 } else {
                     spinnerPane.setFailedReason(i18n("download.failed.refresh"));
