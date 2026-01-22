@@ -525,13 +525,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
                 spinnerPane.setContent(listView);
                 Bindings.bindContent(listView.getItems(), getSkinnable().items);
-                FXUtils.onClicked(listView, () -> {
-                    if (listView.getSelectionModel().getSelectedIndex() < 0)
-                        return;
-                    RemoteMod selectedItem = listView.getSelectionModel().getSelectedItem();
-                    Controllers.navigate(new DownloadPage(getSkinnable(), selectedItem, getSkinnable().getProfileVersion(), getSkinnable().callback));
-                });
-
+                listView.setSelectionModel(null);
                 // ListViewBehavior would consume ESC pressed event, preventing us from handling it, so we ignore it here
                 ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
 
@@ -549,6 +543,12 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
                         container.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), content);
                         HBox.setHgrow(content, Priority.ALWAYS);
+
+                        FXUtils.onClicked(pane, () -> {
+                            RemoteMod item = getItem();
+                            if (item != null)
+                                Controllers.navigate(new DownloadPage(getSkinnable(), item, getSkinnable().getProfileVersion(), getSkinnable().callback));
+                        });
                     }
 
                     @Override
