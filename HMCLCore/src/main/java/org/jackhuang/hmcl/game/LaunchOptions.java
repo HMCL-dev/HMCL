@@ -82,8 +82,8 @@ public class LaunchOptions implements Serializable {
     }
 
     /**
-     * Will be shown in the left bottom corner of the main menu of Minecraft.
-     * null if the id of launch version.
+     * Will shown in the left bottom corner of the main menu of Minecraft.
+     * null if use the id of launch version.
      */
     public String getVersionName() {
         return versionName;
@@ -208,7 +208,7 @@ public class LaunchOptions implements Serializable {
     }
 
     /**
-     * The username of the proxy, optional.
+     * The user name of the proxy, optional.
      */
     public String getProxyUser() {
         return proxyUser;

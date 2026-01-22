@@ -131,13 +131,16 @@ public final class HMCLGameLauncher extends DefaultLauncher {
         var dialog = new MessageDialogPane.Builder(
                 i18n("launcher.info.switch_working_directory.content", File.separatorChar, version.getId()),
                 i18n("launcher.info.switch_working_directory.title"), MessageDialogPane.MessageType.QUESTION)
-                .ok(() -> {
+                .yesOrNo(() -> {
                     repository.getVersionSetting(version.getId()).setGameDirType(GameDirectoryType.VERSION_FOLDER);
                     future.complete(repository.getVersionRoot(version.getId()));
-                }).addCancel(() -> {
+                }, () -> {
                     future.complete(repository.getBaseDirectory());
                 }).addCancel(i18n("Dialog.this_launch_only.button"), () -> {
                     future.complete(repository.getVersionRoot(version.getId()));
+                })
+                .addCancel(() -> {
+                    // TODO: Cancel all the task of Launch Minecraft
                 }).build();
         FXUtils.runInFX(() -> Controllers.dialog(dialog));
 
