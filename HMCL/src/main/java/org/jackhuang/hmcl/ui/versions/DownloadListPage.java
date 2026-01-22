@@ -527,13 +527,15 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
 
                 listView.setCellFactory(x -> new ListCell<>() {
+                    private static final Insets PADDING = new Insets(9, 9, 0, 9);
+
                     private final RipplerContainer graphic;
 
                     private final TwoLineListItem content = new TwoLineListItem();
                     private final ImageView imageView = new ImageView();
 
                     {
-                        setPadding(new Insets(9, 9, 0, 9));
+                        setPadding(PADDING);
 
                         HBox container = new HBox(8);
                         container.getStyleClass().add("card");
