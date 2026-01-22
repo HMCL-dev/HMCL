@@ -17,10 +17,8 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXComboBox;
-import com.jfoenix.controls.JFXListView;
-import com.jfoenix.controls.JFXTextField;
+import com.jfoenix.controls.*;
+import com.jfoenix.effects.JFXDepthManager;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.*;
@@ -30,16 +28,15 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.Node;
-import javafx.scene.control.Control;
-import javafx.scene.control.Label;
-import javafx.scene.control.Skin;
-import javafx.scene.control.SkinBase;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.mod.RemoteMod;
@@ -52,7 +49,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
-import org.jackhuang.hmcl.ui.construct.FloatListCell;
+import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
@@ -529,14 +526,20 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 // ListViewBehavior would consume ESC pressed event, preventing us from handling it, so we ignore it here
                 ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
 
-                listView.setCellFactory(x -> new FloatListCell<>(listView) {
+                listView.setCellFactory(x -> new ListCell<>() {
+                    private final RipplerContainer graphic;
+
                     private final TwoLineListItem content = new TwoLineListItem();
                     private final ImageView imageView = new ImageView();
 
                     {
+                        setPadding(new Insets(9, 9, 0, 9));
+
                         HBox container = new HBox(8);
+                        container.getStyleClass().add("card");
+                        container.setCursor(Cursor.HAND);
                         container.setAlignment(Pos.CENTER_LEFT);
-                        pane.getChildren().add(container);
+                        JFXDepthManager.setDepth(container, 1);
 
                         imageView.setFitWidth(40);
                         imageView.setFitHeight(40);
@@ -544,27 +547,42 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         container.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), content);
                         HBox.setHgrow(content, Priority.ALWAYS);
 
-                        FXUtils.onClicked(pane, () -> {
+                        this.graphic = new RipplerContainer(container);
+                        graphic.setPosition(JFXRippler.RipplerPos.FRONT);
+                        graphic.setRipplerFill(Color.RED);
+                        FXUtils.onClicked(graphic, () -> {
                             RemoteMod item = getItem();
                             if (item != null)
                                 Controllers.navigate(new DownloadPage(getSkinnable(), item, getSkinnable().getProfileVersion(), getSkinnable().callback));
                         });
+
+                        setPrefWidth(0);
+
+                        if (listView.lookup(".clipped-container") instanceof Region clippedContainer) {
+                            maxWidthProperty().bind(clippedContainer.widthProperty());
+                            prefWidthProperty().bind(clippedContainer.widthProperty());
+                            minWidthProperty().bind(clippedContainer.widthProperty());
+                        }
                     }
 
                     @Override
-                    protected void updateControl(RemoteMod dataItem, boolean empty) {
-                        if (empty) return;
-                        ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(getSkinnable().repository.getType()).getModByCurseForgeId(dataItem.getSlug());
-                        content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : dataItem.getTitle());
-                        content.setSubtitle(dataItem.getDescription());
-                        content.getTags().clear();
-                        for (String category : dataItem.getCategories()) {
-                            if (getSkinnable().shouldDisplayCategory(category))
-                                content.addTag(getSkinnable().getLocalizedCategory(category));
+                    protected void updateItem(RemoteMod item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (empty || item == null) {
+                            setGraphic(null);
+                        } else {
+                            ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(getSkinnable().repository.getType()).getModByCurseForgeId(item.getSlug());
+                            content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : item.getTitle());
+                            content.setSubtitle(item.getDescription());
+                            content.getTags().clear();
+                            for (String category : item.getCategories()) {
+                                if (getSkinnable().shouldDisplayCategory(category))
+                                    content.addTag(getSkinnable().getLocalizedCategory(category));
+                            }
+                            iconLoader.load(imageView.imageProperty(), item.getIconUrl());
+                            setGraphic(graphic);
                         }
-                        iconLoader.load(imageView.imageProperty(), dataItem.getIconUrl());
                     }
-
                 });
             }
 
