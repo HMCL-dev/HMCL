@@ -134,7 +134,6 @@ final class ComponentListCell extends StackPane {
                 Platform.runLater(() -> {
                     // FIXME: ComponentSubList without padding must have a 4 pixel padding for displaying a border radius.
                     double newAnimatedHeight = (list.prefHeight(list.getWidth()) + (hasPadding ? 8 + 10 : 4)) * (expanded ? 1 : -1);
-                    // double newHeight = expanded ? getHeight() + newAnimatedHeight : prefHeight(list.getWidth());
                     double contentHeight = expanded ? newAnimatedHeight : 0;
                     double targetRotate = expanded ? -180 : 0;
 
