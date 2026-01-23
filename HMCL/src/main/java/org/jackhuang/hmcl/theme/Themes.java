@@ -32,6 +32,9 @@ import org.glavo.monetfx.beans.property.ColorSchemeProperty;
 import org.glavo.monetfx.beans.property.ReadOnlyColorSchemeProperty;
 import org.glavo.monetfx.beans.property.SimpleColorSchemeProperty;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemUtils;
+import org.jackhuang.hmcl.util.platform.windows.WinReg;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +42,7 @@ import java.util.Locale;
 import java.util.Objects;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// @author Glavo
 public final class Themes {
@@ -65,7 +69,7 @@ public final class Themes {
                     if (FXUtils.DARK_MODE != null) {
                         yield FXUtils.DARK_MODE.get() ? Brightness.DARK : Brightness.LIGHT;
                     } else {
-                        yield Brightness.DEFAULT;
+                        yield getDefaultBrightness();
                     }
                 }
                 case "dark" -> Brightness.DARK;
@@ -95,6 +99,33 @@ public final class Themes {
         };
         listener.changed(theme, null, theme.get());
         theme.addListener(listener);
+    }
+
+    private static Brightness defaultBrightness;
+
+    private static Brightness getDefaultBrightness() {
+        if (defaultBrightness != null)
+            return defaultBrightness;
+
+        Brightness brightness = Brightness.DEFAULT;
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+            WinReg reg = WinReg.INSTANCE;
+            if (reg != null) {
+                Object appsUseLightTheme = reg.queryValue(WinReg.HKEY.HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize", "AppsUseLightTheme");
+                if (appsUseLightTheme instanceof Integer value) {
+                    brightness = value == 0 ? Brightness.DARK : Brightness.LIGHT;
+                }
+            }
+        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+            try {
+                String result = SystemUtils.run("/usr/bin/defaults", "read", "-g", "AppleInterfaceStyle").trim();
+                brightness = "Dark".equalsIgnoreCase(result) ? Brightness.DARK : Brightness.LIGHT;
+            } catch (Exception e) {
+                LOG.warning("Failed to get macOS appearance", e);
+            }
+        }
+
+        return defaultBrightness = brightness;
     }
 
     public static ObjectExpression<Theme> themeProperty() {
