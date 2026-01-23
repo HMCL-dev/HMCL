@@ -558,11 +558,8 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
                         setPrefWidth(0);
 
-                        if (listView.lookup(".clipped-container") instanceof Region clippedContainer) {
-                            maxWidthProperty().bind(clippedContainer.widthProperty());
-                            prefWidthProperty().bind(clippedContainer.widthProperty());
-                            minWidthProperty().bind(clippedContainer.widthProperty());
-                        }
+                        FXUtils.limitCellWidth(listView, this);
+
                     }
 
                     @Override

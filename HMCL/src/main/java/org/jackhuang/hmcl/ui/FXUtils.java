@@ -42,6 +42,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.*;
+import javafx.scene.control.skin.ListViewSkin;
 import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -80,6 +81,7 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import java.awt.*;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -420,6 +422,20 @@ public final class FXUtils {
         return pane;
     }
 
+    public static void limitCellWidth(ListView<?> listView, ListCell<?> cell) {
+        ObservableDoubleValue widthProperty;
+
+        if (listView.lookup(".clipped-container") instanceof Region clippedContainer) {
+            widthProperty = clippedContainer.widthProperty();
+        } else {
+            widthProperty = listView.widthProperty();
+        }
+
+        cell.maxWidthProperty().bind(widthProperty);
+        cell.prefWidthProperty().bind(widthProperty);
+        cell.minWidthProperty().bind(widthProperty);
+    }
+
     public static void smoothScrolling(ScrollPane scrollPane) {
         if (AnimationUtils.isAnimationEnabled())
             ScrollUtils.addSmoothScrolling(scrollPane);
@@ -537,7 +553,7 @@ public final class FXUtils {
 
             // Fallback to java.awt.Desktop::open
             try {
-                java.awt.Desktop.getDesktop().open(file.toFile());
+                Desktop.getDesktop().open(file.toFile());
             } catch (Throwable e) {
                 LOG.error("Unable to open " + path + " by java.awt.Desktop.getDesktop()::open", e);
             }
@@ -634,7 +650,7 @@ public final class FXUtils {
             }
 
             try {
-                java.awt.Desktop.getDesktop().browse(new URI(uri));
+                Desktop.getDesktop().browse(new URI(uri));
             } catch (Throwable e) {
                 LOG.warning("Failed to open link: " + link, e);
             }
@@ -893,10 +909,10 @@ public final class FXUtils {
         public boolean equals(Object o) {
             if (this == o)
                 return true;
-            if (!(o instanceof FXUtils.PaintBidirectionalBinding))
+            if (!(o instanceof PaintBidirectionalBinding))
                 return false;
 
-            var that = (FXUtils.PaintBidirectionalBinding) o;
+            var that = (PaintBidirectionalBinding) o;
 
             final ColorPicker colorPicker = this.colorPickerRef.get();
             final Property<Paint> property = this.propertyRef.get();
@@ -1188,7 +1204,7 @@ public final class FXUtils {
      *
      * @param url the url of image. The image resource should be a file within the jar.
      * @return the image resource within the jar.
-     * @see org.jackhuang.hmcl.util.CrashReporter
+     * @see CrashReporter
      * @see ResourceNotFoundError
      */
     public static Image newBuiltinImage(String url) {
@@ -1212,7 +1228,7 @@ public final class FXUtils {
      *                        algorithm or a faster one when scaling this image to fit within
      *                        the specified bounding box
      * @return the image resource within the jar.
-     * @see org.jackhuang.hmcl.util.CrashReporter
+     * @see CrashReporter
      * @see ResourceNotFoundError
      */
     public static Image newBuiltinImage(String url, double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth) {

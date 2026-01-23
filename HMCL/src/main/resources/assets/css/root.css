@@ -950,6 +950,13 @@
     -fx-background-color: transparent;
 }
 
+.no-horizontal-scrollbar .scroll-bar:horizontal {
+    -fx-opacity: 0;
+    -fx-max-height: 0;
+    -fx-min-height: 0;
+    -fx-pref-height: 0;
+}
+
 .options-list {
     -fx-background-color: transparent;
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 5, 0.06, -0.5, 1);
@@ -1091,15 +1098,16 @@
 .jfx-toggle-button Line {
     -fx-stroke: -jfx-untoggle-line-color;
 }
-.jfx-toggle-button:selected Line{
+
+.jfx-toggle-button:selected Line {
     -fx-stroke: -jfx-toggle-line-color;
 }
 
-.jfx-toggle-button Circle{
+.jfx-toggle-button Circle {
     -fx-fill: -jfx-untoggle-color;
 }
 
-.jfx-toggle-button:selected Circle{
+.jfx-toggle-button:selected Circle {
     -fx-fill: -jfx-toggle-color;
 }
 
