@@ -63,9 +63,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -330,6 +328,19 @@ public final class SettingsPage extends ScrollPane {
         UpdateHandler.updateFrom(target);
     }
 
+    private static String getEntryName(Set<String> entryNames, String name) {
+        if (entryNames.add(name)) {
+            return name;
+        }
+
+        for (long i = 1; ; i++) {
+            String newName = name + "." + i;
+            if (entryNames.add(newName)) {
+                return newName;
+            }
+        }
+    }
+
     /// This method guarantees to close both `input` and the current zip entry.
     ///
     /// If no exception occurs, this method returns `true`;
@@ -389,6 +400,8 @@ public final class SettingsPage extends ScrollPane {
                     try (var os = Files.newOutputStream(outputFile);
                          var zos = new ZipOutputStream(os)) {
 
+                        Set<String> entryNames = new HashSet<>();
+
                         for (Path path : recentLogFiles) {
                             String fileName = FileUtils.getName(path);
                             String extension = StringUtils.substringAfterLast(fileName, '.');
@@ -410,7 +423,7 @@ public final class SettingsPage extends ScrollPane {
                                     input = null;
                                 }
 
-                                String entryName = StringUtils.substringBeforeLast(fileName, ".");
+                                String entryName = getEntryName(entryNames, StringUtils.substringBeforeLast(fileName, "."));
                                 if (input != null && exportLogFile(zos, path, entryName, input, buffer))
                                     continue;
                             }
@@ -427,10 +440,10 @@ public final class SettingsPage extends ScrollPane {
                                 continue;
                             }
 
-                            exportLogFile(zos, path, fileName, input, buffer);
+                            exportLogFile(zos, path, getEntryName(entryNames, fileName), input, buffer);
                         }
 
-                        zos.putNextEntry(new ZipEntry("hmcl-latest.log"));
+                        zos.putNextEntry(new ZipEntry(getEntryName(entryNames, "hmcl-latest.log")));
                         LOG.exportLogs(zos);
                         zos.closeEntry();
                     }
