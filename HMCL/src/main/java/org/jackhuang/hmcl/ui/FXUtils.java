@@ -299,6 +299,14 @@ public final class FXUtils {
         });
     }
 
+    public static Node wrap(Node node) {
+        return limitingSize(node, 30, 20);
+    }
+
+    public static Node wrap(SVG svg) {
+        return wrap(svg.createIcon(20));
+    }
+
     private static class ListenerPair<T> {
         private final ObservableValue<T> value;
         private final ChangeListener<? super T> listener;
@@ -1391,6 +1399,15 @@ public final class FXUtils {
     public static void onClicked(Node node, Runnable action) {
         node.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
             if (e.getButton() == MouseButton.PRIMARY) {
+                action.run();
+                e.consume();
+            }
+        });
+    }
+
+    public static void onSecondaryButtonClicked(Node node, Runnable action) {
+        node.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
+            if (e.getButton() == MouseButton.SECONDARY) {
                 action.run();
                 e.consume();
             }

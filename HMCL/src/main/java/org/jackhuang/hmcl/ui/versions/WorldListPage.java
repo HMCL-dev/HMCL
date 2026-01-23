@@ -145,24 +145,26 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
     private void installWorld(Path zipFile) {
         // Only accept one world file because user is required to confirm the new world name
         // Or too many input dialogs are popped.
-        Task.supplyAsync(() -> new World(zipFile)).whenComplete(Schedulers.javafx(), world -> {
-            Controllers.prompt(i18n("world.name.enter"), (name, resolve, reject) -> {
-                Task.runAsync(() -> world.install(savesDir, name)).whenComplete(Schedulers.javafx(), () -> {
-                    resolve.run();
-                    refresh();
+        Task.supplyAsync(() -> new World(zipFile))
+                .whenComplete(Schedulers.javafx(), world -> {
+                    Controllers.prompt(i18n("world.name.enter"), (name, handler) -> {
+                        Task.runAsync(() -> world.install(savesDir, name))
+                                .whenComplete(Schedulers.javafx(), () -> {
+                                    handler.resolve();
+                                    refresh();
+                                }, e -> {
+                                    if (e instanceof FileAlreadyExistsException)
+                                        handler.reject(i18n("world.import.failed", i18n("world.import.already_exists")));
+                                    else if (e instanceof IOException && e.getCause() instanceof InvalidPathException)
+                                        handler.reject(i18n("world.import.failed", i18n("install.new_game.malformed")));
+                                    else
+                                        handler.reject(i18n("world.import.failed", e.getClass().getName() + ": " + e.getLocalizedMessage()));
+                                }).start();
+                    }, world.getWorldName(), new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid));
                 }, e -> {
-                    if (e instanceof FileAlreadyExistsException)
-                        reject.accept(i18n("world.import.failed", i18n("world.import.already_exists")));
-                    else if (e instanceof IOException && e.getCause() instanceof InvalidPathException)
-                        reject.accept(i18n("world.import.failed", i18n("install.new_game.malformed")));
-                    else
-                        reject.accept(i18n("world.import.failed", e.getClass().getName() + ": " + e.getLocalizedMessage()));
+                    LOG.warning("Unable to parse world file " + zipFile, e);
+                    Controllers.dialog(i18n("world.import.invalid"));
                 }).start();
-            }, world.getWorldName(), new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid));
-        }, e -> {
-            LOG.warning("Unable to parse world file " + zipFile, e);
-            Controllers.dialog(i18n("world.import.invalid"));
-        }).start();
     }
 
     private void showManagePage(World world) {

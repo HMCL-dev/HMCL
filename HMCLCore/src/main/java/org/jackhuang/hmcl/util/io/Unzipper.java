@@ -152,7 +152,7 @@ public final class Unzipper {
                 }
             }
 
-            if (entryCount == 0 && !terminateIfSubDirectoryNotExists) {
+            if (entryCount == 0 && !"/".equals(subDirectory) && !terminateIfSubDirectoryNotExists) {
                 throw new NoSuchFileException("Subdirectory " + subDirectory + " does not exist in the zip file.");
             }
         }
