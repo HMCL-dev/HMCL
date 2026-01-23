@@ -118,7 +118,7 @@ public final class WorldManageUIUtils {
                                     }
                             ).whenComplete(Schedulers.javafx(), (throwable) -> {
                                 if (throwable == null) {
-                                    handler.accept();
+                                    handler.resolve();
                                 } else {
                                     handler.reject(i18n("world.duplicate.failed"));
                                     LOG.warning("Failed to duplicate world " + world.getFile(), throwable);

@@ -252,12 +252,12 @@ public class TerracottaControllerPage extends StackPane {
                                 if (e != null) {
                                     handler.reject(i18n("terracotta.status.waiting.guest.prompt.invalid"));
                                 } else {
-                                    handler.accept();
+                                    handler.resolve();
                                     UI_STATE.set(s);
                                 }
                             }).setSignificance(Task.TaskSignificance.MINOR).start();
                         } else {
-                            handler.accept();
+                            handler.resolve();
                         }
                     });
                 });

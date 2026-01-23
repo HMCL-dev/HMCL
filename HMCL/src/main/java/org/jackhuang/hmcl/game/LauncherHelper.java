@@ -328,7 +328,7 @@ public final class LauncherHelper {
                                             (result, handler) -> {
                                                 if (CommandBuilder.setExecutionPolicy()) {
                                                     LOG.info("Set the ExecutionPolicy for the scope 'CurrentUser' to 'RemoteSigned'");
-                                                    handler.accept();
+                                                    handler.resolve();
                                                 } else {
                                                     LOG.warning("Failed to set ExecutionPolicy");
                                                     handler.reject(i18n("launch.failed.execution_policy.failed_to_set"));

@@ -159,7 +159,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                     Controllers.prompt(i18n("world.name.enter"), (name, handler) -> {
                         Task.runAsync(() -> world.install(savesDir, name))
                                 .whenComplete(Schedulers.javafx(), () -> {
-                                    handler.accept();
+                                    handler.resolve();
                                     refresh();
                                 }, e -> {
                                     if (e instanceof FileAlreadyExistsException)

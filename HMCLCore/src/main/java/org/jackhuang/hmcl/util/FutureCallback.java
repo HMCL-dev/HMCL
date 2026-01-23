@@ -31,7 +31,7 @@ public interface FutureCallback<T> {
     interface ResultHandler {
 
         /// Accept the result.
-        void accept();
+        void resolve();
 
         /// Reject the result with given reason.
         void reject(String reason);

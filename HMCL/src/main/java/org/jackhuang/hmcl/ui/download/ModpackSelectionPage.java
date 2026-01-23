@@ -133,7 +133,7 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
                         if (manifest == null) {
                             handler.reject(i18n("modpack.type.server.malformed"));
                         } else if (e == null) {
-                            handler.accept();
+                            handler.resolve();
                             controller.getSettings().put(MODPACK_SERVER_MANIFEST, manifest);
                             controller.onNext();
                         } else {
@@ -144,13 +144,13 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
                     // otherwise we still consider the file as modpack zip file
                     // since casually the url may not ends with ".zip"
                     Path modpack = Files.createTempFile("modpack", ".zip");
-                    handler.accept();
+                    handler.resolve();
 
                     Controllers.taskDialog(
                             new FileDownloadTask(url, modpack)
                                     .whenComplete(Schedulers.javafx(), e -> {
                                         if (e == null) {
-                                            handler.accept();
+                                            handler.resolve();
                                             controller.getSettings().put(MODPACK_FILE, modpack);
                                             controller.onNext();
                                         } else {

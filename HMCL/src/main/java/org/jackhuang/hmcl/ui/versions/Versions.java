@@ -131,11 +131,11 @@ public final class Versions {
     public static CompletableFuture<String> renameVersion(Profile profile, String version) {
         return Controllers.prompt(i18n("version.manage.rename.message"), (newName, handler) -> {
             if (newName.equals(version)) {
-                handler.accept();
+                handler.resolve();
                 return;
             }
             if (profile.getRepository().renameVersion(version, newName)) {
-                handler.accept();
+                handler.resolve();
                 profile.getRepository().refreshVersionsAsync()
                         .thenRunAsync(Schedulers.javafx(), () -> {
                             if (profile.getRepository().hasVersion(newName)) {
@@ -166,7 +166,7 @@ public final class Versions {
                             .thenComposeAsync(profile.getRepository().refreshVersionsAsync())
                             .whenComplete(Schedulers.javafx(), (result, exception) -> {
                                 if (exception == null) {
-                                    handler.accept();
+                                    handler.resolve();
                                 } else {
                                     handler.reject(StringUtils.getStackTrace(exception));
                                     if (!profile.getRepository().versionIdConflicts(newVersionName)) {

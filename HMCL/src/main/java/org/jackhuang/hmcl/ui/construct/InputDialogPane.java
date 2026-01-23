@@ -74,7 +74,7 @@ public class InputDialogPane extends JFXDialogLayout implements DialogAware {
 
             onResult.call(textField.getText(), new FutureCallback.ResultHandler() {
                 @Override
-                public void accept() {
+                public void resolve() {
                     acceptPane.hideSpinner();
                     future.complete(textField.getText());
                     fireEvent(new DialogCloseEvent());

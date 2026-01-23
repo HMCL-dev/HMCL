@@ -179,7 +179,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
                     try {
                         Files.createDirectories(targetDir);
-                        handler.accept();
+                        handler.resolve();
                         refresh();
                     } catch (IOException e) {
                         LOG.warning("Failed to create directory: " + targetDir, e);

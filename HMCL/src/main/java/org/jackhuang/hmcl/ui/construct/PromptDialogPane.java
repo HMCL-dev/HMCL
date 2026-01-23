@@ -119,7 +119,7 @@ public class PromptDialogPane extends DialogPane {
 
         builder.callback.call(builder.questions, new FutureCallback.ResultHandler() {
             @Override
-            public void accept() {
+            public void resolve() {
                 future.complete(builder.questions);
                 runInFX(() -> onSuccess());
             }
