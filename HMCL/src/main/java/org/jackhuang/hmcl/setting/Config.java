@@ -747,6 +747,17 @@ public final class Config extends ObservableSetting {
         return configurations;
     }
 
+    @SerializedName("resourcePackWarningShown")
+    private final BooleanProperty resourcePackWarningShown = new SimpleBooleanProperty(false);
+
+    public boolean isResourcePackWarningShown() {
+        return resourcePackWarningShown.get();
+    }
+
+    public void onResourcePackWarningShown() {
+        resourcePackWarningShown.set(true);
+    }
+
     public static final class Adapter extends ObservableSetting.Adapter<Config> {
         @Override
         protected Config createInstance() {
