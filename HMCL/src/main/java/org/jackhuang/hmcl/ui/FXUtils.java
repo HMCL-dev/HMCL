@@ -1639,7 +1639,7 @@ public final class FXUtils {
             delete.setDisable(hasNoSelection);
             copy.setDisable(hasNoSelection);
             paste.setDisable(!Clipboard.getSystemClipboard().hasString());
-            selectall.setDisable(textField.getText().isEmpty());
+            selectall.setDisable(textField.getText() != null && !textField.getText().isEmpty());
 
             JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(textField, popup);
             popup.show(textField, vPosition, JFXPopup.PopupHPosition.LEFT, e.getX(), vPosition == JFXPopup.PopupVPosition.TOP ? e.getY() : e.getY() - textField.getHeight());
