@@ -1613,36 +1613,36 @@ public final class FXUtils {
                 : JFXPopup.PopupVPosition.TOP;    // Show menu above the button, expanding upward
     }
 
-    public static void useJFXContextMenu(TextField textField) {
-        textField.setContextMenu(null);
+    public static void useJFXContextMenu(TextInputControl control) {
+        control.setContextMenu(null);
 
         PopupMenu menu = new PopupMenu();
         JFXPopup popup = new JFXPopup(menu);
         popup.setAutoHide(true);
 
-        textField.setOnContextMenuRequested(e -> {
-            boolean hasNoSelection = textField.getSelectedText().isEmpty();
+        control.setOnContextMenuRequested(e -> {
+            boolean hasNoSelection = control.getSelectedText().isEmpty();
 
-            IconedMenuItem undo = new IconedMenuItem(SVG.UNDO, i18n("menu.undo"), textField::undo, popup);
-            IconedMenuItem redo = new IconedMenuItem(SVG.REDO, i18n("menu.redo"), textField::redo, popup);
-            IconedMenuItem cut = new IconedMenuItem(SVG.CONTENT_CUT, i18n("menu.cut"), textField::cut, popup);
-            IconedMenuItem copy = new IconedMenuItem(SVG.CONTENT_COPY, i18n("menu.copy"), textField::copy, popup);
-            IconedMenuItem paste = new IconedMenuItem(SVG.CONTENT_PASTE, i18n("menu.paste"), textField::paste, popup);
-            IconedMenuItem delete = new IconedMenuItem(SVG.DELETE, i18n("menu.deleteselection"), () -> textField.replaceSelection(""), popup);
-            IconedMenuItem selectall = new IconedMenuItem(SVG.SELECT_ALL, i18n("menu.selectall"), textField::selectAll, popup);
+            IconedMenuItem undo = new IconedMenuItem(SVG.UNDO, i18n("menu.undo"), control::undo, popup);
+            IconedMenuItem redo = new IconedMenuItem(SVG.REDO, i18n("menu.redo"), control::redo, popup);
+            IconedMenuItem cut = new IconedMenuItem(SVG.CONTENT_CUT, i18n("menu.cut"), control::cut, popup);
+            IconedMenuItem copy = new IconedMenuItem(SVG.CONTENT_COPY, i18n("menu.copy"), control::copy, popup);
+            IconedMenuItem paste = new IconedMenuItem(SVG.CONTENT_PASTE, i18n("menu.paste"), control::paste, popup);
+            IconedMenuItem delete = new IconedMenuItem(SVG.DELETE, i18n("menu.deleteselection"), () -> control.replaceSelection(""), popup);
+            IconedMenuItem selectall = new IconedMenuItem(SVG.SELECT_ALL, i18n("menu.selectall"), control::selectAll, popup);
 
             menu.getContent().setAll(undo, redo, cut, copy, paste, delete, selectall);
 
-            undo.setDisable(!textField.isUndoable());
-            redo.setDisable(!textField.isRedoable());
+            undo.setDisable(!control.isUndoable());
+            redo.setDisable(!control.isRedoable());
             cut.setDisable(hasNoSelection);
             delete.setDisable(hasNoSelection);
             copy.setDisable(hasNoSelection);
             paste.setDisable(!Clipboard.getSystemClipboard().hasString());
-            selectall.setDisable(textField.getText() != null && !textField.getText().isEmpty());
+            selectall.setDisable(control.getText() == null || control.getText().isEmpty());
 
-            JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(textField, popup);
-            popup.show(textField, vPosition, JFXPopup.PopupHPosition.LEFT, e.getX(), vPosition == JFXPopup.PopupVPosition.TOP ? e.getY() : e.getY() - textField.getHeight());
+            JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(control, popup);
+            popup.show(control, vPosition, JFXPopup.PopupHPosition.LEFT, e.getX(), vPosition == JFXPopup.PopupVPosition.TOP ? e.getY() : e.getY() - control.getHeight());
 
             e.consume();
         });
