@@ -333,7 +333,7 @@ public final class SettingsPage extends ScrollPane {
             return name;
         }
 
-        for (long i = 0; ; i++) {
+        for (long i = 1; ; i++) {
             String newName = name + "." + i;
             if (entryNames.add(newName)) {
                 return newName;
