@@ -18,7 +18,8 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.*;
-import javafx.animation.*;
+import javafx.animation.Animation;
+import javafx.animation.Interpolator;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -26,7 +27,10 @@ import javafx.beans.WeakInvalidationListener;
 import javafx.beans.WeakListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
-import javafx.beans.value.*;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableBooleanValue;
+import javafx.beans.value.ObservableValue;
+import javafx.beans.value.WeakChangeListener;
 import javafx.collections.ObservableMap;
 import javafx.event.Event;
 import javafx.event.EventDispatcher;
@@ -39,20 +43,23 @@ import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.control.*;
 import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.*;
-import javafx.scene.layout.*;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
-import javafx.stage.*;
+import javafx.stage.FileChooser;
+import javafx.stage.Screen;
+import javafx.stage.Stage;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
@@ -61,9 +68,12 @@ import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
+import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
+import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.image.ImageLoader;
 import org.jackhuang.hmcl.ui.image.ImageUtils;
-import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.ResourceNotFoundError;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.ExtendedProperties;
@@ -88,12 +98,14 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.ref.WeakReference;
-import java.net.*;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLConnection;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
-import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.*;
@@ -102,8 +114,8 @@ import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class FXUtils {
     private FXUtils() {
@@ -1599,5 +1611,40 @@ public final class FXUtils {
         return (availableSpaceAbove > menuHeight && availableSpaceBelow < menuHeight)
                 ? JFXPopup.PopupVPosition.BOTTOM  // Show menu below the button, expanding downward
                 : JFXPopup.PopupVPosition.TOP;    // Show menu above the button, expanding upward
+    }
+
+    public static void useJFXContextMenu(TextField textField) {
+        textField.setContextMenu(null);
+
+        PopupMenu menu = new PopupMenu();
+        JFXPopup popup = new JFXPopup(menu);
+        popup.setAutoHide(true);
+
+        textField.setOnContextMenuRequested(e -> {
+            boolean hasNoSelection = textField.getSelectedText().isEmpty();
+
+            IconedMenuItem undo = new IconedMenuItem(SVG.UNDO, i18n("menu.undo"), textField::undo, popup);
+            IconedMenuItem redo = new IconedMenuItem(SVG.REDO, i18n("menu.redo"), textField::redo, popup);
+            IconedMenuItem cut = new IconedMenuItem(SVG.CONTENT_CUT, i18n("menu.cut"), textField::cut, popup);
+            IconedMenuItem copy = new IconedMenuItem(SVG.CONTENT_COPY, i18n("menu.copy"), textField::copy, popup);
+            IconedMenuItem paste = new IconedMenuItem(SVG.CONTENT_PASTE, i18n("menu.paste"), textField::paste, popup);
+            IconedMenuItem delete = new IconedMenuItem(SVG.DELETE, i18n("menu.deleteselection"), () -> textField.replaceSelection(""), popup);
+            IconedMenuItem selectall = new IconedMenuItem(SVG.SELECT_ALL, i18n("menu.selectall"), textField::selectAll, popup);
+
+            menu.getContent().setAll(undo, redo, cut, copy, paste, delete, selectall);
+
+            undo.setDisable(!textField.isUndoable());
+            redo.setDisable(!textField.isRedoable());
+            cut.setDisable(hasNoSelection);
+            delete.setDisable(hasNoSelection);
+            copy.setDisable(hasNoSelection);
+            paste.setDisable(!Clipboard.getSystemClipboard().hasString());
+            selectall.setDisable(textField.getText().isEmpty());
+
+            JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(textField, popup);
+            popup.show(textField, vPosition, JFXPopup.PopupHPosition.LEFT, e.getX(), vPosition == JFXPopup.PopupVPosition.TOP ? e.getY() : e.getY() - textField.getHeight());
+
+            e.consume();
+        });
     }
 }

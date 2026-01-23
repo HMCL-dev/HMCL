@@ -31,19 +31,14 @@ import javafx.css.converter.PaintConverter;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
 import javafx.scene.control.TextField;
-import javafx.scene.input.Clipboard;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
-import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
-import org.jackhuang.hmcl.ui.construct.PopupMenu;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.ui.FXUtils.useJFXContextMenu;
 
 /**
  * JFXTextField is the material design implementation of a text Field.
@@ -90,38 +85,7 @@ public class JFXTextField extends TextField {
             this.setStyle("-fx-skin: \"com.jfoenix.android.skins.JFXTextFieldSkinAndroid\";");
         }
 
-        setContextMenu(null);
-
-        PopupMenu menu = new PopupMenu();
-        JFXPopup popup = new JFXPopup(menu);
-        popup.setAutoHide(true);
-
-        setOnContextMenuRequested(e -> {
-            boolean hasNoSelection = getSelectedText().isEmpty();
-
-            IconedMenuItem undo = new IconedMenuItem(SVG.UNDO, i18n("menu.undo"), this::undo, popup);
-            IconedMenuItem redo = new IconedMenuItem(SVG.REDO, i18n("menu.redo"), this::redo, popup);
-            IconedMenuItem cut = new IconedMenuItem(SVG.CONTENT_CUT, i18n("menu.cut"), this::cut, popup);
-            IconedMenuItem copy = new IconedMenuItem(SVG.CONTENT_COPY, i18n("menu.copy"), this::copy, popup);
-            IconedMenuItem paste = new IconedMenuItem(SVG.CONTENT_PASTE, i18n("menu.paste"), this::paste, popup);
-            IconedMenuItem delete = new IconedMenuItem(SVG.DELETE, i18n("menu.deleteselection"), () -> this.replaceSelection(""), popup);
-            IconedMenuItem selectall = new IconedMenuItem(SVG.SELECT_ALL, i18n("menu.selectall"), this::selectAll, popup);
-
-            menu.getContent().setAll(undo, redo, cut, copy, paste, delete, selectall);
-
-            undo.setDisable(!isUndoable());
-            redo.setDisable(!isRedoable());
-            cut.setDisable(hasNoSelection);
-            delete.setDisable(hasNoSelection);
-            copy.setDisable(hasNoSelection);
-            paste.setDisable(!Clipboard.getSystemClipboard().hasString());
-            selectall.setDisable(getText().isEmpty());
-
-            JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(this, popup);
-            popup.show(this, vPosition, JFXPopup.PopupHPosition.LEFT, e.getX(), vPosition == JFXPopup.PopupVPosition.TOP ? e.getY() : e.getY() - this.getHeight());
-
-            e.consume();
-        });
+        useJFXContextMenu(this);
     }
 
     /***************************************************************************
