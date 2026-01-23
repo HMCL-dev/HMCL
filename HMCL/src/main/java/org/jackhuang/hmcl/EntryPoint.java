@@ -51,8 +51,11 @@ public final class EntryPoint {
 
         setupJavaFXVMOptions();
 
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS && !isInsideMacAppBundle())
-            initIcon();
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+            System.getProperties().putIfAbsent("apple.awt.application.appearance", "system");
+            if (!isInsideMacAppBundle())
+                initIcon();
+        }
 
         checkJavaFX();
         verifyJavaFX();
