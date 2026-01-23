@@ -488,11 +488,10 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 @Override
                 public void fire() {
                     if (!ConfigHolder.config().isResourcePackWarningShown()) {
-                        Controllers.confirmWithCountdown(
+                        Controllers.confirm(
                                 i18n("resourcepack.warning.manipulate"),
-                                i18n("message.warning"),
-                                5,
-                                MessageDialogPane.MessageType.WARNING,
+                                i18n("message.info"),
+                                MessageDialogPane.MessageType.INFO,
                                 () -> {
                                     super.fire();
                                     ConfigHolder.config().onResourcePackWarningShown();
