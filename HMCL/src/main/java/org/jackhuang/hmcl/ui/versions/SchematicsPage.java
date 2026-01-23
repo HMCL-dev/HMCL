@@ -163,30 +163,30 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         Controllers.dialog(new InputDialogPane(
                 i18n("schematics.create_directory.prompt"),
                 "",
-                (result, resolve, reject) -> {
+                (result, handler) -> {
                     if (StringUtils.isBlank(result)) {
-                        reject.accept(i18n("schematics.create_directory.failed.empty_name"));
+                        handler.reject(i18n("schematics.create_directory.failed.empty_name"));
                         return;
                     }
 
                     if (result.contains("/") || result.contains("\\") || !FileUtils.isNameValid(result)) {
-                        reject.accept(i18n("schematics.create_directory.failed.invalid_name"));
+                        handler.reject(i18n("schematics.create_directory.failed.invalid_name"));
                         return;
                     }
 
                     Path targetDir = parent.resolve(result);
                     if (Files.exists(targetDir)) {
-                        reject.accept(i18n("schematics.create_directory.failed.already_exists"));
+                        handler.reject(i18n("schematics.create_directory.failed.already_exists"));
                         return;
                     }
 
                     try {
                         Files.createDirectories(targetDir);
-                        resolve.run();
+                        handler.resolve();
                         refresh();
                     } catch (IOException e) {
                         LOG.warning("Failed to create directory: " + targetDir, e);
-                        reject.accept(i18n("schematics.create_directory.failed", targetDir));
+                        handler.reject(i18n("schematics.create_directory.failed", targetDir));
                     }
                 }));
     }
