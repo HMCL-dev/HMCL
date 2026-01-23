@@ -999,10 +999,6 @@
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 5, 0.06, -0.5, 1);
 }
 
-.card:selected {
-    -fx-background-color: -monet-secondary-container-transparent-80;
-}
-
 .card-list {
     -fx-padding: 10;
     -fx-spacing: 10;
