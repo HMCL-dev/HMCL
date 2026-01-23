@@ -42,7 +42,6 @@ import java.util.Locale;
 import java.util.Objects;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// @author Glavo
 public final class Themes {
@@ -121,7 +120,8 @@ public final class Themes {
                 String result = SystemUtils.run("/usr/bin/defaults", "read", "-g", "AppleInterfaceStyle").trim();
                 brightness = "Dark".equalsIgnoreCase(result) ? Brightness.DARK : Brightness.LIGHT;
             } catch (Exception e) {
-                LOG.warning("Failed to get macOS appearance", e);
+                // If the key does not exist, it means Light mode is used
+                brightness = Brightness.LIGHT;
             }
         }
 
