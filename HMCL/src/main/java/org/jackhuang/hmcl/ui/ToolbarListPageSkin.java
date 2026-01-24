@@ -62,6 +62,7 @@ public abstract class ToolbarListPageSkin<E, P extends ListPageBase<E>> extends 
         {
             this.listView = new JFXListView<>();
             this.listView.setPadding(Insets.EMPTY);
+            this.listView.setFocusTraversable(false);
             this.listView.setCellFactory(listView -> createListCell((JFXListView<E>) listView));
             ComponentList.setVgrow(listView, Priority.ALWAYS);
             Bindings.bindContent(this.listView.getItems(), skinnable.itemsProperty());
