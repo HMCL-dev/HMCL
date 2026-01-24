@@ -81,6 +81,7 @@ public final class GameListCell extends ListCell<GameListItem> {
 
         {
             HBox center = new HBox();
+            center.setMouseTransparent(true);
             root.setCenter(center);
             center.setPrefWidth(Region.USE_PREF_SIZE);
             center.setSpacing(8);
