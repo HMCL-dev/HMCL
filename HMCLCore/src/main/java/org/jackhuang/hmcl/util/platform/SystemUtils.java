@@ -81,13 +81,9 @@ public final class SystemUtils {
     }
 
     public static <T> T run(List<String> command, ExceptionalFunction<InputStream, T, ?> convert) throws Exception {
-        File nul = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS
-                ? new File("NUL")
-                : new File("/dev/null");
-
         Process process = new ProcessBuilder(command)
-                .redirectInput(nul)
-                .redirectError(nul)
+                .redirectInput(ProcessBuilder.Redirect.DISCARD)
+                .redirectError(ProcessBuilder.Redirect.DISCARD)
                 .start();
         try {
             InputStream inputStream = process.getInputStream();
