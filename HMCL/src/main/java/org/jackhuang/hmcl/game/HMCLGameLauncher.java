@@ -30,7 +30,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
-import java.awt.*;
+import java.awt.Toolkit;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileVisitOption;
@@ -142,7 +142,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
                     future.complete(repository.getVersionRoot(version.getId()));
                 }).build();
         dialog.setOnKeyPressed(event -> {
-            if (event.getCode() == KeyCode.ESCAPE){
+            if (event.getCode() == KeyCode.ESCAPE) {
                 event.consume();
                 Toolkit.getDefaultToolkit().beep();
             }
