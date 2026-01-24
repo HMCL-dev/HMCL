@@ -173,7 +173,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     }
 
     private void setSelectedEnabled(List<ResourcePackInfoObject> selectedItems, boolean enabled) {
-        if (!ConfigHolder.config().isResourcePackWarningShown()) {
+        if (!ConfigHolder.config().isResourcePackWarningShown() && !selectedItems.stream().map(ResourcePackInfoObject::getFile).allMatch(ResourcePackFile::isCompatible)) {
             Controllers.confirmWithCountdown(
                     i18n("resourcepack.warning.manipulate"),
                     i18n("message.warning"),
@@ -470,6 +470,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         private final JFXButton btnReveal = new JFXButton();
         private final JFXButton btnInfo = new JFXButton();
 
+        private ResourcePackInfoObject object = null;
         private Tooltip warningTooltip = null;
 
         private BooleanProperty booleanProperty = null;
@@ -487,7 +488,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             checkBox = new JFXCheckBox() {
                 @Override
                 public void fire() {
-                    if (!ConfigHolder.config().isResourcePackWarningShown()) {
+                    if (!ConfigHolder.config().isResourcePackWarningShown() && object != null && !object.getFile().isCompatible()) {
                         Controllers.confirm(
                                 i18n("resourcepack.warning.manipulate"),
                                 i18n("message.info"),
@@ -534,7 +535,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             if (empty || item == null) {
                 return;
             }
-
+            this.object = item;
             ResourcePackFile file = item.getFile();
             imageView.setImage(item.getIcon());
 
