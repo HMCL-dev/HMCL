@@ -34,7 +34,6 @@ import javafx.scene.control.Skin;
 import javafx.scene.control.TextField;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
-import org.jackhuang.hmcl.ui.construct.PopupMenu;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -73,11 +72,6 @@ public class JFXPasswordField extends PasswordField {
             this.setStyle("-fx-skin: \"com.jfoenix.android.skins.JFXPasswordFieldSkinAndroid\";");
         }
 
-        setContextMenu(null);
-
-        PopupMenu menu = new PopupMenu();
-        JFXPopup popup = new JFXPopup(menu);
-        popup.setAutoHide(true);
 
         useJFXContextMenu(this);
     }
