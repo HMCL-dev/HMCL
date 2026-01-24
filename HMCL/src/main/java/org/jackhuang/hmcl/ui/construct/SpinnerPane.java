@@ -169,13 +169,13 @@ public class SpinnerPane extends Control {
         }
 
         private void animateContentOpacity(double targetOpacity) {
-            if (Math.abs(contentPane.getOpacity() - targetOpacity) < 0.01) {
-                return;
-            }
-
             if (contentFadeTransition != null) {
                 contentFadeTransition.stop();
+            }
+
+            if (Math.abs(contentPane.getOpacity() - targetOpacity) < 0.01) {
                 contentPane.setOpacity(targetOpacity);
+                return;
             }
 
             contentFadeTransition = new FadeTransition(Motion.SHORT4, contentPane);
