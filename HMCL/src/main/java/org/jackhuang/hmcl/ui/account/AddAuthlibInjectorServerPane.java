@@ -118,6 +118,8 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
                 lblServerWarning.setStyle("-fx-text-fill: red;");
                 GridPane.setColumnIndex(lblServerWarning, 0);
                 GridPane.setRowIndex(lblServerWarning, 2);
+                lblServerWarning.setWrapText(true);
+                lblServerWarning.managedProperty().bind(lblServerWarning.visibleProperty());
                 GridPane.setColumnSpan(lblServerWarning, 2);
 
                 body.getChildren().setAll(
