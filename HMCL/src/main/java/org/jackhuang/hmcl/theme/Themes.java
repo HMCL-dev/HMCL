@@ -32,16 +32,19 @@ import org.glavo.monetfx.beans.property.ColorSchemeProperty;
 import org.glavo.monetfx.beans.property.ReadOnlyColorSchemeProperty;
 import org.glavo.monetfx.beans.property.SimpleColorSchemeProperty;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jackhuang.hmcl.util.platform.windows.WinReg;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// @author Glavo
 public final class Themes {
@@ -122,6 +125,36 @@ public final class Themes {
             } catch (Exception e) {
                 // If the key does not exist, it means Light mode is used
                 brightness = Brightness.LIGHT;
+            }
+        } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
+            Path dbusSend = SystemUtils.which("dbus-send");
+            if (dbusSend != null) {
+                try {
+                    String[] result = SystemUtils.run(
+                            FileUtils.getAbsolutePath(dbusSend),
+                            "--session",
+                            "--print-reply=literal",
+                            "--reply-timeout=1000",
+                            "--dest=org.freedesktop.portal.Desktop",
+                            "/org/freedesktop/portal/desktop",
+                            "org.freedesktop.portal.Settings.Read",
+                            "string:org.freedesktop.appearance",
+                            "string:color-scheme"
+                    ).trim().split(" ");
+
+                    if (result.length > 0) {
+                        String value = result[result.length - 1];
+                        // 1: prefer dark
+                        // 2: prefer light
+                        if ("1".equals(value)) {
+                            brightness = Brightness.DARK;
+                        } else if ("2".equals(value)) {
+                            brightness = Brightness.LIGHT;
+                        }
+                    }
+                } catch (Exception e) {
+                    LOG.warning("Failed to get system theme from D-Bus", e);
+                }
             }
         }
 
