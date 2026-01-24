@@ -69,6 +69,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
+import org.jackhuang.hmcl.ui.construct.MenuSeparator;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.image.ImageLoader;
 import org.jackhuang.hmcl.ui.image.ImageUtils;
@@ -1631,7 +1632,7 @@ public final class FXUtils {
             IconedMenuItem delete = new IconedMenuItem(SVG.DELETE, i18n("menu.deleteselection"), () -> control.replaceSelection(""), popup);
             IconedMenuItem selectall = new IconedMenuItem(SVG.SELECT_ALL, i18n("menu.selectall"), control::selectAll, popup);
 
-            menu.getContent().setAll(undo, redo, cut, copy, paste, delete, selectall);
+            menu.getContent().setAll(undo, redo, new MenuSeparator(), cut, copy, paste, delete, new MenuSeparator(), selectall);
 
             undo.setDisable(!control.isUndoable());
             redo.setDisable(!control.isRedoable());
