@@ -126,7 +126,7 @@ public final class Themes {
                 // If the key does not exist, it means Light mode is used
                 brightness = Brightness.LIGHT;
             }
-        } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
+        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
             Path dbusSend = SystemUtils.which("dbus-send");
             if (dbusSend != null) {
                 try {
