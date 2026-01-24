@@ -198,9 +198,6 @@ public final class NativePatcher {
     public static SupportStatus checkSupportedStatus(GameVersionNumber gameVersion, Platform platform,
                                                      OSVersion systemVersion) {
         if (platform.equals(Platform.WINDOWS_X86_64)) {
-            if (!systemVersion.isAtLeast(OSVersion.WINDOWS_10) && gameVersion.isAtLeast("1.20.5", "24w14a"))
-                return SupportStatus.UNSUPPORTED;
-
             return SupportStatus.OFFICIAL_SUPPORTED;
         }
 
