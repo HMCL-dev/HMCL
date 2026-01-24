@@ -173,7 +173,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     }
 
     private void setSelectedEnabled(List<ResourcePackInfoObject> selectedItems, boolean enabled) {
-        if (!ConfigHolder.config().isResourcePackWarningShown() && !selectedItems.stream().map(ResourcePackInfoObject::getFile).allMatch(ResourcePackFile::isCompatible)) {
+        if (!ConfigHolder.config().isResourcePackWarningShown() && enabled && !selectedItems.stream().map(ResourcePackInfoObject::getFile).allMatch(ResourcePackFile::isCompatible)) {
             Controllers.confirmWithCountdown(
                     i18n("resourcepack.warning.manipulate"),
                     i18n("message.warning"),
@@ -488,7 +488,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             checkBox = new JFXCheckBox() {
                 @Override
                 public void fire() {
-                    if (!ConfigHolder.config().isResourcePackWarningShown() && object != null && !object.getFile().isCompatible()) {
+                    if (!ConfigHolder.config().isResourcePackWarningShown() && !isSelected() && object != null && !object.getFile().isCompatible()) {
                         Controllers.confirm(
                                 i18n("resourcepack.warning.manipulate"),
                                 i18n("message.info"),
