@@ -39,7 +39,7 @@ public class SkinPreviewDialog extends JFXDialogLayout {
         setBody(canvas);
 
         onEscPressed(this, () -> fireEvent(new DialogCloseEvent()));
-        setActions(Lang.apply(new JFXButton(i18n("button.cancel")), (jfxButton) -> {
+        setActions(Lang.apply(new JFXButton(i18n("button.ok")), (jfxButton) -> {
             jfxButton.setOnAction((event) -> fireEvent(new DialogCloseEvent()));
             jfxButton.getStyleClass().add("dialog-accept");
         }));
