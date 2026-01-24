@@ -50,7 +50,7 @@ public final class HMCLLocalizedDownloadListPage extends DownloadListPage {
     }
 
     public static DownloadListPage ofShaderPack(DownloadPage.DownloadCallback callback, boolean versionSelection) {
-        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteModRepository.Type.SHADER_PACK, null, ModrinthRemoteModRepository.SHADER_PACKS);
+        return new HMCLLocalizedDownloadListPage(callback, versionSelection, RemoteModRepository.Type.SHADER_PACK, CurseForgeRemoteModRepository.SHADERS, ModrinthRemoteModRepository.SHADER_PACKS);
     }
 
     private HMCLLocalizedDownloadListPage(DownloadPage.DownloadCallback callback, boolean versionSelection, RemoteModRepository.Type type, CurseForgeRemoteModRepository curseForge, ModrinthRemoteModRepository modrinth) {
