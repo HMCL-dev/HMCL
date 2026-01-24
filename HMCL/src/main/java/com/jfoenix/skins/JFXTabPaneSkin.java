@@ -390,9 +390,9 @@ public class JFXTabPaneSkin extends TabPaneSkin {
     }
 
     /**************************************************************************
-     *																		  *
-     * HeaderContainer: tabs headers container 						     	  *
-     *																		  *
+     *                                                                          *
+     * HeaderContainer: tabs headers container                                    *
+     *                                                                          *
      **************************************************************************/
     protected class HeaderContainer extends StackPane {
 
@@ -823,9 +823,9 @@ public class JFXTabPaneSkin extends TabPaneSkin {
     }
 
     /**************************************************************************
-     *																		  *
-     * TabHeaderContainer: each tab Container								  *
-     *																		  *
+     *                                                                          *
+     * TabHeaderContainer: each tab Container                                  *
+     *                                                                          *
      **************************************************************************/
 
     protected class TabHeaderContainer extends StackPane {
@@ -1058,9 +1058,9 @@ public class JFXTabPaneSkin extends TabPaneSkin {
     private static final PseudoClass RIGHT_PSEUDOCLASS_STATE = PseudoClass.getPseudoClass("right");
 
     /**************************************************************************
-     *																		  *
-     * TabContentHolder: each tab content container						      *
-     *																		  *
+     *                                                                          *
+     * TabContentHolder: each tab content container                              *
+     *                                                                          *
      **************************************************************************/
     protected static class TabContentHolder extends StackPane {
         private Tab tab;
@@ -1099,9 +1099,9 @@ public class JFXTabPaneSkin extends TabPaneSkin {
     }
 
     /**************************************************************************
-     *																		  *
+     *                                                                          *
      * HeaderControl: left/right controls to interact with HeaderContainer*
-     *																		  *
+     *                                                                          *
      **************************************************************************/
     protected class HeaderControl extends StackPane {
         private StackPane inner;
