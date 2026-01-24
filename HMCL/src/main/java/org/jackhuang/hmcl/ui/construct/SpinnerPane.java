@@ -1,23 +1,7 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
 package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXSpinner;
+import javafx.animation.FadeTransition;
 import javafx.beans.DefaultProperty;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.*;
@@ -31,13 +15,20 @@ import javafx.scene.control.SkinBase;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
+import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
+import org.jackhuang.hmcl.util.Lang;
 
 @DefaultProperty("content")
 public class SpinnerPane extends Control {
     private final ObjectProperty<Node> content = new SimpleObjectProperty<>(this, "content");
     private final BooleanProperty loading = new SimpleBooleanProperty(this, "loading");
     private final StringProperty failedReason = new SimpleStringProperty(this, "failedReason");
+
+    public SpinnerPane(Node content) {
+        this();
+        setContent(content);
+    }
 
     public SpinnerPane() {
         getStyleClass().add("spinner-pane");
@@ -114,13 +105,21 @@ public class SpinnerPane extends Control {
 
     private static final class Skin extends SkinBase<SpinnerPane> {
         private final JFXSpinner spinner = new JFXSpinner();
+
         private final StackPane contentPane = new StackPane();
+
         private final StackPane topPane = new StackPane();
-        private final TransitionPane root = new TransitionPane();
         private final StackPane failedPane = new StackPane();
         private final Label failedReasonLabel = new Label();
-        @SuppressWarnings("FieldCanBeLocal") // prevent from gc.
+
+        private final TransitionPane transition = new TransitionPane();
+
+        private static final StackPane EMPTY = Lang.apply(new StackPane(), (stackPane) -> stackPane.setMouseTransparent(true));
+
+        @SuppressWarnings("FieldCanBeLocal")
         private final InvalidationListener observer;
+
+        private FadeTransition contentFadeTransition;
 
         Skin(SpinnerPane control) {
             super(control);
@@ -142,20 +141,50 @@ public class SpinnerPane extends Control {
                     contentPane.getChildren().setAll(newValue);
                 }
             });
-            getChildren().setAll(root);
+
+            transition.setPickOnBounds(false);
+            transition.setMouseTransparent(true);
+
+            getChildren().setAll(new StackPane(contentPane, transition));
 
             observer = FXUtils.observeWeak(() -> {
-                if (getSkinnable().getFailedReason() != null) {
-                    root.setContent(failedPane, ContainerAnimations.FADE);
+                boolean isError = getSkinnable().getFailedReason() != null;
+                boolean isLoading = getSkinnable().isLoading();
+                boolean showOverlay = isError || isLoading;
+
+                animateContentOpacity(showOverlay ? 0.0 : 1.0);
+                contentPane.setMouseTransparent(showOverlay);
+
+                transition.setMouseTransparent(!showOverlay);
+
+                if (isError) {
                     failedReasonLabel.setText(getSkinnable().getFailedReason());
-                } else if (getSkinnable().isLoading()) {
-                    root.setContent(topPane, ContainerAnimations.FADE);
+                    transition.setContent(failedPane, ContainerAnimations.FADE);
+                } else if (isLoading) {
+                    transition.setContent(topPane, ContainerAnimations.FADE);
                 } else {
-                    root.setContent(contentPane, ContainerAnimations.FADE);
+                    transition.setContent(EMPTY, ContainerAnimations.FADE);
                 }
             }, getSkinnable().loadingProperty(), getSkinnable().failedReasonProperty());
+        }
+
+        private void animateContentOpacity(double targetOpacity) {
+            if (Math.abs(contentPane.getOpacity() - targetOpacity) < 0.01) {
+                return;
+            }
+
+            if (contentFadeTransition != null) {
+                contentFadeTransition.stop();
+                contentPane.setOpacity(targetOpacity);
+            }
+
+            contentFadeTransition = new FadeTransition(Motion.SHORT4, contentPane);
+            contentFadeTransition.setFromValue(contentPane.getOpacity());
+            contentFadeTransition.setToValue(targetOpacity);
+            contentFadeTransition.play();
         }
     }
 
     public static final EventType<Event> FAILED_ACTION = new EventType<>(Event.ANY, "FAILED_ACTION");
 }
+

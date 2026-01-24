@@ -41,6 +41,7 @@ import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Log4jLevel;
@@ -79,6 +80,7 @@ public class GameCrashWindow extends Stage {
     private final TextFlow reasonTextFlow = new TextFlow(new Text(i18n("game.crash.reason.unknown")));
     private final BooleanProperty loading = new SimpleBooleanProperty();
     private final TextFlow feedbackTextFlow = new TextFlow();
+    private final SpinnerPane exportSpinner = new SpinnerPane();
 
     private final ManagedProcess managedProcess;
     private final DefaultGameRepository repository;
@@ -271,6 +273,8 @@ public class GameCrashWindow extends Stage {
     }
 
     private void exportGameCrashInfo() {
+        exportSpinner.showSpinner();
+
         Path logFile = Paths.get("minecraft-exported-crash-info-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss")) + ".zip").toAbsolutePath();
 
         CompletableFuture.supplyAsync(() ->
@@ -300,6 +304,7 @@ public class GameCrashWindow extends Stage {
                             });
                 })
                 .handleAsync((result, exception) -> {
+                    exportSpinner.hideSpinner();
                     if (exception == null) {
                         FXUtils.showFileInExplorer(logFile);
                         var dialog = new MessageDialogPane.Builder(i18n("settings.launcher.launcher_log.export.success", logFile), i18n("message.success"), MessageDialogPane.MessageType.SUCCESS).ok(null).build();
@@ -444,6 +449,8 @@ public class GameCrashWindow extends Stage {
                 JFXButton exportGameCrashInfoButton = FXUtils.newRaisedButton(i18n("logwindow.export_game_crash_logs"));
                 exportGameCrashInfoButton.setOnAction(e -> exportGameCrashInfo());
 
+                exportSpinner.setContent(exportGameCrashInfoButton);
+
                 JFXButton logButton = FXUtils.newRaisedButton(i18n("logwindow.title"));
                 logButton.setOnAction(e -> showLogWindow());
 
@@ -454,7 +461,7 @@ public class GameCrashWindow extends Stage {
                 toolBar.setPadding(new Insets(8));
                 toolBar.setSpacing(8);
                 toolBar.getStyleClass().add("jfx-tool-bar");
-                toolBar.getChildren().setAll(exportGameCrashInfoButton, logButton, helpButton);
+                toolBar.getChildren().setAll(exportSpinner, logButton, helpButton);
             }
 
             getChildren().setAll(titlePane, infoPane, moddedPane, gameDirPane, toolBar);
