@@ -138,15 +138,10 @@ public final class HMCLGameLauncher extends DefaultLauncher {
                     future.complete(repository.getVersionRoot(version.getId()));
                 }, () -> {
                     future.complete(repository.getBaseDirectory());
-                }).addCancel(i18n("Dialog.this_launch_only.button"), () -> {
+                }).addAction(i18n("Dialog.this_launch_only.button"), () -> {
                     future.complete(repository.getVersionRoot(version.getId()));
                 }).build();
-        dialog.setOnKeyPressed(event -> {
-            if (event.getCode() == KeyCode.ESCAPE) {
-                event.consume();
-                Toolkit.getDefaultToolkit().beep();
-            }
-        });
+        dialog.setCancelButton(null);
         FXUtils.runInFX(() -> Controllers.dialog(dialog));
 
         try {
