@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.game;
 
+import javafx.scene.input.KeyCode;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.launch.DefaultLauncher;
@@ -29,6 +30,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileVisitOption;
@@ -138,10 +140,13 @@ public final class HMCLGameLauncher extends DefaultLauncher {
                     future.complete(repository.getBaseDirectory());
                 }).addCancel(i18n("Dialog.this_launch_only.button"), () -> {
                     future.complete(repository.getVersionRoot(version.getId()));
-                })
-                .addCancel(() -> {
-                    // TODO: Cancel all the task of Launch Minecraft
                 }).build();
+        dialog.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.ESCAPE){
+                event.consume();
+                Toolkit.getDefaultToolkit().beep();
+            }
+        });
         FXUtils.runInFX(() -> Controllers.dialog(dialog));
 
         try {
