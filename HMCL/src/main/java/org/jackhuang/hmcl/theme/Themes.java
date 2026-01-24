@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.theme;
 
+import com.sun.jna.Pointer;
 import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
@@ -24,7 +25,10 @@ import javafx.beans.binding.ObjectBinding;
 import javafx.beans.binding.ObjectExpression;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.event.EventHandler;
 import javafx.scene.paint.Color;
+import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorScheme;
 import org.glavo.monetfx.Contrast;
@@ -32,14 +36,17 @@ import org.glavo.monetfx.beans.property.ColorSchemeProperty;
 import org.glavo.monetfx.beans.property.ReadOnlyColorSchemeProperty;
 import org.glavo.monetfx.beans.property.SimpleColorSchemeProperty;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.WindowsNativeUtils;
+import org.jackhuang.hmcl.util.platform.NativeUtils;
+import org.jackhuang.hmcl.util.platform.OSVersion;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
+import org.jackhuang.hmcl.util.platform.windows.Dwmapi;
+import org.jackhuang.hmcl.util.platform.windows.WinConstants;
 import org.jackhuang.hmcl.util.platform.windows.WinReg;
+import org.jackhuang.hmcl.util.platform.windows.WinTypes;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
+import java.util.*;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 
@@ -158,6 +165,39 @@ public final class Themes {
 
     public static BooleanBinding darkModeProperty() {
         return darkMode;
+    }
+
+    public static void applyNativeDarkMode(Stage stage) {
+        if (OperatingSystem.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_11) && NativeUtils.USE_JNA && Dwmapi.INSTANCE != null) {
+            ChangeListener<Boolean> listener = FXUtils.onWeakChange(Themes.darkModeProperty(), darkMode -> {
+                if (stage.isShowing()) {
+                    WindowsNativeUtils.getWindowHandle(stage).ifPresent(handle -> {
+                        if (handle == WinTypes.HANDLE.INVALID_VALUE)
+                            return;
+
+                        Dwmapi.INSTANCE.DwmSetWindowAttribute(
+                                new WinTypes.HANDLE(Pointer.createConstant(handle)),
+                                WinConstants.DWMWA_USE_IMMERSIVE_DARK_MODE,
+                                new WinTypes.BOOLByReference(new WinTypes.BOOL(darkMode)),
+                                WinTypes.BOOL.SIZE
+                        );
+                    });
+                }
+            });
+            stage.getProperties().put("Themes.applyNativeDarkMode.listener", listener);
+
+            if (stage.isShowing()) {
+                listener.changed(null, false, Themes.darkModeProperty().get());
+            } else {
+                stage.addEventFilter(WindowEvent.WINDOW_SHOWN, new EventHandler<>() {
+                    @Override
+                    public void handle(WindowEvent event) {
+                        stage.removeEventFilter(WindowEvent.WINDOW_SHOWN, this);
+                        listener.changed(null, false, Themes.darkModeProperty().get());
+                    }
+                });
+            }
+        }
     }
 
     private Themes() {
