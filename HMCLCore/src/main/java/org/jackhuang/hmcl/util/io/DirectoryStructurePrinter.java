@@ -83,17 +83,13 @@ final class DirectoryStructurePrinter {
 
     private static void pushFile(StringBuilder output, Path file, int depth) {
         output.append("|");
-        for (int i = 1; i < depth; i++) {
-            output.append("  |");
-        }
+        output.append("  |".repeat(Math.max(0, depth - 1)));
         output.append("-> ").append(FileUtils.getName(file)).append('\n');
     }
 
     private static void pushMessage(StringBuilder output, String message, int depth) {
         output.append("| ");
-        for (int i = 1; i < depth; i++) {
-            output.append(" | ");
-        }
+        output.append(" | ".repeat(Math.max(0, depth - 1)));
         output.append('<').append(message).append(">\n");
     }
 }

@@ -495,9 +495,7 @@ public final class StringUtils {
 
     public static String repeats(char ch, int repeat) {
         StringBuilder result = new StringBuilder();
-        for (int i = 0; i < repeat; i++) {
-            result.append(ch);
-        }
+        result.append(String.valueOf(ch).repeat(Math.max(0, repeat)));
         return result.toString();
     }
 
