@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.game;
 
-import javafx.scene.input.KeyCode;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.launch.DefaultLauncher;
@@ -29,8 +28,6 @@ import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
-
-import java.awt.Toolkit;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileVisitOption;
@@ -136,11 +133,9 @@ public final class HMCLGameLauncher extends DefaultLauncher {
                 .yesOrNo(() -> {
                     repository.getVersionSetting(version.getId()).setGameDirType(GameDirectoryType.VERSION_FOLDER);
                     future.complete(repository.getVersionRoot(version.getId()));
-                }, () -> {
-                    future.complete(repository.getBaseDirectory());
-                }).addAction(i18n("Dialog.this_launch_only.button"), () -> {
-                    future.complete(repository.getVersionRoot(version.getId()));
-                }).build();
+                }, () -> future.complete(repository.getBaseDirectory()))
+                .addAction(i18n("Dialog.this_launch_only.button"), () -> future.complete(repository.getVersionRoot(version.getId()))
+                ).build();
         dialog.setCancelButton(null);
         FXUtils.runInFX(() -> Controllers.dialog(dialog));
 
