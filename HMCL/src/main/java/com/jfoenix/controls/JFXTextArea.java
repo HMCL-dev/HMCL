@@ -81,7 +81,7 @@ public class JFXTextArea extends TextArea {
 
     private void initialize() {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
-        if ("dalvik".equals(System.getProperty("java.vm.name").toLowerCase())) {
+        if ("dalvik".equalsIgnoreCase(System.getProperty("java.vm.name"))) {
             this.setStyle("-fx-skin: \"com.jfoenix.android.skins.JFXTextAreaSkinAndroid\";");
         }
 
@@ -221,7 +221,7 @@ public class JFXTextArea extends TextArea {
         this.disableAnimationProperty().set(disabled);
     }
 
-    private static class StyleableProperties {
+    private final static class StyleableProperties {
         private static final CssMetaData<JFXTextArea, Paint> UNFOCUS_COLOR = new CssMetaData<JFXTextArea, Paint>("-jfx-unfocus-color", PaintConverter.getInstance(), Color.rgb(77, 77, 77)) {
             @Override
             public boolean isSettable(JFXTextArea control) {
