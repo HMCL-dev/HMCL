@@ -1,4 +1,4 @@
-# https://gitlab.freedesktop.org/mesa/libdrm/-/blob/35a21916c8f621b35a67f3c5994280ae59a4981a/data/amdgpu.ids
+# https://gitlab.freedesktop.org/mesa/libdrm/-/blob/369990d9660a387f618d0eedc341eb285016243b/data/amdgpu.ids
 #
 # List of AMDGPU IDs
 #
@@ -41,11 +41,11 @@
 1506,	C3,	AMD Radeon 610M
 1506,	C4,	AMD Radeon 610M
 150E,	C1,	AMD Radeon 890M Graphics
-150E,	C4,	AMD Radeon 890M Graphics
+150E,	C4,	AMD Radeon 880M Graphics
 150E,	C5,	AMD Radeon 890M Graphics
 150E,	C6,	AMD Radeon 890M Graphics
 150E,	D1,	AMD Radeon 890M Graphics
-150E,	D2,	AMD Radeon 890M Graphics
+150E,	D2,	AMD Radeon 880M Graphics
 150E,	D3,	AMD Radeon 890M Graphics
 1586,	C1,	Radeon 8060S Graphics
 1586,	C2,	Radeon 8050S Graphics
@@ -579,6 +579,7 @@
 7480,	C3,	AMD Radeon RX 7600S
 7480,	C7,	AMD Radeon RX 7600M XT
 7480,	CF,	AMD Radeon RX 7600
+7481,   C7,     AMD Steam Machine
 7483,	CF,	AMD Radeon RX 7600M
 7489,	00,	AMD Radeon Pro W7500
 7499,	00,	AMD Radeon Pro W7400
