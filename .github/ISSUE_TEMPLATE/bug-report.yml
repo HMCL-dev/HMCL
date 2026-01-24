@@ -10,14 +10,14 @@ body:
         提交前请确认：
 
         * 该问题确实是 **HMCL 的错误**，而**不是 Minecraft 非正常退出**。如果你的 Minecraft 非正常退出，请前往 [QQ 群](https://docs.hmcl.net/groups.html)/[Discord 服务器](https://discord.gg/jVvC7HfM6U) 获取帮助。
-        * 你的启动器版本是**最新的预览版本**。你可以从 [GitHub Actions](https://github.com/HMCL-dev/HMCL/actions/workflows/gradle.yml?query=branch%3Amain+event%3Apush) (需登录) 或 [nightly.link](https://nightly.link/HMCL-dev/HMCL/workflows/gradle/main) 下载最新预览版本。
+        * 你的启动器版本是**最新的预览版本**。你可以从 [GitHub Actions](https://github.com/HMCL-dev/HMCL/actions/workflows/gradle.yml?query=branch%3Amain+event%3Apush) 或 [nightly.link](https://nightly.link/HMCL-dev/HMCL/workflows/gradle/main) 下载最新预览版本。
 
         如果你的问题并不属于上述两类，你可以选取另一种 Issue 类型，或者直接前往 [QQ 群](https://docs.hmcl.net/groups.html)/[Discord 服务器](https://discord.gg/jVvC7HfM6U) 获取帮助。
 
         Before submitting, please confirm:
 
         * The issue is indeed **a bug of HMCL**, not **Minecraft abnormal exit**. If your Minecraft exits abnormally, please go to the [QQ group](https://docs.hmcl.net/groups.html) or [Discord server](https://discord.gg/jVvC7HfM6U) for help.
-        * Your launcher is the **latest nightly build**. You can download the latest nightly build from [GitHub Actions](https://github.com/HMCL-dev/HMCL/actions/workflows/gradle.yml?query=branch%3Amain+event%3Apush) (login required) or [nightly.link](https://nightly.link/HMCL-dev/HMCL/workflows/gradle/main).
+        * Your launcher is the **latest nightly build**. You can download the latest nightly build from [GitHub Actions](https://github.com/HMCL-dev/HMCL/actions/workflows/gradle.yml?query=branch%3Amain+event%3Apush) or [nightly.link](https://nightly.link/HMCL-dev/HMCL/workflows/gradle/main).
 
         If your issue does not fall into the above two categories, you can choose another type of issue or directly go to the [QQ group](https://docs.hmcl.net/groups.html) or [Discord server](https://discord.gg/jVvC7HfM6U) for help.
   - type: textarea
