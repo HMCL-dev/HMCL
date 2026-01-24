@@ -42,6 +42,7 @@ import javafx.stage.WindowEvent;
 import org.jackhuang.hmcl.game.GameDumpGenerator;
 import org.jackhuang.hmcl.game.Log;
 import org.jackhuang.hmcl.setting.StyleSheets;
+import org.jackhuang.hmcl.theme.Theme;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.NoneMultipleSelectionModel;
@@ -87,41 +88,13 @@ public final class LogWindow extends Stage {
     private final LogWindowImpl impl;
     private final ManagedProcess gameProcess;
 
-    @SuppressWarnings("unused")
-    private Object windowsDarkModeListenerHolder;
-
-    {
-        if (OperatingSystem.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_11) && NativeUtils.USE_JNA && Dwmapi.INSTANCE != null) {
-            this.addEventFilter(WindowEvent.WINDOW_SHOWN, new EventHandler<>() {
-                @Override
-                public void handle(WindowEvent event) {
-                    LogWindow.this.removeEventFilter(WindowEvent.WINDOW_SHOWN, this);
-
-                    windowsDarkModeListenerHolder = FXUtils.onWeakChangeAndOperate(Themes.darkModeProperty(), darkMode -> {
-                        if (LogWindow.this.isShowing()) {
-                            WindowsNativeUtils.getWindowHandle(LogWindow.this).ifPresent(handle -> {
-                                if (handle == WinTypes.HANDLE.INVALID_VALUE)
-                                    return;
-
-                                Dwmapi.INSTANCE.DwmSetWindowAttribute(
-                                        new WinTypes.HANDLE(Pointer.createConstant(handle)),
-                                        WinConstants.DWMWA_USE_IMMERSIVE_DARK_MODE,
-                                        new WinTypes.BOOLByReference(new WinTypes.BOOL(darkMode)),
-                                        WinTypes.BOOL.SIZE
-                                );
-                            });
-                        }
-                    });
-                }
-            });
-        }
-    }
-
     public LogWindow(ManagedProcess gameProcess) {
         this(gameProcess, new CircularArrayList<>());
     }
 
     public LogWindow(ManagedProcess gameProcess, CircularArrayList<Log> logs) {
+        Themes.applyNativeDarkMode(this);
+
         this.logs = logs;
         this.impl = new LogWindowImpl();
         setScene(new Scene(impl, 800, 480));
