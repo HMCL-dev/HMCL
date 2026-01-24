@@ -4,7 +4,7 @@
 
 <module name="Checker">
     <module name="NewlineAtEndOfFile"/> <!-- force newline, important for git merge and POSIX compatibility: http://checkstyle.sourceforge.net/config_misc.html#NewlineAtEndOfFile -->
-<!--    <module name="FileTabCharacter"/> &lt;!&ndash; e.g. disallow tab character outside of strings &ndash;&gt;-->
+
     <module name="UniqueProperties"><!-- must not have duplicate properties in .properties files: http://checkstyle.sourceforge.net/config_misc.html#UniqueProperties -->
         <property name="fileExtensions" value="properties"/>
     </module>
