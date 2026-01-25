@@ -161,8 +161,6 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
 
         bodyPane.getChildren().addAll(hintPane, errHintPane, linkBox);
 
-
-
         setPrefWidth(560);
     }
 
