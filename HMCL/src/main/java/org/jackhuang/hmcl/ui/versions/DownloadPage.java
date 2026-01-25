@@ -559,9 +559,9 @@ public class DownloadPage extends Control implements DecoratorPage {
                 if (changelogCache.containsKey(version)) {
                     return Optional.ofNullable(changelogCache.get(version));
                 } else if (version.getChangelog() != null) {
-                    return StringUtils.nullIfBlank(version.getChangelog()).map(StringUtils::markdownToHTML);
+                    return StringUtils.nullIfBlank(version.getChangelog()).map(StringUtils::convertToHtml);
                 } else {
-                    return StringUtils.nullIfBlank(selfPage.repository.getModChangelog(version.getModid(), version.getVersionId())).map(StringUtils::markdownToHTML);
+                    return StringUtils.nullIfBlank(selfPage.repository.getModChangelog(version.getModid(), version.getVersionId())).map(StringUtils::convertToHtml);
                 }
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {

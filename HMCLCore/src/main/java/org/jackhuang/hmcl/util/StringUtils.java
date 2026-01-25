@@ -21,6 +21,8 @@ import org.commonmark.ext.autolink.AutolinkExtension;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 import org.jetbrains.annotations.Contract;
+import org.jsoup.Jsoup;
+import org.jsoup.safety.Safelist;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -539,13 +541,20 @@ public final class StringUtils {
         return Optional.ofNullable(str).map(s -> s.isBlank() ? null : s);
     }
 
+    public static boolean isStringHtml(String str) {
+        if (isBlank(str)) return false;
+        if (str.startsWith("<!DOCTYPE html>") || str.startsWith("<html>") || str.startsWith("<body>")) return true;
+        return Jsoup.isValid(str, Safelist.relaxed().addAttributes("a", "rel"));
+    }
+
     private static final HtmlRenderer HTML_RENDERER = HtmlRenderer.builder().build();
 
     private static final Parser MD_PARSER = Parser.builder().extensions(List.of(AutolinkExtension.create())).build();
 
     @Contract(pure = true, value = "null -> null")
-    public static String markdownToHTML(String md) {
+    public static String convertToHtml(String md) {
         if (md == null) return null;
+        if (isStringHtml(md)) return md;
         return HTML_RENDERER.render(MD_PARSER.parse(md));
     }
 
