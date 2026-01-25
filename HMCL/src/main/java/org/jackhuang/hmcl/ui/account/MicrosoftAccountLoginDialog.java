@@ -45,7 +45,6 @@ import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements DialogAware {
-
     private final Account accountToRelogin;
     private final Consumer<AuthInfo> loginCallback;
     private final Runnable cancelCallback;
@@ -55,12 +54,12 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
     private final ObjectProperty<OAuthServer.GrantDeviceCodeEvent> deviceCode = new SimpleObjectProperty<>();
     private final ObjectProperty<String> browserUrl = new SimpleObjectProperty<>();
 
-    private TaskExecutor browserTask;
-    private TaskExecutor deviceTask;
+    private TaskExecutor browserTaskExecuter;
+    private TaskExecutor deviceTaskExecuter;
 
-    private SpinnerPane startLoginButtonSpinner;
-    private HBox authMethodsContentBox;
-    private HintPane errHintPane;
+    private SpinnerPane loginButtonSpinner;
+    private final HBox authMethodsContentBox = new HBox(10);
+    private final HintPane errHintPane = new HintPane(MessageDialogPane.MessageType.ERROR);
     private HintPane unofficialHintPane;
 
     public MicrosoftAccountLoginDialog() {
@@ -71,6 +70,7 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
         this.accountToRelogin = account;
         this.loginCallback = callback;
         this.cancelCallback = onCancel;
+
         initUI();
 
         holder.add(Accounts.OAUTH_CALLBACK.onGrantDeviceCode.registerWeak(value -> runInFX(() -> deviceCode.set(value))));
@@ -93,26 +93,27 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
                 hintPane.setSegment(i18n("account.methods.microsoft.manual", event.getVerificationUri()));
         });
 
-        errHintPane = new HintPane(MessageDialogPane.MessageType.ERROR);
+        errHintPane.managedProperty().bind(errHintPane.visibleProperty());
         errHintPane.setVisible(false);
+        rootContainer.getChildren().add(errHintPane);
 
         if (Accounts.OAUTH_CALLBACK.getClientId().isEmpty()) {
             HintPane snapshotHint = new HintPane(MessageDialogPane.MessageType.WARNING);
             snapshotHint.setSegment(i18n("account.methods.microsoft.snapshot"));
             rootContainer.getChildren().add(snapshotHint);
-            startLoginButtonSpinner = new SpinnerPane();
+            loginButtonSpinner = new SpinnerPane();
             return;
         }
 
         rootContainer.getChildren().add(hintPane);
         if (!IntegrityChecker.isOfficial()) {
             unofficialHintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
+            unofficialHintPane.managedProperty().bind(unofficialHintPane.visibleProperty());
             unofficialHintPane.setSegment(i18n("unofficial.hint"));
             rootContainer.getChildren().add(unofficialHintPane);
         }
-        rootContainer.getChildren().add(errHintPane);
 
-        authMethodsContentBox = new HBox(10);
+        authMethodsContentBox.managedProperty().bind(authMethodsContentBox.visibleProperty());
         authMethodsContentBox.setAlignment(Pos.CENTER);
         authMethodsContentBox.setVisible(false);
         authMethodsContentBox.setPrefWidth(640);
@@ -235,33 +236,28 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
         btnStartLogin.getStyleClass().add("dialog-accept");
         btnStartLogin.setOnAction(e -> startLoginTasks());
 
-        startLoginButtonSpinner = new SpinnerPane();
-        startLoginButtonSpinner.getStyleClass().add("small-spinner-pane");
-        startLoginButtonSpinner.setContent(btnStartLogin);
+        loginButtonSpinner = new SpinnerPane();
+        loginButtonSpinner.getStyleClass().add("small-spinner-pane");
+        loginButtonSpinner.setContent(btnStartLogin);
 
         JFXButton btnCancel = new JFXButton(i18n("button.cancel"));
         btnCancel.getStyleClass().add("dialog-cancel");
         btnCancel.setOnAction(e -> onCancel());
         onEscPressed(this, btnCancel::fire);
 
-        HBox actions = new HBox(10, startLoginButtonSpinner, btnCancel);
+        HBox actions = new HBox(10, loginButtonSpinner, btnCancel);
         actions.setAlignment(Pos.CENTER_RIGHT);
         setActions(actions);
-
-        errHintPane.managedProperty().bind(errHintPane.visibleProperty());
-        authMethodsContentBox.managedProperty().bind(authMethodsContentBox.visibleProperty());
-        unofficialHintPane.managedProperty().bind(unofficialHintPane.visibleProperty());
     }
 
     private void startLoginTasks() {
-        startLoginButtonSpinner.showSpinner();
-
         deviceCode.set(null);
         browserUrl.set(null);
         errHintPane.setVisible(false);
         authMethodsContentBox.setVisible(true);
-        startLoginButtonSpinner.hideSpinner();
         unofficialHintPane.setVisible(false);
+
+        loginButtonSpinner.showSpinner();
 
         ExceptionalConsumer<MicrosoftAccount, Exception> onSuccess = (account) -> {
             cancelAllTasks();
@@ -276,8 +272,8 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
             }
         });
 
-        browserTask = Task.supplyAsync(() -> Accounts.FACTORY_MICROSOFT.create(null, null, null, null, OAuth.GrantFlow.AUTHORIZATION_CODE)).whenComplete(Schedulers.javafx(), onSuccess, onFail).executor(true);
-        deviceTask = Task.supplyAsync(() -> Accounts.FACTORY_MICROSOFT.create(null, null, null, null, OAuth.GrantFlow.DEVICE)).whenComplete(Schedulers.javafx(), onSuccess, onFail).executor(true);
+        browserTaskExecuter = Task.supplyAsync(() -> Accounts.FACTORY_MICROSOFT.create(null, null, null, null, OAuth.GrantFlow.AUTHORIZATION_CODE)).whenComplete(Schedulers.javafx(), onSuccess, onFail).executor(true);
+        deviceTaskExecuter = Task.supplyAsync(() -> Accounts.FACTORY_MICROSOFT.create(null, null, null, null, OAuth.GrantFlow.DEVICE)).whenComplete(Schedulers.javafx(), onSuccess, onFail).executor(true);
     }
 
     private void handleLoginCompleted(MicrosoftAccount account) {
@@ -299,7 +295,7 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
             } catch (AuthenticationException e) {
                 errHintPane.setText(Accounts.localizeErrorMessage(e));
                 errHintPane.setVisible(true);
-                errHintPane.setManaged(true);
+                loginButtonSpinner.showSpinner();
                 return;
             }
         }
@@ -307,8 +303,8 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
     }
 
     private void cancelAllTasks() {
-        if (browserTask != null) browserTask.cancel();
-        if (deviceTask != null) deviceTask.cancel();
+        if (browserTaskExecuter != null) browserTaskExecuter.cancel();
+        if (deviceTaskExecuter != null) deviceTaskExecuter.cancel();
     }
 
     private void onCancel() {
