@@ -257,7 +257,7 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
 
         ExceptionalConsumer<MicrosoftAccount, Exception> onSuccess = (account) -> {
             cancelAllTasks();
-            runInFX(() -> handleLoginCompleted(account));
+            runInFX(() -> onLoginCompleted(account));
         };
 
         ExceptionalConsumer<Exception, Exception> onFail = (e) -> runInFX(() -> {
@@ -278,7 +278,7 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
                 .executor(true);
     }
 
-    private void handleLoginCompleted(MicrosoftAccount account) {
+    private void onLoginCompleted(MicrosoftAccount account) {
         if (accountToRelogin != null) Accounts.getAccounts().remove(accountToRelogin);
 
         int oldIndex = Accounts.getAccounts().indexOf(account);
