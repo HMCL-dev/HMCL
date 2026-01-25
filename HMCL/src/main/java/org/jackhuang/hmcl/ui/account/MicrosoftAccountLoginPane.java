@@ -87,7 +87,25 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
             setStyle("-fx-padding: 0px 0px 0px 0px;");
         }
 
+        JFXButton btnLogin = new JFXButton(i18n("account.login"));
+        btnLogin.getStyleClass().add("dialog-accept");
+        btnLogin.setOnAction(e -> startLoginTasks());
+
+        loginButtonSpinner = new SpinnerPane();
+        loginButtonSpinner.getStyleClass().add("small-spinner-pane");
+        loginButtonSpinner.setContent(btnLogin);
+
+        JFXButton btnCancel = new JFXButton(i18n("button.cancel"));
+        btnCancel.getStyleClass().add("dialog-cancel");
+        btnCancel.setOnAction(e -> onCancel());
+        onEscPressed(this, btnCancel::fire);
+
+        HBox actions = new HBox(10, loginButtonSpinner, btnCancel);
+        actions.setAlignment(Pos.CENTER_RIGHT);
+        setActions(actions);
+
         VBox rootContainer = new VBox(10);
+        setBody(rootContainer);
         rootContainer.setPadding(new Insets(5, 0, 0, 0));
         rootContainer.setAlignment(Pos.TOP_CENTER);
 
@@ -106,7 +124,7 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
             HintPane snapshotHint = new HintPane(MessageDialogPane.MessageType.WARNING);
             snapshotHint.setSegment(i18n("account.methods.microsoft.snapshot"));
             rootContainer.getChildren().add(snapshotHint);
-            loginButtonSpinner = new SpinnerPane();
+            btnLogin.setDisable(true);
             return;
         }
 
@@ -135,25 +153,6 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
 
         linkBox.getChildren().addAll(profileLink, purchaseLink, forgotLink);
         rootContainer.getChildren().add(linkBox);
-
-        setBody(rootContainer);
-
-        JFXButton btnStartLogin = new JFXButton(i18n("account.login"));
-        btnStartLogin.getStyleClass().add("dialog-accept");
-        btnStartLogin.setOnAction(e -> startLoginTasks());
-
-        loginButtonSpinner = new SpinnerPane();
-        loginButtonSpinner.getStyleClass().add("small-spinner-pane");
-        loginButtonSpinner.setContent(btnStartLogin);
-
-        JFXButton btnCancel = new JFXButton(i18n("button.cancel"));
-        btnCancel.getStyleClass().add("dialog-cancel");
-        btnCancel.setOnAction(e -> onCancel());
-        onEscPressed(this, btnCancel::fire);
-
-        HBox actions = new HBox(10, loginButtonSpinner, btnCancel);
-        actions.setAlignment(Pos.CENTER_RIGHT);
-        setActions(actions);
     }
 
     private void initAuthMethodsBox() {
