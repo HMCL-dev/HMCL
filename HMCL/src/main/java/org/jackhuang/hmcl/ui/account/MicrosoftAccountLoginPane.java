@@ -178,7 +178,10 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
         browserDesc.setTextAlignment(TextAlignment.CENTER);
 
         JFXButton btnOpenBrowser = FXUtils.newBorderButton(i18n("account.methods.microsoft.methods.browser.copy_open"));
-        btnOpenBrowser.setOnAction(e -> FXUtils.openLink(browserUrl.get()));
+        btnOpenBrowser.setOnAction(e -> {
+            FXUtils.copyText(browserUrl.get());
+            FXUtils.openLink(browserUrl.get());
+        });
         btnOpenBrowser.disableProperty().bind(browserUrl.isNull());
 
         browserPanel.getChildren().addAll(browserTitle, browserDesc, btnOpenBrowser);
