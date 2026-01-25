@@ -47,7 +47,7 @@ public final class MicrosoftAccount extends OAuthAccount {
         this.characterUUID = requireNonNull(session.getProfile().getId());
     }
 
-    protected MicrosoftAccount(MicrosoftService service, CharacterSelector characterSelector) throws AuthenticationException {
+    protected MicrosoftAccount(MicrosoftService service) throws AuthenticationException {
         this.service = requireNonNull(service);
 
         MicrosoftSession acquiredSession = service.authenticate();

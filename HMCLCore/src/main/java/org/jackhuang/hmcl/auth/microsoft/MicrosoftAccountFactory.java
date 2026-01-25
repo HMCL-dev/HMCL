@@ -39,9 +39,7 @@ public class MicrosoftAccountFactory extends AccountFactory<MicrosoftAccount> {
 
     @Override
     public MicrosoftAccount create(CharacterSelector selector, String username, String password, ProgressCallback progressCallback, Object additionalData) throws AuthenticationException {
-        Objects.requireNonNull(selector);
-
-        return new MicrosoftAccount(service, selector);
+        return new MicrosoftAccount(service);
     }
 
     @Override

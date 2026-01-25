@@ -60,7 +60,7 @@ import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.createSelectedIt
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class AccountListPage extends DecoratorAnimatedPage implements DecoratorPage {
-    static final BooleanProperty RESTRICTED = new SimpleBooleanProperty(true);
+    public static final BooleanProperty RESTRICTED = new SimpleBooleanProperty(true);
 
     static {
         String property = System.getProperty("hmcl.offline.auth.restricted", "auto");
@@ -133,7 +133,7 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                     microsoftItem.setActionButtonVisible(false);
                     microsoftItem.setTitle(i18n("account.methods.microsoft"));
                     microsoftItem.setLeftGraphic(wrap(SVG.MICROSOFT));
-                    microsoftItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_MICROSOFT)));
+                    microsoftItem.setOnAction(e -> Controllers.dialog(new MicrosoftAccountLoginDialog()));
 
                     AdvancedListItem offlineItem = new AdvancedListItem();
                     offlineItem.getStyleClass().add("navigation-drawer-item");

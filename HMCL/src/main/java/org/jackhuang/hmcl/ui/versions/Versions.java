@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
 import javafx.application.Platform;
+import javafx.scene.layout.Region;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorAccount;
@@ -32,7 +33,9 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.account.AccountListPage;
 import org.jackhuang.hmcl.ui.account.CreateAccountPane;
+import org.jackhuang.hmcl.ui.account.MicrosoftAccountLoginDialog;
 import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PromptDialogPane;
@@ -289,7 +292,11 @@ public final class Versions {
             });
             Controllers.dialog(dialog);
         } else if (account == null) {
-            CreateAccountPane dialog = new CreateAccountPane();
+            Region dialog;
+
+            if (AccountListPage.RESTRICTED.get()) dialog = new MicrosoftAccountLoginDialog();
+            else dialog = new CreateAccountPane();
+
             dialog.addEventHandler(DialogCloseEvent.CLOSE, e -> {
                 Account newAccount = Accounts.getSelectedAccount();
                 if (newAccount == null) {
