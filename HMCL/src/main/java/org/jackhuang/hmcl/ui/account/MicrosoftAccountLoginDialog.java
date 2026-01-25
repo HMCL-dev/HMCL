@@ -36,6 +36,7 @@ import org.jackhuang.hmcl.upgrade.IntegrityChecker;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
@@ -75,7 +76,7 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
         initUI();
 
         holder.add(Accounts.OAUTH_CALLBACK.onGrantDeviceCode.registerWeak(value -> runInFX(() -> deviceCode.set(value))));
-        holder.add(Accounts.OAUTH_CALLBACK.onOpenBrowser.registerWeak(event -> runInFX(() -> browserUrl.set(event.getUrl()))));
+        holder.add(Accounts.OAUTH_CALLBACK.onOpenBrowserAuthorizationCode.registerWeak(event -> runInFX(() -> browserUrl.set(event.getUrl()))));
     }
 
     private void initUI() {
@@ -137,7 +138,6 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
         VBox.setVgrow(browserDesc, Priority.ALWAYS);
 
         JFXButton btnOpenBrowser = new JFXButton(i18n("account.methods.microsoft.methods.broswer.copy_open"));
-        btnOpenBrowser.getStyleClass().add("dialog-accept");
         btnOpenBrowser.setDisable(true);
         btnOpenBrowser.disableProperty().bind(browserUrl.isNull().or(browserUrl.asString().isEmpty()));
         btnOpenBrowser.setMaxWidth(Double.MAX_VALUE);
@@ -290,9 +290,10 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
 
         ExceptionalConsumer<Exception, Exception> onFail = (e) -> runInFX(() -> {
             if (!loginFirst.get()) {
-                if (!(e instanceof java.util.concurrent.CancellationException)) {
+                if (!(e instanceof CancellationException)) {
                     errHintPane.setText(Accounts.localizeErrorMessage(e));
                     errHintPane.setVisible(true);
+                    authContentBox.setVisible(false);
                 }
             }
         });

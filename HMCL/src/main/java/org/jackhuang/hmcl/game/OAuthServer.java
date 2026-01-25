@@ -122,7 +122,8 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
 
     public static class Factory implements OAuth.Callback {
         public final EventManager<GrantDeviceCodeEvent> onGrantDeviceCode = new EventManager<>();
-        public final EventManager<OpenBrowserEvent> onOpenBrowser = new EventManager<>();
+        public final EventManager<OpenBrowserEvent> onOpenBrowserAuthorizationCode = new EventManager<>();
+        public final EventManager<OpenBrowserEvent> onOpenBrowserDevice = new EventManager<>();
 
         @Override
         public OAuth.Session startServer() throws IOException, AuthenticationException {
@@ -149,10 +150,11 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
         }
 
         @Override
-        public void openBrowser(String url) throws IOException {
+        public void openBrowser(OAuth.GrantFlow authorizationCode, String url) throws IOException {
             lastlyOpenedURL = url;
 
-            onOpenBrowser.fireEvent(new OpenBrowserEvent(this, url));
+            if (authorizationCode == OAuth.GrantFlow.AUTHORIZATION_CODE) onOpenBrowserAuthorizationCode.fireEvent(new OpenBrowserEvent(this, url));
+            else onOpenBrowserDevice.fireEvent(new OpenBrowserEvent(this, url));
         }
 
         @Override
