@@ -20,10 +20,12 @@ package org.jackhuang.hmcl.ui;
 import javafx.scene.Cursor;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jsoup.Jsoup;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
 
@@ -77,6 +79,7 @@ public final class HTMLRenderer {
     private boolean highlight;
     private String headerLevel;
     private Node hyperlink;
+    private String style;
 
     private final Consumer<URI> onClickHyperlink;
 
@@ -92,6 +95,7 @@ public final class HTMLRenderer {
         highlight = false;
         headerLevel = null;
         hyperlink = null;
+        style = null;
 
         for (Node node : stack) {
             String nodeName = node.nodeName();
@@ -124,6 +128,13 @@ public final class HTMLRenderer {
                 case "h6":
                     headerLevel = nodeName;
                     break;
+            }
+
+            String style = node.attr("style");
+            if (StringUtils.isNotBlank(style)) {
+                this.style = style
+                        .replace("color:", "-fx-fill:")
+                        .replace("font-size:", "-fx-font-size:");
             }
         }
     }
@@ -162,6 +173,10 @@ public final class HTMLRenderer {
 
         if (headerLevel != null)
             text.getStyleClass().add("html-" + headerLevel);
+
+        if (style != null) {
+            text.setStyle(style);
+        }
     }
 
     private void appendText(String text) {
