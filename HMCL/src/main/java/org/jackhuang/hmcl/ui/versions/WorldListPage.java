@@ -156,18 +156,18 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
         // Or too many input dialogs are popped.
         Task.supplyAsync(() -> new World(zipFile))
                 .whenComplete(Schedulers.javafx(), world -> {
-                    Controllers.prompt(i18n("world.name.enter"), (name, resolve, reject) -> {
+                    Controllers.prompt(i18n("world.name.enter"), (name, handler) -> {
                         Task.runAsync(() -> world.install(savesDir, name))
                                 .whenComplete(Schedulers.javafx(), () -> {
-                                    resolve.run();
+                                    handler.resolve();
                                     refresh();
                                 }, e -> {
                                     if (e instanceof FileAlreadyExistsException)
-                                        reject.accept(i18n("world.import.failed", i18n("world.import.already_exists")));
+                                        handler.reject(i18n("world.import.failed", i18n("world.import.already_exists")));
                                     else if (e instanceof IOException && e.getCause() instanceof InvalidPathException)
-                                        reject.accept(i18n("world.import.failed", i18n("install.new_game.malformed")));
+                                        handler.reject(i18n("world.import.failed", i18n("install.new_game.malformed")));
                                     else
-                                        reject.accept(i18n("world.import.failed", e.getClass().getName() + ": " + e.getLocalizedMessage()));
+                                        handler.reject(i18n("world.import.failed", e.getClass().getName() + ": " + e.getLocalizedMessage()));
                                 }).start();
                     }, world.getWorldName(), new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid));
                 }, e -> {
