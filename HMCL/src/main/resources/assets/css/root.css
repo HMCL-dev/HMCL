@@ -299,6 +299,11 @@
     -fx-fill: -monet-surface-tint;
 }
 
+.popup-menu .scroll-pane > .scroll-bar:vertical,
+.popup-menu .scroll-pane > .scroll-bar:horizontal {
+    -fx-opacity: 0;
+}
+
 .popup-menu-content {
     -fx-padding: 4 0 4 0;
 }
