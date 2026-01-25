@@ -281,7 +281,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             VBox vbox = new VBox(8);
             detailsPane = vbox;
             HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
-            hintPane.setText("点击 下一步 > 按钮开始添加微软账号");
+            hintPane.setText(i18n("account.methods.microsoft.hint"));
             vbox.getChildren().addAll(hintPane);
             btnAccept.setOnAction(e -> {
                 fireEvent(new DialogCloseEvent());

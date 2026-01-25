@@ -11,6 +11,8 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.auth.Account;
+import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.game.OAuthServer;
 import org.jackhuang.hmcl.setting.Accounts;
@@ -21,6 +23,8 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.upgrade.IntegrityChecker;
+
+import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
@@ -36,13 +40,29 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
     private final ObjectProperty<OAuthServer.GrantDeviceCodeEvent> deviceCode = new SimpleObjectProperty<>();
     private final WeakListenerHolder holder = new WeakListenerHolder();
 
+    private final Account accountToRelogin;
+    private final Consumer<AuthInfo> loginCallback;
+    private final Runnable cancelCallback;
+
     private TaskExecutor loginTask;
 
     public MicrosoftAccountLoginDialog() {
+        this(null, null, null);
+    }
+
+    public MicrosoftAccountLoginDialog(Account account, Consumer<AuthInfo> callback, Runnable onCancel) {
+        this.accountToRelogin = account;
+        this.loginCallback = callback;
+        this.cancelCallback = onCancel;
+
         hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
         errHintPane = new HintPane(MessageDialogPane.MessageType.ERROR);
 
-        setHeading(new Label(i18n("account.create.microsoft")));
+        if (accountToRelogin != null) {
+            setHeading(new Label(i18n("account.login.refresh")));
+        } else {
+            setHeading(new Label(i18n("account.create.microsoft")));
+        }
 
         btnLogin = new JFXButton(i18n("account.login"));
         btnLogin.getStyleClass().add("dialog-accept");
@@ -124,9 +144,7 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
             if (deviceCode.get() != null) FXUtils.copyText(deviceCode.get().getUserCode());
         });
 
-        holder.add(Accounts.OAUTH_CALLBACK.onGrantDeviceCode.registerWeak(value ->
-                runInFX(() -> deviceCode.set(value))
-        ));
+        holder.add(Accounts.OAUTH_CALLBACK.onGrantDeviceCode.registerWeak(value -> runInFX(() -> deviceCode.set(value))));
 
         HBox linkBox = new HBox();
         JFXHyperlink profileLink = new JFXHyperlink(i18n("account.methods.microsoft.profile"));
@@ -148,35 +166,49 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
 
     private void onLogin() {
         spinner.showSpinner();
-
         logging.set(true);
         deviceCode.set(null);
 
-        loginTask = Task.supplyAsync(() -> Accounts.FACTORY_MICROSOFT.create(
-                        null, null, null, null, null))
-                .whenComplete(Schedulers.javafx(), account -> {
-                    int oldIndex = Accounts.getAccounts().indexOf(account);
-                    if (oldIndex == -1) {
-                        Accounts.getAccounts().add(account);
-                    } else {
-                        Accounts.getAccounts().remove(oldIndex);
-                        Accounts.getAccounts().add(oldIndex, account);
-                    }
+        if (accountToRelogin != null) {
+            loginTask = Task.supplyAsync(accountToRelogin::logIn).whenComplete(Schedulers.javafx(), authInfo -> {
+                if (loginCallback != null) {
+                    loginCallback.accept(authInfo);
+                }
+                spinner.hideSpinner();
+                fireEvent(new DialogCloseEvent());
+            }, exception -> {
+                errHintPane.setText(Accounts.localizeErrorMessage(exception));
+                spinner.hideSpinner();
+                logging.set(false);
+            }).executor(true);
+        } else {
+            loginTask = Task.supplyAsync(() -> Accounts.FACTORY_MICROSOFT.create(null, null, null, null, null)).whenComplete(Schedulers.javafx(), account -> {
+                int oldIndex = Accounts.getAccounts().indexOf(account);
+                if (oldIndex == -1) {
+                    Accounts.getAccounts().add(account);
+                } else {
+                    Accounts.getAccounts().remove(oldIndex);
+                    Accounts.getAccounts().add(oldIndex, account);
+                }
 
-                    Accounts.setSelectedAccount(account);
+                Accounts.setSelectedAccount(account);
 
-                    spinner.hideSpinner();
-                    fireEvent(new DialogCloseEvent());
-                }, exception -> {
-                    errHintPane.setText(Accounts.localizeErrorMessage(exception));
-                    spinner.hideSpinner();
-                    logging.set(false);
-                }).executor(true);
+                spinner.hideSpinner();
+                fireEvent(new DialogCloseEvent());
+            }, exception -> {
+                errHintPane.setText(Accounts.localizeErrorMessage(exception));
+                spinner.hideSpinner();
+                logging.set(false);
+            }).executor(true);
+        }
     }
 
     private void onCancel() {
         if (loginTask != null) {
             loginTask.cancel();
+        }
+        if (cancelCallback != null) {
+            cancelCallback.run();
         }
         fireEvent(new DialogCloseEvent());
     }
@@ -186,5 +218,3 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
         btnLogin.requestFocus();
     }
 }
-
-
