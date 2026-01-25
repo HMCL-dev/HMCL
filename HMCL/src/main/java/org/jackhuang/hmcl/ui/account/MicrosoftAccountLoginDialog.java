@@ -126,17 +126,17 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
         browserPanel.setPrefWidth(290);
         HBox.setHgrow(browserPanel, Priority.ALWAYS);
 
-        Label browserTitle = new Label(i18n("account.methods.microsoft.methods.broswer"));
+        Label browserTitle = new Label(i18n("account.methods.microsoft.methods.browser"));
         browserTitle.setStyle("-fx-text-fill: -monet-on-surface;");
 
-        Label browserDesc = new Label(i18n("account.methods.microsoft.methods.broswer.hint"));
+        Label browserDesc = new Label(i18n("account.methods.microsoft.methods.browser.hint"));
         browserDesc.setStyle("-fx-text-fill: -monet-outline; -fx-line-spacing: 2px;");
         browserDesc.setWrapText(true);
         browserDesc.setTextAlignment(TextAlignment.CENTER);
         browserDesc.setMaxWidth(Double.MAX_VALUE);
         VBox.setVgrow(browserDesc, Priority.ALWAYS);
 
-        JFXButton btnOpenBrowser = FXUtils.newBorderButton(i18n("account.methods.microsoft.methods.broswer.copy_open"));
+        JFXButton btnOpenBrowser = FXUtils.newBorderButton(i18n("account.methods.microsoft.methods.browser.copy_open"));
         btnOpenBrowser.setOnAction(e -> FXUtils.openLink(browserUrl.get()));
 
         browserPanel.getChildren().addAll(browserTitle, browserDesc, btnOpenBrowser);
