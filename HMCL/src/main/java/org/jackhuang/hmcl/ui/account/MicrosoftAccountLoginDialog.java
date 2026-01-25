@@ -127,7 +127,6 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
         HBox.setHgrow(browserPanel, Priority.ALWAYS);
 
         Label browserTitle = new Label(i18n("account.methods.microsoft.methods.broswer"));
-        browserTitle.getStyleClass().add("h4");
         browserTitle.setStyle("-fx-text-fill: -monet-on-surface;");
 
         Label browserDesc = new Label(i18n("account.methods.microsoft.methods.broswer.hint"));
@@ -137,14 +136,8 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
         browserDesc.setMaxWidth(Double.MAX_VALUE);
         VBox.setVgrow(browserDesc, Priority.ALWAYS);
 
-        JFXButton btnOpenBrowser = new JFXButton(i18n("account.methods.microsoft.methods.broswer.copy_open"));
-        btnOpenBrowser.setDisable(true);
-        btnOpenBrowser.disableProperty().bind(browserUrl.isNull().or(browserUrl.asString().isEmpty()));
-        btnOpenBrowser.setMaxWidth(Double.MAX_VALUE);
-        btnOpenBrowser.setOnAction(e -> {
-            String url = browserUrl.get();
-            if (url != null) FXUtils.openLink(url);
-        });
+        JFXButton btnOpenBrowser = FXUtils.newBorderButton(i18n("account.methods.microsoft.methods.broswer.copy_open"));
+        btnOpenBrowser.setOnAction(e -> FXUtils.openLink(browserUrl.get()));
 
         browserPanel.getChildren().addAll(browserTitle, browserDesc, btnOpenBrowser);
 
@@ -171,7 +164,6 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
         HBox.setHgrow(devicePanel, Priority.ALWAYS);
 
         Label deviceTitle = new Label(i18n("account.methods.microsoft.methods.device"));
-        deviceTitle.getStyleClass().add("h4");
         deviceTitle.setStyle("-fx-text-fill: -monet-on-surface;");
 
         Label deviceDesc = new Label();
@@ -179,11 +171,7 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
         deviceDesc.setWrapText(true);
         deviceDesc.setTextAlignment(TextAlignment.CENTER);
         deviceDesc.setMaxWidth(Double.MAX_VALUE);
-        deviceDesc.textProperty().bind(Bindings.createStringBinding(
-                () -> i18n("account.methods.microsoft.methods.device.hint",
-                        deviceCode.get() == null ? "..." : deviceCode.get().getVerificationUri()),
-                deviceCode
-        ));
+        deviceDesc.textProperty().bind(Bindings.createStringBinding(() -> i18n("account.methods.microsoft.methods.device.hint", deviceCode.get() == null ? "..." : deviceCode.get().getVerificationUri()), deviceCode));
 
         ImageView imageView = new ImageView(FXUtils.newBuiltinImage("/assets/img/microsoft_login.png"));
         imageView.setFitWidth(84);
@@ -199,8 +187,7 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
         codeBox.setMaxWidth(Double.MAX_VALUE);
 
         Label lblCode = new Label("...");
-        lblCode.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: -monet-primary; -fx-font-family: \""
-                + Lang.requireNonNullElse(config().getFontFamily(), FXUtils.DEFAULT_MONOSPACE_FONT) + "\"");
+        lblCode.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: -monet-primary; -fx-font-family: \"" + Lang.requireNonNullElse(config().getFontFamily(), FXUtils.DEFAULT_MONOSPACE_FONT) + "\"");
 
         SpinnerPane codeSpinner = new SpinnerPane();
         codeSpinner.setContent(lblCode);
@@ -298,11 +285,9 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
             }
         });
 
-        browserTask = Task.supplyAsync(() -> Accounts.FACTORY_MICROSOFT.create(null, null, null, null, OAuth.GrantFlow.AUTHORIZATION_CODE))
-                .whenComplete(Schedulers.javafx(), onSuccess, onFail).executor(true);
+        browserTask = Task.supplyAsync(() -> Accounts.FACTORY_MICROSOFT.create(null, null, null, null, OAuth.GrantFlow.AUTHORIZATION_CODE)).whenComplete(Schedulers.javafx(), onSuccess, onFail).executor(true);
 
-        deviceTask = Task.supplyAsync(() -> Accounts.FACTORY_MICROSOFT.create(null, null, null, null, OAuth.GrantFlow.DEVICE))
-                .whenComplete(Schedulers.javafx(), onSuccess, onFail).executor(true);
+        deviceTask = Task.supplyAsync(() -> Accounts.FACTORY_MICROSOFT.create(null, null, null, null, OAuth.GrantFlow.DEVICE)).whenComplete(Schedulers.javafx(), onSuccess, onFail).executor(true);
     }
 
     private void handleLoginSuccess(MicrosoftAccount account) {
