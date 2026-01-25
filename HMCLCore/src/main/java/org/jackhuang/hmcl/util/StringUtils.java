@@ -544,7 +544,13 @@ public final class StringUtils {
     public static boolean isStringHtml(String str) {
         if (isBlank(str)) return false;
         if (str.startsWith("<!DOCTYPE html>") || str.startsWith("<html>") || str.startsWith("<body>")) return true;
-        return Jsoup.isValid(str, Safelist.relaxed().addAttributes("a", "rel"));
+        if (!Jsoup.isValid(str, Safelist.relaxed().addAttributes("a", "rel"))) {
+            return false;
+        }
+        var body = Jsoup.parse(str).body();
+        if (body.childNodes().size() > 1) return true;
+        if (body.childNodes().isEmpty()) return false;
+        return !body.childNodes().get(0).nameIs("#text");
     }
 
     private static final HtmlRenderer HTML_RENDERER = HtmlRenderer.builder().build();
