@@ -14,6 +14,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import javafx.scene.text.TextAlignment;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.AuthenticationException;
@@ -44,9 +45,8 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
     private final Account accountToRelogin;
     private final Consumer<AuthInfo> loginCallback;
     private final Runnable cancelCallback;
-    @SuppressWarnings("FieldCanBeLocal")
-    private final WeakListenerHolder holder = new WeakListenerHolder();
 
+    private final WeakListenerHolder holder = new WeakListenerHolder();
     private final ObjectProperty<OAuthServer.GrantDeviceCodeEvent> deviceCode = new SimpleObjectProperty<>();
     private final ObjectProperty<String> browserUrl = new SimpleObjectProperty<>();
 
@@ -54,7 +54,7 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
     private TaskExecutor deviceTaskExecuter;
 
     private SpinnerPane loginButtonSpinner;
-    private final HBox authMethodsContentBox = new HBox(10);
+    private final HBox authMethodsContentBox = new HBox(0);
     private final HintPane errHintPane = new HintPane(MessageDialogPane.MessageType.ERROR);
     private HintPane unofficialHintPane;
 
@@ -78,8 +78,8 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
         heading.getStyleClass().add("header-label");
         setHeading(heading);
 
-        VBox rootContainer = new VBox(15);
-        rootContainer.setPadding(new Insets(10, 0, 0, 0));
+        VBox rootContainer = new VBox(10);
+        rootContainer.setPadding(new Insets(5, 0, 0, 0));
         rootContainer.setAlignment(Pos.TOP_CENTER);
 
         HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
@@ -102,6 +102,7 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
         }
 
         rootContainer.getChildren().add(hintPane);
+
         if (!IntegrityChecker.isOfficial()) {
             unofficialHintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
             unofficialHintPane.managedProperty().bind(unofficialHintPane.visibleProperty());
@@ -109,99 +110,12 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
             rootContainer.getChildren().add(unofficialHintPane);
         }
 
-        authMethodsContentBox.managedProperty().bind(authMethodsContentBox.visibleProperty());
-        authMethodsContentBox.setAlignment(Pos.CENTER);
-        authMethodsContentBox.setVisible(false);
-        authMethodsContentBox.setPrefWidth(640);
-        authMethodsContentBox.setMinHeight(250);
-
-        VBox browserPanel = new VBox(15);
-        browserPanel.setAlignment(Pos.TOP_CENTER);
-        browserPanel.setPadding(new Insets(10));
-        browserPanel.setPrefWidth(290);
-        HBox.setHgrow(browserPanel, Priority.ALWAYS);
-
-        Label browserTitle = new Label(i18n("account.methods.microsoft.methods.browser"));
-        browserTitle.setStyle("-fx-text-fill: -monet-on-surface;");
-
-        Label browserDesc = new Label(i18n("account.methods.microsoft.methods.browser.hint"));
-        browserDesc.setLineSpacing(2);
-        browserDesc.setStyle("-fx-text-fill: -monet-outline;");
-        browserDesc.setWrapText(true);
-        VBox.setVgrow(browserDesc, Priority.ALWAYS);
-
-        JFXButton btnOpenBrowser = FXUtils.newBorderButton(i18n("account.methods.microsoft.methods.browser.copy_open"));
-        btnOpenBrowser.setOnAction(e -> FXUtils.openLink(browserUrl.get()));
-
-        browserPanel.getChildren().addAll(browserTitle, browserDesc, btnOpenBrowser);
-
-        VBox separatorBox = new VBox();
-        separatorBox.setAlignment(Pos.CENTER);
-        separatorBox.setMinWidth(40);
-        HBox.setHgrow(separatorBox, Priority.NEVER);
-
-        Separator sepTop = new Separator(Orientation.VERTICAL);
-        VBox.setVgrow(sepTop, Priority.ALWAYS);
-
-        Label orLabel = new Label(i18n("account.methods.microsoft.methods.or"));
-        orLabel.setPadding(new Insets(8, 0, 8, 0));
-        orLabel.setStyle("-fx-text-fill: -monet-outline; -fx-font-size: 12px; -fx-font-weight: bold;");
-
-        Separator sepBottom = new Separator(Orientation.VERTICAL);
-        VBox.setVgrow(sepBottom, Priority.ALWAYS);
-
-        separatorBox.getChildren().addAll(sepTop, orLabel, sepBottom);
-
-        VBox devicePanel = new VBox(15);
-        devicePanel.setAlignment(Pos.TOP_CENTER);
-        devicePanel.setPadding(new Insets(10));
-        devicePanel.setPrefWidth(290);
-        HBox.setHgrow(devicePanel, Priority.ALWAYS);
-
-        Label deviceTitle = new Label(i18n("account.methods.microsoft.methods.device"));
-        deviceTitle.setStyle("-fx-text-fill: -monet-on-surface;");
-
-        Label deviceDesc = new Label();
-        deviceDesc.setLineSpacing(2);
-        deviceDesc.setStyle("-fx-text-fill: -monet-outline;");
-        deviceDesc.setWrapText(true);
-        deviceDesc.textProperty().bind(Bindings.createStringBinding(() -> i18n("account.methods.microsoft.methods.device.hint", deviceCode.get() == null ? "..." : deviceCode.get().getVerificationUri()), deviceCode));
-
-        ImageView imageView = new ImageView(FXUtils.newBuiltinImage("/assets/img/microsoft_login.png"));
-        imageView.setFitWidth(84);
-        imageView.setFitHeight(84);
-
-
-        HBox codeBox = new HBox(10);
-        codeBox.setAlignment(Pos.CENTER);
-        codeBox.setPadding(new Insets(8, 15, 8, 15));
-        codeBox.setStyle("-fx-background-color: -monet-surface-variant; -fx-background-radius: 6;");
-
-        Label lblCode = new Label("...");
-        lblCode.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: -monet-primary; -fx-font-family: \"" + Lang.requireNonNullElse(config().getFontFamily(), FXUtils.DEFAULT_MONOSPACE_FONT) + "\"");
-
-        SpinnerPane codeSpinner = new SpinnerPane();
-        codeSpinner.setContent(lblCode);
-        codeSpinner.showSpinner();
-
-        FXUtils.onChangeAndOperate(deviceCode, event -> {
-            if (event != null) {
-                lblCode.setText(event.getUserCode());
-                codeSpinner.hideSpinner();
-            } else {
-                codeSpinner.showSpinner();
-            }
-        });
-
-        codeBox.getChildren().addAll(codeSpinner);
-        devicePanel.getChildren().addAll(deviceTitle, deviceDesc, imageView, codeBox);
-
-        authMethodsContentBox.getChildren().addAll(browserPanel, separatorBox, devicePanel);
+        initAuthMethodsBox();
         rootContainer.getChildren().add(authMethodsContentBox);
 
         HBox linkBox = new HBox(15);
         linkBox.setAlignment(Pos.CENTER);
-        linkBox.setPadding(new Insets(10, 0, 0, 0));
+        linkBox.setPadding(new Insets(5, 0, 0, 0));
 
         JFXHyperlink profileLink = new JFXHyperlink(i18n("account.methods.microsoft.profile"));
         profileLink.setExternalLink("https://account.live.com/editprof.aspx");
@@ -233,12 +147,110 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
         setActions(actions);
     }
 
+    private void initAuthMethodsBox() {
+        authMethodsContentBox.managedProperty().bind(authMethodsContentBox.visibleProperty());
+        authMethodsContentBox.setAlignment(Pos.CENTER);
+        authMethodsContentBox.setVisible(false);
+        authMethodsContentBox.setPrefWidth(600);
+
+        VBox browserPanel = new VBox(10);
+        browserPanel.setAlignment(Pos.CENTER);
+        browserPanel.setPadding(new Insets(10));
+        browserPanel.setPrefWidth(280);
+        HBox.setHgrow(browserPanel, Priority.ALWAYS);
+
+        Label browserTitle = new Label(i18n("account.methods.microsoft.methods.browser"));
+        browserTitle.setStyle("-fx-text-fill: -monet-on-surface; -fx-font-weight: bold;");
+
+        Label browserDesc = new Label(i18n("account.methods.microsoft.methods.browser.hint"));
+        browserDesc.setLineSpacing(2);
+        browserDesc.setStyle("-fx-text-fill: -monet-outline; -fx-font-size: 0.9em;");
+        browserDesc.setWrapText(true);
+        browserDesc.setTextAlignment(TextAlignment.CENTER);
+
+        JFXButton btnOpenBrowser = FXUtils.newBorderButton(i18n("account.methods.microsoft.methods.browser.copy_open"));
+        btnOpenBrowser.setOnAction(e -> FXUtils.openLink(browserUrl.get()));
+        btnOpenBrowser.disableProperty().bind(browserUrl.isNull());
+
+        browserPanel.getChildren().addAll(browserTitle, browserDesc, btnOpenBrowser);
+
+        VBox separatorBox = new VBox();
+        separatorBox.setAlignment(Pos.CENTER);
+        separatorBox.setMinWidth(30);
+        HBox.setHgrow(separatorBox, Priority.NEVER);
+
+        Separator sepTop = new Separator(Orientation.VERTICAL);
+        VBox.setVgrow(sepTop, Priority.ALWAYS);
+
+        Label orLabel = new Label(i18n("account.methods.microsoft.methods.or"));
+        orLabel.setPadding(new Insets(5, 0, 5, 0));
+        orLabel.setStyle("-fx-text-fill: -monet-outline; -fx-font-size: 11px; -fx-font-weight: bold;");
+
+        Separator sepBottom = new Separator(Orientation.VERTICAL);
+        VBox.setVgrow(sepBottom, Priority.ALWAYS);
+
+        separatorBox.getChildren().addAll(sepTop, orLabel, sepBottom);
+
+        VBox devicePanel = new VBox(10);
+        devicePanel.setAlignment(Pos.CENTER);
+        devicePanel.setPadding(new Insets(10));
+        devicePanel.setPrefWidth(280);
+        HBox.setHgrow(devicePanel, Priority.ALWAYS);
+
+        Label deviceTitle = new Label(i18n("account.methods.microsoft.methods.device"));
+        deviceTitle.setStyle("-fx-text-fill: -monet-on-surface; -fx-font-weight: bold;");
+
+        Label deviceDesc = new Label();
+        deviceDesc.setLineSpacing(2);
+        deviceDesc.setStyle("-fx-text-fill: -monet-outline; -fx-font-size: 0.9em;");
+        deviceDesc.setWrapText(true);
+        deviceDesc.setTextAlignment(TextAlignment.CENTER);
+        deviceDesc.textProperty().bind(Bindings.createStringBinding(
+                () -> i18n("account.methods.microsoft.methods.device.hint", deviceCode.get() == null ? "..." : deviceCode.get().getVerificationUri()),
+                deviceCode));
+
+        ImageView imageView = new ImageView(FXUtils.newBuiltinImage("/assets/img/microsoft_login.png"));
+        imageView.setPreserveRatio(true);
+        imageView.setFitWidth(80);
+        imageView.setFitHeight(80);
+
+        HBox codeBox = new HBox(10);
+        codeBox.setAlignment(Pos.CENTER);
+        codeBox.setPadding(new Insets(6, 12, 6, 12));
+        codeBox.setStyle("-fx-background-color: -monet-surface-variant; -fx-background-radius: 6;");
+        codeBox.setMaxWidth(Double.MAX_VALUE);
+
+        Label lblCode = new Label("...");
+        lblCode.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: -monet-primary; -fx-font-family: \"" + Lang.requireNonNullElse(config().getFontFamily(), FXUtils.DEFAULT_MONOSPACE_FONT) + "\"");
+
+        SpinnerPane codeSpinner = new SpinnerPane();
+        codeSpinner.setContent(lblCode);
+        codeSpinner.showSpinner();
+
+        FXUtils.onChangeAndOperate(deviceCode, event -> {
+            if (event != null) {
+                lblCode.setText(event.getUserCode());
+                codeSpinner.hideSpinner();
+            } else {
+                codeSpinner.showSpinner();
+            }
+        });
+
+        codeBox.getChildren().add(codeSpinner);
+        devicePanel.getChildren().addAll(deviceTitle, deviceDesc, imageView, codeBox);
+
+        authMethodsContentBox.getChildren().addAll(browserPanel, separatorBox, devicePanel);
+    }
+
     private void startLoginTasks() {
         deviceCode.set(null);
         browserUrl.set(null);
         errHintPane.setVisible(false);
         authMethodsContentBox.setVisible(true);
-        unofficialHintPane.setVisible(false);
+
+        if (unofficialHintPane != null) {
+            unofficialHintPane.setVisible(false);
+        }
 
         loginButtonSpinner.showSpinner();
 
@@ -252,11 +264,17 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
                 errHintPane.setText(Accounts.localizeErrorMessage(e));
                 errHintPane.setVisible(true);
                 authMethodsContentBox.setVisible(false);
+                loginButtonSpinner.hideSpinner();
             }
         });
 
-        browserTaskExecuter = Task.supplyAsync(() -> Accounts.FACTORY_MICROSOFT.create(null, null, null, null, OAuth.GrantFlow.AUTHORIZATION_CODE)).whenComplete(Schedulers.javafx(), onSuccess, onFail).executor(true);
-        deviceTaskExecuter = Task.supplyAsync(() -> Accounts.FACTORY_MICROSOFT.create(null, null, null, null, OAuth.GrantFlow.DEVICE)).whenComplete(Schedulers.javafx(), onSuccess, onFail).executor(true);
+        browserTaskExecuter = Task.supplyAsync(() -> Accounts.FACTORY_MICROSOFT.create(null, null, null, null, OAuth.GrantFlow.AUTHORIZATION_CODE))
+                .whenComplete(Schedulers.javafx(), onSuccess, onFail)
+                .executor(true);
+
+        deviceTaskExecuter = Task.supplyAsync(() -> Accounts.FACTORY_MICROSOFT.create(null, null, null, null, OAuth.GrantFlow.DEVICE))
+                .whenComplete(Schedulers.javafx(), onSuccess, onFail)
+                .executor(true);
     }
 
     private void handleLoginCompleted(MicrosoftAccount account) {
