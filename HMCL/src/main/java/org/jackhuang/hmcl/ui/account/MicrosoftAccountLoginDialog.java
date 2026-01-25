@@ -46,6 +46,7 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
     private final Consumer<AuthInfo> loginCallback;
     private final Runnable cancelCallback;
 
+    @SuppressWarnings("FieldCanBeLocal")
     private final WeakListenerHolder holder = new WeakListenerHolder();
     private final ObjectProperty<OAuthServer.GrantDeviceCodeEvent> deviceCode = new SimpleObjectProperty<>();
     private final ObjectProperty<String> browserUrl = new SimpleObjectProperty<>();
