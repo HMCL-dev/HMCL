@@ -37,7 +37,6 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
@@ -50,19 +49,18 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
     private final Account accountToRelogin;
     private final Consumer<AuthInfo> loginCallback;
     private final Runnable cancelCallback;
+    @SuppressWarnings("FieldCanBeLocal")
     private final WeakListenerHolder holder = new WeakListenerHolder();
 
     private final ObjectProperty<OAuthServer.GrantDeviceCodeEvent> deviceCode = new SimpleObjectProperty<>();
     private final ObjectProperty<String> browserUrl = new SimpleObjectProperty<>();
-    private final AtomicBoolean loginFirst = new AtomicBoolean(false);
 
     private TaskExecutor browserTask;
     private TaskExecutor deviceTask;
 
-    private SpinnerPane mainSpinner;
-    private HBox authContentBox;
+    private SpinnerPane startLoginButtonSpinner;
+    private HBox authMethodsContentBox;
     private HintPane errHintPane;
-    private JFXButton btnStartLogin;
     private HintPane unofficialHintPane;
 
     public MicrosoftAccountLoginDialog() {
@@ -102,7 +100,7 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
             HintPane snapshotHint = new HintPane(MessageDialogPane.MessageType.WARNING);
             snapshotHint.setSegment(i18n("account.methods.microsoft.snapshot"));
             rootContainer.getChildren().add(snapshotHint);
-            mainSpinner = new SpinnerPane();
+            startLoginButtonSpinner = new SpinnerPane();
             return;
         }
 
@@ -114,11 +112,11 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
         }
         rootContainer.getChildren().add(errHintPane);
 
-        authContentBox = new HBox(10);
-        authContentBox.setAlignment(Pos.CENTER);
-        authContentBox.setVisible(false);
-        authContentBox.setPrefWidth(640);
-        authContentBox.setMinHeight(250);
+        authMethodsContentBox = new HBox(10);
+        authMethodsContentBox.setAlignment(Pos.CENTER);
+        authMethodsContentBox.setVisible(false);
+        authMethodsContentBox.setPrefWidth(640);
+        authMethodsContentBox.setMinHeight(250);
 
         VBox browserPanel = new VBox(15);
         browserPanel.setAlignment(Pos.TOP_CENTER);
@@ -214,8 +212,8 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
         codeBox.getChildren().addAll(codeSpinner, btnCopyCode);
         devicePanel.getChildren().addAll(deviceTitle, deviceDesc, imageContainer, codeBox);
 
-        authContentBox.getChildren().addAll(browserPanel, separatorBox, devicePanel);
-        rootContainer.getChildren().add(authContentBox);
+        authMethodsContentBox.getChildren().addAll(browserPanel, separatorBox, devicePanel);
+        rootContainer.getChildren().add(authMethodsContentBox);
 
         HBox linkBox = new HBox(15);
         linkBox.setAlignment(Pos.CENTER);
@@ -233,64 +231,56 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
 
         setBody(rootContainer);
 
-        btnStartLogin = new JFXButton(i18n("account.login"));
+        JFXButton btnStartLogin = new JFXButton(i18n("account.login"));
         btnStartLogin.getStyleClass().add("dialog-accept");
         btnStartLogin.setOnAction(e -> startLoginTasks());
 
-        mainSpinner = new SpinnerPane();
-        mainSpinner.getStyleClass().add("small-spinner-pane");
-        mainSpinner.setContent(btnStartLogin);
+        startLoginButtonSpinner = new SpinnerPane();
+        startLoginButtonSpinner.getStyleClass().add("small-spinner-pane");
+        startLoginButtonSpinner.setContent(btnStartLogin);
 
         JFXButton btnCancel = new JFXButton(i18n("button.cancel"));
         btnCancel.getStyleClass().add("dialog-cancel");
         btnCancel.setOnAction(e -> onCancel());
         onEscPressed(this, btnCancel::fire);
 
-        HBox actions = new HBox(10, mainSpinner, btnCancel);
+        HBox actions = new HBox(10, startLoginButtonSpinner, btnCancel);
         actions.setAlignment(Pos.CENTER_RIGHT);
         setActions(actions);
 
         errHintPane.managedProperty().bind(errHintPane.visibleProperty());
-        authContentBox.managedProperty().bind(authContentBox.visibleProperty());
+        authMethodsContentBox.managedProperty().bind(authMethodsContentBox.visibleProperty());
         unofficialHintPane.managedProperty().bind(unofficialHintPane.visibleProperty());
     }
 
     private void startLoginTasks() {
-        btnStartLogin.setVisible(false);
-        mainSpinner.showSpinner();
+        startLoginButtonSpinner.showSpinner();
 
         deviceCode.set(null);
         browserUrl.set(null);
         errHintPane.setVisible(false);
-        authContentBox.setVisible(true);
-        mainSpinner.hideSpinner();
+        authMethodsContentBox.setVisible(true);
+        startLoginButtonSpinner.hideSpinner();
         unofficialHintPane.setVisible(false);
 
-        loginFirst.set(false);
-
         ExceptionalConsumer<MicrosoftAccount, Exception> onSuccess = (account) -> {
-            if (loginFirst.compareAndSet(false, true)) {
-                cancelAllTasks();
-                runInFX(() -> handleLoginSuccess(account));
-            }
+            cancelAllTasks();
+            runInFX(() -> handleLoginCompleted(account));
         };
 
         ExceptionalConsumer<Exception, Exception> onFail = (e) -> runInFX(() -> {
-            if (!loginFirst.get()) {
-                if (!(e instanceof CancellationException)) {
-                    errHintPane.setText(Accounts.localizeErrorMessage(e));
-                    errHintPane.setVisible(true);
-                    authContentBox.setVisible(false);
-                }
+            if (!(e instanceof CancellationException)) {
+                errHintPane.setText(Accounts.localizeErrorMessage(e));
+                errHintPane.setVisible(true);
+                authMethodsContentBox.setVisible(false);
             }
         });
 
         browserTask = Task.supplyAsync(() -> Accounts.FACTORY_MICROSOFT.create(null, null, null, null, OAuth.GrantFlow.AUTHORIZATION_CODE)).whenComplete(Schedulers.javafx(), onSuccess, onFail).executor(true);
-
         deviceTask = Task.supplyAsync(() -> Accounts.FACTORY_MICROSOFT.create(null, null, null, null, OAuth.GrantFlow.DEVICE)).whenComplete(Schedulers.javafx(), onSuccess, onFail).executor(true);
     }
 
-    private void handleLoginSuccess(MicrosoftAccount account) {
+    private void handleLoginCompleted(MicrosoftAccount account) {
         if (accountToRelogin != null) Accounts.getAccounts().remove(accountToRelogin);
 
         int oldIndex = Accounts.getAccounts().indexOf(account);
