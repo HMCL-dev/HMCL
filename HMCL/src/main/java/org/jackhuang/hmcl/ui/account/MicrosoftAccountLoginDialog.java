@@ -186,3 +186,5 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
         btnLogin.requestFocus();
     }
 }
+
+
