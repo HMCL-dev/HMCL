@@ -14,7 +14,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import javafx.scene.text.TextAlignment;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.AuthenticationException;
@@ -126,10 +125,9 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
         browserTitle.setStyle("-fx-text-fill: -monet-on-surface;");
 
         Label browserDesc = new Label(i18n("account.methods.microsoft.methods.browser.hint"));
-        browserDesc.setStyle("-fx-text-fill: -monet-outline; -fx-line-spacing: 2px;");
+        browserDesc.setLineSpacing(2);
+        browserDesc.setStyle("-fx-text-fill: -monet-outline;");
         browserDesc.setWrapText(true);
-        browserDesc.setTextAlignment(TextAlignment.CENTER);
-        browserDesc.setMaxWidth(Double.MAX_VALUE);
         VBox.setVgrow(browserDesc, Priority.ALWAYS);
 
         JFXButton btnOpenBrowser = FXUtils.newBorderButton(i18n("account.methods.microsoft.methods.browser.copy_open"));
@@ -167,8 +165,6 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
         deviceDesc.setLineSpacing(2);
         deviceDesc.setStyle("-fx-text-fill: -monet-outline;");
         deviceDesc.setWrapText(true);
-        deviceDesc.setTextAlignment(TextAlignment.CENTER);
-        deviceDesc.setMaxWidth(Double.MAX_VALUE);
         deviceDesc.textProperty().bind(Bindings.createStringBinding(() -> i18n("account.methods.microsoft.methods.device.hint", deviceCode.get() == null ? "..." : deviceCode.get().getVerificationUri()), deviceCode));
 
         ImageView imageView = new ImageView(FXUtils.newBuiltinImage("/assets/img/microsoft_login.png"));
@@ -178,8 +174,8 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
 
         HBox codeBox = new HBox(10);
         codeBox.setAlignment(Pos.CENTER);
-        codeBox.setStyle("-fx-background-color: -monet-surface-variant; -fx-background-radius: 6; -fx-padding: 8 15 8 15;");
-        codeBox.setMaxWidth(Double.MAX_VALUE);
+        codeBox.setPadding(new Insets(8, 15, 8, 15));
+        codeBox.setStyle("-fx-background-color: -monet-surface-variant; -fx-background-radius: 6;");
 
         Label lblCode = new Label("...");
         lblCode.setStyle("-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: -monet-primary; -fx-font-family: \"" + Lang.requireNonNullElse(config().getFontFamily(), FXUtils.DEFAULT_MONOSPACE_FONT) + "\"");
