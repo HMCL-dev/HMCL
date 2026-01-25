@@ -171,18 +171,18 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
         Label deviceDesc = new Label();
         deviceDesc.setStyle("-fx-text-fill: -monet-outline;");
         deviceDesc.setWrapText(true);
+        deviceDesc.setMaxWidth(Double.MAX_VALUE);
         deviceDesc.setTextAlignment(TextAlignment.CENTER);
         deviceDesc.textProperty().bind(Bindings.createStringBinding(
                 () -> i18n("account.methods.microsoft.methods.device.hint",
                         deviceCode.get() == null ? "..." : deviceCode.get().getVerificationUri()),
                 deviceCode
         ));
-        deviceDesc.maxWidthProperty().bind(devicePanel.widthProperty().subtract(20));
+        deviceDesc.maxWidthProperty().bind(devicePanel.widthProperty().subtract(40));
 
         ImageView imageView = new ImageView(FXUtils.newBuiltinImage("/assets/img/microsoft_login.png"));
-        FXUtils.limitingSize(imageView, 128, 128);
-        imageView.setFitWidth(128);
-        imageView.setFitHeight(128);
+        imageView.setFitWidth(84);
+        imageView.setFitHeight(84);
 
         HBox codeBox = new HBox(10);
         codeBox.setAlignment(Pos.CENTER);
