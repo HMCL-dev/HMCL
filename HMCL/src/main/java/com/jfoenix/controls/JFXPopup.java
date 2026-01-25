@@ -24,6 +24,7 @@ import javafx.application.Platform;
 import javafx.beans.DefaultProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.geometry.NodeOrientation;
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -134,7 +135,7 @@ public class JFXPopup extends PopupControl {
             Window parent = scene.getWindow();
             final Point2D origin = node.localToScene(0, 0);
 
-            boolean isRTL = node.getEffectiveNodeOrientation() == javafx.geometry.NodeOrientation.RIGHT_TO_LEFT;
+            boolean isRTL = node.getEffectiveNodeOrientation() == NodeOrientation.RIGHT_TO_LEFT;
 
             this.show(parent,
                     parent.getX() + scene.getX() + origin.getX() + (hAlign == PopupHPosition.RIGHT ? ((Region) node).getWidth() : 0),
