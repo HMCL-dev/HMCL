@@ -58,13 +58,13 @@
         <module name="OuterTypeFilename"/> <!-- class Foo must be in Foo.java: http://checkstyle.sourceforge.net/config_misc.html#OuterTypeFilename -->
 
         <module name="HideUtilityClassConstructor"/> <!-- utility class constructor must be private: http://checkstyle.sourceforge.net/config_design.html#HideUtilityClassConstructor -->
-<!--        <module name="VisibilityModifier"> &lt;!&ndash; most members must be private http://checkstyle.sourceforge.net/config_design.html#VisibilityModifier &ndash;&gt;-->
-<!--            <property name="protectedAllowed" value="true"/>-->
-<!--            <property name="packageAllowed" value="true"/>-->
-<!--            <property name="allowPublicImmutableFields" value="true"/>-->
-<!--            <property name="allowPublicFinalFields" value="true"/>-->
-<!--            <property name="publicMemberPattern" value="^TAG$|^CREATOR$"/>-->
-<!--        </module>-->
+        <!--        <module name="VisibilityModifier"> &lt;!&ndash; most members must be private http://checkstyle.sourceforge.net/config_design.html#VisibilityModifier &ndash;&gt;-->
+        <!--            <property name="protectedAllowed" value="true"/>-->
+        <!--            <property name="packageAllowed" value="true"/>-->
+        <!--            <property name="allowPublicImmutableFields" value="true"/>-->
+        <!--            <property name="allowPublicFinalFields" value="true"/>-->
+        <!--            <property name="publicMemberPattern" value="^TAG$|^CREATOR$"/>-->
+        <!--        </module>-->
 
         <!-- Coding -->
         <module name="CovariantEquals"/> <!-- if you override equals with different type you must provide equals with same type: http://checkstyle.sourceforge.net/config_coding.html#CovariantEquals -->
