@@ -83,12 +83,14 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
 
         VBox bodyPane = new VBox(8);
         bodyPane.setPadding(new Insets(10, 0, 0, 0));
+        setBody(bodyPane);
 
         if (Accounts.OAUTH_CALLBACK.getClientId().isEmpty()) {
             HintPane hintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
             hintPane.setSegment(i18n("account.methods.microsoft.snapshot"));
             bodyPane.getChildren().add(hintPane);
             btnLogin.setDisable(true);
+            bodyPane.getChildren().setAll(hintPane);
             return;
         }
 
@@ -159,7 +161,7 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
 
         bodyPane.getChildren().addAll(hintPane, errHintPane, linkBox);
 
-        setBody(bodyPane);
+
 
         setPrefWidth(560);
     }
