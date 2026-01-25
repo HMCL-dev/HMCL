@@ -59,7 +59,6 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
     private final HintPane errHintPane = new HintPane(MessageDialogPane.MessageType.ERROR);
     private HintPane unofficialHintPane;
 
-
     public MicrosoftAccountLoginPane() {
         this(false);
     }
@@ -84,6 +83,8 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
             Label heading = new Label(accountToRelogin != null ? i18n("account.login.refresh") : i18n("account.create.microsoft"));
             heading.getStyleClass().add("header-label");
             setHeading(heading);
+        } else {
+            setStyle("-fx-padding: 0px 0px 0px 0px;");
         }
 
         VBox rootContainer = new VBox(10);
