@@ -22,7 +22,6 @@ import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.OAuth;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventManager;
-import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
@@ -37,8 +36,8 @@ import java.util.concurrent.ExecutionException;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.thread;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
     private final int port;
@@ -152,13 +151,6 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
         @Override
         public void openBrowser(String url) throws IOException {
             lastlyOpenedURL = url;
-
-            try {
-                Thread.sleep(1500);
-            } catch (InterruptedException ignored) {
-            }
-
-            FXUtils.openLink(url);
 
             onOpenBrowser.fireEvent(new OpenBrowserEvent(this, url));
         }

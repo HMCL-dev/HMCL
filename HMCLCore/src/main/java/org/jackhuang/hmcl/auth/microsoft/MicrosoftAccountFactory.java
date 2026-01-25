@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.auth.microsoft;
 import org.jackhuang.hmcl.auth.AccountFactory;
 import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.CharacterSelector;
+import org.jackhuang.hmcl.auth.OAuth;
 
 import java.util.Map;
 import java.util.Objects;
@@ -39,7 +40,7 @@ public class MicrosoftAccountFactory extends AccountFactory<MicrosoftAccount> {
 
     @Override
     public MicrosoftAccount create(CharacterSelector selector, String username, String password, ProgressCallback progressCallback, Object additionalData) throws AuthenticationException {
-        return new MicrosoftAccount(service);
+        return new MicrosoftAccount(service, (OAuth.GrantFlow) additionalData);
     }
 
     @Override
