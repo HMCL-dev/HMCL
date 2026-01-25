@@ -327,3 +327,4 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
         fireEvent(new DialogCloseEvent());
     }
 }
+
