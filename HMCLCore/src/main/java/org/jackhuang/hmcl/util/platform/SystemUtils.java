@@ -82,7 +82,6 @@ public final class SystemUtils {
 
     public static <T> T run(List<String> command, ExceptionalFunction<InputStream, T, ?> convert) throws Exception {
         Process process = new ProcessBuilder(command)
-                .redirectInput(ProcessBuilder.Redirect.DISCARD)
                 .redirectError(ProcessBuilder.Redirect.DISCARD)
                 .start();
         try {
