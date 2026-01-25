@@ -1,38 +1,142 @@
 <!--
 Hello Minecraft! Launcher
 Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <https://www.gnu.org/licenses/>.
 -->
 <!DOCTYPE html>
 <html lang="%lang%">
 
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hello Minecraft! Launcher</title>
+    <style>
+        %style%
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--monet-surface);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            padding: 16px;
+            user-select: none;
+            cursor: default;
+        }
+
+        .dialog {
+            background-color: var(--monet-surface-container-high);
+            color: var(--monet-on-surface);
+            padding: 24px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.14), 0 0 0 1px rgba(0,0,0,0.02);
+            max-width: 560px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dialog-content {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .icon-box {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 32px;
+            margin-top: 2px;
+        }
+
+        .icon-box svg {
+            width: 36px;
+            height: 36px;
+            display: block;
+            fill: var(--monet-on-surface);
+        }
+
+        .text-box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .title {
+            font-size: 24px;
+            color: var(--monet-on-surface);
+            line-height: 1.33;
+            margin-bottom: 8px;
+            font-weight: 400;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: var(--monet-on-surface-variant);
+            line-height: 1.42;
+            word-wrap: break-word;
+            opacity: 0.9;
+        }
+
+        .dialog-footer {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 24px;
+        }
+
+        .btn-confirm {
+            background-color: transparent;
+            color: var(--monet-primary);
+            border: none;
+            padding: 0 12px;
+            height: 40px;
+            line-height: 40px;
+            font-size: 14px;
+            font-weight: 500;
+            font-family: inherit;
+            cursor: pointer;
+            border-radius: 20px;
+            transition: background-color 0.2s;
+            outline: none;
+            min-width: 64px;
+            text-align: center;
+        }
+    </style>
 </head>
 
 <body>
-    <div>
-        %close-page%
+<div class="dialog">
+    <div class="dialog-content">
+        <div class="icon-box">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+                <path d="m10.6 16.6l7.05-7.05l-1.4-1.4l-5.65 5.65l-2.85-2.85l-1.4 1.4zM12 22q-2.075 0-3.9-.788t-3.175-2.137T2.788 15.9T2 12t.788-3.9t2.137-3.175T8.1 2.788T12 2t3.9.788t3.175 2.137T21.213 8.1T22 12t-.788 3.9t-2.137 3.175t-3.175 2.138T12 22m0-2q3.35 0 5.675-2.325T20 12t-2.325-5.675T12 4T6.325 6.325T4 12t2.325 5.675T12 20m0-8" />
+            </svg>
+        </div>
+        <div class="text-box">
+            <div class="title">%success%</div>
+            <div class="subtitle">%close_page%</div>
+        </div>
     </div>
 
-    <script>
-        setTimeout(function() {
-            open("about:blank","_self").close();
-        }, 5000);
-    </script>
-</body>
+    <div class="dialog-footer">
+        <button class="btn-confirm" onclick="closeWindow()">%ok%</button>
+    </div>
+</div>
 
+<script>
+    function closeWindow() {
+        window.close();
+        window.open("about:blank", "_self").close();
+    }
+
+    setTimeout(closeWindow, 3000);
+</script>
+</body>
 </html>

@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.OAuth;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventManager;
+import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
@@ -103,8 +104,11 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
         String html;
         try {
             html = IOUtils.readFullyAsString(OAuthServer.class.getResourceAsStream("/assets/microsoft_auth.html"))
+                    .replace("%style%", Themes.getTheme().toColorScheme().toStyleSheet().replace("-monet", "--monet"))
                     .replace("%lang%", Locale.getDefault().toLanguageTag())
-                    .replace("%close-page%", i18n("account.methods.microsoft.close_page"));
+                    .replace("%success%", i18n("message.success"))
+                    .replace("%ok%", i18n("button.ok"))
+                    .replace("%close_page%", i18n("account.methods.microsoft.close_page"));
         } catch (IOException e) {
             LOG.error("Failed to load html", e);
             return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MIME_HTML, "");
@@ -153,7 +157,8 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
         public void openBrowser(OAuth.GrantFlow authorizationCode, String url) throws IOException {
             lastlyOpenedURL = url;
 
-            if (authorizationCode == OAuth.GrantFlow.AUTHORIZATION_CODE) onOpenBrowserAuthorizationCode.fireEvent(new OpenBrowserEvent(this, url));
+            if (authorizationCode == OAuth.GrantFlow.AUTHORIZATION_CODE)
+                onOpenBrowserAuthorizationCode.fireEvent(new OpenBrowserEvent(this, url));
             else onOpenBrowserDevice.fireEvent(new OpenBrowserEvent(this, url));
         }
 
