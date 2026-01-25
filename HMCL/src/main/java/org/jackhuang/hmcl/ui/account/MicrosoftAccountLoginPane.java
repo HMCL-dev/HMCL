@@ -41,7 +41,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements DialogAware {
+public class MicrosoftAccountLoginPane extends JFXDialogLayout implements DialogAware {
     private final Account accountToRelogin;
     private final Consumer<AuthInfo> loginCallback;
     private final Runnable cancelCallback;
@@ -59,25 +59,32 @@ public class MicrosoftAccountLoginDialog extends JFXDialogLayout implements Dial
     private final HintPane errHintPane = new HintPane(MessageDialogPane.MessageType.ERROR);
     private HintPane unofficialHintPane;
 
-    public MicrosoftAccountLoginDialog() {
-        this(null, null, null);
+
+    public MicrosoftAccountLoginPane() {
+        this(false);
     }
 
-    public MicrosoftAccountLoginDialog(Account account, Consumer<AuthInfo> callback, Runnable onCancel) {
+    public MicrosoftAccountLoginPane(boolean bodyonly) {
+        this(null, null, null, bodyonly);
+    }
+
+    public MicrosoftAccountLoginPane(Account account, Consumer<AuthInfo> callback, Runnable onCancel, boolean bodyonly) {
         this.accountToRelogin = account;
         this.loginCallback = callback;
         this.cancelCallback = onCancel;
 
-        initUI();
+        initUI(bodyonly);
 
         holder.add(Accounts.OAUTH_CALLBACK.onGrantDeviceCode.registerWeak(value -> runInFX(() -> deviceCode.set(value))));
         holder.add(Accounts.OAUTH_CALLBACK.onOpenBrowserAuthorizationCode.registerWeak(event -> runInFX(() -> browserUrl.set(event.getUrl()))));
     }
 
-    private void initUI() {
-        Label heading = new Label(accountToRelogin != null ? i18n("account.login.refresh") : i18n("account.create.microsoft"));
-        heading.getStyleClass().add("header-label");
-        setHeading(heading);
+    private void initUI(boolean bodyonly) {
+        if (!bodyonly) {
+            Label heading = new Label(accountToRelogin != null ? i18n("account.login.refresh") : i18n("account.create.microsoft"));
+            heading.getStyleClass().add("header-label");
+            setHeading(heading);
+        }
 
         VBox rootContainer = new VBox(10);
         rootContainer.setPadding(new Insets(5, 0, 0, 0));

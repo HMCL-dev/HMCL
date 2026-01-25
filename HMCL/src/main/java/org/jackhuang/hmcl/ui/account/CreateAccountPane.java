@@ -81,7 +81,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
     private final JFXButton btnAccept;
     private final SpinnerPane spinner;
     private final Node body;
-
+    private final HBox actions;
     private Node detailsPane; // AccountDetailsInputPane for Offline / Mojang / authlib-injector, Label for Microsoft
     private final Pane detailsContainer;
 
@@ -140,10 +140,10 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             btnCancel.setOnAction(e -> onCancel());
             onEscPressed(this, btnCancel::fire);
 
-            HBox hbox = new HBox(spinner, btnCancel);
-            hbox.setAlignment(Pos.CENTER_RIGHT);
+            actions = new HBox(spinner, btnCancel);
+            actions.setAlignment(Pos.CENTER_RIGHT);
 
-            setActions(lblErrorMessage, hbox);
+            setActions(lblErrorMessage, actions);
         }
 
         if (showMethodSwitcher) {
@@ -274,7 +274,8 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             detailsContainer.getChildren().remove(detailsPane);
             lblErrorMessage.setText("");
             lblErrorMessage.setVisible(true);
-            btnAccept.setOnAction(e -> onAccept());
+            actions.setVisible(true);
+            actions.setVisible(true);
         }
 
         if (factory == Accounts.FACTORY_MICROSOFT) {
@@ -282,12 +283,13 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             detailsPane = vbox;
             HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
             hintPane.setText(i18n("account.methods.microsoft.hint"));
-            vbox.getChildren().addAll(hintPane);
+            vbox.getChildren().addAll(new MicrosoftAccountLoginPane(true));
             btnAccept.setOnAction(e -> {
                 fireEvent(new DialogCloseEvent());
-                Controllers.dialog(new MicrosoftAccountLoginDialog());
+                Controllers.dialog(new MicrosoftAccountLoginPane());
             });
-
+            actions.setManaged(false);
+            actions.setVisible(false);
             btnAccept.setDisable(false);
         } else {
             detailsPane = new AccountDetailsInputPane(factory, btnAccept::fire);
