@@ -322,6 +322,13 @@ public final class HTMLRenderer {
         TextFlow textFlow = new TextFlow();
         textFlow.getStyleClass().add("html");
         textFlow.getChildren().setAll(children);
+        for (javafx.scene.Node node : children) {
+            if (node instanceof ImageView img) {
+                double width = img.getImage().getWidth();
+                img.setPreserveRatio(true);
+                img.fitWidthProperty().bind(textFlow.widthProperty().map(d -> Math.min((double) d - 20D, width)));
+            }
+        }
         return textFlow;
     }
 
