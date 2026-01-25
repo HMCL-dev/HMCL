@@ -338,12 +338,12 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                 }
                 RemoteMod.Version version = object.data.getCandidate();
                 if (version.getChangelog() != null) {
-                    return StringUtils.nullIfBlank(version.getChangelog());
+                    return StringUtils.nullIfBlank(version.getChangelog()).map(StringUtils::markdownToHTML);
                 }
-                return StringUtils.nullIfBlank(repository.getModChangelog(version.getModid(), version.getVersionId()));
+                return StringUtils.nullIfBlank(repository.getModChangelog(version.getModid(), version.getVersionId())).map(StringUtils::markdownToHTML);
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
-                    object.changelog = result.map(StringUtils::markdownToHTML).orElse(i18n("mods.changelog.empty"));
+                    object.changelog = result.orElse(i18n("mods.changelog.empty"));
                     scrollPane.setContent(FXUtils.renderAddonChangelog(object.changelog));
                     spinnerPane.setFailedReason(null);
                 } else {

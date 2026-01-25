@@ -559,14 +559,14 @@ public class DownloadPage extends Control implements DecoratorPage {
                 if (changelogCache.containsKey(version)) {
                     return Optional.ofNullable(changelogCache.get(version));
                 } else if (version.getChangelog() != null) {
-                    return StringUtils.nullIfBlank(version.getChangelog());
+                    return StringUtils.nullIfBlank(version.getChangelog()).map(StringUtils::markdownToHTML);
                 } else {
-                    return StringUtils.nullIfBlank(selfPage.repository.getModChangelog(version.getModid(), version.getVersionId()));
+                    return StringUtils.nullIfBlank(selfPage.repository.getModChangelog(version.getModid(), version.getVersionId())).map(StringUtils::markdownToHTML);
                 }
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
                     if (result.isPresent()) {
-                        String s = StringUtils.markdownToHTML(result.get());
+                        String s = result.get();
                         changelogCache.put(version, s);
                         changelogButton.setDisable(false);
                         changelogButton.setOnAction(e -> Controllers.dialog(new AddonChangelog(version, s)));
