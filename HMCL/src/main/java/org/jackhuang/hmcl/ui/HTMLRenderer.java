@@ -285,8 +285,8 @@ public final class HTMLRenderer {
     }
 
     public void appendNode(Node node) {
-        if (node instanceof TextNode) {
-            appendText(StringUtils.removeEmptyLinesAtBeginningAndEnd(((TextNode) node).getWholeText()));
+        if (node instanceof TextNode n) {
+            appendText(StringUtils.removeEmptyLinesAtBeginningAndEnd(n.getWholeText()));
         }
 
         String name = node.nodeName();
