@@ -39,6 +39,10 @@ public interface RemoteModRepository {
 
     Type getType();
 
+    String getApiBaseUrl();
+
+    String getBaseUrl();
+
     enum SortType {
         POPULARITY,
         NAME,

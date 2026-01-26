@@ -344,7 +344,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
                     object.changelog = result.orElse(i18n("mods.changelog.empty"));
-                    scrollPane.setContent(FXUtils.renderAddonChangelog(object.changelog));
+                    scrollPane.setContent(FXUtils.renderAddonChangelog(object.changelog, object.data.getRepository().getBaseUrl()));
                     spinnerPane.setFailedReason(null);
                 } else {
                     spinnerPane.setFailedReason(i18n("download.failed.refresh"));

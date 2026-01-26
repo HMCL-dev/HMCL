@@ -54,6 +54,8 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
 
     private static final String PREFIX = "https://api.modrinth.com";
 
+    private static final String BASE = "https://modrinth.com";
+
     private final String projectType;
 
     private ModrinthRemoteModRepository(String projectType) {
@@ -63,6 +65,16 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     @Override
     public Type getType() {
         return Type.MOD;
+    }
+
+    @Override
+    public String getApiBaseUrl() {
+        return PREFIX;
+    }
+
+    @Override
+    public String getBaseUrl() {
+        return BASE;
     }
 
     private static String convertSortType(SortType sortType) {

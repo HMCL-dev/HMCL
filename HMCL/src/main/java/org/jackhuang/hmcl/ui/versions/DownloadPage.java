@@ -569,7 +569,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                         String s = result.get();
                         changelogCache.put(version, s);
                         changelogButton.setDisable(false);
-                        changelogButton.setOnAction(e -> Controllers.dialog(new AddonChangelog(version, s)));
+                        changelogButton.setOnAction(e -> Controllers.dialog(new AddonChangelog(version, s, selfPage.repository)));
                     } else {
                         changelogCache.put(version, null);
                         changelogButton.setOnAction(null);
@@ -583,7 +583,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     private static final class AddonChangelog extends JFXDialogLayout {
 
-        public AddonChangelog(RemoteMod.Version version, String changelog) {
+        public AddonChangelog(RemoteMod.Version version, String changelog, RemoteModRepository repo) {
             setHeading(new HBox(new Label(i18n("mods.changelog") + " - " + version.getName())));
 
             VBox box = new VBox(8);
@@ -592,7 +592,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             SpinnerPane spinnerPane = new SpinnerPane();
             ScrollPane scrollPane = new ScrollPane();
             scrollPane.setFitToWidth(true);
-            scrollPane.setContent(FXUtils.renderAddonChangelog(changelog));
+            scrollPane.setContent(FXUtils.renderAddonChangelog(changelog, repo.getBaseUrl()));
 
             spinnerPane.setContent(scrollPane);
             box.getChildren().add(spinnerPane);

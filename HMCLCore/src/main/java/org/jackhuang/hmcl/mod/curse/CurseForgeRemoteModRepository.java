@@ -46,6 +46,7 @@ import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
 public final class CurseForgeRemoteModRepository implements RemoteModRepository {
 
     private static final String PREFIX = "https://api.curseforge.com";
+    private static final String BASE = "https://www.curseforge.com";
     private static final String apiKey = System.getProperty("hmcl.curseforge.apikey", JarUtils.getAttribute("hmcl.curseforge.apikey", ""));
     private static final Semaphore SEMAPHORE = new Semaphore(16);
 
@@ -73,6 +74,16 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     @Override
     public Type getType() {
         return type;
+    }
+
+    @Override
+    public String getApiBaseUrl() {
+        return PREFIX;
+    }
+
+    @Override
+    public String getBaseUrl() {
+        return BASE;
     }
 
     private int toModsSearchSortField(SortType sort) {
