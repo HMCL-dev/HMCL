@@ -54,6 +54,8 @@ final class ScrollUtils {
     private static final double DEFAULT_SPEED = 1.0;
     private static final double DEFAULT_TRACK_PAD_ADJUSTMENT = 7.0;
 
+    private static final double CUTOFF_DELTA = 0.01;
+
     /**
      * Determines if the given ScrollEvent comes from a trackpad.
      * <p></p>
@@ -210,7 +212,7 @@ final class ScrollUtils {
                     break;
             }
 
-            if (Math.abs(dy) < 0.001) {
+            if (Math.abs(dy) < CUTOFF_DELTA) {
                 timeline.stop();
             }
         }));
@@ -255,7 +257,7 @@ final class ScrollUtils {
             double dy = derivatives[derivatives.length - 1];
             virtualFlow.scrollPixels(dy);
 
-            if (Math.abs(dy) < 0.001) {
+            if (Math.abs(dy) < CUTOFF_DELTA) {
                 timeline.stop();
             }
         }));

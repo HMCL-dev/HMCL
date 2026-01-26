@@ -48,7 +48,6 @@ public final class EntryPoint {
         LOG.start(Metadata.HMCL_CURRENT_DIRECTORY.resolve("logs"));
 
         setupJavaFXVMOptions();
-        checkDirectoryPath();
 
         if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
             System.getProperties().putIfAbsent("apple.awt.application.appearance", "system");
@@ -159,16 +158,6 @@ public final class EntryPoint {
             } catch (IOException e) {
                 LOG.warning("Failed to create HMCL global directory " + Metadata.HMCL_GLOBAL_DIRECTORY, e);
             }
-        }
-    }
-
-    private static void checkDirectoryPath() {
-        String currentDir = System.getProperty("user.dir", "");
-        if (currentDir.contains("!")) {
-            LOG.error("The current working path contains an exclamation mark: " + currentDir);
-            // No Chinese translation because both Swing and JavaFX cannot render Chinese character properly when exclamation mark exists in the path.
-            showErrorAndExit("Exclamation mark(!) is not allowed in the path where HMCL is in.\n"
-                    + "The path is " + currentDir);
         }
     }
 

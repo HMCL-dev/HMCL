@@ -109,7 +109,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
     private void onNext() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle(i18n("modpack.wizard.step.initialization.save"));
-        if (controller.getSettings().get(MODPACK_TYPE) == MODPACK_TYPE_MODRINTH) {
+        if (!packWithLauncher.get() && controller.getSettings().get(MODPACK_TYPE) == MODPACK_TYPE_MODRINTH) {
             fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("modpack"), "*.mrpack"));
             fileChooser.setInitialFileName(name.get() + (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS ? "" : ".mrpack"));
         } else {

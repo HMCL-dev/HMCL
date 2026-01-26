@@ -192,7 +192,7 @@ public final class JavaRestorePage extends ListPageBase<JavaRestorePage.Disabled
         }
     }
 
-    private static final class JavaRestorePageSkin extends ToolbarListPageSkin<JavaRestorePage> {
+    private static final class JavaRestorePageSkin extends ToolbarListPageSkin<DisabledJavaItem, JavaRestorePage> {
         JavaRestorePageSkin(JavaRestorePage skinnable) {
             super(skinnable);
         }

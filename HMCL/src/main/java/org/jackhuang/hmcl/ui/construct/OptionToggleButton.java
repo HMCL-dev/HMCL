@@ -57,7 +57,9 @@ public class OptionToggleButton extends StackPane {
         left.setAlignment(Pos.CENTER_LEFT);
 
         JFXToggleButton toggleButton = new JFXToggleButton();
-        pane.setRight(toggleButton);
+        StackPane right = new StackPane(toggleButton);
+        right.setAlignment(Pos.CENTER);
+        pane.setRight(right);
         toggleButton.selectedProperty().bindBidirectional(selected);
         toggleButton.setSize(8);
         FXUtils.setLimitHeight(toggleButton, 30);

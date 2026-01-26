@@ -253,7 +253,7 @@ public final class Launcher extends Application {
         if (Files.exists(mcDir))
             files.add(mcDir.toString());
 
-        String command = new CommandBuilder().add("sudo", "chown", "-R", userName).addAll(files).toString();
+        String command = new CommandBuilder().addAll("sudo", "chown", "-R", userName).addAll(files).toString();
         ButtonType copyAndExit = new ButtonType(i18n("button.copy_and_exit"));
 
         if (showAlert(AlertType.ERROR,

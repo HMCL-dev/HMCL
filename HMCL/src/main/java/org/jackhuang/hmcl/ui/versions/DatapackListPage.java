@@ -48,14 +48,12 @@ public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.Da
 
     public DatapackListPage(WorldManagePage worldManagePage) {
         this.worldDir = worldManagePage.getWorld().getFile();
-
         datapack = new Datapack(worldDir.resolve("datapacks"));
-        datapack.loadFromDir();
-
         setItems(MappedObservableList.create(datapack.getPacks(), DatapackListPageSkin.DatapackInfoObject::new));
-
         FXUtils.applyDragListener(this, it -> Objects.equals("zip", FileUtils.getExtension(it)),
                 mods -> mods.forEach(this::installSingleDatapack), this::refresh);
+
+        refresh();
     }
 
     private void installSingleDatapack(Path datapack) {
@@ -74,9 +72,7 @@ public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.Da
     public void refresh() {
         setLoading(true);
         Task.runAsync(datapack::loadFromDir)
-                .withRunAsync(Schedulers.javafx(), () -> {
-                    setLoading(false);
-                })
+                .withRunAsync(Schedulers.javafx(), () -> setLoading(false))
                 .start();
     }
 

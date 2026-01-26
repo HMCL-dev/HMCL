@@ -44,7 +44,6 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 
 import java.util.Arrays;
-import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -87,11 +86,8 @@ public class PersonalizationPage extends StackPane {
 
             brightnessPane.setLeft(left);
 
-            JFXComboBox<String> cboBrightness = new JFXComboBox<>(FXCollections.observableArrayList(
-                    FXUtils.DARK_MODE != null
-                            ? List.of("auto", "light", "dark")
-                            : List.of("light", "dark")
-            ));
+            JFXComboBox<String> cboBrightness = new JFXComboBox<>();
+            cboBrightness.getItems().setAll("auto", "light", "dark");
             cboBrightness.setConverter(FXUtils.stringConverter(name -> i18n("settings.launcher.brightness." + name)));
             cboBrightness.valueProperty().bindBidirectional(config().themeBrightnessProperty());
             brightnessPane.setRight(cboBrightness);
@@ -238,7 +234,14 @@ public class PersonalizationPage extends StackPane {
                                 .fallbackTo(12.0)
                                 .asPredicate(Validator.addTo(txtLogFontSize)));
 
-                        hBox.getChildren().setAll(cboLogFont, txtLogFontSize);
+                        JFXButton clearButton = new JFXButton();
+                        clearButton.getStyleClass().add("toggle-icon4");
+                        clearButton.setGraphic(SVG.RESTORE.createIcon());
+                        clearButton.setOnAction(e -> cboLogFont.setValue(null));
+
+                        FXUtils.installFastTooltip(clearButton, i18n("button.reset"));
+
+                        hBox.getChildren().setAll(cboLogFont, txtLogFontSize, clearButton);
 
                         borderPane.setRight(hBox);
                     }
@@ -286,6 +289,8 @@ public class PersonalizationPage extends StackPane {
                         clearButton.getStyleClass().add("toggle-icon4");
                         clearButton.setGraphic(SVG.RESTORE.createIcon());
                         clearButton.setOnAction(e -> cboFont.setValue(null));
+
+                        FXUtils.installFastTooltip(clearButton, i18n("button.reset"));
 
                         hBox.getChildren().setAll(cboFont, clearButton);
 

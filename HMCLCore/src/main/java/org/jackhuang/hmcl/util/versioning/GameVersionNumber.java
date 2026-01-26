@@ -795,7 +795,8 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
                     } else if (version instanceof Release release) {
                         currentRelease = release;
 
-                        if (currentRelease.eaType == Release.ReleaseType.GA) {
+                        if (currentRelease.eaType == Release.ReleaseType.GA
+                                && currentRelease.additional == Release.Additional.NONE) {
                             defaultGameVersions.addFirst(currentRelease.value);
                         }
                     } else if (version instanceof Special special) {
