@@ -76,6 +76,7 @@ import org.jackhuang.hmcl.ui.image.ImageLoader;
 import org.jackhuang.hmcl.ui.image.ImageUtils;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.ResourceNotFoundError;
+import org.jackhuang.hmcl.util.TaskbarIconManager;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.ExtendedProperties;
