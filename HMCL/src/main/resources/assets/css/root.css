@@ -1836,6 +1836,10 @@
     -fx-font-style: italic;
 }
 
+.html-code {
+    -fx-font-size: 15;
+}
+
 /*******************************************************************************
  *                                                                             *
  * Tooltip                                                                     *
@@ -1875,6 +1879,16 @@
 
 .addon-changelog .html-h3 {
     -fx-font-size: 13.5;
+}
+
+.addon-changelog .html-code {
+    -fx-font-size: 11.25;
+}
+
+.addon-changelog .html-code-block {
+    -fx-padding: 0 3 0 3;
+    -fx-background-radius: 5;
+    -fx-background-color: -monet-surface-dim;
 }
 
 .addon-changelog-table-cell {

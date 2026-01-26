@@ -17,12 +17,15 @@
  */
 package org.jackhuang.hmcl.ui;
 
+import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
@@ -32,6 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -75,9 +79,10 @@ public final class HTMLRenderer {
     private boolean underline;
     private boolean strike;
     private boolean highlight;
+    private boolean code;
     private String headerLevel;
     private Node hyperlink;
-    private String style;
+    private String fxStyle;
 
     private final Consumer<URI> onClickHyperlink;
 
@@ -91,48 +96,29 @@ public final class HTMLRenderer {
         underline = false;
         strike = false;
         highlight = false;
+        code = false;
         headerLevel = null;
         hyperlink = null;
-        style = null;
+        fxStyle = null;
 
         for (Node node : stack) {
             String nodeName = node.nodeName();
             switch (nodeName) {
-                case "b":
-                case "strong":
-                    bold = true;
-                    break;
-                case "i":
-                case "em":
-                    italic = true;
-                    break;
-                case "ins":
-                    underline = true;
-                    break;
-                case "del":
-                    strike = true;
-                    break;
-                case "mark":
-                    highlight = true;
-                    break;
-                case "a":
-                    hyperlink = node;
-                    break;
-                case "h1":
-                case "h2":
-                case "h3":
-                case "h4":
-                case "h5":
-                case "h6":
-                    headerLevel = nodeName;
-                    break;
+                case "b", "strong" -> bold = true;
+                case "i", "em" -> italic = true;
+                case "ins" -> underline = true;
+                case "del" -> strike = true;
+                case "mark" -> highlight = true;
+                case "code" -> code = true;
+                case "a" -> hyperlink = node;
+                case "h1", "h2", "h3", "h4", "h5", "h6" -> headerLevel = nodeName;
             }
 
             String style = node.attr("style");
             if (StringUtils.isNotBlank(style)) {
-                this.style = style
+                fxStyle = style
                         .replace("color:", "-fx-fill:")
-                        .replace("font-size:", "-fx-font-size:");
+                        .replace("font-size:", "-fx-font-size:"); // And more
             }
         }
     }
@@ -169,18 +155,29 @@ public final class HTMLRenderer {
         if (italic)
             text.getStyleClass().add("html-italic");
 
+        if (code) {
+            text.getStyleClass().add("html-code");
+            text.setStyle("-fx-font-family: \"%s\";".formatted(Lang.requireNonNullElse(config().getFontFamily(), FXUtils.DEFAULT_MONOSPACE_FONT)));
+        }
+
         if (headerLevel != null)
             text.getStyleClass().add("html-" + headerLevel);
 
-        if (style != null) {
-            text.setStyle(style);
-        }
+        if (fxStyle != null)
+            text.setStyle(fxStyle);
     }
 
     private void appendText(String text) {
         Text textNode = new Text(text);
         applyStyle(textNode);
-        children.add(textNode);
+        if (code) {
+            var block = new VBox(textNode);
+            block.setAlignment(Pos.CENTER);
+            block.getStyleClass().add("html-code-block");
+            children.add(block);
+        } else {
+            children.add(textNode);
+        }
     }
 
     private void appendAutoLineBreak(String text) {
