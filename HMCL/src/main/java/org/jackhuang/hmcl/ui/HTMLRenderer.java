@@ -299,11 +299,12 @@ public final class HTMLRenderer {
             }
             case "li" -> {
                 int i = 0;
-                var n = (Element) node;
-                while (true) {
-                    n = n.parent();
-                    if (n == null) break;
-                    if (n.nameIs("li")) i++;
+                if (node instanceof Element n) {
+                    while (true) {
+                        n = n.parent();
+                        if (n == null) break;
+                        if (n.nameIs("li")) i++;
+                    }
                 }
                 appendText("\n " + "  ".repeat(Math.max(0, i)) + "\u2022 ");
             }
