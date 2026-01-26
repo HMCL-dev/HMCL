@@ -28,6 +28,9 @@ dependencies {
     api(libs.pci.ids)
     api(libs.commonmark)
     api(libs.commonmark.autolink)
+    api(libs.commonmark.underline)
+    api(libs.commonmark.stikethrough)
+    api(libs.commonmark.table)
 
     compileOnlyApi(libs.jetbrains.annotations)
 

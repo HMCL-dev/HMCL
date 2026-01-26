@@ -18,6 +18,9 @@
 package org.jackhuang.hmcl.util;
 
 import org.commonmark.ext.autolink.AutolinkExtension;
+import org.commonmark.ext.gfm.strikethrough.StrikethroughExtension;
+import org.commonmark.ext.gfm.tables.TablesExtension;
+import org.commonmark.ext.ins.InsExtension;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 import org.jetbrains.annotations.Contract;
@@ -553,9 +556,13 @@ public final class StringUtils {
         return !body.childNodes().get(0).nameIs("#text");
     }
 
-    private static final HtmlRenderer HTML_RENDERER = HtmlRenderer.builder().build();
+    private static final HtmlRenderer HTML_RENDERER = HtmlRenderer.builder().extensions(List.of(
+            InsExtension.create(), StrikethroughExtension.create(), TablesExtension.create()
+    )).build();
 
-    private static final Parser MD_PARSER = Parser.builder().extensions(List.of(AutolinkExtension.create())).build();
+    private static final Parser MD_PARSER = Parser.builder().extensions(List.of(
+            AutolinkExtension.create(), InsExtension.create(), StrikethroughExtension.create(), TablesExtension.create()
+    )).build();
 
     @Contract(pure = true, value = "null -> null")
     public static String convertToHtml(String md) {

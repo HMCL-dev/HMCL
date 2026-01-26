@@ -52,6 +52,9 @@ authlib-injector = { module = "org.glavo.hmcl:authlib-injector", version.ref = "
 monet-fx = { module = "org.glavo:MonetFX", version.ref = "monet-fx" }
 commonmark = { module = "org.commonmark:commonmark", version.ref = "commonmark" }
 commonmark-autolink = { module = "org.commonmark:commonmark-ext-autolink", version.ref = "commonmark" }
+commonmark-underline = { module = "org.commonmark:commonmark-ext-ins", version.ref = "commonmark" }
+commonmark-stikethrough = { module = "org.commonmark:commonmark-ext-gfm-strikethrough", version.ref = "commonmark" }
+commonmark-table = { module = "org.commonmark:commonmark-ext-gfm-tables", version.ref = "commonmark" }
 
 # testing
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }

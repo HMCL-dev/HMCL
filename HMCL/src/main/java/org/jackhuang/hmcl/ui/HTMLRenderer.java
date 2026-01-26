@@ -17,8 +17,12 @@
  */
 package org.jackhuang.hmcl.ui;
 
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
@@ -27,11 +31,13 @@ import javafx.scene.text.TextFlow;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -224,6 +230,7 @@ public final class HTMLRenderer {
                         imageView.setCursor(Cursor.HAND);
                     }
                 }
+                imageView.setPreserveRatio(true);
                 children.add(imageView);
                 return;
             } catch (Throwable e) {
@@ -235,6 +242,48 @@ public final class HTMLRenderer {
             appendText(alt);
     }
 
+    private void appendTable(Node table) {
+        var childNodes = table.childNodes();
+
+        var headOptional = childNodes.stream().filter(n -> n.nameIs("thead")).findFirst();
+        if (headOptional.isEmpty()) return;
+        var head = (Element) headOptional.get();
+        String[] headRow = head.getAllElements().stream()
+                .filter(n -> n.nameIs("th"))
+                .map(Element::text)
+                .toArray(String[]::new);
+        if (headRow.length == 0) return;
+
+        var bodyOptional = childNodes.stream().filter(n -> n.nameIs("tbody")).findFirst();
+        String[][] bodyRows;
+        if (bodyOptional.isEmpty()) {
+            bodyRows = new String[0][headRow.length];
+        } else {
+            var body = (Element) bodyOptional.get();
+            var r = body.getAllElements().stream()
+                    .filter(n -> n.nameIs("tr"))
+                    .map(n -> n.getAllElements().stream()
+                            .filter(e -> e.nameIs("td"))
+                            .map(Element::text)
+                            .toArray(String[]::new))
+                    .toList();
+            bodyRows = new String[r.size()][headRow.length];
+            for (int i = 0; i < r.size(); i++) {
+                bodyRows[i] = r.get(i);
+            }
+        }
+
+        TableView<String[]> tableView = new TableView<>(FXCollections.observableList(Arrays.asList(bodyRows)));
+        for (int i = 0; i < headRow.length; i++) {
+            int finalI = i;
+            TableColumn<String[], String> c = new TableColumn<>(headRow[i]);
+            c.setCellValueFactory(param -> new SimpleStringProperty(param.getValue()[finalI]));
+            tableView.getColumns().add(c);
+        }
+
+        children.add(tableView);
+    }
+
     public void appendNode(Node node) {
         if (node instanceof TextNode) {
             appendText(((TextNode) node).text());
@@ -242,48 +291,29 @@ public final class HTMLRenderer {
 
         String name = node.nodeName();
         switch (name) {
-            case "img":
-                appendImage(node);
-                break;
-            case "li":
-                appendText("\n \u2022 ");
-                break;
-            case "dt":
-                appendText(" ");
-                break;
-            case "p":
-            case "h1":
-            case "h2":
-            case "h3":
-            case "h4":
-            case "h5":
-            case "h6":
-            case "tr":
+            case "img" -> appendImage(node);
+            case "li" -> appendText("\n \u2022 ");
+            case "dt" -> appendText(" ");
+            case "p", "h1", "h2", "h3", "h4", "h5", "h6", "tr" -> {
                 if (!children.isEmpty())
                     appendAutoLineBreak("\n\n");
-                break;
+            }
         }
 
         if (node.childNodeSize() > 0) {
             pushNode(node);
-            for (Node childNode : node.childNodes()) {
-                appendNode(childNode);
+            if ("table".equals(name)) {
+                appendTable(node);
+            } else {
+                for (Node childNode : node.childNodes()) {
+                    appendNode(childNode);
+                }
             }
             popNode();
         }
 
         switch (name) {
-            case "br":
-            case "dd":
-            case "p":
-            case "h1":
-            case "h2":
-            case "h3":
-            case "h4":
-            case "h5":
-            case "h6":
-                appendAutoLineBreak("\n");
-                break;
+            case "br", "dd", "p", "h1", "h2", "h3", "h4", "h5", "h6" -> appendAutoLineBreak("\n");
         }
     }
 
@@ -335,8 +365,9 @@ public final class HTMLRenderer {
         for (javafx.scene.Node node : children) {
             if (node instanceof ImageView img) {
                 double width = img.getImage().getWidth();
-                img.setPreserveRatio(true);
                 img.fitWidthProperty().bind(textFlow.widthProperty().map(d -> Math.min((double) d - 20D, width)));
+            } else if (node instanceof TableView<?> table) {
+                table.prefWidthProperty().bind(textFlow.widthProperty().add(-20D));
             }
         }
         return textFlow;
