@@ -299,17 +299,21 @@ public final class HTMLRenderer {
             }
             case "li" -> {
                 int i = 0;
-                if (node instanceof Element n) {
-                    while (true) {
-                        n = n.parent();
-                        if (n == null) break;
-                        if (n.nameIs("li")) i++;
-                    }
+                var n = node;
+                while (true) {
+                    n = n.parent();
+                    if (n == null) break;
+                    if (n.nameIs("li")) i++;
                 }
                 appendText("\n " + "  ".repeat(Math.max(0, i)) + "\u2022 ");
             }
             case "dt" -> appendText(" ");
-            case "p", "h1", "h2", "h3", "h4", "h5", "h6", "tr" -> {
+            case "p" -> {
+                var n = node.parent();
+                if (!children.isEmpty() && (n == null || !n.nameIs("li")))
+                    appendAutoLineBreak("\n\n");
+            }
+            case "h1", "h2", "h3", "h4", "h5", "h6" -> {
                 if (!children.isEmpty())
                     appendAutoLineBreak("\n\n");
             }
@@ -328,7 +332,12 @@ public final class HTMLRenderer {
         }
 
         switch (name) {
-            case "br", "dd", "p", "h1", "h2", "h3", "h4", "h5", "h6" -> appendAutoLineBreak("\n");
+            case "br", "dd", "h1", "h2", "h3", "h4", "h5", "h6" -> appendAutoLineBreak("\n");
+            case "p" -> {
+                var n = node.parent();
+                if (!children.isEmpty() && (n == null || !n.nameIs("li")))
+                    appendAutoLineBreak("\n");
+            }
         }
     }
 
