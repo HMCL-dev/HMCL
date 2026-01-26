@@ -32,6 +32,7 @@ import java.io.StringWriter;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * @author huangyuhui
@@ -504,11 +505,7 @@ public final class StringUtils {
     }
 
     public static String repeats(char ch, int repeat) {
-        StringBuilder result = new StringBuilder();
-        for (int i = 0; i < repeat; i++) {
-            result.append(ch);
-        }
-        return result.toString();
+        return String.valueOf(ch).repeat(Math.max(0, repeat));
     }
 
     public static String truncate(String str, int limit) {
@@ -542,6 +539,24 @@ public final class StringUtils {
     @Contract(pure = true)
     public static Optional<String> nullIfBlank(String str) {
         return Optional.ofNullable(str).map(s -> s.isBlank() ? null : s);
+    }
+
+    public static String removeEmptyLinesAtBeginningAndEnd(String str) {
+        if (str == null) return null;
+        var lines = str.lines().toList();
+        int i = 0;
+        for (; i < lines.size(); i++) {
+            if (isNotBlank(lines.get(i))) break;
+        }
+        int j = lines.size() - 1;
+        for (; j > 0; j--) {
+            if (isNotBlank(lines.get(j))) break;
+        }
+        j = Math.min(j + 1, lines.size() - 1);
+        if (i > j) {
+            return "";
+        }
+        return lines.subList(i, j + 1).stream().collect(Collectors.joining(System.lineSeparator()));
     }
 
     public static boolean isStringHtml(String str) {

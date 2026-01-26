@@ -286,13 +286,27 @@ public final class HTMLRenderer {
 
     public void appendNode(Node node) {
         if (node instanceof TextNode) {
-            appendText(((TextNode) node).text());
+            appendText(StringUtils.removeEmptyLinesAtBeginningAndEnd(((TextNode) node).getWholeText()));
         }
 
         String name = node.nodeName();
         switch (name) {
-            case "img" -> appendImage(node);
-            case "li" -> appendText("\n \u2022 ");
+            case "img" -> {
+                if (!children.isEmpty())
+                    appendAutoLineBreak("\n");
+                appendImage(node);
+                appendAutoLineBreak("\n");
+            }
+            case "li" -> {
+                int i = 0;
+                var n = (Element) node;
+                while (true) {
+                    n = n.parent();
+                    if (n == null) break;
+                    if (n.nameIs("li")) i++;
+                }
+                appendText("\n " + "  ".repeat(Math.max(0, i)) + "\u2022 ");
+            }
             case "dt" -> appendText(" ");
             case "p", "h1", "h2", "h3", "h4", "h5", "h6", "tr" -> {
                 if (!children.isEmpty())
