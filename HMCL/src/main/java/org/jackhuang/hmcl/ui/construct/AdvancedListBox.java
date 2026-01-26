@@ -26,12 +26,10 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Paint;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.versions.VersionPage;
 
 import java.util.function.Consumer;
 
@@ -76,7 +74,7 @@ public class AdvancedListBox extends ScrollPane {
         item.setActionButtonVisible(false);
         item.setTitle(title);
         if (leftGraphic != null) {
-            item.setLeftGraphic(VersionPage.wrap(leftGraphic));
+            item.setLeftGraphic(FXUtils.wrap(leftGraphic));
         }
         return item;
     }
@@ -109,8 +107,8 @@ public class AdvancedListBox extends ScrollPane {
         item.activeProperty().bind(tabHeader.getSelectionModel().selectedItemProperty().isEqualTo(tab));
         item.setOnAction(e -> tabHeader.select(tab));
 
-        Node unselectedIcon = unselectedGraphic.createIcon((Paint) null, 20);
-        Node selectedIcon = selectedGraphic.createIcon((Paint) null, 20);
+        Node unselectedIcon = unselectedGraphic.createIcon(20);
+        Node selectedIcon = selectedGraphic.createIcon(20);
 
         TransitionPane leftGraphic = new TransitionPane();
         leftGraphic.setAlignment(Pos.CENTER);

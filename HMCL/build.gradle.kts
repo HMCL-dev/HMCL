@@ -1,3 +1,4 @@
+import org.jackhuang.hmcl.gradle.TerracottaConfigUpgradeTask
 import org.jackhuang.hmcl.gradle.ci.GitHubActionUtils
 import org.jackhuang.hmcl.gradle.ci.JenkinsUtils
 import org.jackhuang.hmcl.gradle.l10n.CheckTranslations
@@ -58,6 +59,7 @@ dependencies {
     implementation("libs:JFoenix")
     implementation(libs.twelvemonkeys.imageio.webp)
     implementation(libs.java.info)
+    implementation(libs.monet.fx)
 
     if (launcherExe.isBlank()) {
         implementation(libs.hmclauncher)
@@ -117,10 +119,6 @@ tasks.checkstyleMain {
     exclude("**/org/jackhuang/hmcl/ui/image/apng/**")
 }
 
-tasks.compileJava {
-    options.compilerArgs.add("--add-exports=java.base/jdk.internal.loader=ALL-UNNAMED")
-}
-
 val addOpens = listOf(
     "java.base/java.lang",
     "java.base/java.lang.reflect",
@@ -128,14 +126,23 @@ val addOpens = listOf(
     "javafx.base/com.sun.javafx.binding",
     "javafx.base/com.sun.javafx.event",
     "javafx.base/com.sun.javafx.runtime",
+    "javafx.base/javafx.beans.property",
     "javafx.graphics/javafx.css",
+    "javafx.graphics/javafx.stage",
+    "javafx.graphics/com.sun.glass.ui",
     "javafx.graphics/com.sun.javafx.stage",
+    "javafx.graphics/com.sun.javafx.util",
     "javafx.graphics/com.sun.prism",
     "javafx.controls/com.sun.javafx.scene.control",
     "javafx.controls/com.sun.javafx.scene.control.behavior",
+    "javafx.graphics/com.sun.javafx.tk.quantum",
     "javafx.controls/javafx.scene.control.skin",
     "jdk.attach/sun.tools.attach",
 )
+
+tasks.compileJava {
+    options.compilerArgs.addAll(addOpens.map { "--add-exports=$it=ALL-UNNAMED" })
+}
 
 val hmclProperties = buildList {
     add("hmcl.version" to project.version.toString())
@@ -202,7 +209,8 @@ tasks.shadowJar {
         "Main-Class" to "org.jackhuang.hmcl.Main",
         "Multi-Release" to "true",
         "Add-Opens" to addOpens.joinToString(" "),
-        "Enable-Native-Access" to "ALL-UNNAMED"
+        "Enable-Native-Access" to "ALL-UNNAMED",
+        "Enable-Final-Field-Mutation" to "ALL-UNNAMED",
     )
 
     if (launcherExe.isNotBlank()) {
@@ -232,6 +240,11 @@ tasks.processResources {
         from(createLanguageList.map { it.outputFile })
         from(upsideDownTranslate.map { it.outputFile })
         from(createLocaleNamesResourceBundle.map { it.outputDirectory })
+    }
+
+    inputs.property("terracotta_version", libs.versions.terracotta)
+    doLast {
+        upgradeTerracottaConfig.get().checkValid()
     }
 }
 
@@ -353,6 +366,26 @@ tasks.register<JavaExec>("run") {
         logger.quiet("HMCL_JAVA_OPTS: {}", vmOptions)
         logger.quiet("HMCL_JAVA_HOME: {}", hmclJavaHome ?: System.getProperty("java.home"))
     }
+}
+
+// terracotta
+
+val upgradeTerracottaConfig = tasks.register<TerracottaConfigUpgradeTask>("upgradeTerracottaConfig") {
+    val destination = layout.projectDirectory.file("src/main/resources/assets/terracotta.json")
+    val source = layout.projectDirectory.file("terracotta-template.json");
+
+    classifiers.set(listOf(
+        "windows-x86_64", "windows-arm64",
+        "macos-x86_64", "macos-arm64",
+        "linux-x86_64", "linux-arm64", "linux-loongarch64", "linux-riscv64",
+        "freebsd-x86_64"
+    ))
+
+    version.set(libs.versions.terracotta)
+    downloadURL.set($$"https://github.com/burningtnt/Terracotta/releases/download/v${version}/terracotta-${version}-${classifier}-pkg.tar.gz")
+
+    templateFile.set(source)
+    outputFile.set(destination)
 }
 
 // Check Translations

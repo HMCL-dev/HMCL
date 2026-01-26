@@ -19,8 +19,6 @@ package org.jackhuang.hmcl.ui.construct;
 
 import javafx.animation.*;
 import javafx.application.Platform;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -28,9 +26,8 @@ import javafx.scene.control.Label;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
-import javafx.scene.shape.Rectangle;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
@@ -42,32 +39,12 @@ import org.jackhuang.hmcl.ui.animation.Motion;
 final class ComponentListCell extends StackPane {
     private final Node content;
     private Animation expandAnimation;
-    private Rectangle clipRect;
-    private final BooleanProperty expanded = new SimpleBooleanProperty(this, "expanded", false);
+    private boolean expanded = false;
 
     ComponentListCell(Node content) {
         this.content = content;
 
         updateLayout();
-    }
-
-    private void updateClip(double newHeight) {
-        if (clipRect != null)
-            clipRect.setHeight(newHeight);
-    }
-
-    @Override
-    protected void layoutChildren() {
-        super.layoutChildren();
-
-        if (clipRect == null)
-            clipRect = new Rectangle(0, 0, getWidth(), getHeight());
-        else {
-            clipRect.setX(0);
-            clipRect.setY(0);
-            clipRect.setHeight(getHeight());
-            clipRect.setWidth(getWidth());
-        }
     }
 
     private void updateLayout() {
@@ -79,7 +56,7 @@ final class ComponentListCell extends StackPane {
 
             VBox groupNode = new VBox();
 
-            Node expandIcon = SVG.KEYBOARD_ARROW_DOWN.createIcon(Theme.blackFill(), 20);
+            Node expandIcon = SVG.KEYBOARD_ARROW_DOWN.createIcon(20);
             expandIcon.setMouseTransparent(true);
             HBox.setMargin(expandIcon, new Insets(0, 8, 0, 8));
 
@@ -99,12 +76,14 @@ final class ComponentListCell extends StackPane {
             if (!overrideHeaderLeft) {
                 Label label = new Label();
                 label.textProperty().bind(list.titleProperty());
+                label.getStyleClass().add("title-label");
                 labelVBox.getChildren().add(label);
 
                 if (list.isHasSubtitle()) {
                     Label subtitleLabel = new Label();
                     subtitleLabel.textProperty().bind(list.subtitleProperty());
                     subtitleLabel.getStyleClass().add("subtitle-label");
+                    subtitleLabel.textFillProperty().bind(Themes.colorSchemeProperty().getOnSurfaceVariant());
                     labelVBox.getChildren().add(subtitleLabel);
                 }
             }
@@ -145,8 +124,8 @@ final class ComponentListCell extends StackPane {
                     expandAnimation.stop();
                 }
 
-                boolean expanded = !isExpanded();
-                setExpanded(expanded);
+                boolean expanded = !this.expanded;
+                this.expanded = expanded;
                 if (expanded) {
                     list.doLazyInit();
                     list.layout();
@@ -155,13 +134,8 @@ final class ComponentListCell extends StackPane {
                 Platform.runLater(() -> {
                     // FIXME: ComponentSubList without padding must have a 4 pixel padding for displaying a border radius.
                     double newAnimatedHeight = (list.prefHeight(list.getWidth()) + (hasPadding ? 8 + 10 : 4)) * (expanded ? 1 : -1);
-                    double newHeight = expanded ? getHeight() + newAnimatedHeight : prefHeight(list.getWidth());
                     double contentHeight = expanded ? newAnimatedHeight : 0;
                     double targetRotate = expanded ? -180 : 0;
-
-                    if (expanded) {
-                        updateClip(newHeight);
-                    }
 
                     if (AnimationUtils.isAnimationEnabled()) {
                         double currentRotate = expandIcon.getRotate();
@@ -175,19 +149,11 @@ final class ComponentListCell extends StackPane {
                                         new KeyValue(expandIcon.rotateProperty(), targetRotate, interpolator))
                         );
 
-                        if (!expanded) {
-                            expandAnimation.setOnFinished(e2 -> updateClip(newHeight));
-                        }
-
                         expandAnimation.play();
                     } else {
                         container.setMinHeight(contentHeight);
                         container.setMaxHeight(contentHeight);
                         expandIcon.setRotate(targetRotate);
-
-                        if (!expanded) {
-                            updateClip(newHeight);
-                        }
                     }
                 });
             });
@@ -197,17 +163,5 @@ final class ComponentListCell extends StackPane {
             getStyleClass().remove("no-padding");
             getChildren().setAll(content);
         }
-    }
-
-    public boolean isExpanded() {
-        return expanded.get();
-    }
-
-    public BooleanProperty expandedProperty() {
-        return expanded;
-    }
-
-    public void setExpanded(boolean expanded) {
-        this.expanded.set(expanded);
     }
 }

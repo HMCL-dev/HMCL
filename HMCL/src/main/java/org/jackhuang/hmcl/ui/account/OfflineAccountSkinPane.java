@@ -24,6 +24,7 @@ import com.jfoenix.controls.JFXTextField;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.geometry.Insets;
+import javafx.geometry.VPos;
 import javafx.scene.control.Label;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.TransferMode;
@@ -159,7 +160,9 @@ public class OfflineAccountSkinPane extends StackPane {
 
         FXUtils.onChangeAndOperate(skinItem.selectedDataProperty(), selectedData -> {
             GridPane gridPane = new GridPane();
-            gridPane.setPadding(new Insets(0, 0, 0, 10));
+            // Increase bottom padding to prevent the prompt from overlapping with the dialog action area
+
+            gridPane.setPadding(new Insets(0, 0, 45, 10));
             gridPane.setHgap(16);
             gridPane.setVgap(8);
             gridPane.getColumnConstraints().setAll(new ColumnConstraints(), FXUtils.getColumnHgrowing());
@@ -172,9 +175,23 @@ public class OfflineAccountSkinPane extends StackPane {
                 case LITTLE_SKIN:
                     HintPane hint = new HintPane(MessageDialogPane.MessageType.INFO);
                     hint.setText(i18n("account.skin.type.little_skin.hint"));
+
+                    // Spanning two columns and expanding horizontally
+                    GridPane.setColumnSpan(hint, 2);
+                    GridPane.setHgrow(hint, Priority.ALWAYS);
+                    hint.setMaxWidth(Double.MAX_VALUE);
+
+                    // Force top alignment within cells (to avoid vertical offset caused by the baseline)
+                    GridPane.setValignment(hint, VPos.TOP);
+
+                    // Set a fixed height as the preferred height to prevent the GridPane from stretching or leaving empty space.
+                    hint.setMaxHeight(Region.USE_PREF_SIZE);
+                    hint.setMinHeight(Region.USE_PREF_SIZE);
+
                     gridPane.addRow(0, hint);
                     break;
                 case LOCAL_FILE:
+                    gridPane.setPadding(new Insets(0, 0, 0, 10));
                     gridPane.addRow(0, new Label(i18n("account.skin.model")), modelCombobox);
                     gridPane.addRow(1, new Label(i18n("account.skin")), skinSelector);
                     gridPane.addRow(2, new Label(i18n("account.cape")), capeSelector);

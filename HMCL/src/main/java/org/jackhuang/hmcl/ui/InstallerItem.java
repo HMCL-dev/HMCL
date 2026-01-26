@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXRippler;
 import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
@@ -36,7 +37,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -63,7 +63,7 @@ public class InstallerItem extends Control {
     private final ObjectProperty<Runnable> onInstall = new SimpleObjectProperty<>(this, "onInstall");
     private final ObjectProperty<Runnable> onRemove = new SimpleObjectProperty<>(this, "onRemove");
 
-    public interface State {
+    public sealed interface State {
     }
 
     public static final class InstallableState implements State {
@@ -73,46 +73,10 @@ public class InstallerItem extends Control {
         }
     }
 
-    public static final class IncompatibleState implements State {
-        private final String incompatibleItemName;
-        private final String incompatibleItemVersion;
-
-        public IncompatibleState(String incompatibleItemName, String incompatibleItemVersion) {
-            this.incompatibleItemName = incompatibleItemName;
-            this.incompatibleItemVersion = incompatibleItemVersion;
-        }
-
-        public String getIncompatibleItemName() {
-            return incompatibleItemName;
-        }
-
-        public String getIncompatibleItemVersion() {
-            return incompatibleItemVersion;
-        }
+    public record IncompatibleState(String incompatibleItemName, String incompatibleItemVersion) implements State {
     }
 
-    public static final class InstalledState implements State {
-        private final String version;
-        private final boolean external;
-        private final boolean incompatibleWithGame;
-
-        public InstalledState(String version, boolean external, boolean incompatibleWithGame) {
-            this.version = version;
-            this.external = external;
-            this.incompatibleWithGame = incompatibleWithGame;
-        }
-
-        public String getVersion() {
-            return version;
-        }
-
-        public boolean isExternal() {
-            return external;
-        }
-
-        public boolean isIncompatibleWithGame() {
-            return incompatibleWithGame;
-        }
+    public record InstalledState(String version, boolean external, boolean incompatibleWithGame) implements State {
     }
 
     public enum Style {
@@ -128,37 +92,18 @@ public class InstallerItem extends Control {
         this.id = id;
         this.style = style;
 
-        switch (id) {
-            case "game":
-                iconType = VersionIconType.GRASS;
-                break;
-            case "fabric":
-            case "fabric-api":
-                iconType = VersionIconType.FABRIC;
-                break;
-            case "forge":
-                iconType = VersionIconType.FORGE;
-                break;
-            case "cleanroom":
-                iconType = VersionIconType.CLEANROOM;
-                break;
-            case "liteloader":
-                iconType = VersionIconType.CHICKEN;
-                break;
-            case "optifine":
-                iconType = VersionIconType.OPTIFINE;
-                break;
-            case "quilt":
-            case "quilt-api":
-                iconType = VersionIconType.QUILT;
-                break;
-            case "neoforge":
-                iconType = VersionIconType.NEO_FORGE;
-                break;
-            default:
-                iconType = null;
-                break;
-        }
+        iconType = switch (id) {
+            case "game" -> VersionIconType.GRASS;
+            case "fabric", "fabric-api" -> VersionIconType.FABRIC;
+            case "legacyfabric", "legacyfabric-api" -> VersionIconType.LEGACY_FABRIC;
+            case "forge" -> VersionIconType.FORGE;
+            case "cleanroom" -> VersionIconType.CLEANROOM;
+            case "liteloader" -> VersionIconType.CHICKEN;
+            case "optifine" -> VersionIconType.OPTIFINE;
+            case "quilt", "quilt-api" -> VersionIconType.QUILT;
+            case "neoforge" -> VersionIconType.NEO_FORGE;
+            default -> null;
+        };
     }
 
     public String getLibraryId() {
@@ -237,6 +182,8 @@ public class InstallerItem extends Control {
             InstallerItem fabricApi = new InstallerItem(FABRIC_API, style);
             InstallerItem forge = new InstallerItem(FORGE, style);
             InstallerItem cleanroom = new InstallerItem(CLEANROOM, style);
+            InstallerItem legacyfabric = new InstallerItem(LEGACY_FABRIC, style);
+            InstallerItem legacyfabricApi = new InstallerItem(LEGACY_FABRIC_API, style);
             InstallerItem neoForge = new InstallerItem(NEO_FORGE, style);
             InstallerItem liteLoader = new InstallerItem(LITELOADER, style);
             InstallerItem optiFine = new InstallerItem(OPTIFINE, style);
@@ -244,11 +191,11 @@ public class InstallerItem extends Control {
             InstallerItem quiltApi = new InstallerItem(QUILT_API, style);
 
             Map<InstallerItem, Set<InstallerItem>> incompatibleMap = new HashMap<>();
-            mutualIncompatible(incompatibleMap, forge, fabric, quilt, neoForge, cleanroom);
-            addIncompatibles(incompatibleMap, liteLoader, fabric, quilt, neoForge, cleanroom);
-            addIncompatibles(incompatibleMap, optiFine, fabric, quilt, neoForge, cleanroom);
-            addIncompatibles(incompatibleMap, fabricApi, forge, quiltApi, neoForge, liteLoader, optiFine, cleanroom);
-            addIncompatibles(incompatibleMap, quiltApi, forge, fabric, fabricApi, neoForge, liteLoader, optiFine, cleanroom);
+            mutualIncompatible(incompatibleMap, forge, fabric, quilt, neoForge, cleanroom, legacyfabric);
+            addIncompatibles(incompatibleMap, liteLoader, fabric, quilt, neoForge, cleanroom, legacyfabric);
+            addIncompatibles(incompatibleMap, optiFine, fabric, quilt, neoForge, cleanroom, liteLoader, legacyfabric);
+            addIncompatibles(incompatibleMap, fabricApi, forge, quiltApi, neoForge, liteLoader, optiFine, cleanroom, legacyfabricApi, legacyfabricApi);
+            addIncompatibles(incompatibleMap, quiltApi, forge, fabric, fabricApi, neoForge, liteLoader, optiFine, cleanroom, legacyfabric, legacyfabricApi);
 
             for (Map.Entry<InstallerItem, Set<InstallerItem>> entry : incompatibleMap.entrySet()) {
                 InstallerItem item = entry.getKey();
@@ -282,7 +229,7 @@ public class InstallerItem extends Control {
                 game.versionProperty.set(new InstalledState(gameVersion, false, false));
             }
 
-            InstallerItem[] all = {game, forge, neoForge, liteLoader, optiFine, fabric, fabricApi, quilt, quiltApi, cleanroom};
+            InstallerItem[] all = {game, forge, neoForge, liteLoader, optiFine, fabric, fabricApi, quilt, quiltApi, legacyfabric, legacyfabricApi, cleanroom};
 
             for (InstallerItem item : all) {
                 if (!item.resolvedStateProperty.isBound()) {
@@ -299,9 +246,9 @@ public class InstallerItem extends Control {
             if (gameVersion == null) {
                 this.libraries = all;
             } else if (gameVersion.equals("1.12.2")) {
-                this.libraries = new InstallerItem[]{game, forge, cleanroom, liteLoader, optiFine};
-            } else if (GameVersionNumber.compare(gameVersion, "1.13") < 0) {
-                this.libraries = new InstallerItem[]{game, forge, liteLoader, optiFine};
+                this.libraries = new InstallerItem[]{game, forge, cleanroom, liteLoader, legacyfabric, legacyfabricApi, optiFine};
+            } else if (GameVersionNumber.compare(gameVersion, "1.13.2") <= 0) {
+                this.libraries = new InstallerItem[]{game, forge, liteLoader, optiFine, legacyfabric, legacyfabricApi};
             } else {
                 this.libraries = new InstallerItem[]{game, forge, neoForge, optiFine, fabric, fabricApi, quilt, quiltApi};
             }
@@ -336,10 +283,15 @@ public class InstallerItem extends Control {
             }
             pane.getStyleClass().add("installer-item");
             RipplerContainer container = new RipplerContainer(pane);
-            getChildren().setAll(container);
+            container.setPosition(JFXRippler.RipplerPos.BACK);
+            StackPane paneWrapper = new StackPane();
+            paneWrapper.getStyleClass().add("installer-item-wrapper");
+            paneWrapper.getChildren().setAll(container);
+            getChildren().setAll(paneWrapper);
 
             pane.pseudoClassStateChanged(LIST_ITEM, control.style == Style.LIST_ITEM);
             pane.pseudoClassStateChanged(CARD, control.style == Style.CARD);
+            paneWrapper.pseudoClassStateChanged(CARD, control.style == Style.CARD);
 
             if (control.iconType != null) {
                 ImageView view = new ImageView(control.iconType.getIcon());
@@ -368,21 +320,20 @@ public class InstallerItem extends Control {
             statusLabel.textProperty().bind(Bindings.createStringBinding(() -> {
                 State state = control.resolvedStateProperty.get();
 
-                if (state instanceof InstalledState) {
-                    InstalledState s = (InstalledState) state;
-                    if (s.incompatibleWithGame) {
-                        return i18n("install.installer.change_version", s.version);
+                if (state instanceof InstalledState installedState) {
+                    if (installedState.incompatibleWithGame) {
+                        return i18n("install.installer.change_version", installedState.version);
                     }
-                    if (s.external) {
-                        return i18n("install.installer.external_version", s.version);
+                    if (installedState.external) {
+                        return i18n("install.installer.external_version", installedState.version);
                     }
-                    return i18n("install.installer.version", s.version);
+                    return i18n("install.installer.version", installedState.version);
                 } else if (state instanceof InstallableState) {
                     return control.style == Style.CARD
                             ? i18n("install.installer.do_not_install")
                             : i18n("install.installer.not_installed");
-                } else if (state instanceof IncompatibleState) {
-                    return i18n("install.installer.incompatible", i18n("install.installer." + ((IncompatibleState) state).incompatibleItemName));
+                } else if (state instanceof IncompatibleState incompatibleState) {
+                    return i18n("install.installer.incompatible", i18n("install.installer." + incompatibleState.incompatibleItemName));
                 } else {
                     throw new AssertionError("Unknown state type: " + state.getClass());
                 }
@@ -396,14 +347,14 @@ public class InstallerItem extends Control {
             pane.getChildren().add(buttonsContainer);
 
             JFXButton removeButton = new JFXButton();
-            removeButton.setGraphic(SVG.CLOSE.createIcon(Theme.blackFill(), -1));
+            removeButton.setGraphic(SVG.CLOSE.createIcon());
             removeButton.getStyleClass().add("toggle-icon4");
             if (control.id.equals(MINECRAFT.getPatchId())) {
                 removeButton.setVisible(false);
             } else {
                 removeButton.visibleProperty().bind(Bindings.createBooleanBinding(() -> {
                     State state = control.resolvedStateProperty.get();
-                    return state instanceof InstalledState && !((InstalledState) state).external;
+                    return state instanceof InstalledState installedState && !installedState.external;
                 }, control.resolvedStateProperty));
             }
             removeButton.managedProperty().bind(removeButton.visibleProperty());
@@ -417,8 +368,8 @@ public class InstallerItem extends Control {
             JFXButton installButton = new JFXButton();
             installButton.graphicProperty().bind(Bindings.createObjectBinding(() ->
                             control.resolvedStateProperty.get() instanceof InstallableState ?
-                                    SVG.ARROW_FORWARD.createIcon(Theme.blackFill(), -1) :
-                                    SVG.UPDATE.createIcon(Theme.blackFill(), -1),
+                                    SVG.ARROW_FORWARD.createIcon() :
+                                    SVG.UPDATE.createIcon(),
                     control.resolvedStateProperty
             ));
             installButton.getStyleClass().add("toggle-icon4");

@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.terracotta;
 
+import com.jfoenix.controls.JFXPopup;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.value.ChangeListener;
@@ -24,7 +25,6 @@ import javafx.geometry.Insets;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.game.LauncherHelper;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.terracotta.TerracottaMetadata;
@@ -36,6 +36,7 @@ import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.main.MainPage;
+import org.jackhuang.hmcl.ui.versions.GameListPopupMenu;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -71,7 +72,10 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
         AdvancedListBox toolbar = new AdvancedListBox()
                 .addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, () -> {
                     Profile profile = Profiles.getSelectedProfile();
-                    Versions.launch(profile, profile.getSelectedVersion(), LauncherHelper::setKeep);
+                    Versions.launch(profile, profile.getSelectedVersion(), launcherHelper -> {
+                        launcherHelper.setKeep();
+                        launcherHelper.setDisableOfflineSkin();
+                    });
                 }, item -> {
                     instanceChangeListenerHolder = FXUtils.onWeakChangeAndOperate(Profiles.selectedVersionProperty(),
                             instanceName -> item.setSubtitle(StringUtils.isNotBlank(instanceName) ? instanceName : i18n("version.empty"))
@@ -82,9 +86,15 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
                         String currentId = mainPage.getCurrentGame();
                         return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
                     }, it -> mainPage.getProfile().setSelectedVersion(it.getId()));
+
+                    FXUtils.onSecondaryButtonClicked(item, () -> GameListPopupMenu.show(item,
+                            JFXPopup.PopupVPosition.BOTTOM,
+                            JFXPopup.PopupHPosition.LEFT,
+                            item.getWidth(),
+                            0,
+                            mainPage.getProfile(), mainPage.getVersions()));
                 })
-                .addNavigationDrawerItem(i18n("terracotta.feedback.title"), SVG.FEEDBACK, () -> FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK))
-                .addNavigationDrawerItem(i18n("terracotta.easytier"), SVG.HOST, () -> FXUtils.openLink("https://easytier.cn/"));
+                .addNavigationDrawerItem(i18n("terracotta.feedback.title"), SVG.FEEDBACK, () -> FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK));
         BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
         left.setBottom(toolbar);
 

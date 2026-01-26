@@ -42,10 +42,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Pair;
-import org.jackhuang.hmcl.util.ServerAddress;
-import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.PropertyUtils;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
@@ -56,33 +53,17 @@ import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.hardware.PhysicalMemoryStatus;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
+import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.DataSizeUnit.GIGABYTES;
 import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
-import static org.jackhuang.hmcl.util.Lang.getTimer;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class VersionSettingsPage extends StackPane implements DecoratorPage, VersionPage.VersionLoadable, PageAware {
-
-    private static final ObjectProperty<PhysicalMemoryStatus> memoryStatus = new SimpleObjectProperty<>(PhysicalMemoryStatus.INVALID);
-    private static TimerTask memoryStatusUpdateTask;
-
-    private static void initMemoryStatusUpdateTask() {
-        FXUtils.checkFxUserThread();
-        if (memoryStatusUpdateTask != null)
-            return;
-        memoryStatusUpdateTask = new TimerTask() {
-            @Override
-            public void run() {
-                Platform.runLater(() -> memoryStatus.set(SystemInfo.getPhysicalMemoryStatus()));
-            }
-        };
-        getTimer().scheduleAtFixedRate(memoryStatusUpdateTask, 0, 1000);
-    }
 
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>(new State("", null, false, false, false));
 
@@ -111,6 +92,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private final MultiFileItem.FileOption<GameDirectoryType> gameDirCustomOption;
     private final JFXComboBox<ProcessPriority> cboProcessPriority;
     private final OptionToggleButton showLogsPane;
+    private final OptionToggleButton enableDebugLogOutputPane;
     private final ImagePickerItem iconPickerItem;
 
     private final ChangeListener<Collection<JavaRuntime>> javaListChangeListener;
@@ -125,6 +107,8 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private final BooleanProperty enableSpecificSettings = new SimpleBooleanProperty(false);
     private final IntegerProperty maxMemory = new SimpleIntegerProperty();
     private final BooleanProperty modpack = new SimpleBooleanProperty();
+
+    private final ReadOnlyObjectProperty<PhysicalMemoryStatus> memoryStatus = UpdateMemoryStatus.memoryStatusProperty();
 
     public VersionSettingsPage(boolean globalSetting) {
         ScrollPane scrollPane = new ScrollPane();
@@ -410,6 +394,9 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             showLogsPane = new OptionToggleButton();
             showLogsPane.setTitle(i18n("settings.show_log"));
 
+            enableDebugLogOutputPane = new OptionToggleButton();
+            enableDebugLogOutputPane.setTitle(i18n("settings.enable_debug_log_output"));
+
             BorderPane processPriorityPane = new BorderPane();
             {
                 Label label = new Label(i18n("settings.advanced.process_priority"));
@@ -474,6 +461,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     launcherVisibilityPane,
                     dimensionPane,
                     showLogsPane,
+                    enableDebugLogOutputPane,
                     processPriorityPane,
                     serverPane,
                     showAdvancedSettingPane
@@ -505,10 +493,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         cboProcessPriority.getItems().setAll(ProcessPriority.values());
         cboProcessPriority.setConverter(stringConverter(e -> i18n("settings.advanced.process_priority." + e.name().toLowerCase(Locale.ROOT))));
 
-        memoryStatus.set(SystemInfo.getPhysicalMemoryStatus());
         componentList.disableProperty().bind(enableSpecificSettings.not());
-
-        initMemoryStatusUpdateTask();
     }
 
     @Override
@@ -551,6 +536,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             chkAutoAllocate.selectedProperty().unbindBidirectional(lastVersionSetting.autoMemoryProperty());
             chkFullscreen.selectedProperty().unbindBidirectional(lastVersionSetting.fullscreenProperty());
             showLogsPane.selectedProperty().unbindBidirectional(lastVersionSetting.showLogsProperty());
+            enableDebugLogOutputPane.selectedProperty().unbindBidirectional(lastVersionSetting.enableDebugLogOutputProperty());
             FXUtils.unbindEnum(cboLauncherVisibility, lastVersionSetting.launcherVisibilityProperty());
             FXUtils.unbindEnum(cboProcessPriority, lastVersionSetting.processPriorityProperty());
 
@@ -585,6 +571,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         chkAutoAllocate.selectedProperty().bindBidirectional(versionSetting.autoMemoryProperty());
         chkFullscreen.selectedProperty().bindBidirectional(versionSetting.fullscreenProperty());
         showLogsPane.selectedProperty().bindBidirectional(versionSetting.showLogsProperty());
+        enableDebugLogOutputPane.selectedProperty().bindBidirectional(versionSetting.enableDebugLogOutputProperty());
         FXUtils.bindEnum(cboLauncherVisibility, versionSetting.launcherVisibilityProperty());
         FXUtils.bindEnum(cboProcessPriority, versionSetting.processPriorityProperty());
 
@@ -801,5 +788,59 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     @Override
     public ReadOnlyObjectProperty<State> stateProperty() {
         return state.getReadOnlyProperty();
+    }
+
+    private static final class UpdateMemoryStatus extends Thread {
+
+        @FXThread
+        private static WeakReference<ObjectProperty<PhysicalMemoryStatus>> memoryStatusPropertyCache;
+
+        @FXThread
+        static ReadOnlyObjectProperty<PhysicalMemoryStatus> memoryStatusProperty() {
+            if (memoryStatusPropertyCache != null) {
+                var property = memoryStatusPropertyCache.get();
+                if (property != null) {
+                    return property;
+                }
+            }
+
+            ObjectProperty<PhysicalMemoryStatus> property = new SimpleObjectProperty<>(PhysicalMemoryStatus.INVALID);
+            memoryStatusPropertyCache = new WeakReference<>(property);
+            new UpdateMemoryStatus(memoryStatusPropertyCache).start();
+            return property;
+        }
+
+        private final WeakReference<ObjectProperty<PhysicalMemoryStatus>> memoryStatusPropertyRef;
+
+        UpdateMemoryStatus(WeakReference<ObjectProperty<PhysicalMemoryStatus>> memoryStatusPropertyRef) {
+            this.memoryStatusPropertyRef = memoryStatusPropertyRef;
+
+            setName("UpdateMemoryStatus");
+            setDaemon(true);
+            setPriority(Thread.MIN_PRIORITY);
+        }
+
+        @Override
+        public void run() {
+            while (true) {
+                PhysicalMemoryStatus status = SystemInfo.getPhysicalMemoryStatus();
+
+                var memoryStatusProperty = memoryStatusPropertyRef.get();
+                if (memoryStatusProperty == null)
+                    return;
+
+                if (Controllers.isStopped())
+                    return;
+
+                Platform.runLater(() -> memoryStatusProperty.set(status));
+
+                try {
+                    //noinspection BusyWait
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    return;
+                }
+            }
+        }
     }
 }

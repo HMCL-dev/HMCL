@@ -18,25 +18,26 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXListView;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.ScrollPane;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 
 import java.util.List;
 
-public abstract class ToolbarListPageSkin<T extends ListPageBase<? extends Node>> extends SkinBase<T> {
+public abstract class ToolbarListPageSkin<E, P extends ListPageBase<E>> extends SkinBase<P> {
 
-    public ToolbarListPageSkin(T skinnable) {
+    protected final JFXListView<E> listView;
+
+    public ToolbarListPageSkin(P skinnable) {
         super(skinnable);
 
         SpinnerPane spinnerPane = new SpinnerPane();
@@ -59,18 +60,12 @@ public abstract class ToolbarListPageSkin<T extends ListPageBase<? extends Node>
         }
 
         {
-            ScrollPane scrollPane = new ScrollPane();
-            ComponentList.setVgrow(scrollPane, Priority.ALWAYS);
-            scrollPane.setFitToWidth(true);
-
-            VBox content = new VBox();
-
-            Bindings.bindContent(content.getChildren(), skinnable.itemsProperty());
-
-            scrollPane.setContent(content);
-            FXUtils.smoothScrolling(scrollPane);
-
-            root.getContent().add(scrollPane);
+            this.listView = new JFXListView<>();
+            this.listView.setPadding(Insets.EMPTY);
+            this.listView.setCellFactory(listView -> createListCell((JFXListView<E>) listView));
+            ComponentList.setVgrow(listView, Priority.ALWAYS);
+            Bindings.bindContent(this.listView.getItems(), skinnable.itemsProperty());
+            root.getContent().add(listView);
         }
 
         spinnerPane.setContent(root);
@@ -85,37 +80,39 @@ public abstract class ToolbarListPageSkin<T extends ListPageBase<? extends Node>
         return stackPane;
     }
 
-    public static JFXButton createToolbarButton(String text, SVG svg, Runnable onClick) {
-        JFXButton ret = new JFXButton();
-        ret.getStyleClass().add("jfx-tool-bar-button");
-        ret.textFillProperty().bind(Theme.foregroundFillBinding());
-        ret.setGraphic(wrap(svg.createIcon(Theme.foregroundFillBinding(), -1)));
-        ret.setText(text);
-        ret.setOnAction(e -> onClick.run());
-        return ret;
-    }
-
     public static JFXButton createToolbarButton2(String text, SVG svg, Runnable onClick) {
         JFXButton ret = new JFXButton();
         ret.getStyleClass().add("jfx-tool-bar-button");
-        ret.setGraphic(wrap(svg.createIcon(Theme.blackFill(), -1)));
+        ret.setGraphic(wrap(svg.createIcon()));
         ret.setText(text);
-        ret.setOnAction(e -> {
-            onClick.run();
-            FXUtils.clearFocus(ret);
-        });
+        ret.setOnAction(e -> onClick.run());
         return ret;
     }
 
     public static JFXButton createDecoratorButton(String tooltip, SVG svg, Runnable onClick) {
         JFXButton ret = new JFXButton();
         ret.getStyleClass().add("jfx-decorator-button");
-        ret.textFillProperty().bind(Theme.foregroundFillBinding());
-        ret.setGraphic(wrap(svg.createIcon(Theme.foregroundFillBinding(), -1)));
+        ret.setGraphic(wrap(svg.createIcon()));
         FXUtils.installFastTooltip(ret, tooltip);
         ret.setOnAction(e -> onClick.run());
         return ret;
     }
 
-    protected abstract List<Node> initializeToolbar(T skinnable);
+    protected abstract List<Node> initializeToolbar(P skinnable);
+
+    protected ListCell<E> createListCell(JFXListView<E> listView) {
+        return new ListCell<>() {
+            @Override
+            protected void updateItem(E item, boolean empty) {
+                super.updateItem(item, empty);
+                if (!empty && item instanceof Node node) {
+                    setGraphic(node);
+                    setText(null);
+                } else {
+                    setGraphic(null);
+                    setText(null);
+                }
+            }
+        };
+    }
 }

@@ -19,34 +19,45 @@ package org.jackhuang.hmcl.ui.versions;
 
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.RemoteMod;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class ModCheckUpdatesTask extends Task<List<LocalModFile.ModUpdate>> {
-    private final String gameVersion;
-    private final Collection<LocalModFile> mods;
-    private final Collection<Collection<Task<LocalModFile.ModUpdate>>> dependents;
+    private final List<Task<LocalModFile.ModUpdate>> dependents;
 
     public ModCheckUpdatesTask(String gameVersion, Collection<LocalModFile> mods) {
-        this.gameVersion = gameVersion;
-        this.mods = mods;
+        dependents = mods.stream().map(mod ->
+                Task.supplyAsync(Schedulers.io(), () -> {
+                    LocalModFile.ModUpdate candidate = null;
+                    for (RemoteMod.Type type : RemoteMod.Type.values()) {
+                        LocalModFile.ModUpdate update = null;
+                        try {
+                            update = mod.checkUpdates(gameVersion, type.getRemoteModRepository());
+                        } catch (IOException e) {
+                            LOG.warning(String.format("Cannot check update for mod %s.", mod.getFileName()), e);
+                        }
+                        if (update == null) {
+                            continue;
+                        }
 
-        dependents = mods.stream()
-                .map(mod ->
-                        Arrays.stream(RemoteMod.Type.values())
-                                .map(type ->
-                                        Task.supplyAsync(() -> mod.checkUpdates(gameVersion, type.getRemoteModRepository()))
-                                                .setSignificance(TaskSignificance.MAJOR)
-                                                .setName(String.format("%s (%s)", mod.getFileName(), type.name())).withCounter("mods.check_updates")
-                                )
-                                .collect(Collectors.toList())
-                )
-                .collect(Collectors.toList());
+                        if (candidate == null || candidate.getCandidate().getDatePublished().isBefore(update.getCandidate().getDatePublished())) {
+                            candidate = update;
+                        }
+                    }
 
-        setStage("mods.check_updates");
-        getProperties().put("total", dependents.size() * RemoteMod.Type.values().length);
+                    return candidate;
+                }).setName(mod.getFileName()).setSignificance(TaskSignificance.MAJOR).withCounter("update.checking")
+        ).toList();
+
+        setStage("update.checking");
+        getProperties().put("total", dependents.size());
     }
 
     @Override
@@ -61,7 +72,7 @@ public class ModCheckUpdatesTask extends Task<List<LocalModFile.ModUpdate>> {
 
     @Override
     public Collection<? extends Task<?>> getDependents() {
-        return dependents.stream().flatMap(Collection::stream).collect(Collectors.toList());
+        return dependents;
     }
 
     @Override
@@ -72,14 +83,7 @@ public class ModCheckUpdatesTask extends Task<List<LocalModFile.ModUpdate>> {
     @Override
     public void execute() throws Exception {
         setResult(dependents.stream()
-                .map(tasks -> tasks.stream()
-                        .filter(task -> task.getResult() != null)
-                        .map(Task::getResult)
-                        .filter(modUpdate -> !modUpdate.getCandidates().isEmpty())
-                        .max(Comparator.comparing((LocalModFile.ModUpdate modUpdate) -> modUpdate.getCandidates().get(0).getDatePublished()))
-                        .orElse(null)
-                )
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList()));
+                .map(Task::getResult)
+                .filter(Objects::nonNull).toList());
     }
 }

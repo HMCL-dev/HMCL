@@ -29,7 +29,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.ui.*;
-import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.download.UpdateInstallerWizardProvider;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -43,7 +42,7 @@ import java.util.concurrent.CompletableFuture;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
-public class InstallerListPage extends ListPageBase<InstallerItem> implements VersionPage.VersionLoadable, TransitionPane.Cacheable {
+public class InstallerListPage extends ListPageBase<InstallerItem> implements VersionPage.VersionLoadable {
     private Profile profile;
     private String versionId;
     private Version version;
@@ -77,12 +76,12 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
 
             InstallerItem.InstallerItemGroup group = new InstallerItem.InstallerItemGroup(gameVersion, InstallerItem.Style.LIST_ITEM);
 
-            // Conventional libraries: game, fabric, forge, cleanroom, neoforge, liteloader, optifine
+            // Conventional libraries: game, fabric, legacyfabric, forge, cleanroom, neoforge, liteloader, optifine
             for (InstallerItem item : group.getLibraries()) {
                 String libraryId = item.getLibraryId();
 
-                // Skip fabric-api and quilt-api
-                if (libraryId.contains("fabric-api") || libraryId.contains("quilt-api")) {
+                // Skip fabric-api and quilt-api and legacyfabric-api
+                if (libraryId.endsWith("-api")) {
                     continue;
                 }
 
@@ -166,7 +165,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
         executor.start();
     }
 
-    private class InstallerListPageSkin extends ToolbarListPageSkin<InstallerListPage> {
+    private class InstallerListPageSkin extends ToolbarListPageSkin<InstallerItem, InstallerListPage> {
 
         InstallerListPageSkin() {
             super(InstallerListPage.this);

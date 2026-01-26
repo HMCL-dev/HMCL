@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.github.steveice10.opennbt.tag.builtin.*;
+import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXTextField;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -28,28 +29,36 @@ import javafx.scene.Cursor;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.effect.BoxBlur;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
+import org.glavo.png.javafx.PNGJavaFXUtils;
 import org.jackhuang.hmcl.game.World;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jetbrains.annotations.PropertyKey;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.DecimalFormat;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.concurrent.Callable;
 
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.formatDateTime;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * @author Glavo
@@ -58,6 +67,8 @@ public final class WorldInfoPage extends SpinnerPane {
     private final WorldManagePage worldManagePage;
     private final World world;
     private CompoundTag levelDat;
+
+    ImageView iconImageView = new ImageView();
 
     public WorldInfoPage(WorldManagePage worldManagePage) {
         this.worldManagePage = worldManagePage;
@@ -81,7 +92,7 @@ public final class WorldInfoPage extends SpinnerPane {
         if (!Files.isDirectory(world.getFile()))
             throw new IOException("Not a valid world directory");
 
-        return world.readLevelDat();
+        return world.getLevelData();
     }
 
     private void updateControls() {
@@ -104,97 +115,132 @@ public final class WorldInfoPage extends SpinnerPane {
         {
             BorderPane worldNamePane = new BorderPane();
             {
-                Label label = new Label(i18n("world.name"));
-                worldNamePane.setLeft(label);
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
+                setLeftLabel(worldNamePane, "world.name");
+                JFXTextField worldNameField = new JFXTextField();
+                setRightTextField(worldNamePane, worldNameField, 200);
 
-                Label worldNameLabel = new Label();
-                FXUtils.copyOnDoubleClick(worldNameLabel);
-                worldNameLabel.setText(world.getWorldName());
-                BorderPane.setAlignment(worldNameLabel, Pos.CENTER_RIGHT);
-                worldNamePane.setRight(worldNameLabel);
+                Tag tag = dataTag.get("LevelName");
+                if (tag instanceof StringTag stringTag) {
+                    worldNameField.setText(stringTag.getValue());
+
+                    worldNameField.textProperty().addListener((observable, oldValue, newValue) -> {
+                        if (newValue != null) {
+                            try {
+                                world.setWorldName(newValue);
+                            } catch (Exception e) {
+                                LOG.warning("Failed to set world name", e);
+                            }
+                        }
+                    });
+                } else {
+                    worldNameField.setDisable(true);
+                }
             }
 
             BorderPane gameVersionPane = new BorderPane();
             {
-                Label label = new Label(i18n("world.info.game_version"));
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-                gameVersionPane.setLeft(label);
-
+                setLeftLabel(gameVersionPane, "world.info.game_version");
                 Label gameVersionLabel = new Label();
-                FXUtils.copyOnDoubleClick(gameVersionLabel);
-                gameVersionLabel.setText(world.getGameVersion());
-                BorderPane.setAlignment(gameVersionLabel, Pos.CENTER_RIGHT);
-                gameVersionPane.setRight(gameVersionLabel);
+                setRightTextLabel(gameVersionPane, gameVersionLabel, () -> world.getGameVersion() == null ? "" : world.getGameVersion().toNormalizedString());
             }
 
-            BorderPane randomSeedPane = new BorderPane();
+            BorderPane iconPane = new BorderPane();
             {
+                setLeftLabel(iconPane, "world.icon");
 
-                HBox left = new HBox(8);
-                BorderPane.setAlignment(left, Pos.CENTER_LEFT);
-                left.setAlignment(Pos.CENTER_LEFT);
-                randomSeedPane.setLeft(left);
+                Runnable onClickAction = () -> Controllers.confirm(
+                        i18n("world.icon.change.tip"), i18n("world.icon.change"), MessageDialogPane.MessageType.INFO,
+                        this::changeWorldIcon,
+                        null
+                );
 
-                Label label = new Label(i18n("world.info.random_seed"));
+                FXUtils.limitSize(iconImageView, 32, 32);
+                {
+                    iconImageView.setImage(world.getIcon() == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : world.getIcon());
+                }
+
+                JFXButton editIconButton = new JFXButton();
+                JFXButton resetIconButton = new JFXButton();
+                {
+                    editIconButton.setGraphic(SVG.EDIT.createIcon(20));
+                    editIconButton.setDisable(worldManagePage.isReadOnly());
+                    FXUtils.onClicked(editIconButton, onClickAction);
+                    FXUtils.installFastTooltip(editIconButton, i18n("button.edit"));
+                    editIconButton.getStyleClass().add("toggle-icon4");
+
+                    resetIconButton.setGraphic(SVG.RESTORE.createIcon(20));
+                    resetIconButton.setDisable(worldManagePage.isReadOnly());
+                    FXUtils.onClicked(resetIconButton, this::clearWorldIcon);
+                    FXUtils.installFastTooltip(resetIconButton, i18n("button.reset"));
+                    resetIconButton.getStyleClass().add("toggle-icon4");
+                }
+
+                HBox hBox = new HBox(8);
+                hBox.setAlignment(Pos.CENTER_LEFT);
+                hBox.getChildren().addAll(iconImageView, editIconButton, resetIconButton);
+
+                iconPane.setRight(hBox);
+            }
+
+            BorderPane seedPane = new BorderPane();
+            {
+                setLeftLabel(seedPane, "world.info.random_seed");
 
                 SimpleBooleanProperty visibility = new SimpleBooleanProperty();
                 StackPane visibilityButton = new StackPane();
-                visibilityButton.setCursor(Cursor.HAND);
-                FXUtils.setLimitWidth(visibilityButton, 12);
-                FXUtils.setLimitHeight(visibilityButton, 12);
-                FXUtils.onClicked(visibilityButton, () -> visibility.set(!visibility.get()));
-
-                left.getChildren().setAll(label, visibilityButton);
-
-                Label randomSeedLabel = new Label();
-                FXUtils.copyOnDoubleClick(randomSeedLabel);
-                BorderPane.setAlignment(randomSeedLabel, Pos.CENTER_RIGHT);
-                randomSeedPane.setRight(randomSeedLabel);
-
-                Tag tag = worldGenSettings != null ? worldGenSettings.get("seed") : dataTag.get("RandomSeed");
-                if (tag instanceof LongTag) {
-                    randomSeedLabel.setText(tag.getValue().toString());
+                {
+                    visibilityButton.setCursor(Cursor.HAND);
+                    visibilityButton.setAlignment(Pos.BOTTOM_RIGHT);
+                    FXUtils.setLimitWidth(visibilityButton, 12);
+                    FXUtils.setLimitHeight(visibilityButton, 12);
+                    FXUtils.onClicked(visibilityButton, () -> visibility.set(!visibility.get()));
                 }
 
-                BoxBlur blur = new BoxBlur();
-                blur.setIterations(3);
-                FXUtils.onChangeAndOperate(visibility, isVisibility -> {
-                    SVG icon = isVisibility ? SVG.VISIBILITY : SVG.VISIBILITY_OFF;
-                    visibilityButton.getChildren().setAll(icon.createIcon(Theme.blackFill(), 12));
-                    randomSeedLabel.setEffect(isVisibility ? null : blur);
-                });
+                Label seedLabel = new Label();
+                {
+                    FXUtils.copyOnDoubleClick(seedLabel);
+                    seedLabel.setAlignment(Pos.CENTER_RIGHT);
+
+                    seedLabel.setText(world.getSeed() != null ? world.getSeed().toString() : "");
+
+                    BoxBlur blur = new BoxBlur();
+                    blur.setIterations(3);
+                    FXUtils.onChangeAndOperate(visibility, isVisibility -> {
+                        SVG icon = isVisibility ? SVG.VISIBILITY : SVG.VISIBILITY_OFF;
+                        visibilityButton.getChildren().setAll(icon.createIcon(12));
+                        seedLabel.setEffect(isVisibility ? null : blur);
+                    });
+                }
+
+                HBox right = new HBox(8);
+                {
+                    BorderPane.setAlignment(right, Pos.CENTER_RIGHT);
+                    right.getChildren().setAll(visibilityButton, seedLabel);
+                    seedPane.setRight(right);
+                }
             }
 
             BorderPane lastPlayedPane = new BorderPane();
             {
-                Label label = new Label(i18n("world.info.last_played"));
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-                lastPlayedPane.setLeft(label);
-
+                setLeftLabel(lastPlayedPane, "world.info.last_played");
                 Label lastPlayedLabel = new Label();
-                FXUtils.copyOnDoubleClick(lastPlayedLabel);
-                lastPlayedLabel.setText(formatDateTime(Instant.ofEpochMilli(world.getLastPlayed())));
-                BorderPane.setAlignment(lastPlayedLabel, Pos.CENTER_RIGHT);
-                lastPlayedPane.setRight(lastPlayedLabel);
+                setRightTextLabel(lastPlayedPane, lastPlayedLabel, () -> formatDateTime(Instant.ofEpochMilli(world.getLastPlayed())));
             }
 
             BorderPane timePane = new BorderPane();
             {
-                Label label = new Label(i18n("world.info.time"));
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-                timePane.setLeft(label);
+                setLeftLabel(timePane, "world.info.time");
 
                 Label timeLabel = new Label();
-                FXUtils.copyOnDoubleClick(timeLabel);
-                BorderPane.setAlignment(timeLabel, Pos.CENTER_RIGHT);
-                timePane.setRight(timeLabel);
-
-                Tag tag = dataTag.get("Time");
-                if (tag instanceof LongTag) {
-                    long days = ((LongTag) tag).getValue() / 24000;
-                    timeLabel.setText(i18n("world.info.time.format", days));
-                }
+                setRightTextLabel(timePane, timeLabel, () -> {
+                    Tag tag = dataTag.get("Time");
+                    if (tag instanceof LongTag) {
+                        long days = ((LongTag) tag).getValue() / 24000;
+                        return i18n("world.info.time.format", days);
+                    } else {
+                        return "";
+                    }
+                });
             }
 
             OptionToggleButton allowCheatsButton = new OptionToggleButton();
@@ -203,21 +249,7 @@ public final class WorldInfoPage extends SpinnerPane {
                 allowCheatsButton.setDisable(worldManagePage.isReadOnly());
                 Tag tag = dataTag.get("allowCommands");
 
-                if (tag instanceof ByteTag) {
-                    ByteTag byteTag = (ByteTag) tag;
-                    byte value = byteTag.getValue();
-                    if (value == 0 || value == 1) {
-                        allowCheatsButton.setSelected(value == 1);
-                        allowCheatsButton.selectedProperty().addListener((o, oldValue, newValue) -> {
-                            byteTag.setValue(newValue ? (byte) 1 : (byte) 0);
-                            saveLevelDat();
-                        });
-                    } else {
-                        allowCheatsButton.setDisable(true);
-                    }
-                } else {
-                    allowCheatsButton.setDisable(true);
-                }
+                checkTagAndSetListener(tag, allowCheatsButton);
             }
 
             OptionToggleButton generateFeaturesButton = new OptionToggleButton();
@@ -226,28 +258,12 @@ public final class WorldInfoPage extends SpinnerPane {
                 generateFeaturesButton.setDisable(worldManagePage.isReadOnly());
                 Tag tag = worldGenSettings != null ? worldGenSettings.get("generate_features") : dataTag.get("MapFeatures");
 
-                if (tag instanceof ByteTag) {
-                    ByteTag byteTag = (ByteTag) tag;
-                    byte value = byteTag.getValue();
-                    if (value == 0 || value == 1) {
-                        generateFeaturesButton.setSelected(value == 1);
-                        generateFeaturesButton.selectedProperty().addListener((o, oldValue, newValue) -> {
-                            byteTag.setValue(newValue ? (byte) 1 : (byte) 0);
-                            saveLevelDat();
-                        });
-                    } else {
-                        generateFeaturesButton.setDisable(true);
-                    }
-                } else {
-                    generateFeaturesButton.setDisable(true);
-                }
+                checkTagAndSetListener(tag, generateFeaturesButton);
             }
 
             BorderPane difficultyPane = new BorderPane();
             {
-                Label label = new Label(i18n("world.info.difficulty"));
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-                difficultyPane.setLeft(label);
+                setLeftLabel(difficultyPane, "world.info.difficulty");
 
                 JFXComboBox<Difficulty> difficultyBox = new JFXComboBox<>(Difficulty.items);
                 difficultyBox.setDisable(worldManagePage.isReadOnly());
@@ -255,8 +271,7 @@ public final class WorldInfoPage extends SpinnerPane {
                 difficultyPane.setRight(difficultyBox);
 
                 Tag tag = dataTag.get("Difficulty");
-                if (tag instanceof ByteTag) {
-                    ByteTag byteTag = (ByteTag) tag;
+                if (tag instanceof ByteTag byteTag) {
                     Difficulty difficulty = Difficulty.of(byteTag.getValue());
                     if (difficulty != null) {
                         difficultyBox.setValue(difficulty);
@@ -274,86 +289,93 @@ public final class WorldInfoPage extends SpinnerPane {
                 }
             }
 
+            OptionToggleButton difficultyLockPane = new OptionToggleButton();
+            {
+                difficultyLockPane.setTitle(i18n("world.info.difficulty_lock"));
+                difficultyLockPane.setDisable(worldManagePage.isReadOnly());
+
+                Tag tag = dataTag.get("DifficultyLocked");
+                checkTagAndSetListener(tag, difficultyLockPane);
+            }
+
             basicInfo.getContent().setAll(
-                    worldNamePane, gameVersionPane, randomSeedPane, lastPlayedPane, timePane,
-                    allowCheatsButton, generateFeaturesButton, difficultyPane);
+                    worldNamePane, gameVersionPane, iconPane, seedPane, lastPlayedPane, timePane,
+                    allowCheatsButton, generateFeaturesButton, difficultyPane, difficultyLockPane);
 
             rootPane.getChildren().addAll(ComponentList.createComponentListTitle(i18n("world.info.basic")), basicInfo);
         }
 
         Tag playerTag = dataTag.get("Player");
-        if (playerTag instanceof CompoundTag) {
-            CompoundTag player = (CompoundTag) playerTag;
+        if (playerTag instanceof CompoundTag player) {
             ComponentList playerInfo = new ComponentList();
 
             BorderPane locationPane = new BorderPane();
             {
-                Label label = new Label(i18n("world.info.player.location"));
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-                locationPane.setLeft(label);
-
+                setLeftLabel(locationPane, "world.info.player.location");
                 Label locationLabel = new Label();
-                FXUtils.copyOnDoubleClick(locationLabel);
-                BorderPane.setAlignment(locationLabel, Pos.CENTER_RIGHT);
-                locationPane.setRight(locationLabel);
-
-                Dimension dim = Dimension.of(player.get("Dimension"));
-                if (dim != null) {
-                    String posString = dim.formatPosition(player.get("Pos"));
-                    if (posString != null)
-                        locationLabel.setText(posString);
-                }
+                setRightTextLabel(locationPane, locationLabel, () -> {
+                    Dimension dim = Dimension.of(player.get("Dimension"));
+                    if (dim != null) {
+                        String posString = dim.formatPosition(player.get("Pos"));
+                        if (posString != null)
+                            return posString;
+                    }
+                    return "";
+                });
             }
 
             BorderPane lastDeathLocationPane = new BorderPane();
             {
-                Label label = new Label(i18n("world.info.player.last_death_location"));
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-                lastDeathLocationPane.setLeft(label);
-
+                setLeftLabel(lastDeathLocationPane, "world.info.player.last_death_location");
                 Label lastDeathLocationLabel = new Label();
-                FXUtils.copyOnDoubleClick(lastDeathLocationLabel);
-                BorderPane.setAlignment(lastDeathLocationLabel, Pos.CENTER_RIGHT);
-                lastDeathLocationPane.setRight(lastDeathLocationLabel);
-
-                Tag tag = player.get("LastDeathLocation");
-                if (tag instanceof CompoundTag) {
-                    Dimension dim = Dimension.of(((CompoundTag) tag).get("dimension"));
-                    if (dim != null) {
-                        String posString = dim.formatPosition(((CompoundTag) tag).get("pos"));
-                        if (posString != null)
-                            lastDeathLocationLabel.setText(posString);
+                setRightTextLabel(lastDeathLocationPane, lastDeathLocationLabel, () -> {
+                    Tag tag = player.get("LastDeathLocation");// Valid after 22w14a; prior to this version, the game did not record the last death location data.
+                    if (tag instanceof CompoundTag compoundTag) {
+                        Dimension dim = Dimension.of(compoundTag.get("dimension"));
+                        if (dim != null) {
+                            String posString = dim.formatPosition(compoundTag.get("pos"));
+                            if (posString != null)
+                                return posString;
+                        }
                     }
-                }
+                    return "";
+                });
+
             }
 
             BorderPane spawnPane = new BorderPane();
             {
-                Label label = new Label(i18n("world.info.player.spawn"));
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-                spawnPane.setLeft(label);
-
+                setLeftLabel(spawnPane, "world.info.player.spawn");
                 Label spawnLabel = new Label();
-                FXUtils.copyOnDoubleClick(spawnLabel);
-                BorderPane.setAlignment(spawnLabel, Pos.CENTER_RIGHT);
-                spawnPane.setRight(spawnLabel);
+                setRightTextLabel(spawnPane, spawnLabel, () -> {
 
-                Dimension dim = Dimension.of(player.get("SpawnDimension"));
-                if (dim != null) {
-                    Tag x = player.get("SpawnX");
-                    Tag y = player.get("SpawnY");
-                    Tag z = player.get("SpawnZ");
+                    Dimension dimension;
+                    if (player.get("respawn") instanceof CompoundTag respawnTag && respawnTag.get("dimension") != null) { // Valid after 25w07a
+                        dimension = Dimension.of(respawnTag.get("dimension"));
+                        Tag posTag = respawnTag.get("pos");
 
-                    if (x instanceof IntTag && y instanceof IntTag && z instanceof IntTag)
-                        spawnLabel.setText(dim.formatPosition(((IntTag) x).getValue(), ((IntTag) y).getValue(), ((IntTag) z).getValue()));
-                }
+                        if (posTag instanceof IntArrayTag intArrayTag && intArrayTag.length() >= 3) {
+                            return dimension.formatPosition(intArrayTag.getValue(0), intArrayTag.getValue(1), intArrayTag.getValue(2));
+                        }
+                    } else if (player.get("SpawnX") instanceof IntTag intX
+                            && player.get("SpawnY") instanceof IntTag intY
+                            && player.get("SpawnZ") instanceof IntTag intZ) { // Valid before 25w07a
+                        // SpawnDimension tag is valid after 20w12a. Prior to this version, the game did not record the respawn point dimension and respawned in the Overworld.
+                        dimension = Dimension.of(player.get("SpawnDimension") == null ? new IntTag("SpawnDimension", 0) : player.get("SpawnDimension"));
+                        if (dimension == null) {
+                            return "";
+                        }
+
+                        return dimension.formatPosition(intX.getValue(), intY.getValue(), intZ.getValue());
+                    }
+
+                    return "";
+                });
             }
 
             BorderPane playerGameTypePane = new BorderPane();
             {
-                Label label = new Label(i18n("world.info.player.game_type"));
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-                playerGameTypePane.setLeft(label);
+                setLeftLabel(playerGameTypePane, "world.info.player.game_type");
 
                 JFXComboBox<GameType> gameTypeBox = new JFXComboBox<>(GameType.items);
                 gameTypeBox.setDisable(worldManagePage.isReadOnly());
@@ -364,8 +386,7 @@ public final class WorldInfoPage extends SpinnerPane {
                 Tag hardcoreTag = dataTag.get("hardcore");
                 boolean isHardcore = hardcoreTag instanceof ByteTag && ((ByteTag) hardcoreTag).getValue() == 1;
 
-                if (tag instanceof IntTag) {
-                    IntTag intTag = (IntTag) tag;
+                if (tag instanceof IntTag intTag) {
                     GameType gameType = GameType.of(intTag.getValue(), isHardcore);
                     if (gameType != null) {
                         gameTypeBox.setValue(gameType);
@@ -395,33 +416,13 @@ public final class WorldInfoPage extends SpinnerPane {
 
             BorderPane healthPane = new BorderPane();
             {
-                Label label = new Label(i18n("world.info.player.health"));
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-                healthPane.setLeft(label);
-
+                setLeftLabel(healthPane, "world.info.player.health");
                 JFXTextField healthField = new JFXTextField();
-                healthField.setDisable(worldManagePage.isReadOnly());
-                healthField.setPrefWidth(50);
-                healthField.setAlignment(Pos.CENTER_RIGHT);
-                BorderPane.setAlignment(healthField, Pos.CENTER_RIGHT);
-                healthPane.setRight(healthField);
+                setRightTextField(healthPane, healthField, 50);
 
                 Tag tag = player.get("Health");
-                if (tag instanceof FloatTag) {
-                    FloatTag floatTag = (FloatTag) tag;
-                    healthField.setText(new DecimalFormat("#").format(floatTag.getValue().floatValue()));
-
-                    healthField.textProperty().addListener((o, oldValue, newValue) -> {
-                        if (newValue != null) {
-                            try {
-                                floatTag.setValue(Float.parseFloat(newValue));
-                                saveLevelDat();
-                            } catch (Throwable ignored) {
-                            }
-                        }
-                    });
-                    FXUtils.setValidateWhileTextChanged(healthField, true);
-                    healthField.setValidators(new DoubleValidator(i18n("input.number"), true));
+                if (tag instanceof FloatTag floatTag) {
+                    setTagAndTextField(floatTag, healthField);
                 } else {
                     healthField.setDisable(true);
                 }
@@ -429,33 +430,13 @@ public final class WorldInfoPage extends SpinnerPane {
 
             BorderPane foodLevelPane = new BorderPane();
             {
-                Label label = new Label(i18n("world.info.player.food_level"));
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-                foodLevelPane.setLeft(label);
-
+                setLeftLabel(foodLevelPane, "world.info.player.food_level");
                 JFXTextField foodLevelField = new JFXTextField();
-                foodLevelField.setDisable(worldManagePage.isReadOnly());
-                foodLevelField.setPrefWidth(50);
-                foodLevelField.setAlignment(Pos.CENTER_RIGHT);
-                BorderPane.setAlignment(foodLevelField, Pos.CENTER_RIGHT);
-                foodLevelPane.setRight(foodLevelField);
+                setRightTextField(foodLevelPane, foodLevelField, 50);
 
                 Tag tag = player.get("foodLevel");
-                if (tag instanceof IntTag) {
-                    IntTag intTag = (IntTag) tag;
-                    foodLevelField.setText(String.valueOf(intTag.getValue()));
-
-                    foodLevelField.textProperty().addListener((o, oldValue, newValue) -> {
-                        if (newValue != null) {
-                            try {
-                                intTag.setValue(Integer.parseInt(newValue));
-                                saveLevelDat();
-                            } catch (Throwable ignored) {
-                            }
-                        }
-                    });
-                    FXUtils.setValidateWhileTextChanged(foodLevelField, true);
-                    foodLevelField.setValidators(new NumberValidator(i18n("input.number"), true));
+                if (tag instanceof IntTag intTag) {
+                    setTagAndTextField(intTag, foodLevelField);
                 } else {
                     foodLevelField.setDisable(true);
                 }
@@ -463,33 +444,13 @@ public final class WorldInfoPage extends SpinnerPane {
 
             BorderPane xpLevelPane = new BorderPane();
             {
-                Label label = new Label(i18n("world.info.player.xp_level"));
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-                xpLevelPane.setLeft(label);
-
+                setLeftLabel(xpLevelPane, "world.info.player.xp_level");
                 JFXTextField xpLevelField = new JFXTextField();
-                xpLevelField.setDisable(worldManagePage.isReadOnly());
-                xpLevelField.setPrefWidth(50);
-                xpLevelField.setAlignment(Pos.CENTER_RIGHT);
-                BorderPane.setAlignment(xpLevelField, Pos.CENTER_RIGHT);
-                xpLevelPane.setRight(xpLevelField);
+                setRightTextField(xpLevelPane, xpLevelField, 50);
 
                 Tag tag = player.get("XpLevel");
-                if (tag instanceof IntTag) {
-                    IntTag intTag = (IntTag) tag;
-                    xpLevelField.setText(String.valueOf(intTag.getValue()));
-
-                    xpLevelField.textProperty().addListener((o, oldValue, newValue) -> {
-                        if (newValue != null) {
-                            try {
-                                intTag.setValue(Integer.parseInt(newValue));
-                                saveLevelDat();
-                            } catch (Throwable ignored) {
-                            }
-                        }
-                    });
-                    FXUtils.setValidateWhileTextChanged(xpLevelField, true);
-                    xpLevelField.setValidators(new NumberValidator(i18n("input.number"), true));
+                if (tag instanceof IntTag intTag) {
+                    setTagAndTextField(intTag, xpLevelField);
                 } else {
                     xpLevelField.setDisable(true);
                 }
@@ -504,6 +465,88 @@ public final class WorldInfoPage extends SpinnerPane {
         }
     }
 
+    private void setLeftLabel(BorderPane borderPane, @PropertyKey(resourceBundle = "assets.lang.I18N") String key) {
+        Label label = new Label(i18n(key));
+        BorderPane.setAlignment(label, Pos.CENTER_LEFT);
+        borderPane.setLeft(label);
+    }
+
+    private void setRightTextField(BorderPane borderPane, JFXTextField textField, int perfWidth) {
+        textField.setDisable(worldManagePage.isReadOnly());
+        textField.setPrefWidth(perfWidth);
+        textField.setAlignment(Pos.CENTER_RIGHT);
+        borderPane.setRight(textField);
+    }
+
+    private void setRightTextLabel(BorderPane borderPane, Label label, Callable<String> setNameCall) {
+        FXUtils.copyOnDoubleClick(label);
+        BorderPane.setAlignment(label, Pos.CENTER_RIGHT);
+        try {
+            label.setText(setNameCall.call());
+        } catch (Exception e) {
+            LOG.warning("Exception happened when setting name", e);
+        }
+        borderPane.setRight(label);
+    }
+
+    private void checkTagAndSetListener(Tag tag, OptionToggleButton toggleButton) {
+        if (tag instanceof ByteTag byteTag) {
+            byte value = byteTag.getValue();
+            if (value == 0 || value == 1) {
+                toggleButton.setSelected(value == 1);
+                toggleButton.selectedProperty().addListener((o, oldValue, newValue) -> {
+                    try {
+                        byteTag.setValue((byte) (newValue ? 1 : 0));
+                        saveLevelDat();
+                    } catch (Exception e) {
+                        toggleButton.setSelected(oldValue);
+                        LOG.warning("Exception happened when saving level.dat", e);
+                    }
+                });
+            } else {
+                toggleButton.setDisable(true);
+            }
+        } else {
+            toggleButton.setDisable(true);
+        }
+    }
+
+    private void setTagAndTextField(IntTag intTag, JFXTextField jfxTextField) {
+        jfxTextField.setText(String.valueOf(intTag.getValue()));
+
+        jfxTextField.textProperty().addListener((o, oldValue, newValue) -> {
+            if (newValue != null) {
+                try {
+                    intTag.setValue(Integer.parseInt(newValue));
+                    saveLevelDat();
+                } catch (Exception e) {
+                    jfxTextField.setText(oldValue);
+                    LOG.warning("Exception happened when saving level.dat", e);
+                }
+            }
+        });
+        FXUtils.setValidateWhileTextChanged(jfxTextField, true);
+        jfxTextField.setValidators(new NumberValidator(i18n("input.number"), true));
+    }
+
+    private void setTagAndTextField(FloatTag floatTag, JFXTextField jfxTextField) {
+        jfxTextField.setText(new DecimalFormat("#").format(floatTag.getValue().floatValue()));
+
+        jfxTextField.textProperty().addListener((o, oldValue, newValue) -> {
+            if (newValue != null) {
+                try {
+                    floatTag.setValue(Float.parseFloat(newValue));
+                    saveLevelDat();
+                } catch (Exception e) {
+                    jfxTextField.setText(oldValue);
+                    LOG.warning("Exception happened when saving level.dat", e);
+                }
+            }
+        });
+        FXUtils.setValidateWhileTextChanged(jfxTextField, true);
+        jfxTextField.setValidators(new DoubleValidator(i18n("input.number"), true));
+    }
+
     private void saveLevelDat() {
         LOG.info("Saving level.dat of world " + world.getWorldName());
         try {
@@ -513,54 +556,34 @@ public final class WorldInfoPage extends SpinnerPane {
         }
     }
 
-    private static final class Dimension {
+    private record Dimension(String name) {
         static final Dimension OVERWORLD = new Dimension(null);
         static final Dimension THE_NETHER = new Dimension(i18n("world.info.dimension.the_nether"));
         static final Dimension THE_END = new Dimension(i18n("world.info.dimension.the_end"));
 
-        final String name;
-
         static Dimension of(Tag tag) {
-            if (tag instanceof IntTag) {
-                switch (((IntTag) tag).getValue()) {
-                    case 0:
-                        return OVERWORLD;
-                    case 1:
-                        return THE_NETHER;
-                    case 2:
-                        return THE_END;
-                    default:
-                        return null;
-                }
-            } else if (tag instanceof StringTag) {
-                String id = ((StringTag) tag).getValue();
-                switch (id) {
-                    case "overworld":
-                    case "minecraft:overworld":
-                        return OVERWORLD;
-                    case "the_nether":
-                    case "minecraft:the_nether":
-                        return THE_NETHER;
-                    case "the_end":
-                    case "minecraft:the_end":
-                        return THE_END;
-                    default:
-                        return new Dimension(id);
-                }
+            if (tag instanceof IntTag intTag) {
+                return switch (intTag.getValue()) {
+                    case 0 -> OVERWORLD;
+                    case 1 -> THE_NETHER;
+                    case 2 -> THE_END;
+                    default -> null;
+                };
+            } else if (tag instanceof StringTag stringTag) {
+                String id = stringTag.getValue();
+                return switch (id) {
+                    case "overworld", "minecraft:overworld" -> OVERWORLD;
+                    case "the_nether", "minecraft:the_nether" -> THE_NETHER;
+                    case "the_end", "minecraft:the_end" -> THE_END;
+                    default -> new Dimension(id);
+                };
             } else {
                 return null;
             }
         }
 
-        private Dimension(String name) {
-            this.name = name;
-        }
-
         String formatPosition(Tag tag) {
-            if (tag instanceof ListTag) {
-                ListTag listTag = (ListTag) tag;
-                if (listTag.size() != 3)
-                    return null;
+            if (tag instanceof ListTag listTag && listTag.size() == 3) {
 
                 Tag x = listTag.get(0);
                 Tag y = listTag.get(1);
@@ -575,8 +598,7 @@ public final class WorldInfoPage extends SpinnerPane {
                 return null;
             }
 
-            if (tag instanceof IntArrayTag) {
-                IntArrayTag intArrayTag = (IntArrayTag) tag;
+            if (tag instanceof IntArrayTag intArrayTag) {
 
                 int x = intArrayTag.getValue(0);
                 int y = intArrayTag.getValue(1);
@@ -609,7 +631,7 @@ public final class WorldInfoPage extends SpinnerPane {
         static final ObservableList<Difficulty> items = FXCollections.observableList(Arrays.asList(values()));
 
         static Difficulty of(int d) {
-            return d >= 0 && d <= items.size() ? items.get(d) : null;
+            return (d >= 0 && d < items.size()) ? items.get(d) : null;
         }
 
         @Override
@@ -631,6 +653,53 @@ public final class WorldInfoPage extends SpinnerPane {
         @Override
         public String toString() {
             return i18n("world.info.player.game_type." + name().toLowerCase(Locale.ROOT));
+        }
+    }
+
+    private void changeWorldIcon() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle(i18n("world.icon.choose.title"));
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.png"), "*.png"));
+        fileChooser.setInitialFileName("icon.png");
+
+        File file = fileChooser.showOpenDialog(Controllers.getStage());
+        if (file == null) return;
+
+        Image image;
+        try {
+            image = FXUtils.loadImage(file.toPath());
+        } catch (Exception e) {
+            LOG.warning("Failed to load image", e);
+            Controllers.dialog(i18n("world.icon.change.fail.load.text"), i18n("world.icon.change.fail.load.title"), MessageDialogPane.MessageType.ERROR);
+            return;
+        }
+        if ((int) image.getWidth() == 64 && (int) image.getHeight() == 64) {
+            Path output = world.getFile().resolve("icon.png");
+            saveImage(image, output);
+        } else {
+            Controllers.dialog(i18n("world.icon.change.fail.not_64x64.text", (int) image.getWidth(), (int) image.getHeight()), i18n("world.icon.change.fail.not_64x64.title"), MessageDialogPane.MessageType.ERROR);
+        }
+    }
+
+    private void saveImage(Image image, Path path) {
+        Image oldImage = iconImageView.getImage();
+        try {
+            PNGJavaFXUtils.writeImage(image, path);
+            iconImageView.setImage(image);
+            Controllers.showToast(i18n("world.icon.change.succeed.toast"));
+        } catch (IOException e) {
+            LOG.warning("Failed to save world icon " + e.getMessage());
+            iconImageView.setImage(oldImage);
+        }
+    }
+
+    private void clearWorldIcon() {
+        Path output = world.getFile().resolve("icon.png");
+        try {
+            Files.deleteIfExists(output);
+            iconImageView.setImage(FXUtils.newBuiltinImage("/assets/img/unknown_server.png"));
+        } catch (IOException e) {
+            LOG.warning("Failed to delete world icon " + e.getMessage());
         }
     }
 }

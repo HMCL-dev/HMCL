@@ -73,6 +73,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
         getChildren().setAll(scrollPane);
 
         VBox rootPane = new VBox();
+        rootPane.setFocusTraversable(true);
         rootPane.setFillWidth(true);
         scrollPane.setContent(rootPane);
         FXUtils.smoothScrolling(scrollPane);

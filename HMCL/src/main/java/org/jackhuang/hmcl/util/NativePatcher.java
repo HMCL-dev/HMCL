@@ -198,7 +198,7 @@ public final class NativePatcher {
     public static SupportStatus checkSupportedStatus(GameVersionNumber gameVersion, Platform platform,
                                                      OSVersion systemVersion) {
         if (platform.equals(Platform.WINDOWS_X86_64)) {
-            if (!systemVersion.isAtLeast(OSVersion.WINDOWS_10) && gameVersion.isAtLeast("1.20.5", "24w14a"))
+            if (!systemVersion.isAtLeast(OSVersion.WINDOWS_7) && gameVersion.isAtLeast("1.20.5", "24w14a"))
                 return SupportStatus.UNSUPPORTED;
 
             return SupportStatus.OFFICIAL_SUPPORTED;
@@ -249,7 +249,7 @@ public final class NativePatcher {
 
         if (minVersion != null) {
             if (gameVersion.compareTo(minVersion) >= 0) {
-                if (maxVersion != null && gameVersion.compareTo(maxVersion) >= 0)
+                if (maxVersion != null && gameVersion.compareTo(maxVersion) > 0)
                     return SupportStatus.UNSUPPORTED;
 
                 String[] defaultGameVersions = GameVersionNumber.getDefaultGameVersions();

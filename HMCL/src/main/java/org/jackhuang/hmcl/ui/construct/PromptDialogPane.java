@@ -117,11 +117,17 @@ public class PromptDialogPane extends DialogPane {
     protected void onAccept() {
         setLoading();
 
-        builder.callback.call(builder.questions, () -> {
-            future.complete(builder.questions);
-            runInFX(this::onSuccess);
-        }, msg -> {
-            runInFX(() -> onFailure(msg));
+        builder.callback.call(builder.questions, new FutureCallback.ResultHandler() {
+            @Override
+            public void resolve() {
+                future.complete(builder.questions);
+                runInFX(() -> onSuccess());
+            }
+
+            @Override
+            public void reject(String reason) {
+                runInFX(() -> onFailure(reason));
+            }
         });
     }
 
