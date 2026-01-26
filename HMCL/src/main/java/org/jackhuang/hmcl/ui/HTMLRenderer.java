@@ -335,7 +335,7 @@ public final class HTMLRenderer {
             case "br", "dd", "h1", "h2", "h3", "h4", "h5", "h6" -> appendAutoLineBreak("\n");
             case "p" -> {
                 var n = node.parent();
-                if (!children.isEmpty() && (n == null || !n.nameIs("li")))
+                if (n == null || !n.nameIs("li"))
                     appendAutoLineBreak("\n");
             }
         }
