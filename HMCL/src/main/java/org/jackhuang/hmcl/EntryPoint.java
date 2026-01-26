@@ -50,6 +50,8 @@ public final class EntryPoint {
         setupJavaFXVMOptions();
         checkDirectoryPath();
 
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
+            System.getProperties().putIfAbsent("apple.awt.application.appearance", "system");
         if (!OperatingSystem.isInsideMacAppBundle())
             TaskbarIconManager.setIcon("/assets/img/icon-mac.png");
 
