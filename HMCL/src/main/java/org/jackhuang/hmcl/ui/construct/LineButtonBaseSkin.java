@@ -44,8 +44,7 @@ public abstract class LineButtonBaseSkin extends SkinBase<LineButtonBase> {
         // Left
 
         var left = new VBox();
-        root.setLeft(left);
-        left.setMinHeight(30);
+        root.setCenter(left);
         left.setMouseTransparent(true);
         left.setAlignment(Pos.CENTER_LEFT);
 
