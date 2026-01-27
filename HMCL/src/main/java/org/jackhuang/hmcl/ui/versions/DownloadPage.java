@@ -471,7 +471,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             ScrollPane scrollPane = new ScrollPane();
             ComponentList dependenciesList = new ComponentList(Lang::immutableListOf);
             loadDependencies(version, selfPage, spinnerPane, dependenciesList);
-            loadChangelog(version, selfPage, changelogButton);
+            loadChangelog(version, selfPage.repository, changelogButton);
             spinnerPane.setOnFailedAction(e -> loadDependencies(version, selfPage, spinnerPane, dependenciesList));
 
             scrollPane.setContent(dependenciesList);
@@ -482,6 +482,10 @@ public class DownloadPage extends Control implements DecoratorPage {
             VBox.setVgrow(spinnerPane, Priority.SOMETIMES);
 
             this.setBody(box);
+
+            JFXHyperlink versionPageBtn = new JFXHyperlink(i18n("mods.url"));
+            versionPageBtn.setDisable(true);
+            loadVersionPageUrl(version, selfPage.repository, versionPageBtn);
 
             JFXButton downloadButton = null;
             if (selfPage.callback != null) {
@@ -509,9 +513,9 @@ public class DownloadPage extends Control implements DecoratorPage {
             cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
 
             if (downloadButton == null) {
-                this.setActions(changelogButton, saveAsButton, cancelButton);
+                this.setActions(versionPageBtn, changelogButton, saveAsButton, cancelButton);
             } else {
-                this.setActions(changelogButton, downloadButton, saveAsButton, cancelButton);
+                this.setActions(versionPageBtn, changelogButton, downloadButton, saveAsButton, cancelButton);
             }
 
             this.prefWidthProperty().bind(BindingMapping.of(Controllers.getStage().widthProperty()).map(w -> w.doubleValue() * 0.7));
@@ -553,7 +557,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             }).start();
         }
 
-        private void loadChangelog(RemoteMod.Version version, DownloadPage selfPage, Button changelogButton) {
+        private void loadChangelog(RemoteMod.Version version, RemoteModRepository repo, Button changelogButton) {
             changelogButton.setDisable(true);
             Task.supplyAsync(() -> {
                 if (changelogCache.containsKey(version)) {
@@ -561,7 +565,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 } else if (version.getChangelog() != null) {
                     return StringUtils.nullIfBlank(version.getChangelog()).map(StringUtils::convertToHtml);
                 } else {
-                    return StringUtils.nullIfBlank(selfPage.repository.getModChangelog(version.getModid(), version.getVersionId())).map(StringUtils::convertToHtml);
+                    return StringUtils.nullIfBlank(repo.getModChangelog(version.getModid(), version.getVersionId())).map(StringUtils::convertToHtml);
                 }
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 if (exception == null) {
@@ -569,7 +573,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                         String s = result.get();
                         changelogCache.put(version, s);
                         changelogButton.setDisable(false);
-                        changelogButton.setOnAction(e -> Controllers.dialog(new AddonChangelog(version, s, selfPage.repository)));
+                        changelogButton.setOnAction(e -> Controllers.dialog(new AddonChangelog(version, s, repo)));
                     } else {
                         changelogCache.put(version, null);
                         changelogButton.setOnAction(null);
@@ -578,6 +582,17 @@ public class DownloadPage extends Control implements DecoratorPage {
                     changelogButton.setOnAction(null);
                 }
             }).start();
+        }
+
+        private void loadVersionPageUrl(RemoteMod.Version version, RemoteModRepository repo, JFXHyperlink button) {
+            Task.supplyAsync(() -> repo.getVersionPageUrl(version))
+                    .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                        if (exception == null && StringUtils.isNotBlank(result)) {
+                            button.setOnAction(__ -> FXUtils.openUriInBrowser(result));
+                            button.setDisable(false);
+                        }
+                    })
+                    .start();
         }
     }
 
@@ -597,16 +612,6 @@ public class DownloadPage extends Control implements DecoratorPage {
             spinnerPane.setContent(scrollPane);
             box.getChildren().add(spinnerPane);
             VBox.setVgrow(spinnerPane, Priority.SOMETIMES);
-
-            JFXHyperlink versionPage = new JFXHyperlink(i18n("mods.url"));
-            versionPage.setDisable(true);
-            Task.supplyAsync(() -> repo.getVersionPageUrl(version)).whenComplete(Schedulers.javafx(), (result, exception) -> {
-                if (exception == null && StringUtils.isNotBlank(result)) {
-                    versionPage.setOnAction(__ -> FXUtils.openUriInBrowser(result));
-                    versionPage.setDisable(false);
-                }
-            }).start();
-            box.getChildren().add(versionPage);
 
             this.setBody(box);
 

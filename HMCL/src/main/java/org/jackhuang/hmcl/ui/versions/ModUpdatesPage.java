@@ -27,8 +27,14 @@ import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.*;
-import javafx.scene.layout.*;
-import org.jackhuang.hmcl.mod.*;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.mod.LocalModFile;
+import org.jackhuang.hmcl.mod.ModManager;
+import org.jackhuang.hmcl.mod.RemoteMod;
+import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -318,6 +324,10 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
 
             this.setBody(box);
 
+            JFXHyperlink versionPageBtn = new JFXHyperlink(i18n("mods.url"));
+            versionPageBtn.setDisable(true);
+            loadVersionPageUrl(object, versionPageBtn);
+
             JFXButton closeButton = new JFXButton(i18n("button.ok"));
             closeButton.getStyleClass().add("dialog-accept");
             closeButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
@@ -351,6 +361,17 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                 }
                 spinnerPane.setLoading(false);
             }).start();
+        }
+
+        private void loadVersionPageUrl(ModUpdateObject object, JFXHyperlink button) {
+            Task.supplyAsync(() -> repository.getVersionPageUrl(object.data.getCandidate()))
+                    .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                        if (exception == null && StringUtils.isNotBlank(result)) {
+                            button.setOnAction(__ -> FXUtils.openUriInBrowser(result));
+                            button.setDisable(false);
+                        }
+                    })
+                    .start();
         }
     }
 
