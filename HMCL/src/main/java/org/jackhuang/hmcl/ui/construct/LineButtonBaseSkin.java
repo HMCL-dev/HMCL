@@ -22,6 +22,7 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -54,6 +55,7 @@ public abstract class LineButtonBaseSkin extends SkinBase<LineButtonBase> {
 
         var subtitleLabel = new Label();
         subtitleLabel.setWrapText(true);
+        subtitleLabel.setMinHeight(Region.USE_PREF_SIZE);
         subtitleLabel.getStyleClass().add("subtitle");
         subtitleLabel.textProperty().bind(control.subtitleProperty());
 
