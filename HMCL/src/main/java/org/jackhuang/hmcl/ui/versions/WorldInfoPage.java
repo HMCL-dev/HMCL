@@ -549,11 +549,7 @@ public final class WorldInfoPage extends SpinnerPane {
 
     private void saveLevelDat() {
         LOG.info("Saving level.dat of world " + world.getWorldName());
-        try {
-            this.world.writeLevelDat(levelDat);
-        } catch (IOException e) {
-            LOG.warning("Failed to save level.dat of world " + world.getWorldName(), e);
-        }
+        this.world.writeLevelDatAsync();
     }
 
     private record Dimension(String name) {
