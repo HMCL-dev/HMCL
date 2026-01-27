@@ -18,14 +18,12 @@
 package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXRadioButton;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
-import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.VPos;
@@ -67,7 +65,6 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.selectedItemPropertyFor;
@@ -248,7 +245,7 @@ public final class SettingsPage extends ScrollPane {
             }
 
             {
-                var chooseLanguagePane = new ChooseButton<SupportedLocale>();
+                var chooseLanguagePane = new LineSelectButton<SupportedLocale>();
                 chooseLanguagePane.setTitle(i18n("settings.launcher.language"));
                 chooseLanguagePane.setSubtitle(i18n("settings.take_effect_after_restart"));
 
@@ -261,7 +258,7 @@ public final class SettingsPage extends ScrollPane {
                     else
                         return locale.getDisplayName(currentLocale) + " - " + locale.getDisplayName(locale);
                 });
-                chooseLanguagePane.setItems(FXCollections.observableList(SupportedLocale.getSupportedLocales()));
+                chooseLanguagePane.setItems(SupportedLocale.getSupportedLocales());
                 chooseLanguagePane.valueProperty().bindBidirectional(config().localizationProperty());
 
                 settingsPane.getContent().add(chooseLanguagePane);

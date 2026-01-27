@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.construct;
 import com.jfoenix.controls.JFXPopup;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -31,15 +32,16 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
+import java.util.Collection;
 import java.util.Objects;
 import java.util.function.Function;
 
 import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 
 /// @author Glavo
-public final class ChooseButton<T> extends StackPane {
+public final class LineSelectButton<T> extends StackPane {
 
-    public ChooseButton() {
+    public LineSelectButton() {
         getProperties().put("ComponentList.noPadding", true);
 
         var pane = new HBox();
@@ -49,6 +51,7 @@ public final class ChooseButton<T> extends StackPane {
 
         VBox left = new VBox();
         HBox.setHgrow(left, Priority.ALWAYS);
+        left.setMinHeight(30);
         left.setMouseTransparent(true);
         Label titleLabel = new Label();
         titleLabel.textProperty().bind(title);
@@ -73,6 +76,9 @@ public final class ChooseButton<T> extends StackPane {
         arrowIcon.setMouseTransparent(true);
 
         StackPane arrowPane = new StackPane(arrowIcon);
+        arrowPane.opacityProperty().bind(Bindings.when(this.disabledProperty())
+                .then(0.4)
+                .otherwise(1.0));
         HBox.setMargin(arrowPane, new Insets(0, 8, 0, 8));
         arrowPane.setAlignment(Pos.CENTER);
 
@@ -176,6 +182,14 @@ public final class ChooseButton<T> extends StackPane {
 
     public ListProperty<T> itemsProperty() {
         return items;
+    }
+
+    public void setItems(Collection<T> value) {
+        if (value instanceof ObservableList<T> observableList) {
+            this.setItems(observableList);
+        } else {
+            this.setItems(FXCollections.observableArrayList(value));
+        }
     }
 
     public void setItems(ObservableList<T> value) {
