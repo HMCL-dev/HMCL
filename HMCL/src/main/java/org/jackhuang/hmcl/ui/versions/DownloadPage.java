@@ -467,7 +467,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             Button changelogButton = new JFXButton(i18n("mods.changelog"));
             changelogButton.getStyleClass().add("dialog-accept");
             loadChangelog(version, selfPage.repository, changelogButton);
-            
+
             SpinnerPane spinnerPane = new SpinnerPane();
             ScrollPane scrollPane = new ScrollPane();
             ComponentList dependenciesList = new ComponentList(Lang::immutableListOf);
@@ -482,10 +482,6 @@ public class DownloadPage extends Control implements DecoratorPage {
             VBox.setVgrow(spinnerPane, Priority.SOMETIMES);
 
             this.setBody(box);
-
-            JFXHyperlink versionPageBtn = new JFXHyperlink(i18n("mods.url"));
-            versionPageBtn.setDisable(true);
-            loadVersionPageUrl(version, selfPage.repository, versionPageBtn);
 
             JFXButton downloadButton = null;
             if (selfPage.callback != null) {
@@ -513,9 +509,9 @@ public class DownloadPage extends Control implements DecoratorPage {
             cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
 
             if (downloadButton == null) {
-                this.setActions(versionPageBtn, changelogButton, saveAsButton, cancelButton);
+                this.setActions(changelogButton, saveAsButton, cancelButton);
             } else {
-                this.setActions(versionPageBtn, changelogButton, downloadButton, saveAsButton, cancelButton);
+                this.setActions(changelogButton, downloadButton, saveAsButton, cancelButton);
             }
 
             this.prefWidthProperty().bind(BindingMapping.of(Controllers.getStage().widthProperty()).map(w -> w.doubleValue() * 0.7));
@@ -583,17 +579,6 @@ public class DownloadPage extends Control implements DecoratorPage {
                 }
             }).start();
         }
-
-        private void loadVersionPageUrl(RemoteMod.Version version, RemoteModRepository repo, JFXHyperlink button) {
-            Task.supplyAsync(() -> repo.getVersionPageUrl(version))
-                    .whenComplete(Schedulers.javafx(), (result, exception) -> {
-                        if (exception == null && StringUtils.isNotBlank(result)) {
-                            button.setOnAction(__ -> FXUtils.openUriInBrowser(result));
-                            button.setDisable(false);
-                        }
-                    })
-                    .start();
-        }
     }
 
     private static final class AddonChangelog extends JFXDialogLayout {
@@ -615,16 +600,31 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             this.setBody(box);
 
+            JFXHyperlink versionPageBtn = new JFXHyperlink(i18n("mods.url"));
+            versionPageBtn.setDisable(true);
+            loadVersionPageUrl(version, repo, versionPageBtn);
+
             JFXButton closeButton = new JFXButton(i18n("button.ok"));
             closeButton.getStyleClass().add("dialog-accept");
             closeButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
 
-            setActions(closeButton);
+            setActions(versionPageBtn, closeButton);
 
             this.prefWidthProperty().bind(BindingMapping.of(Controllers.getStage().widthProperty()).map(w -> w.doubleValue() * 0.7));
             this.prefHeightProperty().bind(BindingMapping.of(Controllers.getStage().heightProperty()).map(w -> w.doubleValue() * 0.7));
 
             onEscPressed(this, closeButton::fire);
+        }
+
+        private void loadVersionPageUrl(RemoteMod.Version version, RemoteModRepository repo, JFXHyperlink button) {
+            Task.supplyAsync(() -> repo.getVersionPageUrl(version))
+                    .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                        if (exception == null && StringUtils.isNotBlank(result)) {
+                            button.setOnAction(__ -> FXUtils.openUriInBrowser(result));
+                            button.setDisable(false);
+                        }
+                    })
+                    .start();
         }
     }
 
