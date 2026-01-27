@@ -552,7 +552,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         showLogsPane.selectedProperty().bindBidirectional(versionSetting.showLogsProperty());
         enableDebugLogOutputPane.selectedProperty().bindBidirectional(versionSetting.enableDebugLogOutputProperty());
         launcherVisibilityPane.valueProperty().bindBidirectional(versionSetting.launcherVisibilityProperty());
-        processPriorityPane.valueProperty().bindBidirectional(lastVersionSetting.processPriorityProperty());
+        processPriorityPane.valueProperty().bindBidirectional(versionSetting.processPriorityProperty());
 
         if (versionId != null)
             enableSpecificSettings.set(!versionSetting.isUsesGlobal());
