@@ -43,11 +43,11 @@ public class LineToggleButton extends LineButtonBase {
     }
 
     public boolean isSelected() {
-        return selected.get();
+        return selectedProperty().get();
     }
 
     public void setSelected(boolean selected) {
-        this.selected.set(selected);
+        selectedProperty().set(selected);
     }
 
     private static final class Skin extends LineButtonBaseSkin {
