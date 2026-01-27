@@ -26,7 +26,6 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.control.Skin;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -108,27 +107,31 @@ public final class LineSelectButton<T> extends LineButtonBase {
 
             this.control = control;
 
-            Label valueLabel = new Label();
-            valueLabel.getStyleClass().add("subtitle");
-
-            valueLabel.textProperty().bind(Bindings.createStringBinding(
-                    () -> toDisplayString(control.getValue()),
-                    control.converterProperty(), control.valueProperty()));
-            StackPane valuePane = new StackPane(valueLabel);
-            valuePane.setAlignment(Pos.CENTER);
-
-            Node arrowIcon = SVG.UNFOLD_MORE.createIcon(24);
-            arrowIcon.setMouseTransparent(true);
-
-            StackPane arrowPane = new StackPane(arrowIcon);
-            arrowPane.opacityProperty().bind(Bindings.when(control.disabledProperty())
-                    .then(0.4)
-                    .otherwise(1.0));
-            HBox.setMargin(arrowPane, new Insets(0, 8, 0, 8));
-            arrowPane.setAlignment(Pos.CENTER);
-
             root.setMouseTransparent(true);
-            root.getChildren().setAll(left, valuePane, arrowPane);
+
+            HBox right = new HBox();
+            root.setRight(right);
+            {
+                Label valueLabel = new Label();
+                valueLabel.getStyleClass().add("subtitle");
+
+                valueLabel.textProperty().bind(Bindings.createStringBinding(
+                        () -> toDisplayString(control.getValue()),
+                        control.converterProperty(), control.valueProperty()));
+                StackPane valuePane = new StackPane(valueLabel);
+                valuePane.setAlignment(Pos.CENTER);
+
+                Node arrowIcon = SVG.UNFOLD_MORE.createIcon(24);
+
+                StackPane arrowPane = new StackPane(arrowIcon);
+                arrowPane.opacityProperty().bind(Bindings.when(control.disabledProperty())
+                        .then(0.4)
+                        .otherwise(1.0));
+                HBox.setMargin(arrowPane, new Insets(0, 8, 0, 8));
+                arrowPane.setAlignment(Pos.CENTER);
+
+                right.getChildren().setAll(valuePane, arrowPane);
+            }
 
             FXUtils.onClicked(container, () -> {
                 PopupMenu popupMenu = new PopupMenu();

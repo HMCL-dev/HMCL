@@ -21,8 +21,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.SkinBase;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -30,15 +29,13 @@ import org.jackhuang.hmcl.util.StringUtils;
 /// @author Glavo
 public abstract class LineButtonBaseSkin extends SkinBase<LineButtonBase> {
 
-    protected final HBox root;
+    protected final BorderPane root;
     protected final RipplerContainer container;
-
-    protected final VBox left;
 
     protected LineButtonBaseSkin(LineButtonBase control) {
         super(control);
 
-        this.root = new HBox();
+        this.root = new BorderPane();
         root.setPadding(new Insets(8, 8, 8, 16));
 
         this.container = new RipplerContainer(root);
@@ -46,17 +43,17 @@ public abstract class LineButtonBaseSkin extends SkinBase<LineButtonBase> {
 
         // Left
 
-        this.left = new VBox();
-        HBox.setHgrow(left, Priority.ALWAYS);
+        var left = new VBox();
+        root.setLeft(left);
         left.setMinHeight(30);
         left.setMouseTransparent(true);
         left.setAlignment(Pos.CENTER_LEFT);
 
-        Label titleLabel = new Label();
+        var titleLabel = new Label();
         titleLabel.textProperty().bind(control.titleProperty());
         titleLabel.getStyleClass().add("title");
 
-        Label subtitleLabel = new Label();
+        var subtitleLabel = new Label();
         subtitleLabel.setWrapText(true);
         subtitleLabel.getStyleClass().add("subtitle");
         subtitleLabel.textProperty().bind(control.subtitleProperty());

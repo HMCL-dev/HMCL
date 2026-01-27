@@ -57,7 +57,7 @@ public class DownloadSettingsPage extends StackPane {
             downloadSource.getStyleClass().add("card-non-transparent");
             {
 
-                var autoChooseDownloadSource = new OptionToggleButton();
+                var autoChooseDownloadSource = new LineToggleButton();
                 autoChooseDownloadSource.setTitle(i18n("settings.launcher.download_source.auto"));
                 autoChooseDownloadSource.selectedProperty().bindBidirectional(config().autoChooseDownloadTypeProperty());
 

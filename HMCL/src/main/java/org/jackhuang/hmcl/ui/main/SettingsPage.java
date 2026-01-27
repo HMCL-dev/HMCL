@@ -201,7 +201,7 @@ public final class SettingsPage extends ScrollPane {
             }
 
             {
-                OptionToggleButton previewPane = new OptionToggleButton();
+                LineToggleButton previewPane = new LineToggleButton();
                 previewPane.setTitle(i18n("update.preview"));
                 previewPane.setSubtitle(i18n("update.preview.subtitle"));
                 previewPane.selectedProperty().bindBidirectional(config().acceptPreviewUpdateProperty());
@@ -265,7 +265,7 @@ public final class SettingsPage extends ScrollPane {
             }
 
             {
-                OptionToggleButton disableAutoGameOptionsPane = new OptionToggleButton();
+                LineToggleButton disableAutoGameOptionsPane = new LineToggleButton();
                 disableAutoGameOptionsPane.setTitle(i18n("settings.launcher.disable_auto_game_options"));
                 disableAutoGameOptionsPane.selectedProperty().bindBidirectional(config().disableAutoGameOptionsProperty());
 

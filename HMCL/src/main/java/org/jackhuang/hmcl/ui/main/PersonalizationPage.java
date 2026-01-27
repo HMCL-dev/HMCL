@@ -112,13 +112,13 @@ public class PersonalizationPage extends StackPane {
             Platform.runLater(() -> JFXDepthManager.setDepth(picker, 0));
         }
         {
-            OptionToggleButton titleTransparentButton = new OptionToggleButton();
+            LineToggleButton titleTransparentButton = new LineToggleButton();
             themeList.getContent().add(titleTransparentButton);
             titleTransparentButton.selectedProperty().bindBidirectional(config().titleTransparentProperty());
             titleTransparentButton.setTitle(i18n("settings.launcher.title_transparent"));
         }
         {
-            OptionToggleButton animationButton = new OptionToggleButton();
+            LineToggleButton animationButton = new LineToggleButton();
             themeList.getContent().add(animationButton);
             animationButton.selectedProperty().bindBidirectional(config().animationDisabledProperty());
             animationButton.setTitle(i18n("settings.launcher.turn_off_animations"));

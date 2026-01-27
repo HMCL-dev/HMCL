@@ -1,0 +1,66 @@
+/*
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2021  huangyuhui <huanghongxun2008@126.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+package org.jackhuang.hmcl.ui.construct;
+
+import com.jfoenix.controls.JFXToggleButton;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.geometry.Pos;
+import javafx.scene.layout.StackPane;
+import org.jackhuang.hmcl.ui.FXUtils;
+
+public class LineToggleButton extends LineButtonBase {
+    public LineToggleButton() {
+    }
+
+    @Override
+    protected javafx.scene.control.Skin<?> createDefaultSkin() {
+        return new Skin(this);
+    }
+
+    private final BooleanProperty selected = new SimpleBooleanProperty(this, "selected");
+
+    public BooleanProperty selectedProperty() {
+        return selected;
+    }
+
+    public boolean isSelected() {
+        return selected.get();
+    }
+
+    public void setSelected(boolean selected) {
+        this.selected.set(selected);
+    }
+
+    private static final class Skin extends LineButtonBaseSkin {
+        Skin(LineToggleButton control) {
+            super(control);
+
+            JFXToggleButton toggleButton = new JFXToggleButton();
+
+            StackPane right = new StackPane(toggleButton);
+            root.setRight(right);
+            right.setAlignment(Pos.CENTER);
+            toggleButton.selectedProperty().bindBidirectional(control.selectedProperty());
+            toggleButton.setSize(8);
+            FXUtils.setLimitHeight(toggleButton, 30);
+
+            FXUtils.onClicked(container, () -> toggleButton.setSelected(!toggleButton.isSelected()));
+        }
+    }
+}

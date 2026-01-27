@@ -91,8 +91,8 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private final MultiFileItem<GameDirectoryType> gameDirItem;
     private final MultiFileItem.FileOption<GameDirectoryType> gameDirCustomOption;
     private final JFXComboBox<ProcessPriority> cboProcessPriority;
-    private final OptionToggleButton showLogsPane;
-    private final OptionToggleButton enableDebugLogOutputPane;
+    private final LineToggleButton showLogsPane;
+    private final LineToggleButton enableDebugLogOutputPane;
     private final ImagePickerItem iconPickerItem;
 
     private final ChangeListener<Collection<JavaRuntime>> javaListChangeListener;
@@ -391,10 +391,10 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 }
             }
 
-            showLogsPane = new OptionToggleButton();
+            showLogsPane = new LineToggleButton();
             showLogsPane.setTitle(i18n("settings.show_log"));
 
-            enableDebugLogOutputPane = new OptionToggleButton();
+            enableDebugLogOutputPane = new LineToggleButton();
             enableDebugLogOutputPane.setTitle(i18n("settings.enable_debug_log_output"));
 
             BorderPane processPriorityPane = new BorderPane();

@@ -243,7 +243,7 @@ public final class WorldInfoPage extends SpinnerPane {
                 });
             }
 
-            OptionToggleButton allowCheatsButton = new OptionToggleButton();
+            LineToggleButton allowCheatsButton = new LineToggleButton();
             {
                 allowCheatsButton.setTitle(i18n("world.info.allow_cheats"));
                 allowCheatsButton.setDisable(worldManagePage.isReadOnly());
@@ -252,7 +252,7 @@ public final class WorldInfoPage extends SpinnerPane {
                 checkTagAndSetListener(tag, allowCheatsButton);
             }
 
-            OptionToggleButton generateFeaturesButton = new OptionToggleButton();
+            LineToggleButton generateFeaturesButton = new LineToggleButton();
             {
                 generateFeaturesButton.setTitle(i18n("world.info.generate_features"));
                 generateFeaturesButton.setDisable(worldManagePage.isReadOnly());
@@ -289,7 +289,7 @@ public final class WorldInfoPage extends SpinnerPane {
                 }
             }
 
-            OptionToggleButton difficultyLockPane = new OptionToggleButton();
+            LineToggleButton difficultyLockPane = new LineToggleButton();
             {
                 difficultyLockPane.setTitle(i18n("world.info.difficulty_lock"));
                 difficultyLockPane.setDisable(worldManagePage.isReadOnly());
@@ -489,7 +489,7 @@ public final class WorldInfoPage extends SpinnerPane {
         borderPane.setRight(label);
     }
 
-    private void checkTagAndSetListener(Tag tag, OptionToggleButton toggleButton) {
+    private void checkTagAndSetListener(Tag tag, LineToggleButton toggleButton) {
         if (tag instanceof ByteTag byteTag) {
             byte value = byteTag.getValue();
             if (value == 0 || value == 1) {

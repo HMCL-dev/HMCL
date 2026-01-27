@@ -44,13 +44,13 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
     private final JFXTextField txtWrapper;
     private final JFXTextField txtPreLaunchCommand;
     private final JFXTextField txtPostExitCommand;
-    private final OptionToggleButton noJVMArgsPane;
-    private final OptionToggleButton noOptimizingJVMArgsPane;
-    private final OptionToggleButton noGameCheckPane;
-    private final OptionToggleButton noJVMCheckPane;
-    private final OptionToggleButton noNativesPatchPane;
-    private final OptionToggleButton useNativeGLFWPane;
-    private final OptionToggleButton useNativeOpenALPane;
+    private final LineToggleButton noJVMArgsPane;
+    private final LineToggleButton noOptimizingJVMArgsPane;
+    private final LineToggleButton noGameCheckPane;
+    private final LineToggleButton noJVMCheckPane;
+    private final LineToggleButton noNativesPatchPane;
+    private final LineToggleButton useNativeGLFWPane;
+    private final LineToggleButton useNativeOpenALPane;
     private final ComponentSublist nativesDirSublist;
     private final MultiFileItem<NativesDirectoryType> nativesDirItem;
     private final MultiFileItem.FileOption<NativesDirectoryType> nativesDirCustomOption;
@@ -184,26 +184,26 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
                 FXUtils.setLimitWidth(cboRenderer, 300);
             }
 
-            noJVMArgsPane = new OptionToggleButton();
+            noJVMArgsPane = new LineToggleButton();
             noJVMArgsPane.setTitle(i18n("settings.advanced.no_jvm_args"));
 
-            noOptimizingJVMArgsPane = new OptionToggleButton();
+            noOptimizingJVMArgsPane = new LineToggleButton();
             noOptimizingJVMArgsPane.setTitle(i18n("settings.advanced.no_optimizing_jvm_args"));
             noOptimizingJVMArgsPane.disableProperty().bind(noJVMArgsPane.selectedProperty());
 
-            noGameCheckPane = new OptionToggleButton();
+            noGameCheckPane = new LineToggleButton();
             noGameCheckPane.setTitle(i18n("settings.advanced.dont_check_game_completeness"));
 
-            noJVMCheckPane = new OptionToggleButton();
+            noJVMCheckPane = new LineToggleButton();
             noJVMCheckPane.setTitle(i18n("settings.advanced.dont_check_jvm_validity"));
 
-            noNativesPatchPane = new OptionToggleButton();
+            noNativesPatchPane = new LineToggleButton();
             noNativesPatchPane.setTitle(i18n("settings.advanced.dont_patch_natives"));
 
-            useNativeGLFWPane = new OptionToggleButton();
+            useNativeGLFWPane = new LineToggleButton();
             useNativeGLFWPane.setTitle(i18n("settings.advanced.use_native_glfw"));
 
-            useNativeOpenALPane = new OptionToggleButton();
+            useNativeOpenALPane = new LineToggleButton();
             useNativeOpenALPane.setTitle(i18n("settings.advanced.use_native_openal"));
 
             workaroundPane.getContent().setAll(
