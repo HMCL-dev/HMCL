@@ -77,7 +77,7 @@ public class OAuth {
 
     private Result authenticateAuthorizationCode(Options options) throws IOException, InterruptedException, JsonParseException, ExecutionException, AuthenticationException {
         Session session = options.callback.startServer();
-        options.callback.openBrowser(NetworkUtils.withQuery(authorizationURL,
+        options.callback.openBrowser(GrantFlow.AUTHORIZATION_CODE, NetworkUtils.withQuery(authorizationURL,
                 mapOf(pair("client_id", options.callback.getClientId()), pair("response_type", "code"),
                         pair("redirect_uri", session.getRedirectURI()), pair("scope", options.scope),
                         pair("prompt", "select_account"))));
@@ -106,7 +106,7 @@ public class OAuth {
         options.callback.grantDeviceCode(deviceTokenResponse.userCode, deviceTokenResponse.verificationURI);
 
         // Microsoft OAuth Flow
-        options.callback.openBrowser(deviceTokenResponse.verificationURI);
+        options.callback.openBrowser(GrantFlow.DEVICE, deviceTokenResponse.verificationURI);
 
         long startTime = System.nanoTime();
         long interval = TimeUnit.MILLISECONDS.convert(deviceTokenResponse.interval, TimeUnit.SECONDS);
@@ -237,9 +237,10 @@ public class OAuth {
         /**
          * Open browser
          *
-         * @param url OAuth url.
+         * @param authorizationCode
+         * @param url               OAuth url.
          */
-        void openBrowser(String url) throws IOException;
+        void openBrowser(GrantFlow authorizationCode, String url) throws IOException;
 
         String getClientId();
 
