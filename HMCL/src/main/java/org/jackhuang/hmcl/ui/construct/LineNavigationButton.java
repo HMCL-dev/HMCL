@@ -29,7 +29,6 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 
@@ -102,25 +101,20 @@ public final class LineNavigationButton extends LineButtonBase {
 
             HBox right = new HBox();
             root.setRight(right);
-            right.setAlignment(Pos.CENTER_RIGHT);
             {
+                right.setAlignment(Pos.CENTER_RIGHT);
+
                 Label valueLabel = new Label();
                 valueLabel.getStyleClass().add("subtitle");
                 valueLabel.textProperty().bind(control.messageProperty());
 
-                StackPane valuePane = new StackPane(valueLabel);
-                valuePane.setAlignment(Pos.CENTER);
-
                 Node arrowIcon = SVG.ARROW_FORWARD.createIcon(24);
-
-                StackPane arrowPane = new StackPane(arrowIcon);
-                arrowPane.opacityProperty().bind(Bindings.when(control.disabledProperty())
+                HBox.setMargin(arrowIcon, new Insets(0, 8, 0, 8));
+                arrowIcon.opacityProperty().bind(Bindings.when(control.disabledProperty())
                         .then(0.4)
                         .otherwise(1.0));
-                HBox.setMargin(arrowPane, new Insets(0, 8, 0, 8));
-                arrowPane.setAlignment(Pos.CENTER);
 
-                right.getChildren().setAll(valuePane, arrowPane);
+                right.getChildren().setAll(valueLabel, arrowIcon);
             }
 
             FXUtils.onClicked(container, control::fire);
