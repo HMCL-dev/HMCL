@@ -78,7 +78,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
     private final JFXComboBox<String> cboWindowsSize;
     private final JFXTextField txtServerIP;
     private final ComponentList componentList;
-    private final JFXComboBox<LauncherVisibility> cboLauncherVisibility;
+    private final LineSelectButton<LauncherVisibility> launcherVisibilityButton;
     private final JFXCheckBox chkAutoAllocate;
     private final JFXCheckBox chkFullscreen;
     private final ComponentSublist javaSublist;
@@ -351,17 +351,10 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 maxMemoryPane.getChildren().setAll(title, chkAutoAllocate, lowerBoundPane, progressBarPane, digitalPane);
             }
 
-            BorderPane launcherVisibilityPane = new BorderPane();
-            {
-                Label label = new Label(i18n("settings.advanced.launcher_visible"));
-                launcherVisibilityPane.setLeft(label);
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-
-                cboLauncherVisibility = new JFXComboBox<>();
-                launcherVisibilityPane.setRight(cboLauncherVisibility);
-                BorderPane.setAlignment(cboLauncherVisibility, Pos.CENTER_RIGHT);
-                FXUtils.setLimitWidth(cboLauncherVisibility, 300);
-            }
+            launcherVisibilityButton = new LineSelectButton<>();
+            launcherVisibilityButton.setTitle(i18n("settings.advanced.launcher_visible"));
+            launcherVisibilityButton.setItems(LauncherVisibility.values());
+            launcherVisibilityButton.setConverter(e -> i18n("settings.advanced.launcher_visibility." + e.name().toLowerCase(Locale.ROOT)));
 
             BorderPane dimensionPane = new BorderPane();
             {
@@ -458,7 +451,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                     javaSublist,
                     gameDirSublist,
                     maxMemoryPane,
-                    launcherVisibilityPane,
+                    launcherVisibilityButton,
                     dimensionPane,
                     showLogsPane,
                     enableDebugLogOutputPane,
@@ -486,9 +479,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         };
 
         addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onDecoratorPageNavigating);
-
-        cboLauncherVisibility.getItems().setAll(LauncherVisibility.values());
-        cboLauncherVisibility.setConverter(stringConverter(e -> i18n("settings.advanced.launcher_visibility." + e.name().toLowerCase(Locale.ROOT))));
 
         cboProcessPriority.getItems().setAll(ProcessPriority.values());
         cboProcessPriority.setConverter(stringConverter(e -> i18n("settings.advanced.process_priority." + e.name().toLowerCase(Locale.ROOT))));
@@ -537,7 +527,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             chkFullscreen.selectedProperty().unbindBidirectional(lastVersionSetting.fullscreenProperty());
             showLogsPane.selectedProperty().unbindBidirectional(lastVersionSetting.showLogsProperty());
             enableDebugLogOutputPane.selectedProperty().unbindBidirectional(lastVersionSetting.enableDebugLogOutputProperty());
-            FXUtils.unbindEnum(cboLauncherVisibility, lastVersionSetting.launcherVisibilityProperty());
+            launcherVisibilityButton.valueProperty().unbindBidirectional(lastVersionSetting.launcherVisibilityProperty());
             FXUtils.unbindEnum(cboProcessPriority, lastVersionSetting.processPriorityProperty());
 
             lastVersionSetting.usesGlobalProperty().removeListener(usesGlobalListener);
@@ -572,7 +562,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         chkFullscreen.selectedProperty().bindBidirectional(versionSetting.fullscreenProperty());
         showLogsPane.selectedProperty().bindBidirectional(versionSetting.showLogsProperty());
         enableDebugLogOutputPane.selectedProperty().bindBidirectional(versionSetting.enableDebugLogOutputProperty());
-        FXUtils.bindEnum(cboLauncherVisibility, versionSetting.launcherVisibilityProperty());
+        launcherVisibilityButton.valueProperty().bindBidirectional(versionSetting.launcherVisibilityProperty());
         FXUtils.bindEnum(cboProcessPriority, versionSetting.processPriorityProperty());
 
         if (versionId != null)
