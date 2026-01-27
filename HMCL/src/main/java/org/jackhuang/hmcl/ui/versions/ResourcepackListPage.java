@@ -140,6 +140,8 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
             root.getStyleClass().add("no-padding");
             listView = new JFXListView<>();
 
+            FXUtils.ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
+
             HBox toolbar = new HBox();
             toolbar.setAlignment(Pos.CENTER_LEFT);
             toolbar.setPickOnBounds(false);
