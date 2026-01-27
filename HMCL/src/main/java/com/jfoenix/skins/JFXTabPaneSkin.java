@@ -955,7 +955,7 @@ public class JFXTabPaneSkin extends TabPaneSkin {
             } else if ("GRAPHIC".equals(p)) {
                 tabText.setGraphic(tab.getGraphic());
             } else if ("TOOLTIP".equals(p)) {
-                // install new Toolip/ uninstall the old one
+                // install new Tooltip / uninstall the old one
                 if (oldTooltip != null) {
                     Tooltip.uninstall(this, oldTooltip);
                 }
