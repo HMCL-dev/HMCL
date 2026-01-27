@@ -176,6 +176,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             gameItem.setActionButtonVisible(false);
             gameItem.setTitle(i18n("version.manage"));
             gameItem.setOnAction(e -> Controllers.navigate(Controllers.getGameListPage()));
+            FXUtils.onSecondaryButtonClicked(gameItem, () -> showGameListPopupMenu(gameItem));
 
             // forth item in left sidebar
             AdvancedListItem downloadItem = new AdvancedListItem();
@@ -249,6 +250,15 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             setCenter(getSkinnable().getMainPage());
         }
 
+        public void showGameListPopupMenu(AdvancedListItem gameListItem) {
+            GameListPopupMenu.show(gameListItem,
+                    JFXPopup.PopupVPosition.TOP,
+                    JFXPopup.PopupHPosition.LEFT,
+                    gameListItem.getWidth(),
+                    0,
+                    getSkinnable().getMainPage().getProfile(),
+                    getSkinnable().getMainPage().getVersions());
+        }
     }
 
     private boolean checkedModpack = false;
