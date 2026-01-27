@@ -564,10 +564,13 @@ public final class StringUtils {
         return accum.toString();
     }
 
-    public static boolean isStringHtml(String str) {
+    private static final Safelist all = Safelist.relaxed()
+            .addAttributes("a", "rel", "target");
+
+    public static boolean isHtml(String str) {
         if (isBlank(str)) return false;
         if (str.startsWith("<!DOCTYPE html>") || str.startsWith("<html>") || str.startsWith("<body>")) return true;
-        if (!Jsoup.isValid(str, Safelist.relaxed().addAttributes("a", "rel", "target"))) {
+        if (!Jsoup.isValid(str, all)) {
             return false;
         }
         var body = Jsoup.parse(str).body();
@@ -584,10 +587,9 @@ public final class StringUtils {
             AutolinkExtension.create(), InsExtension.create(), StrikethroughExtension.create(), TablesExtension.create()
     )).build();
 
-    @Contract(pure = true, value = "null -> null")
     public static String convertToHtml(String md) {
         if (md == null) return null;
-        if (isStringHtml(md)) return md;
+        if (isHtml(md)) return md;
         return HTML_RENDERER.render(MD_PARSER.parse(md));
     }
 
