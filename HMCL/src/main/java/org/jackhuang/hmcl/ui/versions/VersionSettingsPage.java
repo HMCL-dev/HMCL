@@ -421,23 +421,16 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 serverPane.addRow(0, new Label(i18n("settings.advanced.server_ip")), txtServerIP);
             }
 
-            BorderPane showAdvancedSettingPane = new BorderPane();
-            {
-                Label label = new Label(i18n("settings.advanced"));
-                showAdvancedSettingPane.setLeft(label);
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
+            LineNavigationButton showAdvancedSettingPane = new LineNavigationButton();
+            showAdvancedSettingPane.setTitle(i18n("settings.advanced"));
+            showAdvancedSettingPane.setOnAction(event -> {
+                if (lastVersionSetting != null) {
+                    if (advancedVersionSettingPage == null)
+                        advancedVersionSettingPage = new AdvancedVersionSettingPage(profile, versionId, lastVersionSetting);
 
-                JFXButton button = FXUtils.newBorderButton(i18n("settings.advanced.modify"));
-                button.setOnAction(e -> {
-                    if (lastVersionSetting != null) {
-                        if (advancedVersionSettingPage == null)
-                            advancedVersionSettingPage = new AdvancedVersionSettingPage(profile, versionId, lastVersionSetting);
-
-                        Controllers.navigateForward(advancedVersionSettingPage);
-                    }
-                });
-                showAdvancedSettingPane.setRight(button);
-            }
+                    Controllers.navigateForward(advancedVersionSettingPage);
+                }
+            });
 
             componentList.getContent().addAll(
                     javaSublist,
