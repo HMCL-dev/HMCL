@@ -40,8 +40,10 @@ import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 /// @author Glavo
 public final class LineSelectButton<T> extends LineButtonBase {
 
+    private static final String DEFAULT_STYLE_CLASS = "line-select-button";
+
     public LineSelectButton() {
-        this.getStyleClass().add("line-select-button");
+        this.getStyleClass().add(DEFAULT_STYLE_CLASS);
     }
 
     @Override

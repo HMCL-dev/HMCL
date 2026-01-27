@@ -25,7 +25,10 @@ import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.FXUtils;
 
 public class LineToggleButton extends LineButtonBase {
+    private static final String DEFAULT_STYLE_CLASS = "line-toggle-button";
+
     public LineToggleButton() {
+        this.getStyleClass().add(DEFAULT_STYLE_CLASS);
     }
 
     @Override
