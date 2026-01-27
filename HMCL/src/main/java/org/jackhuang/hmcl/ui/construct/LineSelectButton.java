@@ -138,7 +138,7 @@ public final class LineSelectButton<T> extends LineButtonBase {
                 right.getChildren().setAll(valueLabel, arrowIcon);
             }
 
-            FXUtils.onClicked(container, this::showPopup);
+            FXUtils.onClicked(container, this::onClick);
         }
 
         private String toDisplayString(T value) {
@@ -151,7 +151,7 @@ public final class LineSelectButton<T> extends LineButtonBase {
 
         private JFXPopup popup;
 
-        private void showPopup() {
+        private void onClick() {
             if (popup == null) {
                 PopupMenu popupMenu = new PopupMenu();
                 this.popup = new JFXPopup(popupMenu);
@@ -179,7 +179,7 @@ public final class LineSelectButton<T> extends LineButtonBase {
                 }));
             }
 
-            if (popup.isFocused()) {
+            if (popup.isShowing()) {
                 popup.hide();
             } else {
                 JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(control, popup);
