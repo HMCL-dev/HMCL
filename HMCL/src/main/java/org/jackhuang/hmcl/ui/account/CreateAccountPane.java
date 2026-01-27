@@ -279,6 +279,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         if (detailsPane != null) {
             btnAccept.disableProperty().unbind();
             detailsContainer.getChildren().remove(detailsPane);
+            btnAccept.setDisable(false);
             lblErrorMessage.setText("");
             lblErrorMessage.setVisible(true);
         }
@@ -286,11 +287,13 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         if (factory == Accounts.FACTORY_MICROSOFT) {
             VBox vbox = new VBox(8);
             detailsPane = vbox;
+            detailsContainer.getChildren().add(detailsPane);
 
             if (Accounts.OAUTH_CALLBACK.getClientId().isEmpty()) {
                 HintPane hintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
                 hintPane.setSegment(i18n("account.methods.microsoft.snapshot"));
                 vbox.getChildren().add(hintPane);
+                btnAccept.setDisable(true);
                 return;
             }
 
@@ -368,8 +371,6 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             detailsPane = new AccountDetailsInputPane(factory, btnAccept::fire);
             btnAccept.disableProperty().bind(((AccountDetailsInputPane) detailsPane).validProperty().not());
         }
-
-        detailsContainer.getChildren().add(detailsPane);
     }
 
     private static class AccountDetailsInputPane extends GridPane {
