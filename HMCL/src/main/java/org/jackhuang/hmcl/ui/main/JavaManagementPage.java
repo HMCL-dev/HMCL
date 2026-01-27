@@ -189,6 +189,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
 
         JavaPageSkin(JavaManagementPage skinnable) {
             super(skinnable);
+            this.listView.getStyleClass().add("no-horizontal-scrollbar");
         }
 
         @Override
@@ -210,7 +211,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
 
         @Override
         protected ListCell<JavaRuntime> createListCell(JFXListView<JavaRuntime> listView) {
-            return new JavaItemCell();
+            return new JavaItemCell(listView);
         }
     }
 
@@ -222,7 +223,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
         private final StackPane removeIconPane;
         private final Tooltip removeTooltip = new Tooltip();
 
-        JavaItemCell() {
+        JavaItemCell(JFXListView<JavaRuntime> listView) {
             BorderPane root = new BorderPane();
 
             HBox center = new HBox();
@@ -272,6 +273,8 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
             root.setPadding(new Insets(8));
 
             this.graphic = new RipplerContainer(root);
+
+            FXUtils.limitCellWidth(listView, this);
         }
 
         @Override

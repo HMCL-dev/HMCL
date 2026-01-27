@@ -44,6 +44,9 @@ public class TwoLineListItem extends VBox {
     private final ObservableList<Label> tags = FXCollections.observableArrayList();
     private final StringProperty subtitle = new SimpleStringProperty(this, "subtitle");
 
+    private final Label lblSubtitle;
+    private final Label lblTitle;
+
     private final AggregatedObservableList<Node> firstLineChildren;
 
     public TwoLineListItem(String titleString, String subtitleString) {
@@ -59,7 +62,7 @@ public class TwoLineListItem extends VBox {
         HBox firstLine = new HBox();
         firstLine.getStyleClass().add("first-line");
 
-        Label lblTitle = new Label();
+        lblTitle = new Label();
         lblTitle.getStyleClass().add("title");
         lblTitle.textProperty().bind(title);
 
@@ -68,7 +71,7 @@ public class TwoLineListItem extends VBox {
         firstLineChildren.appendList(tags);
         Bindings.bindContent(firstLine.getChildren(), firstLineChildren.getAggregatedList());
 
-        Label lblSubtitle = new Label();
+        lblSubtitle = new Label();
         lblSubtitle.getStyleClass().add("subtitle");
         lblSubtitle.textProperty().bind(subtitle);
 
@@ -107,6 +110,14 @@ public class TwoLineListItem extends VBox {
 
     public void setSubtitle(String subtitle) {
         this.subtitle.set(subtitle);
+    }
+
+    public Label getSubtitleLabel() {
+        return lblSubtitle;
+    }
+
+    public Label getTitleLabel() {
+        return lblTitle;
     }
 
     public void addTag(String tag) {

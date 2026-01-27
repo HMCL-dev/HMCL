@@ -245,19 +245,19 @@ public class TerracottaControllerPage extends StackPane {
                 guest.setSubtitle(i18n("terracotta.status.waiting.guest.desc"));
                 guest.setRightIcon(SVG.ARROW_FORWARD);
                 FXUtils.onClicked(guest, () -> {
-                    Controllers.prompt(i18n("terracotta.status.waiting.guest.prompt.title"), (code, resolve, reject) -> {
+                    Controllers.prompt(i18n("terracotta.status.waiting.guest.prompt.title"), (code, handler) -> {
                         Task<TerracottaState.GuestConnecting> task = TerracottaManager.setGuesting(code);
                         if (task != null) {
                             task.whenComplete(Schedulers.javafx(), (s, e) -> {
                                 if (e != null) {
-                                    reject.accept(i18n("terracotta.status.waiting.guest.prompt.invalid"));
+                                    handler.reject(i18n("terracotta.status.waiting.guest.prompt.invalid"));
                                 } else {
-                                    resolve.run();
+                                    handler.resolve();
                                     UI_STATE.set(s);
                                 }
                             }).setSignificance(Task.TaskSignificance.MINOR).start();
                         } else {
-                            resolve.run();
+                            handler.resolve();
                         }
                     });
                 });
