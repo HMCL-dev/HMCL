@@ -446,7 +446,6 @@ public class DownloadPage extends Control implements DecoratorPage {
     }
 
     private static final class AddonVersion extends JFXDialogLayout {
-
         public AddonVersion(RemoteMod mod, RemoteMod.Version version, DownloadPage selfPage) {
             RemoteModRepository.Type type = selfPage.repository.getType();
 
@@ -457,7 +456,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 case SHADER_PACK -> "shaderpack.download.title";
                 default -> "mods.download.title";
             };
-            this.setHeading(new HBox(new Label(I18n.i18n(title, version.getName()))));
+            this.setHeading(new HBox(new Label(i18n(title, version.getName()))));
 
             VBox box = new VBox(8);
             box.setPadding(new Insets(8));
@@ -467,11 +466,12 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             Button changelogButton = new JFXButton(i18n("mods.changelog"));
             changelogButton.getStyleClass().add("dialog-accept");
+            loadChangelog(version, selfPage.repository, changelogButton);
+            
             SpinnerPane spinnerPane = new SpinnerPane();
             ScrollPane scrollPane = new ScrollPane();
             ComponentList dependenciesList = new ComponentList(Lang::immutableListOf);
             loadDependencies(version, selfPage, spinnerPane, dependenciesList);
-            loadChangelog(version, selfPage.repository, changelogButton);
             spinnerPane.setOnFailedAction(e -> loadDependencies(version, selfPage, spinnerPane, dependenciesList));
 
             scrollPane.setContent(dependenciesList);

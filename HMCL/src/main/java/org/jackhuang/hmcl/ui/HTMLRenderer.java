@@ -293,11 +293,7 @@ public final class HTMLRenderer {
                     if (n == null) break;
                     if (n.nameIs("li")) i++;
                 }
-                if (i == 0) {
-                    appendText("\n \u2022 ");
-                } else {
-                    appendText("\n " + "  ".repeat(Math.max(0, i)) + "\u2022 ");
-                }
+                appendText("\n " + "  ".repeat(Math.max(0, i)) + "\u2022 ");
             }
             case "dt" -> appendText(" ");
             case "p" -> {
@@ -312,15 +308,15 @@ public final class HTMLRenderer {
         }
 
         if (node.childNodeSize() > 0) {
-            pushNode(node);
             if ("table".equals(name)) {
                 appendTable(node);
             } else {
+                pushNode(node);
                 for (Node childNode : node.childNodes()) {
                     appendNode(childNode);
                 }
+                popNode();
             }
-            popNode();
         }
 
         switch (name) {
