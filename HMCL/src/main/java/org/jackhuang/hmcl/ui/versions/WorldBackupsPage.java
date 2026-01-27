@@ -21,7 +21,6 @@ import com.jfoenix.controls.JFXButton;
 import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
@@ -42,13 +41,12 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jetbrains.annotations.NotNull;
 
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -61,7 +59,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /**
  * @author Glavo
  */
-public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.BackupInfo> {
+public final class WorldBackupsPage extends CommonListPage<WorldBackupsPage.BackupInfo> {
     static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss");
 
     private final World world;
@@ -123,7 +121,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
 
     @Override
     protected Skin<?> createDefaultSkin() {
-        return new WorldBackupsPageSkin();
+        return new WorldBackupsPageSkin(this);
     }
 
     void createBackup() {
@@ -155,21 +153,15 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
         }), i18n("world.backup"), null);
     }
 
-    private final class WorldBackupsPageSkin extends ToolbarListPageSkin<BackupInfo, WorldBackupsPage> {
+    private final class WorldBackupsPageSkin extends CommonListPageSkin<BackupInfo> {
 
-        WorldBackupsPageSkin() {
-            super(WorldBackupsPage.this);
-        }
+        WorldBackupsPageSkin(WorldBackupsPage skinnable) {
+            super(skinnable, SelectionType.NONE);
 
-        @Override
-        protected List<Node> initializeToolbar(WorldBackupsPage skinnable) {
-            JFXButton createBackup = createToolbarButton2(i18n("world.backup.create.new_one"), SVG.ARCHIVE, skinnable::createBackup);
-            createBackup.setDisable(isReadOnly);
-
-            return Arrays.asList(
-                    createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
-                    createBackup
-            );
+            setToolbar(new HBox(
+                    createToolbarButton(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
+                    createToolbarButton(i18n("world.backup.create.new_one"), SVG.ARCHIVE, skinnable::createBackup, button -> button.setDisable(isReadOnly))
+            ));
         }
     }
 
@@ -221,9 +213,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
             super(skinnable);
 
             World world = skinnable.getBackupWorld();
-
             BorderPane root = new BorderPane();
-            root.getStyleClass().add("md-list-cell");
             root.setPadding(new Insets(8));
 
             {
