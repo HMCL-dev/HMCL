@@ -80,7 +80,6 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import java.awt.*;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -552,7 +551,7 @@ public final class FXUtils {
 
             // Fallback to java.awt.Desktop::open
             try {
-                Desktop.getDesktop().open(file.toFile());
+                java.awt.Desktop.getDesktop().open(file.toFile());
             } catch (Throwable e) {
                 LOG.error("Unable to open " + path + " by java.awt.Desktop.getDesktop()::open", e);
             }
@@ -649,7 +648,7 @@ public final class FXUtils {
             }
 
             try {
-                Desktop.getDesktop().browse(new URI(uri));
+                java.awt.Desktop.getDesktop().browse(new URI(uri));
             } catch (Throwable e) {
                 LOG.warning("Failed to open link: " + link, e);
             }
