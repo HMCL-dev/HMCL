@@ -1098,7 +1098,6 @@
 .jfx-toggle-button Line {
     -fx-stroke: -jfx-untoggle-line-color;
 }
-
 .jfx-toggle-button:selected Line{
     -fx-stroke: -jfx-toggle-line-color;
 }
