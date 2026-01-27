@@ -907,10 +907,10 @@ public final class FXUtils {
         public boolean equals(Object o) {
             if (this == o)
                 return true;
-            if (!(o instanceof PaintBidirectionalBinding))
+            if (!(o instanceof FXUtils.PaintBidirectionalBinding))
                 return false;
 
-            var that = (PaintBidirectionalBinding) o;
+            var that = (FXUtils.PaintBidirectionalBinding) o;
 
             final ColorPicker colorPicker = this.colorPickerRef.get();
             final Property<Paint> property = this.propertyRef.get();
@@ -1202,7 +1202,7 @@ public final class FXUtils {
      *
      * @param url the url of image. The image resource should be a file within the jar.
      * @return the image resource within the jar.
-     * @see CrashReporter
+     * @see org.jackhuang.hmcl.util.CrashReporter
      * @see ResourceNotFoundError
      */
     public static Image newBuiltinImage(String url) {
@@ -1226,7 +1226,7 @@ public final class FXUtils {
      *                        algorithm or a faster one when scaling this image to fit within
      *                        the specified bounding box
      * @return the image resource within the jar.
-     * @see CrashReporter
+     * @see org.jackhuang.hmcl.util.CrashReporter
      * @see ResourceNotFoundError
      */
     public static Image newBuiltinImage(String url, double requestedWidth, double requestedHeight, boolean preserveRatio, boolean smooth) {
