@@ -85,6 +85,10 @@ public final class LineSelectButton<T> extends LineButtonBase {
         return items;
     }
 
+    public void setItems(ObservableList<T> value) {
+        itemsProperty().set(value);
+    }
+
     public void setItems(Collection<T> value) {
         if (value instanceof ObservableList<T> observableList) {
             this.setItems(observableList);
@@ -93,8 +97,9 @@ public final class LineSelectButton<T> extends LineButtonBase {
         }
     }
 
-    public void setItems(ObservableList<T> value) {
-        itemsProperty().set(value);
+    @SafeVarargs
+    public final void setItems(T... values) {
+        this.setItems(FXCollections.observableArrayList(values));
     }
 
     public ObservableList<T> getItems() {

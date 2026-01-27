@@ -1,12 +1,10 @@
 package org.jackhuang.hmcl.ui.versions;
 
-import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXTextField;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
@@ -26,7 +24,6 @@ import java.nio.file.FileSystems;
 import java.util.Arrays;
 import java.util.Locale;
 
-import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class AdvancedVersionSettingPage extends StackPane implements DecoratorPage {
@@ -54,7 +51,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
     private final ComponentSublist nativesDirSublist;
     private final MultiFileItem<NativesDirectoryType> nativesDirItem;
     private final MultiFileItem.FileOption<NativesDirectoryType> nativesDirCustomOption;
-    private final JFXComboBox<Renderer> cboRenderer;
+    private final LineSelectButton<Renderer> rendererPane;
 
     public AdvancedVersionSettingPage(Profile profile, @Nullable String versionId, VersionSetting versionSetting) {
         this.profile = profile;
@@ -170,19 +167,10 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
             nativesDirHint.setText(i18n("settings.advanced.natives_directory.hint"));
             nativesDirItem.getChildren().add(nativesDirHint);
 
-            BorderPane rendererPane = new BorderPane();
-            {
-                Label label = new Label(i18n("settings.advanced.renderer"));
-                rendererPane.setLeft(label);
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-
-                cboRenderer = new JFXComboBox<>();
-                cboRenderer.getItems().setAll(Renderer.values());
-                cboRenderer.setConverter(stringConverter(e -> i18n("settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT))));
-                rendererPane.setRight(cboRenderer);
-                BorderPane.setAlignment(cboRenderer, Pos.CENTER_RIGHT);
-                FXUtils.setLimitWidth(cboRenderer, 300);
-            }
+            rendererPane = new LineSelectButton<>();
+            rendererPane.setTitle(i18n("settings.advanced.renderer"));
+            rendererPane.setConverter(e -> i18n("settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT)));
+            rendererPane.setItems(Renderer.values());
 
             noJVMArgsPane = new LineToggleButton();
             noJVMArgsPane.setTitle(i18n("settings.advanced.no_jvm_args"));
@@ -239,7 +227,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
         FXUtils.bindString(txtWrapper, versionSetting.wrapperProperty());
         FXUtils.bindString(txtPreLaunchCommand, versionSetting.preLaunchCommandProperty());
         FXUtils.bindString(txtPostExitCommand, versionSetting.postExitCommandProperty());
-        FXUtils.bindEnum(cboRenderer, versionSetting.rendererProperty());
+        rendererPane.valueProperty().bindBidirectional(versionSetting.rendererProperty());
         noGameCheckPane.selectedProperty().bindBidirectional(versionSetting.notCheckGameProperty());
         noJVMCheckPane.selectedProperty().bindBidirectional(versionSetting.notCheckJVMProperty());
         noJVMArgsPane.selectedProperty().bindBidirectional(versionSetting.noJVMArgsProperty());
@@ -281,7 +269,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
         FXUtils.unbind(txtWrapper, versionSetting.wrapperProperty());
         FXUtils.unbind(txtPreLaunchCommand, versionSetting.preLaunchCommandProperty());
         FXUtils.unbind(txtPostExitCommand, versionSetting.postExitCommandProperty());
-        FXUtils.unbindEnum(cboRenderer, versionSetting.rendererProperty());
+        rendererPane.valueProperty().unbindBidirectional(versionSetting.rendererProperty());
         noGameCheckPane.selectedProperty().unbindBidirectional(versionSetting.notCheckGameProperty());
         noJVMCheckPane.selectedProperty().unbindBidirectional(versionSetting.notCheckJVMProperty());
         noJVMArgsPane.selectedProperty().unbindBidirectional(versionSetting.noJVMArgsProperty());
