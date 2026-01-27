@@ -254,6 +254,7 @@ public final class HTMLRenderer {
                 .toArray(String[]::new);
         if (headRow.length == 0) return;
 
+        appendAutoLineBreak("\n");
         var bodyOptional = childNodes.stream().filter(n -> n.nameIs("tbody")).findFirst();
         String[][] bodyRows;
         if (bodyOptional.isEmpty()) {
