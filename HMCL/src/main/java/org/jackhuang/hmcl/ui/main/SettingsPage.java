@@ -25,6 +25,7 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
+import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.geometry.VPos;
@@ -247,40 +248,23 @@ public final class SettingsPage extends ScrollPane {
             }
 
             {
-                BorderPane languagePane = new BorderPane();
-
-                VBox left = new VBox();
-                Label title = new Label(i18n("settings.launcher.language"));
-                title.getStyleClass().add("title");
-                Label subtitle = new Label(i18n("settings.take_effect_after_restart"));
-                subtitle.getStyleClass().add("subtitle");
-                left.getChildren().setAll(title, subtitle);
-                languagePane.setLeft(left);
-
-                ChooseButton<String> button = new ChooseButton<>();
-                button.setTitle("MeowMeow");
-                button.setSubtitle("MeowMeowSub");
-                button.setValue("Value");
-                settingsPane.getContent().add(button);
-
+                var chooseLanguagePane = new ChooseButton<SupportedLocale>();
+                chooseLanguagePane.setTitle(i18n("settings.launcher.language"));
+                chooseLanguagePane.setSubtitle(i18n("settings.take_effect_after_restart"));
 
                 SupportedLocale currentLocale = I18n.getLocale();
-                JFXComboBox<SupportedLocale> cboLanguage = new JFXComboBox<>();
-                cboLanguage.setConverter(stringConverter(locale -> {
+                chooseLanguagePane.setConverter(locale -> {
                     if (locale.isDefault())
                         return locale.getDisplayName(currentLocale);
                     else if (locale.isSameLanguage(currentLocale))
                         return locale.getDisplayName(locale);
                     else
                         return locale.getDisplayName(currentLocale) + " - " + locale.getDisplayName(locale);
-                }));
-                cboLanguage.getItems().setAll(SupportedLocale.getSupportedLocales());
-                selectedItemPropertyFor(cboLanguage).bindBidirectional(config().localizationProperty());
+                });
+                chooseLanguagePane.setItems(FXCollections.observableList(SupportedLocale.getSupportedLocales()));
+                chooseLanguagePane.valueProperty().bindBidirectional(config().localizationProperty());
 
-                FXUtils.setLimitWidth(cboLanguage, 300);
-                languagePane.setRight(cboLanguage);
-
-                settingsPane.getContent().add(languagePane);
+                settingsPane.getContent().add(chooseLanguagePane);
             }
 
             {

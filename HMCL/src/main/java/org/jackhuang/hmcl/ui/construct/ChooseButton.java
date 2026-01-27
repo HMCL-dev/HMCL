@@ -80,15 +80,27 @@ public final class ChooseButton<T> extends StackPane {
 
         FXUtils.onClicked(container, () -> {
             PopupMenu popupMenu = new PopupMenu();
+            JFXPopup popup = new JFXPopup(popupMenu);
+
             Bindings.bindContent(popupMenu.getContent(), MappedObservableList.create(itemsProperty(), item -> {
                 Label itemLabel = new Label();
-                Function<T, String> converter = getConverter();
-                itemLabel.setText(converter != null ? converter.apply(item) : Objects.toString(item, ""));
-                itemLabel.getStyleClass().add("menu-item-label");
-                return PopupMenu.wrapPopupMenuItem(itemLabel);
+                itemLabel.textProperty().bind(Bindings.createStringBinding(() -> {
+                    Function<T, String> converter = getConverter();
+                    return converter != null ? converter.apply(item) : Objects.toString(item, "");
+                }, converterProperty()));
+
+                var wrapper = new StackPane(itemLabel);
+                wrapper.setAlignment(Pos.CENTER_LEFT);
+                wrapper.getStyleClass().add("menu-container");
+                wrapper.setMouseTransparent(true);
+                RipplerContainer ripplerContainer = new RipplerContainer(wrapper);
+                FXUtils.onClicked(ripplerContainer, () -> {
+                    setValue(item);
+                    popup.hide();
+                });
+                return ripplerContainer;
             }));
 
-            JFXPopup popup = new JFXPopup(popupMenu);
             JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(this, popup);
             popup.show(this, vPosition, JFXPopup.PopupHPosition.RIGHT,
                     0,
