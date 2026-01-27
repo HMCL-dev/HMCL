@@ -17,17 +17,19 @@
  */
 package org.jackhuang.hmcl.ui;
 
+import javafx.beans.InvalidationListener;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
-import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+import org.jackhuang.hmcl.task.Schedulers;
+import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jsoup.nodes.Element;
@@ -204,12 +206,23 @@ public final class HTMLRenderer {
             }
 
             try {
-                Image image = FXUtils.getRemoteImageTask(src, width, height, true, true)
-                        .run();
-                if (image == null)
-                    throw new AssertionError("Image loading task returned null");
+                ImageView imageView = new ImageView();
 
-                ImageView imageView = new ImageView(image);
+                int finalWidth = width;
+                int finalHeight = height;
+                Task.supplyAsync(() -> FXUtils.getRemoteImageTask(src, finalWidth, finalHeight, true, true).run())
+                        .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                            if (exception == null) {
+                                if (result == null) {
+                                    throw new AssertionError("Image loading task returned null");
+                                }
+                                imageView.setImage(result);
+                            } else {
+                                LOG.warning("Failed to load image: " + src, exception);
+                            }
+                        })
+                        .start();
+
                 if (hyperlink != null) {
                     URI target = resolveLink(hyperlink);
                     if (target != null) {
@@ -376,8 +389,10 @@ public final class HTMLRenderer {
         textFlow.getChildren().setAll(children);
         for (javafx.scene.Node node : children) {
             if (node instanceof ImageView img) {
-                double width = img.getImage().getWidth();
-                img.fitWidthProperty().bind(textFlow.widthProperty().map(d -> Math.min((double) d - 20D, width)));
+                InvalidationListener i = __ ->
+                        img.setFitWidth(Math.min(textFlow.getWidth() - 20D, img.getImage() == null ? 0D : img.getImage().getWidth()));
+                textFlow.widthProperty().addListener(i);
+                img.imageProperty().addListener(i);
             } else if (node instanceof TableView<?> table) {
                 table.prefWidthProperty().bind(textFlow.widthProperty().add(-20D));
             }
