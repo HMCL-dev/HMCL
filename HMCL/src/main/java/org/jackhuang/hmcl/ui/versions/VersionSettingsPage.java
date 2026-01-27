@@ -30,12 +30,18 @@ import javafx.geometry.Rectangle2D;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Toggle;
+import javafx.scene.image.Image;
 import javafx.scene.layout.*;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Screen;
-import org.jackhuang.hmcl.game.*;
+import org.jackhuang.hmcl.event.Event;
+import org.jackhuang.hmcl.game.GameDirectoryType;
+import org.jackhuang.hmcl.game.HMCLGameRepository;
+import org.jackhuang.hmcl.game.ProcessPriority;
+import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.java.JavaManager;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.setting.*;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -47,7 +53,6 @@ import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.PropertyUtils;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 import org.jackhuang.hmcl.util.platform.Architecture;
-import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.platform.hardware.PhysicalMemoryStatus;
@@ -498,6 +503,9 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
     @Override
     public void loadVersion(Profile profile, String versionId) {
+        String lastVersionId = this.versionId;
+        Image lastIcon = versionId == null ? null : iconPickerItem.getImage(); //Global Setting
+
         this.profile = profile;
         this.versionId = versionId;
         this.listenerHolder = new WeakListenerHolder();
@@ -623,6 +631,10 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 versionSetting.gameDirProperty(), versionSetting.gameDirTypeProperty()));
 
         lastVersionSetting = versionSetting;
+
+        if (Objects.equals(lastVersionId, versionId) && !Objects.equals(profile.getRepository().getVersionIconImage(versionId), lastIcon)) {
+            this.profile.getRepository().onVersionIconChanged.fireEvent(new Event(this));
+        }
 
         initJavaSubtitle();
 
@@ -751,7 +763,10 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         if (localVersionSetting != null) {
             localVersionSetting.setVersionIcon(VersionIconType.DEFAULT);
         }
+
         loadIcon();
+
+        profile.getRepository().onVersionIconChanged.fireEvent(new Event(this));
     }
 
     private void loadIcon() {
