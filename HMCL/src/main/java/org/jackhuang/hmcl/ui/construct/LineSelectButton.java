@@ -27,6 +27,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
+import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
@@ -148,6 +149,12 @@ public final class LineSelectButton<T> extends LineButtonBase {
                     Label itemLabel = new Label();
                     itemLabel.textProperty().bind(Bindings.createStringBinding(() -> toDisplayString(item), control.converterProperty()));
 
+                    itemLabel.textFillProperty().bind(Bindings.createObjectBinding(() ->
+                            Objects.equals(control.getValue(), item)
+                                    ? Themes.getColorScheme().getPrimary()
+                                    : Themes.getColorScheme().getOnSurface(),
+                            control.valueProperty(), Themes.colorSchemeProperty()));
+
                     var wrapper = new StackPane(itemLabel);
                     wrapper.setAlignment(Pos.CENTER_LEFT);
                     wrapper.getStyleClass().add("menu-container");
@@ -168,8 +175,11 @@ public final class LineSelectButton<T> extends LineButtonBase {
         }
 
         private String toDisplayString(T value) {
+            if (value == null)
+                return "";
+
             Function<T, String> converter = control.getConverter();
-            return converter != null ? converter.apply(value) : Objects.toString(value, "");
+            return converter != null ? converter.apply(value) : value.toString();
         }
     }
 
