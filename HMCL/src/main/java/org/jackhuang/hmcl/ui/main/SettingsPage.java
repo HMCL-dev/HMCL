@@ -40,11 +40,8 @@ import org.jackhuang.hmcl.setting.Settings;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.ComponentSublist;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
-import org.jackhuang.hmcl.ui.construct.MultiFileItem;
-import org.jackhuang.hmcl.ui.construct.OptionToggleButton;
 import org.jackhuang.hmcl.upgrade.RemoteVersion;
 import org.jackhuang.hmcl.upgrade.UpdateChannel;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
@@ -259,6 +256,13 @@ public final class SettingsPage extends ScrollPane {
                 subtitle.getStyleClass().add("subtitle");
                 left.getChildren().setAll(title, subtitle);
                 languagePane.setLeft(left);
+
+                ChooseButton<String> button = new ChooseButton<>();
+                button.setTitle("MeowMeow");
+                button.setSubtitle("MeowMeowSub");
+                button.setValue("Value");
+                settingsPane.getContent().add(button);
+
 
                 SupportedLocale currentLocale = I18n.getLocale();
                 JFXComboBox<SupportedLocale> cboLanguage = new JFXComboBox<>();
