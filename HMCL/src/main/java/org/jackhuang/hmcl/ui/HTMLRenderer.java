@@ -63,18 +63,7 @@ public final class HTMLRenderer {
     }
 
     public static HTMLRenderer openHyperlinkInBrowser() {
-        return new HTMLRenderer(uri -> {
-            var dialog =
-                    new MessageDialogPane.Builder(
-                            i18n("web.open_in_browser", uri),
-                            i18n("message.confirm"),
-                            MessageDialogPane.MessageType.QUESTION
-                    )
-                            .addAction(i18n("button.copy"), () -> FXUtils.copyText(uri.toString()))
-                            .yesOrNo(() -> FXUtils.openLink(uri.toString()), null)
-                            .build();
-            Controllers.dialog(dialog);
-        });
+        return new HTMLRenderer(FXUtils::openUriInBrowser);
     }
 
     private final List<javafx.scene.Node> children = new ArrayList<>();
@@ -306,7 +295,11 @@ public final class HTMLRenderer {
                     if (n == null) break;
                     if (n.nameIs("li")) i++;
                 }
-                appendText("\n " + "  ".repeat(Math.max(0, i)) + "\u2022 ");
+                if (i == 0) {
+                    appendText("\n \u2022 ");
+                } else {
+                    appendText("\n " + "  ".repeat(Math.max(0, i)) + "\u2022 ");
+                }
             }
             case "dt" -> appendText(" ");
             case "p" -> {

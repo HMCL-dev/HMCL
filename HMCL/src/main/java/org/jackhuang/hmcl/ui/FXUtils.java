@@ -70,6 +70,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
 import org.jackhuang.hmcl.ui.construct.MenuSeparator;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.image.ImageLoader;
 import org.jackhuang.hmcl.ui.image.ImageUtils;
@@ -1666,5 +1667,23 @@ public final class FXUtils {
         var textFlow = renderer.render();
         textFlow.getStyleClass().add("addon-changelog");
         return textFlow;
+    }
+
+    public static void openUriInBrowser(URI uri) {
+        if (uri == null) return;
+        openUriInBrowser(uri.toString());
+    }
+
+    public static void openUriInBrowser(String uri) {
+        if (uri == null) return;
+        var dialog = new MessageDialogPane.Builder(
+                i18n("web.open_in_browser", uri),
+                i18n("message.confirm"),
+                MessageDialogPane.MessageType.QUESTION
+        )
+                .addAction(i18n("button.copy"), () -> copyText(uri))
+                .yesOrNo(() -> openLink(uri), null)
+                .build();
+        Controllers.dialog(dialog);
     }
 }

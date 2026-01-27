@@ -562,7 +562,7 @@ public final class StringUtils {
     public static boolean isStringHtml(String str) {
         if (isBlank(str)) return false;
         if (str.startsWith("<!DOCTYPE html>") || str.startsWith("<html>") || str.startsWith("<body>")) return true;
-        if (!Jsoup.isValid(str, Safelist.relaxed().addAttributes("a", "rel"))) {
+        if (!Jsoup.isValid(str, Safelist.relaxed().addAttributes("a", "rel", "target"))) {
             return false;
         }
         var body = Jsoup.parse(str).body();

@@ -186,6 +186,11 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     }
 
     @Override
+    public String getVersionPageUrl(RemoteMod.Version version) {
+        return "%s/mod/%s/version/%s".formatted(BASE, version.getModid(), version.getVersionId()); // Modrinth will help us redirect
+    }
+
+    @Override
     public Stream<RemoteModRepository.Category> getCategories() throws IOException {
         SEMAPHORE.acquireUninterruptibly();
         try {

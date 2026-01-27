@@ -261,6 +261,32 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     }
 
     @Override
+    public String getVersionPageUrl(RemoteMod.Version version) throws IOException {
+        SEMAPHORE.acquireUninterruptibly();
+        try {
+            Response<CurseAddon> response = withApiKey(HttpRequest.GET(PREFIX + "/v1/mods/" + version.getModid()))
+                    .getJson(Response.typeOf(CurseAddon.class));
+            var addon = response.getData();
+            var classId = addon.getClassId();
+            var clazz = switch (classId) {
+                case SECTION_MOD -> "mc-mods";
+                case SECTION_RESOURCE_PACK -> "texture-packs";
+                case SECTION_WORLD -> "worlds";
+                case SECTION_MODPACK -> "modpacks";
+                case SECTION_DATAPACK -> "data-packs";
+                case SECTION_BUKKIT_PLUGIN -> "bukkit-plugins";
+                case SECTION_ADDONS -> "mc-addons";
+                case SECTION_CUSTOMIZATION -> "customization";
+                case SECTION_SHADERS -> "shaders";
+                default -> throw new IllegalArgumentException("Unsupported CurseForge class id [%d]".formatted(classId));
+            };
+            return "%s/minecraft/%s/%s/files/%s".formatted(BASE, clazz, addon.getSlug(), version.getVersionId());
+        } finally {
+            SEMAPHORE.release();
+        }
+    }
+
+    @Override
     public Stream<RemoteModRepository.Category> getCategories() throws IOException {
         SEMAPHORE.acquireUninterruptibly();
         try {
@@ -297,6 +323,8 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     public static final int SECTION_BUKKIT_PLUGIN = 5;
     public static final int SECTION_MOD = 6;
     public static final int SECTION_RESOURCE_PACK = 12;
+    public static final int SECTION_DATAPACK = 6945;
+    public static final int SECTION_SHADERS = 6552;
     public static final int SECTION_WORLD = 17;
     public static final int SECTION_MODPACK = 4471;
     public static final int SECTION_CUSTOMIZATION = 4546;

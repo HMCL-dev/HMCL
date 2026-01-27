@@ -102,6 +102,8 @@ public interface RemoteModRepository {
 
     String getModChangelog(String modId, String versionId) throws IOException;
 
+    String getVersionPageUrl(RemoteMod.Version version) throws IOException;
+
     Stream<Category> getCategories() throws IOException;
 
     class Category {

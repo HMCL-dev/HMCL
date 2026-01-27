@@ -143,4 +143,9 @@ public abstract class LocalizedRemoteModRepository implements RemoteModRepositor
     public String getModChangelog(String modId, String versionId) throws IOException {
         return getBackedRemoteModRepository().getModChangelog(modId, versionId);
     }
+
+    @Override
+    public String getVersionPageUrl(RemoteMod.Version version) throws IOException {
+        return getBackedRemoteModRepository().getVersionPageUrl(version);
+    }
 }

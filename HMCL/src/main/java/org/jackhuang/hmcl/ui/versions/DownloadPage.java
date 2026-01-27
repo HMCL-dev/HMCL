@@ -598,6 +598,16 @@ public class DownloadPage extends Control implements DecoratorPage {
             box.getChildren().add(spinnerPane);
             VBox.setVgrow(spinnerPane, Priority.SOMETIMES);
 
+            JFXHyperlink versionPage = new JFXHyperlink(i18n("mods.url"));
+            versionPage.setDisable(true);
+            Task.supplyAsync(() -> repo.getVersionPageUrl(version)).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                if (exception == null && StringUtils.isNotBlank(result)) {
+                    versionPage.setOnAction(__ -> FXUtils.openUriInBrowser(result));
+                    versionPage.setDisable(false);
+                }
+            }).start();
+            box.getChildren().add(versionPage);
+
             this.setBody(box);
 
             JFXButton closeButton = new JFXButton(i18n("button.ok"));
