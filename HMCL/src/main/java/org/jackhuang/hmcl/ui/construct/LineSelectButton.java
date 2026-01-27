@@ -138,9 +138,23 @@ public final class LineSelectButton<T> extends LineButtonBase {
                 right.getChildren().setAll(valueLabel, arrowIcon);
             }
 
-            FXUtils.onClicked(container, () -> {
+            FXUtils.onClicked(container, this::showPopup);
+        }
+
+        private String toDisplayString(T value) {
+            if (value == null)
+                return "";
+
+            Function<T, String> converter = control.getConverter();
+            return converter != null ? converter.apply(value) : Objects.toString(value, "");
+        }
+
+        private JFXPopup popup;
+
+        private void showPopup() {
+            if (popup == null) {
                 PopupMenu popupMenu = new PopupMenu();
-                JFXPopup popup = new JFXPopup(popupMenu);
+                this.popup = new JFXPopup(popupMenu);
 
                 Bindings.bindContent(popupMenu.getContent(), MappedObservableList.create(control.itemsProperty(), item -> {
                     Label itemLabel = new Label();
@@ -163,20 +177,16 @@ public final class LineSelectButton<T> extends LineButtonBase {
                     });
                     return ripplerContainer;
                 }));
+            }
 
+            if (popup.isFocused()) {
+                popup.hide();
+            } else {
                 JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(control, popup);
                 popup.show(control, vPosition, JFXPopup.PopupHPosition.RIGHT,
                         0,
                         vPosition == JFXPopup.PopupVPosition.TOP ? control.getHeight() : -control.getHeight());
-            });
-        }
-
-        private String toDisplayString(T value) {
-            if (value == null)
-                return "";
-
-            Function<T, String> converter = control.getConverter();
-            return converter != null ? converter.apply(value) : Objects.toString(value, "");
+            }
         }
     }
 
