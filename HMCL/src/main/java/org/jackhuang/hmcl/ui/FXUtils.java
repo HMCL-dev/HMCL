@@ -433,6 +433,20 @@ public final class FXUtils {
         return pane;
     }
 
+    public static void limitCellWidth(ListView<?> listView, ListCell<?> cell) {
+        ReadOnlyDoubleProperty widthProperty;
+
+        if (listView.lookup(".clipped-container") instanceof Region clippedContainer) {
+            widthProperty = clippedContainer.widthProperty();
+        } else {
+            widthProperty = listView.widthProperty();
+        }
+
+        cell.maxWidthProperty().bind(widthProperty);
+        cell.prefWidthProperty().bind(widthProperty);
+        cell.minWidthProperty().bind(widthProperty);
+    }
+
     public static void smoothScrolling(ScrollPane scrollPane) {
         if (AnimationUtils.isAnimationEnabled())
             ScrollUtils.addSmoothScrolling(scrollPane);
