@@ -28,7 +28,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
-import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -210,15 +209,15 @@ public final class HTMLRenderer {
 
                 int finalWidth = width;
                 int finalHeight = height;
-                Task.supplyAsync(() -> FXUtils.getRemoteImageTask(src, finalWidth, finalHeight, true, true).run())
-                        .whenComplete(Schedulers.javafx(), (result, exception) -> {
-                            if (exception == null) {
+                Task.runAsync(() -> {
+                            try {
+                                var result = FXUtils.getRemoteImageTask(src, finalWidth, finalHeight, true, true).run();
                                 if (result == null) {
                                     throw new AssertionError("Image loading task returned null");
                                 }
                                 imageView.setImage(result);
-                            } else {
-                                LOG.warning("Failed to load image: " + src, exception);
+                            } catch (Throwable e) {
+                                LOG.warning("Failed to load image: " + src, e);
                             }
                         })
                         .start();
