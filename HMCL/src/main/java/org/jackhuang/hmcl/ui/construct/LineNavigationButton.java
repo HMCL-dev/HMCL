@@ -102,6 +102,7 @@ public final class LineNavigationButton extends LineButtonBase {
 
             HBox right = new HBox();
             root.setRight(right);
+            right.setAlignment(Pos.CENTER_RIGHT);
             {
                 Label valueLabel = new Label();
                 valueLabel.getStyleClass().add("subtitle");

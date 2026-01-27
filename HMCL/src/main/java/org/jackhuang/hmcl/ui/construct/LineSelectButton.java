@@ -120,25 +120,22 @@ public final class LineSelectButton<T> extends LineButtonBase {
             HBox right = new HBox();
             root.setRight(right);
             {
+                right.setAlignment(Pos.CENTER_RIGHT);
+
                 Label valueLabel = new Label();
                 valueLabel.getStyleClass().add("subtitle");
 
                 valueLabel.textProperty().bind(Bindings.createStringBinding(
                         () -> toDisplayString(control.getValue()),
                         control.converterProperty(), control.valueProperty()));
-                StackPane valuePane = new StackPane(valueLabel);
-                valuePane.setAlignment(Pos.CENTER);
 
                 Node arrowIcon = SVG.UNFOLD_MORE.createIcon(24);
-
-                StackPane arrowPane = new StackPane(arrowIcon);
-                arrowPane.opacityProperty().bind(Bindings.when(control.disabledProperty())
+                HBox.setMargin(arrowIcon, new Insets(0, 8, 0, 8));
+                arrowIcon.opacityProperty().bind(Bindings.when(control.disabledProperty())
                         .then(0.4)
                         .otherwise(1.0));
-                HBox.setMargin(arrowPane, new Insets(0, 8, 0, 8));
-                arrowPane.setAlignment(Pos.CENTER);
 
-                right.getChildren().setAll(valuePane, arrowPane);
+                right.getChildren().setAll(valueLabel, arrowIcon);
             }
 
             FXUtils.onClicked(container, () -> {
