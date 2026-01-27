@@ -63,7 +63,7 @@ public class LineToggleButton extends LineButtonBase {
             toggleButton.setSize(8);
             FXUtils.setLimitHeight(toggleButton, 30);
 
-            FXUtils.onClicked(container, () -> toggleButton.setSelected(!toggleButton.isSelected()));
+            FXUtils.onClicked(container, toggleButton::fire);
         }
     }
 }
