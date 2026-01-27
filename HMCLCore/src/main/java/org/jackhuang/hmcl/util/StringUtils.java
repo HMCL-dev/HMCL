@@ -25,6 +25,7 @@ import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 import org.jetbrains.annotations.Contract;
 import org.jsoup.Jsoup;
+import org.jsoup.internal.StringUtil;
 import org.jsoup.safety.Safelist;
 
 import java.io.PrintWriter;
@@ -32,7 +33,6 @@ import java.io.StringWriter;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 /**
  * @author huangyuhui
@@ -541,22 +541,27 @@ public final class StringUtils {
         return Optional.ofNullable(str).map(s -> s.isBlank() ? null : s);
     }
 
-    public static String removeEmptyLinesAtBeginningAndEnd(String str) {
-        if (str == null) return null;
-        var lines = str.lines().toList();
-        int i = 0;
-        for (; i < lines.size(); i++) {
-            if (isNotBlank(lines.get(i))) break;
+    /// @see StringUtil#normaliseWhitespace(String)
+    /// @see StringUtil#isActuallyWhitespace(int)
+    public static String normaliseWhitespace(String str) {
+        var accum = new StringBuilder();
+        boolean lastWasWhite = false;
+        int len = str.length();
+        int c;
+        for (int i = 0; i < len; i += Character.charCount(c)) {
+            c = str.codePointAt(i);
+            if (StringUtil.isWhitespace(c)) { // Ignore &nbsp;
+                if (lastWasWhite)
+                    continue;
+                accum.append(' ');
+                lastWasWhite = true;
+            }
+            else if (!StringUtil.isInvisibleChar(c)) {
+                accum.appendCodePoint(c);
+                lastWasWhite = false;
+            }
         }
-        int j = lines.size() - 1;
-        for (; j > 0; j--) {
-            if (isNotBlank(lines.get(j))) break;
-        }
-        j = Math.min(j + 1, lines.size() - 1);
-        if (i > j) {
-            return "";
-        }
-        return lines.subList(i, j + 1).stream().collect(Collectors.joining(System.lineSeparator()));
+        return accum.toString();
     }
 
     public static boolean isStringHtml(String str) {

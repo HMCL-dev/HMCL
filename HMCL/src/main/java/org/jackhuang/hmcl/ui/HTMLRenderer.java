@@ -28,7 +28,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jsoup.nodes.Element;
@@ -42,7 +41,6 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
@@ -276,7 +274,7 @@ public final class HTMLRenderer {
 
     public void appendNode(Node node) {
         if (node instanceof TextNode n) {
-            appendText(StringUtils.removeEmptyLinesAtBeginningAndEnd(n.getWholeText()));
+            appendText(StringUtils.normaliseWhitespace(n.getWholeText()));
         }
 
         String name = node.nodeName();
