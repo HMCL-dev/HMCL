@@ -177,6 +177,9 @@ public final class LineSelectButton<T> extends LineButtonBase {
                     });
                     return ripplerContainer;
                 }));
+
+                popup.showingProperty().addListener((observable, oldValue, newValue) ->
+                        container.getRippler().setRipplerDisabled(newValue));
             }
 
             if (popup.isShowing()) {
