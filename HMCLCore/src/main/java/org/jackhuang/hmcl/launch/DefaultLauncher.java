@@ -50,6 +50,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public class DefaultLauncher extends Launcher {
 
     private final LibraryAnalyzer analyzer;
+    protected boolean restoreVersionSetting = false;
 
     public DefaultLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options) {
         this(repository, version, authInfo, options, null);
@@ -545,7 +546,7 @@ public class DefaultLauncher extends Launcher {
         return p;
     }
 
-    private Map<String, String> getEnvVars() {
+    protected Map<String, String> getEnvVars() {
         String versionName = Optional.ofNullable(options.getVersionName()).orElse(version.getId());
         Map<String, String> env = new LinkedHashMap<>();
         env.put("INST_NAME", versionName);
@@ -774,7 +775,7 @@ public class DefaultLauncher extends Launcher {
             throw new ExecutionPolicyLimitException();
     }
 
-    private void startMonitors(ManagedProcess managedProcess, ProcessListener processListener, Charset encoding, boolean isDaemon) {
+    protected void startMonitors(ManagedProcess managedProcess, ProcessListener processListener, Charset encoding, boolean isDaemon) {
         processListener.setProcess(managedProcess);
         Thread stdout = Lang.thread(new StreamPump(managedProcess.getProcess().getInputStream(), it -> {
             processListener.onLog(it, false);

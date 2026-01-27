@@ -20,16 +20,23 @@ package org.jackhuang.hmcl.game;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.launch.DefaultLauncher;
+import org.jackhuang.hmcl.launch.ExitWaiter;
 import org.jackhuang.hmcl.launch.ProcessListener;
+import org.jackhuang.hmcl.launch.StreamPump;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
+import org.jackhuang.hmcl.util.platform.SystemUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -48,15 +55,27 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public final class HMCLGameLauncher extends DefaultLauncher {
 
-    public HMCLGameLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options) {
+    public HMCLGameLauncher(
+            GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options) {
         this(repository, version, authInfo, options, null);
     }
 
-    public HMCLGameLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener) {
+    public HMCLGameLauncher(
+            GameRepository repository,
+            Version version,
+            AuthInfo authInfo,
+            LaunchOptions options,
+            ProcessListener listener) {
         this(repository, version, authInfo, options, listener, true);
     }
 
-    public HMCLGameLauncher(GameRepository repository, Version version, AuthInfo authInfo, LaunchOptions options, ProcessListener listener, boolean daemon) {
+    public HMCLGameLauncher(
+            GameRepository repository,
+            Version version,
+            AuthInfo authInfo,
+            LaunchOptions options,
+            ProcessListener listener,
+            boolean daemon) {
         super(repository, version, authInfo, options, listener, daemon);
     }
 
@@ -69,8 +88,7 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     }
 
     private void generateOptionsTxt() {
-        if (config().isDisableAutoGameOptions())
-            return;
+        if (config().isDisableAutoGameOptions()) return;
         Path runDir = repository.getRunDirectory(version.getId());
         HMCLGameRepository repository = (HMCLGameRepository) this.repository;
         if (repository.getGameDirectoryType(version.getId()) == GameDirectoryType.ROOT_FOLDER) {
@@ -78,19 +96,20 @@ public final class HMCLGameLauncher extends DefaultLauncher {
             String[] subdirs = {"resourcepacks", "saves", "mods", "shaderpacks", "crash-report"};
 
             if (Arrays.stream(subdirs).anyMatch(dir -> Files.exists(versionRoot.resolve(dir)))) {
-                runDir = switchWorkingDirectory(repository, version);
+                if (Arrays.stream(subdirs)
+                        .anyMatch(dir -> Files.exists(versionRoot.resolve(dir)))) {
+                    runDir = switchWorkingDirectory(repository, version);
+                }
             }
         }
         Path optionsFile = runDir.resolve("options.txt");
         Path configFolder = runDir.resolve("config");
 
-        if (Files.exists(optionsFile))
-            return;
+        if (Files.exists(optionsFile)) return;
 
         if (Files.isDirectory(configFolder)) {
             try (Stream<Path> stream = Files.walk(configFolder, 2, FileVisitOption.FOLLOW_LINKS)) {
-                if (stream.anyMatch(file -> "options.txt".equals(FileUtils.getName(file))))
-                    return;
+                if (stream.anyMatch(file -> "options.txt".equals(FileUtils.getName(file)))) return;
             } catch (IOException e) {
                 LOG.warning("Failed to visit config folder", e);
             }
@@ -105,16 +124,14 @@ public final class HMCLGameLauncher extends DefaultLauncher {
          *  1.11 ~ 1.12 : zh_cn works fine, zh_CN will display Chinese but the language setting will incorrectly show English as selected
          *  1.13+       : zh_cn works fine, zh_CN will automatically switch to English
          */
-        GameVersionNumber gameVersion = GameVersionNumber.asGameVersion(this.repository.getGameVersion(version));
-        if (gameVersion.compareTo("1.1") < 0)
-            return;
+        GameVersionNumber gameVersion =
+                GameVersionNumber.asGameVersion(this.repository.getGameVersion(version));
+        if (gameVersion.compareTo("1.1") < 0) return;
 
         String lang = normalizedLanguageTag(locale, gameVersion);
-        if (lang.isEmpty())
-            return;
+        if (lang.isEmpty()) return;
 
-        if (gameVersion.compareTo("1.11") >= 0)
-            lang = lang.toLowerCase(Locale.ROOT);
+        if (gameVersion.compareTo("1.11") >= 0) lang = lang.toLowerCase(Locale.ROOT);
 
         try {
             Files.createDirectories(optionsFile.getParent());
@@ -127,15 +144,34 @@ public final class HMCLGameLauncher extends DefaultLauncher {
     private Path switchWorkingDirectory(HMCLGameRepository repository, Version version) {
         CompletableFuture<Path> future = new CompletableFuture<>();
 
-        var dialog = new MessageDialogPane.Builder(
-                i18n("launcher.info.switch_working_directory.content", File.separatorChar, version.getId()),
-                i18n("launcher.info.switch_working_directory.title"), MessageDialogPane.MessageType.QUESTION)
-                .yesOrNo(() -> {
-                    repository.getVersionSetting(version.getId()).setGameDirType(GameDirectoryType.VERSION_FOLDER);
-                    future.complete(repository.getVersionRoot(version.getId()));
-                }, () -> future.complete(repository.getBaseDirectory()))
-                .addAction(i18n("Dialog.this_launch_only.button"), () -> future.complete(repository.getVersionRoot(version.getId()))
-                ).build();
+        var dialog =
+                new MessageDialogPane.Builder(
+                                i18n(
+                                        "launcher.info.switch_working_directory.content",
+                                        File.separatorChar,
+                                        version.getId()),
+                                i18n("launcher.info.switch_working_directory.title"),
+                                MessageDialogPane.MessageType.QUESTION)
+                        .yesOrNo(
+                                () -> {
+                                    repository
+                                            .getVersionSetting(version.getId())
+                                            .setGameDirType(GameDirectoryType.VERSION_FOLDER);
+                                    future.complete(repository.getVersionRoot(version.getId()));
+                                },
+                                () -> {
+                                    future.complete(repository.getBaseDirectory());
+                                })
+                        .addAction(
+                                i18n("Dialog.this_launch_only.button"),
+                                () -> {
+                                    repository
+                                            .getVersionSetting(version.getId())
+                                            .setGameDirType(GameDirectoryType.VERSION_FOLDER);
+                                    restoreVersionSetting = true;
+                                    future.complete(repository.getVersionRoot(version.getId()));
+                                })
+                        .build();
         dialog.setCancelButton(null);
         FXUtils.runInFX(() -> Controllers.dialog(dialog));
 
@@ -161,14 +197,16 @@ public final class HMCLGameLauncher extends DefaultLauncher {
 
                 String script = LocaleUtils.getScript(locale);
                 if ("Hant".equals(script)) {
-                    if ((region.equals("HK") || region.equals("MO") && gameVersion.compareTo("1.16") >= 0))
+                    if ((region.equals("HK")
+                            || region.equals("MO") && gameVersion.compareTo("1.16") >= 0))
                         yield "zh_HK";
                     yield "zh_TW";
                 }
                 yield "zh_CN";
             }
             case "en" -> {
-                if ("Qabs".equals(LocaleUtils.getScript(locale)) && gameVersion.compareTo("1.16") >= 0) {
+                if ("Qabs".equals(LocaleUtils.getScript(locale))
+                        && gameVersion.compareTo("1.16") >= 0) {
                     yield "en_UD";
                 }
 
@@ -176,6 +214,37 @@ public final class HMCLGameLauncher extends DefaultLauncher {
             }
             default -> "";
         };
+    }
+
+    @Override
+    protected void startMonitors(ManagedProcess managedProcess, ProcessListener processListener, Charset encoding, boolean isDaemon) {
+        processListener.setProcess(managedProcess);
+        Thread stdout = Lang.thread(new StreamPump(managedProcess.getProcess().getInputStream(), it -> {
+            processListener.onLog(it, false);
+            managedProcess.addLine(it);
+        }, encoding), "stdout-pump", isDaemon);
+        managedProcess.addRelatedThread(stdout);
+        Thread stderr = Lang.thread(new StreamPump(managedProcess.getProcess().getErrorStream(), it -> {
+            processListener.onLog(it, true);
+            managedProcess.addLine(it);
+        }, encoding), "stderr-pump", isDaemon);
+        managedProcess.addRelatedThread(stderr);
+        managedProcess.addRelatedThread(Lang.thread(new ExitWaiter(managedProcess, Arrays.asList(stdout, stderr), (exitCode, exitType) -> {
+            if (restoreVersionSetting) {
+                ((HMCLGameRepository) repository).getVersionSetting(version.getId()).setGameDirType(GameDirectoryType.ROOT_FOLDER);
+            }
+            processListener.onExit(exitCode, exitType);
+
+            if (StringUtils.isNotBlank(options.getPostExitCommand())) {
+                try {
+                    ProcessBuilder builder = new ProcessBuilder(StringUtils.tokenize(options.getPostExitCommand(), getEnvVars())).directory(options.getGameDir().toFile());
+                    builder.environment().putAll(getEnvVars());
+                    SystemUtils.callExternalProcess(builder);
+                } catch (Throwable e) {
+                    LOG.warning("An Exception happened while running exit command.", e);
+                }
+            }
+        }), "exit-waiter", isDaemon));
     }
 
     @Override

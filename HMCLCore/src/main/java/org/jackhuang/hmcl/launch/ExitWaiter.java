@@ -33,7 +33,7 @@ import java.util.function.BiConsumer;
 /**
  * @author huangyuhui
  */
-final class ExitWaiter implements Runnable {
+public final class ExitWaiter implements Runnable {
 
     private final ManagedProcess process;
     private final Collection<Thread> joins;
