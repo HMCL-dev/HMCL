@@ -72,12 +72,12 @@ public final class LineSelectButton<T> extends LineButtonBase {
         return converter;
     }
 
-    public void setConverter(Function<T, String> value) {
-        converterProperty().set(value);
-    }
-
     public Function<T, String> getConverter() {
         return converterProperty().get();
+    }
+
+    public void setConverter(Function<T, String> value) {
+        converterProperty().set(value);
     }
 
     private final ListProperty<T> items = new SimpleListProperty<>(this, "items");
@@ -150,9 +150,9 @@ public final class LineSelectButton<T> extends LineButtonBase {
                     itemLabel.textProperty().bind(Bindings.createStringBinding(() -> toDisplayString(item), control.converterProperty()));
 
                     itemLabel.textFillProperty().bind(Bindings.createObjectBinding(() ->
-                            Objects.equals(control.getValue(), item)
-                                    ? Themes.getColorScheme().getPrimary()
-                                    : Themes.getColorScheme().getOnSurface(),
+                                    Objects.equals(control.getValue(), item)
+                                            ? Themes.getColorScheme().getPrimary()
+                                            : Themes.getColorScheme().getOnSurface(),
                             control.valueProperty(), Themes.colorSchemeProperty()));
 
                     var wrapper = new StackPane(itemLabel);
@@ -179,7 +179,7 @@ public final class LineSelectButton<T> extends LineButtonBase {
                 return "";
 
             Function<T, String> converter = control.getConverter();
-            return converter != null ? converter.apply(value) : value.toString();
+            return converter != null ? converter.apply(value) : Objects.toString(value, "");
         }
     }
 
