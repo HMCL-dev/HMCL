@@ -421,7 +421,7 @@ public final class FXUtils {
     }
 
     public static void limitCellWidth(ListView<?> listView, ListCell<?> cell) {
-        ObservableDoubleValue widthProperty;
+        ReadOnlyDoubleProperty widthProperty;
 
         if (listView.lookup(".clipped-container") instanceof Region clippedContainer) {
             widthProperty = clippedContainer.widthProperty();
