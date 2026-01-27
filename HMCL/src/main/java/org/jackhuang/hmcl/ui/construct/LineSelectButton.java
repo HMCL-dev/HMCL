@@ -26,10 +26,10 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.control.Skin;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
 import java.util.Collection;
@@ -39,115 +39,15 @@ import java.util.function.Function;
 import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 
 /// @author Glavo
-public final class LineSelectButton<T> extends StackPane {
+public final class LineSelectButton<T> extends LineButtonBase {
 
     public LineSelectButton() {
-        getProperties().put("ComponentList.noPadding", true);
-
-        var pane = new HBox();
-        pane.setPadding(new Insets(8, 8, 8, 16));
-        RipplerContainer container = new RipplerContainer(pane);
-        getChildren().setAll(container);
-
-        VBox left = new VBox();
-        HBox.setHgrow(left, Priority.ALWAYS);
-        left.setMinHeight(30);
-        left.setMouseTransparent(true);
-        Label titleLabel = new Label();
-        titleLabel.textProperty().bind(title);
-        Label subtitleLabel = new Label();
-        subtitleLabel.setWrapText(true);
-        subtitleLabel.setMouseTransparent(true);
-        subtitleLabel.getStyleClass().add("subtitle");
-        subtitleLabel.textProperty().bind(subtitle);
-        left.setAlignment(Pos.CENTER_LEFT);
-
-        Label valueLabel = new Label();
-        valueLabel.getStyleClass().add("subtitle");
-        valueLabel.textProperty().bind(Bindings.createStringBinding(() -> {
-            T value = getValue();
-            Function<T, String> converter = getConverter();
-            return converter != null ? converter.apply(value) : Objects.toString(value, "");
-        }, converterProperty(), valueProperty()));
-        StackPane valuePane = new StackPane(valueLabel);
-        valuePane.setAlignment(Pos.CENTER);
-
-        Node arrowIcon = SVG.UNFOLD_MORE.createIcon(24);
-        arrowIcon.setMouseTransparent(true);
-
-        StackPane arrowPane = new StackPane(arrowIcon);
-        arrowPane.opacityProperty().bind(Bindings.when(this.disabledProperty())
-                .then(0.4)
-                .otherwise(1.0));
-        HBox.setMargin(arrowPane, new Insets(0, 8, 0, 8));
-        arrowPane.setAlignment(Pos.CENTER);
-
-        pane.getChildren().setAll(left, valuePane, arrowPane);
-
-        FXUtils.onClicked(container, () -> {
-            PopupMenu popupMenu = new PopupMenu();
-            JFXPopup popup = new JFXPopup(popupMenu);
-
-            Bindings.bindContent(popupMenu.getContent(), MappedObservableList.create(itemsProperty(), item -> {
-                Label itemLabel = new Label();
-                itemLabel.textProperty().bind(Bindings.createStringBinding(() -> {
-                    Function<T, String> converter = getConverter();
-                    return converter != null ? converter.apply(item) : Objects.toString(item, "");
-                }, converterProperty()));
-
-                var wrapper = new StackPane(itemLabel);
-                wrapper.setAlignment(Pos.CENTER_LEFT);
-                wrapper.getStyleClass().add("menu-container");
-                wrapper.setMouseTransparent(true);
-                RipplerContainer ripplerContainer = new RipplerContainer(wrapper);
-                FXUtils.onClicked(ripplerContainer, () -> {
-                    setValue(item);
-                    popup.hide();
-                });
-                return ripplerContainer;
-            }));
-
-            JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(this, popup);
-            popup.show(this, vPosition, JFXPopup.PopupHPosition.RIGHT,
-                    0,
-                    vPosition == JFXPopup.PopupVPosition.TOP ? this.getHeight() : -this.getHeight());
-        });
-
-        FXUtils.onChangeAndOperate(subtitleProperty(), subtitle -> {
-            if (StringUtils.isNotBlank(subtitle)) {
-                left.getChildren().setAll(titleLabel, subtitleLabel);
-            } else {
-                left.getChildren().setAll(titleLabel);
-            }
-        });
+        this.getStyleClass().add("line-select-button");
     }
 
-    private final StringProperty title = new SimpleStringProperty(this, "title");
-
-    public StringProperty titleProperty() {
-        return title;
-    }
-
-    public String getTitle() {
-        return title.get();
-    }
-
-    public void setTitle(String title) {
-        this.title.set(title);
-    }
-
-    private final StringProperty subtitle = new SimpleStringProperty(this, "subtitle");
-
-    public StringProperty subtitleProperty() {
-        return subtitle;
-    }
-
-    public String getSubtitle() {
-        return subtitle.get();
-    }
-
-    public void setSubtitle(String subtitle) {
-        this.subtitle.set(subtitle);
+    @Override
+    protected javafx.scene.control.Skin<?> createDefaultSkin() {
+        return new Skin<>(this);
     }
 
     private final ObjectProperty<T> value = new SimpleObjectProperty<>(this, "value");
@@ -198,6 +98,69 @@ public final class LineSelectButton<T> extends StackPane {
 
     public ObservableList<T> getItems() {
         return items.get();
+    }
+
+    private static final class Skin<T> extends LineButtonBaseSkin {
+        private final LineSelectButton<T> control;
+
+        Skin(LineSelectButton<T> control) {
+            super(control);
+
+            this.control = control;
+
+            Label valueLabel = new Label();
+            valueLabel.getStyleClass().add("subtitle");
+
+            valueLabel.textProperty().bind(Bindings.createStringBinding(
+                    () -> toDisplayString(control.getValue()),
+                    control.converterProperty(), control.valueProperty()));
+            StackPane valuePane = new StackPane(valueLabel);
+            valuePane.setAlignment(Pos.CENTER);
+
+            Node arrowIcon = SVG.UNFOLD_MORE.createIcon(24);
+            arrowIcon.setMouseTransparent(true);
+
+            StackPane arrowPane = new StackPane(arrowIcon);
+            arrowPane.opacityProperty().bind(Bindings.when(control.disabledProperty())
+                    .then(0.4)
+                    .otherwise(1.0));
+            HBox.setMargin(arrowPane, new Insets(0, 8, 0, 8));
+            arrowPane.setAlignment(Pos.CENTER);
+
+            root.setMouseTransparent(true);
+            root.getChildren().setAll(left, valuePane, arrowPane);
+
+            FXUtils.onClicked(container, () -> {
+                PopupMenu popupMenu = new PopupMenu();
+                JFXPopup popup = new JFXPopup(popupMenu);
+
+                Bindings.bindContent(popupMenu.getContent(), MappedObservableList.create(control.itemsProperty(), item -> {
+                    Label itemLabel = new Label();
+                    itemLabel.textProperty().bind(Bindings.createStringBinding(() -> toDisplayString(item), control.converterProperty()));
+
+                    var wrapper = new StackPane(itemLabel);
+                    wrapper.setAlignment(Pos.CENTER_LEFT);
+                    wrapper.getStyleClass().add("menu-container");
+                    wrapper.setMouseTransparent(true);
+                    RipplerContainer ripplerContainer = new RipplerContainer(wrapper);
+                    FXUtils.onClicked(ripplerContainer, () -> {
+                        control.setValue(item);
+                        popup.hide();
+                    });
+                    return ripplerContainer;
+                }));
+
+                JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(control, popup);
+                popup.show(control, vPosition, JFXPopup.PopupHPosition.RIGHT,
+                        0,
+                        vPosition == JFXPopup.PopupVPosition.TOP ? control.getHeight() : -control.getHeight());
+            });
+        }
+
+        private String toDisplayString(T value) {
+            Function<T, String> converter = control.getConverter();
+            return converter != null ? converter.apply(value) : Objects.toString(value, "");
+        }
     }
 
 }
