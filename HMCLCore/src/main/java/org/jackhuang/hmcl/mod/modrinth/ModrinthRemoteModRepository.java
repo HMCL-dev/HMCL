@@ -20,15 +20,10 @@ package org.jackhuang.hmcl.mod.modrinth;
 import com.google.gson.annotations.SerializedName;
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
-import org.jackhuang.hmcl.util.DigestUtils;
-import org.jackhuang.hmcl.util.Immutable;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Pair;
-import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
@@ -39,13 +34,7 @@ import java.io.IOException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Semaphore;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -66,13 +55,21 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
 
     private final String projectType;
 
+    private final RemoteModRepository.Type type;
+
     private ModrinthRemoteModRepository(String projectType) {
         this.projectType = projectType;
+        this.type = switch (projectType) {
+            case "modpack" -> Type.MODPACK;
+            case "resourcepack" -> Type.RESOURCE_PACK;
+            case "shader" -> Type.SHADER_PACK;
+            default -> Type.MOD;
+        };
     }
 
     @Override
     public Type getType() {
-        return Type.MOD;
+        return this.type;
     }
 
     private static String convertSortType(SortType sortType) {
@@ -120,7 +117,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     }
 
     @Override
-    public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(LocalModFile localModFile, Path file) throws IOException {
+    public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(Path file) throws IOException {
         String sha1 = DigestUtils.digestToString("SHA-1", file);
 
         SEMAPHORE.acquireUninterruptibly();
@@ -341,6 +338,12 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         }
 
         public RemoteMod toMod() {
+            RemoteModRepository.Type type = switch (projectType) {
+                case "modpack" -> RemoteModRepository.Type.MODPACK;
+                case "resourcepack" -> RemoteModRepository.Type.RESOURCE_PACK;
+                case "shader" -> RemoteModRepository.Type.SHADER_PACK;
+                default -> RemoteModRepository.Type.MOD;
+            };
             return new RemoteMod(
                     slug,
                     "",
@@ -349,7 +352,8 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                     categories,
                     String.format("https://modrinth.com/%s/%s", projectType, id),
                     iconUrl,
-                    this
+                    this,
+                    type
             );
         }
     }
@@ -728,6 +732,12 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         }
 
         public RemoteMod toMod() {
+            RemoteModRepository.Type type = switch (projectType) {
+                case "modpack" -> RemoteModRepository.Type.MODPACK;
+                case "resourcepack" -> RemoteModRepository.Type.RESOURCE_PACK;
+                case "shader" -> RemoteModRepository.Type.SHADER_PACK;
+                default -> RemoteModRepository.Type.MOD;
+            };
             return new RemoteMod(
                     slug,
                     author,
@@ -736,7 +746,8 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
                     displayCategories,
                     String.format("https://modrinth.com/%s/%s", projectType, projectId),
                     iconUrl,
-                    this
+                    this,
+                    type
             );
         }
     }

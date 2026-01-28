@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.mod.curse;
 
 import com.google.gson.reflect.TypeToken;
 import org.jackhuang.hmcl.download.DownloadProvider;
-import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
 import org.jackhuang.hmcl.util.MurmurHash2;
@@ -134,7 +133,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
             Response<List<CurseAddon>> response = withApiKey(HttpRequest.GET(downloadProvider.injectURL(NetworkUtils.withQuery(PREFIX + "/v1/mods/search", query))))
                     .getJson(Response.typeOf(listTypeOf(CurseAddon.class)));
             if (searchFilter.isEmpty()) {
-                return new SearchResult(response.getData().stream().map(CurseAddon::toMod), calculateTotalPages(response, pageSize));
+                return new SearchResult(response.getData().stream().map(addon -> addon.toMod(type)), calculateTotalPages(response, pageSize));
             }
 
             // https://github.com/HMCL-dev/HMCL/issues/1549
@@ -146,7 +145,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
 
             StringUtils.LevCalculator levCalculator = new StringUtils.LevCalculator();
 
-            return new SearchResult(response.getData().stream().map(CurseAddon::toMod).map(remoteMod -> {
+            return new SearchResult(response.getData().stream().map(addon -> addon.toMod(type)).map(remoteMod -> {
                 String lowerCaseResult = remoteMod.getTitle().toLowerCase(Locale.ROOT);
                 int diff = levCalculator.calc(lowerCaseSearchFilter, lowerCaseResult);
 
@@ -157,14 +156,14 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
                 }
 
                 return pair(remoteMod, diff);
-            }).sorted(Comparator.comparingInt(Pair::getValue)).map(Pair::getKey), response.getData().stream().map(CurseAddon::toMod), calculateTotalPages(response, pageSize));
+            }).sorted(Comparator.comparingInt(Pair::getValue)).map(Pair::getKey), response.getData().stream().map(addon -> addon.toMod(type)), calculateTotalPages(response, pageSize));
         } finally {
             SEMAPHORE.release();
         }
     }
 
     @Override
-    public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(LocalModFile localModFile, Path file) throws IOException {
+    public Optional<RemoteMod.Version> getRemoteVersionByLocalFile(Path file) throws IOException {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try (InputStream stream = Files.newInputStream(file)) {
             byte[] buf = new byte[1024];
@@ -206,7 +205,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
         try {
             Response<CurseAddon> response = withApiKey(HttpRequest.GET(PREFIX + "/v1/mods/" + id))
                     .getJson(Response.typeOf(CurseAddon.class));
-            return response.data.toMod();
+            return response.data.toMod(type);
         } finally {
             SEMAPHORE.release();
         }
