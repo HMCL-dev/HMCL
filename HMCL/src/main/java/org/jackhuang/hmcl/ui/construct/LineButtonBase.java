@@ -39,7 +39,6 @@ public abstract class LineButtonBase extends StackPane {
 
     private final VBox left;
     private final Label titleLabel;
-    private Label subtitleLabel;
 
     public LineButtonBase() {
         this.root = new BorderPane();
@@ -82,6 +81,8 @@ public abstract class LineButtonBase extends StackPane {
     public StringProperty subtitleProperty() {
         if (subtitle == null) {
             subtitle = new StringPropertyBase() {
+                private Label subtitleLabel;
+
                 @Override
                 public String getName() {
                     return "subtitle";
