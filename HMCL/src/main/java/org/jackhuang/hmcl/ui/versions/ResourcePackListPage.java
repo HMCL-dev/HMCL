@@ -59,6 +59,8 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class ResourcePackListPage extends ListPageBase<ResourcePackListPage.ResourcePackInfoObject> implements VersionPage.VersionLoadable {
+
+    private static final String TIP_KEY = "resourcePackWarning";
     private static @Nullable String getWarningKey(ResourcePackFile.Compatibility compatibility) {
         return switch (compatibility) {
             case TOO_NEW -> "resourcepack.warning.too_new";
@@ -173,15 +175,15 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
     }
 
     private void setSelectedEnabled(List<ResourcePackInfoObject> selectedItems, boolean enabled) {
-        if (!ConfigHolder.config().isResourcePackWarningShown() && enabled && !selectedItems.stream().map(ResourcePackInfoObject::getFile).allMatch(ResourcePackFile::isCompatible)) {
+        if (!ConfigHolder.config().getShownTips().containsKey(TIP_KEY) && enabled && !selectedItems.stream().map(ResourcePackInfoObject::getFile).allMatch(ResourcePackFile::isCompatible)) {
             Controllers.confirmWithCountdown(
                     i18n("resourcepack.warning.manipulate"),
                     i18n("message.warning"),
                     5,
                     MessageDialogPane.MessageType.WARNING,
                     () -> {
-                        ConfigHolder.config().onResourcePackWarningShown();
-                        setSelectedEnabled(selectedItems, enabled);
+                        ConfigHolder.config().getShownTips().put(TIP_KEY, 0);
+                        setSelectedEnabled(selectedItems, true);
                     }, null);
         } else {
             for (ResourcePackInfoObject item : selectedItems) {
@@ -488,14 +490,14 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             checkBox = new JFXCheckBox() {
                 @Override
                 public void fire() {
-                    if (!ConfigHolder.config().isResourcePackWarningShown() && !isSelected() && object != null && !object.getFile().isCompatible()) {
+                    if (!ConfigHolder.config().getShownTips().containsKey(TIP_KEY) && !isSelected() && object != null && !object.getFile().isCompatible()) {
                         Controllers.confirm(
                                 i18n("resourcepack.warning.manipulate"),
                                 i18n("message.info"),
                                 MessageDialogPane.MessageType.INFO,
                                 () -> {
                                     super.fire();
-                                    ConfigHolder.config().onResourcePackWarningShown();
+                                    ConfigHolder.config().getShownTips().put(TIP_KEY, 0);
                                 }, null);
                     } else {
                         super.fire();
