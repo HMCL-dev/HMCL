@@ -37,6 +37,7 @@ import java.net.Proxy;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.util.i18n.I18n.hasKey;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class DownloadSettingsPage extends StackPane {
@@ -65,6 +66,7 @@ public class DownloadSettingsPage extends StackPane {
                 versionListSourcePane.disableProperty().bind(autoChooseDownloadSource.selectedProperty().not());
                 versionListSourcePane.setTitle(i18n("settings.launcher.version_list_source"));
                 versionListSourcePane.setConverter(key -> i18n("download.provider." + key));
+                versionListSourcePane.setDescriptionConverter(key -> i18n("download.provider." + key + ".desc"));
                 versionListSourcePane.setItems(DownloadProviders.AUTO_PROVIDERS.keySet());
                 versionListSourcePane.valueProperty().bindBidirectional(config().versionListSourceProperty());
 
@@ -72,6 +74,7 @@ public class DownloadSettingsPage extends StackPane {
                 downloadSourcePane.disableProperty().bind(autoChooseDownloadSource.selectedProperty());
                 downloadSourcePane.setTitle(i18n("settings.launcher.download_source"));
                 downloadSourcePane.setConverter(key -> i18n("download.provider." + key));
+                downloadSourcePane.setDescriptionConverter(key -> i18n("download.provider." + key + ".desc"));
                 downloadSourcePane.setItems(DownloadProviders.DIRECT_PROVIDERS.keySet());
                 downloadSourcePane.valueProperty().bindBidirectional(config().downloadTypeProperty());
 

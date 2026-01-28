@@ -66,12 +66,10 @@ public final class LineSelectButton<T> extends LineButtonBase {
                         if (value == null)
                             return "";
 
-                        Function<T, String> converter = getLabelConverter();
-                        if (converter == null)
-                            converter = getConverter();
+                        Function<T, String> converter = getConverter();
                         return converter != null ? converter.apply(value) : Objects.toString(value, "");
                     },
-                    converterProperty(), labelConverterProperty(), valueProperty()));
+                    converterProperty(), valueProperty()));
 
             Node arrowIcon = SVG.UNFOLD_MORE.createIcon(24);
             HBox.setMargin(arrowIcon, new Insets(0, 8, 0, 8));
@@ -89,21 +87,45 @@ public final class LineSelectButton<T> extends LineButtonBase {
                     this.popup = new JFXPopup(popupMenu);
 
                     Bindings.bindContent(popupMenu.getContent(), MappedObservableList.create(itemsProperty(), item -> {
-                        Label itemLabel = new Label();
-                        itemLabel.textProperty().bind(Bindings.createStringBinding(() -> {
+                        VBox vbox = new VBox();
+
+                        var itemTitleLabel = new Label();
+                        itemTitleLabel.textProperty().bind(Bindings.createStringBinding(() -> {
                             if (item == null)
                                 return "";
 
                             Function<T, String> converter = getConverter();
                             return converter != null ? converter.apply(item) : Objects.toString(item, "");
                         }, converterProperty()));
-                        itemLabel.textFillProperty().bind(Bindings.createObjectBinding(() ->
+                        itemTitleLabel.textFillProperty().bind(Bindings.createObjectBinding(() ->
                                         Objects.equals(getValue(), item)
                                                 ? Themes.getColorScheme().getPrimary()
                                                 : Themes.getColorScheme().getOnSurface(),
                                 valueProperty(), Themes.colorSchemeProperty()));
 
-                        var wrapper = new StackPane(itemLabel);
+                        var itemSubtitleLabel = new Label();
+                        itemSubtitleLabel.getStyleClass().add("subtitle");
+                        itemSubtitleLabel.textProperty().bind(Bindings.createStringBinding(() -> {
+                            Function<T, String> descriptionConverter = getDescriptionConverter();
+                            return descriptionConverter != null ? descriptionConverter.apply(item) : "";
+                        }, descriptionConverterProperty()));
+
+                        FXUtils.onChangeAndOperate(itemSubtitleLabel.textProperty(), text -> {
+                            if (text == null || text.isEmpty()) {
+                                vbox.getChildren().setAll(itemTitleLabel);
+                            } else {
+                                vbox.getChildren().setAll(itemTitleLabel, itemSubtitleLabel);
+                            }
+                        });
+
+                        itemSubtitleLabel.textFillProperty().bind(Bindings.createObjectBinding(() ->
+                                        Objects.equals(getValue(), item)
+                                                ? Themes.getColorScheme().getPrimary()
+                                                : Themes.getColorScheme().getOnSurface(),
+                                valueProperty(), Themes.colorSchemeProperty()));
+
+
+                        var wrapper = new StackPane(vbox);
                         wrapper.setAlignment(Pos.CENTER_LEFT);
                         wrapper.getStyleClass().add("menu-container");
                         wrapper.setMouseTransparent(true);
@@ -166,18 +188,18 @@ public final class LineSelectButton<T> extends LineButtonBase {
         converterProperty().set(value);
     }
 
-    private final ObjectProperty<Function<T, String>> labelConverter = new SimpleObjectProperty<>(this, "labelConverter");
+    private final ObjectProperty<Function<T, String>> descriptionConverter = new SimpleObjectProperty<>(this, "labelConverter");
 
-    public ObjectProperty<Function<T, String>> labelConverterProperty() {
-        return labelConverter;
+    public ObjectProperty<Function<T, String>> descriptionConverterProperty() {
+        return descriptionConverter;
     }
 
-    public Function<T, String> getLabelConverter() {
-        return labelConverterProperty().get();
+    public Function<T, String> getDescriptionConverter() {
+        return descriptionConverterProperty().get();
     }
 
-    public void setLabelConverter(Function<T, String> value) {
-        labelConverterProperty().set(value);
+    public void setDescriptionConverter(Function<T, String> value) {
+        descriptionConverterProperty().set(value);
     }
 
     private final ListProperty<T> items = new SimpleListProperty<>(this, "items", FXCollections.emptyObservableList());
