@@ -38,11 +38,28 @@ public final class LineNavigationButton extends LineButtonBase {
 
     public LineNavigationButton() {
         getStyleClass().add(DEFAULT_STYLE_CLASS);
-    }
 
-    @Override
-    protected javafx.scene.control.Skin<?> createDefaultSkin() {
-        return new Skin(this);
+        root.setMouseTransparent(true);
+
+        HBox right = new HBox();
+        root.setRight(right);
+        {
+            right.setAlignment(Pos.CENTER_RIGHT);
+
+            Label valueLabel = new Label();
+            valueLabel.getStyleClass().add("subtitle");
+            valueLabel.textProperty().bind(messageProperty());
+
+            Node arrowIcon = SVG.ARROW_FORWARD.createIcon(24);
+            HBox.setMargin(arrowIcon, new Insets(0, 8, 0, 8));
+            arrowIcon.opacityProperty().bind(Bindings.when(disabledProperty())
+                    .then(0.4)
+                    .otherwise(1.0));
+
+            right.getChildren().setAll(valueLabel, arrowIcon);
+        }
+
+        FXUtils.onClicked(container, this::fire);
     }
 
     public void fire() {
@@ -93,31 +110,4 @@ public final class LineNavigationButton extends LineButtonBase {
         messageProperty().set(message);
     }
 
-    private static final class Skin extends LineButtonBaseSkin {
-        Skin(LineNavigationButton control) {
-            super(control);
-
-            root.setMouseTransparent(true);
-
-            HBox right = new HBox();
-            root.setRight(right);
-            {
-                right.setAlignment(Pos.CENTER_RIGHT);
-
-                Label valueLabel = new Label();
-                valueLabel.getStyleClass().add("subtitle");
-                valueLabel.textProperty().bind(control.messageProperty());
-
-                Node arrowIcon = SVG.ARROW_FORWARD.createIcon(24);
-                HBox.setMargin(arrowIcon, new Insets(0, 8, 0, 8));
-                arrowIcon.opacityProperty().bind(Bindings.when(control.disabledProperty())
-                        .then(0.4)
-                        .otherwise(1.0));
-
-                right.getChildren().setAll(valueLabel, arrowIcon);
-            }
-
-            FXUtils.onClicked(container, control::fire);
-        }
-    }
 }

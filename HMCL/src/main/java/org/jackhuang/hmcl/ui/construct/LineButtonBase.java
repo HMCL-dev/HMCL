@@ -19,10 +19,54 @@ package org.jackhuang.hmcl.ui.construct;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.scene.control.Control;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.Label;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.StringUtils;
 
 /// @author Glavo
-public abstract class LineButtonBase extends Control {
+public abstract class LineButtonBase extends StackPane {
+
+    protected final BorderPane root;
+    protected final RipplerContainer container;
+
+    public LineButtonBase() {
+        this.root = new BorderPane();
+        root.setPadding(new Insets(8, 8, 8, 16));
+        root.setMinHeight(48);
+
+        this.container = new RipplerContainer(root);
+        this.getChildren().setAll(container);
+
+        // Left
+
+        var left = new VBox();
+        root.setCenter(left);
+        left.setMouseTransparent(true);
+        left.setAlignment(Pos.CENTER_LEFT);
+
+        var titleLabel = new Label();
+        titleLabel.textProperty().bind(titleProperty());
+        titleLabel.getStyleClass().add("title");
+
+        var subtitleLabel = new Label();
+        subtitleLabel.setWrapText(true);
+        subtitleLabel.setMinHeight(Region.USE_PREF_SIZE);
+        subtitleLabel.getStyleClass().add("subtitle");
+        subtitleLabel.textProperty().bind(subtitleProperty());
+
+        FXUtils.onChangeAndOperate(subtitleProperty(), subtitle -> {
+            if (StringUtils.isBlank(subtitle))
+                left.getChildren().setAll(titleLabel);
+            else
+                left.getChildren().setAll(titleLabel, subtitleLabel);
+        });
+    }
 
     private final StringProperty title = new SimpleStringProperty(this, "title");
 

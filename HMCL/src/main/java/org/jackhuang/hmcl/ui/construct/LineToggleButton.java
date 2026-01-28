@@ -29,11 +29,17 @@ public final class LineToggleButton extends LineButtonBase {
 
     public LineToggleButton() {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
-    }
 
-    @Override
-    protected javafx.scene.control.Skin<?> createDefaultSkin() {
-        return new Skin(this);
+        JFXToggleButton toggleButton = new JFXToggleButton();
+
+        StackPane right = new StackPane(toggleButton);
+        root.setRight(right);
+        right.setAlignment(Pos.CENTER);
+        toggleButton.selectedProperty().bindBidirectional(selectedProperty());
+        toggleButton.setSize(8);
+        FXUtils.setLimitHeight(toggleButton, 30);
+
+        FXUtils.onClicked(container, toggleButton::fire);
     }
 
     private final BooleanProperty selected = new SimpleBooleanProperty(this, "selected");
@@ -48,22 +54,5 @@ public final class LineToggleButton extends LineButtonBase {
 
     public void setSelected(boolean selected) {
         selectedProperty().set(selected);
-    }
-
-    private static final class Skin extends LineButtonBaseSkin {
-        Skin(LineToggleButton control) {
-            super(control);
-
-            JFXToggleButton toggleButton = new JFXToggleButton();
-
-            StackPane right = new StackPane(toggleButton);
-            root.setRight(right);
-            right.setAlignment(Pos.CENTER);
-            toggleButton.selectedProperty().bindBidirectional(control.selectedProperty());
-            toggleButton.setSize(8);
-            FXUtils.setLimitHeight(toggleButton, 30);
-
-            FXUtils.onClicked(container, toggleButton::fire);
-        }
     }
 }
