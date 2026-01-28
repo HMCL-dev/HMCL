@@ -32,6 +32,8 @@ import org.jackhuang.hmcl.util.StringUtils;
 /// @author Glavo
 public abstract class LineButtonBase extends StackPane {
 
+    private static final Insets PADDING = new Insets(8, 8, 8, 16);
+
     protected final BorderPane root;
     protected final RipplerContainer container;
 
@@ -41,7 +43,7 @@ public abstract class LineButtonBase extends StackPane {
 
     public LineButtonBase() {
         this.root = new BorderPane();
-        root.setPadding(new Insets(8, 8, 8, 16));
+        root.setPadding(PADDING);
         root.setMinHeight(48);
 
         this.container = new RipplerContainer(root);
