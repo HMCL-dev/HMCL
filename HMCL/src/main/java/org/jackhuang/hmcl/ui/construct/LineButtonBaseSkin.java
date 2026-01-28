@@ -38,6 +38,7 @@ public abstract class LineButtonBaseSkin extends SkinBase<LineButtonBase> {
 
         this.root = new BorderPane();
         root.setPadding(new Insets(8, 8, 8, 16));
+        root.setMinHeight(48);
 
         this.container = new RipplerContainer(root);
         this.getChildren().setAll(container);
@@ -46,7 +47,6 @@ public abstract class LineButtonBaseSkin extends SkinBase<LineButtonBase> {
 
         var left = new VBox();
         root.setCenter(left);
-        left.setMinHeight(30);
         left.setMouseTransparent(true);
         left.setAlignment(Pos.CENTER_LEFT);
 
