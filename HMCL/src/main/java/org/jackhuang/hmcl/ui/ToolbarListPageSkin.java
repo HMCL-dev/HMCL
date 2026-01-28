@@ -25,6 +25,8 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.SkinBase;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
@@ -65,6 +67,7 @@ public abstract class ToolbarListPageSkin<E, P extends ListPageBase<E>> extends 
             this.listView.setCellFactory(listView -> createListCell((JFXListView<E>) listView));
             ComponentList.setVgrow(listView, Priority.ALWAYS);
             Bindings.bindContent(this.listView.getItems(), skinnable.itemsProperty());
+            FXUtils.ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
             root.getContent().add(listView);
         }
 

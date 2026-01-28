@@ -9,6 +9,8 @@ import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -139,6 +141,8 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
             ComponentList root = new ComponentList();
             root.getStyleClass().add("no-padding");
             listView = new JFXListView<>();
+
+            FXUtils.ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
 
             HBox toolbar = new HBox();
             toolbar.setAlignment(Pos.CENTER_LEFT);
