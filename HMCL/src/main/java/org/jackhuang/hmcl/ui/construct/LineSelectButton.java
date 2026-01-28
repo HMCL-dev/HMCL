@@ -181,5 +181,4 @@ public final class LineSelectButton<T> extends LineButtonBase {
         return items.get();
     }
 
-
 }
