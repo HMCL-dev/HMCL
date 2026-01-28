@@ -61,8 +61,17 @@ public final class LineSelectButton<T> extends LineButtonBase {
             valueLabel.getStyleClass().add("subtitle");
 
             valueLabel.textProperty().bind(Bindings.createStringBinding(
-                    () -> toDisplayString(getValue()),
-                    converterProperty(), valueProperty()));
+                    () -> {
+                        T value = getValue();
+                        if (value == null)
+                            return "";
+
+                        Function<T, String> converter = getLabelConverter();
+                        if (converter == null)
+                            converter = getConverter();
+                        return converter != null ? converter.apply(value) : Objects.toString(value, "");
+                    },
+                    converterProperty(), labelConverterProperty(), valueProperty()));
 
             Node arrowIcon = SVG.UNFOLD_MORE.createIcon(24);
             HBox.setMargin(arrowIcon, new Insets(0, 8, 0, 8));
@@ -81,8 +90,13 @@ public final class LineSelectButton<T> extends LineButtonBase {
 
                     Bindings.bindContent(popupMenu.getContent(), MappedObservableList.create(itemsProperty(), item -> {
                         Label itemLabel = new Label();
-                        itemLabel.textProperty().bind(Bindings.createStringBinding(() -> toDisplayString(item), converterProperty()));
+                        itemLabel.textProperty().bind(Bindings.createStringBinding(() -> {
+                            if (item == null)
+                                return "";
 
+                            Function<T, String> converter = getConverter();
+                            return converter != null ? converter.apply(item) : Objects.toString(item, "");
+                        }, converterProperty()));
                         itemLabel.textFillProperty().bind(Bindings.createObjectBinding(() ->
                                         Objects.equals(getValue(), item)
                                                 ? Themes.getColorScheme().getPrimary()
@@ -124,14 +138,6 @@ public final class LineSelectButton<T> extends LineButtonBase {
         });
     }
 
-    private String toDisplayString(T value) {
-        if (value == null)
-            return "";
-
-        Function<T, String> converter = getConverter();
-        return converter != null ? converter.apply(value) : Objects.toString(value, "");
-    }
-
     private final ObjectProperty<T> value = new SimpleObjectProperty<>(this, "value");
 
     public ObjectProperty<T> valueProperty() {
@@ -158,6 +164,20 @@ public final class LineSelectButton<T> extends LineButtonBase {
 
     public void setConverter(Function<T, String> value) {
         converterProperty().set(value);
+    }
+
+    private final ObjectProperty<Function<T, String>> labelConverter = new SimpleObjectProperty<>(this, "labelConverter");
+
+    public ObjectProperty<Function<T, String>> labelConverterProperty() {
+        return labelConverter;
+    }
+
+    public Function<T, String> getLabelConverter() {
+        return labelConverterProperty().get();
+    }
+
+    public void setLabelConverter(Function<T, String> value) {
+        labelConverterProperty().set(value);
     }
 
     private final ListProperty<T> items = new SimpleListProperty<>(this, "items", FXCollections.emptyObservableList());
