@@ -1,3 +1,5 @@
+import com.sass_lang.embedded_protocol.OutputStyle
+import io.freefair.gradle.plugins.sass.SassCompile
 import org.jackhuang.hmcl.gradle.TerracottaConfigUpgradeTask
 import org.jackhuang.hmcl.gradle.ci.GitHubActionUtils
 import org.jackhuang.hmcl.gradle.ci.JenkinsUtils
@@ -18,6 +20,7 @@ import java.util.zip.ZipFile
 
 plugins {
     alias(libs.plugins.shadow)
+    alias(libs.plugins.sass)
 }
 
 val projectConfig = PropertiesUtils.load(rootProject.file("config/project.properties").toPath())
@@ -432,4 +435,27 @@ tasks.register<ParseModDataTask>("parseModData") {
 tasks.register<ParseModDataTask>("parseModPackData") {
     inputFile.set(layout.projectDirectory.file("modpack.json"))
     outputFile.set(layout.projectDirectory.file("src/main/resources/assets/modpack_data.txt"))
+}
+
+// scss
+
+val compileScss by tasks.registering(SassCompile::class) {
+    group = "scss"
+    description = "Compile SCSS to CSS (dev only)"
+
+    val scssDir = layout.projectDirectory.dir("src/main/scss")
+    val scssDestinationDir = layout.projectDirectory.dir("src/main/resources/assets/css")
+
+    source = fileTree(scssDir) {
+        include("**/*.scss")
+    }
+    destinationDir = scssDestinationDir
+
+    sourceMapEnabled = false
+    outputStyle = OutputStyle.COMPRESSED
+
+    inputs.dir(scssDir)
+    outputs.dir(scssDestinationDir)
+
+    onlyIf { true }
 }
