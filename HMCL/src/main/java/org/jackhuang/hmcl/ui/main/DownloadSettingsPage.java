@@ -35,12 +35,10 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 
 import java.net.Proxy;
-import java.util.MissingResourceException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.util.i18n.I18n.hasKey;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class DownloadSettingsPage extends StackPane {
@@ -67,11 +65,8 @@ public class DownloadSettingsPage extends StackPane {
 
                 Function<String, String> converter = key -> i18n("download.provider." + key);
                 Function<String, String> descriptionConverter = key -> {
-                    try {
-                        return I18n.getResourceBundle().getString("download.provider." + key + ".desc");
-                    } catch (MissingResourceException ignored) {
-                        return null;
-                    }
+                    String bundleKey = "download.provider." + key + ".desc";
+                    return I18n.hasKey(bundleKey) ? i18n(bundleKey) : null;
                 };
 
                 var versionListSourcePane = new LineSelectButton<String>();
