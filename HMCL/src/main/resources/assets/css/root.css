@@ -1874,6 +1874,10 @@
     -fx-text-fill: -monet-primary;
 }
 
-.line-select-button .popup-menu .subtitle {
+.line-select-button .menu-container .subtitle {
     -fx-text-fill: -monet-on-surface-variant;
+}
+
+.line-select-button .menu-container:selected .subtitle {
+    -fx-text-fill: -monet-primary;
 }
