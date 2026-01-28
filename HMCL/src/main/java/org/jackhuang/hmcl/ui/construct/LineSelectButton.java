@@ -46,9 +46,6 @@ public final class LineSelectButton<T> extends LineButtonBase {
     public LineSelectButton() {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
 
-
-        LineSelectButton<T> control = this;
-
         root.setMouseTransparent(true);
 
         HBox right = new HBox();
@@ -60,12 +57,12 @@ public final class LineSelectButton<T> extends LineButtonBase {
             valueLabel.getStyleClass().add("subtitle");
 
             valueLabel.textProperty().bind(Bindings.createStringBinding(
-                    () -> toDisplayString(control.getValue()),
-                    control.converterProperty(), control.valueProperty()));
+                    () -> toDisplayString(getValue()),
+                    converterProperty(), valueProperty()));
 
             Node arrowIcon = SVG.UNFOLD_MORE.createIcon(24);
             HBox.setMargin(arrowIcon, new Insets(0, 8, 0, 8));
-            arrowIcon.opacityProperty().bind(Bindings.when(control.disabledProperty())
+            arrowIcon.opacityProperty().bind(Bindings.when(disabledProperty())
                     .then(0.4)
                     .otherwise(1.0));
 
