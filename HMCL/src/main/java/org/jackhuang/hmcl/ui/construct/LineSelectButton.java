@@ -29,6 +29,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -151,6 +152,11 @@ public final class LineSelectButton<T> extends LineButtonBase {
 
                 event.consume();
             }
+        });
+
+        container.addEventFilter(ScrollEvent.ANY, event -> {
+            if (popup != null)
+                popup.hide();
         });
     }
 
