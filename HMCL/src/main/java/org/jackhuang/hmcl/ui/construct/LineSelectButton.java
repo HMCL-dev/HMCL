@@ -26,6 +26,8 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -42,6 +44,8 @@ import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 public final class LineSelectButton<T> extends LineButtonBase {
 
     private static final String DEFAULT_STYLE_CLASS = "line-select-button";
+
+    private JFXPopup popup;
 
     public LineSelectButton() {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
@@ -69,7 +73,55 @@ public final class LineSelectButton<T> extends LineButtonBase {
             right.getChildren().setAll(valueLabel, arrowIcon);
         }
 
-        FXUtils.onClicked(container, this::onClick);
+        container.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
+            if (event.getButton() == MouseButton.PRIMARY) {
+                if (popup == null) {
+                    PopupMenu popupMenu = new PopupMenu();
+                    this.popup = new JFXPopup(popupMenu);
+
+                    Bindings.bindContent(popupMenu.getContent(), MappedObservableList.create(itemsProperty(), item -> {
+                        Label itemLabel = new Label();
+                        itemLabel.textProperty().bind(Bindings.createStringBinding(() -> toDisplayString(item), converterProperty()));
+
+                        itemLabel.textFillProperty().bind(Bindings.createObjectBinding(() ->
+                                        Objects.equals(getValue(), item)
+                                                ? Themes.getColorScheme().getPrimary()
+                                                : Themes.getColorScheme().getOnSurface(),
+                                valueProperty(), Themes.colorSchemeProperty()));
+
+                        var wrapper = new StackPane(itemLabel);
+                        wrapper.setAlignment(Pos.CENTER_LEFT);
+                        wrapper.getStyleClass().add("menu-container");
+                        wrapper.setMouseTransparent(true);
+                        RipplerContainer ripplerContainer = new RipplerContainer(wrapper);
+                        FXUtils.onClicked(ripplerContainer, () -> {
+                            setValue(item);
+                            popup.hide();
+                        });
+                        return ripplerContainer;
+                    }));
+
+                    popup.showingProperty().addListener((observable, oldValue, newValue) ->
+                            container.getRippler().setRipplerDisabled(newValue));
+                }
+
+                if (popup.isShowing()) {
+                    popup.hide();
+                } else {
+                    JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(this, popup);
+                    popup.show(this, vPosition, JFXPopup.PopupHPosition.RIGHT,
+                            0,
+                            vPosition == JFXPopup.PopupVPosition.TOP ? this.getHeight() : -this.getHeight());
+                }
+
+                event.consume();
+            } else if (event.getButton() == MouseButton.SECONDARY) {
+                if (popup != null)
+                    popup.hide();
+
+                event.consume();
+            }
+        });
     }
 
     private String toDisplayString(T value) {
@@ -78,49 +130,6 @@ public final class LineSelectButton<T> extends LineButtonBase {
 
         Function<T, String> converter = getConverter();
         return converter != null ? converter.apply(value) : Objects.toString(value, "");
-    }
-
-    private JFXPopup popup;
-
-    private void onClick() {
-        if (popup == null) {
-            PopupMenu popupMenu = new PopupMenu();
-            this.popup = new JFXPopup(popupMenu);
-
-            Bindings.bindContent(popupMenu.getContent(), MappedObservableList.create(itemsProperty(), item -> {
-                Label itemLabel = new Label();
-                itemLabel.textProperty().bind(Bindings.createStringBinding(() -> toDisplayString(item), converterProperty()));
-
-                itemLabel.textFillProperty().bind(Bindings.createObjectBinding(() ->
-                                Objects.equals(getValue(), item)
-                                        ? Themes.getColorScheme().getPrimary()
-                                        : Themes.getColorScheme().getOnSurface(),
-                        valueProperty(), Themes.colorSchemeProperty()));
-
-                var wrapper = new StackPane(itemLabel);
-                wrapper.setAlignment(Pos.CENTER_LEFT);
-                wrapper.getStyleClass().add("menu-container");
-                wrapper.setMouseTransparent(true);
-                RipplerContainer ripplerContainer = new RipplerContainer(wrapper);
-                FXUtils.onClicked(ripplerContainer, () -> {
-                    setValue(item);
-                    popup.hide();
-                });
-                return ripplerContainer;
-            }));
-
-            popup.showingProperty().addListener((observable, oldValue, newValue) ->
-                    container.getRippler().setRipplerDisabled(newValue));
-        }
-
-        if (popup.isShowing()) {
-            popup.hide();
-        } else {
-            JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(this, popup);
-            popup.show(this, vPosition, JFXPopup.PopupHPosition.RIGHT,
-                    0,
-                    vPosition == JFXPopup.PopupVPosition.TOP ? this.getHeight() : -this.getHeight());
-        }
     }
 
     private final ObjectProperty<T> value = new SimpleObjectProperty<>(this, "value");
