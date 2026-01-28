@@ -151,7 +151,7 @@ public final class LineSelectButton<T> extends LineButtonBase {
         converterProperty().set(value);
     }
 
-    private final ListProperty<T> items = new SimpleListProperty<>(this, "items");
+    private final ListProperty<T> items = new SimpleListProperty<>(this, "items", FXCollections.emptyObservableList());
 
     public ListProperty<T> itemsProperty() {
         return items;
