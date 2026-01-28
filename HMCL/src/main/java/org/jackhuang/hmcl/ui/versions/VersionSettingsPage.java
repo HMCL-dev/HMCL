@@ -43,6 +43,7 @@ import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.javafx.PropertyUtils;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
@@ -388,10 +389,13 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
             enableDebugLogOutputPane = new LineToggleButton();
             enableDebugLogOutputPane.setTitle(i18n("settings.enable_debug_log_output"));
-
             processPriorityPane = new LineSelectButton<>();
             processPriorityPane.setTitle(i18n("settings.advanced.process_priority"));
             processPriorityPane.setConverter(e -> i18n("settings.advanced.process_priority." + e.name().toLowerCase(Locale.ROOT)));
+            processPriorityPane.setDescriptionConverter(e -> {
+                String bundleKey = "settings.advanced.process_priority." + e.name().toLowerCase(Locale.ROOT) + ".desc";
+                return I18n.hasKey(bundleKey) ? i18n(bundleKey) : null;
+            });
             processPriorityPane.setItems(ProcessPriority.values());
 
             GridPane serverPane = new GridPane();
