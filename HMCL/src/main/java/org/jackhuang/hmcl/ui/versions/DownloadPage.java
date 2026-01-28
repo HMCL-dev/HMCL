@@ -62,6 +62,8 @@ import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class DownloadPage extends Control implements DecoratorPage {
+    private static final WeakHashMap<RemoteMod.Version, String> changelogCache = new WeakHashMap<>();
+
     private final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     private final BooleanProperty loaded = new SimpleBooleanProperty(false);
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
@@ -159,13 +161,13 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     public void download(RemoteMod mod, RemoteMod.Version file) {
         if (this.callback == null) {
-            saveAs(mod, file);
+            saveAs(file);
         } else {
             this.callback.download(version.getProfile(), version.getVersion(), mod, file);
         }
     }
 
-    public void saveAs(RemoteMod mod, RemoteMod.Version file) {
+    public void saveAs(RemoteMod.Version file) {
         String extension = StringUtils.substringAfterLast(file.getFile().getFilename(), '.');
 
         FileChooser fileChooser = new FileChooser();
@@ -194,12 +196,12 @@ public class DownloadPage extends Control implements DecoratorPage {
 
     @Override
     protected Skin<?> createDefaultSkin() {
-        return new ModDownloadPageSkin(this);
+        return new DownloadPageSkin(this);
     }
 
-    private static class ModDownloadPageSkin extends SkinBase<DownloadPage> {
+    private static class DownloadPageSkin extends SkinBase<DownloadPage> {
 
-        protected ModDownloadPageSkin(DownloadPage control) {
+        protected DownloadPageSkin(DownloadPage control) {
             super(control);
 
             VBox pane = new VBox(8);
@@ -288,7 +290,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                                         if (targetLoaders.contains(loader)) {
                                             list.getContent().addAll(
                                                     ComponentList.createComponentListTitle(i18n("mods.download.recommend", gameVersion)),
-                                                    new ModItem(control.addon, modVersion, control)
+                                                    new AddonItem(control.addon, modVersion, control)
                                             );
                                             break resolve;
                                         }
@@ -300,16 +302,15 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                     for (String gameVersion : control.versions.keys().stream()
                             .sorted(Collections.reverseOrder(GameVersionNumber::compare))
-                            .collect(Collectors.toList())) {
+                            .toList()) {
                         List<RemoteMod.Version> versions = control.versions.get(gameVersion);
                         if (versions == null || versions.isEmpty()) {
                             continue;
                         }
-
                         ComponentList sublist = new ComponentList(() -> {
-                            ArrayList<ModItem> items = new ArrayList<>(versions.size());
+                            ArrayList<AddonItem> items = new ArrayList<>(versions.size());
                             for (RemoteMod.Version v : versions) {
-                                items.add(new ModItem(control.addon, v, control));
+                                items.add(new AddonItem(control.addon, v, control));
                             }
                             return items;
                         });
@@ -325,7 +326,7 @@ public class DownloadPage extends Control implements DecoratorPage {
         }
     }
 
-    private static final class DependencyModItem extends StackPane {
+    private static final class DependencyAddonItem extends StackPane {
         public static final EnumMap<RemoteMod.DependencyType, String> I18N_KEY = new EnumMap<>(Lang.mapOf(
                 Pair.pair(RemoteMod.DependencyType.EMBEDDED, "mods.dependency.embedded"),
                 Pair.pair(RemoteMod.DependencyType.OPTIONAL, "mods.dependency.optional"),
@@ -336,7 +337,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 Pair.pair(RemoteMod.DependencyType.BROKEN, "mods.dependency.broken")
         ));
 
-        DependencyModItem(DownloadListPage page, RemoteMod addon, Profile.ProfileVersion version, DownloadCallback callback) {
+        DependencyAddonItem(DownloadListPage page, RemoteMod addon, Profile.ProfileVersion version, DownloadCallback callback) {
             HBox pane = new HBox(8);
             pane.setPadding(new Insets(0, 8, 0, 8));
             pane.setAlignment(Pos.CENTER_LEFT);
@@ -373,9 +374,9 @@ public class DownloadPage extends Control implements DecoratorPage {
         }
     }
 
-    private static final class ModItem extends StackPane {
+    private static final class AddonItem extends StackPane {
 
-        ModItem(RemoteMod mod, RemoteMod.Version dataItem, DownloadPage selfPage) {
+        AddonItem(RemoteMod mod, RemoteMod.Version dataItem, DownloadPage selfPage) {
             VBox pane = new VBox(8);
             pane.setPadding(new Insets(8, 0, 8, 0));
 
@@ -437,7 +438,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             }
 
             RipplerContainer container = new RipplerContainer(pane);
-            FXUtils.onClicked(container, () -> Controllers.dialog(new ModVersion(mod, dataItem, selfPage)));
+            FXUtils.onClicked(container, () -> Controllers.dialog(new AddonVersion(mod, dataItem, selfPage)));
             getChildren().setAll(container);
 
             // Workaround for https://github.com/HMCL-dev/HMCL/issues/2129
@@ -445,8 +446,8 @@ public class DownloadPage extends Control implements DecoratorPage {
         }
     }
 
-    private static final class ModVersion extends JFXDialogLayout {
-        public ModVersion(RemoteMod mod, RemoteMod.Version version, DownloadPage selfPage) {
+    private static final class AddonVersion extends JFXDialogLayout {
+        public AddonVersion(RemoteMod mod, RemoteMod.Version version, DownloadPage selfPage) {
             RemoteModRepository.Type type = selfPage.repository.getType();
 
             String title = switch (type) {
@@ -460,9 +461,14 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             VBox box = new VBox(8);
             box.setPadding(new Insets(8));
-            ModItem modItem = new ModItem(mod, version, selfPage);
-            modItem.setMouseTransparent(true); // Item is displayed for info, clicking shouldn't open the dialog again
-            box.getChildren().setAll(modItem);
+            var addonItem = new AddonItem(mod, version, selfPage);
+            addonItem.setMouseTransparent(true); // Item is displayed for info, clicking shouldn't open the dialog again
+            box.getChildren().setAll(addonItem);
+
+            Button changelogButton = new JFXButton(i18n("mods.changelog"));
+            changelogButton.getStyleClass().add("dialog-accept");
+            loadChangelog(version, selfPage.repository, changelogButton);
+
             SpinnerPane spinnerPane = new SpinnerPane();
             ScrollPane scrollPane = new ScrollPane();
             ComponentList dependenciesList = new ComponentList(Lang::immutableListOf);
@@ -496,7 +502,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 if (!spinnerPane.isLoading() && spinnerPane.getFailedReason() == null) {
                     fireEvent(new DialogCloseEvent());
                 }
-                selfPage.saveAs(mod, version);
+                selfPage.saveAs(version);
             });
 
             JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
@@ -504,9 +510,9 @@ public class DownloadPage extends Control implements DecoratorPage {
             cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
 
             if (downloadButton == null) {
-                this.setActions(saveAsButton, cancelButton);
+                this.setActions(changelogButton, saveAsButton, cancelButton);
             } else {
-                this.setActions(downloadButton, saveAsButton, cancelButton);
+                this.setActions(changelogButton, downloadButton, saveAsButton, cancelButton);
             }
 
             this.prefWidthProperty().bind(BindingMapping.of(Controllers.getStage().widthProperty()).map(w -> w.doubleValue() * 0.7));
@@ -526,18 +532,17 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                     if (!dependencies.containsKey(dependency.getType())) {
                         List<Node> list = new ArrayList<>();
-                        Label title = new Label(i18n(DependencyModItem.I18N_KEY.get(dependency.getType())));
+                        Label title = new Label(i18n(DependencyAddonItem.I18N_KEY.get(dependency.getType())));
                         title.setPadding(new Insets(0, 8, 0, 8));
                         list.add(title);
                         dependencies.put(dependency.getType(), list);
                     }
-                    DependencyModItem dependencyModItem = new DependencyModItem(selfPage.page, dependency.load(), selfPage.version, selfPage.callback);
-                    dependencies.get(dependency.getType()).add(dependencyModItem);
+                    DependencyAddonItem dependencyAddonItem = new DependencyAddonItem(selfPage.page, dependency.load(), selfPage.version, selfPage.callback);
+                    dependencies.get(dependency.getType()).add(dependencyAddonItem);
                 }
 
                 return dependencies.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
-                spinnerPane.setLoading(false);
                 if (exception == null) {
                     dependenciesList.getContent().setAll(result);
                     spinnerPane.setFailedReason(null);
@@ -545,7 +550,82 @@ public class DownloadPage extends Control implements DecoratorPage {
                     dependenciesList.getContent().setAll();
                     spinnerPane.setFailedReason(i18n("download.failed.refresh"));
                 }
+                spinnerPane.setLoading(false);
             }).start();
+        }
+
+        private void loadChangelog(RemoteMod.Version version, RemoteModRepository repo, Button changelogButton) {
+            changelogButton.setDisable(true);
+            Task.supplyAsync(() -> {
+                if (changelogCache.containsKey(version)) {
+                    return Optional.ofNullable(changelogCache.get(version));
+                } else if (version.getChangelog() != null) {
+                    return StringUtils.nullIfBlank(version.getChangelog()).map(StringUtils::convertToHtml);
+                } else {
+                    return StringUtils.nullIfBlank(repo.getModChangelog(version.getModid(), version.getVersionId())).map(StringUtils::convertToHtml);
+                }
+            }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                if (exception == null) {
+                    if (result.isPresent()) {
+                        String s = result.get();
+                        changelogCache.put(version, s);
+                        changelogButton.setDisable(false);
+                        changelogButton.setOnAction(e -> Controllers.dialog(new AddonChangelog(version, s, repo)));
+                    } else {
+                        changelogCache.put(version, null);
+                        changelogButton.setOnAction(null);
+                    }
+                } else {
+                    changelogButton.setOnAction(null);
+                }
+            }).start();
+        }
+    }
+
+    private static final class AddonChangelog extends JFXDialogLayout {
+
+        public AddonChangelog(RemoteMod.Version version, String changelog, RemoteModRepository repo) {
+            setHeading(new HBox(new Label(i18n("mods.changelog") + " - " + version.getName())));
+
+            VBox box = new VBox(8);
+            box.setPadding(new Insets(8));
+
+            SpinnerPane spinnerPane = new SpinnerPane();
+            ScrollPane scrollPane = new ScrollPane();
+            scrollPane.setFitToWidth(true);
+            scrollPane.setContent(FXUtils.renderAddonChangelog(changelog, repo.getBaseUrl()));
+
+            spinnerPane.setContent(scrollPane);
+            box.getChildren().add(spinnerPane);
+            VBox.setVgrow(spinnerPane, Priority.SOMETIMES);
+
+            this.setBody(box);
+
+            JFXHyperlink versionPageBtn = new JFXHyperlink(i18n("mods.url"));
+            versionPageBtn.setDisable(true);
+            loadVersionPageUrl(version, repo, versionPageBtn);
+
+            JFXButton closeButton = new JFXButton(i18n("button.ok"));
+            closeButton.getStyleClass().add("dialog-accept");
+            closeButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
+
+            setActions(versionPageBtn, closeButton);
+
+            this.prefWidthProperty().bind(BindingMapping.of(Controllers.getStage().widthProperty()).map(w -> w.doubleValue() * 0.7));
+            this.prefHeightProperty().bind(BindingMapping.of(Controllers.getStage().heightProperty()).map(w -> w.doubleValue() * 0.7));
+
+            onEscPressed(this, closeButton::fire);
+        }
+
+        private void loadVersionPageUrl(RemoteMod.Version version, RemoteModRepository repo, JFXHyperlink button) {
+            Task.supplyAsync(() -> repo.getVersionPageUrl(version))
+                    .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                        if (exception == null && StringUtils.isNotBlank(result)) {
+                            button.setOnAction(__ -> FXUtils.openUriInBrowser(result));
+                            button.setDisable(false);
+                        }
+                    })
+                    .start();
         }
     }
 

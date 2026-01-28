@@ -17,26 +17,38 @@
  */
 package org.jackhuang.hmcl.ui;
 
+import javafx.beans.InvalidationListener;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.collections.FXCollections;
+import javafx.geometry.Pos;
 import javafx.scene.Cursor;
-import javafx.scene.image.Image;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * @author Glavo
  */
 public final class HTMLRenderer {
+
     private static URI resolveLink(Node linkNode) {
         String href = linkNode.absUrl("href");
         if (href.isEmpty())
@@ -49,6 +61,10 @@ public final class HTMLRenderer {
         }
     }
 
+    public static HTMLRenderer openHyperlinkInBrowser() {
+        return new HTMLRenderer(FXUtils::openUriInBrowser);
+    }
+
     private final List<javafx.scene.Node> children = new ArrayList<>();
     private final List<Node> stack = new ArrayList<>();
 
@@ -57,8 +73,10 @@ public final class HTMLRenderer {
     private boolean underline;
     private boolean strike;
     private boolean highlight;
+    private boolean code;
     private String headerLevel;
     private Node hyperlink;
+    private String fxStyle;
 
     private final Consumer<URI> onClickHyperlink;
 
@@ -72,40 +90,29 @@ public final class HTMLRenderer {
         underline = false;
         strike = false;
         highlight = false;
+        code = false;
         headerLevel = null;
         hyperlink = null;
+        fxStyle = null;
 
         for (Node node : stack) {
             String nodeName = node.nodeName();
             switch (nodeName) {
-                case "b":
-                case "strong":
-                    bold = true;
-                    break;
-                case "i":
-                case "em":
-                    italic = true;
-                    break;
-                case "ins":
-                    underline = true;
-                    break;
-                case "del":
-                    strike = true;
-                    break;
-                case "mark":
-                    highlight = true;
-                    break;
-                case "a":
-                    hyperlink = node;
-                    break;
-                case "h1":
-                case "h2":
-                case "h3":
-                case "h4":
-                case "h5":
-                case "h6":
-                    headerLevel = nodeName;
-                    break;
+                case "b", "strong" -> bold = true;
+                case "i", "em" -> italic = true;
+                case "ins" -> underline = true;
+                case "del" -> strike = true;
+                case "mark" -> highlight = true;
+                case "code" -> code = true;
+                case "a" -> hyperlink = node;
+                case "h1", "h2", "h3", "h4", "h5", "h6" -> headerLevel = nodeName;
+            }
+
+            String style = node.attr("style");
+            if (StringUtils.isNotBlank(style)) {
+                fxStyle = style
+                        .replace("color:", "-fx-fill:")
+                        .replace("font-size:", "-fx-font-size:"); // And more
             }
         }
     }
@@ -142,14 +149,29 @@ public final class HTMLRenderer {
         if (italic)
             text.getStyleClass().add("html-italic");
 
+        if (code) {
+            text.getStyleClass().add("html-code");
+            text.setStyle("-fx-font-family: \"%s\";".formatted(Lang.requireNonNullElse(config().getFontFamily(), FXUtils.DEFAULT_MONOSPACE_FONT)));
+        }
+
         if (headerLevel != null)
             text.getStyleClass().add("html-" + headerLevel);
+
+        if (fxStyle != null)
+            text.setStyle(fxStyle);
     }
 
     private void appendText(String text) {
         Text textNode = new Text(text);
         applyStyle(textNode);
-        children.add(textNode);
+        if (code) {
+            var block = new VBox(textNode);
+            block.setAlignment(Pos.CENTER);
+            block.getStyleClass().add("html-code-block");
+            children.add(block);
+        } else {
+            children.add(textNode);
+        }
     }
 
     private void appendAutoLineBreak(String text) {
@@ -183,12 +205,22 @@ public final class HTMLRenderer {
             }
 
             try {
-                Image image = FXUtils.getRemoteImageTask(src, width, height, true, true)
-                        .run();
-                if (image == null)
-                    throw new AssertionError("Image loading task returned null");
+                ImageView imageView = new ImageView();
 
-                ImageView imageView = new ImageView(image);
+                int finalWidth = width;
+                int finalHeight = height;
+                Task.runAsync(() -> {
+                    try {
+                        var result = FXUtils.getRemoteImageTask(src, finalWidth, finalHeight, true, true).run();
+                        if (result == null) {
+                            throw new AssertionError("Image loading task returned null");
+                        }
+                        imageView.setImage(result);
+                    } catch (Throwable e) {
+                        LOG.warning("Failed to load image: " + src, e);
+                    }
+                }).start();
+
                 if (hyperlink != null) {
                     URI target = resolveLink(hyperlink);
                     if (target != null) {
@@ -196,6 +228,7 @@ public final class HTMLRenderer {
                         imageView.setCursor(Cursor.HAND);
                     }
                 }
+                imageView.setPreserveRatio(true);
                 children.add(imageView);
                 return;
             } catch (Throwable e) {
@@ -207,55 +240,105 @@ public final class HTMLRenderer {
             appendText(alt);
     }
 
+    private void appendTable(Node table) {
+        var childNodes = table.childNodes();
+
+        var headOptional = childNodes.stream().filter(n -> n.nameIs("thead")).findFirst();
+        if (headOptional.isEmpty()) return;
+        var head = (Element) headOptional.get();
+        String[] headRow = head.getAllElements().stream()
+                .filter(n -> n.nameIs("th"))
+                .map(Element::text)
+                .toArray(String[]::new);
+        if (headRow.length == 0) return;
+
+        appendAutoLineBreak("\n");
+        var bodyOptional = childNodes.stream().filter(n -> n.nameIs("tbody")).findFirst();
+        String[][] bodyRows;
+        if (bodyOptional.isEmpty()) {
+            bodyRows = new String[0][headRow.length];
+        } else {
+            var body = (Element) bodyOptional.get();
+            var r = body.getAllElements().stream()
+                    .filter(n -> n.nameIs("tr"))
+                    .map(n -> n.getAllElements().stream()
+                            .filter(e -> e.nameIs("td"))
+                            .map(Element::text)
+                            .toArray(String[]::new))
+                    .toList();
+            bodyRows = new String[r.size()][headRow.length];
+            for (int i = 0; i < r.size(); i++) {
+                bodyRows[i] = r.get(i);
+            }
+        }
+
+        TableView<String[]> tableView = new TableView<>(FXCollections.observableList(Arrays.asList(bodyRows)));
+        tableView.setFixedCellSize(25);
+        tableView.setPrefHeight(25 * (bodyRows.length + 1) + 5);
+        for (int i = 0; i < headRow.length; i++) {
+            int finalI = i;
+            TableColumn<String[], String> c = new TableColumn<>(headRow[i]);
+            c.setCellValueFactory(param -> new SimpleStringProperty(param.getValue()[finalI]));
+            tableView.getColumns().add(c);
+        }
+
+        children.add(tableView);
+    }
+
     public void appendNode(Node node) {
-        if (node instanceof TextNode) {
-            appendText(((TextNode) node).text());
+        if (node instanceof TextNode n) {
+            appendText(StringUtils.normaliseWhitespace(n.getWholeText()));
         }
 
         String name = node.nodeName();
         switch (name) {
-            case "img":
+            case "img" -> {
+                if (!children.isEmpty())
+                    appendAutoLineBreak("\n");
                 appendImage(node);
-                break;
-            case "li":
-                appendText("\n \u2022 ");
-                break;
-            case "dt":
-                appendText(" ");
-                break;
-            case "p":
-            case "h1":
-            case "h2":
-            case "h3":
-            case "h4":
-            case "h5":
-            case "h6":
-            case "tr":
+                appendAutoLineBreak("\n");
+            }
+            case "li" -> {
+                int i = 0;
+                var n = node;
+                while (true) {
+                    n = n.parent();
+                    if (n == null) break;
+                    if (n.nameIs("li")) i++;
+                }
+                appendText("\n " + "  ".repeat(Math.max(0, i)) + "\u2022 ");
+            }
+            case "dt" -> appendText(" ");
+            case "p" -> {
+                var n = node.parent();
+                if (!children.isEmpty() && (n == null || !n.nameIs("li")))
+                    appendAutoLineBreak("\n\n");
+            }
+            case "h1", "h2", "h3", "h4", "h5", "h6" -> {
                 if (!children.isEmpty())
                     appendAutoLineBreak("\n\n");
-                break;
+            }
         }
 
         if (node.childNodeSize() > 0) {
-            pushNode(node);
-            for (Node childNode : node.childNodes()) {
-                appendNode(childNode);
+            if ("table".equals(name)) {
+                appendTable(node);
+            } else {
+                pushNode(node);
+                for (Node childNode : node.childNodes()) {
+                    appendNode(childNode);
+                }
+                popNode();
             }
-            popNode();
         }
 
         switch (name) {
-            case "br":
-            case "dd":
-            case "p":
-            case "h1":
-            case "h2":
-            case "h3":
-            case "h4":
-            case "h5":
-            case "h6":
-                appendAutoLineBreak("\n");
-                break;
+            case "br", "dd", "h1", "h2", "h3", "h4", "h5", "h6" -> appendAutoLineBreak("\n");
+            case "p" -> {
+                var n = node.parent();
+                if (n == null || !n.nameIs("li"))
+                    appendAutoLineBreak("\n");
+            }
         }
     }
 
@@ -304,6 +387,16 @@ public final class HTMLRenderer {
         TextFlow textFlow = new TextFlow();
         textFlow.getStyleClass().add("html");
         textFlow.getChildren().setAll(children);
+        for (javafx.scene.Node node : children) {
+            if (node instanceof ImageView img) {
+                InvalidationListener i = __ ->
+                        img.setFitWidth(Math.min(textFlow.getWidth() - 20D, img.getImage() == null ? 0D : img.getImage().getWidth()));
+                textFlow.widthProperty().addListener(i);
+                img.imageProperty().addListener(i);
+            } else if (node instanceof TableView<?> table) {
+                table.prefWidthProperty().bind(textFlow.widthProperty().add(-20D));
+            }
+        }
         return textFlow;
     }
 
