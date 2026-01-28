@@ -22,6 +22,7 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -44,6 +45,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 public final class LineSelectButton<T> extends LineButtonBase {
 
     private static final String DEFAULT_STYLE_CLASS = "line-select-button";
+    private static final PseudoClass SELECTED_PSEUDO_CLASS = PseudoClass.getPseudoClass("selected");
 
     private JFXPopup popup;
 
@@ -90,6 +92,7 @@ public final class LineSelectButton<T> extends LineButtonBase {
                         VBox vbox = new VBox();
 
                         var itemTitleLabel = new Label();
+                        itemTitleLabel.getStyleClass().add("title");
                         itemTitleLabel.textProperty().bind(Bindings.createStringBinding(() -> {
                             if (item == null)
                                 return "";
@@ -97,11 +100,6 @@ public final class LineSelectButton<T> extends LineButtonBase {
                             Function<T, String> converter = getConverter();
                             return converter != null ? converter.apply(item) : Objects.toString(item, "");
                         }, converterProperty()));
-                        itemTitleLabel.textFillProperty().bind(Bindings.createObjectBinding(() ->
-                                        Objects.equals(getValue(), item)
-                                                ? Themes.getColorScheme().getPrimary()
-                                                : Themes.getColorScheme().getOnSurface(),
-                                valueProperty(), Themes.colorSchemeProperty()));
 
                         var itemSubtitleLabel = new Label();
                         itemSubtitleLabel.getStyleClass().add("subtitle");
@@ -118,13 +116,6 @@ public final class LineSelectButton<T> extends LineButtonBase {
                             }
                         });
 
-                        itemSubtitleLabel.textFillProperty().bind(Bindings.createObjectBinding(() ->
-                                        Objects.equals(getValue(), item)
-                                                ? Themes.getColorScheme().getPrimary()
-                                                : Themes.getColorScheme().getOnSurface(),
-                                valueProperty(), Themes.colorSchemeProperty()));
-
-
                         var wrapper = new StackPane(vbox);
                         wrapper.setAlignment(Pos.CENTER_LEFT);
                         wrapper.getStyleClass().add("menu-container");
@@ -134,6 +125,10 @@ public final class LineSelectButton<T> extends LineButtonBase {
                             setValue(item);
                             popup.hide();
                         });
+
+                        FXUtils.onChangeAndOperate(valueProperty(),
+                                value -> wrapper.pseudoClassStateChanged(SELECTED_PSEUDO_CLASS, Objects.equals(value, item)));
+
                         return ripplerContainer;
                     }));
 

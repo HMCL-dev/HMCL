@@ -31,10 +31,13 @@ import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.javafx.SafeStringConverter;
 
 import java.net.Proxy;
+import java.util.MissingResourceException;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.i18n.I18n.hasKey;
@@ -62,19 +65,28 @@ public class DownloadSettingsPage extends StackPane {
                 autoChooseDownloadSource.setTitle(i18n("settings.launcher.download_source.auto"));
                 autoChooseDownloadSource.selectedProperty().bindBidirectional(config().autoChooseDownloadTypeProperty());
 
+                Function<String, String> converter = key -> i18n("download.provider." + key);
+                Function<String, String> descriptionConverter = key -> {
+                    try {
+                        return I18n.getResourceBundle().getString("download.provider." + key + ".desc");
+                    } catch (MissingResourceException ignored) {
+                        return null;
+                    }
+                };
+
                 var versionListSourcePane = new LineSelectButton<String>();
                 versionListSourcePane.disableProperty().bind(autoChooseDownloadSource.selectedProperty().not());
                 versionListSourcePane.setTitle(i18n("settings.launcher.version_list_source"));
-                versionListSourcePane.setConverter(key -> i18n("download.provider." + key));
-                versionListSourcePane.setDescriptionConverter(key -> i18n("download.provider." + key + ".desc"));
+                versionListSourcePane.setConverter(converter);
+                versionListSourcePane.setDescriptionConverter(descriptionConverter);
                 versionListSourcePane.setItems(DownloadProviders.AUTO_PROVIDERS.keySet());
                 versionListSourcePane.valueProperty().bindBidirectional(config().versionListSourceProperty());
 
                 var downloadSourcePane = new LineSelectButton<String>();
                 downloadSourcePane.disableProperty().bind(autoChooseDownloadSource.selectedProperty());
                 downloadSourcePane.setTitle(i18n("settings.launcher.download_source"));
-                downloadSourcePane.setConverter(key -> i18n("download.provider." + key));
-                downloadSourcePane.setDescriptionConverter(key -> i18n("download.provider." + key + ".desc"));
+                downloadSourcePane.setConverter(converter);
+                downloadSourcePane.setDescriptionConverter(descriptionConverter);
                 downloadSourcePane.setItems(DownloadProviders.DIRECT_PROVIDERS.keySet());
                 downloadSourcePane.valueProperty().bindBidirectional(config().downloadTypeProperty());
 
