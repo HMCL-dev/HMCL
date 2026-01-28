@@ -210,17 +210,16 @@ public final class HTMLRenderer {
                 int finalWidth = width;
                 int finalHeight = height;
                 Task.runAsync(() -> {
-                            try {
-                                var result = FXUtils.getRemoteImageTask(src, finalWidth, finalHeight, true, true).run();
-                                if (result == null) {
-                                    throw new AssertionError("Image loading task returned null");
-                                }
-                                imageView.setImage(result);
-                            } catch (Throwable e) {
-                                LOG.warning("Failed to load image: " + src, e);
-                            }
-                        })
-                        .start();
+                    try {
+                        var result = FXUtils.getRemoteImageTask(src, finalWidth, finalHeight, true, true).run();
+                        if (result == null) {
+                            throw new AssertionError("Image loading task returned null");
+                        }
+                        imageView.setImage(result);
+                    } catch (Throwable e) {
+                        LOG.warning("Failed to load image: " + src, e);
+                    }
+                }).start();
 
                 if (hyperlink != null) {
                     URI target = resolveLink(hyperlink);
