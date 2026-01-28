@@ -273,6 +273,8 @@ public final class HTMLRenderer {
         }
 
         TableView<String[]> tableView = new TableView<>(FXCollections.observableList(Arrays.asList(bodyRows)));
+        tableView.setFixedCellSize(25);
+        tableView.setPrefHeight(25 * (bodyRows.length + 1));
         for (int i = 0; i < headRow.length; i++) {
             int finalI = i;
             TableColumn<String[], String> c = new TableColumn<>(headRow[i]);
