@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.construct;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.beans.property.StringPropertyBase;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
@@ -26,7 +27,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 
 /// @author Glavo
@@ -34,6 +34,10 @@ public abstract class LineButtonBase extends StackPane {
 
     protected final BorderPane root;
     protected final RipplerContainer container;
+
+    private final VBox left;
+    private final Label titleLabel;
+    private Label subtitleLabel;
 
     public LineButtonBase() {
         this.root = new BorderPane();
@@ -45,27 +49,16 @@ public abstract class LineButtonBase extends StackPane {
 
         // Left
 
-        var left = new VBox();
+        this.left = new VBox();
         root.setCenter(left);
         left.setMouseTransparent(true);
         left.setAlignment(Pos.CENTER_LEFT);
 
-        var titleLabel = new Label();
+        this.titleLabel = new Label();
         titleLabel.textProperty().bind(titleProperty());
         titleLabel.getStyleClass().add("title");
 
-        var subtitleLabel = new Label();
-        subtitleLabel.setWrapText(true);
-        subtitleLabel.setMinHeight(Region.USE_PREF_SIZE);
-        subtitleLabel.getStyleClass().add("subtitle");
-        subtitleLabel.textProperty().bind(subtitleProperty());
-
-        FXUtils.onChangeAndOperate(subtitleProperty(), subtitle -> {
-            if (StringUtils.isBlank(subtitle))
-                left.getChildren().setAll(titleLabel);
-            else
-                left.getChildren().setAll(titleLabel, subtitleLabel);
-        });
+        left.getChildren().add(titleLabel);
     }
 
     private final StringProperty title = new SimpleStringProperty(this, "title");
@@ -82,9 +75,41 @@ public abstract class LineButtonBase extends StackPane {
         this.titleProperty().set(title);
     }
 
-    private final StringProperty subtitle = new SimpleStringProperty(this, "subtitle");
+    private StringProperty subtitle;
 
     public StringProperty subtitleProperty() {
+        if (subtitle == null) {
+            subtitle = new StringPropertyBase() {
+                @Override
+                public String getName() {
+                    return "subtitle";
+                }
+
+                @Override
+                public Object getBean() {
+                    return LineButtonBase.this;
+                }
+
+                @Override
+                protected void invalidated() {
+                    String subtitle = get();
+                    if (StringUtils.isNotBlank(subtitle)) {
+                        if (subtitleLabel == null) {
+                            subtitleLabel = new Label();
+                            subtitleLabel.setWrapText(true);
+                            subtitleLabel.setMinHeight(Region.USE_PREF_SIZE);
+                            subtitleLabel.getStyleClass().add("subtitle");
+                        }
+                        subtitleLabel.setText(subtitle);
+
+                        left.getChildren().setAll(titleLabel, subtitleLabel);
+                    } else if (subtitleLabel != null) {
+                        subtitleLabel.setText(null);
+                    }
+                }
+            };
+        }
+
         return subtitle;
     }
 
@@ -93,6 +118,6 @@ public abstract class LineButtonBase extends StackPane {
     }
 
     public void setSubtitle(String subtitle) {
-        this.subtitleProperty().set(subtitle);
+        subtitleProperty().set(subtitle);
     }
 }
