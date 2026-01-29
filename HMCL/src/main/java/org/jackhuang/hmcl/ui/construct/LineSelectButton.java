@@ -75,9 +75,6 @@ public final class LineSelectButton<T> extends LineButtonBase {
 
             Node arrowIcon = SVG.UNFOLD_MORE.createIcon(24);
             HBox.setMargin(arrowIcon, new Insets(0, 8, 0, 8));
-            arrowIcon.opacityProperty().bind(Bindings.when(disabledProperty())
-                    .then(0.4)
-                    .otherwise(1.0));
 
             right.getChildren().setAll(valueLabel, arrowIcon);
         }
