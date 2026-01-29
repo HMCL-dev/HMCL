@@ -73,7 +73,13 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         this.versionId = versionId;
 
         updateSessionLockChannel();
-        updateWorldLevelDat(false);
+
+        try {
+            this.world.reloadLevelDat();
+        } catch (IOException e) {
+            LOG.warning("Can not load world level.dat of world: " + this.world.getFile(), e);
+            this.addEventHandler(Navigator.NavigationEvent.NAVIGATED, event -> closePageForLoadingFail());
+        }
 
         worldInfoTab.setNodeSupplier(() -> new WorldInfoPage(this));
         worldBackupsTab.setNodeSupplier(() -> new WorldBackupsPage(this));
@@ -93,7 +99,13 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     @Override
     public void refresh() {
         updateSessionLockChannel();
-        updateWorldLevelDat(true);
+        try {
+            world.reloadLevelDat();
+        } catch (IOException e) {
+            LOG.warning("Can not load world level.dat of world: " + world.getFile(), e);
+            closePageForLoadingFail();
+            return;
+        }
 
         for (var tab : header.getTabs()) {
             if (tab.getNode() instanceof WorldRefreshable r) {
@@ -113,19 +125,6 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         if (sessionLockChannel == null || !sessionLockChannel.isOpen()) {
             sessionLockChannel = WorldManageUIUtils.getSessionLockChannel(world);
             readOnly.set(sessionLockChannel == null);
-        }
-    }
-
-    private void updateWorldLevelDat(boolean pageFullyNavigated) {
-        try {
-            world.reloadLevelDat();
-        } catch (IOException e) {
-            LOG.warning("Can not load world level.dat of world: " + world.getFile(), e);
-            if (pageFullyNavigated) {
-                closePageForLoadingFail();
-            } else {
-                this.addEventHandler(Navigator.NavigationEvent.NAVIGATED, event -> closePageForLoadingFail());
-            }
         }
     }
 
