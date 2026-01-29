@@ -27,7 +27,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.util.StringUtils;
 
 /// @author Glavo
 public abstract class LineButtonBase extends StackPane {
