@@ -37,7 +37,7 @@ import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.FileItem;
-import org.jackhuang.hmcl.ui.construct.OptionToggleButton;
+import org.jackhuang.hmcl.ui.construct.LineToggleButton;
 import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -55,7 +55,7 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
     private final Profile profile;
     private final JFXTextField txtProfileName;
     private final FileItem gameDir;
-    private final OptionToggleButton toggleUseRelativePath;
+    private final LineToggleButton toggleUseRelativePath;
 
     /**
      * @param profile null if creating a new profile.
@@ -113,7 +113,7 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
                     gameDir.setTitle(i18n("profile.instance_directory.choose"));
                     gameDir.pathProperty().bindBidirectional(location);
 
-                    toggleUseRelativePath = new OptionToggleButton();
+                    toggleUseRelativePath = new LineToggleButton();
                     toggleUseRelativePath.setTitle(i18n("profile.use_relative_path"));
 
                     gameDir.convertToRelativePathProperty().bind(toggleUseRelativePath.selectedProperty());
