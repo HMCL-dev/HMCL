@@ -47,7 +47,6 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jetbrains.annotations.PropertyKey;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -103,9 +102,9 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
 
         ComponentList worldInfo = new ComponentList();
         {
-            BorderPane worldNamePane = new BorderPane();
+            var worldNamePane = new LinePane();
             {
-                setLeftLabel(worldNamePane, "world.name");
+                worldNamePane.setTitle(i18n("world.name"));
                 JFXTextField worldNameField = new JFXTextField();
                 setRightTextField(worldNamePane, worldNameField, 200);
 
@@ -128,15 +127,15 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 }
             }
 
-            var gameVersionPane = new LineLabelPane();
+            var gameVersionPane = new org.jackhuang.hmcl.ui.construct.LineTextPane();
             {
                 gameVersionPane.setTitle(i18n("world.info.game_version"));
                 gameVersionPane.setText(world.getGameVersion() == null ? "" : world.getGameVersion().toNormalizedString());
             }
 
-            BorderPane iconPane = new BorderPane();
+            var iconPane = new LinePane();
             {
-                setLeftLabel(iconPane, "world.icon");
+                iconPane.setTitle(i18n("world.icon"));
 
                 {
                     FXUtils.limitSize(iconImageView, 32, 32);
@@ -172,9 +171,9 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 iconPane.setRight(hBox);
             }
 
-            BorderPane seedPane = new BorderPane();
+            var seedPane = new LinePane();
             {
-                setLeftLabel(seedPane, "world.info.random_seed");
+                seedPane.setTitle(i18n("world.info.random_seed"));
 
                 SimpleBooleanProperty visibility = new SimpleBooleanProperty();
                 StackPane visibilityButton = new StackPane();
@@ -202,13 +201,14 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
 
                 HBox right = new HBox(8);
                 {
+                    right.setAlignment(Pos.CENTER_RIGHT);
                     BorderPane.setAlignment(right, Pos.CENTER_RIGHT);
                     right.getChildren().setAll(visibilityButton, seedLabel);
                     seedPane.setRight(right);
                 }
             }
 
-            var worldSpawnPoint = new LineLabelPane();
+            var worldSpawnPoint = new LineTextPane();
             {
                 worldSpawnPoint.setTitle(i18n("world.info.spawn"));
 
@@ -229,13 +229,13 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 worldSpawnPoint.setText(value);
             }
 
-            var lastPlayedPane = new LineLabelPane();
+            var lastPlayedPane = new LineTextPane();
             {
                 lastPlayedPane.setTitle(i18n("world.info.last_played"));
                 lastPlayedPane.setText(formatDateTime(Instant.ofEpochMilli(world.getLastPlayed())));
             }
 
-            var timePane = new LineLabelPane();
+            var timePane = new LineTextPane();
             {
                 timePane.setTitle(i18n("world.info.time"));
                 if (dataTag.get("Time") instanceof LongTag timeTag) {
@@ -244,7 +244,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 }
             }
 
-            LineToggleButton allowCheatsButton = new LineToggleButton();
+            var allowCheatsButton = new LineToggleButton();
             {
                 allowCheatsButton.setTitle(i18n("world.info.allow_cheats"));
                 allowCheatsButton.setDisable(isReadOnly);
@@ -252,7 +252,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 bindTagAndToggleButton(dataTag.get("allowCommands"), allowCheatsButton);
             }
 
-            LineToggleButton generateFeaturesButton = new LineToggleButton();
+            var generateFeaturesButton = new LineToggleButton();
             {
                 generateFeaturesButton.setTitle(i18n("world.info.generate_features"));
                 generateFeaturesButton.setDisable(isReadOnly);
@@ -265,7 +265,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 }
             }
 
-            LineSelectButton<Difficulty> difficultyButton = new LineSelectButton<>();
+            var difficultyButton = new LineSelectButton<Difficulty>();
             {
                 difficultyButton.setTitle(i18n("world.info.difficulty"));
                 difficultyButton.setDisable(worldManagePage.isReadOnly());
@@ -289,7 +289,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 }
             }
 
-            LineToggleButton difficultyLockPane = new LineToggleButton();
+            var difficultyLockPane = new LineToggleButton();
             {
                 difficultyLockPane.setTitle(i18n("world.info.difficulty_lock"));
                 difficultyLockPane.setDisable(isReadOnly);
@@ -307,7 +307,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
         if (dataTag.get("Player") instanceof CompoundTag playerTag) {
             ComponentList playerInfo = new ComponentList();
 
-            var locationPane = new LineLabelPane();
+            var locationPane = new LineTextPane();
             {
                 locationPane.setTitle(i18n("world.info.player.location"));
                 Dimension dimension = Dimension.of(playerTag.get("Dimension"));
@@ -316,7 +316,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 }
             }
 
-            var lastDeathLocationPane = new LineLabelPane();
+            var lastDeathLocationPane = new LineTextPane();
             {
                 lastDeathLocationPane.setTitle(i18n("world.info.player.last_death_location"));
                 // Valid after 22w14a; prior to this version, the game did not record the last death location data.
@@ -328,7 +328,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 }
             }
 
-            var spawnPane = new LineLabelPane();
+            var spawnPane = new LineTextPane();
             {
                 spawnPane.setTitle(i18n("world.info.player.spawn"));
                 if (playerTag.get("respawn") instanceof CompoundTag respawnTag
@@ -345,7 +345,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 }
             }
 
-            LineSelectButton<GameType> playerGameTypePane = new LineSelectButton<>();
+            var playerGameTypePane = new LineSelectButton<GameType>();
             {
                 playerGameTypePane.setTitle(i18n("world.info.player.game_type"));
                 playerGameTypePane.setDisable(worldManagePage.isReadOnly());
@@ -377,27 +377,27 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 }
             }
 
-            BorderPane healthPane = new BorderPane();
+            var healthPane = new LinePane();
             {
-                setLeftLabel(healthPane, "world.info.player.health");
+                healthPane.setTitle(i18n("world.info.player.health"));
                 setRightTextField(healthPane, 50, playerTag.get("Health"));
             }
 
-            BorderPane foodLevelPane = new BorderPane();
+            var foodLevelPane = new LinePane();
             {
-                setLeftLabel(foodLevelPane, "world.info.player.food_level");
+                foodLevelPane.setTitle(i18n("world.info.player.food_level"));
                 setRightTextField(foodLevelPane, 50, playerTag.get("foodLevel"));
             }
 
-            BorderPane foodSaturationPane = new BorderPane();
+            var foodSaturationPane = new LinePane();
             {
-                setLeftLabel(foodSaturationPane, "world.info.player.food_saturation_level");
+                foodSaturationPane.setTitle(i18n("world.info.player.food_saturation_level"));
                 setRightTextField(foodSaturationPane, 50, playerTag.get("foodSaturationLevel"));
             }
 
-            BorderPane xpLevelPane = new BorderPane();
+            var xpLevelPane = new LinePane();
             {
-                setLeftLabel(xpLevelPane, "world.info.player.xp_level");
+                xpLevelPane.setTitle(i18n("world.info.player.xp_level"));
                 setRightTextField(xpLevelPane, 50, playerTag.get("XpLevel"));
             }
 
@@ -408,12 +408,6 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
 
             rootPane.getChildren().addAll(ComponentList.createComponentListTitle(i18n("world.info.player")), playerInfo);
         }
-    }
-
-    private void setLeftLabel(BorderPane borderPane, @PropertyKey(resourceBundle = "assets.lang.I18N") String key) {
-        Label label = new Label(i18n(key));
-        BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-        borderPane.setLeft(label);
     }
 
     private void setRightTextField(BorderPane borderPane, int perfWidth, Tag tag) {

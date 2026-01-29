@@ -29,7 +29,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 /// @author Glavo
-public abstract class LinePane extends BorderPane {
+public class LinePane extends BorderPane {
 
     private static final Insets PADDING = new Insets(8, 8, 8, 16);
 

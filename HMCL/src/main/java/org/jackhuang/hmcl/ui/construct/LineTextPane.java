@@ -20,16 +20,17 @@ package org.jackhuang.hmcl.ui.construct;
 import javafx.beans.property.StringProperty;
 import javafx.beans.property.StringPropertyBase;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import org.jackhuang.hmcl.ui.FXUtils;
 
 /// @author Glavo
-public final class LineLabelPane extends LinePane {
+public final class LineTextPane extends LinePane {
 
     private static final String DEFAULT_STYLE_CLASS = "line-label-pane";
 
-    public LineLabelPane() {
+    public LineTextPane() {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
     }
 
@@ -38,13 +39,13 @@ public final class LineLabelPane extends LinePane {
     public StringProperty textProperty() {
         if (text == null) {
             text = new StringPropertyBase() {
-                private static final Insets LABEL_MARGIN = new Insets(0, 0, 0, 16);
+                private static final Insets LABEL_MARGIN = new Insets(0, 8, 0, 16);
 
                 private Label rightLabel;
 
                 @Override
                 public Object getBean() {
-                    return LineLabelPane.this;
+                    return LineTextPane.this;
                 }
 
                 @Override
@@ -58,15 +59,16 @@ public final class LineLabelPane extends LinePane {
                     if (text == null || text.isEmpty()) {
                         if (rightLabel != null)
                             rightLabel.setText(null);
-                        LineLabelPane.this.setRight(null);
+                        LineTextPane.this.setRight(null);
                     } else {
                         if (rightLabel == null) {
                             rightLabel = new Label();
                             FXUtils.copyOnDoubleClick(rightLabel);
                             BorderPane.setMargin(rightLabel, LABEL_MARGIN);
+                            BorderPane.setAlignment(rightLabel, Pos.CENTER_RIGHT);
                         }
                         rightLabel.setText(text);
-                        LineLabelPane.this.setRight(rightLabel);
+                        LineTextPane.this.setRight(rightLabel);
                     }
                 }
             };
