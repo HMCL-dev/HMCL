@@ -127,7 +127,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 }
             }
 
-            var gameVersionPane = new org.jackhuang.hmcl.ui.construct.LineTextPane();
+            var gameVersionPane = new LineTextPane();
             {
                 gameVersionPane.setTitle(i18n("world.info.game_version"));
                 gameVersionPane.setText(world.getGameVersion() == null ? "" : world.getGameVersion().toNormalizedString());
