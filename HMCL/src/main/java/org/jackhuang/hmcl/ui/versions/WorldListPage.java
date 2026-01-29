@@ -273,11 +273,8 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                 FXUtils.installFastTooltip(btnLaunch, i18n("version.launch"));
                 btnLaunch.setOnAction(event -> {
                     World world = getItem();
-                    if (world != null && !world.isLocked()) {
+                    if (world != null)
                         page.launch(world);
-                    } else {
-                        updateItem(world, false);
-                    }
                 });
 
                 JFXButton btnMore = new JFXButton();
@@ -286,18 +283,22 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                 btnMore.setGraphic(SVG.MORE_VERT.createIcon());
                 btnMore.setOnAction(event -> {
                     World world = getItem();
-                    if (world != null) showPopupMenu(world, JFXPopup.PopupHPosition.RIGHT, 0, root.getHeight());
+                    if (world != null)
+                        showPopupMenu(world, JFXPopup.PopupHPosition.RIGHT, 0, root.getHeight());
                 });
             }
 
             this.graphic = new RipplerContainer(root);
             graphic.setOnMouseClicked(event -> {
-                if (event.getClickCount() != 1) return;
+                if (event.getClickCount() != 1)
+                    return;
 
                 World world = getItem();
-                if (world == null) return;
+                if (world == null)
+                    return;
 
-                if (event.getButton() == MouseButton.PRIMARY) page.showManagePage(world);
+                if (event.getButton() == MouseButton.PRIMARY)
+                    page.showManagePage(world);
                 else if (event.getButton() == MouseButton.SECONDARY)
                     showPopupMenu(world, JFXPopup.PopupHPosition.LEFT, event.getX(), event.getY());
             });
@@ -320,7 +321,8 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                 leftTooltip.setText(world.getFile().toString());
                 content.setTitle(world.getWorldName() != null ? parseColorEscapes(world.getWorldName()) : "");
 
-                if (world.getGameVersion() != null) content.addTag(I18n.getDisplayVersion(world.getGameVersion()));
+                if (world.getGameVersion() != null)
+                    content.addTag(I18n.getDisplayVersion(world.getGameVersion()));
                 if (world.isLocked()) {
                     content.addTag(i18n("world.locked"));
                     btnLaunch.setDisable(true);
@@ -348,13 +350,21 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                 launchItem.setDisable(worldLocked);
                 popupMenu.getContent().add(launchItem);
 
-                popupMenu.getContent().addAll(new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), () -> page.generateLaunchScript(world), popup), new MenuSeparator());
+                popupMenu.getContent().addAll(
+                        new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), () -> page.generateLaunchScript(world), popup),
+                        new MenuSeparator()
+                );
             }
 
             popupMenu.getContent().add(new IconedMenuItem(SVG.SETTINGS, i18n("world.manage.button"), () -> page.showManagePage(world), popup));
 
             if (ChunkBaseApp.isSupported(world)) {
-                popupMenu.getContent().addAll(new MenuSeparator(), new IconedMenuItem(SVG.EXPLORE, i18n("world.chunkbase.seed_map"), () -> ChunkBaseApp.openSeedMap(world), popup), new IconedMenuItem(SVG.VISIBILITY, i18n("world.chunkbase.stronghold"), () -> ChunkBaseApp.openStrongholdFinder(world), popup), new IconedMenuItem(SVG.FORT, i18n("world.chunkbase.nether_fortress"), () -> ChunkBaseApp.openNetherFortressFinder(world), popup));
+                popupMenu.getContent().addAll(
+                        new MenuSeparator(),
+                        new IconedMenuItem(SVG.EXPLORE, i18n("world.chunkbase.seed_map"), () -> ChunkBaseApp.openSeedMap(world), popup),
+                        new IconedMenuItem(SVG.VISIBILITY, i18n("world.chunkbase.stronghold"), () -> ChunkBaseApp.openStrongholdFinder(world), popup),
+                        new IconedMenuItem(SVG.FORT, i18n("world.chunkbase.nether_fortress"), () -> ChunkBaseApp.openNetherFortressFinder(world), popup)
+                );
 
                 if (ChunkBaseApp.supportEndCity(world)) {
                     popupMenu.getContent().add(new IconedMenuItem(SVG.LOCATION_CITY, i18n("world.chunkbase.end_city"), () -> ChunkBaseApp.openEndCityFinder(world), popup));
@@ -366,9 +376,17 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
             IconedMenuItem duplicateMenuItem = new IconedMenuItem(SVG.CONTENT_COPY, i18n("world.duplicate"), () -> page.copy(world), popup);
             Stream.of(exportMenuItem, deleteMenuItem, duplicateMenuItem).forEach(iconedMenuItem -> iconedMenuItem.setDisable(worldLocked));
 
-            popupMenu.getContent().addAll(new MenuSeparator(), exportMenuItem, deleteMenuItem, duplicateMenuItem);
+            popupMenu.getContent().addAll(
+                    new MenuSeparator(),
+                    exportMenuItem,
+                    deleteMenuItem,
+                    duplicateMenuItem
+            );
 
-            popupMenu.getContent().addAll(new MenuSeparator(), new IconedMenuItem(SVG.FOLDER_OPEN, i18n("folder.world"), () -> page.reveal(world), popup));
+            popupMenu.getContent().addAll(
+                    new MenuSeparator(),
+                    new IconedMenuItem(SVG.FOLDER_OPEN, i18n("folder.world"), () -> page.reveal(world), popup)
+            );
 
             JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(this, popup);
             popup.show(this, vPosition, hPosition, initOffsetX, vPosition == JFXPopup.PopupVPosition.TOP ? initOffsetY : -initOffsetY);
