@@ -212,7 +212,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                 getSkinnable().header.select(getSkinnable().worldInfoTab);
 
                 tabBar.addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldInfoTab, i18n("world.info"), SVG.INFO, SVG.INFO_FILL)
-                        .addNavigationDrawerTab(header, gameRuleTab, i18n("gamerule"), SVG.RULE)
+                        .addNavigationDrawerTab(getSkinnable().header, getSkinnable().gameRuleTab, i18n("gamerule"), SVG.RULE)
                         .addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE, SVG.ARCHIVE_FILL);
 
                 if (getSkinnable().world.supportDatapacks()) {

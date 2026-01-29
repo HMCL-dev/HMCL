@@ -184,7 +184,7 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
                 cellBox.setPadding(new Insets(0, 8, 0, 0));
             }
 
-            OptionToggleButton toggleButton = new OptionToggleButton();
+            LineToggleButton toggleButton = new LineToggleButton();
             {
                 if (StringUtils.isNotBlank(gameRule.getDisplayName())) {
                     toggleButton.setTitle(gameRule.getDisplayName());
