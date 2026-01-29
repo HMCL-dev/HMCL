@@ -24,7 +24,6 @@ import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 
-import java.awt.*;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;

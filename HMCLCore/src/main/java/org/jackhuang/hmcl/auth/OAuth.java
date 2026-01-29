@@ -237,10 +237,10 @@ public class OAuth {
         /**
          * Open browser
          *
-         * @param authorizationCode
-         * @param url               OAuth url.
+         * @param grantFlow the grant flow.
+         * @param url       OAuth url.
          */
-        void openBrowser(GrantFlow authorizationCode, String url) throws IOException;
+        void openBrowser(GrantFlow grantFlow, String url) throws IOException;
 
         String getClientId();
 

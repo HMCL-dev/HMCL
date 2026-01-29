@@ -154,12 +154,13 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
         }
 
         @Override
-        public void openBrowser(OAuth.GrantFlow authorizationCode, String url) throws IOException {
+        public void openBrowser(OAuth.GrantFlow grantFlow, String url) throws IOException {
             lastlyOpenedURL = url;
 
-            if (authorizationCode == OAuth.GrantFlow.AUTHORIZATION_CODE)
-                onOpenBrowserAuthorizationCode.fireEvent(new OpenBrowserEvent(this, url));
-            else onOpenBrowserDevice.fireEvent(new OpenBrowserEvent(this, url));
+            switch (grantFlow) {
+                case AUTHORIZATION_CODE -> onOpenBrowserAuthorizationCode.fireEvent(new OpenBrowserEvent(this, url));
+                case DEVICE -> onOpenBrowserDevice.fireEvent(new OpenBrowserEvent(this, url));
+            }
         }
 
         @Override
