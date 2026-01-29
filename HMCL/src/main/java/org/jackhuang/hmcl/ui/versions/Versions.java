@@ -290,7 +290,6 @@ public final class Versions {
             Controllers.dialog(dialog);
         } else if (account == null) {
             CreateAccountPane dialog = new CreateAccountPane();
-
             dialog.addEventHandler(DialogCloseEvent.CLOSE, e -> {
                 Account newAccount = Accounts.getSelectedAccount();
                 if (newAccount == null) {
