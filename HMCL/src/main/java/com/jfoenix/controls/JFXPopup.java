@@ -137,7 +137,7 @@ public class JFXPopup extends PopupControl {
 
             boolean isRTL = node.getEffectiveNodeOrientation() == NodeOrientation.RIGHT_TO_LEFT;
 
-            this.show(parent,
+            this.show(node,
                     parent.getX() + scene.getX() + origin.getX() + (hAlign == PopupHPosition.RIGHT ? ((Region) node).getWidth() : 0),
                     parent.getY() + origin.getY() + scene.getY() + (vAlign == PopupVPosition.BOTTOM ? ((Region) node).getHeight() : 0)
             );
