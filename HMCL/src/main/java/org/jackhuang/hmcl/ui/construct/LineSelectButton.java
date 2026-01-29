@@ -85,6 +85,8 @@ public final class LineSelectButton<T> extends LineButtonBase {
                     PopupMenu popupMenu = new PopupMenu();
                     this.popup = new JFXPopup(popupMenu);
 
+                    container.addEventFilter(ScrollEvent.ANY, ignored -> popup.hide());
+
                     Bindings.bindContent(popupMenu.getContent(), MappedObservableList.create(itemsProperty(), item -> {
                         VBox vbox = new VBox();
 
@@ -149,11 +151,6 @@ public final class LineSelectButton<T> extends LineButtonBase {
 
                 event.consume();
             }
-        });
-
-        container.addEventFilter(ScrollEvent.ANY, event -> {
-            if (popup != null)
-                popup.hide();
         });
     }
 
