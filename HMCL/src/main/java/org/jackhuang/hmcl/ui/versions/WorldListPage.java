@@ -99,7 +99,9 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
             getItems().setAll(worlds);
         } else {
             GameVersionNumber gameVersion = profile.getRepository().getGameVersion(instanceId).map(GameVersionNumber::asGameVersion).orElse(null);
-            getItems().setAll(worlds.stream().filter(world -> world.getGameVersion() == null || world.getGameVersion().equals(gameVersion)).toList());
+            getItems().setAll(worlds.stream()
+                    .filter(world -> world.getGameVersion() == null || world.getGameVersion().equals(gameVersion))
+                    .toList());
         }
     }
 
