@@ -129,11 +129,10 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     }
 
     private void onNavigated(Navigator.NavigationEvent event) {
-        if (isFirstNavigation) {
+        if (isFirstNavigation)
             isFirstNavigation = false;
-            return;
-        }
-        refresh();
+        else
+            refresh();
     }
 
     public void onExited(Navigator.NavigationEvent event) {
