@@ -61,7 +61,7 @@ public sealed abstract class ResourcePackFile extends LocalAddonFile implements 
     }
 
     public boolean isCompatible() {
-        return compatibility == Compatibility.COMPATIBLE;
+        return getCompatibility() == Compatibility.COMPATIBLE;
     }
 
     public boolean isEnabled() {
