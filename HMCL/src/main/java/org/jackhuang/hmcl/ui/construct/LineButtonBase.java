@@ -108,6 +108,7 @@ public abstract class LineButtonBase extends StackPane {
                         left.getChildren().setAll(titleLabel, subtitleLabel);
                     } else if (subtitleLabel != null) {
                         subtitleLabel.setText(null);
+                        left.getChildren().setAll(titleLabel);
                     }
                 }
             };
