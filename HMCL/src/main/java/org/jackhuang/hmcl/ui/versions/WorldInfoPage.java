@@ -356,11 +356,11 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 });
             }
 
-            LineSelectButton<GameType> playerGameTypeButton = new LineSelectButton<>();
+            LineSelectButton<GameType> playerGameTypePane = new LineSelectButton<>();
             {
-                playerGameTypeButton.setTitle(i18n("world.info.player.game_type"));
-                playerGameTypeButton.setDisable(worldManagePage.isReadOnly());
-                playerGameTypeButton.setItems(GameType.items);
+                playerGameTypePane.setTitle(i18n("world.info.player.game_type"));
+                playerGameTypePane.setDisable(worldManagePage.isReadOnly());
+                playerGameTypePane.setItems(GameType.items);
 
                 IntTag playerGameTypeTag = playerTag.get("playerGameType");
                 ByteTag hardcoreTag = dataTag.get("hardcore");
@@ -369,8 +369,8 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                     boolean isHardcore = hardcoreTag.getValue() == 1;
                     GameType gameType = GameType.of(playerGameTypeTag.getValue(), isHardcore);
                     if (gameType != null) {
-                        playerGameTypeButton.setValue(gameType);
-                        playerGameTypeButton.valueProperty().addListener((o, oldValue, newValue) -> {
+                        playerGameTypePane.setValue(gameType);
+                        playerGameTypePane.valueProperty().addListener((o, oldValue, newValue) -> {
                             if (newValue != null) {
                                 if (newValue == GameType.HARDCORE) {
                                     playerGameTypeTag.setValue(0); // survival (hardcore worlds are survival+hardcore flag)
@@ -383,10 +383,10 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                             }
                         });
                     } else {
-                        playerGameTypeButton.setDisable(true);
+                        playerGameTypePane.setDisable(true);
                     }
                 } else {
-                    playerGameTypeButton.setDisable(true);
+                    playerGameTypePane.setDisable(true);
                 }
             }
 
