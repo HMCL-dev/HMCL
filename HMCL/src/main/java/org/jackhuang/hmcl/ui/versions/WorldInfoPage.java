@@ -21,6 +21,7 @@ import com.github.steveice10.opennbt.tag.builtin.*;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXTextField;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Pos;
@@ -109,11 +110,13 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 setRightTextField(worldNamePane, worldNameField, 200);
 
                 if (dataTag.get("LevelName") instanceof StringTag worldNameTag) {
-                    worldNameField.setText(worldNameTag.getValue());
-                    worldNameField.focusedProperty().addListener((observable, oldValue, newValue) -> {
-                        if (!newValue && StringUtils.isNotBlank(worldNameField.getText())) {
+                    var worldName = new SimpleStringProperty(worldNameTag.getValue());
+                    FXUtils.bindString(worldNameField, worldName);
+                    worldNameField.getProperties().put(WorldInfoPage.class.getName() + ".worldNameProperty", worldName);
+                    worldName.addListener((observable, oldValue, newValue) -> {
+                        if (StringUtils.isNotBlank(newValue)) {
                             try {
-                                world.setWorldName(worldNameField.getText());
+                                world.setWorldName(newValue);
                                 worldManagePage.changeStateTitle(i18n("world.manage.title", StringUtils.parseColorEscapes(world.getWorldName())));
                             } catch (Exception e) {
                                 LOG.warning("Failed to set world name", e);
