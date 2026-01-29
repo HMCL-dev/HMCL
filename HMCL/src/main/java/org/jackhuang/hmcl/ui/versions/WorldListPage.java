@@ -109,10 +109,11 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
         int currentRefresh = ++refreshCount;
 
         setLoading(true);
-        Task.runAsync(() -> {
+        Task.supplyAsync(Schedulers.io(), () -> {
             // Ensure the game version number is parsed
             profile.getRepository().getGameVersion(instanceId);
-        }).thenSupplyAsync(() -> World.getWorlds(savesDir)).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            return World.getWorlds(savesDir);
+        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (refreshCount != currentRefresh) {
                 // A newer refresh task is running, discard this result
                 return;
@@ -121,7 +122,8 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
             worlds = result;
             updateWorldList();
 
-            if (exception != null) LOG.warning("Failed to load world list page", exception);
+            if (exception != null)
+                LOG.warning("Failed to load world list page", exception);
 
             setLoading(false);
         }).start();

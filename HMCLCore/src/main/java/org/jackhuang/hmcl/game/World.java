@@ -384,7 +384,7 @@ public final class World {
             try (Stream<Path> stream = Files.list(savesDir)) {
                 return stream.flatMap(world -> {
                     try {
-                        return Stream.of(new World(world.toAbsolutePath()));
+                        return Stream.of(new World(world.toAbsolutePath().normalize()));
                     } catch (IOException e) {
                         LOG.warning("Failed to read world " + world, e);
                         return Stream.empty();
