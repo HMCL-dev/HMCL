@@ -58,6 +58,7 @@ public abstract class CheckTranslations extends DefaultTask {
         var classicalChinese = new PropertiesFile(getClassicalChineseFile());
 
         simplifiedChinese.forEach((key, value) -> {
+            checker.checkKeyExists(english, key);
             checker.checkKeyExists(traditionalChinese, key);
 
             checker.checkMisspelled(simplifiedChinese, key, value, "账户", "帐户");
