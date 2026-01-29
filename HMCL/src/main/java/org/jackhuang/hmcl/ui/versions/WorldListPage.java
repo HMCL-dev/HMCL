@@ -106,7 +106,8 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
     }
 
     public void refresh() {
-        if (profile == null || instanceId == null) return;
+        if (profile == null || instanceId == null)
+            return;
 
         int currentRefresh = ++refreshCount;
 
