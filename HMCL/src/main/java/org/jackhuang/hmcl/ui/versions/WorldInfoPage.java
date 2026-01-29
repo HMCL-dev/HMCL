@@ -366,10 +366,8 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 playerGameTypePane.setDisable(worldManagePage.isReadOnly());
                 playerGameTypePane.setItems(GameType.items);
 
-                IntTag playerGameTypeTag = playerTag.get("playerGameType");
-                ByteTag hardcoreTag = dataTag.get("hardcore");
-
-                if (playerGameTypeTag != null && hardcoreTag != null) {
+                if (playerTag.get("playerGameType") instanceof IntTag playerGameTypeTag
+                        && dataTag.get("hardcore") instanceof ByteTag hardcoreTag) {
                     boolean isHardcore = hardcoreTag.getValue() == 1;
                     GameType gameType = GameType.of(playerGameTypeTag.getValue(), isHardcore);
                     if (gameType != null) {
