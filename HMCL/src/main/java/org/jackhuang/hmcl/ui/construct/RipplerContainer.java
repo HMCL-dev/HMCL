@@ -158,6 +158,10 @@ public class RipplerContainer extends StackPane {
         updateChildren();
     }
 
+    public JFXRippler getRippler() {
+        return buttonRippler;
+    }
+
     public Node getContainer() {
         return container.get();
     }

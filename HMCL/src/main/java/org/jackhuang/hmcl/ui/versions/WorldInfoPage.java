@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.github.steveice10.opennbt.tag.builtin.*;
 import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXTextField;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
@@ -243,7 +242,7 @@ public final class WorldInfoPage extends SpinnerPane {
                 });
             }
 
-            OptionToggleButton allowCheatsButton = new OptionToggleButton();
+            LineToggleButton allowCheatsButton = new LineToggleButton();
             {
                 allowCheatsButton.setTitle(i18n("world.info.allow_cheats"));
                 allowCheatsButton.setDisable(worldManagePage.isReadOnly());
@@ -252,7 +251,7 @@ public final class WorldInfoPage extends SpinnerPane {
                 checkTagAndSetListener(tag, allowCheatsButton);
             }
 
-            OptionToggleButton generateFeaturesButton = new OptionToggleButton();
+            LineToggleButton generateFeaturesButton = new LineToggleButton();
             {
                 generateFeaturesButton.setTitle(i18n("world.info.generate_features"));
                 generateFeaturesButton.setDisable(worldManagePage.isReadOnly());
@@ -261,35 +260,32 @@ public final class WorldInfoPage extends SpinnerPane {
                 checkTagAndSetListener(tag, generateFeaturesButton);
             }
 
-            BorderPane difficultyPane = new BorderPane();
+            LineSelectButton<Difficulty> difficultyButton = new LineSelectButton<>();
             {
-                setLeftLabel(difficultyPane, "world.info.difficulty");
-
-                JFXComboBox<Difficulty> difficultyBox = new JFXComboBox<>(Difficulty.items);
-                difficultyBox.setDisable(worldManagePage.isReadOnly());
-                BorderPane.setAlignment(difficultyBox, Pos.CENTER_RIGHT);
-                difficultyPane.setRight(difficultyBox);
+                difficultyButton.setTitle(i18n("world.info.difficulty"));
+                difficultyButton.setDisable(worldManagePage.isReadOnly());
+                difficultyButton.setItems(Difficulty.items);
 
                 Tag tag = dataTag.get("Difficulty");
                 if (tag instanceof ByteTag byteTag) {
                     Difficulty difficulty = Difficulty.of(byteTag.getValue());
                     if (difficulty != null) {
-                        difficultyBox.setValue(difficulty);
-                        difficultyBox.valueProperty().addListener((o, oldValue, newValue) -> {
+                        difficultyButton.setValue(difficulty);
+                        difficultyButton.valueProperty().addListener((o, oldValue, newValue) -> {
                             if (newValue != null) {
                                 byteTag.setValue((byte) newValue.ordinal());
                                 saveLevelDat();
                             }
                         });
                     } else {
-                        difficultyBox.setDisable(true);
+                        difficultyButton.setDisable(true);
                     }
                 } else {
-                    difficultyBox.setDisable(true);
+                    difficultyButton.setDisable(true);
                 }
             }
 
-            OptionToggleButton difficultyLockPane = new OptionToggleButton();
+            LineToggleButton difficultyLockPane = new LineToggleButton();
             {
                 difficultyLockPane.setTitle(i18n("world.info.difficulty_lock"));
                 difficultyLockPane.setDisable(worldManagePage.isReadOnly());
@@ -300,7 +296,7 @@ public final class WorldInfoPage extends SpinnerPane {
 
             basicInfo.getContent().setAll(
                     worldNamePane, gameVersionPane, iconPane, seedPane, lastPlayedPane, timePane,
-                    allowCheatsButton, generateFeaturesButton, difficultyPane, difficultyLockPane);
+                    allowCheatsButton, generateFeaturesButton, difficultyButton, difficultyLockPane);
 
             rootPane.getChildren().addAll(ComponentList.createComponentListTitle(i18n("world.info.basic")), basicInfo);
         }
@@ -373,14 +369,11 @@ public final class WorldInfoPage extends SpinnerPane {
                 });
             }
 
-            BorderPane playerGameTypePane = new BorderPane();
+            LineSelectButton<GameType> playerGameTypeButton = new LineSelectButton<>();
             {
-                setLeftLabel(playerGameTypePane, "world.info.player.game_type");
-
-                JFXComboBox<GameType> gameTypeBox = new JFXComboBox<>(GameType.items);
-                gameTypeBox.setDisable(worldManagePage.isReadOnly());
-                BorderPane.setAlignment(gameTypeBox, Pos.CENTER_RIGHT);
-                playerGameTypePane.setRight(gameTypeBox);
+                playerGameTypeButton.setTitle(i18n("world.info.player.game_type"));
+                playerGameTypeButton.setDisable(worldManagePage.isReadOnly());
+                playerGameTypeButton.setItems(GameType.items);
 
                 Tag tag = player.get("playerGameType");
                 Tag hardcoreTag = dataTag.get("hardcore");
@@ -389,8 +382,8 @@ public final class WorldInfoPage extends SpinnerPane {
                 if (tag instanceof IntTag intTag) {
                     GameType gameType = GameType.of(intTag.getValue(), isHardcore);
                     if (gameType != null) {
-                        gameTypeBox.setValue(gameType);
-                        gameTypeBox.valueProperty().addListener((o, oldValue, newValue) -> {
+                        playerGameTypeButton.setValue(gameType);
+                        playerGameTypeButton.valueProperty().addListener((o, oldValue, newValue) -> {
                             if (newValue != null) {
                                 if (newValue == GameType.HARDCORE) {
                                     intTag.setValue(0); // survival (hardcore worlds are survival+hardcore flag)
@@ -407,10 +400,10 @@ public final class WorldInfoPage extends SpinnerPane {
                             }
                         });
                     } else {
-                        gameTypeBox.setDisable(true);
+                        playerGameTypeButton.setDisable(true);
                     }
                 } else {
-                    gameTypeBox.setDisable(true);
+                    playerGameTypeButton.setDisable(true);
                 }
             }
 
@@ -458,7 +451,7 @@ public final class WorldInfoPage extends SpinnerPane {
 
             playerInfo.getContent().setAll(
                     locationPane, lastDeathLocationPane, spawnPane,
-                    playerGameTypePane, healthPane, foodLevelPane, xpLevelPane
+                    playerGameTypeButton, healthPane, foodLevelPane, xpLevelPane
             );
 
             rootPane.getChildren().addAll(ComponentList.createComponentListTitle(i18n("world.info.player")), playerInfo);
@@ -489,7 +482,7 @@ public final class WorldInfoPage extends SpinnerPane {
         borderPane.setRight(label);
     }
 
-    private void checkTagAndSetListener(Tag tag, OptionToggleButton toggleButton) {
+    private void checkTagAndSetListener(Tag tag, LineToggleButton toggleButton) {
         if (tag instanceof ByteTag byteTag) {
             byte value = byteTag.getValue();
             if (value == 0 || value == 1) {
