@@ -61,7 +61,9 @@ public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.Da
 
     private void installMultiDatapack(List<Path> datapackPath) {
         datapackPath.forEach(this::installSingleDatapack);
-        Controllers.showToast(i18n("datapack.reload.toast"));
+        if (readOnly.get()) {
+            Controllers.showToast(i18n("datapack.reload.toast"));
+        }
     }
 
     private void installSingleDatapack(Path datapack) {
