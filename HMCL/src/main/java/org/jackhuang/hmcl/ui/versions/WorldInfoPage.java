@@ -118,7 +118,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                         if (StringUtils.isNotBlank(newValue)) {
                             try {
                                 world.setWorldName(newValue);
-                                worldManagePage.changeStateTitle(i18n("world.manage.title", StringUtils.parseColorEscapes(world.getWorldName())));
+                                worldManagePage.setTitle(i18n("world.manage.title", StringUtils.parseColorEscapes(world.getWorldName())));
                             } catch (Exception e) {
                                 LOG.warning("Failed to set world name", e);
                             }
