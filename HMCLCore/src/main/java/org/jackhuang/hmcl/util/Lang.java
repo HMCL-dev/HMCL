@@ -280,6 +280,15 @@ public final class Lang {
         }
     }
 
+    public static Float toFloatOrNull(Object string) {
+        try {
+            if (string == null) return null;
+            return Float.parseFloat(string.toString());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
     /**
      * Find the first non-null reference in given list.
      *
