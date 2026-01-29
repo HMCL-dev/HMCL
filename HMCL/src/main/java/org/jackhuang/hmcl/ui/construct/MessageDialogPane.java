@@ -190,6 +190,7 @@ public final class MessageDialogPane extends HBox {
 
         public Builder addCancel(String cancelText, @Nullable Runnable cancel) {
             JFXButton btnCancel = new JFXButton(cancelText);
+            btnCancel.setButtonType(JFXButton.ButtonType.FLAT);
             btnCancel.getStyleClass().add("dialog-cancel");
             if (cancel != null) {
                 btnCancel.setOnAction(e -> cancel.run());

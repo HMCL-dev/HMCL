@@ -118,6 +118,7 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
                 lblServerWarning.setStyle("-fx-text-fill: red;");
                 GridPane.setColumnIndex(lblServerWarning, 0);
                 GridPane.setRowIndex(lblServerWarning, 2);
+                lblServerWarning.managedProperty().bind(lblServerWarning.visibleProperty());
                 GridPane.setColumnSpan(lblServerWarning, 2);
 
                 body.getChildren().setAll(
@@ -164,6 +165,12 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
 
     private String resolveFetchExceptionMessage(Throwable exception) {
         if (exception instanceof SSLException) {
+            if (exception.getMessage() != null && exception.getMessage().contains("Remote host terminated")) {
+                return i18n("account.failed.connect_injector_server");
+            }
+            if (exception.getMessage() != null && (exception.getMessage().contains("No name matching") || exception.getMessage().contains("No subject alternative DNS name matching"))) {
+                return i18n("account.failed.dns");
+            }
             return i18n("account.failed.ssl");
         } else if (exception instanceof IOException) {
             return i18n("account.failed.connect_injector_server");

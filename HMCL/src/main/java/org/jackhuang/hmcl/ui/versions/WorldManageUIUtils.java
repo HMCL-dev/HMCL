@@ -92,20 +92,20 @@ public final class WorldManageUIUtils {
         Controllers.dialog(new InputDialogPane(
                 i18n("world.duplicate.prompt"),
                 "",
-                (result, resolve, reject) -> {
+                (result, handler) -> {
                     if (StringUtils.isBlank(result)) {
-                        reject.accept(i18n("world.duplicate.failed.empty_name"));
+                        handler.reject(i18n("world.duplicate.failed.empty_name"));
                         return;
                     }
 
                     if (result.contains("/") || result.contains("\\") || !FileUtils.isNameValid(result)) {
-                        reject.accept(i18n("world.duplicate.failed.invalid_name"));
+                        handler.reject(i18n("world.duplicate.failed.invalid_name"));
                         return;
                     }
 
                     Path targetDir = worldPath.resolveSibling(result);
                     if (Files.exists(targetDir)) {
-                        reject.accept(i18n("world.duplicate.failed.already_exists"));
+                        handler.reject(i18n("world.duplicate.failed.already_exists"));
                         return;
                     }
 
@@ -118,9 +118,9 @@ public final class WorldManageUIUtils {
                                     }
                             ).whenComplete(Schedulers.javafx(), (throwable) -> {
                                 if (throwable == null) {
-                                    resolve.run();
+                                    handler.resolve();
                                 } else {
-                                    reject.accept(i18n("world.duplicate.failed"));
+                                    handler.reject(i18n("world.duplicate.failed"));
                                     LOG.warning("Failed to duplicate world " + world.getFile(), throwable);
                                 }
                             })
@@ -144,7 +144,7 @@ public final class WorldManageUIUtils {
             FileChannel lock = world.lock();
             LOG.info("Acquired lock on world " + world.getFileName());
             return lock;
-        } catch (IOException ignored) {
+        } catch (WorldLockedException ignored) {
             return null;
         }
     }

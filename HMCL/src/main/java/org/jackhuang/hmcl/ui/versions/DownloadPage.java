@@ -230,6 +230,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 ModTranslations.Mod mod = getSkinnable().translations.getModByCurseForgeId(getSkinnable().addon.getSlug());
                 content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : getSkinnable().addon.getTitle());
                 content.setSubtitle(getSkinnable().addon.getDescription());
+                content.getSubtitleLabel().setWrapText(true);
                 getSkinnable().addon.getCategories().stream()
                         .map(category -> getSkinnable().page.getLocalizedCategory(category))
                         .forEach(content::addTag);
@@ -357,9 +358,10 @@ public class DownloadPage extends Control implements DecoratorPage {
                 ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(page.repository.getType()).getModByCurseForgeId(addon.getSlug());
                 content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : addon.getTitle());
                 content.setSubtitle(addon.getDescription());
-                addon.getCategories().stream()
-                        .map(page::getLocalizedCategory)
-                        .forEach(content::addTag);
+                for (String category : addon.getCategories()) {
+                    if (page.shouldDisplayCategory(category))
+                        content.addTag(page.getLocalizedCategory(category));
+                }
                 if (StringUtils.isNotBlank(addon.getIconUrl())) {
                     imageView.imageProperty().bind(FXUtils.newRemoteImage(addon.getIconUrl(), 80, 80, true, true));
                 }
