@@ -45,6 +45,7 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.PropertyKey;
 
@@ -138,14 +139,6 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
             {
                 setLeftLabel(iconPane, "world.icon");
 
-                Runnable onClickAction = () -> Controllers.confirm(
-                        i18n("world.icon.change.tip"),
-                        i18n("world.icon.change"),
-                        MessageDialogPane.MessageType.INFO,
-                        this::changeWorldIcon,
-                        null
-                );
-
                 {
                     FXUtils.limitSize(iconImageView, 32, 32);
                     iconImageView.setImage(world.getIcon() == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : world.getIcon());
@@ -156,13 +149,19 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 {
                     editIconButton.setGraphic(SVG.EDIT.createIcon(20));
                     editIconButton.setDisable(isReadOnly);
-                    FXUtils.onClicked(editIconButton, onClickAction);
+                    editIconButton.setOnAction(event -> Controllers.confirm(
+                            I18n.i18n("world.icon.change.tip"),
+                            I18n.i18n("world.icon.change"),
+                            MessageDialogPane.MessageType.INFO,
+                            this::changeWorldIcon,
+                            null
+                    ));
                     FXUtils.installFastTooltip(editIconButton, i18n("button.edit"));
                     editIconButton.getStyleClass().add("toggle-icon4");
 
                     resetIconButton.setGraphic(SVG.RESTORE.createIcon(20));
                     resetIconButton.setDisable(isReadOnly);
-                    FXUtils.onClicked(resetIconButton, this::clearWorldIcon);
+                    resetIconButton.setOnAction(event -> this.clearWorldIcon());
                     FXUtils.installFastTooltip(resetIconButton, i18n("button.reset"));
                     resetIconButton.getStyleClass().add("toggle-icon4");
                 }
