@@ -62,7 +62,7 @@ public final class LineTextPane extends LinePane {
                         LineTextPane.this.setRight(null);
                     } else {
                         if (rightLabel == null) {
-                            rightLabel = new Label();
+                            rightLabel = FXUtils.newSafeTruncatedLabel();
                             FXUtils.copyOnDoubleClick(rightLabel);
                             BorderPane.setMargin(rightLabel, LABEL_MARGIN);
                             BorderPane.setAlignment(rightLabel, Pos.CENTER_RIGHT);
