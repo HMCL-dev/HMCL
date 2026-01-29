@@ -955,6 +955,13 @@
     -fx-background-color: transparent;
 }
 
+.no-horizontal-scrollbar .scroll-bar:horizontal {
+    -fx-opacity: 0;
+    -fx-max-height: 0;
+    -fx-min-height: 0;
+    -fx-pref-height: 0;
+}
+
 .options-list {
     -fx-background-color: transparent;
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 5, 0.06, -0.5, 1);
@@ -1853,6 +1860,37 @@
 
 .tooltip .text {
     -fx-fill: -monet-inverse-on-surface;
+}
+
+/*******************************************************************************
+ *                                                                             *
+ * Line Button                                                                 *
+ *                                                                             *
+ ******************************************************************************/
+
+.line-select-button .svg {
+    -fx-opacity: 1;
+}
+
+.line-select-button .svg:disabled {
+    -fx-opacity: 0.4;
+}
+
+.line-select-button .menu-container .title {
+    -fx-font-size: 13px;
+    -fx-text-fill: -monet-on-surface;
+}
+
+.line-select-button .menu-container:selected .title {
+    -fx-text-fill: -monet-primary;
+}
+
+.line-select-button .menu-container .subtitle {
+    -fx-text-fill: -monet-on-surface-variant;
+}
+
+.line-select-button .menu-container:selected .subtitle {
+    -fx-text-fill: -monet-primary;
 }
 
 /*******************************************************************************
