@@ -36,7 +36,6 @@ public abstract class LineButtonBase extends StackPane {
     protected final BorderPane root;
     protected final RipplerContainer container;
 
-    private final VBox left;
     private final Label titleLabel;
 
     public LineButtonBase() {
@@ -47,18 +46,11 @@ public abstract class LineButtonBase extends StackPane {
         this.container = new RipplerContainer(root);
         this.getChildren().setAll(container);
 
-        // Left
-
-        this.left = new VBox();
-        root.setCenter(left);
-        left.setMouseTransparent(true);
-        left.setAlignment(Pos.CENTER_LEFT);
-
         this.titleLabel = new Label();
+        root.setCenter(titleLabel);
+        BorderPane.setAlignment(titleLabel, Pos.CENTER_LEFT);
         titleLabel.textProperty().bind(titleProperty());
         titleLabel.getStyleClass().add("title");
-
-        left.getChildren().add(titleLabel);
     }
 
     private final StringProperty title = new SimpleStringProperty(this, "title");
@@ -80,6 +72,7 @@ public abstract class LineButtonBase extends StackPane {
     public StringProperty subtitleProperty() {
         if (subtitle == null) {
             subtitle = new StringPropertyBase() {
+                private VBox left;
                 private Label subtitleLabel;
 
                 @Override
@@ -95,19 +88,23 @@ public abstract class LineButtonBase extends StackPane {
                 @Override
                 protected void invalidated() {
                     String subtitle = get();
-                    if (subtitle == null || subtitle.isEmpty()) {
-                        if (subtitleLabel == null) {
+                    if (subtitle != null && !subtitle.isEmpty()) {
+                        if (left == null) {
+                            left = new VBox();
+                            left.setMouseTransparent(true);
+                            left.setAlignment(Pos.CENTER_LEFT);
+
                             subtitleLabel = new Label();
                             subtitleLabel.setWrapText(true);
                             subtitleLabel.setMinHeight(Region.USE_PREF_SIZE);
                             subtitleLabel.getStyleClass().add("subtitle");
                         }
                         subtitleLabel.setText(subtitle);
-
                         left.getChildren().setAll(titleLabel, subtitleLabel);
-                    } else if (subtitleLabel != null) {
+                        root.setCenter(left);
+                    } else if (left != null) {
                         subtitleLabel.setText(null);
-                        left.getChildren().setAll(titleLabel);
+                        root.setCenter(titleLabel);
                     }
                 }
             };
