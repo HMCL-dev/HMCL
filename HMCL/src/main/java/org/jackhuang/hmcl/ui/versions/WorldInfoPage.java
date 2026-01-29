@@ -231,13 +231,13 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
 
             var lastPlayedPane = new LineLabelPane();
             {
-                lastPlayedPane.setTitle("world.info.last_played");
+                lastPlayedPane.setTitle(i18n("world.info.last_played"));
                 lastPlayedPane.setText(formatDateTime(Instant.ofEpochMilli(world.getLastPlayed())));
             }
 
             var timePane = new LineLabelPane();
             {
-                timePane.setTitle("world.info.time");
+                timePane.setTitle(i18n("world.info.time"));
                 if (dataTag.get("Time") instanceof LongTag timeTag) {
                     Duration duration = Duration.ofSeconds(timeTag.getValue() / 20);
                     timePane.setText(i18n("world.info.time.format", duration.toDays(), duration.toHoursPart(), duration.toMinutesPart()));
@@ -309,7 +309,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
 
             var locationPane = new LineLabelPane();
             {
-                locationPane.setTitle("world.info.player.location");
+                locationPane.setTitle(i18n("world.info.player.location"));
                 Dimension dimension = Dimension.of(playerTag.get("Dimension"));
                 if (dimension != null && playerTag.get("Pos") instanceof ListTag posTag) {
                     locationPane.setText(dimension.formatPosition(posTag));
@@ -318,7 +318,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
 
             var lastDeathLocationPane = new LineLabelPane();
             {
-                lastDeathLocationPane.setTitle("world.info.player.last_death_location");
+                lastDeathLocationPane.setTitle(i18n("world.info.player.last_death_location"));
                 // Valid after 22w14a; prior to this version, the game did not record the last death location data.
                 if (playerTag.get("LastDeathLocation") instanceof CompoundTag LastDeathLocationTag) {
                     Dimension dimension = Dimension.of(LastDeathLocationTag.get("dimension"));
@@ -330,7 +330,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
 
             var spawnPane = new LineLabelPane();
             {
-                spawnPane.setTitle("world.info.player.spawn");
+                spawnPane.setTitle(i18n("world.info.player.spawn"));
                 if (playerTag.get("respawn") instanceof CompoundTag respawnTag
                         && respawnTag.get("dimension") instanceof StringTag dimensionTag
                         && respawnTag.get("pos") instanceof IntArrayTag intArrayTag
