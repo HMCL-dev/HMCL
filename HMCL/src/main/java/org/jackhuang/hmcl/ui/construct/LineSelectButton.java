@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXPopup;
+import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
@@ -62,16 +63,17 @@ public final class LineSelectButton<T> extends LineButtonBase {
             Label valueLabel = new Label();
             valueLabel.getStyleClass().add("subtitle");
 
-            valueLabel.textProperty().bind(Bindings.createStringBinding(
-                    () -> {
-                        T value = getValue();
-                        if (value == null)
-                            return "";
-
-                        Function<T, String> converter = getConverter();
-                        return converter != null ? converter.apply(value) : Objects.toString(value, "");
-                    },
-                    converterProperty(), valueProperty()));
+            InvalidationListener updateValue = observable -> {
+                T value = getValue();
+                if (value == null)
+                    valueLabel.setText("");
+                else {
+                    Function<T, String> converter = getConverter();
+                    valueLabel.setText(converter != null ? converter.apply(value) : value.toString());
+                }
+            };
+            converterProperty().addListener(updateValue);
+            valueProperty().addListener(updateValue);
 
             Node arrowIcon = SVG.UNFOLD_MORE.createIcon(24);
             HBox.setMargin(arrowIcon, new Insets(0, 8, 0, 8));
