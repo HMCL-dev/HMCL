@@ -212,7 +212,12 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
             JFXCheckBox chkShowAll = new JFXCheckBox(i18n("world.show_all"));
             chkShowAll.selectedProperty().bindBidirectional(skinnable.showAllProperty());
 
-            return Arrays.asList(chkShowAll, createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh), createToolbarButton2(i18n("world.add"), SVG.ADD, skinnable::add), createToolbarButton2(i18n("world.download"), SVG.DOWNLOAD, skinnable::download));
+            return Arrays.asList(
+                    chkShowAll,
+                    createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
+                    createToolbarButton2(i18n("world.add"), SVG.ADD, skinnable::add),
+                    createToolbarButton2(i18n("world.download"), SVG.DOWNLOAD, skinnable::download)
+            );
         }
 
         @Override
