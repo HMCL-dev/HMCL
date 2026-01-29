@@ -260,10 +260,11 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 generateFeaturesButton.setTitle(i18n("world.info.generate_features"));
                 generateFeaturesButton.setDisable(isReadOnly);
 
-                CompoundTag worldGenSettings = dataTag.get("WorldGenSettings");
                 // generate_features was valid after 20w20a and MapFeatures was before that
-                Tag generateFeaturesTag = worldGenSettings != null ? worldGenSettings.get("generate_features") : dataTag.get("MapFeatures");
-                bindTagAndToggleButton(generateFeaturesTag, generateFeaturesButton);
+                if (dataTag.get("WorldGenSettings") instanceof CompoundTag worldGenSettings) {
+                    bindTagAndToggleButton(worldGenSettings.get("generate_features"), generateFeaturesButton);
+                }
+
             }
 
             LineSelectButton<Difficulty> difficultyButton = new LineSelectButton<>();
