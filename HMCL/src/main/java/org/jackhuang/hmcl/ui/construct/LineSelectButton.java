@@ -184,9 +184,12 @@ public final class LineSelectButton<T> extends LineButtonBase {
         converterProperty().set(value);
     }
 
-    private final ObjectProperty<Function<T, String>> descriptionConverter = new SimpleObjectProperty<>(this, "descriptionConverter");
+    private ObjectProperty<Function<T, String>> descriptionConverter;
 
     public ObjectProperty<Function<T, String>> descriptionConverterProperty() {
+        if (descriptionConverter == null) {
+            descriptionConverter = new SimpleObjectProperty<>(this, "descriptionConverter");
+        }
         return descriptionConverter;
     }
 
