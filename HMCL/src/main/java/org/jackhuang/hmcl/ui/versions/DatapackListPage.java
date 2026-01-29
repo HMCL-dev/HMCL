@@ -46,13 +46,13 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.DatapackInfoObject> implements WorldManagePage.WorldRefreshable {
     private final Path worldDir;
     private final Datapack datapack;
-    final BooleanProperty isReadOnlyProperty;
+    final BooleanProperty readOnly;
 
     public DatapackListPage(WorldManagePage worldManagePage) {
         this.worldDir = worldManagePage.getWorld().getFile();
         datapack = new Datapack(worldDir.resolve("datapacks"));
         setItems(MappedObservableList.create(datapack.getPacks(), DatapackListPageSkin.DatapackInfoObject::new));
-        isReadOnlyProperty = worldManagePage.readOnlyProperty();
+        readOnly = worldManagePage.readOnlyProperty();
         FXUtils.applyDragListener(this, it -> Objects.equals("zip", FileUtils.getExtension(it)),
                 this::installMultiDatapack, this::refresh);
 

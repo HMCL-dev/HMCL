@@ -67,13 +67,13 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
 
     private final World world;
     private final Path backupsDir;
-    private final BooleanProperty readOnlyProperty;
+    private final BooleanProperty readOnly;
     private final Pattern backupFileNamePattern;
 
     public WorldBackupsPage(WorldManagePage worldManagePage) {
         this.world = worldManagePage.getWorld();
         this.backupsDir = worldManagePage.getBackupsDir();
-        this.readOnlyProperty = worldManagePage.readOnlyProperty();
+        this.readOnly = worldManagePage.readOnlyProperty();
         this.backupFileNamePattern = Pattern.compile("(?<datetime>[0-9]{4}-[0-9]{2}-[0-9]{2}_[0-9]{2}-[0-9]{2}-[0-9]{2})_" + Pattern.quote(world.getFileName()) + "( (?<count>[0-9]+))?\\.zip");
 
         refresh();
@@ -165,7 +165,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
         @Override
         protected List<Node> initializeToolbar(WorldBackupsPage skinnable) {
             JFXButton createBackup = createToolbarButton2(i18n("world.backup.create.new_one"), SVG.ARCHIVE, skinnable::createBackup);
-            createBackup.disableProperty().bind(getSkinnable().readOnlyProperty);
+            createBackup.disableProperty().bind(getSkinnable().readOnly);
 
             return Arrays.asList(
                     createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),

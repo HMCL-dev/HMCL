@@ -57,8 +57,8 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
     private final ObjectProperty<State> state;
     private boolean isFirstNavigation = true;
-    private final BooleanProperty refreshableProperty = new SimpleBooleanProperty(true);
-    private final BooleanProperty isReadOnlyProperty = new SimpleBooleanProperty(false);
+    private final BooleanProperty refreshable = new SimpleBooleanProperty(true);
+    private final BooleanProperty readOnly = new SimpleBooleanProperty(false);
 
     private final TransitionPane transitionPane = new TransitionPane();
     private final TabHeader header = new TabHeader(transitionPane);
@@ -112,7 +112,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     private void updateSessionLockChannel() {
         if (sessionLockChannel == null || !sessionLockChannel.isOpen()) {
             sessionLockChannel = WorldManageUIUtils.getSessionLockChannel(world);
-            isReadOnlyProperty.set(sessionLockChannel == null);
+            readOnly.set(sessionLockChannel == null);
         }
     }
 
@@ -171,16 +171,16 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     }
 
     public boolean isReadOnly() {
-        return isReadOnlyProperty.get();
+        return readOnly.get();
     }
 
     public BooleanProperty readOnlyProperty() {
-        return isReadOnlyProperty;
+        return readOnly;
     }
 
     @Override
     public BooleanProperty refreshableProperty() {
-        return refreshableProperty;
+        return refreshable;
     }
 
     public static class Skin extends DecoratorAnimatedPageSkin<WorldManagePage> {
