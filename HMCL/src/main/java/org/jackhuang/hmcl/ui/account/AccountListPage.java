@@ -60,7 +60,7 @@ import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.createSelectedIt
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class AccountListPage extends DecoratorAnimatedPage implements DecoratorPage {
-    public static final BooleanProperty RESTRICTED = new SimpleBooleanProperty(true);
+    static final BooleanProperty RESTRICTED = new SimpleBooleanProperty(true);
 
     static {
         String property = System.getProperty("hmcl.offline.auth.restricted", "auto");
