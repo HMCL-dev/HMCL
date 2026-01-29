@@ -96,7 +96,7 @@ public abstract class LineButtonBase extends StackPane {
                 @Override
                 protected void invalidated() {
                     String subtitle = get();
-                    if (StringUtils.isNotBlank(subtitle)) {
+                    if (subtitle == null || subtitle.isEmpty()) {
                         if (subtitleLabel == null) {
                             subtitleLabel = new Label();
                             subtitleLabel.setWrapText(true);
