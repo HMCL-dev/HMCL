@@ -87,6 +87,8 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
             setStyle("-fx-padding: 0px 0px 0px 0px;");
         }
 
+        onEscPressed(this, this::onCancel);
+
         JFXButton btnLogin = new JFXButton(i18n("account.login"));
         btnLogin.getStyleClass().add("dialog-accept");
         btnLogin.setOnAction(e -> startLoginTasks());
@@ -98,7 +100,6 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
         JFXButton btnCancel = new JFXButton(i18n("button.cancel"));
         btnCancel.getStyleClass().add("dialog-cancel");
         btnCancel.setOnAction(e -> onCancel());
-        onEscPressed(this, btnCancel::fire);
 
         HBox actions = new HBox(10, loginButtonSpinner, btnCancel);
         actions.setAlignment(Pos.CENTER_RIGHT);
