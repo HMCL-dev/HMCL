@@ -25,6 +25,7 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.css.*;
+import javafx.css.converter.PaintConverter;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.layout.Background;
@@ -38,6 +39,7 @@ import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.Motion;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @DefaultProperty("container")
@@ -179,12 +181,28 @@ public class RipplerContainer extends StackPane {
     }
 
     public static List<CssMetaData<? extends Styleable, ?>> getClassCssMetaData() {
-        return StyleableProperties.FACTORY.getCssMetaData();
+        return StyleableProperties.STYLEABLES;
     }
 
     private final static class StyleableProperties {
-        private static final StyleablePropertyFactory<RipplerContainer> FACTORY = new StyleablePropertyFactory<>(StackPane.getClassCssMetaData());
+        private static final CssMetaData<RipplerContainer, Paint> RIPPLER_FILL = new CssMetaData<>("-jfx-rippler-fill", PaintConverter.getInstance(), Color.rgb(0, 200, 255)) {
+            @Override
+            public boolean isSettable(RipplerContainer styleable) {
+                return styleable.ripplerFill == null || !styleable.ripplerFill.isBound();
+            }
 
-        private static final CssMetaData<RipplerContainer, Paint> RIPPLER_FILL = FACTORY.createPaintCssMetaData("-jfx-rippler-fill", s -> s.ripplerFill, Color.rgb(0, 200, 255));
+            @Override
+            public StyleableProperty<Paint> getStyleableProperty(RipplerContainer styleable) {
+                return styleable.ripplerFillProperty();
+            }
+        };
+
+        private static final List<CssMetaData<? extends Styleable, ?>> STYLEABLES;
+
+        static {
+            var styleables = new ArrayList<>(StackPane.getClassCssMetaData());
+            styleables.add(RIPPLER_FILL);
+            STYLEABLES = List.copyOf(styleables);
+        }
     }
 }
