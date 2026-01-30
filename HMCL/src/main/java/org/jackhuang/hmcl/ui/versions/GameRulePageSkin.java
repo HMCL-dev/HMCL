@@ -76,7 +76,7 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
             searchField = new JFXTextField();
             {
                 searchField.setPromptText(i18n("search"));
-                PauseTransition searchPause = new PauseTransition(Duration.millis(1000));
+                PauseTransition searchPause = new PauseTransition(Duration.millis(300));
                 searchPause.setOnFinished(event -> getSkinnable().updateSearchPredicate(searchField.getText()));
                 searchField.textProperty().addListener((observable) -> searchPause.playFromStart());
                 HBox.setHgrow(searchField, Priority.ALWAYS);
