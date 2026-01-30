@@ -299,6 +299,11 @@
     -fx-fill: -monet-surface-tint;
 }
 
+.popup-menu .scroll-pane > .scroll-bar:vertical,
+.popup-menu .scroll-pane > .scroll-bar:horizontal {
+    -fx-opacity: 0;
+}
+
 .popup-menu-content {
     -fx-padding: 4 0 4 0;
 }
@@ -388,31 +393,33 @@
     -fx-cursor: hand;
 }
 
-.installer-item {
-    -fx-padding: 8px;
+.installer-item-wrapper {
+    -fx-background-color: -monet-surface;
+    -fx-background-radius: 4;
+    -fx-pref-width: 180px;
 }
 
-.installer-item:list-item {
+.installer-item-wrapper:card {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 10, 0.12, -1, 2);
+}
+
+.installer-item-wrapper .installer-item:list-item {
+    -fx-padding: 8px;
     -fx-border-color: -monet-outline-variant;
     -fx-border-width: 0 0 1 0;
     -fx-alignment: center-left;
 }
 
-.installer-item:list-item > .installer-item-name {
+.installer-item-wrapper .installer-item:list-item > .installer-item-name {
     -fx-pref-width: 80px;
 }
 
-.installer-item:list-item > .installer-item-status {
+.installer-item-wrapper .installer-item:list-item > .installer-item-status {
     -fx-max-width: infinity;
 }
 
-.installer-item:card {
-    -fx-background-color: -monet-surface;
-    -fx-background-radius: 4;
+.installer-item-wrapper .installer-item:card {
     -fx-alignment: center;
-    -fx-pref-width: 180px;
-
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 10, 0.12, -1, 2);
 }
 
 /*******************************************************************************
@@ -948,6 +955,13 @@
     -fx-background-color: transparent;
 }
 
+.no-horizontal-scrollbar .scroll-bar:horizontal {
+    -fx-opacity: 0;
+    -fx-max-height: 0;
+    -fx-min-height: 0;
+    -fx-pref-height: 0;
+}
+
 .options-list {
     -fx-background-color: transparent;
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 5, 0.06, -0.5, 1);
@@ -995,10 +1009,6 @@
     -fx-padding: 8px;
 
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 5, 0.06, -0.5, 1);
-}
-
-.card:selected {
-    -fx-background-color: -monet-secondary-container-transparent-80;
 }
 
 .card-list {
@@ -1850,4 +1860,36 @@
 
 .tooltip .text {
     -fx-fill: -monet-inverse-on-surface;
+}
+
+/*******************************************************************************
+ *                                                                             *
+ * Line Button                                                                 *
+ *                                                                             *
+ ******************************************************************************/
+
+
+.line-select-button .svg {
+    -fx-opacity: 1;
+}
+
+.line-select-button .svg:disabled {
+    -fx-opacity: 0.4;
+}
+
+.line-select-button .menu-container .title {
+    -fx-font-size: 13px;
+    -fx-text-fill: -monet-on-surface;
+}
+
+.line-select-button .menu-container:selected .title {
+    -fx-text-fill: -monet-primary;
+}
+
+.line-select-button .menu-container .subtitle {
+    -fx-text-fill: -monet-on-surface-variant;
+}
+
+.line-select-button .menu-container:selected .subtitle {
+    -fx-text-fill: -monet-primary;
 }

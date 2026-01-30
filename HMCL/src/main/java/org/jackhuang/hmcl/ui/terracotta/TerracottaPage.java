@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.terracotta;
 
+import com.jfoenix.controls.JFXPopup;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.value.ChangeListener;
@@ -24,17 +25,21 @@ import javafx.geometry.Insets;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.terracotta.TerracottaMetadata;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.account.AccountAdvancedListItem;
+import org.jackhuang.hmcl.ui.account.AccountListPopupMenu;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.main.MainPage;
+import org.jackhuang.hmcl.ui.versions.GameListPopupMenu;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -67,7 +72,13 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
                 .addNavigationDrawerTab(tab, statusPage, i18n("terracotta.status"), SVG.TUNE);
         left.setTop(sideBar);
 
+        AccountAdvancedListItem accountListItem = new AccountAdvancedListItem();
+        accountListItem.setOnAction(e -> Controllers.navigate(Controllers.getAccountListPage()));
+        accountListItem.accountProperty().bind(Accounts.selectedAccountProperty());
+        FXUtils.onSecondaryButtonClicked(accountListItem, () -> AccountListPopupMenu.show(accountListItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, accountListItem.getWidth(), 0));
+
         AdvancedListBox toolbar = new AdvancedListBox()
+                .add(accountListItem)
                 .addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, () -> {
                     Profile profile = Profiles.getSelectedProfile();
                     Versions.launch(profile, profile.getSelectedVersion(), launcherHelper -> {
@@ -84,6 +95,13 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
                         String currentId = mainPage.getCurrentGame();
                         return Lang.indexWhere(list, instance -> instance.getId().equals(currentId));
                     }, it -> mainPage.getProfile().setSelectedVersion(it.getId()));
+
+                    FXUtils.onSecondaryButtonClicked(item, () -> GameListPopupMenu.show(item,
+                            JFXPopup.PopupVPosition.BOTTOM,
+                            JFXPopup.PopupHPosition.LEFT,
+                            item.getWidth(),
+                            0,
+                            mainPage.getProfile(), mainPage.getVersions()));
                 })
                 .addNavigationDrawerItem(i18n("terracotta.feedback.title"), SVG.FEEDBACK, () -> FXUtils.openLink(TerracottaMetadata.FEEDBACK_LINK));
         BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));

@@ -170,7 +170,7 @@ public final class ModManager extends LocalFileManager<LocalModFile> {
         if (Files.isDirectory(getDirectory())) {
             try (DirectoryStream<Path> modsDirectoryStream = Files.newDirectoryStream(getDirectory())) {
                 for (Path subitem : modsDirectoryStream) {
-                    if (supportSubfolders && Files.isDirectory(subitem)) {
+                    if (supportSubfolders && Files.isDirectory(subitem) && !".connector".equalsIgnoreCase(subitem.getFileName().toString())) {
                         try (DirectoryStream<Path> subitemDirectoryStream = Files.newDirectoryStream(subitem)) {
                             for (Path subsubitem : subitemDirectoryStream) {
                                 addModInfo(subsubitem);

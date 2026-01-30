@@ -40,6 +40,7 @@ import org.jackhuang.hmcl.launch.ProcessListener;
 import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.Lang;
@@ -90,6 +91,8 @@ public class GameCrashWindow extends Stage {
     private final List<Log> logs;
 
     public GameCrashWindow(ManagedProcess managedProcess, ProcessListener.ExitType exitType, DefaultGameRepository repository, Version version, LaunchOptions launchOptions, List<Log> logs) {
+        Themes.applyNativeDarkMode(this);
+
         this.managedProcess = managedProcess;
         this.exitType = exitType;
         this.repository = repository;
