@@ -356,6 +356,13 @@ public abstract class Task<T> {
     protected void updateProgress(double progress) {
         if (progress < 0 || progress > 1.0 || Double.isNaN(progress))
             throw new IllegalArgumentException("Progress is must between 0 and 1.");
+
+        if (progress == 1.0) {
+            updateProgressImmediately(progress);
+            lastUpdateProgressTime = System.currentTimeMillis();
+            return;
+        }
+
         long now = System.currentTimeMillis();
         if (lastUpdateProgressTime == Long.MIN_VALUE || now - lastUpdateProgressTime >= 1000L) {
             updateProgressImmediately(progress);
