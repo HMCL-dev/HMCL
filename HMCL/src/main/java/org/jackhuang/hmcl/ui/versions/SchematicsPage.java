@@ -20,6 +20,8 @@ package org.jackhuang.hmcl.ui.versions;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -98,7 +100,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         if (schematicsDirectory == null) return;
 
         setLoading(true);
-        Task.supplyAsync(() -> loadAll(schematicsDirectory, null))
+        Task.supplyAsync(() -> loadRoot(schematicsDirectory))
                 .whenComplete(Schedulers.javafx(), (result, exception) -> {
                     setLoading(false);
                     if (exception == null) {
@@ -191,32 +193,15 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 }));
     }
 
-    private DirItem loadAll(Path dir, @Nullable DirItem parent) {
-        DirItem item = new DirItem(dir, parent);
-
-        try (Stream<Path> stream = Files.list(dir)) {
-            for (Path path : Lang.toIterable(stream)) {
-                if (Files.isDirectory(path)) {
-                    item.children.add(loadAll(path, item));
-                } else if (path.getFileName().toString().endsWith(".litematic") && Files.isRegularFile(path)) {
-                    try {
-                        item.children.add(new LitematicFileItem(LitematicFile.load(path)));
-                    } catch (IOException e) {
-                        LOG.warning("Failed to load litematic file: " + path, e);
-                    }
-                }
-            }
-        } catch (NoSuchFileException ignored) {
-        } catch (IOException e) {
-            LOG.warning("Failed to load schematics in " + dir, e);
-        }
-
-        item.children.sort(Comparator.naturalOrder());
+    private DirItem loadRoot(Path dir) {
+        var item = new DirItem(dir, null);
+        item.load();
         return item;
     }
 
     private void navigateTo(DirItem item) {
         currentDirectory = item;
+        item.load();
         getItems().clear();
         if (item.parent != null) {
             getItems().add(new BackItem(item.parent));
@@ -317,6 +302,9 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         final @Nullable DirItem parent;
         final List<Item> children = new ArrayList<>();
         final List<String> relativePath;
+        int size = 0;
+        boolean preLoaded = false;
+        boolean loaded = false;
 
         DirItem(Path path, @Nullable DirItem parent) {
             this.path = path;
@@ -324,7 +312,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
             if (parent != null) {
                 this.relativePath = new ArrayList<>(parent.relativePath);
-                relativePath.add(path.getFileName().toString());
+                relativePath.add(FileUtils.getName(path));
             } else {
                 this.relativePath = Collections.emptyList();
             }
@@ -342,17 +330,51 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
         @Override
         public String getName() {
-            return path.getFileName().toString();
+            return FileUtils.getName(path);
         }
 
         @Override
         String getDescription() {
-            return i18n("schematics.sub_items", children.size());
+            return i18n("schematics.sub_items", size);
         }
 
         @Override
         SVG getIcon() {
             return SVG.FOLDER;
+        }
+
+        void preLoad() throws IOException {
+            if (this.preLoaded) return;
+            try (Stream<Path> stream = Files.list(path)) {
+                this.size = (int) stream.filter(p -> Files.isDirectory(p) || LitematicFile.isFileLitematic(p)).count();
+            }
+        }
+
+        void load() {
+            if (this.loaded) return;
+
+            try (Stream<Path> stream = Files.list(path)) {
+                if (!this.preLoaded) preLoad();
+                for (Path p : Lang.toIterable(stream)) {
+                    if (Files.isDirectory(p)) {
+                        var child = new DirItem(p, this);
+                        child.preLoad();
+                        this.children.add(child);
+                    } else if (LitematicFile.isFileLitematic(p)) {
+                        try {
+                            this.children.add(new LitematicFileItem(LitematicFile.load(p)));
+                        } catch (IOException e) {
+                            LOG.warning("Failed to load litematic file: " + path, e);
+                        }
+                    }
+                }
+            } catch (NoSuchFileException ignored) {
+            } catch (IOException e) {
+                LOG.warning("Failed to load schematics in " + path, e);
+            }
+
+            this.children.sort(Comparator.naturalOrder());
+            this.loaded = true;
         }
 
         @Override
@@ -368,8 +390,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         @Override
         void onDelete() {
             try {
-                FileUtils.cleanDirectory(path);
-                Files.deleteIfExists(path);
+                FileUtils.deleteDirectory(path);
                 refresh();
             } catch (IOException e) {
                 LOG.warning("Failed to delete directory: " + path, e);
@@ -389,7 +410,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             if (name != null && !"Unnamed".equals(name)) {
                 this.name = name;
             } else {
-                this.name = StringUtils.removeSuffix(file.getFile().getFileName().toString(), ".litematic");
+                this.name = FileUtils.getNameWithoutExtension(name);
             }
 
             WritableImage image = null;
@@ -554,6 +575,8 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         private final SVGPath iconSVG;
         private final StackPane iconSVGWrapper;
 
+        private final BooleanProperty directoryProperty = new SimpleBooleanProperty(this, "isDirectory", false);
+
         private final Tooltip tooltip = new Tooltip();
 
         public Cell() {
@@ -594,7 +617,11 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 JFXButton btnReveal = new JFXButton();
                 FXUtils.installFastTooltip(btnReveal, i18n("reveal.in_file_manager"));
                 btnReveal.getStyleClass().add("toggle-icon4");
-                btnReveal.setGraphic(SVG.FOLDER_OPEN.createIcon());
+                {
+                    var fo = SVG.FOLDER_OPEN.createIcon();
+                    var f = SVG.FOLDER.createIcon();
+                    btnReveal.graphicProperty().bind(directoryProperty.map(b -> b ? fo : f));
+                }
                 btnReveal.setOnAction(event -> {
                     Item item = getItem();
                     if (item != null && !(item instanceof BackItem))
@@ -634,6 +661,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 center.setTitle("");
                 center.setSubtitle("");
             } else {
+                directoryProperty.set(item.isDirectory());
                 if (item instanceof LitematicFileItem fileItem && fileItem.getImage() != null) {
                     iconImageView.setImage(fileItem.getImage());
                     left.getChildren().setAll(iconImageView);

@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.schematic;
 import com.github.steveice10.opennbt.NBTIO;
 import com.github.steveice10.opennbt.tag.builtin.*;
 import javafx.geometry.Point3D;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,6 +50,10 @@ public final class LitematicFile {
 
     private static @Nullable String tryGetString(Tag tag) {
         return tag instanceof StringTag ? ((StringTag) tag).getValue() : null;
+    }
+
+    public static boolean isFileLitematic(Path path) {
+        return "litematic".equals(FileUtils.getExtension(path)) && Files.isRegularFile(path);
     }
 
     public static LitematicFile load(Path file) throws IOException {
