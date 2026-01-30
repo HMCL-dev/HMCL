@@ -25,8 +25,10 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ObjectPropertyBase;
 import javafx.css.*;
 import javafx.css.converter.PaintConverter;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.CornerRadii;
@@ -88,6 +90,8 @@ public class RipplerContainer extends StackPane {
         }
     };
 
+    private Transition hoverAnimation;
+
     public RipplerContainer(Node container) {
         getStyleClass().add(DEFAULT_STYLE_CLASS);
         buttonRippler.setPosition(JFXRippler.RipplerPos.BACK);
@@ -116,34 +120,50 @@ public class RipplerContainer extends StackPane {
         shape.heightProperty().bind(heightProperty());
         setShape(shape);
 
+        EventHandler<MouseEvent> mouseEventHandler;
+
         if (AnimationUtils.isAnimationEnabled()) {
-            setOnMouseEntered(e -> new Transition() {
-                {
-                    setCycleDuration(Motion.SHORT4);
-                    setInterpolator(Motion.EASE_IN);
+            mouseEventHandler = event -> {
+                if (hoverAnimation != null) {
+                    hoverAnimation.stop();
+                    hoverAnimation = null;
                 }
 
-                @Override
-                protected void interpolate(double frac) {
-                    interpolateBackground(frac);
-                }
-            }.play());
+                if (event.getEventType() == MouseEvent.MOUSE_ENTERED) {
+                    hoverAnimation = new Transition() {
+                        {
+                            setCycleDuration(Motion.SHORT4);
+                            setInterpolator(Motion.EASE_IN);
+                        }
 
-            setOnMouseExited(e -> new Transition() {
-                {
-                    setCycleDuration(Motion.SHORT4);
-                    setInterpolator(Motion.EASE_OUT);
+                        @Override
+                        protected void interpolate(double frac) {
+                            interpolateBackground(frac);
+                        }
+                    };
+                } else {
+                    hoverAnimation = new Transition() {
+                        {
+                            setCycleDuration(Motion.SHORT4);
+                            setInterpolator(Motion.EASE_OUT);
+                        }
+
+                        @Override
+                        protected void interpolate(double frac) {
+                            interpolateBackground(1 - frac);
+                        }
+                    };
                 }
 
-                @Override
-                protected void interpolate(double frac) {
-                    interpolateBackground(1 - frac);
-                }
-            }.play());
+                hoverAnimation.play();
+            };
         } else {
-            setOnMouseEntered(e -> interpolateBackground(1));
-            setOnMouseExited(e -> interpolateBackground(0));
+            mouseEventHandler = event ->
+                    interpolateBackground(event.getEventType() == MouseEvent.MOUSE_ENTERED ? 1 : 0);
         }
+
+        addEventHandler(MouseEvent.MOUSE_ENTERED, mouseEventHandler);
+        addEventHandler(MouseEvent.MOUSE_EXITED, mouseEventHandler);
     }
 
     private void interpolateBackground(double frac) {
