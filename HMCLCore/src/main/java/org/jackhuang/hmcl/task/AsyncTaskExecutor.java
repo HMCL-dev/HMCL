@@ -164,7 +164,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                     }
 
                     task.setResult(result);
-                    task.onDone().fireEvent(new TaskEvent(this, task, false));
+                    task.fireDoneEvent(this, false);
                     taskListeners.forEach(it -> it.onFinished(task));
 
                     task.setState(Task.TaskState.SUCCEEDED);
@@ -180,7 +180,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                             if (task.getSignificance().shouldLog()) {
                                 LOG.trace("Task aborted: " + task.getName());
                             }
-                            task.onDone().fireEvent(new TaskEvent(this, task, true));
+                            task.fireDoneEvent(this, true);
                             taskListeners.forEach(it -> it.onFailed(task, e));
                         } else {
                             task.setException(e);
@@ -188,7 +188,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                             if (task.getSignificance().shouldLog()) {
                                 LOG.trace("Task failed: " + task.getName(), e);
                             }
-                            task.onDone().fireEvent(new TaskEvent(this, task, true));
+                            task.fireDoneEvent(this, true);
                             taskListeners.forEach(it -> it.onFailed(task, e));
                         }
 
@@ -278,7 +278,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                         LOG.trace("Task finished: " + task.getName());
                     }
 
-                    task.onDone().fireEvent(new TaskEvent(this, task, false));
+                    task.fireDoneEvent(this, false);
                     taskListeners.forEach(it -> it.onFinished(task));
 
                     task.setState(Task.TaskState.SUCCEEDED);
@@ -300,7 +300,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                                 LOG.trace("Task failed: " + task.getName(), e);
                             }
                         }
-                        task.onDone().fireEvent(new TaskEvent(this, task, true));
+                        task.fireDoneEvent(this, true);
                         taskListeners.forEach(it -> it.onFailed(task, e));
 
                         task.setState(Task.TaskState.FAILED);

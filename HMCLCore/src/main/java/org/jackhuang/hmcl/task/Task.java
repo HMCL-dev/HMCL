@@ -47,8 +47,6 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public abstract class Task<T> {
 
-    private final EventManager<TaskEvent> onDone = new EventManager<>();
-
     /**
      * True if not logging when executing this task.
      */
@@ -313,8 +311,34 @@ public abstract class Task<T> {
         return Collections.emptySet();
     }
 
+    private volatile EventManager<TaskEvent> onDone;
+
     public EventManager<TaskEvent> onDone() {
+        EventManager<TaskEvent> onDone = this.onDone;
+        if (onDone == null) {
+            synchronized (this) {
+                onDone = this.onDone;
+                if (onDone == null) {
+                    this.onDone = onDone = new EventManager<>();
+                }
+            }
+        }
+
         return onDone;
+    }
+
+    void fireDoneEvent(Object source, boolean failed) {
+        EventManager<TaskEvent> onDone = this.onDone;
+        if (onDone == null) {
+            synchronized (this) {
+                onDone = this.onDone;
+                if (onDone == null) {
+                    return;
+                }
+            }
+        }
+
+        onDone.fireEvent(new TaskEvent(source, this, failed));
     }
 
     private final DoubleProperty progress = new SimpleDoubleProperty(this, "progress", -1);
@@ -359,7 +383,6 @@ public abstract class Task<T> {
 
     protected void updateProgressImmediately(double progress) {
         // assert progress >= 0 && progress <= 1.0;
-
         if ((double) PENDING_PROGRESS_HANDLE.getAndSet(this, progress) == Double.MIN_VALUE) {
             Platform.runLater(() -> this.progress.set((double) PENDING_PROGRESS_HANDLE.getAndSet(this, Double.MIN_VALUE)));
         }
@@ -374,7 +397,7 @@ public abstract class Task<T> {
         execute();
         for (Task<?> task : getDependencies())
             doSubTask(task);
-        onDone.fireEvent(new TaskEvent(this, this, false));
+        fireDoneEvent(this, false);
 
         return getResult();
     }
