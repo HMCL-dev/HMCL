@@ -160,12 +160,12 @@ public class RipplerContainer extends StackPane {
         return buttonRippler;
     }
 
-    public Node getContainer() {
-        return container.get();
-    }
-
     public ObjectProperty<Node> containerProperty() {
         return container;
+    }
+
+    public Node getContainer() {
+        return container.get();
     }
 
     public void setContainer(Node container) {
@@ -174,6 +174,14 @@ public class RipplerContainer extends StackPane {
 
     public StyleableObjectProperty<Paint> ripplerFillProperty() {
         return ripplerFill;
+    }
+
+    public Paint getRipplerFill() {
+        return ripplerFillProperty().get();
+    }
+
+    public void setRipplerFill(Paint ripplerFill) {
+        ripplerFillProperty().set(ripplerFill);
     }
 
     @Override
