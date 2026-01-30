@@ -20,12 +20,9 @@ package org.jackhuang.hmcl.ui.construct;
 import com.jfoenix.controls.JFXRippler;
 import javafx.animation.Transition;
 import javafx.beans.DefaultProperty;
-import javafx.beans.InvalidationListener;
 import javafx.beans.NamedArg;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.css.*;
 import javafx.geometry.Insets;
@@ -52,7 +49,6 @@ public class RipplerContainer extends StackPane {
 
     private final ObjectProperty<Node> container = new SimpleObjectProperty<>(this, "container", null);
     private final StyleableObjectProperty<Paint> ripplerFill = new SimpleStyleableObjectProperty<>(StyleableProperties.RIPPLER_FILL, this, "ripplerFill", null);
-    private final BooleanProperty selected = new SimpleBooleanProperty(this, "selected", false);
 
     private final StackPane buttonContainer = new StackPane();
     private final JFXRippler buttonRippler = new JFXRippler(new StackPane()) {
@@ -60,7 +56,17 @@ public class RipplerContainer extends StackPane {
         protected Node getMask() {
             StackPane mask = new StackPane();
             mask.shapeProperty().bind(buttonContainer.shapeProperty());
-            mask.backgroundProperty().bind(Bindings.createObjectBinding(() -> new Background(new BackgroundFill(Color.WHITE, buttonContainer.getBackground() != null && buttonContainer.getBackground().getFills().size() > 0 ? buttonContainer.getBackground().getFills().get(0).getRadii() : defaultRadii, buttonContainer.getBackground() != null && buttonContainer.getBackground().getFills().size() > 0 ? buttonContainer.getBackground().getFills().get(0).getInsets() : Insets.EMPTY)), buttonContainer.backgroundProperty()));
+            mask.backgroundProperty().bind(Bindings.createObjectBinding(
+                    () -> {
+                        BackgroundFill fill = buttonContainer.getBackground() != null && !buttonContainer.getBackground().getFills().isEmpty()
+                                ? buttonContainer.getBackground().getFills().get(0)
+                                : null;
+                        return new Background(fill != null
+                                ? new BackgroundFill(Color.WHITE, fill.getRadii(), fill.getInsets())
+                                : new BackgroundFill(Color.WHITE, defaultRadii, Insets.EMPTY)
+                        );
+                    },
+                    buttonContainer.backgroundProperty()));
             mask.resize(buttonContainer.getWidth() - buttonContainer.snappedRightInset() - buttonContainer.snappedLeftInset(), buttonContainer.getHeight() - buttonContainer.snappedBottomInset() - buttonContainer.snappedTopInset());
             return mask;
         }
@@ -91,15 +97,8 @@ public class RipplerContainer extends StackPane {
         containerProperty().addListener(o -> updateChildren());
         updateChildren();
 
-        InvalidationListener listener = o -> {
-            if (isSelected()) setBackground(new Background(new BackgroundFill(getRipplerFill(), defaultRadii, null)));
-            else setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, defaultRadii, null)));
-        };
-
-        selectedProperty().addListener(listener);
-        selectedProperty().addListener((a, b, newValue) ->
-                pseudoClassStateChanged(PseudoClass.getPseudoClass("selected"), newValue));
-        ripplerFillProperty().addListener(listener);
+        ripplerFillProperty().addListener(o ->
+                setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, defaultRadii, null))));
 
         setShape(Lang.apply(new Rectangle(), rectangle -> {
             rectangle.widthProperty().bind(widthProperty());
@@ -174,28 +173,8 @@ public class RipplerContainer extends StackPane {
         this.container.set(container);
     }
 
-    public Paint getRipplerFill() {
-        return ripplerFill.get();
-    }
-
     public StyleableObjectProperty<Paint> ripplerFillProperty() {
         return ripplerFill;
-    }
-
-    public void setRipplerFill(Paint ripplerFill) {
-        this.ripplerFill.set(ripplerFill);
-    }
-
-    public boolean isSelected() {
-        return selected.get();
-    }
-
-    public BooleanProperty selectedProperty() {
-        return selected;
-    }
-
-    public void setSelected(boolean selected) {
-        this.selected.set(selected);
     }
 
     @Override
