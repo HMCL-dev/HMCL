@@ -144,7 +144,7 @@ public final class WorldManageUIUtils {
             FileChannel lock = world.lock();
             LOG.info("Acquired lock on world " + world.getFileName());
             return lock;
-        } catch (IOException ignored) {
+        } catch (WorldLockedException ignored) {
             return null;
         }
     }
