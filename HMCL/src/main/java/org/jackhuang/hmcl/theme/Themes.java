@@ -116,6 +116,7 @@ public final class Themes {
         if (defaultBrightness != null)
             return defaultBrightness;
 
+        LOG.info("Detecting system theme brightness");
         Brightness brightness = Brightness.DEFAULT;
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
             WinReg reg = WinReg.INSTANCE;
