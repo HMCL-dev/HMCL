@@ -78,6 +78,8 @@ public class PopupMenu extends Control {
             ScrollPane scrollPane = new ScrollPane();
             scrollPane.setFitToHeight(true);
             scrollPane.setFitToWidth(true);
+            scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+            scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             scrollPane.vbarPolicyProperty().bind(new When(alwaysShowingVBar)
                     .then(ScrollPane.ScrollBarPolicy.ALWAYS)
                     .otherwise(ScrollPane.ScrollBarPolicy.AS_NEEDED));
