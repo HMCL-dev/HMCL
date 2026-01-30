@@ -1030,10 +1030,12 @@ public abstract class Task<T> {
         FAILED
     }
 
+    @FunctionalInterface
     public interface FinalizedCallback {
         void execute(Exception exception) throws Exception;
     }
 
+    @FunctionalInterface
     public interface FinalizedCallbackWithResult<T> {
         void execute(T result, Exception exception) throws Exception;
     }
