@@ -67,13 +67,13 @@ public interface ModAdviser {
     );
 
     List<String> MODPACK_SUGGESTED_BLACK_LIST = Lang.immutableListOf(
-        "fonts", // BetterFonts
-        "saves", "servers.dat", "options.txt", // Minecraft
-        "blueprints" /* BuildCraft */,
-        "optionsof.txt" /* OptiFine */,
-        "journeymap" /* JourneyMap */,
-        "optionsshaders.txt",
-        "mods/VoxelMods");
+            "fonts", // BetterFonts
+            "saves", "servers.dat", "options.txt", // Minecraft
+            "blueprints" /* BuildCraft */,
+            "optionsof.txt" /* OptiFine */,
+            "journeymap" /* JourneyMap */,
+            "optionsshaders.txt",
+            "mods/VoxelMods");
 
     static ModAdviser.ModSuggestion suggestMod(String fileName, boolean isDirectory) {
         if (match(MODPACK_BLACK_LIST, fileName, isDirectory))
