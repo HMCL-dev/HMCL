@@ -20,11 +20,8 @@ package org.jackhuang.hmcl.task;
 import javafx.application.Platform;
 import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleProperty;
-import javafx.beans.property.ReadOnlyDoubleWrapper;
 import javafx.beans.property.SimpleDoubleProperty;
 import org.jackhuang.hmcl.event.EventManager;
-import org.jackhuang.hmcl.util.Holder;
-import org.jackhuang.hmcl.util.InvocationDispatcher;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
@@ -324,24 +321,25 @@ public abstract class Task<T> {
         return 1000L;
     }
 
-    private long lastTime = Long.MIN_VALUE;
     private final DoubleProperty progress = new SimpleDoubleProperty(this, "progress", -1);
 
     public ReadOnlyDoubleProperty progressProperty() {
         return progress;
     }
 
+    private long lastUpdateProgressTime = Long.MIN_VALUE;
+
     protected void updateProgress(long progress, long total) {
         updateProgress(1.0 * progress / total);
     }
 
     protected void updateProgress(double progress) {
-        if (progress < 0 || progress > 1.0)
+        if (progress < 0 || progress > 1.0 || Double.isNaN(progress))
             throw new IllegalArgumentException("Progress is must between 0 and 1.");
         long now = System.currentTimeMillis();
-        if (lastTime == Long.MIN_VALUE || now - lastTime >= getProgressInterval()) {
+        if (lastUpdateProgressTime == Long.MIN_VALUE || now - lastUpdateProgressTime >= getProgressInterval()) {
             updateProgressImmediately(progress);
-            lastTime = now;
+            lastUpdateProgressTime = now;
         }
     }
 
@@ -364,6 +362,8 @@ public abstract class Task<T> {
     //endregion updateProgressImmediately
 
     protected void updateProgressImmediately(double progress) {
+        // assert progress >= 0 && progress <= 1.0;
+
         if ((double) PENDING_PROGRESS_HANDLE.getAndSet(this, progress) == Double.MIN_VALUE) {
             Platform.runLater(() -> this.progress.set((double) PENDING_PROGRESS_HANDLE.getAndSet(this, Double.MIN_VALUE)));
         }
