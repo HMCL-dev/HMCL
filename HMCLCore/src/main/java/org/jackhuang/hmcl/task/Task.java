@@ -210,10 +210,10 @@ public abstract class Task<T> {
     }
 
     // name
-    private String name = getClass().getName();
+    private String name;
 
     public String getName() {
-        return name;
+        return name != null ? name : getClass().getName();
     }
 
     public Task<T> setName(String name) {
