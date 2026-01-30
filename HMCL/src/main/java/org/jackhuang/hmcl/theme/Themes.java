@@ -48,6 +48,7 @@ import org.jackhuang.hmcl.util.platform.windows.WinReg;
 import org.jackhuang.hmcl.util.platform.windows.WinTypes;
 
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.*;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
@@ -138,7 +139,7 @@ public final class Themes {
             Path dbusSend = SystemUtils.which("dbus-send");
             if (dbusSend != null) {
                 try {
-                    String[] result = SystemUtils.run(
+                    String[] result = SystemUtils.run(List.of(
                             FileUtils.getAbsolutePath(dbusSend),
                             "--session",
                             "--print-reply=literal",
@@ -148,7 +149,7 @@ public final class Themes {
                             "org.freedesktop.portal.Settings.Read",
                             "string:org.freedesktop.appearance",
                             "string:color-scheme"
-                    ).trim().split(" ");
+                    ), Duration.ofSeconds(2)).trim().split(" ");
 
                     if (result.length > 0) {
                         String value = result[result.length - 1];
