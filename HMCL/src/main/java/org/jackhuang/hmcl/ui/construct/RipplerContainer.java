@@ -46,9 +46,10 @@ import java.util.List;
 public class RipplerContainer extends StackPane {
     private static final String DEFAULT_STYLE_CLASS = "rippler-container";
     private static final CornerRadii DEFAULT_RADII = new CornerRadii(3);
+    private static final Color DEFAULT_RIPPLER_FILL = Color.rgb(0, 200, 255);
 
     private final ObjectProperty<Node> container = new SimpleObjectProperty<>(this, "container", null);
-    private final StyleableObjectProperty<Paint> ripplerFill = new SimpleStyleableObjectProperty<>(StyleableProperties.RIPPLER_FILL, this, "ripplerFill", null);
+    private final StyleableObjectProperty<Paint> ripplerFill = new SimpleStyleableObjectProperty<>(StyleableProperties.RIPPLER_FILL, this, "ripplerFill", DEFAULT_RIPPLER_FILL);
 
     private final StackPane buttonContainer = new StackPane();
     private final JFXRippler buttonRippler = new JFXRippler(new StackPane()) {
@@ -185,7 +186,7 @@ public class RipplerContainer extends StackPane {
     }
 
     private final static class StyleableProperties {
-        private static final CssMetaData<RipplerContainer, Paint> RIPPLER_FILL = new CssMetaData<>("-jfx-rippler-fill", PaintConverter.getInstance(), Color.rgb(0, 200, 255)) {
+        private static final CssMetaData<RipplerContainer, Paint> RIPPLER_FILL = new CssMetaData<>("-jfx-rippler-fill", PaintConverter.getInstance(), DEFAULT_RIPPLER_FILL) {
             @Override
             public boolean isSettable(RipplerContainer styleable) {
                 return styleable.ripplerFill == null || !styleable.ripplerFill.isBound();
