@@ -1857,3 +1857,35 @@
 .tooltip .text {
     -fx-fill: -monet-inverse-on-surface;
 }
+
+/*******************************************************************************
+ *                                                                             *
+ * Line Button                                                                 *
+ *                                                                             *
+ ******************************************************************************/
+
+
+.line-select-button .svg {
+    -fx-opacity: 1;
+}
+
+.line-select-button .svg:disabled {
+    -fx-opacity: 0.4;
+}
+
+.line-select-button .menu-container .title {
+    -fx-font-size: 13px;
+    -fx-text-fill: -monet-on-surface;
+}
+
+.line-select-button .menu-container:selected .title {
+    -fx-text-fill: -monet-primary;
+}
+
+.line-select-button .menu-container .subtitle {
+    -fx-text-fill: -monet-on-surface-variant;
+}
+
+.line-select-button .menu-container:selected .subtitle {
+    -fx-text-fill: -monet-primary;
+}
