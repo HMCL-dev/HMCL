@@ -317,10 +317,6 @@ public abstract class Task<T> {
         return onDone;
     }
 
-    protected long getProgressInterval() {
-        return 1000L;
-    }
-
     private final DoubleProperty progress = new SimpleDoubleProperty(this, "progress", -1);
 
     public ReadOnlyDoubleProperty progressProperty() {
@@ -337,7 +333,7 @@ public abstract class Task<T> {
         if (progress < 0 || progress > 1.0 || Double.isNaN(progress))
             throw new IllegalArgumentException("Progress is must between 0 and 1.");
         long now = System.currentTimeMillis();
-        if (lastUpdateProgressTime == Long.MIN_VALUE || now - lastUpdateProgressTime >= getProgressInterval()) {
+        if (lastUpdateProgressTime == Long.MIN_VALUE || now - lastUpdateProgressTime >= 1000L) {
             updateProgressImmediately(progress);
             lastUpdateProgressTime = now;
         }
