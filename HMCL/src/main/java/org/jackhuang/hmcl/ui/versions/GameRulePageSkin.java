@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.*;
 import javafx.animation.PauseTransition;
+import javafx.beans.property.BooleanProperty;
 import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -36,9 +37,6 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.StringUtils;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -47,7 +45,7 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
     private final HBox toolBar;
     private final JFXTextField searchField;
     private final JFXListView<GameRuleInfo<?>> listView = new JFXListView<>();
-    private final Map<String, HBox> cellMap = new HashMap<>();
+    //private final Map<String, HBox> cellMap = new HashMap<>();
 
     GameRulePageSkin(GameRulePage skinnable) {
         super(skinnable);
@@ -55,8 +53,7 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
         StackPane pane = new StackPane(root);
         {
             pane.setPadding(new Insets(10));
-            pane.getStyleClass().add("notice-pane");
-            root.getStyleClass().add("no-padding");
+            pane.getStyleClass().addAll("notice-pane", "no-padding");
 
             getChildren().add(pane);
         }
@@ -71,7 +68,8 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
             viewFilterComboBox.setValue(GameRulePage.RuleModifiedType.ALL);
             // Changes to the modifiedList are only applied at the time a type is manually selected; this is by design.
             viewFilterComboBox.valueProperty().addListener((observable, oldValue, newValue) -> {
-                getSkinnable().applyModifiedFilter(newValue);
+                getSkinnable().setRuleModifiedType(newValue);
+                getSkinnable().applyModifiedFilter(getSkinnable().getRuleModifiedType());
             });
             viewFilterComboBox.setPrefWidth(100);
 
@@ -85,7 +83,8 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
             }
 
             JFXButton resetAllButton = createToolbarButton2(i18n("gamerule.restore_default_values_all"), SVG.RESTORE,
-                    () -> Controllers.dialog(new ResetDefaultValuesLayout(skinnable::resettingAllGameRule, getSkinnable().getModifiedItems(), () -> getSkinnable().applyModifiedFilter(viewFilterComboBox.getSelectionModel().getSelectedItem()))));
+                    () -> Controllers.dialog(new ResetDefaultValuesLayout(skinnable::resettingAllGameRule, getSkinnable().getModifiedItems(), () -> getSkinnable().applyModifiedFilter(getSkinnable().getRuleModifiedType()))));
+            resetAllButton.disableProperty().bind(skinnable.readOnly);
 
             toolBar.getChildren().addAll(searchField, new Label(i18n("gamerule.filter")), viewFilterComboBox, resetAllButton);
             root.getContent().add(toolBar);
@@ -95,10 +94,11 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
         {
             ComponentList.setVgrow(center, Priority.ALWAYS);
             center.getStyleClass().add("large-spinner-pane");
+            center.loadingProperty().bind(skinnable.loadingProperty());
             center.setContent(listView);
 
             listView.setItems(getSkinnable().getDisplayedItems());
-            listView.setCellFactory(x -> new GameRuleListCell(listView, cellMap));
+            listView.setCellFactory(x -> new GameRuleListCell(listView, getSkinnable().readOnly));
             FXUtils.ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
 
             root.getContent().add(center);
@@ -106,85 +106,52 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
     }
 
     static class GameRuleListCell extends MDListCell<GameRuleInfo<?>> {
-        private final Map<String, HBox> cellMap;
+        //private final Map<String, HBox> cellMap;
+        private final BooleanProperty readOnly;
 
-        public GameRuleListCell(JFXListView<GameRuleInfo<?>> listView, Map<String, HBox> cellMap) {
+        public GameRuleListCell(JFXListView<GameRuleInfo<?>> listView, BooleanProperty readOnly) {
             super(listView);
-            this.cellMap = cellMap;
+            //this.cellMap = cellMap;
+            this.readOnly = readOnly;
         }
 
         @Override
         protected void updateControl(GameRuleInfo<?> item, boolean empty) {
             if (empty) return;
+            LineButtonBase lineButtonBase = null;
+            if (item instanceof GameRuleInfo.IntGameRuleInfo intInfo) {
+                lineButtonBase = buildNodeForIntGameRule(intInfo);
+            } else if (item instanceof GameRuleInfo.BooleanGameRuleInfo booleanInfo) {
+                lineButtonBase = buildNodeForBooleanGameRule(booleanInfo);
+            }
 
-            HBox hBox = cellMap.computeIfAbsent(item.getRuleKey(), key -> {
-                if (item instanceof GameRuleInfo.IntGameRuleInfo intInfo) {
-                    return buildNodeForIntGameRule(intInfo);
-                } else if (item instanceof GameRuleInfo.BooleanGameRuleInfo booleanInfo) {
-                    return buildNodeForBooleanGameRule(booleanInfo);
-                }
-                return null;
-            });
-            if (hBox != null) {
-                getContainer().getChildren().setAll(hBox);
+            if (lineButtonBase != null) {
+                getContainer().getChildren().setAll(lineButtonBase);
             }
         }
 
-        private HBox buildNodeForIntGameRule(GameRuleInfo.IntGameRuleInfo gameRule) {
-            HBox cellBox = new HBox();
-            {
-                cellBox.setPadding(new Insets(8, 8, 8, 16));
-                HBox.setHgrow(cellBox, Priority.ALWAYS);
-                cellBox.setAlignment(Pos.CENTER_LEFT);
+        private LineButtonBase buildNodeForIntGameRule(GameRuleInfo.IntGameRuleInfo gameRule) {
+
+            LineTextResetButton lineTextResetButton = new LineTextResetButton();
+            if (StringUtils.isNotBlank(gameRule.getDisplayName())) {
+                lineTextResetButton.setTitle(gameRule.getDisplayName());
+                lineTextResetButton.setSubtitle(gameRule.getRuleKey());
+            } else {
+                lineTextResetButton.setTitle(gameRule.getRuleKey());
             }
 
-            VBox displayInfoVBox = new VBox();
-            {
-                if (StringUtils.isNotBlank(gameRule.getDisplayName())) {
-                    Label displayNameLabel = new Label(gameRule.getDisplayName());
-                    Label ruleKeyLabel = new Label(gameRule.getRuleKey());
-                    ruleKeyLabel.getStyleClass().add("subtitle");
+            lineTextResetButton.getTextField().textProperty().bindBidirectional(gameRule.currentValueProperty());
+            FXUtils.setValidateWhileTextChanged(lineTextResetButton.getTextField(), true);
+            lineTextResetButton.getTextField().setValidators(
+                    new NumberValidator(i18n("input.integer"), false),
+                    new NumberRangeValidator(i18n("input.number_range", gameRule.getMinValue(), gameRule.getMaxValue()), gameRule.getMinValue(), gameRule.getMaxValue()));
+            lineTextResetButton.getTextField().setPrefWidth(150);
 
-                    displayInfoVBox.getChildren().addAll(displayNameLabel, ruleKeyLabel);
-                } else {
-                    displayInfoVBox.getChildren().addAll(new Label(gameRule.getRuleKey()));
-                }
-                displayInfoVBox.setAlignment(Pos.CENTER_LEFT);
-                HBox.setHgrow(displayInfoVBox, Priority.ALWAYS);
-            }
-
-            HBox rightHBox = new HBox();
-            {
-                rightHBox.setSpacing(12);
-                rightHBox.setAlignment(Pos.CENTER_LEFT);
-            }
-
-            JFXTextField textField = new JFXTextField();
-            {
-                textField.textProperty().bindBidirectional(gameRule.currentValueProperty());
-                FXUtils.setValidateWhileTextChanged(textField, true);
-                textField.setValidators(
-                        new NumberValidator(i18n("input.integer"), false),
-                        new NumberRangeValidator(i18n("input.number_range", gameRule.getMinValue(), gameRule.getMaxValue()), gameRule.getMinValue(), gameRule.getMaxValue()));
-
-                textField.setPrefWidth(150);
-            }
-
-            rightHBox.getChildren().addAll(textField, buildResetButton(gameRule));
-            cellBox.getChildren().addAll(displayInfoVBox, rightHBox);
-
-            return cellBox;
+            return lineTextResetButton;
         }
 
-        private HBox buildNodeForBooleanGameRule(GameRuleInfo.BooleanGameRuleInfo gameRule) {
-            HBox cellBox = new HBox();
-            {
-                HBox.setHgrow(cellBox, Priority.ALWAYS);
-                cellBox.setAlignment(Pos.CENTER_LEFT);
-                cellBox.setPadding(new Insets(0, 8, 0, 0));
-            }
-
-            LineToggleButton toggleButton = new LineToggleButton();
+        private LineButtonBase buildNodeForBooleanGameRule(GameRuleInfo.BooleanGameRuleInfo gameRule) {
+            LineToggleResetButton toggleButton = new LineToggleResetButton();
             {
                 if (StringUtils.isNotBlank(gameRule.getDisplayName())) {
                     toggleButton.setTitle(gameRule.getDisplayName());
@@ -194,11 +161,17 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
                 }
                 HBox.setHgrow(toggleButton, Priority.ALWAYS);
                 toggleButton.selectedProperty().bindBidirectional(gameRule.currentValueProperty());
+
+                if (StringUtils.isNotBlank(gameRule.getDefaultValueText())) {
+                    toggleButton.getResetButton().setOnAction(event -> gameRule.resetValue());
+                    toggleButton.getResetButton().disableProperty().bind(gameRule.modifiedProperty().not());
+                    FXUtils.installFastTooltip(toggleButton.getResetButton(), i18n("gamerule.restore_default_values.tooltip", gameRule.getDefaultValueText()));
+                } else {
+                    toggleButton.getResetButton().setDisable(true);
+                }
             }
 
-            cellBox.getChildren().addAll(toggleButton, buildResetButton(gameRule));
-
-            return cellBox;
+            return toggleButton;
         }
 
         private StackPane buildResetButton(GameRuleInfo<?> gameRule) {

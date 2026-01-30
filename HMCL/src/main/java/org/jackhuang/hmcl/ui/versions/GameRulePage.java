@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.versions;
 import com.github.steveice10.opennbt.tag.builtin.CompoundTag;
 import javafx.animation.PauseTransition;
 import javafx.beans.Observable;
+import javafx.beans.property.BooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -45,16 +46,19 @@ import java.util.stream.Collectors;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class GameRulePage extends ListPageBase<GameRuleInfo<?>> {
+public class GameRulePage extends ListPageBase<GameRuleInfo<?>> implements WorldManagePage.WorldRefreshable {
 
     private final WorldManagePage worldManagePage;
     private final World world;
     private CompoundTag levelDat;
+    final BooleanProperty readOnly;
 
     private final ObservableList<GameRuleInfo<?>> gameRuleList;
     private final FilteredList<GameRuleInfo<?>> modifiedItems;
     private final ObservableList<GameRuleInfo<?>> modifiedList = FXCollections.observableArrayList();
     private final FilteredList<GameRuleInfo<?>> displayedItems = new FilteredList<>(modifiedList);
+
+    private RuleModifiedType ruleModifiedType;
 
     private boolean batchUpdating = false;
     private final PauseTransition saveLevelDatPause;
@@ -62,6 +66,9 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> {
     public GameRulePage(WorldManagePage worldManagePage) {
         this.worldManagePage = worldManagePage;
         this.world = worldManagePage.getWorld();
+        this.readOnly = worldManagePage.readOnlyProperty();
+
+        ruleModifiedType = RuleModifiedType.ALL;
 
         gameRuleList = FXCollections.observableArrayList(gameRule -> {
             if (gameRule instanceof GameRuleInfo.BooleanGameRuleInfo booleanGameRuleInfo) {
@@ -73,25 +80,31 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> {
         });
         setItems(gameRuleList);
         modifiedItems = new FilteredList<>(getItems(), GameRuleInfo::getModified);
-
-        this.setLoading(true);
-        Task.supplyAsync(this::loadWorldInfo)
-                .whenComplete(Schedulers.javafx(), ((result, exception) -> {
-                    if (exception == null) {
-                        this.levelDat = result;
-                        updateControls();
-                        setLoading(false);
-                    } else {
-                        LOG.warning("Failed to load level.dat", exception);
-                        setFailedReason(i18n("world.info.failed"));
-                    }
-                })).start();
-
         saveLevelDatPause = new PauseTransition(Duration.millis(300));
         saveLevelDatPause.setOnFinished(event -> saveLevelDat());
+
+        refresh();
     }
 
-    public void updateControls() {
+    @Override
+    public void refresh() {
+        this.setLoading(true);
+        Task.runAsync(Schedulers.javafx(), () -> {
+            gameRuleList.clear();
+            modifiedList.clear();
+        }).thenSupplyAsync(this::loadWorldInfo).whenComplete(Schedulers.javafx(), ((result, exception) -> {
+            if (exception == null) {
+                this.levelDat = result;
+                updateList();
+                setLoading(false);
+            } else {
+                LOG.warning("Failed to load level.dat", exception);
+                setFailedReason(i18n("world.info.failed"));
+            }
+        })).start();
+    }
+
+    public void updateList() {
         CompoundTag dataTag = levelDat.get("Data");
         CompoundTag gameRuleCompoundTag = dataTag.get("game_rules");
         if (gameRuleCompoundTag == null) {
@@ -110,7 +123,7 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> {
                 });
             });
         });
-        applyModifiedFilter(RuleModifiedType.ALL);
+        applyModifiedFilter(ruleModifiedType);
     }
 
     @Override
@@ -127,9 +140,7 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> {
             case ALL -> modifiedList.setAll(getItems());
             case MODIFIED -> modifiedList.setAll(modifiedItems);
             case UNMODIFIED -> {
-                modifiedList.setAll(getItems().stream()
-                        .filter(gameRuleInfo -> !modifiedItems.contains(gameRuleInfo))
-                        .collect(Collectors.toSet()));
+                modifiedList.setAll(getItems().stream().filter(gameRuleInfo -> !modifiedItems.contains(gameRuleInfo)).collect(Collectors.toSet()));
             }
         }
     }
@@ -142,6 +153,14 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> {
         return displayedItems;
     }
 
+    public RuleModifiedType getRuleModifiedType() {
+        return ruleModifiedType;
+    }
+
+    public void setRuleModifiedType(RuleModifiedType ruleModifiedType) {
+        this.ruleModifiedType = ruleModifiedType;
+    }
+
     public boolean isBatchUpdating() {
         return batchUpdating;
     }
@@ -151,8 +170,7 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> {
     }
 
     private CompoundTag loadWorldInfo() throws IOException {
-        if (!Files.isDirectory(world.getFile()))
-            throw new IOException("Not a valid world directory");
+        if (!Files.isDirectory(world.getFile())) throw new IOException("Not a valid world directory");
 
         return world.getLevelData();
     }
@@ -208,7 +226,7 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> {
         return gameRuleInfo -> stringPredicate.test(gameRuleInfo.getDisplayName()) || stringPredicate.test(gameRuleInfo.getRuleKey());
     }
 
-    enum RuleModifiedType {
+    public enum RuleModifiedType {
         ALL, MODIFIED, UNMODIFIED;
 
         static final ObservableList<RuleModifiedType> items = FXCollections.observableList(Arrays.asList(values()));
