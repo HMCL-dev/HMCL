@@ -90,7 +90,7 @@ public class RipplerContainer extends StackPane {
         }
     };
 
-    private Transition hoverAnimation;
+    private Transition coverAnimation;
 
     public RipplerContainer(Node container) {
         getStyleClass().add(DEFAULT_STYLE_CLASS);
@@ -121,16 +121,15 @@ public class RipplerContainer extends StackPane {
         setShape(shape);
 
         EventHandler<MouseEvent> mouseEventHandler;
-
         if (AnimationUtils.isAnimationEnabled()) {
             mouseEventHandler = event -> {
-                if (hoverAnimation != null) {
-                    hoverAnimation.stop();
-                    hoverAnimation = null;
+                if (coverAnimation != null) {
+                    coverAnimation.stop();
+                    coverAnimation = null;
                 }
 
                 if (event.getEventType() == MouseEvent.MOUSE_ENTERED) {
-                    hoverAnimation = new Transition() {
+                    coverAnimation = new Transition() {
                         {
                             setCycleDuration(Motion.SHORT4);
                             setInterpolator(Motion.EASE_IN);
@@ -142,7 +141,7 @@ public class RipplerContainer extends StackPane {
                         }
                     };
                 } else {
-                    hoverAnimation = new Transition() {
+                    coverAnimation = new Transition() {
                         {
                             setCycleDuration(Motion.SHORT4);
                             setInterpolator(Motion.EASE_OUT);
@@ -155,7 +154,7 @@ public class RipplerContainer extends StackPane {
                     };
                 }
 
-                hoverAnimation.play();
+                coverAnimation.play();
             };
         } else {
             mouseEventHandler = event ->
