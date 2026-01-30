@@ -20,8 +20,6 @@ package org.jackhuang.hmcl.task;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleWrapper;
-import javafx.beans.property.ReadOnlyStringProperty;
-import javafx.beans.property.ReadOnlyStringWrapper;
 import org.jackhuang.hmcl.event.EventManager;
 import org.jackhuang.hmcl.util.InvocationDispatcher;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
@@ -344,12 +342,6 @@ public abstract class Task<T> {
         progressUpdate.accept(progress);
     }
 
-    private final ReadOnlyStringWrapper message = new ReadOnlyStringWrapper(this, "message", null);
-
-    public final ReadOnlyStringProperty messageProperty() {
-        return message.getReadOnlyProperty();
-    }
-
     public final T run() throws Exception {
         if (getSignificance().shouldLog())
             LOG.trace("Executing task: " + getName());
@@ -365,10 +357,8 @@ public abstract class Task<T> {
     }
 
     private void doSubTask(Task<?> task) throws Exception {
-        message.bind(task.message);
         progress.bind(task.progress);
         task.run();
-        message.unbind();
         progress.unbind();
     }
 
