@@ -53,7 +53,6 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 import static org.jackhuang.hmcl.util.StringUtils.parseColorEscapes;
@@ -65,10 +64,9 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
     private final BooleanProperty showAll = new SimpleBooleanProperty(this, "showAll", false);
 
     private Path savesDir;
-    private Path backupsDir;
     private List<World> worlds;
     private Profile profile;
-    private String id;
+    private String instanceId;
 
     private int refreshCount = 0;
 
@@ -88,9 +86,8 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
     @Override
     public void loadVersion(Profile profile, String id) {
         this.profile = profile;
-        this.id = id;
+        this.instanceId = id;
         this.savesDir = profile.getRepository().getSavesDirectory(id);
-        this.backupsDir = profile.getRepository().getBackupsDirectory(id);
         refresh();
     }
 
@@ -100,7 +97,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
         } else if (showAll.get()) {
             getItems().setAll(worlds);
         } else {
-            GameVersionNumber gameVersion = profile.getRepository().getGameVersion(id).map(GameVersionNumber::asGameVersion).orElse(null);
+            GameVersionNumber gameVersion = profile.getRepository().getGameVersion(instanceId).map(GameVersionNumber::asGameVersion).orElse(null);
             getItems().setAll(worlds.stream()
                     .filter(world -> world.getGameVersion() == null || world.getGameVersion().equals(gameVersion))
                     .toList());
@@ -108,7 +105,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
     }
 
     public void refresh() {
-        if (profile == null || id == null)
+        if (profile == null || instanceId == null)
             return;
 
         int currentRefresh = ++refreshCount;
@@ -116,10 +113,8 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
         setLoading(true);
         Task.supplyAsync(Schedulers.io(), () -> {
             // Ensure the game version number is parsed
-            profile.getRepository().getGameVersion(id);
-            try (Stream<World> stream = World.getWorlds(savesDir)) {
-                return stream.toList();
-            }
+            profile.getRepository().getGameVersion(instanceId);
+            return World.getWorlds(savesDir);
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (refreshCount != currentRefresh) {
                 // A newer refresh task is running, discard this result
@@ -177,7 +172,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
     }
 
     private void showManagePage(World world) {
-        Controllers.navigate(new WorldManagePage(world, backupsDir, profile, id));
+        Controllers.navigate(new WorldManagePage(world, profile, instanceId));
     }
 
     public void export(World world) {
@@ -197,11 +192,11 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
     }
 
     public void launch(World world) {
-        Versions.launchAndEnterWorld(profile, id, world.getFileName());
+        Versions.launchAndEnterWorld(profile, instanceId, world.getFileName());
     }
 
     public void generateLaunchScript(World world) {
-        Versions.generateLaunchScriptForQuickEnterWorld(profile, id, world.getFileName());
+        Versions.generateLaunchScriptForQuickEnterWorld(profile, instanceId, world.getFileName());
     }
 
     public BooleanProperty showAllProperty() {
@@ -216,14 +211,15 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
 
         @Override
         protected List<Node> initializeToolbar(WorldListPage skinnable) {
-            JFXCheckBox chkShowAll = new JFXCheckBox();
-            chkShowAll.setText(i18n("world.show_all"));
+            JFXCheckBox chkShowAll = new JFXCheckBox(i18n("world.show_all"));
             chkShowAll.selectedProperty().bindBidirectional(skinnable.showAllProperty());
 
-            return Arrays.asList(chkShowAll,
+            return Arrays.asList(
+                    chkShowAll,
                     createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
                     createToolbarButton2(i18n("world.add"), SVG.ADD, skinnable::add),
-                    createToolbarButton2(i18n("world.download"), SVG.DOWNLOAD, skinnable::download));
+                    createToolbarButton2(i18n("world.download"), SVG.DOWNLOAD, skinnable::download)
+            );
         }
 
         @Override
@@ -240,6 +236,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
         private final ImageView imageView;
         private final Tooltip leftTooltip;
         private final TwoLineListItem content;
+        private final JFXButton btnLaunch;
 
         public WorldListCell(WorldListPage page) {
             this.page = page;
@@ -270,6 +267,17 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                 HBox right = new HBox(8);
                 root.setRight(right);
                 right.setAlignment(Pos.CENTER_RIGHT);
+
+                btnLaunch = new JFXButton();
+                right.getChildren().add(btnLaunch);
+                btnLaunch.getStyleClass().add("toggle-icon4");
+                btnLaunch.setGraphic(SVG.ROCKET_LAUNCH.createIcon());
+                FXUtils.installFastTooltip(btnLaunch, i18n("version.launch"));
+                btnLaunch.setOnAction(event -> {
+                    World world = getItem();
+                    if (world != null)
+                        page.launch(world);
+                });
 
                 JFXButton btnMore = new JFXButton();
                 right.getChildren().add(btnMore);
@@ -317,8 +325,12 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
 
                 if (world.getGameVersion() != null)
                     content.addTag(I18n.getDisplayVersion(world.getGameVersion()));
-                if (world.isLocked())
+                if (world.isLocked()) {
                     content.addTag(i18n("world.locked"));
+                    btnLaunch.setDisable(true);
+                } else {
+                    btnLaunch.setDisable(false);
+                }
 
                 content.setSubtitle(i18n("world.datetime", formatDateTime(Instant.ofEpochMilli(world.getLastPlayed()))));
 
@@ -329,13 +341,15 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
         // Popup Menu
 
         public void showPopupMenu(World world, JFXPopup.PopupHPosition hPosition, double initOffsetX, double initOffsetY) {
+            boolean worldLocked = world.isLocked();
+
             PopupMenu popupMenu = new PopupMenu();
             JFXPopup popup = new JFXPopup(popupMenu);
 
-            if (world.getGameVersion() != null && world.getGameVersion().isAtLeast("1.20", "23w14a")) {
+            if (world.supportQuickPlay()) {
 
                 IconedMenuItem launchItem = new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("version.launch_and_enter_world"), () -> page.launch(world), popup);
-                launchItem.setDisable(world.isLocked());
+                launchItem.setDisable(worldLocked);
                 popupMenu.getContent().add(launchItem);
 
                 popupMenu.getContent().addAll(
@@ -354,18 +368,19 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                         new IconedMenuItem(SVG.FORT, i18n("world.chunkbase.nether_fortress"), () -> ChunkBaseApp.openNetherFortressFinder(world), popup)
                 );
 
-                if (world.getGameVersion() != null && world.getGameVersion().compareTo("1.13") >= 0) {
-                    popupMenu.getContent().add(new IconedMenuItem(SVG.LOCATION_CITY, i18n("world.chunkbase.end_city"),
-                            () -> ChunkBaseApp.openEndCityFinder(world), popup));
+                if (ChunkBaseApp.supportEndCity(world)) {
+                    popupMenu.getContent().add(new IconedMenuItem(SVG.LOCATION_CITY, i18n("world.chunkbase.end_city"), () -> ChunkBaseApp.openEndCityFinder(world), popup));
                 }
             }
 
             IconedMenuItem exportMenuItem = new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), () -> page.export(world), popup);
+            exportMenuItem.setDisable(worldLocked);
+
             IconedMenuItem deleteMenuItem = new IconedMenuItem(SVG.DELETE, i18n("world.delete"), () -> page.delete(world), popup);
+            deleteMenuItem.setDisable(worldLocked);
+
             IconedMenuItem duplicateMenuItem = new IconedMenuItem(SVG.CONTENT_COPY, i18n("world.duplicate"), () -> page.copy(world), popup);
-            boolean worldLocked = world.isLocked();
-            Stream.of(exportMenuItem, deleteMenuItem, duplicateMenuItem)
-                    .forEach(iconedMenuItem -> iconedMenuItem.setDisable(worldLocked));
+            duplicateMenuItem.setDisable(worldLocked);
 
             popupMenu.getContent().addAll(
                     new MenuSeparator(),

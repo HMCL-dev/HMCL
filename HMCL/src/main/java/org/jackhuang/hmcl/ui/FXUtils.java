@@ -1299,8 +1299,8 @@ public final class FXUtils {
         return button;
     }
 
-    public static Label newSafeTruncatedLabel(String text) {
-        Label label = new Label(text);
+    public static Label newSafeTruncatedLabel() {
+        Label label = new Label();
         label.setTextOverrun(OverrunStyle.CENTER_WORD_ELLIPSIS);
         showTooltipWhenTruncated(label);
         return label;
