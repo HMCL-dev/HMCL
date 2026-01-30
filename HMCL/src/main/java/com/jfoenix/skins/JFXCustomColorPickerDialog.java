@@ -43,7 +43,6 @@ import javafx.util.Duration;
 import org.jackhuang.hmcl.setting.StyleSheets;
 
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.UnaryOperator;
 
 /**
  * @author Shadi Shaheen
@@ -411,21 +410,12 @@ public class JFXCustomColorPickerDialog extends StackPane {
     }
 
     private static TextFormatter<String> colorCharFormatter() {
-        UnaryOperator<TextFormatter.Change> filter = change -> {
+        return new TextFormatter<>(change -> {
             if (!change.isContentChange()) return change;
-
-            if (!change.getText().matches("[0-9a-zA-Z#(),%.\\s]*")) {
-                return null;
-            }
-
-            String newText = change.getControlNewText();
-            long hashCount = newText.chars().filter(ch -> ch == '#').count();
-            if (hashCount > 1 || (hashCount == 1 && newText.indexOf('#') != 0)) {
-                return null;
-            }
-
-            return change;
-        };
-        return new TextFormatter<>(filter);
+            if (!change.getText().matches("[0-9a-zA-Z#(),%.\\s]*")) return null;
+            String text = change.getControlNewText();
+            long hashes = text.chars().filter(c -> c == '#').count();
+            return (hashes <= 1 && (hashes == 0 || text.indexOf('#') == 0)) ? change : null;
+        });
     }
 }
