@@ -20,10 +20,9 @@ package org.jackhuang.hmcl.ui.construct;
 import com.jfoenix.controls.JFXRippler;
 import javafx.animation.Transition;
 import javafx.beans.DefaultProperty;
-import javafx.beans.NamedArg;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.ObjectPropertyBase;
 import javafx.css.*;
 import javafx.css.converter.PaintConverter;
 import javafx.geometry.Insets;
@@ -48,7 +47,23 @@ public class RipplerContainer extends StackPane {
     private static final CornerRadii DEFAULT_RADII = new CornerRadii(3);
     private static final Color DEFAULT_RIPPLER_FILL = Color.rgb(0, 200, 255);
 
-    private final ObjectProperty<Node> container = new SimpleObjectProperty<>(this, "container", null);
+    private final ObjectProperty<Node> container = new ObjectPropertyBase<>() {
+        @Override
+        public Object getBean() {
+            return RipplerContainer.this;
+        }
+
+        @Override
+        public String getName() {
+            return "container";
+        }
+
+        @Override
+        protected void invalidated() {
+            updateChildren();
+        }
+    };
+
     private final StyleableObjectProperty<Paint> ripplerFill = new SimpleStyleableObjectProperty<>(StyleableProperties.RIPPLER_FILL, this, "ripplerFill", DEFAULT_RIPPLER_FILL);
 
     private final StackPane buttonContainer = new StackPane();
@@ -73,9 +88,7 @@ public class RipplerContainer extends StackPane {
         }
     };
 
-    public RipplerContainer(@NamedArg("container") Node container) {
-        setContainer(container);
-
+    public RipplerContainer(Node container) {
         getStyleClass().add(DEFAULT_STYLE_CLASS);
         buttonRippler.setPosition(JFXRippler.RipplerPos.BACK);
         buttonContainer.getChildren().add(buttonRippler);
@@ -93,8 +106,7 @@ public class RipplerContainer extends StackPane {
         buttonContainer.setPickOnBounds(false);
         buttonRippler.ripplerFillProperty().bind(ripplerFillProperty());
 
-        containerProperty().addListener(o -> updateChildren());
-        updateChildren();
+        setContainer(container);
 
         ripplerFillProperty().addListener(o ->
                 setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, DEFAULT_RADII, Insets.EMPTY))));
