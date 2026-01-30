@@ -34,18 +34,16 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
-import javafx.util.Duration;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.Motion;
-import org.jackhuang.hmcl.util.Lang;
 
 import java.util.List;
 
 @DefaultProperty("container")
 public class RipplerContainer extends StackPane {
     private static final String DEFAULT_STYLE_CLASS = "rippler-container";
-    private static final Duration DURATION = Duration.millis(200);
+    private static final CornerRadii DEFAULT_RADII = new CornerRadii(3);
 
     private final ObjectProperty<Node> container = new SimpleObjectProperty<>(this, "container", null);
     private final StyleableObjectProperty<Paint> ripplerFill = new SimpleStyleableObjectProperty<>(StyleableProperties.RIPPLER_FILL, this, "ripplerFill", null);
@@ -63,7 +61,7 @@ public class RipplerContainer extends StackPane {
                                 : null;
                         return new Background(fill != null
                                 ? new BackgroundFill(Color.WHITE, fill.getRadii(), fill.getInsets())
-                                : new BackgroundFill(Color.WHITE, defaultRadii, Insets.EMPTY)
+                                : new BackgroundFill(Color.WHITE, DEFAULT_RADII, Insets.EMPTY)
                         );
                     },
                     buttonContainer.backgroundProperty()));
@@ -71,8 +69,6 @@ public class RipplerContainer extends StackPane {
             return mask;
         }
     };
-
-    private final CornerRadii defaultRadii = new CornerRadii(3);
 
     public RipplerContainer(@NamedArg("container") Node container) {
         setContainer(container);
@@ -98,17 +94,17 @@ public class RipplerContainer extends StackPane {
         updateChildren();
 
         ripplerFillProperty().addListener(o ->
-                setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, defaultRadii, null))));
+                setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, DEFAULT_RADII, Insets.EMPTY))));
 
-        setShape(Lang.apply(new Rectangle(), rectangle -> {
-            rectangle.widthProperty().bind(widthProperty());
-            rectangle.heightProperty().bind(heightProperty());
-        }));
+        var shape = new Rectangle();
+        shape.widthProperty().bind(widthProperty());
+        shape.heightProperty().bind(heightProperty());
+        setShape(shape);
 
         if (AnimationUtils.isAnimationEnabled()) {
             setOnMouseEntered(e -> new Transition() {
                 {
-                    setCycleDuration(DURATION);
+                    setCycleDuration(Motion.SHORT4);
                     setInterpolator(Motion.EASE_IN);
                 }
 
@@ -120,7 +116,7 @@ public class RipplerContainer extends StackPane {
 
             setOnMouseExited(e -> new Transition() {
                 {
-                    setCycleDuration(DURATION);
+                    setCycleDuration(Motion.SHORT4);
                     setInterpolator(Motion.EASE_OUT);
                 }
 
