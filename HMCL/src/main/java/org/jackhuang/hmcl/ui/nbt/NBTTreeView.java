@@ -44,6 +44,15 @@ public final class NBTTreeView extends TreeView<Tag> {
         this.setCellFactory(cellFactory());
     }
 
+    @Override
+    protected javafx.scene.control.Skin<?> createDefaultSkin() {
+        return new TreeViewSkin<Tag>(this) {
+            {
+                FXUtils.smoothScrolling(getVirtualFlow());
+            }
+        };
+    }
+
     private static Callback<TreeView<Tag>, TreeCell<Tag>> cellFactory() {
         EnumMap<NBTTagType, Image> icons = new EnumMap<>(NBTTagType.class);
 
@@ -166,14 +175,6 @@ public final class NBTTreeView extends TreeView<Tag> {
 
         public String getName() {
             return name == null ? getValue().getName() : name;
-        }
-    }
-
-    private static final class Skin extends TreeViewSkin<Tag> {
-        public Skin(NBTTreeView control) {
-            super(control);
-
-            FXUtils.smoothScrolling(getVirtualFlow());
         }
     }
 }
