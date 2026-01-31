@@ -595,6 +595,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
             var box = new HBox(8);
             box.setAlignment(Pos.CENTER_LEFT);
+            box.setPickOnBounds(false);
 
             {
                 this.left = new StackPane();
@@ -651,12 +652,11 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
             box.getChildren().setAll(left, center, right);
             StackPane.setMargin(box, new Insets(8));
-
-            FXUtils.onClicked(box, () -> {
+            getContainer().getChildren().setAll(box);
+            onClicked(() -> {
                 var item = getItem();
                 if (item != null) item.onClick();
             });
-            getContainer().getChildren().setAll(box);
         }
 
         @Override
@@ -692,8 +692,6 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
     private static final class SchematicsPageSkin extends SkinBase<SchematicsPage> {
 
-        private final HBox toolbar;
-
         private final JFXListView<Item> listView;
 
         SchematicsPageSkin(SchematicsPage skinnable) {
@@ -709,7 +707,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             listView.setSelectionModel(new NoneMultipleSelectionModel<>());
 
             {
-                toolbar = new HBox();
+                var toolbar = new HBox();
                 toolbar.getChildren().setAll(
                         createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
                         createToolbarButton2(i18n("schematics.add"), SVG.ADD, skinnable::onAddFiles),
@@ -726,7 +724,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 center.loadingProperty().bind(skinnable.loadingProperty());
 
                 listView.setCellFactory(x -> new Cell(listView));
-                listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+                listView.setSelectionModel(new NoneMultipleSelectionModel<>());
                 Bindings.bindContent(listView.getItems(), skinnable.getItems());
 
                 // ListViewBehavior would consume ESC pressed event, preventing us from handling it
