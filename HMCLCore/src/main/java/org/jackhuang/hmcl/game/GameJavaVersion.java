@@ -17,14 +17,19 @@
  */
 package org.jackhuang.hmcl.game;
 
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.platform.Architecture;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
-public final class GameJavaVersion {
+@JsonSerializable
+public record GameJavaVersion(String component, int majorVersion) {
+    public static final GameJavaVersion JAVA_25 = new GameJavaVersion("java-runtime-epsilon", 25);
     public static final GameJavaVersion JAVA_21 = new GameJavaVersion("java-runtime-delta", 21);
     public static final GameJavaVersion JAVA_17 = new GameJavaVersion("java-runtime-beta", 17);
     public static final GameJavaVersion JAVA_16 = new GameJavaVersion("java-runtime-alpha", 16);
@@ -33,6 +38,8 @@ public final class GameJavaVersion {
     public static final GameJavaVersion LATEST = JAVA_21;
 
     public static GameJavaVersion getMinimumJavaVersion(GameVersionNumber gameVersion) {
+        if (gameVersion.compareTo("26.1") >= 0)
+            return JAVA_25;
         if (gameVersion.compareTo("1.20.5") >= 0)
             return JAVA_21;
         if (gameVersion.compareTo("1.18") >= 0)
@@ -45,18 +52,14 @@ public final class GameJavaVersion {
     }
 
     public static GameJavaVersion get(int major) {
-        switch (major) {
-            case 8:
-                return JAVA_8;
-            case 16:
-                return JAVA_16;
-            case 17:
-                return JAVA_17;
-            case 21:
-                return JAVA_21;
-            default:
-                return null;
-        }
+        return switch (major) {
+            case 8 -> JAVA_8;
+            case 16 -> JAVA_16;
+            case 17 -> JAVA_17;
+            case 21 -> JAVA_21;
+            case 25 -> JAVA_25;
+            default -> null;
+        };
     }
 
     public static List<GameJavaVersion> getSupportedVersions(Platform platform) {
@@ -74,49 +77,26 @@ public final class GameJavaVersion {
                 case WINDOWS:
                 case LINUX:
                 case MACOS:
-                    return Arrays.asList(JAVA_8, JAVA_16, JAVA_17, JAVA_21);
+                    return Arrays.asList(JAVA_8, JAVA_16, JAVA_17, JAVA_21, JAVA_25);
             }
         } else if (architecture == Architecture.ARM64) {
             switch (operatingSystem) {
                 case WINDOWS:
                 case MACOS:
-                    return Arrays.asList(JAVA_17, JAVA_21);
+                    return Arrays.asList(JAVA_17, JAVA_21, JAVA_25);
             }
         }
 
         return Collections.emptyList();
     }
 
-    private final String component;
-    private final int majorVersion;
-
-    public GameJavaVersion() {
-        this("", 0);
-    }
-
-    public GameJavaVersion(String component, int majorVersion) {
-        this.component = component;
-        this.majorVersion = majorVersion;
-    }
-
-    public String getComponent() {
-        return component;
-    }
-
-    public int getMajorVersion() {
-        return majorVersion;
-    }
-
     @Override
     public int hashCode() {
-        return getMajorVersion();
+        return majorVersion();
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof GameJavaVersion)) return false;
-        GameJavaVersion that = (GameJavaVersion) o;
-        return majorVersion == that.majorVersion;
+        return this == o || o instanceof GameJavaVersion that && this.majorVersion == that.majorVersion;
     }
 }

@@ -185,7 +185,7 @@ public abstract class FetchTask<T> extends Task<T> {
             }
         }
 
-        ArrayList<IOException> exceptions = null;
+        ArrayList<Exception> exceptions = null;
 
         // If loading the cache fails, the cache should not be loaded again.
         boolean useCachedResult = true;
@@ -284,10 +284,12 @@ public abstract class FetchTask<T> extends Task<T> {
                         contentLength,
                         contentEncoding);
                 return;
+            } catch (InterruptedException e) {
+                throw e;
             } catch (FileNotFoundException ex) {
                 LOG.warning("Failed to download " + uri + ", not found" + (redirects == null ? "" : ", redirects: " + redirects), ex);
                 throw toDownloadException(uri, ex, exceptions); // we will not try this URL again
-            } catch (IOException ex) {
+            } catch (Exception ex) {
                 if (exceptions == null)
                     exceptions = new ArrayList<>();
 
@@ -301,7 +303,7 @@ public abstract class FetchTask<T> extends Task<T> {
     }
 
     private void downloadNotHttp(URI uri) throws DownloadException, InterruptedException {
-        ArrayList<IOException> exceptions = null;
+        ArrayList<Exception> exceptions = null;
         for (int retryTime = 0; retryTime < retry; retryTime++) {
             if (isCancelled()) {
                 throw new InterruptedException();
@@ -317,11 +319,13 @@ public abstract class FetchTask<T> extends Task<T> {
                         conn.getContentLengthLong(),
                         ContentEncoding.fromConnection(conn));
                 return;
+            } catch (InterruptedException e) {
+                throw e;
             } catch (FileNotFoundException ex) {
                 LOG.warning("Failed to download " + uri + ", not found", ex);
 
                 throw toDownloadException(uri, ex, exceptions); // we will not try this URL again
-            } catch (IOException ex) {
+            } catch (Exception ex) {
                 if (exceptions == null)
                     exceptions = new ArrayList<>();
 
@@ -333,7 +337,7 @@ public abstract class FetchTask<T> extends Task<T> {
         throw toDownloadException(uri, null, exceptions);
     }
 
-    private static DownloadException toDownloadException(URI uri, @Nullable IOException last, @Nullable ArrayList<IOException> exceptions) {
+    private static DownloadException toDownloadException(URI uri, @Nullable Exception last, @Nullable ArrayList<Exception> exceptions) {
         if (exceptions == null || exceptions.isEmpty()) {
             return new DownloadException(uri, last != null
                     ? last
@@ -342,7 +346,7 @@ public abstract class FetchTask<T> extends Task<T> {
             if (last == null)
                 last = exceptions.remove(exceptions.size() - 1);
 
-            for (IOException e : exceptions) {
+            for (Exception e : exceptions) {
                 last.addSuppressed(e);
             }
             return new DownloadException(uri, last);
@@ -505,12 +509,22 @@ public abstract class FetchTask<T> extends Task<T> {
         return downloadExecutorConcurrency;
     }
 
+    private static volatile boolean initialized = false;
+
+    public static void notifyInitialized() {
+        initialized = true;
+    }
+
     /// Ensure that [#HTTP_CLIENT] is initialized after ProxyManager has been initialized.
     private static final class Holder {
         private static final HttpClient HTTP_CLIENT;
         private static final String USER_AGENT = System.getProperty("http.agent", "HMCL");
 
         static {
+            if (!initialized) {
+                throw new AssertionError("FetchTask.Holder accessed before ProxyManager initialization.");
+            }
+
             boolean useHttp2 = !"false".equalsIgnoreCase(System.getProperty("hmcl.http2"));
 
             HTTP_CLIENT = HttpClient.newBuilder()

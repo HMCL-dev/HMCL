@@ -328,6 +328,18 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             }
             if (onTitleBarDoubleClick != null)
                 center.setOnMouseClicked(onTitleBarDoubleClick);
+            center.setOnMouseDragged(mouseEvent -> {
+                if (!getSkinnable().isDragging() && primaryStage.isMaximized()) {
+                    getSkinnable().setDragging(true);
+                    mouseInitX = mouseEvent.getScreenX();
+                    mouseInitY = mouseEvent.getScreenY();
+                    primaryStage.setMaximized(false);
+                    stageInitWidth = primaryStage.getWidth();
+                    stageInitHeight = primaryStage.getHeight();
+                    primaryStage.setY(stageInitY = 0);
+                    primaryStage.setX(stageInitX = mouseInitX - stageInitWidth / 2);
+                }
+            });
             navBar.setCenter(center);
 
             if (canRefresh) {

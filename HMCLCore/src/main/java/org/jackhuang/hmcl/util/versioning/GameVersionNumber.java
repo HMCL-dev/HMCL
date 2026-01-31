@@ -337,6 +337,10 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
             } else if (suffix.startsWith("-snapshot-")) {
                 releaseType = ReleaseType.SNAPSHOT;
                 eaVersion = VersionNumber.asVersion(suffix.substring("-snapshot-".length()));
+            } else if (suffix.startsWith(" Snapshot ")) {
+                needNormalize = true;
+                releaseType = ReleaseType.SNAPSHOT;
+                eaVersion = VersionNumber.asVersion(suffix.substring(" Snapshot ".length()));
             } else if (suffix.startsWith("-pre")) {
                 releaseType = ReleaseType.PRE_RELEASE;
                 eaVersion = VersionNumber.asVersion(suffix.substring("-pre".length()));
@@ -791,7 +795,8 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
                     } else if (version instanceof Release release) {
                         currentRelease = release;
 
-                        if (currentRelease.eaType == Release.ReleaseType.GA) {
+                        if (currentRelease.eaType == Release.ReleaseType.GA
+                                && currentRelease.additional == Release.Additional.NONE) {
                             defaultGameVersions.addFirst(currentRelease.value);
                         }
                     } else if (version instanceof Special special) {

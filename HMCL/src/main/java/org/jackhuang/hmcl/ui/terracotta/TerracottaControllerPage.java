@@ -57,7 +57,13 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.ui.construct.ComponentList;
+import org.jackhuang.hmcl.ui.construct.ComponentSublist;
+import org.jackhuang.hmcl.ui.construct.HintPane;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.RipplerContainer;
+import org.jackhuang.hmcl.ui.construct.SpinnerPane;
+import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
@@ -96,6 +102,11 @@ public class TerracottaControllerPage extends StackPane {
     /* FIXME: It's sucked to have such a long logic, containing UI for all states defined in TerracottaState, with unclear control flows.
          Consider moving UI into multiple files for each state respectively. */
     public TerracottaControllerPage() {
+        holder.add(FXUtils.observeWeak(() -> {
+            // Run daemon process only if HMCL is focused and is displaying current node.
+            TerracottaManager.switchDaemon(getScene() != null && Controllers.getStage().isFocused());
+        }, this.sceneProperty(), Controllers.getStage().focusedProperty()));
+
         TransitionPane transition = new TransitionPane();
 
         ObjectProperty<String> statusProperty = new SimpleObjectProperty<>();
@@ -107,7 +118,7 @@ public class TerracottaControllerPage extends StackPane {
 
             if (state instanceof TerracottaState.Uninitialized ||
                     state instanceof TerracottaState.Preparing preparing && preparing.hasInstallFence() ||
-                    state instanceof TerracottaState.Fatal fatal && fatal.getType() == TerracottaState.Fatal.Type.NETWORK
+                    state instanceof TerracottaState.Fatal fatal && fatal.isRecoverable()
             ) {
                 return Files.isReadable(path) && FileUtils.getName(path).toLowerCase(Locale.ROOT).endsWith(".tar.gz");
             } else {
@@ -116,7 +127,7 @@ public class TerracottaControllerPage extends StackPane {
         }, files -> {
             Path path = files.get(0);
 
-            if (!TerracottaManager.validate(path)) {
+            if (TerracottaManager.isInvalidBundle(path)) {
                 Controllers.dialog(
                         i18n("terracotta.from_local.file_name_mismatch", TerracottaMetadata.PACKAGE_NAME, FileUtils.getName(path)),
                         i18n("message.error"),
@@ -125,25 +136,7 @@ public class TerracottaControllerPage extends StackPane {
                 return;
             }
 
-            TerracottaState state = UI_STATE.get(), next;
-            if (state instanceof TerracottaState.Uninitialized || state instanceof TerracottaState.Preparing preparing && preparing.hasInstallFence()) {
-                if (state instanceof TerracottaState.Uninitialized uninitialized && !uninitialized.hasLegacy()) {
-                    Controllers.confirmWithCountdown(i18n("terracotta.confirm.desc"), i18n("terracotta.confirm.title"), 5,
-                            MessageDialogPane.MessageType.INFO, () -> {
-                                TerracottaState.Preparing s = TerracottaManager.install(path);
-                                if (s != null) {
-                                    UI_STATE.set(s);
-                                }
-                            }, null);
-                    return;
-                }
-
-                next = TerracottaManager.install(path);
-            } else if (state instanceof TerracottaState.Fatal fatal && fatal.getType() == TerracottaState.Fatal.Type.NETWORK) {
-                next = TerracottaManager.recover(path);
-            } else {
-                return;
-            }
+            TerracottaState.Preparing next = TerracottaManager.install(path);
             if (next != null) {
                 UI_STATE.set(next);
             }
@@ -167,7 +160,7 @@ public class TerracottaControllerPage extends StackPane {
                 progressProperty.set(0);
 
                 TextFlow body = FXUtils.segmentToTextFlow(i18n("terracotta.confirm.desc"), Controllers::onHyperlinkAction);
-                body.getStyleClass().add("terracotta-license");
+                body.getStyleClass().add("terracotta-hint");
                 body.setLineSpacing(4);
 
                 LineButton download = LineButton.of();
@@ -176,7 +169,7 @@ public class TerracottaControllerPage extends StackPane {
                 download.setSubtitle(i18n("terracotta.status.uninitialized.desc"));
                 download.setRightIcon(SVG.ARROW_FORWARD);
                 FXUtils.onClicked(download, () -> {
-                    TerracottaState.Preparing s = TerracottaManager.install(null);
+                    TerracottaState.Preparing s = TerracottaManager.download();
                     if (s != null) {
                         UI_STATE.set(s);
                     }
@@ -211,7 +204,7 @@ public class TerracottaControllerPage extends StackPane {
                 progressProperty.set(1);
 
                 TextFlow flow = FXUtils.segmentToTextFlow(i18n("terracotta.confirm.desc"), Controllers::onHyperlinkAction);
-                flow.getStyleClass().add("terracotta-license");
+                flow.getStyleClass().add("terracotta-hint");
                 flow.setLineSpacing(4);
 
                 LineButton host = LineButton.of();
@@ -232,7 +225,10 @@ public class TerracottaControllerPage extends StackPane {
                                 MessageDialogPane.MessageType.QUESTION
                         ).addAction(i18n("version.launch"), () -> {
                             Profile profile = Profiles.getSelectedProfile();
-                            Versions.launch(profile, profile.getSelectedVersion(), LauncherHelper::setKeep);
+                            Versions.launch(profile, profile.getSelectedVersion(), launcherHelper -> {
+                                launcherHelper.setKeep();
+                                launcherHelper.setDisableOfflineSkin();
+                            });
                         }).addCancel(i18n("terracotta.status.waiting.host.launch.skip"), () -> {
                             TerracottaState.HostScanning s1 = TerracottaManager.setScanning();
                             if (s1 != null) {
@@ -249,19 +245,19 @@ public class TerracottaControllerPage extends StackPane {
                 guest.setSubtitle(i18n("terracotta.status.waiting.guest.desc"));
                 guest.setRightIcon(SVG.ARROW_FORWARD);
                 FXUtils.onClicked(guest, () -> {
-                    Controllers.prompt(i18n("terracotta.status.waiting.guest.prompt.title"), (code, resolve, reject) -> {
-                        Task<TerracottaState.GuestStarting> task = TerracottaManager.setGuesting(code);
+                    Controllers.prompt(i18n("terracotta.status.waiting.guest.prompt.title"), (code, handler) -> {
+                        Task<TerracottaState.GuestConnecting> task = TerracottaManager.setGuesting(code);
                         if (task != null) {
                             task.whenComplete(Schedulers.javafx(), (s, e) -> {
                                 if (e != null) {
-                                    reject.accept(i18n("terracotta.status.waiting.guest.prompt.invalid"));
+                                    handler.reject(i18n("terracotta.status.waiting.guest.prompt.invalid"));
                                 } else {
-                                    resolve.run();
+                                    handler.resolve();
                                     UI_STATE.set(s);
                                 }
                             }).setSignificance(Task.TaskSignificance.MINOR).start();
                         } else {
-                            resolve.run();
+                            handler.resolve();
                         }
                     });
                 });
@@ -283,6 +279,7 @@ public class TerracottaControllerPage extends StackPane {
                 progressProperty.set(-1);
 
                 TextFlow body = FXUtils.segmentToTextFlow(i18n("terracotta.status.scanning.desc"), Controllers::onHyperlinkAction);
+                body.getStyleClass().add("terracotta-hint");
                 body.setLineSpacing(4);
 
                 LineButton room = LineButton.of();
@@ -368,7 +365,7 @@ public class TerracottaControllerPage extends StackPane {
                         nodesProperty.setAll(code, copy, back, new PlayerProfileUI(hostOK.getProfiles()));
                     }
                 }
-            } else if (state instanceof TerracottaState.GuestStarting) {
+            } else if (state instanceof TerracottaState.GuestConnecting || state instanceof TerracottaState.GuestStarting) {
                 statusProperty.set(i18n("terracotta.status.guest_starting"));
                 progressProperty.set(-1);
 
@@ -383,7 +380,26 @@ public class TerracottaControllerPage extends StackPane {
                     }
                 });
 
-                nodesProperty.setAll(room);
+                nodesProperty.clear();
+                if (state instanceof TerracottaState.GuestStarting) {
+                    TerracottaState.GuestStarting.Difficulty difficulty = ((TerracottaState.GuestStarting) state).getDifficulty();
+                    if (difficulty != null && difficulty != TerracottaState.GuestStarting.Difficulty.UNKNOWN) {
+                        LineButton info = LineButton.of();
+                        info.setLeftIcon(switch (difficulty) {
+                            case UNKNOWN -> throw new AssertionError();
+                            case EASIEST, SIMPLE -> SVG.INFO;
+                            case MEDIUM, TOUGH -> SVG.WARNING;
+                        });
+
+                        String difficultyID = difficulty.name().toLowerCase(Locale.ROOT);
+                        info.setTitle(i18n(String.format("terracotta.difficulty.%s", difficultyID)));
+                        info.setSubtitle(i18n("terracotta.difficulty.estimate_only"));
+
+                        nodesProperty.add(info);
+                    }
+                }
+
+                nodesProperty.add(room);
             } else if (state instanceof TerracottaState.GuestOK guestOK) {
                 if (guestOK.isForkOf(legacyState)) {
                     if (nodesProperty.get(nodesProperty.size() - 1) instanceof PlayerProfileUI profileUI) {
@@ -482,7 +498,7 @@ public class TerracottaControllerPage extends StackPane {
                     retry.setTitle(i18n("terracotta.status.fatal.retry"));
                     retry.setSubtitle(message);
                     FXUtils.onClicked(retry, () -> {
-                        TerracottaState s = TerracottaManager.recover(null);
+                        TerracottaState s = TerracottaManager.recover();
                         if (s != null) {
                             UI_STATE.set(s);
                         }

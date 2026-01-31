@@ -68,6 +68,10 @@ public class AccountAdvancedListItem extends AdvancedListItem {
     };
 
     public AccountAdvancedListItem() {
+        this(null);
+    }
+
+    public AccountAdvancedListItem(Account account) {
         tooltip = new Tooltip();
         FXUtils.installFastTooltip(this, tooltip);
 
@@ -76,9 +80,13 @@ public class AccountAdvancedListItem extends AdvancedListItem {
 
         setActionButtonVisible(false);
 
-        FXUtils.onScroll(this, Accounts.getAccounts(),
-                accounts -> accounts.indexOf(account.get()),
-                Accounts::setSelectedAccount);
+        if (account != null) {
+            this.accountProperty().set(account);
+        } else {
+            FXUtils.onScroll(this, Accounts.getAccounts(),
+                    accounts -> accounts.indexOf(accountProperty().get()),
+                    Accounts::setSelectedAccount);
+        }
     }
 
     public ObjectProperty<Account> accountProperty() {

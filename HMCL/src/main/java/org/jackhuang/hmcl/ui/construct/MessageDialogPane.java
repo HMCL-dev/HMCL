@@ -87,7 +87,7 @@ public final class MessageDialogPane extends HBox {
         {
             StackPane titlePane = new StackPane();
             titlePane.getStyleClass().addAll("jfx-layout-heading", "title");
-            titlePane.getChildren().setAll(new Label(title != null ? title : i18n("message.info")));
+            titlePane.getChildren().setAll(new Label(title != null ? title : type.getDisplayName()));
 
             StackPane content = new StackPane();
             content.getStyleClass().add("jfx-layout-body");
@@ -190,6 +190,7 @@ public final class MessageDialogPane extends HBox {
 
         public Builder addCancel(String cancelText, @Nullable Runnable cancel) {
             JFXButton btnCancel = new JFXButton(cancelText);
+            btnCancel.setButtonType(JFXButton.ButtonType.FLAT);
             btnCancel.getStyleClass().add("dialog-cancel");
             if (cancel != null) {
                 btnCancel.setOnAction(e -> cancel.run());
