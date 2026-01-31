@@ -21,10 +21,13 @@ import com.jfoenix.controls.JFXListView;
 import javafx.beans.InvalidationListener;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
+import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.StackPane;
+import org.jackhuang.hmcl.ui.FXUtils;
 
 /// @author Glavo
 public final class OptionsListSkin extends SkinBase<OptionsList> {
@@ -36,7 +39,7 @@ public final class OptionsListSkin extends SkinBase<OptionsList> {
 
         this.listView = new JFXListView<>();
         listView.setItems(control.getElements());
-        listView.setCellFactory(listView -> new Cell());
+        listView.setCellFactory(Cell::new);
 
         this.getChildren().setAll(listView);
     }
@@ -46,6 +49,11 @@ public final class OptionsListSkin extends SkinBase<OptionsList> {
         private static final PseudoClass PSEUDO_CLASS_LAST = PseudoClass.getPseudoClass("last");
 
         private StackPane wrapper;
+
+        public Cell(ListView<OptionsList.Element> listView) {
+            this.setPadding(Insets.EMPTY);
+            FXUtils.limitCellWidth(listView, this);
+        }
 
         @Override
         protected void updateItem(OptionsList.Element item, boolean empty) {
