@@ -101,8 +101,6 @@ public final class AsyncTaskExecutor extends TaskExecutor {
 
         return CompletableFuture.completedFuture(null)
                 .thenComposeAsync(unused -> {
-                    totTask.addAndGet(tasks.size());
-
                     if (isCancelled()) {
                         for (Task<?> task : tasks) task.setException(new CancellationException());
                         return CompletableFuture.runAsync(this::checkCancellation);

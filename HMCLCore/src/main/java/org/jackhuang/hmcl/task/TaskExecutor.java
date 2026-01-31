@@ -21,12 +21,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class TaskExecutor {
     protected final Task<?> firstTask;
     protected final List<TaskListener> taskListeners = new ArrayList<>();
-    protected final AtomicInteger totTask = new AtomicInteger(0);
     protected final AtomicBoolean cancelled = new AtomicBoolean(false);
     protected Exception exception;
     private final List<String> stages;
@@ -60,10 +58,6 @@ public abstract class TaskExecutor {
 
     public boolean isCancelled() {
         return cancelled.get();
-    }
-
-    public int getTaskCount() {
-        return totTask.get();
     }
 
     public List<String> getStages() {
