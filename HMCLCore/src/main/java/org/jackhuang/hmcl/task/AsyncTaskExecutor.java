@@ -92,7 +92,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
             throw new IllegalStateException("Cannot cancel a not started TaskExecutor");
         }
 
-        cancelled.set(true);
+        cancelled = true;
     }
 
     private CompletableFuture<?> executeTasksExceptionally(Task<?> parentTask, Collection<? extends Task<?>> tasks) {

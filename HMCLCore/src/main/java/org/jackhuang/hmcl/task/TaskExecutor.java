@@ -20,12 +20,11 @@ package org.jackhuang.hmcl.task;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public abstract class TaskExecutor {
     protected final Task<?> firstTask;
     protected final List<TaskListener> taskListeners = new ArrayList<>();
-    protected final AtomicBoolean cancelled = new AtomicBoolean(false);
+    protected volatile boolean cancelled = false;
     protected Exception exception;
     private final List<String> stages;
 
@@ -57,7 +56,7 @@ public abstract class TaskExecutor {
     public abstract void cancel();
 
     public boolean isCancelled() {
-        return cancelled.get();
+        return cancelled;
     }
 
     public List<String> getStages() {
