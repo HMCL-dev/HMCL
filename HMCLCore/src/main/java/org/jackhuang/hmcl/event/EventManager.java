@@ -17,31 +17,32 @@
  */
 package org.jackhuang.hmcl.event;
 
-import org.jackhuang.hmcl.util.SimpleMultimap;
 import org.jetbrains.annotations.Contract;
 
 import java.lang.ref.WeakReference;
-import java.util.EnumMap;
-import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
 /// @author huangyuhui
 public final class EventManager<T extends Event> {
 
+    private static final int PRIORITY_COUNT = EventPriority.values().length;
+
     private final ReentrantLock lock = new ReentrantLock();
-    private final SimpleMultimap<EventPriority, Consumer<T>, CopyOnWriteArraySet<Consumer<T>>> handlers
-            = new SimpleMultimap<>(() -> new EnumMap<>(EventPriority.class), CopyOnWriteArraySet::new);
+    @SuppressWarnings("unchecked")
+    private final ArrayList<Consumer<T>>[] allHandlers = (ArrayList<Consumer<T>>[]) new ArrayList<?>[PRIORITY_COUNT];
 
     @Contract("_ -> param1")
     public Consumer<T> registerWeak(Consumer<T> consumer) {
-        register(new WeakListener(consumer));
+        register(new WeakListener<>(new WeakReference<>(consumer)));
         return consumer;
     }
 
     @Contract("_, _ -> param1")
     public Consumer<T> registerWeak(Consumer<T> consumer, EventPriority priority) {
-        register(new WeakListener(consumer), priority);
+        register(new WeakListener<>(new WeakReference<>(consumer)), priority);
         return consumer;
     }
 
@@ -52,7 +53,12 @@ public final class EventManager<T extends Event> {
     public void register(Consumer<T> consumer, EventPriority priority) {
         lock.lock();
         try {
-            handlers.get(priority).add(consumer);
+            ArrayList<Consumer<T>> handlers = allHandlers[priority.ordinal()];
+            if (handlers == null) {
+                handlers = new ArrayList<>(1);
+                allHandlers[priority.ordinal()] = handlers;
+            }
+            handlers.add(consumer);
         } finally {
             lock.unlock();
         }
@@ -69,9 +75,30 @@ public final class EventManager<T extends Event> {
     public Event.Result fireEvent(T event) {
         lock.lock();
         try {
-            for (EventPriority priority : EventPriority.values()) {
-                for (Consumer<T> handler : handlers.get(priority))
-                    handler.accept(event);
+            for (ArrayList<Consumer<T>> handlers : allHandlers) {
+                if (handlers != null) {
+                    boolean needTrim = false;
+
+                    Iterator<Consumer<T>> iterator = handlers.iterator();
+                    while (iterator.hasNext()) {
+                        Consumer<T> handler = iterator.next();
+
+                        if (handler instanceof WeakListener<T> weakListener) {
+                            Consumer<T> consumer = weakListener.ref.get();
+                            if (consumer != null) {
+                                consumer.accept(event);
+                            } else {
+                                needTrim = true;
+                                iterator.remove();
+                            }
+                        } else {
+                            handler.accept(event);
+                        }
+                    }
+
+                    if (needTrim)
+                        handlers.trimToSize();
+                }
             }
         } finally {
             lock.unlock();
@@ -80,30 +107,12 @@ public final class EventManager<T extends Event> {
         return event.hasResult() ? event.getResult() : Event.Result.DEFAULT;
     }
 
-    public void unregister(Consumer<T> consumer) {
-        lock.lock();
-        try {
-            handlers.removeValue(consumer);
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    private final class WeakListener implements Consumer<T> {
-        private final WeakReference<Consumer<T>> ref;
-
-        public WeakListener(Consumer<T> listener) {
-            this.ref = new WeakReference<>(listener);
-        }
-
+    private record WeakListener<T>(WeakReference<Consumer<T>> ref) implements Consumer<T> {
         @Override
         public void accept(T t) {
             Consumer<T> listener = ref.get();
-            if (listener == null) {
-                unregister(this);
-            } else {
+            if (listener != null)
                 listener.accept(t);
-            }
         }
     }
 }
