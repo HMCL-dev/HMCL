@@ -4,7 +4,6 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXTextField;
 import javafx.animation.PauseTransition;
-import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
@@ -42,8 +41,7 @@ import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
-import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
+import static org.jackhuang.hmcl.ui.FXUtils.*;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.createSelectedItemPropertyFor;
@@ -258,7 +256,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                 if (newToolbar != oldToolbar) {
                     toolbarPane.setContent(newToolbar, ContainerAnimations.FADE);
                     if (newToolbar == searchBar) {
-                        Platform.runLater(searchField::requestFocus);
+                        runInFX(searchField::requestFocus);
                     }
                 }
             }
