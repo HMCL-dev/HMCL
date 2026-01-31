@@ -153,11 +153,13 @@ public final class MainPage extends StackPane implements DecoratorPage {
             announcementCard.getStyleClass().addAll("card", "announcement");
 
             VBox announcementBox = new VBox(16);
+            announcementBox.setPadding(new Insets(15));
             announcementBox.getChildren().add(announcementCard);
 
             announcementPane = new TransitionPane();
             announcementPane.setContent(announcementBox, ContainerAnimations.NONE);
 
+            StackPane.setMargin(announcementPane, new Insets(-15));
             getChildren().add(announcementPane);
         }
 
