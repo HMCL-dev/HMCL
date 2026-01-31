@@ -54,6 +54,10 @@ public final class OptionsList extends Control {
         elements.add(new Title(title));
     }
 
+    public void addElement(Node node) {
+        elements.add(new NodeElement(node));
+    }
+
     public void addListElement(@NotNull Node node) {
         elements.add(new ListElement(node));
     }
@@ -109,6 +113,32 @@ public final class OptionsList extends Control {
             return "Title[%s]".formatted(title);
         }
 
+    }
+
+    public static final class NodeElement extends Element {
+        public NodeElement(@NotNull Node node) {
+            this.node = node;
+        }
+
+        @Override
+        protected Node createNode() {
+            return node;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return this == obj || obj instanceof NodeElement that && this.node.equals(that.node);
+        }
+
+        @Override
+        public int hashCode() {
+            return node.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "NodeElement[node=%s]".formatted(node);
+        }
     }
 
     public static final class ListElement extends Element {
