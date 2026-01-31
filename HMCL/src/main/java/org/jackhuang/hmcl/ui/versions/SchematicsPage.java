@@ -367,7 +367,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             if (this.loaded) return;
 
             try (Stream<Path> stream = Files.list(path)) {
-                if (!this.preLoaded) preLoad();
+                preLoad();
                 for (Path p : Lang.toIterable(stream)) {
                     if (Files.isDirectory(p)) {
                         var child = new DirItem(p, this);
@@ -423,7 +423,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             if (name != null && !"Unnamed".equals(name)) {
                 this.name = name;
             } else {
-                this.name = FileUtils.getNameWithoutExtension(name);
+                this.name = FileUtils.getNameWithoutExtension(file.getFile());
             }
 
             WritableImage image = null;
