@@ -61,10 +61,6 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
         });
         selectedProfile = createSelectedItemPropertyFor(profileListItems, Profile.class);
 
-        GameList gameList = new GameList();
-
-        BorderPane borderPane = new BorderPane();
-
         {
             ScrollPane pane = new ScrollPane();
             VBox.setVgrow(pane, Priority.ALWAYS);
@@ -91,9 +87,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             setLeft(pane, bottomLeftCornerList);
         }
 
-        borderPane.setCenter(gameList);
-
-        setCenter(borderPane);
+        setCenter(new GameList());
     }
 
     public ObjectProperty<Profile> selectedProfileProperty() {
