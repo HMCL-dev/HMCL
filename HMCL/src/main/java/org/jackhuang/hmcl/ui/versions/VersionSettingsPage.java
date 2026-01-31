@@ -114,7 +114,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         ScrollPane scrollPane = new ScrollPane();
         scrollPane.setFitToHeight(true);
         scrollPane.setFitToWidth(true);
-        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         getChildren().setAll(scrollPane);
 
         rootPane = new VBox();
