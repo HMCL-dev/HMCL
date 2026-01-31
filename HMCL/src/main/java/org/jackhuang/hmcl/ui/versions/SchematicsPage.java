@@ -46,6 +46,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.ui.nbt.NBTEditorPage;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -586,6 +587,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         private final SVGPath iconSVG;
         private final StackPane iconSVGWrapper;
 
+        private final BooleanProperty fileProperty = new SimpleBooleanProperty(this, "isFile", false);
         private final BooleanProperty directoryProperty = new SimpleBooleanProperty(this, "isDirectory", false);
 
         private final Tooltip tooltip = new Tooltip();
@@ -636,6 +638,20 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                         item.onReveal();
                 });
 
+                JFXButton btnEdit = new JFXButton();
+                btnEdit.getStyleClass().add("toggle-icon4");
+                btnEdit.setGraphic(SVG.EDIT.createIcon());
+                btnEdit.setOnAction(event -> {
+                    Item item = getItem();
+                    if (item instanceof LitematicFileItem) {
+                        try {
+                            Controllers.navigate(new NBTEditorPage(item.getPath()));
+                        } catch (IOException ignored) {
+                        }
+                    }
+                });
+                btnEdit.visibleProperty().bind(fileProperty);
+
                 JFXButton btnDelete = new JFXButton();
                 btnDelete.getStyleClass().add("toggle-icon4");
                 btnDelete.setGraphic(SVG.DELETE_FOREVER.createIcon());
@@ -647,7 +663,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                     }
                 });
 
-                right.getChildren().setAll(btnReveal, btnDelete);
+                right.getChildren().setAll(btnEdit, btnReveal, btnDelete);
             }
 
             box.getChildren().setAll(left, center, right);
@@ -665,6 +681,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
             iconImageView.setImage(null);
 
+            fileProperty.set(item instanceof LitematicFileItem);
             directoryProperty.set(item.isDirectory());
 
             if (item instanceof LitematicFileItem fileItem && fileItem.getImage() != null) {

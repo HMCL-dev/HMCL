@@ -56,12 +56,17 @@ public final class LitematicFile {
         return "litematic".equals(FileUtils.getExtension(path)) && Files.isRegularFile(path);
     }
 
-    public static LitematicFile load(Path file) throws IOException {
-
+    public static CompoundTag readRoot(Path file) throws IOException {
         CompoundTag root;
         try (InputStream in = new GZIPInputStream(Files.newInputStream(file))) {
             root = (CompoundTag) NBTIO.readTag(in);
         }
+        return root;
+    }
+
+    public static LitematicFile load(Path file) throws IOException {
+
+        CompoundTag root = readRoot(file);
 
         Tag versionTag = root.get("Version");
         if (versionTag == null)
