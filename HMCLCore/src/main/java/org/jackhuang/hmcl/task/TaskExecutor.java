@@ -30,7 +30,7 @@ public abstract class TaskExecutor {
 
     public TaskExecutor(Task<?> task) {
         this.firstTask = task;
-        this.stages = task instanceof Task.StagesHintTask ? ((Task<?>.StagesHintTask) task).getStages() : Collections.emptyList();
+        this.stages = task instanceof Task<?>.StagesHintTask hintTask ? hintTask.getStages() : Collections.emptyList();
     }
 
     public void addTaskListener(TaskListener taskListener) {
