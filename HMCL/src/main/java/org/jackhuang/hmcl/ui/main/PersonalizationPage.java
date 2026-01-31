@@ -180,6 +180,7 @@ public class PersonalizationPage extends StackPane {
                 }
 
                 Label textOpacity = new Label();
+                FXUtils.setLimitWidth(textOpacity, 50);
 
                 StringBinding valueBinding = Bindings.createStringBinding(() -> ((int) slider.getValue()) + "%", slider.valueProperty());
                 textOpacity.textProperty().bind(valueBinding);
