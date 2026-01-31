@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.versions;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
+import com.jfoenix.controls.JFXTextField;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -55,6 +56,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Stream;
 
+import static javafx.application.Platform.runLater;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -65,8 +67,12 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> implements VersionPage.VersionLoadable {
 
     private static String translateAuthorName(String author) {
-        if (I18n.isUseChinese() && "hsds".equals(author)) {
-            return "黑山大叔";
+        if (I18n.isUseChinese()){
+            return switch (author) {
+                case "hsds" -> "黑山大叔";
+                case "CNJ233" -> "长安街";
+                default -> author;
+            };
         }
         return author;
     }
@@ -482,9 +488,30 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 details.getContent().add(borderPane);
             }
 
+            private void addEditableDetailItem(String key, String text, EditHandler h) {
+                BorderPane borderPane = new BorderPane();
+                BorderPane labelBorderPane = new BorderPane();
+
+                labelBorderPane.setCenter(new Label(key));
+                borderPane.setLeft(labelBorderPane);
+
+                var nameEditField = new JFXTextField();
+                nameEditField.setText(text);
+                Validator.addTo(nameEditField).accept(
+                        fileName -> {
+                            if (!Objects.equals(fileName, "")){
+                                h.setValue(nameEditField.getText());
+                                return true;
+                            }else return false;
+                        }
+                );
+                borderPane.setRight(nameEditField);
+                details.getContent().add(borderPane);
+            }
+
             private void updateContent(LitematicFile file) {
                 details.getContent().clear();
-                addDetailItem(i18n("schematics.info.name"), file.getName());
+                addEditableDetailItem(i18n("schematics.info.name"), file.getName(), file::setName);
                 if (StringUtils.isNotBlank(file.getAuthor()))
                     addDetailItem(i18n("schematics.info.schematic_author"), translateAuthorName(file.getAuthor()));
                 if (file.getTimeCreated() != null)
@@ -531,13 +558,52 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                     JFXButton okButton = new JFXButton();
                     okButton.getStyleClass().add("dialog-accept");
                     okButton.setText(i18n("button.ok"));
-                    okButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
+                    okButton.setOnAction(e -> {
+                        try {
+                            LitematicFile.save(file);
+                            fireEvent(new DialogCloseEvent());
+                            LOG.info("Saved litematic file: " + file.getFile());
+                        } catch (IOException ex) {
+                            LOG.error("Cannot save litematic file", ex);
+                            showErrorDialog(ex);
+                        }
+                    });
                     getActions().add(okButton);
 
                     onEscPressed(this, okButton::fire);
                 }
 
                 updateContent(file);
+            }
+
+            private void showErrorDialog(Exception exception){
+                LitematicInfoDialog lid = this;
+                var dialog = new MessageDialogPane.Builder(
+                        i18n("schematics.error.save") + "\n" + StringUtils.getStackTrace(exception),
+                        i18n("message.error"),
+                        MessageDialogPane.MessageType.ERROR
+                ).ok(() -> DialogUtils.close(lid)).build();
+
+                Node p = lid.getParent();
+                while (p != null && !(p instanceof StackPane)) p = p.getParent();
+                if (p instanceof StackPane container) {
+                    DialogUtils.show(container, dialog);
+                } else {
+                    runLater(() -> {
+                        Node p2 = lid.getParent();
+                        while (p2 != null && !(p2 instanceof StackPane)) p2 = p2.getParent();
+                        if (p2 instanceof StackPane container2) {
+                            DialogUtils.show(container2, dialog);
+                        } else {
+                            Controllers.dialog(dialog);
+                        }
+                    });
+                }
+            }
+
+            @FunctionalInterface
+            private interface EditHandler {
+                void setValue(String value);
             }
         }
     }
