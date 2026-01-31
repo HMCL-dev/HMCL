@@ -23,7 +23,7 @@ import java.util.*;
 
 public abstract class TaskExecutor {
     protected final Task<?> firstTask;
-    protected final List<TaskListener> taskListeners = new ArrayList<>();
+    protected final List<TaskListener> taskListeners = new ArrayList<>(0);
     protected volatile boolean cancelled = false;
     protected Exception exception;
     private final List<String> stages;

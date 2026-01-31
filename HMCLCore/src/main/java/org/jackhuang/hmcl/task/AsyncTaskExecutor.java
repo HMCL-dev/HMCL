@@ -171,8 +171,7 @@ public final class AsyncTaskExecutor extends TaskExecutor {
                 })
                 .exceptionally(throwable -> {
                     Throwable resolved = resolveException(throwable);
-                    if (resolved instanceof Exception) {
-                        Exception e = (Exception) resolved;
+                    if (resolved instanceof Exception e) {
                         if (e instanceof InterruptedException || e instanceof CancellationException) {
                             task.setException(null);
                             if (task.getSignificance().shouldLog()) {

@@ -62,9 +62,9 @@ public abstract class Task<T> {
     }
 
     // cancel
-    private Supplier<Boolean> cancelled;
+    private BooleanSupplier cancelled;
 
-    final void setCancelled(Supplier<Boolean> cancelled) {
+    final void setCancelled(BooleanSupplier cancelled) {
         this.cancelled = cancelled;
     }
 
@@ -74,7 +74,7 @@ public abstract class Task<T> {
             return true;
         }
 
-        return cancelled != null ? cancelled.get() : false;
+        return cancelled != null && cancelled.getAsBoolean();
     }
 
     // stage
