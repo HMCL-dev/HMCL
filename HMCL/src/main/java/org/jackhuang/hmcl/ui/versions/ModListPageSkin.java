@@ -31,11 +31,11 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.Clipboard;
-import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.*;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.mod.LocalModFile;
@@ -85,7 +85,6 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
     private final HBox searchBar;
     private final HBox toolbarNormal;
     private final HBox toolbarSelecting;
-    private HBox container = new HBox();
 
     private final JFXListView<ModInfoObject> listView;
     private final JFXTextField searchField;
@@ -560,7 +559,6 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         JFXButton restoreButton = new JFXButton();
         JFXButton infoButton = new JFXButton();
         JFXButton revealButton = new JFXButton();
-        JFXButton bundledModsButton = new JFXButton();
         BooleanProperty booleanProperty;
 
         Tooltip warningTooltip;
@@ -570,11 +568,9 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
             this.getStyleClass().add("mod-info-list-cell");
 
-            container = new HBox(8);
+            HBox container = new HBox(8);
             container.setPickOnBounds(false);
             container.setAlignment(Pos.CENTER_LEFT);
-            StackPane.setMargin(container, new Insets(8));
-            getContainer().getChildren().setAll(container);
             HBox.setHgrow(content, Priority.ALWAYS);
             content.setMouseTransparent(true);
             setSelectable();
@@ -595,120 +591,10 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             infoButton.getStyleClass().add("toggle-icon4");
             infoButton.setGraphic(FXUtils.limitingSize(SVG.INFO.createIcon(24), 24, 24));
 
-            bundledModsButton.getStyleClass().addAll("jfx-button", "toggle-icon4");
-            bundledModsButton.setGraphic(FXUtils.limitingSize(SVG.INFO.createIcon(24), 24, 24));
-            bundledModsButton.setTooltip(new Tooltip("内置模组"));
-            bundledModsButton.setFocusTraversable(false);
-
-
-            container.getChildren().setAll(checkBox, imageView, content, revealButton, infoButton);
+            container.getChildren().setAll(checkBox, imageView, content, restoreButton, revealButton, infoButton);
 
             StackPane.setMargin(container, new Insets(8));
             getContainer().getChildren().setAll(container);
-        }
-
-        private static void exportJijList(String modName, List<String> bundledMods) {
-            if (bundledMods == null || bundledMods.isEmpty()) return;
-            javafx.stage.FileChooser fileChooser = new javafx.stage.FileChooser();
-            fileChooser.setTitle("保存内置模组列表");
-            fileChooser.getExtensionFilters().add(new javafx.stage.FileChooser.ExtensionFilter("文本文件 (*.txt)", "*.txt"));
-            fileChooser.setInitialFileName("JIJ.txt");
-
-            java.io.File file = fileChooser.showSaveDialog(Controllers.getStage());
-
-            if (file != null) {
-                // 构建树状内容
-                StringBuilder sb = new StringBuilder();
-                sb.append(modName).append(System.lineSeparator());
-                for (String mod : bundledMods) {
-                    sb.append("\t- ").append(mod).append(System.lineSeparator());
-                }
-
-                Task.runAsync(() -> {
-                    try {
-                        java.nio.file.Files.writeString(file.toPath(), sb.toString());
-                        LOG.info("导出成功: " + file.getAbsolutePath());
-                    } catch (java.io.IOException ex) {
-                        LOG.warning("Failed to export bundled mods list", ex);
-                    }
-                }).start();
-            }
-        }
-
-        private void showBundledPopup(String modName, List<String> bundledMods) {
-            VBox root = new VBox(10);
-            root.setPadding(new Insets(15));
-            root.setMaxHeight(400);
-            root.setStyle("-fx-background-color: -fx-background;");
-
-            HBox header = new HBox(10);
-            header.setAlignment(Pos.CENTER_LEFT);
-
-            Label titleLabel = new Label("内置模组 (" + bundledMods.size() + ")");
-            titleLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
-
-            Region spacer = new Region();
-            HBox.setHgrow(spacer, Priority.ALWAYS);
-
-            JFXButton exportButton = new JFXButton();
-            exportButton.setGraphic(FXUtils.limitingSize(SVG.DOWNLOAD.createIcon(18), 18, 18));
-            exportButton.getStyleClass().add("toggle-icon4");
-            FXUtils.installFastTooltip(exportButton, "导出JIJ信息");
-
-            exportButton.setOnAction(e -> exportJijList(modName, bundledMods));
-
-            header.getChildren().addAll(titleLabel, spacer, exportButton);
-
-            JFXTextField searchField = new JFXTextField();
-            searchField.setPromptText("搜索内置模组...");
-            searchField.setFocusTraversable(false);
-
-            FlowPane flowPane = new FlowPane();
-            flowPane.setHgap(8);
-            flowPane.setVgap(8);
-            flowPane.setPrefWrapLength(450);
-
-            Runnable refreshList = () -> {
-                flowPane.getChildren().clear();
-                String query = searchField.getText().toLowerCase();
-
-                for (String path : bundledMods) {
-                    if (path.toLowerCase().contains(query)) {
-                        String name = path.contains("/") ? path.substring(path.lastIndexOf('/') + 1) : path;
-
-                        Label tag = new Label(name);
-                        tag.setStyle("-fx-background-color: -fx-control-inner-background-alt; " +
-                                "-fx-padding: 4 8; " +
-                                "-fx-background-radius: 4; " +
-                                "-fx-border-color: -fx-box-border; " +
-                                "-fx-border-radius: 4;");
-                        tag.setMaxWidth(430);
-                        tag.setTooltip(new Tooltip(path));
-
-                        flowPane.getChildren().add(tag);
-                    }
-                }
-
-                if (flowPane.getChildren().isEmpty()) {
-                    Label emptyLabel = new Label("无匹配结果");
-                    emptyLabel.setStyle("-fx-text-fill: -fx-text-base-color-disabled;");
-                    flowPane.getChildren().add(emptyLabel);
-                }
-            };
-
-            refreshList.run();
-            searchField.textProperty().addListener((obs, oldVal, newVal) -> refreshList.run());
-
-            ScrollPane scrollPane = new ScrollPane(flowPane);
-            scrollPane.setFitToWidth(true);
-            scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-            scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
-            scrollPane.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
-
-            root.getChildren().addAll(header, searchField, scrollPane);
-
-            JFXPopup popup = new JFXPopup(root);
-            popup.show(bundledModsButton, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, 0, bundledModsButton.getHeight() + 5);
         }
 
         @Override
@@ -718,8 +604,6 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                 Tooltip.uninstall(this, warningTooltip);
                 warningTooltip = null;
             }
-
-            container.getChildren().remove(bundledModsButton);
 
             if (empty) return;
 
@@ -777,13 +661,6 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                     case LITE_LOADER -> content.addTagWarning(i18n("install.installer.liteloader"));
                     case QUILT -> content.addTagWarning(i18n("install.installer.quilt"));
                 }
-            }
-
-            List<String> bundledMods = modInfo.getBundledMods();
-            String modName = modInfo.getName();
-            if (bundledMods != null && !bundledMods.isEmpty()) {
-                bundledModsButton.setOnAction(e -> showBundledPopup(modName,bundledMods));
-                container.getChildren().add(container.getChildren().indexOf(content) + 1, bundledModsButton);
             }
 
             String modVersion = modInfo.getVersion();

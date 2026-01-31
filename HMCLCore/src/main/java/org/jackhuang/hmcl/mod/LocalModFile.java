@@ -147,6 +147,10 @@ public final class LocalModFile implements Comparable<LocalModFile> {
         return bundledMods;
     }
 
+    public boolean hasBundledMods() {
+        return bundledMods != null && !bundledMods.isEmpty();
+    }
+
     public BooleanProperty activeProperty() {
         return activeProperty;
     }
