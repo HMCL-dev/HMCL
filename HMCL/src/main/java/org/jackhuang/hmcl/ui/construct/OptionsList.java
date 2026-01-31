@@ -19,9 +19,13 @@ package org.jackhuang.hmcl.ui.construct;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Control;
+import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
+import javafx.scene.layout.HBox;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,6 +58,12 @@ public final class OptionsList extends Control {
         elements.add(new ListElement(node));
     }
 
+    public void addListElements(@NotNull Node... nodes) {
+        for (Node node : nodes) {
+            elements.add(new ListElement(node));
+        }
+    }
+
     public static abstract class Element {
         protected Node node;
 
@@ -75,7 +85,13 @@ public final class OptionsList extends Control {
 
         @Override
         protected Node createNode() {
-            return ComponentList.createComponentListTitle(title);
+            HBox node = new HBox();
+            node.setAlignment(Pos.CENTER_LEFT);
+            node.setPadding(new Insets(8, 0, 8, 0));
+
+            Label advanced = new Label(title);
+            node.getChildren().setAll(advanced);
+            return node;
         }
 
         @Override

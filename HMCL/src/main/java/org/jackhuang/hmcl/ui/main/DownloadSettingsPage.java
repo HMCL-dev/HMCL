@@ -46,17 +46,12 @@ public class DownloadSettingsPage extends StackPane {
     private final WeakListenerHolder holder = new WeakListenerHolder();
 
     public DownloadSettingsPage() {
-        VBox content = new VBox(10);
-        content.setPadding(new Insets(10));
-        content.setFillWidth(true);
-        ScrollPane scrollPane = new ScrollPane(content);
-        FXUtils.smoothScrolling(scrollPane);
-        scrollPane.setFitToWidth(true);
-        getChildren().setAll(scrollPane);
+        this.setPadding(new Insets(10));
+
+        var optionsList = new OptionsList();
 
         {
-            var downloadSource = new ComponentList();
-            downloadSource.getStyleClass().add("card-non-transparent");
+            optionsList.addTitle(i18n("settings.launcher.download_source"));
             {
 
                 var autoChooseDownloadSource = new LineToggleButton();
@@ -85,21 +80,19 @@ public class DownloadSettingsPage extends StackPane {
                 downloadSourcePane.setItems(DownloadProviders.DIRECT_PROVIDERS.keySet());
                 downloadSourcePane.valueProperty().bindBidirectional(config().downloadTypeProperty());
 
-                downloadSource.getContent().setAll(autoChooseDownloadSource, versionListSourcePane, downloadSourcePane);
+                optionsList.addListElements(autoChooseDownloadSource, versionListSourcePane, downloadSourcePane);
             }
-
-            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.download_source")), downloadSource);
         }
 
         {
-            VBox downloadThreads = new VBox(16);
-            downloadThreads.getStyleClass().add("card-non-transparent");
+            optionsList.addTitle(i18n("download"));
+
             {
                 {
                     JFXCheckBox chkAutoDownloadThreads = new JFXCheckBox(i18n("settings.launcher.download.threads.auto"));
                     VBox.setMargin(chkAutoDownloadThreads, new Insets(8, 0, 0, 0));
                     chkAutoDownloadThreads.selectedProperty().bindBidirectional(config().autoDownloadThreadsProperty());
-                    downloadThreads.getChildren().add(chkAutoDownloadThreads);
+                    optionsList.addListElement(chkAutoDownloadThreads);
 
                     chkAutoDownloadThreads.selectedProperty().addListener((a, b, newValue) -> {
                         if (newValue) {
@@ -135,7 +128,7 @@ public class DownloadSettingsPage extends StackPane {
                     });
 
                     hbox.getChildren().setAll(label, slider, threadsField);
-                    downloadThreads.getChildren().add(hbox);
+                    optionsList.addListElement(hbox);
                 }
 
                 {
@@ -143,16 +136,13 @@ public class DownloadSettingsPage extends StackPane {
                     VBox.setMargin(hintPane, new Insets(0, 0, 0, 30));
                     hintPane.disableProperty().bind(config().autoDownloadThreadsProperty());
                     hintPane.setText(i18n("settings.launcher.download.threads.hint"));
-                    downloadThreads.getChildren().add(hintPane);
+                    optionsList.addListElement(hintPane);
                 }
             }
-
-            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("download")), downloadThreads);
         }
 
         {
-            VBox proxyList = new VBox(10);
-            proxyList.getStyleClass().add("card-non-transparent");
+            optionsList.addTitle(i18n("settings.launcher.proxy"));
 
             HBox proxyTypePane = new HBox();
             {
@@ -205,7 +195,7 @@ public class DownloadSettingsPage extends StackPane {
                 }));
 
                 proxyTypePane.getChildren().setAll(chkProxyDefault, chkProxyNone, chkProxyHttp, chkProxySocks);
-                proxyList.getChildren().add(proxyTypePane);
+                optionsList.addListElement(proxyTypePane);
             }
 
             VBox proxyPane = new VBox();
@@ -317,11 +307,12 @@ public class DownloadSettingsPage extends StackPane {
                     }
 
                     proxyPane.getChildren().add(authPane);
-                    proxyList.getChildren().add(proxyPane);
+
+                    optionsList.addListElement(proxyPane);
                 }
             }
-            content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.proxy")), proxyList);
         }
 
+        this.getChildren().setAll(optionsList);
     }
 }
