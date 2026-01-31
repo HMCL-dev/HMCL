@@ -22,6 +22,7 @@ import javafx.beans.InvalidationListener;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
@@ -67,12 +68,12 @@ public final class OptionsListSkin extends SkinBase<OptionsList> {
             } else if (item instanceof OptionsList.ListElement element) {
                 if (wrapper == null)
                     wrapper = createWrapper();
+                else
+                    wrapper.getStyleClass().remove("no-padding");
 
                 Node node = element.getNode();
                 if (node instanceof LineButtonBase || node instanceof LinePane || node.getProperties().containsKey("ComponentList.noPadding"))
                     wrapper.getStyleClass().add("no-padding");
-                else
-                    wrapper.getStyleClass().remove("no-padding");
 
                 wrapper.getChildren().setAll(node);
 
@@ -84,6 +85,7 @@ public final class OptionsListSkin extends SkinBase<OptionsList> {
 
         private StackPane createWrapper() {
             var wrapper = new StackPane();
+            wrapper.setAlignment(Pos.CENTER_LEFT);
             wrapper.getStyleClass().add("options-list-item");
 
             InvalidationListener listener = ignored -> {
