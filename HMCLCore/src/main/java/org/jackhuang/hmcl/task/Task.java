@@ -329,16 +329,8 @@ public abstract class Task<T> {
 
     void fireDoneEvent(Object source, boolean failed) {
         EventManager<TaskEvent> onDone = this.onDone;
-        if (onDone == null) {
-            synchronized (this) {
-                onDone = this.onDone;
-                if (onDone == null) {
-                    return;
-                }
-            }
-        }
-
-        onDone.fireEvent(new TaskEvent(source, this, failed));
+        if (onDone != null)
+            onDone.fireEvent(new TaskEvent(source, this, failed));
     }
 
     private final DoubleProperty progress = new SimpleDoubleProperty(this, "progress", -1);
