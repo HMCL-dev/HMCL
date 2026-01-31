@@ -18,24 +18,15 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import javafx.scene.control.Skin;
-import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.ListPageBase;
 import org.jackhuang.hmcl.ui.construct.PageAware;
-import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.i18n.I18n;
 
-import java.io.IOException;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class BuiltInModListPage extends ListPageBase<ModListPageSkin.ModInfoObject> implements VersionPage.VersionLoadable, PageAware {

@@ -102,6 +102,7 @@ public final class FabricModMetadata {
             return src == null ? JsonNull.INSTANCE : new JsonPrimitive(src.name);
         }
     }
+
     public static final class FabricNestedJar {
         @SerializedName("file")
         private final String file;

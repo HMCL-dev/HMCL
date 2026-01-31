@@ -40,7 +40,6 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.MDListCell;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.util.i18n.I18n;
 
 import java.io.File;
@@ -48,6 +47,7 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.nio.file.Files;
 import java.util.List;
+import java.util.Locale;
 import java.util.StringJoiner;
 
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
@@ -208,10 +208,10 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
 
         Runnable refreshList = () -> {
             flowPane.getChildren().clear();
-            String query = searchField.getText().toLowerCase();
+            String query = searchField.getText().toLowerCase(Locale.ROOT);
 
             for (String path : bundledMods) {
-                if (path.toLowerCase().contains(query)) {
+                if (path.toLowerCase(Locale.ROOT).contains(query)) {
                     String name = path.contains("/") ? path.substring(path.lastIndexOf('/') + 1) : path;
 
                     Label tag = new Label(name);
