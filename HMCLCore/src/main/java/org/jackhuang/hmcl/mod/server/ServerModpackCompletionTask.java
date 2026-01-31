@@ -161,8 +161,12 @@ public class ServerModpackCompletionTask extends Task<Void> {
 
             if (download) {
                 total++;
+                String downloadUrl = file.getDownloadURL();
+                if (StringUtils.isBlank(downloadUrl)) {
+                    downloadUrl=remoteManifest.getFileApi() + "/overrides/" + file.getPath();
+                }
                 dependencies.add(new FileDownloadTask(
-                        remoteManifest.getFileApi() + "/overrides/" + file.getPath(),
+                        downloadUrl,
                         actualPath,
                         new FileDownloadTask.IntegrityCheck("SHA-1", file.getHash()))
                         .withCounter("hmcl.modpack.download"));
