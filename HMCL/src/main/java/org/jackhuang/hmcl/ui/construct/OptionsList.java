@@ -19,42 +19,51 @@ package org.jackhuang.hmcl.ui.construct;
 
 import javafx.scene.Node;
 import javafx.scene.control.Control;
-import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
 // TODO: Rename
 
 /// @author Glavo
-public final class ComponentList2 extends Control {
-    public ComponentList2() {
+public final class OptionsList extends Control {
+    public OptionsList() {
+        this.getStyleClass().add("options-list");
     }
 
     @Override
     protected Skin<?> createDefaultSkin() {
-        return new ComponentList2Skin(this);
+        return new OptionsListSkin(this);
     }
 
-    public sealed interface Element {
+    public static abstract class Element {
+        protected Node node;
+
+        Node getNode() {
+            if (node == null)
+                node = createNode();
+            return node;
+        }
+
+        protected abstract Node createNode();
     }
 
-    public static final class Title implements Element {
+    public static final class Title extends Element {
         private final @NotNull String title;
 
-        private Label label;
-
-        public Title(@NotNull String title, @Nullable Node leftNode) {
+        public Title(@NotNull String title) {
             this.title = title;
         }
 
+        @Override
+        protected Node createNode() {
+            return ComponentList.createComponentListTitle(title);
+        }
 
         @Override
         public boolean equals(Object obj) {
-            return this == obj
-                    || obj instanceof Title that && Objects.equals(this.title, that.title);
+            return this == obj || obj instanceof Title that && Objects.equals(this.title, that.title);
         }
 
         @Override
@@ -69,6 +78,29 @@ public final class ComponentList2 extends Control {
 
     }
 
-    public record ListElement(@NotNull Node node) implements Element {
+    public static final class ListElement extends Element {
+        public ListElement(@NotNull Node node) {
+            this.node = node;
+        }
+
+        @Override
+        protected Node createNode() {
+            return node;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return this == obj || obj instanceof ListElement that && this.node.equals(that.node);
+        }
+
+        @Override
+        public int hashCode() {
+            return node.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "ListElement[node=%s]".formatted(node);
+        }
     }
 }
