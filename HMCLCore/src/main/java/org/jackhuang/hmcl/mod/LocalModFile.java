@@ -23,11 +23,7 @@ import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -49,12 +45,13 @@ public final class LocalModFile implements Comparable<LocalModFile> {
     private final String fileName;
     private final String logoPath;
     private final BooleanProperty activeProperty;
+    private final List<String> bundledMods;
 
     public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description) {
-        this(modManager, mod, file, name, description, "", "", "", "", "");
+        this(modManager, mod, file, name, description, "", "", "", "", "", Collections.emptyList());
     }
 
-    public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description, String authors, String version, String gameVersion, String url, String logoPath) {
+    public LocalModFile(ModManager modManager, LocalMod mod, Path file, String name, Description description, String authors, String version, String gameVersion, String url, String logoPath, List<String> bundledMods) {
         this.modManager = modManager;
         this.mod = mod;
         this.file = file;
@@ -65,6 +62,11 @@ public final class LocalModFile implements Comparable<LocalModFile> {
         this.gameVersion = gameVersion;
         this.url = url;
         this.logoPath = logoPath;
+        this.bundledMods = bundledMods;
+
+        if (bundledMods != null && !bundledMods.isEmpty()) {
+            System.out.println("Found bundled jars in " + file + ": " + bundledMods.size());
+        }
 
         activeProperty = new SimpleBooleanProperty(this, "active", !modManager.isDisabled(file)) {
             @Override
@@ -139,6 +141,10 @@ public final class LocalModFile implements Comparable<LocalModFile> {
 
     public String getLogoPath() {
         return logoPath;
+    }
+
+    public List<String> getBundledMods() {
+        return bundledMods;
     }
 
     public BooleanProperty activeProperty() {

@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -194,6 +195,6 @@ public record PackMcMeta(@SerializedName("pack") PackInfo pack) implements Valid
                 modFile,
                 FileUtils.getNameWithoutExtension(modFile),
                 metadata.pack.description,
-                "", "", "", "", "");
+                "", "", "", "", "", Collections.emptyList());
     }
 }
