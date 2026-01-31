@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.ui.versions;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
@@ -31,8 +32,11 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.shape.SVGPath;
 import javafx.stage.FileChooser;
@@ -57,7 +61,9 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Stream;
 
+import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
+import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -85,7 +91,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
     @Override
     protected Skin<?> createDefaultSkin() {
-        return new SchematicsPageSkin();
+        return new SchematicsPageSkin(this);
     }
 
     @Override
@@ -193,6 +199,10 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 }));
     }
 
+    public void onRevealSchematicsFolder() {
+        FXUtils.openFolder(schematicsDirectory);
+    }
+
     private DirItem loadRoot(Path dir) {
         var item = new DirItem(dir, null);
         item.load();
@@ -201,12 +211,15 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
     private void navigateTo(DirItem item) {
         currentDirectory = item;
-        item.load();
-        getItems().clear();
-        if (item.parent != null) {
-            getItems().add(new BackItem(item.parent));
-        }
-        getItems().addAll(item.children);
+        setLoading(true);
+        Task.runAsync(item::load).whenComplete(Schedulers.javafx(), exception -> {
+            getItems().clear();
+            if (item.parent != null) {
+                getItems().add(new BackItem(item.parent));
+            }
+            getItems().addAll(item.children);
+            setLoading(false);
+        }).start();
     }
 
     abstract sealed class Item implements Comparable<Item> {
@@ -563,10 +576,8 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         }
     }
 
-    private static final class Cell extends ListCell<Item> {
+    private static final class Cell extends MDListCell<Item> {
 
-        private final RipplerContainer graphics;
-        private final BorderPane root;
         private final StackPane left;
         private final TwoLineListItem center;
         private final HBox right;
@@ -579,10 +590,11 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
         private final Tooltip tooltip = new Tooltip();
 
-        public Cell() {
-            this.root = new BorderPane();
-            root.getStyleClass().add("md-list-cell");
-            root.setPadding(new Insets(8));
+        public Cell(JFXListView<Item> listView) {
+            super(listView);
+
+            var box = new HBox(8);
+            box.setAlignment(Pos.CENTER_LEFT);
 
             {
                 this.left = new StackPane();
@@ -600,16 +612,11 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 iconSVGWrapper.setAlignment(Pos.CENTER);
                 FXUtils.setLimitWidth(iconSVGWrapper, 32);
                 FXUtils.setLimitHeight(iconSVGWrapper, 32);
-
-                BorderPane.setAlignment(left, Pos.CENTER);
-                root.setLeft(left);
             }
-
             {
                 this.center = new TwoLineListItem();
-                root.setCenter(center);
+                HBox.setHgrow(center, Priority.ALWAYS);
             }
-
             {
                 this.right = new HBox(8);
                 right.setAlignment(Pos.CENTER_RIGHT);
@@ -642,70 +649,96 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 right.getChildren().setAll(btnReveal, btnDelete);
             }
 
-            this.graphics = new RipplerContainer(root);
-            FXUtils.onClicked(graphics, () -> {
-                Item item = getItem();
-                if (item != null)
-                    item.onClick();
+            box.getChildren().setAll(left, center, right);
+            StackPane.setMargin(box, new Insets(8));
+
+            FXUtils.onClicked(box, () -> {
+                var item = getItem();
+                if (item != null) item.onClick();
             });
+            getContainer().getChildren().setAll(box);
         }
 
         @Override
-        protected void updateItem(Item item, boolean empty) {
-            super.updateItem(item, empty);
+        protected void updateControl(Item item, boolean empty) {
+            if (empty || item == null) return;
 
             iconImageView.setImage(null);
 
-            if (empty || item == null) {
-                setGraphic(null);
-                center.setTitle("");
-                center.setSubtitle("");
+            directoryProperty.set(item.isDirectory());
+
+            if (item instanceof LitematicFileItem fileItem && fileItem.getImage() != null) {
+                iconImageView.setImage(fileItem.getImage());
+                left.getChildren().setAll(iconImageView);
             } else {
-                directoryProperty.set(item.isDirectory());
-                if (item instanceof LitematicFileItem fileItem && fileItem.getImage() != null) {
-                    iconImageView.setImage(fileItem.getImage());
-                    left.getChildren().setAll(iconImageView);
-                } else {
-                    iconSVG.setContent(item.getIcon().getPath());
-                    left.getChildren().setAll(iconSVGWrapper);
-                }
-
-                center.setTitle(item.getName());
-                center.setSubtitle(item.getDescription());
-
-                Path path = item.getPath();
-                if (path != null) {
-                    tooltip.setText(FileUtils.getAbsolutePath(path));
-                    FXUtils.installSlowTooltip(left, tooltip);
-                } else {
-                    tooltip.setText("");
-                    Tooltip.uninstall(left, tooltip);
-                }
-
-                root.setRight(item instanceof BackItem ? null : right);
-
-                setGraphic(graphics);
+                iconSVG.setContent(item.getIcon().getPath());
+                left.getChildren().setAll(iconSVGWrapper);
             }
+
+            center.setTitle(item.getName());
+            center.setSubtitle(item.getDescription());
+
+            Path path = item.getPath();
+            if (path != null) {
+                tooltip.setText(FileUtils.getAbsolutePath(path));
+                FXUtils.installSlowTooltip(left, tooltip);
+            } else {
+                Tooltip.uninstall(left, tooltip);
+            }
+
+            right.setVisible(!(item instanceof BackItem));
         }
     }
 
-    private final class SchematicsPageSkin extends ToolbarListPageSkin<Item, SchematicsPage> {
-        SchematicsPageSkin() {
-            super(SchematicsPage.this);
-        }
+    private static final class SchematicsPageSkin extends SkinBase<SchematicsPage> {
 
-        @Override
-        protected List<Node> initializeToolbar(SchematicsPage skinnable) {
-            return Arrays.asList(
-                    createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
-                    createToolbarButton2(i18n("schematics.add"), SVG.ADD, skinnable::onAddFiles),
-                    createToolbarButton2(i18n("schematics.create_directory"), SVG.CREATE_NEW_FOLDER, skinnable::onCreateDirectory)
-            );
-        }
+        private final HBox toolbar;
 
-        @Override
-        protected ListCell<Item> createListCell(JFXListView<Item> listView) {
-            return new Cell();
+        private final JFXListView<Item> listView;
+
+        SchematicsPageSkin(SchematicsPage skinnable) {
+            super(skinnable);
+
+            StackPane pane = new StackPane();
+            pane.setPadding(new Insets(10));
+            pane.getStyleClass().addAll("notice-pane");
+
+            ComponentList root = new ComponentList();
+            root.getStyleClass().add("no-padding");
+            listView = new JFXListView<>();
+            listView.setSelectionModel(new NoneMultipleSelectionModel<>());
+
+            {
+                toolbar = new HBox();
+                toolbar.getChildren().setAll(
+                        createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
+                        createToolbarButton2(i18n("schematics.add"), SVG.ADD, skinnable::onAddFiles),
+                        createToolbarButton2(i18n("schematics.create_directory"), SVG.CREATE_NEW_FOLDER, skinnable::onCreateDirectory),
+                        createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, skinnable::onRevealSchematicsFolder)
+                );
+                root.getContent().add(toolbar);
+            }
+
+            {
+                SpinnerPane center = new SpinnerPane();
+                ComponentList.setVgrow(center, Priority.ALWAYS);
+                center.getStyleClass().add("large-spinner-pane");
+                center.loadingProperty().bind(skinnable.loadingProperty());
+
+                listView.setCellFactory(x -> new Cell(listView));
+                listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+                Bindings.bindContent(listView.getItems(), skinnable.getItems());
+
+                // ListViewBehavior would consume ESC pressed event, preventing us from handling it
+                // So we ignore it here
+                ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
+
+                center.setContent(listView);
+                root.getContent().add(center);
+            }
+
+            pane.getChildren().setAll(root);
+            getChildren().setAll(pane);
         }
     }
 }
