@@ -1,41 +1,34 @@
-/*
- * Hello Minecraft! Launcher
- * Copyright (C) 2020  huangyuhui <huanghongxun2008@126.com> and contributors
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
 package org.jackhuang.hmcl.ui.versions;
 
+import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXTextField;
+import javafx.animation.PauseTransition;
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.TextField;
+import javafx.scene.control.Skin;
+import javafx.scene.control.SkinBase;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.ui.*;
+import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
+import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
+import org.jackhuang.hmcl.ui.construct.ComponentList;
+import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.profile.ProfileListItem;
@@ -43,13 +36,15 @@ import org.jackhuang.hmcl.ui.profile.ProfilePage;
 import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
+import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
+import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.createSelectedItemPropertyFor;
 
@@ -61,7 +56,6 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
     private final ObjectProperty<Profile> selectedProfile;
 
     public GameListPage() {
-        TextField searchField = new JFXTextField();
         profileListItems = MappedObservableList.create(profilesProperty(), profile -> {
             ProfileListItem item = new ProfileListItem(profile);
             FXUtils.setLimitWidth(item, 200);
@@ -71,29 +65,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
 
         GameList gameList = new GameList();
 
-        GridPane searchPane = new GridPane();
-        searchPane.getStyleClass().add("card");
-
-        searchField.setPromptText(i18n("search.enter"));
-
-        ColumnConstraints col1 = new ColumnConstraints();
-        col1.setHgrow(Priority.NEVER);
-
-        ColumnConstraints col2 = new ColumnConstraints();
-        col2.setHgrow(Priority.ALWAYS);
-
-        searchPane.getColumnConstraints().addAll(col1, col2);
-
-        searchPane.addRow(0, new Label(i18n("search")), searchField);
-
-        searchPane.setHgap(16);
-        searchPane.setVgap(10);
-        BorderPane.setMargin(searchPane, new Insets(10, 10, 0, 10));
         BorderPane borderPane = new BorderPane();
-        borderPane.setTop(searchPane);
-
-        searchField.textProperty().addListener(i -> gameList.filter(searchField.getText()));
-
 
         {
             ScrollPane pane = new ScrollPane();
@@ -116,12 +88,8 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                 pane.setContent(wrapper);
             }
 
-            AdvancedListBox bottomLeftCornerList = new AdvancedListBox()
-                    .addNavigationDrawerItem(i18n("install.new_game"), SVG.ADD_CIRCLE, Versions::addNewGame)
-                    .addNavigationDrawerItem(i18n("install.modpack"), SVG.PACKAGE2, Versions::importModpack)
-                    .addNavigationDrawerItem(i18n("button.refresh"), SVG.REFRESH, gameList::refreshList)
-                    .addNavigationDrawerItem(i18n("settings.type.global.manage"), SVG.SETTINGS, this::modifyGlobalGameSettings);
-            FXUtils.setLimitHeight(bottomLeftCornerList, 40 * 4 + 12 * 2);
+            AdvancedListBox bottomLeftCornerList = new AdvancedListBox().addNavigationDrawerItem(i18n("install.new_game"), SVG.ADD_CIRCLE, Versions::addNewGame).addNavigationDrawerItem(i18n("install.modpack"), SVG.PACKAGE2, Versions::importModpack).addNavigationDrawerItem(i18n("settings.type.global.manage"), SVG.SETTINGS, this::modifyGlobalGameSettings);
+            FXUtils.setLimitHeight(bottomLeftCornerList, 40 * 3 + 12 * 2);
             setLeft(pane, bottomLeftCornerList);
         }
 
@@ -175,9 +143,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             setLoading(true);
             setFailedReason(null);
 
-            List<GameListItem> versionItems = profile.getRepository().getDisplayVersions()
-                    .map(instance -> new GameListItem(profile, instance.getId()))
-                    .toList();
+            List<GameListItem> versionItems = profile.getRepository().getDisplayVersions().map(instance -> new GameListItem(profile, instance.getId())).toList();
 
             sourceList.setAll(versionItems);
 
@@ -186,10 +152,6 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             }
 
             setLoading(false);
-        }
-
-        public void filter(String searchText) {
-            filteredList.setPredicate(createPredicate(searchText));
         }
 
         private Predicate<GameListItem> createPredicate(String searchText) {
@@ -215,26 +177,91 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
         }
 
         @Override
-        protected GameListSkin createDefaultSkin() {
-            return new GameListSkin();
+        protected Skin<?> createDefaultSkin() {
+            return new GameListSkin(this);
         }
 
-        private class GameListSkin extends ToolbarListPageSkin<GameListItem, GameList> {
+        private static class GameListSkin extends SkinBase<GameList> {
+            private final TransitionPane toolbarPane;
+            private final HBox searchBar;
+            private final HBox toolbarNormal;
 
-            public GameListSkin() {
-                super(GameList.this);
+            private final JFXTextField searchField;
+
+            public GameListSkin(GameList skinnable) {
+                super(skinnable);
+
+                StackPane pane = new StackPane();
+                pane.setPadding(new Insets(10));
+                pane.getStyleClass().addAll("notice-pane");
+
+                ComponentList root = new ComponentList();
+                root.getStyleClass().add("no-padding");
+                JFXListView<GameListItem> listView = new JFXListView<>();
+
+                {
+                    toolbarPane = new TransitionPane();
+
+                    searchBar = new HBox();
+                    toolbarNormal = new HBox();
+
+                    searchBar.setAlignment(Pos.CENTER);
+                    searchBar.setPadding(new Insets(0, 5, 0, 5));
+                    searchField = new JFXTextField();
+                    searchField.setPromptText(i18n("search"));
+                    HBox.setHgrow(searchField, Priority.ALWAYS);
+                    PauseTransition pause = new PauseTransition(Duration.millis(100));
+                    pause.setOnFinished(e -> skinnable.filteredList.setPredicate(skinnable.createPredicate(searchField.getText())));
+                    searchField.textProperty().addListener((observable, oldValue, newValue) -> {
+                        pause.setRate(1);
+                        pause.playFromStart();
+                    });
+
+                    JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE, () -> {
+                        changeToolbar(toolbarNormal);
+                        searchField.clear();
+                    });
+
+                    onEscPressed(searchField, closeSearchBar::fire);
+
+                    searchBar.getChildren().setAll(searchField, closeSearchBar);
+
+                    toolbarNormal.getChildren().setAll(createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refreshList), createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar)));
+
+                    toolbarPane.setContent(toolbarNormal, ContainerAnimations.FADE);
+
+                    root.getContent().add(toolbarPane);
+                }
+
+                {
+                    SpinnerPane center = new SpinnerPane();
+                    ComponentList.setVgrow(center, Priority.ALWAYS);
+                    center.getStyleClass().add("large-spinner-pane");
+                    center.loadingProperty().bind(skinnable.loadingProperty());
+
+                    listView.setCellFactory(x -> new GameListCell());
+                    Bindings.bindContent(listView.getItems(), skinnable.getItems());
+
+                    ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
+
+                    center.failedReasonProperty().bind(skinnable.failedReasonProperty());
+                    center.setContent(listView);
+                    root.getContent().add(center);
+                }
+
+                pane.getChildren().setAll(root);
+                getChildren().setAll(pane);
             }
 
-            @Override
-            protected List<Node> initializeToolbar(GameList skinnable) {
-                return Collections.emptyList();
-            }
-
-            @Override
-            protected ListCell<GameListItem> createListCell(JFXListView<GameListItem> listView) {
-                return new GameListCell();
+            private void changeToolbar(HBox newToolbar) {
+                Node oldToolbar = toolbarPane.getCurrentNode();
+                if (newToolbar != oldToolbar) {
+                    toolbarPane.setContent(newToolbar, ContainerAnimations.FADE);
+                    if (newToolbar == searchBar) {
+                        Platform.runLater(searchField::requestFocus);
+                    }
+                }
             }
         }
     }
-
 }
