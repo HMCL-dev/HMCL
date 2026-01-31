@@ -308,8 +308,8 @@ public final class AsyncTaskExecutor extends TaskExecutor {
     }
 
     private <T> CompletableFuture<T> executeTask(Task<?> parentTask, Task<T> task) {
-        if (task instanceof CompletableFutureTask<?>) {
-            return executeCompletableFutureTask(parentTask, (CompletableFutureTask<T>) task);
+        if (task instanceof CompletableFutureTask<T> completableFutureTask) {
+            return executeCompletableFutureTask(parentTask, completableFutureTask);
         } else {
             return executeNormalTask(parentTask, task);
         }
