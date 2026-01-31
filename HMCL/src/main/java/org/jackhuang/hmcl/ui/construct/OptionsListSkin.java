@@ -60,9 +60,6 @@ public final class OptionsListSkin extends SkinBase<OptionsList> {
         protected void updateItem(OptionsList.Element item, boolean empty) {
             super.updateItem(item, empty);
 
-            if (wrapper != null)
-                wrapper.getChildren().clear();
-
             if (empty || item == null) {
                 setGraphic(null);
             } else if (item instanceof OptionsList.ListElement element) {
