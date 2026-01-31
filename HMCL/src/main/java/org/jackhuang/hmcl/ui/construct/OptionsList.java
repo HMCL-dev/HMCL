@@ -17,9 +17,12 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -35,6 +38,20 @@ public final class OptionsList extends Control {
     @Override
     protected Skin<?> createDefaultSkin() {
         return new OptionsListSkin(this);
+    }
+
+    private final ObservableList<Element> elements = FXCollections.observableArrayList();
+
+    public ObservableList<Element> getElements() {
+        return elements;
+    }
+
+    public void addTitle(String title) {
+        elements.add(new Title(title));
+    }
+
+    public void addListElement(@NotNull Node node) {
+        elements.add(new ListElement(node));
     }
 
     public static abstract class Element {

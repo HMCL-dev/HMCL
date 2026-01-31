@@ -35,6 +35,7 @@ public final class OptionsListSkin extends SkinBase<OptionsList> {
         super(control);
 
         this.listView = new JFXListView<>();
+        listView.setItems(control.getElements());
         listView.setCellFactory(listView -> new Cell());
 
         this.getChildren().setAll(listView);
