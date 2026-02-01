@@ -17,14 +17,12 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import javafx.beans.DefaultProperty;
 import javafx.beans.property.*;
 import javafx.scene.Node;
 
 import java.util.List;
 import java.util.function.Supplier;
 
-@DefaultProperty("content")
 public class ComponentSublist extends ComponentList {
 
     Supplier<List<? extends Node>> lazyInitializer;

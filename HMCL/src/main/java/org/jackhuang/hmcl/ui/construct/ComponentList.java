@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import javafx.beans.DefaultProperty;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.IntegerProperty;
@@ -34,7 +33,6 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
-@DefaultProperty("content")
 public class ComponentList extends Control implements NoPaddingComponent {
     private final IntegerProperty depth = new SimpleIntegerProperty(this, "depth", 0);
 
