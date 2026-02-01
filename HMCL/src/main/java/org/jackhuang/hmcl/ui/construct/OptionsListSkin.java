@@ -89,7 +89,6 @@ public final class OptionsListSkin extends SkinBase<OptionsList> {
         @Override
         protected void updateItem(OptionsList.Element item, boolean empty) {
             super.updateItem(item, empty);
-            updateStyle();
 
             if (empty || item == null) {
                 setGraphic(null);
@@ -109,6 +108,8 @@ public final class OptionsListSkin extends SkinBase<OptionsList> {
             } else {
                 setGraphic(item.getNode());
             }
+
+            updateStyle();
         }
 
         private StackPane createWrapper() {
