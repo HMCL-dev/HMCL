@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXRippler;
 import javafx.animation.Transition;
-import javafx.beans.DefaultProperty;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ObjectPropertyBase;
@@ -43,7 +42,6 @@ import org.jackhuang.hmcl.ui.animation.Motion;
 import java.util.ArrayList;
 import java.util.List;
 
-@DefaultProperty("container")
 public class RipplerContainer extends StackPane {
     private static final String DEFAULT_STYLE_CLASS = "rippler-container";
     private static final CornerRadii DEFAULT_RADII = new CornerRadii(3);
@@ -112,9 +110,6 @@ public class RipplerContainer extends StackPane {
 
         setContainer(container);
 
-        ripplerFillProperty().addListener(o ->
-                setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, DEFAULT_RADII, Insets.EMPTY))));
-
         var shape = new Rectangle();
         shape.widthProperty().bind(widthProperty());
         shape.heightProperty().bind(heightProperty());
@@ -166,10 +161,14 @@ public class RipplerContainer extends StackPane {
     }
 
     private void interpolateBackground(double frac) {
-        Color onSurface = Themes.getColorScheme().getOnSurface();
-        setBackground(new Background(new BackgroundFill(
-                Color.color(onSurface.getRed(), onSurface.getGreen(), onSurface.getBlue(), frac * 0.04),
-                CornerRadii.EMPTY, Insets.EMPTY)));
+        if (frac < 0.01) {
+            setBackground(null);
+        } else {
+            Color onSurface = Themes.getColorScheme().getOnSurface();
+            setBackground(new Background(new BackgroundFill(
+                    Color.color(onSurface.getRed(), onSurface.getGreen(), onSurface.getBlue(), frac * 0.04),
+                    CornerRadii.EMPTY, Insets.EMPTY)));
+        }
     }
 
     protected void updateChildren() {
