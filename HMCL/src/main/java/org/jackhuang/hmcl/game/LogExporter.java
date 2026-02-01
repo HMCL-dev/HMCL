@@ -80,31 +80,56 @@ public final class LogExporter {
                     ModManager modManager = gameRepository.getModManager(versionId);
                     modManager.refreshMods();
 
-                    StringBuilder jijInfo = new StringBuilder();
-                    boolean hasJij = false;
+                    StringBuilder infoBuilder = new StringBuilder();
 
+                    infoBuilder.append("=== Mod List ===").append(System.lineSeparator());
+
+                    modManager.getMods().stream()
+                            .filter(LocalModFile::isActive)
+                            .sorted((m1, m2) -> String.CASE_INSENSITIVE_ORDER.compare(m1.getName(), m2.getName()))
+                            .forEach(mod -> {
+                                infoBuilder.append(mod.getName());
+                                if (StringUtils.isNotBlank(mod.getVersion()) && !"${version}".equals(mod.getVersion())) {
+                                    infoBuilder.append(" (").append(mod.getVersion()).append(")");
+                                }
+                                if (!mod.getName().equals(mod.getFileName())) {
+                                    infoBuilder.append(" [").append(mod.getFileName()).append("]");
+                                }
+                                infoBuilder.append(System.lineSeparator());
+                            });
+
+                    infoBuilder.append(System.lineSeparator());
+                    infoBuilder.append("----------------------------").append(System.lineSeparator());
+                    infoBuilder.append(System.lineSeparator());
+
+                    infoBuilder.append("=== JIJ Info List ===").append(System.lineSeparator());
+
+                    boolean hasJij = false;
                     for (LocalModFile mod : modManager.getMods()) {
-                        if (mod.hasBundledMods()) {
+                        if (mod.isActive() && mod.hasBundledMods()) {
                             hasJij = true;
-                            jijInfo.append(mod.getName());
+                            infoBuilder.append(mod.getName());
                             if (!mod.getName().equals(mod.getFileName())) {
-                                jijInfo.append(" (").append(mod.getFileName()).append(")");
+                                infoBuilder.append(" (").append(mod.getFileName()).append(")");
                             }
-                            jijInfo.append(System.lineSeparator());
+                            infoBuilder.append(System.lineSeparator());
 
                             for (String bundled : mod.getBundledMods()) {
                                 String name = bundled.contains("/") ? bundled.substring(bundled.lastIndexOf('/') + 1) : bundled;
-                                jijInfo.append("\t|-> ").append(name).append(System.lineSeparator());
+                                infoBuilder.append("\t|-> ").append(name).append(System.lineSeparator());
                             }
-                            jijInfo.append(System.lineSeparator());
+                            infoBuilder.append(System.lineSeparator());
                         }
                     }
 
-                    if (hasJij) {
-                        zipper.putTextFile(jijInfo.toString(), "ALL_JIJ_INFO.txt");
+                    if (!hasJij) {
+                        infoBuilder.append("无 / None").append(System.lineSeparator());
                     }
+
+                    zipper.putTextFile(infoBuilder.toString(), "ALL_MOD_INFO.txt");
+
                 } catch (Exception e) {
-                    LOG.warning("Failed to export All JIJ info to crash report package", e);
+                    LOG.warning("Failed to export mod info to crash report package", e);
                 }
 
                 for (String id : versions) {

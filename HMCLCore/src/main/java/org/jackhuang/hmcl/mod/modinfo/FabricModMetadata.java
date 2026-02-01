@@ -68,9 +68,7 @@ public final class FabricModMetadata {
             throw new IOException("File " + modFile + " is not a Fabric mod.");
         FabricModMetadata metadata = JsonUtils.fromNonNullJsonFully(tree.getInputStream(mcmod), FabricModMetadata.class);
         String authors = metadata.authors == null ? "" : metadata.authors.stream().map(author -> author.name).collect(Collectors.joining(", "));
-        if (metadata.jars != null && !metadata.jars.isEmpty()) {
-            System.out.println("Found bundled jars in " + modFile + ": " + metadata.jars.size());
-        }
+
         List<String> bundledMods = metadata.jars != null ?
                 metadata.jars.stream().map(jar -> jar.file).toList() :
                 Collections.emptyList();

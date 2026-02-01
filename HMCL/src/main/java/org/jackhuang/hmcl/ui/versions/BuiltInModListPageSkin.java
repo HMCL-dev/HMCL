@@ -92,7 +92,6 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
             searchBar = new HBox();
             toolbarNormal = new HBox();
 
-            // Search Bar
             searchBar.setAlignment(Pos.CENTER);
             searchBar.setPadding(new Insets(0, 5, 0, 5));
             searchField = new JFXTextField();
@@ -117,7 +116,6 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
 
             searchBar.getChildren().setAll(searchField, closeSearchBar);
 
-            // Toolbar Normal
             toolbarNormal.getChildren().addAll(
                     createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
                     createToolbarButton2(i18n("mods.built_in.exportAllJIJINFO"), SVG.FILE_EXPORT, () -> exportAllJijList(listView.getItems())),

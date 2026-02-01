@@ -64,9 +64,6 @@ public final class LocalModFile implements Comparable<LocalModFile> {
         this.logoPath = logoPath;
         this.bundledMods = bundledMods;
 
-        if (bundledMods != null && !bundledMods.isEmpty()) {
-            System.out.println("Found bundled jars in " + file + ": " + bundledMods.size());
-        }
 
         activeProperty = new SimpleBooleanProperty(this, "active", !modManager.isDisabled(file)) {
             @Override
