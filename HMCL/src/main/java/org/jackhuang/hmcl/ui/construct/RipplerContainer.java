@@ -20,8 +20,6 @@ package org.jackhuang.hmcl.ui.construct;
 import com.jfoenix.controls.JFXRippler;
 import javafx.animation.Transition;
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.ObjectPropertyBase;
 import javafx.css.*;
 import javafx.css.converter.PaintConverter;
 import javafx.event.EventHandler;
@@ -47,44 +45,7 @@ public class RipplerContainer extends StackPane {
     private static final CornerRadii DEFAULT_RADII = new CornerRadii(3);
     private static final Color DEFAULT_RIPPLER_FILL = Color.rgb(0, 200, 255);
 
-    private final ObjectProperty<Node> container = new ObjectPropertyBase<>() {
-        @Override
-        public Object getBean() {
-            return RipplerContainer.this;
-        }
-
-        @Override
-        public String getName() {
-            return "container";
-        }
-
-        @Override
-        protected void invalidated() {
-            updateChildren();
-        }
-    };
-
-    private final StyleableObjectProperty<Paint> ripplerFill = new StyleableObjectProperty<>(DEFAULT_RIPPLER_FILL) {
-        @Override
-        public Object getBean() {
-            return RipplerContainer.this;
-        }
-
-        @Override
-        public String getName() {
-            return "ripplerFill";
-        }
-
-        @Override
-        public CssMetaData<? extends Styleable, Paint> getCssMetaData() {
-            return StyleableProperties.RIPPLER_FILL;
-        }
-
-        @Override
-        protected void invalidated() {
-            buttonRippler.setRipplerFill(get());
-        }
-    };
+    private final Node container;
 
     private final StackPane buttonContainer = new StackPane();
     private final JFXRippler buttonRippler = new JFXRippler(new StackPane()) {
@@ -111,6 +72,8 @@ public class RipplerContainer extends StackPane {
     private Transition coverAnimation;
 
     public RipplerContainer(Node container) {
+        this.container = container;
+
         getStyleClass().add(DEFAULT_STYLE_CLASS);
         buttonRippler.setPosition(JFXRippler.RipplerPos.BACK);
         buttonContainer.getChildren().add(buttonRippler);
@@ -127,7 +90,7 @@ public class RipplerContainer extends StackPane {
 
         buttonContainer.setPickOnBounds(false);
 
-        setContainer(container);
+        updateChildren();
 
         var shape = new Rectangle();
         shape.widthProperty().bind(widthProperty());
@@ -209,17 +172,31 @@ public class RipplerContainer extends StackPane {
         return buttonRippler;
     }
 
-    public ObjectProperty<Node> containerProperty() {
+    public Node getContainer() {
         return container;
     }
 
-    public Node getContainer() {
-        return container.get();
-    }
+    private final StyleableObjectProperty<Paint> ripplerFill = new StyleableObjectProperty<>(DEFAULT_RIPPLER_FILL) {
+        @Override
+        public Object getBean() {
+            return RipplerContainer.this;
+        }
 
-    public void setContainer(Node container) {
-        this.container.set(container);
-    }
+        @Override
+        public String getName() {
+            return "ripplerFill";
+        }
+
+        @Override
+        public CssMetaData<? extends Styleable, Paint> getCssMetaData() {
+            return StyleableProperties.RIPPLER_FILL;
+        }
+
+        @Override
+        protected void invalidated() {
+            buttonRippler.setRipplerFill(get());
+        }
+    };
 
     public StyleableObjectProperty<Paint> ripplerFillProperty() {
         return ripplerFill;
