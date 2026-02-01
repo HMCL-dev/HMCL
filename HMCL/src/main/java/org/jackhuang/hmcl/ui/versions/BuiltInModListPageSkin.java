@@ -249,7 +249,7 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
 
             content.getTags().clear();
             if (modInfo.hasBundledMods()) {
-                content.addTag(i18n("mods.built_in") + " : " + modInfo.getBundledMods().size());
+                content.addTag(i18n("mods.built_in") + ": " + modInfo.getBundledMods().size());
             }
 
             String modVersion = modInfo.getVersion();
