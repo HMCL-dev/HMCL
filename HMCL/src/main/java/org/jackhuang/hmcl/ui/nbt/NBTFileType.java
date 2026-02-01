@@ -23,7 +23,6 @@ import com.github.steveice10.opennbt.tag.builtin.IntTag;
 import com.github.steveice10.opennbt.tag.builtin.ListTag;
 import com.github.steveice10.opennbt.tag.builtin.Tag;
 import kala.compress.utils.BoundedInputStream;
-import org.jackhuang.hmcl.schematic.LitematicFile;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.BufferedInputStream;
@@ -42,7 +41,7 @@ import java.util.zip.InflaterInputStream;
  * @author Glavo
  */
 public enum NBTFileType {
-    COMPRESSED("dat", "dat_old") {
+    COMPRESSED("dat", "dat_old", "litematic", "nbt", "schematic", "schem") {
         @Override
         public Tag read(Path file) throws IOException {
             try (BufferedInputStream fileInputStream = new BufferedInputStream(Files.newInputStream(file))) {
@@ -160,12 +159,6 @@ public enum NBTFileType {
             }
 
             return item;
-        }
-    },
-    SCHEMATIC("litematic") {
-        @Override
-        public Tag read(Path file) throws IOException {
-            return LitematicFile.readRoot(file);
         }
     };
 

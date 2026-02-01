@@ -17,54 +17,30 @@
  */
 package org.jackhuang.hmcl.schematic;
 
-import com.github.steveice10.opennbt.NBTIO;
 import com.github.steveice10.opennbt.tag.builtin.*;
-import javafx.geometry.Point3D;
+import org.jackhuang.hmcl.util.Vec3i;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
-import java.util.zip.GZIPInputStream;
+
+import static org.jackhuang.hmcl.schematic.Schematic.*;
 
 /**
  * @author Glavo
  * @see <a href="https://litemapy.readthedocs.io/en/v0.9.0b0/litematics.html">The Litematic file format</a>
  */
-public final class LitematicFile {
-
-    private static int tryGetInt(Tag tag) {
-        return tag instanceof IntTag ? ((IntTag) tag).getValue() : 0;
-    }
-
-    private static @Nullable Instant tryGetLongTimestamp(Tag tag) {
-        if (tag instanceof LongTag) {
-            return Instant.ofEpochMilli(((LongTag) tag).getValue());
-        }
-        return null;
-    }
-
-    private static @Nullable String tryGetString(Tag tag) {
-        return tag instanceof StringTag ? ((StringTag) tag).getValue() : null;
-    }
+public final class LitematicFile implements Schematic {
 
     public static boolean isFileLitematic(Path path) {
         return "litematic".equals(FileUtils.getExtension(path)) && Files.isRegularFile(path);
     }
 
-    public static CompoundTag readRoot(Path file) throws IOException {
-        CompoundTag root;
-        try (InputStream in = new GZIPInputStream(Files.newInputStream(file))) {
-            root = (CompoundTag) NBTIO.readTag(in);
-        }
-        return root;
-    }
-
     public static LitematicFile load(Path file) throws IOException {
+        if (!isFileLitematic(file)) return null;
 
         CompoundTag root = readRoot(file);
 
@@ -107,7 +83,7 @@ public final class LitematicFile {
     private final Instant timeModified;
     private final int totalBlocks;
     private final int totalVolume;
-    private final Point3D enclosingSize;
+    private final Vec3i enclosingSize;
 
     private LitematicFile(@NotNull Path file, @NotNull CompoundTag metadata,
                           int version, int subVersion, int minecraftDataVersion, int regionCount) {
@@ -131,7 +107,7 @@ public final class LitematicFile {
         this.totalVolume = tryGetInt(metadata.get("TotalVolume"));
 
 
-        Point3D enclosingSize = null;
+        Vec3i enclosingSize = null;
         Tag enclosingSizeTag = metadata.get("EnclosingSize");
         if (enclosingSizeTag instanceof CompoundTag) {
             CompoundTag list = (CompoundTag) enclosingSizeTag;
@@ -140,12 +116,13 @@ public final class LitematicFile {
             int z = tryGetInt(list.get("z"));
 
             if (x >= 0 && y >= 0 && z >= 0)
-                enclosingSize = new Point3D(x, y, z);
+                enclosingSize = new Vec3i(x, y, z);
         }
         this.enclosingSize = enclosingSize;
 
     }
 
+    @Override
     public @NotNull Path getFile() {
         return file;
     }
@@ -162,14 +139,21 @@ public final class LitematicFile {
         return minecraftDataVersion;
     }
 
+    @Override
+    public String getMinecraftVersion() {
+        return Integer.toString(minecraftDataVersion);
+    }
+
     public int[] getPreviewImageData() {
         return previewImageData != null ? previewImageData.clone() : null;
     }
 
+    @Override
     public String getName() {
         return name;
     }
 
+    @Override
     public String getAuthor() {
         return author;
     }
@@ -178,26 +162,32 @@ public final class LitematicFile {
         return description;
     }
 
+    @Override
     public Instant getTimeCreated() {
         return timeCreated;
     }
 
+    @Override
     public Instant getTimeModified() {
         return timeModified;
     }
 
+    @Override
     public int getTotalBlocks() {
         return totalBlocks;
     }
 
+    @Override
     public int getTotalVolume() {
         return totalVolume;
     }
 
-    public Point3D getEnclosingSize() {
+    @Override
+    public Vec3i getEnclosingSize() {
         return enclosingSize;
     }
 
+    @Override
     public int getRegionCount() {
         return regionCount;
     }

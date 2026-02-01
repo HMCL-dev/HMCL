@@ -48,6 +48,7 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.schematic.LitematicFile;
+import org.jackhuang.hmcl.schematic.Schematic;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -96,7 +97,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
     public SchematicsPage() {
         FXUtils.applyDragListener(this,
-                file -> currentDirectoryProperty().get() != null && Files.isRegularFile(file) && FileUtils.getName(file).endsWith(".litematic"),
+                file -> currentDirectoryProperty().get() != null && Schematic.isFileSchematicAlike(file),
                 this::addFiles
         );
     }
@@ -336,7 +337,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             try (Stream<Path> stream = Files.list(path)) {
                 stream.forEach(p -> {
                     boolean b1 = Files.isDirectory(p);
-                    boolean b2 = LitematicFile.isFileLitematic(p);
+                    boolean b2 = Schematic.isFileSchematicAlike(p);
                     if (b1 || b2) this.size++;
                     if (b1) {
                         var child = new DirItem(p, this);
@@ -356,10 +357,10 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                     dir.preLoad();
                     this.children.add(dir);
                 }
-                stream.filter(LitematicFile::isFileLitematic)
+                stream.filter(Schematic::isFileSchematicAlike)
                         .forEach(p -> {
                             try {
-                                this.children.add(new LitematicFileItem(p));
+                                this.children.add(new SchematicItem(p));
                             } catch (IOException e) {
                                 LOG.warning("Failed to load litematic file: " + path, e);
                             }
@@ -394,37 +395,43 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         }
     }
 
-    private final class LitematicFileItem extends Item {
+    private final class SchematicItem extends Item {
         final Path path;
-        final LitematicFile file;
+        final Schematic file;
         final String name;
         final Image image;
 
-        private LitematicFileItem(Path path) throws IOException {
+        private SchematicItem(Path path) throws IOException {
             this.path = path;
-            this.file = LitematicFile.load(path);
+            this.file = Schematic.load(path);
 
-            String name = file.getName();
-            if (StringUtils.isNotBlank(name) && !"Unnamed".equals(name)) {
-                this.name = name;
+            if (this.file instanceof LitematicFile lFile) {
+                String name = lFile.getName();
+                if (StringUtils.isNotBlank(name) && !"Unnamed".equals(name)) {
+                    this.name = name;
+                } else {
+                    this.name = FileUtils.getNameWithoutExtension(path);
+                }
             } else {
                 this.name = FileUtils.getNameWithoutExtension(path);
             }
 
             WritableImage image = null;
-            int[] previewImageData = file.getPreviewImageData();
-            if (previewImageData != null && previewImageData.length > 0) {
-                int size = (int) Math.sqrt(previewImageData.length);
-                if ((size * size) == previewImageData.length) {
-                    image = new WritableImage(size, size);
-                    PixelWriter pixelWriter = image.getPixelWriter();
+            if (this.file instanceof LitematicFile lFile) {
+                int[] previewImageData = lFile.getPreviewImageData();
+                if (previewImageData != null && previewImageData.length > 0) {
+                    int size = (int) Math.sqrt(previewImageData.length);
+                    if ((size * size) == previewImageData.length) {
+                        image = new WritableImage(size, size);
+                        PixelWriter pixelWriter = image.getPixelWriter();
 
-                    for (int y = 0, i = 0; y < size; ++y) {
-                        for (int x = 0; x < size; ++x) {
-                            pixelWriter.setArgb(x, y, previewImageData[i++]);
+                        for (int y = 0, i = 0; y < size; ++y) {
+                            for (int x = 0; x < size; ++x) {
+                                pixelWriter.setArgb(x, y, previewImageData[i++]);
+                            }
                         }
-                    }
 
+                    }
                 }
             }
             this.image = image;
@@ -473,7 +480,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
         @Override
         void onClick() {
-            Controllers.dialog(new LitematicInfoDialog());
+            Controllers.dialog(new SchematicInfoDialog());
         }
 
         @Override
@@ -491,7 +498,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             }
         }
 
-        private final class LitematicInfoDialog extends JFXDialogLayout {
+        private final class SchematicInfoDialog extends JFXDialogLayout {
             private final ComponentList details;
 
             private void addDetailItem(String key, Object detail) {
@@ -501,7 +508,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 details.getContent().add(borderPane);
             }
 
-            private void updateContent(LitematicFile file) {
+            private void updateContent(Schematic file) {
                 details.getContent().clear();
                 addDetailItem(i18n("schematics.info.name"), file.getName());
                 if (StringUtils.isNotBlank(file.getAuthor()))
@@ -518,14 +525,17 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                     addDetailItem(i18n("schematics.info.total_blocks"), file.getTotalBlocks());
                 if (file.getEnclosingSize() != null)
                     addDetailItem(i18n("schematics.info.enclosing_size"),
-                            String.format("%d x %d x %d", (int) file.getEnclosingSize().getX(),
-                                    (int) file.getEnclosingSize().getY(),
-                                    (int) file.getEnclosingSize().getZ()));
+                            String.format("%d x %d x %d", file.getEnclosingSize().x(),
+                                    file.getEnclosingSize().y(),
+                                    file.getEnclosingSize().z()));
+                if (StringUtils.isNotBlank(file.getMinecraftVersion()))
+                    addDetailItem(i18n("schematics.info.mc_version"), file.getMinecraftVersion());
 
-                addDetailItem(i18n("schematics.info.version"), file.getVersion());
+                if (file instanceof LitematicFile lFile)
+                    addDetailItem(i18n("schematics.info.version"), lFile.getVersion());
             }
 
-            LitematicInfoDialog() {
+            SchematicInfoDialog() {
                 HBox titleBox = new HBox(8);
                 {
                     Node icon = getIcon(40);
@@ -626,7 +636,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 btnEdit.setGraphic(SVG.EDIT.createIcon());
                 btnEdit.setOnAction(event -> {
                     Item item = getItem();
-                    if (item instanceof LitematicFileItem) {
+                    if (item instanceof SchematicItem) {
                         try {
                             Controllers.navigate(new NBTEditorPage(item.getPath()));
                         } catch (IOException ignored) { // Should be impossible
@@ -664,10 +674,10 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
             iconImageView.setImage(null);
 
-            isFileProperty.set(item instanceof LitematicFileItem);
+            isFileProperty.set(item instanceof SchematicItem);
             isDirectoryProperty.set(item.isDirectory());
 
-            if (item instanceof LitematicFileItem fileItem && fileItem.getImage() != null) {
+            if (item instanceof SchematicItem fileItem && fileItem.getImage() != null) {
                 iconImageView.setImage(fileItem.getImage());
                 left.getChildren().setAll(iconImageView);
             } else {
