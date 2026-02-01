@@ -251,7 +251,7 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
 
             content.getTags().clear();
             if (modInfo.hasBundledMods()) {
-                content.addTag(i18n("mods.built_in") +" : "+modInfo.getBundledMods().size());
+                content.addTag(i18n("mods.built_in") + " : " + modInfo.getBundledMods().size());
             }
 
             String modVersion = modInfo.getVersion();
@@ -270,7 +270,7 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
         HBox header = new HBox(10);
         header.setAlignment(Pos.CENTER_LEFT);
 
-        Label titleLabel = new Label(i18n("mods.built_in")+" (" + bundledMods.size() + ")");
+        Label titleLabel = new Label(i18n("mods.built_in") + " (" + bundledMods.size() + ")");
         titleLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
 
         Region spacer = new Region();
