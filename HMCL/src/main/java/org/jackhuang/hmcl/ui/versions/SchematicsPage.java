@@ -29,7 +29,10 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Node;
-import javafx.scene.control.*;
+import javafx.scene.control.Label;
+import javafx.scene.control.Skin;
+import javafx.scene.control.SkinBase;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelWriter;
@@ -48,7 +51,10 @@ import org.jackhuang.hmcl.schematic.LitematicFile;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.ui.*;
+import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.ListPageBase;
+import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.nbt.NBTEditorPage;
 import org.jackhuang.hmcl.util.Lang;
@@ -134,9 +140,10 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                         if (currentDirectoryProperty().get() != null) {
                             loop:
                             for (String dirName : currentDirectoryProperty().get().relativePath) {
-                                for (Item child : target.children) {
-                                    if (child instanceof DirItem && child.getName().equals(dirName)) {
-                                        target = (DirItem) child;
+                                target.preLoad();
+                                for (var dirChild : target.dirChildren) {
+                                    if (dirChild.getName().equals(dirName)) {
+                                        target = dirChild;
                                         continue loop;
                                     }
                                 }
@@ -182,10 +189,9 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
     }
 
     public void onCreateDirectory() {
-        if (currentDirectoryProperty().get() == null)
-            return;
+        if (currentDirectoryProperty().get() == null) return;
 
-        Path parent = currentDirectoryProperty().get().path;
+        Path parent = currentDirectoryProperty().get().getPath();
         Controllers.dialog(new InputDialogPane(
                 i18n("schematics.create_directory.prompt"),
                 "",
@@ -283,6 +289,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         final Path path;
         final @Nullable DirItem parent;
         final List<Item> children = new ArrayList<>();
+        final List<DirItem> dirChildren = new ArrayList<>();
         final List<String> relativePath;
         int size = 0;
         boolean preLoaded = false;
@@ -328,8 +335,17 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         void preLoad() throws IOException {
             if (this.preLoaded) return;
             try (Stream<Path> stream = Files.list(path)) {
-                this.size = (int) stream.filter(p -> Files.isDirectory(p) || LitematicFile.isFileLitematic(p)).count();
+                stream.forEach(p -> {
+                    boolean b1 = Files.isDirectory(p);
+                    boolean b2 = LitematicFile.isFileLitematic(p);
+                    if (b1 || b2) this.size++;
+                    if (b1) {
+                        var child = new DirItem(p, this);
+                        this.dirChildren.add(child);
+                    }
+                });
             }
+            this.preLoaded = true;
         }
 
         void load() {
@@ -337,19 +353,18 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
             try (Stream<Path> stream = Files.list(path)) {
                 preLoad();
-                for (Path p : Lang.toIterable(stream)) {
-                    if (Files.isDirectory(p)) {
-                        var child = new DirItem(p, this);
-                        child.preLoad();
-                        this.children.add(child);
-                    } else if (LitematicFile.isFileLitematic(p)) {
-                        try {
-                            this.children.add(new LitematicFileItem(p));
-                        } catch (IOException e) {
-                            LOG.warning("Failed to load litematic file: " + path, e);
-                        }
-                    }
+                for (var dir : dirChildren) {
+                    dir.preLoad();
+                    this.children.add(dir);
                 }
+                stream.filter(LitematicFile::isFileLitematic)
+                        .forEach(p -> {
+                            try {
+                                this.children.add(new LitematicFileItem(p));
+                            } catch (IOException e) {
+                                LOG.warning("Failed to load litematic file: " + path, e);
+                            }
+                        });
             } catch (NoSuchFileException ignored) {
             } catch (IOException e) {
                 LOG.warning("Failed to load schematics in " + path, e);
