@@ -339,7 +339,7 @@ public abstract class Task<T> {
         return progress;
     }
 
-    private long lastUpdateProgressTime = Long.MIN_VALUE;
+    private long lastUpdateProgressTime = 0L;
 
     protected void updateProgress(long progress, long total) {
         updateProgress(1.0 * progress / total);
