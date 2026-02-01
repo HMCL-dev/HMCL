@@ -49,6 +49,8 @@ public class RipplerContainer extends StackPane {
 
     private final StackPane buttonContainer = new StackPane();
     private final JFXRippler buttonRippler = new JFXRippler(new StackPane()) {
+        private static final Background DEFAULT_MASK_BACKGROUND = new Background(new BackgroundFill(Color.WHITE, DEFAULT_RADII, Insets.EMPTY));
+
         @Override
         protected Node getMask() {
             StackPane mask = new StackPane();
@@ -58,13 +60,15 @@ public class RipplerContainer extends StackPane {
                         BackgroundFill fill = buttonContainer.getBackground() != null && !buttonContainer.getBackground().getFills().isEmpty()
                                 ? buttonContainer.getBackground().getFills().get(0)
                                 : null;
-                        return new Background(fill != null
-                                ? new BackgroundFill(Color.WHITE, fill.getRadii(), fill.getInsets())
-                                : new BackgroundFill(Color.WHITE, DEFAULT_RADII, Insets.EMPTY)
-                        );
+                        return fill != null
+                                ? new Background(new BackgroundFill(Color.WHITE, fill.getRadii(), fill.getInsets()))
+                                : DEFAULT_MASK_BACKGROUND;
                     },
                     buttonContainer.backgroundProperty()));
-            mask.resize(buttonContainer.getWidth() - buttonContainer.snappedRightInset() - buttonContainer.snappedLeftInset(), buttonContainer.getHeight() - buttonContainer.snappedBottomInset() - buttonContainer.snappedTopInset());
+            mask.resize(
+                    buttonContainer.getWidth() - buttonContainer.snappedRightInset() - buttonContainer.snappedLeftInset(),
+                    buttonContainer.getHeight() - buttonContainer.snappedBottomInset() - buttonContainer.snappedTopInset()
+            );
             return mask;
         }
     };
