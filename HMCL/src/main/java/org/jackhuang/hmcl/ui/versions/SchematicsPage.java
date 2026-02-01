@@ -23,6 +23,8 @@ import com.jfoenix.controls.JFXListView;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -60,6 +62,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
@@ -83,6 +86,9 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
     private Path schematicsDirectory;
     private DirItem currentDirectory;
 
+    private final StringProperty relativePathProperty = new SimpleStringProperty(this, "relativePath", "schematics");
+    private final BooleanProperty isRootProperty = new SimpleBooleanProperty(this, "isRoot", true);
+
     public SchematicsPage() {
         FXUtils.applyDragListener(this,
                 file -> currentDirectory != null && Files.isRegularFile(file) && FileUtils.getName(file).endsWith(".litematic"),
@@ -102,6 +108,18 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         refresh();
     }
 
+    public BooleanProperty isRootProperty() {
+        return isRootProperty;
+    }
+
+    public StringProperty relativePathProperty() {
+        return relativePathProperty;
+    }
+
+    public void navigateBack() {
+        if (currentDirectory.parent != null) navigateTo(currentDirectory.parent);
+    }
+
     public void refresh() {
         Path schematicsDirectory = this.schematicsDirectory;
         if (schematicsDirectory == null) return;
@@ -114,9 +132,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                         DirItem target = result;
                         if (currentDirectory != null) {
                             loop:
-                            for (int i = 0; i < currentDirectory.relativePath.size(); i++) {
-                                String dirName = currentDirectory.relativePath.get(i);
-
+                            for (String dirName : currentDirectory.relativePath) {
                                 for (Item child : target.children) {
                                     if (child instanceof DirItem && child.getName().equals(dirName)) {
                                         target = (DirItem) child;
@@ -201,7 +217,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
     }
 
     public void onRevealSchematicsFolder() {
-        FXUtils.openFolder(schematicsDirectory);
+        FXUtils.openFolder(Objects.requireNonNullElse(currentDirectory.path, schematicsDirectory));
     }
 
     private DirItem loadRoot(Path dir) {
@@ -212,14 +228,18 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
     private void navigateTo(DirItem item) {
         currentDirectory = item;
+        if (item.relativePath.isEmpty()) {
+            relativePathProperty().set("schematics");
+        } else {
+            relativePathProperty().set(item.relativePath.stream().collect(Collectors.joining("/", "schematics/", "")));
+        }
+        isRootProperty().set(currentDirectory.parent == null);
         setLoading(true);
         Task.runAsync(item::load).whenComplete(Schedulers.javafx(), exception -> {
-            getItems().clear();
-            if (item.parent != null) {
-                getItems().add(new BackItem(item.parent));
+            if (currentDirectory == item) {
+                getItems().setAll(item.children);
+                setLoading(false);
             }
-            getItems().addAll(item.children);
-            setLoading(false);
         }).start();
     }
 
@@ -262,55 +282,6 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         }
     }
 
-    private final class BackItem extends Item {
-
-        private final DirItem parent;
-
-        BackItem(DirItem parent) {
-            this.parent = parent;
-        }
-
-        @Override
-        int order() {
-            return 0;
-        }
-
-        @Override
-        Path getPath() {
-            return null;
-        }
-
-        @Override
-        String getName() {
-            return "..";
-        }
-
-        @Override
-        String getDescription() {
-            return i18n("schematics.back_to", parent.getName());
-        }
-
-        @Override
-        SVG getIcon() {
-            return SVG.FOLDER;
-        }
-
-        @Override
-        void onClick() {
-            navigateTo(parent);
-        }
-
-        @Override
-        void onReveal() {
-            throw new UnsupportedOperationException("Unreachable");
-        }
-
-        @Override
-        void onDelete() {
-            throw new UnsupportedOperationException("Unreachable");
-        }
-    }
-
     private final class DirItem extends Item {
         final Path path;
         final @Nullable DirItem parent;
@@ -334,7 +305,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
         @Override
         int order() {
-            return 1;
+            return 0;
         }
 
         @Override
@@ -421,7 +392,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             this.file = file;
 
             String name = file.getName();
-            if (name != null && !"Unnamed".equals(name)) {
+            if (StringUtils.isNotBlank(name) && !"Unnamed".equals(name)) {
                 this.name = name;
             } else {
                 this.name = FileUtils.getNameWithoutExtension(file.getFile());
@@ -448,7 +419,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
         @Override
         int order() {
-            return 2;
+            return 1;
         }
 
         @Override
@@ -587,8 +558,8 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         private final SVGPath iconSVG;
         private final StackPane iconSVGWrapper;
 
-        private final BooleanProperty fileProperty = new SimpleBooleanProperty(this, "isFile", false);
-        private final BooleanProperty directoryProperty = new SimpleBooleanProperty(this, "isDirectory", false);
+        private final BooleanProperty isFileProperty = new SimpleBooleanProperty(this, "isFile", false);
+        private final BooleanProperty isDirectoryProperty = new SimpleBooleanProperty(this, "isDirectory", false);
 
         private final Tooltip tooltip = new Tooltip();
 
@@ -630,12 +601,11 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 {
                     var fo = SVG.FOLDER_OPEN.createIcon();
                     var f = SVG.FOLDER.createIcon();
-                    btnReveal.graphicProperty().bind(directoryProperty.map(b -> b ? fo : f));
+                    btnReveal.graphicProperty().bind(isDirectoryProperty.map(b -> b ? fo : f));
                 }
                 btnReveal.setOnAction(event -> {
                     Item item = getItem();
-                    if (item != null && !(item instanceof BackItem))
-                        item.onReveal();
+                    if (item != null) item.onReveal();
                 });
 
                 JFXButton btnEdit = new JFXButton();
@@ -646,18 +616,18 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                     if (item instanceof LitematicFileItem) {
                         try {
                             Controllers.navigate(new NBTEditorPage(item.getPath()));
-                        } catch (IOException ignored) {
+                        } catch (IOException ignored) { // Should be impossible
                         }
                     }
                 });
-                btnEdit.visibleProperty().bind(fileProperty);
+                btnEdit.visibleProperty().bind(isFileProperty);
 
                 JFXButton btnDelete = new JFXButton();
                 btnDelete.getStyleClass().add("toggle-icon4");
                 btnDelete.setGraphic(SVG.DELETE_FOREVER.createIcon());
                 btnDelete.setOnAction(event -> {
                     Item item = getItem();
-                    if (item != null && !(item instanceof BackItem)) {
+                    if (item != null) {
                         Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"),
                                 item::onDelete, null);
                     }
@@ -681,8 +651,8 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
             iconImageView.setImage(null);
 
-            fileProperty.set(item instanceof LitematicFileItem);
-            directoryProperty.set(item.isDirectory());
+            isFileProperty.set(item instanceof LitematicFileItem);
+            isDirectoryProperty.set(item.isDirectory());
 
             if (item instanceof LitematicFileItem fileItem && fileItem.getImage() != null) {
                 iconImageView.setImage(fileItem.getImage());
@@ -702,8 +672,6 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             } else {
                 Tooltip.uninstall(left, tooltip);
             }
-
-            right.setVisible(!(item instanceof BackItem));
         }
     }
 
@@ -725,13 +693,26 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
             {
                 var toolbar = new HBox();
+                JFXButton btnGoBack = createToolbarButton2("", SVG.ARROW_BACK, skinnable::navigateBack);
+                btnGoBack.disableProperty().bind(skinnable.isRootProperty());
                 toolbar.getChildren().setAll(
+                        btnGoBack,
                         createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
                         createToolbarButton2(i18n("schematics.add"), SVG.ADD, skinnable::onAddFiles),
                         createToolbarButton2(i18n("schematics.create_directory"), SVG.CREATE_NEW_FOLDER, skinnable::onCreateDirectory),
                         createToolbarButton2(i18n("button.reveal_dir"), SVG.FOLDER_OPEN, skinnable::onRevealSchematicsFolder)
                 );
                 root.getContent().add(toolbar);
+            }
+
+            {
+                var relPath = new Label();
+                relPath.setStyle("-fx-font-size: 13");
+                HBox.setMargin(relPath, new Insets(4, 0, 4, 5));
+                relPath.textProperty().bind(skinnable.relativePathProperty());
+                var relPathPane = new HBox(relPath);
+                relPathPane.setAlignment(Pos.CENTER_LEFT);
+                root.getContent().add(relPathPane);
             }
 
             {
