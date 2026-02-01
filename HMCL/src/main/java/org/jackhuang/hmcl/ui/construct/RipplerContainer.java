@@ -57,12 +57,14 @@ public class RipplerContainer extends StackPane {
             mask.shapeProperty().bind(buttonContainer.shapeProperty());
             mask.backgroundProperty().bind(Bindings.createObjectBinding(
                     () -> {
-                        BackgroundFill fill = buttonContainer.getBackground() != null && !buttonContainer.getBackground().getFills().isEmpty()
-                                ? buttonContainer.getBackground().getFills().get(0)
-                                : null;
-                        return fill != null
-                                ? new Background(new BackgroundFill(Color.WHITE, fill.getRadii(), fill.getInsets()))
-                                : DEFAULT_MASK_BACKGROUND;
+                        if (buttonContainer.getBackground() == null || buttonContainer.getBackground().getFills().isEmpty())
+                            return DEFAULT_MASK_BACKGROUND;
+                        else {
+                            BackgroundFill fill = buttonContainer.getBackground().getFills().get(0);
+                            return fill != null
+                                    ? new Background(new BackgroundFill(Color.WHITE, fill.getRadii(), fill.getInsets()))
+                                    : DEFAULT_MASK_BACKGROUND;
+                        }
                     },
                     buttonContainer.backgroundProperty()));
             mask.resize(
