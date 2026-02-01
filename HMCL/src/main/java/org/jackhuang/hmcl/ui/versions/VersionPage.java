@@ -241,10 +241,75 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
             {
                 AdvancedListBox sideBar = new AdvancedListBox()
                         .addNavigationDrawerTab(control.tab, control.versionSettingsTab, i18n("settings.game"), SVG.SETTINGS, SVG.SETTINGS_FILL)
-                        .addNavigationDrawerTab(control.tab, control.installerListTab, i18n("settings.tabs.installers"), SVG.DEPLOYED_CODE, SVG.DEPLOYED_CODE_FILL)
-                        .addNavigationDrawerTab(control.tab, control.modListTab, i18n("mods.manage"), SVG.EXTENSION, SVG.EXTENSION_FILL)
-                        .addNavigationDrawerTab(control.tab, control.builtInModListTab, "内置模组", SVG.EXTENSION, SVG.EXTENSION_FILL)
-                        .addNavigationDrawerTab(control.tab, control.resourcePackTab, i18n("resourcepack.manage"), SVG.TEXTURE)
+                        .addNavigationDrawerTab(control.tab, control.installerListTab, i18n("settings.tabs.installers"), SVG.DEPLOYED_CODE, SVG.DEPLOYED_CODE_FILL);
+
+                BooleanProperty isExpanded = new SimpleBooleanProperty(false);
+
+                AdvancedListItem modListItem = new AdvancedListItem();
+                modListItem.getStyleClass().add("navigation-drawer-item");
+                modListItem.setTitle(i18n("mods.manage"));
+                modListItem.setActionButtonVisible(true);
+
+                {
+                    Node unselectedIcon = SVG.EXTENSION.createIcon(20);
+                    Node selectedIcon = SVG.EXTENSION_FILL.createIcon(20);
+                    TransitionPane leftGraphic = new TransitionPane();
+                    leftGraphic.setAlignment(Pos.CENTER);
+                    FXUtils.setLimitWidth(leftGraphic, 30);
+                    FXUtils.setLimitHeight(leftGraphic, 20);
+                    leftGraphic.setPadding(Insets.EMPTY);
+
+                    modListItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.modListTab));
+
+                    leftGraphic.setContent(modListItem.isActive() ? selectedIcon : unselectedIcon, ContainerAnimations.NONE);
+                    FXUtils.onChange(modListItem.activeProperty(), active ->
+                            leftGraphic.setContent(active ? selectedIcon : unselectedIcon, ContainerAnimations.FADE));
+                    modListItem.setLeftGraphic(leftGraphic);
+                }
+
+                StackPane arrowContainer = new StackPane();
+                FXUtils.setLimitWidth(arrowContainer, 40);
+                arrowContainer.setCursor(Cursor.HAND);
+
+                Node arrowIcon = SVG.KEYBOARD_ARROW_DOWN.createIcon();
+                arrowIcon.rotateProperty().bind(Bindings.when(isExpanded).then(180).otherwise(0));
+                arrowContainer.getChildren().add(arrowIcon);
+
+                arrowContainer.setOnMouseClicked(e -> {
+                    isExpanded.set(!isExpanded.get());
+                    e.consume();
+                });
+                modListItem.setRightGraphic(arrowContainer);
+
+                modListItem.setOnAction(e -> control.tab.select(control.modListTab));
+                sideBar.add(modListItem);
+
+                AdvancedListItem jijListItem = new AdvancedListItem();
+                jijListItem.getStyleClass().add("navigation-drawer-item");
+                jijListItem.setActionButtonVisible(false);
+                jijListItem.setTitle("内置模组"); // 如果有语言文件 Key，建议替换为 i18n("mods.built_in")
+
+                jijListItem.setPadding(new Insets(0, 0, 0, 15));
+
+                // 设置一个空白的左侧图标占位，确保文字对齐
+                Region blankIcon = new Region();
+                FXUtils.setLimitWidth(blankIcon, 30);
+                jijListItem.setLeftGraphic(blankIcon);
+
+                jijListItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.builtInModListTab));
+                jijListItem.setOnAction(e -> control.tab.select(control.builtInModListTab));
+
+                jijListItem.visibleProperty().bind(isExpanded);
+                jijListItem.managedProperty().bind(isExpanded);
+                sideBar.add(jijListItem);
+
+                FXUtils.onChange(control.tab.getSelectionModel().selectedItemProperty(), tab -> {
+                    if (tab == control.builtInModListTab) {
+                        isExpanded.set(true);
+                    }
+                });
+
+                sideBar.addNavigationDrawerTab(control.tab, control.resourcePackTab, i18n("resourcepack.manage"), SVG.TEXTURE)
                         .addNavigationDrawerTab(control.tab, control.worldListTab, i18n("world.manage"), SVG.PUBLIC)
                         .addNavigationDrawerTab(control.tab, control.schematicsTab, i18n("schematics.manage"), SVG.SCHEMA, SVG.SCHEMA_FILL);
                 VBox.setVgrow(sideBar, Priority.ALWAYS);
