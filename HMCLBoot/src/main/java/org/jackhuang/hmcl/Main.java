@@ -133,7 +133,6 @@ public final class Main {
         if (protectionDomain == null) return null;
 
         CodeSource codeSource = protectionDomain.getCodeSource();
-
         if (codeSource == null) return null;
 
         Path path;
@@ -142,7 +141,9 @@ public final class Main {
         } catch (FileSystemNotFoundException | IllegalArgumentException | URISyntaxException e) {
             path = null;
         }
-        return (path != null && Files.isRegularFile(path)) ? path : null;
+        return path != null && Files.isRegularFile(path)
+                ? path
+                : null;
 
     }
 
