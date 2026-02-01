@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXRippler;
 import javafx.animation.Transition;
-import javafx.beans.binding.Bindings;
 import javafx.css.*;
 import javafx.css.converter.PaintConverter;
 import javafx.event.EventHandler;
@@ -55,18 +54,19 @@ public class RipplerContainer extends StackPane {
         protected Node getMask() {
             StackPane mask = new StackPane();
             mask.shapeProperty().bind(buttonContainer.shapeProperty());
-            mask.backgroundProperty().bind(Bindings.createObjectBinding(
-                    () -> {
-                        if (buttonContainer.getBackground() == null || buttonContainer.getBackground().getFills().isEmpty())
-                            return DEFAULT_MASK_BACKGROUND;
-                        else {
-                            BackgroundFill fill = buttonContainer.getBackground().getFills().get(0);
-                            return fill != null
-                                    ? new Background(new BackgroundFill(Color.WHITE, fill.getRadii(), fill.getInsets()))
-                                    : DEFAULT_MASK_BACKGROUND;
-                        }
-                    },
-                    buttonContainer.backgroundProperty()));
+            mask.setBackground(DEFAULT_MASK_BACKGROUND);
+//            mask.backgroundProperty().bind(Bindings.createObjectBinding(
+//                    () -> {
+//                        if (buttonContainer.getBackground() == null || buttonContainer.getBackground().getFills().isEmpty())
+//                            return DEFAULT_MASK_BACKGROUND;
+//                        else {
+//                            BackgroundFill fill = buttonContainer.getBackground().getFills().get(0);
+//                            return fill != null
+//                                    ? new Background(new BackgroundFill(Color.WHITE, fill.getRadii(), fill.getInsets()))
+//                                    : DEFAULT_MASK_BACKGROUND;
+//                        }
+//                    },
+//                    buttonContainer.backgroundProperty()));
             mask.resize(
                     buttonContainer.getWidth() - buttonContainer.snappedRightInset() - buttonContainer.snappedLeftInset(),
                     buttonContainer.getHeight() - buttonContainer.snappedBottomInset() - buttonContainer.snappedTopInset()
