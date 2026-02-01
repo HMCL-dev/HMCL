@@ -37,10 +37,14 @@ import org.jackhuang.hmcl.ui.animation.Motion;
 
 /// @author Glavo
 final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
+    private VBox container;
+
     private Animation expandAnimation;
     private boolean expanded = false;
 
     ComponentSublistWrapper(ComponentList list) {
+        boolean noPadding = list instanceof ComponentSublist subList && !subList.hasComponentPadding();
+
         Node expandIcon = SVG.KEYBOARD_ARROW_DOWN.createIcon(20);
         expandIcon.setMouseTransparent(true);
         HBox.setMargin(expandIcon, new Insets(0, 8, 0, 8));
@@ -85,16 +89,6 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
         RipplerContainer headerRippler = new RipplerContainer(header);
         this.getChildren().add(headerRippler);
 
-        VBox container = new VBox();
-        boolean noPadding = list instanceof ComponentSublist subList && !subList.hasComponentPadding();
-        if (!noPadding) {
-            container.setPadding(new Insets(8, 16, 10, 16));
-        }
-        FXUtils.setLimitHeight(container, 0);
-        FXUtils.setOverflowHidden(container);
-        container.getChildren().setAll(list);
-        this.getChildren().add(container);
-
         headerRippler.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
             if (event.getButton() != MouseButton.PRIMARY)
                 return;
@@ -110,7 +104,22 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
             if (expanded) {
                 if (list instanceof ComponentSublist sublist)
                     sublist.doLazyInit();
-                list.layout();
+
+                if (container == null) {
+                    this.container = new VBox();
+
+                    if (!noPadding) {
+                        container.setPadding(new Insets(8, 16, 10, 16));
+                    }
+                    FXUtils.setLimitHeight(container, 0);
+                    FXUtils.setOverflowHidden(container);
+                    container.getChildren().setAll(list);
+                    ComponentSublistWrapper.this.getChildren().add(container);
+
+                    this.applyCss();
+                }
+
+                this.layout();
             }
 
             Platform.runLater(() -> {
