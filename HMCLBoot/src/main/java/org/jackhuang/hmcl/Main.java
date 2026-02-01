@@ -127,10 +127,12 @@ public final class Main {
 
     private static String getThisJarPath() {
         ProtectionDomain protectionDomain = Main.class.getProtectionDomain();
-        if (protectionDomain == null) return null;
+        if (protectionDomain == null)
+            return null;
 
         CodeSource codeSource = protectionDomain.getCodeSource();
-        if (codeSource == null) return null;
+        if (codeSource == null)
+            return null;
 
         try {
             return Paths.get(codeSource.getLocation().toURI()).toAbsolutePath().normalize().toString();
