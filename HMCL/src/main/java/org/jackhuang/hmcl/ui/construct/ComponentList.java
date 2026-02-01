@@ -56,8 +56,6 @@ public class ComponentList extends Control implements NoPaddingComponent {
         this.depth.set(depth);
     }
 
-
-
     public ObservableList<Node> getContent() {
         return content;
     }
