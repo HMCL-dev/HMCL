@@ -20,6 +20,7 @@ package org.jackhuang.hmcl.schematic;
 import com.github.steveice10.opennbt.NBTIO;
 import com.github.steveice10.opennbt.tag.builtin.*;
 import javafx.geometry.Point3D;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,12 +52,21 @@ public final class LitematicFile {
         return tag instanceof StringTag ? ((StringTag) tag).getValue() : null;
     }
 
-    public static LitematicFile load(Path file) throws IOException {
+    public static boolean isFileLitematic(Path path) {
+        return "litematic".equals(FileUtils.getExtension(path)) && Files.isRegularFile(path);
+    }
 
+    public static CompoundTag readRoot(Path file) throws IOException {
         CompoundTag root;
         try (InputStream in = new GZIPInputStream(Files.newInputStream(file))) {
             root = (CompoundTag) NBTIO.readTag(in);
         }
+        return root;
+    }
+
+    public static LitematicFile load(Path file) throws IOException {
+
+        CompoundTag root = readRoot(file);
 
         Tag versionTag = root.get("Version");
         if (versionTag == null)
