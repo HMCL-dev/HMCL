@@ -36,6 +36,7 @@ import org.glavo.monetfx.beans.property.ColorSchemeProperty;
 import org.glavo.monetfx.beans.property.ReadOnlyColorSchemeProperty;
 import org.glavo.monetfx.beans.property.SimpleColorSchemeProperty;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.ui.WindowsNativeUtils;
 import org.jackhuang.hmcl.util.platform.NativeUtils;
 import org.jackhuang.hmcl.util.platform.OSVersion;
@@ -46,9 +47,12 @@ import org.jackhuang.hmcl.util.platform.windows.WinConstants;
 import org.jackhuang.hmcl.util.platform.windows.WinReg;
 import org.jackhuang.hmcl.util.platform.windows.WinTypes;
 
+import java.nio.file.Path;
+import java.time.Duration;
 import java.util.*;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// @author Glavo
 public final class Themes {
@@ -113,6 +117,7 @@ public final class Themes {
         if (defaultBrightness != null)
             return defaultBrightness;
 
+        LOG.info("Detecting system theme brightness");
         Brightness brightness = Brightness.DEFAULT;
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
             WinReg reg = WinReg.INSTANCE;
@@ -130,7 +135,38 @@ public final class Themes {
                 // If the key does not exist, it means Light mode is used
                 brightness = Brightness.LIGHT;
             }
+        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
+            Path dbusSend = SystemUtils.which("dbus-send");
+            if (dbusSend != null) {
+                try {
+                    String[] result = SystemUtils.run(List.of(
+                            FileUtils.getAbsolutePath(dbusSend),
+                            "--session",
+                            "--print-reply=literal",
+                            "--reply-timeout=1000",
+                            "--dest=org.freedesktop.portal.Desktop",
+                            "/org/freedesktop/portal/desktop",
+                            "org.freedesktop.portal.Settings.Read",
+                            "string:org.freedesktop.appearance",
+                            "string:color-scheme"
+                    ), Duration.ofSeconds(2)).trim().split(" ");
+
+                    if (result.length > 0) {
+                        String value = result[result.length - 1];
+                        // 1: prefer dark
+                        // 2: prefer light
+                        if ("1".equals(value)) {
+                            brightness = Brightness.DARK;
+                        } else if ("2".equals(value)) {
+                            brightness = Brightness.LIGHT;
+                        }
+                    }
+                } catch (Exception e) {
+                    LOG.warning("Failed to get system theme from D-Bus", e);
+                }
+            }
         }
+        LOG.info("Detected system theme brightness: " + brightness);
 
         return defaultBrightness = brightness;
     }
