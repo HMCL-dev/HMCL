@@ -18,12 +18,19 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXPopup;
+import javafx.animation.RotateTransition;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.EventPriority;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
@@ -33,6 +40,7 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
+import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
@@ -272,7 +280,16 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                 arrowContainer.setCursor(Cursor.HAND);
 
                 Node arrowIcon = SVG.KEYBOARD_ARROW_DOWN.createIcon();
-                arrowIcon.rotateProperty().bind(Bindings.when(isExpanded).then(180).otherwise(0));
+                // 设置初始角度，不使用绑定
+                arrowIcon.setRotate(isExpanded.get() ? 180 : 0);
+
+                // 添加旋转动画监听
+                FXUtils.onChange(isExpanded, expanded -> {
+                    RotateTransition rt = new RotateTransition(Duration.millis(200), arrowIcon);
+                    rt.setToAngle(expanded ? 180 : 0);
+                    rt.play();
+                });
+
                 arrowContainer.getChildren().add(arrowIcon);
 
                 arrowContainer.setOnMouseClicked(e -> {
@@ -291,10 +308,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
 
                 jijListItem.setPadding(new Insets(0, 0, 0, 15));
 
-                // 设置一个空白的左侧图标占位，确保文字对齐
-                Region blankIcon = new Region();
-                FXUtils.setLimitWidth(blankIcon, 30);
-                jijListItem.setLeftGraphic(blankIcon);
+                jijListItem.setLeftGraphic(SVG.STACKS.createIcon(20));
 
                 jijListItem.activeProperty().bind(control.tab.getSelectionModel().selectedItemProperty().isEqualTo(control.builtInModListTab));
                 jijListItem.setOnAction(e -> control.tab.select(control.builtInModListTab));

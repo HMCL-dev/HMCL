@@ -120,7 +120,7 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
             // Toolbar Normal
             toolbarNormal.getChildren().addAll(
                     createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
-                    createToolbarButton2("导出全部 JIJ 信息", SVG.DOWNLOAD, () -> exportAllJijList(listView.getItems())),
+                    createToolbarButton2("导出全部 JIJ 信息", SVG.FILE_EXPORT, () -> exportAllJijList(listView.getItems())),
                     createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar))
             );
 
@@ -280,7 +280,7 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
         JFXButton exportButton = new JFXButton();
-        exportButton.setGraphic(FXUtils.limitingSize(SVG.DOWNLOAD.createIcon(18), 18, 18));
+        exportButton.setGraphic(FXUtils.limitingSize(SVG.FILE_EXPORT.createIcon(18), 18, 18));
         exportButton.getStyleClass().add("toggle-icon4");
         FXUtils.installFastTooltip(exportButton, "导出JIJ信息");
 
