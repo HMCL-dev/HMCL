@@ -40,6 +40,7 @@ import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.RemoteModRepository;
+import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.setting.DownloadProviders;
 import org.jackhuang.hmcl.setting.Profile;
@@ -71,6 +72,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
     protected final ReadOnlyObjectWrapper<State> state = new ReadOnlyObjectWrapper<>();
     private final BooleanProperty loading = new SimpleBooleanProperty(false);
     private final BooleanProperty failed = new SimpleBooleanProperty(false);
+    private final StringProperty failedReason = new SimpleStringProperty("");
     private final boolean versionSelection;
     private final ObjectProperty<Profile.ProfileVersion> version = new SimpleObjectProperty<>();
     private final IntegerProperty pageOffset = new SimpleIntegerProperty(0);
@@ -160,6 +162,17 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         setFailed(false);
 
         int currentSearchID = searchID = searchID + 1;
+        boolean isCurseforge = repository instanceof CurseForgeRemoteModRepository ||
+                (repository instanceof HMCLLocalizedDownloadListPage.Repository r
+                        &&
+                        r.getBackedRemoteModRepository() instanceof CurseForgeRemoteModRepository);
+        if (!CurseForgeRemoteModRepository.isAvailable() && isCurseforge) {
+            failedReason.set(i18n("download.curseforge.unavailable"));
+            setLoading(false);
+            failed.set(true);
+            return;
+        }
+
         Task.supplyAsync(() -> {
             Profile.ProfileVersion version = this.version.get();
             if (StringUtils.isBlank(version.getVersion())) {
@@ -183,6 +196,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 failed.set(false);
             } else {
                 failed.set(true);
+                failedReason.set("");
                 pageCount.set(-1);
                 retrySearch = () -> search(userGameVersion, category, pageOffset, searchFilter, sort);
             }
@@ -508,7 +522,8 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 spinnerPane.loadingProperty().bind(getSkinnable().loadingProperty());
                 spinnerPane.failedReasonProperty().bind(Bindings.createStringBinding(() -> {
                     if (getSkinnable().isFailed()) {
-                        return i18n("download.failed.refresh");
+                        String reason = getSkinnable().failedReason.get();
+                        return reason.isEmpty() ? i18n("download.failed.refresh") : reason;
                     } else {
                         return null;
                     }
