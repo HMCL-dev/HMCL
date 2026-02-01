@@ -55,18 +55,6 @@ public class RipplerContainer extends StackPane {
             StackPane mask = new StackPane();
             mask.shapeProperty().bind(buttonContainer.shapeProperty());
             mask.setBackground(DEFAULT_MASK_BACKGROUND);
-//            mask.backgroundProperty().bind(Bindings.createObjectBinding(
-//                    () -> {
-//                        if (buttonContainer.getBackground() == null || buttonContainer.getBackground().getFills().isEmpty())
-//                            return DEFAULT_MASK_BACKGROUND;
-//                        else {
-//                            BackgroundFill fill = buttonContainer.getBackground().getFills().get(0);
-//                            return fill != null
-//                                    ? new Background(new BackgroundFill(Color.WHITE, fill.getRadii(), fill.getInsets()))
-//                                    : DEFAULT_MASK_BACKGROUND;
-//                        }
-//                    },
-//                    buttonContainer.backgroundProperty()));
             mask.resize(
                     buttonContainer.getWidth() - buttonContainer.snappedRightInset() - buttonContainer.snappedLeftInset(),
                     buttonContainer.getHeight() - buttonContainer.snappedBottomInset() - buttonContainer.snappedTopInset()
@@ -160,13 +148,14 @@ public class RipplerContainer extends StackPane {
     }
 
     protected void updateChildren() {
-        if (buttonRippler.getPosition() == JFXRippler.RipplerPos.BACK)
-            getChildren().setAll(buttonContainer, getContainer());
-        else
-            getChildren().setAll(getContainer(), buttonContainer);
-
-        for (int i = 1; i < getChildren().size(); ++i)
-            getChildren().get(i).setPickOnBounds(false);
+        Node container = getContainer();
+        if (buttonRippler.getPosition() == JFXRippler.RipplerPos.BACK) {
+            getChildren().setAll(buttonContainer, container);
+            container.setPickOnBounds(false);
+        } else {
+            getChildren().setAll(container, buttonContainer);
+            buttonContainer.setPickOnBounds(false);
+        }
     }
 
     public void setPosition(JFXRippler.RipplerPos pos) {
