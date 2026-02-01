@@ -156,13 +156,9 @@ public final class OptionsList extends Control {
 
         @Override
         protected Node createNode() {
-            HBox node = new HBox();
-            node.setAlignment(Pos.CENTER_LEFT);
-            node.setPadding(new Insets(8, 0, 8, 0));
-
-            Label advanced = new Label(title);
-            node.getChildren().setAll(advanced);
-            return node;
+            Label label = new Label(title);
+            label.setPadding(new Insets(8, 0, 8, 0));
+            return label;
         }
 
         @Override
