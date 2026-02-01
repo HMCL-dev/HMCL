@@ -32,11 +32,12 @@ import javafx.scene.layout.*;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
 public class ComponentList extends Control implements NoPaddingComponent {
-    public final ObservableList<Node> content = FXCollections.observableArrayList();
 
     public ComponentList() {
         getStyleClass().add("options-list");
     }
+
+    private final ObservableList<Node> content = FXCollections.observableArrayList();
 
     public ObservableList<Node> getContent() {
         return content;
@@ -66,6 +67,8 @@ public class ComponentList extends Control implements NoPaddingComponent {
             list = MappedObservableList.create(control.getContent(), node -> {
                 Pane wrapper;
                 if (node instanceof ComponentSublist sublist) {
+                    sublist.getStyleClass().remove("options-list");
+                    sublist.getStyleClass().add("options-sublist");
                     wrapper = new ComponentSublistWrapper(sublist);
                 } else {
                     wrapper = new StackPane(node);

@@ -29,12 +29,9 @@ public class ComponentSublist extends ComponentList {
 
     public ComponentSublist() {
         super();
-        this.getStyleClass().remove("options-list");
-        this.getStyleClass().add("options-sublist");
     }
 
     public ComponentSublist(Supplier<List<? extends Node>> lazyInitializer) {
-        this();
         this.lazyInitializer = lazyInitializer;
     }
 
