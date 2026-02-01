@@ -263,7 +263,7 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
         VBox root = new VBox(10);
         root.setPadding(new Insets(15));
         root.setMaxHeight(400);
-        root.setStyle("-fx-background-color: -fx-control-inner-background; -fx-text-fill: -fx-text-inner-color;");
+        root.getStyleClass().add("card-pane");
 
         HBox header = new HBox(10);
         header.setAlignment(Pos.CENTER_LEFT);
@@ -302,7 +302,6 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
 
                     Label tag = new Label(name);
                     tag.setStyle("-fx-background-color: -fx-background; " +
-                            "-fx-text-fill: -fx-text-base-color; " +
                             "-fx-padding: 4 8; " +
                             "-fx-background-radius: 4; " +
                             "-fx-border-color: -fx-box-border; " +
