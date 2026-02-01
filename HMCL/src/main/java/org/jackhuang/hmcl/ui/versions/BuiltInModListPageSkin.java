@@ -21,6 +21,9 @@ import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXPopup;
 import com.jfoenix.controls.JFXTextField;
+import javafx.animation.PauseTransition;
+import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -31,13 +34,18 @@ import javafx.scene.control.Tooltip;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
+import javafx.util.Duration;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
+import org.jackhuang.hmcl.ui.animation.TransitionPane;
+import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.MDListCell;
+import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -49,46 +57,129 @@ import java.nio.file.Files;
 import java.util.List;
 import java.util.Locale;
 import java.util.StringJoiner;
+import java.util.function.Predicate;
 
+import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
 
+    private final TransitionPane toolbarPane;
+    private final HBox searchBar;
+    private final HBox toolbarNormal;
+
     private final JFXListView<ModListPageSkin.ModInfoObject> listView;
-    private final HBox toolbar;
+    private final JFXTextField searchField;
+
+    private boolean isSearching = false;
 
     protected BuiltInModListPageSkin(BuiltInModListPage skinnable) {
         super(skinnable);
 
-        StackPane rootPane = new StackPane();
-        rootPane.setPadding(new Insets(10));
-        rootPane.getStyleClass().add("notice-pane");
+        StackPane pane = new StackPane();
+        pane.setPadding(new Insets(10));
+        pane.getStyleClass().addAll("notice-pane");
 
-        VBox contentBox = new VBox();
-        contentBox.setSpacing(10);
-
+        ComponentList root = new ComponentList();
+        root.getStyleClass().add("no-padding");
         listView = new JFXListView<>();
-        toolbar = new HBox();
-        toolbar.getChildren().addAll(
-                createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
-                createToolbarButton2("导出全部 JIJ 信息", SVG.DOWNLOAD, () -> exportAllJijList(listView.getItems())),
-                createToolbarButton2(i18n("search"), SVG.SEARCH, () -> {
-                    // 搜索功能预留
-                })
-        );
 
-        listView.setItems(skinnable.getItems());
+        {
+            toolbarPane = new TransitionPane();
 
-        VBox.setVgrow(listView, Priority.ALWAYS);
+            searchBar = new HBox();
+            toolbarNormal = new HBox();
 
-        listView.setCellFactory(param -> new JijModListCell(listView));
+            // Search Bar
+            searchBar.setAlignment(Pos.CENTER);
+            searchBar.setPadding(new Insets(0, 5, 0, 5));
+            searchField = new JFXTextField();
+            searchField.setPromptText(i18n("search"));
+            HBox.setHgrow(searchField, Priority.ALWAYS);
+            PauseTransition pause = new PauseTransition(Duration.millis(100));
+            pause.setOnFinished(e -> search());
+            searchField.textProperty().addListener((observable, oldValue, newValue) -> {
+                pause.setRate(1);
+                pause.playFromStart();
+            });
 
-        contentBox.getChildren().addAll(toolbar, listView);
-        rootPane.getChildren().add(contentBox);
+            JFXButton closeSearchBar = createToolbarButton2(null, SVG.CLOSE,
+                    () -> {
+                        changeToolbar(toolbarNormal);
+                        isSearching = false;
+                        searchField.clear();
+                        Bindings.bindContent(listView.getItems(), getSkinnable().getItems());
+                    });
 
-        getChildren().add(rootPane);
+            onEscPressed(searchField, closeSearchBar::fire);
+
+            searchBar.getChildren().setAll(searchField, closeSearchBar);
+
+            // Toolbar Normal
+            toolbarNormal.getChildren().addAll(
+                    createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
+                    createToolbarButton2("导出全部 JIJ 信息", SVG.DOWNLOAD, () -> exportAllJijList(listView.getItems())),
+                    createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar))
+            );
+
+            root.getContent().add(toolbarPane);
+            changeToolbar(toolbarNormal);
+        }
+
+        {
+            SpinnerPane center = new SpinnerPane();
+            ComponentList.setVgrow(center, Priority.ALWAYS);
+            center.getStyleClass().add("large-spinner-pane");
+            center.loadingProperty().bind(skinnable.loadingProperty());
+
+            // 修复：不要直接设置 Items，否则 Bindings.bindContent 会导致 "Cannot bind object to itself"
+            // listView.setItems(skinnable.getItems());
+
+            listView.setCellFactory(param -> new JijModListCell(listView));
+            Bindings.bindContent(listView.getItems(), skinnable.getItems());
+
+            center.setContent(listView);
+            root.getContent().add(center);
+        }
+
+        pane.getChildren().add(root);
+        getChildren().add(pane);
+    }
+
+    private void changeToolbar(HBox newToolbar) {
+        Node oldToolbar = toolbarPane.getCurrentNode();
+        if (newToolbar != oldToolbar) {
+            toolbarPane.setContent(newToolbar, ContainerAnimations.FADE);
+            if (newToolbar == searchBar) {
+                Platform.runLater(searchField::requestFocus);
+            }
+        }
+    }
+
+    private void search() {
+        isSearching = true;
+        Bindings.unbindContent(listView.getItems(), getSkinnable().getItems());
+
+        String queryString = searchField.getText();
+        if (StringUtils.isBlank(queryString)) {
+            listView.getItems().setAll(getSkinnable().getItems());
+        } else {
+            listView.getItems().clear();
+            String lowerQueryString = queryString.toLowerCase(Locale.ROOT);
+            Predicate<String> predicate = s -> s != null && s.toLowerCase(Locale.ROOT).contains(lowerQueryString);
+
+            for (ModListPageSkin.ModInfoObject item : getSkinnable().getItems()) {
+                LocalModFile modInfo = item.getModInfo();
+                if (predicate.test(modInfo.getFileName())
+                        || predicate.test(modInfo.getName())
+                        || predicate.test(modInfo.getId())
+                        || (item.getModTranslations() != null && predicate.test(item.getModTranslations().getDisplayName()))) {
+                    listView.getItems().add(item);
+                }
+            }
+        }
     }
 
     private class JijModListCell extends MDListCell<ModListPageSkin.ModInfoObject> {
@@ -228,7 +319,7 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
             }
 
             if (flowPane.getChildren().isEmpty()) {
-                Label emptyLabel = new Label("无匹配结果");
+                Label emptyLabel = new Label("无匹配���果");
                 emptyLabel.setStyle("-fx-text-fill: -fx-text-base-color-disabled;");
                 flowPane.getChildren().add(emptyLabel);
             }
@@ -254,7 +345,7 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("保存内置模组列表");
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("文本文件 (*.txt)", "*.txt"));
-        fileChooser.setInitialFileName("JIJ.txt");
+        fileChooser.setInitialFileName(modName+"_JIJ_INFO.txt");
 
         File file = fileChooser.showSaveDialog(Controllers.getStage());
 
