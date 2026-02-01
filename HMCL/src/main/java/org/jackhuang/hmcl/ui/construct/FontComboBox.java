@@ -17,25 +17,27 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import static javafx.collections.FXCollections.emptyObservableList;
-import static javafx.collections.FXCollections.observableList;
-import static javafx.collections.FXCollections.singletonObservableList;
-
-import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.util.javafx.BindingMapping;
-
 import com.jfoenix.controls.JFXComboBox;
 import com.jfoenix.controls.JFXListCell;
-
 import javafx.beans.binding.Bindings;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.scene.text.Font;
+import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.javafx.BindingMapping;
+
+import static javafx.collections.FXCollections.emptyObservableList;
+import static javafx.collections.FXCollections.singletonObservableList;
 
 public final class FontComboBox extends JFXComboBox<String> {
 
     private boolean loaded = false;
+    private ObservableList<String> allFonts;
 
     public FontComboBox() {
         setMinWidth(260);
+        setEditable(true);
 
         styleProperty().bind(Bindings.concat("-fx-font-family: \"", valueProperty(), "\""));
 
@@ -52,14 +54,34 @@ public final class FontComboBox extends JFXComboBox<String> {
         });
 
         itemsProperty().bind(BindingMapping.of(valueProperty())
-                        .map(value -> value == null ? emptyObservableList() : singletonObservableList(value)));
+                .map(value -> value == null ? emptyObservableList() : singletonObservableList(value)));
 
         FXUtils.onClicked(this, () -> {
             if (loaded)
                 return;
             itemsProperty().unbind();
-            setItems(observableList(Font.getFamilies()));
+            allFonts = FXCollections.observableArrayList(Font.getFamilies());
+            setItems(allFonts);
             loaded = true;
+        });
+
+        getEditor().textProperty().addListener((observable, oldValue, newValue) -> {
+            if (!loaded || StringUtils.isBlank(newValue)) {
+                if (loaded) {
+                    setItems(allFonts);
+                }
+                return;
+            }
+
+            String lowerQuery = newValue.toLowerCase();
+            ObservableList<String> filteredFonts = FXCollections.observableArrayList();
+            for (String font : allFonts) {
+                if (font.toLowerCase().contains(lowerQuery)) {
+                    filteredFonts.add(font);
+                }
+            }
+            setItems(filteredFonts);
+            show();
         });
     }
 }
