@@ -197,7 +197,7 @@ public class PersonalizationPage extends StackPane {
         }
 
         {
-            ComponentList logPane = new ComponentSublist();
+            ComponentSublist logPane = new ComponentSublist();
             logPane.setTitle(i18n("settings.launcher.log"));
 
             {

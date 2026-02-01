@@ -49,27 +49,23 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
         labelVBox.setMouseTransparent(true);
         labelVBox.setAlignment(Pos.CENTER_LEFT);
 
-        boolean overrideHeaderLeft = false;
         if (list instanceof ComponentSublist sublist) {
             Node leftNode = sublist.getHeaderLeft();
-            if (leftNode != null) {
+            if (leftNode == null) {
+                Label label = new Label();
+                label.textProperty().bind(sublist.titleProperty());
+                label.getStyleClass().add("title-label");
+                labelVBox.getChildren().add(label);
+
+                if (sublist.isHasSubtitle()) {
+                    Label subtitleLabel = new Label();
+                    subtitleLabel.textProperty().bind(sublist.subtitleProperty());
+                    subtitleLabel.getStyleClass().add("subtitle-label");
+                    subtitleLabel.textFillProperty().bind(Themes.colorSchemeProperty().getOnSurfaceVariant());
+                    labelVBox.getChildren().add(subtitleLabel);
+                }
+            } else {
                 labelVBox.getChildren().setAll(leftNode);
-                overrideHeaderLeft = true;
-            }
-        }
-
-        if (!overrideHeaderLeft) {
-            Label label = new Label();
-            label.textProperty().bind(list.titleProperty());
-            label.getStyleClass().add("title-label");
-            labelVBox.getChildren().add(label);
-
-            if (list.isHasSubtitle()) {
-                Label subtitleLabel = new Label();
-                subtitleLabel.textProperty().bind(list.subtitleProperty());
-                subtitleLabel.getStyleClass().add("subtitle-label");
-                subtitleLabel.textFillProperty().bind(Themes.colorSchemeProperty().getOnSurfaceVariant());
-                labelVBox.getChildren().add(subtitleLabel);
             }
         }
 
@@ -112,7 +108,8 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
             boolean expanded = !this.expanded;
             this.expanded = expanded;
             if (expanded) {
-                list.doLazyInit();
+                if (list instanceof ComponentSublist sublist)
+                    sublist.doLazyInit();
                 list.layout();
             }
 

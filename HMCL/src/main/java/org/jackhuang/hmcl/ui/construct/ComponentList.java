@@ -22,8 +22,6 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
@@ -36,49 +34,14 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
-import java.util.List;
-import java.util.function.Supplier;
-
 @DefaultProperty("content")
 public class ComponentList extends Control implements NoPaddingComponent {
-    private final StringProperty title = new SimpleStringProperty(this, "title", "Group");
-    private final StringProperty subtitle = new SimpleStringProperty(this, "subtitle", "");
     private final IntegerProperty depth = new SimpleIntegerProperty(this, "depth", 0);
-    private boolean hasSubtitle = false;
+
     public final ObservableList<Node> content = FXCollections.observableArrayList();
-    private Supplier<List<? extends Node>> lazyInitializer;
 
     public ComponentList() {
         getStyleClass().add("options-list");
-    }
-
-    public ComponentList(Supplier<List<? extends Node>> lazyInitializer) {
-        this();
-        this.lazyInitializer = lazyInitializer;
-    }
-
-    public String getTitle() {
-        return title.get();
-    }
-
-    public StringProperty titleProperty() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title.set(title);
-    }
-
-    public String getSubtitle() {
-        return subtitle.get();
-    }
-
-    public StringProperty subtitleProperty() {
-        return subtitle;
-    }
-
-    public void setSubtitle(String subtitle) {
-        this.subtitle.set(subtitle);
     }
 
     public int getDepth() {
@@ -93,24 +56,10 @@ public class ComponentList extends Control implements NoPaddingComponent {
         this.depth.set(depth);
     }
 
-    public boolean isHasSubtitle() {
-        return hasSubtitle;
-    }
 
-    public void setHasSubtitle(boolean hasSubtitle) {
-        this.hasSubtitle = hasSubtitle;
-    }
 
     public ObservableList<Node> getContent() {
         return content;
-    }
-
-    void doLazyInit() {
-        if (lazyInitializer != null) {
-            this.getContent().setAll(lazyInitializer.get());
-            setNeedsLayout(true);
-            lazyInitializer = null;
-        }
     }
 
     @Override
