@@ -181,6 +181,8 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
 
         private final ImageView imageView = new ImageView();
         private final TwoLineListItem content = new TwoLineListItem();
+        private JFXPopup activePopup;
+        private boolean ignoreNextClick = false;
 
         public JijModListCell(JFXListView<ModListPageSkin.ModInfoObject> listView) {
             super(listView);
@@ -203,11 +205,32 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
 
             setSelectable();
 
+            this.setOnMousePressed(e -> {
+                if (activePopup != null && activePopup.isShowing()) {
+                    ignoreNextClick = true;
+                } else {
+                    ignoreNextClick = false;
+                }
+            });
+
             this.setOnMouseClicked(e -> {
                 if (getItem() != null && getItem().getModInfo() != null) {
                     LocalModFile modFile = getItem().getModInfo();
                     if (modFile.hasBundledMods()) {
-                        showBundledPopup(this, modFile.getName(), modFile.getBundledMods());
+
+                        if (activePopup != null && activePopup.isShowing()) {
+                            activePopup.hide();
+                            activePopup = null;
+                            return;
+                        }
+
+                        activePopup = showBundledPopup(this, modFile.getName(), modFile.getBundledMods());
+
+                        activePopup.setOnHidden(event -> {
+                            if (activePopup == event.getSource()) {
+                                activePopup = null;
+                            }
+                        });
                     }
                 }
             });
@@ -259,7 +282,7 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
         }
     }
 
-    private void showBundledPopup(Node anchor, String modName, List<String> bundledMods) {
+    private JFXPopup showBundledPopup(Node anchor, String modName, List<String> bundledMods) {
         VBox root = new VBox(10);
         root.setPadding(new Insets(15));
         root.setMaxHeight(400);
@@ -333,6 +356,7 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
 
         JFXPopup popup = new JFXPopup(root);
         popup.show(anchor, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.RIGHT, 0, anchor.getLayoutBounds().getHeight() + 5);
+        return popup;
     }
 
     private static void exportJijList(String modName, List<String> bundledMods) {
