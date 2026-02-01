@@ -46,7 +46,7 @@ public class DownloadSettingsPage extends StackPane {
 
     public DownloadSettingsPage() {
         var optionsList = new OptionsList();
-        optionsList.setPadding(new Insets(10, 10, 0, 10));
+        optionsList.setContentPadding(new Insets(10));
 
         {
             optionsList.addTitle(i18n("settings.launcher.download_source"));

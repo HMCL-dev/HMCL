@@ -74,7 +74,7 @@ public final class OptionsListSkin extends SkinBase<OptionsList> {
             FXUtils.limitCellWidth(listView, this);
 
             WeakInvalidationListener weakListener = new WeakInvalidationListener(updateStyleListener);
-            getListView().itemsProperty().addListener((o, oldValue, newValue) -> {
+            listView.itemsProperty().addListener((o, oldValue, newValue) -> {
                 if (oldValue != null)
                     oldValue.removeListener(weakListener);
                 if (newValue != null)
