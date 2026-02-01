@@ -212,7 +212,7 @@ public final class OptionsList extends Control {
             if (original instanceof ComponentList componentList) {
                 componentList.getStyleClass().remove("options-list");
                 componentList.getStyleClass().add("options-sublist");
-                return new ComponentListWrapper(componentList);
+                return new ComponentSublistWrapper(componentList);
             } else {
                 return original;
             }

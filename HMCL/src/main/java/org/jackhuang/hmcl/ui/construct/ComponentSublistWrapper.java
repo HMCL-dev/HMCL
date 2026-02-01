@@ -36,11 +36,11 @@ import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.Motion;
 
 /// @author Glavo
-final class ComponentListWrapper extends VBox implements NoPadding {
+final class ComponentSublistWrapper extends VBox implements NoPadding {
     private Animation expandAnimation;
     private boolean expanded = false;
 
-    ComponentListWrapper(ComponentList list) {
+    ComponentSublistWrapper(ComponentList list) {
         Node expandIcon = SVG.KEYBOARD_ARROW_DOWN.createIcon(20);
         expandIcon.setMouseTransparent(true);
         HBox.setMargin(expandIcon, new Insets(0, 8, 0, 8));

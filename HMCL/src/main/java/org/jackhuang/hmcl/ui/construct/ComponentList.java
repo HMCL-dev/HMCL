@@ -139,7 +139,7 @@ public class ComponentList extends Control implements NoPadding {
                 if (node instanceof ComponentList componentList) {
                     componentList.getStyleClass().remove("options-list");
                     componentList.getStyleClass().add("options-sublist");
-                    wrapper = new ComponentListWrapper(componentList);
+                    wrapper = new ComponentSublistWrapper(componentList);
                 } else {
                     wrapper = new StackPane(node);
                 }
