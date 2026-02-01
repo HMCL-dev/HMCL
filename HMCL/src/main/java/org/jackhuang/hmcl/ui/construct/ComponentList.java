@@ -34,24 +34,10 @@ import javafx.scene.layout.*;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
 public class ComponentList extends Control implements NoPaddingComponent {
-    private final IntegerProperty depth = new SimpleIntegerProperty(this, "depth", 0);
-
     public final ObservableList<Node> content = FXCollections.observableArrayList();
 
     public ComponentList() {
         getStyleClass().add("options-list");
-    }
-
-    public int getDepth() {
-        return depth.get();
-    }
-
-    public IntegerProperty depthProperty() {
-        return depth;
-    }
-
-    public void setDepth(int depth) {
-        this.depth.set(depth);
     }
 
     public ObservableList<Node> getContent() {

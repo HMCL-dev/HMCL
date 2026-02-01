@@ -173,7 +173,6 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
         {
             componentList = new ComponentList();
-            componentList.setDepth(1);
 
             if (!globalSetting) {
                 BorderPane copyGlobalPane = new BorderPane();
