@@ -166,6 +166,7 @@ public final class Themes {
                 }
             }
         }
+        LOG.info("Detected system theme brightness: " + brightness);
 
         return defaultBrightness = brightness;
     }
