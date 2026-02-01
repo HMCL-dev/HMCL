@@ -276,9 +276,10 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
 
                 StackPane arrowContainer = new StackPane();
                 FXUtils.setLimitWidth(arrowContainer, 40);
+                FXUtils.setLimitHeight(arrowContainer, 20);
                 arrowContainer.setCursor(Cursor.HAND);
 
-                Node arrowIcon = SVG.KEYBOARD_ARROW_DOWN.createIcon();
+                Node arrowIcon = SVG.KEYBOARD_ARROW_DOWN.createIcon(20);
                 arrowIcon.setRotate(isExpanded.get() ? 180 : 0);
 
                 FXUtils.onChange(isExpanded, expanded -> {
