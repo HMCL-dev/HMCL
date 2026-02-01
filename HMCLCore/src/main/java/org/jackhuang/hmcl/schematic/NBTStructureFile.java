@@ -72,8 +72,8 @@ public final class NBTStructureFile implements Schematic {
     }
 
     @Override
-    public String getMinecraftVersion() {
-        return Integer.toString(dataVersion);
+    public int getMinecraftDataVersion() {
+        return dataVersion;
     }
 
     @Override

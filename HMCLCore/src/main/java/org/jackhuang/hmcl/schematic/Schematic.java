@@ -63,7 +63,13 @@ public sealed interface Schematic permits LitematicFile, SchematicFile, NBTStruc
 
     @NotNull Path getFile();
 
-    String getMinecraftVersion();
+    default int getMinecraftDataVersion() {
+        return 0;
+    }
+
+    default String getMinecraftVersion() {
+        return Integer.toString(getMinecraftDataVersion());
+    }
 
     default String getName() {
         return FileUtils.getNameWithoutExtension(getFile());

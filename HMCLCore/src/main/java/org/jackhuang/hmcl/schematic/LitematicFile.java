@@ -135,13 +135,9 @@ public final class LitematicFile implements Schematic {
         return subVersion;
     }
 
+    @Override
     public int getMinecraftDataVersion() {
         return minecraftDataVersion;
-    }
-
-    @Override
-    public String getMinecraftVersion() {
-        return Integer.toString(minecraftDataVersion);
     }
 
     public int[] getPreviewImageData() {
