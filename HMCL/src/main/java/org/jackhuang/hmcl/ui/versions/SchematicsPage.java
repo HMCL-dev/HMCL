@@ -730,7 +730,8 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                     relPath.getChildren().clear();
                     var d = newValue;
                     while (d != null) {
-                        var txt = new Text(d.getName() + "/");
+                        relPath.getChildren().add(0, new Text("/"));
+                        var txt = new Text(d.getName());
                         var finalD = d;
                         FXUtils.onClicked(txt, () -> skinnable.navigateTo(finalD));
                         relPath.getChildren().add(0, txt);
