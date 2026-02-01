@@ -33,16 +33,14 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
 import java.util.List;
 import java.util.function.Supplier;
 
 @DefaultProperty("content")
-public class ComponentList extends Control {
+public class ComponentList extends Control implements OptionsList.NoPadding {
     private final StringProperty title = new SimpleStringProperty(this, "title", "Group");
     private final StringProperty subtitle = new SimpleStringProperty(this, "subtitle", "");
     private final IntegerProperty depth = new SimpleIntegerProperty(this, "depth", 0);
@@ -137,15 +135,23 @@ public class ComponentList extends Control {
             super(control);
 
             list = MappedObservableList.create(control.getContent(), node -> {
-                ComponentListCell cell = new ComponentListCell(node);
-                cell.getStyleClass().add("options-list-item");
+                Pane wrapper;
+                if (node instanceof ComponentList componentList) {
+                    componentList.getStyleClass().remove("options-list");
+                    componentList.getStyleClass().add("options-sublist");
+                    wrapper = new ComponentListWrapper(componentList);
+                } else {
+                    wrapper = new StackPane(node);
+                }
+
+                wrapper.getStyleClass().add("options-list-item");
                 if (node.getProperties().containsKey("ComponentList.vgrow")) {
-                    VBox.setVgrow(cell, (Priority) node.getProperties().get("ComponentList.vgrow"));
+                    VBox.setVgrow(wrapper, (Priority) node.getProperties().get("ComponentList.vgrow"));
                 }
-                if (node instanceof LineButtonBase || node instanceof LinePane || node.getProperties().containsKey("ComponentList.noPadding")) {
-                    cell.getStyleClass().add("no-padding");
+                if (node instanceof OptionsList.NoPadding || node.getProperties().containsKey("ComponentList.noPadding")) {
+                    wrapper.getStyleClass().add("no-padding");
                 }
-                return cell;
+                return wrapper;
             });
 
             firstItem = Bindings.valueAt(list, 0);

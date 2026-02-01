@@ -28,7 +28,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
 /// @author Glavo
-public class LinePane extends BorderPane {
+public class LinePane extends BorderPane implements OptionsList.NoPadding {
 
     private static final Insets PADDING = new Insets(8, 8, 8, 16);
 

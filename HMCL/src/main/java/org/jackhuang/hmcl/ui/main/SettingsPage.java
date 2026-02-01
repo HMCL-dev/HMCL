@@ -29,7 +29,6 @@ import javafx.geometry.Pos;
 import javafx.geometry.VPos;
 import javafx.scene.Cursor;
 import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.*;
 import javafx.scene.text.TextAlignment;
@@ -70,7 +69,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.selectedItemPropertyFor;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class SettingsPage extends ScrollPane {
+public final class SettingsPage extends StackPane {
 
     @SuppressWarnings("FieldCanBeLocal")
     private final ToggleGroup updateChannelGroup;
@@ -78,14 +77,9 @@ public final class SettingsPage extends ScrollPane {
     private final InvalidationListener updateListener;
 
     public SettingsPage() {
-        this.setFitToWidth(true);
+        this.setPadding(new Insets(10));
 
-        VBox rootPane = new VBox();
-        rootPane.setPadding(new Insets(10));
-        this.setContent(rootPane);
-        FXUtils.smoothScrolling(this);
-
-        ComponentList settingsPane = new ComponentList();
+        OptionsList settingsPane = new OptionsList();
         {
             {
                 StackPane sponsorPane = new StackPane();
@@ -117,7 +111,7 @@ public final class SettingsPage extends ScrollPane {
                 }
 
                 sponsorPane.getChildren().setAll(gridPane);
-                settingsPane.getContent().add(sponsorPane);
+                settingsPane.addListElement(sponsorPane);
             }
 
             {
@@ -197,7 +191,7 @@ public final class SettingsPage extends ScrollPane {
 
                     updatePane.getContent().add(content);
                 }
-                settingsPane.getContent().add(updatePane);
+                settingsPane.addListElement(updatePane);
             }
 
             {
@@ -214,7 +208,7 @@ public final class SettingsPage extends ScrollPane {
                 updateChannel.addListener(checkUpdateListener);
                 previewPane.selectedProperty().addListener(checkUpdateListener);
 
-                settingsPane.getContent().add(previewPane);
+                settingsPane.addListElement(previewPane);
             }
 
             {
@@ -241,7 +235,7 @@ public final class SettingsPage extends ScrollPane {
                 cleanButton.setOnAction(e -> clearCacheDirectory());
                 fileCommonLocationSublist.setHeaderRight(cleanButton);
 
-                settingsPane.getContent().add(fileCommonLocationSublist);
+                settingsPane.addListElement(fileCommonLocationSublist);
             }
 
             {
@@ -261,7 +255,7 @@ public final class SettingsPage extends ScrollPane {
                 chooseLanguagePane.setItems(SupportedLocale.getSupportedLocales());
                 chooseLanguagePane.valueProperty().bindBidirectional(config().localizationProperty());
 
-                settingsPane.getContent().add(chooseLanguagePane);
+                settingsPane.addListElement(chooseLanguagePane);
             }
 
             {
@@ -269,7 +263,7 @@ public final class SettingsPage extends ScrollPane {
                 disableAutoGameOptionsPane.setTitle(i18n("settings.launcher.disable_auto_game_options"));
                 disableAutoGameOptionsPane.selectedProperty().bindBidirectional(config().disableAutoGameOptionsProperty());
 
-                settingsPane.getContent().add(disableAutoGameOptionsPane);
+                settingsPane.addListElement(disableAutoGameOptionsPane);
             }
 
             {
@@ -294,11 +288,10 @@ public final class SettingsPage extends ScrollPane {
                 BorderPane.setAlignment(buttonBox, Pos.CENTER_RIGHT);
                 debugPane.setRight(buttonBox);
 
-                settingsPane.getContent().add(debugPane);
+                settingsPane.addListElement(debugPane);
             }
-
-            rootPane.getChildren().add(settingsPane);
         }
+        this.getChildren().setAll(settingsPane);
     }
 
     private void openLogFolder() {
