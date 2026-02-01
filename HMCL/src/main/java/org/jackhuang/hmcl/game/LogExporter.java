@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.game;
 
+import org.jackhuang.hmcl.mod.LocalModFile;
+import org.jackhuang.hmcl.mod.ModManager;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
@@ -73,6 +75,37 @@ public final class LogExporter {
                 zipper.putTextFile(LOG.getLogs(), "hmcl.log");
                 zipper.putTextFile(logs, "minecraft.log");
                 zipper.putTextFile(Logger.filterForbiddenToken(launchScript), OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "launch.bat" : "launch.sh");
+
+                try {
+                    ModManager modManager = gameRepository.getModManager(versionId);
+                    modManager.refreshMods();
+
+                    StringBuilder jijInfo = new StringBuilder();
+                    boolean hasJij = false;
+
+                    for (LocalModFile mod : modManager.getMods()) {
+                        if (mod.hasBundledMods()) {
+                            hasJij = true;
+                            jijInfo.append(mod.getName());
+                            if (!mod.getName().equals(mod.getFileName())) {
+                                jijInfo.append(" (").append(mod.getFileName()).append(")");
+                            }
+                            jijInfo.append(System.lineSeparator());
+
+                            for (String bundled : mod.getBundledMods()) {
+                                String name = bundled.contains("/") ? bundled.substring(bundled.lastIndexOf('/') + 1) : bundled;
+                                jijInfo.append("\t|-> ").append(name).append(System.lineSeparator());
+                            }
+                            jijInfo.append(System.lineSeparator());
+                        }
+                    }
+
+                    if (hasJij) {
+                        zipper.putTextFile(jijInfo.toString(), "ALL_JIJ_INFO.txt");
+                    }
+                } catch (Exception e) {
+                    LOG.warning("Failed to export All JIJ info to crash report package", e);
+                }
 
                 for (String id : versions) {
                     Path versionJson = baseDirectory.resolve("versions").resolve(id).resolve(id + ".json");
