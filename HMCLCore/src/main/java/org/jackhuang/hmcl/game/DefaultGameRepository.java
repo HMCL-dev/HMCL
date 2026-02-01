@@ -567,7 +567,8 @@ public class DefaultGameRepository implements GameRepository {
                         && conf.generic().customSchematicBaseDirectoryEnabled()
                         && StringUtils.isNotBlank(conf.generic().customSchematicBaseDirectory())
                 ) {
-                    return Path.of(conf.generic().customSchematicBaseDirectory());
+                    // The given path is used if it's absolute. Otherwise, resolves it against the game directory
+                    dir = runDir.resolve(conf.generic().customSchematicBaseDirectory());
                 }
             } catch (Exception e) {
                 LOG.warning("Failed to read litematica config at '%s'".formatted(config), e);
