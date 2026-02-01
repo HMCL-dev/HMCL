@@ -129,9 +129,6 @@ public abstract class ArchiveFileTree<R, E extends ArchiveEntry> implements Clos
         }
 
         if (entry.isDirectory()) {
-            if (dir.entry != null) {
-                throw new IOException("Duplicate entry: " + entry.getName());
-            }
             dir.entry = entry;
         } else {
             String fileName = path[path.length - 1];
