@@ -455,7 +455,7 @@ public class TerracottaControllerPage extends StackPane {
                 exportLogInner.setTitle(i18n("terracotta.export_log"));
                 exportLogInner.setSubtitle(i18n("terracotta.export_log.desc"));
                 exportLog.setContent(exportLogInner);
-                exportLog.getProperties().put("ComponentList.noPadding", true);
+                ComponentList.setNoPadding(exportLog);
                 // FIXME: SpinnerPane loses its content width in loading state.
                 exportLog.minHeightProperty().bind(back.heightProperty());
 
@@ -587,7 +587,7 @@ public class TerracottaControllerPage extends StackPane {
                     i18n("message.info"), MessageDialogPane.MessageType.INFO,
                     () -> FXUtils.openLink(url)
             ));
-            container.getProperties().put("ComponentList.noPadding", true);
+            ComponentList.setNoPadding(container);
             locals.getContent().add(container);
         }
         return locals;
@@ -666,7 +666,7 @@ public class TerracottaControllerPage extends StackPane {
 
                 container.getChildren().setAll(nodes);
             }, button.title, button.subTitle, button.left, button.right));
-            button.getProperties().put("ComponentList.noPadding", true);
+            ComponentList.setNoPadding(button);
 
             return button;
         }

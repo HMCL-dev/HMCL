@@ -197,4 +197,8 @@ public class ComponentList extends Control implements NoPadding {
     public static void setVgrow(Node node, Priority priority) {
         node.getProperties().put("ComponentList.vgrow", priority);
     }
+
+    public static void setNoPadding(Node node) {
+        node.getProperties().put("ComponentList.noPadding", true);
+    }
 }
