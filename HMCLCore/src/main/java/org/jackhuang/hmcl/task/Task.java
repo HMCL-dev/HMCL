@@ -359,7 +359,7 @@ public abstract class Task<T> {
     //region Helpers for updateProgressImmediately
 
     @SuppressWarnings("FieldMayBeFinal")
-    private volatile double pendingProgress = Double.NEGATIVE_INFINITY;
+    private volatile double pendingProgress = -1.0;
 
     /// @see Task#pendingProgress
     private static final VarHandle PENDING_PROGRESS_HANDLE;
@@ -376,8 +376,8 @@ public abstract class Task<T> {
 
     protected void updateProgressImmediately(double progress) {
         // assert progress >= 0 && progress <= 1.0;
-        if ((double) PENDING_PROGRESS_HANDLE.getAndSet(this, progress) == Double.NEGATIVE_INFINITY) {
-            Platform.runLater(() -> this.progress.set((double) PENDING_PROGRESS_HANDLE.getAndSet(this, Double.NEGATIVE_INFINITY)));
+        if ((double) PENDING_PROGRESS_HANDLE.getAndSet(this, progress) == -1.0) {
+            Platform.runLater(() -> this.progress.set((double) PENDING_PROGRESS_HANDLE.getAndSet(this, -1.0)));
         }
     }
 
