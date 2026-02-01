@@ -347,7 +347,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                         this.children.add(child);
                     } else if (LitematicFile.isFileLitematic(p)) {
                         try {
-                            this.children.add(new LitematicFileItem(LitematicFile.load(p)));
+                            this.children.add(new LitematicFileItem(p));
                         } catch (IOException e) {
                             LOG.warning("Failed to load litematic file: " + path, e);
                         }
@@ -384,18 +384,20 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
     }
 
     private final class LitematicFileItem extends Item {
+        final Path path;
         final LitematicFile file;
         final String name;
         final Image image;
 
-        private LitematicFileItem(LitematicFile file) {
-            this.file = file;
+        private LitematicFileItem(Path path) throws IOException {
+            this.path = path;
+            this.file = LitematicFile.load(path);
 
             String name = file.getName();
             if (StringUtils.isNotBlank(name) && !"Unnamed".equals(name)) {
                 this.name = name;
             } else {
-                this.name = FileUtils.getNameWithoutExtension(file.getFile());
+                this.name = FileUtils.getNameWithoutExtension(path);
             }
 
             WritableImage image = null;
@@ -424,7 +426,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
         @Override
         Path getPath() {
-            return file.getFile();
+            return path;
         }
 
         @Override
@@ -434,7 +436,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
         @Override
         String getDescription() {
-            return file.getFile().getFileName().toString();
+            return path.getFileName().toString();
         }
 
         @Override
@@ -519,7 +521,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
                     TwoLineListItem title = new TwoLineListItem();
                     title.setTitle(getName());
-                    title.setSubtitle(file.getFile().getFileName().toString());
+                    title.setSubtitle(path.getFileName().toString());
 
                     titleBox.getChildren().setAll(icon, title);
                     setHeading(titleBox);
