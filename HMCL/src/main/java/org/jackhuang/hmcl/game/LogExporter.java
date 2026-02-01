@@ -126,7 +126,7 @@ public final class LogExporter {
                         infoBuilder.append("无 / None").append(System.lineSeparator());
                     }
 
-                    zipper.putTextFile(infoBuilder.toString(), "ALL_MOD_INFO.txt");
+                    zipper.putTextFile(infoBuilder.toString(), "ALL_MOD_JIJ_INFO.txt");
 
                 } catch (Exception e) {
                     LOG.warning("Failed to export mod info to crash report package", e);
