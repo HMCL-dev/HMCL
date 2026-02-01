@@ -76,6 +76,7 @@ public final class SettingsPage extends ScrollPane {
     private final ToggleGroup updateChannelGroup;
     @SuppressWarnings("FieldCanBeLocal")
     private final InvalidationListener updateListener;
+    private final SpinnerPane logExportSpinner;
 
     public SettingsPage() {
         this.setFitToWidth(true);
@@ -287,10 +288,11 @@ public final class SettingsPage extends ScrollPane {
 
                 JFXButton logButton = FXUtils.newBorderButton(i18n("settings.launcher.launcher_log.export"));
                 logButton.setOnAction(e -> onExportLogs());
+                logExportSpinner = new SpinnerPane(logButton);
 
                 HBox buttonBox = new HBox();
                 buttonBox.setSpacing(10);
-                buttonBox.getChildren().addAll(openLogFolderButton, logButton);
+                buttonBox.getChildren().addAll(openLogFolderButton, logExportSpinner);
                 BorderPane.setAlignment(buttonBox, Pos.CENTER_RIGHT);
                 debugPane.setRight(buttonBox);
 
@@ -363,6 +365,7 @@ public final class SettingsPage extends ScrollPane {
     }
 
     private void onExportLogs() {
+        logExportSpinner.showSpinner();
         thread(() -> {
             String nameBase = "hmcl-exported-logs-" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH-mm-ss"));
             List<Path> recentLogFiles = LOG.findRecentLogFiles(5);
@@ -439,7 +442,10 @@ public final class SettingsPage extends ScrollPane {
                 return;
             }
 
-            Platform.runLater(() -> Controllers.dialog(i18n("settings.launcher.launcher_log.export.success", outputFile)));
+            Platform.runLater(() -> {
+                logExportSpinner.hideSpinner();
+                Controllers.dialog(i18n("settings.launcher.launcher_log.export.success", outputFile));
+            });
             FXUtils.showFileInExplorer(outputFile);
         });
     }
