@@ -23,11 +23,17 @@ import javafx.geometry.Point3D;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 import java.util.zip.GZIPInputStream;
 
 /**
@@ -83,6 +89,78 @@ public final class LitematicFile {
         );
     }
 
+    public static void save(@NotNull LitematicFile litematicFile) throws IOException {
+        if (!litematicFile.isModified) return;
+
+        Path path = litematicFile.file;
+        File file = path.toFile();
+
+        if (Files.notExists(path)) throw new IOException("File not found: " + path);
+        if (!file.canWrite() && !file.setWritable(true)) {
+            throw new IOException("File is not writable: " + path);
+        }
+
+        CompoundTag root;
+        try (java.io.InputStream in = new GZIPInputStream(Files.newInputStream(path))) {
+            Tag t = NBTIO.readTag(in);
+            if (!(t instanceof CompoundTag))
+                throw new IOException("Root tag is not a compound tag");
+            root = (CompoundTag) t;
+        }
+
+        Tag metadataTag = root.get("Metadata");
+        if (!(metadataTag instanceof CompoundTag metadata))
+            throw new IOException("Metadata tag not found or not a compound tag");
+
+        String currentName = tryGetString(metadata.get("Name"));
+
+        if ((litematicFile.name == null && currentName == null) ||
+                (litematicFile.name != null && litematicFile.name.equals(currentName))) {
+            litematicFile.isModified = false;
+            return;
+        }
+
+        Map<String, Tag> newMetaMap = new HashMap<>(metadata.getValue());
+        newMetaMap.put("Name", new StringTag("Name",
+                Objects.requireNonNullElse(litematicFile.name, "Unnamed"))
+        );
+        CompoundTag newRoot = getTags(metadata, newMetaMap, root);
+
+        Path dir = path.getParent();
+        if (dir == null) dir = path.toAbsolutePath().getParent();
+        Path temp = Files.createTempFile(dir, "litematic-", ".tmp");
+
+        boolean moved = false;
+        try {
+            try (java.io.OutputStream out = new java.util.zip.GZIPOutputStream(Files.newOutputStream(temp))) {
+                NBTIO.writeTag(out, newRoot);
+            }
+
+            try {
+                Files.move(temp, path,
+                        StandardCopyOption.REPLACE_EXISTING,
+                        StandardCopyOption.ATOMIC_MOVE);
+            } catch (AtomicMoveNotSupportedException amnse) {
+                Files.move(temp, path, StandardCopyOption.REPLACE_EXISTING);
+            }
+
+            moved = true;
+            litematicFile.isModified = false;
+        } finally {
+            if (!moved) {
+                try { Files.deleteIfExists(temp); } catch (IOException ignored) {}
+            }
+        }
+    }
+
+    private static @NotNull CompoundTag getTags(@NotNull CompoundTag metadata, Map<String, Tag> newMetaMap, @NotNull CompoundTag root) {
+        CompoundTag newMetadata = new CompoundTag(metadata.getName(), newMetaMap);
+        Map<String, Tag> newRootMap =
+                new HashMap<>(root.getValue());
+        newRootMap.put("Metadata", newMetadata);
+        return new CompoundTag(root.getName(), newRootMap);
+    }
+
     private final @NotNull Path file;
 
     private final int version;
@@ -90,7 +168,7 @@ public final class LitematicFile {
     private final int minecraftDataVersion;
     private final int regionCount;
     private final int[] previewImageData;
-    private final String name;
+    private String name;
     private final String author;
     private final String description;
     private final Instant timeCreated;
@@ -98,6 +176,7 @@ public final class LitematicFile {
     private final int totalBlocks;
     private final int totalVolume;
     private final Point3D enclosingSize;
+    private boolean isModified = false;
 
     private LitematicFile(@NotNull Path file, @NotNull CompoundTag metadata,
                           int version, int subVersion, int minecraftDataVersion, int regionCount) {
@@ -158,6 +237,11 @@ public final class LitematicFile {
 
     public String getName() {
         return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+        this.isModified = true;
     }
 
     public String getAuthor() {
