@@ -28,6 +28,7 @@ import org.jackhuang.hmcl.util.tree.ZipFileTree;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Collections;
 
 /**
  *
@@ -117,7 +118,7 @@ public final class LiteModMetadata {
         if (metadata == null)
             throw new IOException("Mod " + modFile + " `litemod.json` is malformed.");
         return new LocalModFile(modManager, modManager.getLocalMod(metadata.getName(), ModLoaderType.LITE_LOADER), modFile, metadata.getName(), new LocalModFile.Description(metadata.getDescription()), metadata.getAuthor(),
-                metadata.getVersion(), metadata.getGameVersion(), metadata.getUpdateURI(), "");
+                metadata.getVersion(), metadata.getGameVersion(), metadata.getUpdateURI(), "", Collections.emptyList());
     }
 
 }

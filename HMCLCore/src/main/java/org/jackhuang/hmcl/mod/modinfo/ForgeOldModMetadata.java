@@ -33,6 +33,7 @@ import org.jackhuang.hmcl.util.tree.ZipFileTree;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Collections;
 
 import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
 
@@ -159,6 +160,6 @@ public final class ForgeOldModMetadata {
         return new LocalModFile(modManager, modManager.getLocalMod(metadata.getModId(), ModLoaderType.FORGE), modFile, metadata.getName(), new LocalModFile.Description(metadata.getDescription()),
                 authors, metadata.getVersion(), metadata.getGameVersion(),
                 StringUtils.isBlank(metadata.getUrl()) ? metadata.getUpdateUrl() : metadata.url,
-                metadata.getLogoFile());
+                metadata.getLogoFile(), Collections.emptyList());
     }
 }
