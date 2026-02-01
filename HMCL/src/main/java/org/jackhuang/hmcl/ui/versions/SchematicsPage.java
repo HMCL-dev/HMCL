@@ -161,7 +161,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         if (currentDirectoryProperty().get() == null)
             return;
 
-        Path dir = currentDirectoryProperty().get().path;
+        Path dir = currentDirectoryProperty().get().getPath();
         try {
             // Can be executed in the background, but be careful that users can call loadVersion during this time
             Files.createDirectories(dir);
@@ -223,7 +223,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
     }
 
     public void onRevealSchematicsFolder() {
-        FXUtils.openFolder(Objects.requireNonNullElse(currentDirectoryProperty().get().path, schematicsDirectory));
+        FXUtils.openFolder(Objects.requireNonNullElse(currentDirectoryProperty().get().getPath(), schematicsDirectory));
     }
 
     private DirItem loadRoot(Path dir) {
