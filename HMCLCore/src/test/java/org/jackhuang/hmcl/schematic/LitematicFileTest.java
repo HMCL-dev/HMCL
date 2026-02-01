@@ -17,8 +17,8 @@
  */
 package org.jackhuang.hmcl.schematic;
 
-import javafx.geometry.Point3D;
 import org.jackhuang.hmcl.game.CrashReportAnalyzerTest;
+import org.jackhuang.hmcl.util.Vec3i;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -47,7 +47,7 @@ public final class LitematicFileTest {
         assertEquals(Instant.ofEpochMilli(1746443586433L), file.getTimeModified());
         assertEquals(1334, file.getTotalBlocks());
         assertEquals(5746, file.getTotalVolume());
-        assertEquals(new Point3D(17, 26, 13), file.getEnclosingSize());
+        assertEquals(new Vec3i(17, 26, 13), file.getEnclosingSize());
         assertEquals(1, file.getRegionCount());
     }
 }
