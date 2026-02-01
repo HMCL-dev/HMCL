@@ -186,12 +186,12 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
 
         private final ImageView imageView = new ImageView();
         private final TwoLineListItem content = new TwoLineListItem();
-        private final HBox container = new HBox(8);
 
         public JijModListCell(JFXListView<ModListPageSkin.ModInfoObject> listView) {
             super(listView);
             this.getStyleClass().add("mod-info-list-cell");
 
+            HBox container = new HBox(8);
             container.setPickOnBounds(false);
             container.setAlignment(Pos.CENTER_LEFT);
             StackPane.setMargin(container, new Insets(8));
