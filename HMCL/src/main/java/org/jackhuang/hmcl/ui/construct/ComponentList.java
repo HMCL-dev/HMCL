@@ -40,7 +40,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 @DefaultProperty("content")
-public class ComponentList extends Control implements NoPadding {
+public class ComponentList extends Control implements NoPaddingComponent {
     private final StringProperty title = new SimpleStringProperty(this, "title", "Group");
     private final StringProperty subtitle = new SimpleStringProperty(this, "subtitle", "");
     private final IntegerProperty depth = new SimpleIntegerProperty(this, "depth", 0);
@@ -150,7 +150,7 @@ public class ComponentList extends Control implements NoPadding {
                     VBox.setVgrow(wrapper, priority);
                 }
 
-                if (node instanceof NoPadding || node.getProperties().containsKey("ComponentList.noPadding")) {
+                if (node instanceof NoPaddingComponent || node.getProperties().containsKey("ComponentList.noPadding")) {
                     wrapper.getStyleClass().add("no-padding");
                 }
                 return wrapper;

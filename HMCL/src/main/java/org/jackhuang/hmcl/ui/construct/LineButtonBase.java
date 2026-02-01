@@ -29,7 +29,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 /// @author Glavo
-public abstract class LineButtonBase extends StackPane implements NoPadding {
+public abstract class LineButtonBase extends StackPane implements NoPaddingComponent {
 
     private static final Insets PADDING = new Insets(8, 8, 8, 16);
 

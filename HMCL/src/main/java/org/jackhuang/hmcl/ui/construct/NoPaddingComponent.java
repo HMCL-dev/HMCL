@@ -20,5 +20,5 @@ package org.jackhuang.hmcl.ui.construct;
 /// Marker interface for no padding in [ComponentList].
 ///
 /// @author Glavo
-interface NoPadding {
+interface NoPaddingComponent {
 }
