@@ -65,10 +65,8 @@ public class ComponentList extends Control implements NoPaddingComponent {
 
             list = MappedObservableList.create(control.getContent(), node -> {
                 Pane wrapper;
-                if (node instanceof ComponentList componentList) {
-                    componentList.getStyleClass().remove("options-list");
-                    componentList.getStyleClass().add("options-sublist");
-                    wrapper = new ComponentSublistWrapper(componentList);
+                if (node instanceof ComponentSublist sublist) {
+                    wrapper = new ComponentSublistWrapper(sublist);
                 } else {
                     wrapper = new StackPane(node);
                 }

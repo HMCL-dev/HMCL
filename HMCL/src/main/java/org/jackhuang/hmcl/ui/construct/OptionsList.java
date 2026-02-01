@@ -211,10 +211,8 @@ public final class OptionsList extends Control {
 
         @Override
         protected Node createNode() {
-            if (original instanceof ComponentList componentList) {
-                componentList.getStyleClass().remove("options-list");
-                componentList.getStyleClass().add("options-sublist");
-                return new ComponentSublistWrapper(componentList);
+            if (original instanceof ComponentSublist sublist) {
+                return new ComponentSublistWrapper(sublist);
             } else {
                 return original;
             }

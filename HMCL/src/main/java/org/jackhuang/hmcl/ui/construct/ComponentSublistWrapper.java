@@ -42,11 +42,8 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
     private Animation expandAnimation;
     private boolean expanded = false;
 
-    ComponentSublistWrapper(ComponentList list) {
-        if (!(list instanceof ComponentSublist))
-            throw new AssertionError();
-
-        boolean noPadding = list instanceof ComponentSublist subList && !subList.hasComponentPadding();
+    ComponentSublistWrapper(ComponentSublist sublist) {
+        boolean noPadding = !sublist.hasComponentPadding();
 
         Node expandIcon = SVG.KEYBOARD_ARROW_DOWN.createIcon(20);
         expandIcon.setMouseTransparent(true);
@@ -56,24 +53,22 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
         labelVBox.setMouseTransparent(true);
         labelVBox.setAlignment(Pos.CENTER_LEFT);
 
-        if (list instanceof ComponentSublist sublist) {
-            Node leftNode = sublist.getHeaderLeft();
-            if (leftNode == null) {
-                Label label = new Label();
-                label.textProperty().bind(sublist.titleProperty());
-                label.getStyleClass().add("title-label");
-                labelVBox.getChildren().add(label);
+        Node leftNode = sublist.getHeaderLeft();
+        if (leftNode == null) {
+            Label label = new Label();
+            label.textProperty().bind(sublist.titleProperty());
+            label.getStyleClass().add("title-label");
+            labelVBox.getChildren().add(label);
 
-                if (sublist.isHasSubtitle()) {
-                    Label subtitleLabel = new Label();
-                    subtitleLabel.textProperty().bind(sublist.subtitleProperty());
-                    subtitleLabel.getStyleClass().add("subtitle-label");
-                    subtitleLabel.textFillProperty().bind(Themes.colorSchemeProperty().getOnSurfaceVariant());
-                    labelVBox.getChildren().add(subtitleLabel);
-                }
-            } else {
-                labelVBox.getChildren().setAll(leftNode);
+            if (sublist.isHasSubtitle()) {
+                Label subtitleLabel = new Label();
+                subtitleLabel.textProperty().bind(sublist.subtitleProperty());
+                subtitleLabel.getStyleClass().add("subtitle-label");
+                subtitleLabel.textFillProperty().bind(Themes.colorSchemeProperty().getOnSurfaceVariant());
+                labelVBox.getChildren().add(subtitleLabel);
             }
+        } else {
+            labelVBox.getChildren().setAll(leftNode);
         }
 
         HBox header = new HBox();
@@ -82,11 +77,9 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
         header.setPadding(new Insets(10, 16, 10, 16));
         header.setAlignment(Pos.CENTER_LEFT);
         HBox.setHgrow(labelVBox, Priority.ALWAYS);
-        if (list instanceof ComponentSublist sublist) {
-            Node rightNode = sublist.getHeaderRight();
-            if (rightNode != null)
-                header.getChildren().add(rightNode);
-        }
+        Node rightNode = sublist.getHeaderRight();
+        if (rightNode != null)
+            header.getChildren().add(rightNode);
         header.getChildren().add(expandIcon);
 
         RipplerContainer headerRippler = new RipplerContainer(header);
@@ -105,8 +98,7 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
             boolean expanded = !this.expanded;
             this.expanded = expanded;
             if (expanded) {
-                if (list instanceof ComponentSublist sublist)
-                    sublist.doLazyInit();
+                sublist.doLazyInit();
 
                 if (container == null) {
                     this.container = new VBox();
@@ -116,7 +108,7 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
                     }
                     FXUtils.setLimitHeight(container, 0);
                     FXUtils.setOverflowHidden(container);
-                    container.getChildren().setAll(list);
+                    container.getChildren().setAll(sublist);
                     ComponentSublistWrapper.this.getChildren().add(container);
 
                     this.applyCss();
@@ -127,7 +119,7 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
 
             Platform.runLater(() -> {
                 // FIXME: ComponentSubList without padding must have a 4 pixel padding for displaying a border radius.
-                double contentHeight = expanded ? (list.prefHeight(list.getWidth()) + (noPadding ? 4 : 8 + 10)) : 0;
+                double contentHeight = expanded ? (sublist.prefHeight(sublist.getWidth()) + (noPadding ? 4 : 8 + 10)) : 0;
                 double targetRotate = expanded ? -180 : 0;
 
                 if (AnimationUtils.isAnimationEnabled()) {
