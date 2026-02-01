@@ -19,6 +19,11 @@ package org.jackhuang.hmcl.ui.construct;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.css.CssMetaData;
+import javafx.css.Styleable;
+import javafx.css.StyleableObjectProperty;
+import javafx.css.StyleableProperty;
+import javafx.css.converter.InsetsConverter;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -28,6 +33,9 @@ import javafx.scene.control.Skin;
 import javafx.scene.layout.HBox;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 // TODO: Rename
@@ -65,6 +73,73 @@ public final class OptionsList extends Control {
         for (Node node : nodes) {
             elements.add(new ListElement(node));
         }
+    }
+
+    private StyleableObjectProperty<Insets> contentPadding;
+
+    public StyleableObjectProperty<Insets> contentPaddingProperty() {
+        if (contentPadding == null) {
+            contentPadding = new StyleableObjectProperty<>() {
+                private Insets value = Insets.EMPTY;
+
+                @Override
+                public Object getBean() {
+                    return OptionsList.this;
+                }
+
+                @Override
+                public String getName() {
+                    return "contentPadding";
+                }
+
+                @Override
+                public Insets get() {
+                    return value;
+                }
+
+                @Override
+                public void set(Insets v) {
+                    value = v;
+                }
+
+                @Override
+                public javafx.css.CssMetaData<OptionsList, Insets> getCssMetaData() {
+                    return StyleableProperties.CONTENT_PADDING;
+                }
+            };
+        }
+        return contentPadding;
+    }
+
+    private static class StyleableProperties {
+        private static final CssMetaData<OptionsList, Insets> CONTENT_PADDING = new CssMetaData<>("-jfx-content-padding", InsetsConverter.getInstance()) {
+            @Override
+            public boolean isSettable(OptionsList styleable) {
+                return styleable.contentPadding == null || !styleable.contentPadding.isBound();
+            }
+
+            @Override
+            public StyleableProperty<Insets> getStyleableProperty(OptionsList styleable) {
+                return styleable.contentPaddingProperty();
+            }
+        };
+
+        private static final List<CssMetaData<? extends Styleable, ?>> STYLEABLES;
+
+        static {
+            List<CssMetaData<? extends Styleable, ?>> styleables = new ArrayList<>(Control.getClassCssMetaData());
+            Collections.addAll(styleables, CONTENT_PADDING);
+            STYLEABLES = List.copyOf(styleables);
+        }
+    }
+
+    public static List<CssMetaData<? extends Styleable, ?>> getClassCssMetaData() {
+        return StyleableProperties.STYLEABLES;
+    }
+
+    @Override
+    public List<CssMetaData<? extends Styleable, ?>> getControlCssMetaData() {
+        return getClassCssMetaData();
     }
 
     public static abstract class Element {
