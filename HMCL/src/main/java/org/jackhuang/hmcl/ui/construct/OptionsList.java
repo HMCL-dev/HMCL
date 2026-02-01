@@ -25,20 +25,16 @@ import javafx.css.StyleableObjectProperty;
 import javafx.css.StyleableProperty;
 import javafx.css.converter.InsetsConverter;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
-import javafx.scene.layout.HBox;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-
-// TODO: Rename
 
 /// @author Glavo
 public final class OptionsList extends Control {
@@ -104,7 +100,7 @@ public final class OptionsList extends Control {
         contentPaddingProperty().set(padding);
     }
 
-    private static class StyleableProperties {
+    private static final class StyleableProperties {
         private static final CssMetaData<OptionsList, Insets> CONTENT_PADDING = new CssMetaData<>("-jfx-content-padding", InsetsConverter.getInstance()) {
             @Override
             public boolean isSettable(OptionsList styleable) {
