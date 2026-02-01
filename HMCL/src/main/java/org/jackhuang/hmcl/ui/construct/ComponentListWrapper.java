@@ -79,8 +79,8 @@ final class ComponentListWrapper extends VBox implements NoPadding {
         header.setPadding(new Insets(10, 16, 10, 16));
         header.setAlignment(Pos.CENTER_LEFT);
         HBox.setHgrow(labelVBox, Priority.ALWAYS);
-        if (list instanceof ComponentSublist) {
-            Node rightNode = ((ComponentSublist) list).getHeaderRight();
+        if (list instanceof ComponentSublist sublist) {
+            Node rightNode = sublist.getHeaderRight();
             if (rightNode != null)
                 header.getChildren().add(rightNode);
         }

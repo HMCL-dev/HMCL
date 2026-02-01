@@ -145,9 +145,11 @@ public class ComponentList extends Control implements NoPadding {
                 }
 
                 wrapper.getStyleClass().add("options-list-item");
-                if (node.getProperties().containsKey("ComponentList.vgrow")) {
-                    VBox.setVgrow(wrapper, (Priority) node.getProperties().get("ComponentList.vgrow"));
+
+                if (node.getProperties().get("ComponentList.vgrow") instanceof Priority priority) {
+                    VBox.setVgrow(wrapper, priority);
                 }
+
                 if (node instanceof NoPadding || node.getProperties().containsKey("ComponentList.noPadding")) {
                     wrapper.getStyleClass().add("no-padding");
                 }
