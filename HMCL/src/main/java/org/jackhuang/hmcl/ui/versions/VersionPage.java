@@ -279,10 +279,8 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                 arrowContainer.setCursor(Cursor.HAND);
 
                 Node arrowIcon = SVG.KEYBOARD_ARROW_DOWN.createIcon();
-                // 设置初始角度，不使用绑定
                 arrowIcon.setRotate(isExpanded.get() ? 180 : 0);
 
-                // 添加旋转动画监听
                 FXUtils.onChange(isExpanded, expanded -> {
                     RotateTransition rt = new RotateTransition(Duration.millis(200), arrowIcon);
                     rt.setToAngle(expanded ? 180 : 0);
@@ -303,7 +301,7 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                 AdvancedListItem jijListItem = new AdvancedListItem();
                 jijListItem.getStyleClass().add("navigation-drawer-item");
                 jijListItem.setActionButtonVisible(false);
-                jijListItem.setTitle("内置模组"); // 如果有语言文件 Key，建议替换为 i18n("mods.built_in")
+                jijListItem.setTitle(i18n("mods.built_in.mods"));
 
                 jijListItem.setPadding(new Insets(0, 0, 0, 15));
 

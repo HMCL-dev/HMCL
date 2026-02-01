@@ -120,7 +120,7 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
             // Toolbar Normal
             toolbarNormal.getChildren().addAll(
                     createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
-                    createToolbarButton2("导出全部 JIJ 信息", SVG.FILE_EXPORT, () -> exportAllJijList(listView.getItems())),
+                    createToolbarButton2(i18n("mods.built_in.exportAllJIJINFO"), SVG.FILE_EXPORT, () -> exportAllJijList(listView.getItems())),
                     createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar))
             );
 
@@ -133,9 +133,6 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
             ComponentList.setVgrow(center, Priority.ALWAYS);
             center.getStyleClass().add("large-spinner-pane");
             center.loadingProperty().bind(skinnable.loadingProperty());
-
-            // 修复：不要直接设置 Items，否则 Bindings.bindContent 会导致 "Cannot bind object to itself"
-            // listView.setItems(skinnable.getItems());
 
             listView.setCellFactory(param -> new JijModListCell(listView));
             Bindings.bindContent(listView.getItems(), skinnable.getItems());
@@ -254,7 +251,7 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
 
             content.getTags().clear();
             if (modInfo.hasBundledMods()) {
-                content.addTag("内置: " + modInfo.getBundledMods().size());
+                content.addTag(i18n("mods.built_in") +" : "+modInfo.getBundledMods().size());
             }
 
             String modVersion = modInfo.getVersion();
@@ -273,7 +270,7 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
         HBox header = new HBox(10);
         header.setAlignment(Pos.CENTER_LEFT);
 
-        Label titleLabel = new Label("内置模组 (" + bundledMods.size() + ")");
+        Label titleLabel = new Label(i18n("mods.built_in")+" (" + bundledMods.size() + ")");
         titleLabel.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
 
         Region spacer = new Region();
@@ -282,14 +279,14 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
         JFXButton exportButton = new JFXButton();
         exportButton.setGraphic(FXUtils.limitingSize(SVG.FILE_EXPORT.createIcon(18), 18, 18));
         exportButton.getStyleClass().add("toggle-icon4");
-        FXUtils.installFastTooltip(exportButton, "导出JIJ信息");
+        FXUtils.installFastTooltip(exportButton, i18n("mods.built_in.exportJIJINFO"));
 
         exportButton.setOnAction(e -> exportJijList(modName, bundledMods));
 
         header.getChildren().addAll(titleLabel, spacer, exportButton);
 
         JFXTextField searchField = new JFXTextField();
-        searchField.setPromptText("搜索内置模组...");
+        searchField.setPromptText(i18n("mods.built_in.search"));
         searchField.setFocusTraversable(false);
 
         FlowPane flowPane = new FlowPane();
@@ -320,7 +317,7 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
             }
 
             if (flowPane.getChildren().isEmpty()) {
-                Label emptyLabel = new Label("无匹配结果");
+                Label emptyLabel = new Label(i18n("mods.built_in.noresult"));
                 emptyLabel.setStyle("-fx-text-fill: -fx-text-base-color-disabled;");
                 flowPane.getChildren().add(emptyLabel);
             }
@@ -344,7 +341,7 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
     private static void exportJijList(String modName, List<String> bundledMods) {
         if (bundledMods == null || bundledMods.isEmpty()) return;
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("保存内置模组列表");
+        fileChooser.setTitle(i18n("mods.built_in.exportJIJINFO"));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("文本文件 (*.txt)", "*.txt"));
         fileChooser.setInitialFileName(modName + "_JIJ_INFO.txt");
 
@@ -362,7 +359,7 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
             Task.runAsync(() -> {
                 try {
                     Files.writeString(file.toPath(), sb.toString());
-                    LOG.info("导出成功: " + file.getAbsolutePath());
+                    LOG.info("Save to: " + file.getAbsolutePath());
                 } catch (IOException ex) {
                     LOG.warning("Failed to export bundled mods list", ex);
                 }
@@ -404,12 +401,12 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
         }
 
         if (!hasData) {
-            FXUtils.runInFX(() -> Controllers.confirm("无包含JIJ信息的模组，操作将取消", i18n("button.ok"), () -> {}, null));
+            FXUtils.runInFX(() -> Controllers.confirm(i18n("mods.built_in.cancleexport"), i18n("button.ok"), () -> {}, null));
             return;
         }
 
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("导出所有内置模组信息");
+        fileChooser.setTitle(i18n("mods.built_in.exportAllJIJINFO"));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("文本文件 (*.txt)", "*.txt"));
         fileChooser.setInitialFileName("ALL_JIJ_INFO.txt");
 
@@ -419,7 +416,7 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
             Task.runAsync(() -> {
                 try {
                     Files.writeString(file.toPath(), sb.toString());
-                    LOG.info("全部导出成功: " + file.getAbsolutePath());
+                    LOG.info("Save to: " + file.getAbsolutePath());
                 } catch (IOException ex) {
                     LOG.warning("Failed to export all bundled mods list", ex);
                 }
