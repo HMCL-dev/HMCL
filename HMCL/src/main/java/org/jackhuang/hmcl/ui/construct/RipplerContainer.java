@@ -64,7 +64,27 @@ public class RipplerContainer extends StackPane {
         }
     };
 
-    private final StyleableObjectProperty<Paint> ripplerFill = new SimpleStyleableObjectProperty<>(StyleableProperties.RIPPLER_FILL, this, "ripplerFill", DEFAULT_RIPPLER_FILL);
+    private final StyleableObjectProperty<Paint> ripplerFill = new StyleableObjectProperty<>(DEFAULT_RIPPLER_FILL) {
+        @Override
+        public Object getBean() {
+            return RipplerContainer.this;
+        }
+
+        @Override
+        public String getName() {
+            return "ripplerFill";
+        }
+
+        @Override
+        public CssMetaData<? extends Styleable, Paint> getCssMetaData() {
+            return StyleableProperties.RIPPLER_FILL;
+        }
+
+        @Override
+        protected void invalidated() {
+            buttonRippler.setRipplerFill(get());
+        }
+    };
 
     private final StackPane buttonContainer = new StackPane();
     private final JFXRippler buttonRippler = new JFXRippler(new StackPane()) {
@@ -106,7 +126,6 @@ public class RipplerContainer extends StackPane {
         setPickOnBounds(false);
 
         buttonContainer.setPickOnBounds(false);
-        buttonRippler.ripplerFillProperty().bind(ripplerFillProperty());
 
         setContainer(container);
 
