@@ -23,7 +23,6 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 
-import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.setting.DownloadProviders;
@@ -46,9 +45,8 @@ public class DownloadSettingsPage extends StackPane {
     private final WeakListenerHolder holder = new WeakListenerHolder();
 
     public DownloadSettingsPage() {
-        this.setPadding(new Insets(10));
-
         var optionsList = new OptionsList();
+        optionsList.setPadding(new Insets(10, 10, 0, 10));
 
         {
             optionsList.addTitle(i18n("settings.launcher.download_source"));
