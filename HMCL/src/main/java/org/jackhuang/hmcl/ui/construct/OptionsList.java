@@ -53,7 +53,7 @@ public final class OptionsList extends Control {
         elements.add(new Title(title));
     }
 
-    public void addElement(Node node) {
+    public void addNode(Node node) {
         elements.add(new NodeElement(node));
     }
 
@@ -65,10 +65,6 @@ public final class OptionsList extends Control {
         for (Node node : nodes) {
             elements.add(new ListElement(node));
         }
-    }
-
-    /// Marker interface for no padding.
-    public interface NoPadding {
     }
 
     public static abstract class Element {

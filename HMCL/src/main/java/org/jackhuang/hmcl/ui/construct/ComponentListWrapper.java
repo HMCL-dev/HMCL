@@ -36,7 +36,7 @@ import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.Motion;
 
 /// @author Glavo
-final class ComponentListWrapper extends VBox implements OptionsList.NoPadding {
+final class ComponentListWrapper extends VBox implements NoPadding {
     private Animation expandAnimation;
     private boolean expanded = false;
 
