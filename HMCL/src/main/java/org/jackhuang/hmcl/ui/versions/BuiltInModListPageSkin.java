@@ -194,7 +194,7 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
             HBox container = new HBox(8);
             container.setPickOnBounds(false);
             container.setAlignment(Pos.CENTER_LEFT);
-            StackPane.setMargin(container, new Insets(8));
+            StackPane.setMargin(container, new Insets(8, 8, 8, 18));
 
             imageView.setFitWidth(24);
             imageView.setFitHeight(24);
@@ -268,7 +268,7 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
         VBox root = new VBox(10);
         root.setPadding(new Insets(15));
         root.setMaxHeight(400);
-        root.setStyle("-fx-background-color: -fx-background;");
+        root.setStyle("-fx-background-color: -fx-control-inner-background; -fx-text-fill: -fx-text-inner-color;");
 
         HBox header = new HBox(10);
         header.setAlignment(Pos.CENTER_LEFT);
@@ -306,7 +306,8 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
                     String name = path.contains("/") ? path.substring(path.lastIndexOf('/') + 1) : path;
 
                     Label tag = new Label(name);
-                    tag.setStyle("-fx-background-color: -fx-control-inner-background-alt; " +
+                    tag.setStyle("-fx-background-color: -fx-background; " +
+                            "-fx-text-fill: -fx-text-base-color; " +
                             "-fx-padding: 4 8; " +
                             "-fx-background-radius: 4; " +
                             "-fx-border-color: -fx-box-border; " +
@@ -319,7 +320,7 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
             }
 
             if (flowPane.getChildren().isEmpty()) {
-                Label emptyLabel = new Label("无匹配���果");
+                Label emptyLabel = new Label("无匹配结果");
                 emptyLabel.setStyle("-fx-text-fill: -fx-text-base-color-disabled;");
                 flowPane.getChildren().add(emptyLabel);
             }
@@ -345,7 +346,7 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("保存内置模组列表");
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("文本文件 (*.txt)", "*.txt"));
-        fileChooser.setInitialFileName(modName+"_JIJ_INFO.txt");
+        fileChooser.setInitialFileName(modName + "_JIJ_INFO.txt");
 
         File file = fileChooser.showSaveDialog(Controllers.getStage());
 
