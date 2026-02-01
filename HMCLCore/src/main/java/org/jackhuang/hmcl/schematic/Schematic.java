@@ -69,7 +69,7 @@ public sealed interface Schematic permits LitematicFile, SchematicFile, NBTStruc
         return FileUtils.getNameWithoutExtension(getFile());
     }
 
-    default String getAuthor(){
+    default String getAuthor() {
         return null;
     }
 
