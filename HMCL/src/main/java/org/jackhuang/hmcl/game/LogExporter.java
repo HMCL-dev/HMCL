@@ -84,10 +84,16 @@ public final class LogExporter {
 
                     infoBuilder.append("=== Mod List ===").append(System.lineSeparator());
 
+                    Path modsDir = runDirectory.resolve("mods");
+
+                    infoBuilder.append("Filesystem structure of: ").append(modsDir).append(System.lineSeparator());
+                    infoBuilder.append("|-> mods").append(System.lineSeparator());
+
                     modManager.getMods().stream()
                             .filter(LocalModFile::isActive)
                             .sorted((m1, m2) -> String.CASE_INSENSITIVE_ORDER.compare(m1.getName(), m2.getName()))
                             .forEach(mod -> {
+                                infoBuilder.append("|  |-> ");
                                 infoBuilder.append(mod.getName());
                                 if (StringUtils.isNotBlank(mod.getVersion()) && !"${version}".equals(mod.getVersion())) {
                                     infoBuilder.append(" (").append(mod.getVersion()).append(")");
