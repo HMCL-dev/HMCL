@@ -142,13 +142,21 @@ public final class OptionsList extends Control {
     }
 
     public static final class ListElement extends Element {
+        private final Node original;
+
         public ListElement(@NotNull Node node) {
-            this.node = node;
+            this.original = node;
         }
 
         @Override
         protected Node createNode() {
-            return node;
+            if (original instanceof ComponentList componentList) {
+                componentList.getStyleClass().remove("options-list");
+                componentList.getStyleClass().add("options-sublist");
+                return new OptionsListSkin.ComponentListWrapper(componentList);
+            } else {
+                return original;
+            }
         }
 
         @Override
