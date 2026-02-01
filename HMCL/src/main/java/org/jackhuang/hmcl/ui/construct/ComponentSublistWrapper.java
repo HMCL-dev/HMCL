@@ -43,6 +43,9 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
     private boolean expanded = false;
 
     ComponentSublistWrapper(ComponentList list) {
+        if (!(list instanceof ComponentSublist))
+            throw new AssertionError();
+
         boolean noPadding = list instanceof ComponentSublist subList && !subList.hasComponentPadding();
 
         Node expandIcon = SVG.KEYBOARD_ARROW_DOWN.createIcon(20);
