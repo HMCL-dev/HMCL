@@ -22,8 +22,6 @@ import org.jackhuang.hmcl.util.SwingUtils;
 import javax.swing.*;
 import java.net.URISyntaxException;
 import java.nio.file.FileSystemNotFoundException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
@@ -111,15 +109,14 @@ public final class Main {
 
     private static void checkDirectoryPath() {
         String currentDir = System.getProperty("user.dir", "");
-
-        Path jarPath = getThisJarPath();
+        String jarPath = getThisJarPath();
         if (currentDir.contains("!")) {
             SwingUtils.initLookAndFeel();
             System.err.println("The current working path contains an exclamation mark: " + currentDir);
             // No Chinese translation because both Swing and JavaFX cannot render Chinese character properly when exclamation mark exists in the path.
             SwingUtils.showErrorDialog("Exclamation mark(!) is not allowed in the working path.\n" + "The path is " + currentDir);
             System.exit(1);
-        } else if (jarPath != null && jarPath.toString().contains("!")) {
+        } else if (jarPath != null && jarPath.contains("!")) {
             SwingUtils.initLookAndFeel();
             System.err.println("The jar path contains an exclamation mark: " + jarPath);
             // No Chinese translation because both Swing and JavaFX cannot render Chinese character properly when exclamation mark exists in the path.
@@ -128,23 +125,18 @@ public final class Main {
         }
     }
 
-    private static Path getThisJarPath() {
+    private static String getThisJarPath() {
         ProtectionDomain protectionDomain = Main.class.getProtectionDomain();
         if (protectionDomain == null) return null;
 
         CodeSource codeSource = protectionDomain.getCodeSource();
         if (codeSource == null) return null;
 
-        Path path;
         try {
-            path = Paths.get(codeSource.getLocation().toURI()).toAbsolutePath();
+            return Paths.get(codeSource.getLocation().toURI()).toAbsolutePath().normalize().toString();
         } catch (FileSystemNotFoundException | IllegalArgumentException | URISyntaxException e) {
-            path = null;
+            return null;
         }
-        return path != null && Files.isRegularFile(path)
-                ? path
-                : null;
-
     }
 
     public static void main(String[] args) throws Throwable {
