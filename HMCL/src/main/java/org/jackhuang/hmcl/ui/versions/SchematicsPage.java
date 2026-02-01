@@ -22,9 +22,9 @@ import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -41,6 +41,8 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.shape.SVGPath;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.schematic.LitematicFile;
 import org.jackhuang.hmcl.setting.Profile;
@@ -62,7 +64,6 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
@@ -84,14 +85,13 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
     }
 
     private Path schematicsDirectory;
-    private DirItem currentDirectory;
+    private final ObjectProperty<DirItem> currentDirectory = new SimpleObjectProperty<>(this, "currentDirectory", null);
 
-    private final StringProperty relativePathProperty = new SimpleStringProperty(this, "relativePath", "schematics");
     private final BooleanProperty isRootProperty = new SimpleBooleanProperty(this, "isRoot", true);
 
     public SchematicsPage() {
         FXUtils.applyDragListener(this,
-                file -> currentDirectory != null && Files.isRegularFile(file) && FileUtils.getName(file).endsWith(".litematic"),
+                file -> currentDirectoryProperty().get() != null && Files.isRegularFile(file) && FileUtils.getName(file).endsWith(".litematic"),
                 this::addFiles
         );
     }
@@ -108,16 +108,17 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         refresh();
     }
 
+    private ObjectProperty<DirItem> currentDirectoryProperty() {
+        return currentDirectory;
+    }
+
     public BooleanProperty isRootProperty() {
         return isRootProperty;
     }
 
-    public StringProperty relativePathProperty() {
-        return relativePathProperty;
-    }
-
     public void navigateBack() {
-        if (currentDirectory.parent != null) navigateTo(currentDirectory.parent);
+        var p = currentDirectoryProperty().get().parent;
+        if (p != null) navigateTo(p);
     }
 
     public void refresh() {
@@ -130,9 +131,9 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                     setLoading(false);
                     if (exception == null) {
                         DirItem target = result;
-                        if (currentDirectory != null) {
+                        if (currentDirectoryProperty().get() != null) {
                             loop:
-                            for (String dirName : currentDirectory.relativePath) {
+                            for (String dirName : currentDirectoryProperty().get().relativePath) {
                                 for (Item child : target.children) {
                                     if (child instanceof DirItem && child.getName().equals(dirName)) {
                                         target = (DirItem) child;
@@ -151,10 +152,10 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
     }
 
     public void addFiles(List<Path> files) {
-        if (currentDirectory == null)
+        if (currentDirectoryProperty().get() == null)
             return;
 
-        Path dir = currentDirectory.path;
+        Path dir = currentDirectoryProperty().get().path;
         try {
             // Can be executed in the background, but be careful that users can call loadVersion during this time
             Files.createDirectories(dir);
@@ -181,10 +182,10 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
     }
 
     public void onCreateDirectory() {
-        if (currentDirectory == null)
+        if (currentDirectoryProperty().get() == null)
             return;
 
-        Path parent = currentDirectory.path;
+        Path parent = currentDirectoryProperty().get().path;
         Controllers.dialog(new InputDialogPane(
                 i18n("schematics.create_directory.prompt"),
                 "",
@@ -217,7 +218,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
     }
 
     public void onRevealSchematicsFolder() {
-        FXUtils.openFolder(Objects.requireNonNullElse(currentDirectory.path, schematicsDirectory));
+        FXUtils.openFolder(Objects.requireNonNullElse(currentDirectoryProperty().get().path, schematicsDirectory));
     }
 
     private DirItem loadRoot(Path dir) {
@@ -227,16 +228,12 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
     }
 
     private void navigateTo(DirItem item) {
-        currentDirectory = item;
-        if (item.relativePath.isEmpty()) {
-            relativePathProperty().set("schematics");
-        } else {
-            relativePathProperty().set(item.relativePath.stream().collect(Collectors.joining("/", "schematics/", "")));
-        }
-        isRootProperty().set(currentDirectory.parent == null);
+        if (currentDirectoryProperty().get() == item) return;
+        currentDirectoryProperty().set(item);
+        isRootProperty().set(item.parent == null);
         setLoading(true);
         Task.runAsync(item::load).whenComplete(Schedulers.javafx(), exception -> {
-            if (currentDirectory == item) {
+            if (currentDirectoryProperty().get() == item) {
                 getItems().setAll(item.children);
                 setLoading(false);
             }
@@ -708,16 +705,6 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             }
 
             {
-                var relPath = new Label();
-                relPath.setStyle("-fx-font-size: 13");
-                HBox.setMargin(relPath, new Insets(4, 0, 4, 5));
-                relPath.textProperty().bind(skinnable.relativePathProperty());
-                var relPathPane = new HBox(relPath);
-                relPathPane.setAlignment(Pos.CENTER_LEFT);
-                root.getContent().add(relPathPane);
-            }
-
-            {
                 SpinnerPane center = new SpinnerPane();
                 ComponentList.setVgrow(center, Priority.ALWAYS);
                 center.getStyleClass().add("large-spinner-pane");
@@ -733,6 +720,26 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
                 center.setContent(listView);
                 root.getContent().add(center);
+            }
+
+            {
+                var relPath = new TextFlow();
+                relPath.setStyle("-fx-font-size: 13");
+                HBox.setMargin(relPath, new Insets(5));
+                skinnable.currentDirectoryProperty().addListener((__, ___, newValue) -> {
+                    relPath.getChildren().clear();
+                    var d = newValue;
+                    while (d != null) {
+                        var txt = new Text(d.getName() + "/");
+                        var finalD = d;
+                        FXUtils.onClicked(txt, () -> skinnable.navigateTo(finalD));
+                        relPath.getChildren().add(0, txt);
+                        d = d.parent;
+                    }
+                });
+                var relPathPane = new HBox(relPath);
+                relPathPane.setAlignment(Pos.CENTER_LEFT);
+                root.getContent().add(relPathPane);
             }
 
             pane.getChildren().setAll(root);
