@@ -163,7 +163,7 @@ public class ServerModpackCompletionTask extends Task<Void> {
                 total++;
                 String downloadUrl = file.getDownloadURL();
                 if (StringUtils.isBlank(downloadUrl)) {
-                    downloadUrl=remoteManifest.getFileApi() + "/overrides/" + file.getPath();
+                    downloadUrl = remoteManifest.getFileApi() + "/overrides/" + file.getPath();
                 }
                 dependencies.add(new FileDownloadTask(
                         downloadUrl,
