@@ -131,7 +131,7 @@ public final class Main {
             return null;
 
         CodeSource codeSource = protectionDomain.getCodeSource();
-        if (codeSource == null)
+        if (codeSource == null || codeSource.getLocation() == null)
             return null;
 
         try {
