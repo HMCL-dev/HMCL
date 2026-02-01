@@ -26,7 +26,6 @@ import javafx.scene.control.Control;
 import javafx.scene.control.Label;
 import javafx.scene.control.Skin;
 import javafx.scene.layout.HBox;
-import org.jackhuang.hmcl.ui.FXUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -66,6 +65,10 @@ public final class OptionsList extends Control {
         for (Node node : nodes) {
             elements.add(new ListElement(node));
         }
+    }
+
+    /// Marker interface for no padding.
+    public interface NoPadding {
     }
 
     public static abstract class Element {
@@ -153,7 +156,7 @@ public final class OptionsList extends Control {
             if (original instanceof ComponentList componentList) {
                 componentList.getStyleClass().remove("options-list");
                 componentList.getStyleClass().add("options-sublist");
-                return new OptionsListSkin.ComponentListWrapper(componentList);
+                return new ComponentListWrapper(componentList);
             } else {
                 return original;
             }
