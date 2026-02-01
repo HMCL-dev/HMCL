@@ -1029,6 +1029,10 @@
     -fx-background-color: -monet-error-container;
 }
 
+.resource-pack-list-cell:warning {
+    -fx-background-color: -monet-error-container;
+}
+
 .options-sublist {
     -fx-background-color: -monet-surface;
 }
