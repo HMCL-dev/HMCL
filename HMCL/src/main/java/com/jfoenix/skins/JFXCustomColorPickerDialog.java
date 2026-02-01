@@ -34,6 +34,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Tab;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -95,14 +96,17 @@ public class JFXCustomColorPickerDialog extends StackPane {
 
         rgbField.getStyleClass().add("custom-color-field");
         rgbField.setPromptText("RGB Color");
+        rgbField.setTextFormatter(colorCharFormatter());
         rgbField.textProperty().addListener((o, oldVal, newVal) -> updateColorFromUserInput(newVal));
 
         hsbField.getStyleClass().add("custom-color-field");
         hsbField.setPromptText("HSB Color");
+        hsbField.setTextFormatter(colorCharFormatter());
         hsbField.textProperty().addListener((o, oldVal, newVal) -> updateColorFromUserInput(newVal));
 
         hexField.getStyleClass().add("custom-color-field");
         hexField.setPromptText("#HEX Color");
+        hexField.setTextFormatter(colorCharFormatter());
         hexField.textProperty().addListener((o, oldVal, newVal) -> updateColorFromUserInput(newVal));
 
         StackPane tabContent = new StackPane();
@@ -403,5 +407,15 @@ public class JFXCustomColorPickerDialog extends StackPane {
         double minHeight = Math.max(0, computeMinHeight(getWidth()) + (dialog.getHeight() - customScene.getHeight()));
         dialog.setMinWidth(minWidth);
         dialog.setMinHeight(minHeight);
+    }
+
+    private static TextFormatter<String> colorCharFormatter() {
+        return new TextFormatter<>(change -> {
+            if (!change.isContentChange()) return change;
+            if (!change.getText().matches("[0-9a-zA-Z#(),%.\\s]*")) return null;
+            String text = change.getControlNewText();
+            long hashes = text.chars().filter(c -> c == '#').count();
+            return (hashes <= 1 && (hashes == 0 || text.indexOf('#') == 0)) ? change : null;
+        });
     }
 }
