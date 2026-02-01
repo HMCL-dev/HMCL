@@ -20,8 +20,7 @@ package org.jackhuang.hmcl.event;
 import org.jetbrains.annotations.Contract;
 
 import java.lang.ref.WeakReference;
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
@@ -32,7 +31,7 @@ public final class EventManager<T extends Event> {
 
     private final ReentrantLock lock = new ReentrantLock();
     @SuppressWarnings("unchecked")
-    private final ArrayList<Consumer<T>>[] allHandlers = (ArrayList<Consumer<T>>[]) new ArrayList<?>[PRIORITY_COUNT];
+    private final CopyOnWriteArrayList<Consumer<T>>[] allHandlers = (CopyOnWriteArrayList<Consumer<T>>[]) new CopyOnWriteArrayList<?>[PRIORITY_COUNT];
 
     @Contract("_ -> param1")
     public Consumer<T> registerWeak(Consumer<T> consumer) {
@@ -53,9 +52,9 @@ public final class EventManager<T extends Event> {
     public void register(Consumer<T> consumer, EventPriority priority) {
         lock.lock();
         try {
-            ArrayList<Consumer<T>> handlers = allHandlers[priority.ordinal()];
+            var handlers = allHandlers[priority.ordinal()];
             if (handlers == null) {
-                handlers = new ArrayList<>(1);
+                handlers = new CopyOnWriteArrayList<>();
                 allHandlers[priority.ordinal()] = handlers;
             }
             handlers.add(consumer);
@@ -75,29 +74,20 @@ public final class EventManager<T extends Event> {
     public Event.Result fireEvent(T event) {
         lock.lock();
         try {
-            for (ArrayList<Consumer<T>> handlers : allHandlers) {
+            for (var handlers : allHandlers) {
                 if (handlers != null) {
-                    boolean needTrim = false;
-
-                    Iterator<Consumer<T>> iterator = handlers.iterator();
-                    while (iterator.hasNext()) {
-                        Consumer<T> handler = iterator.next();
-
+                    for (Consumer<T> handler : handlers) {
                         if (handler instanceof WeakListener<T> weakListener) {
                             Consumer<T> consumer = weakListener.ref.get();
                             if (consumer != null) {
                                 consumer.accept(event);
                             } else {
-                                needTrim = true;
-                                iterator.remove();
+                                handlers.remove(weakListener);
                             }
                         } else {
                             handler.accept(event);
                         }
                     }
-
-                    if (needTrim)
-                        handlers.trimToSize();
                 }
             }
         } finally {
