@@ -559,7 +559,7 @@ public class TerracottaControllerPage extends StackPane {
         getChildren().setAll(scrollPane);
     }
 
-    private ComponentList getThirdPartyDownloadNodes() {
+    private ComponentSublist getThirdPartyDownloadNodes() {
         ComponentSublist locals = new ComponentSublist();
         locals.setComponentPadding(false);
 
