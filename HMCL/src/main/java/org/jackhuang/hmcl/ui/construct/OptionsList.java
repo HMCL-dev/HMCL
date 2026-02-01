@@ -36,6 +36,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+// TODO: We plan to replace ComponentList with this class, but we need to address some issues first
+
 /// @author Glavo
 public final class OptionsList extends Control {
     public OptionsList() {

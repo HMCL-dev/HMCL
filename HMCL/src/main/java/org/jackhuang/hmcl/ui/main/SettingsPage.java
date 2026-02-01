@@ -29,6 +29,7 @@ import javafx.geometry.Pos;
 import javafx.geometry.VPos;
 import javafx.scene.Cursor;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.*;
 import javafx.scene.text.TextAlignment;
@@ -69,7 +70,7 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.selectedItemPropertyFor;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class SettingsPage extends StackPane {
+public final class SettingsPage extends ScrollPane {
 
     @SuppressWarnings("FieldCanBeLocal")
     private final ToggleGroup updateChannelGroup;
@@ -77,9 +78,14 @@ public final class SettingsPage extends StackPane {
     private final InvalidationListener updateListener;
 
     public SettingsPage() {
-        this.setPadding(new Insets(10));
+        this.setFitToWidth(true);
 
-        OptionsList settingsPane = new OptionsList();
+        VBox rootPane = new VBox();
+        rootPane.setPadding(new Insets(10));
+        this.setContent(rootPane);
+        FXUtils.smoothScrolling(this);
+
+        ComponentList settingsPane = new ComponentList();
         {
             {
                 StackPane sponsorPane = new StackPane();
@@ -111,7 +117,7 @@ public final class SettingsPage extends StackPane {
                 }
 
                 sponsorPane.getChildren().setAll(gridPane);
-                settingsPane.addListElement(sponsorPane);
+                settingsPane.getContent().add(sponsorPane);
             }
 
             {
@@ -191,7 +197,7 @@ public final class SettingsPage extends StackPane {
 
                     updatePane.getContent().add(content);
                 }
-                settingsPane.addListElement(updatePane);
+                settingsPane.getContent().add(updatePane);
             }
 
             {
@@ -208,7 +214,7 @@ public final class SettingsPage extends StackPane {
                 updateChannel.addListener(checkUpdateListener);
                 previewPane.selectedProperty().addListener(checkUpdateListener);
 
-                settingsPane.addListElement(previewPane);
+                settingsPane.getContent().add(previewPane);
             }
 
             {
@@ -235,7 +241,7 @@ public final class SettingsPage extends StackPane {
                 cleanButton.setOnAction(e -> clearCacheDirectory());
                 fileCommonLocationSublist.setHeaderRight(cleanButton);
 
-                settingsPane.addListElement(fileCommonLocationSublist);
+                settingsPane.getContent().add(fileCommonLocationSublist);
             }
 
             {
@@ -255,7 +261,7 @@ public final class SettingsPage extends StackPane {
                 chooseLanguagePane.setItems(SupportedLocale.getSupportedLocales());
                 chooseLanguagePane.valueProperty().bindBidirectional(config().localizationProperty());
 
-                settingsPane.addListElement(chooseLanguagePane);
+                settingsPane.getContent().add(chooseLanguagePane);
             }
 
             {
@@ -263,7 +269,7 @@ public final class SettingsPage extends StackPane {
                 disableAutoGameOptionsPane.setTitle(i18n("settings.launcher.disable_auto_game_options"));
                 disableAutoGameOptionsPane.selectedProperty().bindBidirectional(config().disableAutoGameOptionsProperty());
 
-                settingsPane.addListElement(disableAutoGameOptionsPane);
+                settingsPane.getContent().add(disableAutoGameOptionsPane);
             }
 
             {
@@ -288,10 +294,11 @@ public final class SettingsPage extends StackPane {
                 BorderPane.setAlignment(buttonBox, Pos.CENTER_RIGHT);
                 debugPane.setRight(buttonBox);
 
-                settingsPane.addListElement(debugPane);
+                settingsPane.getContent().add(debugPane);
             }
+
+            rootPane.getChildren().add(settingsPane);
         }
-        this.getChildren().setAll(settingsPane);
     }
 
     private void openLogFolder() {
