@@ -75,40 +75,33 @@ public final class OptionsList extends Control {
         }
     }
 
-    private StyleableObjectProperty<Insets> contentPadding;
+    private final StyleableObjectProperty<Insets> contentPadding = new StyleableObjectProperty<>() {
+        @Override
+        public Object getBean() {
+            return OptionsList.this;
+        }
+
+        @Override
+        public String getName() {
+            return "contentPadding";
+        }
+
+        @Override
+        public javafx.css.CssMetaData<OptionsList, Insets> getCssMetaData() {
+            return StyleableProperties.CONTENT_PADDING;
+        }
+    };
 
     public StyleableObjectProperty<Insets> contentPaddingProperty() {
-        if (contentPadding == null) {
-            contentPadding = new StyleableObjectProperty<>() {
-                private Insets value = Insets.EMPTY;
-
-                @Override
-                public Object getBean() {
-                    return OptionsList.this;
-                }
-
-                @Override
-                public String getName() {
-                    return "contentPadding";
-                }
-
-                @Override
-                public Insets get() {
-                    return value;
-                }
-
-                @Override
-                public void set(Insets v) {
-                    value = v;
-                }
-
-                @Override
-                public javafx.css.CssMetaData<OptionsList, Insets> getCssMetaData() {
-                    return StyleableProperties.CONTENT_PADDING;
-                }
-            };
-        }
         return contentPadding;
+    }
+
+    public Insets getContentPadding() {
+        return contentPaddingProperty().get();
+    }
+
+    public void setContentPadding(Insets padding) {
+        contentPaddingProperty().set(padding);
     }
 
     private static class StyleableProperties {

@@ -19,13 +19,15 @@ package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXListView;
 import javafx.beans.InvalidationListener;
+import javafx.beans.WeakInvalidationListener;
+import javafx.beans.binding.Bindings;
+import javafx.beans.binding.ObjectBinding;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.ListCell;
-import javafx.scene.control.ListView;
 import javafx.scene.control.SkinBase;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -34,31 +36,60 @@ import org.jackhuang.hmcl.ui.FXUtils;
 public final class OptionsListSkin extends SkinBase<OptionsList> {
 
     private final JFXListView<OptionsList.Element> listView;
+    private final ObjectBinding<ContentPaddings> contentPaddings;
 
     OptionsListSkin(OptionsList control) {
         super(control);
 
         this.listView = new JFXListView<>();
         listView.setItems(control.getElements());
-        listView.setCellFactory(Cell::new);
+        listView.setCellFactory(listView1 -> new Cell());
+
+        this.contentPaddings = Bindings.createObjectBinding(() -> {
+            Insets padding = control.getContentPadding();
+            return padding == null ? ContentPaddings.EMPTY : new ContentPaddings(
+                    new Insets(padding.getTop(), padding.getRight(), 0, padding.getLeft()),
+                    new Insets(0, padding.getRight(), padding.getBottom(), padding.getLeft()),
+                    new Insets(0, padding.getRight(), 0, padding.getLeft())
+            );
+        }, control.contentPaddingProperty());
 
         this.getChildren().setAll(listView);
     }
 
-    private static final class Cell extends ListCell<OptionsList.Element> {
+    private record ContentPaddings(Insets first, Insets last, Insets middle) {
+        static final ContentPaddings EMPTY = new ContentPaddings(Insets.EMPTY, Insets.EMPTY, Insets.EMPTY);
+    }
+
+    private final class Cell extends ListCell<OptionsList.Element> {
         private static final PseudoClass PSEUDO_CLASS_FIRST = PseudoClass.getPseudoClass("first");
         private static final PseudoClass PSEUDO_CLASS_LAST = PseudoClass.getPseudoClass("last");
 
+        @SuppressWarnings("FieldCanBeLocal")
+        private final InvalidationListener updateStyleListener = o -> updateStyle();
+
         private StackPane wrapper;
 
-        public Cell(ListView<OptionsList.Element> listView) {
-            this.setPadding(Insets.EMPTY);
+        public Cell() {
             FXUtils.limitCellWidth(listView, this);
+
+            WeakInvalidationListener weakListener = new WeakInvalidationListener(updateStyleListener);
+            getListView().itemsProperty().addListener((o, oldValue, newValue) -> {
+                if (oldValue != null)
+                    oldValue.removeListener(weakListener);
+                if (newValue != null)
+                    newValue.addListener(weakListener);
+
+                weakListener.invalidated(o);
+            });
+            itemProperty().addListener(weakListener);
+            contentPaddings.addListener(weakListener);
         }
 
         @Override
         protected void updateItem(OptionsList.Element item, boolean empty) {
             super.updateItem(item, empty);
+            updateStyle();
 
             if (empty || item == null) {
                 setGraphic(null);
@@ -84,31 +115,36 @@ public final class OptionsListSkin extends SkinBase<OptionsList> {
             var wrapper = new StackPane();
             wrapper.setAlignment(Pos.CENTER_LEFT);
             wrapper.getStyleClass().add("options-list-item");
-
-            InvalidationListener listener = ignored -> {
-                OptionsList.Element item = getItem();
-                int index = getIndex();
-                if (!(item instanceof OptionsList.ListElement) || index < 0)
-                    return;
-
-                ObservableList<OptionsList.Element> items = getListView().getItems();
-
-                wrapper.pseudoClassStateChanged(PSEUDO_CLASS_FIRST, index == 0 || !(items.get(index - 1) instanceof OptionsList.ListElement));
-                wrapper.pseudoClassStateChanged(PSEUDO_CLASS_LAST, index == items.size() - 1 || !(items.get(index + 1) instanceof OptionsList.ListElement));
-            };
-
-            getListView().itemsProperty().addListener((o, oldValue, newValue) -> {
-                if (oldValue != null)
-                    oldValue.removeListener(listener);
-                if (newValue != null)
-                    newValue.addListener(listener);
-
-                listener.invalidated(o);
-            });
-            itemProperty().addListener(listener);
-            listener.invalidated(null);
-
+            updateStyle();
             return wrapper;
+        }
+
+        private void updateStyle() {
+            OptionsList.Element item = getItem();
+            int index = getIndex();
+            ObservableList<OptionsList.Element> items = getListView().getItems();
+
+            if (item == null || index < 0 || index >= items.size()) {
+                this.setPadding(Insets.EMPTY);
+                return;
+            }
+
+            boolean isFirst = index == 0;
+            boolean isLast = index == items.size() - 1;
+
+            ContentPaddings paddings = contentPaddings.get();
+            if (isFirst) {
+                this.setPadding(paddings.first);
+            } else if (isLast) {
+                this.setPadding(paddings.last);
+            } else {
+                this.setPadding(paddings.middle);
+            }
+
+            if (item instanceof OptionsList.ListElement && wrapper != null) {
+                wrapper.pseudoClassStateChanged(PSEUDO_CLASS_FIRST, isFirst || !(items.get(index - 1) instanceof OptionsList.ListElement));
+                wrapper.pseudoClassStateChanged(PSEUDO_CLASS_LAST, isLast || !(items.get(index + 1) instanceof OptionsList.ListElement));
+            }
         }
     }
 
