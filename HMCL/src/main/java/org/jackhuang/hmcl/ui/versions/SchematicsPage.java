@@ -49,6 +49,7 @@ import javafx.scene.text.TextFlow;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.schematic.LitematicFile;
 import org.jackhuang.hmcl.schematic.Schematic;
+import org.jackhuang.hmcl.schematic.SchematicType;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -90,6 +91,10 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         return author;
     }
 
+    private static String translateType(SchematicType type) {
+        return i18n("schematics.info.type." + type.name().toLowerCase(Locale.ROOT));
+    }
+
     private Path schematicsDirectory;
     private final ObjectProperty<DirItem> currentDirectory = new SimpleObjectProperty<>(this, "currentDirectory", null);
 
@@ -97,7 +102,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
     public SchematicsPage() {
         FXUtils.applyDragListener(this,
-                file -> currentDirectoryProperty().get() != null && Schematic.isFileSchematicAlike(file),
+                file -> currentDirectoryProperty().get() != null && Schematic.isFileSchematic(file),
                 this::addFiles
         );
     }
@@ -337,7 +342,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             try (Stream<Path> stream = Files.list(path)) {
                 stream.forEach(p -> {
                     boolean b1 = Files.isDirectory(p);
-                    boolean b2 = Schematic.isFileSchematicAlike(p);
+                    boolean b2 = Schematic.isFileSchematic(p);
                     if (b1 || b2) this.size++;
                     if (b1) {
                         var child = new DirItem(p, this);
@@ -357,7 +362,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                     dir.preLoad();
                     this.children.add(dir);
                 }
-                stream.filter(Schematic::isFileSchematicAlike)
+                stream.filter(Schematic::isFileSchematic)
                         .forEach(p -> {
                             try {
                                 this.children.add(new SchematicItem(p));
@@ -511,6 +516,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             private void updateContent(Schematic file) {
                 details.getContent().clear();
                 addDetailItem(i18n("schematics.info.name"), file.getName());
+                addDetailItem(i18n("schematics.info.type"), translateType(file.getType()));
                 if (StringUtils.isNotBlank(file.getAuthor()))
                     addDetailItem(i18n("schematics.info.schematic_author"), translateAuthorName(file.getAuthor()));
                 if (file.getTimeCreated() != null)
@@ -530,9 +536,8 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                                     file.getEnclosingSize().z()));
                 if (StringUtils.isNotBlank(file.getMinecraftVersion()))
                     addDetailItem(i18n("schematics.info.mc_version"), file.getMinecraftVersion());
-
-                if (file instanceof LitematicFile lFile)
-                    addDetailItem(i18n("schematics.info.version"), lFile.getVersion());
+                if (file.getVersion() > 0)
+                    addDetailItem(i18n("schematics.info.version"), file.getVersion());
             }
 
             SchematicInfoDialog() {

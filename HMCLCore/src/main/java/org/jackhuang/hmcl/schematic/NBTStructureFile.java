@@ -2,12 +2,10 @@ package org.jackhuang.hmcl.schematic;
 
 import com.github.steveice10.opennbt.tag.builtin.*;
 import org.jackhuang.hmcl.util.Vec3i;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -17,12 +15,7 @@ import static org.jackhuang.hmcl.schematic.Schematic.tryGetInt;
 /// @see <a href="https://minecraft.wiki/w/Structure_file">Structure File</a>
 public final class NBTStructureFile implements Schematic {
 
-    public static boolean isFileNBTStructure(Path path) {
-        return "nbt".equals(FileUtils.getExtension(path)) && Files.isRegularFile(path);
-    }
-
     public static NBTStructureFile load(Path file) throws IOException {
-        if (!isFileNBTStructure(file)) return null;
 
         CompoundTag root = Schematic.readRoot(file);
 
@@ -64,6 +57,11 @@ public final class NBTStructureFile implements Schematic {
         this.file = file;
         this.dataVersion = dataVersion;
         this.enclosingSize = enclosingSize;
+    }
+
+    @Override
+    public SchematicType getType() {
+        return SchematicType.NBT_STRUCTURE;
     }
 
     @Override

@@ -19,11 +19,9 @@ package org.jackhuang.hmcl.schematic;
 
 import com.github.steveice10.opennbt.tag.builtin.*;
 import org.jackhuang.hmcl.util.Vec3i;
-import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 
@@ -35,12 +33,7 @@ import static org.jackhuang.hmcl.schematic.Schematic.*;
  */
 public final class LitematicFile implements Schematic {
 
-    public static boolean isFileLitematic(Path path) {
-        return "litematic".equals(FileUtils.getExtension(path)) && Files.isRegularFile(path);
-    }
-
     public static LitematicFile load(Path file) throws IOException {
-        if (!isFileLitematic(file)) return null;
 
         CompoundTag root = readRoot(file);
 
@@ -123,10 +116,16 @@ public final class LitematicFile implements Schematic {
     }
 
     @Override
+    public SchematicType getType() {
+        return SchematicType.LITEMATIC;
+    }
+
+    @Override
     public @NotNull Path getFile() {
         return file;
     }
 
+    @Override
     public int getVersion() {
         return version;
     }

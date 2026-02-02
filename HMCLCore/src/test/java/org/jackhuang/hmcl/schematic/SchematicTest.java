@@ -39,31 +39,49 @@ public final class SchematicTest {
 
     @Test
     public void test() throws Exception {
-        LitematicFile lFile = (LitematicFile) load("/schematics/test.litematic");
-        assertEquals("刷石机一桶岩浆下推爆破8.3万每小时", lFile.getName());
-        assertEquals("hsds", lFile.getAuthor());
-        assertEquals("", lFile.getDescription());
-        assertEquals(Instant.ofEpochMilli(1746443586433L), lFile.getTimeCreated());
-        assertEquals(Instant.ofEpochMilli(1746443586433L), lFile.getTimeModified());
-        assertEquals(1334, lFile.getTotalBlocks());
-        assertEquals(5746, lFile.getTotalVolume());
-        assertEquals(new Vec3i(17, 26, 13), lFile.getEnclosingSize());
-        assertEquals(1, lFile.getRegionCount());
-        assertEquals(4325, lFile.getMinecraftDataVersion());
-        assertEquals("4325", lFile.getMinecraftVersion());
-        assertEquals(7, lFile.getVersion());
+        {
+            LitematicFile lFile = (LitematicFile) load("/schematics/test.litematic");
+            assertEquals(SchematicType.LITEMATIC, lFile.getType());
+            assertEquals("刷石机一桶岩浆下推爆破8.3万每小时", lFile.getName());
+            assertEquals("hsds", lFile.getAuthor());
+            assertEquals("", lFile.getDescription());
+            assertEquals(Instant.ofEpochMilli(1746443586433L), lFile.getTimeCreated());
+            assertEquals(Instant.ofEpochMilli(1746443586433L), lFile.getTimeModified());
+            assertEquals(1334, lFile.getTotalBlocks());
+            assertEquals(5746, lFile.getTotalVolume());
+            assertEquals(new Vec3i(17, 26, 13), lFile.getEnclosingSize());
+            assertEquals(1, lFile.getRegionCount());
+            assertEquals(4325, lFile.getMinecraftDataVersion());
+            assertEquals("4325", lFile.getMinecraftVersion());
+            assertEquals(7, lFile.getVersion());
+        }
 
-        SchematicFile sFile = (SchematicFile) load("/schematics/test.schematic");
-        assertEquals("test", sFile.getName());
-        assertEquals(new Vec3i(28, 35, 18), sFile.getEnclosingSize());
-        assertEquals(17640, sFile.getTotalVolume());
-        assertEquals("Alpha", sFile.getMinecraftVersion());
+        {
+            SchemFile sFile = (SchemFile) load("/schematics/test.schematic");
+            assertEquals(SchematicType.SCHEM, sFile.getType());
+            assertEquals("test", sFile.getName());
+            assertEquals(new Vec3i(28, 35, 18), sFile.getEnclosingSize());
+            assertEquals(17640, sFile.getTotalVolume());
+            assertEquals("Alpha", sFile.getMinecraftVersion());
+        }
 
-        NBTStructureFile nFile = (NBTStructureFile) load("/schematics/test.nbt");
-        assertEquals("test", nFile.getName());
-        assertEquals(new Vec3i(9, 11, 13), nFile.getEnclosingSize());
-        assertEquals(1287, nFile.getTotalVolume());
-        assertEquals(3465, nFile.getMinecraftDataVersion());
-        assertEquals("3465", nFile.getMinecraftVersion());
+        {
+            SchemFile sFileSponge = (SchemFile) load("/schematics/test.schem");
+            assertEquals(SchematicType.SCHEM, sFileSponge.getType());
+            assertEquals("test", sFileSponge.getName());
+            assertEquals(3465, sFileSponge.getMinecraftDataVersion());
+            assertEquals("3465", sFileSponge.getMinecraftVersion());
+            assertEquals(new Vec3i(9, 5, 9), sFileSponge.getEnclosingSize());
+        }
+
+        {
+            NBTStructureFile nFile = (NBTStructureFile) load("/schematics/test.nbt");
+            assertEquals(SchematicType.NBT_STRUCTURE, nFile.getType());
+            assertEquals("test", nFile.getName());
+            assertEquals(new Vec3i(9, 11, 13), nFile.getEnclosingSize());
+            assertEquals(1287, nFile.getTotalVolume());
+            assertEquals(3465, nFile.getMinecraftDataVersion());
+            assertEquals("3465", nFile.getMinecraftVersion());
+        }
     }
 }

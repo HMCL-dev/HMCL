@@ -14,24 +14,21 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.zip.GZIPInputStream;
 
-public sealed interface Schematic permits LitematicFile, SchematicFile, NBTStructureFile {
+public sealed interface Schematic permits LitematicFile, SchemFile, NBTStructureFile {
 
-    static boolean isFileSchematicAlike(Path file) {
-        if (file == null) return false;
-        return LitematicFile.isFileLitematic(file) || SchematicFile.isFileSchematic(file) || NBTStructureFile.isFileNBTStructure(file);
+    static boolean isFileSchematic(Path file) {
+        return SchematicType.getType(file) != null;
     }
 
     @Nullable
     static Schematic load(Path file) throws IOException {
-        if (file == null) return null;
-        if (LitematicFile.isFileLitematic(file)) {
-            return LitematicFile.load(file);
-        } else if (SchematicFile.isFileSchematic(file)) {
-            return SchematicFile.load(file);
-        } else if (NBTStructureFile.isFileNBTStructure(file)) {
-            return NBTStructureFile.load(file);
-        }
-        return null;
+        var type = SchematicType.getType(file);
+        if (type == null) return null;
+        return switch (SchematicType.getType(file)) {
+            case LITEMATIC -> LitematicFile.load(file);
+            case SCHEM -> SchemFile.load(file);
+            case NBT_STRUCTURE -> NBTStructureFile.load(file);
+        };
     }
 
     static CompoundTag readRoot(Path file) throws IOException {
@@ -61,7 +58,13 @@ public sealed interface Schematic permits LitematicFile, SchematicFile, NBTStruc
         return tag instanceof StringTag ? ((StringTag) tag).getValue() : null;
     }
 
+    SchematicType getType();
+
     @NotNull Path getFile();
+
+    default int getVersion() {
+        return 0;
+    }
 
     default int getMinecraftDataVersion() {
         return 0;
