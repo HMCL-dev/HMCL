@@ -127,6 +127,7 @@ public abstract class LineButtonBase extends StackPane implements NoPaddingCompo
 
     public void setIcon(Image icon) {
         ImageView imageView = new ImageView(icon);
+        imageView.setMouseTransparent(true);
         BorderPane.setAlignment(imageView, Pos.CENTER);
         BorderPane.setMargin(imageView, new Insets(0, 16, 0, 0));
         root.setLeft(imageView);
@@ -138,6 +139,7 @@ public abstract class LineButtonBase extends StackPane implements NoPaddingCompo
 
     public void setIcon(SVG svg, double size) {
         Node icon = svg.createIcon(size);
+        icon.setMouseTransparent(true);
         BorderPane.setAlignment(icon, Pos.CENTER);
         BorderPane.setMargin(icon, new Insets(0, 16, 0, 0));
         root.setLeft(icon);
