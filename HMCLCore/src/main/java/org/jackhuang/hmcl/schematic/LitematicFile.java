@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.OptionalInt;
 
 import static org.jackhuang.hmcl.schematic.Schematic.*;
 
@@ -54,9 +55,10 @@ public final class LitematicFile implements Schematic {
         if (regionsTag instanceof CompoundTag)
             regions = ((CompoundTag) regionsTag).size();
 
+        Tag tag = root.get("SubVersion");
         return new LitematicFile(file, (CompoundTag) metadataTag,
                 ((IntTag) versionTag).getValue(),
-                tryGetInt(root.get("SubVersion")),
+                tag instanceof IntTag ? ((IntTag) tag).getValue() : -1,
                 tryGetInt(root.get("MinecraftDataVersion")),
                 regions
         );
@@ -130,8 +132,9 @@ public final class LitematicFile implements Schematic {
         return version;
     }
 
-    public int getSubVersion() {
-        return subVersion;
+    @Override
+    public OptionalInt getSubVersion() {
+        return subVersion >= 0 ? OptionalInt.of(subVersion) : OptionalInt.empty();
     }
 
     @Override

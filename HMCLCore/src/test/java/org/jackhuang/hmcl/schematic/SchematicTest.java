@@ -28,6 +28,7 @@ import java.nio.file.Paths;
 import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public final class SchematicTest {
     private static Schematic load(String name) throws IOException, URISyntaxException {
@@ -54,6 +55,8 @@ public final class SchematicTest {
             assertEquals(4325, lFile.getMinecraftDataVersion());
             assertEquals("4325", lFile.getMinecraftVersion());
             assertEquals(7, lFile.getVersion());
+            assertTrue(lFile.getSubVersion().isPresent());
+            assertEquals(1, lFile.getSubVersion().getAsInt());
         }
 
         {

@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.OptionalInt;
 import java.util.zip.GZIPInputStream;
 
 public sealed interface Schematic permits LitematicFile, SchemFile, NBTStructureFile {
@@ -64,6 +65,10 @@ public sealed interface Schematic permits LitematicFile, SchemFile, NBTStructure
 
     default int getVersion() {
         return 0;
+    }
+
+    default OptionalInt getSubVersion() {
+        return OptionalInt.empty();
     }
 
     default int getMinecraftDataVersion() {
