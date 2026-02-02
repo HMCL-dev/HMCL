@@ -790,6 +790,15 @@
     -fx-cursor: hand;
 }
 
+.jfx-button:armed,
+.jfx-button:hover,
+.jfx-button:focused,
+.jfx-button {
+    -fx-background-color: TRANSPARENT, TRANSPARENT, TRANSPARENT, TRANSPARENT;
+    -fx-background-radius: 3px;
+    -fx-background-insets: 0px;
+}
+
 .jfx-button .jfx-rippler {
     -jfx-rippler-fill: -monet-on-surface;
     -jfx-mask-type: CIRCLE;
