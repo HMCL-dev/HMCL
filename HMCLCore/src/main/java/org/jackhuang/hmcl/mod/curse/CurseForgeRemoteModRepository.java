@@ -277,7 +277,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
                 case SECTION_BUKKIT_PLUGIN -> "bukkit-plugins";
                 case SECTION_ADDONS -> "mc-addons";
                 case SECTION_CUSTOMIZATION -> "customization";
-                case SECTION_SHADERS -> "shaders";
+                case SECTION_SHADER -> "shaders";
                 default -> throw new IllegalArgumentException("Unsupported CurseForge class id [%d]".formatted(classId));
             };
             return "%s/minecraft/%s/%s/files/%s".formatted(BASE, clazz, addon.getSlug(), version.getVersionId());
@@ -324,9 +324,9 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     public static final int SECTION_MOD = 6;
     public static final int SECTION_RESOURCE_PACK = 12;
     public static final int SECTION_DATAPACK = 6945;
-    public static final int SECTION_SHADERS = 6552;
     public static final int SECTION_WORLD = 17;
     public static final int SECTION_MODPACK = 4471;
+    public static final int SECTION_SHADER = 6552;
     public static final int SECTION_CUSTOMIZATION = 4546;
     public static final int SECTION_ADDONS = 4559; // For Pocket Edition
     public static final int SECTION_UNKNOWN1 = 4944;
