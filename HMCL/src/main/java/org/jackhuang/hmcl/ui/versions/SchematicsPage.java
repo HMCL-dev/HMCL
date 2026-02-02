@@ -594,7 +594,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                                     file.getEnclosingSize().y(),
                                     file.getEnclosingSize().z()));
                 if (StringUtils.isNotBlank(file.getMinecraftVersion()))
-                    addDetailItem(i18n("schematics.info.mc_version"), file.getMinecraftVersion());
+                    addDetailItem(i18n("schematics.info.mc_data_version"), file.getMinecraftVersion());
                 if (file.getVersion() > 0)
                     addDetailItem(i18n("schematics.info.version"),
                             file.getSubVersion().isPresent() ? "%d.%d".formatted(file.getVersion(), file.getSubVersion().getAsInt()) : file.getVersion()
