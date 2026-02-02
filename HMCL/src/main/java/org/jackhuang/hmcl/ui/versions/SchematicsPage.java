@@ -45,6 +45,7 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.mod.LocalModFile;
+import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.schematic.LitematicFile;
@@ -62,6 +63,7 @@ import org.jackhuang.hmcl.ui.nbt.NBTEditorPage;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,6 +73,7 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
@@ -85,6 +88,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> implements VersionPage.VersionLoadable {
 
     private static RemoteMod litematica;
+    private static RemoteMod forgematica;
 
     private static String translateAuthorName(String author) {
         if (I18n.isUseChinese() && "hsds".equals(author)) {
@@ -143,17 +147,16 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         if (schematicsDirectory == null) return;
 
         setLoading(true);
+        var modManager = profile.getRepository().getModManager(instanceId);
         Task.supplyAsync(() -> {
             boolean hasLitematica = false;
             try {
-                if (profile.getRepository()
-                        .getModManager(instanceId)
-                        .getMods()
+                modManager.refreshMods();
+                var set = modManager.getMods()
                         .stream()
                         .map(LocalModFile::getId)
-                        .toList()
-                        .contains("litematica")
-                ) {
+                        .collect(Collectors.toSet());
+                if (set.contains("litematica") || set.contains("forgematica")) {
                     hasLitematica = true;
                 }
             } catch (IOException e) {
@@ -164,21 +167,31 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                     if (litematica == null) litematica = ModrinthRemoteModRepository.MODS.getModById("litematica");
                 } catch (IOException ignored) {
                 }
+                try {
+                    if (forgematica == null) forgematica = ModrinthRemoteModRepository.MODS.getModById("forgematica");
+                } catch (IOException ignored) {
+                }
                 return null;
             }
             return loadRoot(schematicsDirectory);
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
                 if (result == null) {
-                    if (litematica != null) {
+                    boolean useForgematica = forgematica != null
+                            && (modManager.getSupportedLoaders().contains(ModLoaderType.FORGE) || modManager.getSupportedLoaders().contains(ModLoaderType.NEO_FORGED))
+                            && GameVersionNumber.asGameVersion(Optional.ofNullable(modManager.getGameVersion())).isAtLeast("1.16.4", "20w45a");
+                    if (useForgematica || litematica != null) {
                         setFailedReason(i18n("schematics.no_litematica_install"));
-                        setOnFailedAction(__ -> FXUtils.runInFX(() -> {
-                            if (litematica != null) {
-                                DownloadListPage modDownloads = Controllers.getDownloadPage().showModDownloads();
-                                modDownloads.selectVersion(instanceId);
-                                Controllers.navigate(new DownloadPage(modDownloads, litematica, modDownloads.getProfileVersion(), modDownloads.getCallback()));
-                            }
-                        }));
+                        setOnFailedAction(__ -> {
+                            var modDownloads = Controllers.getDownloadPage().showModDownloads();
+                            modDownloads.selectVersion(instanceId);
+                            Controllers.navigate(new DownloadPage(
+                                    modDownloads,
+                                    useForgematica ? forgematica : litematica,
+                                    modDownloads.getProfileVersion(),
+                                    modDownloads.getCallback())
+                            );
+                        });
                     } else {
                         setFailedReason(i18n("schematics.no_litematica"));
                         setOnFailedAction(null);

@@ -57,7 +57,6 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
     private ModManager modManager;
     private Profile profile;
     private String instanceId;
-    private String gameVersion;
 
     final EnumSet<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
 
@@ -90,7 +89,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
 
         HMCLGameRepository repository = profile.getRepository();
         Version resolved = repository.getResolvedPreservingPatchesVersion(id);
-        this.gameVersion = repository.getGameVersion(resolved).orElse(null);
+        String gameVersion = repository.getGameVersion(resolved).orElse(null);
         LibraryAnalyzer analyzer = LibraryAnalyzer.analyze(resolved, gameVersion);
         modded.set(analyzer.hasModLoader());
         loadMods(profile.getRepository().getModManager(id));
@@ -111,7 +110,8 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                 lock.unlock();
             }
         }, Schedulers.io()).whenCompleteAsync((list, exception) -> {
-            updateSupportedLoaders(modManager);
+            supportedLoaders.clear();
+            supportedLoaders.addAll(modManager.getSupportedLoaders());
 
             if (exception == null) {
                 getItems().setAll(list);
@@ -121,51 +121,6 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
             }
             setLoading(false);
         }, Schedulers.javafx());
-    }
-
-    private void updateSupportedLoaders(ModManager modManager) {
-        supportedLoaders.clear();
-
-        LibraryAnalyzer analyzer = modManager.getLibraryAnalyzer();
-        if (analyzer == null) {
-            Collections.addAll(supportedLoaders, ModLoaderType.values());
-            return;
-        }
-
-        for (LibraryAnalyzer.LibraryType type : LibraryAnalyzer.LibraryType.values()) {
-            if (type.isModLoader() && analyzer.has(type)) {
-                ModLoaderType modLoaderType = type.getModLoaderType();
-                if (modLoaderType != null) {
-                    supportedLoaders.add(modLoaderType);
-
-                    if (modLoaderType == ModLoaderType.CLEANROOM)
-                        supportedLoaders.add(ModLoaderType.FORGE);
-                }
-            }
-        }
-
-        if (analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE) && "1.20.1".equals(gameVersion)) {
-            supportedLoaders.add(ModLoaderType.FORGE);
-        }
-
-        if (analyzer.has(LibraryAnalyzer.LibraryType.QUILT)) {
-            supportedLoaders.add(ModLoaderType.FABRIC);
-        }
-
-        if (analyzer.has(LibraryAnalyzer.LibraryType.LEGACY_FABRIC)) {
-            supportedLoaders.add(ModLoaderType.FABRIC);
-        }
-
-        if (analyzer.has(LibraryAnalyzer.LibraryType.FABRIC) && modManager.hasMod("kilt", ModLoaderType.FABRIC)) {
-            supportedLoaders.add(ModLoaderType.FORGE);
-            supportedLoaders.add(ModLoaderType.NEO_FORGED);
-        }
-
-        // Sinytra Connector
-        if (analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE) && modManager.hasMod("connectormod", ModLoaderType.NEO_FORGED)
-                || "1.20.1".equals(gameVersion) && analyzer.has(LibraryAnalyzer.LibraryType.FORGE) && modManager.hasMod("connectormod", ModLoaderType.FORGE)) {
-            supportedLoaders.add(ModLoaderType.FABRIC);
-        }
     }
 
     public void add() {
