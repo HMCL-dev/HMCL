@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.construct;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
@@ -47,6 +48,10 @@ public abstract class LineButtonBase extends StackPane implements NoPaddingCompo
         BorderPane.setAlignment(titleLabel, Pos.CENTER_LEFT);
         titleLabel.textProperty().bind(titleProperty());
         titleLabel.getStyleClass().add("title");
+    }
+
+    public void setContentPadding(Insets padding) {
+        root.setPadding(padding);
     }
 
     private final StringProperty title = new SimpleStringProperty(this, "title");
