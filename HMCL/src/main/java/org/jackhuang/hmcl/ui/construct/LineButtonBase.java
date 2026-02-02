@@ -22,11 +22,15 @@ import javafx.beans.property.StringProperty;
 import javafx.beans.property.StringPropertyBase;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.ui.SVG;
 
 /// @author Glavo
 public abstract class LineButtonBase extends StackPane implements NoPaddingComponent {
@@ -119,5 +123,23 @@ public abstract class LineButtonBase extends StackPane implements NoPaddingCompo
 
     public void setSubtitle(String subtitle) {
         subtitleProperty().set(subtitle);
+    }
+
+    public void setIcon(Image icon) {
+        ImageView imageView = new ImageView(icon);
+        BorderPane.setAlignment(imageView, Pos.CENTER);
+        BorderPane.setMargin(imageView, new Insets(0, 16, 0, 0));
+        root.setLeft(imageView);
+    }
+
+    public void setIcon(SVG svg) {
+        setIcon(svg, 24);
+    }
+
+    public void setIcon(SVG svg, double size) {
+        Node icon = svg.createIcon(size);
+        BorderPane.setAlignment(icon, Pos.CENTER);
+        BorderPane.setMargin(icon, new Insets(0, 16, 0, 0));
+        root.setLeft(icon);
     }
 }
