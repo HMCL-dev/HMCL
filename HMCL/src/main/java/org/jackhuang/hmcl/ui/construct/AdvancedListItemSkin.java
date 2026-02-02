@@ -25,7 +25,7 @@ import javafx.scene.layout.HBox;
 import org.jackhuang.hmcl.ui.FXUtils;
 
 public class AdvancedListItemSkin extends SkinBase<AdvancedListItem> {
-    private final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
+    private static final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
 
     public AdvancedListItemSkin(AdvancedListItem skinnable) {
         super(skinnable);

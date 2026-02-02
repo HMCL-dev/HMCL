@@ -180,7 +180,7 @@ public class PersonalizationPage extends StackPane {
                 }
 
                 Label textOpacity = new Label();
-                FXUtils.setLimitWidth(textOpacity, 35);
+                FXUtils.setLimitWidth(textOpacity, 50);
 
                 StringBinding valueBinding = Bindings.createStringBinding(() -> ((int) slider.getValue()) + "%", slider.valueProperty());
                 textOpacity.textProperty().bind(valueBinding);
@@ -197,8 +197,7 @@ public class PersonalizationPage extends StackPane {
         }
 
         {
-            ComponentList logPane = new ComponentSublist();
-            logPane.setTitle(i18n("settings.launcher.log"));
+            ComponentList logPane = new ComponentList();
 
             {
                 VBox fontPane = new VBox();
@@ -254,8 +253,7 @@ public class PersonalizationPage extends StackPane {
         }
 
         {
-            ComponentSublist fontPane = new ComponentSublist();
-            fontPane.setTitle(i18n("settings.launcher.font"));
+            ComponentList fontPane = new ComponentList();
 
             {
                 VBox vbox = new VBox();

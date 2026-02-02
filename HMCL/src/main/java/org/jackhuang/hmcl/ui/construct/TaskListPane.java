@@ -326,8 +326,7 @@ public final class TaskListPane extends StackPane {
             if (prevStageNodeRef != null && (prevStageNode = prevStageNodeRef.get()) != null)
                 prevStageNode.status.removeListener(statusChangeListener);
 
-            if (item instanceof ProgressListNode) {
-                var progressListNode = (ProgressListNode) item;
+            if (item instanceof ProgressListNode progressListNode) {
                 title.setText(progressListNode.title);
                 message.textProperty().bind(progressListNode.message);
                 bar.progressProperty().bind(progressListNode.progress);
@@ -336,8 +335,7 @@ public final class TaskListPane extends StackPane {
                 pane.setLeft(null);
                 pane.setRight(message);
                 pane.setBottom(bar);
-            } else if (item instanceof StageNode) {
-                var stageNode = (StageNode) item;
+            } else if (item instanceof StageNode stageNode) {
                 title.textProperty().bind(stageNode.title);
                 message.setText("");
                 bar.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
@@ -493,12 +491,10 @@ public final class TaskListPane extends StackPane {
 
         private ProgressListNode(Task<?> task) {
             this.title = task.getName();
-            message.bind(task.messageProperty());
             progress.bind(task.progressProperty());
         }
 
         public void unbind() {
-            message.unbind();
             progress.unbind();
         }
 
