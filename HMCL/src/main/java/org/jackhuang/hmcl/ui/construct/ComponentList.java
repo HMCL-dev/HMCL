@@ -17,8 +17,9 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
+import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
-import javafx.beans.binding.ObjectBinding;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
@@ -58,8 +59,6 @@ public class ComponentList extends Control implements NoPaddingComponent {
         private static final PseudoClass PSEUDO_CLASS_LAST = PseudoClass.getPseudoClass("last");
 
         private final ObservableList<Node> list;
-        private final ObjectBinding<Node> firstItem;
-        private final ObjectBinding<Node> lastItem;
 
         Skin(ComponentList control) {
             super(control);
@@ -86,30 +85,42 @@ public class ComponentList extends Control implements NoPaddingComponent {
                 return wrapper;
             });
 
-            firstItem = Bindings.valueAt(list, 0);
-            firstItem.addListener((observable, oldValue, newValue) -> {
-                if (newValue != null)
-                    newValue.pseudoClassStateChanged(PSEUDO_CLASS_FIRST, true);
-                if (oldValue != null)
-                    oldValue.pseudoClassStateChanged(PSEUDO_CLASS_FIRST, false);
-            });
-            if (!list.isEmpty())
-                list.get(0).pseudoClassStateChanged(PSEUDO_CLASS_FIRST, true);
-
-            lastItem = Bindings.valueAt(list, Bindings.subtract(Bindings.size(list), 1));
-            lastItem.addListener((observable, oldValue, newValue) -> {
-                if (newValue != null)
-                    newValue.pseudoClassStateChanged(PSEUDO_CLASS_LAST, true);
-                if (oldValue != null)
-                    oldValue.pseudoClassStateChanged(PSEUDO_CLASS_LAST, false);
-            });
-            if (!list.isEmpty())
-                list.get(list.size() - 1).pseudoClassStateChanged(PSEUDO_CLASS_LAST, true);
+            updateStyle();
+            list.addListener((InvalidationListener) o -> updateStyle());
 
             VBox vbox = new VBox();
             vbox.setFillWidth(true);
             Bindings.bindContent(vbox.getChildren(), list);
             node = vbox;
+        }
+
+        private Node prevFirstItem;
+        private Node prevLastItem;
+
+        private void updateStyle() {
+            Node newFirstItem;
+            Node newLastItem;
+
+            if (list.isEmpty()) {
+                newFirstItem = null;
+                newLastItem = null;
+            } else {
+                newFirstItem = list.get(0);
+                newLastItem = list.get(list.size() - 1);
+            }
+
+            if (prevFirstItem != null)
+                prevFirstItem.pseudoClassStateChanged(PSEUDO_CLASS_FIRST, false);
+            if (prevLastItem != null)
+                prevLastItem.pseudoClassStateChanged(PSEUDO_CLASS_LAST, false);
+
+            if (newFirstItem != null)
+                newFirstItem.pseudoClassStateChanged(PSEUDO_CLASS_FIRST, true);
+            if (newLastItem != null)
+                newLastItem.pseudoClassStateChanged(PSEUDO_CLASS_LAST, true);
+
+            prevFirstItem = newFirstItem;
+            prevLastItem = newLastItem;
         }
     }
 
