@@ -551,9 +551,9 @@ public class TerracottaControllerPage extends StackPane {
 
         var header = new LinePane();
         header.getStyleClass().add("terracotta-iconed-button");
-        header.setMouseTransparent(true);
         header.setPadding(Insets.EMPTY);
         header.setMinHeight(LinePane.USE_COMPUTED_SIZE);
+        header.setMouseTransparent(true);
         header.setLeftIcon(FXUtils.newBuiltinImage("/assets/img/terracotta.png"));
         header.setTitle(i18n("terracotta.from_local.title"));
         header.setSubtitle(i18n("terracotta.from_local.desc"));
