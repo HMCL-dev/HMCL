@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui.construct;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.beans.property.StringPropertyBase;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -27,15 +26,11 @@ import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.ui.SVG;
 
 /// @author Glavo
 public abstract class LineButtonBase extends StackPane implements NoPaddingComponent {
-
-    private static final Insets PADDING = new Insets(8, 8, 8, 16);
 
     protected final BorderPane root;
     protected final RipplerContainer container;
@@ -44,8 +39,8 @@ public abstract class LineButtonBase extends StackPane implements NoPaddingCompo
 
     public LineButtonBase() {
         this.root = new BorderPane();
-        root.setPadding(PADDING);
-        root.setMinHeight(48);
+        root.setPadding(LinePane.PADDING);
+        root.setMinHeight(LinePane.MIN_HEIGHT);
 
         this.container = new RipplerContainer(root);
         this.getChildren().setAll(container);
@@ -75,41 +70,20 @@ public abstract class LineButtonBase extends StackPane implements NoPaddingCompo
 
     public StringProperty subtitleProperty() {
         if (subtitle == null) {
-            subtitle = new StringPropertyBase() {
-                private VBox left;
-                private Label subtitleLabel;
-
-                @Override
-                public String getName() {
-                    return "subtitle";
-                }
-
+            subtitle = new LinePane.SubtitleProperty() {
                 @Override
                 public Object getBean() {
                     return LineButtonBase.this;
                 }
 
                 @Override
-                protected void invalidated() {
-                    String subtitle = get();
-                    if (subtitle != null && !subtitle.isEmpty()) {
-                        if (left == null) {
-                            left = new VBox();
-                            left.setMouseTransparent(true);
-                            left.setAlignment(Pos.CENTER_LEFT);
+                public BorderPane getRootPane() {
+                    return root;
+                }
 
-                            subtitleLabel = new Label();
-                            subtitleLabel.setWrapText(true);
-                            subtitleLabel.setMinHeight(Region.USE_PREF_SIZE);
-                            subtitleLabel.getStyleClass().add("subtitle");
-                        }
-                        subtitleLabel.setText(subtitle);
-                        left.getChildren().setAll(titleLabel, subtitleLabel);
-                        root.setCenter(left);
-                    } else if (left != null) {
-                        subtitleLabel.setText(null);
-                        root.setCenter(titleLabel);
-                    }
+                @Override
+                public Label getTitleLabel() {
+                    return titleLabel;
                 }
             };
         }

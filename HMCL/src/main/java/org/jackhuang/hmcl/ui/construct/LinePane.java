@@ -30,13 +30,14 @@ import javafx.scene.layout.VBox;
 /// @author Glavo
 public class LinePane extends BorderPane implements NoPaddingComponent {
 
-    private static final Insets PADDING = new Insets(8, 8, 8, 16);
+    static final Insets PADDING = new Insets(8, 8, 8, 16);
+    static final double MIN_HEIGHT = 48.0;
 
     private final Label titleLabel;
 
     public LinePane() {
         this.setPadding(PADDING);
-        this.setMinHeight(48);
+        this.setMinHeight(MIN_HEIGHT);
 
         this.titleLabel = new Label();
         this.setCenter(titleLabel);
@@ -63,41 +64,20 @@ public class LinePane extends BorderPane implements NoPaddingComponent {
 
     public StringProperty subtitleProperty() {
         if (subtitle == null) {
-            subtitle = new StringPropertyBase() {
-                private VBox left;
-                private Label subtitleLabel;
-
-                @Override
-                public String getName() {
-                    return "subtitle";
-                }
-
+            subtitle = new SubtitleProperty() {
                 @Override
                 public Object getBean() {
                     return LinePane.this;
                 }
 
                 @Override
-                protected void invalidated() {
-                    String subtitle = get();
-                    if (subtitle != null && !subtitle.isEmpty()) {
-                        if (left == null) {
-                            left = new VBox();
-                            left.setMouseTransparent(true);
-                            left.setAlignment(Pos.CENTER_LEFT);
+                public BorderPane getRootPane() {
+                    return LinePane.this;
+                }
 
-                            subtitleLabel = new Label();
-                            subtitleLabel.setWrapText(true);
-                            subtitleLabel.setMinHeight(Region.USE_PREF_SIZE);
-                            subtitleLabel.getStyleClass().add("subtitle");
-                        }
-                        subtitleLabel.setText(subtitle);
-                        left.getChildren().setAll(titleLabel, subtitleLabel);
-                        LinePane.this.setCenter(left);
-                    } else if (left != null) {
-                        subtitleLabel.setText(null);
-                        LinePane.this.setCenter(titleLabel);
-                    }
+                @Override
+                public Label getTitleLabel() {
+                    return titleLabel;
                 }
             };
         }
@@ -111,5 +91,42 @@ public class LinePane extends BorderPane implements NoPaddingComponent {
 
     public void setSubtitle(String subtitle) {
         subtitleProperty().set(subtitle);
+    }
+
+    abstract static class SubtitleProperty extends StringPropertyBase {
+        private VBox left;
+        private Label subtitleLabel;
+
+        public abstract BorderPane getRootPane();
+
+        public abstract Label getTitleLabel();
+
+        @Override
+        public String getName() {
+            return "subtitle";
+        }
+
+        @Override
+        protected void invalidated() {
+            String subtitle = get();
+            if (subtitle != null && !subtitle.isEmpty()) {
+                if (left == null) {
+                    left = new VBox();
+                    left.setMouseTransparent(true);
+                    left.setAlignment(Pos.CENTER_LEFT);
+
+                    subtitleLabel = new Label();
+                    subtitleLabel.setWrapText(true);
+                    subtitleLabel.setMinHeight(Region.USE_PREF_SIZE);
+                    subtitleLabel.getStyleClass().add("subtitle");
+                }
+                subtitleLabel.setText(subtitle);
+                left.getChildren().setAll(getTitleLabel(), subtitleLabel);
+                getRootPane().setCenter(left);
+            } else if (left != null) {
+                subtitleLabel.setText(null);
+                getRootPane().setCenter(getTitleLabel());
+            }
+        }
     }
 }
