@@ -704,10 +704,10 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                     if (item != null) item.onReveal();
                 });
 
-                JFXButton btnEdit = new JFXButton();
-                btnEdit.getStyleClass().add("toggle-icon4");
-                btnEdit.setGraphic(SVG.EDIT.createIcon());
-                btnEdit.setOnAction(event -> {
+                JFXButton btnExplore = new JFXButton();
+                btnExplore.getStyleClass().add("toggle-icon4");
+                btnExplore.setGraphic(SVG.EXPLORE.createIcon()); // Change the icon if allows editing
+                btnExplore.setOnAction(event -> {
                     Item item = getItem();
                     if (item instanceof SchematicItem) {
                         try {
@@ -716,7 +716,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                         }
                     }
                 });
-                btnEdit.visibleProperty().bind(isFileProperty);
+                btnExplore.visibleProperty().bind(isFileProperty);
 
                 JFXButton btnDelete = new JFXButton();
                 btnDelete.getStyleClass().add("toggle-icon4");
@@ -729,7 +729,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                     }
                 });
 
-                right.getChildren().setAll(btnEdit, btnReveal, btnDelete);
+                right.getChildren().setAll(btnExplore, btnReveal, btnDelete);
             }
 
             box.getChildren().setAll(left, center, right);
