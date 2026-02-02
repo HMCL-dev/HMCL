@@ -32,6 +32,12 @@ import org.jackhuang.hmcl.ui.SVG;
 public final class LineButton extends LineButtonBase {
     private static final String DEFAULT_STYLE_CLASS = "line-button";
 
+    public static LineButton createNavigationButton() {
+        var button = new LineButton();
+        button.setRightIcon(SVG.ARROW_FORWARD);
+        return button;
+    }
+
     public LineButton() {
         getStyleClass().add(DEFAULT_STYLE_CLASS);
 
@@ -44,25 +50,28 @@ public final class LineButton extends LineButtonBase {
         fireEvent(new ActionEvent());
     }
 
-    private final ObjectProperty<EventHandler<ActionEvent>> onAction = new ObjectPropertyBase<>() {
-
-        @Override
-        protected void invalidated() {
-            setEventHandler(ActionEvent.ACTION, get());
-        }
-
-        @Override
-        public Object getBean() {
-            return LineButton.this;
-        }
-
-        @Override
-        public String getName() {
-            return "onAction";
-        }
-    };
+    private ObjectProperty<EventHandler<ActionEvent>> onAction;
 
     public ObjectProperty<EventHandler<ActionEvent>> onActionProperty() {
+        if (onAction == null) {
+            onAction = new ObjectPropertyBase<>() {
+
+                @Override
+                protected void invalidated() {
+                    setEventHandler(ActionEvent.ACTION, get());
+                }
+
+                @Override
+                public Object getBean() {
+                    return LineButton.this;
+                }
+
+                @Override
+                public String getName() {
+                    return "onAction";
+                }
+            };
+        }
         return onAction;
     }
 
