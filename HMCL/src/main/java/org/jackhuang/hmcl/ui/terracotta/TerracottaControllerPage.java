@@ -57,13 +57,7 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.ComponentSublist;
-import org.jackhuang.hmcl.ui.construct.HintPane;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
-import org.jackhuang.hmcl.ui.construct.RipplerContainer;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
-import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.i18n.LocaleUtils;
@@ -563,8 +557,11 @@ public class TerracottaControllerPage extends StackPane {
         ComponentSublist locals = new ComponentSublist();
         locals.setComponentPadding(false);
 
-        LineButton header = LineButton.of(false);
-        header.setLeftImage(FXUtils.newBuiltinImage("/assets/img/terracotta.png"));
+        var header = new LinePane();
+        header.getStyleClass().add("terracotta-iconed-line");
+        header.setMouseTransparent(true);
+        header.setPadding(Insets.EMPTY);
+        header.setLeftIcon(FXUtils.newBuiltinImage("/assets/img/terracotta.png"));
         header.setTitle(i18n("terracotta.from_local.title"));
         header.setSubtitle(i18n("terracotta.from_local.desc"));
         locals.setHeaderLeft(header);
@@ -606,14 +603,8 @@ public class TerracottaControllerPage extends StackPane {
         private final StringProperty subTitle = new SimpleStringProperty(this, "subTitle", "");
 
         public static LineButton of() {
-            return of(true);
-        }
-
-        public static LineButton of(boolean padding) {
             HBox container = new HBox();
-            if (padding) {
-                container.setPadding(new Insets(10, 16, 10, 16));
-            }
+            container.setPadding(new Insets(10, 16, 10, 16));
             container.setAlignment(Pos.CENTER_LEFT);
             container.setCursor(Cursor.HAND);
             container.setSpacing(16);

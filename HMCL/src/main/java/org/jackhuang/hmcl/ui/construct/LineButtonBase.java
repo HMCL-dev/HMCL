@@ -97,7 +97,11 @@ public abstract class LineButtonBase extends StackPane implements NoPaddingCompo
     }
 
     public void setLeftIcon(Image icon) {
-        LinePane.setLeftIcon(root, icon);
+        LinePane.setLeftIcon(root, icon, -1.0);
+    }
+
+    public void setLeftIcon(Image icon, double size) {
+        LinePane.setLeftIcon(root, icon, size);
     }
 
     public void setLeftIcon(SVG svg) {

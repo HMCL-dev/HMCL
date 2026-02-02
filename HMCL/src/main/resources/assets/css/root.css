@@ -355,6 +355,10 @@
     -fx-font-size: 15px;
 }
 
+.terracotta-iconed-line .title {
+    -fx-font-size: 15px;
+}
+
 .terracotta-hint Text {
     -fx-fill: -monet-on-surface;
 }
