@@ -167,7 +167,7 @@ public class LinePane extends BorderPane implements NoPaddingComponent {
     }
 
     public void setLeftIcon(SVG svg) {
-        setLeftIcon(this, svg, 24);
+        setLeftIcon(this, svg, SVG.DEFAULT_SIZE);
     }
 
     public void setLeftIcon(SVG svg, double size) {
