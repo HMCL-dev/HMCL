@@ -22,10 +22,14 @@ import javafx.beans.property.StringProperty;
 import javafx.beans.property.StringPropertyBase;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.ui.SVG;
 
 /// @author Glavo
 public class LinePane extends BorderPane implements NoPaddingComponent {
@@ -58,39 +62,6 @@ public class LinePane extends BorderPane implements NoPaddingComponent {
 
     public void setTitle(String title) {
         this.titleProperty().set(title);
-    }
-
-    private StringProperty subtitle;
-
-    public StringProperty subtitleProperty() {
-        if (subtitle == null) {
-            subtitle = new SubtitleProperty() {
-                @Override
-                public Object getBean() {
-                    return LinePane.this;
-                }
-
-                @Override
-                public BorderPane getRootPane() {
-                    return LinePane.this;
-                }
-
-                @Override
-                public Label getTitleLabel() {
-                    return titleLabel;
-                }
-            };
-        }
-
-        return subtitle;
-    }
-
-    public String getSubtitle() {
-        return subtitleProperty().get();
-    }
-
-    public void setSubtitle(String subtitle) {
-        subtitleProperty().set(subtitle);
     }
 
     abstract static class SubtitleProperty extends StringPropertyBase {
@@ -128,5 +99,68 @@ public class LinePane extends BorderPane implements NoPaddingComponent {
                 getRootPane().setCenter(getTitleLabel());
             }
         }
+    }
+
+    private StringProperty subtitle;
+
+    public StringProperty subtitleProperty() {
+        if (subtitle == null) {
+            subtitle = new SubtitleProperty() {
+                @Override
+                public Object getBean() {
+                    return LinePane.this;
+                }
+
+                @Override
+                public BorderPane getRootPane() {
+                    return LinePane.this;
+                }
+
+                @Override
+                public Label getTitleLabel() {
+                    return titleLabel;
+                }
+            };
+        }
+
+        return subtitle;
+    }
+
+    public String getSubtitle() {
+        return subtitleProperty().get();
+    }
+
+    public void setSubtitle(String subtitle) {
+        subtitleProperty().set(subtitle);
+    }
+
+    private static final Insets ICON_MARGIN = new Insets(0, 16, 0, 0);
+
+    static void setIcon(BorderPane root, Image icon) {
+        ImageView imageView = new ImageView(icon);
+        imageView.setMouseTransparent(true);
+        BorderPane.setAlignment(imageView, Pos.CENTER);
+        BorderPane.setMargin(imageView, ICON_MARGIN);
+        root.setLeft(imageView);
+    }
+
+    static void setIcon(BorderPane root, SVG icon, double size) {
+        Node node = icon.createIcon(size);
+        node.setMouseTransparent(true);
+        BorderPane.setAlignment(node, Pos.CENTER);
+        BorderPane.setMargin(node, ICON_MARGIN);
+        root.setLeft(node);
+    }
+
+    public void setIcon(Image icon) {
+        setIcon(this, icon);
+    }
+
+    public void setIcon(SVG svg) {
+        setIcon(this, svg, 24);
+    }
+
+    public void setIcon(SVG svg, double size) {
+        setIcon(this, svg, size);
     }
 }

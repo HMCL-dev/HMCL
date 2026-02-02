@@ -19,12 +19,9 @@ package org.jackhuang.hmcl.ui.construct;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.SVG;
@@ -100,22 +97,14 @@ public abstract class LineButtonBase extends StackPane implements NoPaddingCompo
     }
 
     public void setIcon(Image icon) {
-        ImageView imageView = new ImageView(icon);
-        imageView.setMouseTransparent(true);
-        BorderPane.setAlignment(imageView, Pos.CENTER);
-        BorderPane.setMargin(imageView, new Insets(0, 16, 0, 0));
-        root.setLeft(imageView);
+        LinePane.setIcon(root, icon);
     }
 
     public void setIcon(SVG svg) {
-        setIcon(svg, 24);
+        LinePane.setIcon(root, svg, 24);
     }
 
     public void setIcon(SVG svg, double size) {
-        Node icon = svg.createIcon(size);
-        icon.setMouseTransparent(true);
-        BorderPane.setAlignment(icon, Pos.CENTER);
-        BorderPane.setMargin(icon, new Insets(0, 16, 0, 0));
-        root.setLeft(icon);
+        LinePane.setIcon(root, svg, size);
     }
 }
