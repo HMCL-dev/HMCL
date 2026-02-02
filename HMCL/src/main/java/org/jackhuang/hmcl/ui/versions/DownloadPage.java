@@ -594,6 +594,7 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             ScrollPane scrollPane = new ScrollPane(FXUtils.renderAddonChangelog(changelog, repo.getBaseUrl()));
             scrollPane.setFitToWidth(true);
+            FXUtils.smoothScrolling(scrollPane);
 
             VBox.setVgrow(scrollPane, Priority.SOMETIMES);
             box.getChildren().add(scrollPane);
