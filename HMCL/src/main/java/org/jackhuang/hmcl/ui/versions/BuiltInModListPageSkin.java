@@ -118,7 +118,7 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
 
             toolbarNormal.getChildren().addAll(
                     createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
-                    createToolbarButton2(i18n("mods.built_in.exportAllJIJINFO"), SVG.FILE_EXPORT, () -> exportAllJijList(listView.getItems())),
+                    createToolbarButton2(i18n("mods.built_in.export.jij_info.all"), SVG.FILE_EXPORT, () -> exportAllJijList(listView.getItems())),
                     createToolbarButton2(i18n("search"), SVG.SEARCH, () -> changeToolbar(searchBar))
             );
 
@@ -300,7 +300,7 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
         JFXButton exportButton = new JFXButton();
         exportButton.setGraphic(FXUtils.limitingSize(SVG.FILE_EXPORT.createIcon(18), 18, 18));
         exportButton.getStyleClass().add("toggle-icon4");
-        FXUtils.installFastTooltip(exportButton, i18n("mods.built_in.exportJIJINFO"));
+        FXUtils.installFastTooltip(exportButton, i18n("mods.built_in.export.jij_info"));
 
         exportButton.setOnAction(e -> exportJijList(modName, bundledMods));
 
@@ -362,7 +362,7 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
     private static void exportJijList(String modName, List<String> bundledMods) {
         if (bundledMods == null || bundledMods.isEmpty()) return;
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle(i18n("mods.built_in.exportJIJINFO"));
+        fileChooser.setTitle(i18n("mods.built_in.export.jij_info"));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("文本文件 (*.txt)", "*.txt"));
         fileChooser.setInitialFileName(modName + "_JIJ_INFO.txt");
 
@@ -427,7 +427,7 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
         }
 
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle(i18n("mods.built_in.exportAllJIJINFO"));
+        fileChooser.setTitle(i18n("mods.built_in.export.jij_info.all"));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("文本文件 (*.txt)", "*.txt"));
         fileChooser.setInitialFileName("ALL_JIJ_INFO.txt");
 
