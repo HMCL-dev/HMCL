@@ -220,17 +220,17 @@ public final class OptionsList extends Control {
 
         @Override
         public boolean equals(Object obj) {
-            return this == obj || obj instanceof ListElement that && this.node.equals(that.node);
+            return this == obj || obj instanceof ListElement that && this.original.equals(that.original);
         }
 
         @Override
         public int hashCode() {
-            return node.hashCode();
+            return original.hashCode();
         }
 
         @Override
         public String toString() {
-            return "ListElement[node=%s]".formatted(node);
+            return "ListElement[node=%s]".formatted(original);
         }
     }
 }
