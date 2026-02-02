@@ -521,7 +521,8 @@ public class TerracottaControllerPage extends StackPane {
                 children.add(statusPane);
                 children.addAll(nodesProperty);
             }
-
+            // Prevent the shadow of components from being clipped
+            StackPane.setMargin(components, new Insets(0, 0, 5, 0));
             transition.setContent(components, ContainerAnimations.SLIDE_UP_FADE_IN);
         };
         listener.changed(UI_STATE, null, UI_STATE.get());
