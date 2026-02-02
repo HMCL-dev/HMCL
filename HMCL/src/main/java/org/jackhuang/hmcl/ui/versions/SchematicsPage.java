@@ -44,7 +44,6 @@ import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
@@ -60,6 +59,7 @@ import org.jackhuang.hmcl.ui.ListPageBase;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.nbt.NBTEditorPage;
+import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -73,12 +73,12 @@ import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
+import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -105,6 +105,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
     private String instanceId;
     private Path schematicsDirectory;
     private final ObjectProperty<DirItem> currentDirectory = new SimpleObjectProperty<>(this, "currentDirectory", null);
+    private final ObjectProperty<Pair<String, Runnable>> warningTip = new SimpleObjectProperty<>(this, "tip", pair(null, null));
 
     private final BooleanProperty isRootProperty = new SimpleBooleanProperty(this, "isRoot", true);
 
@@ -149,20 +150,24 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         setLoading(true);
         var modManager = profile.getRepository().getModManager(instanceId);
         Task.supplyAsync(() -> {
-            boolean hasLitematica = false;
+            LitematicaState litematicaState = LitematicaState.NOT_INSTALLED;
             try {
                 modManager.refreshMods();
-                var set = modManager.getMods()
-                        .stream()
-                        .map(LocalModFile::getId)
-                        .collect(Collectors.toSet());
-                if (set.contains("litematica") || set.contains("forgematica")) {
-                    hasLitematica = true;
+                var mods = modManager.getMods();
+                for (var localModFile : mods) {
+                    if ("litematica".equals(localModFile.getId()) || "forgematica".equals(localModFile.getId())) {
+                        if (localModFile.isActive()) {
+                            litematicaState = LitematicaState.OK;
+                            break;
+                        } else {
+                            litematicaState = LitematicaState.DISABLED;
+                        }
+                    }
                 }
             } catch (IOException e) {
                 LOG.warning("Failed to load mods, unable to check litematica", e);
             }
-            if (!hasLitematica) {
+            if (litematicaState == LitematicaState.NOT_INSTALLED) {
                 try {
                     if (litematica == null) litematica = ModrinthRemoteModRepository.MODS.getModById("litematica");
                 } catch (IOException ignored) {
@@ -171,50 +176,48 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                     if (forgematica == null) forgematica = ModrinthRemoteModRepository.MODS.getModById("forgematica");
                 } catch (IOException ignored) {
                 }
-                return null;
             }
-            return loadRoot(schematicsDirectory);
+            return pair(litematicaState, loadRoot(schematicsDirectory));
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
-                if (result == null) {
-                    boolean useForgematica = forgematica != null
-                            && (modManager.getSupportedLoaders().contains(ModLoaderType.FORGE) || modManager.getSupportedLoaders().contains(ModLoaderType.NEO_FORGED))
-                            && GameVersionNumber.asGameVersion(Optional.ofNullable(modManager.getGameVersion())).isAtLeast("1.16.4", "20w45a");
-                    if (useForgematica || litematica != null) {
-                        setFailedReason(i18n("schematics.no_litematica_install"));
-                        setOnFailedAction(__ -> {
-                            var modDownloads = Controllers.getDownloadPage().showModDownloads();
-                            modDownloads.selectVersion(instanceId);
-                            Controllers.navigate(new DownloadPage(
-                                    modDownloads,
-                                    useForgematica ? forgematica : litematica,
-                                    modDownloads.getProfileVersion(),
-                                    modDownloads.getCallback())
-                            );
-                        });
-                    } else {
-                        setFailedReason(i18n("schematics.no_litematica"));
-                        setOnFailedAction(null);
-                    }
-                } else {
-                    DirItem target = result;
-                    if (currentDirectoryProperty().get() != null) {
-                        loop:
-                        for (String dirName : currentDirectoryProperty().get().relativePath) {
-                            target.preLoad();
-                            for (var dirChild : target.dirChildren) {
-                                if (dirChild.getName().equals(dirName)) {
-                                    target = dirChild;
-                                    continue loop;
-                                }
-                            }
-                            break;
+                switch (result.key()) {
+                    case NOT_INSTALLED -> {
+                        boolean useForgematica = forgematica != null
+                                && (modManager.getSupportedLoaders().contains(ModLoaderType.FORGE) || modManager.getSupportedLoaders().contains(ModLoaderType.NEO_FORGED))
+                                && GameVersionNumber.asGameVersion(Optional.ofNullable(modManager.getGameVersion())).isAtLeast("1.16.4", "20w45a");
+                        if (useForgematica || litematica != null) {
+                            warningTip.set(pair(i18n("schematics.warning.no_litematica_install"), () -> {
+                                var modDownloads = Controllers.getDownloadPage().showModDownloads();
+                                modDownloads.selectVersion(instanceId);
+                                Controllers.navigate(new DownloadPage(
+                                        modDownloads,
+                                        useForgematica ? forgematica : litematica,
+                                        modDownloads.getProfileVersion(),
+                                        modDownloads.getCallback())
+                                );
+                            }));
+                        } else {
+                            warningTip.set(pair(i18n("schematics.warning.no_litematica"), null));
                         }
                     }
-
-                    setFailedReason(null);
-                    navigateTo(target);
+                    case DISABLED -> warningTip.set(pair(i18n("schematics.warning.litematica_disabled"), null));
+                    default -> warningTip.set(pair(null, null));
                 }
+                DirItem target = result.value();
+                if (currentDirectoryProperty().get() != null) {
+                    loop:
+                    for (String dirName : currentDirectoryProperty().get().relativePath) {
+                        target.preLoad();
+                        for (var dirChild : target.dirChildren) {
+                            if (dirChild.getName().equals(dirName)) {
+                                target = dirChild;
+                                continue loop;
+                            }
+                        }
+                        break;
+                    }
+                }
+                navigateTo(target);
                 setLoading(false);
             } else {
                 LOG.warning("Failed to load schematics", exception);
@@ -803,12 +806,27 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             }
 
             {
+                var tip = new TextFlow();
+                tip.setStyle("-fx-font-size: 13;");
+                HBox.setMargin(tip, new Insets(5));
+                var tipPane = new HBox(tip);
+                tipPane.setAlignment(Pos.CENTER_LEFT);
+                skinnable.warningTip.addListener((observable, oldValue, newValue) -> {
+                    root.getContent().remove(tipPane);
+                    if (newValue != null && !StringUtils.isBlank(newValue.key())) {
+                        var txt = new Text(newValue.key());
+                        if (newValue.value() != null) FXUtils.onClicked(txt, newValue.value());
+                        tip.getChildren().setAll(txt);
+                        root.getContent().add(1, tipPane);
+                    }
+                });
+            }
+
+            {
                 SpinnerPane center = new SpinnerPane();
                 ComponentList.setVgrow(center, Priority.ALWAYS);
                 center.getStyleClass().add("large-spinner-pane");
                 center.loadingProperty().bind(skinnable.loadingProperty());
-                center.failedReasonProperty().bind(skinnable.failedReasonProperty());
-                center.onFailedActionProperty().bind(skinnable.onFailedActionProperty());
 
                 listView.setCellFactory(x -> new Cell(listView));
                 listView.setSelectionModel(new NoneMultipleSelectionModel<>());
@@ -847,4 +865,11 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             getChildren().setAll(pane);
         }
     }
+
+    private enum LitematicaState {
+        DISABLED,
+        NOT_INSTALLED,
+        OK
+    }
+
 }
