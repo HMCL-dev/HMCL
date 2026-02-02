@@ -20,6 +20,8 @@ package org.jackhuang.hmcl.ui.main;
 import com.jfoenix.controls.*;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -108,21 +110,28 @@ public final class JavaDownloadDialog extends StackPane {
     }
 
     private final class DownloadMojangJava extends DialogPane {
-        private final ToggleGroup toggleGroup = new ToggleGroup();
+        private final List<JFXCheckBox> checkboxes = new ArrayList<>();
+        private final IntegerProperty selectedCount = new SimpleIntegerProperty(0);
 
         DownloadMojangJava() {
             setTitle(i18n("java.download"));
-            validProperty().bind(toggleGroup.selectedToggleProperty().isNotNull());
+            validProperty().bind(selectedCount.greaterThan(0));
 
             VBox vbox = new VBox(16);
             Label prompt = new Label(i18n("java.download.prompt"));
             vbox.getChildren().add(prompt);
 
             for (GameJavaVersion version : supportedGameJavaVersions) {
-                JFXRadioButton button = new JFXRadioButton("Java " + version.majorVersion());
+                JFXCheckBox button = new JFXCheckBox("Java " + version.majorVersion());
                 button.setUserData(version);
+
+                button.selectedProperty().addListener((observable, oldValue, newValue) ->
+                        selectedCount.set(selectedCount.get() + (newValue ? 1 : -1))
+                );
+
                 vbox.getChildren().add(button);
-                toggleGroup.getToggles().add(button);
+                checkboxes.add(button);
+
                 if (JavaManager.REPOSITORY.isInstalled(platform, version))
                     button.setDisable(true);
             }
@@ -153,22 +162,61 @@ public final class JavaDownloadDialog extends StackPane {
         protected void onAccept() {
             fireEvent(new DialogCloseEvent());
 
-            GameJavaVersion javaVersion = (GameJavaVersion) toggleGroup.getSelectedToggle().getUserData();
-            if (javaVersion == null)
+            List<GameJavaVersion> selectedVersions = new ArrayList<>();
+            for (JFXCheckBox box : checkboxes) {
+                if (box.isSelected()) {
+                    selectedVersions.add((GameJavaVersion) box.getUserData());
+                }
+            }
+
+            if (selectedVersions.isEmpty())
                 return;
 
-            if (JavaManager.REPOSITORY.isInstalled(platform, javaVersion))
+            List<GameJavaVersion> installed = new ArrayList<>();
+            List<GameJavaVersion> notInstalled = new ArrayList<>();
+
+            for (GameJavaVersion v : selectedVersions) {
+                if (JavaManager.REPOSITORY.isInstalled(platform, v)) {
+                    installed.add(v);
+                } else {
+                    notInstalled.add(v);
+                }
+            }
+
+            if (!installed.isEmpty()) {
                 Controllers.confirm(i18n("download.java.override"), null, () -> {
-                    Controllers.taskDialog(Task.supplyAsync(() -> JavaManager.REPOSITORY.getJavaExecutable(platform, javaVersion))
-                            .thenComposeAsync(Schedulers.javafx(), realPath -> {
-                                if (realPath != null) {
-                                    JavaManager.removeJava(realPath);
-                                }
-                                return downloadTask(javaVersion);
-                            }), i18n("download.java"), TaskCancellationAction.NORMAL);
+                    startDownload(installed, notInstalled);
                 }, null);
-            else
-                Controllers.taskDialog(downloadTask(javaVersion), i18n("download.java.process"), TaskCancellationAction.NORMAL);
+            } else {
+                startDownload(installed, notInstalled);
+            }
+        }
+
+        private void startDownload(List<GameJavaVersion> installed, List<GameJavaVersion> notInstalled) {
+            Task<?> chain = null;
+
+            for (GameJavaVersion v : installed) {
+                Task<?> task = Task.supplyAsync(() -> JavaManager.REPOSITORY.getJavaExecutable(platform, v))
+                        .thenComposeAsync(Schedulers.javafx(), realPath -> {
+                            if (realPath != null) {
+                                JavaManager.removeJava(realPath);
+                            }
+                            return downloadTask(v);
+                        });
+
+                if (chain == null) chain = task;
+                else chain = chain.thenComposeAsync(Schedulers.javafx(), ignore -> task);
+            }
+
+            for (GameJavaVersion v : notInstalled) {
+                Task<?> task = downloadTask(v);
+                if (chain == null) chain = task;
+                else chain = chain.thenComposeAsync(Schedulers.javafx(), ignore -> task);
+            }
+
+            if (chain != null) {
+                Controllers.taskDialog(chain, i18n("download.java.process"), TaskCancellationAction.NORMAL);
+            }
         }
     }
 
