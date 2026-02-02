@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
