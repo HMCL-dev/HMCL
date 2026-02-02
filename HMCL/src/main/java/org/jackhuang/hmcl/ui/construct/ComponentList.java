@@ -97,29 +97,32 @@ public class ComponentList extends Control implements NoPaddingComponent {
         private Node prevLastItem;
 
         private void updateStyle() {
-            Node newFirstItem;
-            Node newLastItem;
+            Node firstItem;
+            Node lastItem;
 
             if (list.isEmpty()) {
-                newFirstItem = null;
-                newLastItem = null;
+                firstItem = null;
+                lastItem = null;
             } else {
-                newFirstItem = list.get(0);
-                newLastItem = list.get(list.size() - 1);
+                firstItem = list.get(0);
+                lastItem = list.get(list.size() - 1);
             }
 
-            if (prevFirstItem != null)
-                prevFirstItem.pseudoClassStateChanged(PSEUDO_CLASS_FIRST, false);
-            if (prevLastItem != null)
-                prevLastItem.pseudoClassStateChanged(PSEUDO_CLASS_LAST, false);
+            if (firstItem != prevFirstItem) {
+                if (prevFirstItem != null)
+                    prevFirstItem.pseudoClassStateChanged(PSEUDO_CLASS_FIRST, false);
+                if (firstItem != null)
+                    firstItem.pseudoClassStateChanged(PSEUDO_CLASS_FIRST, true);
+                prevFirstItem = firstItem;
+            }
 
-            if (newFirstItem != null)
-                newFirstItem.pseudoClassStateChanged(PSEUDO_CLASS_FIRST, true);
-            if (newLastItem != null)
-                newLastItem.pseudoClassStateChanged(PSEUDO_CLASS_LAST, true);
-
-            prevFirstItem = newFirstItem;
-            prevLastItem = newLastItem;
+            if (lastItem != prevLastItem) {
+                if (prevLastItem != null)
+                    prevLastItem.pseudoClassStateChanged(PSEUDO_CLASS_LAST, false);
+                if (lastItem != null)
+                    lastItem.pseudoClassStateChanged(PSEUDO_CLASS_LAST, true);
+                prevLastItem = lastItem;
+            }
         }
     }
 
