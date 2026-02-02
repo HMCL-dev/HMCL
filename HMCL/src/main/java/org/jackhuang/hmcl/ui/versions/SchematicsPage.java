@@ -29,10 +29,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Node;
-import javafx.scene.control.Label;
-import javafx.scene.control.Skin;
-import javafx.scene.control.SkinBase;
-import javafx.scene.control.Tooltip;
+import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelWriter;
@@ -555,10 +552,14 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
                 {
                     this.details = new ComponentList();
+                    details.setStyle("-fx-effect: null;");
                     StackPane detailsContainer = new StackPane();
-                    detailsContainer.setPadding(new Insets(10, 0, 0, 0));
                     detailsContainer.getChildren().add(details);
-                    setBody(detailsContainer);
+                    ScrollPane scrollPane = new ScrollPane(detailsContainer);
+                    scrollPane.setStyle("-fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 5, 0.06, -0.5, 1);");
+                    scrollPane.setFitToWidth(true);
+                    StackPane.setMargin(scrollPane, new Insets(10, 0, 0, 0));
+                    setBody(scrollPane);
                 }
 
                 {
@@ -570,6 +571,9 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
                     onEscPressed(this, okButton::fire);
                 }
+
+                this.prefWidthProperty().bind(Controllers.getStage().widthProperty().multiply(0.6));
+                this.maxHeightProperty().bind(Controllers.getStage().heightProperty().multiply(0.8));
 
                 updateContent(file);
             }
