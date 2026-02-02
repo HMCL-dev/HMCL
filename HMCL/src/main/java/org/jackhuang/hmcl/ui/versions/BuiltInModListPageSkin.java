@@ -229,6 +229,7 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
                         activePopup.setOnHidden(event -> {
                             if (activePopup == event.getSource()) {
                                 activePopup = null;
+                                listView.getSelectionModel().clearSelection();
                             }
                         });
                     }
