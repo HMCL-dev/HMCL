@@ -823,7 +823,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
             {
                 var relPath = new TextFlow();
-                relPath.setStyle("-fx-font-size: 13");
+                relPath.setStyle("-fx-font-size: 13;");
                 HBox.setMargin(relPath, new Insets(5));
                 skinnable.currentDirectoryProperty().addListener((__, ___, newValue) -> {
                     relPath.getChildren().clear();

@@ -19,7 +19,8 @@
 .root {
 }
 
-.svg {
+.svg,
+Text {
     -fx-fill: -monet-on-surface;
 }
 
