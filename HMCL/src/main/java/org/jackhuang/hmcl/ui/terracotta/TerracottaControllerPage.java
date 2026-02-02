@@ -157,7 +157,7 @@ public class TerracottaControllerPage extends StackPane {
                 download.setTitle(i18n(String.format("terracotta.status.uninitialized.%s.title", fork)));
                 download.setSubtitle(i18n("terracotta.status.uninitialized.desc"));
                 download.setRightIcon(SVG.ARROW_FORWARD, ICON_SIZE);
-                FXUtils.onClicked(download, () -> {
+                download.setOnAction(event -> {
                     TerracottaState.Preparing s = TerracottaManager.download();
                     if (s != null) {
                         UI_STATE.set(s);
@@ -233,7 +233,7 @@ public class TerracottaControllerPage extends StackPane {
                 guest.setTitle(i18n("terracotta.status.waiting.guest.title"));
                 guest.setSubtitle(i18n("terracotta.status.waiting.guest.desc"));
                 guest.setRightIcon(SVG.ARROW_FORWARD, ICON_SIZE);
-                FXUtils.onClicked(guest, () -> {
+                guest.setOnAction(event -> {
                     Controllers.prompt(i18n("terracotta.status.waiting.guest.prompt.title"), (code, handler) -> {
                         Task<TerracottaState.GuestConnecting> task = TerracottaManager.setGuesting(code);
                         if (task != null) {
@@ -275,7 +275,7 @@ public class TerracottaControllerPage extends StackPane {
                 room.setLeftIcon(SVG.ARROW_BACK, ICON_SIZE);
                 room.setTitle(i18n("terracotta.back"));
                 room.setSubtitle(i18n("terracotta.status.scanning.back"));
-                FXUtils.onClicked(room, () -> {
+                room.setOnAction(event -> {
                     TerracottaState.Waiting s = TerracottaManager.setWaiting();
                     if (s != null) {
                         UI_STATE.set(s);
@@ -291,7 +291,7 @@ public class TerracottaControllerPage extends StackPane {
                 room.setLeftIcon(SVG.ARROW_BACK, ICON_SIZE);
                 room.setTitle(i18n("terracotta.back"));
                 room.setSubtitle(i18n("terracotta.status.host_starting.back"));
-                FXUtils.onClicked(room, () -> {
+                room.setOnAction(event -> {
                     TerracottaState.Waiting s = TerracottaManager.setWaiting();
                     if (s != null) {
                         UI_STATE.set(s);
@@ -341,7 +341,7 @@ public class TerracottaControllerPage extends StackPane {
                     back.setLeftIcon(SVG.ARROW_BACK, ICON_SIZE);
                     back.setTitle(i18n("terracotta.back"));
                     back.setSubtitle(i18n("terracotta.status.host_ok.back"));
-                    FXUtils.onClicked(back, () -> {
+                    back.setOnAction(event -> {
                         TerracottaState.Waiting s = TerracottaManager.setWaiting();
                         if (s != null) {
                             UI_STATE.set(s);
@@ -362,7 +362,7 @@ public class TerracottaControllerPage extends StackPane {
                 room.setLeftIcon(SVG.ARROW_BACK, ICON_SIZE);
                 room.setTitle(i18n("terracotta.back"));
                 room.setSubtitle(i18n("terracotta.status.guest_starting.back"));
-                FXUtils.onClicked(room, () -> {
+                room.setOnAction(event -> {
                     TerracottaState.Waiting s = TerracottaManager.setWaiting();
                     if (s != null) {
                         UI_STATE.set(s);
@@ -409,7 +409,7 @@ public class TerracottaControllerPage extends StackPane {
                     back.setLeftIcon(SVG.ARROW_BACK, ICON_SIZE);
                     back.setTitle(i18n("terracotta.back"));
                     back.setSubtitle(i18n("terracotta.status.guest_ok.back"));
-                    FXUtils.onClicked(back, () -> {
+                    back.setOnAction(event -> {
                         TerracottaState.Waiting s = TerracottaManager.setWaiting();
                         if (s != null) {
                             UI_STATE.set(s);
@@ -431,7 +431,7 @@ public class TerracottaControllerPage extends StackPane {
                 back.setLeftIcon(SVG.ARROW_BACK, ICON_SIZE);
                 back.setTitle(i18n("terracotta.back"));
                 back.setSubtitle(i18n("terracotta.status.exception.back"));
-                FXUtils.onClicked(back, () -> {
+                back.setOnAction(event -> {
                     TerracottaState.Waiting s = TerracottaManager.setWaiting();
                     if (s != null) {
                         UI_STATE.set(s);
@@ -448,7 +448,7 @@ public class TerracottaControllerPage extends StackPane {
                 // FIXME: SpinnerPane loses its content width in loading state.
                 exportLog.minHeightProperty().bind(back.heightProperty());
 
-                FXUtils.onClicked(exportLogInner, () -> {
+                exportLogInner.setOnAction(event -> {
                     exportLog.setLoading(true);
 
                     TerracottaManager.exportLogs().thenAcceptAsync(Schedulers.io(), data -> {
@@ -486,7 +486,7 @@ public class TerracottaControllerPage extends StackPane {
                     retry.setLeftIcon(SVG.RESTORE, ICON_SIZE);
                     retry.setTitle(i18n("terracotta.status.fatal.retry"));
                     retry.setSubtitle(message);
-                    FXUtils.onClicked(retry, () -> {
+                    retry.setOnAction(event -> {
                         TerracottaState s = TerracottaManager.recover();
                         if (s != null) {
                             UI_STATE.set(s);
