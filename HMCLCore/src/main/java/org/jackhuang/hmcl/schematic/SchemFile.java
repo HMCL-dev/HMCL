@@ -5,20 +5,16 @@ import com.github.steveice10.opennbt.tag.builtin.IntTag;
 import com.github.steveice10.opennbt.tag.builtin.StringTag;
 import com.github.steveice10.opennbt.tag.builtin.Tag;
 import org.jackhuang.hmcl.util.Vec3i;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
 
-import static org.jackhuang.hmcl.schematic.Schematic.*;
-import static org.jackhuang.hmcl.schematic.Schematic.tryGetShort;
-
 /// @author Calboot
 /// @see <a href="https://minecraft.wiki/w/Schematic_file_format">Schematic File Format Wiki</a>
 /// @see <a href="https://github.com/Lunatrius/Schematica/blob/master/src/main/java/com/github/lunatrius/schematica/world/schematic/SchematicAlpha.java">Schematica</a>
 /// @see <a href="https://github.com/EngineHub/WorldEdit/blob/version/7.4.x/worldedit-core/src/main/java/com/sk89q/worldedit/extent/clipboard/io/SpongeSchematicReader.java">Schem</a>
-public final class SchemFile implements Schematic {
+public final class SchemFile extends Schematic {
 
     private static final int DATA_VERSION_MC_1_13_2 = 1631;
 
@@ -74,18 +70,13 @@ public final class SchemFile implements Schematic {
         return new SchemFile(file, null, dataVersion, ((IntTag) versionTag).getValue(), enclosingSize);
     }
 
-    private final Path file;
     private final String materials;
-    private final int dataVersion;
     private final int version;
-    private final Vec3i enclosingSize;
 
     private SchemFile(Path file, @Nullable String materials, int dataVersion, int version, Vec3i enclosingSize) {
-        this.file = file;
+        super(file, dataVersion, enclosingSize);
         this.materials = materials;
-        this.dataVersion = dataVersion;
         this.version = version;
-        this.enclosingSize = enclosingSize;
     }
 
     @Override
@@ -94,28 +85,13 @@ public final class SchemFile implements Schematic {
     }
 
     @Override
-    public @NotNull Path getFile() {
-        return file;
-    }
-
-    @Override
     public int getVersion() {
         return version;
     }
 
     @Override
-    public int getMinecraftDataVersion() {
-        return dataVersion;
-    }
-
-    @Override
     public String getMinecraftVersion() {
-        return materials == null ? Integer.toString(dataVersion) : materials;
-    }
-
-    @Override
-    public @Nullable Vec3i getEnclosingSize() {
-        return enclosingSize;
+        return materials == null ? super.getMinecraftVersion() : materials;
     }
 
 }

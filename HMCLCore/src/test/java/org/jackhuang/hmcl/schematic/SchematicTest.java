@@ -52,7 +52,8 @@ public final class SchematicTest {
             assertEquals(5746, lFile.getTotalVolume());
             assertEquals(new Vec3i(17, 26, 13), lFile.getEnclosingSize());
             assertEquals(1, lFile.getRegionCount());
-            assertEquals(4325, lFile.getMinecraftDataVersion());
+            assertTrue(lFile.getMinecraftDataVersion().isPresent());
+            assertEquals(4325, lFile.getMinecraftDataVersion().getAsInt());
             assertEquals("4325", lFile.getMinecraftVersion());
             assertEquals(7, lFile.getVersion());
             assertTrue(lFile.getSubVersion().isPresent());
@@ -72,7 +73,8 @@ public final class SchematicTest {
             SchemFile sFileSponge = (SchemFile) load("/schematics/test.schem");
             assertEquals(SchematicType.SCHEM, sFileSponge.getType());
             assertEquals("test", sFileSponge.getName());
-            assertEquals(3465, sFileSponge.getMinecraftDataVersion());
+            assertTrue(sFileSponge.getMinecraftDataVersion().isPresent());
+            assertEquals(3465, sFileSponge.getMinecraftDataVersion().getAsInt());
             assertEquals("3465", sFileSponge.getMinecraftVersion());
             assertEquals(new Vec3i(9, 5, 9), sFileSponge.getEnclosingSize());
         }
@@ -83,7 +85,8 @@ public final class SchematicTest {
             assertEquals("test", nFile.getName());
             assertEquals(new Vec3i(9, 11, 13), nFile.getEnclosingSize());
             assertEquals(1287, nFile.getTotalVolume());
-            assertEquals(3465, nFile.getMinecraftDataVersion());
+            assertTrue(nFile.getMinecraftDataVersion().isPresent());
+            assertEquals(3465, nFile.getMinecraftDataVersion().getAsInt());
             assertEquals("3465", nFile.getMinecraftVersion());
         }
     }

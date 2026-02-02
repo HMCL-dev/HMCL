@@ -2,18 +2,14 @@ package org.jackhuang.hmcl.schematic;
 
 import com.github.steveice10.opennbt.tag.builtin.*;
 import org.jackhuang.hmcl.util.Vec3i;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
-import static org.jackhuang.hmcl.schematic.Schematic.tryGetInt;
-
 /// @author Calboot
 /// @see <a href="https://minecraft.wiki/w/Structure_file">Structure File</a>
-public final class NBTStructureFile implements Schematic {
+public final class NBTStructureFile extends Schematic {
 
     public static NBTStructureFile load(Path file) throws IOException {
 
@@ -49,14 +45,8 @@ public final class NBTStructureFile implements Schematic {
         return new NBTStructureFile(file, ((IntTag) dataVersionTag).getValue(), enclosingSize);
     }
 
-    private final Path file;
-    private final int dataVersion;
-    private final Vec3i enclosingSize;
-
     private NBTStructureFile(Path file, int dataVersion, Vec3i enclosingSize) {
-        this.file = file;
-        this.dataVersion = dataVersion;
-        this.enclosingSize = enclosingSize;
+        super(file, dataVersion, enclosingSize);
     }
 
     @Override
@@ -64,18 +54,4 @@ public final class NBTStructureFile implements Schematic {
         return SchematicType.NBT_STRUCTURE;
     }
 
-    @Override
-    public @NotNull Path getFile() {
-        return file;
-    }
-
-    @Override
-    public int getMinecraftDataVersion() {
-        return dataVersion;
-    }
-
-    @Override
-    public @Nullable Vec3i getEnclosingSize() {
-        return enclosingSize;
-    }
 }

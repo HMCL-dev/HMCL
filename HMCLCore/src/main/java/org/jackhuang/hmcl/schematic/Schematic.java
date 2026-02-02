@@ -15,14 +15,14 @@ import java.time.Instant;
 import java.util.OptionalInt;
 import java.util.zip.GZIPInputStream;
 
-public sealed interface Schematic permits LitematicFile, SchemFile, NBTStructureFile {
+public sealed abstract class Schematic permits LitematicFile, SchemFile, NBTStructureFile {
 
-    static boolean isFileSchematic(Path file) {
+    public static boolean isFileSchematic(Path file) {
         return SchematicType.getType(file) != null;
     }
 
     @Nullable
-    static Schematic load(Path file) throws IOException {
+    public static Schematic load(Path file) throws IOException {
         var type = SchematicType.getType(file);
         if (type == null) return null;
         return switch (SchematicType.getType(file)) {
@@ -32,7 +32,7 @@ public sealed interface Schematic permits LitematicFile, SchemFile, NBTStructure
         };
     }
 
-    static CompoundTag readRoot(Path file) throws IOException {
+    public static CompoundTag readRoot(Path file) throws IOException {
         CompoundTag root;
         try (InputStream in = new GZIPInputStream(Files.newInputStream(file))) {
             root = (CompoundTag) NBTIO.readTag(in);
@@ -40,72 +40,88 @@ public sealed interface Schematic permits LitematicFile, SchemFile, NBTStructure
         return root;
     }
 
-    static int tryGetInt(Tag tag) {
+    public static int tryGetInt(Tag tag) {
         return tag instanceof IntTag ? ((IntTag) tag).getValue() : 0;
     }
 
-    static short tryGetShort(Tag tag) {
+    public static short tryGetShort(Tag tag) {
         return tag instanceof ShortTag ? ((ShortTag) tag).getValue() : 0;
     }
 
-    static @Nullable Instant tryGetLongTimestamp(Tag tag) {
+    public static @Nullable Instant tryGetLongTimestamp(Tag tag) {
         if (tag instanceof LongTag) {
             return Instant.ofEpochMilli(((LongTag) tag).getValue());
         }
         return null;
     }
 
-    static @Nullable String tryGetString(Tag tag) {
+    public static @Nullable String tryGetString(Tag tag) {
         return tag instanceof StringTag ? ((StringTag) tag).getValue() : null;
     }
 
-    SchematicType getType();
+    private final Path file;
+    private final int dataVersion;
+    private final Vec3i enclosingSize;
 
-    @NotNull Path getFile();
+    protected Schematic(Path file, int dataVersion, @Nullable Vec3i enclosingSize) {
+        this.file = file;
+        this.dataVersion = dataVersion;
+        this.enclosingSize = enclosingSize;
+    }
 
-    default int getVersion() {
+    public abstract SchematicType getType();
+
+    @NotNull
+    public Path getFile() {
+        return file;
+    }
+
+    public int getVersion() {
         return 0;
     }
 
-    default OptionalInt getSubVersion() {
+    public OptionalInt getSubVersion() {
         return OptionalInt.empty();
     }
 
-    default int getMinecraftDataVersion() {
-        return 0;
+    public OptionalInt getMinecraftDataVersion() {
+        return dataVersion >= 100 /* 15w32a */ ? OptionalInt.of(dataVersion) : OptionalInt.empty();
     }
 
-    default String getMinecraftVersion() {
-        return Integer.toString(getMinecraftDataVersion());
+    public String getMinecraftVersion() {
+        return getMinecraftDataVersion().isPresent() ? Integer.toString(getMinecraftDataVersion().getAsInt()) : null;
     }
 
-    default String getName() {
+    public String getName() {
         return FileUtils.getNameWithoutExtension(getFile());
     }
 
-    default String getAuthor() {
+    public String getAuthor() {
         return null;
     }
 
-    default Instant getTimeCreated() {
+    public Instant getTimeCreated() {
         return null;
     }
 
-    default Instant getTimeModified() {
+    public Instant getTimeModified() {
         return null;
     }
 
-    default int getRegionCount() {
+    public int getRegionCount() {
         return 0;
     }
 
-    default int getTotalBlocks() {
+    public int getTotalBlocks() {
         return 0;
     }
 
-    @Nullable Vec3i getEnclosingSize();
+    @Nullable
+    public Vec3i getEnclosingSize() {
+        return enclosingSize;
+    }
 
-    default int getTotalVolume() {
+    public int getTotalVolume() {
         var enclosingSize = getEnclosingSize();
         if (enclosingSize != null) return enclosingSize.x() * enclosingSize.y() * enclosingSize.z();
         return 0;

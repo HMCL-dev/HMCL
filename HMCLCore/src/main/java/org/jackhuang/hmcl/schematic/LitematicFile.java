@@ -26,13 +26,11 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.OptionalInt;
 
-import static org.jackhuang.hmcl.schematic.Schematic.*;
-
 /**
  * @author Glavo
  * @see <a href="https://litemapy.readthedocs.io/en/v0.9.0b0/litematics.html">The Litematic file format</a>
  */
-public final class LitematicFile implements Schematic {
+public final class LitematicFile extends Schematic {
 
     public static LitematicFile load(Path file) throws IOException {
 
@@ -55,20 +53,30 @@ public final class LitematicFile implements Schematic {
         if (regionsTag instanceof CompoundTag)
             regions = ((CompoundTag) regionsTag).size();
 
+        Vec3i enclosingSize = null;
+        Tag enclosingSizeTag = ((CompoundTag) metadataTag).get("EnclosingSize");
+        if (enclosingSizeTag instanceof CompoundTag) {
+            CompoundTag list = (CompoundTag) enclosingSizeTag;
+            int x = tryGetInt(list.get("x"));
+            int y = tryGetInt(list.get("y"));
+            int z = tryGetInt(list.get("z"));
+
+            if (x >= 0 && y >= 0 && z >= 0)
+                enclosingSize = new Vec3i(x, y, z);
+        }
+
         Tag tag = root.get("SubVersion");
         return new LitematicFile(file, (CompoundTag) metadataTag,
                 ((IntTag) versionTag).getValue(),
                 tag instanceof IntTag ? ((IntTag) tag).getValue() : -1,
                 tryGetInt(root.get("MinecraftDataVersion")),
-                regions
+                regions,
+                enclosingSize
         );
     }
 
-    private final @NotNull Path file;
-
     private final int version;
     private final int subVersion;
-    private final int minecraftDataVersion;
     private final int regionCount;
     private final int[] previewImageData;
     private final String name;
@@ -78,14 +86,12 @@ public final class LitematicFile implements Schematic {
     private final Instant timeModified;
     private final int totalBlocks;
     private final int totalVolume;
-    private final Vec3i enclosingSize;
 
     private LitematicFile(@NotNull Path file, @NotNull CompoundTag metadata,
-                          int version, int subVersion, int minecraftDataVersion, int regionCount) {
-        this.file = file;
+                          int version, int subVersion, int minecraftDataVersion, int regionCount, Vec3i enclosingSize) {
+        super(file, minecraftDataVersion, enclosingSize);
         this.version = version;
         this.subVersion = subVersion;
-        this.minecraftDataVersion = minecraftDataVersion;
         this.regionCount = regionCount;
 
         Tag previewImageData = metadata.get("PreviewImageData");
@@ -101,30 +107,11 @@ public final class LitematicFile implements Schematic {
         this.totalBlocks = tryGetInt(metadata.get("TotalBlocks"));
         this.totalVolume = tryGetInt(metadata.get("TotalVolume"));
 
-
-        Vec3i enclosingSize = null;
-        Tag enclosingSizeTag = metadata.get("EnclosingSize");
-        if (enclosingSizeTag instanceof CompoundTag) {
-            CompoundTag list = (CompoundTag) enclosingSizeTag;
-            int x = tryGetInt(list.get("x"));
-            int y = tryGetInt(list.get("y"));
-            int z = tryGetInt(list.get("z"));
-
-            if (x >= 0 && y >= 0 && z >= 0)
-                enclosingSize = new Vec3i(x, y, z);
-        }
-        this.enclosingSize = enclosingSize;
-
     }
 
     @Override
     public SchematicType getType() {
         return SchematicType.LITEMATIC;
-    }
-
-    @Override
-    public @NotNull Path getFile() {
-        return file;
     }
 
     @Override
@@ -135,11 +122,6 @@ public final class LitematicFile implements Schematic {
     @Override
     public OptionalInt getSubVersion() {
         return subVersion >= 0 ? OptionalInt.of(subVersion) : OptionalInt.empty();
-    }
-
-    @Override
-    public int getMinecraftDataVersion() {
-        return minecraftDataVersion;
     }
 
     public int[] getPreviewImageData() {
@@ -181,12 +163,8 @@ public final class LitematicFile implements Schematic {
     }
 
     @Override
-    public Vec3i getEnclosingSize() {
-        return enclosingSize;
-    }
-
-    @Override
     public int getRegionCount() {
         return regionCount;
     }
+
 }
