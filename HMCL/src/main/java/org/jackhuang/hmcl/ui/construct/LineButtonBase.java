@@ -96,15 +96,15 @@ public abstract class LineButtonBase extends StackPane implements NoPaddingCompo
         subtitleProperty().set(subtitle);
     }
 
-    public void setIcon(Image icon) {
-        LinePane.setIcon(root, icon);
+    public void setLeftIcon(Image icon) {
+        LinePane.setLeftIcon(root, icon);
     }
 
-    public void setIcon(SVG svg) {
-        LinePane.setIcon(root, svg, 24);
+    public void setLeftIcon(SVG svg) {
+        LinePane.setLeftIcon(root, svg, 24);
     }
 
-    public void setIcon(SVG svg, double size) {
-        LinePane.setIcon(root, svg, size);
+    public void setLeftIcon(SVG svg, double size) {
+        LinePane.setLeftIcon(root, svg, size);
     }
 }

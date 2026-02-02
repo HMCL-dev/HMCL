@@ -136,7 +136,7 @@ public class LinePane extends BorderPane implements NoPaddingComponent {
 
     private static final Insets ICON_MARGIN = new Insets(0, 16, 0, 0);
 
-    static void setIcon(BorderPane root, Image icon) {
+    static void setLeftIcon(BorderPane root, Image icon) {
         ImageView imageView = new ImageView(icon);
         imageView.setMouseTransparent(true);
         BorderPane.setAlignment(imageView, Pos.CENTER);
@@ -144,7 +144,7 @@ public class LinePane extends BorderPane implements NoPaddingComponent {
         root.setLeft(imageView);
     }
 
-    static void setIcon(BorderPane root, SVG icon, double size) {
+    static void setLeftIcon(BorderPane root, SVG icon, double size) {
         Node node = icon.createIcon(size);
         node.setMouseTransparent(true);
         BorderPane.setAlignment(node, Pos.CENTER);
@@ -152,15 +152,15 @@ public class LinePane extends BorderPane implements NoPaddingComponent {
         root.setLeft(node);
     }
 
-    public void setIcon(Image icon) {
-        setIcon(this, icon);
+    public void setLeftIcon(Image icon) {
+        setLeftIcon(this, icon);
     }
 
-    public void setIcon(SVG svg) {
-        setIcon(this, svg, 24);
+    public void setLeftIcon(SVG svg) {
+        setLeftIcon(this, svg, 24);
     }
 
-    public void setIcon(SVG svg, double size) {
-        setIcon(this, svg, size);
+    public void setLeftIcon(SVG svg, double size) {
+        setLeftIcon(this, svg, size);
     }
 }
