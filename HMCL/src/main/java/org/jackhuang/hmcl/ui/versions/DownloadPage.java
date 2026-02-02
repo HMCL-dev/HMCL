@@ -300,13 +300,13 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                     for (String gameVersion : control.versions.keys().stream()
                             .sorted(Collections.reverseOrder(GameVersionNumber::compare))
-                            .collect(Collectors.toList())) {
+                            .toList()) {
                         List<RemoteMod.Version> versions = control.versions.get(gameVersion);
                         if (versions == null || versions.isEmpty()) {
                             continue;
                         }
 
-                        ComponentList sublist = new ComponentList(() -> {
+                        var sublist = new ComponentSublist(() -> {
                             ArrayList<ModItem> items = new ArrayList<>(versions.size());
                             for (RemoteMod.Version v : versions) {
                                 items.add(new ModItem(control.addon, v, control));
@@ -465,13 +465,14 @@ public class DownloadPage extends Control implements DecoratorPage {
             box.getChildren().setAll(modItem);
             SpinnerPane spinnerPane = new SpinnerPane();
             ScrollPane scrollPane = new ScrollPane();
-            ComponentList dependenciesList = new ComponentList(Lang::immutableListOf);
+            ComponentList dependenciesList = new ComponentList();
             loadDependencies(version, selfPage, spinnerPane, dependenciesList);
             spinnerPane.setOnFailedAction(e -> loadDependencies(version, selfPage, spinnerPane, dependenciesList));
 
             scrollPane.setContent(dependenciesList);
             scrollPane.setFitToWidth(true);
             scrollPane.setFitToHeight(true);
+            FXUtils.smoothScrolling(scrollPane);
             spinnerPane.setContent(scrollPane);
             box.getChildren().add(spinnerPane);
             VBox.setVgrow(spinnerPane, Priority.SOMETIMES);

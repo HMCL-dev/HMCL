@@ -79,7 +79,6 @@ public final class ProfilePage extends BorderPane implements DecoratorPage {
             rootPane.setStyle("-fx-padding: 20;");
             {
                 ComponentList componentList = new ComponentList();
-                componentList.setDepth(1);
                 {
                     BorderPane profileNamePane = new BorderPane();
                     {
