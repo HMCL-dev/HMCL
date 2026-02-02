@@ -129,7 +129,7 @@ public final class LogExporter {
                     }
 
                     if (!hasJij) {
-                        infoBuilder.append("无 / None").append(System.lineSeparator());
+                        infoBuilder.append("No JIJ INFO contain").append(System.lineSeparator());
                     }
 
                     zipper.putTextFile(infoBuilder.toString(), "ALL_MOD_JIJ_INFO.txt");
