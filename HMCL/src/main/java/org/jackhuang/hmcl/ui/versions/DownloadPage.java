@@ -307,7 +307,8 @@ public class DownloadPage extends Control implements DecoratorPage {
                         if (versions == null || versions.isEmpty()) {
                             continue;
                         }
-                        ComponentList sublist = new ComponentList(() -> {
+
+                        var sublist = new ComponentSublist(() -> {
                             ArrayList<AddonItem> items = new ArrayList<>(versions.size());
                             for (RemoteMod.Version v : versions) {
                                 items.add(new AddonItem(control.addon, v, control));
@@ -471,13 +472,14 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             SpinnerPane spinnerPane = new SpinnerPane();
             ScrollPane scrollPane = new ScrollPane();
-            ComponentList dependenciesList = new ComponentList(Lang::immutableListOf);
+            ComponentList dependenciesList = new ComponentList();
             loadDependencies(version, selfPage, spinnerPane, dependenciesList);
             spinnerPane.setOnFailedAction(e -> loadDependencies(version, selfPage, spinnerPane, dependenciesList));
 
             scrollPane.setContent(dependenciesList);
             scrollPane.setFitToWidth(true);
             scrollPane.setFitToHeight(true);
+            FXUtils.smoothScrolling(scrollPane);
             spinnerPane.setContent(scrollPane);
             box.getChildren().add(spinnerPane);
             VBox.setVgrow(spinnerPane, Priority.SOMETIMES);
