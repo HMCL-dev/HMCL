@@ -590,14 +590,11 @@ public class DownloadPage extends Control implements DecoratorPage {
             VBox box = new VBox(8);
             box.setPadding(new Insets(8));
 
-            SpinnerPane spinnerPane = new SpinnerPane();
-            ScrollPane scrollPane = new ScrollPane();
+            ScrollPane scrollPane = new ScrollPane(FXUtils.renderAddonChangelog(changelog, repo.getBaseUrl()));
             scrollPane.setFitToWidth(true);
-            scrollPane.setContent(FXUtils.renderAddonChangelog(changelog, repo.getBaseUrl()));
 
-            spinnerPane.setContent(scrollPane);
-            box.getChildren().add(spinnerPane);
-            VBox.setVgrow(spinnerPane, Priority.SOMETIMES);
+            VBox.setVgrow(scrollPane, Priority.SOMETIMES);
+            box.getChildren().add(scrollPane);
 
             this.setBody(box);
 
