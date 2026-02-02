@@ -137,17 +137,16 @@ public class JFXButtonSkin extends ButtonSkin {
             if (((JFXButton) getSkinnable()).getRipplerFill() == null) {
                 // change rippler fill according to the last LabeledText/Label child
                 for (int i = getChildren().size() - 1; i >= 1; i--) {
-                    if (getChildren().get(i) instanceof Text) {
-                        buttonRippler.setRipplerFill(((Text) getChildren().get(i)).getFill());
-                        ((Text) getChildren().get(i)).fillProperty()
-                                .addListener((o, oldVal, newVal) -> buttonRippler.setRipplerFill(
-                                        newVal));
+                    if (getChildren().get(i) instanceof Text text) {
+                        buttonRippler.setRipplerFill(text.getFill());
+                        text.fillProperty()
+                                .addListener((o, oldVal, newVal) ->
+                                        buttonRippler.setRipplerFill(newVal));
                         break;
-                    } else if (getChildren().get(i) instanceof Label) {
-                        buttonRippler.setRipplerFill(((Label) getChildren().get(i)).getTextFill());
-                        ((Label) getChildren().get(i)).textFillProperty()
-                                .addListener((o, oldVal, newVal) -> buttonRippler.setRipplerFill(
-                                        newVal));
+                    } else if (getChildren().get(i) instanceof Label label) {
+                        buttonRippler.setRipplerFill(label.getTextFill());
+                        label.textFillProperty().addListener((o, oldVal, newVal) ->
+                                buttonRippler.setRipplerFill(newVal));
                         break;
                     }
                 }
@@ -162,7 +161,6 @@ public class JFXButtonSkin extends ButtonSkin {
                 getSkinnable().getWidth(), getSkinnable().getHeight());
         layoutLabelInArea(x, y, w, h);
     }
-
 
     private void updateButtonType(ButtonType type) {
         switch (type) {
