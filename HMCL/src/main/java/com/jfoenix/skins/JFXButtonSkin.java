@@ -29,6 +29,7 @@ import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.animation.Transition;
+import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.skin.ButtonSkin;
@@ -37,6 +38,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.StackPane;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.ui.FXUtils;
 
 /// Material Design Button Skin
 ///
@@ -96,7 +98,10 @@ public class JFXButtonSkin extends ButtonSkin {
         });
 
         // show focused state
-        button.focusedProperty().addListener((o, oldVal, newVal) -> {
+        ReadOnlyBooleanProperty focusVisibleProperty = FXUtils.focusVisibleProperty(button);
+        if (focusVisibleProperty == null)
+            focusVisibleProperty = button.focusedProperty();
+        focusVisibleProperty.addListener((o, oldVal, newVal) -> {
             if (newVal) {
                 if (!getSkinnable().isPressed()) {
                     buttonRippler.setOverlayVisible(true);
