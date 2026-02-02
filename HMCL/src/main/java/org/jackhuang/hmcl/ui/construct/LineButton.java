@@ -30,30 +30,12 @@ import org.jackhuang.hmcl.ui.SVG;
 
 /// @author Glavo
 public final class LineButton extends LineButtonBase {
-    private static final String DEFAULT_STYLE_CLASS = "line-navigation-button";
+    private static final String DEFAULT_STYLE_CLASS = "line-button";
 
     public LineButton() {
         getStyleClass().add(DEFAULT_STYLE_CLASS);
 
         root.setMouseTransparent(true);
-
-        HBox right = new HBox();
-        root.setRight(right);
-        {
-            right.setAlignment(Pos.CENTER_RIGHT);
-
-            Label valueLabel = new Label();
-            valueLabel.getStyleClass().add("subtitle");
-            valueLabel.textProperty().bind(messageProperty());
-
-            Node arrowIcon = SVG.ARROW_FORWARD.createIcon(24);
-            HBox.setMargin(arrowIcon, new Insets(0, 8, 0, 8));
-
-            disabledProperty().addListener((observable, oldValue, newValue) ->
-                    arrowIcon.setOpacity(newValue ? 0.4 : 1.0));
-
-            right.getChildren().setAll(valueLabel, arrowIcon);
-        }
 
         FXUtils.onClicked(container, this::fire);
     }
@@ -172,6 +154,7 @@ public final class LineButton extends LineButtonBase {
         if (rightIcon != currentRightIcon || rightIconSize != currentRightIconSize) {
             if (rightIcon != null) {
                 rightIconNode = rightIcon.createIcon(rightIconSize);
+                HBox.setMargin(rightIconNode, new Insets(0, 8, 0, 8));
             } else {
                 rightIconNode = null;
             }

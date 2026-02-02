@@ -32,8 +32,6 @@ import javafx.scene.Cursor;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.TextFlow;
@@ -550,7 +548,6 @@ public class TerracottaControllerPage extends StackPane {
 
     private ComponentSublist getThirdPartyDownloadNodes() {
         ComponentSublist locals = new ComponentSublist();
-        locals.setComponentPadding(false);
 
         var header = new LinePane();
         header.getStyleClass().add("terracotta-iconed-button");
@@ -562,25 +559,15 @@ public class TerracottaControllerPage extends StackPane {
         locals.setHeaderLeft(header);
 
         for (TerracottaMetadata.Link link : TerracottaMetadata.PACKAGE_LINKS) {
-            HBox node = new HBox();
-            node.setAlignment(Pos.CENTER_LEFT);
-            node.setPadding(new Insets(10, 16, 10, 16));
-
-            Label description = new Label(link.description().getText(I18n.getLocale().getCandidateLocales()));
-            HBox placeholder = new HBox();
-            HBox.setHgrow(placeholder, Priority.ALWAYS);
-            Node icon = SVG.OPEN_IN_NEW.createIcon(16);
-            node.getChildren().setAll(description, placeholder, icon);
-
-            String url = link.link();
-            RipplerContainer container = new RipplerContainer(node);
-            container.setOnMouseClicked(ev -> Controllers.dialog(
+            LineButton item = new LineButton();
+            item.setRightIcon(SVG.OPEN_IN_NEW);
+            item.setTitle(link.description().getText(I18n.getLocale().getCandidateLocales()));
+            item.setOnAction(event -> Controllers.dialog(
                     i18n("terracotta.from_local.guide", TerracottaMetadata.PACKAGE_NAME),
                     i18n("message.info"), MessageDialogPane.MessageType.INFO,
-                    () -> FXUtils.openLink(url)
+                    () -> FXUtils.openLink(link.link())
             ));
-            ComponentList.setNoPadding(container);
-            locals.getContent().add(container);
+            locals.getContent().add(item);
         }
         return locals;
     }
@@ -594,7 +581,6 @@ public class TerracottaControllerPage extends StackPane {
     private static LineButton createLineButton() {
         LineButton lineButton = new LineButton();
         lineButton.getStyleClass().add("terracotta-iconed-button");
-        lineButton.setContentPadding(new Insets(10, 16, 10, 16));
         return lineButton;
     }
 

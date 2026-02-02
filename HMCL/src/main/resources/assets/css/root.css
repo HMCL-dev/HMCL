@@ -1868,6 +1868,13 @@
  *                                                                             *
  ******************************************************************************/
 
+.line-button .svg {
+    -fx-opacity: 1;
+}
+
+.line-button .svg:disabled {
+    -fx-opacity: 0.4;
+}
 
 .line-select-button .svg {
     -fx-opacity: 1;
