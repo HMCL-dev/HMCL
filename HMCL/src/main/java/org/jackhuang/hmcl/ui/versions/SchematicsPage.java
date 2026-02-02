@@ -44,6 +44,9 @@ import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.mod.LocalModFile;
+import org.jackhuang.hmcl.mod.RemoteMod;
+import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.schematic.LitematicFile;
 import org.jackhuang.hmcl.schematic.Schematic;
 import org.jackhuang.hmcl.schematic.SchematicType;
@@ -81,6 +84,8 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> implements VersionPage.VersionLoadable {
 
+    private static RemoteMod litematica;
+
     private static String translateAuthorName(String author) {
         if (I18n.isUseChinese() && "hsds".equals(author)) {
             return "黑山大叔";
@@ -92,6 +97,8 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         return i18n("schematics.info.type." + type.name().toLowerCase(Locale.ROOT));
     }
 
+    private Profile profile;
+    private String instanceId;
     private Path schematicsDirectory;
     private final ObjectProperty<DirItem> currentDirectory = new SimpleObjectProperty<>(this, "currentDirectory", null);
 
@@ -111,6 +118,8 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
     @Override
     public void loadVersion(Profile profile, String version) {
+        this.profile = profile;
+        this.instanceId = version;
         this.schematicsDirectory = profile.getRepository().getSchematicsDirectory(version);
 
         refresh();
@@ -134,30 +143,70 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         if (schematicsDirectory == null) return;
 
         setLoading(true);
-        Task.supplyAsync(() -> loadRoot(schematicsDirectory))
-                .whenComplete(Schedulers.javafx(), (result, exception) -> {
-                    setLoading(false);
-                    if (exception == null) {
-                        DirItem target = result;
-                        if (currentDirectoryProperty().get() != null) {
-                            loop:
-                            for (String dirName : currentDirectoryProperty().get().relativePath) {
-                                target.preLoad();
-                                for (var dirChild : target.dirChildren) {
-                                    if (dirChild.getName().equals(dirName)) {
-                                        target = dirChild;
-                                        continue loop;
-                                    }
-                                }
-                                break;
+        Task.supplyAsync(() -> {
+            boolean hasLitematica = false;
+            try {
+                if (profile.getRepository()
+                        .getModManager(instanceId)
+                        .getMods()
+                        .stream()
+                        .map(LocalModFile::getId)
+                        .toList()
+                        .contains("litematica")
+                ) {
+                    hasLitematica = true;
+                }
+            } catch (IOException e) {
+                LOG.warning("Failed to load mods, unable to check litematica", e);
+            }
+            if (!hasLitematica) {
+                try {
+                    if (litematica == null) litematica = ModrinthRemoteModRepository.MODS.getModById("litematica");
+                } catch (IOException ignored) {
+                }
+                return null;
+            }
+            return loadRoot(schematicsDirectory);
+        }).whenComplete(Schedulers.javafx(), (result, exception) -> {
+            if (exception == null) {
+                if (result == null) {
+                    if (litematica != null) {
+                        setFailedReason(i18n("schematics.no_litematica_install"));
+                        setOnFailedAction(__ -> FXUtils.runInFX(() -> {
+                            if (litematica != null) {
+                                DownloadListPage modDownloads = Controllers.getDownloadPage().showModDownloads();
+                                modDownloads.selectVersion(instanceId);
+                                Controllers.navigate(new DownloadPage(modDownloads, litematica, modDownloads.getProfileVersion(), modDownloads.getCallback()));
                             }
-                        }
-
-                        navigateTo(target);
+                        }));
                     } else {
-                        LOG.warning("Failed to load schematics", exception);
+                        setFailedReason(i18n("schematics.no_litematica"));
+                        setOnFailedAction(null);
                     }
-                }).start();
+                } else {
+                    DirItem target = result;
+                    if (currentDirectoryProperty().get() != null) {
+                        loop:
+                        for (String dirName : currentDirectoryProperty().get().relativePath) {
+                            target.preLoad();
+                            for (var dirChild : target.dirChildren) {
+                                if (dirChild.getName().equals(dirName)) {
+                                    target = dirChild;
+                                    continue loop;
+                                }
+                            }
+                            break;
+                        }
+                    }
+
+                    setFailedReason(null);
+                    navigateTo(target);
+                }
+                setLoading(false);
+            } else {
+                LOG.warning("Failed to load schematics", exception);
+            }
+        }).start();
     }
 
     public void addFiles(List<Path> files) {
@@ -742,6 +791,8 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 ComponentList.setVgrow(center, Priority.ALWAYS);
                 center.getStyleClass().add("large-spinner-pane");
                 center.loadingProperty().bind(skinnable.loadingProperty());
+                center.failedReasonProperty().bind(skinnable.failedReasonProperty());
+                center.onFailedActionProperty().bind(skinnable.onFailedActionProperty());
 
                 listView.setCellFactory(x -> new Cell(listView));
                 listView.setSelectionModel(new NoneMultipleSelectionModel<>());
