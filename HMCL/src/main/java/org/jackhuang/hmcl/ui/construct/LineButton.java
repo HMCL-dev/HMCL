@@ -43,7 +43,7 @@ public final class LineButton extends LineButtonBase {
 
         root.setMouseTransparent(true);
 
-        FXUtils.onClicked(container, this::fire);
+        FXUtils.onClicked(ripplerContainer, this::fire);
     }
 
     public void fire() {
@@ -138,12 +138,12 @@ public final class LineButton extends LineButtonBase {
 
     private void updateRight() {
         HBox right;
-        if (root.getRight() instanceof HBox box) {
+        if (root.getNode(LineComponentContainer.IDX_RIGHT) instanceof HBox box) {
             right = box;
         } else {
             right = new HBox();
             right.setAlignment(Pos.CENTER_RIGHT);
-            root.setRight(right);
+            root.setNode(LineComponentContainer.IDX_RIGHT, right);
         }
 
         right.getChildren().clear();

@@ -20,18 +20,22 @@ package org.jackhuang.hmcl.ui.construct;
 import javafx.beans.property.StringProperty;
 import javafx.beans.property.StringPropertyBase;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.control.Label;
-import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import org.jackhuang.hmcl.ui.FXUtils;
 
 /// @author Glavo
-public final class LineTextPane extends LinePane {
+public final class LineTextPane extends LineComponentContainer {
 
-    private static final String DEFAULT_STYLE_CLASS = "line-label-pane";
+    private static final String DEFAULT_STYLE_CLASS = "line-text-pane";
 
     public LineTextPane() {
-        this.getStyleClass().add(DEFAULT_STYLE_CLASS);
+        this.getStyleClass().addAll(LineComponent.DEFAULT_STYLE_CLASS, DEFAULT_STYLE_CLASS);
+    }
+
+    @Override
+    protected LineComponent getBean() {
+        return this;
     }
 
     private StringProperty text;
@@ -59,16 +63,17 @@ public final class LineTextPane extends LinePane {
                     if (text == null || text.isEmpty()) {
                         if (rightLabel != null)
                             rightLabel.setText(null);
-                        LineTextPane.this.setRight(null);
+
+                        setNode(IDX_RIGHT, null);
                     } else {
                         if (rightLabel == null) {
                             rightLabel = FXUtils.newSafeTruncatedLabel();
                             FXUtils.copyOnDoubleClick(rightLabel);
-                            BorderPane.setMargin(rightLabel, LABEL_MARGIN);
-                            BorderPane.setAlignment(rightLabel, Pos.CENTER_RIGHT);
+                            HBox.setMargin(rightLabel, LABEL_MARGIN);
+                            // BorderPane.setAlignment(rightLabel, Pos.CENTER_RIGHT);
                         }
                         rightLabel.setText(text);
-                        LineTextPane.this.setRight(rightLabel);
+                        setNode(IDX_RIGHT, rightLabel);
                     }
                 }
             };

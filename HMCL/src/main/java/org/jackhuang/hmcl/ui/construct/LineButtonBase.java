@@ -17,11 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
-import javafx.geometry.Pos;
-import javafx.scene.control.Label;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 
 /// @author Glavo
@@ -29,59 +24,24 @@ public abstract class LineButtonBase extends StackPane implements LineComponent 
 
     private static final String DEFAULT_STYLE_CLASS = "line-button-base";
 
-    protected final BorderPane root;
-    protected final RipplerContainer container;
+    protected final LineComponentContainer root = new LineComponentContainer() {
+        @Override
+        protected LineComponent getBean() {
+            return LineButtonBase.this;
+        }
+    };
 
-    private final Label titleLabel;
+    protected final RipplerContainer ripplerContainer;
 
     public LineButtonBase() {
         this.getStyleClass().addAll(LineComponent.DEFAULT_STYLE_CLASS, LineButtonBase.DEFAULT_STYLE_CLASS);
 
-        this.root = new BorderPane();
-        root.setPadding(LineComponent.PADDING);
-        root.setMinHeight(LineComponent.MIN_HEIGHT);
-
-        this.container = new RipplerContainer(root);
-        this.getChildren().setAll(container);
-
-        this.titleLabel = new Label();
-        root.setCenter(titleLabel);
-        BorderPane.setAlignment(titleLabel, Pos.CENTER_LEFT);
-        titleLabel.textProperty().bind(titleProperty());
-        titleLabel.getStyleClass().add("title");
+        this.ripplerContainer = new RipplerContainer(root);
+        this.getChildren().setAll(ripplerContainer);
     }
 
     @Override
-    public BorderPane getRoot() {
+    public LineComponentContainer getRoot() {
         return root;
     }
-
-    private final StringProperty title = new SimpleStringProperty(this, "title");
-
-    @Override
-    public StringProperty titleProperty() {
-        return title;
-    }
-
-    private StringProperty subtitle;
-
-    @Override
-    public StringProperty subtitleProperty() {
-        if (subtitle == null) {
-            subtitle = new LineComponent.SubtitleProperty() {
-                @Override
-                public LineButtonBase getBean() {
-                    return LineButtonBase.this;
-                }
-
-                @Override
-                public Label getTitleLabel() {
-                    return titleLabel;
-                }
-            };
-        }
-
-        return subtitle;
-    }
-
 }

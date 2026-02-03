@@ -115,7 +115,7 @@ public final class JavaInstallPage extends WizardSinglePage {
                     nameField = new JFXTextField();
                     nameField.textProperty().bindBidirectional(control.nameProperty);
                     FXUtils.setLimitWidth(nameField, 200);
-                    BorderPane.setAlignment(nameField, Pos.CENTER_RIGHT);
+                    // BorderPane.setAlignment(nameField, Pos.CENTER_RIGHT);
                     namePane.setRight(nameField);
                     nameField.setValidators(
                             new RequiredValidator(),

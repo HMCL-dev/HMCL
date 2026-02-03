@@ -48,6 +48,9 @@ public final class LineSelectButton<T> extends LineButtonBase {
     private static final String DEFAULT_STYLE_CLASS = "line-select-button";
     private static final PseudoClass SELECTED_PSEUDO_CLASS = PseudoClass.getPseudoClass("selected");
 
+    private static final int IDX_RIGHT_VALUE_LABEL = LineComponentContainer.IDX_RIGHT;
+    private static final int IDX_RIGHT_ICON = IDX_RIGHT_VALUE_LABEL + 1;
+
     private JFXPopup popup;
 
     public LineSelectButton() {
@@ -55,11 +58,7 @@ public final class LineSelectButton<T> extends LineButtonBase {
 
         root.setMouseTransparent(true);
 
-        HBox right = new HBox();
-        root.setRight(right);
         {
-            right.setAlignment(Pos.CENTER_RIGHT);
-
             Label valueLabel = new Label();
             valueLabel.getStyleClass().add("subtitle");
 
@@ -78,16 +77,17 @@ public final class LineSelectButton<T> extends LineButtonBase {
             Node arrowIcon = SVG.UNFOLD_MORE.createIcon(24);
             HBox.setMargin(arrowIcon, new Insets(0, 8, 0, 8));
 
-            right.getChildren().setAll(valueLabel, arrowIcon);
+            root.setNode(IDX_RIGHT_VALUE_LABEL, valueLabel);
+            root.setNode(IDX_RIGHT_ICON, arrowIcon);
         }
 
-        container.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
+        ripplerContainer.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
             if (event.getButton() == MouseButton.PRIMARY) {
                 if (popup == null) {
                     PopupMenu popupMenu = new PopupMenu();
                     this.popup = new JFXPopup(popupMenu);
 
-                    container.addEventFilter(ScrollEvent.ANY, ignored -> popup.hide());
+                    ripplerContainer.addEventFilter(ScrollEvent.ANY, ignored -> popup.hide());
 
                     Bindings.bindContent(popupMenu.getContent(), MappedObservableList.create(itemsProperty(), item -> {
                         VBox vbox = new VBox();
@@ -134,7 +134,7 @@ public final class LineSelectButton<T> extends LineButtonBase {
                     }));
 
                     popup.showingProperty().addListener((observable, oldValue, newValue) ->
-                            container.getRippler().setRipplerDisabled(newValue));
+                            ripplerContainer.getRippler().setRipplerDisabled(newValue));
                 }
 
                 if (popup.isShowing()) {

@@ -45,9 +45,11 @@ public interface LineComponent extends NoPaddingComponent {
         return (Node) this;
     }
 
-    BorderPane getRoot();
+    LineComponentContainer getRoot();
 
-    StringProperty titleProperty();
+    default StringProperty titleProperty() {
+        return getRoot().titleProperty();
+    }
 
     default String getTitle() {
         return titleProperty().get();
@@ -57,45 +59,9 @@ public interface LineComponent extends NoPaddingComponent {
         titleProperty().set(title);
     }
 
-    abstract class SubtitleProperty extends StringPropertyBase {
-        private VBox left;
-        private Label subtitleLabel;
-
-        @Override
-        public String getName() {
-            return "subtitle";
-        }
-
-        @Override
-        public abstract LineComponent getBean();
-
-        public abstract Label getTitleLabel();
-
-        @Override
-        protected void invalidated() {
-            String subtitle = get();
-            if (subtitle != null && !subtitle.isEmpty()) {
-                if (left == null) {
-                    left = new VBox();
-                    left.setMouseTransparent(true);
-                    left.setAlignment(Pos.CENTER_LEFT);
-
-                    subtitleLabel = new Label();
-                    subtitleLabel.setWrapText(true);
-                    subtitleLabel.setMinHeight(Region.USE_PREF_SIZE);
-                    subtitleLabel.getStyleClass().add("subtitle");
-                }
-                subtitleLabel.setText(subtitle);
-                left.getChildren().setAll(getTitleLabel(), subtitleLabel);
-                getBean().getRoot().setCenter(left);
-            } else if (left != null) {
-                subtitleLabel.setText(null);
-                getBean().getRoot().setCenter(getTitleLabel());
-            }
-        }
+    default StringProperty subtitleProperty() {
+        return getRoot().subtitleProperty();
     }
-
-    StringProperty subtitleProperty();
 
     default String getSubtitle() {
         return subtitleProperty().get();
@@ -110,18 +76,7 @@ public interface LineComponent extends NoPaddingComponent {
     }
 
     default void setLeftIcon(Image icon, double size) {
-        ImageView imageView = new ImageView(icon);
-        imageView.getStyleClass().add("left-icon");
-        if (size > 0) {
-            imageView.setFitWidth(size);
-            imageView.setFitHeight(size);
-            imageView.setPreserveRatio(true);
-            imageView.setSmooth(true);
-        }
-        imageView.setMouseTransparent(true);
-        BorderPane.setAlignment(imageView, Pos.CENTER);
-        BorderPane.setMargin(imageView, ICON_MARGIN);
-        getRoot().setLeft(imageView);
+        getRoot().setLeftIcon(icon, size);
     }
 
     default void setLeftIcon(SVG svg) {
@@ -129,15 +84,11 @@ public interface LineComponent extends NoPaddingComponent {
     }
 
     default void setLeftIcon(SVG svg, double size) {
-        Node node = svg.createIcon(size);
-        node.getStyleClass().add("left-icon");
-        node.setMouseTransparent(true);
-        BorderPane.setAlignment(node, Pos.CENTER);
-        BorderPane.setMargin(node, ICON_MARGIN);
-        getRoot().setLeft(node);
+        getRoot().setLeftIcon(svg, size);
     }
 
     default void setLargeTitle(boolean largeTitle) {
         self().pseudoClassStateChanged(PSEUDO_LARGER_TITLE, largeTitle);
     }
+
 }

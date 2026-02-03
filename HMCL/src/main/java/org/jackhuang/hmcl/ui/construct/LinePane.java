@@ -17,61 +17,52 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
-import javafx.geometry.Pos;
-import javafx.scene.control.Label;
-import javafx.scene.layout.BorderPane;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ObjectPropertyBase;
+import javafx.scene.Node;
 
 /// @author Glavo
-public class LinePane extends BorderPane implements LineComponent {
+public class LinePane extends LineComponentContainer {
     private static final String DEFAULT_STYLE_CLASS = "line-pane";
-
-    private final Label titleLabel;
 
     public LinePane() {
         this.getStyleClass().addAll(LineComponent.DEFAULT_STYLE_CLASS, LinePane.DEFAULT_STYLE_CLASS);
-
-        this.setPadding(LineComponent.PADDING);
-        this.setMinHeight(LineComponent.MIN_HEIGHT);
-
-        this.titleLabel = new Label();
-        this.setCenter(titleLabel);
-        BorderPane.setAlignment(titleLabel, Pos.CENTER_LEFT);
-        titleLabel.textProperty().bind(titleProperty());
-        titleLabel.getStyleClass().add("title");
     }
 
     @Override
-    public BorderPane getRoot() {
+    protected LineComponent getBean() {
         return this;
     }
 
-    private final StringProperty title = new SimpleStringProperty(this, "title");
+    private ObjectProperty<Node> right;
 
-    @Override
-    public StringProperty titleProperty() {
-        return title;
-    }
-
-    private StringProperty subtitle;
-
-    @Override
-    public StringProperty subtitleProperty() {
-        if (subtitle == null) {
-            subtitle = new LineComponent.SubtitleProperty() {
+    public ObjectProperty<Node> rightProperty() {
+        if (right == null) {
+            right = new ObjectPropertyBase<>() {
                 @Override
-                public LinePane getBean() {
+                public Object getBean() {
                     return LinePane.this;
                 }
 
                 @Override
-                public Label getTitleLabel() {
-                    return titleLabel;
+                public String getName() {
+                    return "right";
+                }
+
+                @Override
+                protected void invalidated() {
+                    setNode(IDX_RIGHT, get());
                 }
             };
         }
+        return right;
+    }
 
-        return subtitle;
+    public Node getRight() {
+        return rightProperty().get();
+    }
+
+    public void setRight(Node right) {
+        rightProperty().set(right);
     }
 }

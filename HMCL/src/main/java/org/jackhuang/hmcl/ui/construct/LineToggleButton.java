@@ -35,10 +35,10 @@ public final class LineToggleButton extends LineButtonBase {
         toggleButton.setSize(8);
         FXUtils.setLimitHeight(toggleButton, 30);
 
-        BorderPane.setAlignment(toggleButton, Pos.CENTER);
-        root.setRight(toggleButton);
+        // BorderPane.setAlignment(toggleButton, Pos.CENTER);
+        root.setNode(LineComponentContainer.IDX_RIGHT, toggleButton);
 
-        FXUtils.onClicked(container, toggleButton::fire);
+        FXUtils.onClicked(ripplerContainer, toggleButton::fire);
     }
 
     private final BooleanProperty selected = new SimpleBooleanProperty(this, "selected");
