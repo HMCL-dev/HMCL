@@ -54,10 +54,10 @@ HMCL 為社群所驅之開源計畫，迎諸君貢獻其碼，或建言於此。
 - 於 GitHub 上[創建 Issue](https://github.com/HMCL-dev/HMCL/issues/new/choose)，以報告謬誤，或請求功能。
 - 於 GitHub 上 Fork 倉庫，並[提交 Pull Request](https://github.com/HMCL-dev/HMCL/compare)，以貢獻其碼。
 
-參與貢獻之前，請閱[貢獻指南](./Contributing_zh.md)，其中載有如下：
+參與貢獻之前，請閱[貢獻指南](./Contributing_zh_Hant.md)，其中載有如下：
 
-- [如何自源碼構建並運行 HMCL](./Contributing_zh.md#构建-hmcl)
-- [以調試選項調整 HMCL 之行為](./Contributing_zh.md#调试选项)
+- [如何自源碼構建並運行 HMCL](./Contributing_zh_Hant.md#構建-hmcl)
+- [以調試選項調整 HMCL 之行為](./Contributing_zh_Hant.md#除錯選項)
 
 ## 貢獻者
 
