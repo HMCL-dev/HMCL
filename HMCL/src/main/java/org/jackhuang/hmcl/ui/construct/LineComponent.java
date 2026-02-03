@@ -32,6 +32,8 @@ import org.jackhuang.hmcl.ui.SVG;
 
 /// @author Glavo
 public interface LineComponent extends NoPaddingComponent {
+    String DEFAULT_STYLE_CLASS = "line-component";
+
     Insets PADDING = new Insets(8, 8, 8, 16);
     Insets ICON_MARGIN = new Insets(0, 16, 0, 0);
     double MIN_HEIGHT = 48.0;
@@ -102,6 +104,7 @@ public interface LineComponent extends NoPaddingComponent {
 
     default void setLeftIcon(Image icon, double size) {
         ImageView imageView = new ImageView(icon);
+        imageView.getStyleClass().add("left-icon");
         if (size > 0) {
             imageView.setFitWidth(size);
             imageView.setFitHeight(size);
@@ -120,6 +123,7 @@ public interface LineComponent extends NoPaddingComponent {
 
     default void setLeftIcon(SVG svg, double size) {
         Node node = svg.createIcon(size);
+        node.getStyleClass().add("left-icon");
         node.setMouseTransparent(true);
         BorderPane.setAlignment(node, Pos.CENTER);
         BorderPane.setMargin(node, ICON_MARGIN);

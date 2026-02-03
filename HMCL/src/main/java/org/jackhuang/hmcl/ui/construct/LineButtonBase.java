@@ -27,12 +27,16 @@ import javafx.scene.layout.StackPane;
 /// @author Glavo
 public abstract class LineButtonBase extends StackPane implements LineComponent {
 
+    private static final String DEFAULT_STYLE_CLASS = "line-button-base";
+
     protected final BorderPane root;
     protected final RipplerContainer container;
 
     private final Label titleLabel;
 
     public LineButtonBase() {
+        this.getStyleClass().addAll(LineComponent.DEFAULT_STYLE_CLASS, LineButtonBase.DEFAULT_STYLE_CLASS);
+
         this.root = new BorderPane();
         root.setPadding(LineComponent.PADDING);
         root.setMinHeight(LineComponent.MIN_HEIGHT);

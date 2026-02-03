@@ -25,10 +25,13 @@ import javafx.scene.layout.BorderPane;
 
 /// @author Glavo
 public class LinePane extends BorderPane implements LineComponent {
+    private static final String DEFAULT_STYLE_CLASS = "line-pane";
 
     private final Label titleLabel;
 
     public LinePane() {
+        this.getStyleClass().addAll(LineComponent.DEFAULT_STYLE_CLASS, LinePane.DEFAULT_STYLE_CLASS);
+
         this.setPadding(LineComponent.PADDING);
         this.setMinHeight(LineComponent.MIN_HEIGHT);
 

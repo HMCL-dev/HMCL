@@ -1864,9 +1864,17 @@
 
 /*******************************************************************************
  *                                                                             *
- * Line Button                                                                 *
+ * Line Component                                                              *
  *                                                                             *
  ******************************************************************************/
+
+.line-component .title {
+    -fx-text-fill: -monet-on-surface;
+}
+
+.line-component .subtitle {
+    -fx-text-fill: -monet-on-surface-variant;
+}
 
 .line-button .svg {
     -fx-opacity: 1;
