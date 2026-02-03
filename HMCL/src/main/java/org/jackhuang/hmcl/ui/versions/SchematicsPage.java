@@ -811,11 +811,11 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 HBox.setMargin(tip, new Insets(5));
                 var tipPane = new HBox(tip);
                 tipPane.setAlignment(Pos.CENTER_LEFT);
-                skinnable.warningTip.addListener((observable, oldValue, newValue) -> {
+                FXUtils.onChangeAndOperate(skinnable.warningTip, pair -> {
                     root.getContent().remove(tipPane);
-                    if (newValue != null && !StringUtils.isBlank(newValue.key())) {
-                        var txt = new Text(newValue.key());
-                        if (newValue.value() != null) FXUtils.onClicked(txt, newValue.value());
+                    if (pair != null && !StringUtils.isBlank(pair.key())) {
+                        var txt = new Text(pair.key());
+                        if (pair.value() != null) FXUtils.onClicked(txt, pair.value());
                         tip.getChildren().setAll(txt);
                         root.getContent().add(1, tipPane);
                     }
@@ -844,9 +844,9 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 var relPath = new TextFlow();
                 relPath.setStyle("-fx-font-size: 13;");
                 HBox.setMargin(relPath, new Insets(5));
-                skinnable.currentDirectoryProperty().addListener((__, ___, newValue) -> {
+                FXUtils.onChangeAndOperate(skinnable.currentDirectoryProperty(), currentDir -> {
                     relPath.getChildren().clear();
-                    var d = newValue;
+                    var d = currentDir;
                     while (d != null) {
                         relPath.getChildren().add(0, new Text("/"));
                         var txt = new Text(d.getName());
