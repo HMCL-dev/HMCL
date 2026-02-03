@@ -20,8 +20,6 @@ package org.jackhuang.hmcl.ui.construct;
 import com.jfoenix.controls.JFXToggleButton;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.geometry.Pos;
-import javafx.scene.layout.BorderPane;
 import org.jackhuang.hmcl.ui.FXUtils;
 
 public final class LineToggleButton extends LineButtonBase {

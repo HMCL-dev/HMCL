@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.construct;
 
 import javafx.beans.property.StringProperty;
 import javafx.beans.property.StringPropertyBase;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
@@ -39,12 +40,16 @@ public abstract class LineComponentContainer extends HBox implements LineCompone
     protected static final int IDX_TITLE = 1;
     protected static final int IDX_RIGHT = 2;
 
+    private static final Insets PADDING = new Insets(8, 8, 8, 16);
+    private static final Insets ICON_MARGIN = new Insets(0, 16, 0, 0);
+    private static final double MIN_HEIGHT = 48.0;
+
     private final Label titleLabel;
     private final VBox titleContainer;
 
     public LineComponentContainer() {
-        setPadding(LineComponent.PADDING);
-        setMinHeight(LineComponent.MIN_HEIGHT);
+        setPadding(PADDING);
+        setMinHeight(MIN_HEIGHT);
         setAlignment(Pos.CENTER_LEFT);
 
         this.titleLabel = new Label();

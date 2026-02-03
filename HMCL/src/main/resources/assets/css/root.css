@@ -1876,6 +1876,10 @@
     -fx-opacity: 0.4;
 }
 
+.line-select-button .value-label {
+    -fx-text-fill: -monet-on-surface-variant;
+}
+
 .line-select-button .svg {
     -fx-opacity: 1;
 }
@@ -1884,17 +1888,12 @@
     -fx-opacity: 0.4;
 }
 
-.line-select-button .menu-container .title {
+.line-select-button .menu-container .title-label {
     -fx-font-size: 13px;
-    -fx-text-fill: -monet-on-surface;
 }
 
-.line-select-button .menu-container:selected .title {
+.line-select-button .menu-container:selected .title-label {
     -fx-text-fill: -monet-primary;
-}
-
-.line-select-button .menu-container .subtitle {
-    -fx-text-fill: -monet-on-surface-variant;
 }
 
 .line-select-button .menu-container:selected .subtitle {

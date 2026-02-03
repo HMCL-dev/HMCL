@@ -60,7 +60,7 @@ public final class LineSelectButton<T> extends LineButtonBase {
 
         {
             Label valueLabel = new Label();
-            valueLabel.getStyleClass().add("subtitle");
+            valueLabel.getStyleClass().add("value-label");
 
             InvalidationListener updateValue = observable -> {
                 T value = getValue();
@@ -93,7 +93,7 @@ public final class LineSelectButton<T> extends LineButtonBase {
                         VBox vbox = new VBox();
 
                         var itemTitleLabel = new Label();
-                        itemTitleLabel.getStyleClass().add("title");
+                        itemTitleLabel.getStyleClass().add("title-label");
                         itemTitleLabel.textProperty().bind(Bindings.createStringBinding(() -> {
                             if (item == null)
                                 return "";
@@ -103,7 +103,7 @@ public final class LineSelectButton<T> extends LineButtonBase {
                         }, converterProperty()));
 
                         var itemSubtitleLabel = new Label();
-                        itemSubtitleLabel.getStyleClass().add("subtitle");
+                        itemSubtitleLabel.getStyleClass().add("subtitle-label");
                         itemSubtitleLabel.textProperty().bind(Bindings.createStringBinding(() -> {
                             Function<T, String> descriptionConverter = getDescriptionConverter();
                             return descriptionConverter != null ? descriptionConverter.apply(item) : "";

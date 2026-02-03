@@ -18,17 +18,9 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import javafx.beans.property.StringProperty;
-import javafx.beans.property.StringPropertyBase;
 import javafx.css.PseudoClass;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.Label;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.ui.SVG;
 
 /// @author Glavo
@@ -36,10 +28,6 @@ public interface LineComponent extends NoPaddingComponent {
     String DEFAULT_STYLE_CLASS = "line-component";
 
     PseudoClass PSEUDO_LARGER_TITLE = PseudoClass.getPseudoClass("large-title");
-
-    Insets PADDING = new Insets(8, 8, 8, 16);
-    Insets ICON_MARGIN = new Insets(0, 16, 0, 0);
-    double MIN_HEIGHT = 48.0;
 
     private Node self() {
         return (Node) this;
