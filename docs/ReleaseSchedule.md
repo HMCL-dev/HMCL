@@ -1,7 +1,7 @@
 # Hello Minecraft! Launcher Release Schedule
 
 <!-- #BEGIN LANGUAGE_SWITCHER -->
-**English** | [中文](ReleaseSchedule_zh.md)
+**English** | 中文 ([简体](ReleaseSchedule_zh.md), [繁體](ReleaseSchedule_zh_Hant.md))
 <!-- #END LANGUAGE_SWITCHER -->
 
 This document describes the HMCL version release schedule starting from October 2025.
