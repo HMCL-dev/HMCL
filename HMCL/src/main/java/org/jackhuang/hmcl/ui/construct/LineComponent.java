@@ -40,9 +40,13 @@ public interface LineComponent extends NoPaddingComponent {
 
     StringProperty titleProperty();
 
-    String getTitle();
+    default String getTitle() {
+        return titleProperty().get();
+    }
 
-    void setTitle(String title);
+    default void setTitle(String title) {
+        titleProperty().set(title);
+    }
 
     abstract class SubtitleProperty extends StringPropertyBase {
         private VBox left;
@@ -84,9 +88,13 @@ public interface LineComponent extends NoPaddingComponent {
 
     StringProperty subtitleProperty();
 
-    String getSubtitle();
+    default String getSubtitle() {
+        return subtitleProperty().get();
+    }
 
-    void setSubtitle(String subtitle);
+    default void setSubtitle(String subtitle) {
+        subtitleProperty().set(subtitle);
+    }
 
     default void setLeftIcon(Image icon) {
         setLeftIcon(icon, -1.0);

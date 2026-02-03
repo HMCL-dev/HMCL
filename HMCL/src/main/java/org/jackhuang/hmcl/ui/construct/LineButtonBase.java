@@ -59,16 +59,6 @@ public abstract class LineButtonBase extends StackPane implements LineComponent 
         return title;
     }
 
-    @Override
-    public String getTitle() {
-        return titleProperty().get();
-    }
-
-    @Override
-    public void setTitle(String title) {
-        this.titleProperty().set(title);
-    }
-
     private StringProperty subtitle;
 
     @Override
@@ -90,13 +80,4 @@ public abstract class LineButtonBase extends StackPane implements LineComponent 
         return subtitle;
     }
 
-    @Override
-    public String getSubtitle() {
-        return subtitleProperty().get();
-    }
-
-    @Override
-    public void setSubtitle(String subtitle) {
-        subtitleProperty().set(subtitle);
-    }
 }
