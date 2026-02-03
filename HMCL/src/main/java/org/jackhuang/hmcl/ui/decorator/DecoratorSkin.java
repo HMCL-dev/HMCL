@@ -181,17 +181,12 @@ public class DecoratorSkin extends SkinBase<Decorator> {
 
         // Maybe, we can automatically identify whether the top part of the picture is light-coloured or dark when the title is transparent,
         // and decide whether the whole top bar should be rendered in white or black. TODO
+        wrapper.backgroundProperty().bind(skinnable.contentBackgroundProperty());
         FXUtils.onChangeAndOperate(skinnable.titleTransparentProperty(), titleTransparent -> {
             if (titleTransparent) {
-                wrapper.backgroundProperty().bind(skinnable.contentBackgroundProperty());
-                container.backgroundProperty().unbind();
-                container.setBackground(null);
                 titleContainer.getStyleClass().remove("background");
                 titleContainer.getStyleClass().add("gray-background");
             } else {
-                container.backgroundProperty().bind(skinnable.contentBackgroundProperty());
-                wrapper.backgroundProperty().unbind();
-                wrapper.setBackground(null);
                 titleContainer.getStyleClass().add("background");
                 titleContainer.getStyleClass().remove("gray-background");
             }
