@@ -23,6 +23,7 @@ import javafx.collections.ObservableList;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -35,6 +36,18 @@ public class LineFileChooserButton extends LineButton {
     public LineFileChooserButton() {
         getStyleClass().add(DEFAULT_STYLE_CLASS);
         setRightIcon(SVG.EDIT, 16);
+    }
+
+    /// Converts the given path to absolute/relative(if possible) path according to [#convertToRelativePathProperty()].
+    private String processPath(Path path) {
+        if (isConvertToRelativePath() && path.isAbsolute()) {
+            try {
+                return Metadata.CURRENT_DIRECTORY.relativize(path).normalize().toString();
+            } catch (IllegalArgumentException e) {
+                // the given path can't be relativized against current path
+            }
+        }
+        return path.normalize().toString();
     }
 
     @Override
@@ -70,7 +83,7 @@ public class LineFileChooserButton extends LineButton {
         }
 
         if (path != null) {
-            setLocation(path.toString());
+            setLocation(processPath(path));
         }
     }
 
@@ -157,6 +170,40 @@ public class LineFileChooserButton extends LineButton {
         if (extensionFilters == null)
             extensionFilters = FXCollections.observableArrayList();
         return extensionFilters;
+    }
+
+    private BooleanProperty convertToRelativePath;
+
+    public BooleanProperty convertToRelativePathProperty() {
+        if (convertToRelativePath == null)
+            convertToRelativePath = new BooleanPropertyBase(false) {
+                @Override
+                public Object getBean() {
+                    return LineFileChooserButton.this;
+                }
+
+                @Override
+                public String getName() {
+                    return "convertToRelativePath";
+                }
+
+                @Override
+                protected void invalidated() {
+                    try {
+                        setLocation(processPath(Path.of(getLocation()).toAbsolutePath().normalize()));
+                    } catch (IllegalArgumentException ignored) {
+                    }
+                }
+            };
+        return convertToRelativePath;
+    }
+
+    public boolean isConvertToRelativePath() {
+        return convertToRelativePath != null && convertToRelativePath.get();
+    }
+
+    public void setConvertToRelativePath(boolean convertToRelativePath) {
+        convertToRelativePathProperty().set(convertToRelativePath);
     }
 
     public enum Type {
