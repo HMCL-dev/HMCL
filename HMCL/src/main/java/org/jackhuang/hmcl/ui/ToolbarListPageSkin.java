@@ -42,14 +42,9 @@ public abstract class ToolbarListPageSkin<E, P extends ListPageBase<E>> extends 
     public ToolbarListPageSkin(P skinnable) {
         super(skinnable);
 
-        SpinnerPane spinnerPane = new SpinnerPane();
-        spinnerPane.loadingProperty().bind(skinnable.loadingProperty());
-        spinnerPane.failedReasonProperty().bind(skinnable.failedReasonProperty());
-        spinnerPane.onFailedActionProperty().bind(skinnable.onFailedActionProperty());
-        spinnerPane.getStyleClass().add("large-spinner-pane");
-
         ComponentList root = new ComponentList();
         root.getStyleClass().add("no-padding");
+        StackPane wrapper = new StackPane(root);
         StackPane.setMargin(root, new Insets(10));
 
         List<Node> toolbarButtons = initializeToolbar(skinnable);
@@ -68,12 +63,16 @@ public abstract class ToolbarListPageSkin<E, P extends ListPageBase<E>> extends 
             ComponentList.setVgrow(listView, Priority.ALWAYS);
             Bindings.bindContent(this.listView.getItems(), skinnable.itemsProperty());
             FXUtils.ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
-            root.getContent().add(listView);
+            SpinnerPane spinnerPane = new SpinnerPane();
+            spinnerPane.setContent(listView);
+            spinnerPane.loadingProperty().bind(skinnable.loadingProperty());
+            spinnerPane.failedReasonProperty().bind(skinnable.failedReasonProperty());
+            spinnerPane.onFailedActionProperty().bind(skinnable.onFailedActionProperty());
+            spinnerPane.getStyleClass().add("large-spinner-pane");
+            root.getContent().add(spinnerPane);
         }
 
-        spinnerPane.setContent(root);
-
-        getChildren().setAll(spinnerPane);
+        getChildren().setAll(wrapper);
     }
 
     public static Node wrap(Node node) {
