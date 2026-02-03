@@ -121,7 +121,6 @@ public abstract class LineComponentContainer extends HBox implements LineCompone
         if (subtitle == null) {
             subtitle = new StringPropertyBase() {
                 private Label subtitleLabel;
-                private InvalidationListener maxWidthListener;
 
                 @Override
                 public String getName() {
