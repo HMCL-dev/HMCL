@@ -567,6 +567,30 @@
     -fx-text-fill: -monet-on-surface;
 }
 
+/*******************************************************************************
+ *                                                                             *
+ * Microsoft Login Dialog                                                      *
+ *                                                                             *
+ ******************************************************************************/
+
+.method-title {
+    -fx-text-fill: -monet-on-surface;
+    -fx-font-weight: bold;
+}
+
+.method-desc {
+    -fx-text-fill: -monet-outline;
+    -fx-font-size: 0.9em;
+    -fx-line-spacing: 2;
+    -fx-wrap-text: true;
+    -fx-text-alignment: center;
+}
+
+.code-box {
+    -fx-background-color: -monet-surface-variant;
+    -fx-background-radius: 6;
+    -fx-alignment: center;
+}
 
 /*******************************************************************************
  *                                                                             *
@@ -1103,15 +1127,16 @@
 .jfx-toggle-button Line {
     -fx-stroke: -jfx-untoggle-line-color;
 }
-.jfx-toggle-button:selected Line{
+
+.jfx-toggle-button:selected Line {
     -fx-stroke: -jfx-toggle-line-color;
 }
 
-.jfx-toggle-button Circle{
+.jfx-toggle-button Circle {
     -fx-fill: -jfx-untoggle-color;
 }
 
-.jfx-toggle-button:selected Circle{
+.jfx-toggle-button:selected Circle {
     -fx-fill: -jfx-toggle-color;
 }
 

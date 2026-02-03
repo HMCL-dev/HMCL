@@ -14,7 +14,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import javafx.scene.text.TextAlignment;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.AuthenticationException;
@@ -79,6 +78,7 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
     }
 
     private void initUI(boolean bodyonly) {
+        getStyleClass().add("microsoft-login-dialog");
         if (!bodyonly) {
             Label heading = new Label(accountToRelogin != null ? i18n("account.login.refresh") : i18n("account.create.microsoft"));
             heading.getStyleClass().add("header-label");
@@ -169,13 +169,10 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
         HBox.setHgrow(browserPanel, Priority.ALWAYS);
 
         Label browserTitle = new Label(i18n("account.methods.microsoft.methods.browser"));
-        browserTitle.setStyle("-fx-text-fill: -monet-on-surface; -fx-font-weight: bold;");
+        browserTitle.getStyleClass().add("method-title");
 
         Label browserDesc = new Label(i18n("account.methods.microsoft.methods.browser.hint"));
-        browserDesc.setLineSpacing(2);
-        browserDesc.setStyle("-fx-text-fill: -monet-outline; -fx-font-size: 0.9em;");
-        browserDesc.setWrapText(true);
-        browserDesc.setTextAlignment(TextAlignment.CENTER);
+        browserDesc.getStyleClass().add("method-desc");
 
         JFXButton btnOpenBrowser = FXUtils.newBorderButton(i18n("account.methods.microsoft.methods.browser.copy_open"));
         btnOpenBrowser.setOnAction(e -> {
@@ -210,13 +207,10 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
         HBox.setHgrow(devicePanel, Priority.ALWAYS);
 
         Label deviceTitle = new Label(i18n("account.methods.microsoft.methods.device"));
-        deviceTitle.setStyle("-fx-text-fill: -monet-on-surface; -fx-font-weight: bold;");
+        deviceTitle.getStyleClass().add("method-title");
 
         Label deviceDesc = new Label();
-        deviceDesc.setLineSpacing(2);
-        deviceDesc.setStyle("-fx-text-fill: -monet-outline; -fx-font-size: 0.9em;");
-        deviceDesc.setWrapText(true);
-        deviceDesc.setTextAlignment(TextAlignment.CENTER);
+        deviceDesc.getStyleClass().add("method-desc");
         deviceDesc.textProperty().bind(Bindings.createStringBinding(
                 () -> i18n("account.methods.microsoft.methods.device.hint", deviceCode.get() == null ? "..." : deviceCode.get().getVerificationUri()),
                 deviceCode));
@@ -227,10 +221,8 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
         imageView.setFitHeight(80);
 
         HBox codeBox = new HBox(10);
-        codeBox.setAlignment(Pos.CENTER);
-        codeBox.setPadding(new Insets(6, 12, 6, 12));
-        codeBox.setStyle("-fx-background-color: -monet-surface-variant; -fx-background-radius: 6;");
-        codeBox.setMaxWidth(Double.MAX_VALUE);
+        codeBox.getStyleClass().add("code-box");
+        FXUtils.limitingSize(codeBox, 200, 300);
 
         Label lblCode = new Label("...");
         lblCode.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: -monet-primary; -fx-font-family: \"" + Lang.requireNonNullElse(config().getFontFamily(), FXUtils.DEFAULT_MONOSPACE_FONT) + "\"");
