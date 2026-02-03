@@ -146,7 +146,7 @@ public abstract class LineComponentContainer extends HBox implements LineCompone
 
                             maxWidthListener = observable -> {
                                 ObservableList<Node> children = LineComponentContainer.this.getChildren();
-                                if (children.isEmpty() || children.get(children.size() - 1) != titleContainer) {
+                                if (children.isEmpty() || children.get(children.size() - 1) == titleContainer) {
                                     subtitleLabel.setMaxWidth(USE_COMPUTED_SIZE);
                                     return;
                                 }
