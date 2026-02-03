@@ -240,6 +240,12 @@ public class DecoratorController {
             case CLASSIC:
                 image = newBuiltinImage("/assets/img/background-classic.jpg");
                 break;
+            case LIGHT:
+                image = newBuiltinImage("/assets/img/background.jpg");
+                break;
+            case DARK:
+                image = newBuiltinImage("/assets/img/background-dark.png");
+                break;
             case TRANSLUCENT: // Deprecated
                 return new Background(new BackgroundFill(new Color(1, 1, 1, 0.5), CornerRadii.EMPTY, Insets.EMPTY));
             case PAINT:
@@ -321,7 +327,7 @@ public class DecoratorController {
         }
 
         if (Themes.darkModeProperty().get()) {
-            return newBuiltinImage("/assets/img/lushcave.png");
+            return newBuiltinImage("/assets/img/background-dark.png");
         }
 
         return newBuiltinImage("/assets/img/background.jpg");

@@ -21,6 +21,8 @@ public enum EnumBackgroundImage {
     DEFAULT,
     CUSTOM,
     CLASSIC,
+    LIGHT,
+    DARK,
     NETWORK,
     TRANSLUCENT, // Deprecated
     PAINT
