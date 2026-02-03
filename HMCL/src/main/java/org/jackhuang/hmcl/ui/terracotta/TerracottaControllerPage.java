@@ -150,7 +150,7 @@ public class TerracottaControllerPage extends StackPane {
                 body.getStyleClass().add("terracotta-hint");
                 body.setLineSpacing(4);
 
-                var download = createLineButton();
+                var download = createLargeTitleLineButton();
                 download.setLeftIcon(FXUtils.newBuiltinImage("/assets/img/terracotta.png"));
                 download.setTitle(i18n(String.format("terracotta.status.uninitialized.%s.title", fork)));
                 download.setSubtitle(i18n("terracotta.status.uninitialized.desc"));
@@ -194,7 +194,7 @@ public class TerracottaControllerPage extends StackPane {
                 flow.getStyleClass().add("terracotta-hint");
                 flow.setLineSpacing(4);
 
-                var host = createLineButton();
+                var host = createLargeTitleLineButton();
                 host.setLeftIcon(SVG.HOST, ICON_SIZE);
                 host.setTitle(i18n("terracotta.status.waiting.host.title"));
                 host.setSubtitle(i18n("terracotta.status.waiting.host.desc"));
@@ -226,7 +226,7 @@ public class TerracottaControllerPage extends StackPane {
                     }
                 });
 
-                var guest = createLineButton();
+                var guest = createLargeTitleLineButton();
                 guest.setLeftIcon(SVG.ADD_CIRCLE, ICON_SIZE);
                 guest.setTitle(i18n("terracotta.status.waiting.guest.title"));
                 guest.setSubtitle(i18n("terracotta.status.waiting.guest.desc"));
@@ -250,7 +250,7 @@ public class TerracottaControllerPage extends StackPane {
                 });
 
                 if (ThreadLocalRandom.current().nextDouble() < 0.02D) {
-                    var feedback = createLineButton();
+                    var feedback = createLargeTitleLineButton();
                     feedback.setLeftIcon(SVG.FEEDBACK, ICON_SIZE);
                     feedback.setTitle(i18n("terracotta.feedback.title"));
                     feedback.setSubtitle(i18n("terracotta.feedback.desc"));
@@ -269,7 +269,7 @@ public class TerracottaControllerPage extends StackPane {
                 body.getStyleClass().add("terracotta-hint");
                 body.setLineSpacing(4);
 
-                var room = createLineButton();
+                var room = createLargeTitleLineButton();
                 room.setLeftIcon(SVG.ARROW_BACK, ICON_SIZE);
                 room.setTitle(i18n("terracotta.back"));
                 room.setSubtitle(i18n("terracotta.status.scanning.back"));
@@ -285,7 +285,7 @@ public class TerracottaControllerPage extends StackPane {
                 statusProperty.set(i18n("terracotta.status.host_starting"));
                 progressProperty.set(-1);
 
-                var room = createLineButton();
+                var room = createLargeTitleLineButton();
                 room.setLeftIcon(SVG.ARROW_BACK, ICON_SIZE);
                 room.setTitle(i18n("terracotta.back"));
                 room.setSubtitle(i18n("terracotta.status.host_starting.back"));
@@ -329,13 +329,13 @@ public class TerracottaControllerPage extends StackPane {
                     code.setCursor(Cursor.HAND);
                     FXUtils.onClicked(code, () -> copyCode(cs));
 
-                    var copy = createLineButton();
+                    var copy = createLargeTitleLineButton();
                     copy.setLeftIcon(SVG.CONTENT_COPY, ICON_SIZE);
                     copy.setTitle(i18n("terracotta.status.host_ok.code.copy"));
                     copy.setSubtitle(i18n("terracotta.status.host_ok.code.desc"));
                     FXUtils.onClicked(copy, () -> copyCode(cs));
 
-                    var back = createLineButton();
+                    var back = createLargeTitleLineButton();
                     back.setLeftIcon(SVG.ARROW_BACK, ICON_SIZE);
                     back.setTitle(i18n("terracotta.back"));
                     back.setSubtitle(i18n("terracotta.status.host_ok.back"));
@@ -356,7 +356,7 @@ public class TerracottaControllerPage extends StackPane {
                 statusProperty.set(i18n("terracotta.status.guest_starting"));
                 progressProperty.set(-1);
 
-                var room = createLineButton();
+                var room = createLargeTitleLineButton();
                 room.setLeftIcon(SVG.ARROW_BACK, ICON_SIZE);
                 room.setTitle(i18n("terracotta.back"));
                 room.setSubtitle(i18n("terracotta.status.guest_starting.back"));
@@ -371,7 +371,7 @@ public class TerracottaControllerPage extends StackPane {
                 if (state instanceof TerracottaState.GuestStarting) {
                     TerracottaState.GuestStarting.Difficulty difficulty = ((TerracottaState.GuestStarting) state).getDifficulty();
                     if (difficulty != null && difficulty != TerracottaState.GuestStarting.Difficulty.UNKNOWN) {
-                        var info = createLineButton();
+                        var info = createLargeTitleLineButton();
                         info.setLeftIcon(switch (difficulty) {
                             case UNKNOWN -> throw new AssertionError();
                             case EASIEST, SIMPLE -> SVG.INFO;
@@ -399,11 +399,11 @@ public class TerracottaControllerPage extends StackPane {
                     statusProperty.set(i18n("terracotta.status.guest_ok"));
                     progressProperty.set(1);
 
-                    var tutorial = createLineButton();
+                    var tutorial = createLargeTitleLineButton();
                     tutorial.setTitle(i18n("terracotta.status.guest_ok.title"));
                     tutorial.setSubtitle(i18n("terracotta.status.guest_ok.desc", guestOK.getUrl()));
 
-                    var back = createLineButton();
+                    var back = createLargeTitleLineButton();
                     back.setLeftIcon(SVG.ARROW_BACK, ICON_SIZE);
                     back.setTitle(i18n("terracotta.back"));
                     back.setSubtitle(i18n("terracotta.status.guest_ok.back"));
@@ -425,7 +425,7 @@ public class TerracottaControllerPage extends StackPane {
                 progressProperty.set(1);
                 nodesProperty.setAll();
 
-                var back = createLineButton();
+                var back = createLargeTitleLineButton();
                 back.setLeftIcon(SVG.ARROW_BACK, ICON_SIZE);
                 back.setTitle(i18n("terracotta.back"));
                 back.setSubtitle(i18n("terracotta.status.exception.back"));
@@ -437,7 +437,7 @@ public class TerracottaControllerPage extends StackPane {
                 });
 
                 SpinnerPane exportLog = new SpinnerPane();
-                var exportLogInner = createLineButton();
+                var exportLogInner = createLargeTitleLineButton();
                 exportLogInner.setLeftIcon(SVG.OUTPUT, ICON_SIZE);
                 exportLogInner.setTitle(i18n("terracotta.export_log"));
                 exportLogInner.setSubtitle(i18n("terracotta.export_log.desc"));
@@ -480,7 +480,7 @@ public class TerracottaControllerPage extends StackPane {
                 progressProperty.set(1);
 
                 if (fatal.isRecoverable()) {
-                    var retry = createLineButton();
+                    var retry = createLargeTitleLineButton();
                     retry.setLeftIcon(SVG.RESTORE, ICON_SIZE);
                     retry.setTitle(i18n("terracotta.status.fatal.retry"));
                     retry.setSubtitle(message);
@@ -551,7 +551,7 @@ public class TerracottaControllerPage extends StackPane {
         ComponentSublist locals = new ComponentSublist();
 
         var header = new LinePane();
-        header.getStyleClass().add("terracotta-iconed-button");
+        header.setLargeTitle(true);
         header.setPadding(Insets.EMPTY);
         header.setMinHeight(LinePane.USE_COMPUTED_SIZE);
         header.setMouseTransparent(true);
@@ -580,9 +580,9 @@ public class TerracottaControllerPage extends StackPane {
 
     private static final double ICON_SIZE = 28;
 
-    private static LineButton createLineButton() {
-        LineButton lineButton = new LineButton();
-        lineButton.getStyleClass().add("terracotta-iconed-button");
+    private static LineButton createLargeTitleLineButton() {
+        var lineButton = new LineButton();
+        lineButton.setLargeTitle(true);
         return lineButton;
     }
 
