@@ -24,14 +24,11 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.SkinBase;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.LineFileChooserButton;
+import org.jackhuang.hmcl.ui.construct.*;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -43,7 +40,6 @@ public class WorldExportPageSkin extends SkinBase<WorldExportPage> {
     public WorldExportPageSkin(WorldExportPage skinnable) {
         super(skinnable);
 
-        Insets insets = new Insets(0, 0, 12, 0);
         VBox container = new VBox();
         container.setSpacing(16);
         container.setAlignment(Pos.CENTER);
@@ -65,20 +61,18 @@ public class WorldExportPageSkin extends SkinBase<WorldExportPage> {
         chooseFileButton.locationProperty().bindBidirectional(skinnable.pathProperty());
         list.getContent().add(chooseFileButton);
 
+        var worldNamePane = new LinePane();
+        worldNamePane.setTitle(i18n("world.name"));
         JFXTextField txtWorldName = new JFXTextField();
+        txtWorldName.getValidators().add(new RequiredValidator());
+        FXUtils.setValidateWhileTextChanged(txtWorldName, true);
+        worldNamePane.setRight(txtWorldName);
         txtWorldName.textProperty().bindBidirectional(skinnable.worldNameProperty());
-        txtWorldName.setLabelFloat(true);
-        txtWorldName.setPromptText(i18n("world.name"));
-        StackPane.setMargin(txtWorldName, insets);
-        list.getContent().add(txtWorldName);
+        list.getContent().add(worldNamePane);
 
-        Label lblGameVersionTitle = new Label(i18n("world.game_version"));
-        Label lblGameVersion = new Label();
-        lblGameVersion.textProperty().bind(skinnable.gameVersionProperty());
-        BorderPane gameVersionPane = new BorderPane();
-        gameVersionPane.setPadding(new Insets(4, 0, 4, 0));
-        gameVersionPane.setLeft(lblGameVersionTitle);
-        gameVersionPane.setRight(lblGameVersion);
+        var gameVersionPane = new LineTextPane();
+        gameVersionPane.setTitle(i18n("world.game_version"));
+        gameVersionPane.textProperty().bind(skinnable.gameVersionProperty());
         list.getContent().add(gameVersionPane);
 
         container.getChildren().add(list);
