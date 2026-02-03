@@ -140,9 +140,12 @@ public abstract class LineComponentContainer extends HBox implements LineCompone
                             subtitleLabel.getStyleClass().add("subtitle-label");
                         }
                         subtitleLabel.setText(subtitle);
-                        titleContainer.getChildren().setAll(titleLabel, subtitleLabel);
+                        if (titleContainer.getChildren().size() == 1)
+                            titleContainer.getChildren().add(subtitleLabel);
                     } else if (subtitleLabel != null) {
                         subtitleLabel.setText(null);
+                        if (titleContainer.getChildren().size() == 2)
+                            titleContainer.getChildren().remove(1);
                     }
                 }
             };
