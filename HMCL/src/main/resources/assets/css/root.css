@@ -1860,10 +1860,29 @@
 
 /*******************************************************************************
  *                                                                             *
- * Line Button                                                                 *
+ * Line Component                                                              *
  *                                                                             *
  ******************************************************************************/
 
+.line-component .title {
+    -fx-text-fill: -monet-on-surface;
+}
+
+.line-component:large-title .title {
+    -fx-font-size: 15px;
+}
+
+.line-component .subtitle {
+    -fx-text-fill: -monet-on-surface-variant;
+}
+
+.line-button .svg {
+    -fx-opacity: 1;
+}
+
+.line-button .svg:disabled {
+    -fx-opacity: 0.4;
+}
 
 .line-select-button .svg {
     -fx-opacity: 1;

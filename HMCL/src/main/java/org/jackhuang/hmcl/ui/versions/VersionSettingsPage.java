@@ -424,7 +424,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 serverPane.addRow(0, new Label(i18n("settings.advanced.server_ip")), txtServerIP);
             }
 
-            LineNavigationButton showAdvancedSettingPane = new LineNavigationButton();
+            var showAdvancedSettingPane = LineButton.createNavigationButton();
             showAdvancedSettingPane.setTitle(i18n("settings.advanced"));
             showAdvancedSettingPane.setOnAction(event -> {
                 if (lastVersionSetting != null) {
