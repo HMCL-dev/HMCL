@@ -152,7 +152,7 @@ public abstract class LineComponentContainer extends HBox implements LineCompone
         return subtitle;
     }
 
-    private static final Insets ICON_MARGIN = new Insets(0, 16, 0, 0);
+    private static final Insets LEFT_ICON_MARGIN = new Insets(0, 16, 0, 0);
 
     @Override
     public void setLeftIcon(Image icon, double size) {
@@ -165,7 +165,7 @@ public abstract class LineComponentContainer extends HBox implements LineCompone
             imageView.setSmooth(true);
         }
         imageView.setMouseTransparent(true);
-        HBox.setMargin(imageView, ICON_MARGIN);
+        HBox.setMargin(imageView, LEFT_ICON_MARGIN);
 
         setNode(IDX_LEFT_ICON, imageView);
     }
@@ -175,7 +175,7 @@ public abstract class LineComponentContainer extends HBox implements LineCompone
         Node node = svg.createIcon(size);
         node.getStyleClass().add("left-icon");
         node.setMouseTransparent(true);
-        HBox.setMargin(node, ICON_MARGIN);
+        HBox.setMargin(node, LEFT_ICON_MARGIN);
         setNode(IDX_LEFT_ICON, node);
     }
 }
