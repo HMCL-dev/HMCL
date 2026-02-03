@@ -1041,7 +1041,11 @@
     -fx-font-size: 12;
 }
 
-.options-list-item .line-component-container {
+.options-list-item > .line-component-container {
+    -fx-padding: 10 16 10 16;
+}
+
+.options-list-item > .line-component .line-component-container {
     -fx-padding: 10 16 10 16;
 }
 
@@ -1867,10 +1871,6 @@
  * Line Component                                                              *
  *                                                                             *
  ******************************************************************************/
-
-.line-component.no-padding {
-    -fx-padding: 0;
-}
 
 .line-component:large-title .title-label {
     -fx-font-size: 15px;
