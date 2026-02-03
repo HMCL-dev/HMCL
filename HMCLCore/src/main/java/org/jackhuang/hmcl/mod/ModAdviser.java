@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.mod;
 
 import org.jackhuang.hmcl.util.Lang;
 
+import java.nio.file.FileSystems;
 import java.util.List;
 
 /**
@@ -87,7 +88,7 @@ public interface ModAdviser {
     static boolean match(List<String> l, String fileName, boolean isDirectory) {
         for (String s : l)
             if (isDirectory) {
-                if (fileName.startsWith(s + "/"))
+                if (fileName.startsWith(s + "/") || fileName.startsWith(s + FileSystems.getDefault().getSeparator()))
                     return true;
             } else {
                 if (s.startsWith("regex:")) {
