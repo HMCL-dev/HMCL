@@ -24,6 +24,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
@@ -44,6 +45,11 @@ public final class LineButton extends LineButtonBase {
         root.setMouseTransparent(true);
 
         FXUtils.onClicked(container, this::fire);
+    }
+
+    @Override
+    public BorderPane getRoot() {
+        return root;
     }
 
     public void fire() {

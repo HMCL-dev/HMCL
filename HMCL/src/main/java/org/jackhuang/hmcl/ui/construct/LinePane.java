@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui.construct;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.beans.property.StringPropertyBase;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -27,27 +26,27 @@ import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.ui.SVG;
 
 /// @author Glavo
-public class LinePane extends BorderPane implements NoPaddingComponent {
-
-    static final Insets PADDING = new Insets(8, 8, 8, 16);
-    static final double MIN_HEIGHT = 48.0;
+public class LinePane extends BorderPane implements LineComponent {
 
     private final Label titleLabel;
 
     public LinePane() {
-        this.setPadding(PADDING);
-        this.setMinHeight(MIN_HEIGHT);
+        this.setPadding(LineComponent.PADDING);
+        this.setMinHeight(LineComponent.MIN_HEIGHT);
 
         this.titleLabel = new Label();
         this.setCenter(titleLabel);
         BorderPane.setAlignment(titleLabel, Pos.CENTER_LEFT);
         titleLabel.textProperty().bind(titleProperty());
         titleLabel.getStyleClass().add("title");
+    }
+
+    @Override
+    public BorderPane getRoot() {
+        return this;
     }
 
     private final StringProperty title = new SimpleStringProperty(this, "title");
@@ -64,55 +63,13 @@ public class LinePane extends BorderPane implements NoPaddingComponent {
         this.titleProperty().set(title);
     }
 
-    abstract static class SubtitleProperty extends StringPropertyBase {
-        private VBox left;
-        private Label subtitleLabel;
-
-        public abstract BorderPane getRootPane();
-
-        public abstract Label getTitleLabel();
-
-        @Override
-        public String getName() {
-            return "subtitle";
-        }
-
-        @Override
-        protected void invalidated() {
-            String subtitle = get();
-            if (subtitle != null && !subtitle.isEmpty()) {
-                if (left == null) {
-                    left = new VBox();
-                    left.setMouseTransparent(true);
-                    left.setAlignment(Pos.CENTER_LEFT);
-
-                    subtitleLabel = new Label();
-                    subtitleLabel.setWrapText(true);
-                    subtitleLabel.setMinHeight(Region.USE_PREF_SIZE);
-                    subtitleLabel.getStyleClass().add("subtitle");
-                }
-                subtitleLabel.setText(subtitle);
-                left.getChildren().setAll(getTitleLabel(), subtitleLabel);
-                getRootPane().setCenter(left);
-            } else if (left != null) {
-                subtitleLabel.setText(null);
-                getRootPane().setCenter(getTitleLabel());
-            }
-        }
-    }
-
     private StringProperty subtitle;
 
     public StringProperty subtitleProperty() {
         if (subtitle == null) {
-            subtitle = new SubtitleProperty() {
+            subtitle = new LineComponent.SubtitleProperty() {
                 @Override
-                public Object getBean() {
-                    return LinePane.this;
-                }
-
-                @Override
-                public BorderPane getRootPane() {
+                public LinePane getBean() {
                     return LinePane.this;
                 }
 

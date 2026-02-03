@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui.construct;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
@@ -28,7 +27,7 @@ import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.SVG;
 
 /// @author Glavo
-public abstract class LineButtonBase extends StackPane implements NoPaddingComponent {
+public abstract class LineButtonBase extends StackPane implements LineComponent {
 
     protected final BorderPane root;
     protected final RipplerContainer container;
@@ -37,8 +36,8 @@ public abstract class LineButtonBase extends StackPane implements NoPaddingCompo
 
     public LineButtonBase() {
         this.root = new BorderPane();
-        root.setPadding(LinePane.PADDING);
-        root.setMinHeight(LinePane.MIN_HEIGHT);
+        root.setPadding(LineComponent.PADDING);
+        root.setMinHeight(LineComponent.MIN_HEIGHT);
 
         this.container = new RipplerContainer(root);
         this.getChildren().setAll(container);
@@ -50,8 +49,9 @@ public abstract class LineButtonBase extends StackPane implements NoPaddingCompo
         titleLabel.getStyleClass().add("title");
     }
 
-    public void setContentPadding(Insets padding) {
-        root.setPadding(padding);
+    @Override
+    public BorderPane getRoot() {
+        return root;
     }
 
     private final StringProperty title = new SimpleStringProperty(this, "title");
@@ -72,15 +72,10 @@ public abstract class LineButtonBase extends StackPane implements NoPaddingCompo
 
     public StringProperty subtitleProperty() {
         if (subtitle == null) {
-            subtitle = new LinePane.SubtitleProperty() {
+            subtitle = new LineComponent.SubtitleProperty() {
                 @Override
-                public Object getBean() {
+                public LineButtonBase getBean() {
                     return LineButtonBase.this;
-                }
-
-                @Override
-                public BorderPane getRootPane() {
-                    return root;
                 }
 
                 @Override
