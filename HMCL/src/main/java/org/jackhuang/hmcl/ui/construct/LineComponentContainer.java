@@ -158,7 +158,6 @@ public abstract class LineComponentContainer extends HBox implements LineCompone
         return subtitle;
     }
 
-
     @Override
     public void setLeadingIcon(Image icon, double size) {
         ImageView imageView = new ImageView(icon);

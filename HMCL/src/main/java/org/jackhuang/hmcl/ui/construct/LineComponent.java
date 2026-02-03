@@ -73,7 +73,7 @@ public interface LineComponent extends NoPaddingComponent {
     }
 
     default void setLeadingIcon(SVG svg) {
-        setLeadingIcon(svg, SVG.DEFAULT_SIZE);
+        setLeadingIcon(svg, 20);
     }
 
     default void setLeadingIcon(SVG svg, double size) {

@@ -24,9 +24,7 @@ import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.PseudoClass;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
@@ -43,117 +41,104 @@ import java.util.function.Function;
 import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 
 /// @author Glavo
-public final class LineSelectButton<T> extends LineButtonBase {
+public final class LineSelectButton<T> extends LineButton {
 
     private static final String DEFAULT_STYLE_CLASS = "line-select-button";
     private static final PseudoClass SELECTED_PSEUDO_CLASS = PseudoClass.getPseudoClass("selected");
-
-    private static final int IDX_RIGHT_VALUE_LABEL = LineComponentContainer.IDX_TRAILING;
-    private static final int IDX_RIGHT_ICON = IDX_RIGHT_VALUE_LABEL + 1;
 
     private JFXPopup popup;
 
     public LineSelectButton() {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
 
-        root.setMouseTransparent(true);
+        InvalidationListener updateTrailingText = observable -> {
+            T value = getValue();
+            if (value != null) {
+                Function<T, String> converter = getConverter();
+                setTrailingText(converter != null ? converter.apply(value) : value.toString());
+            } else {
+                setTrailingText(null);
+            }
+        };
+        converterProperty().addListener(updateTrailingText);
+        valueProperty().addListener(updateTrailingText);
 
-        {
-            Label valueLabel = new Label();
-            valueLabel.getStyleClass().add("value-label");
-
-            InvalidationListener updateValue = observable -> {
-                T value = getValue();
-                if (value == null)
-                    valueLabel.setText("");
-                else {
-                    Function<T, String> converter = getConverter();
-                    valueLabel.setText(converter != null ? converter.apply(value) : value.toString());
-                }
-            };
-            converterProperty().addListener(updateValue);
-            valueProperty().addListener(updateValue);
-
-            Node arrowIcon = SVG.UNFOLD_MORE.createIcon(20);
-            HBox.setMargin(arrowIcon, new Insets(0, 0, 0, 12));
-
-            root.setNode(IDX_RIGHT_VALUE_LABEL, valueLabel);
-            root.setNode(IDX_RIGHT_ICON, arrowIcon);
-        }
+        setTrailingIcon(SVG.UNFOLD_MORE);
 
         ripplerContainer.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
-            if (event.getButton() == MouseButton.PRIMARY) {
-                if (popup == null) {
-                    PopupMenu popupMenu = new PopupMenu();
-                    this.popup = new JFXPopup(popupMenu);
-
-                    ripplerContainer.addEventFilter(ScrollEvent.ANY, ignored -> popup.hide());
-
-                    Bindings.bindContent(popupMenu.getContent(), MappedObservableList.create(itemsProperty(), item -> {
-                        VBox vbox = new VBox();
-
-                        var itemTitleLabel = new Label();
-                        itemTitleLabel.getStyleClass().add("title-label");
-                        itemTitleLabel.textProperty().bind(Bindings.createStringBinding(() -> {
-                            if (item == null)
-                                return "";
-
-                            Function<T, String> converter = getConverter();
-                            return converter != null ? converter.apply(item) : Objects.toString(item, "");
-                        }, converterProperty()));
-
-                        var itemSubtitleLabel = new Label();
-                        itemSubtitleLabel.getStyleClass().add("subtitle-label");
-                        itemSubtitleLabel.textProperty().bind(Bindings.createStringBinding(() -> {
-                            Function<T, String> descriptionConverter = getDescriptionConverter();
-                            return descriptionConverter != null ? descriptionConverter.apply(item) : "";
-                        }, descriptionConverterProperty()));
-
-                        FXUtils.onChangeAndOperate(itemSubtitleLabel.textProperty(), text -> {
-                            if (text == null || text.isEmpty()) {
-                                vbox.getChildren().setAll(itemTitleLabel);
-                            } else {
-                                vbox.getChildren().setAll(itemTitleLabel, itemSubtitleLabel);
-                            }
-                        });
-
-                        var wrapper = new StackPane(vbox);
-                        wrapper.setAlignment(Pos.CENTER_LEFT);
-                        wrapper.getStyleClass().add("menu-container");
-                        wrapper.setMouseTransparent(true);
-                        RipplerContainer ripplerContainer = new RipplerContainer(wrapper);
-                        FXUtils.onClicked(ripplerContainer, () -> {
-                            setValue(item);
-                            popup.hide();
-                        });
-
-                        FXUtils.onChangeAndOperate(valueProperty(),
-                                value -> wrapper.pseudoClassStateChanged(SELECTED_PSEUDO_CLASS, Objects.equals(value, item)));
-
-                        return ripplerContainer;
-                    }));
-
-                    popup.showingProperty().addListener((observable, oldValue, newValue) ->
-                            ripplerContainer.getRippler().setRipplerDisabled(newValue));
-                }
-
-                if (popup.isShowing()) {
-                    popup.hide();
-                } else {
-                    JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(this, popup);
-                    popup.show(this, vPosition, JFXPopup.PopupHPosition.RIGHT,
-                            0,
-                            vPosition == JFXPopup.PopupVPosition.TOP ? this.getHeight() : -this.getHeight());
-                }
-
-                event.consume();
-            } else if (event.getButton() == MouseButton.SECONDARY) {
+            if (event.getButton() == MouseButton.SECONDARY) {
                 if (popup != null)
                     popup.hide();
-
                 event.consume();
             }
         });
+    }
+
+    @Override
+    public void fire() {
+        super.fire();
+        if (popup == null) {
+            PopupMenu popupMenu = new PopupMenu();
+            this.popup = new JFXPopup(popupMenu);
+
+            ripplerContainer.addEventFilter(ScrollEvent.ANY, ignored -> popup.hide());
+
+            Bindings.bindContent(popupMenu.getContent(), MappedObservableList.create(itemsProperty(), item -> {
+                VBox vbox = new VBox();
+
+                var itemTitleLabel = new Label();
+                itemTitleLabel.getStyleClass().add("title-label");
+                itemTitleLabel.textProperty().bind(Bindings.createStringBinding(() -> {
+                    if (item == null)
+                        return "";
+
+                    Function<T, String> converter = getConverter();
+                    return converter != null ? converter.apply(item) : Objects.toString(item, "");
+                }, converterProperty()));
+
+                var itemSubtitleLabel = new Label();
+                itemSubtitleLabel.getStyleClass().add("subtitle-label");
+                itemSubtitleLabel.textProperty().bind(Bindings.createStringBinding(() -> {
+                    Function<T, String> descriptionConverter = getDescriptionConverter();
+                    return descriptionConverter != null ? descriptionConverter.apply(item) : "";
+                }, descriptionConverterProperty()));
+
+                FXUtils.onChangeAndOperate(itemSubtitleLabel.textProperty(), text -> {
+                    if (text == null || text.isEmpty()) {
+                        vbox.getChildren().setAll(itemTitleLabel);
+                    } else {
+                        vbox.getChildren().setAll(itemTitleLabel, itemSubtitleLabel);
+                    }
+                });
+
+                var wrapper = new StackPane(vbox);
+                wrapper.setAlignment(Pos.CENTER_LEFT);
+                wrapper.getStyleClass().add("menu-container");
+                wrapper.setMouseTransparent(true);
+                RipplerContainer ripplerContainer = new RipplerContainer(wrapper);
+                FXUtils.onClicked(ripplerContainer, () -> {
+                    setValue(item);
+                    popup.hide();
+                });
+
+                FXUtils.onChangeAndOperate(valueProperty(),
+                        value -> wrapper.pseudoClassStateChanged(SELECTED_PSEUDO_CLASS, Objects.equals(value, item)));
+
+                return ripplerContainer;
+            }));
+
+            popup.showingProperty().addListener((observable, oldValue, newValue) ->
+                    ripplerContainer.getRippler().setRipplerDisabled(newValue));
+        }
+
+        if (popup.isShowing()) {
+            popup.hide();
+        } else {
+            JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(this, popup);
+            popup.show(this, vPosition, JFXPopup.PopupHPosition.RIGHT,
+                    0,
+                    vPosition == JFXPopup.PopupVPosition.TOP ? this.getHeight() : -this.getHeight());
+        }
     }
 
     private final ObjectProperty<T> value = new SimpleObjectProperty<>(this, "value");
@@ -187,9 +172,8 @@ public final class LineSelectButton<T> extends LineButtonBase {
     private ObjectProperty<Function<T, String>> descriptionConverter;
 
     public ObjectProperty<Function<T, String>> descriptionConverterProperty() {
-        if (descriptionConverter == null) {
+        if (descriptionConverter == null)
             descriptionConverter = new SimpleObjectProperty<>(this, "descriptionConverter");
-        }
         return descriptionConverter;
     }
 

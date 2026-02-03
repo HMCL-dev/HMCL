@@ -26,7 +26,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 
 /// @author Glavo
-public final class LineButton extends LineButtonBase {
+public class LineButton extends LineButtonBase {
     private static final String DEFAULT_STYLE_CLASS = "line-button";
 
     private static final int IDX_TRAILING_TEXT = LineComponentContainer.IDX_TRAILING;
@@ -105,7 +105,7 @@ public final class LineButton extends LineButtonBase {
                     if (message != null && !message.isEmpty()) {
                         if (trailingTextLabel == null) {
                             trailingTextLabel = new Label();
-                            trailingTextLabel.getStyleClass().add("subtitle-label");
+                            trailingTextLabel.getStyleClass().add("trailing-label");
                             LineButton.setMargin(trailingTextLabel, TRAILING_NODE_MARGIN);
                         }
                         trailingTextLabel.setText(message);
@@ -167,6 +167,7 @@ public final class LineButton extends LineButtonBase {
 
     public void setTrailingIcon(SVG rightIcon, double size) {
         Node rightIconNode = rightIcon.createIcon(size);
+        rightIconNode.getStyleClass().add("trailing-icon");
         LineButton.setMargin(rightIconNode, TRAILING_NODE_MARGIN);
         setTrailingIcon(rightIconNode);
     }

@@ -1111,15 +1111,16 @@
 .jfx-toggle-button Line {
     -fx-stroke: -jfx-untoggle-line-color;
 }
-.jfx-toggle-button:selected Line{
+
+.jfx-toggle-button:selected Line {
     -fx-stroke: -jfx-toggle-line-color;
 }
 
-.jfx-toggle-button Circle{
+.jfx-toggle-button Circle {
     -fx-fill: -jfx-untoggle-color;
 }
 
-.jfx-toggle-button:selected Circle{
+.jfx-toggle-button:selected Circle {
     -fx-fill: -jfx-toggle-color;
 }
 
@@ -1876,23 +1877,20 @@
     -fx-font-size: 15px;
 }
 
-.line-button .svg {
-    -fx-opacity: 1;
-}
-
 .line-button .svg:disabled {
     -fx-opacity: 0.4;
 }
 
-.line-select-button .value-label {
+.line-button .trailing-label {
     -fx-text-fill: -monet-on-surface-variant;
 }
 
-.line-select-button .svg {
+.line-button .trailing-icon .svg {
+    -fx-fill: -monet-on-surface-variant;
     -fx-opacity: 1;
 }
 
-.line-select-button .svg:disabled {
+.line-button .trailing-icon .svg:disabled {
     -fx-opacity: 0.4;
 }
 
