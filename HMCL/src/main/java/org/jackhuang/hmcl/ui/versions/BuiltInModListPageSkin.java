@@ -364,7 +364,7 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
         if (bundledMods == null || bundledMods.isEmpty()) return;
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle(i18n("mods.built_in.export.jij_info"));
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("mods.built_in.export.filetype"), "*.txt"));
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.file"), "*.txt"));
         fileChooser.setInitialFileName(modName + "_JIJ_INFO.txt");
 
         File file = fileChooser.showSaveDialog(Controllers.getStage());
@@ -429,7 +429,7 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
 
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle(i18n("mods.built_in.export.jij_info.all"));
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("mods.built_in.export.filetype"), "*.txt"));
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.file"), "*.txt"));
         fileChooser.setInitialFileName("ALL_JIJ_INFO.txt");
 
         File file = fileChooser.showSaveDialog(Controllers.getStage());
