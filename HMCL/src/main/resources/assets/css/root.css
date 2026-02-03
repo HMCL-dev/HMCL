@@ -1868,6 +1868,10 @@
  *                                                                             *
  ******************************************************************************/
 
+.line-component.no-padding {
+    -fx-padding: 0;
+}
+
 .line-component:large-title .title-label {
     -fx-font-size: 15px;
 }
