@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
+import javafx.beans.property.BooleanProperty;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
@@ -42,18 +43,27 @@ import java.util.regex.Pattern;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.DatapackInfoObject> {
+public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.DatapackInfoObject> implements WorldManagePage.WorldRefreshable {
     private final Path worldDir;
     private final Datapack datapack;
+    final BooleanProperty readOnly;
 
     public DatapackListPage(WorldManagePage worldManagePage) {
         this.worldDir = worldManagePage.getWorld().getFile();
         datapack = new Datapack(worldDir.resolve("datapacks"));
         setItems(MappedObservableList.create(datapack.getPacks(), DatapackListPageSkin.DatapackInfoObject::new));
+        readOnly = worldManagePage.readOnlyProperty();
         FXUtils.applyDragListener(this, it -> Objects.equals("zip", FileUtils.getExtension(it)),
-                mods -> mods.forEach(this::installSingleDatapack), this::refresh);
+                this::installMultiDatapack, this::refresh);
 
         refresh();
+    }
+
+    private void installMultiDatapack(List<Path> datapackPath) {
+        datapackPath.forEach(this::installSingleDatapack);
+        if (readOnly.get()) {
+            Controllers.showToast(i18n("datapack.reload.toast"));
+        }
     }
 
     private void installSingleDatapack(Path datapack) {
@@ -83,7 +93,7 @@ public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.Da
         List<Path> res = FileUtils.toPaths(chooser.showOpenMultipleDialog(Controllers.getStage()));
 
         if (res != null) {
-            res.forEach(this::installSingleDatapack);
+            installMultiDatapack(res);
         }
 
         datapack.loadFromDir();

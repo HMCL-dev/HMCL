@@ -30,7 +30,7 @@ import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 
 public class ProfileListItemSkin extends SkinBase<ProfileListItem> {
-    private final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
+    private static final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
 
     public ProfileListItemSkin(ProfileListItem skinnable) {
         super(skinnable);
