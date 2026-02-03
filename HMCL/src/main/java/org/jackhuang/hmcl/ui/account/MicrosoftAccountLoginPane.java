@@ -49,11 +49,12 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
     private final WeakListenerHolder holder = new WeakListenerHolder();
     private final ObjectProperty<OAuthServer.GrantDeviceCodeEvent> deviceCode = new SimpleObjectProperty<>();
     private final ObjectProperty<String> browserUrl = new SimpleObjectProperty<>();
+    private final Label lblCode = new Label();
 
     private TaskExecutor browserTaskExecuter;
     private TaskExecutor deviceTaskExecuter;
 
-    private SpinnerPane loginButtonSpinner;
+    private final SpinnerPane loginButtonSpinner;
     private final HBox authMethodsContentBox = new HBox(0);
     private final HintPane errHintPane = new HintPane(MessageDialogPane.MessageType.ERROR);
     private HintPane unofficialHintPane;
@@ -71,13 +72,6 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
         this.loginCallback = callback;
         this.cancelCallback = onCancel;
 
-        initUI(bodyonly);
-
-        holder.add(Accounts.OAUTH_CALLBACK.onGrantDeviceCode.registerWeak(value -> runInFX(() -> deviceCode.set(value))));
-        holder.add(Accounts.OAUTH_CALLBACK.onOpenBrowserAuthorizationCode.registerWeak(event -> runInFX(() -> browserUrl.set(event.getUrl()))));
-    }
-
-    private void initUI(boolean bodyonly) {
         getStyleClass().add("microsoft-login-dialog");
         if (!bodyonly) {
             Label heading = new Label(accountToRelogin != null ? i18n("account.login.refresh") : i18n("account.create.microsoft"));
@@ -154,6 +148,17 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
 
         linkBox.getChildren().addAll(profileLink, purchaseLink, forgotLink);
         rootContainer.getChildren().add(linkBox);
+
+        FXUtils.onChangeAndOperate(deviceCode, event -> {
+            if (event != null) {
+                authMethodsContentBox.setVisible(true);
+                lblCode.setText(event.getUserCode());
+                loginButtonSpinner.hideSpinner();
+            }
+        });
+
+        holder.add(Accounts.OAUTH_CALLBACK.onGrantDeviceCode.registerWeak(value -> runInFX(() -> deviceCode.set(value))));
+        holder.add(Accounts.OAUTH_CALLBACK.onOpenBrowserAuthorizationCode.registerWeak(event -> runInFX(() -> browserUrl.set(event.getUrl()))));
     }
 
     private void initAuthMethodsBox() {
@@ -222,25 +227,13 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
 
         HBox codeBox = new HBox(10);
         codeBox.getStyleClass().add("code-box");
-        FXUtils.limitingSize(codeBox, 200, 300);
 
-        Label lblCode = new Label("...");
+        FXUtils.setLimitWidth(codeBox, 170);
+        FXUtils.setLimitHeight(codeBox, 40);
+
         lblCode.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: -monet-primary; -fx-font-family: \"" + Lang.requireNonNullElse(config().getFontFamily(), FXUtils.DEFAULT_MONOSPACE_FONT) + "\"");
 
-        SpinnerPane codeSpinner = new SpinnerPane();
-        codeSpinner.setContent(lblCode);
-        codeSpinner.showSpinner();
-
-        FXUtils.onChangeAndOperate(deviceCode, event -> {
-            if (event != null) {
-                lblCode.setText(event.getUserCode());
-                codeSpinner.hideSpinner();
-            } else {
-                codeSpinner.showSpinner();
-            }
-        });
-
-        codeBox.getChildren().add(codeSpinner);
+        codeBox.getChildren().add(lblCode);
         devicePanel.getChildren().addAll(deviceTitle, deviceDesc, imageView, codeBox);
 
         authMethodsContentBox.getChildren().addAll(browserPanel, separatorBox, devicePanel);
@@ -250,7 +243,6 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
         deviceCode.set(null);
         browserUrl.set(null);
         errHintPane.setVisible(false);
-        authMethodsContentBox.setVisible(true);
 
         if (unofficialHintPane != null) {
             unofficialHintPane.setVisible(false);
@@ -268,7 +260,6 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
                 errHintPane.setText(Accounts.localizeErrorMessage(e));
                 errHintPane.setVisible(true);
                 authMethodsContentBox.setVisible(false);
-                loginButtonSpinner.hideSpinner();
             }
         });
 
