@@ -179,7 +179,6 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 StackPane visibilityButton = new StackPane();
                 {
                     visibilityButton.setCursor(Cursor.HAND);
-                    visibilityButton.setAlignment(Pos.CENTER_RIGHT);
                     FXUtils.onClicked(visibilityButton, () -> visibility.set(!visibility.get()));
                 }
 
@@ -202,7 +201,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 HBox right = new HBox(8);
                 {
                     right.setAlignment(Pos.CENTER_RIGHT);
-                    BorderPane.setAlignment(right, Pos.CENTER_RIGHT);
+                    right.setFillHeight(false);
                     right.getChildren().setAll(visibilityButton, seedLabel);
                     seedPane.setRight(right);
                 }
