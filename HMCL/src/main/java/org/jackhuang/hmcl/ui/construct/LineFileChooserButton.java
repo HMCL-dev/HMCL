@@ -1,0 +1,167 @@
+/*
+ * Hello Minecraft! Launcher
+ * Copyright (C) 2026 huangyuhui <huanghongxun2008@126.com> and contributors
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+package org.jackhuang.hmcl.ui.construct;
+
+import javafx.beans.property.*;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.stage.DirectoryChooser;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
+import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.SVG;
+import org.jackhuang.hmcl.util.io.FileUtils;
+
+import java.nio.file.Path;
+
+public class LineFileChooserButton extends LineButton {
+    private static final String DEFAULT_STYLE_CLASS = "line-file-select-button";
+
+    public LineFileChooserButton() {
+        getStyleClass().add(DEFAULT_STYLE_CLASS);
+        setRightIcon(SVG.EDIT, 16);
+    }
+
+    @Override
+    public void fire() {
+        super.fire();
+
+        Stage owner = Controllers.getStage(); // TODO: Allow user to set owner stage
+        String windowTitle = getFileChooserTitle();
+
+        Path path;
+        Type type = getType();
+        if (type == Type.OPEN_DIRECTORY) {
+            var directoryChooser = new DirectoryChooser();
+            if (windowTitle != null)
+                directoryChooser.setTitle(windowTitle);
+
+            path = FileUtils.toPath(directoryChooser.showDialog(owner));
+        } else {
+            var fileChooser = new FileChooser();
+            if (windowTitle != null)
+                fileChooser.setTitle(windowTitle);
+
+            if (extensionFilters != null)
+                fileChooser.getExtensionFilters().setAll(extensionFilters);
+
+            fileChooser.setInitialFileName(getInitialFileName());
+
+            path = FileUtils.toPath(switch (type) {
+                case OPEN_FILE -> fileChooser.showOpenDialog(owner);
+                case SAVE_FILE -> fileChooser.showSaveDialog(owner);
+                default -> throw new AssertionError("Unknown Type: " + type);
+            });
+        }
+
+        if (path != null) {
+            setLocation(path.toString());
+        }
+    }
+
+    private final StringProperty location = new StringPropertyBase() {
+        @Override
+        public Object getBean() {
+            return LineFileChooserButton.this;
+        }
+
+        @Override
+        public String getName() {
+            return "location";
+        }
+
+        @Override
+        protected void invalidated() {
+            setMessage(get());
+        }
+    };
+
+    public StringProperty locationProperty() {
+        return location;
+    }
+
+    public String getLocation() {
+        return locationProperty().get();
+    }
+
+    public void setLocation(String location) {
+        locationProperty().set(location);
+    }
+
+    private final StringProperty fileChooserTitle = new SimpleStringProperty(this, "fileChooserTitle");
+
+    public StringProperty fileChooserTitleProperty() {
+        return fileChooserTitle;
+    }
+
+    public String getFileChooserTitle() {
+        return fileChooserTitleProperty().get();
+    }
+
+    public void setFileChooserTitle(String fileChooserTitle) {
+        fileChooserTitleProperty().set(fileChooserTitle);
+    }
+
+    private ObjectProperty<Type> type;
+
+    public ObjectProperty<Type> typeProperty() {
+        if (type == null) {
+            type = new SimpleObjectProperty<>(this, "type", Type.OPEN_FILE);
+        }
+        return type;
+    }
+
+    public Type getType() {
+        return type != null ? type.get() : Type.OPEN_FILE;
+    }
+
+    public void setType(Type type) {
+        typeProperty().set(type);
+    }
+
+    private ObjectProperty<String> initialFileName;
+
+    public final ObjectProperty<String> initialFileNameProperty() {
+        if (initialFileName == null)
+            initialFileName = new SimpleObjectProperty<>(this, "initialFileName");
+
+        return initialFileName;
+    }
+
+    public final String getInitialFileName() {
+        return initialFileName != null ? initialFileName.get() : null;
+    }
+
+    public final void setInitialFileName(String value) {
+        initialFileNameProperty().set(value);
+    }
+
+    private ObservableList<FileChooser.ExtensionFilter> extensionFilters;
+
+    public ObservableList<FileChooser.ExtensionFilter> getExtensionFilters() {
+        if (extensionFilters == null)
+            extensionFilters = FXCollections.observableArrayList();
+        return extensionFilters;
+    }
+
+    public enum Type {
+        OPEN_FILE,
+        OPEN_DIRECTORY,
+        SAVE_FILE
+    }
+}

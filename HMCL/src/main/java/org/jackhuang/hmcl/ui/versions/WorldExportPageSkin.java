@@ -28,9 +28,10 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.FileItem;
+import org.jackhuang.hmcl.ui.construct.LineFileChooserButton;
 
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -57,10 +58,12 @@ public class WorldExportPageSkin extends SkinBase<WorldExportPage> {
 
         ComponentList list = new ComponentList();
 
-        FileItem fileItem = new FileItem();
-        fileItem.setName(i18n("world.export.location"));
-        fileItem.pathProperty().bindBidirectional(skinnable.pathProperty());
-        list.getContent().add(fileItem);
+        var chooseFileButton = new LineFileChooserButton();
+        chooseFileButton.setTitle(i18n("world.export.location"));
+        chooseFileButton.setType(LineFileChooserButton.Type.SAVE_FILE);
+        chooseFileButton.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("world"), "*.zip"));
+        chooseFileButton.locationProperty().bindBidirectional(skinnable.pathProperty());
+        list.getContent().add(chooseFileButton);
 
         JFXTextField txtWorldName = new JFXTextField();
         txtWorldName.textProperty().bindBidirectional(skinnable.worldNameProperty());
@@ -81,8 +84,8 @@ public class WorldExportPageSkin extends SkinBase<WorldExportPage> {
         container.getChildren().add(list);
 
         JFXButton btnExport = FXUtils.newRaisedButton(i18n("button.export"));
-        btnExport.disableProperty().bind(Bindings.createBooleanBinding(() -> txtWorldName.getText().isEmpty() || Files.exists(Paths.get(fileItem.getPath())),
-                txtWorldName.textProperty().isEmpty(), fileItem.pathProperty()));
+        btnExport.disableProperty().bind(Bindings.createBooleanBinding(() -> txtWorldName.getText().isEmpty() || Files.exists(Paths.get(chooseFileButton.getLocation())),
+                txtWorldName.textProperty().isEmpty(), chooseFileButton.locationProperty()));
         btnExport.setOnAction(e -> skinnable.export());
         HBox bottom = new HBox();
         bottom.setAlignment(Pos.CENTER_RIGHT);

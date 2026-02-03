@@ -72,7 +72,7 @@ public abstract class ModpackPage extends SpinnerPane implements WizardPage {
                 authorProperty = authorPane.textProperty();
             }
 
-            BorderPane descriptionPane = new BorderPane();
+            var descriptionPane = new BorderPane();
             {
                 btnDescription = FXUtils.newBorderButton(i18n("modpack.description"));
                 btnDescription.setOnAction(e -> onDescribe());

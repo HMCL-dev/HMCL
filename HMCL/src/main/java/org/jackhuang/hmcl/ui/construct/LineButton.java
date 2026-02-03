@@ -29,7 +29,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 
 /// @author Glavo
-public final class LineButton extends LineButtonBase {
+public class LineButton extends LineButtonBase {
     private static final String DEFAULT_STYLE_CLASS = "line-button";
 
     public static LineButton createNavigationButton() {
