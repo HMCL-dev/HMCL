@@ -17,8 +17,10 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
+import javafx.beans.InvalidationListener;
 import javafx.beans.property.StringProperty;
 import javafx.beans.property.StringPropertyBase;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -120,6 +122,7 @@ public abstract class LineComponentContainer extends HBox implements LineCompone
         if (subtitle == null) {
             subtitle = new StringPropertyBase() {
                 private Label subtitleLabel;
+                private InvalidationListener maxWidthListener;
 
                 @Override
                 public String getName() {
@@ -140,6 +143,20 @@ public abstract class LineComponentContainer extends HBox implements LineCompone
                             subtitleLabel.setWrapText(true);
                             subtitleLabel.setMinHeight(Region.USE_PREF_SIZE);
                             subtitleLabel.getStyleClass().add("subtitle-label");
+
+                            maxWidthListener = observable -> {
+                                ObservableList<Node> children = LineComponentContainer.this.getChildren();
+                                if (children.isEmpty() || children.get(children.size() - 1) != titleContainer) {
+                                    subtitleLabel.setMaxWidth(USE_COMPUTED_SIZE);
+                                    return;
+                                }
+
+                                double width = LineComponentContainer.this.getWidth();
+                                subtitleLabel.setMaxWidth(width > 0 ? width * 0.8 : USE_COMPUTED_SIZE);
+                            };
+
+                            LineComponentContainer.this.widthProperty().addListener(maxWidthListener);
+                            LineComponentContainer.this.getChildren().addListener(maxWidthListener);
                         }
                         subtitleLabel.setText(subtitle);
                         if (titleContainer.getChildren().size() == 1)
