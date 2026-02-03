@@ -153,7 +153,6 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
             if (event != null) {
                 authMethodsContentBox.setVisible(true);
                 lblCode.setText(event.getUserCode());
-                loginButtonSpinner.hideSpinner();
             }
         });
 
