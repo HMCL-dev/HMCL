@@ -44,6 +44,10 @@ public abstract class LineComponentContainer extends HBox implements LineCompone
     private static final Insets ICON_MARGIN = new Insets(0, 16, 0, 0);
     private static final double MIN_HEIGHT = 48.0;
 
+    public static void setMargin(Node child, Insets value) {
+        HBox.setMargin(child, value);
+    }
+
     private final Label titleLabel;
     private final VBox titleContainer;
 

@@ -17,12 +17,18 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
+import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.layout.StackPane;
 
 /// @author Glavo
 public abstract class LineButtonBase extends StackPane implements LineComponent {
 
     private static final String DEFAULT_STYLE_CLASS = "line-button-base";
+
+    public static void setMargin(Node child, Insets value) {
+        LineComponentContainer.setMargin(child, value);
+    }
 
     protected final LineComponentContainer root = new LineComponentContainer() {
         @Override
