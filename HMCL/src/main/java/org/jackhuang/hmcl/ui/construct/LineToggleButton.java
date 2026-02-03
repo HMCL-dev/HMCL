@@ -28,9 +28,9 @@ public final class LineToggleButton extends LineButtonBase {
     public LineToggleButton() {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
 
-        JFXToggleButton toggleButton = new JFXToggleButton();
+        var toggleButton = new JFXToggleButton();
         toggleButton.selectedProperty().bindBidirectional(selectedProperty());
-        toggleButton.setSize(8);
+        // toggleButton.setSize(8);
         FXUtils.setLimitHeight(toggleButton, 30);
         root.setNode(LineComponentContainer.IDX_TRAILING, toggleButton);
 

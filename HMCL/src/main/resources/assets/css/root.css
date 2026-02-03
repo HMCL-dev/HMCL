@@ -1905,3 +1905,7 @@
 .line-select-button .menu-container:selected .subtitle-label {
     -fx-text-fill: -monet-primary;
 }
+
+.line-toggle-button .jfx-toggle-button {
+    -fx-padding: 0;
+}
