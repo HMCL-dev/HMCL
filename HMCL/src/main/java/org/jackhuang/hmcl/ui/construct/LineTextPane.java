@@ -66,12 +66,12 @@ public final class LineTextPane extends LineComponentContainer {
                             LineTextPane.setMargin(rightLabel, LABEL_MARGIN);
                         }
                         rightLabel.setText(text);
-                        setNode(IDX_RIGHT, rightLabel);
+                        setNode(IDX_TRAILING, rightLabel);
                     } else {
                         if (rightLabel != null)
                             rightLabel.setText(null);
 
-                        setNode(IDX_RIGHT, null);
+                        setNode(IDX_TRAILING, null);
                     }
                 }
             };

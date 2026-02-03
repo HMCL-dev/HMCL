@@ -40,7 +40,7 @@ public abstract class LineComponentContainer extends HBox implements LineCompone
 
     protected static final int IDX_LEFT_ICON = 0;
     protected static final int IDX_TITLE = 1;
-    protected static final int IDX_RIGHT = 2;
+    protected static final int IDX_TRAILING = 2;
 
     private static final double MIN_HEIGHT = 48.0;
 
@@ -158,12 +158,11 @@ public abstract class LineComponentContainer extends HBox implements LineCompone
         return subtitle;
     }
 
-    private static final Insets LEFT_ICON_MARGIN = new Insets(0, 16, 0, 0);
 
     @Override
-    public void setLeftIcon(Image icon, double size) {
+    public void setLeadingIcon(Image icon, double size) {
         ImageView imageView = new ImageView(icon);
-        imageView.getStyleClass().add("left-icon");
+        imageView.getStyleClass().add("leading-icon");
         if (size > 0) {
             imageView.setFitWidth(size);
             imageView.setFitHeight(size);
@@ -171,17 +170,17 @@ public abstract class LineComponentContainer extends HBox implements LineCompone
             imageView.setSmooth(true);
         }
         imageView.setMouseTransparent(true);
-        setMargin(imageView, LEFT_ICON_MARGIN);
+        setMargin(imageView, LEADING_ICON_MARGIN);
 
         setNode(IDX_LEFT_ICON, imageView);
     }
 
     @Override
-    public void setLeftIcon(SVG svg, double size) {
+    public void setLeadingIcon(SVG svg, double size) {
         Node node = svg.createIcon(size);
-        node.getStyleClass().add("left-icon");
+        node.getStyleClass().add("leading-icon");
         node.setMouseTransparent(true);
-        setMargin(node, LEFT_ICON_MARGIN);
+        setMargin(node, LEADING_ICON_MARGIN);
         setNode(IDX_LEFT_ICON, node);
     }
 }

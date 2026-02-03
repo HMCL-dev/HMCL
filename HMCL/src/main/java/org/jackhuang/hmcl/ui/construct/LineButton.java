@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.ui.construct;
 import javafx.beans.property.*;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
-import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -30,12 +29,12 @@ import org.jackhuang.hmcl.ui.SVG;
 public final class LineButton extends LineButtonBase {
     private static final String DEFAULT_STYLE_CLASS = "line-button";
 
-    private static final int IDX_RIGHT_MESSAGE = LineComponentContainer.IDX_RIGHT;
-    private static final int IDX_RIGHT_ICON = IDX_RIGHT_MESSAGE + 1;
+    private static final int IDX_TRAILING_TEXT = LineComponentContainer.IDX_TRAILING;
+    private static final int IDX_TRAILING_ICON = IDX_TRAILING_TEXT + 1;
 
     public static LineButton createNavigationButton() {
         var button = new LineButton();
-        button.setRightIcon(SVG.ARROW_FORWARD);
+        button.setTrailingIcon(SVG.ARROW_FORWARD);
         return button;
     }
 
@@ -83,14 +82,12 @@ public final class LineButton extends LineButtonBase {
         onActionProperty().set(value);
     }
 
-    private StringProperty message;
+    private StringProperty trailingText;
 
-    public StringProperty messageProperty() {
-        if (message == null) {
-            message = new StringPropertyBase() {
-                private static final Insets RIGHT_MESSAGE_MARGIN = new Insets(0, 0, 0, 16);
-
-                private Label messageLabel;
+    public StringProperty trailingTextProperty() {
+        if (trailingText == null) {
+            trailingText = new StringPropertyBase() {
+                private Label trailingTextLabel;
 
                 @Override
                 public Object getBean() {
@@ -99,44 +96,44 @@ public final class LineButton extends LineButtonBase {
 
                 @Override
                 public String getName() {
-                    return "message";
+                    return "trailingText";
                 }
 
                 @Override
                 protected void invalidated() {
                     String message = get();
                     if (message != null && !message.isEmpty()) {
-                        if (messageLabel == null) {
-                            messageLabel = new Label();
-                            messageLabel.getStyleClass().add("subtitle-label");
-                            LineButton.setMargin(messageLabel, RIGHT_MESSAGE_MARGIN);
+                        if (trailingTextLabel == null) {
+                            trailingTextLabel = new Label();
+                            trailingTextLabel.getStyleClass().add("subtitle-label");
+                            LineButton.setMargin(trailingTextLabel, TRAILING_NODE_MARGIN);
                         }
-                        messageLabel.setText(message);
-                        root.setNode(IDX_RIGHT_MESSAGE, messageLabel);
-                    } else if (messageLabel != null) {
-                        messageLabel.setText("");
-                        root.setNode(IDX_RIGHT_MESSAGE, null);
+                        trailingTextLabel.setText(message);
+                        root.setNode(IDX_TRAILING_TEXT, trailingTextLabel);
+                    } else if (trailingTextLabel != null) {
+                        trailingTextLabel.setText("");
+                        root.setNode(IDX_TRAILING_TEXT, null);
                     }
                 }
             };
         }
 
-        return message;
+        return trailingText;
     }
 
-    public String getMessage() {
-        return message != null ? message.get() : null;
+    public String getTrailingText() {
+        return trailingText != null ? trailingText.get() : null;
     }
 
-    public void setMessage(String message) {
-        messageProperty().set(message);
+    public void setTrailingText(String trailingText) {
+        trailingTextProperty().set(trailingText);
     }
 
-    private ObjectProperty<Node> rightIcon;
+    private ObjectProperty<Node> trailingIcon;
 
-    public ObjectProperty<Node> rightIconProperty() {
-        if (rightIcon == null)
-            rightIcon = new ObjectPropertyBase<>() {
+    public ObjectProperty<Node> trailingIconProperty() {
+        if (trailingIcon == null)
+            trailingIcon = new ObjectPropertyBase<>() {
                 @Override
                 public Object getBean() {
                     return LineButton.this;
@@ -144,36 +141,33 @@ public final class LineButton extends LineButtonBase {
 
                 @Override
                 public String getName() {
-                    return "rightIcon";
+                    return "trailingIcon";
                 }
 
                 @Override
                 protected void invalidated() {
-                    root.setNode(IDX_RIGHT_ICON, get());
+                    root.setNode(IDX_TRAILING_ICON, get());
                 }
             };
 
-
-        return rightIcon;
+        return trailingIcon;
     }
 
-    public Node getRightIcon() {
-        return rightIcon != null ? rightIcon.get() : null;
+    public Node getTrailingIcon() {
+        return trailingIcon != null ? trailingIcon.get() : null;
     }
 
-    public void setRightIcon(Node rightIcon) {
-        rightIconProperty().set(rightIcon);
+    public void setTrailingIcon(Node trailingIcon) {
+        trailingIconProperty().set(trailingIcon);
     }
 
-    public void setRightIcon(SVG rightIcon) {
-        setRightIcon(rightIcon, SVG.DEFAULT_SIZE);
+    public void setTrailingIcon(SVG rightIcon) {
+        setTrailingIcon(rightIcon, 20);
     }
 
-    private static final Insets RIGHT_ICON_MARGIN = new Insets(0, 8, 0, 8);
-
-    public void setRightIcon(SVG rightIcon, double size) {
+    public void setTrailingIcon(SVG rightIcon, double size) {
         Node rightIconNode = rightIcon.createIcon(size);
-        LineButton.setMargin(rightIconNode, RIGHT_ICON_MARGIN);
-        setRightIcon(rightIconNode);
+        LineButton.setMargin(rightIconNode, TRAILING_NODE_MARGIN);
+        setTrailingIcon(rightIconNode);
     }
 }

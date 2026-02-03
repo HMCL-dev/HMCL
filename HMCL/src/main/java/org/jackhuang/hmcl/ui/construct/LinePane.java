@@ -51,7 +51,7 @@ public class LinePane extends LineComponentContainer {
 
                 @Override
                 protected void invalidated() {
-                    setNode(IDX_RIGHT, get());
+                    setNode(IDX_TRAILING, get());
                 }
             };
         }

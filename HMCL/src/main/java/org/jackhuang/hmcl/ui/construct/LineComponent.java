@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.construct;
 
 import javafx.beans.property.StringProperty;
 import javafx.css.PseudoClass;
+import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.ui.SVG;
@@ -29,6 +30,9 @@ public interface LineComponent extends NoPaddingComponent {
     String DEFAULT_STYLE_CLASS = "line-component";
 
     PseudoClass PSEUDO_LARGER_TITLE = PseudoClass.getPseudoClass("large-title");
+
+    Insets LEADING_ICON_MARGIN = new Insets(0, 12, 0, 0);
+    Insets TRAILING_NODE_MARGIN = new Insets(0, 0, 0, 12);
 
     private Node self() {
         return (Node) this;
@@ -60,20 +64,20 @@ public interface LineComponent extends NoPaddingComponent {
         subtitleProperty().set(subtitle);
     }
 
-    default void setLeftIcon(Image icon) {
-        setLeftIcon(icon, -1.0);
+    default void setLeadingIcon(Image icon) {
+        setLeadingIcon(icon, -1.0);
     }
 
-    default void setLeftIcon(Image icon, double size) {
-        getRoot().setLeftIcon(icon, size);
+    default void setLeadingIcon(Image icon, double size) {
+        getRoot().setLeadingIcon(icon, size);
     }
 
-    default void setLeftIcon(SVG svg) {
-        setLeftIcon(svg, SVG.DEFAULT_SIZE);
+    default void setLeadingIcon(SVG svg) {
+        setLeadingIcon(svg, SVG.DEFAULT_SIZE);
     }
 
-    default void setLeftIcon(SVG svg, double size) {
-        getRoot().setLeftIcon(svg, size);
+    default void setLeadingIcon(SVG svg, double size) {
+        getRoot().setLeadingIcon(svg, size);
     }
 
     default void setLargeTitle(boolean largeTitle) {

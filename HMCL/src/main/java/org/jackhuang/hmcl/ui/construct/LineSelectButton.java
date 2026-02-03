@@ -48,7 +48,7 @@ public final class LineSelectButton<T> extends LineButtonBase {
     private static final String DEFAULT_STYLE_CLASS = "line-select-button";
     private static final PseudoClass SELECTED_PSEUDO_CLASS = PseudoClass.getPseudoClass("selected");
 
-    private static final int IDX_RIGHT_VALUE_LABEL = LineComponentContainer.IDX_RIGHT;
+    private static final int IDX_RIGHT_VALUE_LABEL = LineComponentContainer.IDX_TRAILING;
     private static final int IDX_RIGHT_ICON = IDX_RIGHT_VALUE_LABEL + 1;
 
     private JFXPopup popup;
@@ -74,8 +74,8 @@ public final class LineSelectButton<T> extends LineButtonBase {
             converterProperty().addListener(updateValue);
             valueProperty().addListener(updateValue);
 
-            Node arrowIcon = SVG.UNFOLD_MORE.createIcon(24);
-            HBox.setMargin(arrowIcon, new Insets(0, 8, 0, 8));
+            Node arrowIcon = SVG.UNFOLD_MORE.createIcon(20);
+            HBox.setMargin(arrowIcon, new Insets(0, 0, 0, 12));
 
             root.setNode(IDX_RIGHT_VALUE_LABEL, valueLabel);
             root.setNode(IDX_RIGHT_ICON, arrowIcon);
