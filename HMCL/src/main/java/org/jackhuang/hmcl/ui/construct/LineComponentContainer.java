@@ -56,7 +56,6 @@ public abstract class LineComponentContainer extends HBox implements LineCompone
         setAlignment(Pos.CENTER_LEFT);
 
         this.titleLabel = new Label();
-        HBox.setHgrow(titleLabel, Priority.ALWAYS);
         titleLabel.getStyleClass().add("title-label");
 
         this.titleContainer = new VBox(titleLabel);
@@ -165,7 +164,7 @@ public abstract class LineComponentContainer extends HBox implements LineCompone
             imageView.setSmooth(true);
         }
         imageView.setMouseTransparent(true);
-        HBox.setMargin(imageView, LEFT_ICON_MARGIN);
+        setMargin(imageView, LEFT_ICON_MARGIN);
 
         setNode(IDX_LEFT_ICON, imageView);
     }
@@ -175,7 +174,7 @@ public abstract class LineComponentContainer extends HBox implements LineCompone
         Node node = svg.createIcon(size);
         node.getStyleClass().add("left-icon");
         node.setMouseTransparent(true);
-        HBox.setMargin(node, LEFT_ICON_MARGIN);
+        setMargin(node, LEFT_ICON_MARGIN);
         setNode(IDX_LEFT_ICON, node);
     }
 }
