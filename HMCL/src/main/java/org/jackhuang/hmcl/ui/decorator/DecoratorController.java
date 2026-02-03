@@ -42,6 +42,7 @@ import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorDnD;
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.DialogUtils;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -124,6 +125,7 @@ public class DecoratorController {
         config().backgroundImageUrlProperty().addListener(weakListener);
         config().backgroundPaintProperty().addListener(weakListener);
         config().backgroundImageOpacityProperty().addListener(weakListener);
+        Themes.darkModeProperty().addListener(weakListener);
 
         // pass key events to current dialog / current page
         decorator.addEventFilter(KeyEvent.ANY, e -> {
@@ -316,6 +318,10 @@ public class DecoratorController {
             image = tryLoadImage(Metadata.CURRENT_DIRECTORY.resolve("background." + extension));
             if (image != null)
                 return image;
+        }
+
+        if (Themes.darkModeProperty().get()) {
+            return newBuiltinImage("/assets/img/lushcave.png");
         }
 
         return newBuiltinImage("/assets/img/background.jpg");
