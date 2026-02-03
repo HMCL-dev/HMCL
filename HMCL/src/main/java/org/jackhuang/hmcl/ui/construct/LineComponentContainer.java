@@ -17,6 +17,8 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ObjectPropertyBase;
 import javafx.beans.property.StringProperty;
 import javafx.beans.property.StringPropertyBase;
 import javafx.geometry.Insets;
@@ -38,7 +40,7 @@ import java.util.Objects;
 public abstract class LineComponentContainer extends HBox implements LineComponent {
     private static final String DEFAULT_STYLE_CLASS = "line-component-container";
 
-    protected static final int IDX_LEFT_ICON = 0;
+    protected static final int IDX_LEADING = 0;
     protected static final int IDX_TITLE = 1;
     protected static final int IDX_TRAILING = 2;
 
@@ -159,8 +161,33 @@ public abstract class LineComponentContainer extends HBox implements LineCompone
         return subtitle;
     }
 
+    private ObjectProperty<Node> leading;
+
     @Override
-    public void setLeadingIcon(Image icon, double size) {
+    public ObjectProperty<Node> leadingProperty() {
+        if (leading == null) {
+            leading = new ObjectPropertyBase<>() {
+                @Override
+                public Object getBean() {
+                    return LineComponentContainer.this.getBean();
+                }
+
+                @Override
+                public String getName() {
+                    return "leading";
+                }
+
+                @Override
+                protected void invalidated() {
+                    setNode(IDX_LEADING, get());
+                }
+            };
+        }
+        return leading;
+    }
+
+    @Override
+    public void setLeading(Image icon, double size) {
         ImageView imageView = new ImageView(icon);
         imageView.getStyleClass().add("leading-icon");
         if (size > 0) {
@@ -171,14 +198,14 @@ public abstract class LineComponentContainer extends HBox implements LineCompone
         }
         imageView.setMouseTransparent(true);
 
-        setNode(IDX_LEFT_ICON, imageView);
+        setNode(IDX_LEADING, imageView);
     }
 
     @Override
-    public void setLeadingIcon(SVG svg, double size) {
+    public void setLeading(SVG svg, double size) {
         Node node = svg.createIcon(size);
         node.getStyleClass().add("leading-icon");
         node.setMouseTransparent(true);
-        setNode(IDX_LEFT_ICON, node);
+        setNode(IDX_LEADING, node);
     }
 }
