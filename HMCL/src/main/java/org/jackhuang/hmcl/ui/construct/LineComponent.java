@@ -21,14 +21,19 @@ import javafx.beans.property.StringProperty;
 import javafx.beans.property.StringPropertyBase;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.ui.SVG;
 
 /// @author Glavo
 public interface LineComponent extends NoPaddingComponent {
     Insets PADDING = new Insets(8, 8, 8, 16);
+    Insets ICON_MARGIN = new Insets(0, 16, 0, 0);
     double MIN_HEIGHT = 48.0;
 
     BorderPane getRoot();
@@ -43,15 +48,15 @@ public interface LineComponent extends NoPaddingComponent {
         private VBox left;
         private Label subtitleLabel;
 
-        public abstract Label getTitleLabel();
-
-        @Override
-        public abstract LineComponent getBean();
-
         @Override
         public String getName() {
             return "subtitle";
         }
+
+        @Override
+        public abstract LineComponent getBean();
+
+        public abstract Label getTitleLabel();
 
         @Override
         protected void invalidated() {
@@ -82,4 +87,34 @@ public interface LineComponent extends NoPaddingComponent {
     String getSubtitle();
 
     void setSubtitle(String subtitle);
+
+    default void setLeftIcon(Image icon) {
+        setLeftIcon(icon, -1.0);
+    }
+
+    default void setLeftIcon(Image icon, double size) {
+        ImageView imageView = new ImageView(icon);
+        if (size > 0) {
+            imageView.setFitWidth(size);
+            imageView.setFitHeight(size);
+            imageView.setPreserveRatio(true);
+            imageView.setSmooth(true);
+        }
+        imageView.setMouseTransparent(true);
+        BorderPane.setAlignment(imageView, Pos.CENTER);
+        BorderPane.setMargin(imageView, ICON_MARGIN);
+        getRoot().setLeft(imageView);
+    }
+
+    default void setLeftIcon(SVG svg) {
+        setLeftIcon(svg, SVG.DEFAULT_SIZE);
+    }
+
+    default void setLeftIcon(SVG svg, double size) {
+        Node node = svg.createIcon(size);
+        node.setMouseTransparent(true);
+        BorderPane.setAlignment(node, Pos.CENTER);
+        BorderPane.setMargin(node, ICON_MARGIN);
+        getRoot().setLeft(node);
+    }
 }

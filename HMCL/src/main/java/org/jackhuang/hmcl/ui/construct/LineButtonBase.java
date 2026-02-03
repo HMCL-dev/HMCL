@@ -21,10 +21,8 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
-import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
-import org.jackhuang.hmcl.ui.SVG;
 
 /// @author Glavo
 public abstract class LineButtonBase extends StackPane implements LineComponent {
@@ -56,20 +54,24 @@ public abstract class LineButtonBase extends StackPane implements LineComponent 
 
     private final StringProperty title = new SimpleStringProperty(this, "title");
 
+    @Override
     public StringProperty titleProperty() {
         return title;
     }
 
+    @Override
     public String getTitle() {
         return titleProperty().get();
     }
 
+    @Override
     public void setTitle(String title) {
         this.titleProperty().set(title);
     }
 
     private StringProperty subtitle;
 
+    @Override
     public StringProperty subtitleProperty() {
         if (subtitle == null) {
             subtitle = new LineComponent.SubtitleProperty() {
@@ -88,27 +90,13 @@ public abstract class LineButtonBase extends StackPane implements LineComponent 
         return subtitle;
     }
 
+    @Override
     public String getSubtitle() {
         return subtitleProperty().get();
     }
 
+    @Override
     public void setSubtitle(String subtitle) {
         subtitleProperty().set(subtitle);
-    }
-
-    public void setLeftIcon(Image icon) {
-        LinePane.setLeftIcon(root, icon, -1.0);
-    }
-
-    public void setLeftIcon(Image icon, double size) {
-        LinePane.setLeftIcon(root, icon, size);
-    }
-
-    public void setLeftIcon(SVG svg) {
-        LinePane.setLeftIcon(root, svg, SVG.DEFAULT_SIZE);
-    }
-
-    public void setLeftIcon(SVG svg, double size) {
-        LinePane.setLeftIcon(root, svg, size);
     }
 }

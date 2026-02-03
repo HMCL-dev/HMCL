@@ -19,14 +19,9 @@ package org.jackhuang.hmcl.ui.construct;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
-import org.jackhuang.hmcl.ui.SVG;
 
 /// @author Glavo
 public class LinePane extends BorderPane implements LineComponent {
@@ -51,20 +46,24 @@ public class LinePane extends BorderPane implements LineComponent {
 
     private final StringProperty title = new SimpleStringProperty(this, "title");
 
+    @Override
     public StringProperty titleProperty() {
         return title;
     }
 
+    @Override
     public String getTitle() {
         return titleProperty().get();
     }
 
+    @Override
     public void setTitle(String title) {
         this.titleProperty().set(title);
     }
 
     private StringProperty subtitle;
 
+    @Override
     public StringProperty subtitleProperty() {
         if (subtitle == null) {
             subtitle = new LineComponent.SubtitleProperty() {
@@ -83,51 +82,14 @@ public class LinePane extends BorderPane implements LineComponent {
         return subtitle;
     }
 
+    @Override
     public String getSubtitle() {
         return subtitleProperty().get();
     }
 
+    @Override
     public void setSubtitle(String subtitle) {
         subtitleProperty().set(subtitle);
     }
 
-    private static final Insets ICON_MARGIN = new Insets(0, 16, 0, 0);
-
-    static void setLeftIcon(BorderPane root, Image icon, double size) {
-        ImageView imageView = new ImageView(icon);
-        if (size > 0) {
-            imageView.setFitWidth(size);
-            imageView.setFitHeight(size);
-            imageView.setPreserveRatio(true);
-            imageView.setSmooth(true);
-        }
-        imageView.setMouseTransparent(true);
-        BorderPane.setAlignment(imageView, Pos.CENTER);
-        BorderPane.setMargin(imageView, ICON_MARGIN);
-        root.setLeft(imageView);
-    }
-
-    static void setLeftIcon(BorderPane root, SVG icon, double size) {
-        Node node = icon.createIcon(size);
-        node.setMouseTransparent(true);
-        BorderPane.setAlignment(node, Pos.CENTER);
-        BorderPane.setMargin(node, ICON_MARGIN);
-        root.setLeft(node);
-    }
-
-    public void setLeftIcon(Image icon) {
-        setLeftIcon(this, icon, -1.0);
-    }
-
-    public void setLeftIcon(Image icon, double size) {
-        setLeftIcon(this, icon, size);
-    }
-
-    public void setLeftIcon(SVG svg) {
-        setLeftIcon(this, svg, SVG.DEFAULT_SIZE);
-    }
-
-    public void setLeftIcon(SVG svg, double size) {
-        setLeftIcon(this, svg, size);
-    }
 }
