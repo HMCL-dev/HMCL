@@ -2,6 +2,7 @@ package org.jackhuang.hmcl.schematic;
 
 import com.github.steveice10.opennbt.NBTIO;
 import com.github.steveice10.opennbt.tag.builtin.*;
+import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.Vec3i;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
@@ -40,8 +41,8 @@ public sealed abstract class Schematic permits LitematicFile, SchemFile, NBTStru
         return root;
     }
 
-    public static int tryGetInt(Tag tag) {
-        return tag instanceof IntTag ? ((IntTag) tag).getValue() : 0;
+    public static OptionalInt tryGetInt(Tag tag) {
+        return tag instanceof IntTag ? OptionalInt.of(((IntTag) tag).getValue()) : OptionalInt.empty();
     }
 
     public static short tryGetShort(Tag tag) {
@@ -76,44 +77,51 @@ public sealed abstract class Schematic permits LitematicFile, SchemFile, NBTStru
         return file;
     }
 
-    public int getVersion() {
-        return 0;
+    public OptionalInt getVersion() {
+        return OptionalInt.empty();
     }
 
+    /// None-negative, otherwise empty
     public OptionalInt getSubVersion() {
         return OptionalInt.empty();
     }
 
+    /// At least 100, otherwise empty
     public OptionalInt getMinecraftDataVersion() {
-        return dataVersion >= 100 /* 15w32a */ ? OptionalInt.of(dataVersion) : OptionalInt.empty();
+        return Lang.wrapWithMinValue(dataVersion, /* 15w32a */ 100);
     }
 
+    @Nullable
     public String getMinecraftVersion() {
         return getMinecraftDataVersion().isPresent() ? Integer.toString(getMinecraftDataVersion().getAsInt()) : null;
     }
 
+    @NotNull
     public String getName() {
         return FileUtils.getNameWithoutExtension(getFile());
     }
 
+    @Nullable
     public String getAuthor() {
         return null;
     }
 
+    @Nullable
     public Instant getTimeCreated() {
         return null;
     }
 
+    @Nullable
     public Instant getTimeModified() {
         return null;
     }
 
-    public int getRegionCount() {
-        return 0;
+    public OptionalInt getRegionCount() {
+        return OptionalInt.empty();
     }
 
-    public int getTotalBlocks() {
-        return 0;
+    public OptionalInt getTotalBlocks() {
+        return OptionalInt.empty();
     }
 
     @Nullable
@@ -121,10 +129,14 @@ public sealed abstract class Schematic permits LitematicFile, SchemFile, NBTStru
         return enclosingSize;
     }
 
-    public int getTotalVolume() {
+    public OptionalInt getTotalVolume() {
         var enclosingSize = getEnclosingSize();
-        if (enclosingSize != null) return enclosingSize.x() * enclosingSize.y() * enclosingSize.z();
-        return 0;
+        if (enclosingSize != null) return OptionalInt.of(enclosingSize.x() * enclosingSize.y() * enclosingSize.z());
+        return OptionalInt.empty();
+    }
+
+    public int @Nullable [] getPreviewImageData() {
+        return null;
     }
 
 }

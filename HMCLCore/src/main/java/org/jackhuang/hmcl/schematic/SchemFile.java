@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.OptionalInt;
 
 /// @author Calboot
 /// @see <a href="https://minecraft.wiki/w/Schematic_file_format">Schematic File Format Wiki</a>
@@ -54,7 +55,7 @@ public final class SchemFile extends Schematic {
             throw new IOException("Version tag is not an integer");
 
         Tag dataVersionTag = root.get("DataVersion");
-        int dataVersion = dataVersionTag == null ? DATA_VERSION_MC_1_13_2 : tryGetInt(dataVersionTag);
+        int dataVersion = dataVersionTag == null ? DATA_VERSION_MC_1_13_2 : tryGetInt(dataVersionTag).orElse(0);
 
         Tag widthTag = root.get("Width");
         Tag heightTag = root.get("Height");
@@ -85,8 +86,8 @@ public final class SchemFile extends Schematic {
     }
 
     @Override
-    public int getVersion() {
-        return version;
+    public OptionalInt getVersion() {
+        return version > 0 ? OptionalInt.of(version) : OptionalInt.empty();
     }
 
     @Override

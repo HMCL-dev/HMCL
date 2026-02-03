@@ -34,24 +34,32 @@ public final class NBTStructureFile extends Schematic {
         Tag zTag = size.get(2);
         Vec3i enclosingSize = null;
         if (xTag != null && yTag != null && zTag != null) {
-            int width = tryGetInt(xTag);
-            int height = tryGetInt(yTag);
-            int length = tryGetInt(zTag);
-            if (width >= 0 && height >= 0 && length >= 0) {
+            int width = tryGetInt(xTag).orElse(0);
+            int height = tryGetInt(yTag).orElse(0);
+            int length = tryGetInt(zTag).orElse(0);
+            if (width > 0 && height > 0 && length > 0) {
                 enclosingSize = new Vec3i(width, height, length);
             }
         }
 
-        return new NBTStructureFile(file, ((IntTag) dataVersionTag).getValue(), enclosingSize);
+        return new NBTStructureFile(file, ((IntTag) dataVersionTag).getValue(), tryGetString(root.get("author")), enclosingSize);
     }
 
-    private NBTStructureFile(Path file, int dataVersion, Vec3i enclosingSize) {
+    private final String author;
+
+    private NBTStructureFile(Path file, int dataVersion, String author, Vec3i enclosingSize) {
         super(file, dataVersion, enclosingSize);
+        this.author = author;
     }
 
     @Override
     public SchematicType getType() {
         return SchematicType.NBT_STRUCTURE;
+    }
+
+    @Override
+    public String getAuthor() {
+        return author;
     }
 
 }

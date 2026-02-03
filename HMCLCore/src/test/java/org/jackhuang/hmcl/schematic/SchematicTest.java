@@ -28,7 +28,6 @@ import java.nio.file.Paths;
 import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public final class SchematicTest {
     private static Schematic load(String name) throws IOException, URISyntaxException {
@@ -48,16 +47,14 @@ public final class SchematicTest {
             assertEquals("", lFile.getDescription());
             assertEquals(Instant.ofEpochMilli(1746443586433L), lFile.getTimeCreated());
             assertEquals(Instant.ofEpochMilli(1746443586433L), lFile.getTimeModified());
-            assertEquals(1334, lFile.getTotalBlocks());
-            assertEquals(5746, lFile.getTotalVolume());
+            assertEquals(1334, lFile.getTotalBlocks().orElse(0));
+            assertEquals(5746, lFile.getTotalVolume().orElse(0));
             assertEquals(new Vec3i(17, 26, 13), lFile.getEnclosingSize());
-            assertEquals(1, lFile.getRegionCount());
-            assertTrue(lFile.getMinecraftDataVersion().isPresent());
-            assertEquals(4325, lFile.getMinecraftDataVersion().getAsInt());
+            assertEquals(1, lFile.getRegionCount().orElse(0));
+            assertEquals(4325, lFile.getMinecraftDataVersion().orElse(0));
             assertEquals("4325", lFile.getMinecraftVersion());
-            assertEquals(7, lFile.getVersion());
-            assertTrue(lFile.getSubVersion().isPresent());
-            assertEquals(1, lFile.getSubVersion().getAsInt());
+            assertEquals(7, lFile.getVersion().orElse(0));
+            assertEquals(1, lFile.getSubVersion().orElse(-1));
         }
 
         {
@@ -65,7 +62,7 @@ public final class SchematicTest {
             assertEquals(SchematicType.SCHEM, sFile.getType());
             assertEquals("test", sFile.getName());
             assertEquals(new Vec3i(28, 35, 18), sFile.getEnclosingSize());
-            assertEquals(17640, sFile.getTotalVolume());
+            assertEquals(17640, sFile.getTotalVolume().orElse(0));
             assertEquals("Alpha", sFile.getMinecraftVersion());
         }
 
@@ -73,8 +70,7 @@ public final class SchematicTest {
             SchemFile sFileSponge = (SchemFile) load("/schematics/test.schem");
             assertEquals(SchematicType.SCHEM, sFileSponge.getType());
             assertEquals("test", sFileSponge.getName());
-            assertTrue(sFileSponge.getMinecraftDataVersion().isPresent());
-            assertEquals(3465, sFileSponge.getMinecraftDataVersion().getAsInt());
+            assertEquals(3465, sFileSponge.getMinecraftDataVersion().orElse(0));
             assertEquals("3465", sFileSponge.getMinecraftVersion());
             assertEquals(new Vec3i(9, 5, 9), sFileSponge.getEnclosingSize());
         }
@@ -84,9 +80,8 @@ public final class SchematicTest {
             assertEquals(SchematicType.NBT_STRUCTURE, nFile.getType());
             assertEquals("test", nFile.getName());
             assertEquals(new Vec3i(9, 11, 13), nFile.getEnclosingSize());
-            assertEquals(1287, nFile.getTotalVolume());
-            assertTrue(nFile.getMinecraftDataVersion().isPresent());
-            assertEquals(3465, nFile.getMinecraftDataVersion().getAsInt());
+            assertEquals(1287, nFile.getTotalVolume().orElse(0));
+            assertEquals(3465, nFile.getMinecraftDataVersion().orElse(0));
             assertEquals("3465", nFile.getMinecraftVersion());
         }
     }

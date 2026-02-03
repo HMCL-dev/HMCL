@@ -18,6 +18,8 @@
 package org.jackhuang.hmcl.schematic;
 
 import com.github.steveice10.opennbt.tag.builtin.*;
+import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.Vec3i;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,19 +59,18 @@ public final class LitematicFile extends Schematic {
         Tag enclosingSizeTag = ((CompoundTag) metadataTag).get("EnclosingSize");
         if (enclosingSizeTag instanceof CompoundTag) {
             CompoundTag list = (CompoundTag) enclosingSizeTag;
-            int x = tryGetInt(list.get("x"));
-            int y = tryGetInt(list.get("y"));
-            int z = tryGetInt(list.get("z"));
+            int x = tryGetInt(list.get("x")).orElse(0);
+            int y = tryGetInt(list.get("y")).orElse(0);
+            int z = tryGetInt(list.get("z")).orElse(0);
 
-            if (x >= 0 && y >= 0 && z >= 0)
-                enclosingSize = new Vec3i(x, y, z);
+            if (x > 0 && y > 0 && z > 0) enclosingSize = new Vec3i(x, y, z);
         }
 
-        Tag tag = root.get("SubVersion");
+        Tag subVersionTag = root.get("SubVersion");
         return new LitematicFile(file, (CompoundTag) metadataTag,
                 ((IntTag) versionTag).getValue(),
-                tag instanceof IntTag ? ((IntTag) tag).getValue() : -1,
-                tryGetInt(root.get("MinecraftDataVersion")),
+                tryGetInt(subVersionTag).orElse(-1),
+                tryGetInt(root.get("MinecraftDataVersion")).orElse(0),
                 regions,
                 enclosingSize
         );
@@ -104,8 +105,8 @@ public final class LitematicFile extends Schematic {
         this.description = tryGetString(metadata.get("Description"));
         this.timeCreated = tryGetLongTimestamp(metadata.get("TimeCreated"));
         this.timeModified = tryGetLongTimestamp(metadata.get("TimeModified"));
-        this.totalBlocks = tryGetInt(metadata.get("TotalBlocks"));
-        this.totalVolume = tryGetInt(metadata.get("TotalVolume"));
+        this.totalBlocks = tryGetInt(metadata.get("TotalBlocks")).orElse(-1);
+        this.totalVolume = tryGetInt(metadata.get("TotalVolume")).orElse(-1);
 
     }
 
@@ -115,22 +116,23 @@ public final class LitematicFile extends Schematic {
     }
 
     @Override
-    public int getVersion() {
-        return version;
+    public OptionalInt getVersion() {
+        return OptionalInt.of(version);
     }
 
     @Override
     public OptionalInt getSubVersion() {
-        return subVersion >= 0 ? OptionalInt.of(subVersion) : OptionalInt.empty();
+        return Lang.wrapWithMinValue(subVersion, 0);
     }
 
+    @Override
     public int[] getPreviewImageData() {
         return previewImageData != null ? previewImageData.clone() : null;
     }
 
     @Override
-    public String getName() {
-        return name;
+    public @NotNull String getName() {
+        return StringUtils.isNotBlank(name) ? name : super.getName();
     }
 
     @Override
@@ -153,18 +155,18 @@ public final class LitematicFile extends Schematic {
     }
 
     @Override
-    public int getTotalBlocks() {
-        return totalBlocks;
+    public OptionalInt getTotalBlocks() {
+        return Lang.wrapWithMinValue(totalBlocks, 1);
     }
 
     @Override
-    public int getTotalVolume() {
-        return totalVolume;
+    public OptionalInt getTotalVolume() {
+        return Lang.wrapWithMinValue(totalVolume, 1);
     }
 
     @Override
-    public int getRegionCount() {
-        return regionCount;
+    public OptionalInt getRegionCount() {
+        return Lang.wrapWithMinValue(regionCount, 1);
     }
 
 }

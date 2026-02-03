@@ -472,6 +472,8 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             this.path = path;
             this.file = Schematic.load(path);
 
+            if (file == null) throw new AssertionError(); // Should be impossible
+
             if (this.file instanceof LitematicFile lFile) {
                 String name = lFile.getName();
                 if (StringUtils.isNotBlank(name) && !"Unnamed".equals(name)) {
@@ -484,21 +486,19 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             }
 
             WritableImage image = null;
-            if (this.file instanceof LitematicFile lFile) {
-                int[] previewImageData = lFile.getPreviewImageData();
-                if (previewImageData != null && previewImageData.length > 0) {
-                    int size = (int) Math.sqrt(previewImageData.length);
-                    if ((size * size) == previewImageData.length) {
-                        image = new WritableImage(size, size);
-                        PixelWriter pixelWriter = image.getPixelWriter();
+            int[] previewImageData = file.getPreviewImageData();
+            if (previewImageData != null && previewImageData.length > 0) {
+                int size = (int) Math.sqrt(previewImageData.length);
+                if ((size * size) == previewImageData.length) {
+                    image = new WritableImage(size, size);
+                    PixelWriter pixelWriter = image.getPixelWriter();
 
-                        for (int y = 0, i = 0; y < size; ++y) {
-                            for (int x = 0; x < size; ++x) {
-                                pixelWriter.setArgb(x, y, previewImageData[i++]);
-                            }
+                    for (int y = 0, i = 0; y < size; ++y) {
+                        for (int x = 0; x < size; ++x) {
+                            pixelWriter.setArgb(x, y, previewImageData[i++]);
                         }
-
                     }
+
                 }
             }
             this.image = image;
@@ -552,16 +552,16 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
         @Override
         void onReveal() {
-            FXUtils.showFileInExplorer(file.getFile());
+            FXUtils.showFileInExplorer(path);
         }
 
         @Override
         void onDelete() {
             try {
-                Files.deleteIfExists(file.getFile());
+                Files.deleteIfExists(path);
                 refresh();
             } catch (IOException e) {
-                LOG.warning("Failed to delete litematic file: " + file.getFile(), e);
+                LOG.warning("Failed to delete schematic file: " + path, e);
             }
         }
 
@@ -585,12 +585,12 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                     addDetailItem(i18n("schematics.info.time_created"), I18n.formatDateTime(file.getTimeCreated()));
                 if (file.getTimeModified() != null && !file.getTimeModified().equals(file.getTimeCreated()))
                     addDetailItem(i18n("schematics.info.time_modified"), I18n.formatDateTime(file.getTimeModified()));
-                if (file.getRegionCount() > 0)
-                    addDetailItem(i18n("schematics.info.region_count"), String.valueOf(file.getRegionCount()));
-                if (file.getTotalVolume() > 0)
-                    addDetailItem(i18n("schematics.info.total_volume"), file.getTotalVolume());
-                if (file.getTotalBlocks() > 0)
-                    addDetailItem(i18n("schematics.info.total_blocks"), file.getTotalBlocks());
+                if (file.getRegionCount().isPresent())
+                    addDetailItem(i18n("schematics.info.region_count"), String.valueOf(file.getRegionCount().getAsInt()));
+                if (file.getTotalVolume().isPresent())
+                    addDetailItem(i18n("schematics.info.total_volume"), file.getTotalVolume().getAsInt());
+                if (file.getTotalBlocks().isPresent())
+                    addDetailItem(i18n("schematics.info.total_blocks"), file.getTotalBlocks().getAsInt());
                 if (file.getEnclosingSize() != null)
                     addDetailItem(i18n("schematics.info.enclosing_size"),
                             String.format("%d x %d x %d", file.getEnclosingSize().x(),
@@ -598,9 +598,11 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                                     file.getEnclosingSize().z()));
                 if (StringUtils.isNotBlank(file.getMinecraftVersion()))
                     addDetailItem(i18n("schematics.info.mc_data_version"), file.getMinecraftVersion());
-                if (file.getVersion() > 0)
+                if (file.getVersion().isPresent())
                     addDetailItem(i18n("schematics.info.version"),
-                            file.getSubVersion().isPresent() ? "%d.%d".formatted(file.getVersion(), file.getSubVersion().getAsInt()) : file.getVersion()
+                            file.getSubVersion().isPresent()
+                                    ? "%d.%d".formatted(file.getVersion().getAsInt(), file.getSubVersion().getAsInt())
+                                    : file.getVersion().getAsInt()
                     );
             }
 
