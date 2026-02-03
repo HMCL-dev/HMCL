@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui.construct;
 
 import javafx.beans.property.StringProperty;
 import javafx.beans.property.StringPropertyBase;
-import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import org.jackhuang.hmcl.ui.FXUtils;
 
@@ -42,8 +41,6 @@ public final class LineTextPane extends LineComponentContainer {
     public StringProperty textProperty() {
         if (text == null) {
             text = new StringPropertyBase() {
-                private static final Insets LABEL_MARGIN = new Insets(0, 8, 0, 16);
-
                 private Label rightLabel;
 
                 @Override
@@ -63,7 +60,6 @@ public final class LineTextPane extends LineComponentContainer {
                         if (rightLabel == null) {
                             rightLabel = FXUtils.newSafeTruncatedLabel();
                             FXUtils.copyOnDoubleClick(rightLabel);
-                            LineTextPane.setMargin(rightLabel, LABEL_MARGIN);
                         }
                         rightLabel.setText(text);
                         setNode(IDX_TRAILING, rightLabel);
