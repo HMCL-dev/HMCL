@@ -57,10 +57,12 @@ public abstract class LineComponentContainer extends HBox implements LineCompone
 
         this.titleLabel = new Label();
         titleLabel.getStyleClass().add("title-label");
+        titleLabel.setMinWidth(Region.USE_PREF_SIZE);
 
         this.titleContainer = new VBox(titleLabel);
         titleContainer.setMouseTransparent(true);
         titleContainer.setAlignment(Pos.CENTER_LEFT);
+        titleContainer.minWidthProperty().bind(titleLabel.prefWidthProperty());
         HBox.setHgrow(titleContainer, Priority.ALWAYS);
 
         this.setNode(IDX_TITLE, titleContainer);

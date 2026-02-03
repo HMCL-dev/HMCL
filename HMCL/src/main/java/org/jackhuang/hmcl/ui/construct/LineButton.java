@@ -89,6 +89,8 @@ public final class LineButton extends LineButtonBase {
     public StringProperty messageProperty() {
         if (message == null) {
             message = new StringPropertyBase() {
+                private static final Insets RIGHT_MESSAGE_MARGIN = new Insets(0, 0, 0, 8);
+
                 private Label messageLabel;
 
                 @Override
@@ -108,6 +110,7 @@ public final class LineButton extends LineButtonBase {
                         if (messageLabel == null) {
                             messageLabel = new Label();
                             messageLabel.getStyleClass().add("subtitle-label");
+                            LineButton.setMargin(messageLabel, RIGHT_MESSAGE_MARGIN);
                         }
                         messageLabel.setText(message);
                         root.setNode(IDX_RIGHT_MESSAGE, messageLabel);
@@ -167,9 +170,11 @@ public final class LineButton extends LineButtonBase {
         setRightIcon(rightIcon, SVG.DEFAULT_SIZE);
     }
 
+    private static final Insets RIGHT_ICON_MARGIN = new Insets(0, 8, 0, 8);
+
     public void setRightIcon(SVG rightIcon, double size) {
         Node rightIconNode = rightIcon.createIcon(size);
-        LineButton.setMargin(rightIconNode, new Insets(0, 8, 0, 8));
+        LineButton.setMargin(rightIconNode, RIGHT_ICON_MARGIN);
         setRightIcon(rightIconNode);
     }
 }
