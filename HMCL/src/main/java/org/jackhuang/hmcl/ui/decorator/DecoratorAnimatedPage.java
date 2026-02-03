@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.decorator;
 
+import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
@@ -62,9 +63,15 @@ public class DecoratorAnimatedPage extends Control {
             super(control);
 
             BorderPane pane = new BorderPane();
+
+            control.left.getStyleClass().addAll("radius-6");
             pane.setLeft(control.left);
+            BorderPane.setMargin(control.left, new Insets(0, 4, 0, 0));
             FXUtils.setLimitWidth(control.left, 200);
+
+            control.center.getStyleClass().addAll("radius-6");
             pane.setCenter(control.center);
+            BorderPane.setMargin(control.center, new Insets(0, 0, 0, 4));
             getChildren().setAll(pane);
         }
 

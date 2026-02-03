@@ -159,7 +159,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
             announcementPane = new TransitionPane();
             announcementPane.setContent(announcementBox, ContainerAnimations.NONE);
 
-            StackPane.setMargin(announcementPane, new Insets(-15));
+            StackPane.setMargin(announcementPane, new Insets(-35));
             getChildren().add(announcementPane);
         }
 

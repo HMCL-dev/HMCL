@@ -25,9 +25,12 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
+import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.Motion;
@@ -46,6 +49,11 @@ public class Navigator extends TransitionPane {
     private final BooleanProperty backable = new SimpleBooleanProperty(this, "backable");
     private final Stack<Node> stack = new Stack<>();
     private boolean initialized = false;
+
+    {
+        StackPane.setMargin(this, new Insets(8));
+        getStyleClass().add("radius-6");
+    }
 
     public void init(Node init) {
         stack.push(init);

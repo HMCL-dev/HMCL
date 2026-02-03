@@ -83,8 +83,8 @@ public final class Controllers {
     public static final String JAVA_INTERPRETED_MODE_TIP = "javaInterpretedMode";
     public static final String SOFTWARE_RENDERING = "softwareRendering";
 
-    public static final int MIN_WIDTH = 800 + 2 + 16; // bg width + border width*2 + shadow width*2
-    public static final int MIN_HEIGHT = 450 + 2 + 40 + 16; // bg height + border width*2 + toolbar height + shadow width*2
+    public static final int MIN_WIDTH = 880 + 2 + 16; // bg width + border width*2 + shadow width*2
+    public static final int MIN_HEIGHT = 495 + 2 + 40 + 16; // bg height + border width*2 + toolbar height + shadow width*2
     public static final Screen SCREEN = Screen.getPrimary();
     private static InvalidationListener stageSizeChangeListener;
     private static DoubleProperty stageX = new SimpleDoubleProperty();
