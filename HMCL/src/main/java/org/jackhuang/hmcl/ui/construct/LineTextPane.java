@@ -21,7 +21,6 @@ import javafx.beans.property.StringProperty;
 import javafx.beans.property.StringPropertyBase;
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
-import javafx.scene.layout.HBox;
 import org.jackhuang.hmcl.ui.FXUtils;
 
 /// @author Glavo
@@ -60,20 +59,19 @@ public final class LineTextPane extends LineComponentContainer {
                 @Override
                 protected void invalidated() {
                     String text = get();
-                    if (text == null || text.isEmpty()) {
+                    if (text != null && !text.isEmpty()) {
+                        if (rightLabel == null) {
+                            rightLabel = FXUtils.newSafeTruncatedLabel();
+                            FXUtils.copyOnDoubleClick(rightLabel);
+                            LineTextPane.setMargin(rightLabel, LABEL_MARGIN);
+                        }
+                        rightLabel.setText(text);
+                        setNode(IDX_RIGHT, rightLabel);
+                    } else {
                         if (rightLabel != null)
                             rightLabel.setText(null);
 
                         setNode(IDX_RIGHT, null);
-                    } else {
-                        if (rightLabel == null) {
-                            rightLabel = FXUtils.newSafeTruncatedLabel();
-                            FXUtils.copyOnDoubleClick(rightLabel);
-                            HBox.setMargin(rightLabel, LABEL_MARGIN);
-                            // BorderPane.setAlignment(rightLabel, Pos.CENTER_RIGHT);
-                        }
-                        rightLabel.setText(text);
-                        setNode(IDX_RIGHT, rightLabel);
                     }
                 }
             };
