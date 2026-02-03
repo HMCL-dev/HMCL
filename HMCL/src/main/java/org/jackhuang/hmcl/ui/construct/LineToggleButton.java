@@ -30,7 +30,8 @@ public final class LineToggleButton extends LineButtonBase {
 
         JFXToggleButton toggleButton = new JFXToggleButton();
         toggleButton.selectedProperty().bindBidirectional(selectedProperty());
-
+        toggleButton.setSize(8);
+        FXUtils.setLimitHeight(toggleButton, 30);
         root.setNode(LineComponentContainer.IDX_RIGHT, toggleButton);
 
         FXUtils.onClicked(ripplerContainer, toggleButton::fire);

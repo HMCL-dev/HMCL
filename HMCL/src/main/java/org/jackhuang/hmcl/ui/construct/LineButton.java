@@ -56,12 +56,6 @@ public final class LineButton extends LineButtonBase {
     public ObjectProperty<EventHandler<ActionEvent>> onActionProperty() {
         if (onAction == null) {
             onAction = new ObjectPropertyBase<>() {
-
-                @Override
-                protected void invalidated() {
-                    setEventHandler(ActionEvent.ACTION, get());
-                }
-
                 @Override
                 public Object getBean() {
                     return LineButton.this;
@@ -70,6 +64,11 @@ public final class LineButton extends LineButtonBase {
                 @Override
                 public String getName() {
                     return "onAction";
+                }
+
+                @Override
+                protected void invalidated() {
+                    setEventHandler(ActionEvent.ACTION, get());
                 }
             };
         }
