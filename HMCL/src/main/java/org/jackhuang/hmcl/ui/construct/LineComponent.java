@@ -24,6 +24,7 @@ import javafx.scene.image.Image;
 import org.jackhuang.hmcl.ui.SVG;
 
 /// @author Glavo
+/// @see LineComponentContainer
 public interface LineComponent extends NoPaddingComponent {
     String DEFAULT_STYLE_CLASS = "line-component";
 

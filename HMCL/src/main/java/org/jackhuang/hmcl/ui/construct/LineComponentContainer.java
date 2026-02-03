@@ -41,7 +41,6 @@ public abstract class LineComponentContainer extends HBox implements LineCompone
     protected static final int IDX_RIGHT = 2;
 
     private static final Insets PADDING = new Insets(8, 8, 8, 16);
-    private static final Insets ICON_MARGIN = new Insets(0, 16, 0, 0);
     private static final double MIN_HEIGHT = 48.0;
 
     public static void setMargin(Node child, Insets value) {
@@ -152,6 +151,8 @@ public abstract class LineComponentContainer extends HBox implements LineCompone
 
         return subtitle;
     }
+
+    private static final Insets ICON_MARGIN = new Insets(0, 16, 0, 0);
 
     @Override
     public void setLeftIcon(Image icon, double size) {
