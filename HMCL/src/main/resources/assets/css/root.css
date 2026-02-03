@@ -1041,6 +1041,10 @@
     -fx-font-size: 12;
 }
 
+.options-list-item .line-component-container {
+    -fx-padding: 10 16 10 16;
+}
+
 .options-list-item .svg {
     -fx-fill: -monet-on-surface;
     -fx-border-color: -monet-outline-variant;

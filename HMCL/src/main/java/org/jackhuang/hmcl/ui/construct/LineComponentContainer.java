@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import javafx.beans.InvalidationListener;
 import javafx.beans.property.StringProperty;
 import javafx.beans.property.StringPropertyBase;
 import javafx.geometry.Insets;
@@ -37,11 +36,12 @@ import java.util.Objects;
 ///
 /// @author Glavo
 public abstract class LineComponentContainer extends HBox implements LineComponent {
+    private static final String DEFAULT_STYLE_CLASS = "line-component-container";
+
     protected static final int IDX_LEFT_ICON = 0;
     protected static final int IDX_TITLE = 1;
     protected static final int IDX_RIGHT = 2;
 
-    private static final Insets PADDING = new Insets(8, 8, 8, 16);
     private static final double MIN_HEIGHT = 48.0;
 
     public static void setMargin(Node child, Insets value) {
@@ -52,7 +52,8 @@ public abstract class LineComponentContainer extends HBox implements LineCompone
     private final VBox titleContainer;
 
     public LineComponentContainer() {
-        setPadding(PADDING);
+        this.getStyleClass().add(DEFAULT_STYLE_CLASS);
+
         setMinHeight(MIN_HEIGHT);
         setAlignment(Pos.CENTER_LEFT);
 
