@@ -412,10 +412,32 @@ public class JFXCustomColorPickerDialog extends StackPane {
     private static TextFormatter<String> colorCharFormatter() {
         return new TextFormatter<>(change -> {
             if (!change.isContentChange()) return change;
-            if (!change.getText().matches("[0-9a-zA-Z#(),%.\\s]*")) return null;
-            String text = change.getControlNewText();
-            long hashes = text.chars().filter(c -> c == '#').count();
-            return (hashes <= 1 && (hashes == 0 || text.indexOf('#') == 0)) ? change : null;
+
+            java.util.function.Function<String, String> toHalf = s -> {
+                StringBuilder b = new StringBuilder(s.length());
+                for (char c : s.toCharArray()) {
+                    if (c >= '\uff10' && c <= '\uff19') b.append((char) (c - 0xfee0));
+                    else if (c >= '\uff21' && c <= '\uff3a') b.append((char) (c - 0xfee0));
+                    else if (c >= '\uff41' && c <= '\uff5a') b.append((char) (c - 0xfee0));
+                    else if (c == '\uff08') b.append('(');
+                    else if (c == '\uff09') b.append(')');
+                    else if (c == '\uff0c') b.append(',');
+                    else if (c == '\uff05') b.append('%');
+                    else if (c == '\uff0e') b.append('.');
+                    else if (c == '\u3000') b.append(' ');
+                    else if (c == '\uff03') b.append('#');
+                    else b.append(c);
+                }
+                return b.toString();
+            };
+
+            String ins = toHalf.apply(change.getText());
+            if (!ins.matches("[0-9a-zA-Z#(),%.\\s]*")) return null;
+            String full = toHalf.apply(change.getControlNewText());
+            long h = full.chars().filter(c -> c == '#').count();
+            if (h > 1 || (h == 1 && full.indexOf('#') != 0)) return null;
+            change.setText(ins);
+            return change;
         });
     }
 }
