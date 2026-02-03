@@ -50,6 +50,7 @@ import org.jackhuang.hmcl.ui.versions.GameListPopupMenu;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.Lazy;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
@@ -139,6 +140,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
     }
 
     private static class Skin extends DecoratorAnimatedPageSkin<RootPage> {
+        private final Lazy<AccountListPopupMenu> accountListPopupMenu = new Lazy<>(AccountListPopupMenu::new);
 
         protected Skin(RootPage control) {
             super(control);
@@ -146,7 +148,11 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             // first item in left sidebar
             AccountAdvancedListItem accountListItem = new AccountAdvancedListItem();
             accountListItem.setOnAction(e -> Controllers.navigate(Controllers.getAccountListPage()));
-            FXUtils.onSecondaryButtonClicked(accountListItem, () -> AccountListPopupMenu.show(accountListItem, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, accountListItem.getWidth(), 0));
+            JFXPopup popup = new JFXPopup();
+            FXUtils.onSecondaryButtonClicked(accountListItem, () -> {
+                popup.setPopupContent(accountListPopupMenu.get());
+                popup.show(accountListItem, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, accountListItem.getWidth(), 0);
+            });
             accountListItem.accountProperty().bind(Accounts.selectedAccountProperty());
 
             // second item in left sidebar

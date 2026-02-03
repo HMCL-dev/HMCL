@@ -42,6 +42,7 @@ import org.jackhuang.hmcl.ui.main.MainPage;
 import org.jackhuang.hmcl.ui.versions.GameListPopupMenu;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.Lazy;
 import org.jackhuang.hmcl.util.StringUtils;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
@@ -54,6 +55,7 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
     private final TabHeader tab;
     private final TabHeader.Tab<TerracottaControllerPage> statusPage = new TabHeader.Tab<>("statusPage");
     private final TransitionPane transitionPane = new TransitionPane();
+    private final Lazy<AccountListPopupMenu> accountListPopupMenu = new Lazy<>(AccountListPopupMenu::new);
 
     @SuppressWarnings("unused")
     private ChangeListener<String> instanceChangeListenerHolder;
@@ -75,7 +77,12 @@ public class TerracottaPage extends DecoratorAnimatedPage implements DecoratorPa
         AccountAdvancedListItem accountListItem = new AccountAdvancedListItem();
         accountListItem.setOnAction(e -> Controllers.navigate(Controllers.getAccountListPage()));
         accountListItem.accountProperty().bind(Accounts.selectedAccountProperty());
-        FXUtils.onSecondaryButtonClicked(accountListItem, () -> AccountListPopupMenu.show(accountListItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, accountListItem.getWidth(), 0));
+
+        JFXPopup popup = new JFXPopup();
+        FXUtils.onSecondaryButtonClicked(accountListItem, () -> {
+            popup.setPopupContent(accountListPopupMenu.get());
+            popup.show(accountListItem, JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT, accountListItem.getWidth(), 0);
+        });
 
         AdvancedListBox toolbar = new AdvancedListBox()
                 .add(accountListItem)

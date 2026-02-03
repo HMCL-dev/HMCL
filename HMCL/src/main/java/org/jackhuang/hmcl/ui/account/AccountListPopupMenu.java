@@ -22,7 +22,6 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
-import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.auth.Account;
@@ -33,13 +32,6 @@ import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class AccountListPopupMenu extends StackPane {
-    public static void show(Node owner, JFXPopup.PopupVPosition vAlign, JFXPopup.PopupHPosition hAlign,
-                            double initOffsetX, double initOffsetY) {
-        var menu = new AccountListPopupMenu();
-        JFXPopup popup = new JFXPopup(menu);
-        popup.show(owner, vAlign, hAlign, initOffsetX, initOffsetY);
-    }
-
     @SuppressWarnings("FieldCanBeLocal")
     private final BooleanBinding isEmpty = Bindings.isEmpty(Accounts.getAccounts());
     @SuppressWarnings("FieldCanBeLocal")
