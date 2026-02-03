@@ -123,7 +123,7 @@ public final class LineButton extends LineButtonBase {
     }
 
     public String getMessage() {
-        return message == null ? "" : message.get();
+        return message != null ? message.get() : null;
     }
 
     public void setMessage(String message) {
