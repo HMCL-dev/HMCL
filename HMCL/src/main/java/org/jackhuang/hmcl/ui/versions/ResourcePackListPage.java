@@ -287,7 +287,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 HBox.setHgrow(searchField, Priority.ALWAYS);
                 PauseTransition pause = new PauseTransition(Duration.millis(100));
                 pause.setOnFinished(e -> search());
-                searchField.textProperty().addListener((observable, oldValue, newValue) -> {
+                FXUtils.onChange(searchField.textProperty(), newValue -> {
                     pause.setRate(1);
                     pause.playFromStart();
                 });
@@ -427,7 +427,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         public ResourcePackInfoObject(ResourcePackFile file) {
             this.file = file;
             this.enabled = new SimpleBooleanProperty(this, "enabled", file.isEnabled());
-            this.enabled.addListener(__ -> file.setEnabled(enabled.get()));
+            FXUtils.onChange(this.enabled, file::setEnabled);
         }
 
         public ResourcePackFile getFile() {
@@ -600,7 +600,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             descriptionPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             descriptionPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
             descriptionPane.setFitToWidth(true);
-            description.heightProperty().addListener((obs, oldVal, newVal) -> {
+            FXUtils.onChange(description.heightProperty(), newVal -> {
                 double maxHeight = stage.getHeight() * 0.5;
                 double targetHeight = Math.min(newVal.doubleValue(), maxHeight);
                 descriptionPane.setPrefViewportHeight(targetHeight);
