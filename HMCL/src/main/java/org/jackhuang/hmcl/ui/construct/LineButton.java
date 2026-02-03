@@ -21,16 +21,17 @@ import javafx.beans.property.*;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.layout.HBox;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 
 /// @author Glavo
 public final class LineButton extends LineButtonBase {
     private static final String DEFAULT_STYLE_CLASS = "line-button";
+
+    private static final int IDX_RIGHT_MESSAGE = LineComponentContainer.IDX_RIGHT;
+    private static final int IDX_RIGHT_ICON = IDX_RIGHT_MESSAGE + 1;
 
     public static LineButton createNavigationButton() {
         var button = new LineButton();
@@ -88,6 +89,8 @@ public final class LineButton extends LineButtonBase {
     public StringProperty messageProperty() {
         if (message == null) {
             message = new StringPropertyBase() {
+                private Label messageLabel;
+
                 @Override
                 public Object getBean() {
                     return LineButton.this;
@@ -100,7 +103,18 @@ public final class LineButton extends LineButtonBase {
 
                 @Override
                 protected void invalidated() {
-                    updateRight();
+                    String message = get();
+                    if (message != null && !message.isEmpty()) {
+                        if (messageLabel == null) {
+                            messageLabel = new Label();
+                            messageLabel.getStyleClass().add("subtitle-label");
+                        }
+                        messageLabel.setText(message);
+                        root.setNode(IDX_RIGHT_MESSAGE, messageLabel);
+                    } else if (messageLabel != null) {
+                        messageLabel.setText("");
+                        root.setNode(IDX_RIGHT_MESSAGE, null);
+                    }
                 }
             };
         }
@@ -116,64 +130,46 @@ public final class LineButton extends LineButtonBase {
         messageProperty().set(message);
     }
 
-    private SVG rightIcon;
-    private double rightIconSize;
+    private ObjectProperty<Node> rightIcon;
+
+    public ObjectProperty<Node> rightIconProperty() {
+        if (rightIcon == null)
+            rightIcon = new ObjectPropertyBase<>() {
+                @Override
+                public Object getBean() {
+                    return LineButton.this;
+                }
+
+                @Override
+                public String getName() {
+                    return "rightIcon";
+                }
+
+                @Override
+                protected void invalidated() {
+                    root.setNode(IDX_RIGHT_ICON, get());
+                }
+            };
+
+
+        return rightIcon;
+    }
+
+    public Node getRightIcon() {
+        return rightIcon != null ? rightIcon.get() : null;
+    }
+
+    public void setRightIcon(Node rightIcon) {
+        rightIconProperty().set(rightIcon);
+    }
 
     public void setRightIcon(SVG rightIcon) {
         setRightIcon(rightIcon, SVG.DEFAULT_SIZE);
     }
 
     public void setRightIcon(SVG rightIcon, double size) {
-        this.rightIcon = rightIcon;
-        this.rightIconSize = size;
-        updateRight();
+        Node rightIconNode = rightIcon.createIcon(size);
+        LineButton.setMargin(rightIconNode, new Insets(0, 8, 0, 8));
+        setRightIcon(rightIconNode);
     }
-
-    //region Right
-
-    private Label messageLabel;
-    private Node rightIconNode;
-    private SVG currentRightIcon;
-    private double currentRightIconSize;
-
-    private void updateRight() {
-        HBox right;
-        if (root.getNode(LineComponentContainer.IDX_RIGHT) instanceof HBox box) {
-            right = box;
-        } else {
-            right = new HBox();
-            right.setAlignment(Pos.CENTER_RIGHT);
-            root.setNode(LineComponentContainer.IDX_RIGHT, right);
-        }
-
-        right.getChildren().clear();
-
-        String message = getMessage();
-        if (message != null && !message.isEmpty()) {
-            if (messageLabel == null) {
-                messageLabel = new Label();
-                messageLabel.getStyleClass().add("subtitle");
-            }
-            messageLabel.setText(message);
-            right.getChildren().add(messageLabel);
-        } else if (messageLabel != null) {
-            messageLabel.setText("");
-        }
-
-        if (rightIcon != currentRightIcon || rightIconSize != currentRightIconSize) {
-            if (rightIcon != null) {
-                rightIconNode = rightIcon.createIcon(rightIconSize);
-                HBox.setMargin(rightIconNode, new Insets(0, 8, 0, 8));
-            } else {
-                rightIconNode = null;
-            }
-            currentRightIcon = rightIcon;
-            currentRightIconSize = rightIconSize;
-        }
-
-        if (rightIconNode != null)
-            right.getChildren().add(rightIconNode);
-    }
-
-    //endregion
 }
