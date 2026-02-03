@@ -52,6 +52,7 @@ public abstract class LineComponentContainer extends HBox implements LineCompone
     private final VBox titleContainer;
 
     public LineComponentContainer() {
+        this.setSpacing(LineComponent.SPACING);
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
 
         setMinHeight(MIN_HEIGHT);
@@ -169,7 +170,6 @@ public abstract class LineComponentContainer extends HBox implements LineCompone
             imageView.setSmooth(true);
         }
         imageView.setMouseTransparent(true);
-        setMargin(imageView, LEADING_ICON_MARGIN);
 
         setNode(IDX_LEFT_ICON, imageView);
     }
@@ -179,7 +179,6 @@ public abstract class LineComponentContainer extends HBox implements LineCompone
         Node node = svg.createIcon(size);
         node.getStyleClass().add("leading-icon");
         node.setMouseTransparent(true);
-        setMargin(node, LEADING_ICON_MARGIN);
         setNode(IDX_LEFT_ICON, node);
     }
 }

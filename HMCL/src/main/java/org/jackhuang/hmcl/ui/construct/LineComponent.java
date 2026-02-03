@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui.construct;
 
 import javafx.beans.property.StringProperty;
 import javafx.css.PseudoClass;
-import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.ui.SVG;
@@ -31,8 +30,7 @@ public interface LineComponent extends NoPaddingComponent {
 
     PseudoClass PSEUDO_LARGER_TITLE = PseudoClass.getPseudoClass("large-title");
 
-    Insets LEADING_ICON_MARGIN = new Insets(0, 12, 0, 0);
-    Insets TRAILING_NODE_MARGIN = new Insets(0, 0, 0, 12);
+    double SPACING = 12;
 
     private Node self() {
         return (Node) this;

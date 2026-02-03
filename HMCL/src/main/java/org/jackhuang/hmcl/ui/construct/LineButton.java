@@ -106,7 +106,6 @@ public class LineButton extends LineButtonBase {
                         if (trailingTextLabel == null) {
                             trailingTextLabel = new Label();
                             trailingTextLabel.getStyleClass().add("trailing-label");
-                            LineButton.setMargin(trailingTextLabel, TRAILING_NODE_MARGIN);
                         }
                         trailingTextLabel.setText(message);
                         root.setNode(IDX_TRAILING_TEXT, trailingTextLabel);
@@ -168,7 +167,6 @@ public class LineButton extends LineButtonBase {
     public void setTrailingIcon(SVG rightIcon, double size) {
         Node rightIconNode = rightIcon.createIcon(size);
         rightIconNode.getStyleClass().add("trailing-icon");
-        LineButton.setMargin(rightIconNode, TRAILING_NODE_MARGIN);
         setTrailingIcon(rightIconNode);
     }
 }

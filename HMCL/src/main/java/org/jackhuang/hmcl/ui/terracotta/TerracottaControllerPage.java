@@ -577,7 +577,7 @@ public class TerracottaControllerPage extends StackPane {
         FXUtils.copyText(code, i18n("terracotta.status.host_ok.code.copy.toast"));
     }
 
-    private static final double ICON_SIZE = 28;
+    private static final double ICON_SIZE = 20;
 
     private static LineButton createLargeTitleLineButton() {
         var lineButton = new LineButton();
