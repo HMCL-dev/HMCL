@@ -89,7 +89,7 @@ public final class LineButton extends LineButtonBase {
     public StringProperty messageProperty() {
         if (message == null) {
             message = new StringPropertyBase() {
-                private static final Insets RIGHT_MESSAGE_MARGIN = new Insets(0, 0, 0, 8);
+                private static final Insets RIGHT_MESSAGE_MARGIN = new Insets(0, 0, 0, 16);
 
                 private Label messageLabel;
 
