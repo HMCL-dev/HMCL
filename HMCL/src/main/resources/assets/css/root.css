@@ -50,9 +50,9 @@
 }
 
 .hint {
-    -fx-background-radius: 5;
+    -fx-background-radius: 6;
     -fx-border-width: 1;
-    -fx-border-radius: 5;
+    -fx-border-radius: 6;
     -fx-padding: 6;
 }
 
@@ -171,11 +171,17 @@
     -jfx-rippler-fill: -monet-on-surface-variant;
 }
 
+.advanced-list-item {
+    -fx-background-radius: 6;
+}
+
 .advanced-list-item .rippler-container {
+    -fx-background-radius: 6;
     -jfx-rippler-fill: -monet-on-secondary-container;
 }
 
 .advanced-list-item > .rippler-container > .container {
+    -fx-background-radius: 6;
     -fx-padding: 10 16 10 16;
     -fx-background-color: null;
 }
@@ -444,18 +450,16 @@
 }
 
 .launch-pane > .jfx-button.launch-button {
-    -fx-max-width: 207px;
-    -fx-min-width: 207px;
-    -fx-border-width: 0 3px 0 0;
-    -fx-border-color: -monet-on-surface-variant;
-    -fx-background-radius: 4px 0 0 4px;
+    -fx-max-width: 200;
+    -fx-min-width: 200;
+    -fx-background-radius: 4 0 0 4;
 }
 
 .launch-pane > .jfx-button.menu-button {
-    -fx-max-width: 20px;
-    -fx-min-width: 20px;
-    -fx-font-size: 15px;
-    -fx-background-radius: 0 4px 4px 0;
+    -fx-max-width: 20;
+    -fx-min-width: 20;
+    -fx-font-size: 15;
+    -fx-background-radius: 0 4 4 0;
 }
 
 .launch-pane > .jfx-button > StackPane > .jfx-rippler {
@@ -580,7 +584,7 @@
 
 .jfx-popup-container {
     -fx-background-color: -monet-surface;
-    -fx-background-radius: 4;
+    -fx-background-radius: 6;
 }
 
 .popup-list-view {
@@ -696,7 +700,7 @@
     -fx-pref-height: -fx-toggle-icon4-size;
     -fx-max-height: -fx-toggle-icon4-size;
     -fx-min-height: -fx-toggle-icon4-size;
-    -fx-background-radius: 5px;
+    -fx-background-radius: 6px;
     -fx-background-color: transparent;
     -jfx-toggle-color: -monet-on-surface;
     -jfx-untoggle-color: transparent;
@@ -709,7 +713,7 @@
 
 .jfx-decorator-button {
     -fx-max-width: 40px;
-    -fx-background-radius: 5px;
+    -fx-background-radius: 6px;
     -fx-max-height: 40px;
     -fx-background-color: transparent;
 }
@@ -798,6 +802,13 @@
 
 .jfx-button-raised {
     -fx-background-color: -monet-primary;
+}
+
+.jfx-button-raised-large {
+    -fx-background-color: -monet-primary;
+    -fx-background-radius: 6;
+    -fx-pref-height: 40;
+    -fx-pref-width: 100;
 }
 
 .jfx-button-raised .jfx-rippler {
@@ -997,7 +1008,7 @@
 
 .card {
     -fx-background-color: -monet-surface-container-low-transparent-80;
-    -fx-background-radius: 4;
+    -fx-background-radius: 6;
     -fx-padding: 8px;
 
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 10, 0.12, -1, 2);
@@ -1005,7 +1016,7 @@
 
 .card-non-transparent {
     -fx-background-color: -monet-surface-container-low;
-    -fx-background-radius: 4;
+    -fx-background-radius: 6;
     -fx-padding: 8px;
 
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 5, 0.06, -0.5, 1);
@@ -1063,16 +1074,17 @@
 }
 
 .options-list-item:first {
-    -fx-background-radius: 4 4 0 0;
+    -fx-background-radius: 6 6 0 0;
     -fx-border-width: 0;
 }
 
 .options-list-item:last {
-    -fx-background-radius: 0 0 4 4;
+    -fx-background-radius: 0 0 6 6;
+    -fx-border-width: 0;
 }
 
 .options-list-item:first:last {
-    -fx-background-radius: 4 4 4 4;
+    -fx-background-radius: 6;
     -fx-border-width: 0;
 }
 
@@ -1089,7 +1101,7 @@
 .jfx-toggle-button:selected,
 .jfx-toggle-button:focused:selected {
     -fx-background-color: TRANSPARENT, TRANSPARENT, TRANSPARENT, TRANSPARENT;
-    -fx-background-radius: 3px;
+    -fx-background-radius: 6px;
     -fx-background-insets: 0px;
 
     -jfx-toggle-color: -monet-primary;
@@ -1521,7 +1533,7 @@
 .jfx-color-picker:focused,
 .jfx-color-picker {
     -fx-background-color: TRANSPARENT, TRANSPARENT, TRANSPARENT, TRANSPARENT;
-    -fx-background-radius: 3px;
+    -fx-background-radius: 6px;
     -fx-background-insets: 0px;
     -fx-min-height: 25px;
 }
@@ -1688,11 +1700,17 @@
 }
 
 .content-background {
-    -fx-background-color: -monet-surface-transparent-50;
+    -fx-background-color: -monet-surface-transparent-80;
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
 }
 
 .gray-background {
-    -fx-background-color: -monet-surface-transparent-50;
+    -fx-background-color: -monet-surface-transparent-80;
+}
+
+.transparent-background {
+    -fx-background-color: transparent;
 }
 
 /*******************************************************************************
@@ -1907,4 +1925,9 @@
 
 .line-select-button .menu-container:selected .subtitle {
     -fx-text-fill: -monet-primary;
+}
+
+.radius-6 {
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
 }

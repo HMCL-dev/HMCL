@@ -76,8 +76,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         nextPane.setPadding(new Insets(16, 16, 16, 0));
         nextPane.setAlignment(Pos.CENTER_RIGHT);
         {
-            JFXButton btnNext = FXUtils.newRaisedButton(i18n("wizard.next"));
-            btnNext.setPrefSize(100, 40);
+            JFXButton btnNext = FXUtils.newRaisedButtonLarge(i18n("wizard.next"));
             btnNext.setOnAction(e -> onNext());
 
             nextPane.getChildren().setAll(btnNext);

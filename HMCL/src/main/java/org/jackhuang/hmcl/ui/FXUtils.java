@@ -1286,6 +1286,13 @@ public final class FXUtils {
         return button;
     }
 
+    public static JFXButton newRaisedButtonLarge(String text) {
+        JFXButton button = new JFXButton(text);
+        button.getStyleClass().add("jfx-button-raised-large");
+        button.setButtonType(JFXButton.ButtonType.RAISED);
+        return button;
+    }
+
     public static JFXButton newBorderButton(String text) {
         JFXButton button = new JFXButton(text);
         button.getStyleClass().add("jfx-button-border");
