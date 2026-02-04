@@ -26,7 +26,6 @@ public abstract class TaskExecutor {
     protected final List<TaskListener> taskListeners = new ArrayList<>(0);
     protected volatile boolean cancelled = false;
     protected Exception exception;
-
     private final List<List<String>> stages;
 
     public TaskExecutor(Task<?> task) {
