@@ -28,17 +28,14 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import org.jackhuang.hmcl.ui.SVG;
 
 import java.util.Arrays;
 import java.util.Objects;
 
 /// @author Glavo
-public abstract class LineComponent extends Control implements NoPaddingComponent {
+public abstract class LineComponent extends StackPane implements NoPaddingComponent {
     private static final String DEFAULT_STYLE_CLASS = "line-component";
     private static final double MIN_HEIGHT = 48.0;
     private static final PseudoClass PSEUDO_LARGER_TITLE = PseudoClass.getPseudoClass("large-title");
@@ -80,6 +77,8 @@ public abstract class LineComponent extends Control implements NoPaddingComponen
         HBox.setHgrow(titleContainer, Priority.ALWAYS);
 
         this.setNode(IDX_TITLE, titleContainer);
+
+        this.getChildren().setAll(container);
     }
 
     private Node[] nodes = new Node[2];
@@ -92,29 +91,6 @@ public abstract class LineComponent extends Control implements NoPaddingComponen
             nodes[idx] = node;
             container.getChildren().setAll(Arrays.stream(nodes).filter(Objects::nonNull).toArray(Node[]::new));
         }
-    }
-
-    protected Node getNode() {
-        return container;
-    }
-
-    @Override
-    protected final Skin<?> createDefaultSkin() {
-        return new Skin<LineComponent>() {
-            @Override
-            public LineComponent getSkinnable() {
-                return LineComponent.this;
-            }
-
-            @Override
-            public Node getNode() {
-                return LineComponent.this.getNode();
-            }
-
-            @Override
-            public void dispose() {
-            }
-        };
     }
 
     public void setLargeTitle(boolean largeTitle) {

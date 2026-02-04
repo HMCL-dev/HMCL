@@ -22,6 +22,7 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.control.OverrunStyle;
 import org.jackhuang.hmcl.ui.SVG;
 
 /// @author Glavo
@@ -98,6 +99,8 @@ public class LineButton extends LineButtonBase {
                         if (trailingTextLabel == null) {
                             trailingTextLabel = new Label();
                             trailingTextLabel.getStyleClass().add("trailing-label");
+                            trailingTextLabel.setTextOverrun(OverrunStyle.CENTER_ELLIPSIS);
+                            trailingTextLabel.setMinWidth(50);
                         }
                         trailingTextLabel.setText(message);
                         setNode(IDX_TRAILING_TEXT, trailingTextLabel);

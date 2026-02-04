@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import javafx.event.ActionEvent;
-import javafx.scene.Node;
 import org.jackhuang.hmcl.ui.FXUtils;
 
 /// @author Glavo
@@ -31,16 +30,12 @@ public abstract class LineButtonBase extends LineComponent {
         this.getStyleClass().addAll(LineButtonBase.DEFAULT_STYLE_CLASS);
 
         this.ripplerContainer = new RipplerContainer(container);
-
         FXUtils.onClicked(this, this::fire);
+
+        this.getChildren().setAll(ripplerContainer);
     }
 
     public void fire() {
         fireEvent(new ActionEvent());
-    }
-
-    @Override
-    protected Node getNode() {
-        return ripplerContainer;
     }
 }
