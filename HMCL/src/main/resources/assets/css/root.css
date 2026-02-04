@@ -1268,6 +1268,7 @@
 
 .log-toggle {
     -fx-border: 1px;
+    -fx-background-insets: 0;
     -fx-border-color: -fixed-log-toggle-unselected;
     -fx-text-fill: -fixed-log-toggle-unselected;
 }
