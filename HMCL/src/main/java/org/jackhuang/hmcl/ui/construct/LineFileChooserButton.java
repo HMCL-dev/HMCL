@@ -35,7 +35,7 @@ public class LineFileChooserButton extends LineButton {
 
     public LineFileChooserButton() {
         getStyleClass().add(DEFAULT_STYLE_CLASS);
-        setRightIcon(SVG.EDIT, 16);
+        setTrailingIcon(SVG.EDIT);
     }
 
     /// Converts the given path to absolute/relative(if possible) path according to [#convertToRelativePathProperty()].
@@ -100,7 +100,7 @@ public class LineFileChooserButton extends LineButton {
 
         @Override
         protected void invalidated() {
-            setMessage(get());
+            setTrailingText(get());
         }
     };
 
