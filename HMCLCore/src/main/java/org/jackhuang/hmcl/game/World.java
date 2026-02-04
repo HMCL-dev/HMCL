@@ -17,16 +17,18 @@
  */
 package org.jackhuang.hmcl.game;
 
-import com.github.steveice10.opennbt.NBTIO;
-import com.github.steveice10.opennbt.tag.builtin.*;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.util.io.*;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
+import tech.minediamond.micanbt.NBT.NBT;
+import tech.minediamond.micanbt.tag.ByteTag;
+import tech.minediamond.micanbt.tag.CompoundTag;
+import tech.minediamond.micanbt.tag.LongTag;
+import tech.minediamond.micanbt.tag.StringTag;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
@@ -35,8 +37,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.List;
 import java.util.stream.Stream;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -69,9 +69,9 @@ public final class World {
     }
 
     public String getWorldName() {
-        CompoundTag data = levelData.get("Data");
-        StringTag levelNameTag = data.get("LevelName");
-        return levelNameTag.getValue();
+        CompoundTag data = (CompoundTag) levelData.get("Data");
+        StringTag levelNameTag = (StringTag) data.get("LevelName");
+        return levelNameTag.getClonedValue();
     }
 
     public void setWorldName(String worldName) throws IOException {
@@ -98,36 +98,36 @@ public final class World {
     }
 
     public long getLastPlayed() {
-        CompoundTag data = levelData.get("Data");
-        LongTag lastPlayedTag = data.get("LastPlayed");
-        return lastPlayedTag.getValue();
+        CompoundTag data = (CompoundTag) levelData.get("Data");
+        LongTag lastPlayedTag = (LongTag) data.get("LastPlayed");
+        return lastPlayedTag.getClonedValue();
     }
 
     public @Nullable GameVersionNumber getGameVersion() {
         if (levelData.get("Data") instanceof CompoundTag data &&
                 data.get("Version") instanceof CompoundTag versionTag &&
                 versionTag.get("Name") instanceof StringTag nameTag) {
-            return GameVersionNumber.asGameVersion(nameTag.getValue());
+            return GameVersionNumber.asGameVersion(nameTag.getClonedValue());
         }
         return null;
     }
 
     public @Nullable Long getSeed() {
-        CompoundTag data = levelData.get("Data");
+        CompoundTag data = (CompoundTag) levelData.get("Data");
         if (data.get("WorldGenSettings") instanceof CompoundTag worldGenSettingsTag && worldGenSettingsTag.get("seed") instanceof LongTag seedTag) { //Valid after 1.16
-            return seedTag.getValue();
+            return seedTag.getClonedValue();
         } else if (data.get("RandomSeed") instanceof LongTag seedTag) { //Valid before 1.16
-            return seedTag.getValue();
+            return seedTag.getClonedValue();
         } else if (worldGenSettingsDat != null && worldGenSettingsDat.get("data") instanceof CompoundTag dataTag && dataTag.get("seed") instanceof LongTag seedTag) { //Valid after 26.1-snapshot-6
-            return seedTag.getValue();
+            return seedTag.getClonedValue();
         }
         return null;
     }
 
     public boolean isLargeBiomes() {
-        CompoundTag data = levelData.get("Data");
+        CompoundTag data = (CompoundTag) levelData.get("Data");
         if (data.get("generatorName") instanceof StringTag generatorNameTag) { //Valid before 1.16
-            return "largeBiomes".equals(generatorNameTag.getValue());
+            return "largeBiomes".equals(generatorNameTag.getClonedValue());
         } else {
             if (data.get("WorldGenSettings") instanceof CompoundTag worldGenSettingsTag
                     && worldGenSettingsTag.get("dimensions") instanceof CompoundTag dimensionsTag
@@ -135,9 +135,9 @@ public final class World {
                     && overworldTag.get("generator") instanceof CompoundTag generatorTag) {
                 if (generatorTag.get("biome_source") instanceof CompoundTag biomeSourceTag
                         && biomeSourceTag.get("large_biomes") instanceof ByteTag largeBiomesTag) { //Valid between 1.16 and 1.16.2
-                    return largeBiomesTag.getValue() == (byte) 1;
+                    return largeBiomesTag.getClonedValue() == (byte) 1;
                 } else if (generatorTag.get("settings") instanceof StringTag settingsTag) { //Valid after 1.16.2
-                    return "minecraft:large_biomes".equals(settingsTag.getValue());
+                    return "minecraft:large_biomes".equals(settingsTag.getClonedValue());
                 }
             }
             return false;
@@ -230,7 +230,7 @@ public final class World {
 
     private void loadAndCheckLevelDat(Path levelDat) throws IOException {
         this.levelData = parseLevelDat(levelDat);
-        CompoundTag data = levelData.get("Data");
+        CompoundTag data = (CompoundTag) levelData.get("Data");
         if (data == null)
             throw new IOException("level.dat missing Data");
 
@@ -267,7 +267,7 @@ public final class World {
             throw new IOException("Not a valid world directory");
 
         // Change the name recorded in level.dat
-        CompoundTag data = levelData.get("Data");
+        CompoundTag data = (CompoundTag) levelData.get("Data");
         data.put(new StringTag("LevelName", newName));
         writeLevelDat(levelData);
 
@@ -369,21 +369,15 @@ public final class World {
         if (!Files.isDirectory(file))
             throw new IOException("Not a valid world directory");
 
-        FileUtils.saveSafely(getLevelDatFile(), os -> {
-            try (OutputStream gos = new GZIPOutputStream(os)) {
-                NBTIO.writeTag(gos, nbt);
-            }
-        });
+//        FileUtils.saveSafely(getLevelDatFile(), os -> {
+//            try (OutputStream gos = new GZIPOutputStream(os)) {
+//            }
+//        });
+        NBT.write(nbt, getLevelDatFile());
     }
 
     private static CompoundTag parseLevelDat(Path path) throws IOException {
-        try (InputStream is = new GZIPInputStream(Files.newInputStream(path))) {
-            Tag nbt = NBTIO.readTag(is);
-            if (nbt instanceof CompoundTag compoundTag)
-                return compoundTag;
-            else
-                throw new IOException("level.dat malformed");
-        }
+        return NBT.read(path);
     }
 
     private static boolean isLocked(Path sessionLockFile) {

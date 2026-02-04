@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import com.github.steveice10.opennbt.tag.builtin.*;
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXTextField;
 import javafx.beans.property.SimpleBooleanProperty;
@@ -47,6 +46,7 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import tech.minediamond.micanbt.tag.*;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -86,7 +86,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
     }
 
     private void updateControls() {
-        CompoundTag dataTag = levelDat.get("Data");
+        CompoundTag dataTag = (CompoundTag) levelDat.get("Data");
 
         ScrollPane scrollPane = new ScrollPane();
         scrollPane.setFitToHeight(true);
@@ -109,7 +109,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 setRightTextField(worldNamePane, worldNameField, 200);
 
                 if (dataTag.get("LevelName") instanceof StringTag worldNameTag) {
-                    var worldName = new SimpleStringProperty(worldNameTag.getValue());
+                    var worldName = new SimpleStringProperty(worldNameTag.getRawValue());
                     FXUtils.bindString(worldNameField, worldName);
                     worldNameField.getProperties().put(WorldInfoPage.class.getName() + ".worldNameProperty", worldName);
                     worldName.addListener((observable, oldValue, newValue) -> {
@@ -221,7 +221,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 } else if (dataTag.get("SpawnX") instanceof IntTag intX
                         && dataTag.get("SpawnY") instanceof IntTag intY
                         && dataTag.get("SpawnZ") instanceof IntTag intZ) {
-                    value = Dimension.OVERWORLD.formatPosition(intX.getValue(), intY.getValue(), intZ.getValue());
+                    value = Dimension.OVERWORLD.formatPosition(intX.getClonedValue(), intY.getClonedValue(), intZ.getClonedValue());
                 } else {
                     value = null;
                 }
@@ -239,7 +239,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
             {
                 timePane.setTitle(i18n("world.info.time"));
                 if (dataTag.get("Time") instanceof LongTag timeTag) {
-                    Duration duration = Duration.ofSeconds(timeTag.getValue() / 20);
+                    Duration duration = Duration.ofSeconds(timeTag.getClonedValue() / 20);
                     timePane.setText(i18n("world.info.time.format", duration.toDays(), duration.toHoursPart(), duration.toMinutesPart()));
                 }
             }
@@ -274,7 +274,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 difficultyButton.setItems(Difficulty.items);
 
                 if (dataTag.get("Difficulty") instanceof ByteTag difficultyTag) {
-                    Difficulty difficulty = Difficulty.of(difficultyTag.getValue());
+                    Difficulty difficulty = Difficulty.of(difficultyTag.getClonedValue());
                     if (difficulty != null) {
                         difficultyButton.setValue(difficulty);
                         difficultyButton.valueProperty().addListener((o, oldValue, newValue) -> {
@@ -343,7 +343,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                         && playerTag.get("SpawnZ") instanceof IntTag intZ) { // Valid before 25w07a
                     // SpawnDimension tag is valid after 20w12a. Prior to this version, the game did not record the respawn point dimension and respawned in the Overworld.
                     spawnPane.setText((playerTag.get("SpawnDimension") instanceof StringTag dimensionTag ? Dimension.of(dimensionTag) : Dimension.OVERWORLD)
-                            .formatPosition(intX.getValue(), intY.getValue(), intZ.getValue()));
+                            .formatPosition(intX.getClonedValue(), intY.getClonedValue(), intZ.getClonedValue()));
                 }
             }
 
@@ -355,8 +355,8 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
 
                 if (playerTag.get("playerGameType") instanceof IntTag playerGameTypeTag
                         && dataTag.get("hardcore") instanceof ByteTag hardcoreTag) {
-                    boolean isHardcore = hardcoreTag.getValue() == 1;
-                    GameType gameType = GameType.of(playerGameTypeTag.getValue(), isHardcore);
+                    boolean isHardcore = hardcoreTag.getClonedValue() == 1;
+                    GameType gameType = GameType.of(playerGameTypeTag.getClonedValue(), isHardcore);
                     if (gameType != null) {
                         playerGameTypePane.setValue(gameType);
                         playerGameTypePane.valueProperty().addListener((o, oldValue, newValue) -> {
@@ -433,7 +433,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
 
     private void bindTagAndToggleButton(Tag tag, LineToggleButton toggleButton) {
         if (tag instanceof ByteTag byteTag) {
-            byte value = byteTag.getValue();
+            byte value = byteTag.getClonedValue();
             if (value == 0 || value == 1) {
                 toggleButton.setSelected(value == 1);
                 toggleButton.selectedProperty().addListener((o, oldValue, newValue) -> {
@@ -454,7 +454,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
     }
 
     private void bindTagAndTextField(IntTag intTag, JFXTextField jfxTextField) {
-        jfxTextField.setText(intTag.getValue().toString());
+        jfxTextField.setText(intTag.getClonedValue().toString());
 
         jfxTextField.textProperty().addListener((o, oldValue, newValue) -> {
             if (newValue != null) {
@@ -475,7 +475,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
     }
 
     private void bindTagAndTextField(FloatTag floatTag, JFXTextField jfxTextField) {
-        jfxTextField.setText(new DecimalFormat("0.#").format(floatTag.getValue()));
+        jfxTextField.setText(new DecimalFormat("0.#").format(floatTag.getClonedValue()));
 
         jfxTextField.textProperty().addListener((o, oldValue, newValue) -> {
             if (newValue != null) {
@@ -528,14 +528,14 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
 
         static Dimension of(Tag tag) {
             if (tag instanceof IntTag intTag) {
-                return switch (intTag.getValue()) {
+                return switch (intTag.getClonedValue()) {
                     case 0 -> OVERWORLD;
                     case -1 -> THE_NETHER;
                     case 1 -> THE_END;
                     default -> null;
                 };
             } else if (tag instanceof StringTag stringTag) {
-                String id = stringTag.getValue();
+                String id = stringTag.getClonedValue();
                 return switch (id) {
                     case "overworld", "minecraft:overworld" -> OVERWORLD;
                     case "the_nether", "minecraft:the_nether" -> THE_NETHER;
@@ -556,8 +556,8 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
 
                 if (x instanceof DoubleTag && y instanceof DoubleTag && z instanceof DoubleTag) {
                     return this == OVERWORLD
-                            ? String.format("(%.2f, %.2f, %.2f)", x.getValue(), y.getValue(), z.getValue())
-                            : String.format("%s (%.2f, %.2f, %.2f)", name, x.getValue(), y.getValue(), z.getValue());
+                            ? String.format("(%.2f, %.2f, %.2f)", x.getClonedValue(), y.getClonedValue(), z.getClonedValue())
+                            : String.format("%s (%.2f, %.2f, %.2f)", name, x.getClonedValue(), y.getClonedValue(), z.getClonedValue());
                 }
 
                 return null;
