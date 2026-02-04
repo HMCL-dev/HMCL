@@ -36,7 +36,6 @@ public abstract class LineButtonBase extends LineComponent {
     }
 
     public void fire() {
-        System.out.println("!!!!!!! ");
         fireEvent(new ActionEvent());
     }
 
