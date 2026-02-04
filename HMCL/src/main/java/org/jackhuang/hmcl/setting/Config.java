@@ -659,6 +659,21 @@ public final class Config extends ObservableSetting {
         this.disableAutoGameOptions.set(disableAutoGameOptions);
     }
 
+    @SerializedName("windowsHighPerformance")
+    private final BooleanProperty windowsHighPerformance = new SimpleBooleanProperty(false);
+
+    public BooleanProperty windowsHighPerformanceProperty() {
+        return windowsHighPerformance;
+    }
+
+    public boolean iswindowsHighPerformance() {
+        return windowsHighPerformance.get();
+    }
+
+    public void setwindowsHighPerformance(boolean windowsHighPerformance) {
+        this.windowsHighPerformance.set(windowsHighPerformance);
+    }
+
     // Accounts
 
     @SerializedName("authlibInjectorServers")
