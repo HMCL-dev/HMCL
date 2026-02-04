@@ -23,17 +23,12 @@ import javafx.scene.control.Label;
 import org.jackhuang.hmcl.ui.FXUtils;
 
 /// @author Glavo
-public final class LineTextPane extends LineComponentContainer {
+public final class LineTextPane extends LineComponent {
 
     private static final String DEFAULT_STYLE_CLASS = "line-text-pane";
 
     public LineTextPane() {
-        this.getStyleClass().addAll(LineComponent.DEFAULT_STYLE_CLASS, DEFAULT_STYLE_CLASS);
-    }
-
-    @Override
-    protected LineComponent getBean() {
-        return this;
+        this.getStyleClass().addAll(DEFAULT_STYLE_CLASS);
     }
 
     private StringProperty text;

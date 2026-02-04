@@ -22,16 +22,11 @@ import javafx.beans.property.ObjectPropertyBase;
 import javafx.scene.Node;
 
 /// @author Glavo
-public class LinePane extends LineComponentContainer {
+public class LinePane extends LineComponent {
     private static final String DEFAULT_STYLE_CLASS = "line-pane";
 
     public LinePane() {
-        this.getStyleClass().addAll(LineComponent.DEFAULT_STYLE_CLASS, LinePane.DEFAULT_STYLE_CLASS);
-    }
-
-    @Override
-    protected LineComponent getBean() {
-        return this;
+        this.getStyleClass().addAll(LinePane.DEFAULT_STYLE_CLASS);
     }
 
     private ObjectProperty<Node> right;

@@ -22,15 +22,14 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 
 /// @author Glavo
 public class LineButton extends LineButtonBase {
     private static final String DEFAULT_STYLE_CLASS = "line-button";
 
-    private static final int IDX_TRAILING_TEXT = LineComponentContainer.IDX_TRAILING;
-    private static final int IDX_TRAILING_ICON = IDX_TRAILING_TEXT + 1;
+    private static final int IDX_TRAILING_TEXT = IDX_TRAILING;
+    private static final int IDX_TRAILING_ICON = IDX_TRAILING + 1;
 
     public static LineButton createNavigationButton() {
         var button = new LineButton();
@@ -40,14 +39,7 @@ public class LineButton extends LineButtonBase {
 
     public LineButton() {
         getStyleClass().add(DEFAULT_STYLE_CLASS);
-
-        root.setMouseTransparent(true);
-
-        FXUtils.onClicked(ripplerContainer, this::fire);
-    }
-
-    public void fire() {
-        fireEvent(new ActionEvent());
+        container.setMouseTransparent(true);
     }
 
     private ObjectProperty<EventHandler<ActionEvent>> onAction;
@@ -108,10 +100,10 @@ public class LineButton extends LineButtonBase {
                             trailingTextLabel.getStyleClass().add("trailing-label");
                         }
                         trailingTextLabel.setText(message);
-                        root.setNode(IDX_TRAILING_TEXT, trailingTextLabel);
+                        setNode(IDX_TRAILING_TEXT, trailingTextLabel);
                     } else if (trailingTextLabel != null) {
                         trailingTextLabel.setText("");
-                        root.setNode(IDX_TRAILING_TEXT, null);
+                        setNode(IDX_TRAILING_TEXT, null);
                     }
                 }
             };
@@ -145,7 +137,7 @@ public class LineButton extends LineButtonBase {
 
                 @Override
                 protected void invalidated() {
-                    root.setNode(IDX_TRAILING_ICON, get());
+                    setNode(IDX_TRAILING_ICON, get());
                 }
             };
 

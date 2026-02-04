@@ -17,37 +17,31 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import javafx.geometry.Insets;
+import javafx.event.ActionEvent;
 import javafx.scene.Node;
-import javafx.scene.layout.StackPane;
+import org.jackhuang.hmcl.ui.FXUtils;
 
 /// @author Glavo
-public abstract class LineButtonBase extends StackPane implements LineComponent {
-
+public abstract class LineButtonBase extends LineComponent {
     private static final String DEFAULT_STYLE_CLASS = "line-button-base";
-
-    public static void setMargin(Node child, Insets value) {
-        LineComponentContainer.setMargin(child, value);
-    }
-
-    protected final LineComponentContainer root = new LineComponentContainer() {
-        @Override
-        protected LineComponent getBean() {
-            return LineButtonBase.this;
-        }
-    };
 
     protected final RipplerContainer ripplerContainer;
 
     public LineButtonBase() {
-        this.getStyleClass().addAll(LineComponent.DEFAULT_STYLE_CLASS, LineButtonBase.DEFAULT_STYLE_CLASS);
+        this.getStyleClass().addAll(LineButtonBase.DEFAULT_STYLE_CLASS);
 
-        this.ripplerContainer = new RipplerContainer(root);
-        this.getChildren().setAll(ripplerContainer);
+        this.ripplerContainer = new RipplerContainer(container);
+
+        FXUtils.onClicked(this, this::fire);
+    }
+
+    public void fire() {
+        System.out.println("!!!!!!! ");
+        fireEvent(new ActionEvent());
     }
 
     @Override
-    public LineComponentContainer getRoot() {
-        return root;
+    protected Node getNode() {
+        return ripplerContainer;
     }
 }

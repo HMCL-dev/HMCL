@@ -25,16 +25,22 @@ import org.jackhuang.hmcl.ui.FXUtils;
 public final class LineToggleButton extends LineButtonBase {
     private static final String DEFAULT_STYLE_CLASS = "line-toggle-button";
 
+    private final JFXToggleButton toggleButton;
+
     public LineToggleButton() {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
 
-        var toggleButton = new JFXToggleButton();
+        this.toggleButton = new JFXToggleButton();
         toggleButton.selectedProperty().bindBidirectional(selectedProperty());
-        // toggleButton.setSize(8);
+        toggleButton.setSize(8);
         FXUtils.setLimitHeight(toggleButton, 30);
-        root.setNode(LineComponentContainer.IDX_TRAILING, toggleButton);
+        setNode(IDX_TRAILING, toggleButton);
+    }
 
-        FXUtils.onClicked(ripplerContainer, toggleButton::fire);
+    @Override
+    public void fire() {
+        toggleButton.fire();
+        super.fire();
     }
 
     private final BooleanProperty selected = new SimpleBooleanProperty(this, "selected");
