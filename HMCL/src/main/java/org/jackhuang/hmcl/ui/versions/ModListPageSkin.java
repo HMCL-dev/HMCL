@@ -199,7 +199,6 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         {
             SpinnerPane center = new SpinnerPane();
             ComponentList.setVgrow(center, Priority.ALWAYS);
-            center.getStyleClass().add("large-spinner-pane");
             center.loadingProperty().bind(skinnable.loadingProperty());
 
             listView.setCellFactory(x -> new ModInfoListCell(listView));

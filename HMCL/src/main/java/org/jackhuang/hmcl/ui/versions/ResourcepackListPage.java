@@ -156,7 +156,6 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
 
             SpinnerPane center = new SpinnerPane();
             ComponentList.setVgrow(center, Priority.ALWAYS);
-            center.getStyleClass().add("large-spinner-pane");
             center.loadingProperty().bind(control.loadingProperty());
 
             listView.setCellFactory(x -> new ResourcepackListCell(listView, control));
