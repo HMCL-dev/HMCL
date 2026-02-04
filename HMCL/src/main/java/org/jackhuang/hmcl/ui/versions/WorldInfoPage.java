@@ -56,6 +56,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.Optional;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.formatDateTime;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -368,8 +369,16 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 playerGameTypePane.setDisable(worldManagePage.isReadOnly());
                 playerGameTypePane.setItems(GameType.items);
 
+                ByteTag hardcoreTag = Optional.ofNullable(dataTag.get("hardcore"))
+                        .filter(t -> t instanceof ByteTag)
+                        .map(t -> (ByteTag) t)
+                        .orElseGet(() -> {
+                            if (dataTag.at("difficulty_settings/hardcore") instanceof ByteTag b) return b;
+                            return null;
+                        });
+
                 if (playerTag.get("playerGameType") instanceof IntTag playerGameTypeTag
-                        && dataTag.get("hardcore") instanceof ByteTag hardcoreTag) {
+                        && hardcoreTag != null) {
                     boolean isHardcore = hardcoreTag.getClonedValue() == 1;
                     GameType gameType = GameType.of(playerGameTypeTag.getClonedValue(), isHardcore);
                     if (gameType != null) {
