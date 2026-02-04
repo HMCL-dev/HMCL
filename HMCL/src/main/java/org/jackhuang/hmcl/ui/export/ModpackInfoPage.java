@@ -419,10 +419,8 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                     hbox.setAlignment(Pos.CENTER_RIGHT);
                     borderPane.setBottom(hbox);
 
-                    JFXButton nextButton = FXUtils.newRaisedButton(i18n("wizard.next"));
+                    JFXButton nextButton = FXUtils.newRaisedButtonLarge(i18n("wizard.next"));
                     nextButton.setOnAction(e -> skinnable.onNext());
-                    nextButton.setPrefWidth(100);
-                    nextButton.setPrefHeight(40);
                     nextButton.disableProperty().bind(
                             // Disable nextButton if any text of JFXTextFields in validatingFields does not fulfill
                             // our requirement.

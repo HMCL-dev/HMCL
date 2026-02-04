@@ -178,7 +178,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         titleContainer = new StackPane();
         titleContainer.setPickOnBounds(false);
         titleContainer.getStyleClass().addAll("jfx-tool-bar", "radius-6");
-        BorderPane.setMargin(titleContainer, new Insets(8, 8, 2, 8));
+        BorderPane.setMargin(titleContainer, new Insets(8, 8, 0, 8));
 
         // Maybe, we can automatically identify whether the top part of the picture is light-coloured or dark when the title is transparent,
         // and decide whether the whole top bar should be rendered in white or black. TODO
@@ -250,7 +250,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             AnchorPane layer = new AnchorPane();
             layer.setPickOnBounds(false);
             layer.getChildren().add(buttonsContainer);
-            StackPane.setMargin(layer, new Insets(8, 8, 2, 0));
+            StackPane.setMargin(layer, new Insets(8, 8, 0, 0));
             AnchorPane.setTopAnchor(buttonsContainer, 0.0);
             AnchorPane.setRightAnchor(buttonsContainer, 0.0);
             buttonsContainerPlaceHolder.widthProperty().bind(buttonsContainer.widthProperty());

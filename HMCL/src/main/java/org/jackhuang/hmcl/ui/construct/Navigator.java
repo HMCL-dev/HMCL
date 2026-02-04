@@ -30,7 +30,6 @@ import javafx.scene.Node;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
-import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.Motion;
@@ -51,7 +50,7 @@ public class Navigator extends TransitionPane {
     private boolean initialized = false;
 
     {
-        StackPane.setMargin(this, new Insets(8));
+        StackPane.setMargin(this, new Insets(6, 8, 8, 8));
         getStyleClass().add("radius-6");
     }
 

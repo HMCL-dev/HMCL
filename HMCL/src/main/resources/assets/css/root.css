@@ -804,7 +804,13 @@
 
 .jfx-button-raised {
     -fx-background-color: -monet-primary;
+}
+
+.jfx-button-raised-large {
+    -fx-background-color: -monet-primary;
     -fx-background-radius: 6;
+    -fx-pref-height: 40;
+    -fx-pref-width: 100;
 }
 
 .jfx-button-raised .jfx-rippler {
