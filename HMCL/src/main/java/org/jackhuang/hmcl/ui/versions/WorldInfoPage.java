@@ -87,6 +87,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
 
     private void updateControls() {
         CompoundTag dataTag = (CompoundTag) levelDat.get("Data");
+        CompoundTag playerTag = world.getPlayerDat();
 
         ScrollPane scrollPane = new ScrollPane();
         scrollPane.setFitToHeight(true);
@@ -320,7 +321,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
             rootPane.getChildren().addAll(ComponentList.createComponentListTitle(i18n("world.info")), worldInfo);
         }
 
-        if (dataTag.get("Player") instanceof CompoundTag playerTag) {
+        if (playerTag != null) {
             ComponentList playerInfo = new ComponentList();
 
             var locationPane = new LineTextPane();

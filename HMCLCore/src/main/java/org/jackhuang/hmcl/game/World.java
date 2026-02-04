@@ -22,10 +22,7 @@ import org.jackhuang.hmcl.util.io.*;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 import tech.minediamond.micanbt.NBT.NBT;
-import tech.minediamond.micanbt.tag.ByteTag;
-import tech.minediamond.micanbt.tag.CompoundTag;
-import tech.minediamond.micanbt.tag.LongTag;
-import tech.minediamond.micanbt.tag.StringTag;
+import tech.minediamond.micanbt.tag.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -36,6 +33,7 @@ import java.nio.channels.OverlappingFileLockException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -46,6 +44,7 @@ public final class World {
     private String fileName;
     private CompoundTag levelData;
     private CompoundTag worldGenSettingsDat;
+    private CompoundTag playerDat;
     private Image icon;
     private Path levelDataPath;
 
@@ -93,6 +92,10 @@ public final class World {
 
     public CompoundTag getWorldGenSettingsDat() {
         return worldGenSettingsDat;
+    }
+
+    public CompoundTag getPlayerDat() {
+        return playerDat;
     }
 
     public long getLastPlayed() {
@@ -239,6 +242,21 @@ public final class World {
         Path wgsd = file.resolve("data\\minecraft\\world_gen_settings.dat");
         if (Files.exists(wgsd)) {
             this.worldGenSettingsDat = parseLevelDat(wgsd);
+        }
+
+        if (levelData.get("Player") instanceof CompoundTag playerTag) {
+            this.playerDat = playerTag;
+        } else if (levelData.at("Data/singleplayer_uuid") instanceof IntArrayTag uuidTag) {
+            int[] uuidValue = uuidTag.getClonedValue();
+            if (uuidValue.length == 4) {
+                long mostSigBits = ((long) uuidValue[0] << 32) | (uuidValue[1] & 0xFFFFFFFFL);
+                long leastSigBits = ((long) uuidValue[2] << 32) | (uuidValue[3] & 0xFFFFFFFFL);
+                String playerUUID = new UUID(mostSigBits, leastSigBits).toString();
+                Path playerDatPath = file.resolve("players\\data\\" + playerUUID + ".dat");
+                if (Files.exists(playerDatPath)) {
+                    this.playerDat = parseLevelDat(playerDatPath);
+                }
+            }
         }
     }
 
