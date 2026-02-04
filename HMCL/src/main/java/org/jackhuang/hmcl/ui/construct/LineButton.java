@@ -100,7 +100,6 @@ public class LineButton extends LineButtonBase {
                             trailingTextLabel = new Label();
                             trailingTextLabel.getStyleClass().add("trailing-label");
                             trailingTextLabel.setTextOverrun(OverrunStyle.CENTER_ELLIPSIS);
-                            trailingTextLabel.setMinWidth(50);
                         }
                         trailingTextLabel.setText(message);
                         setNode(IDX_TRAILING_TEXT, trailingTextLabel);
