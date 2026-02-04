@@ -157,21 +157,22 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             Path dest = runDirectory.resolve(subdirectoryName).resolve(result);
 
             Controllers.downloadTaskDialog(Task.composeAsync(() -> {
-                        var task = new FileDownloadTask(file.getFile().getUrl(), dest);
+                var task = new FileDownloadTask(file.getFile().getUrl(), dest);
                 task.setName(file.getName());
-                        return task;
+                return task;
             }).whenComplete(Schedulers.javafx(), exception -> {
-                        if (exception != null) {
-                            if (exception instanceof CancellationException) {
-                                Controllers.showToast(i18n("message.cancelled"));
-                            } else {
-                                Controllers.dialog(DownloadProviders.localizeErrorMessage(exception), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR);
-                            }
-                        } else {
-                            Controllers.showToast(i18n("install.success"));
-                        }
-                    }), i18n("message.downloading"), TaskCancellationAction.NORMAL,
-                    detailPrefix + "-[" + file.getName() + "]");
+                if (exception != null) {
+                    if (exception instanceof CancellationException) {
+                        Controllers.showToast(i18n("message.cancelled"));
+                    } else {
+                        Controllers.dialog(DownloadProviders.localizeErrorMessage(exception), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR);
+                    }
+                }
+                else {
+                    Controllers.showToast(i18n("install.success"));
+                }
+            }), i18n("message.downloading"), TaskCancellationAction.NORMAL,
+            detailPrefix + "-[" + file.getName() + "]");
             handler.resolve();
         }, file.getFile().getFilename(), new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid));
 
