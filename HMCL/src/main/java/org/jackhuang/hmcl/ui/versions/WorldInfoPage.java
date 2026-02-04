@@ -55,7 +55,6 @@ import java.text.DecimalFormat;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -329,7 +328,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
             {
                 locationPane.setTitle(i18n("world.info.player.location"));
                 Dimension dimension = Dimension.of(playerTag.get("Dimension"));
-                if (dimension != null && playerTag.get("Pos") instanceof ListTag posTag) {
+                if (dimension != null && playerTag.get("Pos") instanceof ListTag<?> posTag) {
                     locationPane.setText(dimension.formatPosition(posTag));
                 }
             }
@@ -572,7 +571,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
         }
 
         String formatPosition(Tag tag) {
-            if (tag instanceof ListTag listTag && listTag.size() == 3) {
+            if (tag instanceof ListTag<?> listTag && listTag.size() == 3) {
 
                 Tag x = listTag.get(0);
                 Tag y = listTag.get(1);

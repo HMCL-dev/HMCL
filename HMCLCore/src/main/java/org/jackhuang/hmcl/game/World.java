@@ -22,10 +22,13 @@ import org.jackhuang.hmcl.util.io.*;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 import tech.minediamond.micanbt.NBT.NBT;
+import tech.minediamond.micanbt.NBT.NBTWriter;
 import tech.minediamond.micanbt.tag.*;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
@@ -35,6 +38,7 @@ import java.nio.file.*;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Stream;
+import java.util.zip.GZIPOutputStream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -247,7 +251,7 @@ public final class World {
             this.worldGenSettingsDat = parseLevelDat(worldGenSettingsDatPath);
         }
 
-        if (levelData.get("Player") instanceof CompoundTag playerTag) {
+        if (levelData.at("Data/Player") instanceof CompoundTag playerTag) {
             this.playerDat = playerTag;
         } else if (levelData.at("Data/singleplayer_uuid") instanceof IntArrayTag uuidTag) {
             int[] uuidValue = uuidTag.getClonedValue();
@@ -394,11 +398,11 @@ public final class World {
         if (!Files.isDirectory(file))
             throw new IOException("Not a valid world directory");
 
-//        FileUtils.saveSafely(getLevelDatFile(), os -> {
-//            try (OutputStream gos = new GZIPOutputStream(os)) {
-//            }
-//        });
-        NBT.write(nbt, getLevelDatFile());
+        FileUtils.saveSafely(getLevelDatFile(), os -> {
+            try (OutputStream bos = new BufferedOutputStream(os); OutputStream gos = new GZIPOutputStream(bos)) {
+                NBTWriter.writeTag(gos, nbt);
+            }
+        });
     }
 
     private static CompoundTag parseLevelDat(Path path) throws IOException {
