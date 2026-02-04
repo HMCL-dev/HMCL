@@ -60,7 +60,6 @@ import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
 import org.jackhuang.hmcl.util.NativePatcher;
-import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -129,11 +128,6 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
     @Override
     public String getTitle() {
         return title;
-    }
-
-    @Override
-    public void cleanup(SettingsMap settings) {
-        settings.remove(libraryId);
     }
 
     private void onRefresh() {
