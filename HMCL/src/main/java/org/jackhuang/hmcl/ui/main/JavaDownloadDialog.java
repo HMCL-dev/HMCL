@@ -111,7 +111,7 @@ public final class JavaDownloadDialog extends StackPane {
         private final ToggleGroup toggleGroup = new ToggleGroup();
 
         DownloadMojangJava() {
-            setTitle(i18n("java.download"));
+            setTitle(i18n("java.download.title"));
             validProperty().bind(toggleGroup.selectedToggleProperty().isNotNull());
 
             VBox vbox = new VBox(16);
@@ -311,7 +311,7 @@ public final class JavaDownloadDialog extends StackPane {
             FXUtils.onChange(distributionBox.getSelectionModel().selectedItemProperty(),
                     it -> currentJavaVersionList.set(getJavaVersionList(it)));
 
-            setHeading(new Label(i18n("java.download")));
+            setHeading(new Label(i18n("java.download.title")));
             setBody(body);
             setActions(warningLabel, downloadButtonPane, cancelButton);
             if (platform.getOperatingSystem() == OperatingSystem.LINUX && platform.getArchitecture() == Architecture.RISCV64) {

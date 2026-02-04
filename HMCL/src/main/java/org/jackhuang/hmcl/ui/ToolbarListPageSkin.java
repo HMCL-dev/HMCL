@@ -62,7 +62,6 @@ public abstract class ToolbarListPageSkin<E, P extends ListPageBase<E>> extends 
         spinnerPane.loadingProperty().bind(skinnable.loadingProperty());
         spinnerPane.failedReasonProperty().bind(skinnable.failedReasonProperty());
         spinnerPane.onFailedActionProperty().bind(skinnable.onFailedActionProperty());
-        spinnerPane.getStyleClass().add("large-spinner-pane");
 
         ComponentList.setVgrow(spinnerPane, Priority.ALWAYS);
 

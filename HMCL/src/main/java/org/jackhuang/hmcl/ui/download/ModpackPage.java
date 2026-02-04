@@ -33,8 +33,6 @@ public abstract class ModpackPage extends SpinnerPane implements WizardPage {
     protected ModpackPage(WizardController controller) {
         this.controller = controller;
 
-        this.getStyleClass().add("large-spinner-pane");
-
         VBox borderPane = new VBox();
         borderPane.setAlignment(Pos.CENTER);
         FXUtils.setLimitWidth(borderPane, 500);
