@@ -1080,6 +1080,10 @@
     -fx-border-width: 0;
 }
 
+.options-sublist-wrapper .expand-icon .svg {
+    -fx-fill: -monet-on-surface-variant;
+}
+
 /*******************************************************************************
 *                                                                              *
 * JFX Toggle Button                                                            *

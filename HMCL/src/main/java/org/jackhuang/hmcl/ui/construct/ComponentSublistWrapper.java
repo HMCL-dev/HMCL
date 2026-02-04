@@ -45,7 +45,10 @@ final class ComponentSublistWrapper extends VBox implements NoPaddingComponent {
     ComponentSublistWrapper(ComponentSublist sublist) {
         boolean noPadding = !sublist.hasComponentPadding();
 
+        this.getStyleClass().add("options-sublist-wrapper");
+
         Node expandIcon = SVG.KEYBOARD_ARROW_DOWN.createIcon(20);
+        expandIcon.getStyleClass().add("expand-icon");
         expandIcon.setMouseTransparent(true);
 
         VBox labelVBox = new VBox();
