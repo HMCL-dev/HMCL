@@ -507,6 +507,7 @@ public final class TaskListPane extends StackPane {
             progress.set(0.);
         }
     }
+
     public void refresh() {
         if (executor == null) return;
         Platform.runLater(() -> {

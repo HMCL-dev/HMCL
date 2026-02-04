@@ -158,9 +158,9 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
             Controllers.downloadTaskDialog(Task.composeAsync(() -> {
                         var task = new FileDownloadTask(file.getFile().getUrl(), dest);
-                        task.setName(file.getName());
+                task.setName(file.getName());
                         return task;
-                    }).whenComplete(Schedulers.javafx(), exception -> {
+            }).whenComplete(Schedulers.javafx(), exception -> {
                         if (exception != null) {
                             if (exception instanceof CancellationException) {
                                 Controllers.showToast(i18n("message.cancelled"));

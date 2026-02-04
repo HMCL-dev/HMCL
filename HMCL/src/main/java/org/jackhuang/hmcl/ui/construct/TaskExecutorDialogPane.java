@@ -176,6 +176,7 @@ public class TaskExecutorDialogPane extends BorderPane {
         btnBackground.setVisible(action != null);
         btnBackground.setManaged(action != null);
     }
+
     public void refreshTaskList() {
         taskListPane.refresh();
     }

@@ -37,6 +37,7 @@ import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 
+import java.util.Locale;
 import java.util.concurrent.CancellationException;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -67,7 +68,7 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
         tabHeader.select(runningTab);
 
         AdvancedListBox sideBar = new AdvancedListBox()
-                .startCategory(i18n("task.manage").toUpperCase())
+                .startCategory(i18n("task.manage").toUpperCase(Locale.ROOT))
                 .addNavigationDrawerTab(tabHeader, runningTab, i18n("task.running"), SVG.ARROW_FORWARD)
                 .addNavigationDrawerTab(tabHeader, completedTab, i18n("task.completed"), SVG.CHECK)
                 .addNavigationDrawerTab(tabHeader, failedTab, i18n("task.failed"), SVG.CLOSE)
