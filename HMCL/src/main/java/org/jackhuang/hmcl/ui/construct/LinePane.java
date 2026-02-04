@@ -26,7 +26,7 @@ public class LinePane extends LineComponent {
     private static final String DEFAULT_STYLE_CLASS = "line-pane";
 
     public LinePane() {
-        this.getStyleClass().addAll(LinePane.DEFAULT_STYLE_CLASS);
+        this.getStyleClass().add(DEFAULT_STYLE_CLASS);
     }
 
     private ObjectProperty<Node> right;
