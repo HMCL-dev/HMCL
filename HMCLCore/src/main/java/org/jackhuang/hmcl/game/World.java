@@ -118,11 +118,10 @@ public final class World {
     }
 
     public boolean isLargeBiomes() {
-        CompoundTag data = (CompoundTag) levelData.get("Data");
-        if (data.get("generatorName") instanceof StringTag generatorNameTag) { //Valid before 1.16
+        if (levelData.at("Data/generatorName") instanceof StringTag generatorNameTag) { //Valid before 1.16
             return "largeBiomes".equals(generatorNameTag.getClonedValue());
         } else {
-            if (data.at("WorldGenSettings/dimensions/minecraft:overworld/generator") instanceof CompoundTag generatorTag) {
+            if (levelData.at("Data/WorldGenSettings/dimensions/minecraft:overworld/generator") instanceof CompoundTag generatorTag) {
                 if (generatorTag.at("biome_source/large_biomes") instanceof ByteTag largeBiomesTag) { //Valid between 1.16 and 1.16.2
                     return largeBiomesTag.getClonedValue() == (byte) 1;
                 } else if (generatorTag.get("settings") instanceof StringTag settingsTag) { //Valid after 1.16.2

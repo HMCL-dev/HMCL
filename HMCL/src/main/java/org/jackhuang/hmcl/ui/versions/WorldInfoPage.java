@@ -286,6 +286,17 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                     } else {
                         difficultyButton.setDisable(true);
                     }
+                } else if (dataTag.at("difficulty_settings/difficulty") instanceof StringTag difficultyTag) {
+                    Difficulty difficulty = Difficulty.of(difficultyTag.getClonedValue());
+                    if (difficulty != null) {
+                        difficultyButton.setValue(difficulty);
+                        difficultyButton.valueProperty().addListener((o, oldValue, newValue) -> {
+                            if (newValue != null) {
+                                difficultyTag.setValue(newValue.name().toLowerCase(Locale.ROOT));
+                                saveLevelDat();
+                            }
+                        });
+                    }
                 } else {
                     difficultyButton.setDisable(true);
                 }
@@ -295,8 +306,11 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
             {
                 difficultyLockPane.setTitle(i18n("world.info.difficulty_lock"));
                 difficultyLockPane.setDisable(isReadOnly);
-
-                bindTagAndToggleButton(dataTag.get("DifficultyLocked"), difficultyLockPane);
+                if (dataTag.get("DifficultyLocked") instanceof ByteTag difficultyLockedTag) {
+                    bindTagAndToggleButton(difficultyLockedTag, difficultyLockPane);
+                } else {
+                    bindTagAndToggleButton(dataTag.at("difficulty_settings/locked"), difficultyLockPane);
+                }
             }
 
             worldInfo.getContent().setAll(
@@ -597,6 +611,15 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
 
         static Difficulty of(int d) {
             return (d >= 0 && d < items.size()) ? items.get(d) : null;
+        }
+
+        static Difficulty of(String name) {
+            for (Difficulty item : items) {
+                if (item.name().toLowerCase(Locale.ROOT).equals(name)) {
+                    return item;
+                }
+            }
+            return null;
         }
 
         @Override
