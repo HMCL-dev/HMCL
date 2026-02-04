@@ -1348,6 +1348,10 @@
     -fx-background-color: -fixed-log-info;
 }
 
+.log-window-list-cell {
+    -fx-background-color: -fixed-log-info;
+}
+
 .log-window-list-cell:debug {
     -fx-text-fill: -fixed-log-text-fill;
     -fx-background-color: -fixed-log-debug;
