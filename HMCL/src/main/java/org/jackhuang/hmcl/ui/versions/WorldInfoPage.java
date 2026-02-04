@@ -513,7 +513,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
     private void saveLevelDat() {
         LOG.info("Saving level.dat of world " + world.getWorldName());
         try {
-            this.world.writeLevelDat(levelDat);
+            this.world.writeWorldDat();
         } catch (IOException e) {
             LOG.warning("Failed to save level.dat of world " + world.getWorldName(), e);
         }

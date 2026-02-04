@@ -43,10 +43,12 @@ public final class World {
     private final Path file;
     private String fileName;
     private CompoundTag levelData;
-    private CompoundTag worldGenSettingsDat;
-    private CompoundTag playerDat;
-    private Image icon;
     private Path levelDataPath;
+    private CompoundTag worldGenSettingsDat;
+    private Path worldGenSettingsDatPath;
+    private CompoundTag playerDat;
+    private Path playerDatPath;
+    private Image icon;
 
     public World(Path file) throws IOException {
         this.file = file;
@@ -239,9 +241,10 @@ public final class World {
 //
 //        }
 
-        Path wgsd = file.resolve("data\\minecraft\\world_gen_settings.dat");
-        if (Files.exists(wgsd)) {
-            this.worldGenSettingsDat = parseLevelDat(wgsd);
+        Path worldGenSettingsDatPath = file.resolve("data\\minecraft\\world_gen_settings.dat");
+        if (Files.exists(worldGenSettingsDatPath)) {
+            this.worldGenSettingsDatPath = worldGenSettingsDatPath;
+            this.worldGenSettingsDat = parseLevelDat(worldGenSettingsDatPath);
         }
 
         if (levelData.get("Player") instanceof CompoundTag playerTag) {
@@ -255,6 +258,7 @@ public final class World {
                 Path playerDatPath = file.resolve("players\\data\\" + playerUUID + ".dat");
                 if (Files.exists(playerDatPath)) {
                     this.playerDat = parseLevelDat(playerDatPath);
+                    this.playerDatPath = playerDatPath;
                 }
             }
         }
@@ -368,6 +372,21 @@ public final class World {
         } catch (IOException e) {
             IOUtils.closeQuietly(channel);
             throw new WorldLockedException(e);
+        }
+    }
+
+    public void writeWorldDat() throws IOException {
+        if (!Files.isDirectory(file))
+            throw new IOException("Not a valid world directory");
+
+        NBT.write(this.levelData, getLevelDatFile());
+
+        if (worldGenSettingsDatPath != null) {
+            NBT.write(this.worldGenSettingsDat, worldGenSettingsDatPath);
+        }
+
+        if (playerDatPath != null) {
+            NBT.write(this.playerDat, playerDatPath);
         }
     }
 
