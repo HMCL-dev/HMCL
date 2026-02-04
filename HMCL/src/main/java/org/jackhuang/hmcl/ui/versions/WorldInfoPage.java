@@ -55,6 +55,7 @@ import java.text.DecimalFormat;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -259,12 +260,11 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 generateFeaturesButton.setTitle(i18n("world.info.generate_features"));
                 generateFeaturesButton.setDisable(isReadOnly);
 
-                // generate_features was valid after 20w20a and MapFeatures was before that
-                if (dataTag.get("WorldGenSettings") instanceof CompoundTag worldGenSettings) {
+                if (dataTag.get("WorldGenSettings") instanceof CompoundTag worldGenSettings) { // Valid between 20w20a and 26.1 snapshot 6
                     bindTagAndToggleButton(worldGenSettings.get("generate_features"), generateFeaturesButton);
-                } else if (dataTag.get("MapFeatures") instanceof ByteTag mapFeatures) {
+                } else if (dataTag.get("MapFeatures") instanceof ByteTag mapFeatures) { // Valid before 20w20a
                     bindTagAndToggleButton(mapFeatures, generateFeaturesButton);
-                } else if (world.getWorldGenSettingsDat() != null && world.getWorldGenSettingsDat().get("data") instanceof CompoundTag worldGenSettingsDataTag) {
+                } else if (world.getWorldGenSettingsDat() != null && world.getWorldGenSettingsDat().get("data") instanceof CompoundTag worldGenSettingsDataTag) { // Valid after 26.1 snapshot 6
                     bindTagAndToggleButton(worldGenSettingsDataTag.get("generate_structures"), generateFeaturesButton);
                 }
             }
@@ -275,7 +275,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 difficultyButton.setDisable(worldManagePage.isReadOnly());
                 difficultyButton.setItems(Difficulty.items);
 
-                if (dataTag.get("Difficulty") instanceof ByteTag difficultyTag) {
+                if (dataTag.get("Difficulty") instanceof ByteTag difficultyTag) { //Valid before 26.1 snapshot 6
                     Difficulty difficulty = Difficulty.of(difficultyTag.getClonedValue());
                     if (difficulty != null) {
                         difficultyButton.setValue(difficulty);
@@ -288,13 +288,13 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                     } else {
                         difficultyButton.setDisable(true);
                     }
-                } else if (dataTag.at("difficulty_settings/difficulty") instanceof StringTag difficultyTag) {
+                } else if (dataTag.at("difficulty_settings/difficulty") instanceof StringTag difficultyTag) { // Valid after 26.1 snapshot 6
                     Difficulty difficulty = Difficulty.of(difficultyTag.getClonedValue());
                     if (difficulty != null) {
                         difficultyButton.setValue(difficulty);
                         difficultyButton.valueProperty().addListener((o, oldValue, newValue) -> {
                             if (newValue != null) {
-                                difficultyTag.setValue(newValue.name().toLowerCase(Locale.ROOT));
+                                difficultyTag.setValue(newValue.getTagStringValue());
                                 saveLevelDat();
                             }
                         });
@@ -630,6 +630,10 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 }
             }
             return null;
+        }
+
+        String getTagStringValue() {
+            return this.name().toLowerCase(Locale.ROOT);
         }
 
         @Override
