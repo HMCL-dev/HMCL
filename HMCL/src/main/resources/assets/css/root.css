@@ -1700,13 +1700,13 @@
 }
 
 .content-background {
-    -fx-background-color: -monet-surface-transparent-50;
+    -fx-background-color: -monet-surface-transparent-80;
     -fx-background-radius: 6;
     -fx-border-radius: 6;
 }
 
 .gray-background {
-    -fx-background-color: -monet-surface-transparent-50;
+    -fx-background-color: -monet-surface-transparent-80;
 }
 
 .transparent-background {
