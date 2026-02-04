@@ -28,18 +28,17 @@
 English ([Standard](README.md), [uʍoᗡ ǝpᴉsd∩](README_en_Qabs.md)) | **中文** ([简体](README_zh.md), [繁體](README_zh_Hant.md), **文言**) | [日本語](README_ja.md) | [español](README_es.md) | [русский](README_ru.md) | [українська](README_uk.md)
 <!-- #END LANGUAGE_SWITCHER -->
 
-### 概說
+### 概敘
 
-HMCL 者，開源之礦藝啟者也。能理改囊，善於遊戲之自定，且自動安裝諸如 Forge、NeoForge、Cleanroom、Fabric、Quilt、LiteLoader、OptiFine 諸改囊，亦可製作改囊集，界面亦可隨意更易。
+HMCL 者，開源之礦藝啟器也。善理改囊，可自定遊戲，自動裝設 Forge、NeoForge、Cleanroom、Fabric、Quilt、LiteLoader、OptiFine 諸改囊，亦能制改囊集，界面隨心易之。  
 
-HMCL 跨域甚廣。無論 Windows、Linux、macOS、FreeBSD 諸常見械綱，抑或 x86、ARM、RISC-V、MIPS、LoongArch 諸大構處理器，皆可運行。
-君可憑此，於諸算機間自如遊戲。
+HMCL 跨域廣矣。Windows、Linux、macOS、FreeBSD 諸常見械綱，x86、ARM、RISC-V、MIPS、LoongArch 諸算器架構，皆可運行。憑此器，可遊《礦藝》於諸機之間，無礙也。  
 
-若欲詳知 HMCL 於諸算機之支援，請觀[此表](PLATFORM_zh_Hant.md)。
+欲知 HMCL 所支平臺，詳觀[此表](PLATFORM_zh_Hant.md)。
 
 ## 下載
 
-君可自此數途引 HMCL：
+可從下述諸途得 HMCL：
 
 - [HMCL 官方網站](https://hmcl.huangyuhui.net/download)
 - [GitHub Release](https://github.com/HMCL-dev/HMCL/releases)
@@ -47,25 +46,24 @@ HMCL 跨域甚廣。無論 Windows、Linux、macOS、FreeBSD 諸常見械綱，�
 
 ## 與貢
 
-HMCL 為社群所驅之開源計畫，迎諸君貢獻其碼，或建言於此。
+HMCL 乃社群共驅之開源項目，迎諸君獻碼或建言。
 
-君可由此數途參與 HMCL 之開發：
+參與之道如下：
 
-- 於 GitHub 上[創建 Issue](https://github.com/HMCL-dev/HMCL/issues/new/choose)，以報告謬誤，或請求功能。
-- 於 GitHub 上 Fork 倉庫，並[提交 Pull Request](https://github.com/HMCL-dev/HMCL/compare)，以貢獻其碼。
+- 於 GitHub 上[創建 Issue](https://github.com/HMCL-dev/HMCL/issues/new/choose)，以報謬誤或求功能。
+- 於 GitHub 上 Fork 倉庫，並[提交 Pull Request](https://github.com/HMCL-dev/HMCL/compare)，以貢代碼。
 
-參與貢獻之前，請閱[貢獻指南](./Contributing_zh_Hant.md)，其中載有如下：
+貢獻之前，請閱[貢獻指南](./Contributing_zh_Hant.md)，中含：
 
 - [如何自源碼構建並運行 HMCL](./Contributing_zh_Hant.md#構建-hmcl)
 - [以調試選項調整 HMCL 之行為](./Contributing_zh_Hant.md#除錯選項)
 
 ## 貢獻者
 
-自公元二〇一五年以來，參與 HMCL 者已逾百十，謝其勤勞！
+自乙未年（2015）始，百十余人參與 HMCL，謝其勤勞！  
 
 [![Contributors](https://contrib.rocks/image?repo=HMCL-dev/HMCL)](https://github.com/HMCL-dev/HMCL/graphs/contributors)
 
 ## 開源之約
 
 詳見 [README_zh_Hant.md](README_zh_Hant.md#開源協議)。
-
