@@ -249,11 +249,11 @@ public final class LauncherHelper {
                         i18n("message.doing"),
                         () -> launchingLatch.getCount() == 0, 6.95
                 ).withStage("launch.state.waiting_launching"))
-                .withStagesHint(Lang.immutableListOf(
-                        "launch.state.java",
-                        "launch.state.dependencies",
-                        "launch.state.logging_in",
-                        "launch.state.waiting_launching"))
+                .withMultiStagesHint(List.of(
+                        List.of("launch.state.java"),
+                        List.of("launch.state.dependencies", "hmcl.install.assets", "hmcl.install.libraries", "hmcl.modpack.download"),
+                        List.of("launch.state.logging_in"),
+                        List.of("launch.state.waiting_launching")))
                 .executor();
         launchingStepsPane.setExecutor(executor, false);
         executor.addTaskListener(new TaskListener() {

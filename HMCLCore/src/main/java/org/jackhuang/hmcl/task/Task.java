@@ -837,13 +837,17 @@ public abstract class Task<T> {
     }
 
     public Task<T> withStagesHint(List<String> stages) {
+        return withMultiStagesHint(stages.stream().map(List::of).toList());
+    }
+
+    public Task<T> withMultiStagesHint(List<List<String>> stages) {
         return new StagesHintTask(stages);
     }
 
     public class StagesHintTask extends Task<T> {
-        private final List<String> stages;
+        private final List<List<String>> stages;
 
-        public StagesHintTask(List<String> stages) {
+        public StagesHintTask(List<List<String>> stages) {
             this.stages = stages;
         }
 
@@ -857,7 +861,7 @@ public abstract class Task<T> {
             setResult(Task.this.getResult());
         }
 
-        public List<String> getStages() {
+        public List<List<String>> getStages() {
             return stages;
         }
     }

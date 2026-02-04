@@ -76,6 +76,7 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
@@ -106,13 +107,21 @@ public final class TaskListPane extends StackPane {
     }
 
     @FXThread
-    private void addStages(@NotNull Collection<String> stages) {
-        for (String stage : stages) {
-            stageNodes.computeIfAbsent(stage, s -> {
-                StageNode node = new StageNode(stage);
+    private void addStages(@NotNull Collection<List<String>> stageGroups) {
+        for (List<String> group : stageGroups) {
+            if (group == null || group.isEmpty()) continue;
+
+            String primaryStage = group.get(0);
+            StageNode node = stageNodes.get(primaryStage);
+
+            if (node == null) {
+                node = new StageNode(primaryStage);
+                stageNodes.put(primaryStage, node);
                 listView.getItems().add(node);
-                return node;
-            });
+            }
+            for (String stage : group) {
+                stageNodes.put(stage, node);
+            }
         }
     }
 
@@ -129,7 +138,8 @@ public final class TaskListPane extends StackPane {
                 Platform.runLater(() -> {
                     stageNodes.clear();
                     listView.getItems().clear();
-                    addStages(executor.getStages());
+                    List<List<String>> groupedStages = executor.getStages();
+                    addStages(groupedStages);
                     updateProgressNodePadding();
                 });
             }
@@ -394,6 +404,8 @@ public final class TaskListPane extends StackPane {
     }
 
     private static final class StageNode extends Node {
+        private int runningTasksCount = 0;
+
         private enum Status {
             WAITING(SVG.MORE_HORIZ),
             RUNNING(SVG.ARROW_FORWARD),
@@ -454,17 +466,24 @@ public final class TaskListPane extends StackPane {
         }
 
         private void begin() {
-            if (status.get() == Status.WAITING) {
+            runningTasksCount++;
+            if (status.get() == Status.WAITING || status.get() == Status.SUCCESS) {
                 status.set(Status.RUNNING);
             }
         }
 
-        public void fail() {
-            status.set(Status.FAILED);
+        public void succeed() {
+            int remaining = runningTasksCount - 1;
+            runningTasksCount = Math.max(0, remaining);
+
+            if (runningTasksCount == 0) {
+                status.set(Status.SUCCESS);
+            }
         }
 
-        public void succeed() {
-            status.set(Status.SUCCESS);
+        public void fail() {
+            runningTasksCount = Math.max(0, runningTasksCount - 1);
+            status.set(Status.FAILED);
         }
 
         public void count() {

@@ -26,11 +26,16 @@ public abstract class TaskExecutor {
     protected final List<TaskListener> taskListeners = new ArrayList<>(0);
     protected volatile boolean cancelled = false;
     protected Exception exception;
-    private final List<String> stages;
+
+    private final List<List<String>> stages;
 
     public TaskExecutor(Task<?> task) {
         this.firstTask = task;
-        this.stages = task instanceof Task<?>.StagesHintTask hintTask ? hintTask.getStages() : Collections.emptyList();
+        if (task instanceof Task<?>.StagesHintTask hintTask) {
+            this.stages = hintTask.getStages();
+        } else {
+            this.stages = Collections.emptyList();
+        }
     }
 
     public void addTaskListener(TaskListener taskListener) {
@@ -59,7 +64,7 @@ public abstract class TaskExecutor {
         return cancelled;
     }
 
-    public List<String> getStages() {
+    public List<List<String>> getStages() {
         return stages;
     }
 }
