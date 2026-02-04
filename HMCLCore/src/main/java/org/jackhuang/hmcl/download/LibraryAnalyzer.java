@@ -166,6 +166,12 @@ public final class LibraryAnalyzer implements Iterable<LibraryAnalyzer.LibraryMa
         return new LibraryAnalyzer(version, libraries);
     }
 
+    public Set<LibraryType> getLibraries() {
+        return Arrays.stream(LibraryType.values())
+                .filter(this::has)
+                .collect(Collectors.toSet());
+    }
+
     public static boolean isModded(VersionProvider provider, Version version) {
         Version resolvedVersion = version.resolve(provider);
         String mainClass = resolvedVersion.getMainClass();
