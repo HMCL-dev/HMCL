@@ -666,11 +666,11 @@ public final class Config extends ObservableSetting {
         return windowsHighPerformance;
     }
 
-    public boolean iswindowsHighPerformance() {
+    public boolean isWindowsHighPerformance() {
         return windowsHighPerformance.get();
     }
 
-    public void setwindowsHighPerformance(boolean windowsHighPerformance) {
+    public void setWindowsHighPerformance(boolean windowsHighPerformance) {
         this.windowsHighPerformance.set(windowsHighPerformance);
     }
 
