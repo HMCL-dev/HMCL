@@ -84,7 +84,7 @@ public final class Versions {
                     i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);
             return;
         }
-        Controllers.taskDialog(
+        Controllers.downloadTaskDialog(
                 new FileDownloadTask(downloadURL, modpack)
                         .whenComplete(Schedulers.javafx(), e -> {
                             if (e == null) {
@@ -105,7 +105,8 @@ public final class Versions {
                             }
                         }).executor(true),
                 i18n("message.downloading"),
-                TaskCancellationAction.NORMAL
+                TaskCancellationAction.NORMAL,
+                "安装整合包-[" + modpack.getFileName() + "]"
         );
     }
 

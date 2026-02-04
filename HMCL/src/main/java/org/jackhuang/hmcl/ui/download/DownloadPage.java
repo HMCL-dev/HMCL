@@ -134,24 +134,44 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
         Path runDirectory = profile.getRepository().hasVersion(version) ? profile.getRepository().getRunDirectory(version) : profile.getRepository().getBaseDirectory();
 
+        String detailPrefix;
+        switch (subdirectoryName) {
+            case "mods":
+                detailPrefix = "安装模组";
+                break;
+            case "resourcepacks":
+                detailPrefix = "安装资源包";
+                break;
+            case "shaderpacks":
+                detailPrefix = "安装光影";
+                break;
+            case "saves":
+                detailPrefix = "安装世界";
+                break;
+            default:
+                detailPrefix = "下载";
+                break;
+        }
+
         Controllers.prompt(i18n("archive.file.name"), (result, handler) -> {
             Path dest = runDirectory.resolve(subdirectoryName).resolve(result);
 
-            Controllers.taskDialog(Task.composeAsync(() -> {
-                var task = new FileDownloadTask(file.getFile().getUrl(), dest);
-                task.setName(file.getName());
-                return task;
-            }).whenComplete(Schedulers.javafx(), exception -> {
-                if (exception != null) {
-                    if (exception instanceof CancellationException) {
-                        Controllers.showToast(i18n("message.cancelled"));
-                    } else {
-                        Controllers.dialog(DownloadProviders.localizeErrorMessage(exception), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR);
-                    }
-                } else {
-                    Controllers.showToast(i18n("install.success"));
-                }
-            }), i18n("message.downloading"), TaskCancellationAction.NORMAL);
+            Controllers.downloadTaskDialog(Task.composeAsync(() -> {
+                        var task = new FileDownloadTask(file.getFile().getUrl(), dest);
+                        task.setName(file.getName());
+                        return task;
+                    }).whenComplete(Schedulers.javafx(), exception -> {
+                        if (exception != null) {
+                            if (exception instanceof CancellationException) {
+                                Controllers.showToast(i18n("message.cancelled"));
+                            } else {
+                                Controllers.dialog(DownloadProviders.localizeErrorMessage(exception), i18n("install.failed.downloading"), MessageDialogPane.MessageType.ERROR);
+                            }
+                        } else {
+                            Controllers.showToast(i18n("install.success"));
+                        }
+                    }), i18n("message.downloading"), TaskCancellationAction.NORMAL,
+                    detailPrefix + "-[" + file.getName() + "]");
             handler.resolve();
         }, file.getFile().getFilename(), new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid));
 
@@ -300,6 +320,9 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             settings.put("title", i18n("install.new_game.installation"));
             settings.put("success_message", i18n("install.success"));
             settings.put(FailureCallback.KEY, (settings1, exception, next) -> UpdateInstallerWizardProvider.alertFailureMessage(exception, next));
+
+            settings.put("task_detail", "安装游戏-[" + settings.get("name") + "]");
+            settings.put("backgroundable", true);
 
             return finishVersionDownloadingAsync(settings);
         }

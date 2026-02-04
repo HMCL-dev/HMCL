@@ -45,6 +45,7 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.nbt.NBTEditorPage;
 import org.jackhuang.hmcl.ui.nbt.NBTFileType;
+import org.jackhuang.hmcl.ui.task.TaskCenterPage;
 import org.jackhuang.hmcl.ui.versions.GameAdvancedListItem;
 import org.jackhuang.hmcl.ui.versions.GameListPopupMenu;
 import org.jackhuang.hmcl.ui.versions.Versions;
@@ -191,6 +192,15 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                 FXUtils.prepareOnMouseEnter(downloadItem, Controllers::prepareDownloadPage);
             }
 
+            AdvancedListItem taskManagerItem = new AdvancedListItem();
+            taskManagerItem.setLeftGraphic(wrap(SVG.LIST)); //SVG待更换
+            taskManagerItem.setActionButtonVisible(false);
+            taskManagerItem.setTitle(i18n("task.manage"));
+            taskManagerItem.setOnAction(e -> {
+                Controllers.navigate(new TaskCenterPage());
+            });
+
+
             // fifth item in left sidebar
             AdvancedListItem launcherSettingsItem = new AdvancedListItem();
             launcherSettingsItem.setLeftGraphic(wrap(SVG.SETTINGS));
@@ -236,6 +246,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                     .add(gameListItem)
                     .add(gameItem)
                     .add(downloadItem)
+                    .add(taskManagerItem)
                     .startCategory(i18n("settings.launcher.general").toUpperCase(Locale.ROOT))
                     .add(launcherSettingsItem)
                     .add(terracottaItem)

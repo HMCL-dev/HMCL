@@ -142,6 +142,12 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
             }
         });
 
+        Object name = settings.get("name");
+        if (name != null) {
+            settings.put("task_detail", "安装整合包-[" + name + "]");
+        }
+        settings.put("backgroundable", true);
+
         return finishModpackInstallingAsync(settings);
     }
 

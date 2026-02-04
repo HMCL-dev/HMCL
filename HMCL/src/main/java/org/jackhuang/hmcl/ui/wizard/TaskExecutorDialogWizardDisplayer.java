@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.wizard;
 
 import javafx.beans.property.StringProperty;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.task.TaskCenter;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -58,6 +59,8 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
         }
 
         runInFX(() -> {
+            boolean backgroundable = Boolean.TRUE.equals(settings.get("backgroundable"));
+
             TaskExecutor executor = task.executor(new TaskListener() {
                 @Override
                 public void onStop(boolean success, TaskExecutor executor) {
@@ -84,13 +87,32 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
                             else if (!settings.containsKey("forbid_failure_message"))
                                 Controllers.dialog(appendix, i18n("wizard.failed"), MessageType.ERROR, () -> onEnd());
                         }
-
                     });
                 }
             });
+
             pane.setExecutor(executor);
+
+            if (backgroundable) {
+                String detail = settings.get("task_detail").toString();
+                if (detail == null) {
+                    detail = pane.getTitle();
+                }
+
+                String finalDetail = detail;
+                pane.setBackgroundAction(() -> {
+                    pane.fireEvent(new DialogCloseEvent());
+                    TaskCenter.getInstance().enqueue(executor, pane.getTitle(), finalDetail);
+                });
+
+                TaskCenter.getInstance().enqueue(executor, pane.getTitle(), detail);
+            }
+
             Controllers.dialog(pane);
-            executor.start();
+
+            if (!backgroundable) {
+                executor.start();
+            }
         });
     }
 }
