@@ -1704,6 +1704,10 @@
     -fx-background-color: -monet-surface-transparent-50;
 }
 
+.transparent-background {
+    -fx-background-color: transparent;
+}
+
 /*******************************************************************************
  *                                                                             *
  * Scroll Bar			                                                       *

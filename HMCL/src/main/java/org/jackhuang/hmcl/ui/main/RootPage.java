@@ -79,9 +79,6 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
         Profile profile = Profiles.getSelectedProfile();
         if (profile != null && profile.getRepository().isLoaded())
             onRefreshedVersions(Profiles.selectedProfileProperty().get().getRepository());
-
-        getStyleClass().remove("gray-background");
-        getLeft().getStyleClass().add("gray-background");
     }
 
     @Override
@@ -247,6 +244,8 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             // the root page, with the sidebar in left, navigator in center.
             setLeft(sideBar);
             setCenter(getSkinnable().getMainPage());
+
+            getSkinnable().getCenter().getStyleClass().remove("gray-background");
         }
 
         public void showGameListPopupMenu(AdvancedListItem gameListItem) {

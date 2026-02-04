@@ -41,7 +41,7 @@ public interface DecoratorPage extends Refreshable {
     }
 
     default void onDecoratorPageNavigating(Navigator.NavigationEvent event) {
-        // ((Node) this).getStyleClass().add("content-background");
+        ((Node) this).getStyleClass().add("content-background");
     }
 
     class State {

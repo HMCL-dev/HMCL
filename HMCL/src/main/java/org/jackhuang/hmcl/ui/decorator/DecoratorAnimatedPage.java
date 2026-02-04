@@ -33,7 +33,7 @@ public class DecoratorAnimatedPage extends Control {
     protected final StackPane center = new StackPane();
 
     {
-        getStyleClass().add("gray-background");
+        getStyleClass().add("transparent-background");
     }
 
     protected void setLeft(Node... children) {
@@ -64,12 +64,12 @@ public class DecoratorAnimatedPage extends Control {
 
             BorderPane pane = new BorderPane();
 
-            control.left.getStyleClass().addAll("radius-6");
+            control.left.getStyleClass().addAll("radius-6", "gray-background");
             pane.setLeft(control.left);
             BorderPane.setMargin(control.left, new Insets(0, 4, 0, 0));
             FXUtils.setLimitWidth(control.left, 200);
 
-            control.center.getStyleClass().addAll("radius-6");
+            control.center.getStyleClass().addAll("radius-6", "gray-background");
             pane.setCenter(control.center);
             BorderPane.setMargin(control.center, new Insets(0, 0, 0, 4));
             getChildren().setAll(pane);
