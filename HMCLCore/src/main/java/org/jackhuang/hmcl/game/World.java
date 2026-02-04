@@ -45,6 +45,7 @@ public final class World {
     private final Path file;
     private String fileName;
     private CompoundTag levelData;
+    private CompoundTag worldGenSettingsDat;
     private Image icon;
     private Path levelDataPath;
 
@@ -92,6 +93,10 @@ public final class World {
         return levelData;
     }
 
+    public CompoundTag getWorldGenSettingsDat() {
+        return worldGenSettingsDat;
+    }
+
     public long getLastPlayed() {
         CompoundTag data = levelData.get("Data");
         LongTag lastPlayedTag = data.get("LastPlayed");
@@ -112,6 +117,8 @@ public final class World {
         if (data.get("WorldGenSettings") instanceof CompoundTag worldGenSettingsTag && worldGenSettingsTag.get("seed") instanceof LongTag seedTag) { //Valid after 1.16
             return seedTag.getValue();
         } else if (data.get("RandomSeed") instanceof LongTag seedTag) { //Valid before 1.16
+            return seedTag.getValue();
+        } else if (worldGenSettingsDat != null && worldGenSettingsDat.get("data") instanceof CompoundTag dataTag && dataTag.get("seed") instanceof LongTag seedTag) { //Valid after 26.1-snapshot-6
             return seedTag.getValue();
         }
         return null;
@@ -232,6 +239,19 @@ public final class World {
 
         if (!(data.get("LastPlayed") instanceof LongTag))
             throw new IOException("level.dat missing LastPlayed");
+
+        loadAndCheckOtherDat();
+    }
+
+    private void loadAndCheckOtherDat() throws IOException {
+//        if (getGameVersion().isAtLeast()) {
+//
+//        }
+
+        Path wgsd = file.resolve("data\\minecraft\\world_gen_settings.dat");
+        if (Files.exists(wgsd)) {
+            this.worldGenSettingsDat = parseLevelDat(wgsd);
+        }
     }
 
     public void reloadLevelDat() throws IOException {
