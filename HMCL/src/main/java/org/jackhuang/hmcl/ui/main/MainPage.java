@@ -199,6 +199,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         }
 
         HBox launchPane = new HBox();
+        launchPane.setSpacing(3);
         launchPane.getStyleClass().add("launch-pane");
         FXUtils.onScroll(launchPane, versions, list -> {
             String currentId = getCurrentGame();
