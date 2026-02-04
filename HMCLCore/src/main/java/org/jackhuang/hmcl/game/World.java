@@ -69,13 +69,11 @@ public final class World {
     }
 
     public String getWorldName() {
-        CompoundTag data = (CompoundTag) levelData.get("Data");
-        StringTag levelNameTag = (StringTag) data.get("LevelName");
-        return levelNameTag.getClonedValue();
+        return ((StringTag) levelData.at("Data/LevelName")).getClonedValue();
     }
 
     public void setWorldName(String worldName) throws IOException {
-        if (levelData.get("Data") instanceof CompoundTag data && data.get("LevelName") instanceof StringTag levelNameTag) {
+        if (levelData.at("Data/LevelName") instanceof StringTag levelNameTag) {
             levelNameTag.setValue(worldName);
             writeLevelDat(levelData);
         }
@@ -98,27 +96,22 @@ public final class World {
     }
 
     public long getLastPlayed() {
-        CompoundTag data = (CompoundTag) levelData.get("Data");
-        LongTag lastPlayedTag = (LongTag) data.get("LastPlayed");
-        return lastPlayedTag.getClonedValue();
+        return ((LongTag) levelData.at("Data/LastPlayed")).getClonedValue();
     }
 
     public @Nullable GameVersionNumber getGameVersion() {
-        if (levelData.get("Data") instanceof CompoundTag data &&
-                data.get("Version") instanceof CompoundTag versionTag &&
-                versionTag.get("Name") instanceof StringTag nameTag) {
+        if (levelData.at("Data/Version/Name") instanceof StringTag nameTag) {
             return GameVersionNumber.asGameVersion(nameTag.getClonedValue());
         }
         return null;
     }
 
     public @Nullable Long getSeed() {
-        CompoundTag data = (CompoundTag) levelData.get("Data");
-        if (data.get("WorldGenSettings") instanceof CompoundTag worldGenSettingsTag && worldGenSettingsTag.get("seed") instanceof LongTag seedTag) { //Valid after 1.16
+        if (levelData.at("Data/WorldGenSettings/seed") instanceof LongTag seedTag) { //Valid after 1.16
             return seedTag.getClonedValue();
-        } else if (data.get("RandomSeed") instanceof LongTag seedTag) { //Valid before 1.16
+        } else if (levelData.get("Data/RandomSeed") instanceof LongTag seedTag) { //Valid before 1.16
             return seedTag.getClonedValue();
-        } else if (worldGenSettingsDat != null && worldGenSettingsDat.get("data") instanceof CompoundTag dataTag && dataTag.get("seed") instanceof LongTag seedTag) { //Valid after 26.1-snapshot-6
+        } else if (worldGenSettingsDat != null && worldGenSettingsDat.at("data/seed") instanceof LongTag seedTag) { //Valid after 26.1-snapshot-6
             return seedTag.getClonedValue();
         }
         return null;
@@ -129,12 +122,8 @@ public final class World {
         if (data.get("generatorName") instanceof StringTag generatorNameTag) { //Valid before 1.16
             return "largeBiomes".equals(generatorNameTag.getClonedValue());
         } else {
-            if (data.get("WorldGenSettings") instanceof CompoundTag worldGenSettingsTag
-                    && worldGenSettingsTag.get("dimensions") instanceof CompoundTag dimensionsTag
-                    && dimensionsTag.get("minecraft:overworld") instanceof CompoundTag overworldTag
-                    && overworldTag.get("generator") instanceof CompoundTag generatorTag) {
-                if (generatorTag.get("biome_source") instanceof CompoundTag biomeSourceTag
-                        && biomeSourceTag.get("large_biomes") instanceof ByteTag largeBiomesTag) { //Valid between 1.16 and 1.16.2
+            if (data.at("WorldGenSettings/dimensions/minecraft:overworld/generator") instanceof CompoundTag generatorTag) {
+                if (generatorTag.at("biome_source/large_biomes") instanceof ByteTag largeBiomesTag) { //Valid between 1.16 and 1.16.2
                     return largeBiomesTag.getClonedValue() == (byte) 1;
                 } else if (generatorTag.get("settings") instanceof StringTag settingsTag) { //Valid after 1.16.2
                     return "minecraft:large_biomes".equals(settingsTag.getClonedValue());
