@@ -55,7 +55,7 @@ public class JFXCheckBoxSkin extends CheckBoxSkin {
         this.box.setMinSize(18.0, 18.0);
         this.box.setPrefSize(18.0, 18.0);
         this.box.setMaxSize(18.0, 18.0);
-        this.box.setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, new CornerRadii(2.0), Insets.EMPTY)));
+        this.box.setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, new CornerRadii(3.0), Insets.EMPTY)));
         this.box.setBorder(new Border(new BorderStroke(Themes.getColorScheme().getOnSurfaceVariant(), BorderStrokeStyle.SOLID, new CornerRadii(2.0), new BorderWidths(this.lineThick))));
         StackPane boxContainer = new StackPane();
         boxContainer.getChildren().add(this.box);
@@ -65,7 +65,7 @@ public class JFXCheckBoxSkin extends CheckBoxSkin {
         SVGPath shape = new SVGPath();
         shape.setContent("M384 690l452-452 60 60-512 512-238-238 60-60z");
         this.mark.setShape(shape);
-        this.mark.setMaxSize(15.0, 12.0);
+        this.mark.setMaxSize(14.0, 12.0);
         this.mark.setStyle("-fx-background-color:-monet-on-primary; -fx-border-color:-monet-on-primary; -fx-border-width:2px;");
         this.mark.setVisible(false);
         this.mark.setScaleX(0.0);
