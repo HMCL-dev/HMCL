@@ -203,19 +203,14 @@ public class DownloadPage extends Control implements DecoratorPage {
             super(control);
 
             VBox pane = new VBox(8);
-            pane.getStyleClass().add("gray-background");
+            pane.getStyleClass().addAll("gray-background", "radius-6");
             pane.setPadding(new Insets(10));
-            ScrollPane scrollPane = new ScrollPane(pane);
-            FXUtils.smoothScrolling(scrollPane);
-            scrollPane.setFitToWidth(true);
-            scrollPane.setFitToHeight(true);
 
             HBox descriptionPane = new HBox(8);
             descriptionPane.setMinHeight(Region.USE_PREF_SIZE);
             descriptionPane.setAlignment(Pos.CENTER);
             pane.getChildren().add(descriptionPane);
             descriptionPane.getStyleClass().add("card-non-transparent");
-            BorderPane.setMargin(descriptionPane, new Insets(11, 11, 0, 11));
             {
                 ImageView imageView = new ImageView();
                 imageView.setFitWidth(40);
@@ -266,8 +261,12 @@ public class DownloadPage extends Control implements DecoratorPage {
                 spinnerPane.setOnFailedAction(e -> getSkinnable().loadModVersions());
 
                 ComponentList list = new ComponentList();
-                StackPane.setAlignment(list, Pos.TOP_CENTER);
-                spinnerPane.setContent(list);
+                ScrollPane scrollPane = new ScrollPane(list);
+                FXUtils.smoothScrolling(scrollPane);
+                scrollPane.setFitToWidth(true);
+                scrollPane.setFitToHeight(true);
+                StackPane.setAlignment(scrollPane, Pos.TOP_CENTER);
+                spinnerPane.setContent(scrollPane);
 
                 FXUtils.onChangeAndOperate(control.loaded, loaded -> {
                     if (control.versions == null) return;
@@ -321,7 +320,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 });
             }
 
-            getChildren().setAll(scrollPane);
+            getChildren().setAll(pane);
         }
     }
 
