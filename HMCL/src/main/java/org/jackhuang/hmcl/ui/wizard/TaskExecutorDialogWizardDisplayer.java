@@ -94,15 +94,12 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
             pane.setExecutor(executor);
 
             if (backgroundable) {
-                String detail = settings.get("task_detail").toString();
-                if (detail == null) {
-                    detail = pane.getTitle();
-                }
+                Object detailObj = settings.get("task_detail");
+                String detail = detailObj != null ? detailObj.toString() : pane.getTitle();
 
-                String finalDetail = detail;
                 pane.setBackgroundAction(() -> {
                     pane.fireEvent(new DialogCloseEvent());
-                    TaskCenter.getInstance().enqueue(executor, pane.getTitle(), finalDetail);
+                    TaskCenter.getInstance().enqueue(executor, pane.getTitle(), detail);
                 });
 
                 TaskCenter.getInstance().enqueue(executor, pane.getTitle(), detail);
