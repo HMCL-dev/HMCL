@@ -109,14 +109,12 @@ public final class TaskListPane extends StackPane {
     @FXThread
     private void addStages(@NotNull Collection<List<String>> stageGroups) {
         for (List<String> group : stageGroups) {
-            if (group == null || group.isEmpty()) continue;
-
-            String primaryStage = group.get(0);
-            StageNode node = stageNodes.get(primaryStage);
+            String displayStage = group.get(0);
+            StageNode node = stageNodes.get(displayStage);
 
             if (node == null) {
-                node = new StageNode(primaryStage);
-                stageNodes.put(primaryStage, node);
+                node = new StageNode(displayStage);
+                stageNodes.put(displayStage, node);
                 listView.getItems().add(node);
             }
             for (String stage : group) {
@@ -138,8 +136,7 @@ public final class TaskListPane extends StackPane {
                 Platform.runLater(() -> {
                     stageNodes.clear();
                     listView.getItems().clear();
-                    List<List<String>> groupedStages = executor.getStages();
-                    addStages(groupedStages);
+                    addStages(executor.getStages());
                     updateProgressNodePadding();
                 });
             }
