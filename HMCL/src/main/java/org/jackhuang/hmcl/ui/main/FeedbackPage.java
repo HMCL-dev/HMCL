@@ -22,6 +22,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.LineButton;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
@@ -31,6 +32,8 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import org.jackhuang.hmcl.Metadata;
 
 public class FeedbackPage extends SpinnerPane {
+
+    private final WeakListenerHolder holder = new WeakListenerHolder();
 
     public FeedbackPage() {
         VBox content = new VBox();
@@ -66,11 +69,11 @@ public class FeedbackPage extends SpinnerPane {
             github.setTitle(i18n("contact.feedback.github"));
             github.setSubtitle(i18n("contact.feedback.github.statement"));
 
-            FXUtils.onWeakChangeAndOperate(Themes.darkModeProperty(), darkMode -> {
+            holder.add(FXUtils.onWeakChangeAndOperate(Themes.darkModeProperty(), darkMode -> {
                 github.setLeading(darkMode
                         ? FXUtils.newBuiltinImage("/assets/img/github-white.png")
                         : FXUtils.newBuiltinImage("/assets/img/github.png"));
-            });
+            }));
 
             feedback.getContent().setAll(github);
         }
