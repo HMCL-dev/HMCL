@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.util.javafx;
 
 import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableListBase;
 import org.junit.jupiter.api.Test;
@@ -221,7 +220,7 @@ public class MappedObservableListTest {
         assertEquals("Item-3", mapped.get(2));
     }
 
-    /// Test for [ListChangeListener.Change#wasUpdated()].
+    /// Test for [javafx.collections.ListChangeListener.Change#wasUpdated()].
     @Test
     public void testUpdate() {
         class TestUpdateList<T> extends ObservableListBase<T> {
