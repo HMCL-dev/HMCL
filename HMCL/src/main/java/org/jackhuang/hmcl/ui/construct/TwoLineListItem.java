@@ -29,32 +29,41 @@ import javafx.scene.layout.VBox;
 public class TwoLineListItem extends VBox {
     private static final String DEFAULT_STYLE_CLASS = "two-line-list-item";
 
-    private final HBox firstLine = new HBox();
+    private final HBox firstLine;
     private HBox secondLine;
 
     private final Label lblTitle;
     private Label lblSubtitle;
 
-    public TwoLineListItem(String titleString, String subtitleString) {
-        this();
-
-        title.set(titleString);
-        subtitle.set(subtitleString);
-    }
-
     public TwoLineListItem() {
         getStyleClass().add(DEFAULT_STYLE_CLASS);
         setMouseTransparent(true);
 
-        HBox firstLine = new HBox();
+        this.firstLine = new HBox();
         firstLine.getStyleClass().add("first-line");
 
         lblTitle = new Label();
         lblTitle.getStyleClass().add("title");
 
         firstLine.getChildren().setAll(lblTitle);
-
         this.getChildren().setAll(firstLine);
+    }
+
+    public TwoLineListItem(String titleString, String subtitleString) {
+        this();
+
+        setTitle(titleString);
+        setSubtitle(subtitleString);
+    }
+
+    private void initSecondLine() {
+        if (secondLine == null) {
+            lblSubtitle = new Label();
+            lblSubtitle.getStyleClass().add("subtitle");
+
+            secondLine = new HBox();
+            secondLine.getChildren().setAll(lblSubtitle);
+        }
     }
 
     private final StringProperty title = new StringPropertyBase() {
@@ -106,7 +115,8 @@ public class TwoLineListItem extends VBox {
                     String subtitle = get();
 
                     if (subtitle != null) {
-                        getSubtitleLabel().setText(subtitle);
+                        initSecondLine();
+                        lblSubtitle.setText(subtitle);
 
                         if (getChildren().size() == 1)
                             getChildren().add(secondLine);
@@ -134,14 +144,7 @@ public class TwoLineListItem extends VBox {
     }
 
     public Label getSubtitleLabel() {
-        if (lblSubtitle == null) {
-            lblSubtitle = new Label();
-            lblSubtitle.getStyleClass().add("subtitle");
-
-            secondLine = new HBox();
-            secondLine.getChildren().setAll(lblSubtitle);
-        }
-
+        initSecondLine();
         return lblSubtitle;
     }
 
