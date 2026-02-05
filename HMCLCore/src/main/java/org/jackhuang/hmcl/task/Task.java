@@ -343,7 +343,7 @@ public abstract class Task<T> {
 
     protected void updateProgress(long count, long total) {
         if (count < 0 || total < 0)
-            throw new IllegalArgumentException("Invalid count or total: count=" + count + ", total" + total);
+            throw new IllegalArgumentException("Invalid count or total: count=" + count + ", total=" + total);
 
         double progress;
         if (total >= count)
