@@ -375,7 +375,6 @@ public class JFXSnackbar extends Group {
         /// pseudoClass.
         ///
         /// @param content     what you want shown in the snackbar; a [JFXSnackbarLayout] is a great choice.
-        /// @param pseudoClass
         public SnackbarEvent(Node content, PseudoClass pseudoClass) {
             this(content, DEFAULT_DURATION, pseudoClass);
         }
@@ -395,7 +394,6 @@ public class JFXSnackbar extends Group {
         ///
         /// @param content     what you want shown in the snackbar; a [JFXSnackbarLayout] is a great choice.
         /// @param timeout     the amount of time you want the snackbar to show for.
-        /// @param pseudoClass
         public SnackbarEvent(Node content, Duration timeout, PseudoClass pseudoClass) {
             super(SNACKBAR);
             this.content = content;
