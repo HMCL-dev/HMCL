@@ -132,11 +132,12 @@ public class TwoLineListItem extends VBox {
     }
 
     public String getSubtitle() {
-        return subtitleProperty().get();
+        return subtitle != null ? subtitleProperty().get() : null;
     }
 
     public void setSubtitle(String subtitle) {
-        subtitleProperty().set(subtitle);
+        if (this.subtitle != null || subtitle != null)
+            subtitleProperty().set(subtitle);
     }
 
     public Label getTitleLabel() {
