@@ -19,7 +19,6 @@
 
 package com.jfoenix.controls;
 
-import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.PauseTransition;
@@ -148,11 +147,7 @@ public class JFXSnackbar extends Group {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
     }
 
-
-    ///////////////////////////////////////////////////////////////////////////
     // Setters / Getters
-
-    /// ////////////////////////////////////////////////////////////////////////
 
     public Pane getPopupContainer() {
         return snackbarContainer;
@@ -166,10 +161,7 @@ public class JFXSnackbar extends Group {
         return content.getPrefWidth();
     }
 
-    ///////////////////////////////////////////////////////////////////////////
     // Public API
-
-    /// ////////////////////////////////////////////////////////////////////////
 
     public void registerSnackbarContainer(Pane snackbarContainer) {
         if (snackbarContainer != null) {

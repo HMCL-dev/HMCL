@@ -103,7 +103,6 @@ public class JFXSnackbarLayout extends BorderPane {
         this.toast.setText(toast);
     }
 
-
     private void initialize() {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
     }
