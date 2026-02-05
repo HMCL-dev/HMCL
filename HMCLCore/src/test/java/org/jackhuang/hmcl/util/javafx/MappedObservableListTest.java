@@ -73,6 +73,10 @@ public class MappedObservableListTest {
         assertEquals("Item-2", mapped.get(0));
         assertEquals("Item-4", mapped.get(1));
         assertEquals("Item-5", mapped.get(2));
+
+        source.remove(1, 3);
+        assertEquals(1, mapped.size());
+        assertEquals("Item-2", mapped.get(0));
     }
 
     @Test
