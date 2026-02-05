@@ -27,6 +27,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.game.Log;
 import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
@@ -34,12 +35,14 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.Optional;
 import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class TaskExecutorDialogPane extends BorderPane {
     private TaskExecutor executor;
@@ -61,6 +64,7 @@ public class TaskExecutorDialogPane extends BorderPane {
 
     public TaskExecutorDialogPane(@NotNull TaskCancellationAction cancel) {
         this.getStyleClass().add("task-executor-dialog-layout");
+        cancelAction = null;
 
         FXUtils.setLimitWidth(this, 500);
         FXUtils.setLimitHeight(this, 300);
@@ -114,6 +118,11 @@ public class TaskExecutorDialogPane extends BorderPane {
         setCancel(cancel);
 
         btnCancel.setOnAction(e -> {
+            if (cancelAction != null) {
+                cancelAction.run();
+                return;
+            }
+
             Optional.ofNullable(executor).ifPresent(TaskExecutor::cancel);
             if (onCancel.getCancellationAction() != null) {
                 onCancel.getCancellationAction().accept(this);
@@ -171,13 +180,41 @@ public class TaskExecutorDialogPane extends BorderPane {
         runInFX(() -> btnCancel.setDisable(onCancel == null));
     }
 
+    private final AtomicBoolean background = new AtomicBoolean(false);
+
     public void setBackgroundAction(Runnable action) {
         this.onBackground = action;
+        background.set(false);
+
         btnBackground.setVisible(action != null);
         btnBackground.setManaged(action != null);
+
+        if (action != null) {
+            btnBackground.setDisable(false);
+            btnBackground.setOnAction(e -> {
+                if (!background.compareAndSet(false, true)) {
+                    return;
+                }
+                btnBackground.setDisable(true);
+                onBackground.run();
+            });
+        } else {
+            btnBackground.setDisable(false);
+            btnBackground.setOnAction(null);
+        }
     }
 
     public void refreshTaskList() {
         taskListPane.refresh();
+    }
+
+    private Runnable cancelAction;
+
+    public void setCancelAction(Runnable action) {
+        this.cancelAction = action;
+    }
+
+    public void setCancelText(String text) {
+        btnCancel.setText(text);
     }
 }

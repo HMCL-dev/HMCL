@@ -64,6 +64,7 @@ public final class TaskCenter {
 
     private final Deque<Entry> queue = new ArrayDeque<>();
     private final Map<TaskExecutor, Entry> entryIndex = new HashMap<>();
+    private final Map<TaskExecutor, Boolean> started = new HashMap<>();
     private Entry running;
 
     public ObservableList<Entry> getEntries() {
@@ -79,9 +80,15 @@ public final class TaskCenter {
     }
 
     public synchronized void enqueue(TaskExecutor executor, String title, String detail) {
+        if (!Platform.isFxApplicationThread()) {
+            Platform.runLater(() -> enqueue(executor, title, detail));
+            return;
+        }
+
         if (entryIndex.containsKey(executor)) {
             return;
         }
+
         Entry entry = new Entry(executor, title, detail);
         entryIndex.put(executor, entry);
         entries.add(entry);
@@ -94,14 +101,23 @@ public final class TaskCenter {
         Entry next = queue.poll();
         if (next == null) return;
 
+        TaskExecutor executor = next.getExecutor();
+        if (Boolean.TRUE.equals(started.get(executor))) {
+            tryStartNext();
+            return;
+        }
+
+        started.put(executor, true);
         running = next;
-        next.getExecutor().addTaskListener(new TaskListener() {
+
+        executor.addTaskListener(new TaskListener() {
             @Override
             public void onStop(boolean success, TaskExecutor executor) {
                 Platform.runLater(() -> {
                     if (running != null) {
                         entries.remove(running);
                         entryIndex.remove(executor);
+                        started.remove(executor);
 
                         if (success) {
                             completedEntries.add(running);
@@ -115,6 +131,7 @@ public final class TaskCenter {
                 });
             }
         });
-        next.getExecutor().start();
+
+        executor.start();
     }
 }

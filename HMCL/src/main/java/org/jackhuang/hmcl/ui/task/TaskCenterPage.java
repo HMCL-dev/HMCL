@@ -26,6 +26,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Separator;
 import javafx.scene.layout.*;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -141,32 +142,25 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
     private void rebuildCompleted() {
         completedContainer.getChildren().clear();
         for (TaskCenter.Entry entry : TaskCenter.getInstance().getCompletedEntries()) {
-            Label item = new Label(entry.getDetail() != null ? entry.getDetail() : entry.getTitle());
-            item.getStyleClass().add("md-list-cell");
-            item.setPadding(new Insets(10, 12, 10, 12));
-            completedContainer.getChildren().add(item);
+            String text = entry.getDetail() != null ? entry.getDetail() : entry.getTitle();
+            completedContainer.getChildren().add(createLineItem(text, null));
         }
     }
 
     private void rebuildFailed() {
         failedContainer.getChildren().clear();
         for (TaskCenter.Entry entry : TaskCenter.getInstance().getFailedEntries()) {
-            Label item = new Label(entry.getDetail() != null ? entry.getDetail() : entry.getTitle());
-            item.getStyleClass().add("md-list-cell");
-            item.setPadding(new Insets(10, 12, 10, 12));
-
-            item.setOnMouseClicked(e -> {
+            String text = entry.getDetail() != null ? entry.getDetail() : entry.getTitle();
+            failedContainer.getChildren().add(createLineItem(text, () -> {
                 Throwable ex = entry.getExecutor().getException();
                 if (ex instanceof CancellationException) {
-                    Controllers.dialog("任务由用户取消", entry.getTitle(), MessageDialogPane.MessageType.ERROR);
+                    Controllers.dialog("任务由用户取消", entry.getTitle(), MessageDialogPane.MessageType.ERROR);//TODO: i18n
                 } else if (ex != null) {
                     Controllers.dialog(StringUtils.getStackTrace(ex), entry.getTitle(), MessageDialogPane.MessageType.ERROR);
                 } else {
-                    Controllers.dialog("任务失败（无异常信息）", entry.getTitle(), MessageDialogPane.MessageType.ERROR);
+                    Controllers.dialog("任务失败（无异常信息）", entry.getTitle(), MessageDialogPane.MessageType.ERROR);//TODO: i18n
                 }
-            });
-
-            failedContainer.getChildren().add(item);
+            }));
         }
     }
 
@@ -195,10 +189,30 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
         row.setOnMouseClicked(e -> {
             TaskExecutorDialogPane pane = Controllers.taskDialog(entry.getExecutor(), entry.getTitle(), TaskCancellationAction.NORMAL);
             pane.setEscAction(() -> pane.fireEvent(new DialogCloseEvent()));
+            pane.setCancelText("关闭");//TODO: i18n
+            pane.setCancelAction(() -> pane.fireEvent(new DialogCloseEvent()));
             pane.refreshTaskList();
         });
 
         return row;
+    }
+
+    private Node createLineItem(String text, Runnable onClick) {
+        Label label = new Label(text);
+        label.setPadding(new Insets(10, 12, 10, 12));
+        label.setMaxWidth(Double.MAX_VALUE);
+        label.setPrefWidth(Double.MAX_VALUE);
+
+        Separator separator = new Separator();
+        separator.setMaxWidth(Double.MAX_VALUE);
+        separator.setPrefWidth(Double.MAX_VALUE);
+
+        VBox box = new VBox(label, separator);
+        box.setFillWidth(true);
+        if (onClick != null) {
+            box.setOnMouseClicked(e -> onClick.run());
+        }
+        return box;
     }
 
     @Override
