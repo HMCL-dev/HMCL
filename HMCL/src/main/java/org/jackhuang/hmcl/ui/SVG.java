@@ -137,7 +137,7 @@ public enum SVG {
     private final String path;
 
     SVG(String path) {
-        // We move the cursor so that SVGPath will treat 0 0 24 24 as the layout bounds
+        // We move the current point so that SVGPath will treat 0 0 24 24 as the layout bounds
         this.path = "M24 24ZM0 0Z" + path;
     }
 
