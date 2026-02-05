@@ -18,21 +18,17 @@
 package org.jackhuang.hmcl.ui;
 
 import javafx.beans.value.ObservableValue;
-import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.Node;
-import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.SVGPath;
 
-/**
- * All vector icons used in the launcher.
- * <p>
- * Unless otherwise stated,
- * these icons are from <a href="https://fonts.google.com/icons?icon.size=24&icon.color=%235f6368&icon.query=list&icon.set=Material+Symbols">Material Symbols</a>,
- * with a style of outlined, a weight of 400, a grade of 0, and an optical size of 24 px.
- * The view boxes of all icons are normalized to {@code 0 0 24 24}.
- */
+/// All vector icons used in the launcher.
+///
+/// Unless otherwise stated,
+/// these icons are from <a href="https://fonts.google.com/icons?icon.size=24&icon.color=%235f6368&icon.query=list&icon.set=Material+Symbols">Material Symbols</a>,
+/// with a style of outlined, a weight of 400, a grade of 0, and an optical size of 24 px.
+/// The view boxes of all icons are normalized to `0 0 24 24`.
 public enum SVG {
     ADD("M11 13H5V11H11V5H13V11H19V13H13V19H11V13Z"),
     ADD_CIRCLE("M11 17H13V13H17V11H13V7H11V11H7V13H11V17ZM12 22Q9.925 22 8.1 21.2125T4.925 19.075Q3.575 17.725 2.7875 15.9T2 12Q2 9.925 2.7875 8.1T4.925 4.925Q6.275 3.575 8.1 2.7875T12 2Q14.075 2 15.9 2.7875T19.075 4.925Q20.425 6.275 21.2125 8.1T22 12Q22 14.075 21.2125 15.9T19.075 19.075Q17.725 20.425 15.9 21.2125T12 22ZM12 20Q15.35 20 17.675 17.675T20 12Q20 8.65 17.675 6.325T12 4Q8.65 4 6.325 6.325T4 12Q4 15.35 6.325 17.675T12 20ZM12 12Z"),
