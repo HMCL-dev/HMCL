@@ -30,9 +30,10 @@ English ([Standard](README.md), [uʍoᗡ ǝpᴉsd∩](README_en_Qabs.md)) | **�
 
 ### 概敘
 
-HMCL 者，開源之礦藝啟器也。善理改囊，可自定遊戲，自動裝設 Forge、NeoForge、Cleanroom、Fabric、Quilt、LiteLoader、OptiFine 諸改囊，亦能制改囊集，界面隨心易之。  
+HMCL 者，開源之礦藝啟器也。善理改囊，可自定遊戲，自動裝設 Forge、NeoForge、Cleanroom、Fabric、Quilt、LiteLoader、OptiFine 諸改囊，亦能制改囊集，界面隨心易之。
 
-HMCL 跨域廣矣。Windows、Linux、macOS、FreeBSD 諸常見械綱，x86、ARM、RISC-V、MIPS、LoongArch 諸算器架構，皆可運行。憑此器，可遊《礦藝》於諸機之間，無礙也。  
+HMCL 跨域廣矣。Windows、Linux、macOS、FreeBSD 諸常見械綱，x86、ARM、RISC-V、MIPS、LoongArch 諸算器架構，皆可運行。
+憑此器，可遊《礦藝》於諸機之間，無礙也。  
 
 欲知 HMCL 所支平臺，詳觀[此表](PLATFORM_zh_Hant.md)。
 
@@ -60,7 +61,7 @@ HMCL 乃社群共驅之開源項目，迎諸君獻碼或建言。
 
 ## 貢獻者
 
-自乙未年（2015）始，百十余人參與 HMCL，謝其勤勞！  
+自乙未年（2015）始，百十余人參與 HMCL，謝其勤勞！
 
 [![Contributors](https://contrib.rocks/image?repo=HMCL-dev/HMCL)](https://github.com/HMCL-dev/HMCL/graphs/contributors)
 
