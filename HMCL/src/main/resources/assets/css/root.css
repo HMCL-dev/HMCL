@@ -400,7 +400,6 @@
 }
 
 .installer-item-wrapper:card {
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 10, 0.12, -1, 2);
 }
 
 .installer-item-wrapper .installer-item:list-item {
@@ -964,7 +963,6 @@
 
 .options-list {
     -fx-background-color: transparent;
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 5, 0.06, -0.5, 1);
 }
 
 .depth-0 {
@@ -999,16 +997,12 @@
     -fx-background-color: -monet-surface-container-low-transparent-80;
     -fx-background-radius: 4;
     -fx-padding: 8px;
-
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 10, 0.12, -1, 2);
 }
 
 .card-non-transparent {
     -fx-background-color: -monet-surface-container-low;
     -fx-background-radius: 4;
     -fx-padding: 8px;
-
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 5, 0.06, -0.5, 1);
 }
 
 .card-list {
