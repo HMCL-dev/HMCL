@@ -24,7 +24,6 @@ public final class WindowsEvents {
         List<LogEntry> results = new ArrayList<>();
 
         try {
-
             String rawJson = SystemUtils.run("powershell.exe", "-NoProfile", "-Command", psCommand).trim();
 
             if (!rawJson.isEmpty()) {

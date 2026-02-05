@@ -281,7 +281,7 @@ public class GameCrashWindow extends Stage {
                         logs.stream().map(Log::getLog).collect(Collectors.joining("\n")))
                 .thenComposeAsync(logs -> {
                     var events = WindowsEvents.getApplicationEvents();
-                    var javaEvents = events.stream().filter((it) -> it.message().contains("java.exe") || it.message().contains("javaw.exe")).toList();
+                    var javaEvents = events.stream().filter((it) -> it != null && it.message() != null && (it.message().contains("java.exe") || it.message().contains("javaw.exe"))).toList();
                     if (!javaEvents.isEmpty()) {
                         LOG.info("Recently java event:");
                         javaEvents.forEach(it -> {
