@@ -137,19 +137,19 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
         String detailPrefix;
         switch (subdirectoryName) {
             case "mods":
-                detailPrefix = "安装模组";
+                detailPrefix = "安装模组";//TODO i18n
                 break;
             case "resourcepacks":
-                detailPrefix = "安装资源包";
+                detailPrefix = "安装资源包";//TODO i18n
                 break;
             case "shaderpacks":
-                detailPrefix = "安装光影";
+                detailPrefix = "安装光影";//TODO i18n
                 break;
             case "saves":
-                detailPrefix = "安装世界";
+                detailPrefix = "安装世界";//TODO i18n
                 break;
             default:
-                detailPrefix = "下载";
+                detailPrefix = "下载";//TODO i18n
                 break;
         }
 
@@ -322,7 +322,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             settings.put("success_message", i18n("install.success"));
             settings.put(FailureCallback.KEY, (settings1, exception, next) -> UpdateInstallerWizardProvider.alertFailureMessage(exception, next));
 
-            settings.put("task_detail", "安装游戏-[" + settings.get("name") + "]");
+            settings.put("task_detail", "安装游戏-[" + settings.get("name") + "]");//TODO i18n
             settings.put("backgroundable", true);
 
             return finishVersionDownloadingAsync(settings);

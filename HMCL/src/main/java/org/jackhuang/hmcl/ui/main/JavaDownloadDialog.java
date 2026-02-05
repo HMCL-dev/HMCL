@@ -159,7 +159,7 @@ public final class JavaDownloadDialog extends StackPane {
 
             if (JavaManager.REPOSITORY.isInstalled(platform, javaVersion))
                 Controllers.confirm(i18n("download.java.override"), null, () -> {
-                    String detail = "安装Java-[" + javaVersion.majorVersion() + "]";
+                    String detail = "安装Java-[" + javaVersion.majorVersion() + "]";//TODO: i18n
                     Controllers.downloadTaskDialog(Task.supplyAsync(() -> JavaManager.REPOSITORY.getJavaExecutable(platform, javaVersion))
                             .thenComposeAsync(Schedulers.javafx(), realPath -> {
                                 if (realPath != null) {
@@ -169,7 +169,7 @@ public final class JavaDownloadDialog extends StackPane {
                             }), i18n("download.java"), TaskCancellationAction.NORMAL, detail);
                 }, null);
             else
-                Controllers.downloadTaskDialog(downloadTask(javaVersion), i18n("download.java.process"), TaskCancellationAction.NORMAL, "安装Java-[" + javaVersion.majorVersion() + "]");
+                Controllers.downloadTaskDialog(downloadTask(javaVersion), i18n("download.java.process"), TaskCancellationAction.NORMAL, "安装Java-[" + javaVersion.majorVersion() + "]");//TODO: i18n
         }
     }
 

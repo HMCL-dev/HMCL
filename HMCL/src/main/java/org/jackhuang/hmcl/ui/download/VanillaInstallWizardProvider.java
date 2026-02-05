@@ -70,7 +70,7 @@ public final class VanillaInstallWizardProvider implements WizardProvider {
         settings.put("success_message", i18n("install.success"));
         settings.put(FailureCallback.KEY, (settings1, exception, next) -> UpdateInstallerWizardProvider.alertFailureMessage(exception, next));
 
-        settings.put("task_detail", "安装游戏-[" + settings.get("name") + "]");
+        settings.put("task_detail", "安装游戏-[" + settings.get("name") + "]");//TODO i18n
         settings.put("backgroundable", true);
 
         return finishVersionDownloadingAsync(settings);
