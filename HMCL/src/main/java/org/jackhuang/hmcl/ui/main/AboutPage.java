@@ -17,11 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.main;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParseException;
-import javafx.beans.binding.Bindings;
+import com.google.gson.*;
 import javafx.geometry.Insets;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
@@ -30,8 +26,9 @@ import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.IconedTwoLineListItem;
+import org.jackhuang.hmcl.ui.construct.LineButton;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 
 import java.io.IOException;
@@ -42,20 +39,22 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class AboutPage extends StackPane {
 
+    private final WeakListenerHolder holder = new WeakListenerHolder();
+
     public AboutPage() {
         ComponentList about = new ComponentList();
         {
-            IconedTwoLineListItem launcher = new IconedTwoLineListItem();
-            launcher.setImage(FXUtils.newBuiltinImage("/assets/img/icon.png"));
+            var launcher = LineButton.createExternalLinkButton(Metadata.PUBLISH_URL);
+            launcher.setLargeTitle(true);
+            launcher.setLeading(FXUtils.newBuiltinImage("/assets/img/icon.png"));
             launcher.setTitle("Hello Minecraft! Launcher");
             launcher.setSubtitle(Metadata.VERSION);
-            launcher.setExternalLink(Metadata.PUBLISH_URL);
 
-            IconedTwoLineListItem author = new IconedTwoLineListItem();
-            author.setImage(FXUtils.newBuiltinImage("/assets/img/yellow_fish.png"));
+            var author = LineButton.createExternalLinkButton("https://space.bilibili.com/1445341");
+            author.setLargeTitle(true);
+            author.setLeading(FXUtils.newBuiltinImage("/assets/img/yellow_fish.png"));
             author.setTitle("huanghongxun");
             author.setSubtitle(i18n("about.author.statement"));
-            author.setExternalLink("https://space.bilibili.com/1445341");
 
             about.getContent().setAll(launcher, author);
         }
@@ -66,20 +65,20 @@ public final class AboutPage extends StackPane {
 
         ComponentList legal = new ComponentList();
         {
-            IconedTwoLineListItem copyright = new IconedTwoLineListItem();
+            var copyright = LineButton.createExternalLinkButton(Metadata.ABOUT_URL);
+            copyright.setLargeTitle(true);
             copyright.setTitle(i18n("about.copyright"));
             copyright.setSubtitle(i18n("about.copyright.statement"));
-            copyright.setExternalLink(Metadata.ABOUT_URL);
 
-            IconedTwoLineListItem claim = new IconedTwoLineListItem();
+            var claim = LineButton.createExternalLinkButton(Metadata.EULA_URL);
+            claim.setLargeTitle(true);
             claim.setTitle(i18n("about.claim"));
             claim.setSubtitle(i18n("about.claim.statement"));
-            claim.setExternalLink(Metadata.EULA_URL);
 
-            IconedTwoLineListItem openSource = new IconedTwoLineListItem();
+            var openSource = LineButton.createExternalLinkButton("https://github.com/HMCL-dev/HMCL");
+            openSource.setLargeTitle(true);
             openSource.setTitle(i18n("about.open_source"));
             openSource.setSubtitle(i18n("about.open_source.statement"));
-            openSource.setExternalLink("https://github.com/HMCL-dev/HMCL");
 
             legal.getContent().setAll(copyright, claim, openSource);
         }
@@ -113,7 +112,7 @@ public final class AboutPage extends StackPane {
                 : new Image(url);
     }
 
-    private static ComponentList loadIconedTwoLineList(String path) {
+    private ComponentList loadIconedTwoLineList(String path) {
         ComponentList componentList = new ComponentList();
 
         InputStream input = FXUtils.class.getResourceAsStream(path);
@@ -127,36 +126,37 @@ public final class AboutPage extends StackPane {
 
             for (JsonElement element : array) {
                 JsonObject obj = element.getAsJsonObject();
-                IconedTwoLineListItem item = new IconedTwoLineListItem();
+
+                LineButton button = LineButton.createExternalLinkButton(obj.get("externalLink") instanceof JsonPrimitive primitive
+                        ? primitive.getAsString()
+                        : null);
+                button.setLargeTitle(true);
 
                 if (obj.has("image")) {
                     JsonElement image = obj.get("image");
                     if (image.isJsonPrimitive()) {
-                        item.setImage(loadImage(image.getAsString()));
+                        button.setLeading(loadImage(image.getAsString()));
                     } else if (image.isJsonObject()) {
-                        item.imageProperty().bind(Bindings.when(Themes.darkModeProperty())
-                                .then(loadImage(image.getAsJsonObject().get("dark").getAsString()))
-                                .otherwise(loadImage(image.getAsJsonObject().get("light").getAsString())));
+                        holder.add(FXUtils.onWeakChangeAndOperate(Themes.darkModeProperty(), darkMode -> {
+                            button.setLeading(darkMode
+                                    ? loadImage(image.getAsJsonObject().get("dark").getAsString())
+                                    : loadImage(image.getAsJsonObject().get("light").getAsString())
+                            );
+                        }));
                     }
                 }
 
-                if (obj.has("title"))
-                    item.setTitle(obj.get("title").getAsString());
-                else if (obj.has("titleLocalized"))
-                    item.setTitle(i18n(obj.get("titleLocalized").getAsString()));
+                if (obj.get("title") instanceof JsonPrimitive title)
+                    button.setTitle(title.getAsString());
+                else if (obj.get("titleLocalized") instanceof JsonPrimitive titleLocalized)
+                    button.setTitle(i18n(titleLocalized.getAsString()));
 
-                if (obj.has("subtitle"))
-                    item.setSubtitle(obj.get("subtitle").getAsString());
-                else if (obj.has("subtitleLocalized"))
-                    item.setSubtitle(i18n(obj.get("subtitleLocalized").getAsString()));
+                if (obj.get("subtitle") instanceof JsonPrimitive subtitle)
+                    button.setSubtitle(subtitle.getAsString());
+                else if (obj.get("subtitleLocalized") instanceof JsonPrimitive subtitleLocalized)
+                    button.setSubtitle(i18n(subtitleLocalized.getAsString()));
 
-                if (obj.has("externalLink")) {
-                    String link = obj.get("externalLink").getAsString();
-                    item.setExternalLink(link);
-                    FXUtils.installFastTooltip(item.getExternalLinkButton(), link);
-                }
-
-                componentList.getContent().add(item);
+                componentList.getContent().add(button);
             }
         } catch (IOException | JsonParseException e) {
             LOG.warning("Failed to load list: " + path, e);
