@@ -28,7 +28,10 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
+
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class LineFileChooserButton extends LineButton {
     private static final String DEFAULT_STYLE_CLASS = "line-file-select-button";
@@ -57,18 +60,38 @@ public class LineFileChooserButton extends LineButton {
         Stage owner = Controllers.getStage(); // TODO: Allow user to set owner stage
         String windowTitle = getFileChooserTitle();
 
+        Path initialDirectory = null;
+        if (getLocation() != null) {
+            Path file;
+            try {
+                file = FileUtils.toAbsolute(Path.of(getLocation()));
+                if (Files.exists(file)) {
+                    if (Files.isRegularFile(file))
+                        initialDirectory = file.getParent();
+                    else if (Files.isDirectory(file))
+                        initialDirectory = file;
+                }
+            } catch (IllegalArgumentException e) {
+                LOG.warning("Failed to resolve path: " + getLocation());
+            }
+        }
+
         Path path;
         Type type = getType();
         if (type == Type.OPEN_DIRECTORY) {
             var directoryChooser = new DirectoryChooser();
             if (windowTitle != null)
                 directoryChooser.setTitle(windowTitle);
+            if (initialDirectory != null)
+                directoryChooser.setInitialDirectory(initialDirectory.toFile());
 
             path = FileUtils.toPath(directoryChooser.showDialog(owner));
         } else {
             var fileChooser = new FileChooser();
             if (windowTitle != null)
                 fileChooser.setTitle(windowTitle);
+            if (initialDirectory != null)
+                fileChooser.setInitialDirectory(initialDirectory.toFile());
 
             if (extensionFilters != null)
                 fileChooser.getExtensionFilters().setAll(extensionFilters);
