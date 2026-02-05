@@ -22,7 +22,6 @@ import com.jfoenix.controls.JFXDialogLayout;
 import com.jfoenix.controls.JFXListView;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
@@ -32,7 +31,6 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
-import javafx.scene.shape.SVGPath;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.schematic.LitematicFile;
 import org.jackhuang.hmcl.setting.Profile;
@@ -551,8 +549,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         private final HBox right;
 
         private final ImageView iconImageView;
-        private final SVGPath iconSVG;
-        private final StackPane iconSVGWrapper;
+        private final SVGIcon iconSVG;
 
         private final Tooltip tooltip = new Tooltip();
 
@@ -568,15 +565,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 this.iconImageView = new ImageView();
                 FXUtils.limitSize(iconImageView, 32, 32);
 
-                this.iconSVG = new SVGPath();
-                iconSVG.getStyleClass().add("svg");
-                iconSVG.setScaleX(32.0 / SVG.DEFAULT_SIZE);
-                iconSVG.setScaleY(32.0 / SVG.DEFAULT_SIZE);
-
-                this.iconSVGWrapper = new StackPane(new Group(iconSVG));
-                iconSVGWrapper.setAlignment(Pos.CENTER);
-                FXUtils.setLimitWidth(iconSVGWrapper, 32);
-                FXUtils.setLimitHeight(iconSVGWrapper, 32);
+                this.iconSVG = new SVGIcon(32);
 
                 BorderPane.setAlignment(left, Pos.CENTER);
                 root.setLeft(left);
@@ -638,8 +627,8 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                     iconImageView.setImage(fileItem.getImage());
                     left.getChildren().setAll(iconImageView);
                 } else {
-                    iconSVG.setContent(item.getIcon().getPath());
-                    left.getChildren().setAll(iconSVGWrapper);
+                    iconSVG.setIcon(item.getIcon());
+                    left.getChildren().setAll(iconSVG);
                 }
 
                 center.setTitle(item.getName());

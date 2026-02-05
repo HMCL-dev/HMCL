@@ -55,6 +55,15 @@ public final class SVGIcon extends Control {
         return new Skin();
     }
 
+    public static List<CssMetaData<? extends Styleable, ?>> getClassCssMetaData() {
+        return StyleableProperties.STYLEABLES;
+    }
+
+    @Override
+    protected List<CssMetaData<? extends Styleable, ?>> getControlCssMetaData() {
+        return getClassCssMetaData();
+    }
+
     private ObjectProperty<SVG> icon;
 
     public ObjectProperty<SVG> iconProperty() {
