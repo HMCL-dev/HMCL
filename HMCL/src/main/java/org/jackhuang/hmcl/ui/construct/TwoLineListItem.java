@@ -134,8 +134,10 @@ public class TwoLineListItem extends VBox {
     }
 
     public void setSubtitle(String subtitle) {
-        if (this.subtitle != null || subtitle != null)
-            subtitleProperty().set(subtitle);
+        if (this.subtitle == null && subtitle == null)
+            return;
+
+        subtitleProperty().set(subtitle);
     }
 
     public Label getTitleLabel() {
