@@ -32,20 +32,20 @@ import java.util.ArrayList;
 import java.util.List;
 
 /// @author Glavo
-public final class SVGIcon extends Control {
+public final class SVGView extends Control {
 
-    public SVGIcon() {
+    public SVGView() {
     }
 
-    public SVGIcon(SVG icon) {
+    public SVGView(SVG icon) {
         setIcon(icon);
     }
 
-    public SVGIcon(double size) {
+    public SVGView(double size) {
         setIconSize(size);
     }
 
-    public SVGIcon(SVG icon, double size) {
+    public SVGView(SVG icon, double size) {
         setIcon(icon);
         setIconSize(size);
     }
@@ -71,7 +71,7 @@ public final class SVGIcon extends Control {
             icon = new ObjectPropertyBase<>(SVG.NONE) {
                 @Override
                 public Object getBean() {
-                    return SVGIcon.this;
+                    return SVGView.this;
                 }
 
                 @Override
@@ -98,7 +98,7 @@ public final class SVGIcon extends Control {
             iconSize = new StyleableDoubleProperty(SVG.DEFAULT_SIZE) {
                 @Override
                 public Object getBean() {
-                    return SVGIcon.this;
+                    return SVGView.this;
                 }
 
                 @Override
@@ -107,7 +107,7 @@ public final class SVGIcon extends Control {
                 }
 
                 @Override
-                public javafx.css.CssMetaData<SVGIcon, Number> getCssMetaData() {
+                public javafx.css.CssMetaData<SVGView, Number> getCssMetaData() {
                     return StyleableProperties.ICON_SIZE;
                 }
             };
@@ -123,7 +123,7 @@ public final class SVGIcon extends Control {
         iconSizeProperty().set(size);
     }
 
-    private final class Skin extends Parent implements javafx.scene.control.Skin<SVGIcon> {
+    private final class Skin extends Parent implements javafx.scene.control.Skin<SVGView> {
 
         private final SVGPath svgPath = new SVGPath();
 
@@ -141,8 +141,8 @@ public final class SVGIcon extends Control {
         // Skin
 
         @Override
-        public SVGIcon getSkinnable() {
-            return SVGIcon.this;
+        public SVGView getSkinnable() {
+            return SVGView.this;
         }
 
         @Override
@@ -183,15 +183,15 @@ public final class SVGIcon extends Control {
     }
 
     private static final class StyleableProperties {
-        private static final javafx.css.CssMetaData<SVGIcon, Number> ICON_SIZE =
+        private static final javafx.css.CssMetaData<SVGView, Number> ICON_SIZE =
                 new javafx.css.CssMetaData<>("-icon-size", StyleConverter.getSizeConverter(), SVG.DEFAULT_SIZE) {
                     @Override
-                    public boolean isSettable(SVGIcon control) {
+                    public boolean isSettable(SVGView control) {
                         return control.iconSize == null || !control.iconSize.isBound();
                     }
 
                     @Override
-                    public StyleableDoubleProperty getStyleableProperty(SVGIcon control) {
+                    public StyleableDoubleProperty getStyleableProperty(SVGView control) {
                         return control.iconSizeProperty();
                     }
                 };
