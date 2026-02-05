@@ -50,6 +50,7 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.logging.Logger;
 import org.jackhuang.hmcl.util.platform.*;
+import org.jackhuang.hmcl.util.platform.windows.WindowsEvents;
 
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
@@ -279,6 +280,17 @@ public class GameCrashWindow extends Stage {
         CompletableFuture.supplyAsync(() ->
                         logs.stream().map(Log::getLog).collect(Collectors.joining("\n")))
                 .thenComposeAsync(logs -> {
+                    var events = WindowsEvents.getApplicationEvents();
+                    var javaEvents = events.stream().filter((it) -> it.message().contains("java.exe") || it.message().contains("javaw.exe")).toList();
+                    if (!javaEvents.isEmpty()) {
+                        LOG.info("Recently java event:");
+                        javaEvents.forEach(it -> {
+                            LOG.info(String.format("ID: %d | Level: %s | Time: %s",
+                                    it.eventId(), it.level(), it.timeCreated()));
+                            LOG.info("Message: " + it.message());
+                        });
+                    }
+
                     long processStartTime = managedProcess.getProcess().info()
                             .startInstant()
                             .map(Instant::toEpochMilli).orElseGet(() -> {
