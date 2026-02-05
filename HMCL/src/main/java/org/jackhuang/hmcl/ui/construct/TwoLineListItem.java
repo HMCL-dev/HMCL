@@ -165,13 +165,13 @@ public class TwoLineListItem extends VBox {
     }
 
     public void addTag(String tag) {
-        Label tagLabel = new Label(tag);
+        var tagLabel = new Label(tag);
         tagLabel.getStyleClass().add("tag");
         getTags().add(tagLabel);
     }
 
     public void addTagWarning(String tag) {
-        Label tagLabel = new Label(tag);
+        var tagLabel = new Label(tag);
         tagLabel.getStyleClass().add("tag-warning");
         getTags().add(tagLabel);
     }
