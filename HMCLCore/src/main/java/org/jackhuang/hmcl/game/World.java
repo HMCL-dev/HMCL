@@ -96,11 +96,11 @@ public final class World {
         return levelData;
     }
 
-    public CompoundTag getWorldGenSettingsDat() {
+    public @Nullable CompoundTag getWorldGenSettingsDat() {
         return worldGenSettingsDat;
     }
 
-    public CompoundTag getPlayerDat() {
+    public @Nullable CompoundTag getPlayerDat() {
         return playerDat;
     }
 
@@ -170,8 +170,8 @@ public final class World {
         if (!Files.exists(levelDat)) {
             throw new IOException("Not a valid world directory since level.dat or special_level.dat cannot be found.");
         }
-        loadAndCheckLevelDat(levelDat);
         this.levelDataPath = levelDat;
+        loadAndCheckWorldData();
 
         Path iconFile = file.resolve("icon.png");
         if (Files.isRegularFile(iconFile)) {
@@ -193,7 +193,7 @@ public final class World {
         if (!Files.exists(levelDat)) {
             throw new IOException("Not a valid world zip file since level.dat or special_level.dat cannot be found.");
         }
-        loadAndCheckLevelDat(levelDat);
+        loadAndCheckLevelData(levelDat);
 
         Path iconFile = root.resolve("icon.png");
         if (Files.isRegularFile(iconFile)) {
@@ -225,8 +225,13 @@ public final class World {
         }
     }
 
-    private void loadAndCheckLevelDat(Path levelDat) throws IOException {
-        this.levelData = parseLevelDat(levelDat);
+    private void loadAndCheckWorldData() throws IOException {
+        loadAndCheckLevelData(levelDataPath);
+        loadOtherData();
+    }
+
+    private void loadAndCheckLevelData(Path levelDat) throws IOException {
+        this.levelData = NBT.read(levelDat);
         CompoundTag data = (CompoundTag) levelData.get("Data");
         if (data == null)
             throw new IOException("level.dat missing Data");
@@ -236,19 +241,17 @@ public final class World {
 
         if (!(data.get("LastPlayed") instanceof LongTag))
             throw new IOException("level.dat missing LastPlayed");
-
-        loadAndCheckOtherDat();
     }
 
-    private void loadAndCheckOtherDat() throws IOException {
+    private void loadOtherData() throws IOException {
 //        if (getGameVersion().isAtLeast()) {
 //
 //        }
 
-        Path worldGenSettingsDatPath = file.resolve("data\\minecraft\\world_gen_settings.dat");
+        Path worldGenSettingsDatPath = file.resolve("data/minecraft/world_gen_settings.dat");
         if (Files.exists(worldGenSettingsDatPath)) {
             this.worldGenSettingsDatPath = worldGenSettingsDatPath;
-            this.worldGenSettingsDat = parseLevelDat(worldGenSettingsDatPath);
+            this.worldGenSettingsDat = NBT.read(worldGenSettingsDatPath);
         }
 
         if (levelData.at("Data/Player") instanceof CompoundTag playerTag) {
@@ -259,19 +262,17 @@ public final class World {
                 long mostSigBits = ((long) uuidValue[0] << 32) | (uuidValue[1] & 0xFFFFFFFFL);
                 long leastSigBits = ((long) uuidValue[2] << 32) | (uuidValue[3] & 0xFFFFFFFFL);
                 String playerUUID = new UUID(mostSigBits, leastSigBits).toString();
-                Path playerDatPath = file.resolve("players\\data\\" + playerUUID + ".dat");
+                Path playerDatPath = file.resolve("players/data/" + playerUUID + ".dat");
                 if (Files.exists(playerDatPath)) {
-                    this.playerDat = parseLevelDat(playerDatPath);
+                    this.playerDat = NBT.read(playerDatPath);
                     this.playerDatPath = playerDatPath;
                 }
             }
         }
     }
 
-    public void reloadLevelDat() throws IOException {
-        if (levelDataPath != null) {
-            loadAndCheckLevelDat(this.levelDataPath);
-        }
+    public void reloadWorldData() throws IOException {
+        loadAndCheckWorldData();
     }
 
     // The rename method is used to rename temporary world object during installation and copying,
@@ -403,10 +404,6 @@ public final class World {
                 NBTWriter.writeTag(gos, nbt);
             }
         });
-    }
-
-    private static CompoundTag parseLevelDat(Path path) throws IOException {
-        return NBT.read(path);
     }
 
     private static boolean isLocked(Path sessionLockFile) {
