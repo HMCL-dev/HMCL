@@ -56,8 +56,8 @@ HMCL 乃社群共驅之開源項目，迎諸君獻碼或建言。
 
 貢獻之前，請閱[貢獻指南](./Contributing_zh_Hant.md)，中含：
 
-- [如何自源碼構建並運行 HMCL](./Contributing_zh_Hant.md#構建-hmcl)
-- [以調試選項調整 HMCL 之行為](./Contributing_zh_Hant.md#除錯選項)
+- [如何自源碼構建並執行 HMCL](./Contributing_zh_Hant.md#構建-hmcl)
+- [以勘誤選項調整 HMCL 之行為](./Contributing_zh_Hant.md#除錯選項)
 
 ## 貢獻者
 
