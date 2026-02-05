@@ -124,7 +124,7 @@ public class JFXSnackbar extends Group {
     /// [snackbar.enqueue(snackbarEvent);][JFXSnackbar#enqueue(SnackbarEvent)].
     ///
     /// @param snackbarContainer where the snackbar will appear. Using a single snackbar instead of many, will ensure that
-    ///                                                                            the [#enqueue(SnackbarEvent)] method works correctly.
+    ///                                                                                                                              the [#enqueue(SnackbarEvent)] method works correctly.
     public JFXSnackbar(Pane snackbarContainer) {
         initialize();
         content = new StackPane();
@@ -262,14 +262,14 @@ public class JFXSnackbar extends Group {
                     ),
                     new KeyFrame(
                             Duration.millis(290),
-                            new KeyValue(this.visibleProperty(), true, Interpolator.EASE_BOTH)
+                            e -> this.setVisible(true)
                     ),
                     new KeyFrame(Duration.millis(300),
-                            e -> this.toBack(),
-                            new KeyValue(this.visibleProperty(), false, Interpolator.EASE_BOTH),
-                            new KeyValue(this.translateYProperty(),
-                                    this.getLayoutBounds().getHeight(),
-                                    Motion.EASE),
+                            e -> {
+                                this.toBack();
+                                this.setVisible(false);
+                            },
+                            new KeyValue(this.translateYProperty(), this.getLayoutBounds().getHeight(), Motion.EASE),
                             new KeyValue(this.opacityProperty(), 0, Motion.EASE)
                     )
             );
@@ -376,7 +376,7 @@ public class JFXSnackbar extends Group {
         /// Creates a [SnackbarEvent] with the [default duration][#DEFAULT_DURATION]; you specify the contents and
         /// pseudoClass.
         ///
-        /// @param content     what you want shown in the snackbar; a [JFXSnackbarLayout] is a great choice.
+        /// @param content what you want shown in the snackbar; a [JFXSnackbarLayout] is a great choice.
         public SnackbarEvent(Node content, PseudoClass pseudoClass) {
             this(content, DEFAULT_DURATION, pseudoClass);
         }
@@ -394,8 +394,8 @@ public class JFXSnackbar extends Group {
         ///
         /// If you don't need so much customization, try one of the other constructors.
         ///
-        /// @param content     what you want shown in the snackbar; a [JFXSnackbarLayout] is a great choice.
-        /// @param timeout     the amount of time you want the snackbar to show for.
+        /// @param content what you want shown in the snackbar; a [JFXSnackbarLayout] is a great choice.
+        /// @param timeout the amount of time you want the snackbar to show for.
         public SnackbarEvent(Node content, Duration timeout, PseudoClass pseudoClass) {
             super(SNACKBAR);
             this.content = content;
