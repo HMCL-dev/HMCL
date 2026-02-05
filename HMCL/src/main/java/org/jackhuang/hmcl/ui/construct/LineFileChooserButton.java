@@ -212,8 +212,11 @@ public class LineFileChooserButton extends LineButton {
 
                 @Override
                 protected void invalidated() {
+                    String location = getLocation();
+                    if (location == null)
+                        return;
                     try {
-                        setLocation(processPath(Path.of(getLocation()).toAbsolutePath().normalize()));
+                        setLocation(processPath(FileUtils.toAbsolute(Path.of(getLocation()))));
                     } catch (IllegalArgumentException ignored) {
                     }
                 }
