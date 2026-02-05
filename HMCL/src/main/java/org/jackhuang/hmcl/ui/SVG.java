@@ -152,7 +152,7 @@ public enum SVG {
         if (size == DEFAULT_SIZE)
             return path;
         else {
-            double scale = size / 24;
+            double scale = size / DEFAULT_SIZE;
             path.setScaleX(scale);
             path.setScaleY(scale);
             return new Group(path);
