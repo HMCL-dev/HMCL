@@ -580,15 +580,15 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             imageView.setImage(VersionIconType.COMMAND.getIcon());
 
             restoreButton.getStyleClass().add("toggle-icon4");
-            restoreButton.setGraphic(SVG.RESTORE.createIcon(24));
+            restoreButton.setGraphic(SVG.RESTORE.createIcon());
 
             FXUtils.installFastTooltip(restoreButton, i18n("mods.restore"));
 
             revealButton.getStyleClass().add("toggle-icon4");
-            revealButton.setGraphic(SVG.FOLDER.createIcon(24));
+            revealButton.setGraphic(SVG.FOLDER.createIcon());
 
             infoButton.getStyleClass().add("toggle-icon4");
-            infoButton.setGraphic(SVG.INFO.createIcon(24));
+            infoButton.setGraphic(SVG.INFO.createIcon());
 
             container.getChildren().setAll(checkBox, imageView, content, restoreButton, revealButton, infoButton);
 
