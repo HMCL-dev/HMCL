@@ -60,6 +60,7 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -280,17 +281,6 @@ public class GameCrashWindow extends Stage {
         CompletableFuture.supplyAsync(() ->
                         logs.stream().map(Log::getLog).collect(Collectors.joining("\n")))
                 .thenComposeAsync(logs -> {
-                    var events = WindowsEvents.getApplicationEvents();
-                    var javaEvents = events.stream().filter((it) -> it != null && it.message() != null && (it.message().contains("java.exe") || it.message().contains("javaw.exe"))).toList();
-                    if (!javaEvents.isEmpty()) {
-                        LOG.info("Recently java event:");
-                        javaEvents.forEach(it -> {
-                            LOG.info(String.format("ID: %d | Level: %s | Time: %s",
-                                    it.eventId(), it.level(), it.timeCreated()));
-                            LOG.info("Message: " + it.message());
-                        });
-                    }
-
                     long processStartTime = managedProcess.getProcess().info()
                             .startInstant()
                             .map(Instant::toEpochMilli).orElseGet(() -> {
@@ -301,6 +291,22 @@ public class GameCrashWindow extends Stage {
                                     return 0L;
                                 }
                             });
+
+                    var events = WindowsEvents.getApplicationEvents();
+                    var javaEvents = events.stream().filter((it) -> it != null && it.message() != null && (it.message().contains("java.exe") || it.message().contains("javaw.exe"))).toList();
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+                    if (!javaEvents.isEmpty()) {
+                        javaEvents.forEach(it -> {
+                            Instant compareInstant = LocalDateTime.parse(it.timeCreated(), formatter).atZone(ZoneId.systemDefault()).toInstant();
+                            if (compareInstant.toEpochMilli() > processStartTime) {
+                                LOG.info("Found java event");
+                                LOG.info(String.format("ID: %d | Level: %s | Time: %s",
+                                        it.eventId(), it.level(), it.timeCreated()));
+                                LOG.info("Message: " + it.message());
+                            }
+                        });
+                    }
 
                     return LogExporter.exportLogs(logFile, repository, launchOptions.getVersionName(), logs,
                             new CommandBuilder().addAll(managedProcess.getCommands()).toString(),
