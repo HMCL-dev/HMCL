@@ -135,10 +135,8 @@ public class InstallersPage extends AbstractInstallersPage {
                     default -> null;
                 };
 
-                if (loaderName == null)
-                    continue;
-
-                nameBuilder.append("-").append(loaderName);
+                if (loaderName != null)
+                    nameBuilder.append('-').append(loaderName);
             }
         }
 
