@@ -587,8 +587,16 @@
     -fx-pref-width: 150.0px;
 }
 
+/*******************************************************************************
+ *                                                                             *
+ * JFX Snack Bar                                                               *
+ *                                                                             *
+ ******************************************************************************/
+
 .jfx-snackbar-content {
     -fx-background-color: -monet-inverse-surface;
+    -fx-padding: 5;
+    -fx-spacing: 5;
 }
 
 .jfx-snackbar-toast {
