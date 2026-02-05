@@ -213,15 +213,19 @@ public class JFXSnackbar extends Group {
         animation = new Timeline(
                 new KeyFrame(
                         Duration.ZERO,
-                        e -> this.toBack(),
-                        new KeyValue(this.visibleProperty(), false, Interpolator.EASE_BOTH),
+                        e -> {
+                            this.toBack();
+                            this.setVisible(false);
+                        },
                         new KeyValue(this.translateYProperty(), this.getLayoutBounds().getHeight(), Motion.EASE),
                         new KeyValue(this.opacityProperty(), 0, Motion.EASE)
                 ),
                 new KeyFrame(
                         Duration.millis(10),
-                        e -> this.toFront(),
-                        new KeyValue(this.visibleProperty(), true, Interpolator.EASE_BOTH)
+                        e -> {
+                            this.toFront();
+                            this.setVisible(true);
+                        }
                 ),
                 new KeyFrame(Duration.millis(300),
                         new KeyValue(this.opacityProperty(), 1, Motion.EASE),
