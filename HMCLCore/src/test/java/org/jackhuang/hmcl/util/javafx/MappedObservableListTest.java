@@ -18,10 +18,13 @@
 package org.jackhuang.hmcl.util.javafx;
 
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.collections.ObservableListBase;
 import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
+import java.util.*;
+import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -216,5 +219,49 @@ public class MappedObservableListTest {
         source.add(2, 3);
         assertEquals(5, mapped.size());
         assertEquals("Item-3", mapped.get(2));
+    }
+
+    /// Test for [ListChangeListener.Change#wasUpdated()].
+    @Test
+    public void testUpdate() {
+        class TestUpdateList<T> extends ObservableListBase<T> {
+            private final List<T> backingList;
+
+            @SafeVarargs
+            public TestUpdateList(T... items) {
+                this.backingList = Arrays.asList(items);
+            }
+
+            @Override
+            public int size() {
+                return backingList.size();
+            }
+
+            @Override
+            public T get(int index) {
+                return backingList.get(index);
+            }
+
+            public void updateItem(int beginIndex, int endIndex, Function<T, T> mapper) {
+                Objects.checkFromToIndex(beginIndex, endIndex, size());
+                beginChange();
+                for (int i = beginIndex; i < endIndex; i++) {
+                    backingList.set(i, mapper.apply(backingList.get(i)));
+                    nextUpdate(i);
+                }
+                endChange();
+            }
+        }
+
+        TestUpdateList<Integer> source = new TestUpdateList<>(1, 2, 3, 4, 5);
+        ObservableList<String> mapped = MappedObservableList.create(source, i -> "Item-" + i);
+
+        source.updateItem(2, 4, i -> i * 10);
+        assertEquals(5, mapped.size());
+        assertEquals("Item-1", mapped.get(0));
+        assertEquals("Item-2", mapped.get(1));
+        assertEquals("Item-30", mapped.get(2));
+        assertEquals("Item-40", mapped.get(3));
+        assertEquals("Item-5", mapped.get(4));
     }
 }
