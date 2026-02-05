@@ -341,13 +341,20 @@ public abstract class Task<T> {
 
     private long lastUpdateProgressTime = 0L;
 
-    protected void updateProgress(long progress, long total) {
-        updateProgress(1.0 * progress / total);
+    protected void updateProgress(long count, long total) {
+        double progress = (double) count / total;
+        if (progress < 0) {
+            updateProgress(0);
+        } else if (progress > 1.0 || Double.isNaN(progress)) {
+            updateProgress(1.0);
+        } else {
+            updateProgress(progress);
+        }
     }
 
     protected void updateProgress(double progress) {
         if (progress < 0 || progress > 1.0 || Double.isNaN(progress))
-            throw new IllegalArgumentException("Progress must be between 0 and 1.");
+            throw new IllegalArgumentException("Invalid progress: " + progress);
 
         long now = System.currentTimeMillis();
         if (progress == 1.0 || now - lastUpdateProgressTime >= 1000L) {
