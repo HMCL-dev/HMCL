@@ -342,14 +342,15 @@ public abstract class Task<T> {
     private long lastUpdateProgressTime = 0L;
 
     protected void updateProgress(long count, long total) {
-        double progress = (double) count / total;
-        if (progress < 0) {
-            updateProgress(0);
-        } else if (progress > 1.0 || Double.isNaN(progress)) {
-            updateProgress(1.0);
-        } else {
-            updateProgress(progress);
-        }
+        if (count < 0 || total < 0)
+            throw new IllegalArgumentException("Invalid count or total: count=" + count + ", total" + total);
+
+        double progress;
+        if (total >= count)
+            progress = 1.0;
+        else
+            progress = (double) count / total;
+        updateProgress(progress);
     }
 
     protected void updateProgress(double progress) {
