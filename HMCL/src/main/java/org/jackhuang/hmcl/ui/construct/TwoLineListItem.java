@@ -39,13 +39,12 @@ public class TwoLineListItem extends VBox {
         getStyleClass().add(DEFAULT_STYLE_CLASS);
         setMouseTransparent(true);
 
-        this.firstLine = new HBox();
-        firstLine.getStyleClass().add("first-line");
-
         lblTitle = new Label();
         lblTitle.getStyleClass().add("title");
 
-        firstLine.getChildren().setAll(lblTitle);
+        this.firstLine = new HBox(lblTitle);
+        firstLine.getStyleClass().add("first-line");
+
         this.getChildren().setAll(firstLine);
     }
 
@@ -61,8 +60,7 @@ public class TwoLineListItem extends VBox {
             lblSubtitle = new Label();
             lblSubtitle.getStyleClass().add("subtitle");
 
-            secondLine = new HBox();
-            secondLine.getChildren().setAll(lblSubtitle);
+            secondLine = new HBox(lblSubtitle);
         }
     }
 
@@ -155,7 +153,7 @@ public class TwoLineListItem extends VBox {
         if (tags == null) {
             tags = FXCollections.observableArrayList();
 
-            HBox tagsBox = new HBox(8);
+            var tagsBox = new HBox(8);
             tagsBox.getStyleClass().add("tags");
             Bindings.bindContent(tagsBox.getChildren(), tags);
 
