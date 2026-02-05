@@ -35,7 +35,7 @@ public final class WindowsEvents {
                 }
             }
         } catch (Exception e) {
-            LOG.warning("Failed to fetch detailed application logs", e);
+            LOG.warning("Failed to fetch application logs", e);
         }
         return results;
     }
