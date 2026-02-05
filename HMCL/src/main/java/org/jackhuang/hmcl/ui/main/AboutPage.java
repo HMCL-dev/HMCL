@@ -26,6 +26,7 @@ import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.LineButton;
@@ -127,10 +128,15 @@ public final class AboutPage extends StackPane {
             for (JsonElement element : array) {
                 JsonObject obj = element.getAsJsonObject();
 
-                LineButton button = LineButton.createExternalLinkButton(obj.get("externalLink") instanceof JsonPrimitive primitive
-                        ? primitive.getAsString()
-                        : null);
+                var button = new LineButton();
                 button.setLargeTitle(true);
+
+                if (obj.get("externalLink") instanceof JsonPrimitive externalLink) {
+                    button.setTrailingIcon(SVG.OPEN_IN_NEW);
+
+                    String link = externalLink.getAsString();
+                    button.setOnAction(event -> FXUtils.openLink(link));
+                }
 
                 if (obj.has("image")) {
                     JsonElement image = obj.get("image");
