@@ -178,6 +178,6 @@ public class TwoLineListItem extends VBox {
 
     @Override
     public String toString() {
-        return getTitle();
+        return "TwoLineListItem[title=%s, subtitle=%s, tags=%s]".formatted(getTitle(), getSubtitle(), tags);
     }
 }
