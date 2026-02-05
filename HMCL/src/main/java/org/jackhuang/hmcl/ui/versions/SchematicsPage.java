@@ -549,7 +549,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         private final HBox right;
 
         private final ImageView iconImageView;
-        private final SVGView iconSVG;
+        private final SVGView iconSVGView;
 
         private final Tooltip tooltip = new Tooltip();
 
@@ -560,12 +560,13 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
             {
                 this.left = new StackPane();
+                left.setMouseTransparent(true);
                 left.setPadding(new Insets(0, 8, 0, 0));
 
                 this.iconImageView = new ImageView();
                 FXUtils.limitSize(iconImageView, 32, 32);
 
-                this.iconSVG = new SVGView(32);
+                this.iconSVGView = new SVGView(32);
 
                 BorderPane.setAlignment(left, Pos.CENTER);
                 root.setLeft(left);
@@ -627,8 +628,8 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                     iconImageView.setImage(fileItem.getImage());
                     left.getChildren().setAll(iconImageView);
                 } else {
-                    iconSVG.setIcon(item.getIcon());
-                    left.getChildren().setAll(iconSVG);
+                    iconSVGView.setIcon(item.getIcon());
+                    left.getChildren().setAll(iconSVGView);
                 }
 
                 center.setTitle(item.getName());

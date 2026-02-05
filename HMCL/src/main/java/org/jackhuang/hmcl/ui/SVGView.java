@@ -17,12 +17,7 @@
  */
 package org.jackhuang.hmcl.ui;
 
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.ObjectPropertyBase;
-import javafx.css.CssMetaData;
-import javafx.css.StyleConverter;
-import javafx.css.Styleable;
-import javafx.css.StyleableDoubleProperty;
+import javafx.css.*;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.Control;
@@ -64,11 +59,11 @@ public final class SVGView extends Control {
         return getClassCssMetaData();
     }
 
-    private ObjectProperty<SVG> icon;
+    private StyleableObjectProperty<SVG> icon;
 
-    public ObjectProperty<SVG> iconProperty() {
+    public StyleableObjectProperty<SVG> iconProperty() {
         if (icon == null) {
-            icon = new ObjectPropertyBase<>(SVG.NONE) {
+            icon = new StyleableObjectProperty<>(SVG.NONE) {
                 @Override
                 public Object getBean() {
                     return SVGView.this;
@@ -77,6 +72,11 @@ public final class SVGView extends Control {
                 @Override
                 public String getName() {
                     return "icon";
+                }
+
+                @Override
+                public javafx.css.CssMetaData<SVGView, SVG> getCssMetaData() {
+                    return StyleableProperties.ICON;
                 }
             };
         }
@@ -183,6 +183,19 @@ public final class SVGView extends Control {
     }
 
     private static final class StyleableProperties {
+        private static final javafx.css.CssMetaData<SVGView, SVG> ICON =
+                new javafx.css.CssMetaData<>("-icon", StyleConverter.getEnumConverter(SVG.class), SVG.NONE) {
+                    @Override
+                    public boolean isSettable(SVGView control) {
+                        return control.icon == null || !control.icon.isBound();
+                    }
+
+                    @Override
+                    public StyleableObjectProperty<SVG> getStyleableProperty(SVGView control) {
+                        return control.iconProperty();
+                    }
+                };
+
         private static final javafx.css.CssMetaData<SVGView, Number> ICON_SIZE =
                 new javafx.css.CssMetaData<>("-icon-size", StyleConverter.getSizeConverter(), SVG.DEFAULT_SIZE) {
                     @Override
@@ -200,6 +213,7 @@ public final class SVGView extends Control {
 
         static {
             var styleables = new ArrayList<>(Control.getClassCssMetaData());
+            styleables.add(ICON);
             styleables.add(ICON_SIZE);
             STYLEABLES = List.copyOf(styleables);
         }
