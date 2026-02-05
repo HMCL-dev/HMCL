@@ -343,14 +343,12 @@ public class JFXSnackbar extends Group {
     // Event API
     ///////////////////////////////////////////////////////////////////////////
 
-    /**
-     * Specifies <em>what</em> and <em>how long</em> to show a {@link JFXSnackbar}.
-     * <p>
-     * The <em>what</em> can be any arbitrary {@link Node}; the {@link JFXSnackbarLayout} is a great choice.
-     * <p>
-     * The <em>how long</em> is specified in the form of a {@link javafx.util.Duration javafx.util.Duration}, not to be
-     * confused with the {@link java.time.Duration}.
-     */
+    /// Specifies _what_ and _how long_ to show a [JFXSnackbar].
+    ///
+    /// The _what_ can be any arbitrary [Node]; the [JFXSnackbarLayout] is a great choice.
+    ///
+    /// The _how long_ is specified in the form of a [javafx.util.Duration][javafx.util.Duration], not to be
+    /// confused with the [java.time.Duration].
     public static class SnackbarEvent extends Event {
 
         public static final EventType<SnackbarEvent> SNACKBAR = new EventType<>(Event.ANY, "SNACKBAR");
