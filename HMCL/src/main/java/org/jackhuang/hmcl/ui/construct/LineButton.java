@@ -23,6 +23,7 @@ import javafx.event.EventHandler;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.OverrunStyle;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 
 /// @author Glavo
@@ -35,6 +36,15 @@ public class LineButton extends LineButtonBase {
     public static LineButton createNavigationButton() {
         var button = new LineButton();
         button.setTrailingIcon(SVG.ARROW_FORWARD);
+        return button;
+    }
+
+    public static LineButton createExternalLinkButton(String url) {
+        var button = new LineButton();
+        button.setTrailingIcon(SVG.OPEN_IN_NEW);
+        if (url != null) {
+            button.setOnAction(event -> FXUtils.openLink(url));
+        }
         return button;
     }
 
