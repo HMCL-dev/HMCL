@@ -145,38 +145,35 @@ public enum SVG {
         return path;
     }
 
-    private static Node createIcon(SVGPath path, double size) {
-        if (size < 0) {
-            StackPane pane = new StackPane(path);
-            pane.setAlignment(Pos.CENTER);
-            return pane;
-        }
-
-        double scale = size / 24;
-        path.setScaleX(scale);
-        path.setScaleY(scale);
-        return new Group(path);
-    }
-
-    public Node createIcon(double size) {
-        SVGPath p = new SVGPath();
+    public SVGPath createSVGPath() {
+        var p = new SVGPath();
         p.setContent(path);
         p.getStyleClass().add("svg");
-        return createIcon(p, size);
+        return p;
+    }
+
+    private static Node createIcon(SVGPath path, double size) {
+        if (size == DEFAULT_SIZE)
+            return path;
+        else {
+            double scale = size / 24;
+            path.setScaleX(scale);
+            path.setScaleY(scale);
+            return new Group(path);
+        }
     }
 
     public Node createIcon() {
-        SVGPath p = new SVGPath();
-        p.setContent(path);
-        p.getStyleClass().add("svg");
-        return createIcon(p, -1);
+        return createIcon(DEFAULT_SIZE);
+    }
+
+    public Node createIcon(double size) {
+        return createIcon(createSVGPath(), size);
     }
 
     public Node createIcon(ObservableValue<? extends Paint> color) {
-        SVGPath p = new SVGPath();
-        p.setContent(path);
-        p.getStyleClass().add("svg");
+        SVGPath p = createSVGPath();
         p.fillProperty().bind(color);
-        return createIcon(p, -1);
+        return createIcon(p, DEFAULT_SIZE);
     }
 }
