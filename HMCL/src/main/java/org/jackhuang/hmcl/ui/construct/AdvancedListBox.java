@@ -74,7 +74,7 @@ public class AdvancedListBox extends ScrollPane {
         item.setActionButtonVisible(false);
         item.setTitle(title);
         if (leftGraphic != null) {
-            item.setLeftGraphic(FXUtils.wrap(leftGraphic));
+            item.setLeftIcon(leftGraphic);
         }
         return item;
     }
@@ -112,7 +112,7 @@ public class AdvancedListBox extends ScrollPane {
 
         TransitionPane leftGraphic = new TransitionPane();
         leftGraphic.setAlignment(Pos.CENTER);
-        FXUtils.setLimitWidth(leftGraphic, 30);
+        FXUtils.setLimitWidth(leftGraphic, 32);
         FXUtils.setLimitHeight(leftGraphic, 20);
         leftGraphic.setPadding(Insets.EMPTY);
         leftGraphic.setContent(item.isActive() ? selectedIcon : unselectedIcon, ContainerAnimations.NONE);

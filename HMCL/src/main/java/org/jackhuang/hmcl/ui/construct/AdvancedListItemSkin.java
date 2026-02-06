@@ -40,25 +40,13 @@ public class AdvancedListItemSkin extends SkinBase<AdvancedListItem> {
 
         RipplerContainer container = new RipplerContainer(root);
 
-        HBox left = new HBox();
-        left.setAlignment(Pos.CENTER_LEFT);
-        left.setMouseTransparent(true);
-
         TwoLineListItem item = new TwoLineListItem();
         root.setCenter(item);
         item.setMouseTransparent(true);
         item.titleProperty().bind(skinnable.titleProperty());
         item.subtitleProperty().bind(skinnable.subtitleProperty());
 
-        FXUtils.onChangeAndOperate(skinnable.leftGraphicProperty(),
-                newGraphic -> {
-                    if (newGraphic == null) {
-                        left.getChildren().clear();
-                    } else {
-                        left.getChildren().setAll(newGraphic);
-                    }
-                });
-        root.setLeft(left);
+        FXUtils.onChangeAndOperate(skinnable.leftGraphicProperty(), root::setLeft);
 
         HBox right = new HBox();
         right.setAlignment(Pos.CENTER);

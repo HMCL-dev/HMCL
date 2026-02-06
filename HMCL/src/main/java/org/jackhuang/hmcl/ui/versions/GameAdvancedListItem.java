@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import javafx.scene.Node;
 import javafx.scene.image.ImageView;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.setting.Profile;
@@ -26,7 +25,6 @@ import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
-import org.jackhuang.hmcl.util.Pair;
 
 import java.util.function.Consumer;
 
@@ -40,9 +38,11 @@ public class GameAdvancedListItem extends AdvancedListItem {
     private Consumer<Event> onVersionIconChangedListener;
 
     public GameAdvancedListItem() {
-        Pair<Node, ImageView> view = createImageView(null);
-        setLeftGraphic(view.getValue());
-        imageView = view.getValue();
+        this.imageView = new ImageView();
+        FXUtils.limitSize(imageView, 32, 32);
+        imageView.setPreserveRatio(true);
+        imageView.setImage(null);
+        setLeftGraphic(FXUtils.limitingSize(imageView, 32, 32));
 
         holder.add(FXUtils.onWeakChangeAndOperate(Profiles.selectedVersionProperty(), this::loadVersion));
 

@@ -20,16 +20,13 @@ package org.jackhuang.hmcl.ui.construct;
 import javafx.beans.property.*;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.BorderPane;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.util.Pair;
-
-import static org.jackhuang.hmcl.util.Pair.pair;
+import org.jackhuang.hmcl.ui.SVG;
 
 public class AdvancedListItem extends Control {
     public AdvancedListItem() {
@@ -49,6 +46,13 @@ public class AdvancedListItem extends Control {
 
     public void setLeftGraphic(Node leftGraphic) {
         this.leftGraphic.set(leftGraphic);
+    }
+
+    public void setLeftIcon(SVG svg) {
+        Node icon = svg.createIcon(20);
+        icon.setMouseTransparent(true);
+        BorderPane.setMargin(icon, new Insets(0, 6, 0, 6));
+        leftGraphicProperty().set(icon);
     }
 
     private final ObjectProperty<Node> rightGraphic = new SimpleObjectProperty<>(this, "rightGraphic");
@@ -145,20 +149,4 @@ public class AdvancedListItem extends Control {
         return new AdvancedListItemSkin(this);
     }
 
-    public static Pair<Node, ImageView> createImageView(Image image) {
-        return createImageView(image, 32, 32);
-    }
-
-    public static Pair<Node, ImageView> createImageView(Image image, double width, double height) {
-        StackPane imageViewContainer = new StackPane();
-        FXUtils.setLimitWidth(imageViewContainer, width);
-        FXUtils.setLimitHeight(imageViewContainer, height);
-
-        ImageView imageView = new ImageView();
-        FXUtils.limitSize(imageView, width, height);
-        imageView.setPreserveRatio(true);
-        imageView.setImage(image);
-        imageViewContainer.getChildren().setAll(imageView);
-        return pair(imageViewContainer, imageView);
-    }
 }
