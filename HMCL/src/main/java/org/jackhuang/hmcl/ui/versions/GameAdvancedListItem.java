@@ -17,7 +17,10 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
+import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.BorderPane;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
@@ -37,12 +40,17 @@ public class GameAdvancedListItem extends AdvancedListItem {
     @SuppressWarnings("unused")
     private Consumer<Event> onVersionIconChangedListener;
 
+    @SuppressWarnings("SuspiciousNameCombination")
     public GameAdvancedListItem() {
         this.imageView = new ImageView();
-        FXUtils.limitSize(imageView, 32, 32);
+        FXUtils.limitSize(imageView, LEFT_GRAPHIC_SIZE, LEFT_GRAPHIC_SIZE);
         imageView.setPreserveRatio(true);
         imageView.setImage(null);
-        setLeftGraphic(FXUtils.limitingSize(imageView, 32, 32));
+
+        Node imageViewWrapper = FXUtils.limitingSize(imageView, LEFT_GRAPHIC_SIZE, LEFT_GRAPHIC_SIZE);
+        imageView.setMouseTransparent(true);
+        BorderPane.setAlignment(imageViewWrapper, Pos.CENTER);
+        setLeftGraphic(imageViewWrapper);
 
         holder.add(FXUtils.onWeakChangeAndOperate(Profiles.selectedVersionProperty(), this::loadVersion));
 

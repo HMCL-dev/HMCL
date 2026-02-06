@@ -101,6 +101,7 @@ public class AdvancedListBox extends ScrollPane {
         return add(item);
     }
 
+    @SuppressWarnings("SuspiciousNameCombination")
     public AdvancedListBox addNavigationDrawerTab(TabHeader tabHeader, TabControl.Tab<?> tab, String title,
                                                   SVG unselectedGraphic, SVG selectedGraphic) {
         AdvancedListItem item = createNavigationDrawerItem(title, null);
@@ -111,8 +112,9 @@ public class AdvancedListBox extends ScrollPane {
         Node selectedIcon = selectedGraphic.createIcon(AdvancedListItem.LEFT_ICON_SIZE);
 
         TransitionPane leftGraphic = new TransitionPane();
+        leftGraphic.setMouseTransparent(true);
         leftGraphic.setAlignment(Pos.CENTER);
-        FXUtils.setLimitWidth(leftGraphic, 32);
+        FXUtils.setLimitWidth(leftGraphic, AdvancedListItem.LEFT_GRAPHIC_SIZE);
         FXUtils.setLimitHeight(leftGraphic, AdvancedListItem.LEFT_ICON_SIZE);
         leftGraphic.setPadding(Insets.EMPTY);
         leftGraphic.setContent(item.isActive() ? selectedIcon : unselectedIcon, ContainerAnimations.NONE);

@@ -30,6 +30,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 
 public class AdvancedListItem extends Control {
+    public static final double LEFT_GRAPHIC_SIZE = 32;
     public static final double LEFT_ICON_SIZE = 20;
     public static final Insets LEFT_ICON_MARGIN = new Insets(0, 6, 0, 6);
 
