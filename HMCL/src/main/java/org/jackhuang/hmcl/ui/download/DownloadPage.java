@@ -324,6 +324,7 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
 
             settings.put("task_detail", "安装游戏-[" + settings.get("name") + "]");//TODO i18n
             settings.put("backgroundable", true);
+            settings.put("return_to_download_list", true);
 
             return finishVersionDownloadingAsync(settings);
         }

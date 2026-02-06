@@ -29,6 +29,7 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.task.TaskCenter;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.ui.SVG;
@@ -115,17 +116,7 @@ public class TaskExecutorDialogPane extends BorderPane {
 
         setCancel(cancel);
 
-        btnCancel.setOnAction(e -> {
-            if (cancelAction != null) {
-                cancelAction.run();
-                return;
-            }
-
-            Optional.ofNullable(executor).ifPresent(TaskExecutor::cancel);
-            if (onCancel.getCancellationAction() != null) {
-                onCancel.getCancellationAction().accept(this);
-            }
-        });
+        btnCancel.setOnAction(e -> handleCancelOrClose());
 
         speedEventHandler = FetchTask.SPEED_EVENT.registerWeak(speedEvent -> {
             String message = I18n.formatSpeed(speedEvent.getSpeed());
@@ -138,6 +129,41 @@ public class TaskExecutorDialogPane extends BorderPane {
                 escAction.run();
             }
         });
+    }
+
+    private boolean isQueuedNotStarted() {
+        if (executor == null) {
+            return false;
+        }
+        if (executor instanceof AsyncTaskExecutor asyncExecutor) {
+            return !asyncExecutor.isStarted();
+        }
+        return false;
+    }
+
+    private void handleCancelOrClose() {
+        if (isQueuedNotStarted()) {
+            fireEvent(new DialogCloseEvent());
+            return;
+        }
+
+        if (cancelAction != null) {
+            cancelAction.run();
+            return;
+        }
+
+        Optional.ofNullable(executor).ifPresent(TaskExecutor::cancel);
+        if (onCancel.getCancellationAction() != null) {
+            onCancel.getCancellationAction().accept(this);
+        }
+    }
+
+    private void applyQueuedStateIfNeeded() {
+        if (isQueuedNotStarted()) {
+            setCancelText("关闭"); // TODO: i18n
+        } else {
+            setCancelText(i18n("button.cancel"));
+        }
     }
 
     public void setExecutor(TaskExecutor executor) {
@@ -158,6 +184,7 @@ public class TaskExecutorDialogPane extends BorderPane {
                     }
                 });
         }
+        applyQueuedStateIfNeeded();
     }
 
     public StringProperty titleProperty() {
@@ -204,6 +231,7 @@ public class TaskExecutorDialogPane extends BorderPane {
 
     public void refreshTaskList() {
         taskListPane.refresh();
+        applyQueuedStateIfNeeded();
     }
 
     private Runnable cancelAction;

@@ -71,6 +71,10 @@ public final class TaskCenter {
         return entries;
     }
 
+    public Entry getRunningEntry() {
+        return running;
+    }
+
     public ObservableList<Entry> getCompletedEntries() {
         return completedEntries;
     }
@@ -133,5 +137,13 @@ public final class TaskCenter {
         });
 
         executor.start();
+    }
+
+    public synchronized boolean contains(TaskExecutor executor) {
+        return entryIndex.containsKey(executor);
+    }
+
+    public synchronized boolean isStarted(TaskExecutor executor) {
+        return Boolean.TRUE.equals(started.get(executor));
     }
 }

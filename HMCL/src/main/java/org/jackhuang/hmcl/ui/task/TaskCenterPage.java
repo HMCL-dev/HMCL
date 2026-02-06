@@ -187,6 +187,11 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
         row.getChildren().addAll(label, cancelButton);
 
         row.setOnMouseClicked(e -> {
+            if (entry != TaskCenter.getInstance().getRunningEntry()) {
+                Controllers.dialog("任务等待中", entry.getTitle(), MessageDialogPane.MessageType.INFO);//TODO: i18n
+                return;
+            }
+
             TaskExecutorDialogPane pane = Controllers.taskDialog(entry.getExecutor(), entry.getTitle(), TaskCancellationAction.NORMAL);
             pane.setEscAction(() -> pane.fireEvent(new DialogCloseEvent()));
             pane.setCancelText("关闭");//TODO: i18n

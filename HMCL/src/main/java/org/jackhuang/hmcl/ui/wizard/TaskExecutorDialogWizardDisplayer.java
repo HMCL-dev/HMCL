@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.wizard;
 
 import javafx.beans.property.StringProperty;
+import org.jackhuang.hmcl.task.AsyncTaskExecutor;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.task.TaskCenter;
 import org.jackhuang.hmcl.task.TaskExecutor;
@@ -93,6 +94,14 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
 
             pane.setExecutor(executor);
 
+            pane.addEventHandler(DialogCloseEvent.CLOSE, event -> {
+                if (executor instanceof AsyncTaskExecutor asyncExecutor && !asyncExecutor.isStarted()) {
+                    onEnd();
+                    Controllers.getDownloadPage().showGameDownloads();
+                    Controllers.navigate(Controllers.getDownloadPage());
+                }
+            });
+
             if (backgroundable) {
                 Object detailObj = settings.get("task_detail");
                 String detail = detailObj != null ? detailObj.toString() : pane.getTitle();
@@ -100,15 +109,18 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
                 pane.setBackgroundAction(() -> {
                     pane.fireEvent(new DialogCloseEvent());
                     TaskCenter.getInstance().enqueue(executor, pane.getTitle(), detail);
+                    pane.refreshTaskList();
                 });
 
                 TaskCenter.getInstance().enqueue(executor, pane.getTitle(), detail);
+                pane.refreshTaskList();
             }
 
             Controllers.dialog(pane);
 
             if (!backgroundable) {
                 executor.start();
+                pane.refreshTaskList();
             }
         });
     }
