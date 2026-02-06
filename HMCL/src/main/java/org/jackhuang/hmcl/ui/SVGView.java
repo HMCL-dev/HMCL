@@ -78,6 +78,13 @@ public final class SVGView extends Control {
                 public CssMetaData<SVGView, SVG> getCssMetaData() {
                     return StyleableProperties.ICON;
                 }
+
+                @Override
+                protected void invalidated() {
+                    if (getSkin() instanceof Skin skin) {
+                        skin.svgPath.setContent(get().getPath());
+                    }
+                }
             };
         }
         return icon;
@@ -110,6 +117,15 @@ public final class SVGView extends Control {
                 public javafx.css.CssMetaData<SVGView, Number> getCssMetaData() {
                     return StyleableProperties.ICON_SIZE;
                 }
+
+                @Override
+                protected void invalidated() {
+                    if (getSkin() instanceof Skin skin) {
+                        double scale = get() / SVG.DEFAULT_SIZE;
+                        skin.svgPath.setScaleX(scale);
+                        skin.svgPath.setScaleY(scale);
+                    }
+                }
             };
         }
         return iconSize;
@@ -128,12 +144,11 @@ public final class SVGView extends Control {
         private final SVGPath svgPath = new SVGPath();
 
         Skin() {
-            FXUtils.onChangeAndOperate(iconProperty(), svg -> svgPath.setContent(svg.getPath()));
-            FXUtils.onChangeAndOperate(iconSizeProperty(), size -> {
-                double scale = size.doubleValue() / SVG.DEFAULT_SIZE;
-                svgPath.setScaleX(scale);
-                svgPath.setScaleY(scale);
-            });
+            svgPath.setContent(getIcon().getPath());
+
+            double scale = getIconSize() / SVG.DEFAULT_SIZE;
+            svgPath.setScaleX(scale);
+            svgPath.setScaleY(scale);
 
             this.getChildren().add(svgPath);
         }
