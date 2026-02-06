@@ -83,5 +83,10 @@
     "title": "MonetFX",
     "subtitle": "Copyright © 2025 Glavo.\nLicensed under the Apache 2.0 License.",
     "externalLink": "https://github.com/Glavo/MonetFX"
+  },
+  {
+    "title" : "MicaNBT",
+    "subtitle" : "Copyright © 2013-2021 Steveice10, 2026 Mine-diamond.\nLicensed under the MIT License.",
+    "externalLink" : "https://github.com/Mine-diamond/MicaNBT"
   }
 ]
