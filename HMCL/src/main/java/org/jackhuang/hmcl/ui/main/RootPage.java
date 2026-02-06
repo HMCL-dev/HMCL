@@ -172,7 +172,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
 
             // third item in left sidebar
             AdvancedListItem gameItem = new AdvancedListItem();
-            gameItem.setLeftGraphic(FXUtils.wrap(SVG.FORMAT_LIST_BULLETED));
+            gameItem.setLeftGraphic(wrap(SVG.FORMAT_LIST_BULLETED));
             gameItem.setActionButtonVisible(false);
             gameItem.setTitle(i18n("version.manage"));
             gameItem.setOnAction(e -> Controllers.navigate(Controllers.getGameListPage()));
@@ -193,7 +193,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             }
 
             AdvancedListItem taskManagerItem = new AdvancedListItem();
-            taskManagerItem.setLeftGraphic(wrap(SVG.LIST)); //SVG待更换
+            taskManagerItem.setLeftGraphic(FXUtils.wrap(SVG.LIST)); //TODO SVG待更换
             taskManagerItem.setActionButtonVisible(false);
             taskManagerItem.setTitle(i18n("task.manage"));
             taskManagerItem.setOnAction(e -> {
