@@ -1671,4 +1671,13 @@ public final class FXUtils {
             e.consume();
         });
     }
+
+    public static void forceRadii(Region region, double radii) {
+        var clip = new Rectangle();
+        clip.setArcHeight(radii);
+        clip.setArcWidth(radii);
+        clip.widthProperty().bind(region.widthProperty());
+        clip.heightProperty().bind(region.heightProperty());
+        region.setClip(clip);
+    }
 }
