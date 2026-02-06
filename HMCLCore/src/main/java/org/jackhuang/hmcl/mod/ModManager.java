@@ -302,11 +302,6 @@ public final class ModManager extends LocalFileManager<LocalModFile> {
                 return true;
             }
 
-            if (Files.exists(fs.getPath("pack.mcmeta"))) {
-                // resource pack, data pack
-                return true;
-            }
-
             return false;
         } catch (IOException e) {
             return false;
