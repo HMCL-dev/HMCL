@@ -118,7 +118,7 @@ public final class World {
     public @Nullable Long getSeed() {
         if (levelData.at("Data.WorldGenSettings.seed") instanceof LongTag seedTag) { //Valid after 1.16
             return seedTag.getClonedValue();
-        } else if (levelData.get("Data.RandomSeed") instanceof LongTag seedTag) { //Valid before 1.16
+        } else if (levelData.at("Data.RandomSeed") instanceof LongTag seedTag) { //Valid before 1.16
             return seedTag.getClonedValue();
         } else if (worldGenSettingsData != null && worldGenSettingsData.at("data.seed") instanceof LongTag seedTag) { //Valid after 26.1-snapshot-6
             return seedTag.getClonedValue();
