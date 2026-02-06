@@ -324,7 +324,7 @@
     -fx-fill: -monet-on-surface-variant;
 }
 
-.two-line-list-item > .first-line > .tag {
+.two-line-list-item > .first-line > .tags > .tag {
     -fx-text-fill: -monet-on-secondary-container;
     -fx-background-color: -monet-secondary-container;
     -fx-padding: 2;
@@ -332,7 +332,7 @@
     -fx-font-size: 12px;
 }
 
-.two-line-list-item > .first-line > .tag-warning {
+.two-line-list-item > .first-line > .tags > .tag-warning {
     -fx-text-fill: -monet-on-error-container;
     -fx-background-color: -fixed-warning-tag-background;
     -fx-padding: 2;
