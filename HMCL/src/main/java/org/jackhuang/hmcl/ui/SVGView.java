@@ -17,11 +17,16 @@
  */
 package org.jackhuang.hmcl.ui;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.css.*;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.Control;
 import javafx.scene.shape.SVGPath;
+import javafx.util.Duration;
+import org.jackhuang.hmcl.ui.animation.Motion;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,6 +64,16 @@ public final class SVGView extends Control {
         return getClassCssMetaData();
     }
 
+    private Duration animationDuration = Duration.ZERO;
+
+    public Duration getAnimationDuration() {
+        return animationDuration;
+    }
+
+    public void setAnimationDuration(Duration duration) {
+        animationDuration = duration;
+    }
+
     private StyleableObjectProperty<SVG> icon;
 
     public StyleableObjectProperty<SVG> iconProperty() {
@@ -82,7 +97,7 @@ public final class SVGView extends Control {
                 @Override
                 protected void invalidated() {
                     if (getSkin() instanceof Skin skin) {
-                        skin.svgPath.setContent(get().getPath());
+                        skin.updateIcon(get(), animationDuration);
                     }
                 }
             };
@@ -121,9 +136,7 @@ public final class SVGView extends Control {
                 @Override
                 protected void invalidated() {
                     if (getSkin() instanceof Skin skin) {
-                        double scale = get() / SVG.DEFAULT_SIZE;
-                        skin.svgPath.setScaleX(scale);
-                        skin.svgPath.setScaleY(scale);
+                        skin.updateSize(get());
                     }
                 }
             };
@@ -136,21 +149,72 @@ public final class SVGView extends Control {
     }
 
     public void setIconSize(double size) {
-        iconSizeProperty().set(size);
+        if (iconSize != null || size != SVG.DEFAULT_SIZE)
+            iconSizeProperty().set(size);
     }
 
     private final class Skin extends Parent implements javafx.scene.control.Skin<SVGView> {
 
         private final SVGPath svgPath = new SVGPath();
+        private SVGPath tempPath;
+        private Timeline timeline;
 
         Skin() {
-            svgPath.setContent(getIcon().getPath());
+            updateSize(svgPath, getIconSize());
+            updateIcon(getIcon(), Duration.ZERO);
+        }
 
-            double scale = getIconSize() / SVG.DEFAULT_SIZE;
-            svgPath.setScaleX(scale);
-            svgPath.setScaleY(scale);
+        void updateSize(double newSize) {
+            updateSize(svgPath, newSize);
+        }
 
-            this.getChildren().add(svgPath);
+        void updateSize(SVGPath path, double newSize) {
+            double scale = newSize / SVG.DEFAULT_SIZE;
+            path.setScaleX(scale);
+            path.setScaleY(scale);
+        }
+
+        void updateIcon(SVG newIcon, Duration animationDuration) {
+            if (timeline != null) {
+                timeline.stop();
+                timeline = null;
+            }
+
+            if (animationDuration.equals(Duration.ZERO)) {
+                svgPath.setContent(newIcon.getPath());
+                svgPath.setOpacity(1);
+                if (getChildren().size() != 1)
+                    getChildren().setAll(svgPath);
+            } else {
+                if (tempPath == null)
+                    tempPath = new SVGPath();
+                else
+                    tempPath.setOpacity(1);
+
+                updateSize(tempPath, getIconSize());
+
+                tempPath.setContent(svgPath.getContent());
+                getChildren().setAll(svgPath, tempPath);
+
+                svgPath.setOpacity(0);
+                svgPath.setContent(newIcon.getPath());
+
+                timeline = new Timeline(
+                        new KeyFrame(Duration.ZERO,
+                                new KeyValue(svgPath.opacityProperty(), 0, Motion.LINEAR),
+                                new KeyValue(tempPath.opacityProperty(), 1, Motion.LINEAR)
+                        ),
+                        new KeyFrame(animationDuration,
+                                new KeyValue(svgPath.opacityProperty(), 1, Motion.LINEAR),
+                                new KeyValue(tempPath.opacityProperty(), 0, Motion.LINEAR)
+                        )
+                );
+                timeline.setOnFinished(e -> {
+                    getChildren().setAll(svgPath);
+                    timeline = null;
+                });
+                timeline.play();
+            }
         }
 
         // Skin
@@ -194,7 +258,6 @@ public final class SVGView extends Control {
         @Override
         protected void layoutChildren() {
         }
-
     }
 
     private static final class StyleableProperties {
