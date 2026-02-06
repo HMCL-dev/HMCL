@@ -42,7 +42,6 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Text;
-import javafx.scene.text.TextFlow;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.RemoteMod;
@@ -77,6 +76,7 @@ import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
+import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createTip;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
@@ -813,8 +813,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             }
 
             {
-                var tip = new TextFlow();
-                tip.setStyle("-fx-font-size: 13;");
+                var tip = createTip();
                 HBox.setMargin(tip, new Insets(5));
                 var tipPane = new HBox(tip);
                 tipPane.setAlignment(Pos.CENTER_LEFT);
@@ -847,8 +846,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             }
 
             {
-                var relPath = new TextFlow();
-                relPath.setStyle("-fx-font-size: 13;");
+                var relPath = createTip();
                 HBox.setMargin(relPath, new Insets(5));
                 FXUtils.onChangeAndOperate(skinnable.currentDirectoryProperty(), currentDir -> {
                     relPath.getChildren().clear();
