@@ -107,13 +107,13 @@ public class AdvancedListBox extends ScrollPane {
         item.activeProperty().bind(tabHeader.getSelectionModel().selectedItemProperty().isEqualTo(tab));
         item.setOnAction(e -> tabHeader.select(tab));
 
-        Node unselectedIcon = unselectedGraphic.createIcon(20);
-        Node selectedIcon = selectedGraphic.createIcon(20);
+        Node unselectedIcon = unselectedGraphic.createIcon(AdvancedListItem.LEFT_ICON_SIZE);
+        Node selectedIcon = selectedGraphic.createIcon(AdvancedListItem.LEFT_ICON_SIZE);
 
         TransitionPane leftGraphic = new TransitionPane();
         leftGraphic.setAlignment(Pos.CENTER);
         FXUtils.setLimitWidth(leftGraphic, 32);
-        FXUtils.setLimitHeight(leftGraphic, 20);
+        FXUtils.setLimitHeight(leftGraphic, AdvancedListItem.LEFT_ICON_SIZE);
         leftGraphic.setPadding(Insets.EMPTY);
         leftGraphic.setContent(item.isActive() ? selectedIcon : unselectedIcon, ContainerAnimations.NONE);
         FXUtils.onChange(item.activeProperty(), active ->

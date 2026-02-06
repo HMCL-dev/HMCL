@@ -21,6 +21,7 @@ import javafx.beans.property.*;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
@@ -29,6 +30,9 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 
 public class AdvancedListItem extends Control {
+    public static final double LEFT_ICON_SIZE = 20;
+    public static final Insets LEFT_ICON_MARGIN = new Insets(0, 6, 0, 6);
+
     public AdvancedListItem() {
         getStyleClass().add("advanced-list-item");
         FXUtils.onClicked(this, () -> fireEvent(new ActionEvent()));
@@ -49,9 +53,10 @@ public class AdvancedListItem extends Control {
     }
 
     public void setLeftIcon(SVG svg) {
-        Node icon = svg.createIcon(20);
+        Node icon = svg.createIcon(LEFT_ICON_SIZE);
         icon.setMouseTransparent(true);
-        BorderPane.setMargin(icon, new Insets(0, 6, 0, 6));
+        BorderPane.setMargin(icon, LEFT_ICON_MARGIN);
+        BorderPane.setAlignment(icon, Pos.CENTER);
         leftGraphicProperty().set(icon);
     }
 
