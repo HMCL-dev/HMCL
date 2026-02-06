@@ -22,7 +22,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 /**

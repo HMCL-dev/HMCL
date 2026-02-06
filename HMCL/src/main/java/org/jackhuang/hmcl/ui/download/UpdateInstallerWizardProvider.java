@@ -40,7 +40,6 @@ import org.jetbrains.annotations.Nullable;
 import java.net.SocketTimeoutException;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.zip.ZipException;
 
