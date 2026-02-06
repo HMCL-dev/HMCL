@@ -66,7 +66,6 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
-import static org.jackhuang.hmcl.ui.FXUtils.wrap;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -172,7 +171,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
 
             // third item in left sidebar
             AdvancedListItem gameItem = new AdvancedListItem();
-            gameItem.setLeftGraphic(wrap(SVG.FORMAT_LIST_BULLETED));
+            gameItem.setLeftGraphic(FXUtils.wrap(SVG.FORMAT_LIST_BULLETED));
             gameItem.setActionButtonVisible(false);
             gameItem.setTitle(i18n("version.manage"));
             gameItem.setOnAction(e -> Controllers.navigate(Controllers.getGameListPage()));
@@ -180,7 +179,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
 
             // forth item in left sidebar
             AdvancedListItem downloadItem = new AdvancedListItem();
-            downloadItem.setLeftGraphic(wrap(SVG.DOWNLOAD));
+            downloadItem.setLeftGraphic(FXUtils.wrap(SVG.DOWNLOAD));
             downloadItem.setActionButtonVisible(false);
             downloadItem.setTitle(i18n("download"));
             downloadItem.setOnAction(e -> {
@@ -193,7 +192,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             }
 
             AdvancedListItem taskManagerItem = new AdvancedListItem();
-            taskManagerItem.setLeftGraphic(wrap(SVG.LIST)); //SVG待更换
+            taskManagerItem.setLeftGraphic(FXUtils.wrap(SVG.LIST)); //TODO SVG待更换
             taskManagerItem.setActionButtonVisible(false);
             taskManagerItem.setTitle(i18n("task.manage"));
             taskManagerItem.setOnAction(e -> {
@@ -203,7 +202,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
 
             // fifth item in left sidebar
             AdvancedListItem launcherSettingsItem = new AdvancedListItem();
-            launcherSettingsItem.setLeftGraphic(wrap(SVG.SETTINGS));
+            launcherSettingsItem.setLeftGraphic(FXUtils.wrap(SVG.SETTINGS));
             launcherSettingsItem.setActionButtonVisible(false);
             launcherSettingsItem.setTitle(i18n("settings"));
             launcherSettingsItem.setOnAction(e -> {
@@ -216,7 +215,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
 
             // sixth item in left sidebar
             AdvancedListItem terracottaItem = new AdvancedListItem();
-            terracottaItem.setLeftGraphic(wrap(SVG.GRAPH2));
+            terracottaItem.setLeftGraphic(FXUtils.wrap(SVG.GRAPH2));
             terracottaItem.setActionButtonVisible(false);
             terracottaItem.setTitle(i18n("terracotta"));
             terracottaItem.setOnAction(e -> {
