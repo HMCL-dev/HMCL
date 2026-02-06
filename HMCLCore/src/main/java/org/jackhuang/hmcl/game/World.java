@@ -116,26 +116,38 @@ public final class World {
     }
 
     public @Nullable Long getSeed() {
-        if (levelData.at("Data.WorldGenSettings.seed") instanceof LongTag seedTag) { //Valid after 1.16
+        // Valid between 1.16 and 26.1-snapshot-6
+        if (levelData.at("Data.WorldGenSettings.seed") instanceof LongTag seedTag) {
             return seedTag.getClonedValue();
-        } else if (levelData.at("Data.RandomSeed") instanceof LongTag seedTag) { //Valid before 1.16
+        }
+        // Valid before 1.16
+        else if (levelData.at("Data.RandomSeed") instanceof LongTag seedTag) {
             return seedTag.getClonedValue();
-        } else if (worldGenSettingsData != null && worldGenSettingsData.at("data.seed") instanceof LongTag seedTag) { //Valid after 26.1-snapshot-6
+        }
+        // Valid after 26.1-snapshot-6
+        else if (worldGenSettingsData != null && worldGenSettingsData.at("data.seed") instanceof LongTag seedTag) {
             return seedTag.getClonedValue();
         }
         return null;
     }
 
     public boolean isLargeBiomes() {
-        if (levelData.at("Data.generatorName") instanceof StringTag generatorNameTag) { //Valid before 1.16
+        // Valid before 1.16
+        if (levelData.at("Data.generatorName") instanceof StringTag generatorNameTag) {
             return "largeBiomes".equals(generatorNameTag.getClonedValue());
-        } else if (worldGenSettingsData != null) {
-            if (worldGenSettingsData.at("data.dimensions.minecraft:overworld.generator.settings") instanceof StringTag settingsTag) { //Valid after 26.1-snapshot-6
+        }
+        // Valid after 26.1-snapshot-6
+        else if (worldGenSettingsData != null) {
+            if (worldGenSettingsData.at("data.dimensions.minecraft:overworld.generator.settings") instanceof StringTag settingsTag) {
                 return "minecraft:large_biomes".equals(settingsTag.getClonedValue());
             }
-        } else if (levelData.at("Data.WorldGenSettings.dimensions.minecraft:overworld.generator.biome_source.large_biomes") instanceof ByteTag largeBiomesTag) {  //Valid between 1.16 and 1.16.2
+        }
+        // Valid between 1.16 and 1.16.2
+        else if (levelData.at("Data.WorldGenSettings.dimensions.minecraft:overworld.generator.biome_source.large_biomes") instanceof ByteTag largeBiomesTag) {
             return largeBiomesTag.getClonedValue() == (byte) 1;
-        } else if (levelData.at("Data.WorldGenSettings.dimensions.minecraft:overworld.generator.settings") instanceof StringTag settingsTag) { //Valid between 1.16.2 and 26.1-snapshot-6
+        }
+        // Valid between 1.16.2 and 26.1-snapshot-6
+        else if (levelData.at("Data.WorldGenSettings.dimensions.minecraft:overworld.generator.settings") instanceof StringTag settingsTag) {
             return "minecraft:large_biomes".equals(settingsTag.getClonedValue());
         }
         return false;
