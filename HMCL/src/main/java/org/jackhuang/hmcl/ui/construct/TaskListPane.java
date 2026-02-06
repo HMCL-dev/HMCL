@@ -76,7 +76,6 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.ref.WeakReference;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
@@ -107,17 +106,16 @@ public final class TaskListPane extends StackPane {
     }
 
     @FXThread
-    private void addStages(@NotNull Collection<List<String>> stageGroups) {
-        for (List<String> group : stageGroups) {
-            String displayStage = group.get(0);
-            StageNode node = stageNodes.get(displayStage);
+    private void addStagesHints(@NotNull Collection<Task.StagesHint> hints) {
+        for (Task.StagesHint hint : hints) {
+            StageNode node = stageNodes.get(hint.stage());
 
             if (node == null) {
-                node = new StageNode(displayStage);
-                stageNodes.put(displayStage, node);
+                node = new StageNode(hint.stage());
+                stageNodes.put(hint.stage(), node);
                 listView.getItems().add(node);
             }
-            for (String stage : group) {
+            for (String stage : hint.aliases()) {
                 stageNodes.put(stage, node);
             }
         }
@@ -136,7 +134,7 @@ public final class TaskListPane extends StackPane {
                 Platform.runLater(() -> {
                     stageNodes.clear();
                     listView.getItems().clear();
-                    addStages(executor.getStages());
+                    addStagesHints(executor.getHints());
                     updateProgressNodePadding();
                 });
             }
@@ -145,7 +143,7 @@ public final class TaskListPane extends StackPane {
             public void onReady(Task<?> task) {
                 if (task instanceof Task.StagesHintTask) {
                     Platform.runLater(() -> {
-                        addStages(((Task<?>.StagesHintTask) task).getStages());
+                        addStagesHints(((Task<?>.StagesHintTask) task).getHints());
                         updateProgressNodePadding();
                     });
                 }

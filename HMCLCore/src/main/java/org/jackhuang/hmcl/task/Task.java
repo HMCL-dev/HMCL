@@ -836,19 +836,29 @@ public abstract class Task<T> {
         return new FakeProgressTask(done, k).setExecutor(Schedulers.defaultScheduler()).setName(name).setSignificance(TaskSignificance.MAJOR);
     }
 
-    public Task<T> withStagesHint(List<String> stages) {
-        return withMultiStagesHint(stages.stream().map(List::of).toList());
+    public record StagesHint(String stage, List<String> aliases) {
+        public StagesHint(String stage) {
+            this(stage, List.of());
+        }
     }
 
-    public Task<T> withMultiStagesHint(List<List<String>> stages) {
-        return new StagesHintTask(stages);
+    public Task<T> withStagesHints(String... hints) {
+        return withStagesHints(Arrays.stream(hints).map(StagesHint::new).toList());
+    }
+
+    public Task<T> withStagesHints(StagesHint... hints) {
+        return new StagesHintTask(List.of(hints));
+    }
+
+    public Task<T> withStagesHints(List<StagesHint> hints) {
+        return new StagesHintTask(hints);
     }
 
     public class StagesHintTask extends Task<T> {
-        private final List<List<String>> stages;
+        private final List<StagesHint> hints;
 
-        public StagesHintTask(List<List<String>> stages) {
-            this.stages = stages;
+        public StagesHintTask(List<StagesHint> hints) {
+            this.hints = hints;
         }
 
         @Override
@@ -861,8 +871,8 @@ public abstract class Task<T> {
             setResult(Task.this.getResult());
         }
 
-        public List<List<String>> getStages() {
-            return stages;
+        public List<StagesHint> getHints() {
+            return hints;
         }
     }
 
