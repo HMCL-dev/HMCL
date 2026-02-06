@@ -27,7 +27,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.SVGView;
+import org.jackhuang.hmcl.ui.SVGContainer;
 import org.jackhuang.hmcl.ui.animation.Motion;
 
 import java.util.function.Consumer;
@@ -105,12 +105,11 @@ public class AdvancedListBox extends ScrollPane {
         item.activeProperty().bind(tabHeader.getSelectionModel().selectedItemProperty().isEqualTo(tab));
         item.setOnAction(e -> tabHeader.select(tab));
 
-        var leftGraphic = new SVGView(AdvancedListItem.LEFT_ICON_SIZE);
+        var leftGraphic = new SVGContainer(item.isActive() ? selectedGraphic : unselectedGraphic, AdvancedListItem.LEFT_ICON_SIZE);
         leftGraphic.setMouseTransparent(true);
         AdvancedListItem.setAlignment(leftGraphic, Pos.CENTER);
         AdvancedListItem.setMargin(leftGraphic, AdvancedListItem.LEFT_ICON_MARGIN);
-        FXUtils.onChangeAndOperate(item.activeProperty(), active -> leftGraphic.setIcon(active ? selectedGraphic : unselectedGraphic));
-        leftGraphic.setAnimationDuration(Motion.SHORT4);
+        FXUtils.onChange(item.activeProperty(), active -> leftGraphic.setIcon(active ? selectedGraphic : unselectedGraphic, Motion.SHORT4));
         item.setLeftGraphic(leftGraphic);
         return add(item);
     }

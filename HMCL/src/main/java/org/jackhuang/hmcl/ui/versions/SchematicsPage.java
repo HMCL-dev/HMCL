@@ -549,7 +549,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         private final HBox right;
 
         private final ImageView iconImageView;
-        private final SVGView iconSVGView;
+        private final SVGContainer iconSVGView;
 
         private final Tooltip tooltip = new Tooltip();
 
@@ -566,7 +566,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 this.iconImageView = new ImageView();
                 FXUtils.limitSize(iconImageView, 32, 32);
 
-                this.iconSVGView = new SVGView(32);
+                this.iconSVGView = new SVGContainer(32);
 
                 BorderPane.setAlignment(left, Pos.CENTER);
                 root.setLeft(left);
