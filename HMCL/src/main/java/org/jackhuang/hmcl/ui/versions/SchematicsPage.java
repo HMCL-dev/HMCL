@@ -168,17 +168,16 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             }
             boolean shouldUseForgematica = false;
             if (litematicaState == LitematicaState.NOT_INSTALLED) {
-                if (litematica == null) {
+                shouldUseForgematica =
+                        (modManager.getSupportedLoaders().contains(ModLoaderType.FORGE)
+                                || modManager.getSupportedLoaders().contains(ModLoaderType.NEO_FORGED))
+                                && GameVersionNumber.asGameVersion(Optional.ofNullable(modManager.getGameVersion())).isAtLeast("1.16.4", "20w45a");
+                if (litematica == null && !shouldUseForgematica) {
                     try {
                         litematica = ModrinthRemoteModRepository.MODS.getModById("litematica");
                     } catch (IOException ignored) {
                     }
-                }
-                shouldUseForgematica =
-                        (modManager.getSupportedLoaders().contains(ModLoaderType.FORGE)
-                                || modManager.getSupportedLoaders().contains(ModLoaderType.NEO_FORGED))
-                        && GameVersionNumber.asGameVersion(Optional.ofNullable(modManager.getGameVersion())).isAtLeast("1.16.4", "20w45a");
-                if (forgematica == null && shouldUseForgematica) {
+                } else if (forgematica == null && shouldUseForgematica) {
                     try {
                         forgematica = ModrinthRemoteModRepository.MODS.getModById("forgematica");
                     } catch (IOException ignored) {
@@ -191,7 +190,8 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 switch (result.key().key()) {
                     case NOT_INSTALLED -> {
                         boolean useForgematica = forgematica != null && result.key().value();
-                        if (useForgematica || litematica != null) {
+                        boolean useLitematica = litematica != null && !result.key().value();
+                        if (useForgematica || useLitematica) {
                             warningTip.set(pair(i18n("schematics.warning.no_litematica_install"), () -> {
                                 var modDownloads = Controllers.getDownloadPage().showModDownloads();
                                 modDownloads.selectVersion(instanceId);
