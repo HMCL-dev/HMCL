@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.image.ImageView;
 import org.jackhuang.hmcl.event.Event;
@@ -26,7 +27,6 @@ import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
-import org.jackhuang.hmcl.util.Pair;
 
 import java.util.function.Consumer;
 
@@ -39,14 +39,20 @@ public class GameAdvancedListItem extends AdvancedListItem {
     @SuppressWarnings("unused")
     private Consumer<Event> onVersionIconChangedListener;
 
+    @SuppressWarnings("SuspiciousNameCombination")
     public GameAdvancedListItem() {
-        Pair<Node, ImageView> view = createImageView(null);
-        setLeftGraphic(view.getKey());
-        imageView = view.getValue();
+        this.imageView = new ImageView();
+        FXUtils.limitSize(imageView, LEFT_GRAPHIC_SIZE, LEFT_GRAPHIC_SIZE);
+        imageView.setPreserveRatio(true);
+        imageView.setImage(null);
+
+        Node imageViewWrapper = FXUtils.limitingSize(imageView, LEFT_GRAPHIC_SIZE, LEFT_GRAPHIC_SIZE);
+        imageView.setMouseTransparent(true);
+        AdvancedListItem.setAlignment(imageViewWrapper, Pos.CENTER);
+        setLeftGraphic(imageViewWrapper);
 
         holder.add(FXUtils.onWeakChangeAndOperate(Profiles.selectedVersionProperty(), this::loadVersion));
 
-        setActionButtonVisible(false);
     }
 
     private void loadVersion(String version) {
