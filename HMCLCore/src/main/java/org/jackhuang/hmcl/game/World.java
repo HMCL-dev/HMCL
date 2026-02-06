@@ -129,6 +129,10 @@ public final class World {
     public boolean isLargeBiomes() {
         if (levelData.at("Data.generatorName") instanceof StringTag generatorNameTag) { //Valid before 1.16
             return "largeBiomes".equals(generatorNameTag.getClonedValue());
+        } else if (worldGenSettingsDat != null) {
+            if (worldGenSettingsDat.at("data.dimensions.minecraft:overworld.generator.settings") instanceof StringTag settingsTag) {
+                return "minecraft:large_biomes".equals(settingsTag.getClonedValue());
+            }
         } else {
             if (levelData.at("Data.WorldGenSettings.dimensions.minecraft:overworld.generator") instanceof CompoundTag generatorTag) {
                 if (generatorTag.at("biome_source.large_biomes") instanceof ByteTag largeBiomesTag) { //Valid between 1.16 and 1.16.2
@@ -137,8 +141,8 @@ public final class World {
                     return "minecraft:large_biomes".equals(settingsTag.getClonedValue());
                 }
             }
-            return false;
         }
+        return false;
     }
 
     public Image getIcon() {
