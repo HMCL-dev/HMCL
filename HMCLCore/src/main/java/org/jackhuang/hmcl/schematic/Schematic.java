@@ -43,7 +43,7 @@ public sealed abstract class Schematic permits LitematicFile, SchemFile, NBTStru
     public static Schematic load(Path file) throws IOException {
         var type = SchematicType.getType(file);
         if (type == null) return null;
-        return switch (SchematicType.getType(file)) {
+        return switch (type) {
             case LITEMATIC -> LitematicFile.load(file);
             case SCHEM -> SchemFile.load(file);
             case NBT_STRUCTURE -> NBTStructureFile.load(file);
@@ -98,7 +98,7 @@ public sealed abstract class Schematic permits LitematicFile, SchemFile, NBTStru
         return OptionalInt.empty();
     }
 
-    /// None-negative, otherwise empty
+    /// Non-negative, otherwise empty
     public OptionalInt getSubVersion() {
         return OptionalInt.empty();
     }

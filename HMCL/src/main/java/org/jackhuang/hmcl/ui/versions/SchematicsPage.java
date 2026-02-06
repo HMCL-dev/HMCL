@@ -419,20 +419,22 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         void load() {
             if (this.loaded) return;
 
-            try (Stream<Path> stream = Files.list(path)) {
+            try {
                 preLoad();
-                for (var dir : dirChildren) {
-                    dir.preLoad();
-                    this.children.add(dir);
+                try (Stream<Path> stream = Files.list(path)) {
+                    for (var dir : dirChildren) {
+                        dir.preLoad();
+                        this.children.add(dir);
+                    }
+                    stream.filter(Schematic::isFileSchematic)
+                            .forEach(p -> {
+                                try {
+                                    this.children.add(new SchematicItem(p));
+                                } catch (IOException e) {
+                                    LOG.warning("Failed to load schematic file: " + path, e);
+                                }
+                            });
                 }
-                stream.filter(Schematic::isFileSchematic)
-                        .forEach(p -> {
-                            try {
-                                this.children.add(new SchematicItem(p));
-                            } catch (IOException e) {
-                                LOG.warning("Failed to load litematic file: " + path, e);
-                            }
-                        });
             } catch (NoSuchFileException ignored) {
             } catch (IOException e) {
                 LOG.warning("Failed to load schematics in " + path, e);

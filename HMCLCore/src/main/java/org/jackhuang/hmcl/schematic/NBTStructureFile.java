@@ -34,9 +34,9 @@ public final class NBTStructureFile extends Schematic {
 
         Tag dataVersionTag = root.get("DataVersion");
         if (dataVersionTag == null)
-            throw new IOException("Materials tag not found");
+            throw new IOException("DataVersion tag not found");
         else if (!(dataVersionTag instanceof IntTag))
-            throw new IOException("Materials tag is not an integer");
+            throw new IOException("DataVersion tag is not an integer");
 
         Tag sizeTag = root.get("size");
         if (sizeTag == null)
