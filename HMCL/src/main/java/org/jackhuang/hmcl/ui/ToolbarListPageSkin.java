@@ -77,7 +77,8 @@ public abstract class ToolbarListPageSkin<E, P extends ListPageBase<E>> extends 
 
     public static Node wrap(Node node) {
         StackPane stackPane = new StackPane();
-        stackPane.setPadding(new Insets(0, 5, 0, 2));
+        stackPane.setAlignment(Pos.CENTER);
+        stackPane.setPadding(Insets.EMPTY);
         stackPane.getChildren().setAll(node);
         return stackPane;
     }
@@ -85,7 +86,7 @@ public abstract class ToolbarListPageSkin<E, P extends ListPageBase<E>> extends 
     public static JFXButton createToolbarButton2(String text, SVG svg, Runnable onClick) {
         JFXButton ret = new JFXButton();
         ret.getStyleClass().add("jfx-tool-bar-button");
-        ret.setGraphic(wrap(svg.createIcon()));
+        ret.setGraphic(wrap(svg.createIcon(20)));
         ret.setText(text);
         ret.setOnAction(e -> onClick.run());
         return ret;
@@ -94,7 +95,7 @@ public abstract class ToolbarListPageSkin<E, P extends ListPageBase<E>> extends 
     public static JFXButton createDecoratorButton(String tooltip, SVG svg, Runnable onClick) {
         JFXButton ret = new JFXButton();
         ret.getStyleClass().add("jfx-decorator-button");
-        ret.setGraphic(wrap(svg.createIcon()));
+        ret.setGraphic(wrap(svg.createIcon(20)));
         FXUtils.installFastTooltip(ret, tooltip);
         ret.setOnAction(e -> onClick.run());
         return ret;
