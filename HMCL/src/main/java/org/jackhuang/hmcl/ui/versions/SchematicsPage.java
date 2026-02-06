@@ -139,8 +139,9 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
     }
 
     public void navigateBack() {
-        var p = currentDirectoryProperty().get().parent;
-        if (p != null) navigateTo(p);
+        var d = currentDirectoryProperty().get();
+        if (d == null) return;
+        if (d.parent != null) navigateTo(d.parent);
     }
 
     public void refresh() {
