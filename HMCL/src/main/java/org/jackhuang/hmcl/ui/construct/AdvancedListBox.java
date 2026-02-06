@@ -105,13 +105,13 @@ public class AdvancedListBox extends ScrollPane {
         item.activeProperty().bind(tabHeader.getSelectionModel().selectedItemProperty().isEqualTo(tab));
         item.setOnAction(e -> tabHeader.select(tab));
 
-        var leftGraphics = new SVGView(AdvancedListItem.LEFT_ICON_SIZE);
-        leftGraphics.setMouseTransparent(true);
-        AdvancedListItem.setAlignment(leftGraphics, Pos.CENTER);
-        AdvancedListItem.setMargin(leftGraphics, AdvancedListItem.LEFT_ICON_MARGIN);
-        FXUtils.onChangeAndOperate(item.activeProperty(), active -> leftGraphics.setIcon(active ? selectedGraphic : unselectedGraphic));
-        leftGraphics.setAnimationDuration(Motion.SHORT4);
-        item.setLeftGraphic(leftGraphics);
+        var leftGraphic = new SVGView(AdvancedListItem.LEFT_ICON_SIZE);
+        leftGraphic.setMouseTransparent(true);
+        AdvancedListItem.setAlignment(leftGraphic, Pos.CENTER);
+        AdvancedListItem.setMargin(leftGraphic, AdvancedListItem.LEFT_ICON_MARGIN);
+        FXUtils.onChangeAndOperate(item.activeProperty(), active -> leftGraphic.setIcon(active ? selectedGraphic : unselectedGraphic));
+        leftGraphic.setAnimationDuration(Motion.SHORT4);
+        item.setLeftGraphic(leftGraphic);
         return add(item);
     }
 

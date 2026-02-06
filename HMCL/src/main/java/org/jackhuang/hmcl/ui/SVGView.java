@@ -31,6 +31,8 @@ import org.jackhuang.hmcl.ui.animation.Motion;
 import java.util.ArrayList;
 import java.util.List;
 
+/// A lightweight control that displays an [SVG] icon.
+///
 /// @author Glavo
 public final class SVGView extends Control {
 
@@ -40,17 +42,29 @@ public final class SVGView extends Control {
         getStyleClass().add(DEFAULT_STYLE_CLASS);
     }
 
+    /// Creates an SVGView with the default icon and the default icon size.
     public SVGView() {
     }
 
+    /// Creates an SVGView showing the given icon using the default icon size.
+    ///
+    /// @param icon the [SVG] icon to display
     public SVGView(SVG icon) {
         setIcon(icon);
     }
 
+    /// Creates an SVGView with a custom icon size. The initial icon is
+    /// [SVG#NONE].
+    ///
+    /// @param size the icon size
     public SVGView(double size) {
         setIconSize(size);
     }
 
+    /// Creates an SVGView with the specified icon and size.
+    ///
+    /// @param icon the [SVG] icon to display
+    /// @param size the icon size
     public SVGView(SVG icon, double size) {
         setIcon(icon);
         setIconSize(size);
@@ -72,6 +86,10 @@ public final class SVGView extends Control {
 
     private Duration animationDuration = Duration.ZERO;
 
+    /// Returns the duration used for the cross-fade animation when switching
+    /// icons. A value of [Duration#ZERO] disables the animation.
+    ///
+    /// @return the animation duration
     public Duration getAnimationDuration() {
         return animationDuration;
     }
