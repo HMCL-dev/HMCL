@@ -35,11 +35,13 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.ChunkBaseApp;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
+import java.util.Optional;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -53,6 +55,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     private final Path backupsDir;
     private final Profile profile;
     private final String versionId;
+    private final boolean supportQuickPlay;
     private FileChannel sessionLockChannel;
 
     private final ObjectProperty<State> state;
@@ -86,6 +89,10 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         datapackTab.setNodeSupplier(() -> new DatapackListPage(this));
 
         this.state = new SimpleObjectProperty<>(new State(i18n("world.manage.title", StringUtils.parseColorEscapes(world.getWorldName())), null, true, true, true));
+
+        Optional<String> gameVersion = profile.getRepository().getGameVersion(versionId);
+        GameVersionNumber instanceVersion = GameVersionNumber.asGameVersion(gameVersion);
+        supportQuickPlay = World.supportQuickPlay(instanceVersion);
 
         this.addEventHandler(Navigator.NavigationEvent.EXITED, this::onExited);
         this.addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
@@ -225,7 +232,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
             AdvancedListBox toolbar = new AdvancedListBox();
             BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
             {
-                if (getSkinnable().world.supportQuickPlay()) {
+                if (getSkinnable().supportQuickPlay) {
                     toolbar.addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, () -> getSkinnable().launch(), advancedListItem -> advancedListItem.disableProperty().bind(getSkinnable().readOnlyProperty()));
                 }
 
@@ -257,7 +264,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                     PopupMenu managePopupMenu = new PopupMenu();
                     JFXPopup managePopup = new JFXPopup(managePopupMenu);
 
-                    if (getSkinnable().world.supportQuickPlay()) {
+                    if (getSkinnable().supportQuickPlay) {
                         managePopupMenu.getContent().addAll(
                                 new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("version.launch"), () -> getSkinnable().launch(), managePopup),
                                 new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), () -> getSkinnable().generateLaunchScript(), managePopup),

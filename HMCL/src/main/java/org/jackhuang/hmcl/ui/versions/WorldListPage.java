@@ -53,6 +53,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 import static org.jackhuang.hmcl.util.StringUtils.parseColorEscapes;
@@ -67,6 +68,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
     private List<World> worlds;
     private Profile profile;
     private String instanceId;
+    private boolean supportQuickPlay;
 
     private int refreshCount = 0;
 
@@ -112,8 +114,8 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
 
         setLoading(true);
         Task.supplyAsync(Schedulers.io(), () -> {
-            // Ensure the game version number is parsed
-            profile.getRepository().getGameVersion(instanceId);
+            Optional<String> gameVersion = profile.getRepository().getGameVersion(instanceId);
+            supportQuickPlay = World.supportQuickPlay(GameVersionNumber.asGameVersion(gameVersion));
             return World.getWorlds(savesDir);
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (refreshCount != currentRefresh) {
@@ -322,6 +324,14 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                 imageView.setImage(world.getIcon() == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : world.getIcon());
                 leftTooltip.setText(world.getFile().toString());
                 content.setTitle(world.getWorldName() != null ? parseColorEscapes(world.getWorldName()) : "");
+
+                if (page.supportQuickPlay) {
+                    btnLaunch.setVisible(true);
+                    btnLaunch.setManaged(true);
+                } else {
+                    btnLaunch.setVisible(false);
+                    btnLaunch.setManaged(false);
+                }
 
                 if (world.getGameVersion() != null)
                     content.addTag(I18n.getDisplayVersion(world.getGameVersion()));
