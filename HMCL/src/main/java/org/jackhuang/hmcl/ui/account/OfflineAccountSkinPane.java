@@ -219,7 +219,9 @@ public class OfflineAccountSkinPane extends StackPane {
         cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
         onEscPressed(this, cancelButton::fire);
 
-        acceptButton.disableProperty().bind(cslApiField.activeValidatorProperty().isNotNull());
+        acceptButton.disableProperty().bind(
+                skinItem.selectedDataProperty().isEqualTo(Skin.Type.CUSTOM_SKIN_LOADER_API)
+                        .and(cslApiField.activeValidatorProperty().isNotNull()));
 
         layout.setActions(littleSkinLink, acceptButton, cancelButton);
     }
