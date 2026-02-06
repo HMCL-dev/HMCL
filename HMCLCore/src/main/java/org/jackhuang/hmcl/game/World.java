@@ -48,10 +48,10 @@ public final class World {
     private String fileName;
     private CompoundTag levelData;
     private Path levelDataPath;
-    private CompoundTag worldGenSettingsDat;
-    private Path worldGenSettingsDatPath;
-    private CompoundTag playerDat;
-    private Path playerDatPath;
+    private CompoundTag worldGenSettingsData;
+    private Path worldGenSettingsDataPath;
+    private CompoundTag playerData;
+    private Path playerDataPath;
     private Image icon;
 
     public World(Path file) throws IOException {
@@ -80,11 +80,11 @@ public final class World {
     public void setWorldName(String worldName) throws IOException {
         if (levelData.at("Data.LevelName") instanceof StringTag levelNameTag) {
             levelNameTag.setValue(worldName);
-            writeLevelDat(levelData);
+            writeLevelDat();
         }
     }
 
-    public Path getLevelDatFile() {
+    public Path getLevelDataFile() {
         return file.resolve("level.dat");
     }
 
@@ -96,12 +96,12 @@ public final class World {
         return levelData;
     }
 
-    public @Nullable CompoundTag getWorldGenSettingsDat() {
-        return worldGenSettingsDat;
+    public @Nullable CompoundTag getWorldGenSettingsData() {
+        return worldGenSettingsData;
     }
 
-    public @Nullable CompoundTag getPlayerDat() {
-        return playerDat;
+    public @Nullable CompoundTag getPlayerData() {
+        return playerData;
     }
 
     public long getLastPlayed() {
@@ -120,7 +120,7 @@ public final class World {
             return seedTag.getClonedValue();
         } else if (levelData.get("Data.RandomSeed") instanceof LongTag seedTag) { //Valid before 1.16
             return seedTag.getClonedValue();
-        } else if (worldGenSettingsDat != null && worldGenSettingsDat.at("data.seed") instanceof LongTag seedTag) { //Valid after 26.1-snapshot-6
+        } else if (worldGenSettingsData != null && worldGenSettingsData.at("data.seed") instanceof LongTag seedTag) { //Valid after 26.1-snapshot-6
             return seedTag.getClonedValue();
         }
         return null;
@@ -129,8 +129,8 @@ public final class World {
     public boolean isLargeBiomes() {
         if (levelData.at("Data.generatorName") instanceof StringTag generatorNameTag) { //Valid before 1.16
             return "largeBiomes".equals(generatorNameTag.getClonedValue());
-        } else if (worldGenSettingsDat != null) {
-            if (worldGenSettingsDat.at("data.dimensions.minecraft:overworld.generator.settings") instanceof StringTag settingsTag) { //Valid after 26.1-snapshot-6
+        } else if (worldGenSettingsData != null) {
+            if (worldGenSettingsData.at("data.dimensions.minecraft:overworld.generator.settings") instanceof StringTag settingsTag) { //Valid after 26.1-snapshot-6
                 return "minecraft:large_biomes".equals(settingsTag.getClonedValue());
             }
         } else if (levelData.at("Data.WorldGenSettings.dimensions.minecraft:overworld.generator.biome_source.large_biomes") instanceof ByteTag largeBiomesTag) {  //Valid between 1.16 and 1.16.2
@@ -246,12 +246,12 @@ public final class World {
     private void loadOtherData() throws IOException {
         Path worldGenSettingsDatPath = file.resolve("data/minecraft/world_gen_settings.dat");
         if (Files.exists(worldGenSettingsDatPath)) {
-            this.worldGenSettingsDatPath = worldGenSettingsDatPath;
-            this.worldGenSettingsDat = NBT.read(worldGenSettingsDatPath);
+            this.worldGenSettingsDataPath = worldGenSettingsDatPath;
+            this.worldGenSettingsData = NBT.read(worldGenSettingsDatPath);
         }
 
         if (levelData.at("Data.Player") instanceof CompoundTag playerTag) {
-            this.playerDat = playerTag;
+            this.playerData = playerTag;
         } else if (levelData.at("Data.singleplayer_uuid") instanceof IntArrayTag uuidTag) {
             int[] uuidValue = uuidTag.getClonedValue();
             if (uuidValue.length == 4) {
@@ -260,8 +260,8 @@ public final class World {
                 String playerUUID = new UUID(mostSigBits, leastSigBits).toString();
                 Path playerDatPath = file.resolve("players/data/" + playerUUID + ".dat");
                 if (Files.exists(playerDatPath)) {
-                    this.playerDat = NBT.read(playerDatPath);
-                    this.playerDatPath = playerDatPath;
+                    this.playerData = NBT.read(playerDatPath);
+                    this.playerDataPath = playerDatPath;
                 }
             }
         }
@@ -280,7 +280,7 @@ public final class World {
         // Change the name recorded in level.dat
         CompoundTag data = (CompoundTag) levelData.get("Data");
         data.put(new StringTag("LevelName", newName));
-        writeLevelDat(levelData);
+        writeLevelDat();
 
         // then change the folder's name
         Files.move(file, file.resolveSibling(newName));
@@ -376,26 +376,30 @@ public final class World {
         }
     }
 
-    public void writeWorldDat() throws IOException {
+    public void writeWorldData() throws IOException {
         if (!Files.isDirectory(file))
             throw new IOException("Not a valid world directory");
 
-        NBT.write(this.levelData, getLevelDatFile());
+        writeLevelDat();
 
-        if (worldGenSettingsDatPath != null) {
-            NBT.write(this.worldGenSettingsDat, worldGenSettingsDatPath);
+        if (worldGenSettingsDataPath != null) {
+            writeTag(worldGenSettingsData, worldGenSettingsDataPath);
         }
 
-        if (playerDatPath != null) {
-            NBT.write(this.playerDat, playerDatPath);
+        if (playerDataPath != null) {
+            writeTag(playerData, playerDataPath);
         }
     }
 
-    public void writeLevelDat(CompoundTag nbt) throws IOException {
+    public void writeLevelDat() throws IOException {
+        writeTag(levelData, getLevelDataFile());
+    }
+
+    public void writeTag(CompoundTag nbt, Path path) throws IOException {
         if (!Files.isDirectory(file))
             throw new IOException("Not a valid world directory");
 
-        FileUtils.saveSafely(getLevelDatFile(), os -> {
+        FileUtils.saveSafely(path, os -> {
             try (OutputStream bos = new BufferedOutputStream(os); OutputStream gos = new GZIPOutputStream(bos)) {
                 NBTWriter.writeTag(gos, nbt);
             }

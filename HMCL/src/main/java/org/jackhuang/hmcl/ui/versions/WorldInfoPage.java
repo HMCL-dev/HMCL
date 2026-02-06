@@ -88,7 +88,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
 
     private void updateControls() {
         CompoundTag dataTag = (CompoundTag) levelDat.get("Data");
-        CompoundTag playerTag = world.getPlayerDat();
+        CompoundTag playerTag = world.getPlayerData();
 
         ScrollPane scrollPane = new ScrollPane();
         scrollPane.setFitToHeight(true);
@@ -263,7 +263,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                     bindTagAndToggleButton(worldGenSettings.get("generate_features"), generateFeaturesButton);
                 } else if (dataTag.get("MapFeatures") instanceof ByteTag mapFeatures) { // Valid before 20w20a
                     bindTagAndToggleButton(mapFeatures, generateFeaturesButton);
-                } else if (world.getWorldGenSettingsDat() != null && world.getWorldGenSettingsDat().at("data.generate_structures") instanceof ByteTag generateStructures) { // Valid after 26.1 snapshot 6
+                } else if (world.getWorldGenSettingsData() != null && world.getWorldGenSettingsData().at("data.generate_structures") instanceof ByteTag generateStructures) { // Valid after 26.1 snapshot 6
                     bindTagAndToggleButton(generateStructures, generateFeaturesButton);
                 } else {
                     generateFeaturesButton.setDisable(true);
@@ -469,7 +469,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                         saveWorldData();
                     } catch (Exception e) {
                         toggleButton.setSelected(oldValue);
-                        LOG.warning("Exception happened when saving level.dat", e);
+                        LOG.warning("Exception happened when saving world info", e);
                     }
                 });
             } else {
@@ -493,7 +493,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                     }
                 } catch (Exception e) {
                     jfxTextField.setText(oldValue);
-                    LOG.warning("Exception happened when saving level.dat", e);
+                    LOG.warning("Exception happened when saving world info", e);
                 }
             }
         });
@@ -514,7 +514,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                     }
                 } catch (Exception e) {
                     jfxTextField.setText(oldValue);
-                    LOG.warning("Exception happened when saving level.dat", e);
+                    LOG.warning("Exception happened when saving world info", e);
                 }
             }
         });
@@ -523,11 +523,11 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
     }
 
     private void saveWorldData() {
-        LOG.info("Saving level.dat of world " + world.getWorldName());
+        LOG.info("Saving world info of world " + world.getWorldName());
         try {
-            this.world.writeWorldDat();
+            this.world.writeWorldData();
         } catch (IOException e) {
-            LOG.warning("Failed to save level.dat of world " + world.getWorldName(), e);
+            LOG.warning("Failed to save world info of world " + world.getWorldName(), e);
         }
     }
 
@@ -542,7 +542,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                         updateControls();
                         setLoading(false);
                     } else {
-                        LOG.warning("Failed to load level.dat", exception);
+                        LOG.warning("Failed to load world info of world " + world.getWorldName(), exception);
                         setFailedReason(i18n("world.info.failed"));
                     }
                 })).start();
