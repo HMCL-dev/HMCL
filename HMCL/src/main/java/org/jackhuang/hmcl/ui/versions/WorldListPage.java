@@ -133,8 +133,8 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
 
     public void add() {
         FileChooser chooser = new FileChooser();
-        chooser.setTitle(i18n("world.import.choose"));
-        chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(i18n("world.extension"), "*.zip"));
+        chooser.setTitle(i18n("world.add.title"));
+        chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(i18n("extension.world"), "*.zip"));
         List<Path> res = FileUtils.toPaths(chooser.showOpenMultipleDialog(Controllers.getStage()));
 
         if (res == null || res.isEmpty()) return;
@@ -158,16 +158,16 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                                     refresh();
                                 }, e -> {
                                     if (e instanceof FileAlreadyExistsException)
-                                        handler.reject(i18n("world.import.failed", i18n("world.import.already_exists")));
+                                        handler.reject(i18n("world.add.failed", i18n("world.add.already_exists")));
                                     else if (e instanceof IOException && e.getCause() instanceof InvalidPathException)
-                                        handler.reject(i18n("world.import.failed", i18n("install.new_game.malformed")));
+                                        handler.reject(i18n("world.add.failed", i18n("install.new_game.malformed")));
                                     else
-                                        handler.reject(i18n("world.import.failed", e.getClass().getName() + ": " + e.getLocalizedMessage()));
+                                        handler.reject(i18n("world.add.failed", e.getClass().getName() + ": " + e.getLocalizedMessage()));
                                 }).start();
                     }, world.getWorldName(), new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid));
                 }, e -> {
                     LOG.warning("Unable to parse world file " + zipFile, e);
-                    Controllers.dialog(i18n("world.import.invalid"));
+                    Controllers.dialog(i18n("world.add.invalid"));
                 }).start();
     }
 

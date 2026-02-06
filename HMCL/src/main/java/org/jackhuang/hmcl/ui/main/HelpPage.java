@@ -26,11 +26,11 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.IconedTwoLineListItem;
+import org.jackhuang.hmcl.ui.construct.LineButton;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
+import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.io.HttpRequest;
 
-import java.util.Collections;
 import java.util.List;
 
 import static org.jackhuang.hmcl.util.gson.JsonUtils.listTypeOf;
@@ -50,10 +50,11 @@ public class HelpPage extends SpinnerPane {
         FXUtils.smoothScrolling(scrollPane);
         setContent(scrollPane);
 
-        IconedTwoLineListItem docPane = new IconedTwoLineListItem();
+        var docPane = LineButton.createExternalLinkButton(Metadata.DOCS_URL);
+        docPane.setLargeTitle(true);
         docPane.setTitle(i18n("help.doc"));
         docPane.setSubtitle(i18n("help.detail"));
-        docPane.setExternalLink(Metadata.DOCS_URL);
+
         ComponentList doc = new ComponentList();
         doc.getContent().setAll(docPane);
         content.getChildren().add(doc);
@@ -68,77 +69,32 @@ public class HelpPage extends SpinnerPane {
                     for (HelpCategory category : helpCategories) {
                         ComponentList categoryPane = new ComponentList();
 
-                        for (Help help : category.getItems()) {
-                            IconedTwoLineListItem item = new IconedTwoLineListItem();
-                            item.setTitle(help.getTitle());
-                            item.setSubtitle(help.getSubtitle());
-                            item.setExternalLink(help.getUrl());
+                        for (Help help : category.items()) {
+                            var item = LineButton.createExternalLinkButton(help.url());
+                            item.setLargeTitle(true);
+                            item.setTitle(help.title());
+                            item.setSubtitle(help.subtitle());
 
                             categoryPane.getContent().add(item);
                         }
 
-                        content.getChildren().add(ComponentList.createComponentListTitle(category.title));
+                        content.getChildren().add(ComponentList.createComponentListTitle(category.title()));
                         content.getChildren().add(categoryPane);
                     }
                     hideSpinner();
                 }).start();
     }
 
-    private static class HelpCategory {
-        @SerializedName("title")
-        private final String title;
-
-        @SerializedName("items")
-        private final List<Help> items;
-
-        public HelpCategory() {
-            this("", Collections.emptyList());
-        }
-
-        public HelpCategory(String title, List<Help> items) {
-            this.title = title;
-            this.items = items;
-        }
-
-        public String getTitle() {
-            return title;
-        }
-
-        public List<Help> getItems() {
-            return items;
-        }
+    @JsonSerializable
+    private record HelpCategory(
+            @SerializedName("title") String title,
+            @SerializedName("items") List<Help> items) {
     }
 
-    private static class Help {
-        @SerializedName("title")
-        private final String title;
-
-        @SerializedName("subtitle")
-        private final String subtitle;
-
-        @SerializedName("url")
-        private final String url;
-
-        public Help() {
-            this("", "", "");
-        }
-
-        public Help(String title, String subtitle, String url) {
-            this.title = title;
-            this.subtitle = subtitle;
-            this.url = url;
-        }
-
-        public String getTitle() {
-            return title;
-        }
-
-        public String getSubtitle() {
-            return subtitle;
-        }
-
-        public String getUrl() {
-            return url;
-        }
+    @JsonSerializable
+    private record Help(
+            @SerializedName("title") String title,
+            @SerializedName("subtitle") String subtitle,
+            @SerializedName("url") String url) {
     }
 }
