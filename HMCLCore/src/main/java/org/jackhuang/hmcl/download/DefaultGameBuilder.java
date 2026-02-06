@@ -43,28 +43,28 @@ public class DefaultGameBuilder extends GameBuilder {
 
     @Override
     public Task<?> buildAsync() {
-        List<Task.StagesHint> stages = new ArrayList<>();
+        var hints = new ArrayList<Task.StagesHint>();
 
         Task<Version> libraryTask = Task.supplyAsync(() -> new Version(name));
         libraryTask = libraryTask.thenComposeAsync(libraryTaskHelper(gameVersion, "game", gameVersion));
-        stages.add(new Task.StagesHint("hmcl.install.game:" + gameVersion));
-        stages.add(new Task.StagesHint("hmcl.install.libraries"));
-        stages.add(new Task.StagesHint("hmcl.install.assets"));
+        hints.add(new Task.StagesHint("hmcl.install.game:" + gameVersion));
+        hints.add(new Task.StagesHint("hmcl.install.libraries"));
+        hints.add(new Task.StagesHint("hmcl.install.assets"));
 
         for (Map.Entry<String, String> entry : toolVersions.entrySet()) {
             libraryTask = libraryTask.thenComposeAsync(libraryTaskHelper(gameVersion, entry.getKey(), entry.getValue()));
-            stages.add(new Task.StagesHint(String.format("hmcl.install.%s:%s", entry.getKey(), entry.getValue())));
+            hints.add(new Task.StagesHint(String.format("hmcl.install.%s:%s", entry.getKey(), entry.getValue())));
         }
 
         for (RemoteVersion remoteVersion : remoteVersions) {
             libraryTask = libraryTask.thenComposeAsync(version -> dependencyManager.installLibraryAsync(version, remoteVersion));
-            stages.add(new Task.StagesHint(String.format("hmcl.install.%s:%s", remoteVersion.getLibraryId(), remoteVersion.getSelfVersion())));
+            hints.add(new Task.StagesHint(String.format("hmcl.install.%s:%s", remoteVersion.getLibraryId(), remoteVersion.getSelfVersion())));
         }
 
         return libraryTask.thenComposeAsync(dependencyManager.getGameRepository()::saveAsync).whenComplete(exception -> {
             if (exception != null)
                 dependencyManager.getGameRepository().removeVersionFromDisk(name);
-        }).withStagesHints(stages);
+        }).withStagesHints(hints);
     }
 
     private ExceptionalFunction<Version, Task<Version>, ?> libraryTaskHelper(String gameVersion, String libraryId, String libraryVersion) {
