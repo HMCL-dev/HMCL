@@ -22,8 +22,11 @@ import javafx.beans.property.StringProperty;
 import javafx.beans.property.StringPropertyBase;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Pos;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 
 public class TwoLineListItem extends VBox {
@@ -44,6 +47,7 @@ public class TwoLineListItem extends VBox {
 
         this.firstLine = new HBox(lblTitle);
         firstLine.getStyleClass().add("first-line");
+        firstLine.setAlignment(Pos.CENTER_LEFT);
 
         this.getChildren().setAll(firstLine);
     }
@@ -159,7 +163,14 @@ public class TwoLineListItem extends VBox {
             tagsBox.getStyleClass().add("tags");
             Bindings.bindContent(tagsBox.getChildren(), tags);
 
-            firstLine.getChildren().setAll(lblTitle, tagsBox);
+            var scrollPane = new ScrollPane(tagsBox);
+            HBox.setHgrow(scrollPane, Priority.ALWAYS);
+            scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+            scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+            scrollPane.minHeightProperty().bind(tagsBox.heightProperty());
+            scrollPane.setPrefWidth(50);
+
+            firstLine.getChildren().setAll(lblTitle, scrollPane);
         }
         return tags;
     }
