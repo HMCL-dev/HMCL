@@ -256,7 +256,7 @@ public final class SVGView extends Control {
     }
 
     private static final class StyleableProperties {
-        private static final CssMetaData<SVGView, SVG> ICON = new CssMetaData<>("-icon", StyleConverter.getEnumConverter(SVG.class), SVG.NONE) {
+        private static final CssMetaData<SVGView, SVG> ICON = new CssMetaData<>("-jfx-icon", StyleConverter.getEnumConverter(SVG.class), SVG.NONE) {
             @Override
             public boolean isSettable(SVGView control) {
                 return control.icon == null || !control.icon.isBound();
@@ -268,7 +268,7 @@ public final class SVGView extends Control {
             }
         };
 
-        private static final javafx.css.CssMetaData<SVGView, Number> ICON_SIZE = new CssMetaData<>("-icon-size", StyleConverter.getSizeConverter(), SVG.DEFAULT_SIZE) {
+        private static final javafx.css.CssMetaData<SVGView, Number> ICON_SIZE = new CssMetaData<>("-jfx-icon-size", StyleConverter.getSizeConverter(), SVG.DEFAULT_SIZE) {
             @Override
             public boolean isSettable(SVGView control) {
                 return control.iconSize == null || !control.iconSize.isBound();
