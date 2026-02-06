@@ -32,89 +32,101 @@ import org.jackhuang.hmcl.util.Pair;
 import static org.jackhuang.hmcl.util.Pair.pair;
 
 public class AdvancedListItem extends Control {
-    private final ObjectProperty<Node> leftGraphic = new SimpleObjectProperty<>(this, "leftGraphic");
-    private final ObjectProperty<Node> rightGraphic = new SimpleObjectProperty<>(this, "rightGraphic");
-    private final StringProperty title = new SimpleStringProperty(this, "title");
-    private final BooleanProperty active = new SimpleBooleanProperty(this, "active");
-    private final StringProperty subtitle = new SimpleStringProperty(this, "subtitle");
-    private final BooleanProperty actionButtonVisible = new SimpleBooleanProperty(this, "actionButtonVisible", true);
-
     public AdvancedListItem() {
         getStyleClass().add("advanced-list-item");
         FXUtils.onClicked(this, () -> fireEvent(new ActionEvent()));
+    }
+
+    private final ObjectProperty<Node> leftGraphic = new SimpleObjectProperty<>(this, "leftGraphic");
+
+    public ObjectProperty<Node> leftGraphicProperty() {
+        return leftGraphic;
     }
 
     public Node getLeftGraphic() {
         return leftGraphic.get();
     }
 
-    public ObjectProperty<Node> leftGraphicProperty() {
-        return leftGraphic;
-    }
-
     public void setLeftGraphic(Node leftGraphic) {
         this.leftGraphic.set(leftGraphic);
+    }
+
+    private final ObjectProperty<Node> rightGraphic = new SimpleObjectProperty<>(this, "rightGraphic");
+
+    public ObjectProperty<Node> rightGraphicProperty() {
+        return rightGraphic;
     }
 
     public Node getRightGraphic() {
         return rightGraphic.get();
     }
 
-    public ObjectProperty<Node> rightGraphicProperty() {
-        return rightGraphic;
-    }
-
     public void setRightGraphic(Node rightGraphic) {
         this.rightGraphic.set(rightGraphic);
+    }
+
+    private final StringProperty title = new SimpleStringProperty(this, "title");
+
+    public StringProperty titleProperty() {
+        return title;
     }
 
     public String getTitle() {
         return title.get();
     }
 
-    public StringProperty titleProperty() {
-        return title;
-    }
-
     public void setTitle(String title) {
         this.title.set(title);
     }
 
-    public boolean isActive() {
-        return active.get();
-    }
+    private final StringProperty subtitle = new SimpleStringProperty(this, "subtitle");
 
-    public BooleanProperty activeProperty() {
-        return active;
-    }
-
-    public void setActive(boolean active) {
-        this.active.set(active);
+    public StringProperty subtitleProperty() {
+        return subtitle;
     }
 
     public String getSubtitle() {
         return subtitle.get();
     }
 
-    public StringProperty subtitleProperty() {
-        return subtitle;
-    }
-
     public void setSubtitle(String subtitle) {
         this.subtitle.set(subtitle);
+    }
+
+    private final BooleanProperty active = new SimpleBooleanProperty(this, "active");
+
+    public BooleanProperty activeProperty() {
+        return active;
+    }
+
+    public boolean isActive() {
+        return active.get();
+    }
+
+    public void setActive(boolean active) {
+        this.active.set(active);
+    }
+
+    private final BooleanProperty actionButtonVisible = new SimpleBooleanProperty(this, "actionButtonVisible", true);
+
+    public BooleanProperty actionButtonVisibleProperty() {
+        return actionButtonVisible;
     }
 
     public boolean isActionButtonVisible() {
         return actionButtonVisible.get();
     }
 
-    public BooleanProperty actionButtonVisibleProperty() {
-        return actionButtonVisible;
-    }
-
     public void setActionButtonVisible(boolean actionButtonVisible) {
         this.actionButtonVisible.set(actionButtonVisible);
     }
+
+    private final ObjectProperty<EventHandler<ActionEvent>> onAction = new SimpleObjectProperty<>(this, "onAction") {
+        @Override
+        protected void invalidated() {
+            setEventHandler(ActionEvent.ACTION, get());
+        }
+    };
 
     public final ObjectProperty<EventHandler<ActionEvent>> onActionProperty() {
         return onAction;
@@ -127,13 +139,6 @@ public class AdvancedListItem extends Control {
     public final EventHandler<ActionEvent> getOnAction() {
         return onActionProperty().get();
     }
-
-    private ObjectProperty<EventHandler<ActionEvent>> onAction = new SimpleObjectProperty<EventHandler<ActionEvent>>(this, "onAction") {
-        @Override
-        protected void invalidated() {
-            setEventHandler(ActionEvent.ACTION, get());
-        }
-    };
 
     @Override
     protected Skin<?> createDefaultSkin() {
