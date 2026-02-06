@@ -64,12 +64,12 @@ import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.upgrade.RemoteVersion;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
-import org.jackhuang.hmcl.util.Holder;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.Platform;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
 import java.util.List;
@@ -320,6 +320,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         Task<?> task = versionList.refreshAsync("")
                 .thenSupplyAsync(() -> versionList.getVersions("").stream()
                         .filter(it -> it.getVersionType() == RELEASE)
+                        .filter(it -> !(NativePatcher.checkSupportedStatus(GameVersionNumber.asGameVersion(it.getGameVersion()), Platform.SYSTEM_PLATFORM, OperatingSystem.SYSTEM_VERSION) == NativePatcher.SupportStatus.UNSUPPORTED))
                         .sorted()
                         .findFirst()
                         .orElseThrow(() -> new IOException("No versions found")))
