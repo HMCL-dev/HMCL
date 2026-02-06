@@ -32,7 +32,7 @@ public final class SVGContainer extends Parent {
 
     private static final String DEFAULT_STYLE_CLASS = "svg-container";
 
-    private final SVGPath path = SVG.createSVGPath();
+    private final SVGPath path = new SVGPath();
     private SVG icon = SVG.NONE;
     private double iconSize = SVG.DEFAULT_SIZE;
     private SVGPath tempPath;
@@ -40,6 +40,7 @@ public final class SVGContainer extends Parent {
 
     {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
+        this.path.getStyleClass().add("svg");
     }
 
     /// Creates an SVGView with the default icon and the default icon size.
@@ -114,7 +115,8 @@ public final class SVGContainer extends Parent {
                 getChildren().setAll(path);
         } else {
             if (tempPath == null) {
-                tempPath = SVG.createSVGPath();
+                tempPath = new SVGPath();
+                tempPath.getStyleClass().add("svg");
                 SVG.setSize(tempPath, iconSize);
             } else
                 tempPath.setOpacity(1);

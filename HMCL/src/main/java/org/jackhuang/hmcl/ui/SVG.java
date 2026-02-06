@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui;
 
 import javafx.beans.value.ObservableValue;
-import javafx.scene.Node;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.SVGPath;
 
@@ -136,12 +135,6 @@ public enum SVG {
         path.setScaleY(scale);
     }
 
-    public static SVGPath createSVGPath() {
-        var path = new SVGPath();
-        path.getStyleClass().add("svg");
-        return path;
-    }
-
     private final String rawPath;
     private String path;
 
@@ -157,19 +150,17 @@ public enum SVG {
     }
 
     public SVGPath createIcon() {
-        SVGPath path = createSVGPath();
+        var path = new SVGPath();
+        path.getStyleClass().add("svg");
         path.setContent(getPath());
         return path;
     }
 
-    public Node createIcon(double size) {
-        if (size == DEFAULT_SIZE)
-            return createIcon();
-        else
-            return new SVGContainer(this, size);
+    public SVGContainer createIcon(double size) {
+        return new SVGContainer(this, size);
     }
 
-    public Node createIcon(ObservableValue<? extends Paint> color) {
+    public SVGPath createIcon(ObservableValue<? extends Paint> color) {
         SVGPath path = createIcon();
         path.fillProperty().bind(color);
         return path;
