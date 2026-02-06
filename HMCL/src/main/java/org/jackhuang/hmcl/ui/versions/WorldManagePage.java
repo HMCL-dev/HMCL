@@ -54,7 +54,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     private final World world;
     private final Path backupsDir;
     private final Profile profile;
-    private final String versionId;
+    private final String instanceId;
     private final boolean supportQuickPlay;
     private FileChannel sessionLockChannel;
 
@@ -69,11 +69,11 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     private final TabHeader.Tab<WorldBackupsPage> worldBackupsTab = new TabHeader.Tab<>("worldBackupsPage");
     private final TabHeader.Tab<DatapackListPage> datapackTab = new TabHeader.Tab<>("datapackListPage");
 
-    public WorldManagePage(World world, Profile profile, String versionId) {
+    public WorldManagePage(World world, Profile profile, String instanceId) {
         this.world = world;
-        this.backupsDir = profile.getRepository().getBackupsDirectory(versionId);
+        this.backupsDir = profile.getRepository().getBackupsDirectory(instanceId);
         this.profile = profile;
-        this.versionId = versionId;
+        this.instanceId = instanceId;
 
         updateSessionLockChannel();
 
@@ -90,9 +90,8 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
         this.state = new SimpleObjectProperty<>(new State(i18n("world.manage.title", StringUtils.parseColorEscapes(world.getWorldName())), null, true, true, true));
 
-        Optional<String> gameVersion = profile.getRepository().getGameVersion(versionId);
-        GameVersionNumber instanceVersion = GameVersionNumber.asGameVersion(gameVersion);
-        supportQuickPlay = World.supportQuickPlay(instanceVersion);
+        Optional<String> gameVersion = profile.getRepository().getGameVersion(instanceId);
+        supportQuickPlay = World.supportQuickPlay(GameVersionNumber.asGameVersion(gameVersion));
 
         this.addEventHandler(Navigator.NavigationEvent.EXITED, this::onExited);
         this.addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
@@ -151,11 +150,11 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
 
     public void launch() {
         fireEvent(new PageCloseEvent());
-        Versions.launchAndEnterWorld(profile, versionId, world.getFileName());
+        Versions.launchAndEnterWorld(profile, instanceId, world.getFileName());
     }
 
     public void generateLaunchScript() {
-        Versions.generateLaunchScriptForQuickEnterWorld(profile, versionId, world.getFileName());
+        Versions.generateLaunchScriptForQuickEnterWorld(profile, instanceId, world.getFileName());
     }
 
     @Override
