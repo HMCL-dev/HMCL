@@ -1,0 +1,33 @@
+name: Mirror Repository
+
+on:
+  workflow_dispatch:
+  push:
+
+concurrency:
+  group: mirror-repository
+  cancel-in-progress: true
+
+jobs:
+  mirror:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Gitee
+            repo: gitee.com/huanghongxun/HMCL
+            user: 'hmcl-sync'
+            token: 'GITEE_SYNC_TOKEN'
+          - name: CNB
+            repo: cnb.cool/HMCL-dev/HMCL
+            user: 'cnb'
+            token: 'CNB_SYNC_TOKEN'
+    name: Mirror to ${{ matrix.name }}
+    if: ${{ github.repository == 'HMCL-dev/HMCL' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mirror GitHub to ${{ matrix.name }}
+        run: |
+          git clone --mirror "https://github.com/${{ github.repository }}.git" -- repo
+          cd repo
+          git push -f --prune "https://${{ matrix.user }}:${{ secrets[matrix.token] }}@${{ matrix.repo }}.git" "refs/heads/*:refs/heads/*" "refs/tags/*:refs/tags/*"

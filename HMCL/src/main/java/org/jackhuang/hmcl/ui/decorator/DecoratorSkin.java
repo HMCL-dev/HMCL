@@ -239,7 +239,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
 
                 JFXButton btnMin = new JFXButton();
                 btnMin.setFocusTraversable(false);
-                btnMin.setGraphic(SVG.MINIMIZE.createIcon(Themes.titleFillProperty()));
+                btnMin.setGraphic(SVG.MINIMIZE_CENTER.createIcon(Themes.titleFillProperty()));
                 btnMin.getStyleClass().add("jfx-decorator-button");
                 btnMin.setOnAction(e -> skinnable.minimize());
 
@@ -328,6 +328,18 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             }
             if (onTitleBarDoubleClick != null)
                 center.setOnMouseClicked(onTitleBarDoubleClick);
+            center.setOnMouseDragged(mouseEvent -> {
+                if (!getSkinnable().isDragging() && primaryStage.isMaximized()) {
+                    getSkinnable().setDragging(true);
+                    mouseInitX = mouseEvent.getScreenX();
+                    mouseInitY = mouseEvent.getScreenY();
+                    primaryStage.setMaximized(false);
+                    stageInitWidth = primaryStage.getWidth();
+                    stageInitHeight = primaryStage.getHeight();
+                    primaryStage.setY(stageInitY = 0);
+                    primaryStage.setX(stageInitX = mouseInitX - stageInitWidth / 2);
+                }
+            });
             navBar.setCenter(center);
 
             if (canRefresh) {

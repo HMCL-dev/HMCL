@@ -30,7 +30,6 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.versions.VersionPage;
 
 import java.util.function.Consumer;
 
@@ -75,7 +74,7 @@ public class AdvancedListBox extends ScrollPane {
         item.setActionButtonVisible(false);
         item.setTitle(title);
         if (leftGraphic != null) {
-            item.setLeftGraphic(VersionPage.wrap(leftGraphic));
+            item.setLeftGraphic(FXUtils.wrap(leftGraphic));
         }
         return item;
     }

@@ -17,8 +17,8 @@
  */
 package org.jackhuang.hmcl.ui.main;
 
+import com.jfoenix.controls.JFXPopup;
 import javafx.beans.property.ReadOnlyObjectProperty;
-
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.event.EventBus;
 import org.jackhuang.hmcl.event.RefreshedVersionsEvent;
@@ -35,6 +35,7 @@ import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.account.AccountAdvancedListItem;
+import org.jackhuang.hmcl.ui.account.AccountListPopupMenu;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.construct.AdvancedListBox;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
@@ -45,6 +46,7 @@ import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.nbt.NBTEditorPage;
 import org.jackhuang.hmcl.ui.nbt.NBTFileType;
 import org.jackhuang.hmcl.ui.versions.GameAdvancedListItem;
+import org.jackhuang.hmcl.ui.versions.GameListPopupMenu;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.util.Lang;
@@ -63,9 +65,9 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
-import static org.jackhuang.hmcl.ui.versions.VersionPage.wrap;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+import static org.jackhuang.hmcl.ui.FXUtils.wrap;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
     private MainPage mainPage = null;
@@ -144,6 +146,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             // first item in left sidebar
             AccountAdvancedListItem accountListItem = new AccountAdvancedListItem();
             accountListItem.setOnAction(e -> Controllers.navigate(Controllers.getAccountListPage()));
+            FXUtils.onSecondaryButtonClicked(accountListItem, () -> AccountListPopupMenu.show(accountListItem, JFXPopup.PopupVPosition.TOP, JFXPopup.PopupHPosition.LEFT, accountListItem.getWidth(), 0));
             accountListItem.accountProperty().bind(Accounts.selectedAccountProperty());
 
             // second item in left sidebar
@@ -164,6 +167,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             if (AnimationUtils.isAnimationEnabled()) {
                 FXUtils.prepareOnMouseEnter(gameListItem, Controllers::prepareVersionPage);
             }
+            FXUtils.onSecondaryButtonClicked(gameListItem, () -> showGameListPopupMenu(gameListItem));
 
             // third item in left sidebar
             AdvancedListItem gameItem = new AdvancedListItem();
@@ -171,6 +175,7 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             gameItem.setActionButtonVisible(false);
             gameItem.setTitle(i18n("version.manage"));
             gameItem.setOnAction(e -> Controllers.navigate(Controllers.getGameListPage()));
+            FXUtils.onSecondaryButtonClicked(gameItem, () -> showGameListPopupMenu(gameItem));
 
             // forth item in left sidebar
             AdvancedListItem downloadItem = new AdvancedListItem();
@@ -234,13 +239,25 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                     .startCategory(i18n("settings.launcher.general").toUpperCase(Locale.ROOT))
                     .add(launcherSettingsItem)
                     .add(terracottaItem)
-                    .addNavigationDrawerItem(i18n("chat"), SVG.CHAT, () -> FXUtils.openLink(Metadata.GROUPS_URL));
+                    .addNavigationDrawerItem(i18n("contact.chat"), SVG.CHAT, () -> {
+                        Controllers.getSettingsPage().showFeedback();
+                        Controllers.navigate(Controllers.getSettingsPage());
+                    });
 
             // the root page, with the sidebar in left, navigator in center.
             setLeft(sideBar);
             setCenter(getSkinnable().getMainPage());
         }
 
+        public void showGameListPopupMenu(AdvancedListItem gameListItem) {
+            GameListPopupMenu.show(gameListItem,
+                    JFXPopup.PopupVPosition.TOP,
+                    JFXPopup.PopupHPosition.LEFT,
+                    gameListItem.getWidth(),
+                    0,
+                    getSkinnable().getMainPage().getProfile(),
+                    getSkinnable().getMainPage().getVersions());
+        }
     }
 
     private boolean checkedModpack = false;
@@ -251,13 +268,23 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
                 checkedModpack = true;
 
                 if (repository.getVersionCount() == 0) {
-                    Path modpackFile = Metadata.CURRENT_DIRECTORY.resolve("modpack.zip");
-                    if (Files.exists(modpackFile)) {
+                    Path zipModpack = Metadata.CURRENT_DIRECTORY.resolve("modpack.zip");
+                    Path mrpackModpack = Metadata.CURRENT_DIRECTORY.resolve("modpack.mrpack");
+
+                    Path modpackFile;
+                    if (Files.exists(zipModpack)) {
+                        modpackFile = zipModpack;
+                    } else if (Files.exists(mrpackModpack)) {
+                        modpackFile = mrpackModpack;
+                    } else {
+                        modpackFile = null;
+                    }
+
+                    if (modpackFile != null) {
                         Task.supplyAsync(() -> CompressingUtils.findSuitableEncoding(modpackFile))
-                                .thenApplyAsync(
-                                        encoding -> ModpackHelper.readModpackManifest(modpackFile, encoding))
+                                .thenApplyAsync(encoding -> ModpackHelper.readModpackManifest(modpackFile, encoding))
                                 .thenApplyAsync(modpack -> ModpackHelper
-                                        .getInstallTask(repository.getProfile(), modpackFile, modpack.getName(), modpack)
+                                        .getInstallTask(repository.getProfile(), modpackFile, modpack.getName(), modpack, null)
                                         .executor())
                                 .thenAcceptAsync(Schedulers.javafx(), executor -> {
                                     Controllers.taskDialog(executor, i18n("modpack.installing"), TaskCancellationAction.NO_CANCEL);

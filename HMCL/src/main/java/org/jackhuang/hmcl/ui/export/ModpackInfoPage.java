@@ -17,7 +17,11 @@
  */
 package org.jackhuang.hmcl.ui.export;
 
-import com.jfoenix.controls.*;
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXSlider;
+import com.jfoenix.controls.JFXTextArea;
+import com.jfoenix.controls.JFXTextField;
+import com.jfoenix.validation.base.ValidatorBase;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.collections.ObservableList;
@@ -53,8 +57,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.ui.FXUtils.jfxListCellFactory;
-import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
 import static org.jackhuang.hmcl.ui.export.ModpackTypeSelectionPage.MODPACK_TYPE;
 import static org.jackhuang.hmcl.ui.export.ModpackTypeSelectionPage.MODPACK_TYPE_MODRINTH;
 import static org.jackhuang.hmcl.ui.export.ModpackTypeSelectionPage.MODPACK_TYPE_SERVER;
@@ -109,7 +111,7 @@ public final class ModpackInfoPage extends Control implements WizardPage {
     private void onNext() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle(i18n("modpack.wizard.step.initialization.save"));
-        if (controller.getSettings().get(MODPACK_TYPE) == MODPACK_TYPE_MODRINTH) {
+        if (!packWithLauncher.get() && controller.getSettings().get(MODPACK_TYPE) == MODPACK_TYPE_MODRINTH) {
             fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("modpack"), "*.mrpack"));
             fileChooser.setInitialFileName(name.get() + (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS ? "" : ".mrpack"));
         } else {
@@ -127,7 +129,6 @@ public final class ModpackInfoPage extends Control implements WizardPage {
         exportInfo.setVersion(version.get());
         exportInfo.setAuthor(author.get());
         exportInfo.setDescription(description.get());
-        exportInfo.setPackWithLauncher(packWithLauncher.get());
         exportInfo.setUrl(url.get());
         exportInfo.setForceUpdate(forceUpdate.get());
         exportInfo.setPackWithLauncher(packWithLauncher.get());
@@ -171,10 +172,11 @@ public final class ModpackInfoPage extends Control implements WizardPage {
     public static class ModpackInfoPageSkin extends SkinBase<ModpackInfoPage> {
         private ObservableList<Node> originList;
 
+        private final List<JFXTextField> validatingFields = new ArrayList<>();
+
         public ModpackInfoPageSkin(ModpackInfoPage skinnable) {
             super(skinnable);
 
-            Insets insets = new Insets(5, 0, 12, 0);
             Insets componentListMargin = new Insets(16, 0, 16, 0);
 
             ScrollPane scroll = new ScrollPane();
@@ -182,7 +184,6 @@ public final class ModpackInfoPage extends Control implements WizardPage {
             scroll.setFitToHeight(true);
             getChildren().setAll(scroll);
 
-            List<JFXTextField> validatingFields = new ArrayList<>();
 
             {
                 BorderPane borderPane = new BorderPane();
@@ -209,83 +210,52 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                     BorderPane.setMargin(list, componentListMargin);
                     borderPane.setCenter(list);
 
+                    var instanceNamePane = new LineTextPane();
                     {
-                        BorderPane borderPane1 = new BorderPane();
-                        borderPane1.setLeft(new Label(i18n("modpack.wizard.step.initialization.exported_version")));
+                        instanceNamePane.setTitle(i18n("modpack.wizard.step.initialization.exported_version"));
+                        instanceNamePane.setText(skinnable.versionName);
 
-                        Label versionNameLabel = new Label();
-                        versionNameLabel.setText(skinnable.versionName);
-                        borderPane1.setRight(versionNameLabel);
-                        list.getContent().add(borderPane1);
+                        list.getContent().add(instanceNamePane);
                     }
 
-                    {
-                        GridPane pane = new GridPane();
-                        list.getContent().add(pane);
-                        pane.setHgap(16);
-                        pane.setVgap(8);
-                        pane.getColumnConstraints().setAll(new ColumnConstraints(), FXUtils.getColumnHgrowing());
 
-                        int rowIndex = 0;
+                    list.getContent().addAll(
+                            createTextFieldLinePane(i18n("modpack.name"), skinnable.name, new RequiredValidator()),
+                            createTextFieldLinePane(i18n("archive.author"), skinnable.author, new RequiredValidator()),
+                            createTextFieldLinePane(i18n("archive.version"), skinnable.version, new RequiredValidator())
+                    );
 
-                        JFXTextField txtModpackName = new JFXTextField();
-                        txtModpackName.textProperty().bindBidirectional(skinnable.name);
-                        txtModpackName.getValidators().add(new RequiredValidator());
-                        validatingFields.add(txtModpackName);
-                        pane.addRow(rowIndex++, new Label(i18n("modpack.name")), txtModpackName);
+                    if (skinnable.options.isRequireFileApi()) {
+                        list.getContent().add(createTextFieldLinePane(
+                                i18n("modpack.file_api"), skinnable.fileApi,
+                                skinnable.options.isValidateFileApi() ? new RequiredValidator() : null,
+                                new URLValidator(true)
+                        ));
+                    }
 
-                        JFXTextField txtModpackAuthor = new JFXTextField();
-                        txtModpackAuthor.textProperty().bindBidirectional(skinnable.author);
-                        txtModpackAuthor.getValidators().add(new RequiredValidator());
-                        validatingFields.add(txtModpackAuthor);
-                        pane.addRow(rowIndex++, new Label(i18n("archive.author")), txtModpackAuthor);
+                    if (skinnable.options.isRequireLaunchArguments()) {
+                        list.getContent().add(createTextFieldLinePane(
+                                i18n("settings.advanced.minecraft_arguments"), skinnable.launchArguments
+                        ));
+                    }
 
-                        JFXTextField txtModpackVersion = new JFXTextField();
-                        txtModpackVersion.textProperty().bindBidirectional(skinnable.version);
-                        txtModpackVersion.getValidators().add(new RequiredValidator());
-                        validatingFields.add(txtModpackVersion);
-                        pane.addRow(rowIndex++, new Label(i18n("archive.version")), txtModpackVersion);
+                    if (skinnable.options.isRequireJavaArguments()) {
+                        list.getContent().add(createTextFieldLinePane(
+                                i18n("settings.advanced.jvm_args"), skinnable.javaArguments
+                        ));
+                    }
 
-                        if (skinnable.options.isRequireFileApi()) {
-                            JFXTextField txtModpackFileApi = new JFXTextField();
-                            txtModpackFileApi.textProperty().bindBidirectional(skinnable.fileApi);
-                            validatingFields.add(txtModpackFileApi);
+                    if (skinnable.options.isRequireUrl()) {
+                        list.getContent().add(createTextFieldLinePane(
+                                i18n("modpack.origin.url"), skinnable.url
+                        ));
+                    }
 
-                            if (skinnable.options.isValidateFileApi()) {
-                                txtModpackFileApi.getValidators().add(new RequiredValidator());
-                            }
-
-                            txtModpackFileApi.getValidators().add(new URLValidator(true));
-                            pane.addRow(rowIndex++, new Label(i18n("modpack.file_api")), txtModpackFileApi);
-                        }
-
-                        if (skinnable.options.isRequireLaunchArguments()) {
-                            JFXTextField txtLaunchArguments = new JFXTextField();
-                            txtLaunchArguments.textProperty().bindBidirectional(skinnable.launchArguments);
-                            pane.addRow(rowIndex++, new Label(i18n("settings.advanced.minecraft_arguments")), txtLaunchArguments);
-                        }
-
-                        if (skinnable.options.isRequireJavaArguments()) {
-                            JFXTextField txtJavaArguments = new JFXTextField();
-                            txtJavaArguments.textProperty().bindBidirectional(skinnable.javaArguments);
-                            pane.addRow(rowIndex++, new Label(i18n("settings.advanced.jvm_args")), txtJavaArguments);
-                        }
-
-                        if (skinnable.options.isRequireUrl()) {
-                            JFXTextField txtModpackUrl = new JFXTextField();
-                            txtModpackUrl.textProperty().bindBidirectional(skinnable.url);
-                            pane.addRow(rowIndex++, new Label(i18n("modpack.origin.url")), txtModpackUrl);
-                        }
-
-                        if (skinnable.options.isRequireOrigins()) {
-                            JFXTextField txtMcbbs = new JFXTextField();
-                            FXUtils.setValidateWhileTextChanged(txtMcbbs, true);
-                            txtMcbbs.getValidators().add(new NumberValidator(i18n("input.number"), true));
-                            txtMcbbs.textProperty().bindBidirectional(skinnable.mcbbsThreadId);
-                            validatingFields.add(txtMcbbs);
-                            pane.addRow(rowIndex++, new Label(i18n("modpack.origin.mcbbs")), txtMcbbs);
-                        }
-
+                    if (skinnable.options.isRequireOrigins()) {
+                        list.getContent().add(createTextFieldLinePane(
+                                i18n("modpack.origin.mcbbs"), skinnable.mcbbsThreadId,
+                                new NumberValidator(i18n("input.number"), true)
+                        ));
                     }
 
                     if (skinnable.options.isRequireMinMemory()) {
@@ -339,78 +309,51 @@ public final class ModpackInfoPage extends Control implements WizardPage {
                     }
 
                     if (skinnable.options.isRequireAuthlibInjectorServer()) {
-                        JFXComboBox<AuthlibInjectorServer> cboServers = new JFXComboBox<>();
-                        cboServers.setMaxWidth(Double.MAX_VALUE);
-                        cboServers.setCellFactory(jfxListCellFactory(server -> new TwoLineListItem(server.getName(), server.getUrl())));
-                        cboServers.setConverter(stringConverter(AuthlibInjectorServer::getName));
-                        Bindings.bindContent(cboServers.getItems(), config().getAuthlibInjectorServers());
+                        var serversSelectButton = new LineSelectButton<AuthlibInjectorServer>();
+                        serversSelectButton.setTitle(i18n("account.injector.server"));
+                        serversSelectButton.setConverter(AuthlibInjectorServer::getName);
+                        serversSelectButton.setDescriptionConverter(AuthlibInjectorServer::getUrl);
+                        serversSelectButton.itemsProperty().set(config().getAuthlibInjectorServers());
 
-                        skinnable.authlibInjectorServer.bind(Bindings.createStringBinding(() ->
-                                Optional.ofNullable(cboServers.getSelectionModel().getSelectedItem())
-                                        .map(AuthlibInjectorServer::getUrl)
-                                        .orElse(null)));
+                        skinnable.authlibInjectorServer.bind(Bindings.createStringBinding(() -> {
+                            AuthlibInjectorServer selected = serversSelectButton.getValue();
+                            return selected != null ? selected.getUrl() : null;
+                        }, serversSelectButton.valueProperty()));
 
-                        BorderPane pane = new BorderPane();
-
-                        Label left = new Label(i18n("account.injector.server"));
-                        BorderPane.setAlignment(left, Pos.CENTER_LEFT);
-                        pane.setLeft(left);
-                        pane.setRight(cboServers);
-
-                        list.getContent().add(pane);
+                        list.getContent().add(serversSelectButton);
                     }
 
                     if (skinnable.options.isRequireForceUpdate()) {
-                        BorderPane pane = new BorderPane();
-                        pane.setLeft(new Label(i18n("modpack.wizard.step.initialization.force_update")));
-                        list.getContent().add(pane);
+                        var requireForceUpdateButton = new LineToggleButton();
+                        requireForceUpdateButton.setTitle(i18n("modpack.wizard.step.initialization.force_update"));
+                        requireForceUpdateButton.selectedProperty().bindBidirectional(skinnable.forceUpdate);
 
-                        JFXToggleButton button = new JFXToggleButton();
-                        button.selectedProperty().bindBidirectional(skinnable.forceUpdate);
-                        button.setSize(8);
-                        button.setMinHeight(16);
-                        button.setMaxHeight(16);
-                        pane.setRight(button);
+                        list.getContent().add(requireForceUpdateButton);
                     }
 
                     {
-                        BorderPane pane = new BorderPane();
-                        pane.setLeft(new Label(i18n("modpack.wizard.step.initialization.include_launcher")));
-                        list.getContent().add(pane);
+                        var canIncludeLauncherButton = new LineToggleButton();
+                        canIncludeLauncherButton.setTitle(i18n("modpack.wizard.step.initialization.include_launcher"));
+                        canIncludeLauncherButton.setDisable(!skinnable.canIncludeLauncher);
+                        canIncludeLauncherButton.selectedProperty().bindBidirectional(skinnable.packWithLauncher);
 
-                        JFXToggleButton button = new JFXToggleButton();
-                        button.setDisable(!skinnable.canIncludeLauncher);
-                        button.selectedProperty().bindBidirectional(skinnable.packWithLauncher);
-                        button.setSize(8);
-                        button.setMinHeight(16);
-                        button.setMaxHeight(16);
-                        pane.setRight(button);
+                        list.getContent().add(canIncludeLauncherButton);
                     }
 
                     if (skinnable.options.isRequireNoCreateRemoteFiles()) {
-                        BorderPane noCreateRemoteFiles = new BorderPane();
-                        noCreateRemoteFiles.setLeft(new Label(i18n("modpack.wizard.step.initialization.no_create_remote_files")));
-                        list.getContent().add(noCreateRemoteFiles);
+                        var requireNoCreateRemoteFilesButton = new LineToggleButton();
+                        requireNoCreateRemoteFilesButton.setTitle(i18n("modpack.wizard.step.initialization.no_create_remote_files"));
+                        requireNoCreateRemoteFilesButton.selectedProperty().bindBidirectional(skinnable.noCreateRemoteFiles);
 
-                        JFXToggleButton noCreateRemoteFilesButton = new JFXToggleButton();
-                        noCreateRemoteFilesButton.selectedProperty().bindBidirectional(skinnable.noCreateRemoteFiles);
-                        noCreateRemoteFilesButton.setSize(8);
-                        noCreateRemoteFilesButton.setMinHeight(16);
-                        noCreateRemoteFilesButton.setMaxHeight(16);
-                        noCreateRemoteFiles.setRight(noCreateRemoteFilesButton);
+                        list.getContent().add(requireNoCreateRemoteFilesButton);
                     }
 
                     if (skinnable.options.isRequireSkipCurseForgeRemoteFiles()) {
-                        BorderPane skipCurseForgeRemoteFiles = new BorderPane();
-                        skipCurseForgeRemoteFiles.setLeft(new Label(i18n("modpack.wizard.step.initialization.skip_curseforge_remote_files")));
-                        list.getContent().add(skipCurseForgeRemoteFiles);
-
-                        JFXToggleButton skipCurseForgeRemoteFilesButton = new JFXToggleButton();
+                        var skipCurseForgeRemoteFilesButton = new LineToggleButton();
+                        skipCurseForgeRemoteFilesButton.setTitle(i18n("modpack.wizard.step.initialization.skip_curseforge_remote_files"));
                         skipCurseForgeRemoteFilesButton.selectedProperty().bindBidirectional(skinnable.skipCurseForgeRemoteFiles);
-                        skipCurseForgeRemoteFilesButton.setSize(8);
-                        skipCurseForgeRemoteFilesButton.setMinHeight(16);
-                        skipCurseForgeRemoteFilesButton.setMaxHeight(16);
-                        skipCurseForgeRemoteFiles.setRight(skipCurseForgeRemoteFilesButton);
+
+                        list.getContent().add(skipCurseForgeRemoteFilesButton);
                     }
                 }
 
@@ -435,6 +378,32 @@ public final class ModpackInfoPage extends Control implements WizardPage {
             }
 
             FXUtils.smoothScrolling(scroll);
+        }
+
+        private LinePane createTextFieldLinePane(String title, StringProperty property, ValidatorBase... validators) {
+            LinePane linePane = new LinePane();
+            JFXTextField textField = new JFXTextField();
+            textField.setMinWidth(500);
+
+            linePane.setTitle(title);
+            linePane.setRight(textField);
+            textField.textProperty().bindBidirectional(property);
+
+            boolean needValidation = false;
+            if (validators != null) {
+                for (ValidatorBase validator : validators) {
+                    if (validator != null) {
+                        needValidation = true;
+                        textField.getValidators().add(validator);
+                    }
+                }
+            }
+            if (needValidation) {
+                FXUtils.setValidateWhileTextChanged(textField, true);
+                validatingFields.add(textField);
+            }
+
+            return linePane;
         }
     }
 }

@@ -265,6 +265,10 @@
     -fx-spacing: 0;
 }
 
+.no-padding .advanced-list-box-content {
+    -fx-padding: 0 0 0 0;
+}
+
 .iconed-item {
     -jfx-rippler-fill: -monet-secondary-container;
 }
@@ -295,6 +299,11 @@
     -fx-fill: -monet-surface-tint;
 }
 
+.popup-menu .scroll-pane > .scroll-bar:vertical,
+.popup-menu .scroll-pane > .scroll-bar:horizontal {
+    -fx-opacity: 0;
+}
+
 .popup-menu-content {
     -fx-padding: 4 0 4 0;
 }
@@ -315,7 +324,7 @@
     -fx-fill: -monet-on-surface-variant;
 }
 
-.two-line-list-item > .first-line > .tag {
+.two-line-list-item > .first-line > .tags > .tag {
     -fx-text-fill: -monet-on-secondary-container;
     -fx-background-color: -monet-secondary-container;
     -fx-padding: 2;
@@ -323,7 +332,7 @@
     -fx-font-size: 12px;
 }
 
-.two-line-list-item > .first-line > .tag-warning {
+.two-line-list-item > .first-line > .tags > .tag-warning {
     -fx-text-fill: -monet-on-error-container;
     -fx-background-color: -fixed-warning-tag-background;
     -fx-padding: 2;
@@ -346,7 +355,7 @@
     -fx-font-size: 15px;
 }
 
-.terracotta-license Text {
+.terracotta-hint Text {
     -fx-fill: -monet-on-surface;
 }
 
@@ -384,31 +393,33 @@
     -fx-cursor: hand;
 }
 
-.installer-item {
-    -fx-padding: 8px;
+.installer-item-wrapper {
+    -fx-background-color: -monet-surface;
+    -fx-background-radius: 4;
+    -fx-pref-width: 180px;
 }
 
-.installer-item:list-item {
+.installer-item-wrapper:card {
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 10, 0.12, -1, 2);
+}
+
+.installer-item-wrapper .installer-item:list-item {
+    -fx-padding: 8px;
     -fx-border-color: -monet-outline-variant;
     -fx-border-width: 0 0 1 0;
     -fx-alignment: center-left;
 }
 
-.installer-item:list-item > .installer-item-name {
+.installer-item-wrapper .installer-item:list-item > .installer-item-name {
     -fx-pref-width: 80px;
 }
 
-.installer-item:list-item > .installer-item-status {
+.installer-item-wrapper .installer-item:list-item > .installer-item-status {
     -fx-max-width: infinity;
 }
 
-.installer-item:card {
-    -fx-background-color: -monet-surface;
-    -fx-background-radius: 4;
+.installer-item-wrapper .installer-item:card {
     -fx-alignment: center;
-    -fx-pref-width: 180px;
-
-    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 10, 0.12, -1, 2);
 }
 
 /*******************************************************************************
@@ -417,15 +428,40 @@
  *                                                                             *
  ******************************************************************************/
 
+.launch-pane {
+    -fx-max-height: 57px;
+    -fx-min-height: 57px;
+    -fx-max-width: 230px;
+    -fx-min-width: 230px;
+}
+
 .launch-pane > .jfx-button {
+    -fx-translate-y: 1px;
+    -fx-max-height: 55px;
+    -fx-min-height: 55px;
     -fx-background-color: -monet-primary-container;
     -fx-cursor: hand;
+}
+
+.launch-pane > .jfx-button.launch-button {
+    -fx-max-width: 207px;
+    -fx-min-width: 207px;
+    -fx-border-width: 0 3px 0 0;
+    -fx-border-color: -monet-on-surface-variant;
+    -fx-background-radius: 4px 0 0 4px;
+}
+
+.launch-pane > .jfx-button.menu-button {
+    -fx-max-width: 20px;
+    -fx-min-width: 20px;
+    -fx-font-size: 15px;
+    -fx-background-radius: 0 4px 4px 0;
 }
 
 .launch-pane > .jfx-button > StackPane > .jfx-rippler {
     -jfx-rippler-fill: -monet-on-primary-container;
     -jfx-mask-type: CIRCLE;
-    -fx-padding: 0.0;
+    -fx-padding: 0;
 }
 
 .launch-pane > .jfx-button, .jfx-button * {
@@ -435,10 +471,6 @@
 
 .launch-pane .svg {
     -fx-fill: -monet-on-primary-container;
-}
-
-.launch-pane > Rectangle {
-    -fx-fill: -monet-primary-container;
 }
 
 /*******************************************************************************
@@ -813,6 +845,10 @@
     -jfx-unchecked-color: transparent;
 }
 
+.table-view .jfx-check-box .jfx-rippler {
+    -jfx-rippler-disabled: true;
+}
+
 /*******************************************************************************
 *                                                                              *
 * JFX Progress Bar                                                             *
@@ -853,6 +889,16 @@
     -jfx-focus-color: -monet-primary;
     -fx-padding: 8;
     -jfx-unfocus-color: transparent;
+}
+
+.jfx-text-field .context-menu {
+    -fx-background-color: -monet-surface-container;
+    -fx-text-fill: -monet-on-surface;
+}
+
+.jfx-text-field .context-menu .menu-item:focused {
+    -fx-background-color: -monet-secondary-container;
+    -fx-text-fill: -monet-on-secondary-container;
 }
 
 /*******************************************************************************
@@ -909,6 +955,13 @@
     -fx-background-color: transparent;
 }
 
+.no-horizontal-scrollbar .scroll-bar:horizontal {
+    -fx-opacity: 0;
+    -fx-max-height: 0;
+    -fx-min-height: 0;
+    -fx-pref-height: 0;
+}
+
 .options-list {
     -fx-background-color: transparent;
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 5, 0.06, -0.5, 1);
@@ -958,10 +1011,6 @@
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.26), 5, 0.06, -0.5, 1);
 }
 
-.card:selected {
-    -fx-background-color: -monet-secondary-container-transparent-80;
-}
-
 .card-list {
     -fx-padding: 10;
     -fx-spacing: 10;
@@ -992,6 +1041,10 @@
     -fx-font-size: 12;
 }
 
+.options-list-item > .line-component .line-component-container {
+    -fx-padding: 10 16 10 16;
+}
+
 .options-list-item .svg {
     -fx-fill: -monet-on-surface;
     -fx-border-color: -monet-outline-variant;
@@ -999,6 +1052,10 @@
 
 .options-list-item .label {
     -fx-text-fill: -monet-on-surface;
+}
+
+.options-list-item .label.subtitle {
+    -fx-text-fill: -monet-on-surface-variant;
 }
 
 .options-list-item.no-padding {
@@ -1021,6 +1078,10 @@
 .options-list-item:first:last {
     -fx-background-radius: 4 4 4 4;
     -fx-border-width: 0;
+}
+
+.options-sublist-wrapper .expand-icon .svg {
+    -fx-fill: -monet-on-surface-variant;
 }
 
 /*******************************************************************************
@@ -1050,15 +1111,16 @@
 .jfx-toggle-button Line {
     -fx-stroke: -jfx-untoggle-line-color;
 }
-.jfx-toggle-button:selected Line{
+
+.jfx-toggle-button:selected Line {
     -fx-stroke: -jfx-toggle-line-color;
 }
 
-.jfx-toggle-button Circle{
+.jfx-toggle-button Circle {
     -fx-fill: -jfx-untoggle-color;
 }
 
-.jfx-toggle-button:selected Circle{
+.jfx-toggle-button:selected Circle {
     -fx-fill: -jfx-toggle-color;
 }
 
@@ -1215,6 +1277,7 @@
 
 .log-toggle {
     -fx-border: 1px;
+    -fx-background-insets: 0;
     -fx-border-color: -fixed-log-toggle-unselected;
     -fx-text-fill: -fixed-log-toggle-unselected;
 }
@@ -1295,6 +1358,10 @@
     -fx-background-color: -fixed-log-info;
 }
 
+.log-window-list-cell {
+    -fx-background-color: -fixed-log-info;
+}
+
 .log-window-list-cell:debug {
     -fx-text-fill: -fixed-log-text-fill;
     -fx-background-color: -fixed-log-debug;
@@ -1322,6 +1389,10 @@
     -fx-stroke: -monet-primary-container;
 }
 
+.jfx-spinner .arc {
+    -fx-stroke-line-cap: round;
+}
+
 .first-spinner {
     -jfx-radius: 20;
 }
@@ -1344,14 +1415,6 @@
 
 .small-spinner-pane .jfx-spinner > .arc {
     -fx-stroke-width: 3.0;
-}
-
-.large-spinner-pane .jfx-spinner {
-    -jfx-radius: 20;
-}
-
-.large-spinner-pane .jfx-spinner {
-    -fx-stroke-width: 5.0;
 }
 
 .second-spinner {
@@ -1502,6 +1565,104 @@
 
 .custom-color-dialog .tab-selected-line {
     -fx-background-color: -monet-on-surface;
+}
+
+/*******************************************************************************
+ *                                                                             *
+ * Table View                                                                  *
+ *                                                                             *
+ ******************************************************************************/
+
+/* WE DEFINITELY NEED JFX TABLE-VIEW */
+
+.table-view {
+    -fx-padding: 3;
+    -fx-background-color: -monet-surface-container-low;
+}
+
+.table-view,
+.table-view .column-header,
+.table-view .filler,
+.table-view .column-header-background,
+.table-row-cell {
+    -fx-background-radius: 6;
+    -fx-border-radius: 6;
+}
+
+.table-view .column-header,
+.table-view .filler {
+    -fx-background-color: transparent;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: -monet-surface-container-highest;
+}
+
+.table-row-cell {
+    -fx-background-color: -monet-surface-container;
+    -fx-table-cell-border-color: -monet-surface-container-lowest;
+}
+
+.table-row-cell:odd {
+    -fx-background-color: -monet-surface-container-high;
+}
+
+.table-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: -monet-on-surface;
+}
+
+.table-view > .virtual-flow > .clipped-container > .sheet > .table-row-cell:filled:selected {
+    -fx-background-color: -monet-secondary-container;
+}
+
+.table-view > .virtual-flow > .scroll-bar {
+    -fx-skin: "org.jackhuang.hmcl.ui.construct.FloatScrollBarSkin";
+}
+
+.table-view > .virtual-flow > .scroll-bar .track {
+    -fx-fill: transparent;
+}
+
+/*******************************************************************************
+ *                                                                             *
+ * JFX Tree View                                                               *
+ *                                                                             *
+ ******************************************************************************/
+
+.tree-view {
+    -fx-padding: 5;
+    -fx-background-radius: 6;
+    -fx-background-color: -monet-surface-container-low;
+    -fx-border-radius: 6;
+}
+
+.tree-cell {
+    -fx-padding: 5;
+    -fx-background-radius: 6;
+    -fx-background-color: transparent;
+    -fx-text-fill: -monet-on-surface;
+    -fx-border-radius: 6;
+}
+
+.tree-cell:focused {
+    -fx-background-color: -monet-secondary-container;
+}
+
+.tree-cell .arrow {
+    -fx-background-color: -monet-on-surface;
+}
+
+.tree-cell .jfx-rippler {
+    -jfx-rippler-disabled: true;
+}
+
+.tree-view > .virtual-flow > .scroll-bar {
+    -fx-skin: "org.jackhuang.hmcl.ui.construct.FloatScrollBarSkin";
+}
+
+.tree-view > .virtual-flow > .scroll-bar .track {
+    -fx-fill: transparent;
 }
 
 /*******************************************************************************
@@ -1701,4 +1862,47 @@
 
 .tooltip .text {
     -fx-fill: -monet-inverse-on-surface;
+}
+
+/*******************************************************************************
+ *                                                                             *
+ * Line Component                                                              *
+ *                                                                             *
+ ******************************************************************************/
+
+.line-component:large-title .title-label {
+    -fx-font-size: 15px;
+}
+
+.line-button .svg:disabled {
+    -fx-opacity: 0.4;
+}
+
+.line-button .trailing-label {
+    -fx-text-fill: -monet-on-surface-variant;
+}
+
+.line-button .trailing-icon .svg {
+    -fx-fill: -monet-on-surface-variant;
+    -fx-opacity: 1;
+}
+
+.line-button .trailing-icon .svg:disabled {
+    -fx-opacity: 0.4;
+}
+
+.line-select-button .menu-container .title-label {
+    -fx-font-size: 13px;
+}
+
+.line-select-button .menu-container:selected .title-label {
+    -fx-text-fill: -monet-primary;
+}
+
+.line-select-button .menu-container:selected .subtitle-label {
+    -fx-text-fill: -monet-primary;
+}
+
+.line-toggle-button .jfx-toggle-button {
+    -fx-padding: 0;
 }
