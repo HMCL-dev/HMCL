@@ -168,10 +168,9 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             }
             boolean shouldUseForgematica = false;
             if (litematicaState == LitematicaState.NOT_INSTALLED) {
-                shouldUseForgematica =
-                        (modManager.getSupportedLoaders().contains(ModLoaderType.FORGE)
-                                || modManager.getSupportedLoaders().contains(ModLoaderType.NEO_FORGED))
-                                && GameVersionNumber.asGameVersion(Optional.ofNullable(modManager.getGameVersion())).isAtLeast("1.16.4", "20w45a");
+                var modLoaders = modManager.getLibraryAnalyzer().getModLoaders();
+                shouldUseForgematica = (modLoaders.contains(ModLoaderType.FORGE) || modLoaders.contains(ModLoaderType.NEO_FORGED))
+                        && GameVersionNumber.asGameVersion(Optional.ofNullable(modManager.getGameVersion())).isAtLeast("1.16.4", "20w45a");
                 if (litematica == null && !shouldUseForgematica) {
                     try {
                         litematica = ModrinthRemoteModRepository.MODS.getModById("litematica");

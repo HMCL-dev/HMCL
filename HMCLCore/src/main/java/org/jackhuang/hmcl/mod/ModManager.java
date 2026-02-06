@@ -242,11 +242,6 @@ public final class ModManager {
     private void updateSupportedLoaders() {
         supportedLoaders.clear();
 
-        if (this.analyzer == null) {
-            Collections.addAll(supportedLoaders, ModLoaderType.values());
-            return;
-        }
-
         for (LibraryAnalyzer.LibraryType type : LibraryAnalyzer.LibraryType.values()) {
             if (type.isModLoader() && this.analyzer.has(type)) {
                 ModLoaderType modLoaderType = type.getModLoaderType();
