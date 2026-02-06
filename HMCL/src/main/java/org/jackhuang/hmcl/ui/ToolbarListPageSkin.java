@@ -78,7 +78,6 @@ public abstract class ToolbarListPageSkin<E, P extends ListPageBase<E>> extends 
     public static Node wrap(Node node) {
         StackPane stackPane = new StackPane();
         stackPane.setAlignment(Pos.CENTER);
-        stackPane.setPadding(Insets.EMPTY);
         stackPane.getChildren().setAll(node);
         return stackPane;
     }
