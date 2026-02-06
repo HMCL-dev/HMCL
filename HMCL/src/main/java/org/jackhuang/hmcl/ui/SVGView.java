@@ -155,23 +155,19 @@ public final class SVGView extends Control {
 
     private final class Skin extends Parent implements javafx.scene.control.Skin<SVGView> {
 
-        private final SVGPath svgPath = new SVGPath();
+        private final SVGPath path = SVG.createSVGPath();
         private SVGPath tempPath;
         private Timeline timeline;
 
         Skin() {
-            updateSize(svgPath, getIconSize());
+            updateSize(getIconSize());
             updateIcon(getIcon(), Duration.ZERO);
         }
 
         void updateSize(double newSize) {
-            updateSize(svgPath, newSize);
-        }
-
-        void updateSize(SVGPath path, double newSize) {
-            double scale = newSize / SVG.DEFAULT_SIZE;
-            path.setScaleX(scale);
-            path.setScaleY(scale);
+            SVG.setSize(path, newSize);
+            if (tempPath != null)
+                SVG.setSize(tempPath, newSize);
         }
 
         void updateIcon(SVG newIcon, Duration animationDuration) {
@@ -181,36 +177,35 @@ public final class SVGView extends Control {
             }
 
             if (animationDuration.equals(Duration.ZERO)) {
-                svgPath.setContent(newIcon.getPath());
-                svgPath.setOpacity(1);
+                path.setContent(newIcon.getPath());
+                path.setOpacity(1);
                 if (getChildren().size() != 1)
-                    getChildren().setAll(svgPath);
+                    getChildren().setAll(path);
             } else {
-                if (tempPath == null)
-                    tempPath = new SVGPath();
-                else
+                if (tempPath == null) {
+                    tempPath = SVG.createSVGPath();
+                    SVG.setSize(tempPath, getIconSize());
+                } else
                     tempPath.setOpacity(1);
 
-                updateSize(tempPath, getIconSize());
+                tempPath.setContent(path.getContent());
+                getChildren().setAll(path, tempPath);
 
-                tempPath.setContent(svgPath.getContent());
-                getChildren().setAll(svgPath, tempPath);
-
-                svgPath.setOpacity(0);
-                svgPath.setContent(newIcon.getPath());
+                path.setOpacity(0);
+                path.setContent(newIcon.getPath());
 
                 timeline = new Timeline(
                         new KeyFrame(Duration.ZERO,
-                                new KeyValue(svgPath.opacityProperty(), 0, Motion.LINEAR),
+                                new KeyValue(path.opacityProperty(), 0, Motion.LINEAR),
                                 new KeyValue(tempPath.opacityProperty(), 1, Motion.LINEAR)
                         ),
                         new KeyFrame(animationDuration,
-                                new KeyValue(svgPath.opacityProperty(), 1, Motion.LINEAR),
+                                new KeyValue(path.opacityProperty(), 1, Motion.LINEAR),
                                 new KeyValue(tempPath.opacityProperty(), 0, Motion.LINEAR)
                         )
                 );
                 timeline.setOnFinished(e -> {
-                    getChildren().setAll(svgPath);
+                    getChildren().setAll(path);
                     timeline = null;
                 });
                 timeline.play();

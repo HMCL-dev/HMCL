@@ -131,6 +131,18 @@ public enum SVG {
 
     public static final double DEFAULT_SIZE = 24;
 
+    static void setSize(SVGPath path, double size) {
+        double scale = size / DEFAULT_SIZE;
+        path.setScaleX(scale);
+        path.setScaleY(scale);
+    }
+
+    public static SVGPath createSVGPath() {
+        var path = new SVGPath();
+        path.getStyleClass().add("svg");
+        return path;
+    }
+
     private final String rawPath;
     private String path;
 
@@ -145,35 +157,28 @@ public enum SVG {
         return path;
     }
 
-    public SVGPath createSVGPath() {
-        var p = new SVGPath();
-        p.setContent(getPath());
-        p.getStyleClass().add("svg");
-        return p;
+    public Node createIcon() {
+        SVGPath path = createSVGPath();
+        path.setContent(getPath());
+        return path;
     }
 
-    private static Node createIcon(SVGPath path, double size) {
-        if (size == DEFAULT_SIZE)
+    public Node createIcon(double size) {
+        SVGPath path = createSVGPath();
+        path.setContent(getPath());
+
+        if (size == DEFAULT_SIZE) {
             return path;
-        else {
-            double scale = size / DEFAULT_SIZE;
-            path.setScaleX(scale);
-            path.setScaleY(scale);
+        } else {
+            setSize(path, size);
             return new Group(path);
         }
     }
 
-    public Node createIcon() {
-        return createIcon(DEFAULT_SIZE);
-    }
-
-    public Node createIcon(double size) {
-        return createIcon(createSVGPath(), size);
-    }
-
     public Node createIcon(ObservableValue<? extends Paint> color) {
-        SVGPath p = createSVGPath();
-        p.fillProperty().bind(color);
-        return createIcon(p, DEFAULT_SIZE);
+        SVGPath path = createSVGPath();
+        path.setContent(getPath());
+        path.fillProperty().bind(color);
+        return path;
     }
 }
