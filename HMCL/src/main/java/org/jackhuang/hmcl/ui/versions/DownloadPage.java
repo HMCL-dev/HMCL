@@ -486,6 +486,10 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             this.setBody(box);
 
+            JFXHyperlink versionPageBtn = new JFXHyperlink(i18n("mods.url"));
+            versionPageBtn.setDisable(true);
+            loadVersionPageUrl(version, selfPage.repository, versionPageBtn);
+
             JFXButton downloadButton = null;
             if (selfPage.callback != null) {
                 downloadButton = new JFXButton(type == RemoteModRepository.Type.MODPACK ? i18n("install.modpack") : i18n("mods.install"));
@@ -512,9 +516,9 @@ public class DownloadPage extends Control implements DecoratorPage {
             cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
 
             if (downloadButton == null) {
-                this.setActions(changelogButton, saveAsButton, cancelButton);
+                this.setActions(versionPageBtn, changelogButton, saveAsButton, cancelButton);
             } else {
-                this.setActions(changelogButton, downloadButton, saveAsButton, cancelButton);
+                this.setActions(versionPageBtn, changelogButton, downloadButton, saveAsButton, cancelButton);
             }
 
             this.prefWidthProperty().bind(BindingMapping.of(Controllers.getStage().widthProperty()).map(w -> w.doubleValue() * 0.7));
@@ -582,6 +586,17 @@ public class DownloadPage extends Control implements DecoratorPage {
                 }
             }).start();
         }
+
+        private void loadVersionPageUrl(RemoteMod.Version version, RemoteModRepository repo, JFXHyperlink button) {
+            Task.supplyAsync(() -> repo.getVersionPageUrl(version))
+                    .whenComplete(Schedulers.javafx(), (result, exception) -> {
+                        if (exception == null && StringUtils.isNotBlank(result)) {
+                            button.setOnAction(__ -> FXUtils.openUriInBrowser(result));
+                            button.setDisable(false);
+                        }
+                    })
+                    .start();
+        }
     }
 
     private static final class AddonChangelog extends JFXDialogLayout {
@@ -601,31 +616,16 @@ public class DownloadPage extends Control implements DecoratorPage {
 
             this.setBody(box);
 
-            JFXHyperlink versionPageBtn = new JFXHyperlink(i18n("mods.url"));
-            versionPageBtn.setDisable(true);
-            loadVersionPageUrl(version, repo, versionPageBtn);
-
             JFXButton closeButton = new JFXButton(i18n("button.ok"));
             closeButton.getStyleClass().add("dialog-accept");
             closeButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
 
-            setActions(versionPageBtn, closeButton);
+            setActions(closeButton);
 
             this.prefWidthProperty().bind(Controllers.getStage().widthProperty().multiply(0.7));
             this.prefHeightProperty().bind(Controllers.getStage().heightProperty().multiply(0.7));
 
             onEscPressed(this, closeButton::fire);
-        }
-
-        private void loadVersionPageUrl(RemoteMod.Version version, RemoteModRepository repo, JFXHyperlink button) {
-            Task.supplyAsync(() -> repo.getVersionPageUrl(version))
-                    .whenComplete(Schedulers.javafx(), (result, exception) -> {
-                        if (exception == null && StringUtils.isNotBlank(result)) {
-                            button.setOnAction(__ -> FXUtils.openUriInBrowser(result));
-                            button.setDisable(false);
-                        }
-                    })
-                    .start();
         }
     }
 

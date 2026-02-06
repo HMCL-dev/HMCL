@@ -314,7 +314,6 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
             SpinnerPane spinnerPane = new SpinnerPane();
             ScrollPane scrollPane = new ScrollPane();
             scrollPane.setFitToWidth(true);
-            FXUtils.smoothScrolling(scrollPane);
 
             loadChangelog(object, spinnerPane, scrollPane);
             spinnerPane.setOnFailedAction(e -> loadChangelog(object, spinnerPane, scrollPane));
@@ -356,6 +355,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                 if (exception == null) {
                     object.changelog = result.orElse(i18n("mods.changelog.empty"));
                     scrollPane.setContent(FXUtils.renderAddonChangelog(object.changelog, object.data.getRepository().getBaseUrl()));
+                    FXUtils.smoothScrolling(scrollPane);
                     spinnerPane.setFailedReason(null);
                 } else {
                     spinnerPane.setFailedReason(i18n("download.failed.refresh"));
