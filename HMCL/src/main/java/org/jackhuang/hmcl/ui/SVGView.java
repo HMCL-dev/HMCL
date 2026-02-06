@@ -31,7 +31,6 @@ import org.jackhuang.hmcl.ui.animation.Motion;
 import java.util.ArrayList;
 import java.util.List;
 
-
 /// @author Glavo
 public final class SVGView extends Control {
 
