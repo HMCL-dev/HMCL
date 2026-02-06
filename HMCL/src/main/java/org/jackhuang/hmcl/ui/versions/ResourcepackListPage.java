@@ -9,6 +9,8 @@ import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -113,8 +115,8 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
 
     public void onAddFiles() {
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle(i18n("resourcepack.add"));
-        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("resourcepack"), "*.zip"));
+        fileChooser.setTitle(i18n("resourcepack.add.title"));
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.resourcepack"), "*.zip"));
         List<Path> files = FileUtils.toPaths(fileChooser.showOpenMultipleDialog(Controllers.getStage()));
         if (files != null && !files.isEmpty()) {
             addFiles(files);
@@ -140,6 +142,8 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
             root.getStyleClass().add("no-padding");
             listView = new JFXListView<>();
 
+            FXUtils.ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
+
             HBox toolbar = new HBox();
             toolbar.setAlignment(Pos.CENTER_LEFT);
             toolbar.setPickOnBounds(false);
@@ -152,7 +156,6 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
 
             SpinnerPane center = new SpinnerPane();
             ComponentList.setVgrow(center, Priority.ALWAYS);
-            center.getStyleClass().add("large-spinner-pane");
             center.loadingProperty().bind(control.loadingProperty());
 
             listView.setCellFactory(x -> new ResourcepackListCell(listView, control));

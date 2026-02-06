@@ -17,25 +17,8 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
-import javafx.event.ActionEvent;
-import org.jackhuang.hmcl.ui.FXUtils;
-
+/// Marker interface for no padding in [ComponentList].
+///
 /// @author Glavo
-public abstract class LineButtonBase extends LineComponent {
-    private static final String DEFAULT_STYLE_CLASS = "line-button-base";
-
-    protected final RipplerContainer ripplerContainer;
-
-    public LineButtonBase() {
-        this.getStyleClass().addAll(LineButtonBase.DEFAULT_STYLE_CLASS);
-
-        this.ripplerContainer = new RipplerContainer(container);
-        FXUtils.onClicked(this, this::fire);
-
-        this.getChildren().setAll(ripplerContainer);
-    }
-
-    public void fire() {
-        fireEvent(new ActionEvent());
-    }
+interface NoPaddingComponent {
 }

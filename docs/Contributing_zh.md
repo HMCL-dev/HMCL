@@ -1,7 +1,7 @@
 # 贡献指南
 
 <!-- #BEGIN LANGUAGE_SWITCHER -->
-[English](Contributing.md) | **中文**
+[English](Contributing.md) | **中文** (**简体**, [繁體](Contributing_zh_Hant.md))
 <!-- #END LANGUAGE_SWITCHER -->
 
 ## 构建 HMCL
@@ -27,10 +27,22 @@ OpenJDK 64-Bit Server VM (build 25+37-LTS, mixed mode, sharing)
 </details>
 
 <details>
-<summary>Linux/macOS/FreeBSD</summary>
+<summary>Linux/FreeBSD</summary>
 
 ```
 > $JAVA_HOME/bin/java -version
+openjdk version "25" 2025-09-16 LTS
+OpenJDK Runtime Environment (build 25+37-LTS)
+OpenJDK 64-Bit Server VM (build 25+37-LTS, mixed mode, sharing)
+```
+
+</details>
+
+<details>
+<summary>macOS</summary>
+
+```
+> /usr/libexec/java_home --exec java -version
 openjdk version "25" 2025-09-16 LTS
 OpenJDK Runtime Environment (build 25+37-LTS)
 OpenJDK 64-Bit Server VM (build 25+37-LTS, mixed mode, sharing)
@@ -76,7 +88,7 @@ HMCL 提供了一系列调试选项，用于控制启动器的行为。
 | `HMCL_ANIMATION_FRAME_RATE` |                                              | 指定 HMCL 的动画帧率                  | `60`                                                                                                        |              |
 | `HMCL_LANGUAGE`             |                                              | 指定 HMCL 的默认语言                  | 使用系统默认语言                                                                                                    |
 |                             | `-Dhmcl.dir=<path>`                          | 指定 HMCL 的当前数据文件夹               | `./.hmcl`                                                                                                   |              |
-|                             | `-Dhmcl.home=<path>`                         | 指定 HMCL 的用户数据文件夹               | Windows: `%APPDATA\.hmcl`<br>Linux/BSD: `$XDG_DATA_HOME/hmcl`<br>macOS: `~Library/Application Support/hmcl` |              |
+|                             | `-Dhmcl.home=<path>`                         | 指定 HMCL 的用户数据文件夹               | Windows: `%APPDATA%\.hmcl`<br>Linux/BSD: `$XDG_DATA_HOME/hmcl`<br>macOS: `~Library/Application Support/hmcl` |              |
 |                             | `-Dhmcl.self_integrity_check.disable=true`   | 检查更新时不检查本体完整性                  |                                                                                                             |              |
 |                             | `-Dhmcl.bmclapi.override=<url>`              | 指定 BMCLAPI 的 API Root          | `https://bmclapi2.bangbang93.com`                                                                           |              |
 |                             | `-Dhmcl.discoapi.override=<url>`             | 指定 foojay Disco API 的 API Root | `https://api.foojay.io/disco/v3.0`                                                                          |
