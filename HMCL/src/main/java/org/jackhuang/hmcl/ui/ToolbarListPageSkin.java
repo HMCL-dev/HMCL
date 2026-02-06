@@ -42,13 +42,11 @@ public abstract class ToolbarListPageSkin<E, P extends ListPageBase<E>> extends 
     public ToolbarListPageSkin(P skinnable) {
         super(skinnable);
 
-        SpinnerPane spinnerPane = new SpinnerPane();
-        spinnerPane.loadingProperty().bind(skinnable.loadingProperty());
-        spinnerPane.failedReasonProperty().bind(skinnable.failedReasonProperty());
-        spinnerPane.onFailedActionProperty().bind(skinnable.onFailedActionProperty());
-
         ComponentList root = new ComponentList();
         root.getStyleClass().add("no-padding");
+
+        StackPane container = new StackPane();
+        container.getChildren().add(root);
         StackPane.setMargin(root, new Insets(10));
 
         List<Node> toolbarButtons = initializeToolbar(skinnable);
@@ -60,19 +58,26 @@ public abstract class ToolbarListPageSkin<E, P extends ListPageBase<E>> extends 
             root.getContent().add(toolbar);
         }
 
+        SpinnerPane spinnerPane = new SpinnerPane();
+        spinnerPane.loadingProperty().bind(skinnable.loadingProperty());
+        spinnerPane.failedReasonProperty().bind(skinnable.failedReasonProperty());
+        spinnerPane.onFailedActionProperty().bind(skinnable.onFailedActionProperty());
+
+        ComponentList.setVgrow(spinnerPane, Priority.ALWAYS);
+
         {
             this.listView = new JFXListView<>();
             this.listView.setPadding(Insets.EMPTY);
             this.listView.setCellFactory(listView -> createListCell((JFXListView<E>) listView));
-            ComponentList.setVgrow(listView, Priority.ALWAYS);
             Bindings.bindContent(this.listView.getItems(), skinnable.itemsProperty());
             FXUtils.ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
-            root.getContent().add(listView);
+
+            spinnerPane.setContent(listView);
         }
 
-        spinnerPane.setContent(root);
+        root.getContent().add(spinnerPane);
 
-        getChildren().setAll(spinnerPane);
+        getChildren().setAll(container);
     }
 
     public static Node wrap(Node node) {
