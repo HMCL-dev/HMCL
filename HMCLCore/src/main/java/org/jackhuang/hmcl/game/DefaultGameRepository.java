@@ -567,11 +567,11 @@ public class DefaultGameRepository implements GameRepository {
                         && conf.generic().customSchematicBaseDirectoryEnabled()
                         && StringUtils.isNotBlank(conf.generic().customSchematicBaseDirectory())
                 ) {
-                    // The given path is used if it's absolute. Otherwise, resolves it against the game directory
-                    dir = runDir.resolve(conf.generic().customSchematicBaseDirectory());
+                    var p = Path.of(conf.generic().customSchematicBaseDirectory());
+                    dir = p.isAbsolute() ? p : runDir.resolve(p);
                 }
             } catch (Exception e) {
-                LOG.warning("Failed to read litematica config at '%s'".formatted(config), e);
+                LOG.warning("Failed to load custom schematics directory from litematica config at '%s'".formatted(config), e);
             }
         }
         return dir;

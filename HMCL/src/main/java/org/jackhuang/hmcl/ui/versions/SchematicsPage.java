@@ -219,10 +219,10 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                     }
                 }
                 navigateTo(target);
-                setLoading(false);
             } else {
                 LOG.warning("Failed to load schematics", exception);
             }
+            setLoading(false);
         }).start();
     }
 
@@ -292,7 +292,9 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
     }
 
     public void onRevealSchematicsFolder() {
-        FXUtils.openFolder(Objects.requireNonNullElse(currentDirectoryProperty().get().getPath(), schematicsDirectory));
+        var d = currentDirectoryProperty().get();
+        var p = d != null ? d.getPath() : schematicsDirectory;
+        if (p != null) FXUtils.openFolder(p);
     }
 
     private DirItem loadRoot(Path dir) {
