@@ -86,22 +86,8 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> implements VersionPage.VersionLoadable {
 
-    private static RemoteMod litematica;
-    private static RemoteMod forgematica;
-
-    private static synchronized void tryGetLitematica() {
-        try {
-            if (litematica == null) litematica = ModrinthRemoteModRepository.MODS.getModById("litematica");
-        } catch (IOException ignored) {
-        }
-    }
-
-    private static synchronized void tryGetForgematica() {
-        try {
-            if (forgematica == null) forgematica = ModrinthRemoteModRepository.MODS.getModById("forgematica");
-        } catch (IOException ignored) {
-        }
-    }
+    private static volatile RemoteMod litematica;
+    private static volatile RemoteMod forgematica;
 
     private static String translateAuthorName(String author) {
         if (I18n.isUseChinese() && "hsds".equals(author)) {
@@ -158,7 +144,6 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
     }
 
     public void refresh() {
-        Path schematicsDirectory = this.schematicsDirectory;
         if (schematicsDirectory == null) return;
 
         setLoading(true);
@@ -183,13 +168,21 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             }
             boolean shouldUseForgematica = false;
             if (litematicaState == LitematicaState.NOT_INSTALLED) {
-                tryGetLitematica();
+                if (litematica == null) {
+                    try {
+                        litematica = ModrinthRemoteModRepository.MODS.getModById("litematica");
+                    } catch (IOException ignored) {
+                    }
+                }
                 shouldUseForgematica =
                         (modManager.getSupportedLoaders().contains(ModLoaderType.FORGE)
                                 || modManager.getSupportedLoaders().contains(ModLoaderType.NEO_FORGED))
                         && GameVersionNumber.asGameVersion(Optional.ofNullable(modManager.getGameVersion())).isAtLeast("1.16.4", "20w45a");
-                if (shouldUseForgematica) {
-                    tryGetForgematica();
+                if (forgematica == null && shouldUseForgematica) {
+                    try {
+                        forgematica = ModrinthRemoteModRepository.MODS.getModById("forgematica");
+                    } catch (IOException ignored) {
+                    }
                 }
             }
             return pair(pair(litematicaState, shouldUseForgematica), loadRoot(schematicsDirectory));
