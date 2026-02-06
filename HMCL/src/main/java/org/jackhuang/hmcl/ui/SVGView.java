@@ -31,8 +31,15 @@ import org.jackhuang.hmcl.ui.animation.Motion;
 import java.util.ArrayList;
 import java.util.List;
 
+
 /// @author Glavo
 public final class SVGView extends Control {
+
+    private static final String DEFAULT_STYLE_CLASS = "svg-view";
+
+    {
+        getStyleClass().add(DEFAULT_STYLE_CLASS);
+    }
 
     public SVGView() {
     }
