@@ -74,11 +74,11 @@ public final class World {
     }
 
     public String getWorldName() {
-        return ((StringTag) levelData.at("Data/LevelName")).getClonedValue();
+        return ((StringTag) levelData.at("Data.LevelName")).getClonedValue();
     }
 
     public void setWorldName(String worldName) throws IOException {
-        if (levelData.at("Data/LevelName") instanceof StringTag levelNameTag) {
+        if (levelData.at("Data.LevelName") instanceof StringTag levelNameTag) {
             levelNameTag.setValue(worldName);
             writeLevelDat(levelData);
         }
@@ -105,33 +105,33 @@ public final class World {
     }
 
     public long getLastPlayed() {
-        return ((LongTag) levelData.at("Data/LastPlayed")).getClonedValue();
+        return ((LongTag) levelData.at("Data.LastPlayed")).getClonedValue();
     }
 
     public @Nullable GameVersionNumber getGameVersion() {
-        if (levelData.at("Data/Version/Name") instanceof StringTag nameTag) {
+        if (levelData.at("Data.Version.Name") instanceof StringTag nameTag) {
             return GameVersionNumber.asGameVersion(nameTag.getClonedValue());
         }
         return null;
     }
 
     public @Nullable Long getSeed() {
-        if (levelData.at("Data/WorldGenSettings/seed") instanceof LongTag seedTag) { //Valid after 1.16
+        if (levelData.at("Data.WorldGenSettings.seed") instanceof LongTag seedTag) { //Valid after 1.16
             return seedTag.getClonedValue();
-        } else if (levelData.get("Data/RandomSeed") instanceof LongTag seedTag) { //Valid before 1.16
+        } else if (levelData.get("Data.RandomSeed") instanceof LongTag seedTag) { //Valid before 1.16
             return seedTag.getClonedValue();
-        } else if (worldGenSettingsDat != null && worldGenSettingsDat.at("data/seed") instanceof LongTag seedTag) { //Valid after 26.1-snapshot-6
+        } else if (worldGenSettingsDat != null && worldGenSettingsDat.at("data.seed") instanceof LongTag seedTag) { //Valid after 26.1-snapshot-6
             return seedTag.getClonedValue();
         }
         return null;
     }
 
     public boolean isLargeBiomes() {
-        if (levelData.at("Data/generatorName") instanceof StringTag generatorNameTag) { //Valid before 1.16
+        if (levelData.at("Data.generatorName") instanceof StringTag generatorNameTag) { //Valid before 1.16
             return "largeBiomes".equals(generatorNameTag.getClonedValue());
         } else {
-            if (levelData.at("Data/WorldGenSettings/dimensions/minecraft:overworld/generator") instanceof CompoundTag generatorTag) {
-                if (generatorTag.at("biome_source/large_biomes") instanceof ByteTag largeBiomesTag) { //Valid between 1.16 and 1.16.2
+            if (levelData.at("Data.WorldGenSettings.dimensions.minecraft:overworld.generator") instanceof CompoundTag generatorTag) {
+                if (generatorTag.at("biome_source.large_biomes") instanceof ByteTag largeBiomesTag) { //Valid between 1.16 and 1.16.2
                     return largeBiomesTag.getClonedValue() == (byte) 1;
                 } else if (generatorTag.get("settings") instanceof StringTag settingsTag) { //Valid after 1.16.2
                     return "minecraft:large_biomes".equals(settingsTag.getClonedValue());
@@ -244,19 +244,15 @@ public final class World {
     }
 
     private void loadOtherData() throws IOException {
-//        if (getGameVersion().isAtLeast()) {
-//
-//        }
-
         Path worldGenSettingsDatPath = file.resolve("data/minecraft/world_gen_settings.dat");
         if (Files.exists(worldGenSettingsDatPath)) {
             this.worldGenSettingsDatPath = worldGenSettingsDatPath;
             this.worldGenSettingsDat = NBT.read(worldGenSettingsDatPath);
         }
 
-        if (levelData.at("Data/Player") instanceof CompoundTag playerTag) {
+        if (levelData.at("Data.Player") instanceof CompoundTag playerTag) {
             this.playerDat = playerTag;
-        } else if (levelData.at("Data/singleplayer_uuid") instanceof IntArrayTag uuidTag) {
+        } else if (levelData.at("Data.singleplayer_uuid") instanceof IntArrayTag uuidTag) {
             int[] uuidValue = uuidTag.getClonedValue();
             if (uuidValue.length == 4) {
                 long mostSigBits = ((long) uuidValue[0] << 32) | (uuidValue[1] & 0xFFFFFFFFL);

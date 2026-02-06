@@ -19,7 +19,7 @@ java-info = "1.0"
 authlib-injector = "1.2.7"
 monet-fx = "0.4.0"
 terracotta = "0.4.1"
-micanbt = "0.2.0"
+micanbt = "0.3.1"
 
 # testing
 junit = "6.0.1"

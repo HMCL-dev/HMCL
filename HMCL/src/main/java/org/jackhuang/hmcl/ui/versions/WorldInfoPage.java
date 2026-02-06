@@ -287,7 +287,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                     } else {
                         difficultyButton.setDisable(true);
                     }
-                } else if (dataTag.at("difficulty_settings/difficulty") instanceof StringTag difficultyTag) { // Valid after 26.1 snapshot 6
+                } else if (dataTag.at("difficulty_settings.difficulty") instanceof StringTag difficultyTag) { // Valid after 26.1 snapshot 6
                     Difficulty difficulty = Difficulty.of(difficultyTag.getClonedValue());
                     if (difficulty != null) {
                         difficultyButton.setValue(difficulty);
@@ -310,7 +310,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 if (dataTag.get("DifficultyLocked") instanceof ByteTag difficultyLockedTag) {
                     bindTagAndToggleButton(difficultyLockedTag, difficultyLockPane);
                 } else {
-                    bindTagAndToggleButton(dataTag.at("difficulty_settings/locked"), difficultyLockPane);
+                    bindTagAndToggleButton(dataTag.at("difficulty_settings.locked"), difficultyLockPane);
                 }
             }
 
@@ -372,7 +372,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                         .filter(t -> t instanceof ByteTag)
                         .map(t -> (ByteTag) t)
                         .orElseGet(() -> {
-                            if (dataTag.at("difficulty_settings/hardcore") instanceof ByteTag b) return b;
+                            if (dataTag.at("difficulty_settings.hardcore") instanceof ByteTag b) return b;
                             return null;
                         });
 
