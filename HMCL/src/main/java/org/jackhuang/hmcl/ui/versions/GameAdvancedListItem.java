@@ -20,7 +20,6 @@ package org.jackhuang.hmcl.ui.versions;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.BorderPane;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
@@ -49,7 +48,7 @@ public class GameAdvancedListItem extends AdvancedListItem {
 
         Node imageViewWrapper = FXUtils.limitingSize(imageView, LEFT_GRAPHIC_SIZE, LEFT_GRAPHIC_SIZE);
         imageView.setMouseTransparent(true);
-        BorderPane.setAlignment(imageViewWrapper, Pos.CENTER);
+        AdvancedListItem.setAlignment(imageViewWrapper, Pos.CENTER);
         setLeftGraphic(imageViewWrapper);
 
         holder.add(FXUtils.onWeakChangeAndOperate(Profiles.selectedVersionProperty(), this::loadVersion));

@@ -111,6 +111,7 @@ public class AdvancedListBox extends ScrollPane {
         Node selectedIcon = selectedGraphic.createIcon(AdvancedListItem.LEFT_ICON_SIZE);
 
         TransitionPane leftGraphic = new TransitionPane();
+        AdvancedListItem.setAlignment(leftGraphic, Pos.CENTER);
         leftGraphic.setMouseTransparent(true);
         leftGraphic.setAlignment(Pos.CENTER);
         FXUtils.setLimitWidth(leftGraphic, AdvancedListItem.LEFT_GRAPHIC_SIZE);
