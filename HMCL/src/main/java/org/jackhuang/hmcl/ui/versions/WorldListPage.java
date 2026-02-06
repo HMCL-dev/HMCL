@@ -68,7 +68,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
     private List<World> worlds;
     private Profile profile;
     private String instanceId;
-    private boolean supportQuickPlay;
+    private final BooleanProperty supportQuickPlay = new SimpleBooleanProperty(this, "supportQuickPlay", false);
 
     private int refreshCount = 0;
 
@@ -114,14 +114,17 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
 
         setLoading(true);
         Task.supplyAsync(Schedulers.io(), () -> {
-            Optional<String> gameVersion = profile.getRepository().getGameVersion(instanceId);
-            supportQuickPlay = World.supportQuickPlay(GameVersionNumber.asGameVersion(gameVersion));
+            // Ensure the game version number is parsed
+            profile.getRepository().getGameVersion(instanceId);
             return World.getWorlds(savesDir);
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (refreshCount != currentRefresh) {
                 // A newer refresh task is running, discard this result
                 return;
             }
+
+            Optional<String> gameVersion = profile.getRepository().getGameVersion(instanceId);
+            supportQuickPlay.set(World.supportQuickPlay(GameVersionNumber.asGameVersion(gameVersion)));
 
             worlds = result;
             updateWorldList();
@@ -205,6 +208,10 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
         return showAll;
     }
 
+    public BooleanProperty supportQuickPlayProperty() {
+        return supportQuickPlay;
+    }
+
     private final class WorldListPageSkin extends ToolbarListPageSkin<World, WorldListPage> {
 
         WorldListPageSkin() {
@@ -271,6 +278,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                 right.setAlignment(Pos.CENTER_RIGHT);
 
                 btnLaunch = new JFXButton();
+                btnLaunch.visibleProperty().bind(page.supportQuickPlayProperty());
                 right.getChildren().add(btnLaunch);
                 btnLaunch.getStyleClass().add("toggle-icon4");
                 btnLaunch.setGraphic(SVG.ROCKET_LAUNCH.createIcon());
@@ -324,14 +332,6 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                 imageView.setImage(world.getIcon() == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : world.getIcon());
                 leftTooltip.setText(world.getFile().toString());
                 content.setTitle(world.getWorldName() != null ? parseColorEscapes(world.getWorldName()) : "");
-
-                if (page.supportQuickPlay) {
-                    btnLaunch.setVisible(true);
-                    btnLaunch.setManaged(true);
-                } else {
-                    btnLaunch.setVisible(false);
-                    btnLaunch.setManaged(false);
-                }
 
                 if (world.getGameVersion() != null)
                     content.addTag(I18n.getDisplayVersion(world.getGameVersion()));
