@@ -133,14 +133,10 @@ public final class World {
             if (worldGenSettingsDat.at("data.dimensions.minecraft:overworld.generator.settings") instanceof StringTag settingsTag) { //Valid after 26.1-snapshot-6
                 return "minecraft:large_biomes".equals(settingsTag.getClonedValue());
             }
-        } else {
-            if (levelData.at("Data.WorldGenSettings.dimensions.minecraft:overworld.generator") instanceof CompoundTag generatorTag) {
-                if (generatorTag.at("biome_source.large_biomes") instanceof ByteTag largeBiomesTag) { //Valid between 1.16 and 1.16.2
-                    return largeBiomesTag.getClonedValue() == (byte) 1;
-                } else if (generatorTag.get("settings") instanceof StringTag settingsTag) { //Valid between 1.16.2 and 26.1-snapshot-6
-                    return "minecraft:large_biomes".equals(settingsTag.getClonedValue());
-                }
-            }
+        } else if (levelData.at("Data.WorldGenSettings.dimensions.minecraft:overworld.generator.biome_source.large_biomes") instanceof ByteTag largeBiomesTag) {  //Valid between 1.16 and 1.16.2
+            return largeBiomesTag.getClonedValue() == (byte) 1;
+        } else if (levelData.at("Data.WorldGenSettings.dimensions.minecraft:overworld.generator.settings") instanceof StringTag settingsTag) { //Valid between 1.16.2 and 26.1-snapshot-6
+            return "minecraft:large_biomes".equals(settingsTag.getClonedValue());
         }
         return false;
     }

@@ -263,8 +263,10 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                     bindTagAndToggleButton(worldGenSettings.get("generate_features"), generateFeaturesButton);
                 } else if (dataTag.get("MapFeatures") instanceof ByteTag mapFeatures) { // Valid before 20w20a
                     bindTagAndToggleButton(mapFeatures, generateFeaturesButton);
-                } else if (world.getWorldGenSettingsDat() != null && world.getWorldGenSettingsDat().get("data") instanceof CompoundTag worldGenSettingsDataTag) { // Valid after 26.1 snapshot 6
-                    bindTagAndToggleButton(worldGenSettingsDataTag.get("generate_structures"), generateFeaturesButton);
+                } else if (world.getWorldGenSettingsDat() != null && world.getWorldGenSettingsDat().at("data.generate_structures") instanceof ByteTag generateStructures) { // Valid after 26.1 snapshot 6
+                    bindTagAndToggleButton(generateStructures, generateFeaturesButton);
+                } else {
+                    generateFeaturesButton.setDisable(true);
                 }
             }
 
@@ -281,7 +283,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                         difficultyButton.valueProperty().addListener((o, oldValue, newValue) -> {
                             if (newValue != null) {
                                 difficultyTag.setValue((byte) newValue.ordinal());
-                                saveLevelDat();
+                                saveWorldData();
                             }
                         });
                     } else {
@@ -294,7 +296,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                         difficultyButton.valueProperty().addListener((o, oldValue, newValue) -> {
                             if (newValue != null) {
                                 difficultyTag.setValue(newValue.getTagStringValue());
-                                saveLevelDat();
+                                saveWorldData();
                             }
                         });
                     }
@@ -307,10 +309,12 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
             {
                 difficultyLockPane.setTitle(i18n("world.info.difficulty_lock"));
                 difficultyLockPane.setDisable(isReadOnly);
-                if (dataTag.get("DifficultyLocked") instanceof ByteTag difficultyLockedTag) {
+                if (dataTag.get("DifficultyLocked") instanceof ByteTag difficultyLockedTag) { // Valid before 26.1 snapshot 6
                     bindTagAndToggleButton(difficultyLockedTag, difficultyLockPane);
+                } else if (dataTag.at("difficulty_settings.locked") instanceof ByteTag LockedTag) { // Valid after 26.1 snapshot 6
+                    bindTagAndToggleButton(LockedTag, difficultyLockPane);
                 } else {
-                    bindTagAndToggleButton(dataTag.at("difficulty_settings.locked"), difficultyLockPane);
+                    difficultyLockPane.setDisable(true);
                 }
             }
 
@@ -391,7 +395,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                                     playerGameTypeTag.setValue(newValue.ordinal());
                                     hardcoreTag.setValue((byte) 0);
                                 }
-                                saveLevelDat();
+                                saveWorldData();
                             }
                         });
                     } else {
@@ -462,7 +466,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 toggleButton.selectedProperty().addListener((o, oldValue, newValue) -> {
                     try {
                         byteTag.setValue((byte) (newValue ? 1 : 0));
-                        saveLevelDat();
+                        saveWorldData();
                     } catch (Exception e) {
                         toggleButton.setSelected(oldValue);
                         LOG.warning("Exception happened when saving level.dat", e);
@@ -485,7 +489,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                     Integer integer = Lang.toIntOrNull(newValue);
                     if (integer != null) {
                         intTag.setValue(integer);
-                        saveLevelDat();
+                        saveWorldData();
                     }
                 } catch (Exception e) {
                     jfxTextField.setText(oldValue);
@@ -506,7 +510,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                     Float floatValue = Lang.toFloatOrNull(newValue);
                     if (floatValue != null) {
                         floatTag.setValue(floatValue);
-                        saveLevelDat();
+                        saveWorldData();
                     }
                 } catch (Exception e) {
                     jfxTextField.setText(oldValue);
@@ -518,7 +522,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
         jfxTextField.setValidators(new DoubleValidator(i18n("input.number"), true));
     }
 
-    private void saveLevelDat() {
+    private void saveWorldData() {
         LOG.info("Saving level.dat of world " + world.getWorldName());
         try {
             this.world.writeWorldDat();
