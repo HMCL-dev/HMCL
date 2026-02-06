@@ -161,6 +161,7 @@ public class TwoLineListItem extends VBox {
 
             var tagsBox = new HBox(8);
             tagsBox.getStyleClass().add("tags");
+            tagsBox.setAlignment(Pos.CENTER_LEFT);
             Bindings.bindContent(tagsBox.getChildren(), tags);
 
             var scrollPane = new ScrollPane(tagsBox);
