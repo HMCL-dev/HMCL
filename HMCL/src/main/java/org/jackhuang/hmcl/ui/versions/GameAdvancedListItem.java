@@ -54,7 +54,6 @@ public class GameAdvancedListItem extends AdvancedListItem {
 
         holder.add(FXUtils.onWeakChangeAndOperate(Profiles.selectedVersionProperty(), this::loadVersion));
 
-        setActionButtonVisible(false);
     }
 
     private void loadVersion(String version) {

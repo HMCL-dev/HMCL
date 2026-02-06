@@ -69,7 +69,6 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                 AdvancedListItem addProfileItem = new AdvancedListItem();
                 addProfileItem.getStyleClass().add("navigation-drawer-item");
                 addProfileItem.setTitle(i18n("profile.new"));
-                addProfileItem.setActionButtonVisible(false);
                 addProfileItem.setLeftIcon(SVG.ADD_CIRCLE);
                 addProfileItem.setOnAction(e -> Controllers.navigate(new ProfilePage(null)));
 

@@ -17,7 +17,6 @@
  */
 package org.jackhuang.hmcl.ui.account;
 
-import com.jfoenix.controls.JFXButton;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ListProperty;
@@ -129,14 +128,12 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
 
                     AdvancedListItem microsoftItem = new AdvancedListItem();
                     microsoftItem.getStyleClass().add("navigation-drawer-item");
-                    microsoftItem.setActionButtonVisible(false);
                     microsoftItem.setTitle(i18n("account.methods.microsoft"));
                     microsoftItem.setLeftIcon(SVG.MICROSOFT);
                     microsoftItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_MICROSOFT)));
 
                     AdvancedListItem offlineItem = new AdvancedListItem();
                     offlineItem.getStyleClass().add("navigation-drawer-item");
-                    offlineItem.setActionButtonVisible(false);
                     offlineItem.setTitle(i18n("account.methods.offline"));
                     offlineItem.setLeftIcon(SVG.PERSON);
                     offlineItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_OFFLINE)));
@@ -147,17 +144,9 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                         item.getStyleClass().add("navigation-drawer-item");
                         item.setLeftIcon(SVG.DRESSER);
                         item.setOnAction(e -> Controllers.dialog(new CreateAccountPane(server)));
-
-                        JFXButton btnRemove = new JFXButton();
-                        btnRemove.setOnAction(e -> {
-                            Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
-                                skinnable.authServersProperty().remove(server);
-                            }, null);
-                            e.consume();
-                        });
-                        btnRemove.getStyleClass().add("toggle-icon4");
-                        btnRemove.setGraphic(SVG.CLOSE.createIcon(14));
-                        item.setRightGraphic(btnRemove);
+                        item.setRightAction(SVG.CLOSE, () -> Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
+                            skinnable.authServersProperty().remove(server);
+                        }, null));
 
                         ObservableValue<String> title = BindingMapping.of(server, AuthlibInjectorServer::getName);
                         item.titleProperty().bind(title);
@@ -205,7 +194,6 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                     addAuthServerItem.getStyleClass().add("navigation-drawer-item");
                     addAuthServerItem.setTitle(i18n("account.injector.add"));
                     addAuthServerItem.setSubtitle(i18n("account.methods.authlib_injector"));
-                    addAuthServerItem.setActionButtonVisible(false);
                     addAuthServerItem.setLeftIcon(SVG.ADD_CIRCLE);
                     addAuthServerItem.setOnAction(e -> Controllers.dialog(new AddAuthlibInjectorServerPane()));
                     VBox.setMargin(addAuthServerItem, new Insets(0, 0, 12, 0));

@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.construct;
 
+import com.jfoenix.controls.JFXButton;
 import javafx.beans.property.*;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
@@ -33,6 +34,14 @@ public class AdvancedListItem extends Control {
     public static final double LEFT_GRAPHIC_SIZE = 32;
     public static final double LEFT_ICON_SIZE = 20;
     public static final Insets LEFT_ICON_MARGIN = new Insets(0, 6, 0, 6);
+
+    public static void setMargin(Node graphic, Insets margin) {
+        BorderPane.setMargin(graphic, margin);
+    }
+
+    public static void setAlignment(Node graphic, Pos alignment) {
+        BorderPane.setAlignment(graphic, alignment);
+    }
 
     public AdvancedListItem() {
         getStyleClass().add("advanced-list-item");
@@ -75,6 +84,18 @@ public class AdvancedListItem extends Control {
         this.rightGraphic.set(rightGraphic);
     }
 
+    public void setRightAction(SVG icon, Runnable action) {
+        var button = new JFXButton();
+        button.setOnAction(e -> {
+            action.run();
+            e.consume();
+        });
+        button.getStyleClass().add("toggle-icon4");
+        button.setGraphic(icon.createIcon(14));
+        setAlignment(button, Pos.CENTER);
+        setRightGraphic(button);
+    }
+
     private final StringProperty title = new SimpleStringProperty(this, "title");
 
     public StringProperty titleProperty() {
@@ -115,20 +136,6 @@ public class AdvancedListItem extends Control {
 
     public void setActive(boolean active) {
         this.active.set(active);
-    }
-
-    private final BooleanProperty actionButtonVisible = new SimpleBooleanProperty(this, "actionButtonVisible", true);
-
-    public BooleanProperty actionButtonVisibleProperty() {
-        return actionButtonVisible;
-    }
-
-    public boolean isActionButtonVisible() {
-        return actionButtonVisible.get();
-    }
-
-    public void setActionButtonVisible(boolean actionButtonVisible) {
-        this.actionButtonVisible.set(actionButtonVisible);
     }
 
     private final ObjectProperty<EventHandler<ActionEvent>> onAction = new SimpleObjectProperty<>(this, "onAction") {

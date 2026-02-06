@@ -172,7 +172,6 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             // third item in left sidebar
             AdvancedListItem gameItem = new AdvancedListItem();
             gameItem.setLeftIcon(SVG.FORMAT_LIST_BULLETED);
-            gameItem.setActionButtonVisible(false);
             gameItem.setTitle(i18n("version.manage"));
             gameItem.setOnAction(e -> Controllers.navigate(Controllers.getGameListPage()));
             FXUtils.onSecondaryButtonClicked(gameItem, () -> showGameListPopupMenu(gameItem));
@@ -180,7 +179,6 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             // forth item in left sidebar
             AdvancedListItem downloadItem = new AdvancedListItem();
             downloadItem.setLeftIcon(SVG.DOWNLOAD);
-            downloadItem.setActionButtonVisible(false);
             downloadItem.setTitle(i18n("download"));
             downloadItem.setOnAction(e -> {
                 Controllers.getDownloadPage().showGameDownloads();
@@ -194,7 +192,6 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             // fifth item in left sidebar
             AdvancedListItem launcherSettingsItem = new AdvancedListItem();
             launcherSettingsItem.setLeftIcon(SVG.SETTINGS);
-            launcherSettingsItem.setActionButtonVisible(false);
             launcherSettingsItem.setTitle(i18n("settings"));
             launcherSettingsItem.setOnAction(e -> {
                 Controllers.getSettingsPage().showGameSettings(Profiles.getSelectedProfile());
@@ -207,7 +204,6 @@ public class RootPage extends DecoratorAnimatedPage implements DecoratorPage {
             // sixth item in left sidebar
             AdvancedListItem terracottaItem = new AdvancedListItem();
             terracottaItem.setLeftIcon(SVG.GRAPH2);
-            terracottaItem.setActionButtonVisible(false);
             terracottaItem.setTitle(i18n("terracotta"));
             terracottaItem.setOnAction(e -> {
                 if (TerracottaMetadata.PROVIDER != null) {

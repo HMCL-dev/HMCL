@@ -71,7 +71,6 @@ public class AdvancedListBox extends ScrollPane {
     private AdvancedListItem createNavigationDrawerItem(String title, SVG leftGraphic) {
         AdvancedListItem item = new AdvancedListItem();
         item.getStyleClass().add("navigation-drawer-item");
-        item.setActionButtonVisible(false);
         item.setTitle(title);
         if (leftGraphic != null) {
             item.setLeftIcon(leftGraphic);
