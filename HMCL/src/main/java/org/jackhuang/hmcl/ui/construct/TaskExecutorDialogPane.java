@@ -29,7 +29,6 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.task.*;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.task.TaskCenter;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.ui.SVG;
