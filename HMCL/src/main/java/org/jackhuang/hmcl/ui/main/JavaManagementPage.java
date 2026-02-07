@@ -30,6 +30,7 @@ import javafx.scene.control.Skin;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.java.JavaInfo;
@@ -231,6 +232,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
             center.setAlignment(Pos.CENTER_LEFT);
 
             this.content = new TwoLineListItem();
+            HBox.setHgrow(content, Priority.ALWAYS);
 
             BorderPane.setAlignment(content, Pos.CENTER);
             center.getChildren().setAll(content);
