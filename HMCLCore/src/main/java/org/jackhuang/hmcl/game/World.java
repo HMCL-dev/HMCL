@@ -261,10 +261,14 @@ public final class World {
         if (Files.exists(worldGenSettingsDatPath)) {
             this.worldGenSettingsDataPath = worldGenSettingsDatPath;
             this.worldGenSettingsData = NBT.read(worldGenSettingsDatPath);
+        } else {
+            this.worldGenSettingsDataPath = null;
+            this.worldGenSettingsData = null;
         }
 
         if (levelData.at("Data.Player") instanceof CompoundTag playerTag) {
             this.playerData = playerTag;
+            this.playerDataPath = null;
         } else if (levelData.at("Data.singleplayer_uuid") instanceof IntArrayTag uuidTag) {
             int[] uuidValue = uuidTag.getClonedValue();
             if (uuidValue.length == 4) {
@@ -277,6 +281,9 @@ public final class World {
                     this.playerDataPath = playerDatPath;
                 }
             }
+        } else {
+            this.playerData = null;
+            this.playerDataPath = null;
         }
     }
 

@@ -359,8 +359,8 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
             {
                 spawnPane.setTitle(i18n("world.info.player.spawn"));
                 // Valid after 1.21.5(25w07a)
-                if (levelDat.at("respawn.dimension") instanceof StringTag dimensionTag
-                        && levelDat.at("respawn.pos") instanceof IntArrayTag intArrayTag
+                if (playerTag.at("respawn.dimension") instanceof StringTag dimensionTag
+                        && playerTag.at("respawn.pos") instanceof IntArrayTag intArrayTag
                         && intArrayTag.length() == 3) {
                     spawnPane.setText(Dimension.of(dimensionTag).formatPosition(intArrayTag));
                 }
