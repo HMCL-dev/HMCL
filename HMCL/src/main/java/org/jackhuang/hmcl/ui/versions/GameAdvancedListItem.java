@@ -68,10 +68,12 @@ public class GameAdvancedListItem extends AdvancedListItem {
                 Profiles.getSelectedProfile().getRepository().hasVersion(version)) {
             setTitle(i18n("version.manage.manage"));
             setSubtitle(version);
-            imageView.setImage(Profiles.getSelectedProfile().getRepository().getVersionIconImage(version));
+            imageView.imageProperty().bind(Profiles.getSelectedProfile().getRepository().getVersionIconImage(version));
         } else {
             setTitle(i18n("version.empty"));
             setSubtitle(i18n("version.empty.add"));
+
+            imageView.imageProperty().unbind();
             imageView.setImage(VersionIconType.DEFAULT.getIcon());
         }
     }

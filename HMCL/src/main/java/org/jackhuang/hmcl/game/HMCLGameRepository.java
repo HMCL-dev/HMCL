@@ -20,7 +20,11 @@ package org.jackhuang.hmcl.game;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.value.ObservableObjectValue;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.event.Event;
@@ -33,6 +37,7 @@ import org.jackhuang.hmcl.mod.ModpackProvider;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.setting.VersionSetting;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.Lang;
@@ -52,6 +57,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -298,9 +304,9 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
     }
 
-    public Image getVersionIconImage(String id) {
+    public ObservableObjectValue<Image> getVersionIconImage(String id) {
         if (id == null || !isLoaded())
-            return VersionIconType.DEFAULT.getIcon();
+            return new SimpleObjectProperty<>(VersionIconType.DEFAULT.getIcon());
 
         VersionSetting vs = getLocalVersionSettingOrCreate(id);
         VersionIconType iconType = vs != null ? Lang.requireNonNullElse(vs.getVersionIcon(), VersionIconType.DEFAULT) : VersionIconType.DEFAULT;
@@ -309,47 +315,54 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             Version version = getVersion(id).resolve(this);
             Optional<Path> iconFile = getVersionIconFile(id);
             if (iconFile.isPresent()) {
-                try {
-                    return FXUtils.loadImage(iconFile.get());
-                } catch (Exception e) {
-                    LOG.warning("Failed to load version icon of " + id, e);
-                }
+                var holder = new SimpleObjectProperty<Image>(VersionIconType.DEFAULT.getIcon());
+
+                CompletableFuture.supplyAsync(Lang.wrap(() -> FXUtils.loadImage(iconFile.get())), Schedulers.io())
+                        .whenCompleteAsync((result, exception) -> {
+                            if (exception == null) {
+                                if (result != null)
+                                    holder.setValue(result);
+                            } else
+                                LOG.warning("Failed to load version icon of " + id, exception);
+                        }, Schedulers.javafx());
+
+                return holder;
             }
 
             if (LibraryAnalyzer.isModded(this, version)) {
                 LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version, null);
                 if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FABRIC))
-                    return VersionIconType.FABRIC.getIcon();
+                    return new SimpleObjectProperty<>(VersionIconType.FABRIC.getIcon());
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.QUILT))
-                    return VersionIconType.QUILT.getIcon();
+                    return new SimpleObjectProperty<>(VersionIconType.QUILT.getIcon());
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.LEGACY_FABRIC))
-                    return VersionIconType.LEGACY_FABRIC.getIcon();
+                    return new SimpleObjectProperty<>(VersionIconType.LEGACY_FABRIC.getIcon());
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE))
-                    return VersionIconType.NEO_FORGE.getIcon();
+                    return new SimpleObjectProperty<>(VersionIconType.NEO_FORGE.getIcon());
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FORGE))
-                    return VersionIconType.FORGE.getIcon();
+                    return new SimpleObjectProperty<>(VersionIconType.FORGE.getIcon());
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM))
-                    return VersionIconType.CLEANROOM.getIcon();
+                    return new SimpleObjectProperty<>(VersionIconType.CLEANROOM.getIcon());
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.LITELOADER))
-                    return VersionIconType.CHICKEN.getIcon();
+                    return new SimpleObjectProperty<>(VersionIconType.CHICKEN.getIcon());
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.OPTIFINE))
-                    return VersionIconType.OPTIFINE.getIcon();
+                    return new SimpleObjectProperty<>(VersionIconType.OPTIFINE.getIcon());
             }
 
             String gameVersion = getGameVersion(version).orElse(null);
             if (gameVersion != null) {
                 GameVersionNumber versionNumber = GameVersionNumber.asGameVersion(gameVersion);
                 if (versionNumber.isAprilFools()) {
-                    return VersionIconType.APRIL_FOOLS.getIcon();
+                    return new SimpleObjectProperty<>(VersionIconType.APRIL_FOOLS.getIcon());
                 } else if (versionNumber instanceof GameVersionNumber.LegacySnapshot) {
-                    return VersionIconType.COMMAND.getIcon();
+                    return new SimpleObjectProperty<>(VersionIconType.COMMAND.getIcon());
                 } else if (versionNumber instanceof GameVersionNumber.Old) {
-                    return VersionIconType.CRAFT_TABLE.getIcon();
+                    return new SimpleObjectProperty<>(VersionIconType.CRAFT_TABLE.getIcon());
                 }
             }
-            return VersionIconType.GRASS.getIcon();
+            return new SimpleObjectProperty<>(VersionIconType.GRASS.getIcon());
         } else {
-            return iconType.getIcon();
+            return new SimpleObjectProperty<>(iconType.getIcon());
         }
     }
 
