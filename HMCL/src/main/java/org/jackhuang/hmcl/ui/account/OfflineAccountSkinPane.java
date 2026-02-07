@@ -29,9 +29,6 @@ import javafx.scene.control.Label;
 import javafx.scene.input.DragEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.*;
-import org.jackhuang.hmcl.ui.skin.SkinCanvas;
-import org.jackhuang.hmcl.ui.skin.animation.SkinAniRunning;
-import org.jackhuang.hmcl.ui.skin.animation.SkinAniWavingArms;
 import org.jackhuang.hmcl.auth.offline.OfflineAccount;
 import org.jackhuang.hmcl.auth.offline.Skin;
 import org.jackhuang.hmcl.auth.yggdrasil.TextureModel;
@@ -40,6 +37,9 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.ui.skin.SkinCanvas;
+import org.jackhuang.hmcl.ui.skin.animation.SkinAniRunning;
+import org.jackhuang.hmcl.ui.skin.animation.SkinAniWavingArms;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.nio.file.Path;
@@ -48,8 +48,8 @@ import java.util.UUID;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.ui.FXUtils.stringConverter;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class OfflineAccountSkinPane extends StackPane {
     private final OfflineAccount account;
@@ -110,6 +110,7 @@ public class OfflineAccountSkinPane extends StackPane {
 
         cslApiField.setPromptText(i18n("account.skin.type.csl_api.location.hint"));
         cslApiField.setValidators(new URLValidator());
+        FXUtils.setValidateWhileTextChanged(cslApiField, true);
 
         skinItem.loadChildren(Arrays.asList(
                 new MultiFileItem.Option<>(i18n("message.default"), Skin.Type.DEFAULT),
@@ -217,6 +218,10 @@ public class OfflineAccountSkinPane extends StackPane {
         cancelButton.getStyleClass().add("dialog-cancel");
         cancelButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
         onEscPressed(this, cancelButton::fire);
+
+        acceptButton.disableProperty().bind(
+                skinItem.selectedDataProperty().isEqualTo(Skin.Type.CUSTOM_SKIN_LOADER_API)
+                        .and(cslApiField.activeValidatorProperty().isNotNull()));
 
         layout.setActions(littleSkinLink, acceptButton, cancelButton);
     }

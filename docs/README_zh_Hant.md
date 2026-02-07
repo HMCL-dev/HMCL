@@ -38,7 +38,7 @@ HMCL 有著強大的跨平臺能力。它不僅支援 Windows、Linux、macOS、
 
 ## 下載
 
-你可以從這些渠道下載 HMCL：
+你可以透過這些管道下載 HMCL：
 
 - [HMCL 官方網站](https://hmcl.huangyuhui.net/download)
 - [GitHub Release](https://github.com/HMCL-dev/HMCL/releases)
@@ -46,17 +46,17 @@ HMCL 有著強大的跨平臺能力。它不僅支援 Windows、Linux、macOS、
 
 ## 參與貢獻
 
-HMCL 是一個社區驅動的開源項目，歡迎任何人參與貢獻程式碼或提出建議。
+HMCL 是一個由社群驅動的開源專案，歡迎任何人參與貢獻程式碼或提出建議。
 
-你可以通過以下方式參與 HMCL 的開發：
+你可以透過以下方式參與 HMCL 的開發：
 
-- 通過在 GitHub 上[創建 Issue](https://github.com/HMCL-dev/HMCL/issues/new/choose) 來報告 Bug 或提出功能請求。
-- 通過在 GitHub 上 Fork 倉庫並[提交 Pull Request](https://github.com/HMCL-dev/HMCL/compare) 來貢獻程式碼。
+- 透過在 GitHub 上[建立 Issue](https://github.com/HMCL-dev/HMCL/issues/new/choose) 來回報 Bug 或提出功能請求。
+- 透過在 GitHub 上 Fork 倉庫並[提交 Pull Request](https://github.com/HMCL-dev/HMCL/compare) 來貢獻程式碼。
 
-在參與貢獻前，請閱讀[貢獻指南](./Contributing_zh.md)，其中包含以下內容：
+在參與貢獻前，請閱讀[貢獻指南](./Contributing_zh_Hant.md)，其中包含以下內容：
 
-- [如何從原始碼構建並運行 HMCL](./Contributing_zh.md#构建-hmcl)
-- [通過調試選項調整 HMCL 的行為](./Contributing_zh.md#调试选项)
+- [如何從原始碼構建並開啟 HMCL](./Contributing_zh_Hant.md#構建-hmcl)
+- [透過除錯選項調整 HMCL 的行為](./Contributing_zh_Hant.md#除錯選項)
 
 ## 貢獻者
 

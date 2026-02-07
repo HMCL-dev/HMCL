@@ -183,7 +183,6 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
         {
             SpinnerPane center = new SpinnerPane();
             ComponentList.setVgrow(center, Priority.ALWAYS);
-            center.getStyleClass().add("large-spinner-pane");
             center.loadingProperty().bind(skinnable.loadingProperty());
 
             listView.setCellFactory(x -> new DatapackInfoListCell(listView, getSkinnable().readOnly));

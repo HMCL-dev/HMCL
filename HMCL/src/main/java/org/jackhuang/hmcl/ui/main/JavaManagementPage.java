@@ -189,7 +189,6 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
 
         JavaPageSkin(JavaManagementPage skinnable) {
             super(skinnable);
-            this.listView.getStyleClass().add("no-horizontal-scrollbar");
         }
 
         @Override
@@ -241,7 +240,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
             right.setAlignment(Pos.CENTER_RIGHT);
             {
                 JFXButton revealButton = new JFXButton();
-                revealButton.setGraphic(FXUtils.limitingSize(SVG.FOLDER_OPEN.createIcon(24), 24, 24));
+                revealButton.setGraphic(SVG.FOLDER_OPEN.createIcon());
                 revealButton.getStyleClass().add("toggle-icon4");
                 revealButton.setOnAction(e -> {
                     JavaRuntime java = getItem();
