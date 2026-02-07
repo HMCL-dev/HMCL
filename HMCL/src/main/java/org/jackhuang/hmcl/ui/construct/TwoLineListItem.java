@@ -18,126 +18,166 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.beans.property.StringPropertyBase;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.geometry.Insets;
-import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.util.AggregatedObservableList;
 
 public class TwoLineListItem extends VBox {
     private static final String DEFAULT_STYLE_CLASS = "two-line-list-item";
 
-    private static Label createTagLabel(String tag) {
-        Label tagLabel = new Label();
-        tagLabel.setText(tag);
-        HBox.setMargin(tagLabel, new Insets(0, 8, 0, 0));
-        return tagLabel;
-    }
+    private final HBox firstLine;
+    private HBox secondLine;
 
-    private final StringProperty title = new SimpleStringProperty(this, "title");
-    private final ObservableList<Label> tags = FXCollections.observableArrayList();
-    private final StringProperty subtitle = new SimpleStringProperty(this, "subtitle");
-
-    private final Label lblSubtitle;
     private final Label lblTitle;
+    private Label lblSubtitle;
 
-    private final AggregatedObservableList<Node> firstLineChildren;
+    public TwoLineListItem() {
+        getStyleClass().add(DEFAULT_STYLE_CLASS);
+        setMouseTransparent(true);
+
+        lblTitle = new Label();
+        lblTitle.getStyleClass().add("title");
+
+        this.firstLine = new HBox(lblTitle);
+        firstLine.getStyleClass().add("first-line");
+
+        this.getChildren().setAll(firstLine);
+    }
 
     public TwoLineListItem(String titleString, String subtitleString) {
         this();
 
-        title.set(titleString);
-        subtitle.set(subtitleString);
+        setTitle(titleString);
+        setSubtitle(subtitleString);
     }
 
-    public TwoLineListItem() {
-        setMouseTransparent(true);
+    private void initSecondLine() {
+        if (secondLine == null) {
+            lblSubtitle = new Label();
+            lblSubtitle.getStyleClass().add("subtitle");
 
-        HBox firstLine = new HBox();
-        firstLine.getStyleClass().add("first-line");
+            secondLine = new HBox(lblSubtitle);
+        }
+    }
 
-        lblTitle = new Label();
-        lblTitle.getStyleClass().add("title");
-        lblTitle.textProperty().bind(title);
+    private final StringProperty title = new StringPropertyBase() {
+        @Override
+        public Object getBean() {
+            return TwoLineListItem.this;
+        }
 
-        firstLineChildren = new AggregatedObservableList<>();
-        firstLineChildren.appendList(FXCollections.singletonObservableList(lblTitle));
-        firstLineChildren.appendList(tags);
-        Bindings.bindContent(firstLine.getChildren(), firstLineChildren.getAggregatedList());
+        @Override
+        public String getName() {
+            return "title";
+        }
 
-        lblSubtitle = new Label();
-        lblSubtitle.getStyleClass().add("subtitle");
-        lblSubtitle.textProperty().bind(subtitle);
+        @Override
+        protected void invalidated() {
+            lblTitle.setText(get());
+        }
+    };
 
-        HBox secondLine = new HBox();
-        secondLine.getChildren().setAll(lblSubtitle);
-
-        getChildren().setAll(firstLine, secondLine);
-
-        FXUtils.onChangeAndOperate(subtitle, subtitleString -> {
-            if (subtitleString == null) getChildren().setAll(firstLine);
-            else getChildren().setAll(firstLine, secondLine);
-        });
-
-        getStyleClass().add(DEFAULT_STYLE_CLASS);
+    public StringProperty titleProperty() {
+        return title;
     }
 
     public String getTitle() {
         return title.get();
     }
 
-    public StringProperty titleProperty() {
-        return title;
-    }
-
     public void setTitle(String title) {
         this.title.set(title);
     }
 
-    public String getSubtitle() {
-        return subtitle.get();
-    }
+    private StringProperty subtitle;
 
     public StringProperty subtitleProperty() {
+        if (subtitle == null) {
+            subtitle = new StringPropertyBase() {
+                @Override
+                public Object getBean() {
+                    return TwoLineListItem.this;
+                }
+
+                @Override
+                public String getName() {
+                    return "subtitle";
+                }
+
+                @Override
+                protected void invalidated() {
+                    String subtitle = get();
+
+                    if (subtitle != null) {
+                        initSecondLine();
+                        lblSubtitle.setText(subtitle);
+
+                        if (getChildren().size() == 1)
+                            getChildren().add(secondLine);
+                    } else if (secondLine != null) {
+                        lblSubtitle.setText(null);
+                        if (getChildren().size() > 1)
+                            getChildren().setAll(firstLine);
+                    }
+                }
+            };
+        }
         return subtitle;
     }
 
-    public void setSubtitle(String subtitle) {
-        this.subtitle.set(subtitle);
+    public String getSubtitle() {
+        return subtitle != null ? subtitleProperty().get() : null;
     }
 
-    public Label getSubtitleLabel() {
-        return lblSubtitle;
+    public void setSubtitle(String subtitle) {
+        if (this.subtitle == null && subtitle == null)
+            return;
+
+        subtitleProperty().set(subtitle);
     }
 
     public Label getTitleLabel() {
         return lblTitle;
     }
 
+    public Label getSubtitleLabel() {
+        initSecondLine();
+        return lblSubtitle;
+    }
+
+    private ObservableList<Label> tags;
+
+    public ObservableList<Label> getTags() {
+        if (tags == null) {
+            tags = FXCollections.observableArrayList();
+
+            var tagsBox = new HBox(8);
+            tagsBox.getStyleClass().add("tags");
+            Bindings.bindContent(tagsBox.getChildren(), tags);
+
+            firstLine.getChildren().setAll(lblTitle, tagsBox);
+        }
+        return tags;
+    }
+
     public void addTag(String tag) {
-        Label tagLabel = createTagLabel(tag);
+        var tagLabel = new Label(tag);
         tagLabel.getStyleClass().add("tag");
         getTags().add(tagLabel);
     }
 
     public void addTagWarning(String tag) {
-        Label tagLabel = createTagLabel(tag);
+        var tagLabel = new Label(tag);
         tagLabel.getStyleClass().add("tag-warning");
         getTags().add(tagLabel);
     }
 
-    public ObservableList<Label> getTags() {
-        return tags;
-    }
-
     @Override
     public String toString() {
-        return getTitle();
+        return "TwoLineListItem[title=%s, subtitle=%s, tags=%s]".formatted(getTitle(), getSubtitle(), tags);
     }
 }

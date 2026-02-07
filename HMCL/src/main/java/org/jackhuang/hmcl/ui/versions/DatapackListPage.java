@@ -88,8 +88,8 @@ public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.Da
 
     public void add() {
         FileChooser chooser = new FileChooser();
-        chooser.setTitle(i18n("datapack.choose_datapack"));
-        chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(i18n("datapack.extension"), "*.zip"));
+        chooser.setTitle(i18n("datapack.add.title"));
+        chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(i18n("extension.datapack"), "*.zip"));
         List<Path> res = FileUtils.toPaths(chooser.showOpenMultipleDialog(Controllers.getStage()));
 
         if (res != null) {
