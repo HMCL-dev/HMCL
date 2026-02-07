@@ -34,6 +34,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Tab;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
@@ -95,14 +96,17 @@ public class JFXCustomColorPickerDialog extends StackPane {
 
         rgbField.getStyleClass().add("custom-color-field");
         rgbField.setPromptText("RGB Color");
+        rgbField.setTextFormatter(colorCharFormatter());
         rgbField.textProperty().addListener((o, oldVal, newVal) -> updateColorFromUserInput(newVal));
 
         hsbField.getStyleClass().add("custom-color-field");
         hsbField.setPromptText("HSB Color");
+        hsbField.setTextFormatter(colorCharFormatter());
         hsbField.textProperty().addListener((o, oldVal, newVal) -> updateColorFromUserInput(newVal));
 
         hexField.getStyleClass().add("custom-color-field");
         hexField.setPromptText("#HEX Color");
+        hexField.setTextFormatter(colorCharFormatter());
         hexField.textProperty().addListener((o, oldVal, newVal) -> updateColorFromUserInput(newVal));
 
         StackPane tabContent = new StackPane();
@@ -403,5 +407,37 @@ public class JFXCustomColorPickerDialog extends StackPane {
         double minHeight = Math.max(0, computeMinHeight(getWidth()) + (dialog.getHeight() - customScene.getHeight()));
         dialog.setMinWidth(minWidth);
         dialog.setMinHeight(minHeight);
+    }
+
+    private static TextFormatter<String> colorCharFormatter() {
+        return new TextFormatter<>(change -> {
+            if (!change.isContentChange()) return change;
+
+            java.util.function.Function<String, String> toHalf = s -> {
+                StringBuilder b = new StringBuilder(s.length());
+                for (char c : s.toCharArray()) {
+                    if (c >= '\uff10' && c <= '\uff19') b.append((char) (c - 0xfee0));
+                    else if (c >= '\uff21' && c <= '\uff3a') b.append((char) (c - 0xfee0));
+                    else if (c >= '\uff41' && c <= '\uff5a') b.append((char) (c - 0xfee0));
+                    else if (c == '\uff08') b.append('(');
+                    else if (c == '\uff09') b.append(')');
+                    else if (c == '\uff0c') b.append(',');
+                    else if (c == '\uff05') b.append('%');
+                    else if (c == '\uff0e') b.append('.');
+                    else if (c == '\u3000') b.append(' ');
+                    else if (c == '\uff03') b.append('#');
+                    else b.append(c);
+                }
+                return b.toString();
+            };
+
+            String ins = toHalf.apply(change.getText());
+            if (!ins.matches("[0-9a-zA-Z#(),%.\\s]*")) return null;
+            String full = toHalf.apply(change.getControlNewText());
+            long h = full.chars().filter(c -> c == '#').count();
+            if (h > 1 || (h == 1 && full.indexOf('#') != 0)) return null;
+            change.setText(ins);
+            return change;
+        });
     }
 }
