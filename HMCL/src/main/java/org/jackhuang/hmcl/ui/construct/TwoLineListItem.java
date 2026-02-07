@@ -171,6 +171,7 @@ public class TwoLineListItem extends VBox {
             scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             FXUtils.onChangeAndOperate(tagsBox.heightProperty(), height -> FXUtils.setLimitHeight(scrollPane, height.doubleValue()));
+            scrollPane.setPrefWidth(50);
             firstLine.getChildren().setAll(lblTitle, scrollPane);
         }
         return tags;
