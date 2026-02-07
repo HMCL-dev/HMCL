@@ -142,7 +142,9 @@ public final class NBTTreeView extends TreeView<Tag> {
                 item.getChildren().add(subTree);
             }
         }
-        if (item.getChildren().size() == 1) item.getChildren().get(0).setExpanded(true);
+        FXUtils.onChangeAndOperate(item.expandedProperty(), expanded -> {
+            if (expanded && item.getChildren().size() == 1) item.getChildren().get(0).setExpanded(true);
+        });
 
         return item;
     }
