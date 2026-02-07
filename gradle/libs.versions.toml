@@ -9,6 +9,7 @@ xz = "1.11"
 fx-gson = "5.0.0"
 constant-pool-scanner = "1.2"
 opennbt = "1.5"
+micanbt = "0.3.1"
 nanohttpd = "2.3.1"
 jsoup = "1.21.2"
 chardet = "2.5.0"
@@ -19,7 +20,6 @@ java-info = "1.0"
 authlib-injector = "1.2.7"
 monet-fx = "0.4.0"
 terracotta = "0.4.1"
-micanbt = "0.3.1"
 
 # testing
 junit = "6.0.1"
@@ -40,6 +40,7 @@ xz = { module = "org.tukaani:xz", version.ref = "xz" }
 fx-gson = { module = "org.hildan.fxgson:fx-gson", version.ref = "fx-gson" }
 constant-pool-scanner = { module = "org.jenkins-ci:constant-pool-scanner", version.ref = "constant-pool-scanner" }
 opennbt = { module = "com.github.steveice10:opennbt", version.ref = "opennbt" }
+micanbt = {module = "tech.minediamond:micanbt", version.ref = "micanbt"}
 nanohttpd = { module = "org.nanohttpd:nanohttpd", version.ref = "nanohttpd" }
 jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
 chardet = { module = "org.glavo:chardet", version.ref = "chardet" }
@@ -50,7 +51,6 @@ pci-ids = { module = "org.glavo:pci-ids", version.ref = "pci-ids" }
 java-info = { module = "org.glavo:java-info", version.ref = "java-info" }
 authlib-injector = { module = "org.glavo.hmcl:authlib-injector", version.ref = "authlib-injector" }
 monet-fx = { module = "org.glavo:MonetFX", version.ref = "monet-fx" }
-micanbt = {module = "tech.minediamond:micanbt", version.ref = "micanbt"}
 
 # testing
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
