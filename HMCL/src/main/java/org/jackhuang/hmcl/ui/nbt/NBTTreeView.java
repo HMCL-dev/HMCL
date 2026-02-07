@@ -41,9 +41,7 @@ public final class NBTTreeView extends TreeView<Tag> {
 
     public NBTTreeView(NBTTreeView.Item tree) {
         this.setRoot(tree);
-        FXUtils.onChangeAndOperate(rootProperty(), root -> {
-            if (root != null) root.setExpanded(true);
-        });
+        if (tree != null) tree.setExpanded(true);
         this.setCellFactory(cellFactory());
     }
 
