@@ -20,9 +20,11 @@ package org.jackhuang.hmcl.ui.image;
 import com.twelvemonkeys.imageio.plugins.webp.WebPImageReaderSpi;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
+import javafx.scene.SnapshotParameters;
 import javafx.scene.image.Image;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
+import javafx.scene.paint.Color;
 import org.girod.javafx.svgimage.LoaderParameters;
 import org.girod.javafx.svgimage.SVGImage;
 import org.girod.javafx.svgimage.SVGLoader;
@@ -81,6 +83,12 @@ public final class ImageUtils {
         return SwingFXUtils.toFXImage(bufferedImage, requestedWidth, requestedHeight, preserveRatio, smooth);
     };
 
+    private static final SnapshotParameters DEFAULT_SVG_SNAPSHOT_PARAMS = new SnapshotParameters();
+
+    {
+        DEFAULT_SVG_SNAPSHOT_PARAMS.setFill(Color.TRANSPARENT);
+    }
+
     public static final ImageLoader SVG = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
         String content = new String(input.readAllBytes(), StandardCharsets.UTF_8);
 
@@ -103,16 +111,17 @@ public final class ImageUtils {
             throw new IOException("Failed to load SVG image");
 
         if (requestedWidth <= 0. || requestedHeight <= 0.) {
-            return image.toImage();
+            return image.toImage(DEFAULT_SVG_SNAPSHOT_PARAMS);
         }
 
         double scaleX = requestedWidth / image.getWidth();
         double scaleY = requestedHeight / image.getHeight();
 
-        if (preserveRatio) {
+        if (preserveRatio || scaleX == scaleY) {
             double scale = Math.min(scaleX, scaleY);
-            return image.toImageScaled(ScaleQuality.RENDER_QUALITY, scale, scale);
+            return image.scale(scale).toImage(DEFAULT_SVG_SNAPSHOT_PARAMS);
         } else {
+            // FIXME: Use DEFAULT_SVG_SNAPSHOT_PARAMS
             return image.toImageScaled(ScaleQuality.RENDER_QUALITY, scaleX, scaleY);
         }
     };
