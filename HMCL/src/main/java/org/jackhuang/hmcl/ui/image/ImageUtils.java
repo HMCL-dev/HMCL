@@ -37,7 +37,6 @@ import org.jackhuang.hmcl.ui.image.apng.error.PngException;
 import org.jackhuang.hmcl.ui.image.apng.error.PngIntegrityException;
 import org.jackhuang.hmcl.ui.image.internal.AnimationImageImpl;
 import org.jackhuang.hmcl.util.SwingFXUtils;
-import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
@@ -83,7 +82,7 @@ public final class ImageUtils {
     };
 
     public static final ImageLoader SVG = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
-        String content = IOUtils.readFullyAsString(input);
+        String content = new String(input.readAllBytes(), StandardCharsets.UTF_8);
 
         LoaderParameters parameters = new LoaderParameters();
         parameters.autoStartAnimations = false;
