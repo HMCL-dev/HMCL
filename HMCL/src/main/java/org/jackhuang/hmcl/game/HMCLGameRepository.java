@@ -20,8 +20,6 @@ package org.jackhuang.hmcl.game;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonParseException;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ObservableValue;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
@@ -35,14 +33,12 @@ import org.jackhuang.hmcl.mod.ModpackProvider;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.setting.VersionSetting;
-import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.util.javafx.ConstantObservableValue;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -56,7 +52,6 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -303,9 +298,9 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
     }
 
-    public ObservableValue<Image> getVersionIconImage(String id) {
+    public Image getVersionIconImage(String id) {
         if (id == null || !isLoaded())
-            return ConstantObservableValue.of(VersionIconType.DEFAULT.getIcon());
+            return VersionIconType.DEFAULT.getIcon();
 
         VersionSetting vs = getLocalVersionSettingOrCreate(id);
         VersionIconType iconType = vs != null ? Lang.requireNonNullElse(vs.getVersionIcon(), VersionIconType.DEFAULT) : VersionIconType.DEFAULT;
@@ -314,53 +309,47 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             Version version = getVersion(id).resolve(this);
             Optional<Path> iconFile = getVersionIconFile(id);
             if (iconFile.isPresent()) {
-                var holder = new SimpleObjectProperty<>(VersionIconType.DEFAULT.getIcon());
-                CompletableFuture.supplyAsync(Lang.wrap(() -> FXUtils.loadImage(iconFile.get())), Schedulers.io())
-                        .whenCompleteAsync((result, exception) -> {
-                            if (exception == null) {
-                                if (result != null)
-                                    holder.setValue(result);
-                            } else
-                                LOG.warning("Failed to load version icon of " + id, exception);
-                        }, Schedulers.javafx());
-
-                return holder;
+                try {
+                    return FXUtils.loadImage(iconFile.get());
+                } catch (Exception e) {
+                    LOG.warning("Failed to load version icon of " + id, e);
+                }
             }
 
             if (LibraryAnalyzer.isModded(this, version)) {
                 LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version, null);
                 if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FABRIC))
-                    return ConstantObservableValue.of(VersionIconType.FABRIC.getIcon());
+                    return VersionIconType.FABRIC.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.QUILT))
-                    return ConstantObservableValue.of(VersionIconType.QUILT.getIcon());
+                    return VersionIconType.QUILT.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.LEGACY_FABRIC))
-                    return ConstantObservableValue.of(VersionIconType.LEGACY_FABRIC.getIcon());
+                    return VersionIconType.LEGACY_FABRIC.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE))
-                    return ConstantObservableValue.of(VersionIconType.NEO_FORGE.getIcon());
+                    return VersionIconType.NEO_FORGE.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FORGE))
-                    return ConstantObservableValue.of(VersionIconType.FORGE.getIcon());
+                    return VersionIconType.FORGE.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM))
-                    return ConstantObservableValue.of(VersionIconType.CLEANROOM.getIcon());
+                    return VersionIconType.CLEANROOM.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.LITELOADER))
-                    return ConstantObservableValue.of(VersionIconType.CHICKEN.getIcon());
+                    return VersionIconType.CHICKEN.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.OPTIFINE))
-                    return ConstantObservableValue.of(VersionIconType.OPTIFINE.getIcon());
+                    return VersionIconType.OPTIFINE.getIcon();
             }
 
             String gameVersion = getGameVersion(version).orElse(null);
             if (gameVersion != null) {
                 GameVersionNumber versionNumber = GameVersionNumber.asGameVersion(gameVersion);
                 if (versionNumber.isAprilFools()) {
-                    return ConstantObservableValue.of(VersionIconType.APRIL_FOOLS.getIcon());
+                    return VersionIconType.APRIL_FOOLS.getIcon();
                 } else if (versionNumber instanceof GameVersionNumber.LegacySnapshot) {
-                    return ConstantObservableValue.of(VersionIconType.COMMAND.getIcon());
+                    return VersionIconType.COMMAND.getIcon();
                 } else if (versionNumber instanceof GameVersionNumber.Old) {
-                    return ConstantObservableValue.of(VersionIconType.CRAFT_TABLE.getIcon());
+                    return VersionIconType.CRAFT_TABLE.getIcon();
                 }
             }
-            return ConstantObservableValue.of(VersionIconType.GRASS.getIcon());
+            return VersionIconType.GRASS.getIcon();
         } else {
-            return ConstantObservableValue.of(iconType.getIcon());
+            return iconType.getIcon();
         }
     }
 

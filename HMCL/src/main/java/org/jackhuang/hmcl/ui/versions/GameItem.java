@@ -113,7 +113,7 @@ public class GameItem {
         }, Schedulers.javafx());
 
         title.set(id);
-        image.bind(profile.getRepository().getVersionIconImage(id));
+        image.set(profile.getRepository().getVersionIconImage(id));
     }
 
     public ReadOnlyStringProperty titleProperty() {

@@ -726,7 +726,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
             return;
         }
 
-        iconPickerItem.imageProperty().bind(profile.getRepository().getVersionIconImage(versionId));
+        iconPickerItem.setImage(profile.getRepository().getVersionIconImage(versionId));
         FXUtils.limitSize(iconPickerItem.getImageView(), 32, 32);
     }
 
