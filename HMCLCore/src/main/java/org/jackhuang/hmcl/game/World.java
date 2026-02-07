@@ -116,11 +116,11 @@ public final class World {
     }
 
     public @Nullable Long getSeed() {
-        // Valid between 1.16 and 26.1-snapshot-6
+        // Valid between 1.16(20w20a) and 26.1-snapshot-6
         if (levelData.at("Data.WorldGenSettings.seed") instanceof LongTag seedTag) {
             return seedTag.getClonedValue();
         }
-        // Valid before 1.16
+        // Valid before 1.16(20w20a)
         else if (levelData.at("Data.RandomSeed") instanceof LongTag seedTag) {
             return seedTag.getClonedValue();
         }
@@ -132,7 +132,7 @@ public final class World {
     }
 
     public boolean isLargeBiomes() {
-        // Valid before 1.16
+        // Valid before 1.16(20w20a)
         if (levelData.at("Data.generatorName") instanceof StringTag generatorNameTag) {
             return "largeBiomes".equals(generatorNameTag.getClonedValue());
         }
@@ -142,11 +142,12 @@ public final class World {
                 return "minecraft:large_biomes".equals(settingsTag.getClonedValue());
             }
         }
-        // Valid between 1.16 and 1.16.2
+        // Valid between 1.16(20w20a) and 1.18(21w37a)
         else if (levelData.at("Data.WorldGenSettings.dimensions.minecraft:overworld.generator.biome_source.large_biomes") instanceof ByteTag largeBiomesTag) {
             return largeBiomesTag.getClonedValue() == (byte) 1;
         }
-        // Valid between 1.16.2 and 26.1-snapshot-6
+        // Valid between 1.18(21w37a) and 26.1-snapshot-6
+        // Note: In versions 1.16(20w20a) and 1.18(21w37a), the settings tag exists but does not indicate large biomes information
         else if (levelData.at("Data.WorldGenSettings.dimensions.minecraft:overworld.generator.settings") instanceof StringTag settingsTag) {
             return "minecraft:large_biomes".equals(settingsTag.getClonedValue());
         }

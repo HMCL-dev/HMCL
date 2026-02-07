@@ -215,12 +215,14 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 worldSpawnPoint.setTitle(i18n("world.info.spawn"));
 
                 String value;
-                if (dataTag.get("spawn") instanceof CompoundTag spawnTag && spawnTag.get("pos") instanceof IntArrayTag posTag) {
-                    value = Dimension.of(spawnTag.get("dimension") instanceof StringTag dimensionTag
-                                    ? dimensionTag
-                                    : new StringTag("SpawnDimension", "minecraft:overworld"))
-                            .formatPosition(posTag);
-                } else if (dataTag.get("SpawnX") instanceof IntTag intX
+                // Valid after 1.21.9-pre1
+                if (dataTag.at("spawn.pos") instanceof IntArrayTag posTag) {
+                    value = dataTag.at("spawn.dimension") instanceof StringTag dimensionTag
+                            ? Dimension.of(dimensionTag).formatPosition(posTag)
+                            : Dimension.OVERWORLD.formatPosition(posTag);
+                }
+                // Valid before 1.21.9-pre1
+                else if (dataTag.get("SpawnX") instanceof IntTag intX
                         && dataTag.get("SpawnY") instanceof IntTag intY
                         && dataTag.get("SpawnZ") instanceof IntTag intZ) {
                     value = Dimension.OVERWORLD.formatPosition(intX.getClonedValue(), intY.getClonedValue(), intZ.getClonedValue());
@@ -259,15 +261,15 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 generateFeaturesButton.setTitle(i18n("world.info.generate_features"));
                 generateFeaturesButton.setDisable(isReadOnly);
 
-                // Valid between 20w20a and 26.1 snapshot 6
-                if (dataTag.get("WorldGenSettings") instanceof CompoundTag worldGenSettings) {
-                    bindTagAndToggleButton(worldGenSettings.get("generate_features"), generateFeaturesButton);
+                // Valid between (1.16)20w20a and 26.1-snapshot-6
+                if (dataTag.at("WorldGenSettings.generate_features") instanceof ByteTag generateFeaturesTag) {
+                    bindTagAndToggleButton(generateFeaturesTag, generateFeaturesButton);
                 }
-                // Valid before 20w20a
+                // Valid before (1.16)20w20a
                 else if (dataTag.get("MapFeatures") instanceof ByteTag mapFeatures) {
                     bindTagAndToggleButton(mapFeatures, generateFeaturesButton);
                 }
-                // Valid after 26.1 snapshot 6
+                // Valid after 26.1-snapshot-6
                 else if (world.getWorldGenSettingsData() != null && world.getWorldGenSettingsData().at("data.generate_structures") instanceof ByteTag generateStructures) {
                     bindTagAndToggleButton(generateStructures, generateFeaturesButton);
                 } else {
@@ -281,30 +283,28 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 difficultyButton.setDisable(worldManagePage.isReadOnly());
                 difficultyButton.setItems(Difficulty.items);
 
-                if (dataTag.get("Difficulty") instanceof ByteTag difficultyTag) { //Valid before 26.1 snapshot 6
-                    Difficulty difficulty = Difficulty.of(difficultyTag.getClonedValue());
-                    if (difficulty != null) {
-                        difficultyButton.setValue(difficulty);
-                        difficultyButton.valueProperty().addListener((o, oldValue, newValue) -> {
-                            if (newValue != null) {
-                                difficultyTag.setValue((byte) newValue.ordinal());
-                                saveWorldData();
-                            }
-                        });
-                    } else {
-                        difficultyButton.setDisable(true);
-                    }
-                } else if (dataTag.at("difficulty_settings.difficulty") instanceof StringTag difficultyTag) { // Valid after 26.1 snapshot 6
-                    Difficulty difficulty = Difficulty.of(difficultyTag.getClonedValue());
-                    if (difficulty != null) {
-                        difficultyButton.setValue(difficulty);
-                        difficultyButton.valueProperty().addListener((o, oldValue, newValue) -> {
-                            if (newValue != null) {
-                                difficultyTag.setValue(newValue.getTagStringValue());
-                                saveWorldData();
-                            }
-                        });
-                    }
+                Difficulty difficulty;
+                // Valid before 26.1-snapshot-6
+                if (dataTag.get("Difficulty") instanceof ByteTag difficultyTag
+                        && (difficulty = Difficulty.of(difficultyTag.getClonedValue())) != null) {
+                    difficultyButton.setValue(difficulty);
+                    difficultyButton.valueProperty().addListener((o, oldValue, newValue) -> {
+                        if (newValue != null) {
+                            difficultyTag.setValue((byte) newValue.ordinal());
+                            saveWorldData();
+                        }
+                    });
+                }
+                // Valid after 26.1-snapshot-6
+                else if (dataTag.at("difficulty_settings.difficulty") instanceof StringTag difficultyTag
+                        && (difficulty = Difficulty.of(difficultyTag.getClonedValue())) != null) {
+                    difficultyButton.setValue(difficulty);
+                    difficultyButton.valueProperty().addListener((o, oldValue, newValue) -> {
+                        if (newValue != null) {
+                            difficultyTag.setValue(newValue.getTagStringValue());
+                            saveWorldData();
+                        }
+                    });
                 } else {
                     difficultyButton.setDisable(true);
                 }
@@ -360,15 +360,17 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
             var spawnPane = new LineTextPane();
             {
                 spawnPane.setTitle(i18n("world.info.player.spawn"));
-                if (playerTag.get("respawn") instanceof CompoundTag respawnTag
-                        && respawnTag.get("dimension") instanceof StringTag dimensionTag
-                        && respawnTag.get("pos") instanceof IntArrayTag intArrayTag
-                        && intArrayTag.length() >= 3) { // Valid after 25w07a
+                // Valid after 1.21.5(25w07a)
+                if (levelDat.at("respawn.dimension") instanceof StringTag dimensionTag
+                        && levelDat.at("respawn.pos") instanceof IntArrayTag intArrayTag
+                        && intArrayTag.length() == 3) {
                     spawnPane.setText(Dimension.of(dimensionTag).formatPosition(intArrayTag));
-                } else if (playerTag.get("SpawnX") instanceof IntTag intX
+                }
+                // Valid before 1.21.5(25w07a)
+                else if (playerTag.get("SpawnX") instanceof IntTag intX
                         && playerTag.get("SpawnY") instanceof IntTag intY
-                        && playerTag.get("SpawnZ") instanceof IntTag intZ) { // Valid before 25w07a
-                    // SpawnDimension tag is valid after 20w12a. Prior to this version, the game did not record the respawn point dimension and respawned in the Overworld.
+                        && playerTag.get("SpawnZ") instanceof IntTag intZ) {
+                    // SpawnDimension tag is valid after 1.16(20w12a). Prior to this version, the game did not record the respawn point dimension and respawned in the Overworld.
                     spawnPane.setText((playerTag.get("SpawnDimension") instanceof StringTag dimensionTag ? Dimension.of(dimensionTag) : Dimension.OVERWORLD)
                             .formatPosition(intX.getClonedValue(), intY.getClonedValue(), intZ.getClonedValue()));
                 }
@@ -380,14 +382,10 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 playerGameTypePane.setDisable(worldManagePage.isReadOnly());
                 playerGameTypePane.setItems(GameType.items);
 
-                ByteTag hardcoreTag = Optional.ofNullable(dataTag.get("hardcore")) // Valid before 26.1-snapshot-6
-                        .filter(t -> t instanceof ByteTag)
-                        .map(t -> (ByteTag) t)
+                // Valid before 26.1-snapshot-6
+                ByteTag hardcoreTag = Optional.ofNullable(dataTag.get("hardcore") instanceof ByteTag b ? b : null)
                         // Valid after 26.1-snapshot-6
-                        .orElseGet(() -> {
-                            if (dataTag.at("difficulty_settings.hardcore") instanceof ByteTag b) return b;
-                            return null;
-                        });
+                        .orElseGet(() -> dataTag.at("difficulty_settings.hardcore") instanceof ByteTag b ? b : null);
 
                 if (playerTag.get("playerGameType") instanceof IntTag playerGameTypeTag
                         && hardcoreTag != null) {
