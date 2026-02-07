@@ -537,8 +537,10 @@ public class DownloadPage extends Control implements DecoratorPage {
 
         private void loadDependencies(RemoteMod.Version version, DownloadPage selfPage, SpinnerPane spinnerPane, ComponentList dependenciesList) {
             spinnerPane.setLoading(true);
-            Task.supplyAsync(() -> {
+            Task.composeAsync(() -> {
+                // TODO: Massive tasks may cause OOM.
                 EnumMap<RemoteMod.DependencyType, List<Node>> dependencies = new EnumMap<>(RemoteMod.DependencyType.class);
+                List<Task<?>> queue = new ArrayList<>(version.getDependencies().size());
                 for (RemoteMod.Dependency dependency : version.getDependencies()) {
                     if (dependency.getType() == RemoteMod.DependencyType.INCOMPATIBLE || dependency.getType() == RemoteMod.DependencyType.BROKEN) {
                         continue;
@@ -551,11 +553,22 @@ public class DownloadPage extends Control implements DecoratorPage {
                         list.add(title);
                         dependencies.put(dependency.getType(), list);
                     }
-                    DependencyModItem dependencyModItem = new DependencyModItem(selfPage.page, dependency.load(), selfPage.version);
-                    dependencies.get(dependency.getType()).add(dependencyModItem);
+
+                    queue.add(Task.supplyAsync(Schedulers.io(), dependency::load)
+                            .setSignificance(Task.TaskSignificance.MINOR)
+                            .thenAcceptAsync(Schedulers.javafx(), dep -> {
+                                if (dep == RemoteMod.BROKEN) {
+                                    return;
+                                }
+                                DependencyModItem dependencyModItem = new DependencyModItem(selfPage.page, dep, selfPage.version);
+                                dependencies.get(dependency.getType()).add(dependencyModItem);
+                            })
+                            .setSignificance(Task.TaskSignificance.MINOR));
                 }
 
-                return dependencies.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+                return Task.allOf(queue).thenSupplyAsync(() ->
+                        dependencies.values().stream().flatMap(Collection::stream).collect(Collectors.toList())
+                );
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 spinnerPane.setLoading(false);
                 if (exception == null) {
