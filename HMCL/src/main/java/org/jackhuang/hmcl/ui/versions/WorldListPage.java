@@ -279,6 +279,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
 
                 btnLaunch = new JFXButton();
                 btnLaunch.visibleProperty().bind(page.supportQuickPlayProperty());
+                btnLaunch.managedProperty().bind(btnLaunch.visibleProperty());
                 right.getChildren().add(btnLaunch);
                 btnLaunch.getStyleClass().add("toggle-icon4");
                 btnLaunch.setGraphic(SVG.ROCKET_LAUNCH.createIcon());
