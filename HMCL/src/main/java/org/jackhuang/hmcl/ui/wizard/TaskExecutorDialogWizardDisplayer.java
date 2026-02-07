@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.wizard;
 
 import javafx.beans.property.StringProperty;
-import org.jackhuang.hmcl.task.AsyncTaskExecutor;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.task.TaskCenter;
 import org.jackhuang.hmcl.task.TaskExecutor;
