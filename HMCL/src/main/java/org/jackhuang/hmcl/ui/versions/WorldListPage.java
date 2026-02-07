@@ -297,7 +297,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                 btnMore.setOnAction(event -> {
                     World world = getItem();
                     if (world != null)
-                        showPopupMenu(world, JFXPopup.PopupHPosition.RIGHT, 0, root.getHeight());
+                        showPopupMenu(world, page.supportQuickPlayProperty().get(), JFXPopup.PopupHPosition.RIGHT, 0, root.getHeight());
                 });
             }
 
@@ -313,7 +313,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                 if (event.getButton() == MouseButton.PRIMARY)
                     page.showManagePage(world);
                 else if (event.getButton() == MouseButton.SECONDARY)
-                    showPopupMenu(world, JFXPopup.PopupHPosition.LEFT, event.getX(), event.getY());
+                    showPopupMenu(world, page.supportQuickPlayProperty().get(), JFXPopup.PopupHPosition.LEFT, event.getX(), event.getY());
             });
         }
 
@@ -351,13 +351,13 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
 
         // Popup Menu
 
-        public void showPopupMenu(World world, JFXPopup.PopupHPosition hPosition, double initOffsetX, double initOffsetY) {
+        public void showPopupMenu(World world, boolean supportQuickPlay, JFXPopup.PopupHPosition hPosition, double initOffsetX, double initOffsetY) {
             boolean worldLocked = world.isLocked();
 
             PopupMenu popupMenu = new PopupMenu();
             JFXPopup popup = new JFXPopup(popupMenu);
 
-            if (world.supportQuickPlay()) {
+            if (supportQuickPlay) {
 
                 IconedMenuItem launchItem = new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("version.launch_and_enter_world"), () -> page.launch(world), popup);
                 launchItem.setDisable(worldLocked);
