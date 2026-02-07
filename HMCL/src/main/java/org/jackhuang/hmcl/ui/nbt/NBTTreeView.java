@@ -136,7 +136,6 @@ public final class NBTTreeView extends TreeView<Tag> {
             for (Tag subTag : ((CompoundTag) tag)) {
                 item.getChildren().add(buildTree(subTag));
             }
-            if (item.getChildren().size() == 1) item.getChildren().get(0).setExpanded(true);
         } else if (tag instanceof ListTag) {
             int idx = 0;
             for (Tag subTag : ((ListTag) tag)) {
@@ -144,8 +143,8 @@ public final class NBTTreeView extends TreeView<Tag> {
                 subTree.setName(String.valueOf(idx++));
                 item.getChildren().add(subTree);
             }
-            if (idx == 1) item.getChildren().get(0).setExpanded(true);
         }
+        if (item.getChildren().size() == 1) item.getChildren().get(0).setExpanded(true);
 
         return item;
     }
