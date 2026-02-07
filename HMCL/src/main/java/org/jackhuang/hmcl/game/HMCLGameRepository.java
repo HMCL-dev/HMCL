@@ -304,6 +304,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
     }
 
+    // TODO: Optimize this method
     public ObservableObjectValue<Image> getVersionIconImage(String id) {
         if (id == null || !isLoaded())
             return new SimpleObjectProperty<>(VersionIconType.DEFAULT.getIcon());
