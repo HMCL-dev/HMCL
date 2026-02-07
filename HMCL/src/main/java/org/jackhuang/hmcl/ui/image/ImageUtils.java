@@ -83,12 +83,6 @@ public final class ImageUtils {
         return SwingFXUtils.toFXImage(bufferedImage, requestedWidth, requestedHeight, preserveRatio, smooth);
     };
 
-    private static final SnapshotParameters DEFAULT_SVG_SNAPSHOT_PARAMS = new SnapshotParameters();
-
-    {
-        DEFAULT_SVG_SNAPSHOT_PARAMS.setFill(Color.TRANSPARENT);
-    }
-
     public static final ImageLoader SVG = (input, requestedWidth, requestedHeight, preserveRatio, smooth) -> {
         String content = new String(input.readAllBytes(), StandardCharsets.UTF_8);
 
@@ -110,8 +104,11 @@ public final class ImageUtils {
         if (image == null)
             throw new IOException("Failed to load SVG image");
 
+        var snapshotParameters = new SnapshotParameters();
+        snapshotParameters.setFill(Color.TRANSPARENT);
+
         if (requestedWidth <= 0. || requestedHeight <= 0.) {
-            return image.toImage(DEFAULT_SVG_SNAPSHOT_PARAMS);
+            return image.toImage(snapshotParameters);
         }
 
         double scaleX = requestedWidth / image.getWidth();
@@ -119,7 +116,7 @@ public final class ImageUtils {
 
         if (preserveRatio || scaleX == scaleY) {
             double scale = Math.min(scaleX, scaleY);
-            return image.scale(scale).toImage(DEFAULT_SVG_SNAPSHOT_PARAMS);
+            return image.scale(scale).toImage(snapshotParameters);
         } else {
             // FIXME: Use DEFAULT_SVG_SNAPSHOT_PARAMS
             return image.toImageScaled(ScaleQuality.RENDER_QUALITY, scaleX, scaleY);
