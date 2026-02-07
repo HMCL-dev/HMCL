@@ -1,7 +1,7 @@
 # 本地化
 
 <!-- #BEGIN LANGUAGE_SWITCHER -->
-[English](Localization.md) | **中文**
+[English](Localization.md) | **中文** (**简体**, [繁體](Localization_zh_Hant.md))
 <!-- #END LANGUAGE_SWITCHER -->
 
 HMCL 为多种语言提供本地化支持。
