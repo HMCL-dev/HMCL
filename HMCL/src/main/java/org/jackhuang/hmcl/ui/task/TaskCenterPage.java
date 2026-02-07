@@ -179,9 +179,15 @@ public final class TaskCenterPage extends DecoratorAnimatedPage implements Decor
         cancelButton.getStyleClass().add("dialog-cancel");
 
         cancelButton.setOnAction(e -> {
-            entry.getExecutor().cancel();
+            TaskCenter taskCenter = TaskCenter.getInstance();
+            if (taskCenter.isStarted(entry.getExecutor())) {
+                entry.getExecutor().cancel();
+            } else {
+                taskCenter.cancelQueued(entry.getExecutor());
+            }
             e.consume();
         });
+
         cancelButton.setOnMouseClicked(e -> e.consume());
 
         row.getChildren().addAll(label, cancelButton);

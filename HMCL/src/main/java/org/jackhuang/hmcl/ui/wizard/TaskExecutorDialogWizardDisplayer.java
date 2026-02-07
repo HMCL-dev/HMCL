@@ -95,7 +95,8 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
             pane.setExecutor(executor);
 
             pane.addEventHandler(DialogCloseEvent.CLOSE, event -> {
-                if (executor instanceof AsyncTaskExecutor asyncExecutor && !asyncExecutor.isStarted()) {
+                boolean returnToDownloadList = Boolean.TRUE.equals(settings.get("return_to_download_list"));
+                if (returnToDownloadList) {
                     onEnd();
                     Controllers.getDownloadPage().showGameDownloads();
                     Controllers.navigate(Controllers.getDownloadPage());
@@ -106,13 +107,24 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
                 Object detailObj = settings.get("task_detail");
                 String detail = detailObj != null ? detailObj.toString() : pane.getTitle();
 
+                TaskCenter.TaskKind kind = (TaskCenter.TaskKind) settings.get("task_kind");
+                String taskName = (String) settings.get("task_name");
+
                 pane.setBackgroundAction(() -> {
-                    pane.fireEvent(new DialogCloseEvent());
-                    TaskCenter.getInstance().enqueue(executor, pane.getTitle(), detail);
+                    TaskCenter.getInstance().enqueue(executor, pane.getTitle(), detail, kind, taskName);
                     pane.refreshTaskList();
+
+                    boolean returnToDownloadList = Boolean.TRUE.equals(settings.get("return_to_download_list"));
+                    onEnd();
+                    if (returnToDownloadList) {
+                        Controllers.getDownloadPage().showGameDownloads();
+                        Controllers.navigate(Controllers.getDownloadPage());
+                    }
+
+                    pane.fireEvent(new DialogCloseEvent());
                 });
 
-                TaskCenter.getInstance().enqueue(executor, pane.getTitle(), detail);
+                TaskCenter.getInstance().enqueue(executor, pane.getTitle(), detail, kind, taskName);
                 pane.refreshTaskList();
             }
 

@@ -42,6 +42,7 @@ import org.jackhuang.hmcl.ui.construct.TabHeader;
 import org.jackhuang.hmcl.ui.construct.Validator;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.ui.task.TaskCenter;
 import org.jackhuang.hmcl.ui.versions.DownloadListPage;
 import org.jackhuang.hmcl.ui.versions.HMCLLocalizedDownloadListPage;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
@@ -325,6 +326,8 @@ public class DownloadPage extends DecoratorAnimatedPage implements DecoratorPage
             settings.put("task_detail", "安装游戏-[" + settings.get("name") + "]");//TODO i18n
             settings.put("backgroundable", true);
             settings.put("return_to_download_list", true);
+            settings.put("task_kind", TaskCenter.TaskKind.GAME_INSTALL);
+            settings.put("task_name", settings.get("name"));
 
             return finishVersionDownloadingAsync(settings);
         }

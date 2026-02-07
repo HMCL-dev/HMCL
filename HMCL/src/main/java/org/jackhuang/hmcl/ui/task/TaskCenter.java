@@ -26,6 +26,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 public final class TaskCenter {
     private static final TaskCenter INSTANCE = new TaskCenter();
@@ -34,15 +35,25 @@ public final class TaskCenter {
         return INSTANCE;
     }
 
+    public enum TaskKind {
+        GAME_INSTALL,
+        MODPACK_INSTALL,
+        OTHER
+    }
+
     public static final class Entry {
         private final TaskExecutor executor;
         private final String title;
         private final String detail;
+        private final TaskKind kind;
+        private final String name;
 
-        public Entry(TaskExecutor executor, String title, String detail) {
+        public Entry(TaskExecutor executor, String title, String detail, TaskKind kind, String name) {
             this.executor = executor;
             this.title = title;
             this.detail = detail;
+            this.kind = kind;
+            this.name = name;
         }
 
         public TaskExecutor getExecutor() {
@@ -55,6 +66,14 @@ public final class TaskCenter {
 
         public String getDetail() {
             return detail;
+        }
+
+        public TaskKind getKind() {
+            return kind;
+        }
+
+        public String getName() {
+            return name;
         }
     }
 
@@ -93,7 +112,24 @@ public final class TaskCenter {
             return;
         }
 
-        Entry entry = new Entry(executor, title, detail);
+        Entry entry = new Entry(executor, title, detail,TaskKind.OTHER, null);
+        entryIndex.put(executor, entry);
+        entries.add(entry);
+        queue.add(entry);
+        tryStartNext();
+    }
+
+    public synchronized void enqueue(TaskExecutor executor, String title, String detail, TaskKind kind, String name) {
+        if (!Platform.isFxApplicationThread()) {
+            Platform.runLater(() -> enqueue(executor, title, detail, kind, name));
+            return;
+        }
+
+        if (entryIndex.containsKey(executor)) {
+            return;
+        }
+
+        Entry entry = new Entry(executor, title, detail, kind, name);
         entryIndex.put(executor, entry);
         entries.add(entry);
         queue.add(entry);
@@ -146,4 +182,39 @@ public final class TaskCenter {
     public synchronized boolean isStarted(TaskExecutor executor) {
         return Boolean.TRUE.equals(started.get(executor));
     }
+
+    public synchronized boolean hasQueuedInstallName(TaskKind kind, String name) {
+        if (name == null || kind == null) {
+            return false;
+        }
+        for (Entry entry : entries) {
+            if (entry.getKind() != kind || entry.getName() == null) {
+                continue;
+            }
+            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                if (entry.getName().equalsIgnoreCase(name)) return true;
+            } else {
+                if (entry.getName().equals(name)) return true;
+            }
+        }
+        return false;
+    }
+
+    public synchronized boolean cancelQueued(TaskExecutor executor) {
+        Entry entry = entryIndex.get(executor);
+        if (entry == null) {
+            return false;
+        }
+
+        if (Boolean.TRUE.equals(started.get(executor))) {
+        }
+
+        queue.remove(entry);
+        entries.remove(entry);
+        entryIndex.remove(executor);
+        started.remove(executor);
+        failedEntries.add(entry);
+        return true;
+    }
+
 }

@@ -26,6 +26,7 @@ import org.jackhuang.hmcl.ui.InstallerItem;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.RequiredValidator;
 import org.jackhuang.hmcl.ui.construct.Validator;
+import org.jackhuang.hmcl.ui.task.TaskCenter;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.util.SettingsMap;
 
@@ -41,7 +42,8 @@ public class InstallersPage extends AbstractInstallersPage {
 
         txtName.getValidators().addAll(
                 new RequiredValidator(),
-                new Validator(i18n("install.new_game.already_exists"), str -> !repository.versionIdConflicts(str)),
+                new Validator(i18n("install.new_game.already_exists"), str ->
+                        !repository.versionIdConflicts(str) && !TaskCenter.getInstance().hasQueuedInstallName(TaskCenter.TaskKind.GAME_INSTALL, str)),
                 new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId));
         installable.bind(createBooleanBinding(txtName::validate, txtName.textProperty()));
 
