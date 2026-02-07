@@ -30,7 +30,6 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.effect.BoxBlur;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -204,7 +203,6 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 HBox right = new HBox(8);
                 {
                     right.setAlignment(Pos.CENTER_RIGHT);
-                    BorderPane.setAlignment(right, Pos.CENTER_RIGHT);
                     right.getChildren().setAll(visibilityButton, seedLabel);
                     seedPane.setRight(right);
                 }
@@ -446,9 +444,9 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
         }
     }
 
-    private void setRightTextField(BorderPane borderPane, int perfWidth, Tag tag) {
+    private void setRightTextField(LinePane linePane, int perfWidth, Tag tag) {
         JFXTextField textField = new JFXTextField();
-        setRightTextField(borderPane, textField, perfWidth);
+        setRightTextField(linePane, textField, perfWidth);
         if (tag instanceof IntTag intTag) {
             bindTagAndTextField(intTag, textField);
         } else if (tag instanceof FloatTag floatTag) {
@@ -458,11 +456,10 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
         }
     }
 
-    private void setRightTextField(BorderPane borderPane, JFXTextField textField, int perfWidth) {
+    private void setRightTextField(LinePane linePane, JFXTextField textField, int perfWidth) {
         textField.setDisable(isReadOnly);
         textField.setPrefWidth(perfWidth);
-        BorderPane.setAlignment(textField, Pos.CENTER_RIGHT);
-        borderPane.setRight(textField);
+        linePane.setRight(textField);
     }
 
     private void bindTagAndToggleButton(Tag tag, LineToggleButton toggleButton) {
