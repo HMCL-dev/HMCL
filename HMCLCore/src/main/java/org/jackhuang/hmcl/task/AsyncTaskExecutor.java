@@ -334,4 +334,8 @@ public final class AsyncTaskExecutor extends TaskExecutor {
     public static void setUncaughtExceptionHandler(Thread.UncaughtExceptionHandler uncaughtExceptionHandler) {
         AsyncTaskExecutor.uncaughtExceptionHandler = uncaughtExceptionHandler;
     }
+
+    public boolean isStarted() {
+        return future != null;
+    }
 }

@@ -84,28 +84,32 @@ public final class Versions {
                     i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);
             return;
         }
-        Controllers.taskDialog(
-                new FileDownloadTask(downloadURL, modpack)
-                        .whenComplete(Schedulers.javafx(), e -> {
-                            if (e == null) {
-                                ModpackInstallWizardProvider installWizardProvider;
-                                if (version != null)
-                                    installWizardProvider = new ModpackInstallWizardProvider(profile, modpack, version);
-                                else
-                                    installWizardProvider = new ModpackInstallWizardProvider(profile, modpack);
-                                if (StringUtils.isNotBlank(mod.getIconUrl()))
-                                    installWizardProvider.setIconUrl(mod.getIconUrl());
-                                Controllers.getDecorator().startWizard(installWizardProvider);
-                            } else if (e instanceof CancellationException) {
-                                Controllers.showToast(i18n("message.cancelled"));
-                            } else {
-                                Controllers.dialog(
-                                        i18n("install.failed.downloading.detail", file.getFile().getUrl()) + "\n" + StringUtils.getStackTrace(e),
-                                        i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);
-                            }
-                        }).executor(true),
+
+        Task<?> downloadTask = new FileDownloadTask(downloadURL, modpack)
+                .whenComplete(Schedulers.javafx(), e -> {
+                    if (e == null) {
+                        ModpackInstallWizardProvider installWizardProvider;
+                        if (version != null)
+                            installWizardProvider = new ModpackInstallWizardProvider(profile, modpack, version);
+                        else
+                            installWizardProvider = new ModpackInstallWizardProvider(profile, modpack);
+                        if (StringUtils.isNotBlank(mod.getIconUrl()))
+                            installWizardProvider.setIconUrl(mod.getIconUrl());
+                        Controllers.getDecorator().startWizard(installWizardProvider);
+                    } else if (e instanceof CancellationException) {
+                        Controllers.showToast(i18n("message.cancelled"));
+                    } else {
+                        Controllers.dialog(
+                                i18n("install.failed.downloading.detail", file.getFile().getUrl()) + "\n" + StringUtils.getStackTrace(e),
+                                i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);
+                    }
+                });
+
+        Controllers.downloadTaskDialog(
+                downloadTask,
                 i18n("message.downloading"),
-                TaskCancellationAction.NORMAL
+                TaskCancellationAction.NORMAL,
+                "安装整合包-[" + modpack.getFileName() + "]"//TODO:i18n
         );
     }
 

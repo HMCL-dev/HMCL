@@ -59,6 +59,7 @@ import org.jackhuang.hmcl.ui.download.DownloadPage;
 import org.jackhuang.hmcl.ui.download.ModpackInstallWizardProvider;
 import org.jackhuang.hmcl.ui.main.LauncherSettingsPage;
 import org.jackhuang.hmcl.ui.main.RootPage;
+import org.jackhuang.hmcl.ui.task.TaskCenter;
 import org.jackhuang.hmcl.ui.terracotta.TerracottaPage;
 import org.jackhuang.hmcl.ui.versions.GameListPage;
 import org.jackhuang.hmcl.ui.versions.VersionPage;
@@ -531,6 +532,31 @@ public final class Controllers {
         TaskExecutor executor = task.executor();
         TaskExecutorDialogPane pane = taskDialog(executor, title, onCancel);
         executor.start();
+        return pane;
+    }
+
+    public static TaskExecutorDialogPane downloadTaskDialog(Task<?> task, String title, TaskCancellationAction onCancel, String detail) {
+        TaskExecutor executor = task.executor();
+        TaskExecutorDialogPane pane = taskDialog(executor, title, onCancel);
+
+        pane.setBackgroundAction(() -> {
+            pane.fireEvent(new DialogCloseEvent());
+            TaskCenter.getInstance().enqueue(executor, title, detail);
+        });
+
+        TaskCenter.getInstance().enqueue(executor, title, detail);
+        return pane;
+    }
+
+    public static TaskExecutorDialogPane downloadTaskDialog(TaskExecutor executor, String title, TaskCancellationAction onCancel,String detail) {
+        TaskExecutorDialogPane pane = taskDialog(executor, title, onCancel);
+
+        pane.setBackgroundAction(() -> {
+            pane.fireEvent(new DialogCloseEvent());
+            TaskCenter.getInstance().enqueue(executor, title,detail);
+        });
+
+        TaskCenter.getInstance().enqueue(executor, title, detail);
         return pane;
     }
 
