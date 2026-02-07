@@ -43,19 +43,19 @@ public final class SVGContainer extends Parent {
         this.path.getStyleClass().add("svg");
     }
 
-    /// Creates an SVGView with the default icon and the default icon size.
+    /// Creates an SVGContainer with the default icon and the default icon size.
     public SVGContainer() {
         this(SVG.NONE, SVG.DEFAULT_SIZE);
     }
 
-    /// Creates an SVGView showing the given icon using the default icon size.
+    /// Creates an SVGContainer showing the given icon using the default icon size.
     ///
     /// @param icon the [SVG] icon to display
     public SVGContainer(SVG icon) {
         this(icon, SVG.DEFAULT_SIZE);
     }
 
-    /// Creates an SVGView with a custom icon size. The initial icon is
+    /// Creates an SVGContainer with a custom icon size. The initial icon is
     /// [SVG#NONE].
     ///
     /// @param iconSize the icon size
@@ -63,7 +63,7 @@ public final class SVGContainer extends Parent {
         this(SVG.NONE, iconSize);
     }
 
-    /// Creates an SVGView with the specified icon and size.
+    /// Creates an SVGContainer with the specified icon and size.
     ///
     /// @param icon     the [SVG] icon to display
     /// @param iconSize the icon size
