@@ -22,6 +22,7 @@ import javafx.beans.property.StringProperty;
 import javafx.beans.property.StringPropertyBase;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.css.PseudoClass;
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -175,16 +176,22 @@ public class TwoLineListItem extends VBox {
         return tags;
     }
 
-    public void addTag(String tag) {
+    public void addTag(String tag, PseudoClass pseudoClass) {
         var tagLabel = new Label(tag);
         tagLabel.getStyleClass().add("tag");
+        if (pseudoClass != null)
+            tagLabel.pseudoClassStateChanged(pseudoClass, true);
         getTags().add(tagLabel);
     }
 
+    public void addTag(String tag) {
+        addTag(tag, null);
+    }
+
+    private static final PseudoClass WARNING_PSEUDO_CLASS = PseudoClass.getPseudoClass("warning");
+
     public void addTagWarning(String tag) {
-        var tagLabel = new Label(tag);
-        tagLabel.getStyleClass().add("tag-warning");
-        getTags().add(tagLabel);
+        addTag(tag, WARNING_PSEUDO_CLASS);
     }
 
     @Override
