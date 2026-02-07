@@ -1097,6 +1097,10 @@
     -fx-fill: -monet-on-surface-variant;
 }
 
+.options-sublist-wrapper .expand-icon .svg:disabled {
+    -fx-opacity: 0.4;
+}
+
 /*******************************************************************************
 *                                                                              *
 * JFX Toggle Button                                                            *
