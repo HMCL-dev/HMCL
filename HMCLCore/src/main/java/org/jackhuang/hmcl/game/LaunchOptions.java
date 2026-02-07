@@ -85,7 +85,7 @@ public class LaunchOptions implements Serializable {
     }
 
     /**
-     * Will shown in the left bottom corner of the main menu of Minecraft.
+     * Will be shown in the left bottom corner of the main menu of Minecraft.
      * null if use Version.versionType.
      */
     public String getVersionType() {
