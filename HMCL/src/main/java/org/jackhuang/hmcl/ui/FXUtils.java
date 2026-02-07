@@ -1674,8 +1674,8 @@ public final class FXUtils {
 
     public static void forceRadii(Region region, double radii) {
         var clip = new Rectangle();
-        clip.setArcHeight(radii);
-        clip.setArcWidth(radii);
+        clip.setArcHeight(radii * 2); // diameter = 2 * radius
+        clip.setArcWidth(radii * 2);
         clip.widthProperty().bind(region.widthProperty());
         clip.heightProperty().bind(region.heightProperty());
         region.setClip(clip);
