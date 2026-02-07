@@ -28,6 +28,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.ui.FXUtils;
 
 public class TwoLineListItem extends VBox {
     private static final String DEFAULT_STYLE_CLASS = "two-line-list-item";
@@ -168,9 +169,7 @@ public class TwoLineListItem extends VBox {
             HBox.setHgrow(scrollPane, Priority.ALWAYS);
             scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
             scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
-            scrollPane.minHeightProperty().bind(tagsBox.heightProperty());
-            scrollPane.setPrefWidth(50);
-
+            FXUtils.onChangeAndOperate(tagsBox.heightProperty(), height -> FXUtils.setLimitHeight(scrollPane, height.doubleValue()));
             firstLine.getChildren().setAll(lblTitle, scrollPane);
         }
         return tags;
