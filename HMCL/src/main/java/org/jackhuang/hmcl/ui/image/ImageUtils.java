@@ -89,10 +89,10 @@ public final class ImageUtils {
 
         SVGImage image;
 
-        // TODO: Currently, SVGLoader.load(...) requires the javafx.swing module if it operates on a non-JavaFX thread.
         if (Platform.isFxApplicationThread()) {
             image = SVGLoader.load(content, parameters);
         } else {
+            // TODO: Currently, SVGLoader.load(...) requires the javafx.swing module if it operates on a non-JavaFX thread.
             image = CompletableFuture.supplyAsync(
                     () -> SVGLoader.load(content, parameters),
                     Schedulers.javafx()
