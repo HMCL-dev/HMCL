@@ -324,7 +324,7 @@
     -fx-fill: -monet-on-surface-variant;
 }
 
-.two-line-list-item > .first-line scroll-bar {
+.two-line-list-item > .first-line .scroll-bar {
     -fx-opacity: 0;
     -fx-max-height: 0;
     -fx-min-height: 0;
