@@ -93,6 +93,9 @@ public final class ImageUtils {
                 Schedulers.javafx()
         ).get();
 
+        if (image == null)
+            throw new IOException("Failed to load SVG image");
+
         if (requestedWidth <= 0. || requestedHeight <= 0.) {
             return image.toImage();
         }
