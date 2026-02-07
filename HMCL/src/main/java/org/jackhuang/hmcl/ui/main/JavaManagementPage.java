@@ -189,7 +189,6 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
 
         JavaPageSkin(JavaManagementPage skinnable) {
             super(skinnable);
-            this.listView.getStyleClass().add("no-horizontal-scrollbar");
         }
 
         @Override

@@ -69,6 +69,7 @@ public abstract class ToolbarListPageSkin<E, P extends ListPageBase<E>> extends 
             this.listView = new JFXListView<>();
             this.listView.setPadding(Insets.EMPTY);
             this.listView.setCellFactory(listView -> createListCell((JFXListView<E>) listView));
+            this.listView.getStyleClass().add("no-horizontal-scrollbar");
             Bindings.bindContent(this.listView.getItems(), skinnable.itemsProperty());
             FXUtils.ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
 
