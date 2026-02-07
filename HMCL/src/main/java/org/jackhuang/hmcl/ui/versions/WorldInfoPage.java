@@ -317,8 +317,8 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                     bindTagAndToggleButton(difficultyLockedTag, difficultyLockPane);
                 }
                 // Valid after 26.1-snapshot-6
-                else if (dataTag.at("difficulty_settings.locked") instanceof ByteTag LockedTag) {
-                    bindTagAndToggleButton(LockedTag, difficultyLockPane);
+                else if (dataTag.at("difficulty_settings.locked") instanceof ByteTag lockedTag) {
+                    bindTagAndToggleButton(lockedTag, difficultyLockPane);
                 } else {
                     difficultyLockPane.setDisable(true);
                 }

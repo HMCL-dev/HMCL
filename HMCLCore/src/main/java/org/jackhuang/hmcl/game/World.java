@@ -80,7 +80,7 @@ public final class World {
     public void setWorldName(String worldName) throws IOException {
         if (levelData.at("Data.LevelName") instanceof StringTag levelNameTag) {
             levelNameTag.setValue(worldName);
-            writeLevelDat();
+            writeLevelData();
         }
     }
 
@@ -293,7 +293,7 @@ public final class World {
         // Change the name recorded in level.dat
         CompoundTag data = (CompoundTag) levelData.get("Data");
         data.put(new StringTag("LevelName", newName));
-        writeLevelDat();
+        writeLevelData();
 
         // then change the folder's name
         Files.move(file, file.resolveSibling(newName));
@@ -393,7 +393,7 @@ public final class World {
         if (!Files.isDirectory(file))
             throw new IOException("Not a valid world directory");
 
-        writeLevelDat();
+        writeLevelData();
 
         if (worldGenSettingsDataPath != null) {
             writeTag(worldGenSettingsData, worldGenSettingsDataPath);
@@ -404,7 +404,7 @@ public final class World {
         }
     }
 
-    public void writeLevelDat() throws IOException {
+    public void writeLevelData() throws IOException {
         writeTag(levelData, getLevelDataFile());
     }
 
