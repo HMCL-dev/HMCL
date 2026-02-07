@@ -113,7 +113,7 @@ public final class JavaDownloadDialog extends StackPane {
         private final IntegerProperty selectedCount = new SimpleIntegerProperty(0);
 
         DownloadMojangJava() {
-            setTitle(i18n("java.download"));
+            setTitle(i18n("java.download.title"));
             validProperty().bind(selectedCount.greaterThan(0));
 
             VBox vbox = new VBox(16);
