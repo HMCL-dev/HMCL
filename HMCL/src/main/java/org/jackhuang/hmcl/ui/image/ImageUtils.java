@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.image;
 
 import com.twelvemonkeys.imageio.plugins.webp.WebPImageReaderSpi;
 import javafx.animation.Timeline;
+import javafx.application.Platform;
 import javafx.scene.image.Image;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.WritableImage;
@@ -87,11 +88,17 @@ public final class ImageUtils {
         LoaderParameters parameters = new LoaderParameters();
         parameters.autoStartAnimations = false;
 
+        SVGImage image;
+
         // TODO: Currently, SVGLoader.load(...) requires the javafx.swing module if it operates on a non-JavaFX thread.
-        SVGImage image = CompletableFuture.supplyAsync(
-                () -> SVGLoader.load(content, parameters),
-                Schedulers.javafx()
-        ).get();
+        if (Platform.isFxApplicationThread()) {
+            image = SVGLoader.load(content, parameters);
+        } else {
+            image = CompletableFuture.supplyAsync(
+                    () -> SVGLoader.load(content, parameters),
+                    Schedulers.javafx()
+            ).get();
+        }
 
         if (image == null)
             throw new IOException("Failed to load SVG image");
