@@ -255,7 +255,6 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
                 AdvancedListItem modListItem = new AdvancedListItem();
                 modListItem.getStyleClass().add("navigation-drawer-item");
                 modListItem.setTitle(i18n("mods.manage"));
-                modListItem.setActionButtonVisible(true);
 
                 {
                     Node unselectedIcon = SVG.EXTENSION.createIcon(20);
@@ -301,7 +300,6 @@ public class VersionPage extends DecoratorAnimatedPage implements DecoratorPage 
 
                 AdvancedListItem jijListItem = new AdvancedListItem();
                 jijListItem.getStyleClass().add("navigation-drawer-item");
-                jijListItem.setActionButtonVisible(false);
                 jijListItem.setTitle(i18n("mods.built_in.mods"));
 
                 jijListItem.setPadding(new Insets(0, 0, 0, 15));
