@@ -75,7 +75,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
         updateSessionLockChannel();
 
         try {
-            this.world.reloadLevelDat();
+            this.world.reloadWorldData();
         } catch (IOException e) {
             LOG.warning("Can not load world level.dat of world: " + this.world.getFile(), e);
             this.addEventHandler(Navigator.NavigationEvent.NAVIGATED, event -> closePageForLoadingFail());
@@ -100,7 +100,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     public void refresh() {
         updateSessionLockChannel();
         try {
-            world.reloadLevelDat();
+            world.reloadWorldData();
         } catch (IOException e) {
             LOG.warning("Can not load world level.dat of world: " + world.getFile(), e);
             closePageForLoadingFail();
