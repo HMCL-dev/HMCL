@@ -44,6 +44,7 @@ import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.util.StringUtils;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
 
 /**
  * @author Shadi Shaheen
@@ -411,11 +412,12 @@ public class JFXCustomColorPickerDialog extends StackPane {
     }
 
     private static TextFormatter<String> colorCharFormatter() {
+        var pattern = Pattern.compile("[0-9a-zA-Z#(),%.\\s]*");
         return new TextFormatter<>(change -> {
             if (!change.isContentChange()) return change;
 
             String ins = StringUtils.toHalfWidth(change.getText());
-            if (!ins.matches("[0-9a-zA-Z#(),%.\\s]*")) return null;
+            if (!pattern.matcher(ins).matches()) return null;
             String full = StringUtils.toHalfWidth(change.getControlNewText());
             long h = full.chars().filter(c -> c == '#').count();
             if (h > 1 || (h == 1 && full.indexOf('#') != 0)) return null;
