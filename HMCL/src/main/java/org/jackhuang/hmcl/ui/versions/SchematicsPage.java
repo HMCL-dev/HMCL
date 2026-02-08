@@ -844,6 +844,8 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 // ListViewBehavior would consume ESC pressed event, preventing us from handling it
                 // So we ignore it here
                 ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
+                listView.getStyleClass().add("no-horizontal-scrollbar");
+
 
                 center.setContent(listView);
                 root.getContent().add(center);
