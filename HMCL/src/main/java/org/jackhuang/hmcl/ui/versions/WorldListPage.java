@@ -22,6 +22,7 @@ import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXPopup;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -208,7 +209,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
         return showAll;
     }
 
-    public BooleanProperty supportQuickPlayProperty() {
+    public ReadOnlyBooleanProperty supportQuickPlayProperty() {
         return supportQuickPlay;
     }
 
