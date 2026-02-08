@@ -357,6 +357,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 });
 
                 ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
+                listView.getStyleClass().add("no-horizontal-scrollbar");
 
                 center.setContent(listView);
                 root.getContent().add(center);
