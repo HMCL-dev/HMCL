@@ -102,6 +102,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         ComponentList root = new ComponentList();
         root.getStyleClass().add("no-padding");
         listView = new JFXListView<>();
+        listView.getStyleClass().add("no-horizontal-scrollbar");
 
         {
             toolbarPane = new TransitionPane();

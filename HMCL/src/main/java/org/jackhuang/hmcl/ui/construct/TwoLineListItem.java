@@ -22,9 +22,14 @@ import javafx.beans.property.StringProperty;
 import javafx.beans.property.StringPropertyBase;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.css.PseudoClass;
+import javafx.geometry.Pos;
 import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.ui.FXUtils;
 
 public class TwoLineListItem extends VBox {
     private static final String DEFAULT_STYLE_CLASS = "two-line-list-item";
@@ -44,6 +49,7 @@ public class TwoLineListItem extends VBox {
 
         this.firstLine = new HBox(lblTitle);
         firstLine.getStyleClass().add("first-line");
+        firstLine.setAlignment(Pos.CENTER_LEFT);
 
         this.getChildren().setAll(firstLine);
     }
@@ -157,23 +163,36 @@ public class TwoLineListItem extends VBox {
 
             var tagsBox = new HBox(8);
             tagsBox.getStyleClass().add("tags");
+            tagsBox.setAlignment(Pos.CENTER_LEFT);
             Bindings.bindContent(tagsBox.getChildren(), tags);
 
-            firstLine.getChildren().setAll(lblTitle, tagsBox);
+            var scrollPane = new ScrollPane(tagsBox);
+            HBox.setHgrow(scrollPane, Priority.ALWAYS);
+            scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+            scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+            FXUtils.onChangeAndOperate(tagsBox.heightProperty(), height -> FXUtils.setLimitHeight(scrollPane, height.doubleValue()));
+            scrollPane.setPrefWidth(50);
+            firstLine.getChildren().setAll(lblTitle, scrollPane);
         }
         return tags;
     }
 
-    public void addTag(String tag) {
+    public void addTag(String tag, PseudoClass pseudoClass) {
         var tagLabel = new Label(tag);
         tagLabel.getStyleClass().add("tag");
+        if (pseudoClass != null)
+            tagLabel.pseudoClassStateChanged(pseudoClass, true);
         getTags().add(tagLabel);
     }
 
+    public void addTag(String tag) {
+        addTag(tag, null);
+    }
+
+    private static final PseudoClass WARNING_PSEUDO_CLASS = PseudoClass.getPseudoClass("warning");
+
     public void addTagWarning(String tag) {
-        var tagLabel = new Label(tag);
-        tagLabel.getStyleClass().add("tag-warning");
-        getTags().add(tagLabel);
+        addTag(tag, WARNING_PSEUDO_CLASS);
     }
 
     @Override

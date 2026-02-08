@@ -30,7 +30,7 @@ English ([Standard](README.md), [uʍoᗡ ǝpᴉsd∩](README_en_Qabs.md)) | **�
 
 ### 概敘
 
-HMCL 者，開源之礦藝啟器也。善理改囊，可自定遊戲，自動裝設 Forge、NeoForge、Cleanroom、Fabric、Quilt、LiteLoader、OptiFine 諸改囊，亦能制改囊集，界面隨心易之。
+HMCL 者，開源之礦藝啟器也。善理改囊，可自定遊戲，自動裝設 Forge、NeoForge、Cleanroom、Fabric、Legacy Fabric、Quilt、LiteLoader、OptiFine 諸改囊，亦能制改囊集，界面隨心易之。
 
 HMCL 跨域廣矣。Windows、Linux、macOS、FreeBSD 諸常見械綱，x86、ARM、RISC-V、MIPS、LoongArch 諸算器架構，皆可運行。
 憑此器，可遊《礦藝》於諸機之間，無礙也。  
