@@ -130,20 +130,23 @@ public enum SVG {
 
     public static final double DEFAULT_SIZE = 24;
 
-    private final String path;
+    private final String rawPath;
+    private String path;
 
-    SVG(String path) {
-        // We move the current point so that SVGPath will treat 0 0 24 24 as the layout bounds
-        this.path = "M24 24ZM0 0Z" + path;
+    SVG(String rawPath) {
+        this.rawPath = rawPath;
     }
 
     public String getPath() {
+        if (path == null)
+            // We move the current point so that SVGPath will treat 0 0 24 24 as the layout bounds
+            path = "M24 24ZM0 0Z" + rawPath;
         return path;
     }
 
     public SVGPath createSVGPath() {
         var p = new SVGPath();
-        p.setContent(path);
+        p.setContent(getPath());
         p.getStyleClass().add("svg");
         return p;
     }
