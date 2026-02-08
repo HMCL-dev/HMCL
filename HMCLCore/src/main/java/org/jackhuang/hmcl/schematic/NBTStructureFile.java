@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.schematic;
 
 import com.github.steveice10.opennbt.tag.builtin.*;
-import org.jackhuang.hmcl.util.Vec3i;
+import org.jackhuang.hmcl.util.Point3I;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -48,14 +48,14 @@ public final class NBTStructureFile extends Schematic {
             throw new IOException("size tag does not have 3 elements");
         Tag xTag = size.get(0);
         Tag yTag = size.get(1);
-        Tag zTag = size.get(2);
-        Vec3i enclosingSize = null;
+        Tag     zTag          = size.get(2);
+        Point3I enclosingSize = null;
         if (xTag != null && yTag != null && zTag != null) {
             int width = tryGetInt(xTag).orElse(0);
             int height = tryGetInt(yTag).orElse(0);
             int length = tryGetInt(zTag).orElse(0);
             if (width > 0 && height > 0 && length > 0) {
-                enclosingSize = new Vec3i(width, height, length);
+                enclosingSize = new Point3I(width, height, length);
             }
         }
 
@@ -64,7 +64,7 @@ public final class NBTStructureFile extends Schematic {
 
     private final String author;
 
-    private NBTStructureFile(Path file, int dataVersion, String author, Vec3i enclosingSize) {
+    private NBTStructureFile(Path file, int dataVersion, String author, Point3I enclosingSize) {
         super(file, dataVersion, enclosingSize);
         this.author = author;
     }

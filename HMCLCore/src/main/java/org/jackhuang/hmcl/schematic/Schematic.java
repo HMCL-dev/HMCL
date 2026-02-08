@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.schematic;
 import com.github.steveice10.opennbt.NBTIO;
 import com.github.steveice10.opennbt.tag.builtin.*;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.Vec3i;
+import org.jackhuang.hmcl.util.Point3I;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,10 +78,10 @@ public sealed abstract class Schematic permits LitematicFile, SchemFile, NBTStru
     }
 
     private final Path file;
-    private final int dataVersion;
-    private final Vec3i enclosingSize;
+    private final int     dataVersion;
+    private final Point3I enclosingSize;
 
-    protected Schematic(Path file, int dataVersion, @Nullable Vec3i enclosingSize) {
+    protected Schematic(Path file, int dataVersion, @Nullable Point3I enclosingSize) {
         this.file = file;
         this.dataVersion = dataVersion;
         this.enclosingSize = enclosingSize;
@@ -142,7 +142,7 @@ public sealed abstract class Schematic permits LitematicFile, SchemFile, NBTStru
     }
 
     @Nullable
-    public Vec3i getEnclosingSize() {
+    public Point3I getEnclosingSize() {
         return enclosingSize;
     }
 

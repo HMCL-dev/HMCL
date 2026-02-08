@@ -21,7 +21,7 @@ import com.github.steveice10.opennbt.tag.builtin.CompoundTag;
 import com.github.steveice10.opennbt.tag.builtin.IntTag;
 import com.github.steveice10.opennbt.tag.builtin.StringTag;
 import com.github.steveice10.opennbt.tag.builtin.Tag;
-import org.jackhuang.hmcl.util.Vec3i;
+import org.jackhuang.hmcl.util.Point3I;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -52,14 +52,14 @@ public final class SchemFile extends Schematic {
 
         Tag widthTag = root.get("Width");
         Tag heightTag = root.get("Height");
-        Tag lengthTag = root.get("Length");
-        Vec3i enclosingSize = null;
+        Tag     lengthTag     = root.get("Length");
+        Point3I enclosingSize = null;
         if (widthTag != null && heightTag != null && lengthTag != null) {
             short width = tryGetShort(widthTag);
             short height = tryGetShort(heightTag);
             short length = tryGetShort(lengthTag);
             if (width >= 0 && height >= 0 && length >= 0) {
-                enclosingSize = new Vec3i(width, height, length);
+                enclosingSize = new Point3I(width, height, length);
             }
         }
 
@@ -76,13 +76,13 @@ public final class SchemFile extends Schematic {
 
         Tag widthTag = root.get("Width");
         Tag heightTag = root.get("Height");
-        Tag lengthTag = root.get("Length");
-        Vec3i enclosingSize = null;
+        Tag     lengthTag     = root.get("Length");
+        Point3I enclosingSize = null;
         if (widthTag != null && heightTag != null && lengthTag != null) {
             int width = tryGetShort(widthTag) & 0xFFFF;
             int height = tryGetShort(heightTag) & 0xFFFF;
             int length = tryGetShort(lengthTag) & 0xFFFF;
-            enclosingSize = new Vec3i(width, height, length);
+            enclosingSize = new Point3I(width, height, length);
         }
 
         return new SchemFile(file, null, dataVersion, ((IntTag) versionTag).getValue(), enclosingSize);
@@ -91,7 +91,7 @@ public final class SchemFile extends Schematic {
     private final String materials;
     private final int version;
 
-    private SchemFile(Path file, @Nullable String materials, int dataVersion, int version, Vec3i enclosingSize) {
+    private SchemFile(Path file, @Nullable String materials, int dataVersion, int version, Point3I enclosingSize) {
         super(file, dataVersion, enclosingSize);
         this.materials = materials;
         this.version = version;

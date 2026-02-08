@@ -17,8 +17,8 @@
  */
 package org.jackhuang.hmcl.util;
 
-public record Vec3i(int x, int y, int z) {
+public record Point3I(int x, int y, int z) {
 
-    public static final Vec3i ZERO = new Vec3i(0, 0, 0);
+    public static final Point3I ZERO = new Point3I(0, 0, 0);
 
 }

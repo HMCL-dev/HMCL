@@ -18,7 +18,7 @@
 package org.jackhuang.hmcl.schematic;
 
 import org.jackhuang.hmcl.game.CrashReportAnalyzerTest;
-import org.jackhuang.hmcl.util.Vec3i;
+import org.jackhuang.hmcl.util.Point3I;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -49,7 +49,7 @@ public final class SchematicTest {
             assertEquals(Instant.ofEpochMilli(1746443586433L), lFile.getTimeModified());
             assertEquals(1334, lFile.getTotalBlocks().orElse(0));
             assertEquals(5746, lFile.getTotalVolume().orElse(0));
-            assertEquals(new Vec3i(17, 26, 13), lFile.getEnclosingSize());
+            assertEquals(new Point3I(17, 26, 13), lFile.getEnclosingSize());
             assertEquals(1, lFile.getRegionCount().orElse(0));
             assertEquals(4325, lFile.getMinecraftDataVersion().orElse(0));
             assertEquals("4325", lFile.getMinecraftVersion());
@@ -61,7 +61,7 @@ public final class SchematicTest {
             SchemFile sFile = (SchemFile) load("/schematics/test.schematic");
             assertEquals(SchematicType.SCHEM, sFile.getType());
             assertEquals("test", sFile.getName());
-            assertEquals(new Vec3i(28, 35, 18), sFile.getEnclosingSize());
+            assertEquals(new Point3I(28, 35, 18), sFile.getEnclosingSize());
             assertEquals(17640, sFile.getTotalVolume().orElse(0));
             assertEquals("Alpha", sFile.getMinecraftVersion());
         }
@@ -72,14 +72,14 @@ public final class SchematicTest {
             assertEquals("test", sFileSponge.getName());
             assertEquals(3465, sFileSponge.getMinecraftDataVersion().orElse(0));
             assertEquals("3465", sFileSponge.getMinecraftVersion());
-            assertEquals(new Vec3i(9, 5, 9), sFileSponge.getEnclosingSize());
+            assertEquals(new Point3I(9, 5, 9), sFileSponge.getEnclosingSize());
         }
 
         {
             NBTStructureFile nFile = (NBTStructureFile) load("/schematics/test.nbt");
             assertEquals(SchematicType.NBT_STRUCTURE, nFile.getType());
             assertEquals("test", nFile.getName());
-            assertEquals(new Vec3i(9, 11, 13), nFile.getEnclosingSize());
+            assertEquals(new Point3I(9, 11, 13), nFile.getEnclosingSize());
             assertEquals(1287, nFile.getTotalVolume().orElse(0));
             assertEquals(3465, nFile.getMinecraftDataVersion().orElse(0));
             assertEquals("3465", nFile.getMinecraftVersion());

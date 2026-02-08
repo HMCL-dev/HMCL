@@ -20,7 +20,7 @@ package org.jackhuang.hmcl.schematic;
 import com.github.steveice10.opennbt.tag.builtin.*;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.Vec3i;
+import org.jackhuang.hmcl.util.Point3I;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -55,15 +55,15 @@ public final class LitematicFile extends Schematic {
         if (regionsTag instanceof CompoundTag)
             regions = ((CompoundTag) regionsTag).size();
 
-        Vec3i enclosingSize = null;
-        Tag enclosingSizeTag = ((CompoundTag) metadataTag).get("EnclosingSize");
+        Point3I enclosingSize    = null;
+        Tag     enclosingSizeTag = ((CompoundTag) metadataTag).get("EnclosingSize");
         if (enclosingSizeTag instanceof CompoundTag) {
             CompoundTag list = (CompoundTag) enclosingSizeTag;
             int x = tryGetInt(list.get("x")).orElse(0);
             int y = tryGetInt(list.get("y")).orElse(0);
             int z = tryGetInt(list.get("z")).orElse(0);
 
-            if (x > 0 && y > 0 && z > 0) enclosingSize = new Vec3i(x, y, z);
+            if (x > 0 && y > 0 && z > 0) enclosingSize = new Point3I(x, y, z);
         }
 
         Tag subVersionTag = root.get("SubVersion");
@@ -89,7 +89,7 @@ public final class LitematicFile extends Schematic {
     private final int totalVolume;
 
     private LitematicFile(@NotNull Path file, @NotNull CompoundTag metadata,
-                          int version, int subVersion, int minecraftDataVersion, int regionCount, Vec3i enclosingSize) {
+                          int version, int subVersion, int minecraftDataVersion, int regionCount, Point3I enclosingSize) {
         super(file, minecraftDataVersion, enclosingSize);
         this.version = version;
         this.subVersion = subVersion;
