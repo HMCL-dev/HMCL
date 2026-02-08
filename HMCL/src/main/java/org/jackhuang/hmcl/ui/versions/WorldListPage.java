@@ -362,9 +362,9 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
 
                 IconedMenuItem launchItem = new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("version.launch_and_enter_world"), () -> page.launch(world), popup);
                 launchItem.setDisable(worldLocked);
-                popupMenu.getContent().add(launchItem);
 
                 popupMenu.getContent().addAll(
+                        launchItem,
                         new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), () -> page.generateLaunchScript(world), popup),
                         new MenuSeparator()
                 );
