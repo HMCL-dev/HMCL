@@ -148,6 +148,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         Task.supplyAsync(Schedulers.io(), () -> {
             var litematicaState = LitematicaState.NOT_INSTALLED;
             var modManager = profile.getRepository().getModManager(instanceId);
+            boolean shouldUseForgematica = false;
             try {
                 modManager.refreshMods();
                 var mods = modManager.getMods();
@@ -161,27 +162,40 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                         }
                     }
                 }
+                if (litematicaState == LitematicaState.NOT_INSTALLED && modManager.getLibraryAnalyzer() != null) {
+                    var modLoaders = modManager.getLibraryAnalyzer().getModLoaders();
+                    shouldUseForgematica = (modLoaders.contains(ModLoaderType.FORGE) || modLoaders.contains(ModLoaderType.NEO_FORGED))
+                            && GameVersionNumber.asGameVersion(Optional.ofNullable(modManager.getGameVersion())).isAtLeast("1.16.4", "20w45a");
+                    if (litematica == null && !shouldUseForgematica) {
+                        try {
+                            litematica = ModrinthRemoteModRepository.MODS.getModById("litematica");
+                        } catch (IOException ignored) {
+                        }
+                    } else if (forgematica == null && shouldUseForgematica) {
+                        try {
+                            forgematica = ModrinthRemoteModRepository.MODS.getModById("forgematica");
+                        } catch (IOException ignored) {
+                        }
+                    }
+                }
             } catch (IOException e) {
                 LOG.warning("Failed to load mods, unable to check litematica", e);
             }
-            boolean shouldUseForgematica = false;
-            if (litematicaState == LitematicaState.NOT_INSTALLED) {
-                var modLoaders = modManager.getLibraryAnalyzer().getModLoaders();
-                shouldUseForgematica = (modLoaders.contains(ModLoaderType.FORGE) || modLoaders.contains(ModLoaderType.NEO_FORGED))
-                        && GameVersionNumber.asGameVersion(Optional.ofNullable(modManager.getGameVersion())).isAtLeast("1.16.4", "20w45a");
-                if (litematica == null && !shouldUseForgematica) {
-                    try {
-                        litematica = ModrinthRemoteModRepository.MODS.getModById("litematica");
-                    } catch (IOException ignored) {
+            DirItem target = loadRoot(schematicsDirectory);
+            if (currentDirectoryProperty().get() != null) {
+                loop:
+                for (String dirName : currentDirectoryProperty().get().relativePath) {
+                    target.preLoad();
+                    for (var dirChild : target.dirChildren) {
+                        if (dirChild.getName().equals(dirName)) {
+                            target = dirChild;
+                            continue loop;
+                        }
                     }
-                } else if (forgematica == null && shouldUseForgematica) {
-                    try {
-                        forgematica = ModrinthRemoteModRepository.MODS.getModById("forgematica");
-                    } catch (IOException ignored) {
-                    }
+                    break;
                 }
             }
-            return new LoadResult(litematicaState, shouldUseForgematica, loadRoot(schematicsDirectory));
+            return new LoadResult(litematicaState, shouldUseForgematica, target);
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
                 switch (result.state()) {
@@ -206,21 +220,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                     case DISABLED -> warningTip.set(new WarningTip(i18n("schematics.warning.litematica_disabled"), null));
                     default -> warningTip.set(new WarningTip(null, null));
                 }
-                DirItem target = result.rootDirItem();
-                if (currentDirectoryProperty().get() != null) {
-                    loop:
-                    for (String dirName : currentDirectoryProperty().get().relativePath) {
-                        target.preLoad();
-                        for (var dirChild : target.dirChildren) {
-                            if (dirChild.getName().equals(dirName)) {
-                                target = dirChild;
-                                continue loop;
-                            }
-                        }
-                        break;
-                    }
-                }
-                navigateTo(target);
+                navigateTo(result.targetDir());
             } else {
                 LOG.warning("Failed to load schematics", exception);
             }
@@ -435,7 +435,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                                 try {
                                     this.children.add(new SchematicItem(p));
                                 } catch (IOException e) {
-                                    LOG.warning("Failed to load schematic file: " + path, e);
+                                    LOG.warning("Failed to load schematic file: " + p, e);
                                 }
                             });
                 }
@@ -479,7 +479,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             this.path = path;
             this.file = Schematic.load(path);
 
-            if (file == null) throw new AssertionError(); // Should be impossible
+            if (file == null) throw new IOException("Unsupported or deleted file: " + path);
 
             if (this.file instanceof LitematicFile lFile) {
                 String name = lFile.getName();
@@ -880,7 +880,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         OK
     }
 
-    private record LoadResult(LitematicaState state, boolean shouldUseForgematica, DirItem rootDirItem) {
+    private record LoadResult(LitematicaState state, boolean shouldUseForgematica, DirItem targetDir) {
     }
 
     private record WarningTip(String message, Runnable action) {
