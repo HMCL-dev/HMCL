@@ -13,6 +13,7 @@ nanohttpd = "2.3.1"
 jsoup = "1.21.2"
 chardet = "2.5.0"
 twelvemonkeys = "3.13.0"
+fxsvgimage = "1.4"
 jna = "5.18.1"
 pci-ids = "0.4.0"
 java-info = "1.0"
@@ -43,6 +44,7 @@ nanohttpd = { module = "org.nanohttpd:nanohttpd", version.ref = "nanohttpd" }
 jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
 chardet = { module = "org.glavo:chardet", version.ref = "chardet" }
 twelvemonkeys-imageio-webp = { module = "com.twelvemonkeys.imageio:imageio-webp", version.ref = "twelvemonkeys" }
+fxsvgimage = { module = "com.github.hervegirod:fxsvgimage", version.ref = "fxsvgimage" }
 jna = { module = "net.java.dev.jna:jna", version.ref = "jna" }
 jna-platform = { module = "net.java.dev.jna:jna-platform", version.ref = "jna" }
 pci-ids = { module = "org.glavo:pci-ids", version.ref = "pci-ids" }

@@ -70,6 +70,11 @@
     "externalLink" : "https://github.com/aellerton/japng"
   },
   {
+    "title" : "fxsvgimage",
+    "subtitle" : "Copyright (c) 2021, 2022, 2025 Hervé Girod.\nLicensed under the BSD 3-clause License.",
+    "externalLink" : "https://github.com/hervegirod/fxsvgimage"
+  },
+  {
     "title": "Terracotta",
     "subtitle": "Copyright (C) 2025 Burning_TNT.\nAll rights reserved.",
     "externalLink": "https://github.com/burningtnt/Terracotta"
