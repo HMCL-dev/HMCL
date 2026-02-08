@@ -1,5 +1,7 @@
-package org.jackhuang.hmcl.mod;
+package org.jackhuang.hmcl.resourcepack;
 
+import org.jackhuang.hmcl.mod.LocalAddonFile;
+import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.modinfo.PackMcMeta;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;

@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 /// Sub-classes should implement `Comparable`
-public sealed abstract class LocalAddonFile permits LocalModFile, ResourcePackFile {
+public abstract class LocalAddonFile {
 
     private final boolean keepOldFiles;
 

@@ -1,4 +1,4 @@
-package org.jackhuang.hmcl.mod;
+package org.jackhuang.hmcl.resourcepack;
 
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.junit.jupiter.api.Test;
