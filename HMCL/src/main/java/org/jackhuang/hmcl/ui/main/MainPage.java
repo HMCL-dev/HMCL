@@ -320,7 +320,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         Task<?> task = versionList.refreshAsync("")
                 .thenSupplyAsync(() -> versionList.getVersions("").stream()
                         .filter(it -> it.getVersionType() == RELEASE)
-                        .filter(it -> !(NativePatcher.checkSupportedStatus(GameVersionNumber.asGameVersion(it.getGameVersion()), Platform.SYSTEM_PLATFORM, OperatingSystem.SYSTEM_VERSION) == NativePatcher.SupportStatus.UNSUPPORTED))
+                        .filter(it -> NativePatcher.checkSupportedStatus(GameVersionNumber.asGameVersion(it.getGameVersion()), Platform.SYSTEM_PLATFORM, OperatingSystem.SYSTEM_VERSION) != NativePatcher.SupportStatus.UNSUPPORTED)
                         .sorted()
                         .findFirst()
                         .orElseThrow(() -> new IOException("No versions found")))
