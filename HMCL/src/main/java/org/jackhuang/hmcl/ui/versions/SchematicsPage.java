@@ -58,7 +58,6 @@ import org.jackhuang.hmcl.ui.ListPageBase;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.nbt.NBTEditorPage;
-import org.jackhuang.hmcl.util.Pair;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -77,7 +76,6 @@ import java.util.stream.Stream;
 import static org.jackhuang.hmcl.ui.FXUtils.*;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createTip;
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
-import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -104,7 +102,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
     private String instanceId;
     private Path schematicsDirectory;
     private final ObjectProperty<DirItem> currentDirectory = new SimpleObjectProperty<>(this, "currentDirectory", null);
-    private final ObjectProperty<Pair<String, Runnable>> warningTip = new SimpleObjectProperty<>(this, "tip", pair(null, null));
+    private final ObjectProperty<WarningTip> warningTip = new SimpleObjectProperty<>(this, "tip", null);
 
     private final BooleanProperty isRootProperty = new SimpleBooleanProperty(this, "isRoot", true);
 
@@ -147,7 +145,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         if (schematicsDirectory == null) return;
 
         setLoading(true);
-        Task.supplyAsync(() -> {
+        Task.supplyAsync(Schedulers.io(), () -> {
             var litematicaState = LitematicaState.NOT_INSTALLED;
             var modManager = profile.getRepository().getModManager(instanceId);
             try {
@@ -183,15 +181,15 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                     }
                 }
             }
-            return pair(pair(litematicaState, shouldUseForgematica), loadRoot(schematicsDirectory));
+            return new LoadResult(litematicaState, shouldUseForgematica, loadRoot(schematicsDirectory));
         }).whenComplete(Schedulers.javafx(), (result, exception) -> {
             if (exception == null) {
-                switch (result.key().key()) {
+                switch (result.state()) {
                     case NOT_INSTALLED -> {
-                        boolean useForgematica = forgematica != null && result.key().value();
-                        boolean useLitematica = litematica != null && !result.key().value();
+                        boolean useForgematica = forgematica != null && result.shouldUseForgematica();
+                        boolean useLitematica = litematica != null && !result.shouldUseForgematica();
                         if (useForgematica || useLitematica) {
-                            warningTip.set(pair(i18n("schematics.warning.no_litematica_install"), () -> {
+                            warningTip.set(new WarningTip(i18n("schematics.warning.no_litematica_install"), () -> {
                                 var modDownloads = Controllers.getDownloadPage().showModDownloads();
                                 modDownloads.selectVersion(instanceId);
                                 Controllers.navigate(new DownloadPage(
@@ -202,13 +200,13 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                                 );
                             }));
                         } else {
-                            warningTip.set(pair(i18n("schematics.warning.no_litematica"), null));
+                            warningTip.set(new WarningTip(i18n("schematics.warning.no_litematica"), null));
                         }
                     }
-                    case DISABLED -> warningTip.set(pair(i18n("schematics.warning.litematica_disabled"), null));
-                    default -> warningTip.set(pair(null, null));
+                    case DISABLED -> warningTip.set(new WarningTip(i18n("schematics.warning.litematica_disabled"), null));
+                    default -> warningTip.set(new WarningTip(null, null));
                 }
-                DirItem target = result.value();
+                DirItem target = result.rootDirItem();
                 if (currentDirectoryProperty().get() != null) {
                     loop:
                     for (String dirName : currentDirectoryProperty().get().relativePath) {
@@ -823,9 +821,9 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 tipPane.setAlignment(Pos.CENTER_LEFT);
                 FXUtils.onChangeAndOperate(skinnable.warningTip, pair -> {
                     root.getContent().remove(tipPane);
-                    if (pair != null && !StringUtils.isBlank(pair.key())) {
-                        var txt = new Text(pair.key());
-                        if (pair.value() != null) FXUtils.onClicked(txt, pair.value());
+                    if (pair != null && !StringUtils.isBlank(pair.message())) {
+                        var txt = new Text(pair.message());
+                        if (pair.action() != null) FXUtils.onClicked(txt, pair.action());
                         tip.getChildren().setAll(txt);
                         root.getContent().add(1, tipPane);
                     }
@@ -880,6 +878,12 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         DISABLED,
         NOT_INSTALLED,
         OK
+    }
+
+    private record LoadResult(LitematicaState state, boolean shouldUseForgematica, DirItem rootDirItem) {
+    }
+
+    private record WarningTip(String message, Runnable action) {
     }
 
 }
