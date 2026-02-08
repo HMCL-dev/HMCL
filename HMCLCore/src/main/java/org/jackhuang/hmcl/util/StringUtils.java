@@ -17,6 +17,9 @@
  */
 package org.jackhuang.hmcl.util;
 
+import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jetbrains.annotations.Contract;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
@@ -527,6 +530,28 @@ public final class StringUtils {
                 return false;
         }
         return true;
+    }
+
+    /// Turns `List.of("a", "b", "c")` into `["a", "b", "c"]`
+    @Contract(pure = true)
+    public static String serializeStringList(List<String> list) {
+        if (list == null) return "[]";
+        try {
+            return JsonUtils.UGLY_GSON.toJson(list.stream().filter(Objects::nonNull).toList(), JsonUtils.listTypeOf(String.class).getType());
+        } catch (Exception e) {
+            return "[]";
+        }
+    }
+
+    /// Turns `["a", "b", "c"]` into `List.of("a", "b", "c")`
+    @Contract(pure = true)
+    public static List<String> deserializeStringList(String list) {
+        if (list == null || list.isBlank()) return List.of();
+        try {
+            return JsonUtils.fromNonNullJson(list, JsonUtils.listTypeOf(String.class));
+        } catch (Exception e) {
+            return List.of();
+        }
     }
 
     public static class LevCalculator {
