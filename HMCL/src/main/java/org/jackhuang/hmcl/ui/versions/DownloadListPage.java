@@ -249,6 +249,8 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
         protected ModDownloadListPageSkin(DownloadListPage control) {
             super(control);
 
+            listView.getStyleClass().add("no-horizontal-scrollbar");
+
             BorderPane pane = new BorderPane();
 
             GridPane searchPane = new GridPane();
