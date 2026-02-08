@@ -55,8 +55,8 @@ public final class LitematicFile extends Schematic {
         if (regionsTag instanceof CompoundTag)
             regions = ((CompoundTag) regionsTag).size();
 
-        Point3I enclosingSize    = null;
-        Tag     enclosingSizeTag = ((CompoundTag) metadataTag).get("EnclosingSize");
+        Point3I enclosingSize = null;
+        Tag enclosingSizeTag = ((CompoundTag) metadataTag).get("EnclosingSize");
         if (enclosingSizeTag instanceof CompoundTag) {
             CompoundTag list = (CompoundTag) enclosingSizeTag;
             int x = tryGetInt(list.get("x")).orElse(0);

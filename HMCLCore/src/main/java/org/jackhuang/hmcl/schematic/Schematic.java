@@ -78,7 +78,7 @@ public sealed abstract class Schematic permits LitematicFile, SchemFile, NBTStru
     }
 
     private final Path file;
-    private final int     dataVersion;
+    private final int dataVersion;
     private final Point3I enclosingSize;
 
     protected Schematic(Path file, int dataVersion, @Nullable Point3I enclosingSize) {

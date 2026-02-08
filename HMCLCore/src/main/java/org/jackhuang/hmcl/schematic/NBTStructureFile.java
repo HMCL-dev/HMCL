@@ -48,7 +48,7 @@ public final class NBTStructureFile extends Schematic {
             throw new IOException("size tag does not have 3 elements");
         Tag xTag = size.get(0);
         Tag yTag = size.get(1);
-        Tag     zTag          = size.get(2);
+        Tag zTag = size.get(2);
         Point3I enclosingSize = null;
         if (xTag != null && yTag != null && zTag != null) {
             int width = tryGetInt(xTag).orElse(0);
