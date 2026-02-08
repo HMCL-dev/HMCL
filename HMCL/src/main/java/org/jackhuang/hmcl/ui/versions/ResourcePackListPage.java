@@ -50,7 +50,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Predicate;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
@@ -391,17 +390,11 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                 listView.getItems().clear();
 
                 Predicate<@Nullable String> predicate;
-                if (queryString.startsWith("regex:")) {
-                    try {
-                        Pattern pattern = Pattern.compile(queryString.substring("regex:".length()));
-                        predicate = s -> s != null && pattern.matcher(s).find();
-                    } catch (Throwable e) {
-                        LOG.warning("Illegal regular expression", e);
-                        return;
-                    }
-                } else {
-                    String lowerQueryString = queryString.toLowerCase(Locale.ROOT);
-                    predicate = s -> s != null && s.toLowerCase(Locale.ROOT).contains(lowerQueryString);
+                try {
+                    predicate = StringUtils.compileQuery(queryString);
+                } catch (Throwable e) {
+                    LOG.warning("Illegal regular expression", e);
+                    return;
                 }
 
                 // Do we need to search in the background thread?

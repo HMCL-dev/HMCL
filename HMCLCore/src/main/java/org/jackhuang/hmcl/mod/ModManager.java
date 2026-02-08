@@ -185,6 +185,11 @@ public final class ModManager extends LocalFileManager<LocalModFile> {
         loaded = true;
     }
 
+    @Override
+    public Comparator<LocalModFile> getComparator() {
+        return LocalModFile::compareTo;
+    }
+
     public @Unmodifiable List<LocalModFile> getLocalFiles() throws IOException {
         if (!loaded)
             refresh();
@@ -277,7 +282,7 @@ public final class ModManager extends LocalFileManager<LocalModFile> {
 
     public static boolean isFileNameMod(Path file) {
         String name = getLocalFileName(file);
-        return name.endsWith(".zip") || name.endsWith(".jar") || name.endsWith(".litemod");
+        return name.endsWith(".jar") || name.endsWith(".litemod");
     }
 
     public static boolean isFileMod(Path modFile) {

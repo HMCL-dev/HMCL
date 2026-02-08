@@ -255,6 +255,11 @@ public final class ResourcePackManager extends LocalFileManager<ResourcePackFile
     }
 
     @Override
+    public Comparator<ResourcePackFile> getComparator() {
+        return ResourcePackFile::compareTo;
+    }
+
+    @Override
     public @Unmodifiable List<ResourcePackFile> getLocalFiles() throws IOException {
         if (!loaded)
             refresh();

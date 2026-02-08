@@ -21,7 +21,6 @@ class ResourcePackManagerTest {
 
         assertFalse(ResourcePackManager.isMcVersionSupported(GameVersionNumber.asGameVersion("13w23a")));
         assertFalse(ResourcePackManager.isMcVersionSupported(GameVersionNumber.asGameVersion("1.6")));
-        assertFalse(ResourcePackManager.isMcVersionSupported(GameVersionNumber.asGameVersion("13w23a")));
         assertFalse(ResourcePackManager.isMcVersionSupported(GameVersionNumber.asGameVersion("b1.1-1")));
     }
 }
