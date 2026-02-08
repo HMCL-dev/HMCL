@@ -273,6 +273,14 @@ public final class SettingsPage extends ScrollPane {
             }
 
             {
+                LineToggleButton windowsHighPerformance = new LineToggleButton();
+                windowsHighPerformance.setTitle(i18n("settings.launcher.windows_gpu_preferences"));
+                windowsHighPerformance.selectedProperty().bindBidirectional(config().windowsHighPerformanceProperty());
+
+                settingsPane.getContent().add(windowsHighPerformance);
+            }
+
+            {
                 BorderPane debugPane = new BorderPane();
 
                 Label left = new Label(i18n("settings.launcher.debug"));
