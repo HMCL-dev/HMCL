@@ -68,7 +68,8 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
     private final WorldManagePage worldManagePage;
     private boolean isReadOnly;
     private final World world;
-    private CompoundTag levelDat;
+    private CompoundTag levelData;
+    private CompoundTag playerData;
 
     ImageView iconImageView = new ImageView();
 
@@ -78,16 +79,9 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
         refresh();
     }
 
-    private CompoundTag loadWorldInfo() throws IOException {
-        if (!Files.isDirectory(world.getFile()))
-            throw new IOException("Not a valid world directory");
-
-        return world.getLevelData();
-    }
-
     private void updateControls() {
-        CompoundTag dataTag = (CompoundTag) levelDat.get("Data");
-        CompoundTag playerTag = world.getPlayerData();
+        CompoundTag dataTag = (CompoundTag) levelData.get("Data");
+        CompoundTag playerTag = playerData;
 
         ScrollPane scrollPane = new ScrollPane();
         scrollPane.setFitToHeight(true);
@@ -539,17 +533,13 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
     public void refresh() {
         this.isReadOnly = worldManagePage.isReadOnly();
         this.setLoading(true);
-        Task.supplyAsync(this::loadWorldInfo)
-                .whenComplete(Schedulers.javafx(), ((result, exception) -> {
-                    if (exception == null) {
-                        this.levelDat = result;
-                        updateControls();
-                        setLoading(false);
-                    } else {
-                        LOG.warning("Failed to load world info of world " + world.getWorldName(), exception);
-                        setFailedReason(i18n("world.info.failed"));
-                    }
-                })).start();
+        Task.runAsync(Schedulers.javafx(), () -> {
+            this.levelData = world.getLevelData();
+            this.playerData = world.getPlayerData();
+
+            updateControls();
+            setLoading(false);
+        }).start();
     }
 
     private record Dimension(String name) {

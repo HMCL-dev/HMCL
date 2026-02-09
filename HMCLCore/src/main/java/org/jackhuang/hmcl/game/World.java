@@ -46,13 +46,14 @@ public final class World {
 
     private final Path file;
     private String fileName;
+    private Image icon;
+
     private CompoundTag levelData;
     private Path levelDataPath;
     private CompoundTag worldGenSettingsData;
     private Path worldGenSettingsDataPath;
     private CompoundTag playerData;
     private Path playerDataPath;
-    private Image icon;
 
     public World(Path file) throws IOException {
         this.file = file;
@@ -82,10 +83,6 @@ public final class World {
             levelNameTag.setValue(worldName);
             writeLevelData();
         }
-    }
-
-    public Path getLevelDataFile() {
-        return file.resolve("level.dat");
     }
 
     public Path getSessionLockFile() {
@@ -412,7 +409,7 @@ public final class World {
     }
 
     public void writeLevelData() throws IOException {
-        writeTag(levelData, getLevelDataFile());
+        writeTag(levelData, levelDataPath);
     }
 
     public void writeTag(CompoundTag nbt, Path path) throws IOException {
