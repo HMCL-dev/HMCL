@@ -51,7 +51,7 @@ public final class FabricModMetadata {
         this("", "", "", "", "", Collections.emptyList(), Collections.emptyMap(), Collections.emptyList());
     }
 
-    public FabricModMetadata(String id, String name, String version, String icon, String description, List<FabricModAuthor> authors, Map<String, String> contact,List<FabricNestedJar> jars) {
+    public FabricModMetadata(String id, String name, String version, String icon, String description, List<FabricModAuthor> authors, Map<String, String> contact, List<FabricNestedJar> jars) {
         this.id = id;
         this.name = name;
         this.version = version;

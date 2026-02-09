@@ -423,7 +423,7 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
         }
 
         if (!hasData) {
-            FXUtils.runInFX(() -> Controllers.confirm(i18n("mods.built_in.cancleexport"), i18n("button.ok"), () -> {}, null));
+            FXUtils.runInFX(() -> Controllers.dialog(i18n("mods.built_in.cancelexport")));
             return;
         }
 

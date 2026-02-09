@@ -62,7 +62,9 @@ public final class LocalModFile implements Comparable<LocalModFile> {
         this.gameVersion = gameVersion;
         this.url = url;
         this.logoPath = logoPath;
-        this.bundledMods = bundledMods;
+        this.bundledMods = bundledMods == null
+                ? Collections.emptyList()
+                : Collections.unmodifiableList(new ArrayList<>(bundledMods));
 
 
         activeProperty = new SimpleBooleanProperty(this, "active", !modManager.isDisabled(file)) {
