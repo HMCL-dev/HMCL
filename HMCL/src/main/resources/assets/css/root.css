@@ -572,6 +572,36 @@
     -fx-text-fill: -monet-on-surface;
 }
 
+/*******************************************************************************
+ *                                                                             *
+ * Microsoft Login Dialog                                                      *
+ *                                                                             *
+ ******************************************************************************/
+
+.method-title {
+    -fx-text-fill: -monet-on-surface;
+    -fx-font-weight: bold;
+}
+
+.method-desc {
+    -fx-text-fill: -monet-outline;
+    -fx-font-size: 0.9em;
+    -fx-line-spacing: 2;
+    -fx-wrap-text: true;
+    -fx-text-alignment: center;
+}
+
+.code-box {
+    -fx-background-color: -monet-surface-variant;
+    -fx-background-radius: 6;
+    -fx-alignment: center;
+}
+
+.code-box .code-label {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -monet-primary;
+}
 
 /*******************************************************************************
  *                                                                             *

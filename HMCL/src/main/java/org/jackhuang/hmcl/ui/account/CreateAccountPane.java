@@ -23,9 +23,7 @@ import javafx.application.Platform;
 import javafx.beans.NamedArg;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -45,7 +43,6 @@ import org.jackhuang.hmcl.auth.microsoft.MicrosoftAccountFactory;
 import org.jackhuang.hmcl.auth.offline.OfflineAccountFactory;
 import org.jackhuang.hmcl.auth.yggdrasil.GameProfile;
 import org.jackhuang.hmcl.auth.yggdrasil.YggdrasilService;
-import org.jackhuang.hmcl.game.OAuthServer;
 import org.jackhuang.hmcl.game.TexturesLoader;
 import org.jackhuang.hmcl.setting.Accounts;
 import org.jackhuang.hmcl.task.Schedulers;
@@ -54,7 +51,6 @@ import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.upgrade.IntegrityChecker;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -85,13 +81,11 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
     private final JFXButton btnAccept;
     private final SpinnerPane spinner;
     private final Node body;
-
+    private final HBox actions;
     private Node detailsPane; // AccountDetailsInputPane for Offline / Mojang / authlib-injector, Label for Microsoft
     private final Pane detailsContainer;
 
     private final BooleanProperty logging = new SimpleBooleanProperty();
-    private final ObjectProperty<OAuthServer.GrantDeviceCodeEvent> deviceCode = new SimpleObjectProperty<>();
-    private final WeakListenerHolder holder = new WeakListenerHolder();
 
     private TaskExecutor loginTask;
 
@@ -146,10 +140,10 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             btnCancel.setOnAction(e -> onCancel());
             onEscPressed(this, btnCancel::fire);
 
-            HBox hbox = new HBox(spinner, btnCancel);
-            hbox.setAlignment(Pos.CENTER_RIGHT);
+            actions = new HBox(spinner, btnCancel);
+            actions.setAlignment(Pos.CENTER_RIGHT);
 
-            setActions(lblErrorMessage, hbox);
+            setActions(lblErrorMessage, actions);
         }
 
         if (showMethodSwitcher) {
@@ -226,7 +220,6 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
 
         Runnable doCreate = () -> {
             logging.set(true);
-            deviceCode.set(null);
 
             loginTask = Task.supplyAsync(() -> factory.create(new DialogCharacterSelector(), username, password, null, additionalData))
                     .whenComplete(Schedulers.javafx(), account -> {
@@ -281,88 +274,22 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             detailsContainer.getChildren().remove(detailsPane);
             lblErrorMessage.setText("");
             lblErrorMessage.setVisible(true);
+            actions.setVisible(true);
+            actions.setVisible(true);
         }
 
         if (factory == Accounts.FACTORY_MICROSOFT) {
             VBox vbox = new VBox(8);
             detailsPane = vbox;
-
-            if (Accounts.OAUTH_CALLBACK.getClientId().isEmpty()) {
-                HintPane hintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
-                hintPane.setSegment(i18n("account.methods.microsoft.snapshot"));
-                vbox.getChildren().add(hintPane);
-                return;
-            }
-
-            if (!IntegrityChecker.isOfficial()) {
-                HintPane hintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
-                hintPane.setSegment(i18n("unofficial.hint"));
-                vbox.getChildren().add(hintPane);
-            }
-
-            VBox codeBox = new VBox(8);
-            Label hint = new Label(i18n("account.methods.microsoft.code"));
-            Label code = new Label();
-            code.setMouseTransparent(true);
-            code.setStyle("-fx-font-size: 24");
-            codeBox.getChildren().addAll(hint, code);
-            codeBox.setAlignment(Pos.CENTER);
-            vbox.getChildren().add(codeBox);
-
             HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
-            HintPane errHintPane = new HintPane(MessageDialogPane.MessageType.ERROR);
-            errHintPane.setVisible(false);
-            errHintPane.setManaged(false);
-
-            codeBox.setVisible(false);
-            codeBox.setManaged(false);
-
-            FXUtils.onChangeAndOperate(deviceCode, deviceCode -> {
-                if (deviceCode != null) {
-                    FXUtils.copyText(deviceCode.getUserCode());
-                    code.setText(deviceCode.getUserCode());
-                    hintPane.setSegment(i18n("account.methods.microsoft.manual", deviceCode.getVerificationUri()));
-                    codeBox.setVisible(true);
-                    codeBox.setManaged(true);
-                } else {
-                    hintPane.setSegment(i18n("account.methods.microsoft.hint"));
-                    codeBox.setVisible(false);
-                    codeBox.setManaged(false);
-                }
+            hintPane.setText(i18n("account.methods.microsoft.hint"));
+            vbox.getChildren().addAll(new MicrosoftAccountLoginPane(true));
+            btnAccept.setOnAction(e -> {
+                fireEvent(new DialogCloseEvent());
+                Controllers.dialog(new MicrosoftAccountLoginPane());
             });
-
-            lblErrorMessage.setVisible(false);
-            lblErrorMessage.textProperty().addListener((obs, oldVal, newVal) -> {
-                boolean hasError = !newVal.isEmpty();
-                errHintPane.setSegment(newVal);
-                errHintPane.setVisible(hasError);
-                errHintPane.setManaged(hasError);
-                hintPane.setVisible(!hasError);
-                hintPane.setManaged(!hasError);
-                codeBox.setVisible(!hasError && deviceCode.get() != null);
-                codeBox.setManaged(!hasError && deviceCode.get() != null);
-            });
-
-            FXUtils.onClicked(codeBox, () -> {
-                if (deviceCode.get() != null) FXUtils.copyText(deviceCode.get().getUserCode());
-            });
-
-            holder.add(Accounts.OAUTH_CALLBACK.onGrantDeviceCode.registerWeak(value ->
-                    runInFX(() -> deviceCode.set(value))
-            ));
-
-            HBox linkBox = new HBox();
-            JFXHyperlink profileLink = new JFXHyperlink(i18n("account.methods.microsoft.profile"));
-            profileLink.setExternalLink("https://account.live.com/editprof.aspx");
-            JFXHyperlink purchaseLink = new JFXHyperlink(i18n("account.methods.microsoft.purchase"));
-            purchaseLink.setExternalLink(YggdrasilService.PURCHASE_URL);
-            JFXHyperlink deauthorizeLink = new JFXHyperlink(i18n("account.methods.microsoft.deauthorize"));
-            deauthorizeLink.setExternalLink("https://account.live.com/consent/Edit?client_id=000000004C794E0A");
-            JFXHyperlink forgotpasswordLink = new JFXHyperlink(i18n("account.methods.forgot_password"));
-            forgotpasswordLink.setExternalLink("https://account.live.com/ResetPassword.aspx");
-            linkBox.getChildren().setAll(profileLink, purchaseLink, deauthorizeLink, forgotpasswordLink);
-
-            vbox.getChildren().addAll(hintPane, errHintPane, linkBox);
+            actions.setManaged(false);
+            actions.setVisible(false);
             btnAccept.setDisable(false);
         } else {
             detailsPane = new AccountDetailsInputPane(factory, btnAccept::fire);
