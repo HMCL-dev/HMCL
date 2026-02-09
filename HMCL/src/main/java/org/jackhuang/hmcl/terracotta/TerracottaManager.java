@@ -46,6 +46,7 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
@@ -313,10 +314,16 @@ public final class TerracottaManager {
         TerracottaState state = STATE_V.get();
         if (state instanceof TerracottaState.PortSpecific portSpecific) {
             Task.supplyAsync(Schedulers.io(), TerracottaNodeList::fetch)
-                    .thenComposeAsync(nodes -> new GetTask(NetworkUtils.withQuery(
-                            "http://127.0.0.1:%d/state/scanning".formatted(portSpecific.port),
-                            nodes.stream().map(uri -> pair("public_nodes", uri.toString())).toList()
-                    )).setSignificance(Task.TaskSignificance.MINOR)).start();
+                    .thenComposeAsync(nodes -> {
+                        List<Pair<String, String>> query = new ArrayList<>(nodes.size() + 1);
+                        query.add(pair("player", getPlayerName()));
+                        for (URI node : nodes) {
+                            query.add(pair("public_nodes", node.toString()));
+                        }
+                        return new GetTask(NetworkUtils.withQuery(
+                                "http://127.0.0.1:%d/state/scanning".formatted(portSpecific.port), query
+                        )).setSignificance(Task.TaskSignificance.MINOR);
+                    }).start();
 
             return new TerracottaState.HostScanning(-1, -1, null);
         }
