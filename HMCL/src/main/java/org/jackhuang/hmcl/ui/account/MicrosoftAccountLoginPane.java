@@ -53,8 +53,8 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
     private final ObjectProperty<String> browserUrl = new SimpleObjectProperty<>();
     private final Label lblCode;
 
-    private TaskExecutor browserTaskExecuter;
-    private TaskExecutor deviceTaskExecuter;
+    private TaskExecutor browserTaskExecutor;
+    private TaskExecutor deviceTaskExecutor;
 
     private final SpinnerPane loginButtonSpinner;
     private final HBox authMethodsContentBox = new HBox(0);
@@ -266,11 +266,11 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
             }
         };
 
-        browserTaskExecuter = Task.supplyAsync(() -> Accounts.FACTORY_MICROSOFT.create(null, null, null, null, OAuth.GrantFlow.AUTHORIZATION_CODE))
+        browserTaskExecutor = Task.supplyAsync(() -> Accounts.FACTORY_MICROSOFT.create(null, null, null, null, OAuth.GrantFlow.AUTHORIZATION_CODE))
                 .whenComplete(Schedulers.javafx(), onComplete)
                 .executor(true);
 
-        deviceTaskExecuter = Task.supplyAsync(() -> Accounts.FACTORY_MICROSOFT.create(null, null, null, null, OAuth.GrantFlow.DEVICE))
+        deviceTaskExecutor = Task.supplyAsync(() -> Accounts.FACTORY_MICROSOFT.create(null, null, null, null, OAuth.GrantFlow.DEVICE))
                 .whenComplete(Schedulers.javafx(), onComplete)
                 .executor(true);
     }
@@ -302,8 +302,8 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
     }
 
     private void cancelAllTasks() {
-        if (browserTaskExecuter != null) browserTaskExecuter.cancel();
-        if (deviceTaskExecuter != null) deviceTaskExecuter.cancel();
+        if (browserTaskExecutor != null) browserTaskExecutor.cancel();
+        if (deviceTaskExecutor != null) deviceTaskExecutor.cancel();
     }
 
     private void onCancel() {
