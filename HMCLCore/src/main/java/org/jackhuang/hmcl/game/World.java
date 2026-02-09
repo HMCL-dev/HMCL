@@ -407,7 +407,6 @@ public final class World {
         return List.of();
     }
 
-
     /**
      * @author Xiaotian
      * @see <a href="https://minecraft.wiki/w/Region_file_format">The Region file format</a>
@@ -686,6 +685,7 @@ public final class World {
         }
 
         private record Chunk(int x, int z, WorldPath world) {
+            
             @Override
             public boolean equals(Object o) {
                 if (o instanceof Chunk chunk) {
@@ -693,6 +693,7 @@ public final class World {
                 }
                 return false;
             }
+        
             @Override
             public int hashCode() {
                 return Objects.hash(x, z, world);
@@ -700,9 +701,11 @@ public final class World {
         }
 
         public record WorldPath(Path worldPath, String worldType) {
+            
             public Path get() {
                 return worldPath;
             }
+            
             @Override
             public @NotNull String toString() {
                 return String.format("WorldPath<%s>{%s}", worldType, worldPath);
