@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.terracotta;
 
 import com.google.gson.JsonParseException;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.gson.TolerableValidationException;
@@ -77,18 +78,18 @@ public final class TerracottaNodeList {
                                 try {
                                     node.validate();
                                 } catch (Exception e) {
-                                    LOG.warning("Invalid Terracotta node: " + node, e);
+                                    LOG.warning("Invalid terracotta node: " + node, e);
                                     return false;
                                 }
 
-                                return LocaleUtils.IS_CHINA_MAINLAND == "CN".equalsIgnoreCase(node.region);
+                                return StringUtils.isBlank(node.region) || LocaleUtils.IS_CHINA_MAINLAND == "CN".equalsIgnoreCase(node.region);
                             })
                             .map(it -> URI.create(it.url()))
                             .toList();
                     LOG.info("Terracotta node list: " + list);
                 }
             } catch (Exception e) {
-                LOG.warning("Failed to fetch Terracotta node list", e);
+                LOG.warning("Failed to fetch terracotta node list", e);
                 list = List.of();
             }
 
