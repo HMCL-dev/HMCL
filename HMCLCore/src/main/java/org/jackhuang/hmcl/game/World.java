@@ -396,4 +396,352 @@ public final class World {
         }
         return List.of();
     }
+
+
+    /**
+     * @author Xiaotian
+     * @see <a href="https://minecraft.wiki/w/Region_file_format">The Region file format</a>
+     */
+    public static class WorldParser {
+
+        private static final int SECTOR_SIZE = 4096; // 4KB扇区
+        private static final int HEADER_SIZE = 8192; // 8KB文件头
+
+        private static final int COMPRESSION_ZLIB = 2;
+        private static final int COMPRESSION_LZ4 = 4;
+
+        public final WorldPath overworld;
+        public final WorldPath the_nether;
+        public final WorldPath the_end;
+
+        private final ConcurrentHashMap<Chunk, byte[]> chunkCache = new ConcurrentHashMap<>();
+
+        public WorldParser(@NotNull World world) {
+            LOG.info("Parsing world(%s)[%s]".formatted(world.getGameVersion(), world.getWorldName()));
+            LOG.debug(world.getFile().toString());
+
+
+            if (Objects.requireNonNull(world.getGameVersion()).isAtLeast("26.1", "26.1-snapshot-6")){
+                Path vanillaWorldPathRoot = world.getFile().resolve("dimensions/minecraft");
+
+                overworld = new WorldPath((Files.exists(vanillaWorldPathRoot.resolve("overworld")))? vanillaWorldPathRoot.resolve("overworld"): null,"overworld");
+                the_nether = new WorldPath((Files.exists(vanillaWorldPathRoot.resolve("the_nether")))? vanillaWorldPathRoot.resolve("the_nether"): null,"the_nether");
+                the_end = new WorldPath((Files.exists(vanillaWorldPathRoot.resolve("the_end")))? vanillaWorldPathRoot.resolve("the_end"): null,"the_end");
+            }else {
+                overworld = new WorldPath(world.getFile(), "overworld");
+                the_nether = new WorldPath((Files.exists(world.getFile().resolve("DIM-1")))? world.getFile().resolve("DIM-1"): null, "the_nether");
+                the_end = new WorldPath((Files.exists(world.getFile().resolve("DIM1")))? world.getFile().resolve("DIM1"): null, "the_end");
+            }
+        }
+
+        public byte[] parseChunk(int chunkX, int chunkZ, WorldPath worldPath) throws RuntimeException{
+            try {
+                // 计算区域坐标和局部坐标
+                int regionX = chunkX >> 5;
+                int regionZ = chunkZ >> 5;
+                int localX = chunkX & 0x1F;
+                int localZ = chunkZ & 0x1F;
+
+                // 构建区域文件路径
+                String regionFile = String.format("r.%d.%d.mca", regionX, regionZ);
+                Path regionPath = worldPath.get().resolve(Paths.get("region", regionFile));
+
+                if (!Files.exists(regionPath)) {
+                    throw new RuntimeException("Region file does not exists."); // 区域文件不存在
+                }
+
+                // 读取区域文件头
+                byte[] header = Files.readAllBytes(regionPath);
+                if (header.length < HEADER_SIZE) {
+                    throw new RuntimeException("Broken file head."); // 文件头不完整
+                }
+
+                // 计算区块在文件头中的索引
+                int blockIndex = localX + 32 * localZ;
+
+                // 读取区块位置信息（前4KB头）
+                int headerOffset = blockIndex * 4;
+
+                // 读取起始扇区偏移（3字节大端序）
+                int sectorOffset = ((header[headerOffset] & 0xFF) << 16) |
+                        ((header[headerOffset + 1] & 0xFF) << 8) |
+                        (header[headerOffset + 2] & 0xFF);
+
+                // 读取占用扇区数
+                int sectorCount = header[headerOffset + 3] & 0xFF;
+
+                // 检查区块是否存在
+                if (sectorOffset == 0 || sectorCount == 0) {
+                    return new byte[] {};
+                }
+
+                // 读取区块数据
+                int dataOffset = sectorOffset * SECTOR_SIZE;
+                // 读取压缩类型
+                int compressionType = header[dataOffset + 4] & 0xFF;
+                if (dataOffset + 5 > header.length) {
+                    // 数据可能在额外文件中
+                    return readFromExternalFile(chunkX, chunkZ, compressionType, worldPath);
+                }
+
+                // 读取区块数据长度（4字节大端序）
+                int dataLength = ((header[dataOffset] & 0xFF) << 24) |
+                        ((header[dataOffset + 1] & 0xFF) << 16) |
+                        ((header[dataOffset + 2] & 0xFF) << 8) |
+                        (header[dataOffset + 3] & 0xFF);
+
+
+                // 检查是否为超大区块
+                if ((compressionType & 0x80) != 0) {
+                    return readFromExternalFile(chunkX, chunkZ, compressionType, worldPath);
+                }
+
+                // 解压区块数据
+                byte[] compressedData = Files.readAllBytes(regionPath);
+                if (dataOffset + 5 + dataLength > compressedData.length) {
+                    throw new RuntimeException("Illegal chunk data");
+                }
+
+                byte[] chunkData = decompressData(
+                        Arrays.copyOfRange(compressedData, dataOffset + 5, dataOffset + 5 + dataLength),
+                        compressionType
+                );
+
+                Chunk chunk = new Chunk(chunkX, chunkZ, worldPath);
+                chunkCache.put(chunk, chunkData);
+
+                return chunkData;
+            } catch (Exception e) {
+                LOG.warning("An unexpected exception occurred while parsing chunk data", e);
+                throw new RuntimeException(e);
+            }
+        }
+
+        /**
+         * 解析MC区块中的方块数据
+         * @param chunkX 区块X坐标
+         * @param chunkZ 区块Z坐标
+         * @param x 区块内X坐标 (0-15)
+         * @param z 区块内Z坐标 (0-15)
+         * @return 方块ID字符串
+         */
+        public String parseBlockFromChunkData(int chunkX, int chunkZ, int x,int y , int z, WorldPath worldPath) {
+            Chunk chunk = new Chunk(chunkX, chunkZ, worldPath);
+            byte[] data = null;
+            if (! chunkCache.containsKey(chunk)) data = parseChunk(chunkX, chunkZ, worldPath);
+
+            return parseBlockFromChunkData(data == null? chunkCache.get(chunk): data, x, y, z);
+        }
+
+        /**
+         * 解析MC区块中的方块数据
+         * @param chunkData 数据
+         * @param x 区块内X坐标 (0-15)
+         * @param z 区块内Z坐标 (0-15)
+         * @return 方块ID字符串
+         */
+        public String parseBlockFromChunkData(byte[] chunkData, int x,int y , int z) {
+            try {
+                return parseBlockFromNBT(NBTIO.readTag(new ByteArrayInputStream(chunkData)), x, y, z);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+
+        /**
+         * 从额外文件读取区块数据
+         */
+        private byte[] readFromExternalFile(int chunkX, int chunkZ, int compressionType, WorldPath worldPath) throws RuntimeException {
+            try {
+                String externalFile = String.format("-%d.%d.mcc", chunkX, chunkZ);
+                Path externalPath = worldPath.get().resolve(Paths.get("region", externalFile));
+
+                if (!Files.exists(externalPath)) {
+                    throw new RuntimeException("External region file not found.");
+                }
+
+                byte[] externalData = Files.readAllBytes(externalPath);
+                return decompressData(removeHeader(externalData), compressionType);
+
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        /**
+         * 解压区块数据
+         */
+        private byte[] decompressData(byte[] data, int compressionType) throws Exception {
+            return switch (compressionType) {
+                case COMPRESSION_ZLIB -> decompressZlib(data);
+                case 3 -> // 不压缩
+                        data;
+                default -> throw new UnsupportedOperationException("Unsupported compression: " + compressionType);
+            };
+        }
+
+        /**
+         * Zlib解压
+         */
+        private byte @NotNull [] decompressZlib(byte[] data) throws Exception {
+            Inflater inflater = new Inflater();
+            inflater.setInput(data);
+
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream(data.length * 2);
+            byte[] buffer = new byte[1024];
+
+            while (!inflater.finished()) {
+                int count = inflater.inflate(buffer);
+                outputStream.write(buffer, 0, count);
+            }
+
+            outputStream.close();
+            return outputStream.toByteArray();
+        }
+
+        private byte @NotNull [] removeHeader(byte @NotNull [] data){
+            return Arrays.copyOfRange(data, 4, data.length);
+        }
+
+        /**
+         * 从解析后的区块NBT数据解析方块
+         */
+        private @Nullable String parseBlockFromNBT(@NotNull Tag chunkData, int x, int y, int z) {
+            if (!(chunkData instanceof CompoundTag chunk)) {
+                return null;
+            }
+
+            // 确保坐标在区块范围内 (0-15)
+            x &= 15; // 相当于 x % 16
+            z &= 15; // 相当于 z % 16
+
+            // 获取sections列表
+            if (!chunk.contains("sections")) {
+                return null;
+            }
+
+            ListTag sections = chunk.get("sections");
+            if (sections.size() <= 0) {
+                return null;
+            }
+
+            // 计算目标坐标所在的section和局部坐标
+            int sectionY = y >> 4; // 相当于 y / 16
+            int localY = y & 15;   // 相当于 y % 16
+
+            // 在sections中查找对应Y值的section
+            for (int i = 0; i < sections.size(); i++) {
+                Tag sectionTag = sections.get(i);
+                if (!(sectionTag instanceof CompoundTag section)) {
+                    continue;
+                }
+
+                // 检查section的Y值是否匹配
+                if (!section.contains("Y") || !(section.get("Y") instanceof ByteTag)) {
+                    continue;
+                }
+
+                byte sectionYValue = ((ByteTag) section.get("Y")).getValue();
+                if (sectionYValue != sectionY) {
+                    continue;
+                }
+
+                // 获取block_states
+                if (!section.contains("block_states") || !(section.get("block_states") instanceof CompoundTag blockStates)) {
+                    return "minecraft:air";
+                }
+
+                // 获取palette
+                if (!blockStates.contains("palette") || !(blockStates.get("palette") instanceof ListTag palette)) {
+                    return "minecraft:air";
+                }
+
+                if (palette.size() <= 0) {
+                    return "minecraft:air";
+                }
+
+                // 检查是否有data字段（用于非空气区块）
+                if (!blockStates.contains("data") || !(blockStates.get("data") instanceof LongArrayTag dataArray)) {
+                    // 没有data字段，说明这个section的所有方块都使用palette的第一个方块
+                    Tag firstBlock = palette.get(0);
+                    if (firstBlock instanceof CompoundTag blockEntry) {
+                        if (blockEntry.contains("Name") && blockEntry.get("Name") instanceof StringTag nameTag) {
+                            return nameTag.getValue();
+                        }
+                    }
+                    return "minecraft:air";
+                }
+
+                // 完整的索引计算（适用于有data字段的区块）
+                long[] data = dataArray.getValue();
+
+                // 计算3D索引：index = y * 256 + z * 16 + x
+                // 因为在section内，每个平面是16x16，所以z方向每16个方块为一个平面
+                int index3D = localY * 256 + z * 16 + x;
+
+                // 每个long可以存储64个方块状态（6位 per block，因为2^6=64足够索引palette）
+                int longIndex = index3D >> 6;  // 相当于 index3D / 64
+                int bitOffset = (index3D & 63); // 相当于 index3D % 64，每个块占6位
+
+                if (longIndex >= data.length) {
+                    return "minecraft:air"; // 索引超出范围
+                }
+
+                // 从long中提取6位数据
+                long value = data[longIndex];
+                int paletteIndex = (int)((value >>> bitOffset) & 0x3F); // 0x3F = 63 (6位掩码)
+
+                // 确保palette索引在有效范围内
+                if (paletteIndex >= palette.size()) {
+                    paletteIndex = 0; // 如果索引无效，使用第一个方块（通常是空气）
+                }
+
+                // 从palette中获取方块名称
+                Tag blockTag = palette.get(paletteIndex);
+                if (blockTag instanceof CompoundTag blockEntry) {
+                    if (blockEntry.contains("Name") && blockEntry.get("Name") instanceof StringTag nameTag) {
+                        return nameTag.getValue();
+                    }
+                }
+
+                return "minecraft:air";
+            }
+
+            // 如果没有找到对应的section，返回空气
+            return "minecraft:air";
+        }
+
+        public WorldPath getOverworld() {
+            return overworld;
+        }
+
+        public WorldPath getThe_nether() {
+            return the_nether;
+        }
+
+        public WorldPath getThe_end() {
+            return the_end;
+        }
+
+        private record Chunk(int x, int z, WorldPath world) {
+            @Override
+            public boolean equals(Object o) {
+                if (o instanceof Chunk chunk) {
+                    return chunk.x == x && chunk.z == z && chunk.world.equals(world);
+                }
+                return false;
+            }
+        }
+
+        public record WorldPath(Path worldPath, String worldType){
+            public Path get(){
+                return worldPath;
+            }
+            @Override
+            public @NotNull String toString(){
+                return String.format("WorldPath<%s>{%s}",worldType, worldPath);
+            }
+        }
+    }
 }
