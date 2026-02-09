@@ -130,7 +130,7 @@ public final class AccountListPage extends DecoratorAnimatedPage implements Deco
                     microsoftItem.getStyleClass().add("navigation-drawer-item");
                     microsoftItem.setTitle(i18n("account.methods.microsoft"));
                     microsoftItem.setLeftIcon(SVG.MICROSOFT);
-                    microsoftItem.setOnAction(e -> Controllers.dialog(new CreateAccountPane(Accounts.FACTORY_MICROSOFT)));
+                    microsoftItem.setOnAction(e -> Controllers.dialog(new MicrosoftAccountLoginPane()));
 
                     AdvancedListItem offlineItem = new AdvancedListItem();
                     offlineItem.getStyleClass().add("navigation-drawer-item");
