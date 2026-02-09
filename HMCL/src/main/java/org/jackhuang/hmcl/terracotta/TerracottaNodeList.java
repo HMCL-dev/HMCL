@@ -67,6 +67,7 @@ public final class TerracottaNodeList {
 
                 if (nodes == null) {
                     list = List.of();
+                    LOG.info("No available Terracotta nodes found");
                 } else {
                     list = nodes.stream()
                             .filter(node -> {
@@ -84,6 +85,7 @@ public final class TerracottaNodeList {
                             })
                             .map(it -> URI.create(it.url()))
                             .toList();
+                    LOG.info("Terracotta node list: " + list);
                 }
             } catch (Exception e) {
                 LOG.warning("Failed to fetch Terracotta node list", e);
