@@ -1054,10 +1054,6 @@
     -fx-font-size: 12;
 }
 
-.options-list-item > .line-component .line-component-container {
-    -fx-padding: 10 16 10 16;
-}
-
 .options-list-item .svg {
     -fx-fill: -monet-on-surface;
     -fx-border-color: -monet-outline-variant;
@@ -1886,6 +1882,14 @@
  * Line Component                                                              *
  *                                                                             *
  ******************************************************************************/
+
+.line-component .line-component-container {
+    -fx-padding: 10 16 10 16;
+}
+
+.line-component.no-padding .line-component-container {
+    -fx-padding: 0;
+}
 
 .line-component:large-title .title-label {
     -fx-font-size: 15px;
