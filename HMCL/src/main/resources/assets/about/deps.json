@@ -50,6 +50,11 @@
     "externalLink" : "https://github.com/GeyserMC/OpenNBT"
   },
   {
+    "title" : "MicaNBT",
+    "subtitle" : "Copyright © 2013-2021 Steveice10, 2026 Mine-diamond.\nLicensed under the MIT License.",
+    "externalLink" : "https://github.com/Mine-diamond/MicaNBT"
+  },
+  {
     "title" : "minecraft-jfx-skin",
     "subtitle" : "Copyright © 2016 InfinityStudio.\nLicensed under the GPL 3.",
     "externalLink" : "https://github.com/InfinityStudio/minecraft-jfx-skin"
@@ -83,10 +88,5 @@
     "title": "MonetFX",
     "subtitle": "Copyright © 2025 Glavo.\nLicensed under the Apache 2.0 License.",
     "externalLink": "https://github.com/Glavo/MonetFX"
-  },
-  {
-    "title" : "MicaNBT",
-    "subtitle" : "Copyright © 2013-2021 Steveice10, 2026 Mine-diamond.\nLicensed under the MIT License.",
-    "externalLink" : "https://github.com/Mine-diamond/MicaNBT"
   }
 ]
