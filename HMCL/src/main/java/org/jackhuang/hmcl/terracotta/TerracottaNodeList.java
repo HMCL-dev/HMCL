@@ -96,4 +96,7 @@ public final class TerracottaNodeList {
             return list;
         }
     }
+
+    private TerracottaNodeList() {
+    }
 }
