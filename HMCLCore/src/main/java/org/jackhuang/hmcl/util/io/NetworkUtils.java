@@ -40,6 +40,8 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  * @author huangyuhui
  */
 public final class NetworkUtils {
+    public static final String USER_AGENT = System.getProperty("http.agent", "HMCL");
+
     public static final String PARAMETER_SEPARATOR = "&";
     public static final String NAME_VALUE_SEPARATOR = "=";
     public static final int TIME_OUT = 8000;
@@ -168,6 +170,7 @@ public final class NetworkUtils {
         connection.setReadTimeout(TIME_OUT);
         if (connection instanceof HttpURLConnection httpConnection) {
             httpConnection.setRequestProperty("Accept-Language", Locale.getDefault().toLanguageTag());
+            httpConnection.setRequestProperty("User-Agent", USER_AGENT);
             httpConnection.setInstanceFollowRedirects(false);
         }
         return connection;
