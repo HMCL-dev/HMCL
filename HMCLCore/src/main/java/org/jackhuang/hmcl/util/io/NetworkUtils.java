@@ -95,6 +95,27 @@ public final class NetworkUtils {
         return sb.toString();
     }
 
+    public static String withQuery(String baseUrl, List<Pair<String, String>> params) {
+        StringBuilder sb = new StringBuilder(baseUrl);
+        boolean first = true;
+        for (Pair<String, String> param : params) {
+            if (param.getValue() == null)
+                continue;
+            if (first) {
+                if (!baseUrl.isEmpty()) {
+                    sb.append('?');
+                }
+                first = false;
+            } else {
+                sb.append(PARAMETER_SEPARATOR);
+            }
+            sb.append(encodeURL(param.getKey()));
+            sb.append(NAME_VALUE_SEPARATOR);
+            sb.append(encodeURL(param.getValue()));
+        }
+        return sb.toString();
+    }
+
     public static List<URI> withQuery(List<URI> list, Map<String, String> params) {
         return list.stream().map(uri -> URI.create(withQuery(uri.toString(), params))).collect(Collectors.toList());
     }
