@@ -597,6 +597,12 @@
     -fx-alignment: center;
 }
 
+.code-box .code-label {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -monet-primary;
+}
+
 /*******************************************************************************
  *                                                                             *
  * JFX Pop Up                                                                  *

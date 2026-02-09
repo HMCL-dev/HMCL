@@ -51,7 +51,7 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
     private final WeakListenerHolder holder = new WeakListenerHolder();
     private final ObjectProperty<OAuthServer.GrantDeviceCodeEvent> deviceCode = new SimpleObjectProperty<>();
     private final ObjectProperty<String> browserUrl = new SimpleObjectProperty<>();
-    private final Label lblCode = new Label();
+    private final Label lblCode;
 
     private TaskExecutor browserTaskExecuter;
     private TaskExecutor deviceTaskExecuter;
@@ -92,6 +92,10 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
         loginButtonSpinner = new SpinnerPane();
         loginButtonSpinner.getStyleClass().add("small-spinner-pane");
         loginButtonSpinner.setContent(btnLogin);
+
+        lblCode = new Label();
+        lblCode.getStyleClass().add("code-label");
+        lblCode.setStyle("-fx-font-family: \"" + Lang.requireNonNullElse(config().getFontFamily(), FXUtils.DEFAULT_MONOSPACE_FONT) + "\"");
 
         JFXButton btnCancel = new JFXButton(i18n("button.cancel"));
         btnCancel.getStyleClass().add("dialog-cancel");
@@ -233,8 +237,6 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
 
         FXUtils.setLimitWidth(codeBox, 170);
         FXUtils.setLimitHeight(codeBox, 40);
-
-        lblCode.setStyle("-fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: -monet-primary; -fx-font-family: \"" + Lang.requireNonNullElse(config().getFontFamily(), FXUtils.DEFAULT_MONOSPACE_FONT) + "\"");
 
         codeBox.getChildren().add(lblCode);
         devicePanel.getChildren().addAll(deviceTitle, deviceDesc, new Group(qrCode), codeBox);
