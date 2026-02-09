@@ -438,6 +438,7 @@ public class TerracottaControllerPage extends StackPane {
 
                 SpinnerPane exportLog = new SpinnerPane();
                 var exportLogInner = createLargeTitleLineButton();
+
                 exportLogInner.setLeading(SVG.OUTPUT, ICON_SIZE);
                 exportLogInner.setTitle(i18n("terracotta.export_log"));
                 exportLogInner.setSubtitle(i18n("terracotta.export_log.desc"));
@@ -551,6 +552,7 @@ public class TerracottaControllerPage extends StackPane {
         ComponentSublist locals = new ComponentSublist();
 
         var header = new LinePane();
+        header.getStyleClass().add("no-padding");
         header.setLargeTitle(true);
         header.setMinHeight(LinePane.USE_COMPUTED_SIZE);
         header.setMouseTransparent(true);
