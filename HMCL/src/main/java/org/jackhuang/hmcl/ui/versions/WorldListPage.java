@@ -22,6 +22,7 @@ import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXListView;
 import com.jfoenix.controls.JFXPopup;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -53,6 +54,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static org.jackhuang.hmcl.ui.FXUtils.determineOptimalPopupPosition;
 import static org.jackhuang.hmcl.util.StringUtils.parseColorEscapes;
@@ -67,6 +69,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
     private List<World> worlds;
     private Profile profile;
     private String instanceId;
+    private final BooleanProperty supportQuickPlay = new SimpleBooleanProperty(this, "supportQuickPlay", false);
 
     private int refreshCount = 0;
 
@@ -121,6 +124,9 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                 return;
             }
 
+            Optional<String> gameVersion = profile.getRepository().getGameVersion(instanceId);
+            supportQuickPlay.set(World.supportQuickPlay(GameVersionNumber.asGameVersion(gameVersion)));
+
             worlds = result;
             updateWorldList();
 
@@ -133,8 +139,8 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
 
     public void add() {
         FileChooser chooser = new FileChooser();
-        chooser.setTitle(i18n("world.import.choose"));
-        chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(i18n("world.extension"), "*.zip"));
+        chooser.setTitle(i18n("world.add.title"));
+        chooser.getExtensionFilters().setAll(new FileChooser.ExtensionFilter(i18n("extension.world"), "*.zip"));
         List<Path> res = FileUtils.toPaths(chooser.showOpenMultipleDialog(Controllers.getStage()));
 
         if (res == null || res.isEmpty()) return;
@@ -158,16 +164,16 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                                     refresh();
                                 }, e -> {
                                     if (e instanceof FileAlreadyExistsException)
-                                        handler.reject(i18n("world.import.failed", i18n("world.import.already_exists")));
+                                        handler.reject(i18n("world.add.failed", i18n("world.add.already_exists")));
                                     else if (e instanceof IOException && e.getCause() instanceof InvalidPathException)
-                                        handler.reject(i18n("world.import.failed", i18n("install.new_game.malformed")));
+                                        handler.reject(i18n("world.add.failed", i18n("install.new_game.malformed")));
                                     else
-                                        handler.reject(i18n("world.import.failed", e.getClass().getName() + ": " + e.getLocalizedMessage()));
+                                        handler.reject(i18n("world.add.failed", e.getClass().getName() + ": " + e.getLocalizedMessage()));
                                 }).start();
                     }, world.getWorldName(), new Validator(i18n("install.new_game.malformed"), FileUtils::isNameValid));
                 }, e -> {
                     LOG.warning("Unable to parse world file " + zipFile, e);
-                    Controllers.dialog(i18n("world.import.invalid"));
+                    Controllers.dialog(i18n("world.add.invalid"));
                 }).start();
     }
 
@@ -201,6 +207,10 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
 
     public BooleanProperty showAllProperty() {
         return showAll;
+    }
+
+    public ReadOnlyBooleanProperty supportQuickPlayProperty() {
+        return supportQuickPlay;
     }
 
     private final class WorldListPageSkin extends ToolbarListPageSkin<World, WorldListPage> {
@@ -269,6 +279,8 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                 right.setAlignment(Pos.CENTER_RIGHT);
 
                 btnLaunch = new JFXButton();
+                btnLaunch.visibleProperty().bind(page.supportQuickPlayProperty());
+                btnLaunch.managedProperty().bind(btnLaunch.visibleProperty());
                 right.getChildren().add(btnLaunch);
                 btnLaunch.getStyleClass().add("toggle-icon4");
                 btnLaunch.setGraphic(SVG.ROCKET_LAUNCH.createIcon());
@@ -286,7 +298,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                 btnMore.setOnAction(event -> {
                     World world = getItem();
                     if (world != null)
-                        showPopupMenu(world, JFXPopup.PopupHPosition.RIGHT, 0, root.getHeight());
+                        showPopupMenu(world, page.supportQuickPlayProperty().get(), JFXPopup.PopupHPosition.RIGHT, 0, root.getHeight());
                 });
             }
 
@@ -302,7 +314,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                 if (event.getButton() == MouseButton.PRIMARY)
                     page.showManagePage(world);
                 else if (event.getButton() == MouseButton.SECONDARY)
-                    showPopupMenu(world, JFXPopup.PopupHPosition.LEFT, event.getX(), event.getY());
+                    showPopupMenu(world, page.supportQuickPlayProperty().get(), JFXPopup.PopupHPosition.LEFT, event.getX(), event.getY());
             });
         }
 
@@ -340,19 +352,19 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
 
         // Popup Menu
 
-        public void showPopupMenu(World world, JFXPopup.PopupHPosition hPosition, double initOffsetX, double initOffsetY) {
+        public void showPopupMenu(World world, boolean supportQuickPlay, JFXPopup.PopupHPosition hPosition, double initOffsetX, double initOffsetY) {
             boolean worldLocked = world.isLocked();
 
             PopupMenu popupMenu = new PopupMenu();
             JFXPopup popup = new JFXPopup(popupMenu);
 
-            if (world.supportQuickPlay()) {
+            if (supportQuickPlay) {
 
                 IconedMenuItem launchItem = new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("version.launch_and_enter_world"), () -> page.launch(world), popup);
                 launchItem.setDisable(worldLocked);
-                popupMenu.getContent().add(launchItem);
 
                 popupMenu.getContent().addAll(
+                        launchItem,
                         new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), () -> page.generateLaunchScript(world), popup),
                         new MenuSeparator()
                 );
