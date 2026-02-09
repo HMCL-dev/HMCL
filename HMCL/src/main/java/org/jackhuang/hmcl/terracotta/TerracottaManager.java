@@ -36,7 +36,6 @@ import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.HttpRequest;
-import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.platform.ManagedProcess;
 import org.jackhuang.hmcl.util.platform.SystemUtils;
 
@@ -44,7 +43,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
@@ -310,11 +308,15 @@ public final class TerracottaManager {
     public static TerracottaState.HostScanning setScanning() {
         TerracottaState state = STATE_V.get();
         if (state instanceof TerracottaState.PortSpecific portSpecific) {
-            String uri = NetworkUtils.withQuery(String.format("http://127.0.0.1:%d/state/scanning", portSpecific.port), Map.of(
-                    "player", getPlayerName()
-            ));
+            Task.supplyAsync(Schedulers.io(), TerracottaNodeList::fetch)
+                    .thenComposeAsync(nodes -> {
+                        var builder = new StringBuilder("http://127.0.0.1:%d/state/scanning".formatted(portSpecific.port));
+                        for (URI node : nodes) {
+                            builder.append("&public_nodes=").append(node);
+                        }
+                        return new GetTask(builder.toString()).setSignificance(Task.TaskSignificance.MINOR);
+                    }).start();
 
-            new GetTask(uri).setSignificance(Task.TaskSignificance.MINOR).start();
             return new TerracottaState.HostScanning(-1, -1, null);
         }
         return null;
@@ -323,15 +325,17 @@ public final class TerracottaManager {
     public static Task<TerracottaState.GuestConnecting> setGuesting(String room) {
         TerracottaState state = STATE_V.get();
         if (state instanceof TerracottaState.PortSpecific portSpecific) {
-            String uri = NetworkUtils.withQuery(String.format("http://127.0.0.1:%d/state/guesting", portSpecific.port), Map.of(
-                    "room", room,
-                    "player", getPlayerName()
-            ));
-
-            return new GetTask(uri)
-                    .setSignificance(Task.TaskSignificance.MINOR)
-                    .thenSupplyAsync(() -> new TerracottaState.GuestConnecting(-1, -1, null))
-                    .setSignificance(Task.TaskSignificance.MINOR);
+            return Task.supplyAsync(Schedulers.io(), TerracottaNodeList::fetch)
+                    .thenComposeAsync(nodes -> {
+                        var builder = new StringBuilder("http://127.0.0.1:%d/state/guesting?room=%s&player=%s".formatted(portSpecific.port, room, getPlayerName()));
+                        for (URI node : nodes) {
+                            builder.append("&public_nodes=").append(node);
+                        }
+                        return new GetTask(builder.toString())
+                                .setSignificance(Task.TaskSignificance.MINOR)
+                                .thenSupplyAsync(() -> new TerracottaState.GuestConnecting(-1, -1, null))
+                                .setSignificance(Task.TaskSignificance.MINOR);
+                    });
         } else {
             return null;
         }
