@@ -42,13 +42,11 @@ public abstract class ToolbarListPageSkin<E, P extends ListPageBase<E>> extends 
     public ToolbarListPageSkin(P skinnable) {
         super(skinnable);
 
-        SpinnerPane spinnerPane = new SpinnerPane();
-        spinnerPane.loadingProperty().bind(skinnable.loadingProperty());
-        spinnerPane.failedReasonProperty().bind(skinnable.failedReasonProperty());
-        spinnerPane.onFailedActionProperty().bind(skinnable.onFailedActionProperty());
-
         ComponentList root = new ComponentList();
         root.getStyleClass().add("no-padding");
+
+        StackPane container = new StackPane();
+        container.getChildren().add(root);
         StackPane.setMargin(root, new Insets(10));
 
         List<Node> toolbarButtons = initializeToolbar(skinnable);
@@ -60,32 +58,33 @@ public abstract class ToolbarListPageSkin<E, P extends ListPageBase<E>> extends 
             root.getContent().add(toolbar);
         }
 
+        SpinnerPane spinnerPane = new SpinnerPane();
+        spinnerPane.loadingProperty().bind(skinnable.loadingProperty());
+        spinnerPane.failedReasonProperty().bind(skinnable.failedReasonProperty());
+        spinnerPane.onFailedActionProperty().bind(skinnable.onFailedActionProperty());
+
+        ComponentList.setVgrow(spinnerPane, Priority.ALWAYS);
+
         {
             this.listView = new JFXListView<>();
             this.listView.setPadding(Insets.EMPTY);
             this.listView.setCellFactory(listView -> createListCell((JFXListView<E>) listView));
-            ComponentList.setVgrow(listView, Priority.ALWAYS);
+            this.listView.getStyleClass().add("no-horizontal-scrollbar");
             Bindings.bindContent(this.listView.getItems(), skinnable.itemsProperty());
             FXUtils.ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
-            root.getContent().add(listView);
+
+            spinnerPane.setContent(listView);
         }
 
-        spinnerPane.setContent(root);
+        root.getContent().add(spinnerPane);
 
-        getChildren().setAll(spinnerPane);
-    }
-
-    public static Node wrap(Node node) {
-        StackPane stackPane = new StackPane();
-        stackPane.setAlignment(Pos.CENTER);
-        stackPane.getChildren().setAll(node);
-        return stackPane;
+        getChildren().setAll(container);
     }
 
     public static JFXButton createToolbarButton2(String text, SVG svg, Runnable onClick) {
         JFXButton ret = new JFXButton();
         ret.getStyleClass().add("jfx-tool-bar-button");
-        ret.setGraphic(wrap(svg.createIcon(20)));
+        ret.setGraphic(svg.createIcon(20));
         ret.setText(text);
         ret.setOnAction(e -> onClick.run());
         return ret;
@@ -94,7 +93,7 @@ public abstract class ToolbarListPageSkin<E, P extends ListPageBase<E>> extends 
     public static JFXButton createDecoratorButton(String tooltip, SVG svg, Runnable onClick) {
         JFXButton ret = new JFXButton();
         ret.getStyleClass().add("jfx-decorator-button");
-        ret.setGraphic(wrap(svg.createIcon(20)));
+        ret.setGraphic(svg.createIcon(20));
         FXUtils.installFastTooltip(ret, tooltip);
         ret.setOnAction(e -> onClick.run());
         return ret;

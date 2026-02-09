@@ -2,30 +2,27 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXListView;
-import javafx.beans.binding.Bindings;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.Skin;
-import javafx.scene.control.SkinBase;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
-import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.resourcepack.ResourcepackFile;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
-import org.jackhuang.hmcl.ui.Controllers;
-import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.ListPageBase;
-import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.ui.*;
+import org.jackhuang.hmcl.ui.construct.MDListCell;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.RipplerContainer;
+import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.ByteArrayInputStream;
@@ -38,7 +35,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -128,44 +124,24 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
         Controllers.navigate(Controllers.getDownloadPage());
     }
 
-    private static final class ResourcepackListPageSkin extends SkinBase<ResourcepackListPage> {
-        private final JFXListView<ResourcepackInfoObject> listView;
+    private static final class ResourcepackListPageSkin extends ToolbarListPageSkin<ResourcepackInfoObject, ResourcepackListPage> {
 
-        private ResourcepackListPageSkin(ResourcepackListPage control) {
+        public ResourcepackListPageSkin(ResourcepackListPage control) {
             super(control);
+        }
 
-            StackPane pane = new StackPane();
-            pane.setPadding(new Insets(10));
-            pane.getStyleClass().addAll("notice-pane");
-
-            ComponentList root = new ComponentList();
-            root.getStyleClass().add("no-padding");
-            listView = new JFXListView<>();
-
-            FXUtils.ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
-
-            HBox toolbar = new HBox();
-            toolbar.setAlignment(Pos.CENTER_LEFT);
-            toolbar.setPickOnBounds(false);
-            toolbar.getChildren().setAll(
-                    createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, control::refresh),
-                    createToolbarButton2(i18n("resourcepack.add"), SVG.ADD, control::onAddFiles),
-                    createToolbarButton2(i18n("resourcepack.download"), SVG.DOWNLOAD, control::onDownload)
+        @Override
+        protected List<Node> initializeToolbar(ResourcepackListPage skinnable) {
+            return List.of(
+                    createToolbarButton2(i18n("button.refresh"), SVG.REFRESH, skinnable::refresh),
+                    createToolbarButton2(i18n("resourcepack.add"), SVG.ADD, skinnable::onAddFiles),
+                    createToolbarButton2(i18n("resourcepack.download"), SVG.DOWNLOAD, skinnable::onDownload)
             );
-            root.getContent().add(toolbar);
+        }
 
-            SpinnerPane center = new SpinnerPane();
-            ComponentList.setVgrow(center, Priority.ALWAYS);
-            center.loadingProperty().bind(control.loadingProperty());
-
-            listView.setCellFactory(x -> new ResourcepackListCell(listView, control));
-            Bindings.bindContent(listView.getItems(), control.getItems());
-
-            center.setContent(listView);
-            root.getContent().add(center);
-
-            pane.getChildren().setAll(root);
-            getChildren().setAll(pane);
+        @Override
+        protected ListCell<ResourcepackInfoObject> createListCell(JFXListView<ResourcepackInfoObject> listView) {
+            return new ResourcepackListCell(listView, getSkinnable());
         }
     }
 

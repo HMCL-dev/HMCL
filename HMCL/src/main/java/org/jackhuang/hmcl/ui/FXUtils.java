@@ -312,14 +312,6 @@ public final class FXUtils {
         });
     }
 
-    public static Node wrap(Node node) {
-        return limitingSize(node, 30, 20);
-    }
-
-    public static Node wrap(SVG svg) {
-        return wrap(svg.createIcon(20));
-    }
-
     private static class ListenerPair<T> {
         private final ObservableValue<T> value;
         private final ChangeListener<? super T> listener;
