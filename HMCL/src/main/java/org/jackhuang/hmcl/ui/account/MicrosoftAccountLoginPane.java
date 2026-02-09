@@ -30,7 +30,6 @@ import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.upgrade.IntegrityChecker;
 import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 
 import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
@@ -249,25 +248,23 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
 
         loginButtonSpinner.showSpinner();
 
-        ExceptionalConsumer<MicrosoftAccount, Exception> onSuccess = (account) -> {
-            cancelAllTasks();
-            runInFX(() -> onLoginCompleted(account));
-        };
-
-        ExceptionalConsumer<Exception, Exception> onFail = (e) -> runInFX(() -> {
-            if (!(e instanceof CancellationException)) {
-                errHintPane.setText(Accounts.localizeErrorMessage(e));
+        Task.FinalizedCallbackWithResult<MicrosoftAccount> onComplete = (account, exception) -> {
+            if (exception == null) {
+                cancelAllTasks();
+                runInFX(() -> onLoginCompleted(account));
+            } else if (!(exception instanceof CancellationException)) {
+                errHintPane.setText(Accounts.localizeErrorMessage(exception));
                 errHintPane.setVisible(true);
                 authMethodsContentBox.setVisible(false);
             }
-        });
+        };
 
         browserTaskExecuter = Task.supplyAsync(() -> Accounts.FACTORY_MICROSOFT.create(null, null, null, null, OAuth.GrantFlow.AUTHORIZATION_CODE))
-                .whenComplete(Schedulers.javafx(), onSuccess, onFail)
+                .whenComplete(Schedulers.javafx(), onComplete)
                 .executor(true);
 
         deviceTaskExecuter = Task.supplyAsync(() -> Accounts.FACTORY_MICROSOFT.create(null, null, null, null, OAuth.GrantFlow.DEVICE))
-                .whenComplete(Schedulers.javafx(), onSuccess, onFail)
+                .whenComplete(Schedulers.javafx(), onComplete)
                 .executor(true);
     }
 
