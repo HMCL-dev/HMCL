@@ -160,8 +160,8 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
             // Mouse move handler for coordinate display
             setOnMouseMoved(event -> {
                 double chunkSize = getChunkSize();
-                mouseChunkX = centerChunkX + (int)((event.getX() - getWidth()/2) / chunkSize);
-                mouseChunkZ = centerChunkZ + (int)((event.getY() - getHeight()/2) / chunkSize);
+                mouseChunkX = centerChunkX + (int)((event.getX() - getWidth() / 2) / chunkSize);
+                mouseChunkZ = centerChunkZ + (int)((event.getY() - getHeight() / 2) / chunkSize);
                 coordinateLabel.setText(String.format("chunk(%d,%d)", mouseChunkX, mouseChunkZ));
             });
         }
@@ -236,7 +236,7 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
             rendering = status;
         }
 
-        public void renderMainLoop(){
+        public void renderMainLoop() {
             while (isRendering()) {
                 if (chunkColorMap.isEmpty()) continue;
 
@@ -275,7 +275,7 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
 
                 // Draw center marker
                 gc.setFill(Color.RED);
-                gc.fillOval(getWidth()/2 - 2, getHeight()/2 - 2, 4, 4);
+                gc.fillOval(getWidth() / 2 - 2, getHeight() / 2 - 2, 4, 4);
             }
         }
 
