@@ -203,8 +203,11 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
             return switch (blockName) {
                 case "minecraft:air" -> Color.rgb(0, 0, 0, 0);
                 case "minecraft:water" -> Color.rgb(64, 164, 223);
-                case "minecraft:lava" -> Color.rgb(207, 16, 32);
+                case "minecraft:lava" -> Color.rgb(240, 88, 17);
                 case "minecraft:bedrock" -> Color.rgb(54, 54, 54);
+                case "minecraft:grass_block" -> Color.rgb(127, 178, 56);
+                case "minecraft:dirt" -> Color.rgb(134, 96, 67);
+
                 default -> Color.GRAY;
             };
         }
