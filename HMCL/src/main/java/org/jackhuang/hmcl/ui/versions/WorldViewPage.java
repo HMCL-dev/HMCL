@@ -105,6 +105,7 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
             tasks.forEach((task, executor) -> {
                 executor.cancel();
             });
+            render.cancel();
             chunkColorMap.clear();
             LOG.info("Stopped rendering world view: %s".formatted(worldParser.toString()));
         }
