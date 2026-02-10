@@ -407,6 +407,14 @@ public final class World {
         return List.of();
     }
 
+    @Override
+    public String toString() {
+        return "World" + (isLocked() ? " (Locked) " : "") +
+                "{name='" + getWorldName() + "'" +
+                ",seed=" + getSeed() +
+                "}";
+    }
+
     /**
      * @author Xiaotian
      * @see <a href="https://minecraft.wiki/w/Region_file_format">The Region file format</a>
@@ -424,10 +432,12 @@ public final class World {
         public final WorldPath the_end;
 
         private final ConcurrentHashMap<Chunk, byte[]> chunkCache = new ConcurrentHashMap<>();
+        private final @NotNull World world;
 
         public WorldParser(@NotNull World world) {
             LOG.info("Parsing world(%s)[%s]".formatted(world.getGameVersion(), world.getWorldName()));
-            LOG.debug(world.getFile().toString());
+
+            this.world = world;
 
             if (Objects.requireNonNull(world.getGameVersion()).isAtLeast("26.1", "26.1-snapshot-6")) {
                 Path vanillaWorldPathRoot = world.getFile().resolve("dimensions/minecraft");
@@ -530,6 +540,14 @@ public final class World {
             byte[] data = null;
             if (!chunkCache.containsKey(chunk)) {
                 data = parseChunk(chunkX, chunkZ, worldPath);
+            }
+            return parseBlockFromChunkData(data == null ? chunkCache.get(chunk) : data, x, y, z);
+        }
+
+        public String parseBlockFromChunkData(@NotNull Chunk chunk, int x, int y, int z) {
+            byte[] data = null;
+            if (!chunkCache.containsKey(chunk)) {
+                data = parseChunk(chunk.x, chunk.z, chunk.world);
             }
             return parseBlockFromChunkData(data == null ? chunkCache.get(chunk) : data, x, y, z);
         }
@@ -684,7 +702,12 @@ public final class World {
             return the_end;
         }
 
-        private record Chunk(int x, int z, WorldPath world) {
+        @Override
+        public String toString() {
+            return world.toString();
+        }
+
+        public record Chunk(int x, int z, WorldPath world) {
             
             @Override
             public boolean equals(Object o) {

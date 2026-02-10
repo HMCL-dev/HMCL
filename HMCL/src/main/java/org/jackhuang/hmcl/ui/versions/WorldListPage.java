@@ -375,6 +375,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
             if (ChunkBaseApp.isSupported(world)) {
                 popupMenu.getContent().addAll(
                         new MenuSeparator(),
+                        new IconedMenuItem(SVG.WV_CHUNK, i18n("world.view"), () -> Controllers.navigate(new WorldViewPage(world)), popup),
                         new IconedMenuItem(SVG.EXPLORE, i18n("world.chunkbase.seed_map"), () -> ChunkBaseApp.openSeedMap(world), popup),
                         new IconedMenuItem(SVG.VISIBILITY, i18n("world.chunkbase.stronghold"), () -> ChunkBaseApp.openStrongholdFinder(world), popup),
                         new IconedMenuItem(SVG.FORT, i18n("world.chunkbase.nether_fortress"), () -> ChunkBaseApp.openNetherFortressFinder(world), popup)

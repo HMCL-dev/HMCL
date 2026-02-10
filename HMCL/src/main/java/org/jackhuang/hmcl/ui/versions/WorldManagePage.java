@@ -240,6 +240,7 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
                     JFXPopup chunkBasePopup = new JFXPopup(chunkBasePopupMenu);
 
                     chunkBasePopupMenu.getContent().addAll(
+                            new IconedMenuItem(SVG.WV_CHUNK, i18n("world.view"), () -> Controllers.navigate(new WorldViewPage(getSkinnable().world)), chunkBasePopup),
                             new IconedMenuItem(SVG.EXPLORE, i18n("world.chunkbase.seed_map"), () -> ChunkBaseApp.openSeedMap(getSkinnable().world), chunkBasePopup),
                             new IconedMenuItem(SVG.VISIBILITY, i18n("world.chunkbase.stronghold"), () -> ChunkBaseApp.openStrongholdFinder(getSkinnable().world), chunkBasePopup),
                             new IconedMenuItem(SVG.FORT, i18n("world.chunkbase.nether_fortress"), () -> ChunkBaseApp.openNetherFortressFinder(getSkinnable().world), chunkBasePopup)
