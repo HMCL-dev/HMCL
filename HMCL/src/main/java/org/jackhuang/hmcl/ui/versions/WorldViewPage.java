@@ -32,7 +32,9 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -66,19 +68,11 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
     public static class WorldViewer extends Canvas {
 
         World.WorldParser worldParser;
-        final Map<CacheChunkColorTask, AsyncTaskExecutor> tasks = new ConcurrentHashMap<>();
+        final Set<CacheChunkColorTask> tasks = new HashSet<>();
         final ConcurrentHashMap<World.WorldParser.Chunk, Color> chunkColorMap = new ConcurrentHashMap<>();
 
-        final AsyncTaskExecutor render = new AsyncTaskExecutor(new Task<Void>() {
-            @Override
-            public void execute() {
-                while (! isCancelled()) { // 由于interrupt()会被判定为任务取消，所以只能空转等待取消
-                    if (chunkColorMap.isEmpty()) continue;
-                    GraphicsContext gc = getGraphicsContext2D();
-                    // TODO: 区块渲染
-                }
-            }
-        });
+        final RenderTask renderTask = new RenderTask();
+        final AsyncTaskExecutor render = new AsyncTaskExecutor(renderTask);
 
         public WorldViewer(@NotNull World world, double width, double height, int asyncTaskCount) {
             super(width, height);
@@ -89,7 +83,7 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
             }
             for (int i = 0; i < asyncTaskCount; i++) {
                 var task = new CacheChunkColorTask();
-                tasks.put(task, new AsyncTaskExecutor(task));
+                tasks.add(task);
             }
         }
 
@@ -102,15 +96,34 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
         }
 
         public void stopRender() {
-            tasks.forEach((task, executor) -> {
-                executor.cancel();
-            });
-            render.cancel();
+            tasks.forEach(CacheChunkColorTask::stop);
+            renderTask.stop();
             chunkColorMap.clear();
             LOG.info("Stopped rendering world view: %s".formatted(worldParser.toString()));
         }
 
+        public class RenderTask extends Task<Void> {
+
+            Thread thread = null;
+
+            @Override
+            public void execute() {
+                thread = Thread.currentThread();
+                while (! isCancelled()) {
+                    if (chunkColorMap.isEmpty()) continue;
+                    GraphicsContext gc = getGraphicsContext2D();
+                    // TODO: 区块渲染
+                }
+            }
+
+            public void stop() {
+                thread.interrupt();
+            }
+        }
+
         public class CacheChunkColorTask extends Task<Void> {
+
+            Thread thread = null;
 
             public CacheChunkColorTask() {
                 super();
@@ -119,7 +132,8 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
 
             @Override
             public void execute() {
-                while (! isCancelled()) { // 由于interrupt()会被判定为任务取消，所以只能空转等待取消
+                thread = Thread.currentThread();
+                while (!isCancelled()) {
                     Map<String, Object> properties = this.getProperties();
                     if (properties.isEmpty()) continue;
                     properties.keySet().forEach(
@@ -144,21 +158,24 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
                 this.getProperties().put(chunk.toString(), chunk);
             }
 
-            static void executeAll(@NotNull Map<CacheChunkColorTask, AsyncTaskExecutor> tasks) {
+            public void stop() {
+                thread.interrupt();
+            }
+
+            static void executeAll(@NotNull Set<CacheChunkColorTask> tasks) {
                 tasks.forEach(
-                        (task, executor) -> {
-                            executor.start();
+                        task -> {
+                            (new AsyncTaskExecutor(task)).start();
                         }
                 );
             }
 
-            static void sendRequestAll(@NotNull Map<CacheChunkColorTask, AsyncTaskExecutor> tasks, World.WorldParser.Chunk @NotNull [] chunks) {
+            static void sendRequestAll(@NotNull Set<CacheChunkColorTask> tasks, World.WorldParser.Chunk @NotNull [] chunks) {
                 // 平均分配请求
-                int i = 0;
-                for (World.WorldParser.Chunk chunk : chunks) {
-                    CacheChunkColorTask task = (CacheChunkColorTask) tasks.keySet().toArray()[i % tasks.size()];
-                    task.sendRequest(chunk);
-                    i++;
+                int taskCount = tasks.size();
+                for (int i = 0; i < chunks.length; i++) {
+                    CacheChunkColorTask task = tasks.stream().skip(i % taskCount).findFirst().orElseThrow();
+                    task.sendRequest(chunks[i]);
                 }
             }
         }
