@@ -4007,6 +4007,17 @@
           "size": 27866565
         }
       }
+    },
+    "software-renderer-loader": {
+      "name": "org.glavo:llvmpipe-loader:1.0",
+      "downloads": {
+        "artifact": {
+          "path": "org/glavo/llvmpipe-loader/1.0/llvmpipe-loader-1.0.jar",
+          "url": "https://repo1.maven.org/maven2/org/glavo/llvmpipe-loader/1.0/llvmpipe-loader-1.0.jar",
+          "sha1": "ff255415e5c4b2a18970da0a8e552b557ca013ae",
+          "size": 12964773
+        }
+      }
     }
   },
   "windows-x86": {
@@ -4018,6 +4029,17 @@
           "url": "https://repo1.maven.org/maven2/org/glavo/mesa-loader-windows/25.3.5/mesa-loader-windows-25.3.5-x86.jar",
           "sha1": "cde7f92931f784461c670183f05f8abef3d9ede2",
           "size": 23309091
+        }
+      }
+    },
+    "software-renderer-loader": {
+      "name": "org.glavo:llvmpipe-loader:1.0",
+      "downloads": {
+        "artifact": {
+          "path": "org/glavo/llvmpipe-loader/1.0/llvmpipe-loader-1.0.jar",
+          "url": "https://repo1.maven.org/maven2/org/glavo/llvmpipe-loader/1.0/llvmpipe-loader-1.0.jar",
+          "sha1": "ff255415e5c4b2a18970da0a8e552b557ca013ae",
+          "size": 12964773
         }
       }
     }
