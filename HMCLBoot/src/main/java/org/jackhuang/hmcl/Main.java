@@ -107,6 +107,27 @@ public final class Main {
         System.exit(1);
     }
 
+    private static void checkOperatingSystem() {
+        String osName = System.getProperty("os.name", "").toLowerCase();
+
+        String errorMessageKey = null;
+        if (osName.contains("haiku")) {
+            errorMessageKey = "boot.unsupported_os.haiku";
+        } else if (osName.contains("os/2") || osName.contains("os2")) {
+            errorMessageKey = "boot.unsupported_os.os2";
+        }
+
+        if (errorMessageKey != null) {
+            SwingUtils.initLookAndFeel();
+            ResourceBundle resourceBundle = BootProperties.getResourceBundle();
+            String errorTitle = resourceBundle.getString("boot.message.error");
+            String errorMessage = resourceBundle.getString(errorMessageKey);
+            System.err.println("Unsupported OS: " + System.getProperty("os.name", ""));
+            SwingUtils.showErrorDialog(errorMessage, errorTitle);
+            System.exit(1);
+        }
+    }
+
     private static void checkDirectoryPath() {
         String currentDir = System.getProperty("user.dir", "");
         String jarPath = getThisJarPath();
@@ -142,6 +163,7 @@ public final class Main {
     }
 
     public static void main(String[] args) throws Throwable {
+        checkOperatingSystem();
         checkDirectoryPath();
         if (getJavaFeatureVersion(System.getProperty("java.version")) >= MINIMUM_JAVA_VERSION) {
             EntryPoint.main(args);
