@@ -199,7 +199,7 @@ public final class JavaDownloadDialog extends StackPane {
             getLinkButton.disableProperty().bind(Bindings.isNull(remoteVersionBox.getSelectionModel().selectedItemProperty()));
 
             HBox buttonBox = new HBox(8);
-            buttonBox.getChildren().addAll(downloadButton, getLinkButton);
+            buttonBox.getChildren().addAll(downloadButton);
             downloadButtonPane.getChildren().setAll(buttonBox);
 
             JFXButton cancelButton = new JFXButton(i18n("button.cancel"));
@@ -312,7 +312,7 @@ public final class JavaDownloadDialog extends StackPane {
 
             setHeading(new Label(i18n("java.download")));
             setBody(body);
-            setActions(warningLabel, downloadButtonPane, cancelButton);
+            setActions(warningLabel, getLinkButton, downloadButtonPane, cancelButton);
             if (platform.getOperatingSystem() == OperatingSystem.LINUX && platform.getArchitecture() == Architecture.RISCV64) {
                 JFXHyperlink hyperlink = new JFXHyperlink(i18n("java.download.banshanjdk-8"));
                 hyperlink.setExternalLink("https://www.zthread.cn/#product");
