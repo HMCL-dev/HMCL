@@ -48,6 +48,8 @@ import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
 import org.jackhuang.hmcl.ui.construct.DialogPane;
 import org.jackhuang.hmcl.ui.construct.JFXHyperlink;
 import org.jackhuang.hmcl.ui.wizard.SinglePageWizardProvider;
+import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.Result;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
@@ -153,18 +155,6 @@ public final class JavaDownloadDialog extends StackPane {
                 setActions(warningLabel, acceptPane, cancelButton);
         }
 
-        private Task<Void> downloadTask(GameJavaVersion javaVersion) {
-            return JavaManager.getDownloadJavaTask(downloadProvider, platform, javaVersion).whenComplete(Schedulers.javafx(), (result, exception) -> {
-                if (exception != null) {
-                    Throwable resolvedException = resolveException(exception);
-                    LOG.warning("Failed to download java", exception);
-                    if (!(resolvedException instanceof CancellationException)) {
-                        Controllers.dialog(DownloadProviders.localizeErrorMessage(resolvedException), i18n("install.failed"));
-                    }
-                }
-            });
-        }
-
         @Override
         protected void onAccept() {
             fireEvent(new DialogCloseEvent());
@@ -179,9 +169,32 @@ public final class JavaDownloadDialog extends StackPane {
             if (selectedVersions.isEmpty())
                 return;
 
-            Controllers.taskDialog(Task.allOf(selectedVersions.stream().map(this::downloadTask).toList()), i18n("download.java.process"), TaskCancellationAction.NORMAL);
-        }
+            Task<Void> task = Task.allOf(selectedVersions.stream().map(javaVersion -> JavaManager.getDownloadJavaTask(downloadProvider, platform, javaVersion).wrapResult()).toList())
+                    .thenAcceptAsync(Schedulers.javafx(), results -> {
+                        List<Throwable> exceptions = results.stream()
+                                .filter(Result::isFailure)
+                                .map(Result::getException)
+                                .map(Lang::resolveException)
+                                .filter(it -> !(it instanceof CancellationException))
+                                .toList();
+                        if (!exceptions.isEmpty()) {
+                            Throwable exception;
+                            if (exceptions.size() == 1) {
+                                exception = exceptions.get(0);
+                            } else {
+                                exception = new IOException("Failed to download Java");
+                                for (Throwable e : exceptions)
+                                    exception.addSuppressed(e);
+                            }
 
+                            LOG.warning("Failed to download java", exception);
+                            Controllers.dialog(DownloadProviders.localizeErrorMessage(exception), i18n("install.failed"));
+                        }
+
+                    });
+
+            Controllers.taskDialog(task, i18n("download.java.process"), TaskCancellationAction.NORMAL);
+        }
     }
 
     private final class DownloadDiscoJava extends JFXDialogLayout {
