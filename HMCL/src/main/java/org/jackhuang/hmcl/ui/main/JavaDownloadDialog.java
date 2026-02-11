@@ -192,7 +192,7 @@ public final class JavaDownloadDialog extends StackPane {
             this.remoteVersionBox.setConverter(FXUtils.stringConverter(JavaRemoteVersion::getDistributionVersion));
 
             this.packageTypeBox = new JFXComboBox<>(FXCollections.observableArrayList());
-            
+
             JFXButton downloadButton = new JFXButton(i18n("download"));
             downloadButton.setOnAction(e -> onDownload());
             downloadButton.getStyleClass().add("dialog-accept");
