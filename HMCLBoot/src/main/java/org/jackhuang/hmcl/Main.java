@@ -25,7 +25,6 @@ import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Paths;
 import java.security.CodeSource;
 import java.security.ProtectionDomain;
-import java.util.Locale;
 import java.util.ResourceBundle;
 
 /**
@@ -109,7 +108,7 @@ public final class Main {
     }
 
     private static void checkOperatingSystem() {
-        String osName = System.getProperty("os.name", "").toLowerCase(Locale.ROOT);
+        String osName = System.getProperty("os.name", "").toLowerCase(java.util.Locale.ROOT);
 
         String errorMessageKey = null;
         if (osName.contains("haiku")) {
