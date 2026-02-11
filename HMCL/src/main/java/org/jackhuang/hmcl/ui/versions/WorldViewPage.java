@@ -457,7 +457,7 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
                 return UNKNOWN_CHUNK_COLOR;
             }
         }
-        }
+    }
 
         /**
          * Gets the color for a specific block type.
@@ -466,60 +466,60 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
          */
         @Contract("_ -> new")
         private static WVColor getColor(@NotNull String blockName) {
-            return WVColor.fromColor(switch (blockName) {
-                case "minecraft:air" -> Color.rgb(0, 0, 0, 0);
-                case "minecraft:water" -> Color.rgb(64, 164, 223);
-                case "minecraft:ice" -> Color.rgb(131, 190, 223);
-                case "minecraft:lava" -> Color.rgb(240, 88, 17);
-                case "minecraft:bedrock" -> Color.rgb(54, 54, 54);
-                case "minecraft:grass_block" -> Color.rgb(127, 178, 56);
-                case "minecraft:dirt" -> Color.rgb(134, 96, 67);
-                case "minecraft:stone" -> Color.rgb(112, 112, 112);
-                case "minecraft:sand" -> Color.rgb(218, 210, 158);
-                case "minecraft:gravel" -> Color.rgb(136, 126, 126);
-                default -> BlockColorFilter.getColorByFilter(blockName);
-            });
+                return WVColor.fromColor(switch (blockName) {
+                    case "minecraft:air" -> Color.rgb(0, 0, 0, 0);
+                    case "minecraft:water" -> Color.rgb(64, 164, 223);
+                    case "minecraft:ice" -> Color.rgb(131, 190, 223);
+                    case "minecraft:lava" -> Color.rgb(240, 88, 17);
+                    case "minecraft:bedrock" -> Color.rgb(54, 54, 54);
+                    case "minecraft:grass_block" -> Color.rgb(127, 178, 56);
+                    case "minecraft:dirt" -> Color.rgb(134, 96, 67);
+                    case "minecraft:stone" -> Color.rgb(112, 112, 112);
+                    case "minecraft:sand" -> Color.rgb(218, 210, 158);
+                    case "minecraft:gravel" -> Color.rgb(136, 126, 126);
+                    default -> BlockColorFilter.getColorByFilter(blockName);
+                });
+            }
+
+    public static final class WVColor {
+        private final Color color;
+
+        private WVColor(int r, int g, int b, int a) {
+            if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255 || a < 0 || a > 1) {
+                color = null;
+            } else {
+                color = Color.rgb(r, g, b, a);
+            }
         }
 
-        public static final class WVColor {
-            private final Color color;
-
-            private WVColor(int r, int g, int b, int a) {
-                if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255 || a < 0 || a > 1) {
-                    color = null;
-                } else {
-                    color = Color.rgb(r, g, b, a);
-                }
-            }
-
-            @Contract(value = "_, _, _ -> new", pure = true)
-            private static @NotNull WVColor rgb(int r, int g, int b) {
-                return new WVColor(r, g, b, 1);
-            }
-
-            @Contract(value = "_, _, _, _ -> new", pure = true)
-            private static @NotNull WVColor rgb(int r, int g, int b, int a) {
-                return new WVColor(r, g, b, a);
-            }
-
-            @Contract("_ -> new")
-            private static @NotNull WVColor fromColor(Color color) {
-                if (color == null) return UNKNOWN_CHUNK_COLOR;
-                return new WVColor(
-                        (int)(color.getRed() * 255),
-                        (int)(color.getGreen() * 255),
-                        (int)(color.getBlue() * 255),
-                        (int)(color.getOpacity())
-                );
-            }
-
-            private Color get() {
-                return color;
-            }
-
-            public boolean isNormalColor() {
-                return color != null;
+        @Contract(value = "_, _, _ -> new", pure = true)
+        private static @NotNull WVColor rgb(int r, int g, int b) {
+            return new WVColor(r, g, b, 1);
         }
+
+        @Contract(value = "_, _, _, _ -> new", pure = true)
+        private static @NotNull WVColor rgb(int r, int g, int b, int a) {
+            return new WVColor(r, g, b, a);
+        }
+
+        @Contract("_ -> new")
+        private static @NotNull WVColor fromColor(Color color) {
+            if (color == null) return UNKNOWN_CHUNK_COLOR;
+            return new WVColor(
+                    (int)(color.getRed() * 255),
+                    (int)(color.getGreen() * 255),
+                    (int)(color.getBlue() * 255),
+                    (int)(color.getOpacity())
+            );
+        }
+
+        private Color get() {
+            return color;
+        }
+
+        public boolean isNormalColor() {
+            return color != null;
+    }
     }
 
     public static class Skin extends DecoratorAnimatedPageSkin<WorldViewPage> {
