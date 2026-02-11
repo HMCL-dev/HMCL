@@ -411,13 +411,14 @@ public class JFXCustomColorPickerDialog extends StackPane {
         dialog.setMinHeight(minHeight);
     }
 
+    private static final Pattern COLOR_CHAR_PATTERN = Pattern.compile("[0-9a-zA-Z#(),%.\\s]*");
+
     private static TextFormatter<String> colorCharFormatter() {
-        var pattern = Pattern.compile("[0-9a-zA-Z#(),%.\\s]*");
         return new TextFormatter<>(change -> {
             if (!change.isContentChange()) return change;
 
             String ins = StringUtils.toHalfWidth(change.getText());
-            if (!pattern.matcher(ins).matches()) return null;
+            if (!COLOR_CHAR_PATTERN.matcher(ins).matches()) return null;
             String full = StringUtils.toHalfWidth(change.getControlNewText());
             long h = full.chars().filter(c -> c == '#').count();
             if (h > 1 || (h == 1 && full.indexOf('#') != 0)) return null;
