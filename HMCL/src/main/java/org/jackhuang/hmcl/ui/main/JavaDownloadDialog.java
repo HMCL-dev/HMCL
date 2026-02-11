@@ -194,9 +194,8 @@ public final class JavaDownloadDialog extends StackPane {
             downloadButton.getStyleClass().add("dialog-accept");
             downloadButton.disableProperty().bind(Bindings.isNull(remoteVersionBox.getSelectionModel().selectedItemProperty()));
             
-            JFXButton getLinkButton = new JFXButton(i18n("button.get_link"));
+            JFXHyperlink getLinkButton = new JFXHyperlink(i18n("button.get_link"));
             getLinkButton.setOnAction(e -> onGetLink());
-            getLinkButton.getStyleClass().add("dialog-accept");
             getLinkButton.disableProperty().bind(Bindings.isNull(remoteVersionBox.getSelectionModel().selectedItemProperty()));
 
             HBox buttonBox = new HBox(8);
