@@ -34,14 +34,17 @@ import javafx.geometry.Insets;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Tab;
+import javafx.scene.control.TextFormatter;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.stage.*;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.setting.StyleSheets;
+import org.jackhuang.hmcl.util.StringUtils;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Pattern;
 
 /**
  * @author Shadi Shaheen
@@ -95,14 +98,17 @@ public class JFXCustomColorPickerDialog extends StackPane {
 
         rgbField.getStyleClass().add("custom-color-field");
         rgbField.setPromptText("RGB Color");
+        rgbField.setTextFormatter(colorCharFormatter());
         rgbField.textProperty().addListener((o, oldVal, newVal) -> updateColorFromUserInput(newVal));
 
         hsbField.getStyleClass().add("custom-color-field");
         hsbField.setPromptText("HSB Color");
+        hsbField.setTextFormatter(colorCharFormatter());
         hsbField.textProperty().addListener((o, oldVal, newVal) -> updateColorFromUserInput(newVal));
 
         hexField.getStyleClass().add("custom-color-field");
         hexField.setPromptText("#HEX Color");
+        hexField.setTextFormatter(colorCharFormatter());
         hexField.textProperty().addListener((o, oldVal, newVal) -> updateColorFromUserInput(newVal));
 
         StackPane tabContent = new StackPane();
@@ -403,5 +409,21 @@ public class JFXCustomColorPickerDialog extends StackPane {
         double minHeight = Math.max(0, computeMinHeight(getWidth()) + (dialog.getHeight() - customScene.getHeight()));
         dialog.setMinWidth(minWidth);
         dialog.setMinHeight(minHeight);
+    }
+
+    private static final Pattern COLOR_CHAR_PATTERN = Pattern.compile("[0-9a-zA-Z#(),%.\\s]*");
+
+    private static TextFormatter<String> colorCharFormatter() {
+        return new TextFormatter<>(change -> {
+            if (!change.isContentChange()) return change;
+
+            String ins = StringUtils.toHalfWidth(change.getText());
+            if (!COLOR_CHAR_PATTERN.matcher(ins).matches()) return null;
+            String full = StringUtils.toHalfWidth(change.getControlNewText());
+            long h = full.chars().filter(c -> c == '#').count();
+            if (h > 1 || (h == 1 && full.indexOf('#') != 0)) return null;
+            change.setText(ins);
+            return change;
+        });
     }
 }
