@@ -1,7 +1,7 @@
 # Localization
 
 <!-- #BEGIN LANGUAGE_SWITCHER -->
-**English** | [中文](Localization_zh.md)
+**English** | 中文 ([简体](Localization_zh.md), [繁體](Localization_zh_Hant.md))
 <!-- #END LANGUAGE_SWITCHER -->
 
 HMCL provides localization support for multiple languages.

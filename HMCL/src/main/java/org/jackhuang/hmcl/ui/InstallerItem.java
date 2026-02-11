@@ -194,8 +194,9 @@ public class InstallerItem extends Control {
             mutualIncompatible(incompatibleMap, forge, fabric, quilt, neoForge, cleanroom, legacyfabric);
             addIncompatibles(incompatibleMap, liteLoader, fabric, quilt, neoForge, cleanroom, legacyfabric);
             addIncompatibles(incompatibleMap, optiFine, fabric, quilt, neoForge, cleanroom, liteLoader, legacyfabric);
-            addIncompatibles(incompatibleMap, fabricApi, forge, quiltApi, neoForge, liteLoader, optiFine, cleanroom, legacyfabricApi, legacyfabricApi);
+            addIncompatibles(incompatibleMap, fabricApi, forge, quiltApi, neoForge, liteLoader, optiFine, cleanroom, legacyfabric, legacyfabricApi);
             addIncompatibles(incompatibleMap, quiltApi, forge, fabric, fabricApi, neoForge, liteLoader, optiFine, cleanroom, legacyfabric, legacyfabricApi);
+            addIncompatibles(incompatibleMap, legacyfabricApi, forge, fabric, fabricApi, neoForge, liteLoader, optiFine, cleanroom, quilt, quiltApi);
 
             for (Map.Entry<InstallerItem, Set<InstallerItem>> entry : incompatibleMap.entrySet()) {
                 InstallerItem item = entry.getKey();
@@ -283,11 +284,15 @@ public class InstallerItem extends Control {
             }
             pane.getStyleClass().add("installer-item");
             RipplerContainer container = new RipplerContainer(pane);
-            container.setPosition(JFXRippler.RipplerPos.FRONT);
-            getChildren().setAll(container);
+            container.setPosition(JFXRippler.RipplerPos.BACK);
+            StackPane paneWrapper = new StackPane();
+            paneWrapper.getStyleClass().add("installer-item-wrapper");
+            paneWrapper.getChildren().setAll(container);
+            getChildren().setAll(paneWrapper);
 
             pane.pseudoClassStateChanged(LIST_ITEM, control.style == Style.LIST_ITEM);
             pane.pseudoClassStateChanged(CARD, control.style == Style.CARD);
+            paneWrapper.pseudoClassStateChanged(CARD, control.style == Style.CARD);
 
             if (control.iconType != null) {
                 ImageView view = new ImageView(control.iconType.getIcon());

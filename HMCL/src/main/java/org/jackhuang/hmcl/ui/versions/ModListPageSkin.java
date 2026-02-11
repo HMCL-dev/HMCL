@@ -102,6 +102,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         ComponentList root = new ComponentList();
         root.getStyleClass().add("no-padding");
         listView = new JFXListView<>();
+        listView.getStyleClass().add("no-horizontal-scrollbar");
 
         {
             toolbarPane = new TransitionPane();
@@ -199,7 +200,6 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         {
             SpinnerPane center = new SpinnerPane();
             ComponentList.setVgrow(center, Priority.ALWAYS);
-            center.getStyleClass().add("large-spinner-pane");
             center.loadingProperty().bind(skinnable.loadingProperty());
 
             listView.setCellFactory(x -> new ModInfoListCell(listView));
@@ -581,15 +581,15 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             imageView.setImage(VersionIconType.COMMAND.getIcon());
 
             restoreButton.getStyleClass().add("toggle-icon4");
-            restoreButton.setGraphic(FXUtils.limitingSize(SVG.RESTORE.createIcon(24), 24, 24));
+            restoreButton.setGraphic(SVG.RESTORE.createIcon());
 
             FXUtils.installFastTooltip(restoreButton, i18n("mods.restore"));
 
             revealButton.getStyleClass().add("toggle-icon4");
-            revealButton.setGraphic(FXUtils.limitingSize(SVG.FOLDER.createIcon(24), 24, 24));
+            revealButton.setGraphic(SVG.FOLDER.createIcon());
 
             infoButton.getStyleClass().add("toggle-icon4");
-            infoButton.setGraphic(FXUtils.limitingSize(SVG.INFO.createIcon(24), 24, 24));
+            infoButton.setGraphic(SVG.INFO.createIcon());
 
             container.getChildren().setAll(checkBox, imageView, content, restoreButton, revealButton, infoButton);
 

@@ -71,10 +71,9 @@ public class AdvancedListBox extends ScrollPane {
     private AdvancedListItem createNavigationDrawerItem(String title, SVG leftGraphic) {
         AdvancedListItem item = new AdvancedListItem();
         item.getStyleClass().add("navigation-drawer-item");
-        item.setActionButtonVisible(false);
         item.setTitle(title);
         if (leftGraphic != null) {
-            item.setLeftGraphic(FXUtils.wrap(leftGraphic));
+            item.setLeftIcon(leftGraphic);
         }
         return item;
     }
@@ -101,19 +100,22 @@ public class AdvancedListBox extends ScrollPane {
         return add(item);
     }
 
+    @SuppressWarnings("SuspiciousNameCombination")
     public AdvancedListBox addNavigationDrawerTab(TabHeader tabHeader, TabControl.Tab<?> tab, String title,
                                                   SVG unselectedGraphic, SVG selectedGraphic) {
         AdvancedListItem item = createNavigationDrawerItem(title, null);
         item.activeProperty().bind(tabHeader.getSelectionModel().selectedItemProperty().isEqualTo(tab));
         item.setOnAction(e -> tabHeader.select(tab));
 
-        Node unselectedIcon = unselectedGraphic.createIcon(20);
-        Node selectedIcon = selectedGraphic.createIcon(20);
+        Node unselectedIcon = unselectedGraphic.createIcon(AdvancedListItem.LEFT_ICON_SIZE);
+        Node selectedIcon = selectedGraphic.createIcon(AdvancedListItem.LEFT_ICON_SIZE);
 
         TransitionPane leftGraphic = new TransitionPane();
+        AdvancedListItem.setAlignment(leftGraphic, Pos.CENTER);
+        leftGraphic.setMouseTransparent(true);
         leftGraphic.setAlignment(Pos.CENTER);
-        FXUtils.setLimitWidth(leftGraphic, 30);
-        FXUtils.setLimitHeight(leftGraphic, 20);
+        FXUtils.setLimitWidth(leftGraphic, AdvancedListItem.LEFT_GRAPHIC_SIZE);
+        FXUtils.setLimitHeight(leftGraphic, AdvancedListItem.LEFT_ICON_SIZE);
         leftGraphic.setPadding(Insets.EMPTY);
         leftGraphic.setContent(item.isActive() ? selectedIcon : unselectedIcon, ContainerAnimations.NONE);
         FXUtils.onChange(item.activeProperty(), active ->

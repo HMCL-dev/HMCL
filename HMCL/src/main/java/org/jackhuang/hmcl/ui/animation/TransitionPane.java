@@ -82,7 +82,9 @@ public class TransitionPane extends StackPane {
                     duration, interpolator);
             newAnimation.setOnFinished(e -> {
                 setMouseTransparent(false);
-                getChildren().remove(previousNode);
+                if (previousNode != currentNode) {
+                    getChildren().remove(previousNode);
+                }
 
                 if (cacheHint != null) {
                     newView.setCache(false);

@@ -17,6 +17,7 @@
  */
 package org.jackhuang.hmcl.theme;
 
+import com.sun.jna.Pointer;
 import javafx.beans.Observable;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
@@ -24,7 +25,10 @@ import javafx.beans.binding.ObjectBinding;
 import javafx.beans.binding.ObjectExpression;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.event.EventHandler;
 import javafx.scene.paint.Color;
+import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import org.glavo.monetfx.Brightness;
 import org.glavo.monetfx.ColorScheme;
 import org.glavo.monetfx.Contrast;
@@ -32,13 +36,23 @@ import org.glavo.monetfx.beans.property.ColorSchemeProperty;
 import org.glavo.monetfx.beans.property.ReadOnlyColorSchemeProperty;
 import org.glavo.monetfx.beans.property.SimpleColorSchemeProperty;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.ui.WindowsNativeUtils;
+import org.jackhuang.hmcl.util.platform.NativeUtils;
+import org.jackhuang.hmcl.util.platform.OSVersion;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.SystemUtils;
+import org.jackhuang.hmcl.util.platform.windows.Dwmapi;
+import org.jackhuang.hmcl.util.platform.windows.WinConstants;
+import org.jackhuang.hmcl.util.platform.windows.WinReg;
+import org.jackhuang.hmcl.util.platform.windows.WinTypes;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
+import java.nio.file.Path;
+import java.time.Duration;
+import java.util.*;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// @author Glavo
 public final class Themes {
@@ -65,7 +79,7 @@ public final class Themes {
                     if (FXUtils.DARK_MODE != null) {
                         yield FXUtils.DARK_MODE.get() ? Brightness.DARK : Brightness.LIGHT;
                     } else {
-                        yield Brightness.DEFAULT;
+                        yield getDefaultBrightness();
                     }
                 }
                 case "dark" -> Brightness.DARK;
@@ -95,6 +109,66 @@ public final class Themes {
         };
         listener.changed(theme, null, theme.get());
         theme.addListener(listener);
+    }
+
+    private static Brightness defaultBrightness;
+
+    private static Brightness getDefaultBrightness() {
+        if (defaultBrightness != null)
+            return defaultBrightness;
+
+        LOG.info("Detecting system theme brightness");
+        Brightness brightness = Brightness.DEFAULT;
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+            WinReg reg = WinReg.INSTANCE;
+            if (reg != null) {
+                Object appsUseLightTheme = reg.queryValue(WinReg.HKEY.HKEY_CURRENT_USER, "Software\\Microsoft\\Windows\\CurrentVersion\\Themes\\Personalize", "AppsUseLightTheme");
+                if (appsUseLightTheme instanceof Integer value) {
+                    brightness = value == 0 ? Brightness.DARK : Brightness.LIGHT;
+                }
+            }
+        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+            try {
+                String result = SystemUtils.run("/usr/bin/defaults", "read", "-g", "AppleInterfaceStyle").trim();
+                brightness = "Dark".equalsIgnoreCase(result) ? Brightness.DARK : Brightness.LIGHT;
+            } catch (Exception e) {
+                // If the key does not exist, it means Light mode is used
+                brightness = Brightness.LIGHT;
+            }
+        } else if (OperatingSystem.CURRENT_OS == OperatingSystem.LINUX) {
+            Path dbusSend = SystemUtils.which("dbus-send");
+            if (dbusSend != null) {
+                try {
+                    String[] result = SystemUtils.run(List.of(
+                            FileUtils.getAbsolutePath(dbusSend),
+                            "--session",
+                            "--print-reply=literal",
+                            "--reply-timeout=1000",
+                            "--dest=org.freedesktop.portal.Desktop",
+                            "/org/freedesktop/portal/desktop",
+                            "org.freedesktop.portal.Settings.Read",
+                            "string:org.freedesktop.appearance",
+                            "string:color-scheme"
+                    ), Duration.ofSeconds(2)).trim().split(" ");
+
+                    if (result.length > 0) {
+                        String value = result[result.length - 1];
+                        // 1: prefer dark
+                        // 2: prefer light
+                        if ("1".equals(value)) {
+                            brightness = Brightness.DARK;
+                        } else if ("2".equals(value)) {
+                            brightness = Brightness.LIGHT;
+                        }
+                    }
+                } catch (Exception e) {
+                    LOG.warning("Failed to get system theme from D-Bus", e);
+                }
+            }
+        }
+        LOG.info("Detected system theme brightness: " + brightness);
+
+        return defaultBrightness = brightness;
     }
 
     public static ObjectExpression<Theme> themeProperty() {
@@ -127,6 +201,39 @@ public final class Themes {
 
     public static BooleanBinding darkModeProperty() {
         return darkMode;
+    }
+
+    public static void applyNativeDarkMode(Stage stage) {
+        if (OperatingSystem.SYSTEM_VERSION.isAtLeast(OSVersion.WINDOWS_11) && NativeUtils.USE_JNA && Dwmapi.INSTANCE != null) {
+            ChangeListener<Boolean> listener = FXUtils.onWeakChange(Themes.darkModeProperty(), darkMode -> {
+                if (stage.isShowing()) {
+                    WindowsNativeUtils.getWindowHandle(stage).ifPresent(handle -> {
+                        if (handle == WinTypes.HANDLE.INVALID_VALUE)
+                            return;
+
+                        Dwmapi.INSTANCE.DwmSetWindowAttribute(
+                                new WinTypes.HANDLE(Pointer.createConstant(handle)),
+                                WinConstants.DWMWA_USE_IMMERSIVE_DARK_MODE,
+                                new WinTypes.BOOLByReference(new WinTypes.BOOL(darkMode)),
+                                WinTypes.BOOL.SIZE
+                        );
+                    });
+                }
+            });
+            stage.getProperties().put("Themes.applyNativeDarkMode.listener", listener);
+
+            if (stage.isShowing()) {
+                listener.changed(null, false, Themes.darkModeProperty().get());
+            } else {
+                stage.addEventFilter(WindowEvent.WINDOW_SHOWN, new EventHandler<>() {
+                    @Override
+                    public void handle(WindowEvent event) {
+                        stage.removeEventFilter(WindowEvent.WINDOW_SHOWN, this);
+                        listener.changed(null, false, Themes.darkModeProperty().get());
+                    }
+                });
+            }
+        }
     }
 
     private Themes() {

@@ -129,13 +129,13 @@ public final class Versions {
     }
 
     public static CompletableFuture<String> renameVersion(Profile profile, String version) {
-        return Controllers.prompt(i18n("version.manage.rename.message"), (newName, resolve, reject) -> {
+        return Controllers.prompt(i18n("version.manage.rename.message"), (newName, handler) -> {
             if (newName.equals(version)) {
-                resolve.run();
+                handler.resolve();
                 return;
             }
             if (profile.getRepository().renameVersion(version, newName)) {
-                resolve.run();
+                handler.resolve();
                 profile.getRepository().refreshVersionsAsync()
                         .thenRunAsync(Schedulers.javafx(), () -> {
                             if (profile.getRepository().hasVersion(newName)) {
@@ -143,7 +143,7 @@ public final class Versions {
                             }
                         }).start();
             } else {
-                reject.accept(i18n("version.manage.rename.fail"));
+                handler.reject(i18n("version.manage.rename.fail"));
             }
         }, version, new Validator(i18n("install.new_game.malformed"), HMCLGameRepository::isValidVersionId),
             new Validator(i18n("install.new_game.already_exists"), newVersionName -> !profile.getRepository().versionIdConflicts(newVersionName) || newVersionName.equals(version)));
@@ -159,16 +159,16 @@ public final class Versions {
 
     public static void duplicateVersion(Profile profile, String version) {
         Controllers.prompt(
-                new PromptDialogPane.Builder(i18n("version.manage.duplicate.prompt"), (res, resolve, reject) -> {
+                new PromptDialogPane.Builder(i18n("version.manage.duplicate.prompt"), (res, handler) -> {
                     String newVersionName = ((PromptDialogPane.Builder.StringQuestion) res.get(1)).getValue();
                     boolean copySaves = ((PromptDialogPane.Builder.BooleanQuestion) res.get(2)).getValue();
                     Task.runAsync(() -> profile.getRepository().duplicateVersion(version, newVersionName, copySaves))
                             .thenComposeAsync(profile.getRepository().refreshVersionsAsync())
                             .whenComplete(Schedulers.javafx(), (result, exception) -> {
                                 if (exception == null) {
-                                    resolve.run();
+                                    handler.resolve();
                                 } else {
-                                    reject.accept(StringUtils.getStackTrace(exception));
+                                    handler.reject(StringUtils.getStackTrace(exception));
                                     if (!profile.getRepository().versionIdConflicts(newVersionName)) {
                                         profile.getRepository().removeVersionFromDisk(newVersionName);
                                     }

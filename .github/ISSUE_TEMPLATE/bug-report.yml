@@ -9,15 +9,15 @@ body:
       value: |
         提交前请确认：
 
-        * 该问题确实是 **HMCL 的错误**，而**不是 Minecraft 非正常退出**，如果你的 Minecraft 非正常退出，请前往 [QQ 群](https://docs.hmcl.net/groups.html)/[Discord 服务器](https://discord.gg/jVvC7HfM6U) 获取帮助。
-        * 你的启动器版本是**最新的预览版本**，可以点击 [此处](https://zkitefly.github.io/HMCL-Snapshot-Update/) 下载最新预览版本。
+        * 该问题确实是 **HMCL 的错误**，而**不是 Minecraft 非正常退出**。如果你的 Minecraft 非正常退出，请前往 [QQ 群](https://docs.hmcl.net/groups.html)/[Discord 服务器](https://discord.gg/jVvC7HfM6U) 获取帮助。
+        * 你的启动器版本是**最新的预览版本**。你可以从 [GitHub Actions](https://github.com/HMCL-dev/HMCL/actions/workflows/gradle.yml?query=branch%3Amain+event%3Apush) 或 [nightly.link](https://nightly.link/HMCL-dev/HMCL/workflows/gradle/main) 下载最新预览版本。
 
         如果你的问题并不属于上述两类，你可以选取另一种 Issue 类型，或者直接前往 [QQ 群](https://docs.hmcl.net/groups.html)/[Discord 服务器](https://discord.gg/jVvC7HfM6U) 获取帮助。
 
         Before submitting, please confirm:
 
         * The issue is indeed **a bug of HMCL**, not **Minecraft abnormal exit**. If your Minecraft exits abnormally, please go to the [QQ group](https://docs.hmcl.net/groups.html) or [Discord server](https://discord.gg/jVvC7HfM6U) for help.
-        * Your launcher is the **latest nightly build**. You can click [here](https://zkitefly.github.io/HMCL-Snapshot-Update/en) to download the latest nightly build.
+        * Your launcher is the **latest nightly build**. You can download the latest nightly build from [GitHub Actions](https://github.com/HMCL-dev/HMCL/actions/workflows/gradle.yml?query=branch%3Amain+event%3Apush) or [nightly.link](https://nightly.link/HMCL-dev/HMCL/workflows/gradle/main).
 
         If your issue does not fall into the above two categories, you can choose another type of issue or directly go to the [QQ group](https://docs.hmcl.net/groups.html) or [Discord server](https://discord.gg/jVvC7HfM6U) for help.
   - type: textarea
@@ -38,7 +38,7 @@ body:
     attributes:
       label: 启动器崩溃报告 / 启动器日志文件 | Launcher Crash Report / Launcher Log File
       description: |
-        如果你的启动器崩溃了，请将崩溃报告填入（或将文件拖入）下方。
+        如果你的启动器崩溃了，请将崩溃报告填入 (或将文件拖入) 下方。
         如果你的启动器没有崩溃，请在遇到问题后**不要退出启动器**，在启动器的 “设置 → 通用 → 调试” 一栏中点击 “导出启动器日志”，并将导出的日志拖到下方的输入栏中。
         **请注意：启动器崩溃报告或日志文件是诊断问题的重要依据，请务必上传！**
         
