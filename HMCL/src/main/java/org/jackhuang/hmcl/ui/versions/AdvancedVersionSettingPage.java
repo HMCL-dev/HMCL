@@ -170,6 +170,7 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
             rendererPane = new LineSelectButton<>();
             rendererPane.setTitle(i18n("settings.advanced.renderer"));
             rendererPane.setConverter(e -> i18n("settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT)));
+            rendererPane.setDescriptionConverter(e -> i18n("settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT) + ".desc"));
             rendererPane.setItems(Renderer.values());
 
             noJVMArgsPane = new LineToggleButton();
