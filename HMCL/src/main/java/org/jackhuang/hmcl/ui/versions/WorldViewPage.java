@@ -317,9 +317,6 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
                         continue;
                     }
 
-//                    int maxY = chunk.world() == worldParser.overworld && Objects.requireNonNullElse(worldParser.world.getGameVersion(), GameVersionNumber.asGameVersion("1.20.1")).isAtLeast("1.17", "21w06a") ? 319 : 255;
-//                    int minY = chunk.world() == worldParser.overworld && Objects.requireNonNullElse(worldParser.world.getGameVersion(), GameVersionNumber.asGameVersion("1.20.1")).isAtLeast("1.17", "21w06a") ? -64 : 0;
-
                     // Process chunk if not already cached
                     if (!chunkColorMap.containsKey(chunk)) {
                         WVColor[] chunkColors = new WVColor[256];
@@ -327,8 +324,7 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
                         try {
                             for (int x = 0; x < 16; x++) {
                                 for (int z = 0; z < 16; z++) {
-//                                    int y = worldParser.getTheHighestNonAirBlock(chunk, x, z, maxY, minY);
-                                    int y = 63;
+                                    int y = worldParser.getTheHighestNonAirBlock(chunk, x, z);
                                     chunkColors[x * 16 + z] = getColor(worldParser.parseBlockFromChunkData(chunk, x, y != Integer.MIN_VALUE ? y : 64, z));
                                 }
                             }

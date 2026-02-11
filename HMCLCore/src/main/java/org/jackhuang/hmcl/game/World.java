@@ -697,11 +697,9 @@ public final class World {
          * @param chunk 区块对象
          * @param x 区块内X坐标 (0-15)
          * @param z 区块内Z坐标 (0-15)
-         * @param maxY 搜索的最高Y坐标（包含）
-         * @param minY 搜索的最低Y坐标（包含）
          * @return 最高非空气方块的Y坐标，如果没有找到则返回Integer.MIN_VALUE
          */
-        public int getTheHighestNonAirBlock(Chunk chunk, int x, int z, int maxY, int minY) {
+        public int getTheHighestNonAirBlock(Chunk chunk, int x, int z) {
             x &= 15;
             z &= 15;
 
@@ -754,7 +752,7 @@ public final class World {
                     }
 
                     // 在当前section内从最高处向最低处搜索
-                    for (int localY = maxY; localY >= minY; localY--) {
+                    for (int localY = 15; localY >= 0; localY--) {
                         String blockName = getBlockNameAtPosition(palette, dataArray, x, localY, z);
 
                         if (blockName != null && !isAirBlock(blockName)) {
@@ -768,12 +766,6 @@ public final class World {
             } catch (IOException e) {
                 return Integer.MIN_VALUE;
             }
-        }
-
-        public int getTheHighestNonAirBlock(@NotNull Chunk chunk, int x, int z) {
-            int maxY = chunk.world == overworld && Objects.requireNonNullElse(world.getGameVersion(), GameVersionNumber.asGameVersion("1.20.1")).isAtLeast("1.17", "21w06a") ? 319 : 255;
-            int minY = chunk.world == overworld && Objects.requireNonNullElse(world.getGameVersion(), GameVersionNumber.asGameVersion("1.20.1")).isAtLeast("1.17", "21w06a") ? -64 : 0;
-            return getTheHighestNonAirBlock(chunk, x, z, maxY, minY);
         }
 
         /**
