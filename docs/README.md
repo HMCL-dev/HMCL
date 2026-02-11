@@ -4,7 +4,7 @@
     <img src="/HMCL/src/main/resources/assets/img/icon@8x.png" alt="HMCL Logo" width="64"/>
 </div>
 
-<h1 align="center">Hello Minecraft! Launcher</h1>
+<h1 align="center">Hello Minecraft! Launcher Plus Plus</h1>
 <!-- #END BLOCK -->
 
 <!-- #BEGIN BLOCK -->
@@ -60,7 +60,7 @@ Before contributing, please read the [Contributing Guide](./Contributing.md), wh
 
 ## Contributors
 
-Since 2015, more than 110 contributors have participated in HMCL. Thank you for your hard work!
+Since 2015, more than 110 contributors have participated in HMCL++. Thank you for your hard work!
 
 [![Contributors](https://contrib.rocks/image?repo=HMCL-dev/HMCL)](https://github.com/HMCL-dev/HMCL/graphs/contributors)
 
