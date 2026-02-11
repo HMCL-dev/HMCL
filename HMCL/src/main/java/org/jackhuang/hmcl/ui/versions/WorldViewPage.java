@@ -35,7 +35,6 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -329,7 +328,7 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
                             for (int x = 0; x < 16; x++) {
                                 for (int z = 0; z < 16; z++) {
 //                                    int y = worldParser.getTheHighestNonAirBlock(chunk, x, z, maxY, minY);
-                                    int y = 64;
+                                    int y = 63;
                                     chunkColors[x * 16 + z] = getColor(worldParser.parseBlockFromChunkData(chunk, x, y != Integer.MIN_VALUE ? y : 64, z));
                                 }
                             }
