@@ -335,7 +335,7 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
                                 chunkColorMap.put(chunk, UNGENERATED_CHUNK_COLOR);
                             } else if (e.getCause() instanceof RuntimeException runtimeException) { // ignore known exceptions related to missing or incomplete chunk data
                                 if (! runtimeException.getMessage().equals("Broken file head.")
-                                && ! runtimeException.getMessage().equals("Region file does not exists.")) {
+                                    && ! runtimeException.getMessage().equals("Region file does not exists.")) {
                                     LOG.warning("An unexpected exception occurred while parsing chunk data", e);
                                 }
                             }
