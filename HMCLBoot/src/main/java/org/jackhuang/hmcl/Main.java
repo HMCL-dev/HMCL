@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl;
 
 import org.jackhuang.hmcl.util.SwingUtils;
+import org.jackhuang.hmcl.util.WineDetector;
 
 import javax.swing.*;
 import java.net.URISyntaxException;
@@ -125,6 +126,17 @@ public final class Main {
         }
     }
 
+    private static void checkWine() {
+        if (WineDetector.isRunningUnderWine()) {
+            SwingUtils.initLookAndFeel();
+            ResourceBundle resourceBundle = BootProperties.getResourceBundle();
+            String warningTitle = resourceBundle.getString("boot.message.warning");
+            String warningMessage = resourceBundle.getString("boot.wine_warning");
+            System.err.println("HMCL is running under Wine or its distributions!");
+            SwingUtils.showWarningDialog(warningMessage, warningTitle);
+        }
+    }
+
     private static String getThisJarPath() {
         ProtectionDomain protectionDomain = Main.class.getProtectionDomain();
         if (protectionDomain == null)
@@ -143,6 +155,7 @@ public final class Main {
 
     public static void main(String[] args) throws Throwable {
         checkDirectoryPath();
+        checkWine();
         if (getJavaFeatureVersion(System.getProperty("java.version")) >= MINIMUM_JAVA_VERSION) {
             EntryPoint.main(args);
         } else {
