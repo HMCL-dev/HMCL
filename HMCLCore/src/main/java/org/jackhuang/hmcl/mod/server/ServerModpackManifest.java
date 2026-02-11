@@ -27,9 +27,9 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.TolerableValidationException;
 import org.jackhuang.hmcl.util.gson.Validation;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 
@@ -126,7 +126,7 @@ public class ServerModpackManifest implements ModpackManifest, Validation {
                 .orElseThrow(() -> new IOException("Cannot find game version")).getVersion();
         return new Modpack(name, author, version, gameVersion, description, encoding, this) {
             @Override
-            public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, File zipFile, String name) {
+            public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, String name, String iconUrl) {
                 return new ServerModpackLocalInstallTask(dependencyManager, zipFile, this, ServerModpackManifest.this, name);
             }
         };

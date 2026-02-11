@@ -18,27 +18,30 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXPopup;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
+import javafx.application.Platform;
+import javafx.beans.property.*;
 import javafx.geometry.Insets;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.game.World;
+import org.jackhuang.hmcl.setting.Profile;
+import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.ChunkBaseApp;
+import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.channels.FileChannel;
 import java.nio.file.Path;
+import java.util.Optional;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -48,90 +51,119 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public final class WorldManagePage extends DecoratorAnimatedPage implements DecoratorPage {
 
-    private final ObjectProperty<State> state;
     private final World world;
     private final Path backupsDir;
+    private final Profile profile;
+    private final String instanceId;
+    private final boolean supportQuickPlay;
+    private FileChannel sessionLockChannel;
 
-    private final TabHeader header;
+    private final ObjectProperty<State> state;
+    private boolean isFirstNavigation = true;
+    private final BooleanProperty refreshable = new SimpleBooleanProperty(true);
+    private final BooleanProperty readOnly = new SimpleBooleanProperty(false);
+
+    private final TransitionPane transitionPane = new TransitionPane();
+    private final TabHeader header = new TabHeader(transitionPane);
     private final TabHeader.Tab<WorldInfoPage> worldInfoTab = new TabHeader.Tab<>("worldInfoPage");
     private final TabHeader.Tab<WorldBackupsPage> worldBackupsTab = new TabHeader.Tab<>("worldBackupsPage");
     private final TabHeader.Tab<DatapackListPage> datapackTab = new TabHeader.Tab<>("datapackListPage");
 
-    private final TransitionPane transitionPane = new TransitionPane();
-
-    private FileChannel sessionLockChannel;
-
-    public WorldManagePage(World world, Path backupsDir) {
+    public WorldManagePage(World world, Profile profile, String instanceId) {
         this.world = world;
-        this.backupsDir = backupsDir;
+        this.backupsDir = profile.getRepository().getBackupsDirectory(instanceId);
+        this.profile = profile;
+        this.instanceId = instanceId;
 
-        this.state = new SimpleObjectProperty<>(State.fromTitle(i18n("world.manage.title", world.getWorldName())));
-        this.header = new TabHeader(worldInfoTab, worldBackupsTab);
+        updateSessionLockChannel();
 
-        if (world.getGameVersion() != null && // old game will not write game version to level.dat
-                GameVersionNumber.compare(world.getGameVersion(), "1.13") >= 0) {
-            header.getTabs().add(datapackTab);
+        try {
+            this.world.reloadLevelDat();
+        } catch (IOException e) {
+            LOG.warning("Can not load world level.dat of world: " + this.world.getFile(), e);
+            this.addEventHandler(Navigator.NavigationEvent.NAVIGATED, event -> closePageForLoadingFail());
         }
 
         worldInfoTab.setNodeSupplier(() -> new WorldInfoPage(this));
         worldBackupsTab.setNodeSupplier(() -> new WorldBackupsPage(this));
         datapackTab.setNodeSupplier(() -> new DatapackListPage(this));
 
-        header.select(worldInfoTab);
-        transitionPane.setContent(worldInfoTab.getNode(), ContainerAnimations.NONE);
-        FXUtils.onChange(header.getSelectionModel().selectedItemProperty(), newValue ->
-                transitionPane.setContent(newValue.getNode(), ContainerAnimations.FADE));
-        setCenter(transitionPane);
+        this.state = new SimpleObjectProperty<>(new State(i18n("world.manage.title", StringUtils.parseColorEscapes(world.getWorldName())), null, true, true, true));
 
-        BorderPane left = new BorderPane();
-        FXUtils.setLimitWidth(left, 200);
-        VBox.setVgrow(left, Priority.ALWAYS);
-        setLeft(left);
+        Optional<String> gameVersion = profile.getRepository().getGameVersion(instanceId);
+        supportQuickPlay = World.supportQuickPlay(GameVersionNumber.asGameVersion(gameVersion));
 
-        AdvancedListBox sideBar = new AdvancedListBox()
-                .addNavigationDrawerTab(header, worldInfoTab, i18n("world.info"), SVG.INFO)
-                .addNavigationDrawerTab(header, worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE)
-                .addNavigationDrawerTab(header, datapackTab, i18n("world.datapack"), SVG.EXTENSION);
-        left.setTop(sideBar);
+        this.addEventHandler(Navigator.NavigationEvent.EXITED, this::onExited);
+        this.addEventHandler(Navigator.NavigationEvent.NAVIGATED, this::onNavigated);
+    }
 
-        AdvancedListBox toolbar = new AdvancedListBox();
-        if (ChunkBaseApp.isSupported(world)) {
-            PopupMenu popupMenu = new PopupMenu();
-            JFXPopup popup = new JFXPopup(popupMenu);
+    @Override
+    protected @NotNull Skin createDefaultSkin() {
+        return new Skin(this);
+    }
 
-            popupMenu.getContent().addAll(
-                    new IconedMenuItem(SVG.EXPLORE, i18n("world.chunkbase.seed_map"), () -> ChunkBaseApp.openSeedMap(world), popup),
-                    new IconedMenuItem(SVG.VISIBILITY, i18n("world.chunkbase.stronghold"), () -> ChunkBaseApp.openStrongholdFinder(world), popup),
-                    new IconedMenuItem(SVG.FORT, i18n("world.chunkbase.nether_fortress"), () -> ChunkBaseApp.openNetherFortressFinder(world), popup)
-            );
-
-            if (GameVersionNumber.compare(world.getGameVersion(), "1.13") >= 0) {
-                popupMenu.getContent().add(
-                        new IconedMenuItem(SVG.LOCATION_CITY, i18n("world.chunkbase.end_city"), () -> ChunkBaseApp.openEndCityFinder(world), popup));
-            }
-
-            toolbar.addNavigationDrawerItem(i18n("world.chunkbase"), SVG.EXPLORE, null, chunkBaseMenuItem ->
-                    chunkBaseMenuItem.setOnAction(e ->
-                            popup.show(chunkBaseMenuItem,
-                                    JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT,
-                                    chunkBaseMenuItem.getWidth(), 0)));
-        }
-        toolbar.addNavigationDrawerItem(i18n("settings.game.exploration"), SVG.FOLDER_OPEN, () -> FXUtils.openFolder(world.getFile().toFile()), null);
-
-        BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
-        left.setBottom(toolbar);
-
-        // Does it need to be done in the background?
+    @Override
+    public void refresh() {
+        updateSessionLockChannel();
         try {
-            sessionLockChannel = world.lock();
-            LOG.info("Acquired lock on world " + world.getFileName());
+            world.reloadLevelDat();
+        } catch (IOException e) {
+            LOG.warning("Can not load world level.dat of world: " + world.getFile(), e);
+            closePageForLoadingFail();
+            return;
+        }
+
+        for (var tab : header.getTabs()) {
+            if (tab.getNode() instanceof WorldRefreshable r) {
+                r.refresh();
+            }
+        }
+    }
+
+    private void closePageForLoadingFail() {
+        Platform.runLater(() -> {
+            fireEvent(new PageCloseEvent());
+            Controllers.dialog(i18n("world.load.fail"), null, MessageDialogPane.MessageType.ERROR);
+        });
+    }
+
+    private void updateSessionLockChannel() {
+        if (sessionLockChannel == null || !sessionLockChannel.isOpen()) {
+            sessionLockChannel = WorldManageUIUtils.getSessionLockChannel(world);
+            readOnly.set(sessionLockChannel == null);
+        }
+    }
+
+    private void onNavigated(Navigator.NavigationEvent event) {
+        if (isFirstNavigation)
+            isFirstNavigation = false;
+        else
+            refresh();
+    }
+
+    public void onExited(Navigator.NavigationEvent event) {
+        try {
+            WorldManageUIUtils.closeSessionLockChannel(world, sessionLockChannel);
         } catch (IOException ignored) {
         }
+    }
+
+    public void launch() {
+        fireEvent(new PageCloseEvent());
+        Versions.launchAndEnterWorld(profile, instanceId, world.getFileName());
+    }
+
+    public void generateLaunchScript() {
+        Versions.generateLaunchScriptForQuickEnterWorld(profile, instanceId, world.getFileName());
     }
 
     @Override
     public ReadOnlyObjectProperty<State> stateProperty() {
         return state;
+    }
+
+    public void setTitle(String title) {
+        this.state.set(new DecoratorPage.State(title, null, true, true, true));
     }
 
     public World getWorld() {
@@ -143,26 +175,123 @@ public final class WorldManagePage extends DecoratorAnimatedPage implements Deco
     }
 
     public boolean isReadOnly() {
-        return sessionLockChannel == null;
+        return readOnly.get();
+    }
+
+    public BooleanProperty readOnlyProperty() {
+        return readOnly;
     }
 
     @Override
-    public boolean back() {
-        closePage();
-        return true;
+    public BooleanProperty refreshableProperty() {
+        return refreshable;
     }
 
-    @Override
-    public void closePage() {
-        if (sessionLockChannel != null) {
-            try {
-                sessionLockChannel.close();
-                LOG.info("Releases the lock on world " + world.getFileName());
-            } catch (IOException e) {
-                LOG.warning("Failed to close session lock channel", e);
+    public static class Skin extends DecoratorAnimatedPageSkin<WorldManagePage> {
+
+        protected Skin(WorldManagePage control) {
+            super(control);
+
+            setCenter(control.transitionPane);
+            setLeft(getSidebar());
+        }
+
+        private BorderPane getSidebar() {
+            BorderPane sidebar = new BorderPane();
+            {
+                FXUtils.setLimitWidth(sidebar, 200);
+                VBox.setVgrow(sidebar, Priority.ALWAYS);
             }
 
-            sessionLockChannel = null;
+            sidebar.setTop(getTabBar());
+            sidebar.setBottom(getToolBar());
+
+            return sidebar;
         }
+
+        private AdvancedListBox getTabBar() {
+            AdvancedListBox tabBar = new AdvancedListBox();
+            {
+                getSkinnable().header.getTabs().addAll(getSkinnable().worldInfoTab, getSkinnable().worldBackupsTab);
+                getSkinnable().header.select(getSkinnable().worldInfoTab);
+
+                tabBar.addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldInfoTab, i18n("world.info"), SVG.INFO, SVG.INFO_FILL)
+                        .addNavigationDrawerTab(getSkinnable().header, getSkinnable().worldBackupsTab, i18n("world.backup"), SVG.ARCHIVE, SVG.ARCHIVE_FILL);
+
+                if (getSkinnable().world.supportDatapacks()) {
+                    getSkinnable().header.getTabs().add(getSkinnable().datapackTab);
+                    tabBar.addNavigationDrawerTab(getSkinnable().header, getSkinnable().datapackTab, i18n("world.datapack"), SVG.EXTENSION, SVG.EXTENSION_FILL);
+                }
+            }
+
+            return tabBar;
+        }
+
+        private AdvancedListBox getToolBar() {
+            AdvancedListBox toolbar = new AdvancedListBox();
+            BorderPane.setMargin(toolbar, new Insets(0, 0, 12, 0));
+            {
+                if (getSkinnable().supportQuickPlay) {
+                    toolbar.addNavigationDrawerItem(i18n("version.launch"), SVG.ROCKET_LAUNCH, () -> getSkinnable().launch(), advancedListItem -> advancedListItem.disableProperty().bind(getSkinnable().readOnlyProperty()));
+                }
+
+                if (ChunkBaseApp.isSupported(getSkinnable().world)) {
+                    PopupMenu chunkBasePopupMenu = new PopupMenu();
+                    JFXPopup chunkBasePopup = new JFXPopup(chunkBasePopupMenu);
+
+                    chunkBasePopupMenu.getContent().addAll(
+                            new IconedMenuItem(SVG.EXPLORE, i18n("world.chunkbase.seed_map"), () -> ChunkBaseApp.openSeedMap(getSkinnable().world), chunkBasePopup),
+                            new IconedMenuItem(SVG.VISIBILITY, i18n("world.chunkbase.stronghold"), () -> ChunkBaseApp.openStrongholdFinder(getSkinnable().world), chunkBasePopup),
+                            new IconedMenuItem(SVG.FORT, i18n("world.chunkbase.nether_fortress"), () -> ChunkBaseApp.openNetherFortressFinder(getSkinnable().world), chunkBasePopup)
+                    );
+
+                    if (ChunkBaseApp.supportEndCity(getSkinnable().world)) {
+                        chunkBasePopupMenu.getContent().add(
+                                new IconedMenuItem(SVG.LOCATION_CITY, i18n("world.chunkbase.end_city"), () -> ChunkBaseApp.openEndCityFinder(getSkinnable().world), chunkBasePopup));
+                    }
+
+                    toolbar.addNavigationDrawerItem(i18n("world.chunkbase"), SVG.EXPLORE, null, chunkBaseMenuItem ->
+                            chunkBaseMenuItem.setOnAction(e ->
+                                    chunkBasePopup.show(chunkBaseMenuItem,
+                                            JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT,
+                                            chunkBaseMenuItem.getWidth(), 0)));
+                }
+
+                toolbar.addNavigationDrawerItem(i18n("settings.game.exploration"), SVG.FOLDER_OPEN, () -> FXUtils.openFolder(getSkinnable().world.getFile()));
+
+                {
+                    PopupMenu managePopupMenu = new PopupMenu();
+                    JFXPopup managePopup = new JFXPopup(managePopupMenu);
+
+                    if (getSkinnable().supportQuickPlay) {
+                        managePopupMenu.getContent().addAll(
+                                new IconedMenuItem(SVG.ROCKET_LAUNCH, i18n("version.launch"), () -> getSkinnable().launch(), managePopup),
+                                new IconedMenuItem(SVG.SCRIPT, i18n("version.launch_script"), () -> getSkinnable().generateLaunchScript(), managePopup),
+                                new MenuSeparator()
+                        );
+                    }
+
+                    managePopupMenu.getContent().addAll(
+                            new IconedMenuItem(SVG.OUTPUT, i18n("world.export"), () -> WorldManageUIUtils.export(getSkinnable().world, getSkinnable().sessionLockChannel), managePopup),
+                            new IconedMenuItem(SVG.DELETE, i18n("world.delete"), () -> WorldManageUIUtils.delete(getSkinnable().world, () -> getSkinnable().fireEvent(new PageCloseEvent()), getSkinnable().sessionLockChannel), managePopup),
+                            new IconedMenuItem(SVG.CONTENT_COPY, i18n("world.duplicate"), () -> WorldManageUIUtils.copyWorld(getSkinnable().world, null), managePopup)
+                    );
+
+                    toolbar.addNavigationDrawerItem(i18n("settings.game.management"), SVG.MENU, null, managePopupMenuItem ->
+                    {
+                        managePopupMenuItem.setOnAction(e ->
+                                managePopup.show(managePopupMenuItem,
+                                        JFXPopup.PopupVPosition.BOTTOM, JFXPopup.PopupHPosition.LEFT,
+                                        managePopupMenuItem.getWidth(), 0));
+                        managePopupMenuItem.disableProperty().bind(getSkinnable().readOnlyProperty());
+                    });
+                }
+            }
+            return toolbar;
+        }
+    }
+
+    public interface WorldRefreshable {
+        void refresh();
     }
 }

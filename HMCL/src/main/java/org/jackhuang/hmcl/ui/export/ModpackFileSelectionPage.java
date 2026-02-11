@@ -18,10 +18,10 @@
 package org.jackhuang.hmcl.ui.export;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXCheckBox;
 import com.jfoenix.controls.JFXTreeView;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.CheckBox;
 import javafx.scene.control.CheckBoxTreeItem;
 import javafx.scene.control.Label;
 import javafx.scene.control.TreeItem;
@@ -33,18 +33,22 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.NoneMultipleSelectionModel;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
+import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
+import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /**
  * @author huangyuhui
@@ -64,6 +68,8 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         rootNode = getTreeItem(profile.getRepository().getRunDirectory(version), "minecraft");
         treeView.setRoot(rootNode);
         treeView.setSelectionModel(new NoneMultipleSelectionModel<>());
+        onEscPressed(treeView, () -> controller.onPrev(true));
+        setMargin(treeView, new Insets(10, 10, 5, 10));
         this.setCenter(treeView);
 
         HBox nextPane = new HBox();
@@ -80,16 +86,31 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         this.setBottom(nextPane);
     }
 
-    private CheckBoxTreeItem<String> getTreeItem(File file, String basePath) {
-        if (!file.exists())
+    private CheckBoxTreeItem<String> getTreeItem(Path file, String basePath) {
+        if (Files.notExists(file))
             return null;
+
+        boolean isDirectory = Files.isDirectory(file);
 
         ModAdviser.ModSuggestion state = ModAdviser.ModSuggestion.SUGGESTED;
         if (basePath.length() > "minecraft/".length()) {
-            state = adviser.advise(StringUtils.substringAfter(basePath, "minecraft/") + (file.isDirectory() ? "/" : ""), file.isDirectory());
-            if (file.isFile() && Objects.equals(FileUtils.getNameWithoutExtension(file), version)) // Ignore <version>.json, <version>.jar
-                state = ModAdviser.ModSuggestion.HIDDEN;
-            if (file.isDirectory() && Objects.equals(file.getName(), version + "-natives")) // Ignore <version>-natives
+            state = adviser.advise(StringUtils.substringAfter(basePath, "minecraft/") + (isDirectory ? "/" : ""), isDirectory);
+
+            String fileName = FileUtils.getName(file);
+
+            if (!isDirectory) {
+                switch (fileName) {
+                    case ".DS_Store", // macOS system file
+                         "desktop.ini", "Thumbs.db" // Windows system files
+                            -> state = ModAdviser.ModSuggestion.HIDDEN;
+                }
+                if (fileName.startsWith("._")) // macOS system file
+                    state = ModAdviser.ModSuggestion.HIDDEN;
+                if (FileUtils.getNameWithoutExtension(file).equals(version))
+                    state = ModAdviser.ModSuggestion.HIDDEN;
+            }
+
+            if (isDirectory && fileName.equals(version + "-natives")) // Ignore <version>-natives
                 state = ModAdviser.ModSuggestion.HIDDEN;
             if (state == ModAdviser.ModSuggestion.HIDDEN)
                 return null;
@@ -99,11 +120,10 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         if (state == ModAdviser.ModSuggestion.SUGGESTED)
             node.setSelected(true);
 
-        if (file.isDirectory()) {
-            File[] files = file.listFiles();
-            if (files != null) {
-                for (File it : files) {
-                    CheckBoxTreeItem<String> subNode = getTreeItem(it, basePath + "/" + it.getName());
+        if (isDirectory) {
+            try (var stream = Files.list(file)) {
+                stream.forEach(it -> {
+                    CheckBoxTreeItem<String> subNode = getTreeItem(it, basePath + "/" + FileUtils.getName(it));
                     if (subNode != null) {
                         node.setSelected(subNode.isSelected() || node.isSelected());
                         if (!subNode.isSelected()) {
@@ -111,8 +131,11 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
                         }
                         node.getChildren().add(subNode);
                     }
-                }
+                });
+            } catch (IOException e) {
+                LOG.warning("Failed to list contents of " + file, e);
             }
+
             if (!node.isSelected()) node.setIndeterminate(false);
 
             // Empty folder need not to be displayed.
@@ -122,15 +145,14 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         }
 
         HBox graphic = new HBox();
-        CheckBox checkBox = new CheckBox();
+        JFXCheckBox checkBox = new JFXCheckBox();
         checkBox.selectedProperty().bindBidirectional(node.selectedProperty());
         checkBox.indeterminateProperty().bindBidirectional(node.indeterminateProperty());
         graphic.getChildren().add(checkBox);
 
         if (TRANSLATION.containsKey(basePath)) {
-            Label comment = new Label();
-            comment.setText(TRANSLATION.get(basePath));
-            comment.setStyle("-fx-text-fill: gray;");
+            Label comment = new Label(TRANSLATION.get(basePath));
+            comment.setStyle("-fx-text-fill: -monet-on-surface-variant;");
             comment.setMouseTransparent(true);
             graphic.getChildren().add(comment);
         }
@@ -155,7 +177,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
     }
 
     @Override
-    public void cleanup(Map<String, Object> settings) {
+    public void cleanup(SettingsMap settings) {
         controller.getSettings().remove(MODPACK_FILE_SELECTION);
     }
 
@@ -171,7 +193,7 @@ public final class ModpackFileSelectionPage extends BorderPane implements Wizard
         return i18n("modpack.wizard.step.2.title");
     }
 
-    public static final String MODPACK_FILE_SELECTION = "modpack.accepted";
+    public static final SettingsMap.Key<List<String>> MODPACK_FILE_SELECTION = new SettingsMap.Key<>("modpack.accepted");
     private static final Map<String, String> TRANSLATION = mapOf(
             pair("minecraft/hmclversion.cfg", i18n("modpack.files.hmclversion_cfg")),
             pair("minecraft/servers.dat", i18n("modpack.files.servers_dat")),

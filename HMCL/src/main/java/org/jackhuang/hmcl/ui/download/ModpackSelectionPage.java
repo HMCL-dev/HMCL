@@ -29,27 +29,28 @@ import javafx.scene.shape.SVGPath;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.game.ModpackHelper;
 import org.jackhuang.hmcl.mod.server.ServerModpackManifest;
-import org.jackhuang.hmcl.task.*;
+import org.jackhuang.hmcl.task.FileDownloadTask;
+import org.jackhuang.hmcl.task.GetTask;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.ui.construct.URLValidator;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
+import org.jackhuang.hmcl.util.SettingsMap;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
-import java.util.Optional;
 
 import static org.jackhuang.hmcl.ui.download.LocalModpackPage.MODPACK_FILE;
 import static org.jackhuang.hmcl.ui.download.LocalModpackPage.MODPACK_NAME;
 import static org.jackhuang.hmcl.ui.download.RemoteModpackPage.MODPACK_SERVER_MANIFEST;
-import static org.jackhuang.hmcl.util.Lang.tryCast;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class ModpackSelectionPage extends VBox implements WizardPage {
@@ -71,14 +72,14 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
                 createButton("repository", this::onChooseRepository)
         );
 
-        Optional<File> filePath = tryCast(controller.getSettings().get(MODPACK_FILE), File.class);
-        if (filePath.isPresent()) {
-            controller.getSettings().put(MODPACK_FILE, filePath.get());
+        Path filePath = controller.getSettings().get(MODPACK_FILE);
+        if (filePath != null) {
+            controller.getSettings().put(MODPACK_FILE, filePath);
             Platform.runLater(controller::onNext);
         }
 
         FXUtils.applyDragListener(this, ModpackHelper::isFileModpackByExtension, modpacks -> {
-            File modpack = modpacks.get(0);
+            Path modpack = modpacks.get(0);
             controller.getSettings().put(MODPACK_FILE, modpack);
             controller.onNext();
         });
@@ -112,7 +113,7 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
         FileChooser chooser = new FileChooser();
         chooser.setTitle(i18n("modpack.choose"));
         chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("modpack"), "*.zip", "*.mrpack"));
-        File selectedFile = chooser.showOpenDialog(Controllers.getStage());
+        Path selectedFile = FileUtils.toPath(chooser.showOpenDialog(Controllers.getStage()));
         if (selectedFile == null) {
             Platform.runLater(controller::onEnd);
             return;
@@ -123,37 +124,37 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
     }
 
     private void onChooseRemoteFile() {
-        Controllers.prompt(i18n("modpack.choose.remote.tooltip"), (url, resolve, reject) -> {
+        Controllers.prompt(i18n("modpack.choose.remote.tooltip"), (url, handler) -> {
             try {
                 if (url.endsWith("server-manifest.json")) {
                     // if urlString ends with .json, we assume that the url is server-manifest.json
                     Controllers.taskDialog(new GetTask(url).whenComplete(Schedulers.javafx(), (result, e) -> {
                         ServerModpackManifest manifest = JsonUtils.fromMaybeMalformedJson(result, ServerModpackManifest.class);
                         if (manifest == null) {
-                            reject.accept(i18n("modpack.type.server.malformed"));
+                            handler.reject(i18n("modpack.type.server.malformed"));
                         } else if (e == null) {
-                            resolve.run();
+                            handler.resolve();
                             controller.getSettings().put(MODPACK_SERVER_MANIFEST, manifest);
                             controller.onNext();
                         } else {
-                            reject.accept(e.getMessage());
+                            handler.reject(e.getMessage());
                         }
                     }).executor(true), i18n("message.downloading"), TaskCancellationAction.NORMAL);
                 } else {
                     // otherwise we still consider the file as modpack zip file
                     // since casually the url may not ends with ".zip"
                     Path modpack = Files.createTempFile("modpack", ".zip");
-                    resolve.run();
+                    handler.resolve();
 
                     Controllers.taskDialog(
                             new FileDownloadTask(url, modpack)
                                     .whenComplete(Schedulers.javafx(), e -> {
                                         if (e == null) {
-                                            resolve.run();
-                                            controller.getSettings().put(MODPACK_FILE, modpack.toFile());
+                                            handler.resolve();
+                                            controller.getSettings().put(MODPACK_FILE, modpack);
                                             controller.onNext();
                                         } else {
-                                            reject.accept(e.getMessage());
+                                            handler.reject(e.getMessage());
                                         }
                                     }).executor(true),
                             i18n("message.downloading"),
@@ -161,20 +162,20 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
                     );
                 }
             } catch (IOException e) {
-                reject.accept(e.getMessage());
+                handler.reject(e.getMessage());
             }
-        });
+        }, "", new URLValidator());
     }
 
     public void onChooseRepository() {
-        String modPackName = (String) controller.getSettings().get(MODPACK_NAME);
+        String modPackName = controller.getSettings().get(MODPACK_NAME);
         DownloadPage downloadPage = new DownloadPage(modPackName);
         downloadPage.showModpackDownloads();
         Controllers.navigate(downloadPage);
     }
 
     @Override
-    public void cleanup(Map<String, Object> settings) {
+    public void cleanup(SettingsMap settings) {
     }
 
     @Override

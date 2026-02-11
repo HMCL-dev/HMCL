@@ -52,24 +52,26 @@ public abstract class ParseModDataTask extends DefaultTask {
     @OutputFile
     public abstract RegularFileProperty getOutputFile();
 
-    // ---
-
     private static final Logger LOGGER = Logging.getLogger(ParseModDataTask.class);
 
     private static final String S = ";";
     private static final String MOD_SEPARATOR = ",";
 
     private static final Pattern[] CURSEFORGE_PATTERNS = {
-            Pattern.compile("^/(minecraft|Minecraft|minecraft-bedrock)/(mc-mods|data-packs|modpacks|customization|mc-addons|texture-packs|customization/configuration|addons)/+(?<modid>[\\w-]+)(/(.*?))?$"),
+            Pattern.compile("^/(minecraft|Minecraft|minecraft-bedrock)/(mc-mods|data-packs|modpacks|customization|mc-addons|texture-packs|customization/configuration|addons|scripts)/+(?<modid>[\\w-]+)(/(.*?))?$"),
             Pattern.compile("^/projects/(?<modid>[\\w-]+)(/(.*?))?$"),
             Pattern.compile("^/mc-mods/minecraft/(?<modid>[\\w-]+)(/(.*?))?$"),
             Pattern.compile("^/legacy/mc-mods/minecraft/(\\d+)-(?<modid>[\\w-]+)"),
     };
 
     private static String parseCurseforge(String url) {
-        URI res = URI.create(url);
+        URI res = URI.create(url.replace(" ", "%20"));
 
         if (!"http".equals(res.getScheme()) && !"https".equals(res.getScheme())) {
+            return "";
+        }
+
+        if ("edge.forgecdn.net".equals(res.getHost())) {
             return "";
         }
 
@@ -94,7 +96,33 @@ public abstract class ParseModDataTask extends DefaultTask {
         return "";
     }
 
-    private static final Set<String> skip = Set.of(
+    private static String cleanChineseName(String chineseName) {
+        if (chineseName == null || chineseName.isBlank())
+            return "";
+
+        chineseName = chineseName.trim();
+
+        StringBuilder builder = new StringBuilder(chineseName.length());
+        int[] codePoints = chineseName.codePoints().toArray();
+        for (int i = 0; i < codePoints.length; i++) {
+            int ch = codePoints[i];
+            int prev = i > 0 ? codePoints[i - 1] : 0;
+
+            switch (ch) {
+                case '（' -> {
+                    if (Character.isWhitespace(prev) || prev == '！' || prev == '。')
+                        builder.append('(');
+                    else
+                        builder.append(" (");
+                }
+                case '）' -> builder.append(')');
+                default -> builder.appendCodePoint(ch);
+            }
+        }
+        return builder.toString().trim();
+    }
+
+    private static final Set<String> SKIP = Set.of(
             "Minecraft",
             "The Building Game"
     );
@@ -105,7 +133,6 @@ public abstract class ParseModDataTask extends DefaultTask {
         Path outputFile = getOutputFile().get().getAsFile().toPath().toAbsolutePath();
 
         Files.createDirectories(outputFile.getParent());
-
 
         List<ModData> modDatas;
         try (BufferedReader reader = Files.newBufferedReader(inputFile)) {
@@ -125,14 +152,13 @@ public abstract class ParseModDataTask extends DefaultTask {
                 String subName = mod.name.sub;
                 String abbr = mod.name.abbr;
 
-                if (chineseName == null)
-                    chineseName = "";
+                chineseName = chineseName == null ? "" : cleanChineseName(chineseName);
                 if (subName == null)
                     subName = "";
                 if (abbr == null)
                     abbr = "";
 
-                if (skip.contains(subName)) {
+                if (SKIP.contains(subName)) {
                     continue;
                 }
 
@@ -207,7 +233,6 @@ public abstract class ParseModDataTask extends DefaultTask {
         public static final class Links {
             public Map<String, List<Link>> list;
         }
-
 
         public static final class ModIdDeserializer implements JsonDeserializer<List<String>> {
             private static final Type STRING_LIST = TypeToken.getParameterized(List.class, String.class).getType();

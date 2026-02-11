@@ -13,6 +13,7 @@ public final class JavaRuntimeTest {
     public void testParseVersion() {
         assertEquals(8, parseVersion("1.8.0_302"));
         assertEquals(8, parseVersion("1.8-internal"));
+        assertEquals(8, parseVersion("8.0"));
         assertEquals(11, parseVersion("11"));
         assertEquals(11, parseVersion("11.0.12"));
         assertEquals(11, parseVersion("11-internal"));

@@ -17,10 +17,8 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXComboBox;
-import com.jfoenix.controls.JFXListView;
-import com.jfoenix.controls.JFXTextField;
+import com.jfoenix.controls.*;
+import com.jfoenix.effects.JFXDepthManager;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.*;
@@ -30,11 +28,10 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
 import javafx.scene.Node;
-import javafx.scene.control.Control;
-import javafx.scene.control.Label;
-import javafx.scene.control.Skin;
-import javafx.scene.control.SkinBase;
+import javafx.scene.control.*;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -51,18 +48,18 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
-import org.jackhuang.hmcl.ui.construct.FloatListCell;
+import org.jackhuang.hmcl.ui.construct.NoneMultipleSelectionModel;
+import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.util.AggregatedObservableList;
-import org.jackhuang.hmcl.util.Holder;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
+import org.jetbrains.annotations.NotNull;
 
+import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -199,6 +196,10 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 : i18n("curse.category." + category);
     }
 
+    protected boolean shouldDisplayCategory(String category) {
+        return !"minecraft".equals(category);
+    }
+
     private String getLocalizedCategoryIndent(ModDownloadListPageSkin.CategoryIndented category) {
         return StringUtils.repeats(' ', category.indent * 4) +
                 (category.getCategory() == null
@@ -234,9 +235,17 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
     private static class ModDownloadListPageSkin extends SkinBase<DownloadListPage> {
         private final JFXListView<RemoteMod> listView = new JFXListView<>();
+        private final RemoteImageLoader iconLoader = new RemoteImageLoader() {
+            @Override
+            protected @NotNull Task<Image> createLoadTask(@NotNull URI uri) {
+                return FXUtils.getRemoteImageTask(uri, 80, 80, true, true);
+            }
+        };
 
         protected ModDownloadListPageSkin(DownloadListPage control) {
             super(control);
+
+            listView.getStyleClass().add("no-horizontal-scrollbar");
 
             BorderPane pane = new BorderPane();
 
@@ -364,6 +373,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                 IntegerProperty filterID = new SimpleIntegerProperty(this, "Filter ID", 0);
                 IntegerProperty currentFilterID = new SimpleIntegerProperty(this, "Current Filter ID", -1);
                 EventHandler<ActionEvent> searchAction = e -> {
+                    iconLoader.clearInvalidCache();
                     if (currentFilterID.get() != -1 && currentFilterID.get() != filterID.get()) {
                         control.pageOffset.set(0);
                     }
@@ -514,40 +524,63 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
                 spinnerPane.setContent(listView);
                 Bindings.bindContent(listView.getItems(), getSkinnable().items);
-                FXUtils.onClicked(listView, () -> {
-                    if (listView.getSelectionModel().getSelectedIndex() < 0)
-                        return;
-                    RemoteMod selectedItem = listView.getSelectionModel().getSelectedItem();
-                    Controllers.navigate(new DownloadPage(getSkinnable(), selectedItem, getSkinnable().getProfileVersion(), getSkinnable().callback));
-                });
-
+                listView.setSelectionModel(new NoneMultipleSelectionModel<>());
                 // ListViewBehavior would consume ESC pressed event, preventing us from handling it, so we ignore it here
                 ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
-                listView.setCellFactory(x -> new FloatListCell<RemoteMod>(listView) {
-                    TwoLineListItem content = new TwoLineListItem();
-                    ImageView imageView = new ImageView();
+
+                listView.setCellFactory(x -> new ListCell<>() {
+                    private static final Insets PADDING = new Insets(9, 9, 0, 9);
+
+                    private final RipplerContainer graphic;
+
+                    private final TwoLineListItem content = new TwoLineListItem();
+                    private final ImageView imageView = new ImageView();
 
                     {
+                        setPadding(PADDING);
+
                         HBox container = new HBox(8);
+                        container.getStyleClass().add("card");
+                        container.setCursor(Cursor.HAND);
                         container.setAlignment(Pos.CENTER_LEFT);
-                        pane.getChildren().add(container);
+                        JFXDepthManager.setDepth(container, 1);
+
+                        imageView.setFitWidth(40);
+                        imageView.setFitHeight(40);
 
                         container.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), content);
                         HBox.setHgrow(content, Priority.ALWAYS);
+
+                        this.graphic = new RipplerContainer(container);
+                        graphic.setPosition(JFXRippler.RipplerPos.FRONT);
+                        FXUtils.onClicked(graphic, () -> {
+                            RemoteMod item = getItem();
+                            if (item != null)
+                                Controllers.navigate(new DownloadPage(getSkinnable(), item, getSkinnable().getProfileVersion(), getSkinnable().callback));
+                        });
+
+                        setPrefWidth(0);
+
+                        FXUtils.limitCellWidth(listView, this);
+
                     }
 
                     @Override
-                    protected void updateControl(RemoteMod dataItem, boolean empty) {
-                        if (empty) return;
-                        ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(getSkinnable().repository.getType()).getModByCurseForgeId(dataItem.getSlug());
-                        content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : dataItem.getTitle());
-                        content.setSubtitle(dataItem.getDescription());
-                        content.getTags().setAll(dataItem.getCategories().stream()
-                                .map(category -> getSkinnable().getLocalizedCategory(category))
-                                .collect(Collectors.toList()));
-
-                        if (StringUtils.isNotBlank(dataItem.getIconUrl())) {
-                            imageView.imageProperty().bind(FXUtils.newRemoteImage(dataItem.getIconUrl(), 40, 40, true, true));
+                    protected void updateItem(RemoteMod item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (empty || item == null) {
+                            setGraphic(null);
+                        } else {
+                            ModTranslations.Mod mod = ModTranslations.getTranslationsByRepositoryType(getSkinnable().repository.getType()).getModByCurseForgeId(item.getSlug());
+                            content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : item.getTitle());
+                            content.setSubtitle(item.getDescription());
+                            content.getTags().clear();
+                            for (String category : item.getCategories()) {
+                                if (getSkinnable().shouldDisplayCategory(category))
+                                    content.addTag(getSkinnable().getLocalizedCategory(category));
+                            }
+                            iconLoader.load(imageView.imageProperty(), item.getIconUrl());
+                            setGraphic(graphic);
                         }
                     }
                 });

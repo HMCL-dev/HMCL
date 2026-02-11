@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.task;
 
 import org.jackhuang.hmcl.util.DigestUtils;
-import org.jackhuang.hmcl.util.Hex;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
@@ -27,17 +26,13 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
-import java.net.URLConnection;
+import java.net.http.HttpResponse;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 import static java.util.Objects.requireNonNull;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -190,7 +185,7 @@ public class FileDownloadTask extends FetchTask<Void> {
     }
 
     @Override
-    protected Context getContext(URLConnection connection, boolean checkETag, String bmclapiHash) throws IOException {
+    protected Context getContext(HttpResponse<?> response, boolean checkETag, String bmclapiHash) throws IOException {
         Path temp = Files.createTempFile(null, null);
 
         String algorithm;
@@ -198,7 +193,7 @@ public class FileDownloadTask extends FetchTask<Void> {
         if (integrityCheck != null) {
             algorithm = integrityCheck.getAlgorithm();
             checksum = integrityCheck.getChecksum();
-        } else if (bmclapiHash != null) {
+        } else if (bmclapiHash != null && DigestUtils.isSha1Digest(bmclapiHash)) {
             algorithm = "SHA-1";
             checksum = bmclapiHash;
         } else {
@@ -250,7 +245,7 @@ public class FileDownloadTask extends FetchTask<Void> {
 
                 // Integrity check
                 if (checksum != null) {
-                    String actualChecksum = Hex.encodeHex(digest.digest());
+                    String actualChecksum = HexFormat.of().formatHex(digest.digest());
                     if (!checksum.equalsIgnoreCase(actualChecksum)) {
                         throw new ChecksumMismatchException(algorithm, checksum, actualChecksum);
                     }
@@ -265,7 +260,7 @@ public class FileDownloadTask extends FetchTask<Void> {
                 }
 
                 if (checkETag) {
-                    repository.cacheRemoteFile(connection, file);
+                    repository.cacheRemoteFile(response, file);
                 }
             }
         };

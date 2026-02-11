@@ -80,7 +80,7 @@ public final class OptiFineBMCLVersionList extends VersionList<OptiFineRemoteVer
                 Set<String> duplicates = new HashSet<>();
                 for (OptiFineVersion element : root) {
                     String version = element.getType() + "_" + element.getPatch();
-                    String mirror = "https://bmclapi2.bangbang93.com/optifine/" + toLookupVersion(element.getGameVersion()) + "/" + element.getType() + "/" + element.getPatch();
+                    String mirror = apiRoot + "/optifine/" + toLookupVersion(element.getGameVersion()) + "/" + element.getType() + "/" + element.getPatch();
                     if (!duplicates.add(mirror))
                         continue;
 

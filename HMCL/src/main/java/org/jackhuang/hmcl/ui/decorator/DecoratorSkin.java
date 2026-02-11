@@ -18,6 +18,10 @@
 package org.jackhuang.hmcl.ui.decorator;
 
 import com.jfoenix.controls.JFXButton;
+import javafx.animation.Interpolator;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
 import javafx.beans.binding.Bindings;
@@ -39,12 +43,13 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 
+import javafx.util.Duration;
 import org.jackhuang.hmcl.Metadata;
-import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.animation.AnimationProducer;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
+import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.wizard.Navigation;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
@@ -55,7 +60,9 @@ public class DecoratorSkin extends SkinBase<Decorator> {
     private final Stage primaryStage;
     private final TransitionPane navBarPane;
 
+    @SuppressWarnings("FieldCanBeLocal")
     private final InvalidationListener onWindowsStatusChange;
+    private final EventHandler<MouseEvent> onTitleBarDoubleClick;
 
     private double mouseInitX, mouseInitY, stageInitX, stageInitY, stageInitWidth, stageInitHeight;
 
@@ -104,6 +111,12 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                     root.addEventFilter(MouseEvent.MOUSE_MOVED, onMouseMoved);
                 }
             };
+            onTitleBarDoubleClick = event -> {
+                if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2) {
+                    primaryStage.setMaximized(!primaryStage.isMaximized());
+                    event.consume();
+                }
+            };
             WeakInvalidationListener weakOnWindowsStatusChange = new WeakInvalidationListener(onWindowsStatusChange);
             primaryStage.iconifiedProperty().addListener(weakOnWindowsStatusChange);
             primaryStage.maximizedProperty().addListener(weakOnWindowsStatusChange);
@@ -111,6 +124,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             onWindowsStatusChange.invalidated(null);
         } else {
             onWindowsStatusChange = null;
+            onTitleBarDoubleClick = null;
             root.addEventFilter(MouseEvent.MOUSE_RELEASED, onMouseReleased);
             root.addEventFilter(MouseEvent.MOUSE_DRAGGED, onMouseDragged);
             root.addEventFilter(MouseEvent.MOUSE_MOVED, onMouseMoved);
@@ -188,16 +202,6 @@ public class DecoratorSkin extends SkinBase<Decorator> {
         BorderPane titleBar = new BorderPane();
         titleContainer.getChildren().add(titleBar);
 
-        // https://github.com/HMCL-dev/HMCL/issues/4290
-        if (OperatingSystem.CURRENT_OS != OperatingSystem.MACOS) {
-            titleBar.addEventHandler(MouseEvent.MOUSE_CLICKED, event -> {
-                if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 2) {
-                    primaryStage.setMaximized(!primaryStage.isMaximized());
-                    event.consume();
-                }
-            });
-        }
-
         Rectangle buttonsContainerPlaceHolder = new Rectangle();
         {
             navBarPane = new TransitionPane();
@@ -206,16 +210,13 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 if (s == null) return;
                 Node node = createNavBar(skinnable, s.getLeftPaneWidth(), s.isBackable(), skinnable.canCloseProperty().get(), skinnable.showCloseAsHomeProperty().get(), s.isRefreshable(), s.getTitle(), s.getTitleNode());
                 if (s.isAnimate()) {
-                    AnimationProducer animation;
-                    if (skinnable.getNavigationDirection() == Navigation.NavigationDirection.NEXT) {
-                        animation = ContainerAnimations.SWIPE_LEFT_FADE_SHORT;
-                    } else if (skinnable.getNavigationDirection() == Navigation.NavigationDirection.PREVIOUS) {
-                        animation = ContainerAnimations.SWIPE_RIGHT_FADE_SHORT;
-                    } else {
-                        animation = ContainerAnimations.FADE;
-                    }
+                    TransitionPane.AnimationProducer animation = switch (skinnable.getNavigationDirection()) {
+                        case NEXT -> NavBarAnimations.NEXT;
+                        case PREVIOUS -> NavBarAnimations.PREVIOUS;
+                        default -> ContainerAnimations.FADE;
+                    };
                     skinnable.setNavigationDirection(Navigation.NavigationDirection.START);
-                    navBarPane.setContent(node, animation);
+                    navBarPane.setContent(node, animation, Motion.SHORT4);
                 } else {
                     navBarPane.getChildren().setAll(node);
                 }
@@ -232,19 +233,19 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             {
                 JFXButton btnHelp = new JFXButton();
                 btnHelp.setFocusTraversable(false);
-                btnHelp.setGraphic(SVG.HELP.createIcon(Theme.foregroundFillBinding(), -1));
+                btnHelp.setGraphic(SVG.HELP.createIcon(Themes.titleFillProperty()));
                 btnHelp.getStyleClass().add("jfx-decorator-button");
                 btnHelp.setOnAction(e -> FXUtils.openLink(Metadata.CONTACT_URL));
 
                 JFXButton btnMin = new JFXButton();
                 btnMin.setFocusTraversable(false);
-                btnMin.setGraphic(SVG.MINIMIZE.createIcon(Theme.foregroundFillBinding(), -1));
+                btnMin.setGraphic(SVG.MINIMIZE_CENTER.createIcon(Themes.titleFillProperty()));
                 btnMin.getStyleClass().add("jfx-decorator-button");
                 btnMin.setOnAction(e -> skinnable.minimize());
 
                 JFXButton btnClose = new JFXButton();
                 btnClose.setFocusTraversable(false);
-                btnClose.setGraphic(SVG.CLOSE.createIcon(Theme.foregroundFillBinding(), -1));
+                btnClose.setGraphic(SVG.CLOSE.createIcon(Themes.titleFillProperty()));
                 btnClose.getStyleClass().add("jfx-decorator-button");
                 btnClose.setOnAction(e -> skinnable.close());
 
@@ -264,6 +265,8 @@ public class DecoratorSkin extends SkinBase<Decorator> {
 
     private Node createNavBar(Decorator skinnable, double leftPaneWidth, boolean canBack, boolean canClose, boolean showCloseAsHome, boolean canRefresh, String title, Node titleNode) {
         BorderPane navBar = new BorderPane();
+        navBar.getStyleClass().add("navigation-bar");
+
         {
             HBox navLeft = new HBox();
             navLeft.setAlignment(Pos.CENTER_LEFT);
@@ -272,9 +275,8 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             if (canBack) {
                 JFXButton backNavButton = new JFXButton();
                 backNavButton.setFocusTraversable(false);
-                backNavButton.setGraphic(SVG.ARROW_BACK.createIcon(Theme.foregroundFillBinding(), -1));
+                backNavButton.setGraphic(SVG.ARROW_BACK.createIcon(Themes.titleFillProperty()));
                 backNavButton.getStyleClass().add("jfx-decorator-button");
-                backNavButton.ripplerFillProperty().set(Theme.whiteFill());
                 backNavButton.onActionProperty().bind(skinnable.onBackNavButtonActionProperty());
                 backNavButton.visibleProperty().set(canBack);
 
@@ -284,14 +286,13 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             if (canClose) {
                 JFXButton closeNavButton = new JFXButton();
                 closeNavButton.setFocusTraversable(false);
-                closeNavButton.setGraphic(SVG.CLOSE.createIcon(Theme.foregroundFillBinding(), -1));
+                closeNavButton.setGraphic(SVG.CLOSE.createIcon(Themes.titleFillProperty()));
                 closeNavButton.getStyleClass().add("jfx-decorator-button");
-                closeNavButton.ripplerFillProperty().set(Theme.whiteFill());
                 closeNavButton.onActionProperty().bind(skinnable.onCloseNavButtonActionProperty());
                 if (showCloseAsHome)
-                    closeNavButton.setGraphic(SVG.HOME.createIcon(Theme.foregroundFillBinding(), -1));
+                    closeNavButton.setGraphic(SVG.HOME.createIcon(Themes.titleFillProperty()));
                 else
-                    closeNavButton.setGraphic(SVG.CLOSE.createIcon(Theme.foregroundFillBinding(), -1));
+                    closeNavButton.setGraphic(SVG.CLOSE.createIcon(Themes.titleFillProperty()));
 
                 navLeft.getChildren().add(closeNavButton);
             }
@@ -303,6 +304,7 @@ public class DecoratorSkin extends SkinBase<Decorator> {
             BorderPane center = new BorderPane();
             if (title != null) {
                 Label titleLabel = new Label();
+                titleLabel.textFillProperty().bind(Themes.titleFillProperty());
                 BorderPane.setAlignment(titleLabel, Pos.CENTER_LEFT);
                 titleLabel.getStyleClass().add("jfx-decorator-title");
                 if (titleNode == null) {
@@ -324,15 +326,28 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 BorderPane.setAlignment(titleNode, Pos.CENTER_LEFT);
                 BorderPane.setMargin(titleNode, new Insets(0, 0, 0, 8));
             }
+            if (onTitleBarDoubleClick != null)
+                center.setOnMouseClicked(onTitleBarDoubleClick);
+            center.setOnMouseDragged(mouseEvent -> {
+                if (!getSkinnable().isDragging() && primaryStage.isMaximized()) {
+                    getSkinnable().setDragging(true);
+                    mouseInitX = mouseEvent.getScreenX();
+                    mouseInitY = mouseEvent.getScreenY();
+                    primaryStage.setMaximized(false);
+                    stageInitWidth = primaryStage.getWidth();
+                    stageInitHeight = primaryStage.getHeight();
+                    primaryStage.setY(stageInitY = 0);
+                    primaryStage.setX(stageInitX = mouseInitX - stageInitWidth / 2);
+                }
+            });
             navBar.setCenter(center);
 
             if (canRefresh) {
                 HBox navRight = new HBox();
                 navRight.setAlignment(Pos.CENTER_RIGHT);
                 JFXButton refreshNavButton = new JFXButton();
-                refreshNavButton.setGraphic(SVG.REFRESH.createIcon(Theme.foregroundFillBinding(), -1));
+                refreshNavButton.setGraphic(SVG.REFRESH.createIcon(Themes.titleFillProperty()));
                 refreshNavButton.getStyleClass().add("jfx-decorator-button");
-                refreshNavButton.ripplerFillProperty().set(Theme.whiteFill());
                 refreshNavButton.onActionProperty().bind(skinnable.onRefreshNavButtonActionProperty());
 
                 Rectangle separator = new Rectangle();
@@ -498,5 +513,67 @@ public class DecoratorSkin extends SkinBase<Decorator> {
                 mouseEvent.consume();
             }
         }
+    }
+
+    enum NavBarAnimations implements TransitionPane.AnimationProducer {
+        NEXT {
+            @Override
+            public void init(TransitionPane container, Node previousNode, Node nextNode) {
+                super.init(container, previousNode, nextNode);
+                nextNode.setTranslateX(container.getWidth());
+            }
+
+            @Override
+            public Timeline animate(
+                    Pane container, Node previousNode, Node nextNode,
+                    Duration duration, Interpolator interpolator) {
+                return new Timeline(
+                        new KeyFrame(Duration.ZERO,
+                                new KeyValue(nextNode.translateXProperty(), 50, interpolator),
+                                new KeyValue(previousNode.translateXProperty(), 0, interpolator),
+                                new KeyValue(nextNode.opacityProperty(), 0, interpolator),
+                                new KeyValue(previousNode.opacityProperty(), 1, interpolator)),
+                        new KeyFrame(duration,
+                                new KeyValue(nextNode.translateXProperty(), 0, interpolator),
+                                new KeyValue(previousNode.translateXProperty(), -50, interpolator),
+                                new KeyValue(nextNode.opacityProperty(), 1, interpolator),
+                                new KeyValue(previousNode.opacityProperty(), 0, interpolator))
+                );
+            }
+
+            @Override
+            public TransitionPane.AnimationProducer opposite() {
+                return NEXT;
+            }
+        },
+
+        PREVIOUS {
+            @Override
+            public void init(TransitionPane container, Node previousNode, Node nextNode) {
+                super.init(container, previousNode, nextNode);
+                nextNode.setTranslateX(container.getWidth());
+            }
+
+            @Override
+            public Timeline animate(Pane container, Node previousNode, Node nextNode, Duration duration, Interpolator interpolator) {
+                return new Timeline(
+                        new KeyFrame(Duration.ZERO,
+                                new KeyValue(nextNode.translateXProperty(), -50, interpolator),
+                                new KeyValue(previousNode.translateXProperty(), 0, interpolator),
+                                new KeyValue(nextNode.opacityProperty(), 0, interpolator),
+                                new KeyValue(previousNode.opacityProperty(), 1, interpolator)),
+                        new KeyFrame(duration,
+                                new KeyValue(nextNode.translateXProperty(), 0, interpolator),
+                                new KeyValue(previousNode.translateXProperty(), 50, interpolator),
+                                new KeyValue(nextNode.opacityProperty(), 1, interpolator),
+                                new KeyValue(previousNode.opacityProperty(), 0, interpolator))
+                );
+            }
+
+            @Override
+            public TransitionPane.AnimationProducer opposite() {
+                return PREVIOUS;
+            }
+        };
     }
 }

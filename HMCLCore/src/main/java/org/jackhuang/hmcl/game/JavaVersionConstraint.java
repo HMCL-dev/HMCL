@@ -18,9 +18,9 @@
 package org.jackhuang.hmcl.game;
 
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.platform.Architecture;
-import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
@@ -43,7 +43,7 @@ public enum JavaVersionConstraint {
         @Override
         public boolean checkJava(GameVersionNumber gameVersionNumber, Version version, JavaRuntime java) {
             GameJavaVersion minimumJavaVersion = GameJavaVersion.getMinimumJavaVersion(gameVersionNumber);
-            return minimumJavaVersion == null || java.getParsedVersion() >= minimumJavaVersion.getMajorVersion();
+            return minimumJavaVersion == null || java.getParsedVersion() >= minimumJavaVersion.majorVersion();
         }
     },
     // Minecraft with suggested java version recorded in game json is restrictedly constrained.
@@ -59,10 +59,10 @@ public enum JavaVersionConstraint {
         @Override
         public VersionRange<VersionNumber> getJavaVersionRange(Version version) {
             String javaVersion;
-            if (Objects.requireNonNull(version.getJavaVersion()).getMajorVersion() >= 9) {
-                javaVersion = "" + version.getJavaVersion().getMajorVersion();
+            if (Objects.requireNonNull(version.getJavaVersion()).majorVersion() >= 9) {
+                javaVersion = "" + version.getJavaVersion().majorVersion();
             } else {
-                javaVersion = "1." + version.getJavaVersion().getMajorVersion();
+                javaVersion = "1." + version.getJavaVersion().majorVersion();
             }
             return VersionNumber.atLeast(javaVersion);
         }
@@ -108,6 +108,14 @@ public enum JavaVersionConstraint {
                     && super.appliesToVersionImpl(gameVersionNumber, version, java, analyzer);
         }
     },
+    CLEANROOM_JAVA_21(true, GameVersionNumber.between("1.12.2", "1.12.999"), VersionNumber.atLeast("21")) {
+        @Override
+        protected boolean appliesToVersionImpl(GameVersionNumber gameVersionNumber, @Nullable Version version,
+                                               @Nullable JavaRuntime java, @Nullable LibraryAnalyzer analyzer) {
+            return analyzer != null && analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM)
+                    && super.appliesToVersionImpl(gameVersionNumber, version, java, analyzer);
+        }
+    },
     // LaunchWrapper<=1.12 will crash because LaunchWrapper assumes the system class loader is an instance of URLClassLoader (Java 8)
     LAUNCH_WRAPPER(true, GameVersionNumber.atMost("1.12.999"), VersionNumber.atMost("1.8.999")) {
         @Override
@@ -130,7 +138,8 @@ public enum JavaVersionConstraint {
                                                @Nullable JavaRuntime java, @Nullable LibraryAnalyzer analyzer) {
             return OperatingSystem.CURRENT_OS == OperatingSystem.LINUX
                     && Architecture.SYSTEM_ARCH == Architecture.X86_64
-                    && (java == null || java.getArchitecture() == Architecture.X86_64);
+                    && (java == null || java.getArchitecture() == Architecture.X86_64)
+                    && (analyzer == null || !analyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM));
         }
 
         @Override
@@ -238,9 +247,9 @@ public enum JavaVersionConstraint {
             return true;
         }
 
-        String versionNumber = gameJavaVersion.getMajorVersion() >= 9
-                ? String.valueOf(gameJavaVersion.getMajorVersion())
-                : "1." + gameJavaVersion.getMajorVersion();
+        String versionNumber = gameJavaVersion.majorVersion() >= 9
+                ? String.valueOf(gameJavaVersion.majorVersion())
+                : "1." + gameJavaVersion.majorVersion();
 
         VersionRange<VersionNumber> range = getJavaVersionRange(version);
         VersionNumber maximum = range.getMaximum();

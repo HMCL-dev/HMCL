@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.setting;
 
 import javafx.beans.InvalidationListener;
+import org.jackhuang.hmcl.task.FetchTask;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.net.*;
 import java.util.List;
+import java.util.Objects;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -70,7 +72,10 @@ public final class ProxyManager {
             String password = config().getProxyPass();
 
             if (username != null || password != null)
-                return new SimpleAuthenticator(username, password.toCharArray());
+                return new SimpleAuthenticator(
+                        Objects.requireNonNullElse(username, ""),
+                        Objects.requireNonNullElse(password, "").toCharArray()
+                );
             else
                 return null;
         } else
@@ -110,6 +115,8 @@ public final class ProxyManager {
         config().hasProxyAuthProperty().addListener(updateAuthenticator);
         config().proxyUserProperty().addListener(updateAuthenticator);
         config().proxyPassProperty().addListener(updateAuthenticator);
+
+        FetchTask.notifyInitialized();
     }
 
     private static abstract class AbstractProxySelector extends ProxySelector {

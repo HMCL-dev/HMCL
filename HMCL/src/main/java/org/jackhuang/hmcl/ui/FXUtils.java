@@ -18,7 +18,8 @@
 package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.*;
-import javafx.animation.*;
+import javafx.animation.Animation;
+import javafx.animation.Interpolator;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -26,39 +27,54 @@ import javafx.beans.WeakInvalidationListener;
 import javafx.beans.WeakListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
-import javafx.beans.value.*;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableBooleanValue;
+import javafx.beans.value.ObservableValue;
+import javafx.beans.value.WeakChangeListener;
 import javafx.collections.ObservableMap;
 import javafx.event.Event;
 import javafx.event.EventDispatcher;
+import javafx.event.EventHandler;
 import javafx.event.EventType;
+import javafx.geometry.Bounds;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.control.*;
+import javafx.scene.control.skin.VirtualFlow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.*;
-import javafx.scene.layout.*;
+import javafx.scene.layout.ColumnConstraints;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.FileChooser;
+import javafx.stage.Screen;
 import javafx.stage.Stage;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
+import org.jackhuang.hmcl.setting.StyleSheets;
 import org.jackhuang.hmcl.task.CacheFileTask;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
+import org.jackhuang.hmcl.ui.construct.IconedMenuItem;
+import org.jackhuang.hmcl.ui.construct.MenuSeparator;
+import org.jackhuang.hmcl.ui.construct.PopupMenu;
 import org.jackhuang.hmcl.ui.image.ImageLoader;
 import org.jackhuang.hmcl.ui.image.ImageUtils;
-import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.ResourceNotFoundError;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.javafx.ExtendedProperties;
@@ -75,28 +91,32 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.StringReader;
+import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.ref.WeakReference;
-import java.net.*;
+import java.net.HttpURLConnection;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLConnection;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.List;
+import java.nio.file.PathMatcher;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.BooleanSupplier;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
+import java.util.function.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import static org.jackhuang.hmcl.util.Lang.thread;
 import static org.jackhuang.hmcl.util.Lang.tryCast;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class FXUtils {
     private FXUtils() {
@@ -104,10 +124,33 @@ public final class FXUtils {
 
     public static final int JAVAFX_MAJOR_VERSION;
 
+    public static final String GRAPHICS_PIPELINE;
+    public static final boolean GPU_ACCELERATION_ENABLED;
+
+    static {
+        String pipelineName = "";
+
+        try {
+            Object pipeline = Class.forName("com.sun.prism.GraphicsPipeline").getMethod("getPipeline").invoke(null);
+            if (pipeline != null) {
+                pipelineName = pipeline.getClass().getName();
+            }
+        } catch (Throwable e) {
+            LOG.warning("Failed to get prism pipeline", e);
+        }
+
+        GRAPHICS_PIPELINE = pipelineName;
+        GPU_ACCELERATION_ENABLED = !pipelineName.endsWith(".SWPipeline");
+    }
+
     /// @see Platform.Preferences
     public static final @Nullable ObservableMap<String, Object> PREFERENCES;
     public static final @Nullable ObservableBooleanValue DARK_MODE;
     public static final @Nullable Boolean REDUCED_MOTION;
+    public static final @Nullable ReadOnlyObjectProperty<Color> ACCENT_COLOR;
+
+    public static final @Nullable MethodHandle TEXT_TRUNCATED_PROPERTY;
+    public static final @Nullable MethodHandle FOCUS_VISIBLE_PROPERTY;
 
     static {
         String jfxVersion = System.getProperty("javafx.version");
@@ -122,6 +165,7 @@ public final class FXUtils {
 
         ObservableMap<String, Object> preferences = null;
         ObservableBooleanValue darkMode = null;
+        ReadOnlyObjectProperty<Color> accentColorProperty = null;
         Boolean reducedMotion = null;
         if (JAVAFX_MAJOR_VERSION >= 22) {
             try {
@@ -133,13 +177,18 @@ public final class FXUtils {
                 preferences = preferences0;
 
                 @SuppressWarnings("unchecked")
-                var colorSchemeProperty =
-                        (ReadOnlyObjectProperty<? extends Enum<?>>)
-                                lookup.findVirtual(preferencesClass, "colorSchemeProperty", MethodType.methodType(ReadOnlyObjectProperty.class))
-                                        .invoke(preferences);
+                var colorSchemeProperty = (ReadOnlyObjectProperty<? extends Enum<?>>)
+                        lookup.findVirtual(preferencesClass, "colorSchemeProperty", MethodType.methodType(ReadOnlyObjectProperty.class))
+                                .invoke(preferences);
 
                 darkMode = Bindings.createBooleanBinding(() ->
                         "DARK".equals(colorSchemeProperty.get().name()), colorSchemeProperty);
+
+                @SuppressWarnings("unchecked")
+                var accentColorProperty0 = (ReadOnlyObjectProperty<Color>)
+                        lookup.findVirtual(preferencesClass, "accentColorProperty", MethodType.methodType(ReadOnlyObjectProperty.class))
+                                .invoke(preferences);
+                accentColorProperty = accentColorProperty0;
 
                 if (JAVAFX_MAJOR_VERSION >= 24) {
                     reducedMotion = (boolean)
@@ -153,6 +202,35 @@ public final class FXUtils {
         PREFERENCES = preferences;
         DARK_MODE = darkMode;
         REDUCED_MOTION = reducedMotion;
+        ACCENT_COLOR = accentColorProperty;
+
+        MethodHandle textTruncatedProperty = null;
+        if (JAVAFX_MAJOR_VERSION >= 23) {
+            try {
+                textTruncatedProperty = MethodHandles.publicLookup().findVirtual(
+                        Labeled.class,
+                        "textTruncatedProperty",
+                        MethodType.methodType(ReadOnlyBooleanProperty.class)
+                );
+            } catch (Throwable e) {
+                LOG.warning("Failed to lookup textTruncatedProperty", e);
+            }
+        }
+        TEXT_TRUNCATED_PROPERTY = textTruncatedProperty;
+
+        MethodHandle focusVisibleProperty = null;
+        if (JAVAFX_MAJOR_VERSION >= 19) {
+            try {
+                focusVisibleProperty = MethodHandles.publicLookup().findVirtual(
+                        Node.class,
+                        "focusVisibleProperty",
+                        MethodType.methodType(ReadOnlyBooleanProperty.class)
+                );
+            } catch (Throwable e) {
+                LOG.warning("Failed to lookup focusVisibleProperty", e);
+            }
+        }
+        FOCUS_VISIBLE_PROPERTY = focusVisibleProperty;
     }
 
     public static final String DEFAULT_MONOSPACE_FONT = OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS ? "Consolas" : "Monospace";
@@ -347,9 +425,58 @@ public final class FXUtils {
         return pane;
     }
 
+    public static void limitCellWidth(ListView<?> listView, ListCell<?> cell) {
+        ReadOnlyDoubleProperty widthProperty;
+
+        if (listView.lookup(".clipped-container") instanceof Region clippedContainer) {
+            widthProperty = clippedContainer.widthProperty();
+        } else {
+            widthProperty = listView.widthProperty();
+        }
+
+        cell.maxWidthProperty().bind(widthProperty);
+        cell.prefWidthProperty().bind(widthProperty);
+        cell.minWidthProperty().bind(widthProperty);
+    }
+
     public static void smoothScrolling(ScrollPane scrollPane) {
         if (AnimationUtils.isAnimationEnabled())
             ScrollUtils.addSmoothScrolling(scrollPane);
+    }
+
+    public static void smoothScrolling(VirtualFlow<?> virtualFlow) {
+        if (AnimationUtils.isAnimationEnabled())
+            ScrollUtils.addSmoothScrolling(virtualFlow);
+    }
+
+    /// If the current environment is JavaFX 23 or higher, this method returns [Labeled#textTruncatedProperty()];
+    /// Otherwise, it returns `null`.
+    public static @Nullable ReadOnlyBooleanProperty textTruncatedProperty(Labeled labeled) {
+        if (TEXT_TRUNCATED_PROPERTY != null) {
+            try {
+                return (ReadOnlyBooleanProperty) TEXT_TRUNCATED_PROPERTY.invokeExact(labeled);
+            } catch (RuntimeException | Error e) {
+                throw e;
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            return null;
+        }
+    }
+
+    public static @Nullable ReadOnlyBooleanProperty focusVisibleProperty(Node node) {
+        if (FOCUS_VISIBLE_PROPERTY != null) {
+            try {
+                return (ReadOnlyBooleanProperty) FOCUS_VISIBLE_PROPERTY.invokeExact(node);
+            } catch (RuntimeException | Error e) {
+                throw e;
+            } catch (Throwable e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            return null;
+        }
     }
 
     private static final Duration TOOLTIP_FAST_SHOW_DELAY = Duration.millis(50);
@@ -379,44 +506,35 @@ public final class FXUtils {
         installSlowTooltip(node, new Tooltip(tooltip));
     }
 
-    public static void playAnimation(Node node, String animationKey, Timeline timeline) {
-        animationKey = "FXUTILS.ANIMATION." + animationKey;
-        Object oldTimeline = node.getProperties().get(animationKey);
-//        if (oldTimeline instanceof Timeline) ((Timeline) oldTimeline).stop();
-        if (timeline != null) timeline.play();
-        node.getProperties().put(animationKey, timeline);
+    public static void playAnimation(Node node, String animationKey, Animation animation) {
+        animationKey = "hmcl.animations." + animationKey;
+        if (node.getProperties().get(animationKey) instanceof Animation oldAnimation)
+            oldAnimation.stop();
+        animation.play();
+        node.getProperties().put(animationKey, animation);
     }
 
-    public static <T> Animation playAnimation(Node node, String animationKey, Duration duration, WritableValue<T> property, T from, T to, Interpolator interpolator) {
-        if (from == null) from = property.getValue();
-        if (duration == null || Objects.equals(duration, Duration.ZERO) || Objects.equals(from, to)) {
-            playAnimation(node, animationKey, null);
-            property.setValue(to);
-            return null;
-        } else {
-            Timeline timeline = new Timeline(
-                    new KeyFrame(Duration.ZERO, new KeyValue(property, from, interpolator)),
-                    new KeyFrame(duration, new KeyValue(property, to, interpolator))
-            );
-            playAnimation(node, animationKey, timeline);
-            return timeline;
-        }
-    }
-
-    public static void openFolder(File file) {
-        if (!FileUtils.makeDirectory(file)) {
-            LOG.error("Unable to make directory " + file);
+    public static void openFolder(Path file) {
+        if (file.getFileSystem() != FileSystems.getDefault()) {
+            LOG.warning("Cannot open folder as the file system is not supported: " + file);
             return;
         }
 
-        String path = file.getAbsolutePath();
+        try {
+            Files.createDirectories(file);
+        } catch (IOException e) {
+            LOG.warning("Failed to create directory " + file);
+            return;
+        }
+
+        String path = FileUtils.getAbsolutePath(file);
 
         String openCommand;
         if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS)
             openCommand = "explorer.exe";
         else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
             openCommand = "/usr/bin/open";
-        else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && new File("/usr/bin/xdg-open").exists())
+        else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() && Files.exists(Path.of("/usr/bin/xdg-open")))
             openCommand = "/usr/bin/xdg-open";
         else
             openCommand = null;
@@ -438,7 +556,7 @@ public final class FXUtils {
 
             // Fallback to java.awt.Desktop::open
             try {
-                java.awt.Desktop.getDesktop().open(file);
+                java.awt.Desktop.getDesktop().open(file.toFile());
             } catch (Throwable e) {
                 LOG.error("Unable to open " + path + " by java.awt.Desktop.getDesktop()::open", e);
             }
@@ -481,11 +599,11 @@ public final class FXUtils {
                 }
 
                 // Fallback to open folder
-                openFolder(file.getParent().toFile());
+                openFolder(file.getParent());
             });
         } else {
             // We do not have a universal method to show file in file manager.
-            openFolder(file.getParent().toFile());
+            openFolder(file.getParent());
         }
     }
 
@@ -508,37 +626,35 @@ public final class FXUtils {
         if (link == null)
             return;
 
+        String uri = NetworkUtils.encodeLocation(link);
         thread(() -> {
-            if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
-                try {
-                    Runtime.getRuntime().exec(new String[]{"rundll32.exe", "url.dll,FileProtocolHandler", link});
+            try {
+                if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+                    Runtime.getRuntime().exec(new String[]{"rundll32.exe", "url.dll,FileProtocolHandler", uri});
                     return;
-                } catch (Throwable e) {
-                    LOG.warning("An exception occurred while calling rundll32", e);
-                }
-            }
-            if (OperatingSystem.CURRENT_OS.isLinuxOrBSD()) {
-                for (String browser : linuxBrowsers) {
-                    Path path = SystemUtils.which(browser);
-                    if (path != null) {
-                        try {
-                            Runtime.getRuntime().exec(new String[]{path.toString(), link});
-                            return;
-                        } catch (Throwable ignored) {
+                } else if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
+                    Runtime.getRuntime().exec(new String[]{"open", uri});
+                    return;
+                } else {
+                    for (String browser : linuxBrowsers) {
+                        Path path = SystemUtils.which(browser);
+                        if (path != null) {
+                            try {
+                                Runtime.getRuntime().exec(new String[]{path.toString(), uri});
+                                return;
+                            } catch (Throwable ignored) {
+                            }
                         }
                     }
                     LOG.warning("No known browser found");
                 }
-            }
-            try {
-                java.awt.Desktop.getDesktop().browse(new URI(link));
             } catch (Throwable e) {
-                if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS)
-                    try {
-                        Runtime.getRuntime().exec(new String[]{"/usr/bin/open", link});
-                    } catch (IOException ex) {
-                        LOG.warning("Unable to open link: " + link, ex);
-                    }
+                LOG.warning("Failed to open link: " + link + ", fallback to java.awt.Desktop", e);
+            }
+
+            try {
+                java.awt.Desktop.getDesktop().browse(new URI(uri));
+            } catch (Throwable e) {
                 LOG.warning("Failed to open link: " + link, e);
             }
         });
@@ -1128,7 +1244,16 @@ public final class FXUtils {
 
     public static Task<Image> getRemoteImageTask(String url, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
         return new CacheFileTask(url)
-                .thenApplyAsync(file -> loadImage(file, requestedWidth, requestedHeight, preserveRatio, smooth));
+                .setSignificance(Task.TaskSignificance.MINOR)
+                .thenApplyAsync(file -> loadImage(file, requestedWidth, requestedHeight, preserveRatio, smooth))
+                .setSignificance(Task.TaskSignificance.MINOR);
+    }
+
+    public static Task<Image> getRemoteImageTask(URI uri, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
+        return new CacheFileTask(uri)
+                .setSignificance(Task.TaskSignificance.MINOR)
+                .thenApplyAsync(file -> loadImage(file, requestedWidth, requestedHeight, preserveRatio, smooth))
+                .setSignificance(Task.TaskSignificance.MINOR);
     }
 
     public static ObservableValue<Image> newRemoteImage(String url, int requestedWidth, int requestedHeight, boolean preserveRatio, boolean smooth) {
@@ -1141,6 +1266,7 @@ public final class FXUtils {
                         LOG.warning("An exception encountered while loading remote image: " + url, exception);
                     }
                 })
+                .setSignificance(Task.TaskSignificance.MINOR)
                 .start();
         return image;
     }
@@ -1155,29 +1281,57 @@ public final class FXUtils {
     public static JFXButton newBorderButton(String text) {
         JFXButton button = new JFXButton(text);
         button.getStyleClass().add("jfx-button-border");
-        button.setButtonType(JFXButton.ButtonType.RAISED);
         return button;
     }
 
-    public static Label truncatedLabel(String text, int limit) {
+    public static JFXButton newToggleButton4(SVG icon) {
+        JFXButton button = new JFXButton();
+        button.getStyleClass().add("toggle-icon4");
+        button.setGraphic(icon.createIcon());
+        return button;
+    }
+
+    public static Label newSafeTruncatedLabel() {
         Label label = new Label();
-        if (text.length() <= limit) {
-            label.setText(text);
-        } else {
-            label.setText(StringUtils.truncate(text, limit));
-            installFastTooltip(label, text);
-        }
+        label.setTextOverrun(OverrunStyle.CENTER_WORD_ELLIPSIS);
+        showTooltipWhenTruncated(label);
         return label;
     }
 
-    public static void applyDragListener(Node node, FileFilter filter, Consumer<List<File>> callback) {
+    private static final String LABEL_FULL_TEXT_PROP_KEY = FXUtils.class.getName() + ".LABEL_FULL_TEXT";
+
+    public static void showTooltipWhenTruncated(Labeled labeled) {
+        ReadOnlyBooleanProperty textTruncatedProperty = textTruncatedProperty(labeled);
+        if (textTruncatedProperty != null) {
+            ChangeListener<Boolean> listener = (observable, oldValue, newValue) -> {
+                var label = (Labeled) ((ReadOnlyProperty<?>) observable).getBean();
+                var tooltip = (Tooltip) label.getProperties().get(LABEL_FULL_TEXT_PROP_KEY);
+
+                if (newValue) {
+                    if (tooltip == null) {
+                        tooltip = new Tooltip();
+                        tooltip.textProperty().bind(label.textProperty());
+                        label.getProperties().put(LABEL_FULL_TEXT_PROP_KEY, tooltip);
+                    }
+
+                    FXUtils.installFastTooltip(label, tooltip);
+                } else if (tooltip != null) {
+                    Tooltip.uninstall(label, tooltip);
+                }
+            };
+            listener.changed(textTruncatedProperty, false, textTruncatedProperty.get());
+            textTruncatedProperty.addListener(listener);
+        }
+    }
+
+    public static void applyDragListener(Node node, PathMatcher filter, Consumer<List<Path>> callback) {
         applyDragListener(node, filter, callback, null);
     }
 
-    public static void applyDragListener(Node node, FileFilter filter, Consumer<List<File>> callback, Runnable dragDropped) {
+    public static void applyDragListener(Node node, PathMatcher filter, Consumer<List<Path>> callback, Runnable dragDropped) {
         node.setOnDragOver(event -> {
             if (event.getGestureSource() != node && event.getDragboard().hasFiles()) {
-                if (event.getDragboard().getFiles().stream().anyMatch(filter::accept))
+                if (event.getDragboard().getFiles().stream().map(File::toPath).anyMatch(filter::matches))
                     event.acceptTransferModes(TransferMode.COPY_OR_MOVE);
             }
             event.consume();
@@ -1186,7 +1340,7 @@ public final class FXUtils {
         node.setOnDragDropped(event -> {
             List<File> files = event.getDragboard().getFiles();
             if (files != null) {
-                List<File> acceptFiles = files.stream().filter(filter::accept).collect(Collectors.toList());
+                List<Path> acceptFiles = files.stream().map(File::toPath).filter(filter::matches).toList();
                 if (!acceptFiles.isEmpty()) {
                     callback.accept(acceptFiles);
                     event.setDropCompleted(true);
@@ -1214,16 +1368,10 @@ public final class FXUtils {
     }
 
     public static <T> Callback<ListView<T>, ListCell<T>> jfxListCellFactory(Function<T, Node> graphicBuilder) {
-        Holder<Object> lastCell = new Holder<>();
         return view -> new JFXListCell<T>() {
             @Override
             public void updateItem(T item, boolean empty) {
                 super.updateItem(item, empty);
-
-                // https://mail.openjdk.org/pipermail/openjfx-dev/2022-July/034764.html
-                if (this == lastCell.value && !isVisible())
-                    return;
-                lastCell.value = this;
 
                 if (!empty) {
                     setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
@@ -1258,8 +1406,6 @@ public final class FXUtils {
         }
     };
 
-    public static final Interpolator EASE = Interpolator.SPLINE(0.25, 0.1, 0.25, 1);
-
     public static void onEscPressed(Node node, Runnable action) {
         node.addEventHandler(KeyEvent.KEY_PRESSED, e -> {
             if (e.getCode() == KeyCode.ESCAPE) {
@@ -1271,10 +1417,58 @@ public final class FXUtils {
 
     public static void onClicked(Node node, Runnable action) {
         node.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
-            if (e.getButton() == MouseButton.PRIMARY && e.getClickCount() == 1) {
+            if (e.getButton() == MouseButton.PRIMARY) {
                 action.run();
                 e.consume();
             }
+        });
+    }
+
+    public static void onSecondaryButtonClicked(Node node, Runnable action) {
+        node.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
+            if (e.getButton() == MouseButton.SECONDARY) {
+                action.run();
+                e.consume();
+            }
+        });
+    }
+
+    public static <N extends Parent> N prepareNode(N node) {
+        Scene dummyScene = new Scene(node);
+        StyleSheets.init(dummyScene);
+        node.applyCss();
+        node.layout();
+        return node;
+    }
+
+    public static void prepareOnMouseEnter(Node node, Runnable action) {
+        node.addEventFilter(MouseEvent.MOUSE_ENTERED, new EventHandler<>() {
+            @Override
+            public void handle(MouseEvent e) {
+                node.removeEventFilter(MouseEvent.MOUSE_ENTERED, this);
+                action.run();
+            }
+        });
+    }
+
+    public static <T> void onScroll(Node node, List<T> list,
+                                    ToIntFunction<List<T>> finder,
+                                    Consumer<T> updater
+    ) {
+        node.addEventHandler(ScrollEvent.SCROLL, event -> {
+            double deltaY = event.getDeltaY();
+            if (deltaY == 0)
+                return;
+
+            int index = finder.applyAsInt(list);
+            if (index < 0) return;
+            if (deltaY > 0) // up
+                index--;
+            else // down
+                index++;
+
+            updater.accept(list.get((index + list.size()) % list.size()));
+            event.consume();
         });
     }
 
@@ -1291,12 +1485,16 @@ public final class FXUtils {
     }
 
     public static void copyText(String text) {
+        copyText(text, i18n("message.copied"));
+    }
+
+    public static void copyText(String text, @Nullable String toastMessage) {
         ClipboardContent content = new ClipboardContent();
         content.putString(text);
         Clipboard.getSystemClipboard().setContent(content);
 
-        if (!Controllers.isStopped()) {
-            Controllers.showToast(i18n("message.copied"));
+        if (toastMessage != null && !Controllers.isStopped()) {
+            Controllers.showToast(toastMessage);
         }
     }
 
@@ -1315,11 +1513,11 @@ public final class FXUtils {
             for (int i = 0; i < children.getLength(); i++) {
                 org.w3c.dom.Node node = children.item(i);
 
-                if (node instanceof Element) {
-                    Element element = (Element) node;
+                if (node instanceof Element element) {
                     if ("a".equals(element.getTagName())) {
                         String href = element.getAttribute("href");
                         Text text = new Text(element.getTextContent());
+                        text.getStyleClass().add("hyperlink");
                         onClicked(text, () -> {
                             String link = href;
                             try {
@@ -1329,7 +1527,6 @@ public final class FXUtils {
                             hyperlinkAction.accept(link);
                         });
                         text.setCursor(Cursor.HAND);
-                        text.setFill(Color.web("#0070E0"));
                         text.setUnderline(true);
                         texts.add(text);
                     } else if ("b".equals(element.getTagName())) {
@@ -1369,5 +1566,101 @@ public final class FXUtils {
     public static FileChooser.ExtensionFilter getImageExtensionFilter() {
         return new FileChooser.ExtensionFilter(i18n("extension.png"),
                 IMAGE_EXTENSIONS.stream().map(ext -> "*." + ext).toArray(String[]::new));
+    }
+
+    /**
+     * Intelligently determines the popup position to prevent the menu from exceeding screen boundaries.
+     * Supports multi-monitor setups by detecting the current screen where the component is located.
+     * Now handles first-time popup display by forcing layout measurement.
+     *
+     * @param root          the root node to calculate position relative to
+     * @param popupInstance the popup instance to position
+     * @return the optimal vertical position for the popup menu
+     */
+    public static JFXPopup.PopupVPosition determineOptimalPopupPosition(Node root, JFXPopup popupInstance) {
+        // Get the screen bounds in screen coordinates
+        Bounds screenBounds = root.localToScreen(root.getBoundsInLocal());
+
+        // Convert Bounds to Rectangle2D for getScreensForRectangle method
+        Rectangle2D boundsRect = new Rectangle2D(
+                screenBounds.getMinX(), screenBounds.getMinY(),
+                screenBounds.getWidth(), screenBounds.getHeight()
+        );
+
+        // Find the screen that contains this component (supports multi-monitor)
+        List<Screen> screens = Screen.getScreensForRectangle(boundsRect);
+        Screen currentScreen = screens.isEmpty() ? Screen.getPrimary() : screens.get(0);
+        Rectangle2D visualBounds = currentScreen.getVisualBounds();
+
+        double screenHeight = visualBounds.getHeight();
+        double screenMinY = visualBounds.getMinY();
+        double itemScreenY = screenBounds.getMinY();
+
+        // Calculate available space relative to the current screen
+        double availableSpaceAbove = itemScreenY - screenMinY;
+        double availableSpaceBelow = screenMinY + screenHeight - itemScreenY - root.getBoundsInLocal().getHeight();
+
+        // Get popup content and ensure it's properly measured
+        Region popupContent = popupInstance.getPopupContent();
+
+        double menuHeight;
+        if (popupContent.getHeight() <= 0) {
+            // Force layout measurement if height is not yet available
+            popupContent.autosize();
+            popupContent.applyCss();
+            popupContent.layout();
+
+            // Get the measured height, or use a reasonable fallback
+            menuHeight = popupContent.getHeight();
+            if (menuHeight <= 0) {
+                // Fallback: estimate based on number of menu items
+                // Each menu item is roughly 36px height + separators + padding
+                menuHeight = 300; // Conservative estimate for the current menu structure
+            }
+        } else {
+            menuHeight = popupContent.getHeight();
+        }
+
+        // Add some margin for safety
+        menuHeight += 20;
+
+        return (availableSpaceAbove > menuHeight && availableSpaceBelow < menuHeight)
+                ? JFXPopup.PopupVPosition.BOTTOM  // Show menu below the button, expanding downward
+                : JFXPopup.PopupVPosition.TOP;    // Show menu above the button, expanding upward
+    }
+
+    public static void useJFXContextMenu(TextInputControl control) {
+        control.setContextMenu(null);
+
+        PopupMenu menu = new PopupMenu();
+        JFXPopup popup = new JFXPopup(menu);
+        popup.setAutoHide(true);
+
+        control.setOnContextMenuRequested(e -> {
+            boolean hasNoSelection = control.getSelectedText().isEmpty();
+
+            IconedMenuItem undo = new IconedMenuItem(SVG.UNDO, i18n("menu.undo"), control::undo, popup);
+            IconedMenuItem redo = new IconedMenuItem(SVG.REDO, i18n("menu.redo"), control::redo, popup);
+            IconedMenuItem cut = new IconedMenuItem(SVG.CONTENT_CUT, i18n("menu.cut"), control::cut, popup);
+            IconedMenuItem copy = new IconedMenuItem(SVG.CONTENT_COPY, i18n("menu.copy"), control::copy, popup);
+            IconedMenuItem paste = new IconedMenuItem(SVG.CONTENT_PASTE, i18n("menu.paste"), control::paste, popup);
+            IconedMenuItem delete = new IconedMenuItem(SVG.DELETE, i18n("menu.deleteselection"), () -> control.replaceSelection(""), popup);
+            IconedMenuItem selectall = new IconedMenuItem(SVG.SELECT_ALL, i18n("menu.selectall"), control::selectAll, popup);
+
+            menu.getContent().setAll(undo, redo, new MenuSeparator(), cut, copy, paste, delete, new MenuSeparator(), selectall);
+
+            undo.setDisable(!control.isUndoable());
+            redo.setDisable(!control.isRedoable());
+            cut.setDisable(hasNoSelection);
+            delete.setDisable(hasNoSelection);
+            copy.setDisable(hasNoSelection);
+            paste.setDisable(!Clipboard.getSystemClipboard().hasString());
+            selectall.setDisable(control.getText() == null || control.getText().isEmpty());
+
+            JFXPopup.PopupVPosition vPosition = determineOptimalPopupPosition(control, popup);
+            popup.show(control, vPosition, JFXPopup.PopupHPosition.LEFT, e.getX(), vPosition == JFXPopup.PopupVPosition.TOP ? e.getY() : e.getY() - control.getHeight());
+
+            e.consume();
+        });
     }
 }

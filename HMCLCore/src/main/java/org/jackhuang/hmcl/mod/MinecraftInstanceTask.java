@@ -17,36 +17,38 @@
  */
 package org.jackhuang.hmcl.mod;
 
+import kala.compress.archivers.zip.ZipArchiveEntry;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
+import org.jackhuang.hmcl.util.tree.ArchiveFileTree;
+import org.jackhuang.hmcl.util.tree.ZipFileTree;
 
-import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 public final class MinecraftInstanceTask<T> extends Task<ModpackConfiguration<T>> {
 
-    private final File zipFile;
+    private final Path zipFile;
     private final Charset encoding;
     private final List<String> subDirectories;
-    private final File jsonFile;
+    private final Path jsonFile;
     private final T manifest;
     private final String type;
     private final String name;
     private final String version;
 
-    public MinecraftInstanceTask(File zipFile, Charset encoding, List<String> subDirectories, T manifest, ModpackProvider modpackProvider, String name, String version, File jsonFile) {
+    public MinecraftInstanceTask(Path zipFile, Charset encoding, List<String> subDirectories, T manifest, ModpackProvider modpackProvider, String name, String version, Path jsonFile) {
         this.zipFile = zipFile;
         this.encoding = encoding;
-        this.subDirectories = subDirectories.stream().map(FileUtils::normalizePath).collect(Collectors.toList());
+        this.subDirectories = subDirectories.stream().map(FileUtils::normalizePath).toList();
         this.manifest = manifest;
         this.jsonFile = jsonFile;
         this.type = modpackProvider.getName();
@@ -54,30 +56,45 @@ public final class MinecraftInstanceTask<T> extends Task<ModpackConfiguration<T>
         this.version = version;
     }
 
+    private static void getOverrides(List<ModpackConfiguration.FileInformation> overrides,
+                                     ZipFileTree tree,
+                                     ArchiveFileTree.Dir<ZipArchiveEntry> dir,
+                                     List<String> names) throws IOException {
+        String prefix = String.join("/", names);
+        if (!prefix.isEmpty())
+            prefix = prefix + "/";
+
+        for (Map.Entry<String, ZipArchiveEntry> entry : dir.getFiles().entrySet()) {
+            String hash;
+            try (InputStream input = tree.getInputStream(entry.getValue())) {
+                hash = DigestUtils.digestToString("SHA-1", input);
+            }
+            overrides.add(new ModpackConfiguration.FileInformation(prefix + entry.getKey(), hash));
+        }
+
+        for (ArchiveFileTree.Dir<ZipArchiveEntry> subDir : dir.getSubDirs().values()) {
+            names.add(subDir.getName());
+            getOverrides(overrides, tree, subDir, names);
+            names.remove(names.size() - 1);
+        }
+    }
+
     @Override
     public void execute() throws Exception {
         List<ModpackConfiguration.FileInformation> overrides = new ArrayList<>();
 
-        try (FileSystem fs = CompressingUtils.readonly(zipFile.toPath()).setEncoding(encoding).build()) {
+        try (var tree = new ZipFileTree(CompressingUtils.openZipFileWithPossibleEncoding(zipFile, encoding))) {
             for (String subDirectory : subDirectories) {
-                Path root = fs.getPath(subDirectory);
-
-                if (Files.exists(root))
-                    Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
-                        @Override
-                        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                            String relativePath = root.relativize(file).normalize().toString().replace(File.separatorChar, '/');
-                            overrides.add(new ModpackConfiguration.FileInformation(relativePath, DigestUtils.digestToString("SHA-1", file)));
-                            return FileVisitResult.CONTINUE;
-                        }
-                    });
+                ArchiveFileTree.Dir<ZipArchiveEntry> root = tree.getDirectory(subDirectory);
+                if (root == null)
+                    continue;
+                var names = new ArrayList<String>();
+                getOverrides(overrides, tree, root, names);
             }
         }
-
         ModpackConfiguration<T> configuration = new ModpackConfiguration<>(manifest, type, name, version, overrides);
-        Path jsonPath = jsonFile.toPath();
-        Files.createDirectories(jsonPath.getParent());
-        JsonUtils.writeToJsonFile(jsonPath, configuration);
+        Files.createDirectories(jsonFile.getParent());
+        JsonUtils.writeToJsonFile(jsonFile, configuration);
         setResult(configuration);
     }
 }

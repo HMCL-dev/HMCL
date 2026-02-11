@@ -452,24 +452,25 @@
 3D Shareware v1.34
 19w14a
 19w14b
-1.14 Pre-Release 1
-1.14 Pre-Release 2
-1.14 Pre-Release 3
-1.14 Pre-Release 4
-1.14 Pre-Release 5
+1.14-pre1
+1.14-pre2
+1.14-pre3
+1.14-pre4
+1.14-pre5
 1.14
-1.14.1 Pre-Release 1
-1.14.1 Pre-Release 2
+1.14.1-pre1
+1.14.1-pre2
 1.14.1
-1.14.2 Pre-Release 1
-1.14.2 Pre-Release 2
-1.14.2 Pre-Release 3
-1.14.2 Pre-Release 4
+1.14.2-pre1
+1.14.2-pre2
+1.14.2-pre3
+1.14.2-pre4
 1.14.2
 1.14.3-pre1
 1.14.3-pre2
 1.14.3-pre3
 1.14.3-pre4
+1.14_combat-212796
 1.14.3
 1.14.4-pre1
 1.14.4-pre2
@@ -479,6 +480,8 @@
 1.14.4-pre6
 1.14.4-pre7
 1.14.4
+1.14_combat-0
+1.14_combat-3
 19w34a
 19w35a
 19w36a
@@ -497,6 +500,7 @@
 1.15-pre1
 1.15-pre2
 1.15-pre3
+1.15_combat-1
 1.15-pre4
 1.15-pre5
 1.15-pre6
@@ -506,6 +510,7 @@
 1.15.1
 1.15.2-pre1
 1.15.2-pre2
+1.15_combat-6
 1.15.2
 20w06a
 20w07a
@@ -545,9 +550,16 @@
 1.16.2-pre1
 1.16.2-pre2
 1.16.2-pre3
+1.16_combat-0
 1.16.2-rc1
 1.16.2-rc2
 1.16.2
+1.16_combat-1
+1.16_combat-2
+1.16_combat-3
+1.16_combat-4
+1.16_combat-5
+1.16_combat-6
 1.16.3-rc1
 1.16.3
 1.16.4-pre1
@@ -592,6 +604,13 @@
 1.17.1-rc1
 1.17.1-rc2
 1.17.1
+1.18_experimental-snapshot-1
+1.18_experimental-snapshot-2
+1.18_experimental-snapshot-3
+1.18_experimental-snapshot-4
+1.18_experimental-snapshot-5
+1.18_experimental-snapshot-6
+1.18_experimental-snapshot-7
 21w37a
 21w38a
 21w39a
@@ -622,12 +641,13 @@
 22w05a
 22w06a
 22w07a
+1.19_deep_dark_experimental_snapshot-1
 1.18.2-pre1
 1.18.2-pre2
 1.18.2-pre3
 1.18.2-rc1
 1.18.2
-22w13oneblockatatime
+22w13oneBlockAtATime
 22w11a
 22w12a
 22w13a
@@ -832,3 +852,44 @@
 1.21.7
 1.21.8-rc1
 1.21.8
+25w31a
+25w32a
+25w33a
+25w34a
+25w34b
+25w35a
+25w36a
+25w36b
+25w37a
+1.21.9-pre1
+1.21.9-pre2
+1.21.9-pre3
+1.21.9-pre4
+1.21.9-rc1
+1.21.9
+1.21.10-rc1
+1.21.10
+25w41a
+25w42a
+25w43a
+25w44a
+25w45a
+25w45a_unobfuscated
+25w46a
+25w46a_unobfuscated
+1.21.11-pre1
+1.21.11-pre1_unobfuscated
+1.21.11-pre2
+1.21.11-pre2_unobfuscated
+1.21.11-pre3
+1.21.11-pre3_unobfuscated
+1.21.11-pre4
+1.21.11-pre4_unobfuscated
+1.21.11-pre5
+1.21.11-pre5_unobfuscated
+1.21.11-rc1
+1.21.11-rc1_unobfuscated
+1.21.11-rc2
+1.21.11-rc2_unobfuscated
+1.21.11
+1.21.11_unobfuscated

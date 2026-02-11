@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.wizard;
 
 import javafx.scene.Node;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.util.SettingsMap;
 
 import java.util.*;
 
@@ -27,7 +28,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public class WizardController implements Navigation {
     private final WizardDisplayer displayer;
     private WizardProvider provider = null;
-    private final Map<String, Object> settings = new HashMap<>();
+    private final SettingsMap settings = new SettingsMap();
     private final Stack<Node> pages = new Stack<>();
     private boolean stopped = false;
 
@@ -36,7 +37,7 @@ public class WizardController implements Navigation {
     }
 
     @Override
-    public Map<String, Object> getSettings() {
+    public SettingsMap getSettings() {
         return settings;
     }
 
@@ -82,6 +83,10 @@ public class WizardController implements Navigation {
     }
 
     public void onNext(Node page) {
+        onNext(page, NavigationDirection.NEXT);
+    }
+
+    public void onNext(Node page, NavigationDirection direction) {
         pages.push(page);
 
         if (stopped) { // navigatingTo may stop this wizard.
@@ -92,11 +97,15 @@ public class WizardController implements Navigation {
             ((WizardPage) page).onNavigate(settings);
 
         LOG.info("Navigating to " + page + ", pages: " + pages);
-        displayer.navigateTo(page, NavigationDirection.NEXT);
+        displayer.navigateTo(page, direction);
     }
 
     @Override
     public void onPrev(boolean cleanUp) {
+        onPrev(cleanUp, NavigationDirection.PREVIOUS);
+    }
+
+    public void onPrev(boolean cleanUp, NavigationDirection direction) {
         if (!canPrev()) {
             if (provider.cancelIfCannotGoBack()) {
                 onCancel();
@@ -115,7 +124,7 @@ public class WizardController implements Navigation {
             ((WizardPage) prevPage).onNavigate(settings);
 
         LOG.info("Navigating to " + prevPage + ", pages: " + pages);
-        displayer.navigateTo(prevPage, NavigationDirection.PREVIOUS);
+        displayer.navigateTo(prevPage, direction);
     }
 
     @Override

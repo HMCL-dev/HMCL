@@ -17,17 +17,14 @@
  */
 package org.jackhuang.hmcl.ui.decorator;
 
-import com.jfoenix.controls.JFXDialog;
 import com.jfoenix.controls.JFXSnackbar;
+import com.jfoenix.controls.JFXSnackbarLayout;
+import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
-import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.WeakInvalidationListener;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.image.Image;
@@ -47,14 +44,15 @@ import org.jackhuang.hmcl.setting.EnumBackgroundImage;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.DialogUtils;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.account.AddAuthlibInjectorServerPane;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
-import org.jackhuang.hmcl.ui.construct.DialogAware;
-import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
-import org.jackhuang.hmcl.ui.construct.Navigator;
+import org.jackhuang.hmcl.ui.animation.Motion;
+import org.jackhuang.hmcl.ui.animation.TransitionPane.AnimationProducer;
 import org.jackhuang.hmcl.ui.construct.JFXDialogPane;
+import org.jackhuang.hmcl.ui.construct.Navigator;
 import org.jackhuang.hmcl.ui.wizard.Refreshable;
 import org.jackhuang.hmcl.ui.wizard.WizardProvider;
 import org.jackhuang.hmcl.util.Lang;
@@ -65,7 +63,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.List;
+import java.util.Locale;
+import java.util.Random;
 import java.util.stream.Stream;
 
 import static java.util.stream.Collectors.toList;
@@ -76,13 +76,8 @@ import static org.jackhuang.hmcl.util.io.FileUtils.getExtension;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class DecoratorController {
-    private static final String PROPERTY_DIALOG_CLOSE_HANDLER = DecoratorController.class.getName() + ".dialog.closeListener";
-
     private final Decorator decorator;
     private final Navigator navigator;
-
-    private JFXDialog dialog;
-    private JFXDialogPane dialogPane;
 
     public DecoratorController(Stage stage, Node mainPage) {
         decorator = new Decorator(stage);
@@ -90,16 +85,16 @@ public class DecoratorController {
             if (AnimationUtils.playWindowAnimation()) {
                 Timeline timeline = new Timeline(
                         new KeyFrame(Duration.millis(0),
-                                new KeyValue(decorator.opacityProperty(), 1, FXUtils.EASE),
-                                new KeyValue(decorator.scaleXProperty(), 1, FXUtils.EASE),
-                                new KeyValue(decorator.scaleYProperty(), 1, FXUtils.EASE),
-                                new KeyValue(decorator.scaleZProperty(), 0.3, FXUtils.EASE)
+                                new KeyValue(decorator.opacityProperty(), 1, Motion.EASE),
+                                new KeyValue(decorator.scaleXProperty(), 1, Motion.EASE),
+                                new KeyValue(decorator.scaleYProperty(), 1, Motion.EASE),
+                                new KeyValue(decorator.scaleZProperty(), 0.3, Motion.EASE)
                         ),
                         new KeyFrame(Duration.millis(200),
-                                new KeyValue(decorator.opacityProperty(), 0, FXUtils.EASE),
-                                new KeyValue(decorator.scaleXProperty(), 0.8, FXUtils.EASE),
-                                new KeyValue(decorator.scaleYProperty(), 0.8, FXUtils.EASE),
-                                new KeyValue(decorator.scaleZProperty(), 0.8, FXUtils.EASE)
+                                new KeyValue(decorator.opacityProperty(), 0, Motion.EASE),
+                                new KeyValue(decorator.scaleXProperty(), 0.8, Motion.EASE),
+                                new KeyValue(decorator.scaleYProperty(), 0.8, Motion.EASE),
+                                new KeyValue(decorator.scaleZProperty(), 0.8, Motion.EASE)
                         )
                 );
                 timeline.setOnFinished(event -> Launcher.stopApplication());
@@ -133,19 +128,24 @@ public class DecoratorController {
 
         // pass key events to current dialog / current page
         decorator.addEventFilter(KeyEvent.ANY, e -> {
-            if (!(e.getTarget() instanceof Node)) {
-                return; // event source can't be determined
+            if (!(e.getTarget() instanceof Node t)) {
+                return;
             }
 
             Node newTarget;
-            if (dialogPane != null && dialogPane.peek().isPresent()) {
-                newTarget = dialogPane.peek().get(); // current dialog
-            } else {
-                newTarget = navigator.getCurrentPage(); // current page
+
+            JFXDialogPane currentDialogPane = null;
+            if (decorator.getDrawerWrapper() != null) {
+                currentDialogPane = (JFXDialogPane) decorator.getDrawerWrapper().getProperties().get(DialogUtils.PROPERTY_DIALOG_PANE_INSTANCE);
             }
 
+            if (currentDialogPane != null && currentDialogPane.peek().isPresent()) {
+                newTarget = currentDialogPane.peek().get();
+            } else {
+                newTarget = navigator.getCurrentPage();
+            }
             boolean needsRedirect = true;
-            Node t = (Node) e.getTarget();
+
             while (t != null) {
                 if (t == newTarget) {
                     // current event target is in newTarget
@@ -176,17 +176,12 @@ public class DecoratorController {
             });
         }
 
-        try {
-            // For JavaFX 12+
-            MouseButton button = MouseButton.valueOf("BACK");
-            navigator.addEventFilter(MouseEvent.MOUSE_CLICKED, e -> {
-                if (e.getButton() == button) {
-                    back();
-                    e.consume();
-                }
-            });
-        } catch (IllegalArgumentException ignored) {
-        }
+        navigator.addEventFilter(MouseEvent.MOUSE_CLICKED, e -> {
+            if (e.getButton() == MouseButton.BACK) {
+                back();
+                e.consume();
+            }
+        });
     }
 
     public Decorator getDecorator() {
@@ -217,6 +212,8 @@ public class DecoratorController {
 
     private Background getBackground() {
         EnumBackgroundImage imageType = config().getBackgroundImageType();
+        if (imageType == null)
+            imageType = EnumBackgroundImage.DEFAULT;
 
         Image image = null;
         switch (imageType) {
@@ -268,7 +265,7 @@ public class DecoratorController {
     private Background createBackgroundWithOpacity(Image image, int opacity) {
         if (opacity <= 0) {
             return new Background(new BackgroundFill(new Color(1, 1, 1, 0), CornerRadii.EMPTY, Insets.EMPTY));
-        } else if (opacity >= 100) {
+        } else if (opacity >= 100 || image.getPixelReader() == null) {
             return new Background(new BackgroundImage(
                     image,
                     BackgroundRepeat.NO_REPEAT,
@@ -367,19 +364,16 @@ public class DecoratorController {
 
     // ==== Navigation ====
 
-    private static final DecoratorAnimationProducer animation = new DecoratorAnimationProducer();
-
-    public void navigate(Node node) {
-        navigator.navigate(node, animation);
+    public void navigate(Node node, AnimationProducer animationProducer, Duration duration, Interpolator interpolator) {
+        navigator.navigate(node, animationProducer, duration, interpolator);
     }
 
     private void close() {
         if (navigator.getCurrentPage() instanceof DecoratorPage) {
             DecoratorPage page = (DecoratorPage) navigator.getCurrentPage();
 
-            // FIXME: Get WorldPage working first, and revisit this later
-            page.closePage();
             if (page.isPageCloseable()) {
+                page.closePage();
                 return;
             }
         }
@@ -450,85 +444,18 @@ public class DecoratorController {
     }
 
     // ==== Dialog ====
-
     public void showDialog(Node node) {
-        FXUtils.checkFxUserThread();
-
-        if (dialog == null) {
-            if (decorator.getDrawerWrapper() == null) {
-                // Sometimes showDialog will be invoked before decorator was initialized.
-                // Keep trying again.
-                Platform.runLater(() -> showDialog(node));
-                return;
-            }
-            dialog = new JFXDialog();
-            dialogPane = new JFXDialogPane();
-
-            dialog.setContent(dialogPane);
-            decorator.capableDraggingWindow(dialog);
-            decorator.forbidDraggingWindow(dialogPane);
-            dialog.setDialogContainer(decorator.getDrawerWrapper());
-            dialog.setOverlayClose(false);
-            dialog.show();
-
-            navigator.setDisable(true);
-        }
-        dialogPane.push(node);
-
-        EventHandler<DialogCloseEvent> handler = event -> closeDialog(node);
-        node.getProperties().put(PROPERTY_DIALOG_CLOSE_HANDLER, handler);
-        node.addEventHandler(DialogCloseEvent.CLOSE, handler);
-
-        if (dialog.isVisible()) {
-            dialog.requestFocus();
-            if (node instanceof DialogAware)
-                ((DialogAware) node).onDialogShown();
-        } else {
-            dialog.visibleProperty().addListener(new ChangeListener<Boolean>() {
-                @Override
-                public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
-                    if (newValue) {
-                        dialog.requestFocus();
-                        if (node instanceof DialogAware)
-                            ((DialogAware) node).onDialogShown();
-                        observable.removeListener(this);
-                    }
-                }
-            });
-        }
+        DialogUtils.show(decorator, node);
     }
 
-    @SuppressWarnings("unchecked")
     private void closeDialog(Node node) {
-        FXUtils.checkFxUserThread();
-
-        Optional.ofNullable(node.getProperties().get(PROPERTY_DIALOG_CLOSE_HANDLER))
-                .ifPresent(handler -> node.removeEventHandler(DialogCloseEvent.CLOSE, (EventHandler<DialogCloseEvent>) handler));
-
-        if (dialog != null) {
-            JFXDialogPane pane = dialogPane;
-
-            if (pane.size() == 1 && pane.peek().orElse(null) == node) {
-                dialog.setOnDialogClosed(e -> pane.pop(node));
-                dialog.close();
-                dialog = null;
-                dialogPane = null;
-
-                navigator.setDisable(false);
-            } else {
-                pane.pop(node);
-            }
-
-            if (node instanceof DialogAware) {
-                ((DialogAware) node).onDialogClosed();
-            }
-        }
+        DialogUtils.close(node);
     }
 
     // ==== Toast ====
 
     public void showToast(String content) {
-        decorator.getSnackbar().fireEvent(new JFXSnackbar.SnackbarEvent(content, null, 2000L, false, null));
+        decorator.getSnackbar().fireEvent(new JFXSnackbar.SnackbarEvent(new JFXSnackbarLayout(content)));
     }
 
     // ==== Wizard ====
@@ -540,7 +467,8 @@ public class DecoratorController {
     public void startWizard(WizardProvider wizardProvider, String category) {
         FXUtils.checkFxUserThread();
 
-        navigator.navigate(new DecoratorWizardDisplayer(wizardProvider, category), ContainerAnimations.FADE);
+        navigator.navigate(new DecoratorWizardDisplayer(wizardProvider, category),
+                ContainerAnimations.FORWARD, Motion.SHORT4, Motion.EASE);
     }
 
     // ==== Authlib Injector DnD ====

@@ -18,14 +18,18 @@
 package org.jackhuang.hmcl.ui.construct;
 
 import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.ui.versions.VersionPage;
+import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
+import org.jackhuang.hmcl.ui.animation.TransitionPane;
 
 import java.util.function.Consumer;
 
@@ -40,8 +44,16 @@ public class AdvancedListBox extends ScrollPane {
         setFitToHeight(true);
         setFitToWidth(true);
         setHbarPolicy(ScrollBarPolicy.NEVER);
+        setVbarPolicy(ScrollBarPolicy.NEVER);
 
         container.getStyleClass().add("advanced-list-box-content");
+
+        this.addEventFilter(MouseEvent.MOUSE_ENTERED, event -> {
+            if (container.getHeight() > getHeight())
+                setVbarPolicy(ScrollBarPolicy.AS_NEEDED);
+        });
+        this.addEventFilter(MouseEvent.MOUSE_EXITED,
+                event -> setVbarPolicy(ScrollBarPolicy.NEVER));
     }
 
     public AdvancedListBox add(Node child) {
@@ -59,10 +71,9 @@ public class AdvancedListBox extends ScrollPane {
     private AdvancedListItem createNavigationDrawerItem(String title, SVG leftGraphic) {
         AdvancedListItem item = new AdvancedListItem();
         item.getStyleClass().add("navigation-drawer-item");
-        item.setActionButtonVisible(false);
         item.setTitle(title);
         if (leftGraphic != null) {
-            item.setLeftGraphic(VersionPage.wrap(leftGraphic));
+            item.setLeftIcon(leftGraphic);
         }
         return item;
     }
@@ -86,6 +97,31 @@ public class AdvancedListBox extends ScrollPane {
         AdvancedListItem item = createNavigationDrawerItem(title, leftGraphic);
         item.activeProperty().bind(tabHeader.getSelectionModel().selectedItemProperty().isEqualTo(tab));
         item.setOnAction(e -> tabHeader.select(tab));
+        return add(item);
+    }
+
+    @SuppressWarnings("SuspiciousNameCombination")
+    public AdvancedListBox addNavigationDrawerTab(TabHeader tabHeader, TabControl.Tab<?> tab, String title,
+                                                  SVG unselectedGraphic, SVG selectedGraphic) {
+        AdvancedListItem item = createNavigationDrawerItem(title, null);
+        item.activeProperty().bind(tabHeader.getSelectionModel().selectedItemProperty().isEqualTo(tab));
+        item.setOnAction(e -> tabHeader.select(tab));
+
+        Node unselectedIcon = unselectedGraphic.createIcon(AdvancedListItem.LEFT_ICON_SIZE);
+        Node selectedIcon = selectedGraphic.createIcon(AdvancedListItem.LEFT_ICON_SIZE);
+
+        TransitionPane leftGraphic = new TransitionPane();
+        AdvancedListItem.setAlignment(leftGraphic, Pos.CENTER);
+        leftGraphic.setMouseTransparent(true);
+        leftGraphic.setAlignment(Pos.CENTER);
+        FXUtils.setLimitWidth(leftGraphic, AdvancedListItem.LEFT_GRAPHIC_SIZE);
+        FXUtils.setLimitHeight(leftGraphic, AdvancedListItem.LEFT_ICON_SIZE);
+        leftGraphic.setPadding(Insets.EMPTY);
+        leftGraphic.setContent(item.isActive() ? selectedIcon : unselectedIcon, ContainerAnimations.NONE);
+        FXUtils.onChange(item.activeProperty(), active ->
+                leftGraphic.setContent(active ? selectedIcon : unselectedIcon, ContainerAnimations.FADE));
+
+        item.setLeftGraphic(leftGraphic);
         return add(item);
     }
 

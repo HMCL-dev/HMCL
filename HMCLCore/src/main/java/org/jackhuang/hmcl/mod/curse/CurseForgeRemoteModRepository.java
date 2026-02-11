@@ -36,6 +36,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.Semaphore;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
@@ -46,6 +47,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
 
     private static final String PREFIX = "https://api.curseforge.com";
     private static final String apiKey = System.getProperty("hmcl.curseforge.apikey", JarUtils.getAttribute("hmcl.curseforge.apikey", ""));
+    private static final Semaphore SEMAPHORE = new Semaphore(16);
 
     private static final int WORD_PERFECT_MATCH_WEIGHT = 5;
 
@@ -110,46 +112,55 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
 
     @Override
     public SearchResult search(DownloadProvider downloadProvider, String gameVersion, @Nullable RemoteModRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder) throws IOException {
-        int categoryId = 0;
-        if (category != null && category.getSelf() instanceof CurseAddon.Category) {
-            categoryId = ((CurseAddon.Category) category.getSelf()).getId();
-        }
-        Response<List<CurseAddon>> response = withApiKey(HttpRequest.GET(downloadProvider.injectURL(NetworkUtils.withQuery(PREFIX + "/v1/mods/search", mapOf(
-                pair("gameId", "432"),
-                pair("classId", Integer.toString(section)),
-                pair("categoryId", Integer.toString(categoryId)),
-                pair("gameVersion", gameVersion),
-                pair("searchFilter", searchFilter),
-                pair("sortField", Integer.toString(toModsSearchSortField(sortType))),
-                pair("sortOrder", toSortOrder(sortOrder)),
-                pair("index", Integer.toString(pageOffset * pageSize)),
-                pair("pageSize", Integer.toString(pageSize)))))))
-                .getJson(Response.typeOf(listTypeOf(CurseAddon.class)));
-        if (searchFilter.isEmpty()) {
-            return new SearchResult(response.getData().stream().map(CurseAddon::toMod), calculateTotalPages(response, pageSize));
-        }
-
-        // https://github.com/HMCL-dev/HMCL/issues/1549
-        String lowerCaseSearchFilter = searchFilter.toLowerCase(Locale.ROOT);
-        Map<String, Integer> searchFilterWords = new HashMap<>();
-        for (String s : StringUtils.tokenize(lowerCaseSearchFilter)) {
-            searchFilterWords.put(s, searchFilterWords.getOrDefault(s, 0) + 1);
-        }
-
-        StringUtils.LevCalculator levCalculator = new StringUtils.LevCalculator();
-
-        return new SearchResult(response.getData().stream().map(CurseAddon::toMod).map(remoteMod -> {
-            String lowerCaseResult = remoteMod.getTitle().toLowerCase();
-            int diff = levCalculator.calc(lowerCaseSearchFilter, lowerCaseResult);
-
-            for (String s : StringUtils.tokenize(lowerCaseResult)) {
-                if (searchFilterWords.containsKey(s)) {
-                    diff -= WORD_PERFECT_MATCH_WEIGHT * searchFilterWords.get(s) * s.length();
-                }
+        SEMAPHORE.acquireUninterruptibly();
+        try {
+            int categoryId = 0;
+            if (category != null && category.getSelf() instanceof CurseAddon.Category) {
+                categoryId = ((CurseAddon.Category) category.getSelf()).getId();
             }
 
-            return pair(remoteMod, diff);
-        }).sorted(Comparator.comparingInt(Pair::getValue)).map(Pair::getKey), response.getData().stream().map(CurseAddon::toMod), calculateTotalPages(response, pageSize));
+            var query = new LinkedHashMap<String, String>();
+            query.put("gameId", "432");
+            query.put("classId", Integer.toString(section));
+            if (categoryId != 0)
+                query.put("categoryId", Integer.toString(categoryId));
+            query.put("gameVersion", gameVersion);
+            query.put("searchFilter", searchFilter);
+            query.put("sortField", Integer.toString(toModsSearchSortField(sortType)));
+            query.put("sortOrder", toSortOrder(sortOrder));
+            query.put("index", Integer.toString(pageOffset * pageSize));
+            query.put("pageSize", Integer.toString(pageSize));
+
+            Response<List<CurseAddon>> response = withApiKey(HttpRequest.GET(downloadProvider.injectURL(NetworkUtils.withQuery(PREFIX + "/v1/mods/search", query))))
+                    .getJson(Response.typeOf(listTypeOf(CurseAddon.class)));
+            if (searchFilter.isEmpty()) {
+                return new SearchResult(response.getData().stream().map(CurseAddon::toMod), calculateTotalPages(response, pageSize));
+            }
+
+            // https://github.com/HMCL-dev/HMCL/issues/1549
+            String lowerCaseSearchFilter = searchFilter.toLowerCase(Locale.ROOT);
+            Map<String, Integer> searchFilterWords = new HashMap<>();
+            for (String s : StringUtils.tokenize(lowerCaseSearchFilter)) {
+                searchFilterWords.put(s, searchFilterWords.getOrDefault(s, 0) + 1);
+            }
+
+            StringUtils.LevCalculator levCalculator = new StringUtils.LevCalculator();
+
+            return new SearchResult(response.getData().stream().map(CurseAddon::toMod).map(remoteMod -> {
+                String lowerCaseResult = remoteMod.getTitle().toLowerCase(Locale.ROOT);
+                int diff = levCalculator.calc(lowerCaseSearchFilter, lowerCaseResult);
+
+                for (String s : StringUtils.tokenize(lowerCaseResult)) {
+                    if (searchFilterWords.containsKey(s)) {
+                        diff -= WORD_PERFECT_MATCH_WEIGHT * searchFilterWords.get(s) * s.length();
+                    }
+                }
+
+                return pair(remoteMod, diff);
+            }).sorted(Comparator.comparingInt(Pair::getValue)).map(Pair::getKey), response.getData().stream().map(CurseAddon::toMod), calculateTotalPages(response, pageSize));
+        } finally {
+            SEMAPHORE.release();
+        }
     }
 
     @Override
@@ -169,49 +180,73 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
         }
 
         long hash = Integer.toUnsignedLong(MurmurHash2.hash32(baos.toByteArray(), baos.size(), 1));
-
-        Response<FingerprintMatchesResult> response = withApiKey(HttpRequest.POST(PREFIX + "/v1/fingerprints/432"))
-                .json(mapOf(pair("fingerprints", Collections.singletonList(hash))))
-                .getJson(Response.typeOf(FingerprintMatchesResult.class));
-
-        if (response.getData().getExactMatches() == null || response.getData().getExactMatches().isEmpty()) {
+        if (hash == 811513880) { // Workaround for https://github.com/HMCL-dev/HMCL/issues/4597
             return Optional.empty();
         }
 
-        return Optional.of(response.getData().getExactMatches().get(0).getFile().toVersion());
+        SEMAPHORE.acquireUninterruptibly();
+        try {
+            Response<FingerprintMatchesResult> response = withApiKey(HttpRequest.POST(PREFIX + "/v1/fingerprints/432"))
+                    .json(mapOf(pair("fingerprints", Collections.singletonList(hash))))
+                    .getJson(Response.typeOf(FingerprintMatchesResult.class));
+
+            if (response.getData().getExactMatches() == null || response.getData().getExactMatches().isEmpty()) {
+                return Optional.empty();
+            }
+
+            return Optional.of(response.getData().getExactMatches().get(0).getFile().toVersion());
+        } finally {
+            SEMAPHORE.release();
+        }
     }
 
     @Override
     public RemoteMod getModById(String id) throws IOException {
-        Response<CurseAddon> response = withApiKey(HttpRequest.GET(PREFIX + "/v1/mods/" + id))
-                .getJson(Response.typeOf(CurseAddon.class));
-        return response.data.toMod();
+        SEMAPHORE.acquireUninterruptibly();
+        try {
+            Response<CurseAddon> response = withApiKey(HttpRequest.GET(PREFIX + "/v1/mods/" + id))
+                    .getJson(Response.typeOf(CurseAddon.class));
+            return response.data.toMod();
+        } finally {
+            SEMAPHORE.release();
+        }
     }
 
     @Override
     public RemoteMod.File getModFile(String modId, String fileId) throws IOException {
-        Response<CurseAddon.LatestFile> response = withApiKey(HttpRequest.GET(String.format("%s/v1/mods/%s/files/%s", PREFIX, modId, fileId)))
-                .getJson(Response.typeOf(CurseAddon.LatestFile.class));
-        return response.getData().toVersion().getFile();
+        SEMAPHORE.acquireUninterruptibly();
+        try {
+            Response<CurseAddon.LatestFile> response = withApiKey(HttpRequest.GET(String.format("%s/v1/mods/%s/files/%s", PREFIX, modId, fileId)))
+                    .getJson(Response.typeOf(CurseAddon.LatestFile.class));
+            return response.getData().toVersion().getFile();
+        } finally {
+            SEMAPHORE.release();
+        }
     }
 
     @Override
     public Stream<RemoteMod.Version> getRemoteVersionsById(String id) throws IOException {
-        Response<List<CurseAddon.LatestFile>> response = withApiKey(HttpRequest.GET(PREFIX + "/v1/mods/" + id + "/files",
-                pair("pageSize", "10000")))
-                .getJson(Response.typeOf(listTypeOf(CurseAddon.LatestFile.class)));
-        return response.getData().stream().map(CurseAddon.LatestFile::toVersion);
-    }
-
-    public List<CurseAddon.Category> getCategoriesImpl() throws IOException {
-        Response<List<CurseAddon.Category>> categories = withApiKey(HttpRequest.GET(PREFIX + "/v1/categories", pair("gameId", "432")))
-                .getJson(Response.typeOf(listTypeOf(CurseAddon.Category.class)));
-        return reorganizeCategories(categories.getData(), section);
+        SEMAPHORE.acquireUninterruptibly();
+        try {
+            Response<List<CurseAddon.LatestFile>> response = withApiKey(HttpRequest.GET(PREFIX + "/v1/mods/" + id + "/files",
+                    pair("pageSize", "10000")))
+                    .getJson(Response.typeOf(listTypeOf(CurseAddon.LatestFile.class)));
+            return response.getData().stream().map(CurseAddon.LatestFile::toVersion);
+        } finally {
+            SEMAPHORE.release();
+        }
     }
 
     @Override
     public Stream<RemoteModRepository.Category> getCategories() throws IOException {
-        return getCategoriesImpl().stream().map(CurseAddon.Category::toCategory);
+        SEMAPHORE.acquireUninterruptibly();
+        try {
+            Response<List<CurseAddon.Category>> categories = withApiKey(HttpRequest.GET(PREFIX + "/v1/categories", pair("gameId", "432")))
+                    .getJson(Response.typeOf(listTypeOf(CurseAddon.Category.class)));
+            return reorganizeCategories(categories.getData(), section).stream().map(CurseAddon.Category::toCategory);
+        } finally {
+            SEMAPHORE.release();
+        }
     }
 
     private List<CurseAddon.Category> reorganizeCategories(List<CurseAddon.Category> categories, int rootId) {

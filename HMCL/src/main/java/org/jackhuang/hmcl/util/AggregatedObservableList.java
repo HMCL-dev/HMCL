@@ -28,10 +28,10 @@ import java.util.function.Function;
 
 public final class AggregatedObservableList<T> {
 
-    protected final List<ObservableList<T>> lists = new ArrayList<>();
-    final private List<Integer> sizes = new ArrayList<>();
-    final private List<InternalListModificationListener> listeners = new ArrayList<>();
-    final protected ObservableList<T> aggregatedList = FXCollections.observableArrayList();
+    private final List<ObservableList<? extends T>> lists = new ArrayList<>();
+    private final List<Integer> sizes = new ArrayList<>();
+    private final List<InternalListModificationListener> listeners = new ArrayList<>();
+    private final ObservableList<T> aggregatedList = FXCollections.observableArrayList();
 
     public AggregatedObservableList() {
 
@@ -46,7 +46,7 @@ public final class AggregatedObservableList<T> {
         return aggregatedList;
     }
 
-    public void appendList(@NotNull ObservableList<T> list) {
+    public void appendList(@NotNull ObservableList<? extends T> list) {
         assert !lists.contains(list) : "List is already contained: " + list;
         lists.add(list);
         final InternalListModificationListener listener = new InternalListModificationListener(list);
@@ -59,7 +59,7 @@ public final class AggregatedObservableList<T> {
                 "lists.size=" + lists.size() + " not equal to sizes.size=" + sizes.size() + " or not equal to listeners.size=" + listeners.size();
     }
 
-    public void prependList(@NotNull ObservableList<T> list) {
+    public void prependList(@NotNull ObservableList<? extends T> list) {
         assert !lists.contains(list) : "List is already contained: " + list;
         lists.add(0, list);
         final InternalListModificationListener listener = new InternalListModificationListener(list);
@@ -72,7 +72,7 @@ public final class AggregatedObservableList<T> {
                 "lists.size=" + lists.size() + " not equal to sizes.size=" + sizes.size() + " or not equal to listeners.size=" + listeners.size();
     }
 
-    public void removeList(@NotNull ObservableList<T> list) {
+    public void removeList(@NotNull ObservableList<? extends T> list) {
         assert lists.size() == sizes.size() && lists.size() == listeners.size() :
                 "lists.size=" + lists.size() + " not equal to sizes.size=" + sizes.size() + " or not equal to listeners.size=" + listeners.size();
         final int index = lists.indexOf(list);
@@ -98,7 +98,7 @@ public final class AggregatedObservableList<T> {
      * @param list the list in question
      * @return the start index of this list in the aggregated List
      */
-    private int getStartIndex(@NotNull ObservableList<T> list) {
+    private int getStartIndex(@NotNull ObservableList<? extends T> list) {
         int startIndex = 0;
         //System.out.println("=== searching startIndex of " + list);
         assert lists.size() == sizes.size() : "lists.size=" + lists.size() + " not equal to sizes.size=" + sizes.size();
@@ -120,7 +120,7 @@ public final class AggregatedObservableList<T> {
      * @param startIndex the start of the list (retrieve with {@link #getStartIndex(ObservableList)}
      * @return the end index of this list in the aggregated List
      */
-    private int getEndIndex(@NotNull ObservableList<T> list, int startIndex) {
+    private int getEndIndex(@NotNull ObservableList<? extends T> list, int startIndex) {
         assert lists.size() == sizes.size() : "lists.size=" + lists.size() + " not equal to sizes.size=" + sizes.size();
         final int index = lists.indexOf(list);
         return startIndex + sizes.get(index) - 1;
@@ -129,9 +129,9 @@ public final class AggregatedObservableList<T> {
     private final class InternalListModificationListener implements ListChangeListener<T> {
 
         @NotNull
-        private final ObservableList<T> list;
+        private final ObservableList<? extends T> list;
 
-        public InternalListModificationListener(@NotNull ObservableList<T> list) {
+        public InternalListModificationListener(@NotNull ObservableList<? extends T> list) {
             this.list = list;
         }
 

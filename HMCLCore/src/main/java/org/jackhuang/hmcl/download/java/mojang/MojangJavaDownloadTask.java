@@ -21,17 +21,16 @@ import org.jackhuang.hmcl.download.ArtifactMalformedException;
 import org.jackhuang.hmcl.download.DownloadProvider;
 import org.jackhuang.hmcl.game.DownloadInfo;
 import org.jackhuang.hmcl.game.GameJavaVersion;
-import org.jackhuang.hmcl.java.*;
+import org.jackhuang.hmcl.java.JavaInfo;
 import org.jackhuang.hmcl.task.FileDownloadTask;
 import org.jackhuang.hmcl.task.GetTask;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.ChecksumMismatchException;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.UnsupportedPlatformException;
 import org.tukaani.xz.LZMAInputStream;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -60,11 +59,11 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
             MojangJavaDownloads allDownloads = JsonUtils.fromNonNullJson(javaDownloadsJson, MojangJavaDownloads.class);
 
             Map<String, List<MojangJavaDownloads.JavaDownload>> osDownloads = allDownloads.getDownloads().get(platform);
-            if (osDownloads == null || !osDownloads.containsKey(javaVersion.getComponent()))
+            if (osDownloads == null || !osDownloads.containsKey(javaVersion.component()))
                 throw new UnsupportedPlatformException("Unsupported platform: " + platform);
-            List<MojangJavaDownloads.JavaDownload> candidates = osDownloads.get(javaVersion.getComponent());
+            List<MojangJavaDownloads.JavaDownload> candidates = osDownloads.get(javaVersion.component());
             for (MojangJavaDownloads.JavaDownload download : candidates) {
-                if (JavaInfo.parseVersion(download.getVersion().getName()) >= javaVersion.getMajorVersion()) {
+                if (JavaInfo.parseVersion(download.getVersion().getName()) >= javaVersion.majorVersion()) {
                     this.download = download;
                     return new GetTask(downloadProvider.injectURLWithCandidates(download.getManifest().getUrl()));
                 }
@@ -102,21 +101,26 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
 
                 if (file.getDownloads().containsKey("lzma")) {
                     DownloadInfo download = file.getDownloads().get("lzma");
-                    File tempFile = target.resolve(entry.getKey() + ".lzma").toFile();
-                    var task = new FileDownloadTask(downloadProvider.injectURLWithCandidates(download.getUrl()), tempFile.toPath(), new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
+                    Path tempFile = target.resolve(entry.getKey() + ".lzma");
+                    var task = new FileDownloadTask(downloadProvider.injectURLWithCandidates(download.getUrl()), tempFile, new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
                     task.setName(entry.getKey());
                     dependencies.add(task.thenRunAsync(() -> {
                         Path decompressed = target.resolve(entry.getKey() + ".tmp");
-                        try (LZMAInputStream input = new LZMAInputStream(new FileInputStream(tempFile))) {
+                        try (LZMAInputStream input = new LZMAInputStream(Files.newInputStream(tempFile))) {
                             Files.copy(input, decompressed, StandardCopyOption.REPLACE_EXISTING);
                         } catch (IOException e) {
                             throw new ArtifactMalformedException("File " + entry.getKey() + " is malformed", e);
                         }
-                        tempFile.delete();
+
+                        try {
+                            Files.deleteIfExists(tempFile);
+                        } catch (IOException e) {
+                            LOG.warning("Failed to delete temporary file: " + tempFile, e);
+                        }
 
                         Files.move(decompressed, dest, StandardCopyOption.REPLACE_EXISTING);
                         if (file.isExecutable()) {
-                            dest.toFile().setExecutable(true);
+                            FileUtils.setExecutable(dest);
                         }
                     }));
                 } else if (file.getDownloads().containsKey("raw")) {
@@ -124,7 +128,7 @@ public final class MojangJavaDownloadTask extends Task<MojangJavaDownloadTask.Re
                     var task = new FileDownloadTask(downloadProvider.injectURLWithCandidates(download.getUrl()), dest, new FileDownloadTask.IntegrityCheck("SHA-1", download.getSha1()));
                     task.setName(entry.getKey());
                     if (file.isExecutable()) {
-                        dependencies.add(task.thenRunAsync(() -> dest.toFile().setExecutable(true)));
+                        dependencies.add(task.thenRunAsync(() -> FileUtils.setExecutable(dest)));
                     } else {
                         dependencies.add(task);
                     }

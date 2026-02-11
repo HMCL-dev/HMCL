@@ -2,26 +2,31 @@ package org.jackhuang.hmcl.ui.download;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXTextField;
-import javafx.geometry.Insets;
+import javafx.beans.property.StringProperty;
 import javafx.geometry.Pos;
-import javafx.scene.control.Label;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
+import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.ComponentList;
+import org.jackhuang.hmcl.ui.construct.LinePane;
+import org.jackhuang.hmcl.ui.construct.LineTextPane;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.wizard.WizardController;
 import org.jackhuang.hmcl.ui.wizard.WizardPage;
+import org.jackhuang.hmcl.util.SettingsMap;
 
 import static javafx.beans.binding.Bindings.createBooleanBinding;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public abstract class ModpackPage extends SpinnerPane implements WizardPage {
+    public static final SettingsMap.Key<Profile> PROFILE = new SettingsMap.Key<>("PROFILE");
+
     protected final WizardController controller;
 
-    protected final Label lblName;
-    protected final Label lblVersion;
-    protected final Label lblAuthor;
+    protected final StringProperty nameProperty;
+    protected final StringProperty versionProperty;
+    protected final StringProperty authorProperty;
     protected final JFXTextField txtModpackName;
     protected final JFXButton btnInstall;
     protected final JFXButton btnDescription;
@@ -29,57 +34,45 @@ public abstract class ModpackPage extends SpinnerPane implements WizardPage {
     protected ModpackPage(WizardController controller) {
         this.controller = controller;
 
-        this.getStyleClass().add("large-spinner-pane");
-
         VBox borderPane = new VBox();
         borderPane.setAlignment(Pos.CENTER);
         FXUtils.setLimitWidth(borderPane, 500);
 
         ComponentList componentList = new ComponentList();
         {
-            BorderPane archiveNamePane = new BorderPane();
+            var archiveNamePane = new LinePane();
             {
-                Label label = new Label(i18n("archive.file.name"));
-                BorderPane.setAlignment(label, Pos.CENTER_LEFT);
-                archiveNamePane.setLeft(label);
+                archiveNamePane.setTitle(i18n("archive.file.name"));
 
                 txtModpackName = new JFXTextField();
-                BorderPane.setMargin(txtModpackName, new Insets(0, 0, 8, 32));
+                txtModpackName.setPrefWidth(300);
+                // FIXME: Validator are not shown properly
+                // BorderPane.setMargin(txtModpackName, new Insets(0, 0, 8, 32));
                 BorderPane.setAlignment(txtModpackName, Pos.CENTER_RIGHT);
-                archiveNamePane.setCenter(txtModpackName);
+                archiveNamePane.setRight(txtModpackName);
             }
 
-            BorderPane modpackNamePane = new BorderPane();
+            var modpackNamePane = new LineTextPane();
             {
-                modpackNamePane.setLeft(new Label(i18n("modpack.name")));
-
-                lblName = new Label();
-                BorderPane.setAlignment(lblName, Pos.CENTER_RIGHT);
-                modpackNamePane.setCenter(lblName);
+                modpackNamePane.setTitle(i18n("modpack.name"));
+                nameProperty = modpackNamePane.textProperty();
             }
 
-            BorderPane versionPane = new BorderPane();
+            var versionPane = new LineTextPane();
             {
-                versionPane.setLeft(new Label(i18n("archive.version")));
-
-                lblVersion = new Label();
-                BorderPane.setAlignment(lblVersion, Pos.CENTER_RIGHT);
-                versionPane.setCenter(lblVersion);
+                versionPane.setTitle(i18n("archive.version"));
+                versionProperty = versionPane.textProperty();
             }
 
-            BorderPane authorPane = new BorderPane();
+            var authorPane = new LineTextPane();
             {
-                authorPane.setLeft(new Label(i18n("archive.author")));
-
-                lblAuthor = new Label();
-                BorderPane.setAlignment(lblAuthor, Pos.CENTER_RIGHT);
-                authorPane.setCenter(lblAuthor);
+                authorPane.setTitle(i18n("archive.author"));
+                authorProperty = authorPane.textProperty();
             }
 
-            BorderPane descriptionPane = new BorderPane();
+            var descriptionPane = new BorderPane();
             {
-                btnDescription = new JFXButton(i18n("modpack.description"));
-                btnDescription.getStyleClass().add("jfx-button-border");
+                btnDescription = FXUtils.newBorderButton(i18n("modpack.description"));
                 btnDescription.setOnAction(e -> onDescribe());
                 descriptionPane.setLeft(btnDescription);
 

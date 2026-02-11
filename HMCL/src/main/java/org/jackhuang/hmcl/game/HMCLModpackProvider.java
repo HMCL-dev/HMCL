@@ -30,7 +30,6 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
@@ -49,15 +48,14 @@ public final class HMCLModpackProvider implements ModpackProvider {
     }
 
     @Override
-    public Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, String name, File zipFile, Modpack modpack) throws MismatchedModpackTypeException {
+    public Task<?> createUpdateTask(DefaultDependencyManager dependencyManager, String name, Path zipFile, Modpack modpack) throws MismatchedModpackTypeException {
         if (!(modpack.getManifest() instanceof HMCLModpackManifest))
             throw new MismatchedModpackTypeException(getName(), modpack.getManifest().getProvider().getName());
 
-        if (!(dependencyManager.getGameRepository() instanceof HMCLGameRepository)) {
+        if (!(dependencyManager.getGameRepository() instanceof HMCLGameRepository repository)) {
             throw new IllegalArgumentException("HMCLModpackProvider requires HMCLGameRepository");
         }
 
-        HMCLGameRepository repository = (HMCLGameRepository) dependencyManager.getGameRepository();
         Profile profile = repository.getProfile();
 
         return new ModpackUpdateTask(dependencyManager.getGameRepository(), name, new HMCLModpackInstallTask(profile, zipFile, modpack, name));
@@ -79,9 +77,9 @@ public final class HMCLModpackProvider implements ModpackProvider {
         return manifest;
     }
 
-    private static class HMCLModpack extends Modpack {
+    private final static class HMCLModpack extends Modpack {
         @Override
-        public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, File zipFile, String name) {
+        public Task<?> getInstallTask(DefaultDependencyManager dependencyManager, Path zipFile, String name, String iconUrl) {
             return new HMCLModpackInstallTask(((HMCLGameRepository) dependencyManager.getGameRepository()).getProfile(), zipFile, this, name);
         }
     }

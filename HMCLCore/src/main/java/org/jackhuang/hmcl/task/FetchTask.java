@@ -19,31 +19,33 @@ package org.jackhuang.hmcl.task;
 
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventBus;
-import org.jackhuang.hmcl.util.CacheRepository;
-import org.jackhuang.hmcl.util.DigestUtils;
-import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.ToStringBuilder;
+import org.jackhuang.hmcl.event.EventManager;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.io.ContentEncoding;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URLConnection;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.jackhuang.hmcl.util.Lang.threadPool;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public abstract class FetchTask<T> extends Task<T> {
+
     protected static final int DEFAULT_RETRY = 3;
 
     protected final List<URI> uris;
@@ -58,7 +60,7 @@ public abstract class FetchTask<T> extends Task<T> {
         if (this.uris.isEmpty())
             throw new IllegalArgumentException("At least one URL is required");
 
-        setExecutor(download());
+        setExecutor(DOWNLOAD_EXECUTOR);
     }
 
     public void setRetry(int retry) {
@@ -79,12 +81,14 @@ public abstract class FetchTask<T> extends Task<T> {
 
     protected abstract EnumCheckETag shouldCheckETag();
 
-    protected abstract Context getContext(URLConnection connection, boolean checkETag, String bmclapiHash) throws IOException;
+    private Context getContext() throws IOException {
+        return getContext(null, false, null);
+    }
+
+    protected abstract Context getContext(@Nullable HttpResponse<?> response, boolean checkETag, String bmclapiHash) throws IOException;
 
     @Override
     public void execute() throws Exception {
-        Exception exception = null;
-        URI failedURI = null;
         boolean checkETag;
         switch (shouldCheckETag()) {
             case CHECK_E_TAG:
@@ -97,162 +101,267 @@ public abstract class FetchTask<T> extends Task<T> {
                 return;
         }
 
-        int repeat = 0;
-        download:
-        for (URI uri : uris) {
-            for (int retryTime = 0; retryTime < retry; retryTime++) {
-                if (isCancelled()) {
-                    break download;
-                }
+        ArrayList<DownloadException> exceptions = null;
 
-                List<URI> redirects = null;
-                String bmclapiHash = null;
+        if (SEMAPHORE != null)
+            SEMAPHORE.acquire();
+        try {
+            for (URI uri : uris) {
                 try {
-                    beforeDownload(uri);
-                    updateProgress(0);
-
-                    URLConnection conn = NetworkUtils.createConnection(uri);
-
-                    if (conn instanceof HttpURLConnection) {
-                        var httpConnection = (HttpURLConnection) conn;
-                        httpConnection.setRequestProperty("Accept-Encoding", "gzip");
-
-                        if (checkETag) repository.injectConnection(httpConnection);
-                        Map<String, List<String>> requestProperties = httpConnection.getRequestProperties();
-
-                        bmclapiHash = httpConnection.getHeaderField("x-bmclapi-hash");
-                        if (DigestUtils.isSha1Digest(bmclapiHash)) {
-                            Optional<Path> cache = repository.checkExistentFile(null, "SHA-1", bmclapiHash);
-                            if (cache.isPresent()) {
-                                useCachedResult(cache.get());
-                                LOG.info("Using cached file for " + NetworkUtils.dropQuery(uri));
-                                return;
-                            }
-                        } else {
-                            bmclapiHash = null;
-                        }
-
-                        while (true) {
-                            int code = httpConnection.getResponseCode();
-                            if (code >= 300 && code <= 308 && code != 306 && code != 304) {
-                                if (redirects == null) {
-                                    redirects = new ArrayList<>();
-                                } else if (redirects.size() >= 20) {
-                                    httpConnection.disconnect();
-                                    throw new IOException("Too much redirects");
-                                }
-
-                                String location = httpConnection.getHeaderField("Location");
-
-                                httpConnection.disconnect();
-                                if (StringUtils.isBlank(location))
-                                    throw new IOException("Redirected to an empty location");
-
-                                URI target = NetworkUtils.toURI(httpConnection.getURL())
-                                        .resolve(NetworkUtils.toURI(location));
-                                redirects.add(target);
-
-                                if (!NetworkUtils.isHttpUri(target))
-                                    throw new IOException("Redirected to not http URI: " + target);
-
-                                HttpURLConnection redirected = NetworkUtils.createHttpConnection(target);
-                                redirected.setUseCaches(checkETag);
-                                requestProperties
-                                        .forEach((key, values) ->
-                                                values.forEach(element ->
-                                                        redirected.addRequestProperty(key, element)));
-                                httpConnection = redirected;
-                            } else {
-                                break;
-                            }
-                        }
-                        conn = httpConnection;
-                        int responseCode = ((HttpURLConnection) conn).getResponseCode();
-
-                        if (responseCode == HttpURLConnection.HTTP_NOT_MODIFIED) {
-                            // Handle cache
-                            try {
-                                Path cache = repository.getCachedRemoteFile(NetworkUtils.toURI(conn.getURL()));
-                                useCachedResult(cache);
-                                LOG.info("Using cached file for " + NetworkUtils.dropQuery(uri));
-                                return;
-                            } catch (IOException e) {
-                                LOG.warning("Unable to use cached file, redownload " + NetworkUtils.dropQuery(uri), e);
-                                repository.removeRemoteEntry(conn.getURL().toURI());
-                                // Now we must reconnect the server since 304 may result in empty content,
-                                // if we want to redownload the file, we must reconnect the server without etag settings.
-                                retryTime--;
-                                continue;
-                            }
-                        } else if (responseCode / 100 == 4) {
-                            throw new FileNotFoundException(uri.toString());
-                        } else if (responseCode / 100 != 2) {
-                            throw new ResponseCodeException(uri, responseCode);
-                        }
-                    }
-
-                    long contentLength = conn.getContentLengthLong();
-                    var encoding = ContentEncoding.fromConnection(conn);
-                    try (var context = getContext(conn, checkETag, bmclapiHash);
-                         var counter = new CounterInputStream(conn.getInputStream());
-                         var input = encoding.wrap(counter)) {
-                        long lastDownloaded = 0L;
-                        byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
-                        while (true) {
-                            if (isCancelled()) break;
-
-                            int len = input.read(buffer);
-                            if (len == -1) break;
-
-                            context.write(buffer, 0, len);
-
-                            if (contentLength >= 0) {
-                                // Update progress information per second
-                                updateProgress(counter.downloaded, contentLength);
-                            }
-
-                            updateDownloadSpeed(counter.downloaded - lastDownloaded);
-                            lastDownloaded = counter.downloaded;
-                        }
-
-                        if (isCancelled()) break download;
-
-                        updateDownloadSpeed(counter.downloaded - lastDownloaded);
-
-                        if (contentLength >= 0 && counter.downloaded != contentLength)
-                            throw new IOException("Unexpected file size: " + counter.downloaded + ", expected: " + contentLength);
-
-                        context.withResult(true);
-                    }
-
+                    if (NetworkUtils.isHttpUri(uri))
+                        downloadHttp(uri, checkETag);
+                    else
+                        downloadNotHttp(uri);
                     return;
-                } catch (FileNotFoundException ex) {
-                    failedURI = uri;
-                    exception = ex;
-                    LOG.warning("Failed to download " + uri + ", not found" + (redirects == null ? "" : ", redirects: " + redirects), ex);
-
-                    break; // we will not try this URL again
-                } catch (IOException ex) {
-                    failedURI = uri;
-                    exception = ex;
-                    LOG.warning("Failed to download " + uri + ", repeat times: " + (++repeat) + (redirects == null ? "" : ", redirects: " + redirects), ex);
+                } catch (DownloadException e) {
+                    if (exceptions == null)
+                        exceptions = new ArrayList<>();
+                    exceptions.add(e);
                 }
+            }
+        } catch (InterruptedException ignored) {
+            // Cancelled
+        } finally {
+            if (SEMAPHORE != null)
+                SEMAPHORE.release();
+        }
+
+        if (exceptions != null) {
+            DownloadException last = exceptions.remove(exceptions.size() - 1);
+            for (DownloadException exception : exceptions) {
+                last.addSuppressed(exception);
+            }
+            throw last;
+        }
+    }
+
+    private void download(Context context,
+                          InputStream inputStream,
+                          long contentLength,
+                          ContentEncoding contentEncoding) throws IOException, InterruptedException {
+        try (var ignored = context;
+             var counter = new CounterInputStream(inputStream);
+             var input = contentEncoding.wrap(counter)) {
+            long lastDownloaded = 0L;
+            byte[] buffer = new byte[IOUtils.DEFAULT_BUFFER_SIZE];
+            while (true) {
+                if (isCancelled()) break;
+
+                int len = input.read(buffer);
+                if (len == -1) break;
+
+                context.write(buffer, 0, len);
+
+                if (contentLength >= 0) {
+                    // Update progress information per second
+                    updateProgress(counter.downloaded, contentLength);
+                }
+
+                updateDownloadSpeed(counter.downloaded - lastDownloaded);
+                lastDownloaded = counter.downloaded;
+            }
+
+            if (isCancelled())
+                throw new InterruptedException();
+
+            updateDownloadSpeed(counter.downloaded - lastDownloaded);
+
+            if (contentLength >= 0 && counter.downloaded != contentLength)
+                throw new IOException("Unexpected file size: " + counter.downloaded + ", expected: " + contentLength);
+
+            context.withResult(true);
+        }
+    }
+
+    private void downloadHttp(URI uri, boolean checkETag) throws DownloadException, InterruptedException {
+        if (checkETag) {
+            // Handle cache
+            try {
+                Path cache = repository.getCachedRemoteFile(uri, true);
+                useCachedResult(cache);
+                LOG.info("Using cached file for " + NetworkUtils.dropQuery(uri));
+                return;
+            } catch (IOException ignored) {
             }
         }
 
-        if (exception != null)
-            throw new DownloadException(failedURI, exception);
+        ArrayList<Exception> exceptions = null;
+
+        // If loading the cache fails, the cache should not be loaded again.
+        boolean useCachedResult = true;
+        for (int retryTime = 0, retryLimit = retry; retryTime < retryLimit; retryTime++) {
+            if (isCancelled()) {
+                throw new InterruptedException();
+            }
+
+            List<URI> redirects = null;
+            try {
+                beforeDownload(uri);
+                updateProgress(0);
+
+                HttpResponse<InputStream> response;
+                String bmclapiHash;
+
+                URI currentURI = uri;
+
+                LinkedHashMap<String, String> headers = new LinkedHashMap<>();
+                headers.put("accept-encoding", "gzip");
+                if (useCachedResult && checkETag)
+                    headers.putAll(repository.injectConnection(uri));
+
+                do {
+                    HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(currentURI)
+                            .timeout(Duration.ofMillis(NetworkUtils.TIME_OUT))
+                            .header("User-Agent", NetworkUtils.USER_AGENT);
+
+                    headers.forEach(requestBuilder::header);
+                    response = Holder.HTTP_CLIENT.send(requestBuilder.build(), BODY_HANDLER);
+
+                    bmclapiHash = response.headers().firstValue("x-bmclapi-hash").orElse(null);
+                    if (DigestUtils.isSha1Digest(bmclapiHash)) {
+                        Optional<Path> cache = repository.checkExistentFile(null, "SHA-1", bmclapiHash);
+                        if (cache.isPresent()) {
+                            useCachedResult(cache.get());
+                            LOG.info("Using cached file for " + NetworkUtils.dropQuery(uri));
+                            return;
+                        }
+                    }
+
+                    int code = response.statusCode();
+                    if (code >= 300 && code <= 308 && code != 306 && code != 304) {
+                        if (redirects == null) {
+                            redirects = new ArrayList<>();
+                        } else if (redirects.size() >= 20) {
+                            throw new IOException("Too much redirects");
+                        }
+
+                        String location = response.headers().firstValue("Location").orElse(null);
+                        if (StringUtils.isBlank(location))
+                            throw new IOException("Redirected to an empty location");
+
+                        URI target = currentURI.resolve(NetworkUtils.encodeLocation(location));
+                        redirects.add(target);
+
+                        if (!NetworkUtils.isHttpUri(target))
+                            throw new IOException("Redirected to not http URI: " + target);
+
+                        currentURI = target;
+                    } else {
+                        break;
+                    }
+                } while (true);
+
+                int responseCode = response.statusCode();
+                if (useCachedResult && responseCode == HttpURLConnection.HTTP_NOT_MODIFIED) {
+                    // Handle cache
+                    try {
+                        Path cache = repository.getCachedRemoteFile(currentURI, false);
+                        useCachedResult(cache);
+                        LOG.info("Using cached file for " + NetworkUtils.dropQuery(uri));
+                        return;
+                    } catch (CacheRepository.CacheExpiredException e) {
+                        LOG.info("Cache expired for " + NetworkUtils.dropQuery(uri));
+                    } catch (IOException e) {
+                        LOG.warning("Unable to use cached file, redownload " + NetworkUtils.dropQuery(uri), e);
+                        repository.removeRemoteEntry(currentURI);
+                        useCachedResult = false;
+                        // Now we must reconnect the server since 304 may result in empty content,
+                        // if we want to redownload the file, we must reconnect the server without etag settings.
+                        retryLimit++;
+                        continue;
+                    }
+                } else if (responseCode / 100 == 4) {
+                    throw new FileNotFoundException(uri.toString());
+                } else if (responseCode / 100 != 2) {
+                    throw new ResponseCodeException(uri, responseCode);
+                }
+
+                long contentLength = response.headers().firstValueAsLong("content-length").orElse(-1L);
+                var contentEncoding = ContentEncoding.fromResponse(response);
+
+                download(getContext(response, checkETag, bmclapiHash),
+                        response.body(),
+                        contentLength,
+                        contentEncoding);
+                return;
+            } catch (InterruptedException e) {
+                throw e;
+            } catch (FileNotFoundException ex) {
+                LOG.warning("Failed to download " + uri + ", not found" + (redirects == null ? "" : ", redirects: " + redirects), ex);
+                throw toDownloadException(uri, ex, exceptions); // we will not try this URL again
+            } catch (Exception ex) {
+                if (exceptions == null)
+                    exceptions = new ArrayList<>();
+
+                exceptions.add(ex);
+
+                LOG.warning("Failed to download " + uri + ", repeat times: " + retryTime + (redirects == null ? "" : ", redirects: " + redirects), ex);
+            }
+        }
+
+        throw toDownloadException(uri, null, exceptions);
+    }
+
+    private void downloadNotHttp(URI uri) throws DownloadException, InterruptedException {
+        ArrayList<Exception> exceptions = null;
+        for (int retryTime = 0; retryTime < retry; retryTime++) {
+            if (isCancelled()) {
+                throw new InterruptedException();
+            }
+
+            try {
+                beforeDownload(uri);
+                updateProgress(0);
+
+                URLConnection conn = NetworkUtils.createConnection(uri);
+                download(getContext(),
+                        conn.getInputStream(),
+                        conn.getContentLengthLong(),
+                        ContentEncoding.fromConnection(conn));
+                return;
+            } catch (InterruptedException e) {
+                throw e;
+            } catch (FileNotFoundException ex) {
+                LOG.warning("Failed to download " + uri + ", not found", ex);
+
+                throw toDownloadException(uri, ex, exceptions); // we will not try this URL again
+            } catch (Exception ex) {
+                if (exceptions == null)
+                    exceptions = new ArrayList<>();
+
+                exceptions.add(ex);
+                LOG.warning("Failed to download " + uri + ", repeat times: " + retryTime, ex);
+            }
+        }
+
+        throw toDownloadException(uri, null, exceptions);
+    }
+
+    private static DownloadException toDownloadException(URI uri, @Nullable Exception last, @Nullable ArrayList<Exception> exceptions) {
+        if (exceptions == null || exceptions.isEmpty()) {
+            return new DownloadException(uri, last != null
+                    ? last
+                    : new IOException("No exceptions"));
+        } else {
+            if (last == null)
+                last = exceptions.remove(exceptions.size() - 1);
+
+            for (Exception e : exceptions) {
+                last.addSuppressed(e);
+            }
+            return new DownloadException(uri, last);
+        }
     }
 
     private static final Timer timer = new Timer("DownloadSpeedRecorder", true);
     private static final AtomicLong downloadSpeed = new AtomicLong(0L);
-    public static final EventBus speedEvent = new EventBus();
+    public static final EventManager<SpeedEvent> SPEED_EVENT = EventBus.EVENT_BUS.channel(SpeedEvent.class);
 
     static {
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                speedEvent.channel(SpeedEvent.class).fireEvent(new SpeedEvent(speedEvent, downloadSpeed.getAndSet(0)));
+                SPEED_EVENT.fireEvent(new SpeedEvent(SPEED_EVENT, downloadSpeed.getAndSet(0)));
             }
         }, 0, 1000);
     }
@@ -314,7 +423,7 @@ public abstract class FetchTask<T> extends Task<T> {
 
         public abstract void write(byte[] buffer, int offset, int len) throws IOException;
 
-        public final void withResult(boolean success) {
+        public void withResult(boolean success) {
             this.success = success;
         }
 
@@ -329,48 +438,101 @@ public abstract class FetchTask<T> extends Task<T> {
         CACHED
     }
 
+    private static final HttpResponse.BodyHandler<InputStream> BODY_HANDLER = responseInfo -> {
+        if (responseInfo.statusCode() / 100 == 2)
+            return HttpResponse.BodySubscribers.ofInputStream();
+        else
+            return HttpResponse.BodySubscribers.replacing(null);
+    };
+
     public static int DEFAULT_CONCURRENCY = Math.min(Runtime.getRuntime().availableProcessors() * 4, 64);
     private static int downloadExecutorConcurrency = DEFAULT_CONCURRENCY;
-    private static volatile ThreadPoolExecutor DOWNLOAD_EXECUTOR;
 
-    /**
-     * Get singleton instance of the thread pool for file downloading.
-     *
-     * @return Thread pool for FetchTask
-     */
-    protected static ExecutorService download() {
-        if (DOWNLOAD_EXECUTOR == null) {
-            synchronized (Schedulers.class) {
-                if (DOWNLOAD_EXECUTOR == null) {
-                    DOWNLOAD_EXECUTOR = threadPool("Download", true, downloadExecutorConcurrency, 10, TimeUnit.SECONDS);
-                }
-            }
+    // For Java 21 or later, DOWNLOAD_EXECUTOR dispatches tasks to virtual threads, and concurrency is controlled by SEMAPHORE.
+    // For versions earlier than Java 21, DOWNLOAD_EXECUTOR is a ThreadPoolExecutor, SEMAPHORE is null, and concurrency is controlled by the thread pool size.
+
+    private static final ExecutorService DOWNLOAD_EXECUTOR;
+    private static final @Nullable Semaphore SEMAPHORE;
+
+    static {
+        ExecutorService executorService = Schedulers.newVirtualThreadPerTaskExecutor("Download");
+        if (executorService != null) {
+            DOWNLOAD_EXECUTOR = executorService;
+            SEMAPHORE = new Semaphore(DEFAULT_CONCURRENCY);
+        } else {
+            DOWNLOAD_EXECUTOR = threadPool("Download", true, downloadExecutorConcurrency, 10, TimeUnit.SECONDS);
+            SEMAPHORE = null;
         }
-
-        return DOWNLOAD_EXECUTOR;
     }
 
+    @FXThread
     public static void setDownloadExecutorConcurrency(int concurrency) {
         concurrency = Math.max(concurrency, 1);
-        synchronized (Schedulers.class) {
-            downloadExecutorConcurrency = concurrency;
 
-            ThreadPoolExecutor downloadExecutor = DOWNLOAD_EXECUTOR;
-            if (downloadExecutor != null) {
-                if (downloadExecutor.getMaximumPoolSize() <= concurrency) {
-                    downloadExecutor.setMaximumPoolSize(concurrency);
-                    downloadExecutor.setCorePoolSize(concurrency);
-                } else {
-                    downloadExecutor.setCorePoolSize(concurrency);
-                    downloadExecutor.setMaximumPoolSize(concurrency);
+        int prevDownloadExecutorConcurrency = downloadExecutorConcurrency;
+        int change = concurrency - prevDownloadExecutorConcurrency;
+        if (change == 0)
+            return;
+
+        downloadExecutorConcurrency = concurrency;
+        if (SEMAPHORE != null) {
+            if (change > 0) {
+                SEMAPHORE.release(change);
+            } else {
+                int permits = -change;
+                if (!SEMAPHORE.tryAcquire(permits)) {
+                    Schedulers.io().execute(() -> {
+                        try {
+                            for (int i = 0; i < permits; i++) {
+                                SEMAPHORE.acquire();
+                            }
+                        } catch (InterruptedException e) {
+                            throw new AssertionError("Unreachable", e);
+                        }
+                    });
                 }
+            }
+        } else {
+            var downloadExecutor = (ThreadPoolExecutor) DOWNLOAD_EXECUTOR;
+
+            if (downloadExecutor.getMaximumPoolSize() <= concurrency) {
+                downloadExecutor.setMaximumPoolSize(concurrency);
+                downloadExecutor.setCorePoolSize(concurrency);
+            } else {
+                downloadExecutor.setCorePoolSize(concurrency);
+                downloadExecutor.setMaximumPoolSize(concurrency);
             }
         }
     }
 
     public static int getDownloadExecutorConcurrency() {
-        synchronized (Schedulers.class) {
-            return downloadExecutorConcurrency;
+        return downloadExecutorConcurrency;
+    }
+
+    private static volatile boolean initialized = false;
+
+    public static void notifyInitialized() {
+        initialized = true;
+    }
+
+    /// Ensure that [#HTTP_CLIENT] is initialized after ProxyManager has been initialized.
+    private static final class Holder {
+        private static final HttpClient HTTP_CLIENT;
+
+        static {
+            if (!initialized) {
+                throw new AssertionError("FetchTask.Holder accessed before ProxyManager initialization.");
+            }
+
+            boolean useHttp2 = !"false".equalsIgnoreCase(System.getProperty("hmcl.http2"));
+
+            HTTP_CLIENT = HttpClient.newBuilder()
+                    .connectTimeout(Duration.ofMillis(NetworkUtils.TIME_OUT))
+                    .version(useHttp2 ? HttpClient.Version.HTTP_2 : HttpClient.Version.HTTP_1_1)
+                    .build();
+        }
+
+        private Holder() {
         }
     }
 }

@@ -25,11 +25,10 @@ import javafx.scene.layout.*;
 import org.jackhuang.hmcl.auth.authlibinjector.AuthlibInjectorServer;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.DialogAware;
-import org.jackhuang.hmcl.ui.construct.DialogCloseEvent;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Lang;
 
 import javax.net.ssl.SSLException;
@@ -88,6 +87,10 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
 
             addServerPane.setBody(txtServerUrl);
             addServerPane.setActions(lblCreationWarning, actions);
+
+            txtServerUrl.getValidators().addAll(new RequiredValidator(), new URLValidator());
+            FXUtils.setValidateWhileTextChanged(txtServerUrl, true);
+            btnAddNext.disableProperty().bind(txtServerUrl.activeValidatorProperty().isNotNull());
         }
 
         confirmServerPane = new JFXDialogLayout();
@@ -115,6 +118,7 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
                 lblServerWarning.setStyle("-fx-text-fill: red;");
                 GridPane.setColumnIndex(lblServerWarning, 0);
                 GridPane.setRowIndex(lblServerWarning, 2);
+                lblServerWarning.managedProperty().bind(lblServerWarning.visibleProperty());
                 GridPane.setColumnSpan(lblServerWarning, 2);
 
                 body.getChildren().setAll(
@@ -149,7 +153,6 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
         this.setContent(addServerPane, ContainerAnimations.NONE);
 
         lblCreationWarning.maxWidthProperty().bind(((FlowPane) lblCreationWarning.getParent()).widthProperty());
-        btnAddNext.disableProperty().bind(txtServerUrl.textProperty().isEmpty());
         nextPane.hideSpinner();
 
         onEscPressed(this, this::onAddCancel);
@@ -162,6 +165,12 @@ public final class AddAuthlibInjectorServerPane extends TransitionPane implement
 
     private String resolveFetchExceptionMessage(Throwable exception) {
         if (exception instanceof SSLException) {
+            if (exception.getMessage() != null && exception.getMessage().contains("Remote host terminated")) {
+                return i18n("account.failed.connect_injector_server");
+            }
+            if (exception.getMessage() != null && (exception.getMessage().contains("No name matching") || exception.getMessage().contains("No subject alternative DNS name matching"))) {
+                return i18n("account.failed.dns");
+            }
             return i18n("account.failed.ssl");
         } else if (exception instanceof IOException) {
             return i18n("account.failed.connect_injector_server");

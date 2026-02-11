@@ -77,7 +77,7 @@ public class OAuth {
 
     private Result authenticateAuthorizationCode(Options options) throws IOException, InterruptedException, JsonParseException, ExecutionException, AuthenticationException {
         Session session = options.callback.startServer();
-        options.callback.openBrowser(NetworkUtils.withQuery(authorizationURL,
+        options.callback.openBrowser(GrantFlow.AUTHORIZATION_CODE, NetworkUtils.withQuery(authorizationURL,
                 mapOf(pair("client_id", options.callback.getClientId()), pair("response_type", "code"),
                         pair("redirect_uri", session.getRedirectURI()), pair("scope", options.scope),
                         pair("prompt", "select_account"))));
@@ -106,7 +106,7 @@ public class OAuth {
         options.callback.grantDeviceCode(deviceTokenResponse.userCode, deviceTokenResponse.verificationURI);
 
         // Microsoft OAuth Flow
-        options.callback.openBrowser(deviceTokenResponse.verificationURI);
+        options.callback.openBrowser(GrantFlow.DEVICE, deviceTokenResponse.verificationURI);
 
         long startTime = System.nanoTime();
         long interval = TimeUnit.MILLISECONDS.convert(deviceTokenResponse.interval, TimeUnit.SECONDS);
@@ -237,9 +237,10 @@ public class OAuth {
         /**
          * Open browser
          *
-         * @param url OAuth url.
+         * @param grantFlow the grant flow.
+         * @param url       OAuth url.
          */
-        void openBrowser(String url) throws IOException;
+        void openBrowser(GrantFlow grantFlow, String url) throws IOException;
 
         String getClientId();
 
@@ -271,7 +272,7 @@ public class OAuth {
         }
     }
 
-    private static class DeviceTokenResponse extends ErrorResponse {
+    private final static class DeviceTokenResponse extends ErrorResponse {
         @SerializedName("user_code")
         public String userCode;
 
@@ -291,7 +292,7 @@ public class OAuth {
         public int interval;
     }
 
-    private static class TokenResponse extends ErrorResponse {
+    private final static class TokenResponse extends ErrorResponse {
         @SerializedName("token_type")
         public String tokenType;
 
@@ -329,7 +330,7 @@ public class OAuth {
      * redirect URI used to obtain the authorization
      * code.","correlation_id":"??????"}
      */
-    public static class AuthorizationResponse extends ErrorResponse {
+    public final static class AuthorizationResponse extends ErrorResponse {
         @SerializedName("token_type")
         public String tokenType;
 
@@ -352,7 +353,7 @@ public class OAuth {
         public String foci;
     }
 
-    private static class RefreshResponse extends ErrorResponse {
+    private final static class RefreshResponse extends ErrorResponse {
         @SerializedName("expires_in")
         int expiresIn;
 

@@ -25,28 +25,30 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventManager;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.mod.ModAdviser;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.mod.ModpackProvider;
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
+import java.net.Proxy;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.*;
@@ -54,10 +56,10 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class HMCLGameRepository extends DefaultGameRepository {
+public final class HMCLGameRepository extends DefaultGameRepository {
     private final Profile profile;
 
     // local version settings
@@ -66,7 +68,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
     public final EventManager<Event> onVersionIconChanged = new EventManager<>();
 
-    public HMCLGameRepository(Profile profile, File baseDirectory) {
+    public HMCLGameRepository(Profile profile, Path baseDirectory) {
         super(baseDirectory);
         this.profile = profile;
     }
@@ -85,18 +87,20 @@ public class HMCLGameRepository extends DefaultGameRepository {
     }
 
     @Override
-    public File getRunDirectory(String id) {
+    public Path getRunDirectory(String id) {
         switch (getGameDirectoryType(id)) {
             case VERSION_FOLDER:
                 return getVersionRoot(id);
             case ROOT_FOLDER:
                 return super.getRunDirectory(id);
             case CUSTOM:
-                File dir = new File(getVersionSetting(id).getGameDir());
-                if (!FileUtils.isValidPath(dir)) return getVersionRoot(id);
-                return dir;
+                try {
+                    return Path.of(getVersionSetting(id).getGameDir());
+                } catch (InvalidPathException ignored) {
+                    return getVersionRoot(id);
+                }
             default:
-                throw new Error();
+                throw new AssertionError("Unreachable");
         }
     }
 
@@ -119,25 +123,24 @@ public class HMCLGameRepository extends DefaultGameRepository {
         });
 
         try {
-            File file = new File(getBaseDirectory(), "launcher_profiles.json");
-            if (!file.exists() && !versions.isEmpty())
-                FileUtils.writeText(file, PROFILE);
+            Path file = getBaseDirectory().resolve("launcher_profiles.json");
+            if (!Files.exists(file) && !versions.isEmpty()) {
+                Files.createDirectories(file.getParent());
+                Files.writeString(file, PROFILE);
+            }
         } catch (IOException ex) {
             LOG.warning("Unable to create launcher_profiles.json, Forge/LiteLoader installer will not work.", ex);
         }
-
-        // https://github.com/HMCL-dev/HMCL/issues/938
-        System.gc();
     }
 
-    public void changeDirectory(File newDirectory) {
+    public void changeDirectory(Path newDirectory) {
         setBaseDirectory(newDirectory);
         refreshVersionsAsync().start();
     }
 
-    private void clean(File directory) throws IOException {
-        FileUtils.deleteDirectory(new File(directory, "crash-reports"));
-        FileUtils.deleteDirectory(new File(directory, "logs"));
+    private void clean(Path directory) throws IOException {
+        FileUtils.deleteDirectory(directory.resolve("crash-reports"));
+        FileUtils.deleteDirectory(directory.resolve("logs"));
     }
 
     public void clean(String id) throws IOException {
@@ -146,8 +149,8 @@ public class HMCLGameRepository extends DefaultGameRepository {
     }
 
     public void duplicateVersion(String srcId, String dstId, boolean copySaves) throws IOException {
-        Path srcDir = getVersionRoot(srcId).toPath();
-        Path dstDir = getVersionRoot(dstId).toPath();
+        Path srcDir = getVersionRoot(srcId);
+        Path dstDir = getVersionRoot(dstId);
 
         Version fromVersion = getVersion(srcId);
 
@@ -172,7 +175,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
         }
         Files.copy(fromJson, toJson);
 
-        JsonUtils.writeToJsonFile(toJson, fromVersion.setId(dstId));
+        JsonUtils.writeToJsonFile(toJson, fromVersion.setId(dstId).setJar(dstId));
 
         VersionSetting oldVersionSetting = getVersionSetting(srcId).clone();
         GameDirectoryType originalGameDirType = oldVersionSetting.getGameDirType();
@@ -181,22 +184,22 @@ public class HMCLGameRepository extends DefaultGameRepository {
         VersionSetting newVersionSetting = initLocalVersionSetting(dstId, oldVersionSetting);
         saveVersionSetting(dstId);
 
-        File srcGameDir = getRunDirectory(srcId);
-        File dstGameDir = getRunDirectory(dstId);
+        Path srcGameDir = getRunDirectory(srcId);
+        Path dstGameDir = getRunDirectory(dstId);
 
         if (originalGameDirType != GameDirectoryType.VERSION_FOLDER)
-            FileUtils.copyDirectory(srcGameDir.toPath(), dstGameDir.toPath(), path -> Modpack.acceptFile(path, blackList, null));
+            FileUtils.copyDirectory(srcGameDir, dstGameDir, path -> Modpack.acceptFile(path, blackList, null));
     }
 
-    private File getLocalVersionSettingFile(String id) {
-        return new File(getVersionRoot(id), "hmclversion.cfg");
+    private Path getLocalVersionSettingFile(String id) {
+        return getVersionRoot(id).resolve("hmclversion.cfg");
     }
 
     private void loadLocalVersionSetting(String id) {
-        File file = getLocalVersionSettingFile(id);
-        if (file.exists())
+        Path file = getLocalVersionSettingFile(id);
+        if (Files.exists(file))
             try {
-                VersionSetting versionSetting = GSON.fromJson(Files.readString(file.toPath()), VersionSetting.class);
+                VersionSetting versionSetting = JsonUtils.fromJsonFile(file, VersionSetting.class);
                 initLocalVersionSetting(id, versionSetting);
             } catch (Exception ex) {
                 // If [JsonParseException], [IOException] or [NullPointerException] happens, the json file is malformed and needed to be recreated.
@@ -259,12 +262,12 @@ public class HMCLGameRepository extends DefaultGameRepository {
             return vs;
     }
 
-    public Optional<File> getVersionIconFile(String id) {
-        File root = getVersionRoot(id);
+    public Optional<Path> getVersionIconFile(String id) {
+        Path root = getVersionRoot(id);
 
         for (String extension : FXUtils.IMAGE_EXTENSIONS) {
-            File file = new File(root, "icon." + extension);
-            if (file.exists()) {
+            Path file = root.resolve("icon." + extension);
+            if (Files.exists(file)) {
                 return Optional.of(file);
             }
         }
@@ -272,7 +275,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
         return Optional.empty();
     }
 
-    public void setVersionIconFile(String id, File iconFile) throws IOException {
+    public void setVersionIconFile(String id, Path iconFile) throws IOException {
         String ext = FileUtils.getExtension(iconFile).toLowerCase(Locale.ROOT);
         if (!FXUtils.IMAGE_EXTENSIONS.contains(ext)) {
             throw new IllegalArgumentException("Unsupported icon file: " + ext);
@@ -280,13 +283,18 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
         deleteIconFile(id);
 
-        FileUtils.copyFile(iconFile, new File(getVersionRoot(id), "icon." + ext));
+        FileUtils.copyFile(iconFile, getVersionRoot(id).resolve("icon." + ext));
     }
 
     public void deleteIconFile(String id) {
-        File root = getVersionRoot(id);
+        Path root = getVersionRoot(id);
         for (String extension : FXUtils.IMAGE_EXTENSIONS) {
-            new File(root, "icon." + extension).delete();
+            Path file = root.resolve("icon." + extension);
+            try {
+                Files.deleteIfExists(file);
+            } catch (IOException e) {
+                LOG.warning("Failed to delete icon file: " + file, e);
+            }
         }
     }
 
@@ -299,10 +307,10 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
         if (iconType == VersionIconType.DEFAULT) {
             Version version = getVersion(id).resolve(this);
-            Optional<File> iconFile = getVersionIconFile(id);
+            Optional<Path> iconFile = getVersionIconFile(id);
             if (iconFile.isPresent()) {
                 try {
-                    return FXUtils.loadImage(iconFile.get().toPath());
+                    return FXUtils.loadImage(iconFile.get());
                 } catch (Exception e) {
                     LOG.warning("Failed to load version icon of " + id, e);
                 }
@@ -312,21 +320,34 @@ public class HMCLGameRepository extends DefaultGameRepository {
                 LibraryAnalyzer libraryAnalyzer = LibraryAnalyzer.analyze(version, null);
                 if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FABRIC))
                     return VersionIconType.FABRIC.getIcon();
-                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FORGE))
-                    return VersionIconType.FORGE.getIcon();
-                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE))
-                    return VersionIconType.NEO_FORGE.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.QUILT))
                     return VersionIconType.QUILT.getIcon();
-                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.OPTIFINE))
-                    return VersionIconType.OPTIFINE.getIcon();
+                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.LEGACY_FABRIC))
+                    return VersionIconType.LEGACY_FABRIC.getIcon();
+                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE))
+                    return VersionIconType.NEO_FORGE.getIcon();
+                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FORGE))
+                    return VersionIconType.FORGE.getIcon();
+                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.CLEANROOM))
+                    return VersionIconType.CLEANROOM.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.LITELOADER))
                     return VersionIconType.CHICKEN.getIcon();
-                else
-                    return VersionIconType.FURNACE.getIcon();
+                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.OPTIFINE))
+                    return VersionIconType.OPTIFINE.getIcon();
             }
 
-            return VersionIconType.DEFAULT.getIcon();
+            String gameVersion = getGameVersion(version).orElse(null);
+            if (gameVersion != null) {
+                GameVersionNumber versionNumber = GameVersionNumber.asGameVersion(gameVersion);
+                if (versionNumber.isAprilFools()) {
+                    return VersionIconType.APRIL_FOOLS.getIcon();
+                } else if (versionNumber instanceof GameVersionNumber.LegacySnapshot) {
+                    return VersionIconType.COMMAND.getIcon();
+                } else if (versionNumber instanceof GameVersionNumber.Old) {
+                    return VersionIconType.CRAFT_TABLE.getIcon();
+                }
+            }
+            return VersionIconType.GRASS.getIcon();
         } else {
             return iconType.getIcon();
         }
@@ -335,7 +356,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
     public void saveVersionSetting(String id) {
         if (!localVersionSettings.containsKey(id))
             return;
-        Path file = getLocalVersionSettingFile(id).toPath().toAbsolutePath().normalize();
+        Path file = getLocalVersionSettingFile(id).toAbsolutePath().normalize();
         try {
             Files.createDirectories(file.getParent());
         } catch (IOException e) {
@@ -369,7 +390,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
             vs.setUsesGlobal(true);
     }
 
-    public LaunchOptions getLaunchOptions(String version, JavaRuntime javaVersion, File gameDir, List<String> javaAgents, List<String> javaArguments, boolean makeLaunchScript) {
+    public LaunchOptions.Builder getLaunchOptions(String version, JavaRuntime javaVersion, Path gameDir, List<String> javaAgents, List<String> javaArguments, boolean makeLaunchScript) {
         VersionSetting vs = getVersionSetting(version);
 
         LaunchOptions.Builder builder = new LaunchOptions.Builder()
@@ -380,7 +401,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
                 .setProfileName(Metadata.TITLE)
                 .setGameArguments(StringUtils.tokenize(vs.getMinecraftArgs()))
                 .setOverrideJavaArguments(StringUtils.tokenize(vs.getJavaArgs()))
-                .setMaxMemory(vs.isNoJVMArgs() && vs.isAutoMemory() ? null : (int)(getAllocatedMemory(
+                .setMaxMemory(vs.isNoJVMArgs() && vs.isAutoMemory() ? null : (int) (getAllocatedMemory(
                         vs.getMaxMemory() * 1024L * 1024L,
                         SystemInfo.getPhysicalMemoryStatus().getAvailable(),
                         vs.isAutoMemory()
@@ -400,53 +421,48 @@ public class HMCLGameRepository extends DefaultGameRepository {
                 .setWidth(vs.getWidth())
                 .setHeight(vs.getHeight())
                 .setFullscreen(vs.isFullscreen())
-                .setServerIp(vs.getServerIp())
                 .setWrapper(vs.getWrapper())
+                .setProxyOption(getProxyOption())
                 .setPreLaunchCommand(vs.getPreLaunchCommand())
                 .setPostExitCommand(vs.getPostExitCommand())
                 .setNoGeneratedJVMArgs(vs.isNoJVMArgs())
+                .setNoGeneratedOptimizingJVMArgs(vs.isNoOptimizingJVMArgs())
                 .setNativesDirType(vs.getNativesDirType())
                 .setNativesDir(vs.getNativesDir())
                 .setProcessPriority(vs.getProcessPriority())
                 .setRenderer(vs.getRenderer())
+                .setEnableDebugLogOutput(vs.isEnableDebugLogOutput())
                 .setUseNativeGLFW(vs.isUseNativeGLFW())
                 .setUseNativeOpenAL(vs.isUseNativeOpenAL())
                 .setDaemon(!makeLaunchScript && vs.getLauncherVisibility().isDaemon())
                 .setJavaAgents(javaAgents)
                 .setJavaArguments(javaArguments);
 
-        if (config().hasProxy()) {
-            builder.setProxyType(config().getProxyType());
-            builder.setProxyHost(config().getProxyHost());
-            builder.setProxyPort(config().getProxyPort());
-
-            if (config().hasProxyAuth()) {
-                builder.setProxyUser(config().getProxyUser());
-                builder.setProxyPass(config().getProxyPass());
-            }
+        if (StringUtils.isNotBlank(vs.getServerIp())) {
+            builder.setQuickPlayOption(new QuickPlayOption.MultiPlayer(vs.getServerIp()));
         }
 
-        File json = getModpackConfiguration(version);
-        if (json.exists()) {
+        Path json = getModpackConfiguration(version);
+        if (Files.exists(json)) {
             try {
-                String jsonText = Files.readString(json.toPath());
+                String jsonText = Files.readString(json);
                 ModpackConfiguration<?> modpackConfiguration = JsonUtils.GSON.fromJson(jsonText, ModpackConfiguration.class);
                 ModpackProvider provider = ModpackHelper.getProviderByType(modpackConfiguration.getType());
                 if (provider != null) provider.injectLaunchOptions(jsonText, builder);
             } catch (IOException | JsonParseException e) {
-                e.printStackTrace();
+                LOG.warning("Failed to parse modpack configuration file " + json, e);
             }
         }
 
         if (vs.isAutoMemory() && builder.getJavaArguments().stream().anyMatch(it -> it.startsWith("-Xmx")))
             builder.setMaxMemory(null);
 
-        return builder.create();
+        return builder;
     }
 
     @Override
-    public File getModpackConfiguration(String version) {
-        return new File(getVersionRoot(version), "modpack.cfg");
+    public Path getModpackConfiguration(String version) {
+        return getVersionRoot(version).resolve("modpack.cfg");
     }
 
     public void markVersionAsModpack(String id) {
@@ -459,16 +475,24 @@ public class HMCLGameRepository extends DefaultGameRepository {
 
     public void markVersionLaunchedAbnormally(String id) {
         try {
-            Files.createFile(getVersionRoot(id).toPath().resolve(".abnormal"));
+            Files.createFile(getVersionRoot(id).resolve(".abnormal"));
         } catch (IOException ignored) {
         }
     }
 
     public boolean unmarkVersionLaunchedAbnormally(String id) {
-        File file = new File(getVersionRoot(id), ".abnormal");
-        boolean result = file.isFile();
-        file.delete();
-        return result;
+        Path file = getVersionRoot(id).resolve(".abnormal");
+        if (Files.isRegularFile(file)) {
+            try {
+                Files.delete(file);
+            } catch (IOException e) {
+                LOG.warning("Failed to delete abnormal mark file: " + file, e);
+            }
+
+            return true;
+        } else {
+            return false;
+        }
     }
 
     private static final Gson GSON = new GsonBuilder()
@@ -490,7 +514,7 @@ public class HMCLGameRepository extends DefaultGameRepository {
                 FORBIDDEN_VERSION_IDS.contains(id.toLowerCase(Locale.ROOT)))
             return false;
 
-        return OperatingSystem.isNameValid(id);
+        return FileUtils.isNameValid(id);
     }
 
     /**
@@ -526,5 +550,40 @@ public class HMCLGameRepository extends DefaultGameRepository {
         } else {
             return minimum;
         }
+    }
+
+    public static ProxyOption getProxyOption() {
+        if (!config().hasProxy() || config().getProxyType() == null) {
+            return ProxyOption.Default.INSTANCE;
+        }
+
+        return switch (config().getProxyType()) {
+            case DIRECT -> ProxyOption.Direct.INSTANCE;
+            case HTTP, SOCKS -> {
+                String proxyHost = config().getProxyHost();
+                int proxyPort = config().getProxyPort();
+
+                if (StringUtils.isBlank(proxyHost) || proxyPort < 0 || proxyPort > 0xFFFF) {
+                    yield ProxyOption.Default.INSTANCE;
+                }
+
+                String proxyUser = config().getProxyUser();
+                String proxyPass = config().getProxyPass();
+
+                if (StringUtils.isBlank(proxyUser)) {
+                    proxyUser = null;
+                    proxyPass = null;
+                } else if (proxyPass == null) {
+                    proxyPass = "";
+                }
+
+                if (config().getProxyType() == Proxy.Type.HTTP) {
+                    yield new ProxyOption.Http(proxyHost, proxyPort, proxyUser, proxyPass);
+                } else {
+                    yield new ProxyOption.Socks(proxyHost, proxyPort, proxyUser, proxyPass);
+                }
+            }
+            default -> ProxyOption.Default.INSTANCE;
+        };
     }
 }

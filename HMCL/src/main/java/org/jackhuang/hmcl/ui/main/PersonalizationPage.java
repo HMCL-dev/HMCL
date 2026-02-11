@@ -17,10 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.main;
 
-import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXComboBox;
-import com.jfoenix.controls.JFXSlider;
-import com.jfoenix.controls.JFXTextField;
+import com.jfoenix.controls.*;
 import com.jfoenix.effects.JFXDepthManager;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
@@ -28,19 +25,17 @@ import javafx.beans.binding.StringBinding;
 import javafx.beans.binding.When;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.collections.FXCollections;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.control.ColorPicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontSmoothingType;
 import org.jackhuang.hmcl.setting.EnumBackgroundImage;
 import org.jackhuang.hmcl.setting.FontManager;
-import org.jackhuang.hmcl.setting.Theme;
+import org.jackhuang.hmcl.theme.ThemeColor;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
@@ -82,6 +77,16 @@ public class PersonalizationPage extends StackPane {
 
         ComponentList themeList = new ComponentList();
         {
+            var brightnessPane = new LineSelectButton<String>();
+            brightnessPane.setTitle(i18n("settings.launcher.brightness"));
+            brightnessPane.setConverter(name -> i18n("settings.launcher.brightness." + name));
+            brightnessPane.setItems("auto", "light", "dark");
+            brightnessPane.valueProperty().bindBidirectional(config().themeBrightnessProperty());
+
+            themeList.getContent().add(brightnessPane);
+        }
+
+        {
             BorderPane themePane = new BorderPane();
             themeList.getContent().add(themePane);
 
@@ -93,24 +98,24 @@ public class PersonalizationPage extends StackPane {
             themeColorPickerContainer.setMinHeight(30);
             themePane.setRight(themeColorPickerContainer);
 
-            ColorPicker picker = new ColorPicker(Color.web(Theme.getTheme().getColor()));
-            picker.getCustomColors().setAll(Theme.SUGGESTED_COLORS);
-            picker.setOnAction(e ->
-                    config().setTheme(Theme.custom(Theme.getColorDisplayName(picker.getValue()))));
+            ColorPicker picker = new JFXColorPicker();
+            picker.getCustomColors().setAll(ThemeColor.STANDARD_COLORS.stream().map(ThemeColor::color).toList());
+            ThemeColor.bindBidirectional(picker, config().themeColorProperty());
             themeColorPickerContainer.getChildren().setAll(picker);
             Platform.runLater(() -> JFXDepthManager.setDepth(picker, 0));
         }
         {
-            OptionToggleButton titleTransparentButton = new OptionToggleButton();
+            LineToggleButton titleTransparentButton = new LineToggleButton();
             themeList.getContent().add(titleTransparentButton);
             titleTransparentButton.selectedProperty().bindBidirectional(config().titleTransparentProperty());
             titleTransparentButton.setTitle(i18n("settings.launcher.title_transparent"));
         }
         {
-            OptionToggleButton animationButton = new OptionToggleButton();
+            LineToggleButton animationButton = new LineToggleButton();
             themeList.getContent().add(animationButton);
             animationButton.selectedProperty().bindBidirectional(config().animationDisabledProperty());
             animationButton.setTitle(i18n("settings.launcher.turn_off_animations"));
+            animationButton.setSubtitle(i18n("settings.take_effect_after_restart"));
         }
         content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("settings.launcher.appearance")), themeList);
 
@@ -157,6 +162,7 @@ public class PersonalizationPage extends StackPane {
                 slider.setMinorTickCount(1);
                 slider.setBlockIncrement(5);
                 slider.setSnapToTicks(true);
+                slider.setPadding(new Insets(9, 0, 0, 0));
                 HBox.setHgrow(slider, Priority.ALWAYS);
 
                 if (config().getBackgroundImageType() == EnumBackgroundImage.TRANSLUCENT) {
@@ -174,6 +180,7 @@ public class PersonalizationPage extends StackPane {
                 }
 
                 Label textOpacity = new Label();
+                FXUtils.setLimitWidth(textOpacity, 50);
 
                 StringBinding valueBinding = Bindings.createStringBinding(() -> ((int) slider.getValue()) + "%", slider.valueProperty());
                 textOpacity.textProperty().bind(valueBinding);
@@ -190,8 +197,7 @@ public class PersonalizationPage extends StackPane {
         }
 
         {
-            ComponentList logPane = new ComponentSublist();
-            logPane.setTitle(i18n("settings.launcher.log"));
+            ComponentList logPane = new ComponentList();
 
             {
                 VBox fontPane = new VBox();
@@ -220,7 +226,14 @@ public class PersonalizationPage extends StackPane {
                                 .fallbackTo(12.0)
                                 .asPredicate(Validator.addTo(txtLogFontSize)));
 
-                        hBox.getChildren().setAll(cboLogFont, txtLogFontSize);
+                        JFXButton clearButton = new JFXButton();
+                        clearButton.getStyleClass().add("toggle-icon4");
+                        clearButton.setGraphic(SVG.RESTORE.createIcon());
+                        clearButton.setOnAction(e -> cboLogFont.setValue(null));
+
+                        FXUtils.installFastTooltip(clearButton, i18n("button.reset"));
+
+                        hBox.getChildren().setAll(cboLogFont, txtLogFontSize, clearButton);
 
                         borderPane.setRight(hBox);
                     }
@@ -240,8 +253,7 @@ public class PersonalizationPage extends StackPane {
         }
 
         {
-            ComponentSublist fontPane = new ComponentSublist();
-            fontPane.setTitle(i18n("settings.launcher.font"));
+            ComponentList fontPane = new ComponentList();
 
             {
                 VBox vbox = new VBox();
@@ -266,8 +278,10 @@ public class PersonalizationPage extends StackPane {
 
                         JFXButton clearButton = new JFXButton();
                         clearButton.getStyleClass().add("toggle-icon4");
-                        clearButton.setGraphic(SVG.RESTORE.createIcon(Theme.blackFill(), -1));
+                        clearButton.setGraphic(SVG.RESTORE.createIcon());
                         clearButton.setOnAction(e -> cboFont.setValue(null));
+
+                        FXUtils.installFastTooltip(clearButton, i18n("button.reset"));
 
                         hBox.getChildren().setAll(cboFont, clearButton);
 
@@ -281,41 +295,32 @@ public class PersonalizationPage extends StackPane {
             }
 
             {
-                BorderPane fontAntiAliasingPane = new BorderPane();
-                {
-                    Label left = new Label(i18n("settings.launcher.font.anti_aliasing"));
-                    BorderPane.setAlignment(left, Pos.CENTER_LEFT);
-                    fontAntiAliasingPane.setLeft(left);
+                var fontAntiAliasingPane = new LineSelectButton<Optional<FontSmoothingType>>();
+                fontAntiAliasingPane.setTitle(i18n("settings.launcher.font.anti_aliasing"));
+                fontAntiAliasingPane.setSubtitle(i18n("settings.take_effect_after_restart"));
+                fontAntiAliasingPane.setConverter(value ->
+                        value.isPresent()
+                                ? i18n("settings.launcher.font.anti_aliasing." + value.get().name().toLowerCase(Locale.ROOT))
+                                : i18n("settings.launcher.font.anti_aliasing.auto")
+                );
+                fontAntiAliasingPane.setItems(
+                        Optional.empty(),
+                        Optional.of(FontSmoothingType.LCD),
+                        Optional.of(FontSmoothingType.GRAY)
+                );
+
+                String fontAntiAliasing = globalConfig().getFontAntiAliasing();
+                if ("lcd".equalsIgnoreCase(fontAntiAliasing)) {
+                    fontAntiAliasingPane.setValue(Optional.of(FontSmoothingType.LCD));
+                } else if ("gray".equalsIgnoreCase(fontAntiAliasing)) {
+                    fontAntiAliasingPane.setValue(Optional.of(FontSmoothingType.GRAY));
+                } else {
+                    fontAntiAliasingPane.setValue(Optional.empty());
                 }
 
-                {
-                    @SuppressWarnings("unchecked")
-                    JFXComboBox<Optional<FontSmoothingType>> cboAntiAliasing = new JFXComboBox<>(FXCollections.observableArrayList(
-                            Optional.empty(),
-                            Optional.of(FontSmoothingType.LCD),
-                            Optional.of(FontSmoothingType.GRAY)
-                    ));
-                    String fontAntiAliasing = globalConfig().getFontAntiAliasing();
-                    if ("lcd".equalsIgnoreCase(fontAntiAliasing)) {
-                        cboAntiAliasing.setValue(Optional.of(FontSmoothingType.LCD));
-                    } else if ("gray".equalsIgnoreCase(fontAntiAliasing)) {
-                        cboAntiAliasing.setValue(Optional.of(FontSmoothingType.GRAY));
-                    } else {
-                        cboAntiAliasing.setValue(Optional.empty());
-                    }
-                    cboAntiAliasing.setConverter(FXUtils.stringConverter(value -> {
-                        if (value.isPresent()) {
-                            return i18n("settings.launcher.font.anti_aliasing." + value.get().name().toLowerCase(Locale.ROOT));
-                        } else {
-                            return i18n("settings.launcher.font.anti_aliasing.auto");
-                        }
-                    }));
-                    FXUtils.onChange(cboAntiAliasing.valueProperty(), value ->
-                            globalConfig().setFontAntiAliasing(value.map(it -> it.name().toLowerCase(Locale.ROOT))
-                                    .orElse(null)));
-
-                    fontAntiAliasingPane.setRight(cboAntiAliasing);
-                }
+                FXUtils.onChange(fontAntiAliasingPane.valueProperty(), value ->
+                        globalConfig().setFontAntiAliasing(value.map(it -> it.name().toLowerCase(Locale.ROOT))
+                                .orElse(null)));
 
                 fontPane.getContent().add(fontAntiAliasingPane);
             }
