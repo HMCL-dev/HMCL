@@ -138,6 +138,10 @@ public final class Lang {
         }
     }
 
+    public static OptionalInt wrapWithMinValue(int value, int min) {
+        return value >= min ? OptionalInt.of(value) : OptionalInt.empty();
+    }
+
     public static <T> T getOrDefault(List<T> a, int index, T defaultValue) {
         return index < 0 || index >= a.size() ? defaultValue : a.get(index);
     }

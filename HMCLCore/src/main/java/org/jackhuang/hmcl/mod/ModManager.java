@@ -63,8 +63,10 @@ public final class ModManager {
 
     private final GameRepository repository;
     private final String id;
+    private String gameVersion;
     private final TreeSet<LocalModFile> localModFiles = new TreeSet<>();
     private final HashMap<Pair<String, ModLoaderType>, LocalMod> localMods = new HashMap<>();
+    private final EnumSet<ModLoaderType> supportedLoaders = EnumSet.noneOf(ModLoaderType.class);
     private LibraryAnalyzer analyzer;
 
     private boolean loaded = false;
@@ -97,6 +99,14 @@ public final class ModManager {
 
     public boolean hasMod(String modId, ModLoaderType modLoaderType) {
         return localMods.containsKey(pair(modId, modLoaderType));
+    }
+
+    public String getGameVersion() {
+        return gameVersion;
+    }
+
+    public EnumSet<ModLoaderType> getSupportedLoaders() {
+        return EnumSet.copyOf(supportedLoaders);
     }
 
     private void addModInfo(Path file) {
@@ -174,7 +184,11 @@ public final class ModManager {
         localModFiles.clear();
         localMods.clear();
 
-        analyzer = LibraryAnalyzer.analyze(getRepository().getResolvedPreservingPatchesVersion(id), null);
+        var resolved = getRepository().getResolvedPreservingPatchesVersion(id);
+        gameVersion = repository.getGameVersion(resolved).orElse(null);
+        analyzer = LibraryAnalyzer.analyze(resolved, gameVersion);
+
+        updateSupportedLoaders();
 
         boolean supportSubfolders = analyzer.has(LibraryAnalyzer.LibraryType.FORGE)
                 || analyzer.has(LibraryAnalyzer.LibraryType.QUILT);
@@ -222,6 +236,45 @@ public final class ModManager {
     public void removeMods(LocalModFile... localModFiles) throws IOException {
         for (LocalModFile localModFile : localModFiles) {
             Files.deleteIfExists(localModFile.getFile());
+        }
+    }
+
+    private void updateSupportedLoaders() {
+        supportedLoaders.clear();
+
+        for (LibraryAnalyzer.LibraryType type : LibraryAnalyzer.LibraryType.values()) {
+            if (type.isModLoader() && this.analyzer.has(type)) {
+                ModLoaderType modLoaderType = type.getModLoaderType();
+                if (modLoaderType != null) {
+                    supportedLoaders.add(modLoaderType);
+
+                    if (modLoaderType == ModLoaderType.CLEANROOM)
+                        supportedLoaders.add(ModLoaderType.FORGE);
+                }
+            }
+        }
+
+        if (this.analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE) && "1.20.1".equals(gameVersion)) {
+            supportedLoaders.add(ModLoaderType.FORGE);
+        }
+
+        if (this.analyzer.has(LibraryAnalyzer.LibraryType.QUILT)) {
+            supportedLoaders.add(ModLoaderType.FABRIC);
+        }
+
+        if (this.analyzer.has(LibraryAnalyzer.LibraryType.LEGACY_FABRIC)) {
+            supportedLoaders.add(ModLoaderType.FABRIC);
+        }
+
+        if (this.analyzer.has(LibraryAnalyzer.LibraryType.FABRIC) && hasMod("kilt", ModLoaderType.FABRIC)) {
+            supportedLoaders.add(ModLoaderType.FORGE);
+            supportedLoaders.add(ModLoaderType.NEO_FORGED);
+        }
+
+        // Sinytra Connector
+        if (this.analyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE) && hasMod("connectormod", ModLoaderType.NEO_FORGED)
+                || "1.20.1".equals(gameVersion) && this.analyzer.has(LibraryAnalyzer.LibraryType.FORGE) && hasMod("connectormod", ModLoaderType.FORGE)) {
+            supportedLoaders.add(ModLoaderType.FABRIC);
         }
     }
 
