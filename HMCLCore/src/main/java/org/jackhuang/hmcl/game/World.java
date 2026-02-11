@@ -432,7 +432,7 @@ public final class World {
         public final WorldPath the_end;
 
         private final ConcurrentHashMap<Chunk, byte[]> chunkCache = new ConcurrentHashMap<>();
-        private final @NotNull World world;
+        public final @NotNull World world;
 
         public WorldParser(@NotNull World world) {
             LOG.info("Parsing world(%s)[%s]".formatted(world.getGameVersion(), world.getWorldName()));
@@ -690,6 +690,142 @@ public final class World {
                 return "minecraft:air";
             }
             return "minecraft:air";
+        }
+
+        /**
+         * 获取指定区块内某个位置的最高非空气方块
+         * @param chunk 区块对象
+         * @param x 区块内X坐标 (0-15)
+         * @param z 区块内Z坐标 (0-15)
+         * @param maxY 搜索的最高Y坐标（包含）
+         * @param minY 搜索的最低Y坐标（包含）
+         * @return 最高非空气方块的Y坐标，如果没有找到则返回Integer.MIN_VALUE
+         */
+        public int getTheHighestNonAirBlock(Chunk chunk, int x, int z, int maxY, int minY) {
+            x &= 15;
+            z &= 15;
+
+            // 尝试从缓存获取区块数据
+            byte[] chunkData = chunkCache.get(chunk);
+            if (chunkData == null) {
+                try {
+                    chunkData = parseChunk(chunk.x, chunk.z, chunk.world);
+                } catch (RuntimeException e) {
+                    return Integer.MIN_VALUE;
+                }
+            }
+
+            try {
+                // 一次性解析整个区块的NBT数据
+                CompoundTag chunkTag = (CompoundTag) NBTIO.readTag(new ByteArrayInputStream(chunkData));
+
+                if (!chunkTag.contains("sections")) {
+                    return Integer.MIN_VALUE;
+                }
+
+                ListTag sections = chunkTag.get("sections");
+
+                // 从最高section开始向下搜索（优化搜索顺序）
+                for (int sectionIndex = sections.size() - 1; sectionIndex >= 0; sectionIndex--) {
+                    Tag sectionTag = sections.get(sectionIndex);
+                    if (!(sectionTag instanceof CompoundTag section)) {
+                        continue;
+                    }
+
+                    if (!section.contains("Y") || !(section.get("Y") instanceof ByteTag sectionYTag)) {
+                        continue;
+                    }
+
+                    int sectionBaseY = sectionYTag.getValue() * 16;
+
+                    // 处理block_states
+                    if (!section.contains("block_states") || !(section.get("block_states") instanceof CompoundTag blockStates)) {
+                        continue;
+                    }
+
+                    ListTag palette = null;
+                    LongArrayTag dataArray = null;
+
+                    if (blockStates.contains("palette") && blockStates.get("palette") instanceof ListTag paletteTag) {
+                        palette = paletteTag;
+                    }
+                    if (blockStates.contains("data") && blockStates.get("data") instanceof LongArrayTag dataArrayTag) {
+                        dataArray = dataArrayTag;
+                    }
+
+                    // 在当前section内从最高处向最低处搜索
+                    for (int localY = maxY; localY >= minY; localY--) {
+                        String blockName = getBlockNameAtPosition(palette, dataArray, x, localY, z);
+
+                        if (blockName != null && !isAirBlock(blockName)) {
+                            return sectionBaseY + localY;
+                        }
+                    }
+                }
+
+                return Integer.MIN_VALUE;
+
+            } catch (IOException e) {
+                return Integer.MIN_VALUE;
+            }
+        }
+
+        public int getTheHighestNonAirBlock(@NotNull Chunk chunk, int x, int z) {
+            int maxY = chunk.world == overworld && Objects.requireNonNullElse(world.getGameVersion(), GameVersionNumber.asGameVersion("1.20.1")).isAtLeast("1.17", "21w06a") ? 319 : 255;
+            int minY = chunk.world == overworld && Objects.requireNonNullElse(world.getGameVersion(), GameVersionNumber.asGameVersion("1.20.1")).isAtLeast("1.17", "21w06a") ? -64 : 0;
+            return getTheHighestNonAirBlock(chunk, x, z, maxY, minY);
+        }
+
+        /**
+         * 获取指定位置的方块名称
+         */
+        private String getBlockNameAtPosition(ListTag palette, LongArrayTag dataArray, int x, int localY, int z) {
+            if (palette == null || palette.size() == 0) {
+                return "minecraft:air";
+            }
+
+            // 如果只有调色板没有数据数组，返回调色板第一个方块
+            if (dataArray == null) {
+                Tag firstBlock = palette.get(0);
+                if (firstBlock instanceof CompoundTag blockEntry &&
+                        blockEntry.contains("Name") && blockEntry.get("Name") instanceof StringTag nameTag) {
+                    return nameTag.getValue();
+                }
+                return "minecraft:air";
+            }
+
+            long[] data = dataArray.getValue();
+            int index3D = localY * 256 + z * 16 + x;
+            int longIndex = index3D >> 6;
+            int bitOffset = index3D & 63;
+
+            if (longIndex >= data.length) {
+                return "minecraft:air";
+            }
+
+            long value = data[longIndex];
+            int bitsPerBlock = Math.max(4, 32 - Integer.numberOfLeadingZeros(palette.size() - 1));
+            int paletteIndex = (int)((value >>> bitOffset) & ((1L << bitsPerBlock) - 1));
+
+            if (paletteIndex >= palette.size()) {
+                paletteIndex = 0;
+            }
+
+            Tag blockTag = palette.get(paletteIndex);
+            if (blockTag instanceof CompoundTag blockEntry) {
+                if (blockEntry.contains("Name") && blockEntry.get("Name") instanceof StringTag nameTag) {
+                    return nameTag.getValue();
+                }
+            }
+
+            return "minecraft:air";
+        }
+
+        private boolean isAirBlock(String blockName) {
+            return "minecraft:air".equals(blockName) ||
+                    blockName.startsWith("minecraft:cave_air") ||
+                    blockName.startsWith("minecraft:void_air") ||
+                    blockName.isEmpty();
         }
 
         public WorldPath getOverworld() {

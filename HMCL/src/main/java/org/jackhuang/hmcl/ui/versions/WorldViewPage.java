@@ -35,6 +35,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -317,6 +318,9 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
                         continue;
                     }
 
+//                    int maxY = chunk.world() == worldParser.overworld && Objects.requireNonNullElse(worldParser.world.getGameVersion(), GameVersionNumber.asGameVersion("1.20.1")).isAtLeast("1.17", "21w06a") ? 319 : 255;
+//                    int minY = chunk.world() == worldParser.overworld && Objects.requireNonNullElse(worldParser.world.getGameVersion(), GameVersionNumber.asGameVersion("1.20.1")).isAtLeast("1.17", "21w06a") ? -64 : 0;
+
                     // Process chunk if not already cached
                     if (!chunkColorMap.containsKey(chunk)) {
                         WVColor[] chunkColors = new WVColor[256];
@@ -324,7 +328,9 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
                         try {
                             for (int x = 0; x < 16; x++) {
                                 for (int z = 0; z < 16; z++) {
-                                    chunkColors[x * 16 + z] = getColor(worldParser.parseBlockFromChunkData(chunk, x, 255, z));
+//                                    int y = worldParser.getTheHighestNonAirBlock(chunk, x, z, maxY, minY);
+                                    int y = 64;
+                                    chunkColors[x * 16 + z] = getColor(worldParser.parseBlockFromChunkData(chunk, x, y != Integer.MIN_VALUE ? y : 64, z));
                                 }
                             }
                             // Determine dominant color for the chunk
