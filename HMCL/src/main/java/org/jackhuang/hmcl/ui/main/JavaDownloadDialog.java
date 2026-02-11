@@ -121,14 +121,13 @@ public final class JavaDownloadDialog extends StackPane {
 
             setValid(false);
             InvalidationListener updateValidStatus = e -> {
-                boolean valid = false;
                 for (JFXCheckBox box : checkboxes) {
                     if (!box.isDisabled() && box.isSelected()) {
-                        valid = true;
+                        setValid(true);
                         break;
                     }
                 }
-                setValid(valid);
+                setValid(false);
             };
 
             for (GameJavaVersion version : supportedGameJavaVersions) {
