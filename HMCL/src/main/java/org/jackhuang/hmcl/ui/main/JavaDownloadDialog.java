@@ -21,8 +21,6 @@ import com.jfoenix.controls.*;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.SimpleIntegerProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -124,7 +122,7 @@ public final class JavaDownloadDialog extends StackPane {
                 for (JFXCheckBox box : checkboxes) {
                     if (!box.isDisabled() && box.isSelected()) {
                         setValid(true);
-                        break;
+                        return;
                     }
                 }
                 setValid(false);
@@ -181,52 +179,9 @@ public final class JavaDownloadDialog extends StackPane {
             if (selectedVersions.isEmpty())
                 return;
 
-            List<GameJavaVersion> installed = new ArrayList<>();
-            List<GameJavaVersion> notInstalled = new ArrayList<>();
-
-            for (GameJavaVersion v : selectedVersions) {
-                if (JavaManager.REPOSITORY.isInstalled(platform, v)) {
-                    installed.add(v);
-                } else {
-                    notInstalled.add(v);
-                }
-            }
-
-            if (!installed.isEmpty()) {
-                Controllers.confirm(i18n("download.java.override"), null, () -> {
-                    startDownload(installed, notInstalled);
-                }, null);
-            } else {
-                startDownload(installed, notInstalled);
-            }
+            Controllers.taskDialog(Task.allOf(selectedVersions.stream().map(this::downloadTask).toList()), i18n("download.java.process"), TaskCancellationAction.NORMAL);
         }
 
-        private void startDownload(List<GameJavaVersion> installed, List<GameJavaVersion> notInstalled) {
-            Task<?> chain = null;
-
-            for (GameJavaVersion v : installed) {
-                Task<?> task = Task.supplyAsync(() -> JavaManager.REPOSITORY.getJavaExecutable(platform, v))
-                        .thenComposeAsync(Schedulers.javafx(), realPath -> {
-                            if (realPath != null) {
-                                JavaManager.removeJava(realPath);
-                            }
-                            return downloadTask(v);
-                        });
-
-                if (chain == null) chain = task;
-                else chain = chain.thenComposeAsync(Schedulers.javafx(), ignore -> task);
-            }
-
-            for (GameJavaVersion v : notInstalled) {
-                Task<?> task = downloadTask(v);
-                if (chain == null) chain = task;
-                else chain = chain.thenComposeAsync(Schedulers.javafx(), ignore -> task);
-            }
-
-            if (chain != null) {
-                Controllers.taskDialog(chain, i18n("download.java.process"), TaskCancellationAction.NORMAL);
-            }
-        }
     }
 
     private final class DownloadDiscoJava extends JFXDialogLayout {
