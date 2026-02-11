@@ -560,7 +560,6 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
             {
                 this.left = new StackPane();
-                left.setMouseTransparent(true);
                 left.setPadding(new Insets(0, 8, 0, 0));
 
                 this.iconImageView = new ImageView();
