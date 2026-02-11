@@ -277,7 +277,7 @@ public final class StringUtils {
     }
 
     /// Check if the code point is a full-width character.
-    public static boolean isHalfWidth(int codePoint) {
+    public static boolean isFullWidth(int codePoint) {
         return codePoint >= '\uff10' && codePoint <= '\uff19'       // full-width digits
                 || codePoint >= '\uff21' && codePoint <= '\uff3a'   // full-width uppercase letters
                 || codePoint >= '\uff41' && codePoint <= '\uff5a'   // full-width lowercase letters
@@ -296,7 +296,7 @@ public final class StringUtils {
         while (i < str.length()) {
             int cp = str.codePointAt(i);
 
-            if (isHalfWidth(cp)) {
+            if (isFullWidth(cp)) {
                 break;
             }
 
