@@ -459,27 +459,27 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
         }
     }
 
-        /**
-         * Gets the color for a specific block type.
-         * @param blockName The block identifier
-         * @return The color representing the block
-         */
-        @Contract("_ -> new")
-        private static WVColor getColor(@NotNull String blockName) {
-                return WVColor.fromColor(switch (blockName) {
-                    case "minecraft:air" -> Color.rgb(0, 0, 0, 0);
-                    case "minecraft:water" -> Color.rgb(64, 164, 223);
-                    case "minecraft:ice" -> Color.rgb(131, 190, 223);
-                    case "minecraft:lava" -> Color.rgb(240, 88, 17);
-                    case "minecraft:bedrock" -> Color.rgb(54, 54, 54);
-                    case "minecraft:grass_block" -> Color.rgb(127, 178, 56);
-                    case "minecraft:dirt" -> Color.rgb(134, 96, 67);
-                    case "minecraft:stone" -> Color.rgb(112, 112, 112);
-                    case "minecraft:sand" -> Color.rgb(218, 210, 158);
-                    case "minecraft:gravel" -> Color.rgb(136, 126, 126);
-                    default -> BlockColorFilter.getColorByFilter(blockName);
-                });
-            }
+    /**
+     * Gets the color for a specific block type.
+     * @param blockName The block identifier
+     * @return The color representing the block
+     */
+    @Contract("_ -> new")
+    private static @NotNull WVColor getColor(@NotNull String blockName) {
+        return WVColor.fromColor(switch (blockName) {
+            case "minecraft:air" -> Color.rgb(0, 0, 0, 0);
+            case "minecraft:water" -> Color.rgb(64, 164, 223);
+            case "minecraft:ice" -> Color.rgb(131, 190, 223);
+            case "minecraft:lava" -> Color.rgb(240, 88, 17);
+            case "minecraft:bedrock" -> Color.rgb(54, 54, 54);
+            case "minecraft:grass_block" -> Color.rgb(127, 178, 56);
+            case "minecraft:dirt" -> Color.rgb(134, 96, 67);
+            case "minecraft:stone" -> Color.rgb(112, 112, 112);
+            case "minecraft:sand" -> Color.rgb(218, 210, 158);
+            case "minecraft:gravel" -> Color.rgb(136, 126, 126);
+            default -> BlockColorFilter.getColorByFilter(blockName);
+        });
+    }
 
     public static final class WVColor {
         private final Color color;
@@ -519,7 +519,7 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
 
         public boolean isNormalColor() {
             return color != null;
-    }
+        }
     }
 
     public static class Skin extends DecoratorAnimatedPageSkin<WorldViewPage> {
