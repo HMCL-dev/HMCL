@@ -37,6 +37,7 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.EOFException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -60,12 +61,18 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
      * Creates a new world view page for the specified world.
      * @param world The world to view
      */
-    public WorldViewPage(@NotNull World world) {
+    public WorldViewPage(@NotNull World world, double width, double height) {
         // Initialize page state with world name as title
         this.state = new SimpleObjectProperty<>(new State(i18n("world.view.title", StringUtils.parseColorEscapes(world.getWorldName())), null, true, true, true));
         // Create viewer using half of available CPU cores (minimum 1)
         this.viewer = new WorldViewer(world, this.getWidth(), this.getHeight(), Math.max((Runtime.getRuntime().availableProcessors() / 2), 1));
 
+        this.setWidth(width);
+        this.setHeight(height);
+        this.viewer.setWidth(width);
+        this.viewer.setHeight(height);
+
+        LOG.debug("%f, %f".formatted(this.getWidth(), this.getHeight()));
         this.viewer.render();
         // Stop rendering when page is closed
         this.sceneProperty().addListener((obs, oldScene, newScene) -> {
@@ -163,6 +170,7 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
                 mouseChunkX = centerChunkX + (int)((event.getX() - getWidth() / 2) / chunkSize);
                 mouseChunkZ = centerChunkZ + (int)((event.getY() - getHeight() / 2) / chunkSize);
                 coordinateLabel.setText(String.format("chunk(%d,%d)", mouseChunkX, mouseChunkZ));
+                renderMainLoop();
             });
         }
 
@@ -212,7 +220,7 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
                 ((Pane)getParent()).getChildren().setAll(newRoot);
             }
 
-            LOG.info("Start rendering world view: %s".formatted(worldParser.toString()));
+            LOG.info("Start rendering world view(%fx%f): %s".formatted(this.getHeight(), this.getHeight(), worldParser.toString()));
             CacheChunkColorTask.executeAll(tasks);
             requestChunksAroundCenter();
             Platform.runLater(this::renderMainLoop);
@@ -237,46 +245,42 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
         }
 
         public void renderMainLoop() {
-            while (isRendering()) {
-                if (chunkColorMap.isEmpty()) continue;
+            GraphicsContext gc = getGraphicsContext2D();
+            gc.clearRect(0, 0, getWidth(), getHeight());
 
-                GraphicsContext gc = getGraphicsContext2D();
-                gc.clearRect(0, 0, getWidth(), getHeight());
+            double chunkSize = getChunkSize();
+            int visibleRadius = (int) (Math.max(getWidth(), getHeight()) / chunkSize / 2) + 1;
 
-                double chunkSize = getChunkSize();
-                int visibleRadius = (int) (Math.max(getWidth(), getHeight()) / chunkSize / 2) + 1;
+            // Cycle through missing chunk patterns
+            patternIndex = (patternIndex + 1) % MISSING_CHUNK_PATTERNS.length;
 
-                // Cycle through missing chunk patterns
-                patternIndex = (patternIndex + 1) % MISSING_CHUNK_PATTERNS.length;
+            // Render all visible chunks
+            for (int x = centerChunkX - visibleRadius; x <= centerChunkX + visibleRadius; x++) {
+                for (int z = centerChunkZ - visibleRadius; z <= centerChunkZ + visibleRadius; z++) {
+                    World.WorldParser.Chunk chunk = new World.WorldParser.Chunk(x, z, worldParser.overworld);
+                    double screenX = getWidth() / 2 + (x - centerChunkX) * chunkSize;
+                    double screenY = getHeight() / 2 + (z - centerChunkZ) * chunkSize;
 
-                // Render all visible chunks
-                for (int x = centerChunkX - visibleRadius; x <= centerChunkX + visibleRadius; x++) {
-                    for (int z = centerChunkZ - visibleRadius; z <= centerChunkZ + visibleRadius; z++) {
-                        World.WorldParser.Chunk chunk = new World.WorldParser.Chunk(x, z, worldParser.overworld);
-                        double screenX = getWidth() / 2 + (x - centerChunkX) * chunkSize;
-                        double screenY = getHeight() / 2 + (z - centerChunkZ) * chunkSize;
-
-                        if (chunkColorMap.containsKey(chunk)) {
-                            // Use cached color if available
-                            gc.setFill(chunkColorMap.get(chunk));
-                        } else {
-                            // Use missing chunk pattern and request loading
-                            gc.setFill(MISSING_CHUNK_PATTERNS[patternIndex]);
-                            CacheChunkColorTask.sendRequestAll(tasks, new World.WorldParser.Chunk[]{chunk});
-                        }
-
-                        // Draw chunk rectangle
-                        gc.fillRect(screenX, screenY, chunkSize, chunkSize);
-                        gc.setStroke(Color.BLACK);
-                        gc.setLineWidth(0.5);
-                        gc.strokeRect(screenX, screenY, chunkSize, chunkSize);
+                    if (chunkColorMap.containsKey(chunk)) {
+                        // Use cached color if available
+                        gc.setFill(chunkColorMap.get(chunk));
+                    } else {
+                        // Use missing chunk pattern and request loading
+                        gc.setFill(MISSING_CHUNK_PATTERNS[patternIndex]);
+                        CacheChunkColorTask.sendRequestAll(tasks, new World.WorldParser.Chunk[]{chunk});
                     }
-                }
 
-                // Draw center marker
-                gc.setFill(Color.RED);
-                gc.fillOval(getWidth() / 2 - 2, getHeight() / 2 - 2, 4, 4);
+                    // Draw chunk rectangle
+                    gc.fillRect(screenX, screenY, chunkSize, chunkSize);
+                    gc.setStroke(Color.BLACK);
+                    gc.setLineWidth(0.5);
+                    gc.strokeRect(screenX, screenY, chunkSize, chunkSize);
+                }
             }
+
+            // Draw center marker
+            gc.setFill(Color.RED);
+            gc.fillOval(getWidth() / 2 - 2, getHeight() / 2 - 2, 4, 4);
         }
 
         /**
@@ -310,13 +314,17 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
                     if (!chunkColorMap.containsKey(chunk)) {
                         Color[] chunkColors = new Color[256];
                         // Sample block colors at top layer (y=255)
-                        for (int x = 0; x < 16; x++) {
-                            for (int z = 0; z < 16; z++) {
-                                chunkColors[x * 16 + z] = getColor(worldParser.parseBlockFromChunkData(chunk, x, 255, z));
+                        try {
+                            for (int x = 0; x < 16; x++) {
+                                for (int z = 0; z < 16; z++) {
+                                    chunkColors[x * 16 + z] = getColor(worldParser.parseBlockFromChunkData(chunk, x, 255, z));
+                                }
                             }
+                            // Determine dominant color for the chunk
+                            chunkColorMap.put(chunk, evaluateColor(chunkColors));
+                        } catch (EOFException e) {
+                            // Chunk not generated yet, skip
                         }
-                        // Determine dominant color for the chunk
-                        chunkColorMap.put(chunk, evaluateColor(chunkColors));
                     }
                 }
             }
@@ -404,8 +412,7 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
     public static class Skin extends DecoratorAnimatedPageSkin<WorldViewPage> {
         public Skin(WorldViewPage page) {
             super(page);
-
-            setCenter(new StackPane(page.viewer));
+            setCenter(page.viewer);
         }
     }
 }
