@@ -11,13 +11,8 @@
 <!-- #PROPERTY NAME=BADGES -->
 <div align="center">
 
-[![GitHub](https://img.shields.io/badge/GitHub-repo-blue?style=flat-square&logo=github)](https://github.com/HMCL-dev/HMCL)
-[![CNB](https://img.shields.io/badge/CNB-mirror-ff6200?style=flat-square&logo=cloudnativebuild)](https://cnb.cool/HMCL-dev/HMCL)
-[![Gitee](https://img.shields.io/badge/Gitee-mirror-c71d23?style=flat-square&logo=gitee)](https://gitee.com/huanghongxun/HMCL)
 
-[![QQ Group](https://img.shields.io/badge/QQ-gray?style=flat-square&logo=qq&logoColor=ffffff)](https://docs.hmcl.net/groups.html)
-[![Discord](https://img.shields.io/badge/Discord-gray?style=flat-square&logo=discord)](https://discord.gg/jVvC7HfM6U)
-[![Bilibili](https://img.shields.io/badge/Bilibili-gray?style=flat-square&logo=bilibili)](https://space.bilibili.com/20314891)
+[![Bilibili](https://img.shields.io/badge/Bilibili-gray?style=flat-square&logo=bilibili)](https://space.bilibili.com/1217263243)
 
 </div>
 <!-- #END BLOCK -->
@@ -36,27 +31,19 @@ HMCL has amazing cross-platform capabilities. Not only does it run on different 
 
 For systems and CPU architectures supported by HMCL, please refer to [this table](PLATFORM.md).
 
-## Download
-
-You can download HMCL from the following sources:
-
-- [HMCL Official Website](https://hmcl.huangyuhui.net/download)
-- [GitHub Release](https://github.com/HMCL-dev/HMCL/releases)
-- [CNB Release](https://cnb.cool/HMCL-dev/HMCL/-/releases)
-
 ## Contributing
 
 HMCL is a community-driven open-source project, and everyone is welcome to contribute code or provide suggestions.
 
 You can contribute to HMCL development in the following ways:
 
-- Report bugs or request features by [creating an issue](https://github.com/HMCL-dev/HMCL/issues/new/choose) on GitHub.
-- Contribute code by forking the repository on GitHub and [submitting a pull request](https://github.com/HMCL-dev/HMCL/compare).
+- Report bugs or request features by [creating an issue](https://github.com/deepsleep-v3/HMCLPP/issues/new/choose) on GitHub.
+- ……
 
 Before contributing, please read the [Contributing Guide](./Contributing.md), which includes the following:
 
-- [How to build and run HMCL from source](./Contributing.md#build-hmcl)
-- [Adjusting HMCL behavior using debug options](./Contributing.md#debug-options)
+- [How to build and run HMCLPP from source](./Contributing.md#build-hmclpp)
+- [Adjusting HMCLPP behavior using debug options](./Contributing.md#debug-options)
 
 ## Contributors
 
