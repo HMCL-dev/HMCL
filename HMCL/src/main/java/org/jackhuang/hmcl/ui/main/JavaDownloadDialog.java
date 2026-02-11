@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.main;
 
 import com.jfoenix.controls.*;
+import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.IntegerProperty;
@@ -110,29 +111,39 @@ public final class JavaDownloadDialog extends StackPane {
 
     private final class DownloadMojangJava extends DialogPane {
         private final List<JFXCheckBox> checkboxes = new ArrayList<>();
-        private final IntegerProperty selectedCount = new SimpleIntegerProperty(0);
 
         DownloadMojangJava() {
             setTitle(i18n("java.download.title"));
-            validProperty().bind(selectedCount.greaterThan(0));
 
             VBox vbox = new VBox(16);
             Label prompt = new Label(i18n("java.download.prompt"));
             vbox.getChildren().add(prompt);
 
+            setValid(false);
+            InvalidationListener updateValidStatus = e -> {
+                boolean valid = false;
+                for (JFXCheckBox box : checkboxes) {
+                    if (!box.isDisabled() && box.isSelected()) {
+                        valid = true;
+                        break;
+                    }
+                }
+                setValid(valid);
+            };
+
             for (GameJavaVersion version : supportedGameJavaVersions) {
                 JFXCheckBox button = new JFXCheckBox("Java " + version.majorVersion());
                 button.setUserData(version);
 
-                button.selectedProperty().addListener((observable, oldValue, newValue) ->
-                        selectedCount.set(selectedCount.get() + (newValue ? 1 : -1))
-                );
+                if (JavaManager.REPOSITORY.isInstalled(platform, version)) {
+                    button.setDisable(true);
+                    button.setSelected(true);
+                } else {
+                    button.selectedProperty().addListener(updateValidStatus);
+                }
 
                 vbox.getChildren().add(button);
                 checkboxes.add(button);
-
-                if (JavaManager.REPOSITORY.isInstalled(platform, version))
-                    button.setDisable(true);
             }
 
             setBody(vbox);
@@ -163,7 +174,7 @@ public final class JavaDownloadDialog extends StackPane {
 
             List<GameJavaVersion> selectedVersions = new ArrayList<>();
             for (JFXCheckBox box : checkboxes) {
-                if (box.isSelected()) {
+                if (!box.isDisabled() && box.isSelected()) {
                     selectedVersions.add((GameJavaVersion) box.getUserData());
                 }
             }
