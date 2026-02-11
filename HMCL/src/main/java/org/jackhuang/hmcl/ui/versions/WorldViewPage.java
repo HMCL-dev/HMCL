@@ -37,6 +37,7 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.EOFException;
 import java.util.*;
@@ -44,6 +45,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.stream.Collectors;
 
+import static org.jackhuang.hmcl.ui.versions.WorldViewPage.WorldViewer.UNKNOWN_CHUNK_COLOR;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -98,12 +100,14 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
      */
     public static class WorldViewer extends Canvas {
         // Color patterns for unloaded chunks (purple/black alternating)
-        private static final WVColor[] MISSING_CHUNK_PATTERNS = {
+        public static final WVColor[] UNKNOWN_CHUNK_COLORSET = {
                 WVColor.rgb(128, 0, 128),  // Purple
                 WVColor.rgb(0, 0, 0)       // Black
         };
 
-        private static final WVColor UNGENERATED_CHUNK_COLOR = WVColor.rgb(-1, -1, -1);
+        public static final WVColor UNKNOWN_CHUNK_COLOR = WVColor.rgb(-1, 0, 0);
+        public static final WVColor UNLOADED_CHUNK_COLOR = WVColor.rgb(-1, -1, 0);
+        public static final WVColor UNGENERATED_CHUNK_COLOR = WVColor.rgb(-1, -1, -1);
 
         private double dragStartX, dragStartY; // Drag start coordinates
         private int centerChunkX = 0, centerChunkZ = 0; // Center chunk coordinates
@@ -139,11 +143,11 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
             coordinateLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: white; -fx-background-color: rgba(0,0,0,0.7);");
             coordinateLabel.setPadding(new Insets(2, 5, 2, 5));
 
-            setupMouseEvents();
+            Platform.runLater(() -> setupMouseEvents(1.3 * (600 / getWidth()))); // 这样可以根据画布大小自动调整鼠标拖动的灵敏度，保持在不同分辨率下都有良好的体验
         }
 
         // Set up mouse interaction handlers
-        private void setupMouseEvents() {
+        private void setupMouseEvents(double sensitivity) {
             // Mouse press handler for dragging
             setOnMousePressed(event -> {
                 dragStartX = event.getSceneX();
@@ -152,8 +156,8 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
 
             // Mouse drag handler for panning
             setOnMouseDragged(event -> {
-                double deltaX = event.getSceneX() - dragStartX;
-                double deltaY = event.getSceneY() - dragStartY;
+                double deltaX = (event.getSceneX() - dragStartX) * sensitivity;
+                double deltaY = (event.getSceneY() - dragStartY) * sensitivity;
 
                 double chunkSize = getChunkSize();
                 centerChunkX -= (int)(deltaX / chunkSize);
@@ -255,15 +259,21 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
                     if (chunkColorMap.containsKey(chunk)) {
                         // Use cached color if available
                         WVColor c = chunkColorMap.get(chunk);
-                        if (c != UNGENERATED_CHUNK_COLOR) {
-                            gc.setFill(c.get());
-                        } else {
-                            drawMissingChunkPattern(gc, screenX, screenY, chunkSize);
+                        if (c == UNGENERATED_CHUNK_COLOR) {
+                            drawUngeneratedChunkPattern(gc, screenX, screenY, chunkSize);
                             continue;
+                        } else if (c == UNLOADED_CHUNK_COLOR) {
+                            drawUnloadedChunkPattern(gc, screenX, screenY, chunkSize);
+                            continue;
+                        } else if (c == UNKNOWN_CHUNK_COLOR) {
+                            drawUnknownChunkPattern(gc, screenX, screenY, chunkSize);
+                            continue;
+                        } else {
+                            gc.setFill(c.get());
                         }
                     } else {
                         // Use missing chunk pattern and request loading
-                        drawMissingChunkPattern(gc, screenX, screenY, chunkSize);
+                        drawUnloadedChunkPattern(gc, screenX, screenY, chunkSize);
                         CacheChunkColorTask.sendRequestAll(tasks, new World.WorldParser.Chunk[]{chunk});
                         gc.setStroke(Color.BLACK);
                         gc.setLineWidth(0.5);
@@ -280,14 +290,33 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
             }
         }
 
-        private void drawMissingChunkPattern(GraphicsContext gc, double x, double y, double size) {
-            gc.setFill(MISSING_CHUNK_PATTERNS[0].get()); // Purple
+        private void drawUngeneratedChunkPattern(GraphicsContext gc, double screenX, double screenY, double chunkSize) {
+            gc.setStroke(Color.DARKRED);
+            gc.setLineWidth(1);
+            gc.strokeLine(screenX, screenY, screenX + chunkSize, screenY + chunkSize);
+            gc.strokeLine(screenX + chunkSize, screenY, screenX, screenY + chunkSize);
+        }
+
+        private void drawUnknownChunkPattern(@NotNull GraphicsContext gc, double x, double y, double size) {
+            gc.setFill(UNKNOWN_CHUNK_COLORSET[0].get()); // Purple
             gc.fillRect(x, y, size / 2, size / 2);
             gc.fillRect(x + size / 2, y + size / 2, size / 2, size / 2);
 
-            gc.setFill(MISSING_CHUNK_PATTERNS[1].get()); // Black
+            gc.setFill(UNKNOWN_CHUNK_COLORSET[1].get()); // Black
             gc.fillRect(x + size / 2, y, size / 2, size / 2);
             gc.fillRect(x, y + size / 2, size / 2, size / 2);
+        }
+
+        private void drawUnloadedChunkPattern(@NotNull GraphicsContext gc, double x, double y, double size) {
+            gc.setFill(Color.LIGHTGRAY);
+            gc.fillRect(x, y, size, size);
+            gc.setStroke(Color.DARKGRAY);
+            gc.setLineWidth(0.5);
+            gc.strokeRect(x, y, size, size);
+            gc.setStroke(Color.GRAY);
+            gc.setLineWidth(1);
+            gc.strokeLine(x, y, x + size, y + size);
+            gc.strokeLine(x + size, y, x, y + size);
         }
 
         /**
@@ -310,7 +339,7 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
                     World.WorldParser.Chunk chunk = pendingChunks.poll();
                     if (chunk == null) {
                         try {
-                            Thread.sleep(10); // Avoid busy waiting
+                            Thread.sleep(20 / tasks.size()); // Avoid busy waiting
                         } catch (InterruptedException e) {
                             break;
                         }
@@ -339,6 +368,7 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
                                     && ! runtimeException.getMessage().equals("Region file does not exists.")) {
                                     LOG.warning("An unexpected exception occurred while parsing chunk data", e);
                                 }
+                                chunkColorMap.put(chunk, UNGENERATED_CHUNK_COLOR);
                             }
                         }
                     }
@@ -406,22 +436,27 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
          * @return The most frequently occurring color
          */
         private @NotNull WVColor evaluateColor(WVColor @NotNull [] chunkColors) {
-            return WVColor.fromColor(Arrays.stream(chunkColors)
-                    .collect(Collectors.groupingBy(
-                            c -> Arrays.asList(
-                                    (int)(c.get().getRed() * 10),
-                                    (int)(c.get().getGreen() * 10),
-                                    (int)(c.get().getBlue() * 10)
-                            ), Collectors.counting()
-                    ))
-                    .entrySet().stream()
-                    .max(Map.Entry.comparingByValue())
-                    .map(e -> Color.color(
-                            e.getKey().get(0) / 10.0,
-                            e.getKey().get(1) / 10.0,
-                            e.getKey().get(2) / 10.0
-                    ))
-                    .orElse(Color.WHITE));
+            if (Arrays.stream(chunkColors).allMatch(WVColor::isNormalColor)) {
+                return WVColor.fromColor(Arrays.stream(chunkColors)
+                        .collect(Collectors.groupingBy(
+                                c -> Arrays.asList(
+                                        (int) (c.get().getRed() * 10),
+                                        (int) (c.get().getGreen() * 10),
+                                        (int) (c.get().getBlue() * 10)
+                                ), Collectors.counting()
+                        ))
+                        .entrySet().stream()
+                        .max(Map.Entry.comparingByValue())
+                        .map(e -> Color.color(
+                                e.getKey().get(0) / 10.0,
+                                e.getKey().get(1) / 10.0,
+                                e.getKey().get(2) / 10.0
+                        ))
+                        .orElse(null));
+            } else {
+                return UNKNOWN_CHUNK_COLOR;
+            }
+        }
         }
 
         /**
@@ -429,7 +464,8 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
          * @param blockName The block identifier
          * @return The color representing the block
          */
-        private WVColor getColor(@NotNull String blockName) {
+        @Contract("_ -> new")
+        private static WVColor getColor(@NotNull String blockName) {
             return WVColor.fromColor(switch (blockName) {
                 case "minecraft:air" -> Color.rgb(0, 0, 0, 0);
                 case "minecraft:water" -> Color.rgb(64, 164, 223);
@@ -441,11 +477,11 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
                 case "minecraft:stone" -> Color.rgb(112, 112, 112);
                 case "minecraft:sand" -> Color.rgb(218, 210, 158);
                 case "minecraft:gravel" -> Color.rgb(136, 126, 126);
-                default -> Color.GRAY;
+                default -> BlockColorFilter.getColorByFilter(blockName);
             });
         }
 
-        private static final class WVColor {
+        public static final class WVColor {
             private final Color color;
 
             private WVColor(int r, int g, int b, int a) {
@@ -467,7 +503,8 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
             }
 
             @Contract("_ -> new")
-            private static @NotNull WVColor fromColor(@NotNull Color color) {
+            private static @NotNull WVColor fromColor(Color color) {
+                if (color == null) return UNKNOWN_CHUNK_COLOR;
                 return new WVColor(
                         (int)(color.getRed() * 255),
                         (int)(color.getGreen() * 255),
@@ -479,6 +516,9 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
             private Color get() {
                 return color;
             }
+
+            public boolean isNormalColor() {
+                return color != null;
         }
     }
 
@@ -486,6 +526,98 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
         public Skin(WorldViewPage page) {
             super(page);
             setCenter(page.viewer);
+        }
+    }
+
+    public static final class BlockColorFilter {
+        public static final BlockColorFilter GRASS = new BlockColorFilter(new String[] {"minecraft:grass_block", "minecraft:tall_grass", "minecraft:fern"});
+        public static final BlockColorFilter LEAVES = new BlockColorFilter(new String[] {
+                "minecraft:oak_leaves", "minecraft:spruce_leaves", "minecraft:birch_leaves",
+                "minecraft:jungle_leaves", "minecraft:acacia_leaves", "minecraft:dark_oak_leaves"
+        });
+
+        public static final BlockColorFilter WHITE_COLOR_BLOCKS = new BlockColorFilter(":.*white");
+        public static final BlockColorFilter ORANGE_COLOR_BLOCKS = new BlockColorFilter(":.*orange");
+        public static final BlockColorFilter MAGENTA_COLOR_BLOCKS = new BlockColorFilter(":.*magenta");
+        public static final BlockColorFilter LIGHT_BLUE_COLOR_BLOCKS = new BlockColorFilter(":.*light_blue");
+        public static final BlockColorFilter YELLOW_COLOR_BLOCKS = new BlockColorFilter(":.*yellow");
+        public static final BlockColorFilter LIME_COLOR_BLOCKS = new BlockColorFilter(":.*lime");
+        public static final BlockColorFilter PINK_COLOR_BLOCKS = new BlockColorFilter(":.*pink");
+        public static final BlockColorFilter GRAY_COLOR_BLOCKS = new BlockColorFilter(":.*gray");
+        public static final BlockColorFilter LIGHT_GRAY_COLOR_BLOCKS = new BlockColorFilter(":.*light_gray");
+        public static final BlockColorFilter CYAN_COLOR_BLOCKS = new BlockColorFilter(":.*cyan");
+        public static final BlockColorFilter PURPLE_COLOR_BLOCKS = new BlockColorFilter(":.*purple");
+        public static final BlockColorFilter BLUE_COLOR_BLOCKS = new BlockColorFilter(":.*blue");
+        public static final BlockColorFilter BROWN_COLOR_BLOCKS = new BlockColorFilter(":.*brown");
+        public static final BlockColorFilter GREEN_COLOR_BLOCKS = new BlockColorFilter(":.*green");
+        public static final BlockColorFilter RED_COLOR_BLOCKS = new BlockColorFilter(":.*red");
+        public static final BlockColorFilter BLACK_COLOR_BLOCKS = new BlockColorFilter(":.*black");
+
+        final String[] blocks;
+        final String regex;
+
+        public BlockColorFilter(String[] blocks) {
+            this.blocks = blocks;
+            this.regex = null;
+        }
+
+        public BlockColorFilter(String regex) {
+            this.blocks = null;
+            this.regex = regex;
+        }
+
+        public boolean matches(String blockName) {
+            if (regex == null && blocks != null) {
+                for (String block : blocks) {
+                    if (block.equals(blockName)) {
+                        return true;
+                    }
+                }
+            } else if (regex != null) {
+                return blockName.matches(regex);
+            }
+            return false;
+        }
+
+        private static @Nullable Color getColorByFilter(String blockName) {
+            if (BlockColorFilter.WHITE_COLOR_BLOCKS.matches(blockName)) {
+                return Color.rgb(240, 240, 240);
+            } else if (BlockColorFilter.ORANGE_COLOR_BLOCKS.matches(blockName)) {
+                return Color.rgb(216, 127, 51);
+            } else if (BlockColorFilter.MAGENTA_COLOR_BLOCKS.matches(blockName)) {
+                return Color.rgb(178, 76, 216);
+            } else if (BlockColorFilter.LIGHT_BLUE_COLOR_BLOCKS.matches(blockName)) {
+                return Color.rgb(102, 153, 216);
+            } else if (BlockColorFilter.YELLOW_COLOR_BLOCKS.matches(blockName)) {
+                return Color.rgb(229, 229, 51);
+            } else if (BlockColorFilter.LIME_COLOR_BLOCKS.matches(blockName)) {
+                return Color.rgb(127, 204, 25);
+            } else if (BlockColorFilter.PINK_COLOR_BLOCKS.matches(blockName)) {
+                return Color.rgb(242, 127, 165);
+            } else if (BlockColorFilter.GRAY_COLOR_BLOCKS.matches(blockName)) {
+                return Color.rgb(76, 76, 76);
+            } else if (BlockColorFilter.LIGHT_GRAY_COLOR_BLOCKS.matches(blockName)) {
+                return Color.rgb(153, 153, 153);
+            } else if (BlockColorFilter.CYAN_COLOR_BLOCKS.matches(blockName)) {
+                return Color.rgb(76, 127, 153);
+            } else if (BlockColorFilter.PURPLE_COLOR_BLOCKS.matches(blockName)) {
+                return Color.rgb(127, 63, 178);
+            } else if (BlockColorFilter.BLUE_COLOR_BLOCKS.matches(blockName)) {
+                return Color.rgb(51, 76, 178);
+            } else if (BlockColorFilter.BROWN_COLOR_BLOCKS.matches(blockName)) {
+                return Color.rgb(102, 76, 51);
+            } else if (BlockColorFilter.GREEN_COLOR_BLOCKS.matches(blockName)) {
+                return Color.rgb(102, 127, 51);
+            } else if (BlockColorFilter.RED_COLOR_BLOCKS.matches(blockName)) {
+                return Color.rgb(153, 51, 51);
+            } else if (BlockColorFilter.BLACK_COLOR_BLOCKS.matches(blockName)) {
+                return Color.rgb(25, 25, 25);
+            } else if (BlockColorFilter.GRASS.matches(blockName)) {
+                return Color.rgb(127, 178, 56);
+            } else if (BlockColorFilter.LEAVES.matches(blockName)) {
+                return Color.rgb(63, 179, 63);
+            }
+            return null;
         }
     }
 }
