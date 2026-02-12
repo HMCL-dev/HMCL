@@ -7,12 +7,14 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
+import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.FillRule;
 import javafx.scene.shape.SVGPath;
+import javafx.scene.text.Text;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.AuthenticationException;
@@ -28,6 +30,7 @@ import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 
@@ -158,27 +161,25 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
                     })
                     .executor(true);
         } else if (currentStep instanceof Step.WaitForOpenBrowser wait) {
-            loginButtonSpinner.setLoading(true);
+            btnLogin.setText("打开浏览器");
+            btnLogin.setOnAction(e -> {
+                FXUtils.openLink(wait.url());
+                loginButtonSpinner.setLoading(true);
+            });
+            loginButtonSpinner.setLoading(false);
 
-            VBox browserPanel = new VBox(10);
-            browserPanel.setAlignment(Pos.CENTER);
-            browserPanel.setPadding(new Insets(10));
-            browserPanel.setPrefWidth(280);
-            HBox.setHgrow(browserPanel, Priority.ALWAYS);
+            HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
+            {
+                // TODO: i18n
+                ArrayList<Node> content = new ArrayList<>();
+                content.add(new Text("点击“打开浏览器”按钮以在浏览器中打开登录页面，或者"));
+                content.add(new JFXHyperlink("复制链接", wait.url()));
+                content.add(new Text("并在浏览器中打开。"));
 
-            Label browserTitle = new Label(i18n("account.methods.microsoft.methods.browser"));
-            browserTitle.getStyleClass().add("method-title");
+                hintPane.setChildren(content.toArray(new Node[0]));
+            }
 
-            Label browserDesc = new Label(i18n("account.methods.microsoft.methods.browser.hint"));
-            browserDesc.getStyleClass().add("method-desc");
-
-            JFXButton btnOpenBrowser = FXUtils.newBorderButton(i18n("account.methods.microsoft.methods.browser.copy_open"));
-            btnOpenBrowser.setOnAction(e -> FXUtils.openLink(wait.url()));
-            btnOpenBrowser.setDisable(StringUtils.isBlank(wait.url()));
-
-            browserPanel.getChildren().addAll(browserTitle, browserDesc, btnOpenBrowser);
-
-            rootContainer.getChildren().add(browserPanel);
+            rootContainer.getChildren().add(hintPane);
 
             JFXHyperlink useQrCode = new JFXHyperlink("使用二维码登录"); // TODO: i18n
             useQrCode.setOnAction(e -> this.step.set(new Step.WaitForScanQrCode(wait.url())));
