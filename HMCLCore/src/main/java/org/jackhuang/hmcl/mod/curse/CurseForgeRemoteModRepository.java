@@ -148,7 +148,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
             query.put("pageSize", Integer.toString(pageSize));
 
             if (loaderType != LoaderType.ALL) {
-                params.put("modLoaderTypes", String.format("[%s]", toModsSearchModloaderField(loaderType)));
+                query.put("modLoaderTypes", String.format("[%s]", toModsSearchModloaderField(loaderType)));
             }
 
             Response<List<CurseAddon>> response = withApiKey(HttpRequest.GET(downloadProvider.injectURL(NetworkUtils.withQuery(PREFIX + "/v1/mods/search", query))))
