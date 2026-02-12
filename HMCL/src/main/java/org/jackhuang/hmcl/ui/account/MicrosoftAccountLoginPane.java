@@ -91,12 +91,12 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
         setActions(actions);
 
         holder.registerWeak(Accounts.OAUTH_CALLBACK.onOpenBrowserAuthorizationCode, event -> runInFX(() ->
-                step.set(new Step.WaitForBrowse(event.getUrl(), LoginType.OPEN_BROWSER))));
+                step.set(new Step.WaitForOpenBrowser(event.getUrl()))));
 
         FXUtils.onChangeAndOperate(step, this::onStep);
     }
 
-    private void onStep(Step step) {
+    private void onStep(Step currentStep) {
         VBox rootContainer = new VBox(10);
         setBody(rootContainer);
         rootContainer.setPadding(new Insets(5, 0, 0, 0));
@@ -106,7 +106,7 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
         linkBox.setAlignment(Pos.CENTER_RIGHT);
         linkBox.setPadding(new Insets(5, 0, 0, 0));
 
-        if (step instanceof Step.Init) {
+        if (currentStep instanceof Step.Init) {
             HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
             hintPane.setText(i18n("account.methods.microsoft.hint"));
             rootContainer.getChildren().add(hintPane);
@@ -121,12 +121,12 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
             return;
         }
 
-        boolean showSpinner = false;
-
-        if (step instanceof Step.Init) {
-            // Do nothing
-        } else if (step instanceof Step.StartLogin) {
-            showSpinner = true;
+        if (currentStep instanceof Step.Init) {
+            btnLogin.setText(i18n("account.login"));
+            btnLogin.setOnAction(e -> this.step.set(new Step.StartLogin()));
+            loginButtonSpinner.setLoading(false);
+        } else if (currentStep instanceof Step.StartLogin) {
+            loginButtonSpinner.setLoading(true);
 
             browserTaskExecutor = Task.supplyAsync(() -> Accounts.FACTORY_MICROSOFT.create(null, null, null, null, OAuth.GrantFlow.AUTHORIZATION_CODE))
                     .whenComplete(Schedulers.javafx(), (account, exception) -> {
@@ -157,61 +157,59 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
                         }
                     })
                     .executor(true);
-        } else if (step instanceof Step.WaitForBrowse wait) {
-            showSpinner = true;
+        } else if (currentStep instanceof Step.WaitForOpenBrowser wait) {
+            loginButtonSpinner.setLoading(true);
 
-            if (wait.loginType == LoginType.OPEN_BROWSER) {
-                VBox browserPanel = new VBox(10);
-                browserPanel.setAlignment(Pos.CENTER);
-                browserPanel.setPadding(new Insets(10));
-                browserPanel.setPrefWidth(280);
-                HBox.setHgrow(browserPanel, Priority.ALWAYS);
+            VBox browserPanel = new VBox(10);
+            browserPanel.setAlignment(Pos.CENTER);
+            browserPanel.setPadding(new Insets(10));
+            browserPanel.setPrefWidth(280);
+            HBox.setHgrow(browserPanel, Priority.ALWAYS);
 
-                Label browserTitle = new Label(i18n("account.methods.microsoft.methods.browser"));
-                browserTitle.getStyleClass().add("method-title");
+            Label browserTitle = new Label(i18n("account.methods.microsoft.methods.browser"));
+            browserTitle.getStyleClass().add("method-title");
 
-                Label browserDesc = new Label(i18n("account.methods.microsoft.methods.browser.hint"));
-                browserDesc.getStyleClass().add("method-desc");
+            Label browserDesc = new Label(i18n("account.methods.microsoft.methods.browser.hint"));
+            browserDesc.getStyleClass().add("method-desc");
 
-                JFXButton btnOpenBrowser = FXUtils.newBorderButton(i18n("account.methods.microsoft.methods.browser.copy_open"));
-                btnOpenBrowser.setOnAction(e -> FXUtils.openLink(wait.url()));
-                btnOpenBrowser.setDisable(StringUtils.isBlank(wait.url()));
+            JFXButton btnOpenBrowser = FXUtils.newBorderButton(i18n("account.methods.microsoft.methods.browser.copy_open"));
+            btnOpenBrowser.setOnAction(e -> FXUtils.openLink(wait.url()));
+            btnOpenBrowser.setDisable(StringUtils.isBlank(wait.url()));
 
-                browserPanel.getChildren().addAll(browserTitle, browserDesc, btnOpenBrowser);
+            browserPanel.getChildren().addAll(browserTitle, browserDesc, btnOpenBrowser);
 
-                rootContainer.getChildren().add(browserPanel);
+            rootContainer.getChildren().add(browserPanel);
 
-                JFXHyperlink useQrCode = new JFXHyperlink("使用二维码登录"); // TODO: i18n
-                useQrCode.setOnAction(e -> this.step.set(new Step.WaitForBrowse(wait.url(), LoginType.QR_CODE)));
-                linkBox.getChildren().add(useQrCode);
-            } else { // wait.loginType == LoginType.QR_CODE;
-                VBox devicePanel = new VBox(10);
-                devicePanel.setAlignment(Pos.CENTER);
-                devicePanel.setPadding(new Insets(10));
-                devicePanel.setPrefWidth(280);
-                HBox.setHgrow(devicePanel, Priority.ALWAYS);
+            JFXHyperlink useQrCode = new JFXHyperlink("使用二维码登录"); // TODO: i18n
+            useQrCode.setOnAction(e -> this.step.set(new Step.WaitForScanQrCode(wait.url())));
+            linkBox.getChildren().add(useQrCode);
+        } else if (currentStep instanceof Step.WaitForScanQrCode wait) {
+            VBox devicePanel = new VBox(10);
+            devicePanel.setAlignment(Pos.CENTER);
+            devicePanel.setPadding(new Insets(10));
+            devicePanel.setPrefWidth(280);
+            HBox.setHgrow(devicePanel, Priority.ALWAYS);
 
-                Label deviceTitle = new Label(i18n("account.methods.microsoft.methods.device"));
-                deviceTitle.getStyleClass().add("method-title");
+            Label deviceTitle = new Label(i18n("account.methods.microsoft.methods.device"));
+            deviceTitle.getStyleClass().add("method-title");
 
-                var qrCode = new SVGPath();
-                qrCode.fillProperty().bind(Themes.colorSchemeProperty().getPrimary());
-                qrCode.setFillRule(FillRule.EVEN_ODD);
-                // TODO: For debug
-                qrCode.setContent("M740 740ZM0 0ZM240 80h20v20h-20zm80 0h20v20h-20zm120 0h20v20h-20zm20 0h20v20h-20zm-180 20h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm80 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm-200 20h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm60 0h20v20h-20zm20 0h20v20h-20zm-240 20h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm-200 20h20v20h-20zm100 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm-200 20h20v20h-20zm60 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm-240 20h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm-240 20h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm80 0h20v20h-20zm60 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zM80 240h20v20H80zm80 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm60 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm60 0h20v20h-20zm-540 20h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm80 0h20v20h-20zm200 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm-480 20h20v20h-20zm80 0h20v20h-20zm60 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm60 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zM80 300h20v20H80zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm80 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm60 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm80 0h20v20h-20zM80 320h20v20H80zm100 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm80 0h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zM80 340h20v20H80zm60 0h20v20h-20zm80 0h20v20h-20zm80 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm80 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zM80 360h20v20H80zm20 0h20v20h-20zm60 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm140 0h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zM80 380h20v20H80zm40 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm60 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm100 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm120 0h20v20h-20zM80 400h20v20H80zm60 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm120 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm80 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zM80 420h20v20H80zm20 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm60 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm240 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm-440 20h20v20h-20zm20 0h20v20h-20zm60 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm60 0h20v20h-20zm60 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm-460 20h20v20h-20zm80 0h20v20h-20zm20 0h20v20h-20zm80 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm60 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm140 0h20v20h-20zM80 480h20v20H80zm20 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm60 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm-320 20h20v20h-20zm40 0h20v20h-20zm60 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm80 0h20v20h-20zm20 0h20v20h-20zm80 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm-360 20h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm100 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm-380 20h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm60 0h20v20h-20zm120 0h20v20h-20zm80 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm-380 20h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm100 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm60 0h20v20h-20zm-360 20h20v20h-20zm60 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm80 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm-360 20h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm60 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm60 0h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm-380 20h20v20h-20zm60 0h20v20h-20zm140 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm-360 20h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm60 0h20v20h-20z M80 80h140v140H80Zm20 20h100v100H100Zm420-20h140v140H520Zm20 20h100v100H540Z M120 120h60v60h-60zm440 0h60v60h-60z M80 520h140v140H80Zm20 20h100v100H100Z M120 560h60v60h-60z");
-                qrCode.setScaleX(80.0 / 740.0);
-                qrCode.setScaleY(80.0 / 740.0);
+            var qrCode = new SVGPath();
+            qrCode.fillProperty().bind(Themes.colorSchemeProperty().getPrimary());
+            qrCode.setFillRule(FillRule.EVEN_ODD);
+            // TODO: For debug
+            qrCode.setContent("M740 740ZM0 0ZM240 80h20v20h-20zm80 0h20v20h-20zm120 0h20v20h-20zm20 0h20v20h-20zm-180 20h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm80 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm-200 20h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm60 0h20v20h-20zm20 0h20v20h-20zm-240 20h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm-200 20h20v20h-20zm100 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm-200 20h20v20h-20zm60 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm-240 20h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm-240 20h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm80 0h20v20h-20zm60 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zM80 240h20v20H80zm80 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm60 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm60 0h20v20h-20zm-540 20h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm80 0h20v20h-20zm200 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm-480 20h20v20h-20zm80 0h20v20h-20zm60 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm60 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zM80 300h20v20H80zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm80 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm60 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm80 0h20v20h-20zM80 320h20v20H80zm100 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm80 0h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zM80 340h20v20H80zm60 0h20v20h-20zm80 0h20v20h-20zm80 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm80 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zM80 360h20v20H80zm20 0h20v20h-20zm60 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm140 0h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zM80 380h20v20H80zm40 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm60 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm100 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm120 0h20v20h-20zM80 400h20v20H80zm60 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm120 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm80 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zM80 420h20v20H80zm20 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm60 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm240 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm-440 20h20v20h-20zm20 0h20v20h-20zm60 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm60 0h20v20h-20zm60 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm-460 20h20v20h-20zm80 0h20v20h-20zm20 0h20v20h-20zm80 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm60 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm140 0h20v20h-20zM80 480h20v20H80zm20 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm60 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm-320 20h20v20h-20zm40 0h20v20h-20zm60 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm80 0h20v20h-20zm20 0h20v20h-20zm80 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm-360 20h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm100 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm-380 20h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm60 0h20v20h-20zm120 0h20v20h-20zm80 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm-380 20h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm100 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm60 0h20v20h-20zm-360 20h20v20h-20zm60 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm80 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm-360 20h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm60 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm60 0h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm-380 20h20v20h-20zm60 0h20v20h-20zm140 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm-360 20h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm20 0h20v20h-20zm20 0h20v20h-20zm40 0h20v20h-20zm40 0h20v20h-20zm60 0h20v20h-20z M80 80h140v140H80Zm20 20h100v100H100Zm420-20h140v140H520Zm20 20h100v100H540Z M120 120h60v60h-60zm440 0h60v60h-60z M80 520h140v140H80Zm20 20h100v100H100Z M120 560h60v60h-60z");
+            qrCode.setScaleX(80.0 / 740.0);
+            qrCode.setScaleY(80.0 / 740.0);
 
-                devicePanel.getChildren().setAll(deviceTitle, new Group(qrCode));
+            devicePanel.getChildren().setAll(deviceTitle, new Group(qrCode));
 
-                rootContainer.getChildren().add(devicePanel);
+            rootContainer.getChildren().add(devicePanel);
 
-                JFXHyperlink userBrowser = new JFXHyperlink("使用浏览器登录"); // TODO: i18n
-                userBrowser.setOnAction(e -> this.step.set(new Step.WaitForBrowse(wait.url(), LoginType.OPEN_BROWSER)));
-                linkBox.getChildren().add(userBrowser);
-            }
-        } else if (step instanceof Step.LoginFailed failed) {
-            showSpinner = true;
+            JFXHyperlink userBrowser = new JFXHyperlink("使用浏览器登录"); // TODO: i18n
+            userBrowser.setOnAction(e -> this.step.set(new Step.WaitForOpenBrowser(wait.url())));
+            linkBox.getChildren().add(userBrowser);
+        } else if (currentStep instanceof Step.LoginFailed failed) {
+            loginButtonSpinner.setLoading(true);
 
             HintPane errHintPane = new HintPane(MessageDialogPane.MessageType.ERROR);
             errHintPane.setText(failed.message());
@@ -229,8 +227,6 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
         rootContainer.getChildren().add(linkBox);
 
         setBody(rootContainer);
-
-        loginButtonSpinner.setLoading(showSpinner);
     }
 
     private void cancelAllTasks() {
@@ -250,7 +246,11 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
         final class StartLogin implements Step {
         }
 
-        record WaitForBrowse(String url, LoginType loginType) implements Step {
+        record WaitForOpenBrowser(String url) implements Step {
+
+        }
+
+        record WaitForScanQrCode(String url) implements Step {
 
         }
 
@@ -258,9 +258,5 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
         }
     }
 
-    private enum LoginType {
-        OPEN_BROWSER,
-        QR_CODE
-    }
 }
 
