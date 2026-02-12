@@ -29,6 +29,11 @@ public final class JFXHyperlink extends Hyperlink {
         setGraphic(SVG.OPEN_IN_NEW.createIcon(16));
     }
 
+    public JFXHyperlink(String text, String externalLink) {
+        this(text);
+        setExternalLink(externalLink);
+    }
+
     public void setExternalLink(String externalLink) {
         this.setOnAction(e -> FXUtils.openLink(externalLink));
     }
