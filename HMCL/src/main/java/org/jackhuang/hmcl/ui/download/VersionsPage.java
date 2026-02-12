@@ -162,6 +162,8 @@ public final class VersionsPage extends Control implements WizardPage, Refreshab
         RemoteVersionListCell(VersionsPage control) {
             this.control = control;
 
+            imageView.setMouseTransparent(true);
+
             HBox hbox = new HBox(16);
             HBox.setHgrow(twoLineListItem, Priority.ALWAYS);
             hbox.setAlignment(Pos.CENTER);
