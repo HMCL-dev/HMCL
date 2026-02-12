@@ -343,6 +343,7 @@ public class InstallerItem extends Control {
             BorderPane.setAlignment(statusLabel, Pos.CENTER_LEFT);
 
             HBox buttonsContainer = new HBox();
+            buttonsContainer.setPickOnBounds(false);
             buttonsContainer.setSpacing(8);
             buttonsContainer.setAlignment(Pos.CENTER);
             pane.getChildren().add(buttonsContainer);
