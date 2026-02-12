@@ -170,27 +170,34 @@ public final class JavaDownloadDialog extends StackPane {
                 return;
 
             Task<Void> task = Task.allOf(selectedVersions.stream().map(javaVersion -> JavaManager.getDownloadJavaTask(downloadProvider, platform, javaVersion).wrapResult()).toList())
-                    .thenAcceptAsync(Schedulers.javafx(), results -> {
-                        List<Throwable> exceptions = results.stream()
-                                .filter(Result::isFailure)
-                                .map(Result::getException)
-                                .map(Lang::resolveException)
-                                .filter(it -> !(it instanceof CancellationException))
-                                .toList();
-                        if (!exceptions.isEmpty()) {
-                            Throwable exception;
-                            if (exceptions.size() == 1) {
-                                exception = exceptions.get(0);
+                    .whenComplete(Schedulers.javafx(), (results, exception) -> {
+                        Throwable exceptionToDisplay;
+                        if (exception == null) {
+                            List<Throwable> exceptions = results.stream()
+                                    .filter(Result::isFailure)
+                                    .map(Result::getException)
+                                    .map(Lang::resolveException)
+                                    .filter(it -> !(it instanceof CancellationException))
+                                    .toList();
+                            if (!exceptions.isEmpty()) {
+                                if (exceptions.size() == 1) {
+                                    exceptionToDisplay = exceptions.get(0);
+                                } else {
+                                    exceptionToDisplay = new IOException("Failed to download Java");
+                                    for (Throwable e : exceptions)
+                                        exceptionToDisplay.addSuppressed(e);
+                                }
                             } else {
-                                exception = new IOException("Failed to download Java");
-                                for (Throwable e : exceptions)
-                                    exception.addSuppressed(e);
+                                exceptionToDisplay = null;
                             }
-
-                            LOG.warning("Failed to download java", exception);
-                            Controllers.dialog(DownloadProviders.localizeErrorMessage(exception), i18n("install.failed"));
+                        } else {
+                            exceptionToDisplay = exception;
                         }
 
+                        if (exceptionToDisplay != null) {
+                            LOG.warning("Failed to download java", exceptionToDisplay);
+                            Controllers.dialog(DownloadProviders.localizeErrorMessage(exception), i18n("install.failed"));
+                        }
                     });
 
             Controllers.taskDialog(task, i18n("download.java.process"), TaskCancellationAction.NORMAL);
