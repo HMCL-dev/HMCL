@@ -25,20 +25,20 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventManager;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.mod.ModAdviser;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.mod.ModpackProvider;
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.util.FileSaver;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
-import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.SystemInfo;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
@@ -46,6 +46,7 @@ import org.jackhuang.hmcl.util.versioning.VersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.net.Proxy;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
@@ -55,8 +56,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.Pair.pair;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class HMCLGameRepository extends DefaultGameRepository {
     private final Profile profile;
@@ -174,7 +175,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         }
         Files.copy(fromJson, toJson);
 
-        JsonUtils.writeToJsonFile(toJson, fromVersion.setId(dstId));
+        JsonUtils.writeToJsonFile(toJson, fromVersion.setId(dstId).setJar(dstId));
 
         VersionSetting oldVersionSetting = getVersionSetting(srcId).clone();
         GameDirectoryType originalGameDirType = oldVersionSetting.getGameDirType();
@@ -321,6 +322,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                     return VersionIconType.FABRIC.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.QUILT))
                     return VersionIconType.QUILT.getIcon();
+                else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.LEGACY_FABRIC))
+                    return VersionIconType.LEGACY_FABRIC.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.NEO_FORGE))
                     return VersionIconType.NEO_FORGE.getIcon();
                 else if (libraryAnalyzer.has(LibraryAnalyzer.LibraryType.FORGE))
@@ -338,7 +341,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 GameVersionNumber versionNumber = GameVersionNumber.asGameVersion(gameVersion);
                 if (versionNumber.isAprilFools()) {
                     return VersionIconType.APRIL_FOOLS.getIcon();
-                } else if (versionNumber instanceof GameVersionNumber.Snapshot) {
+                } else if (versionNumber instanceof GameVersionNumber.LegacySnapshot) {
                     return VersionIconType.COMMAND.getIcon();
                 } else if (versionNumber instanceof GameVersionNumber.Old) {
                     return VersionIconType.CRAFT_TABLE.getIcon();
@@ -387,7 +390,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
             vs.setUsesGlobal(true);
     }
 
-    public LaunchOptions getLaunchOptions(String version, JavaRuntime javaVersion, Path gameDir, List<String> javaAgents, List<String> javaArguments, boolean makeLaunchScript) {
+    public LaunchOptions.Builder getLaunchOptions(String version, JavaRuntime javaVersion, Path gameDir, List<String> javaAgents, List<String> javaArguments, boolean makeLaunchScript) {
         VersionSetting vs = getVersionSetting(version);
 
         LaunchOptions.Builder builder = new LaunchOptions.Builder()
@@ -418,8 +421,8 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 .setWidth(vs.getWidth())
                 .setHeight(vs.getHeight())
                 .setFullscreen(vs.isFullscreen())
-                .setServerIp(vs.getServerIp())
                 .setWrapper(vs.getWrapper())
+                .setProxyOption(getProxyOption())
                 .setPreLaunchCommand(vs.getPreLaunchCommand())
                 .setPostExitCommand(vs.getPostExitCommand())
                 .setNoGeneratedJVMArgs(vs.isNoJVMArgs())
@@ -428,21 +431,15 @@ public final class HMCLGameRepository extends DefaultGameRepository {
                 .setNativesDir(vs.getNativesDir())
                 .setProcessPriority(vs.getProcessPriority())
                 .setRenderer(vs.getRenderer())
+                .setEnableDebugLogOutput(vs.isEnableDebugLogOutput())
                 .setUseNativeGLFW(vs.isUseNativeGLFW())
                 .setUseNativeOpenAL(vs.isUseNativeOpenAL())
                 .setDaemon(!makeLaunchScript && vs.getLauncherVisibility().isDaemon())
                 .setJavaAgents(javaAgents)
                 .setJavaArguments(javaArguments);
 
-        if (config().hasProxy()) {
-            builder.setProxyType(config().getProxyType());
-            builder.setProxyHost(config().getProxyHost());
-            builder.setProxyPort(config().getProxyPort());
-
-            if (config().hasProxyAuth()) {
-                builder.setProxyUser(config().getProxyUser());
-                builder.setProxyPass(config().getProxyPass());
-            }
+        if (StringUtils.isNotBlank(vs.getServerIp())) {
+            builder.setQuickPlayOption(new QuickPlayOption.MultiPlayer(vs.getServerIp()));
         }
 
         Path json = getModpackConfiguration(version);
@@ -460,7 +457,7 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         if (vs.isAutoMemory() && builder.getJavaArguments().stream().anyMatch(it -> it.startsWith("-Xmx")))
             builder.setMaxMemory(null);
 
-        return builder.create();
+        return builder;
     }
 
     @Override
@@ -553,5 +550,40 @@ public final class HMCLGameRepository extends DefaultGameRepository {
         } else {
             return minimum;
         }
+    }
+
+    public static ProxyOption getProxyOption() {
+        if (!config().hasProxy() || config().getProxyType() == null) {
+            return ProxyOption.Default.INSTANCE;
+        }
+
+        return switch (config().getProxyType()) {
+            case DIRECT -> ProxyOption.Direct.INSTANCE;
+            case HTTP, SOCKS -> {
+                String proxyHost = config().getProxyHost();
+                int proxyPort = config().getProxyPort();
+
+                if (StringUtils.isBlank(proxyHost) || proxyPort < 0 || proxyPort > 0xFFFF) {
+                    yield ProxyOption.Default.INSTANCE;
+                }
+
+                String proxyUser = config().getProxyUser();
+                String proxyPass = config().getProxyPass();
+
+                if (StringUtils.isBlank(proxyUser)) {
+                    proxyUser = null;
+                    proxyPass = null;
+                } else if (proxyPass == null) {
+                    proxyPass = "";
+                }
+
+                if (config().getProxyType() == Proxy.Type.HTTP) {
+                    yield new ProxyOption.Http(proxyHost, proxyPort, proxyUser, proxyPass);
+                } else {
+                    yield new ProxyOption.Socks(proxyHost, proxyPort, proxyUser, proxyPass);
+                }
+            }
+            default -> ProxyOption.Default.INSTANCE;
+        };
     }
 }

@@ -23,7 +23,6 @@ import javafx.scene.layout.FlowPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.setting.Profile;
-import org.jackhuang.hmcl.setting.Theme;
 import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -65,6 +64,7 @@ public class VersionIconDialog extends DialogPane {
                 createIcon(VersionIconType.OPTIFINE),
                 createIcon(VersionIconType.CRAFT_TABLE),
                 createIcon(VersionIconType.FABRIC),
+                createIcon(VersionIconType.LEGACY_FABRIC),
                 createIcon(VersionIconType.FORGE),
                 createIcon(VersionIconType.CLEANROOM),
                 createIcon(VersionIconType.NEO_FORGE),
@@ -93,7 +93,7 @@ public class VersionIconDialog extends DialogPane {
     }
 
     private Node createCustomIcon() {
-        Node shape = SVG.ADD_CIRCLE.createIcon(Theme.blackFill(), 32);
+        Node shape = SVG.ADD_CIRCLE.createIcon(32);
         shape.setMouseTransparent(true);
         RipplerContainer container = new RipplerContainer(shape);
         FXUtils.setLimitWidth(container, 36);

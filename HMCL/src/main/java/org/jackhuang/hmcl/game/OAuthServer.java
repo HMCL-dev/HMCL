@@ -22,7 +22,7 @@ import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.OAuth;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.event.EventManager;
-import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.IOUtils;
 import org.jackhuang.hmcl.util.io.JarUtils;
@@ -37,8 +37,8 @@ import java.util.concurrent.ExecutionException;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Lang.thread;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
     private final int port;
@@ -104,8 +104,11 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
         String html;
         try {
             html = IOUtils.readFullyAsString(OAuthServer.class.getResourceAsStream("/assets/microsoft_auth.html"))
+                    .replace("%style%", Themes.getTheme().toColorScheme().toStyleSheet().replace("-monet", "--monet"))
                     .replace("%lang%", Locale.getDefault().toLanguageTag())
-                    .replace("%close-page%", i18n("account.methods.microsoft.close_page"));
+                    .replace("%success%", i18n("message.success"))
+                    .replace("%ok%", i18n("button.ok"))
+                    .replace("%close_page%", i18n("account.methods.microsoft.close_page"));
         } catch (IOException e) {
             LOG.error("Failed to load html", e);
             return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MIME_HTML, "");
@@ -123,7 +126,8 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
 
     public static class Factory implements OAuth.Callback {
         public final EventManager<GrantDeviceCodeEvent> onGrantDeviceCode = new EventManager<>();
-        public final EventManager<OpenBrowserEvent> onOpenBrowser = new EventManager<>();
+        public final EventManager<OpenBrowserEvent> onOpenBrowserAuthorizationCode = new EventManager<>();
+        public final EventManager<OpenBrowserEvent> onOpenBrowserDevice = new EventManager<>();
 
         @Override
         public OAuth.Session startServer() throws IOException, AuthenticationException {
@@ -150,11 +154,13 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
         }
 
         @Override
-        public void openBrowser(String url) throws IOException {
+        public void openBrowser(OAuth.GrantFlow grantFlow, String url) throws IOException {
             lastlyOpenedURL = url;
-            FXUtils.openLink(url);
 
-            onOpenBrowser.fireEvent(new OpenBrowserEvent(this, url));
+            switch (grantFlow) {
+                case AUTHORIZATION_CODE -> onOpenBrowserAuthorizationCode.fireEvent(new OpenBrowserEvent(this, url));
+                case DEVICE -> onOpenBrowserDevice.fireEvent(new OpenBrowserEvent(this, url));
+            }
         }
 
         @Override

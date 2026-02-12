@@ -1,62 +1,70 @@
-# Hello Minecraft! Launcher
+<!-- #BEGIN COPY -->
+<!-- #PROPERTY NAME=TITLE -->
+<div align="center">
+    <img src="/HMCL/src/main/resources/assets/img/icon@8x.png" alt="HMCL Logo" width="64"/>
+</div>
+
+<h1 align="center">Hello Minecraft! Launcher</h1>
+<!-- #END COPY -->
 
 <!-- #BEGIN COPY -->
 <!-- #PROPERTY NAME=BADGES -->
-[![Downloads](https://img.shields.io/github/downloads/HMCL-dev/HMCL/total?label=Downloads&style=flat)](https://github.com/HMCL-dev/HMCL/releases)
-![Stars](https://img.shields.io/github/stars/HMCL-dev/HMCL?style=flat)
-[![Discord](https://img.shields.io/discord/995291757799538688.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/jVvC7HfM6U)
-[![QQ Group](https://img.shields.io/badge/QQ-HMCL-bright?label=&logo=qq&logoColor=ffffff&color=1EBAFC&labelColor=1DB0EF&logoSize=auto)](https://docs.hmcl.net/groups.html)
+<div align="center">
+
+[![GitHub](https://img.shields.io/badge/GitHub-repo-blue?style=flat-square&logo=github)](https://github.com/HMCL-dev/HMCL)
+[![CNB](https://img.shields.io/badge/CNB-mirror-ff6200?style=flat-square&logo=cloudnativebuild)](https://cnb.cool/HMCL-dev/HMCL)
+[![Gitee](https://img.shields.io/badge/Gitee-mirror-c71d23?style=flat-square&logo=gitee)](https://gitee.com/huanghongxun/HMCL)
+
+[![QQ Group](https://img.shields.io/badge/QQ-gray?style=flat-square&logo=qq&logoColor=ffffff)](https://docs.hmcl.net/groups.html)
+[![Discord](https://img.shields.io/badge/Discord-gray?style=flat-square&logo=discord)](https://discord.gg/jVvC7HfM6U)
+[![Bilibili](https://img.shields.io/badge/Bilibili-gray?style=flat-square&logo=bilibili)](https://space.bilibili.com/20314891)
+
+</div>
 <!-- #END COPY -->
+
+---
 
 <!-- #BEGIN LANGUAGE_SWITCHER -->
 English ([Standard](README.md), [uʍoᗡ ǝpᴉsd∩](README_en_Qabs.md)) | **中文** ([简体](README_zh.md), [繁體](README_zh_Hant.md), **文言**) | [日本語](README_ja.md) | [español](README_es.md) | [русский](README_ru.md) | [українська](README_uk.md)
 <!-- #END LANGUAGE_SWITCHER -->
 
-### 概說
+### 概敘
 
-HMCL 者，開源之礦藝啟者也。能理改囊，善於遊戲之自定，且自動安裝諸如 Forge、NeoForge、Cleanroom、Fabric、Quilt、LiteLoader、OptiFine 諸改囊，亦可製作改囊集，界面亦可隨意更易。
+HMCL 者，開源之礦藝啟器也。善理改囊，可自定遊戲，自動裝設 Forge、NeoForge、Cleanroom、Fabric、Legacy Fabric、Quilt、LiteLoader、OptiFine 諸改囊，亦能制改囊集，界面隨心易之。
 
-HMCL 跨域甚廣。無論 Windows、Linux、macOS、FreeBSD 諸常見械綱，抑或 x86、ARM、RISC-V、MIPS、LoongArch 諸大構處理器，皆可運行。
-君可憑此，於諸算機間自如遊戲。
+HMCL 跨域廣矣。Windows、Linux、macOS、FreeBSD 諸常見械綱，x86、ARM、RISC-V、MIPS、LoongArch 諸算器架構，皆可運行。
+憑此器，可遊《礦藝》於諸機之間，無礙也。  
 
-若欲詳知 HMCL 於諸算機之支援，請觀[此表](PLATFORM_zh_Hant.md)。
+欲知 HMCL 所支平臺，詳觀[此表](PLATFORM_zh_Hant.md)。
 
 ## 下載
 
-請自 [HMCL 官網](https://hmcl.huangyuhui.net/download) 取其最新版。
+可從下述諸途得 HMCL：
 
-亦可於 [GitHub Releases](https://github.com/HMCL-dev/HMCL/releases) 得其新者。
+- [HMCL 官方網站](https://hmcl.huangyuhui.net/download)
+- [GitHub Release](https://github.com/HMCL-dev/HMCL/releases)
+- [CNB Release](https://cnb.cool/HMCL-dev/HMCL/-/releases)
 
-雖非強制，然猶勸自官網取之。
+## 與貢
+
+HMCL 乃社群共驅之開源項目，迎諸君獻碼或建言。
+
+參與之道如下：
+
+- 於 GitHub 上[創建 Issue](https://github.com/HMCL-dev/HMCL/issues/new/choose)，以報謬誤或求功能。
+- 於 GitHub 上 Fork 倉庫，並[提交 Pull Request](https://github.com/HMCL-dev/HMCL/compare)，以貢代碼。
+
+貢獻之前，請閱[貢獻指南](./Contributing_zh_Hant.md)，中含：
+
+- [如何自源碼構建並執行 HMCL](./Contributing_zh_Hant.md#構建-hmcl)
+- [以勘誤選項調整 HMCL 之行為](./Contributing_zh_Hant.md#除錯選項)
+
+## 貢獻者
+
+自乙未年（2015）始，百十余人參與 HMCL，謝其勤勞！
+
+[![Contributors](https://contrib.rocks/image?repo=HMCL-dev/HMCL)](https://github.com/HMCL-dev/HMCL/graphs/contributors)
 
 ## 開源之約
 
 詳見 [README_zh_Hant.md](README_zh_Hant.md#開源協議)。
-
-## 貢獻
-
-若欲獻 Pull Request，須遵下列：
-
-* IDE 用 IntelliJ IDEA
-* 編譯器用爪哇十七以上
-
-### 編造
-
-請觀[編造指南](./Building_zh.md)。
-
-## 爪哇虛機之通弦（以資勘誤）
-
-| 參數                                           | 解釋                                                      |
-|----------------------------------------------|---------------------------------------------------------|
-| `-Dhmcl.home=<path>`                         | 易 HMCL 之用戶目錄                                            |
-| `-Dhmcl.self_integrity_check.disable=true`   | 檢查更新時不驗本體之全                                             |
-| `-Dhmcl.bmclapi.override=<url>`              | 易 BMCLAPI 之 API 根，預設為 `https://bmclapi2.bangbang93.com` |
-| `-Dhmcl.font.override=<font family>`         | 易書體                                                     |
-| `-Dhmcl.version.override=<version>`          | 易版                                                      |
-| `-Dhmcl.update_source.override=<url>`        | 易 HMCL 之更新所                                             |
-| `-Dhmcl.authlibinjector.location=<path>`     | 用所指之 authlib-injector，毋需下載                              |
-| `-Dhmcl.openjfx.repo=<maven repository url>` | 增 OpenJFX 下載之自定 Maven 庫                                 |
-| `-Dhmcl.native.encoding=<encoding>`          | 易本地編碼                                                   |
-| `-Dhmcl.microsoft.auth.id=<App ID>`          | 易 Microsoft OAuth 之 App ID                              |
-| `-Dhmcl.microsoft.auth.secret=<App Secret>`  | 易 Microsoft OAuth 之金鑰                                   |
-| `-Dhmcl.curseforge.apikey=<Api Key>`         | 易 CurseForge 之 API 金鑰                                   |

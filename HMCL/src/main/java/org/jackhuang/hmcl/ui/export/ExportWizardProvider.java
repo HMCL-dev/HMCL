@@ -22,10 +22,10 @@ import org.jackhuang.hmcl.Metadata;
 import org.jackhuang.hmcl.mod.ModAdviser;
 import org.jackhuang.hmcl.mod.ModpackExportInfo;
 import org.jackhuang.hmcl.mod.mcbbs.McbbsModpackExportTask;
+import org.jackhuang.hmcl.mod.modrinth.ModrinthModpackExportTask;
 import org.jackhuang.hmcl.mod.multimc.MultiMCInstanceConfiguration;
 import org.jackhuang.hmcl.mod.multimc.MultiMCModpackExportTask;
 import org.jackhuang.hmcl.mod.server.ServerModpackExportTask;
-import org.jackhuang.hmcl.mod.modrinth.ModrinthModpackExportTask;
 import org.jackhuang.hmcl.setting.Config;
 import org.jackhuang.hmcl.setting.FontManager;
 import org.jackhuang.hmcl.setting.Profile;
@@ -41,7 +41,9 @@ import org.jackhuang.hmcl.util.io.Zipper;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 
@@ -126,13 +128,15 @@ public final class ExportWizardProvider implements WizardProvider {
 
                     exported.setBackgroundImageType(config().getBackgroundImageType());
                     exported.setBackgroundImage(config().getBackgroundImage());
-                    exported.setTheme(config().getTheme());
+                    exported.setThemeColor(config().getThemeColor());
                     exported.setDownloadType(config().getDownloadType());
                     exported.setPreferredLoginType(config().getPreferredLoginType());
                     exported.getAuthlibInjectorServers().setAll(config().getAuthlibInjectorServers());
 
                     zip.putTextFile(exported.toJson(), ".hmcl/hmcl.json");
-                    zip.putFile(tempModpack, "modpack.zip");
+                    zip.putFile(tempModpack, ModpackTypeSelectionPage.MODPACK_TYPE_MODRINTH.equals(modpackType)
+                            ? "modpack.mrpack"
+                            : "modpack.zip");
 
                     Path bg = Metadata.HMCL_CURRENT_DIRECTORY.resolve("background");
                     if (!Files.isDirectory(bg))
@@ -263,10 +267,10 @@ public final class ExportWizardProvider implements WizardProvider {
             @Override
             public void execute() {
                 dependency = new ModrinthModpackExportTask(
-                    profile.getRepository(),
-                    version,
-                    exportInfo,
-                    modpackFile
+                        profile.getRepository(),
+                        version,
+                        exportInfo,
+                        modpackFile
                 );
             }
 

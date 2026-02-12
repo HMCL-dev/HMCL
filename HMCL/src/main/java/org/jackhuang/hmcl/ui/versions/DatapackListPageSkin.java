@@ -54,8 +54,6 @@ import org.jackhuang.hmcl.ui.construct.ComponentList;
 import org.jackhuang.hmcl.ui.construct.MDListCell;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
-import org.jackhuang.hmcl.util.Holder;
-import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -116,16 +114,23 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
                     createToolbarButton2(i18n("search"), SVG.SEARCH, () -> isSearching.set(true))
             );
 
+            JFXButton removeButton = createToolbarButton2(i18n("button.remove"), SVG.DELETE, () -> {
+                Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
+                    skinnable.removeSelected(listView.getSelectionModel().getSelectedItems());
+                }, null);
+            });
+            JFXButton enableButton = createToolbarButton2(i18n("mods.enable"), SVG.CHECK, () ->
+                    skinnable.enableSelected(listView.getSelectionModel().getSelectedItems()));
+            JFXButton disableButton = createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () ->
+                    skinnable.disableSelected(listView.getSelectionModel().getSelectedItems()));
+            removeButton.disableProperty().bind(getSkinnable().readOnly);
+            enableButton.disableProperty().bind(getSkinnable().readOnly);
+            disableButton.disableProperty().bind(getSkinnable().readOnly);
+
             selectingToolbar.getChildren().addAll(
-                    createToolbarButton2(i18n("button.remove"), SVG.DELETE, () -> {
-                        Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"), () -> {
-                            skinnable.removeSelected(listView.getSelectionModel().getSelectedItems());
-                        }, null);
-                    }),
-                    createToolbarButton2(i18n("mods.enable"), SVG.CHECK, () ->
-                            skinnable.enableSelected(listView.getSelectionModel().getSelectedItems())),
-                    createToolbarButton2(i18n("mods.disable"), SVG.CLOSE, () ->
-                            skinnable.disableSelected(listView.getSelectionModel().getSelectedItems())),
+                    removeButton,
+                    enableButton,
+                    disableButton,
                     createToolbarButton2(i18n("button.select_all"), SVG.SELECT_ALL, () ->
                             listView.getSelectionModel().selectRange(0, listView.getItems().size())),//reason for not using selectAll() is that selectAll() first clears all selected then selects all, causing the toolbar to flicker
                     createToolbarButton2(i18n("button.cancel"), SVG.CANCEL, () ->
@@ -178,11 +183,9 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
         {
             SpinnerPane center = new SpinnerPane();
             ComponentList.setVgrow(center, Priority.ALWAYS);
-            center.getStyleClass().add("large-spinner-pane");
             center.loadingProperty().bind(skinnable.loadingProperty());
 
-            Holder<Object> lastCell = new Holder<>();
-            listView.setCellFactory(x -> new DatapackInfoListCell(listView, lastCell));
+            listView.setCellFactory(x -> new DatapackInfoListCell(listView, getSkinnable().readOnly));
             listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
             this.listView.setItems(filteredList);
 
@@ -233,7 +236,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
         }
 
         String getSubtitle() {
-            return StringUtils.parseColorEscapes(packInfo.getDescription().toString());
+            return packInfo.getDescription().toString();
         }
 
         Datapack.Pack getPackInfo() {
@@ -305,8 +308,8 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
         final TwoLineListItem content = new TwoLineListItem();
         BooleanProperty booleanProperty;
 
-        DatapackInfoListCell(JFXListView<DatapackInfoObject> listView, Holder<Object> lastCell) {
-            super(listView, lastCell);
+        DatapackInfoListCell(JFXListView<DatapackInfoObject> listView, BooleanProperty isReadOnlyProperty) {
+            super(listView);
 
             HBox container = new HBox(8);
             container.setPickOnBounds(false);
@@ -314,6 +317,8 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
             HBox.setHgrow(content, Priority.ALWAYS);
             content.setMouseTransparent(true);
             setSelectable();
+
+            checkBox.disableProperty().bind(isReadOnlyProperty);
 
             imageView.setFitWidth(32);
             imageView.setFitHeight(32);

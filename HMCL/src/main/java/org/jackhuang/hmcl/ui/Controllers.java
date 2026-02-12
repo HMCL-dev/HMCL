@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
+import com.jfoenix.validation.base.ValidatorBase;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
@@ -49,6 +50,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.account.AccountListPage;
 import org.jackhuang.hmcl.ui.animation.AnimationUtils;
+import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.Motion;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane.MessageType;
@@ -71,9 +73,10 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import static org.jackhuang.hmcl.setting.ConfigHolder.*;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
+import static org.jackhuang.hmcl.setting.ConfigHolder.globalConfig;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class Controllers {
     public static final String JAVA_VERSION_TIP = "javaVersion";
@@ -91,7 +94,7 @@ public final class Controllers {
 
     private static Scene scene;
     private static Stage stage;
-    private static Lazy<VersionPage> versionPage = new Lazy<>(VersionPage::new);
+    private static VersionPage versionPage;
     private static Lazy<GameListPage> gameListPage = new Lazy<>(() -> {
         GameListPage gameListPage = new GameListPage();
         gameListPage.selectedProfileProperty().bindBidirectional(Profiles.selectedProfileProperty());
@@ -128,7 +131,18 @@ public final class Controllers {
 
     // FXThread
     public static VersionPage getVersionPage() {
-        return versionPage.get();
+        if (versionPage == null) {
+            versionPage = new VersionPage();
+        }
+        return versionPage;
+    }
+
+    @FXThread
+    public static void prepareVersionPage() {
+        if (versionPage == null) {
+            LOG.info("Prepare the version page");
+            versionPage = FXUtils.prepareNode(new VersionPage());
+        }
     }
 
     // FXThread
@@ -493,8 +507,8 @@ public final class Controllers {
         return prompt(title, onResult, "");
     }
 
-    public static CompletableFuture<String> prompt(String title, FutureCallback<String> onResult, String initialValue) {
-        InputDialogPane pane = new InputDialogPane(title, initialValue, onResult);
+    public static CompletableFuture<String> prompt(String title, FutureCallback<String> onResult, String initialValue, ValidatorBase... validators) {
+        InputDialogPane pane = new InputDialogPane(title, initialValue, onResult, validators);
         dialog(pane);
         return pane.getCompletableFuture();
     }
@@ -521,7 +535,11 @@ public final class Controllers {
     }
 
     public static void navigate(Node node) {
-        decorator.navigate(node);
+        decorator.navigate(node, ContainerAnimations.NAVIGATION, Motion.SHORT4, Motion.EASE);
+    }
+
+    public static void navigateForward(Node node) {
+        decorator.navigate(node, ContainerAnimations.FORWARD, Motion.SHORT4, Motion.EASE);
     }
 
     public static void showToast(String content) {

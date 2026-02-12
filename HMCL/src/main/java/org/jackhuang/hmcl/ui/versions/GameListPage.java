@@ -17,16 +17,16 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
+import com.jfoenix.controls.JFXListView;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
+import javafx.scene.control.ListCell;
 import javafx.scene.control.ScrollPane;
-import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import org.jackhuang.hmcl.game.HMCLGameRepository;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
 import org.jackhuang.hmcl.ui.*;
@@ -36,13 +36,12 @@ import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.ui.profile.ProfileListItem;
 import org.jackhuang.hmcl.ui.profile.ProfilePage;
+import org.jackhuang.hmcl.util.FXThread;
 import org.jackhuang.hmcl.util.javafx.MappedObservableList;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
-import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.javafx.ExtendedProperties.createSelectedItemPropertyFor;
 
@@ -52,8 +51,6 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
     @SuppressWarnings("FieldCanBeLocal")
     private final ObservableList<ProfileListItem> profileListItems;
     private final ObjectProperty<Profile> selectedProfile;
-
-    private ToggleGroup toggleGroup;
 
     public GameListPage() {
         profileListItems = MappedObservableList.create(profilesProperty(), profile -> {
@@ -72,8 +69,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                 AdvancedListItem addProfileItem = new AdvancedListItem();
                 addProfileItem.getStyleClass().add("navigation-drawer-item");
                 addProfileItem.setTitle(i18n("profile.new"));
-                addProfileItem.setActionButtonVisible(false);
-                addProfileItem.setLeftGraphic(VersionPage.wrap(SVG.ADD_CIRCLE));
+                addProfileItem.setLeftIcon(SVG.ADD_CIRCLE);
                 addProfileItem.setOnAction(e -> Controllers.navigate(new ProfilePage(null)));
 
                 pane.setFitToWidth(true);
@@ -123,50 +119,31 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
         return state.getReadOnlyProperty();
     }
 
-    private class GameList extends ListPageBase<GameListItem> {
-        public GameList() {
-            super();
+    private static class GameList extends ListPageBase<GameListItem> {
+        private final WeakListenerHolder listenerHolder = new WeakListenerHolder();
 
+        public GameList() {
             Profiles.registerVersionsListener(this::loadVersions);
 
             setOnFailedAction(e -> Controllers.navigate(Controllers.getDownloadPage()));
         }
 
+        @FXThread
         private void loadVersions(Profile profile) {
+            listenerHolder.clear();
             setLoading(true);
             setFailedReason(null);
-            HMCLGameRepository repository = profile.getRepository();
-            toggleGroup = new ToggleGroup();
-            WeakListenerHolder listenerHolder = new WeakListenerHolder();
-            toggleGroup.getProperties().put("ReferenceHolder", listenerHolder);
-            runInFX(() -> {
-                if (profile == Profiles.getSelectedProfile()) {
-                    setLoading(false);
-                    List<GameListItem> children = repository.getDisplayVersions()
-                            .map(version -> new GameListItem(toggleGroup, profile, version.getId()))
-                            .collect(Collectors.toList());
-                    itemsProperty().setAll(children);
-                    children.forEach(GameListItem::checkSelection);
+            if (profile != Profiles.getSelectedProfile())
+                return;
 
-                    if (children.isEmpty()) {
-                        setFailedReason(i18n("version.empty.hint"));
-                    }
-
-                    profile.selectedVersionProperty().addListener(listenerHolder.weak((a, b, newValue) -> {
-                        FXUtils.checkFxUserThread();
-                        children.forEach(it -> it.selectedProperty().set(false));
-                        children.stream()
-                                .filter(it -> it.getVersion().equals(newValue))
-                                .findFirst()
-                                .ifPresent(it -> it.selectedProperty().set(true));
-                    }));
-                }
-                toggleGroup.selectedToggleProperty().addListener((o, a, toggle) -> {
-                    if (toggle == null) return;
-                    GameListItem model = (GameListItem) toggle.getUserData();
-                    model.getProfile().setSelectedVersion(model.getVersion());
-                });
-            });
+            ObservableList<GameListItem> children = FXCollections.observableList(profile.getRepository().getDisplayVersions()
+                    .map(instance -> new GameListItem(profile, instance.getId()))
+                    .toList());
+            setItems(children);
+            if (children.isEmpty()) {
+                setFailedReason(i18n("version.empty.hint"));
+            }
+            setLoading(false);
         }
 
         public void refreshList() {
@@ -178,7 +155,7 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             return new GameListSkin();
         }
 
-        private class GameListSkin extends ToolbarListPageSkin<GameList> {
+        private class GameListSkin extends ToolbarListPageSkin<GameListItem, GameList> {
 
             public GameListSkin() {
                 super(GameList.this);
@@ -187,6 +164,11 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
             @Override
             protected List<Node> initializeToolbar(GameList skinnable) {
                 return Collections.emptyList();
+            }
+
+            @Override
+            protected ListCell<GameListItem> createListCell(JFXListView<GameListItem> listView) {
+                return new GameListCell();
             }
         }
     }

@@ -18,16 +18,15 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXCheckBox;
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.CheckBox;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
-import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import org.jackhuang.hmcl.mod.LocalModFile;
@@ -38,6 +37,7 @@ import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.construct.JFXCheckBoxTableCell;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
@@ -72,9 +72,10 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         getStyleClass().add("gray-background");
 
         TableColumn<ModUpdateObject, Boolean> enabledColumn = new TableColumn<>();
-        CheckBox allEnabledBox = new CheckBox();
+        var allEnabledBox = new JFXCheckBox();
+        enabledColumn.setStyle("-fx-alignment: CENTER;");
         enabledColumn.setGraphic(allEnabledBox);
-        enabledColumn.setCellFactory(CheckBoxTableCell.forTableColumn(enabledColumn));
+        enabledColumn.setCellFactory(JFXCheckBoxTableCell.forTableColumn(enabledColumn));
         setupCellValueFactory(enabledColumn, ModUpdateObject::enabledProperty);
         enabledColumn.setEditable(true);
         enabledColumn.setMaxWidth(40);
@@ -101,6 +102,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         TableView<ModUpdateObject> table = new TableView<>(objects);
         table.setEditable(true);
         table.getColumns().setAll(enabledColumn, fileNameColumn, currentVersionColumn, targetVersionColumn, sourceColumn);
+        setMargin(table, new Insets(10, 10, 5, 10));
 
         setCenter(table);
 
@@ -111,12 +113,13 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         JFXButton exportListButton = FXUtils.newRaisedButton(i18n("button.export"));
         exportListButton.setOnAction(e -> exportList());
 
-        JFXButton nextButton = FXUtils.newRaisedButton(i18n("mods.check_updates.update"));
+        JFXButton nextButton = FXUtils.newRaisedButton(i18n("mods.check_updates.confirm"));
         nextButton.setOnAction(e -> updateMods());
 
         JFXButton cancelButton = FXUtils.newRaisedButton(i18n("button.cancel"));
         cancelButton.setOnAction(e -> fireEvent(new PageCloseEvent()));
         onEscPressed(this, cancelButton::fire);
+        onEscPressed(table, cancelButton::fire);
 
         actions.getChildren().setAll(exportListButton, nextButton, cancelButton);
         setBottom(actions);
@@ -131,7 +134,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                 modManager,
                 objects.stream()
                         .filter(o -> o.enabled.get())
-                        .map(object -> pair(object.data.getLocalMod(), object.data.getCandidates().get(0)))
+                        .map(object -> pair(object.data.getLocalMod(), object.data.getCandidate()))
                         .collect(Collectors.toList()));
         Controllers.taskDialog(
                 task.whenComplete(Schedulers.javafx(), exception -> {
@@ -147,7 +150,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                         Controllers.dialog(i18n("install.success"));
                     }
                 }),
-                i18n("mods.check_updates.update"),
+                i18n("mods.check_updates"),
                 TaskCancellationAction.NORMAL);
     }
 
@@ -200,7 +203,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
             enabled.set(!data.getLocalMod().getModManager().isDisabled(data.getLocalMod().getFile()));
             fileName.set(data.getLocalMod().getFileName());
             currentVersion.set(data.getCurrentVersion().getVersion());
-            targetVersion.set(data.getCandidates().get(0).getVersion());
+            targetVersion.set(data.getCandidate().getVersion());
             switch (data.getCurrentVersion().getSelf().getType()) {
                 case CURSEFORGE:
                     source.set(i18n("mods.curseforge"));
@@ -276,7 +279,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         private final List<LocalModFile> failedMods = new ArrayList<>();
 
         ModUpdateTask(ModManager modManager, List<Pair<LocalModFile, RemoteMod.Version>> mods) {
-            setStage("mods.check_updates.update");
+            setStage("mods.check_updates.confirm");
             getProperties().put("total", mods.size());
 
             this.dependents = new ArrayList<>();
@@ -308,7 +311,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                                 failedMods.add(local);
                             }
                         })
-                        .withCounter("mods.check_updates.update"));
+                        .withCounter("mods.check_updates.confirm"));
             }
         }
 
