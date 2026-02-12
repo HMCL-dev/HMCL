@@ -40,8 +40,7 @@ public final class Result<T> {
         this.value = value;
         this.exception = exception;
     }
-
-   public boolean isSuccess() {
+    public boolean isSuccess() {
         return exception == null;
     }
 
