@@ -13,7 +13,6 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import javafx.scene.shape.FillRule;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Text;
 import org.jackhuang.hmcl.auth.Account;
@@ -30,7 +29,6 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.QrCodeUtils;
-import org.jackhuang.hmcl.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.concurrent.CancellationException;
@@ -95,7 +93,7 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
         actions.setAlignment(Pos.CENTER_RIGHT);
         setActions(actions);
 
-        holder.registerWeak(Accounts.OAUTH_CALLBACK.onOpenBrowserAuthorizationCode, event -> runInFX(() ->
+        Accounts.OAUTH_CALLBACK.onOpenBrowserAuthorizationCode.registerWeak(event -> runInFX(() ->
                 step.set(new Step.WaitForOpenBrowser(event.getUrl()))));
 
         FXUtils.onChangeAndOperate(step, this::onStep);
@@ -199,7 +197,6 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
 
             var qrCodeView = new SVGPath();
             qrCodeView.fillProperty().bind(Themes.colorSchemeProperty().getPrimary());
-            qrCodeView.setFillRule(FillRule.EVEN_ODD);
             qrCodeView.setContent(QrCodeUtils.toSVGPath(code));
             qrCodeView.setScaleX(2.5);
             qrCodeView.setScaleY(2.5);
