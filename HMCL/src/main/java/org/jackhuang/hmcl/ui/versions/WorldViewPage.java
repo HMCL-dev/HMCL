@@ -32,9 +32,13 @@ import javafx.scene.paint.Color;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.task.AsyncTaskExecutor;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.Controllers;
+import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
+import org.jackhuang.hmcl.ui.construct.PageCloseEvent;
 import org.jackhuang.hmcl.ui.decorator.DecoratorAnimatedPage;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,7 +72,14 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
         // Initialize page state with world name as title
         this.state = new SimpleObjectProperty<>(new State(i18n("world.view.title", StringUtils.parseColorEscapes(world.getWorldName())), null, true, true, true));
         // Create viewer using half of available CPU cores (minimum 1)
-        this.viewer = new WorldViewer(world, this.getWidth(), this.getHeight(), Math.max((Runtime.getRuntime().availableProcessors() / 2), 1));
+        this.viewer = new WorldViewer(world, this.getWidth(), this.getHeight(), Math.max((Runtime.getRuntime().availableProcessors() / 2), 1), true);
+
+        if (!Objects.requireNonNullElse(world.getGameVersion(), GameVersionNumber.asGameVersion("1.20.1")).isAtLeast("1.2.1", "12w07a")) {
+            // considering most of the players are using high version (1.2.1+), so default is 1.20.1
+            Controllers.dialog(i18n("world.view.error.unsupported_version", world.getGameVersion()), i18n("message.error"), MessageDialogPane.MessageType.ERROR, () -> {
+                WorldViewPage.this.fireEvent(new PageCloseEvent());
+            });
+        }
 
         this.setWidth(width);
         this.setHeight(height);
@@ -117,7 +128,9 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
         World.WorldParser worldParser; // World data parser
         final Set<CacheChunkColorTask> tasks = new HashSet<>(); // Async chunk processing tasks
         final RenderTask renderTask = new RenderTask(); // Main render loop task
-        final ConcurrentHashMap<World.WorldParser.Chunk, WVColor> chunkColorMap = new ConcurrentHashMap<>(); // Chunk color cache
+        final ConcurrentHashMap<World.WorldParser.ChunkId, WVColor> chunkColorMap = new ConcurrentHashMap<>(); // ChunkId color cache
+        final ConcurrentHashMap<World.WorldParser.ChunkId, WVColor[]> chunkDetailedColorMap = new ConcurrentHashMap<>(); // Detailed color cache for debugging
+        private double zoom = 2.0;
 
         /**
          * Creates a new world viewer.
@@ -126,7 +139,7 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
          * @param height Initial height
          * @param asyncTaskCount Number of async tasks for chunk processing
          */
-        public WorldViewer(@NotNull World world, double width, double height, int asyncTaskCount) {
+        public WorldViewer(@NotNull World world, double width, double height, int asyncTaskCount, boolean detailed) {
             super(width, height);
             LOG.info("Initializing world view: %s [async: %d]".formatted(world.getWorldName(), asyncTaskCount));
             this.worldParser = new World.WorldParser(world);
@@ -135,7 +148,7 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
             }
             // Create async tasks for chunk processing
             for (int i = 0; i < asyncTaskCount; i++) {
-                var task = new CacheChunkColorTask();
+                var task = new CacheChunkColorTask(detailed);
                 tasks.add(task);
             }
 
@@ -156,8 +169,8 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
 
             // Mouse drag handler for panning
             setOnMouseDragged(event -> {
-                double deltaX = (event.getSceneX() - dragStartX) * sensitivity;
-                double deltaY = (event.getSceneY() - dragStartY) * sensitivity;
+                double deltaX = (event.getSceneX() - dragStartX) * sensitivity * zoom;
+                double deltaY = (event.getSceneY() - dragStartY) * sensitivity * zoom;
 
                 double chunkSize = getChunkSize();
                 centerChunkX -= (int)(deltaX / chunkSize);
@@ -167,6 +180,12 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
                 dragStartY = event.getSceneY();
 
                 requestChunksAroundCenter();
+            });
+
+            setOnScroll(event -> {
+                double scrollAmount = event.getDeltaY() > 0 ? 1.1 : 0.9;
+                zoom *= scrollAmount;
+                zoom = Math.max(0.5, Math.min(zoom, 20)); // Limit zoom level
             });
 
             // Mouse move handler for coordinate display
@@ -181,23 +200,23 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
 
         // Calculate chunk size in pixels based on canvas dimensions
         private double getChunkSize() {
-            return Math.min(getWidth(), getHeight()) / 20.0;
+            return Math.min(getWidth(), getHeight()) / 20.0 * zoom;
         }
 
         // Request loading of chunks around current center
         private void requestChunksAroundCenter() {
             int visibleRadius = (int) (Math.max(getWidth(), getHeight()) / getChunkSize() / 2) + 1;
-            List<World.WorldParser.Chunk> chunksToLoad = new ArrayList<>();
+            List<World.WorldParser.ChunkId> chunksToLoad = new ArrayList<>();
 
             // Generate chunk coordinates in visible area
             for (int x = centerChunkX - visibleRadius; x <= centerChunkX + visibleRadius; x++) {
                 for (int z = centerChunkZ - visibleRadius; z <= centerChunkZ + visibleRadius; z++) {
-                    chunksToLoad.add(new World.WorldParser.Chunk(x, z, worldParser.overworld));
+                    chunksToLoad.add(new World.WorldParser.ChunkId(x, z, worldParser.overworld));
                 }
             }
 
             // Send chunk load requests to async tasks
-            CacheChunkColorTask.sendRequestAll(tasks, chunksToLoad.toArray(new World.WorldParser.Chunk[0]));
+            CacheChunkColorTask.sendRequestAll(tasks, chunksToLoad.toArray(new World.WorldParser.ChunkId[0]));
         }
 
         /**
@@ -252,13 +271,13 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
             // Render all visible chunks
             for (int x = centerChunkX - visibleRadius; x <= centerChunkX + visibleRadius; x++) {
                 for (int z = centerChunkZ - visibleRadius; z <= centerChunkZ + visibleRadius; z++) {
-                    World.WorldParser.Chunk chunk = new World.WorldParser.Chunk(x, z, worldParser.overworld);
+                    World.WorldParser.ChunkId chunkId = new World.WorldParser.ChunkId(x, z, worldParser.overworld);
                     double screenX = getWidth() / 2 + (x - centerChunkX) * chunkSize;
                     double screenY = getHeight() / 2 + (z - centerChunkZ) * chunkSize;
 
-                    if (chunkColorMap.containsKey(chunk)) {
+                    if (chunkColorMap.containsKey(chunkId)) {
                         // Use cached color if available
-                        WVColor c = chunkColorMap.get(chunk);
+                        WVColor c = chunkColorMap.get(chunkId);
                         if (c == UNGENERATED_CHUNK_COLOR) {
                             drawUngeneratedChunkPattern(gc, screenX, screenY, chunkSize);
                             continue;
@@ -270,22 +289,46 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
                             continue;
                         } else {
                             gc.setFill(c.get());
+                            // Draw chunkId rectangle
+                            gc.fillRect(screenX, screenY, chunkSize, chunkSize);
+                        }
+                    } else if (chunkDetailedColorMap.containsKey(chunkId)) {
+                        WVColor[] detailedColors = chunkDetailedColorMap.get(chunkId);
+                        if (detailedColors == null) {
+                            drawUnknownChunkPattern(gc, screenX, screenY, chunkSize);
+                            continue;
+                        } else {
+                            drawDetailedChunkPattern(gc, screenX, screenY, chunkSize, detailedColors);
+                            continue;
                         }
                     } else {
-                        // Use missing chunk pattern and request loading
+                        // Use missing chunkId pattern and request loading
                         drawUnloadedChunkPattern(gc, screenX, screenY, chunkSize);
-                        CacheChunkColorTask.sendRequestAll(tasks, new World.WorldParser.Chunk[]{chunk});
+                        CacheChunkColorTask.sendRequestAll(tasks, new World.WorldParser.ChunkId[]{chunkId});
                         gc.setStroke(Color.BLACK);
                         gc.setLineWidth(0.5);
                         gc.strokeRect(screenX, screenY, chunkSize, chunkSize);
                         continue;
                     }
 
-                    // Draw chunk rectangle
-                    gc.fillRect(screenX, screenY, chunkSize, chunkSize);
                     gc.setStroke(Color.BLACK);
                     gc.setLineWidth(0.5);
                     gc.strokeRect(screenX, screenY, chunkSize, chunkSize);
+                }
+            }
+        }
+
+        private void drawDetailedChunkPattern(GraphicsContext gc, double screenX, double screenY, double chunkSize, WVColor[] detailedColors) {
+            double blockSize = chunkSize / 16.0;
+            for (int x = 0; x < 16; x++) {
+                for (int z = 0; z < 16; z++) {
+                    WVColor c = detailedColors[x * 16 + z];
+                    if (c == UNKNOWN_CHUNK_COLOR) {
+                        drawUnknownChunkPattern(gc, screenX + x * blockSize, screenY + z * blockSize, blockSize);
+                        continue;
+                    }
+                    gc.setFill(c.get());
+                    gc.fillRect(screenX + x * blockSize, screenY + z * blockSize, blockSize, blockSize);
                 }
             }
         }
@@ -325,19 +368,21 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
         public class CacheChunkColorTask extends Task<Void> {
 
             Thread thread = null;
-            private final ConcurrentLinkedQueue<World.WorldParser.Chunk> pendingChunks = new ConcurrentLinkedQueue<>();
+            private final boolean detailed;
+            private final ConcurrentLinkedQueue<World.WorldParser.ChunkId> pendingChunkIds = new ConcurrentLinkedQueue<>();
 
-            public CacheChunkColorTask() {
+            public CacheChunkColorTask(boolean detailed) {
                 super();
                 setSignificance(TaskSignificance.MINOR);
+                this.detailed = detailed;
             }
 
             @Override
             public void execute() {
                 thread = Thread.currentThread();
                 while (!isCancelled()) {
-                    World.WorldParser.Chunk chunk = pendingChunks.poll();
-                    if (chunk == null) {
+                    World.WorldParser.ChunkId chunkId = pendingChunkIds.poll();
+                    if (chunkId == null) {
                         try {
                             Thread.sleep(20 / tasks.size()); // Avoid busy waiting
                         } catch (InterruptedException e) {
@@ -346,29 +391,39 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
                         continue;
                     }
 
-                    // Process chunk if not already cached
-                    if (!chunkColorMap.containsKey(chunk)) {
+                    // Process chunkId if not already cached
+                    if (!chunkColorMap.containsKey(chunkId) && !chunkDetailedColorMap.containsKey(chunkId)) {
                         WVColor[] chunkColors = new WVColor[256];
                         // Sample block colors at top layer (y=255)
                         try {
                             for (int x = 0; x < 16; x++) {
                                 for (int z = 0; z < 16; z++) {
-                                    int y = worldParser.getTheHighestNonAirBlock(chunk, x, z);
-                                    chunkColors[x * 16 + z] = getColor(worldParser.parseBlockFromChunkData(chunk, x, y != Integer.MIN_VALUE ? y : 64, z));
+                                    int y = worldParser.getTheHighestNonAirBlock(chunkId, x, z);
+                                    if (y != Integer.MIN_VALUE) {
+                                        LOG.debug("Parsed block at chunkId(%d,%d) [%d, %d, %d] world pos (%d,%d,%d) : %s".formatted(
+                                                chunkId.chunkX(), chunkId.chunkZ(), x, y, z, chunkId.chunkX() * 16 + x, y, chunkId.chunkZ() * 16 + z,
+                                                worldParser.parseBlockFromChunkData(chunkId, x, y, z)
+                                        ));
+                                    }
+                                    chunkColors[x * 16 + z] = getColor(worldParser.parseBlockFromChunkData(chunkId, x, y != Integer.MIN_VALUE ? y : 64, z));
                                 }
                             }
-                            // Determine dominant color for the chunk
-                            chunkColorMap.put(chunk, evaluateColor(chunkColors));
+                            if (detailed) {
+                                chunkDetailedColorMap.put(chunkId, chunkColors);
+                            } else {
+                                // Determine dominant color for the chunkId
+                                chunkColorMap.put(chunkId, evaluateColor(chunkColors));
+                            }
                         } catch (RuntimeException e) {
                             if (e.getCause() instanceof EOFException) {
-                                LOG.warning("Chunk data not fully generated yet: %s".formatted(chunk));
-                                chunkColorMap.put(chunk, UNGENERATED_CHUNK_COLOR);
-                            } else if (e.getCause() instanceof RuntimeException runtimeException) { // ignore known exceptions related to missing or incomplete chunk data
+                                LOG.warning("ChunkId data not fully generated yet: %s".formatted(chunkId));
+                                chunkColorMap.put(chunkId, UNGENERATED_CHUNK_COLOR);
+                            } else if (e.getCause() instanceof RuntimeException runtimeException) { // ignore known exceptions related to missing or incomplete chunkId data
                                 if (! runtimeException.getMessage().equals("Broken file head.")
                                     && ! runtimeException.getMessage().equals("Region file does not exists.")) {
-                                    LOG.warning("An unexpected exception occurred while parsing chunk data", e);
+                                    LOG.warning("An unexpected exception occurred while parsing chunkId data", e);
                                 }
-                                chunkColorMap.put(chunk, UNGENERATED_CHUNK_COLOR);
+                                chunkColorMap.put(chunkId, UNGENERATED_CHUNK_COLOR);
                             }
                         }
                     }
@@ -376,11 +431,11 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
             }
 
             /**
-             * Adds a chunk to the processing queue.
-             * @param chunk The chunk to process
+             * Adds a chunkId to the processing queue.
+             * @param chunkId The chunkId to process
              */
-            public void sendRequest(World.WorldParser.Chunk chunk) {
-                pendingChunks.offer(chunk);
+            public void sendRequest(World.WorldParser.ChunkId chunkId) {
+                pendingChunkIds.offer(chunkId);
             }
 
             public void stop() {
@@ -398,14 +453,18 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
             /**
              * Distributes chunk processing requests across all tasks.
              * @param tasks Available tasks
-             * @param chunks Chunks to process
+             * @param chunkIds Chunks to process
              */
-            static void sendRequestAll(@NotNull Set<CacheChunkColorTask> tasks, World.WorldParser.Chunk @NotNull [] chunks) {
+            static void sendRequestAll(@NotNull Set<CacheChunkColorTask> tasks, World.WorldParser.ChunkId @NotNull [] chunkIds) {
                 int taskCount = tasks.size();
-                for (int i = 0; i < chunks.length; i++) {
+                for (int i = 0; i < chunkIds.length; i++) {
                     CacheChunkColorTask task = tasks.stream().skip(i % taskCount).findFirst().orElseThrow();
-                    task.sendRequest(chunks[i]);
+                    task.sendRequest(chunkIds[i]);
                 }
+            }
+
+            public boolean isDetailed() {
+                return detailed;
             }
         }
 
@@ -467,7 +526,7 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
     @Contract("_ -> new")
     private static @NotNull WVColor getColor(@NotNull String blockName) {
         return WVColor.fromColor(switch (blockName) {
-            case "minecraft:air" -> Color.rgb(0, 0, 0, 0);
+            case "minecraft:air" -> Color.rgb(0, 0, 0, 0.5);
             case "minecraft:water" -> Color.rgb(64, 164, 223);
             case "minecraft:ice" -> Color.rgb(131, 190, 223);
             case "minecraft:lava" -> Color.rgb(240, 88, 17);
@@ -483,7 +542,6 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
 
     public static final class WVColor {
         private final Color color;
-
         private WVColor(int r, int g, int b, int a) {
             if (r < 0 || r > 255 || g < 0 || g > 255 || b < 0 || b > 255 || a < 0 || a > 1) {
                 color = null;
@@ -536,22 +594,44 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
                 "minecraft:jungle_leaves", "minecraft:acacia_leaves", "minecraft:dark_oak_leaves"
         });
 
-        public static final BlockColorFilter WHITE_COLOR_BLOCKS = new BlockColorFilter(":.*white");
-        public static final BlockColorFilter ORANGE_COLOR_BLOCKS = new BlockColorFilter(":.*orange");
-        public static final BlockColorFilter MAGENTA_COLOR_BLOCKS = new BlockColorFilter(":.*magenta");
-        public static final BlockColorFilter LIGHT_BLUE_COLOR_BLOCKS = new BlockColorFilter(":.*light_blue");
-        public static final BlockColorFilter YELLOW_COLOR_BLOCKS = new BlockColorFilter(":.*yellow");
-        public static final BlockColorFilter LIME_COLOR_BLOCKS = new BlockColorFilter(":.*lime");
-        public static final BlockColorFilter PINK_COLOR_BLOCKS = new BlockColorFilter(":.*pink");
-        public static final BlockColorFilter GRAY_COLOR_BLOCKS = new BlockColorFilter(":.*gray");
-        public static final BlockColorFilter LIGHT_GRAY_COLOR_BLOCKS = new BlockColorFilter(":.*light_gray");
-        public static final BlockColorFilter CYAN_COLOR_BLOCKS = new BlockColorFilter(":.*cyan");
-        public static final BlockColorFilter PURPLE_COLOR_BLOCKS = new BlockColorFilter(":.*purple");
-        public static final BlockColorFilter BLUE_COLOR_BLOCKS = new BlockColorFilter(":.*blue");
-        public static final BlockColorFilter BROWN_COLOR_BLOCKS = new BlockColorFilter(":.*brown");
-        public static final BlockColorFilter GREEN_COLOR_BLOCKS = new BlockColorFilter(":.*green");
-        public static final BlockColorFilter RED_COLOR_BLOCKS = new BlockColorFilter(":.*red");
-        public static final BlockColorFilter BLACK_COLOR_BLOCKS = new BlockColorFilter(":.*black");
+        public static final BlockColorFilter STONE_BRICKS = new BlockColorFilter(".*:.*?stone_brick.*");
+        public static final BlockColorFilter SANDSTONE = new BlockColorFilter(".*:.*?sandstone.*");
+        public static final BlockColorFilter SMOOTH_STONE = new BlockColorFilter(".*:.*?smooth_stone.*");
+        public static final BlockColorFilter OAK_WOOD = new BlockColorFilter(".*:.*?oak_wood.*");
+        public static final BlockColorFilter OAK_LOG = new BlockColorFilter(".*:.*?oak_log.*");
+        public static final BlockColorFilter SPRUCE_WOOD = new BlockColorFilter(".*:.*?spruce_wood.*");
+        public static final BlockColorFilter SPRUCE_LOG = new BlockColorFilter(".*:.*?spruce_log.*");
+        public static final BlockColorFilter BIRCH_WOOD = new BlockColorFilter(".*:.*?birch_wood.*");
+        public static final BlockColorFilter BIRCH_LOG = new BlockColorFilter(".*:.*?birch_log.*");
+        public static final BlockColorFilter JUNGLE_WOOD = new BlockColorFilter(".*:.*?jungle_wood.*");
+        public static final BlockColorFilter JUNGLE_LOG = new BlockColorFilter(".*:.*?jungle_log.*");
+        public static final BlockColorFilter ACACIA_WOOD = new BlockColorFilter(".*:.*?acacia_wood.*");
+        public static final BlockColorFilter ACACIA_LOG = new BlockColorFilter(".*:.*?acacia_log.*");
+        public static final BlockColorFilter DARK_OAK_WOOD = new BlockColorFilter(".*:.*?dark_oak_wood.*");
+        public static final BlockColorFilter DARK_OAK_LOG = new BlockColorFilter(".*:.*?dark_oak_log.*");
+        public static final BlockColorFilter MANGROVE_WOOD = new BlockColorFilter(".*:.*?mangrove_wood.*");
+        public static final BlockColorFilter MANGROVE_LOG = new BlockColorFilter(".*:.*?mangrove_log.*");
+        public static final BlockColorFilter CHERRY_WOOD = new BlockColorFilter(".*:.*?cherry_wood.*");
+        public static final BlockColorFilter CHERRY_LOG = new BlockColorFilter(".*:.*?cherry_log.*");
+
+        public static final BlockColorFilter WHITE_COLOR_BLOCKS = new BlockColorFilter(".*:.*?white.*");
+        public static final BlockColorFilter ORANGE_COLOR_BLOCKS = new BlockColorFilter(".*:.*?orange.*");
+        public static final BlockColorFilter MAGENTA_COLOR_BLOCKS = new BlockColorFilter(".*:.*?magenta.*");
+        public static final BlockColorFilter LIGHT_BLUE_COLOR_BLOCKS = new BlockColorFilter(".*:.*?light_blue.*");
+        public static final BlockColorFilter YELLOW_COLOR_BLOCKS = new BlockColorFilter(".*:.*?yellow.*");
+        public static final BlockColorFilter LIME_COLOR_BLOCKS = new BlockColorFilter(".*:.*?lime.*");
+        public static final BlockColorFilter PINK_COLOR_BLOCKS = new BlockColorFilter(".*:.*?pink.*");
+        public static final BlockColorFilter GRAY_COLOR_BLOCKS = new BlockColorFilter(".*:.*?gray.*");
+        public static final BlockColorFilter LIGHT_GRAY_COLOR_BLOCKS = new BlockColorFilter(".*:.*?light_gray.*");
+        public static final BlockColorFilter CYAN_COLOR_BLOCKS = new BlockColorFilter(".*:.*?cyan.*");
+        public static final BlockColorFilter PURPLE_COLOR_BLOCKS = new BlockColorFilter(".*:.*?purple.*");
+        public static final BlockColorFilter BLUE_COLOR_BLOCKS = new BlockColorFilter(".*:.*?blue.*");
+        public static final BlockColorFilter BROWN_COLOR_BLOCKS = new BlockColorFilter(".*:.*?brown.*");
+        public static final BlockColorFilter GREEN_COLOR_BLOCKS = new BlockColorFilter(".*:.*?green.*");
+        public static final BlockColorFilter RED_COLOR_BLOCKS = new BlockColorFilter(".*:.*?red.*");
+        public static final BlockColorFilter BLACK_COLOR_BLOCKS = new BlockColorFilter(".*:.*?black.*");
+
+        public static final BlockColorFilter REDSTONES = new BlockColorFilter(".*:.*?redstone.*");
 
         final String[] blocks;
         final String regex;
@@ -616,8 +696,49 @@ public class WorldViewPage extends DecoratorAnimatedPage implements DecoratorPag
                 return Color.rgb(127, 178, 56);
             } else if (BlockColorFilter.LEAVES.matches(blockName)) {
                 return Color.rgb(63, 179, 63);
+            } else if (BlockColorFilter.STONE_BRICKS.matches(blockName)) {
+                return Color.rgb(112, 112, 112);
+            } else if (BlockColorFilter.SANDSTONE.matches(blockName)) {
+                return Color.rgb(218, 210, 158);
+            } else if (BlockColorFilter.SMOOTH_STONE.matches(blockName)) {
+                return Color.rgb(124, 124, 124);
+            } else if (BlockColorFilter.OAK_LOG.matches(blockName)) {
+                return Color.rgb(102, 81, 51);
+            } else if (BlockColorFilter.OAK_WOOD.matches(blockName)) {
+                return Color.rgb(102, 81, 51);
+            } else if (BlockColorFilter.SPRUCE_LOG.matches(blockName)) {
+                return Color.rgb(102, 81, 51);
+            } else if (BlockColorFilter.SPRUCE_WOOD.matches(blockName)) {
+                return Color.rgb(102, 81, 51);
+            } else if (BlockColorFilter.BIRCH_LOG.matches(blockName)) {
+                return Color.rgb(157, 128, 79);
+            } else if (BlockColorFilter.BIRCH_WOOD.matches(blockName)) {
+                return Color.rgb(157, 128, 79);
+            } else if (BlockColorFilter.JUNGLE_LOG.matches(blockName)) {
+                return Color.rgb(102, 81, 51);
+            } else if (BlockColorFilter.JUNGLE_WOOD.matches(blockName)) {
+                return Color.rgb(102, 81, 51);
+            } else if (BlockColorFilter.ACACIA_LOG.matches(blockName)) {
+                return Color.rgb(143, 86, 59);
+            } else if (BlockColorFilter.ACACIA_WOOD.matches(blockName)) {
+                return Color.rgb(143, 86, 59);
+            } else if (BlockColorFilter.DARK_OAK_LOG.matches(blockName)) {
+                return Color.rgb(102, 81, 51);
+            } else if (BlockColorFilter.DARK_OAK_WOOD.matches(blockName)) {
+                return Color.rgb(102, 81, 51);
+            } else if (BlockColorFilter.MANGROVE_LOG.matches(blockName)) {
+                return Color.rgb(120, 85, 60);
+            } else if (BlockColorFilter.MANGROVE_WOOD.matches(blockName)) {
+                return Color.rgb(120, 85, 60);
+            } else if (BlockColorFilter.CHERRY_LOG.matches(blockName)) {
+                return Color.rgb(175, 82, 64);
+            } else if (BlockColorFilter.CHERRY_WOOD.matches(blockName)) {
+                return Color.rgb(175, 82, 64);
+            } else if (BlockColorFilter.REDSTONES.matches(blockName)) {
+                return Color.rgb(150, 0, 0);
+            } else {
+                return null;
             }
-            return null;
         }
     }
 }

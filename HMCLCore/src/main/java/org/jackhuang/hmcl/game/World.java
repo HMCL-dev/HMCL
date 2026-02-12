@@ -32,10 +32,11 @@ import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -427,11 +428,13 @@ public final class World {
         private static final int COMPRESSION_ZLIB = 2;
         private static final int COMPRESSION_LZ4 = 4;
 
-        public final WorldPath overworld;
-        public final WorldPath the_nether;
-        public final WorldPath the_end;
+        public final DimensionPath overworld;
+        public final DimensionPath the_nether;
+        public final DimensionPath the_end;
 
-        private final ConcurrentHashMap<Chunk, byte[]> chunkCache = new ConcurrentHashMap<>();
+        private final Map<DimensionPath, Set<Region>> worldCache = new ConcurrentHashMap<>();
+        private final ConcurrentHashMap<ChunkId, byte[]> chunkCache = new ConcurrentHashMap<>();
+
         public final @NotNull World world;
 
         public WorldParser(@NotNull World world) {
@@ -442,32 +445,209 @@ public final class World {
             if (Objects.requireNonNull(world.getGameVersion()).isAtLeast("26.1", "26.1-snapshot-6")) {
                 Path vanillaWorldPathRoot = world.getFile().resolve("dimensions/minecraft");
 
-                overworld = new WorldPath(
+                overworld = DimensionPath.of(
                         Files.exists(vanillaWorldPathRoot.resolve("overworld")) ? vanillaWorldPathRoot.resolve("overworld") : null,
-                        "overworld"
+                        "overworld",
+                        world
                 );
-                the_nether = new WorldPath(
+                the_nether = DimensionPath.of(
                         Files.exists(vanillaWorldPathRoot.resolve("the_nether")) ? vanillaWorldPathRoot.resolve("the_nether") : null,
-                        "the_nether"
+                        "the_nether",
+                        world
                 );
-                the_end = new WorldPath(
+                the_end = DimensionPath.of(
                         Files.exists(vanillaWorldPathRoot.resolve("the_end")) ? vanillaWorldPathRoot.resolve("the_end") : null,
-                        "the_end"
+                        "the_end",
+                        world
                 );
             } else {
-                overworld = new WorldPath(world.getFile(), "overworld");
-                the_nether = new WorldPath(
+                overworld = DimensionPath.of(world.getFile(), "overworld", world);
+                the_nether = DimensionPath.of(
                         Files.exists(world.getFile().resolve("DIM-1")) ? world.getFile().resolve("DIM-1") : null,
-                        "the_nether"
+                        "the_nether",
+                        world
                 );
-                the_end = new WorldPath(
+                the_end = DimensionPath.of(
                         Files.exists(world.getFile().resolve("DIM1")) ? world.getFile().resolve("DIM1") : null,
-                        "the_end"
+                        "the_end",
+                        world
                 );
             }
         }
 
-        public byte[] parseChunk(int chunkX, int chunkZ, WorldPath worldPath) throws RuntimeException {
+        private void initialRegionParse(@NotNull DimensionPath dimensionPath) throws RuntimeException {
+            try (Stream<Path> stream = Files.walk(dimensionPath.get())) {
+                stream.filter(Files::isRegularFile)
+                        .forEach(path -> {
+                            String fileName = path.getFileName().toString();
+                            if (Region.MCA_FILE_PATTERN.matcher(fileName).matches()) {
+                                if (!worldCache.containsKey(dimensionPath)) {
+                                    worldCache.put(dimensionPath, new HashSet<>());
+                                }
+                                worldCache.get(dimensionPath).add(new Region(new Chunk[1024], dimensionPath));
+                            }
+                        });
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public void regionParse(@NotNull DimensionPath dimensionPath) {
+            if (worldCache.isEmpty()) initialRegionParse(dimensionPath);
+            if (worldCache.containsKey(dimensionPath)) {
+                worldCache.get(dimensionPath).forEach(region -> {
+                    try {
+                        parseChunks(region);
+                    } catch (Exception e) {
+                        LOG.warning("Failed to parse region file " + region.regionFile().get(), e);
+                    }
+                });
+            }
+        }
+
+        private static @Nullable ChunkId convertToChunkId(int regionChunkX, int regionChunkZ, @NotNull Region region) {
+            Matcher m = Region.REGION_GROUP_PATTERN.matcher(region.regionFile().get().getFileName().toString());
+            if (m.find()) {
+                int regionX = Integer.parseInt(m.group(1));
+                int regionZ = Integer.parseInt(m.group(2));
+
+                return new ChunkId(regionX * 32 + regionChunkX, regionZ * 32 + regionChunkZ, region.regionFile());
+            }
+
+            return null;
+        }
+
+        public static int getCompressType(byte @NotNull [] head) {
+            if (head.length < 5) {
+                throw new RuntimeException("Illegal head data");
+            }
+            return head[4] & 0xFF;
+        }
+
+        public static void parseChunks(@NotNull Region region) throws Exception {
+            byte[] header = Files.readAllBytes(region.regionFile().get());
+            if (header.length < HEADER_SIZE) {
+                throw new RuntimeException("Broken file head.");
+            }
+            // 读取所有区块的偏移信息并截取出来
+            for (int i = 0; i < 1024; i++) {
+                int headerOffset = i * 4; // head偏移(指向第一个字节)
+
+                int sectorOffset = ((header[headerOffset] & 0xFF) << 16)
+                        | ((header[headerOffset + 1] & 0xFF) << 8)
+                        | (header[headerOffset + 2] & 0xFF); // 合成24 bit 无符号整数 (大端序)
+
+                int sectorCount = header[headerOffset + 3] & 0xFF;
+
+                if (sectorOffset == 0 || sectorCount == 0) { // 区块未生成
+                    region.chunks()[i] = null;
+                    continue;
+                }
+
+                int dataOffset = sectorOffset * SECTOR_SIZE;
+                int compressionType = header[dataOffset + 4] & 0xFF;
+                if (dataOffset + 5 > header.length) {
+                    LOG.warning("Region file <%s> has an invalid sector at index: <%d>; sector <%d> is out of bounds".formatted(
+                            region.regionFile().dimensionsPath.getFileName().toString(),
+                            i,
+                            dataOffset
+                            )
+                    );
+                    region.chunks()[i] = null;
+                    continue;
+                }
+
+                int dataLength = ((header[dataOffset] & 0xFF) << 24)
+                        | ((header[dataOffset + 1] & 0xFF) << 16)
+                        | ((header[dataOffset + 2] & 0xFF) << 8)
+                        | (header[dataOffset + 3] & 0xFF);
+
+                byte[] compressedData;
+                if ((compressionType & 0x80) != 0) {
+                    // 区块数据在额外文件中
+                    ChunkId cid = convertToChunkId(i / 32, i % 32, region);
+                    if (cid != null) {
+                        compressedData = readFromExternalChunkFile(cid.chunkX(), cid.chunkZ(), region.regionFile());
+                    } else {
+                        region.chunks()[i] = null;
+                        continue;
+                    }
+                } else {
+                    compressedData = Files.readAllBytes(region.regionFile().get());
+                    if (dataOffset + 5 + dataLength > compressedData.length) {
+                        throw new RuntimeException("Illegal chunkId data");
+                    }
+                }
+
+                Tag chunkNBT = NBTIO.readTag(new ByteArrayInputStream(compressedData));
+
+                region.chunks()[i] = new Chunk(
+                        convertToChunkId(i / 32, i % 32, region),
+                        chunkNBT,
+                        new ArrayList<>(),
+                        compressionType,
+                        region
+                );
+            }
+        }
+
+        public static @Nullable ChunkSection @NotNull [] parseSectionsCore(@NotNull Chunk chunk, @NotNull ListTag sections) {
+            DimensionPath dimPath = chunk.id.world;
+            ChunkSection[] ChunkSections = new ChunkSection[(dimPath.yMax - dimPath.yMin) / 16];
+            for (int i = 0; i < sections.size(); i++) {
+                Tag tag = sections.get(i);
+                if (tag instanceof CompoundTag sectionTag) {
+                    if (sectionTag.get("Y") instanceof ByteTag yTag
+                            && sectionTag.get("block_states") instanceof LongArrayTag blockStates
+                            && sectionTag.get("palette") instanceof ListTag palette)
+                    {
+                        List<String> blocks = new ArrayList<>();
+                        palette.forEach(
+                                blockState -> {
+                                    if (blockState instanceof CompoundTag blockStateTag
+                                            && blockStateTag.get("Name") instanceof StringTag stringTag) {
+                                        blocks.add(stringTag.getValue());
+                                    }
+                                }
+                        );
+                        ChunkSections[i] = new ChunkSection(chunk, yTag.getValue(), blocks.toArray(new String[0]), blockStates.getValue());
+                    }
+                }
+            }
+            return ChunkSections;
+        }
+
+        public static void parseSections(@NotNull Chunk chunk) {
+            ChunkSection[] sections = new ChunkSection[0];
+            if (chunk.chunkNBT instanceof CompoundTag rootTag) {
+                if (rootTag.contains("Level")) {
+                    sections = parseSectionsBefore21w43a(chunk, rootTag);
+                } else {
+                    sections = parseSectionsNotBefore21w43a(chunk, rootTag);
+                }
+            }
+            chunk.chunkSections.clear();
+            if (sections != null) {
+                chunk.chunkSections.addAll(List.of(sections));
+            }
+        }
+
+        public static @Nullable ChunkSection @Nullable [] parseSectionsBefore21w43a(@NotNull Chunk chunk, @NotNull CompoundTag chunkNBT) {
+            if (chunkNBT.get("Level") instanceof CompoundTag levelTag && levelTag.get("Sections") instanceof ListTag sections) {
+                return parseSectionsCore(chunk, sections);
+            }
+            return null;
+        }
+
+        public static @Nullable ChunkSection @Nullable [] parseSectionsNotBefore21w43a(@NotNull Chunk chunk, @NotNull CompoundTag chunkNBT) {
+            if (chunkNBT.get("sections") instanceof ListTag sections) {
+                return parseSectionsCore(chunk, sections);
+            }
+            return null;
+        }
+
+        @Deprecated
+        public byte[] parseChunk(int chunkX, int chunkZ, DimensionPath dimensionPath) throws RuntimeException {
             try {
                 int regionX = chunkX >> 5;
                 int regionZ = chunkZ >> 5;
@@ -475,7 +655,7 @@ public final class World {
                 int localZ = chunkZ & 0x1F;
 
                 String regionFile = String.format("r.%d.%d.mca", regionX, regionZ);
-                Path regionPath = worldPath.get().resolve(Paths.get("region", regionFile));
+                Path regionPath = dimensionPath.get().resolve(Paths.get("region", regionFile));
 
                 if (!Files.exists(regionPath)) {
                     throw new RuntimeException("Region file does not exists.");
@@ -503,7 +683,7 @@ public final class World {
                 int compressionType = header[dataOffset + 4] & 0xFF;
                 if (dataOffset + 5 > header.length) {
                     // 数据可能在额外文件中
-                    return readFromExternalFile(chunkX, chunkZ, compressionType, worldPath);
+                    return readFromExternalChunkFile(chunkX, chunkZ, dimensionPath);
                 }
 
                 int dataLength = ((header[dataOffset] & 0xFF) << 24)
@@ -512,12 +692,12 @@ public final class World {
                         | (header[dataOffset + 3] & 0xFF);
 
                 if ((compressionType & 0x80) != 0) {
-                    return readFromExternalFile(chunkX, chunkZ, compressionType, worldPath);
+                    return readFromExternalChunkFile(chunkX, chunkZ, dimensionPath);
                 }
 
                 byte[] compressedData = Files.readAllBytes(regionPath);
                 if (dataOffset + 5 + dataLength > compressedData.length) {
-                    throw new RuntimeException("Illegal chunk data");
+                    throw new RuntimeException("Illegal chunkId data");
                 }
 
                 byte[] chunkData = decompressData(
@@ -525,8 +705,8 @@ public final class World {
                         compressionType
                 );
 
-                Chunk chunk = new Chunk(chunkX, chunkZ, worldPath);
-                chunkCache.put(chunk, chunkData);
+                ChunkId chunkId = new ChunkId(chunkX, chunkZ, dimensionPath);
+                chunkCache.put(chunkId, chunkData);
 
                 return chunkData;
             } catch (Exception e) {
@@ -534,24 +714,25 @@ public final class World {
             }
         }
 
-        public String parseBlockFromChunkData(int chunkX, int chunkZ, int x, int y, int z, WorldPath worldPath) {
-            Chunk chunk = new Chunk(chunkX, chunkZ, worldPath);
+        @Deprecated
+        public String parseBlockFromChunkData(int chunkX, int chunkZ, int x, int y, int z, DimensionPath dimensionPath) {
+            ChunkId chunkId = new ChunkId(chunkX, chunkZ, dimensionPath);
             byte[] data = null;
-            if (!chunkCache.containsKey(chunk)) {
-                data = parseChunk(chunkX, chunkZ, worldPath);
+            if (!chunkCache.containsKey(chunkId)) {
+                data = parseChunk(chunkX, chunkZ, dimensionPath);
             }
-            return parseBlockFromChunkData(data == null ? chunkCache.get(chunk) : data, x, y, z);
+            return parseBlockFromChunkData(data == null ? chunkCache.get(chunkId) : data, x, y, z);
         }
 
         /*
-        * @throws EOFException if chunk data is not found or not generated by MC
+        * @throws EOFException if chunkId data is not found or not generated by MC
         */
-        public String parseBlockFromChunkData(@NotNull Chunk chunk, int x, int y, int z) {
+        public String parseBlockFromChunkData(@NotNull World.WorldParser.ChunkId chunkId, int x, int y, int z) {
             byte[] data = null;
-            if (!chunkCache.containsKey(chunk)) {
-                data = parseChunk(chunk.x, chunk.z, chunk.world);
+            if (!chunkCache.containsKey(chunkId)) {
+                data = parseChunk(chunkId.chunkX, chunkId.chunkZ, chunkId.world);
             }
-            return parseBlockFromChunkData(data == null ? chunkCache.get(chunk) : data, x, y, z);
+            return parseBlockFromChunkData(data == null ? chunkCache.get(chunkId) : data, x, y, z);
         }
 
         public String parseBlockFromChunkData(byte[] chunkData, int x, int y, int z) {
@@ -562,24 +743,23 @@ public final class World {
             }
         }
 
-        private byte[] readFromExternalFile(int chunkX, int chunkZ, int compressionType, WorldPath worldPath) {
+        private static byte[] readFromExternalChunkFile(int chunkX, int chunkZ, DimensionPath dimensionPath) {
             try {
-                String externalFile = String.format("-%d.%d.mcc", chunkX, chunkZ);
-                Path externalPath = worldPath.get().resolve(Paths.get("region", externalFile));
+                Path externalPath = dimensionPath.get().resolve(Paths.get(String.format("c.%d.%d.mcc", chunkX, chunkZ)));
 
                 if (!Files.exists(externalPath)) {
                     throw new RuntimeException("External region file not found.");
                 }
 
                 byte[] externalData = Files.readAllBytes(externalPath);
-                return decompressData(removeHeader(externalData), compressionType);
+                return decompressData(removeHeader(externalData), getCompressType(externalData));
 
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         }
 
-        private byte[] decompressData(byte[] data, int compressionType) throws Exception {
+        private static byte[] decompressData(byte[] data, int compressionType) throws Exception {
             return switch (compressionType) {
                 case COMPRESSION_ZLIB -> decompressZlib(data);
                 case 3 -> data;
@@ -587,7 +767,7 @@ public final class World {
             };
         }
 
-        private byte @NotNull [] decompressZlib(byte[] data) throws Exception {
+        private static byte @NotNull [] decompressZlib(byte[] data) throws Exception {
             Inflater inflater = new Inflater();
             inflater.setInput(data);
 
@@ -603,7 +783,7 @@ public final class World {
             return outputStream.toByteArray();
         }
 
-        private byte @NotNull [] removeHeader(byte @NotNull [] data) {
+        private static byte @NotNull [] removeHeader(byte @NotNull [] data) {
             return Arrays.copyOfRange(data, 4, data.length);
         }
 
@@ -615,11 +795,11 @@ public final class World {
             x &= 15;
             z &= 15;
 
-            if (!chunk.contains("sections")) {
+            if (!chunk.contains("chunkSections")) {
                 return null;
             }
 
-            ListTag sections = chunk.get("sections");
+            ListTag sections = chunk.get("chunkSections");
             if (sections.size() <= 0) {
                 return null;
             }
@@ -694,20 +874,20 @@ public final class World {
 
         /**
          * 获取指定区块内某个位置的最高非空气方块
-         * @param chunk 区块对象
+         * @param chunkId 区块对象
          * @param x 区块内X坐标 (0-15)
          * @param z 区块内Z坐标 (0-15)
          * @return 最高非空气方块的Y坐标，如果没有找到则返回Integer.MIN_VALUE
          */
-        public int getTheHighestNonAirBlock(Chunk chunk, int x, int z) {
+        public int getTheHighestNonAirBlock(ChunkId chunkId, int x, int z) {
             x &= 15;
             z &= 15;
 
             // 尝试从缓存获取区块数据
-            byte[] chunkData = chunkCache.get(chunk);
+            byte[] chunkData = chunkCache.get(chunkId);
             if (chunkData == null) {
                 try {
-                    chunkData = parseChunk(chunk.x, chunk.z, chunk.world);
+                    chunkData = parseChunk(chunkId.chunkX, chunkId.chunkZ, chunkId.world);
                 } catch (RuntimeException e) {
                     return Integer.MIN_VALUE;
                 }
@@ -717,11 +897,11 @@ public final class World {
                 // 一次性解析整个区块的NBT数据
                 CompoundTag chunkTag = (CompoundTag) NBTIO.readTag(new ByteArrayInputStream(chunkData));
 
-                if (!chunkTag.contains("sections")) {
+                if (!chunkTag.contains("chunkSections")) {
                     return Integer.MIN_VALUE;
                 }
 
-                ListTag sections = chunkTag.get("sections");
+                ListTag sections = chunkTag.get("chunkSections");
 
                 // 从最高section开始向下搜索（优化搜索顺序）
                 for (int sectionIndex = sections.size() - 1; sectionIndex >= 0; sectionIndex--) {
@@ -820,15 +1000,15 @@ public final class World {
                     blockName.isEmpty();
         }
 
-        public WorldPath getOverworld() {
+        public DimensionPath getOverworld() {
             return overworld;
         }
 
-        public WorldPath getThe_nether() {
+        public DimensionPath getThe_nether() {
             return the_nether;
         }
 
-        public WorldPath getThe_end() {
+        public DimensionPath getThe_end() {
             return the_end;
         }
 
@@ -837,31 +1017,34 @@ public final class World {
             return world.toString();
         }
 
-        public record Chunk(int x, int z, WorldPath world) {
-            
-            @Override
-            public boolean equals(Object o) {
-                if (o instanceof Chunk chunk) {
-                    return chunk.x == x && chunk.z == z && chunk.world.equals(world);
-                }
-                return false;
-            }
-        
-            @Override
-            public int hashCode() {
-                return Objects.hash(x, z, world);
-            }
+        public record ChunkId(int chunkX, int chunkZ, DimensionPath world) {
         }
 
-        public record WorldPath(Path worldPath, String worldType) {
-            
+        public record Chunk(ChunkId id, Tag chunkNBT, List<ChunkSection> chunkSections, int compressionType, Region region) { }
+
+        public record ChunkSection(Chunk chunkParent, byte y, String[] palette, long[] data) {
+        }
+
+        public record Region(Chunk[] chunks, DimensionPath regionFile) {
+            public static final Pattern MCA_FILE_PATTERN = Pattern.compile("^r\\.-?\\d+\\.-?\\d+\\.mca$");
+            public static final Pattern REGION_GROUP_PATTERN = Pattern.compile("^r\\.(?<regionX>-?\\d+)\\.(?<regionZ>-?\\d+)\\.mca$");
+        }
+
+        public record DimensionPath(Path dimensionsPath, String worldType, World world, int yMax, int yMin) {
+
+            public static @NotNull DimensionPath of(Path dimensionsPath, String worldType, World world) {
+                int yMax = (world.getGameVersion() != null && world.getGameVersion().isAtLeast("1.18", "22w14a")) ? 320 : 256;
+                int yMin = (world.getGameVersion() != null && world.getGameVersion().isAtLeast("1.18", "22w14a")) ? -64 : 0;
+                return new DimensionPath(dimensionsPath, worldType, world, yMax, yMin);
+            }
+
             public Path get() {
-                return worldPath;
+                return dimensionsPath;
             }
             
             @Override
             public @NotNull String toString() {
-                return String.format("WorldPath<%s>{%s}", worldType, worldPath);
+                return String.format("DimensionPath<%s>{%s}", worldType, dimensionsPath);
             }
         }
     }
