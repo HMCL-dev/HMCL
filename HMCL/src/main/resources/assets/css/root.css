@@ -324,20 +324,25 @@
     -fx-fill: -monet-on-surface-variant;
 }
 
-.two-line-list-item > .first-line > .tags > .tag {
+.two-line-list-item > .first-line .scroll-bar {
+    -fx-opacity: 0;
+    -fx-max-height: 0;
+    -fx-min-height: 0;
+    -fx-pref-height: 0;
+}
+
+.two-line-list-item > .first-line .tag {
     -fx-text-fill: -monet-on-secondary-container;
     -fx-background-color: -monet-secondary-container;
+    -fx-background-radius: 2;
     -fx-padding: 2;
     -fx-font-weight: normal;
     -fx-font-size: 12px;
 }
 
-.two-line-list-item > .first-line > .tags > .tag-warning {
+.two-line-list-item > .first-line .tag:warning {
     -fx-text-fill: -monet-on-error-container;
     -fx-background-color: -fixed-warning-tag-background;
-    -fx-padding: 2;
-    -fx-font-weight: normal;
-    -fx-font-size: 12px;
 }
 
 .two-line-item-second-large {
@@ -567,6 +572,36 @@
     -fx-text-fill: -monet-on-surface;
 }
 
+/*******************************************************************************
+ *                                                                             *
+ * Microsoft Login Dialog                                                      *
+ *                                                                             *
+ ******************************************************************************/
+
+.method-title {
+    -fx-text-fill: -monet-on-surface;
+    -fx-font-weight: bold;
+}
+
+.method-desc {
+    -fx-text-fill: -monet-outline;
+    -fx-font-size: 0.9em;
+    -fx-line-spacing: 2;
+    -fx-wrap-text: true;
+    -fx-text-alignment: center;
+}
+
+.code-box {
+    -fx-background-color: -monet-surface-variant;
+    -fx-background-radius: 6;
+    -fx-alignment: center;
+}
+
+.code-box .code-label {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -monet-primary;
+}
 
 /*******************************************************************************
  *                                                                             *
@@ -1049,10 +1084,6 @@
     -fx-font-size: 12;
 }
 
-.options-list-item > .line-component .line-component-container {
-    -fx-padding: 10 16 10 16;
-}
-
 .options-list-item .svg {
     -fx-fill: -monet-on-surface;
     -fx-border-color: -monet-outline-variant;
@@ -1090,6 +1121,10 @@
 
 .options-sublist-wrapper .expand-icon .svg {
     -fx-fill: -monet-on-surface-variant;
+}
+
+.options-sublist-wrapper .expand-icon .svg:disabled {
+    -fx-opacity: 0.4;
 }
 
 /*******************************************************************************
@@ -1877,6 +1912,14 @@
  * Line Component                                                              *
  *                                                                             *
  ******************************************************************************/
+
+.line-component .line-component-container {
+    -fx-padding: 10 16 10 16;
+}
+
+.line-component.no-padding .line-component-container {
+    -fx-padding: 0;
+}
 
 .line-component:large-title .title-label {
     -fx-font-size: 15px;
