@@ -123,8 +123,8 @@ public final class DownloadProviders {
                 return i18n("install.failed.downloading.timeout", uri);
             } else if (exception.getCause() instanceof ResponseCodeException) {
                 ResponseCodeException responseCodeException = (ResponseCodeException) exception.getCause();
-                if (I18n.hasKey("download.userCode." + responseCodeException.getResponseCode())) {
-                    return i18n("download.userCode." + responseCodeException.getResponseCode(), uri);
+                if (I18n.hasKey("download.code." + responseCodeException.getResponseCode())) {
+                    return i18n("download.code." + responseCodeException.getResponseCode(), uri);
                 } else {
                     return i18n("install.failed.downloading.detail", uri) + "\n" + StringUtils.getStackTrace(exception.getCause());
                 }

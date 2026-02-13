@@ -188,7 +188,7 @@ public abstract sealed class TerracottaState {
         @Override
         public void validate() throws JsonParseException, TolerableValidationException {
             if (code == null) {
-                throw new JsonParseException("userCode is null");
+                throw new JsonParseException("code is null");
             }
             if (profiles == null) {
                 throw new JsonParseException("profiles is null");
