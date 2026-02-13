@@ -272,11 +272,11 @@ public class WorldGameRulePage extends SpinnerPane implements WorldManagePage.Wo
                     errorDialog(i18n("world.game_rule.error.save"), "Failed to save game rule: %s".formatted(gameRule));
                     gameRules.put(gameRule, oldValue.toString());
                     ltb.setSelected(oldValue);
-                };
+                }
             });
         } else if (component instanceof EditableLinePane elp) {
             elp.valueProperty.addListener((o, oldValue, newValue) -> {
-                if (newValue.intValue() >= 0){
+                if (newValue.intValue() >= 0) {
                     String oldString = String.valueOf(oldValue);
                     gameRules.put(gameRule, newValue.toString());
                     if (!saveGameRules()) {
@@ -338,7 +338,7 @@ public class WorldGameRulePage extends SpinnerPane implements WorldManagePage.Wo
         return false;
     }
 
-    private static class EditableLinePane extends LinePane {
+    private static final class EditableLinePane extends LinePane {
         private final JFXTextField textField = new JFXTextField();
         private SimpleIntegerProperty valueProperty;
         private int value;
