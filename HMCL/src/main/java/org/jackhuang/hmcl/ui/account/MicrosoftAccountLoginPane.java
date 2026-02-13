@@ -8,11 +8,13 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
+import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.shape.FillRule;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.text.Text;
 import org.jackhuang.hmcl.auth.Account;
@@ -154,7 +156,7 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
                 // TODO: i18n
                 ArrayList<Node> content = new ArrayList<>();
                 content.add(new Text("点击“打开浏览器”按钮以在浏览器中打开登录页面，或者"));
-                content.add(new JFXHyperlink("复制链接", wait.url()));
+                content.add(new JFXHyperlink("点击此处复制链接", wait.url()));
                 content.add(new Text("并在浏览器中打开。"));
 
                 hintPane.setChildren(content.toArray(new Node[0]));
@@ -171,38 +173,28 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
         } else if (currentStep instanceof Step.WaitForScanQrCode wait) {
             loginButtonSpinner.setLoading(true);
 
-            var deviceTitle = new Label(i18n("account.methods.microsoft.methods.device"));
-            deviceTitle.getStyleClass().add("method-title");
+            var deviceHint = new HintPane(MessageDialogPane.MessageType.INFO);
+            deviceHint.setSegment(i18n("account.methods.microsoft.methods.device.hint", wait.verificationUri()));
 
-            var deviceDesc = new Label(i18n("account.methods.microsoft.methods.device.hint", wait.verificationUri()));
-            deviceDesc.getStyleClass().add("method-desc");
-
-            QrCode qrCode = QrCode.encodeText(wait.userCode(), QrCode.Ecc.MEDIUM);
+            QrCode qrCode = QrCode.encodeText(wait.verificationUri(), QrCode.Ecc.MEDIUM);
 
             var qrCodeView = new SVGPath();
             qrCodeView.fillProperty().bind(Themes.colorSchemeProperty().getPrimary());
-            qrCodeView.setFillRule(FillRule.EVEN_ODD);
             qrCodeView.setContent(QrCodeUtils.toSVGPath(qrCode));
-            qrCodeView.setScaleX(3);
-            qrCodeView.setScaleY(3);
+            qrCodeView.setScaleX(4);
+            qrCodeView.setScaleY(4);
 
             var lblCode = new Label(wait.userCode());
-            lblCode = new Label();
             lblCode.getStyleClass().add("code-label");
-            lblCode.setStyle("-fx-font-family: \"" + Lang.requireNonNullElse(config().getFontFamily(), FXUtils.DEFAULT_MONOSPACE_FONT) + "\"");
+            lblCode.setStyle("-fx-font-family: \"" + Lang.requireNonNullElse(config().getFontFamily(), FXUtils.DEFAULT_MONOSPACE_FONT) + "\";");
 
-            var codeBox = new HBox(10, lblCode);
+            var codeBox = new StackPane(lblCode);
             codeBox.getStyleClass().add("code-box");
+            codeBox.setCursor(Cursor.HAND);
+            FXUtils.onClicked(codeBox, () -> FXUtils.copyText(wait.userCode()));
+            codeBox.setMaxWidth(USE_PREF_SIZE);
 
-            FXUtils.setLimitWidth(codeBox, 170);
-            FXUtils.setLimitHeight(codeBox, 40);
-
-            var devicePanel = new VBox(10, qrCodeView, codeBox);
-            devicePanel.setAlignment(Pos.CENTER);
-            devicePanel.setPadding(new Insets(10));
-            devicePanel.setPrefWidth(280);
-
-            rootContainer.getChildren().add(devicePanel);
+            rootContainer.getChildren().addAll(deviceHint, new Group(qrCodeView), codeBox);
         } else if (currentStep instanceof Step.LoginFailed failed) {
             loginButtonSpinner.setLoading(true);
 

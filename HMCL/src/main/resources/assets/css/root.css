@@ -594,6 +594,7 @@
 .code-box {
     -fx-background-color: -monet-surface-variant;
     -fx-background-radius: 6;
+    -fx-padding: 0 10 0 10;
     -fx-alignment: center;
 }
 
