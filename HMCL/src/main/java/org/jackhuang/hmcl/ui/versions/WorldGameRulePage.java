@@ -239,6 +239,8 @@ public class WorldGameRulePage extends SpinnerPane implements WorldManagePage.Wo
         var ltb = new LineToggleButton();
 
         ltb.setTitle(translatedRule);
+        ltb.setSubtitle(rule);
+
         ltb.setDisable(isReadOnly);
         ltb.setSelected(value);
         bind(rule, ltb);
@@ -247,13 +249,15 @@ public class WorldGameRulePage extends SpinnerPane implements WorldManagePage.Wo
     }
 
     private @NotNull LineComponent generateIntRuleComponent(String rule, String translatedRule, int value) {
-        var ltb = new EditableLinePane(value, 200);
+        var elp = new EditableLinePane(value, 200);
 
-        ltb.setTitle(translatedRule);
-        ltb.setDisable(isReadOnly);
-        bind(rule, ltb);
+        elp.setTitle(translatedRule);
+        elp.setSubtitle(rule);
 
-        return ltb;
+        elp.setDisable(isReadOnly);
+        bind(rule, elp);
+
+        return elp;
     }
 
     private @NotNull LineComponent generateReadOnlyComponent(String translatedRule, String value) {
