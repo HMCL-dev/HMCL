@@ -13,8 +13,8 @@ import org.jackhuang.hmcl.ui.image.apng.PngChunkCode;
  */
 public class PngChunkMap {
     /**
-     * The userCode like IHDR, IPAL, IDAT. If the chunk userCode is non-standard,
-     * the UNKNOWN userCode will be used and the codeString will be set.
+     * The code like IHDR, IPAL, IDAT. If the chunk code is non-standard,
+     * the UNKNOWN code will be used and the codeString will be set.
      */
     public PngChunkCode code;
 
