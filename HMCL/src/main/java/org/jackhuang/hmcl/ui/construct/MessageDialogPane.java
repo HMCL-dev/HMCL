@@ -72,7 +72,7 @@ public final class MessageDialogPane extends HBox {
     private @Nullable ButtonBase cancelButton;
 
     public MessageDialogPane(@NotNull String text, @Nullable String title, @NotNull MessageType type) {
-        this.setSpacing(8);
+        this.setSpacing(16);
         this.getStyleClass().add("jfx-dialog-layout");
 
         Label graphic = new Label();
