@@ -545,6 +545,12 @@ public final class StringUtils {
         return builder.toString();
     }
 
+    public static String escapeXmlAttribute(String str) {
+        return str
+                .replace("&", "&amp;")
+                .replace("\"", "&quot;");
+    }
+
     public static String repeats(char ch, int repeat) {
         StringBuilder result = new StringBuilder();
         for (int i = 0; i < repeat; i++) {

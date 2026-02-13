@@ -10,13 +10,11 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Group;
-import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.SVGPath;
-import javafx.scene.text.Text;
 import org.jackhuang.hmcl.auth.Account;
 import org.jackhuang.hmcl.auth.AuthInfo;
 import org.jackhuang.hmcl.auth.AuthenticationException;
@@ -33,8 +31,8 @@ import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.QrCodeUtils;
+import org.jackhuang.hmcl.util.StringUtils;
 
-import java.util.ArrayList;
 import java.util.concurrent.CancellationException;
 import java.util.function.Consumer;
 
@@ -144,7 +142,7 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
                     .whenComplete(Schedulers.javafx(), this::onLoginCompleted)
                     .executor(true);
         } else if (currentStep instanceof Step.WaitForOpenBrowser wait) {
-            btnLogin.setText("打开浏览器");
+            btnLogin.setText(i18n("account.methods.microsoft.methods.browser.open"));
             btnLogin.setOnAction(e -> {
                 FXUtils.openLink(wait.url());
                 loginButtonSpinner.setLoading(true);
@@ -152,15 +150,7 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
             loginButtonSpinner.setLoading(false);
 
             HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
-            {
-                // TODO: i18n
-                ArrayList<Node> content = new ArrayList<>();
-                content.add(new Text("点击“打开浏览器”按钮以在浏览器中打开登录页面，或者"));
-                content.add(new JFXHyperlink("点击此处复制链接", wait.url()));
-                content.add(new Text("并在浏览器中打开。"));
-
-                hintPane.setChildren(content.toArray(new Node[0]));
-            }
+            hintPane.setSegment(i18n("account.methods.microsoft.methods.browser.hint", StringUtils.escapeXmlAttribute(wait.url()), wait.url()));
 
             rootContainer.getChildren().add(hintPane);
         } else if (currentStep instanceof Step.StartDeviceCodeLogin) {
@@ -174,7 +164,11 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
             loginButtonSpinner.setLoading(true);
 
             var deviceHint = new HintPane(MessageDialogPane.MessageType.INFO);
-            deviceHint.setSegment(i18n("account.methods.microsoft.methods.device.hint", wait.verificationUri()));
+            deviceHint.setSegment(i18n("account.methods.microsoft.methods.device.hint",
+                    StringUtils.escapeXmlAttribute(wait.verificationUri()),
+                    wait.verificationUri(),
+                    wait.userCode()
+            ));
 
             var qrCode = new SVGPath();
             qrCode.fillProperty().bind(Themes.colorSchemeProperty().getPrimary());
@@ -201,16 +195,16 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
             loginButtonSpinner.showSpinner();
         }
 
-        HBox linkBox = new HBox(15);
-        linkBox.setAlignment(Pos.CENTER_RIGHT);
+        HBox linkBox = new HBox(8);
+        linkBox.setAlignment(Pos.CENTER_LEFT);
         linkBox.setPadding(new Insets(5, 0, 0, 0));
 
         if (currentStep instanceof Step.Init || currentStep instanceof Step.StartAuthorizationCodeLogin || currentStep instanceof Step.WaitForOpenBrowser) {
-            JFXHyperlink useQrCode = new JFXHyperlink("使用二维码登录"); // TODO: i18n
+            JFXHyperlink useQrCode = new JFXHyperlink(i18n("account.methods.microsoft.methods.device"));
             useQrCode.setOnAction(e -> this.step.set(new Step.StartDeviceCodeLogin()));
             linkBox.getChildren().add(useQrCode);
         } else if (currentStep instanceof Step.StartDeviceCodeLogin || currentStep instanceof Step.WaitForScanQrCode) {
-            JFXHyperlink userBrowser = new JFXHyperlink("使用浏览器登录"); // TODO: i18n
+            JFXHyperlink userBrowser = new JFXHyperlink(i18n("account.methods.microsoft.methods.browser"));
             userBrowser.setOnAction(e -> this.step.set(new Step.StartAuthorizationCodeLogin()));
             linkBox.getChildren().add(userBrowser);
         }
