@@ -6,6 +6,7 @@ import io.nayuki.qrcodegen.QrCode;
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.css.PseudoClass;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
@@ -70,12 +71,12 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
         this.cancelCallback = onCancel;
 
         getStyleClass().add("microsoft-login-dialog");
-        if (!bodyonly) {
+        if (bodyonly) {
+            this.pseudoClassStateChanged(PseudoClass.getPseudoClass("bodyonly"), true);
+        } else {
             Label heading = new Label(accountToRelogin != null ? i18n("account.login.refresh") : i18n("account.create.microsoft"));
             heading.getStyleClass().add("header-label");
             setHeading(heading);
-        } else {
-            setStyle("-fx-padding: 0px 0px 0px 0px;");
         }
 
         onEscPressed(this, this::onCancel);

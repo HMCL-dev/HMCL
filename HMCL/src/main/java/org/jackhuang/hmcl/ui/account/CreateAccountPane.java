@@ -279,11 +279,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
         }
 
         if (factory == Accounts.FACTORY_MICROSOFT) {
-            VBox vbox = new VBox(8);
-            detailsPane = vbox;
-            HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
-            hintPane.setText(i18n("account.methods.microsoft.hint"));
-            vbox.getChildren().addAll(new MicrosoftAccountLoginPane(true));
+            detailsPane = new MicrosoftAccountLoginPane(true);
             btnAccept.setOnAction(e -> {
                 fireEvent(new DialogCloseEvent());
                 Controllers.dialog(new MicrosoftAccountLoginPane());
