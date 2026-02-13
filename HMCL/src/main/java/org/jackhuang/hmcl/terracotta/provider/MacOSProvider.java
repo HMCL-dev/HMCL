@@ -81,7 +81,7 @@ public final class MacOSProvider extends AbstractTerracottaProvider {
 
                 if (process.getExitCode() != 0) {
                     throw new IllegalStateException(String.format(
-                            "Cannot install Terracotta %s: system installer exited with code %d", movedInstaller, process.getExitCode()
+                            "Cannot install Terracotta %s: system installer exited with userCode %d", movedInstaller, process.getExitCode()
                     ));
                 }
             });

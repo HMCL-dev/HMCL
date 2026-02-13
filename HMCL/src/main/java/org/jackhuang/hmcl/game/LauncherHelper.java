@@ -299,8 +299,8 @@ public final class LauncherHelper {
                                         message = i18n("install.failed.downloading.timeout", uri);
                                     } else if (ex.getCause() instanceof ResponseCodeException) {
                                         ResponseCodeException responseCodeException = (ResponseCodeException) ex.getCause();
-                                        if (I18n.hasKey("download.code." + responseCodeException.getResponseCode())) {
-                                            message = i18n("download.code." + responseCodeException.getResponseCode(), uri);
+                                        if (I18n.hasKey("download.userCode." + responseCodeException.getResponseCode())) {
+                                            message = i18n("download.userCode." + responseCodeException.getResponseCode(), uri);
                                         } else {
                                             message = i18n("install.failed.downloading.detail", uri) + "\n" + StringUtils.getStackTrace(ex.getCause());
                                         }
@@ -901,7 +901,7 @@ public final class LauncherHelper {
         @Override
         public void onExit(int exitCode, ExitType exitType) {
             if (showLogs) {
-                logBuffer.add(new Log(String.format("[HMCL ProcessListener] Minecraft exit with code %d(0x%x), type is %s.", exitCode, exitCode, exitType), Log4jLevel.INFO));
+                logBuffer.add(new Log(String.format("[HMCL ProcessListener] Minecraft exit with userCode %d(0x%x), type is %s.", exitCode, exitCode, exitType), Log4jLevel.INFO));
                 submitLogThread.interrupt();
                 try {
                     submitLogThread.join();

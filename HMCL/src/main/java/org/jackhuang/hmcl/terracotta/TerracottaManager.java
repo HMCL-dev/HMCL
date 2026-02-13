@@ -268,7 +268,7 @@ public final class TerracottaManager {
                     if (exitTime == -1) {
                         exitTime = System.currentTimeMillis();
                     } else if (System.currentTimeMillis() - exitTime >= 10000) {
-                        throw new IllegalStateException(String.format("Process has exited for 10s, code = %s", process.getExitCode()));
+                        throw new IllegalStateException(String.format("Process has exited for 10s, userCode = %s", process.getExitCode()));
                     }
                 }
             }

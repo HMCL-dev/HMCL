@@ -30,7 +30,7 @@ import java.util.zip.ZipException;
  * ideal to return an int but the original ``fill`` method is void. Then there
  * is a change to the ``read()`` method and that references a number of private
  * fields. In short, monkeying around in an attempt to reuse the original seemed
- * more expensive than just copying the original code.
+ * more expensive than just copying the original userCode.
  * <p>
  * The original class documentation states:
  * "This class implements a stream filter for uncompressing data in the
@@ -129,19 +129,19 @@ public class PartialInflaterInputStream extends FilterInputStream {
     }
 
     /**
-     * Reads uncompressed data into an array of bytes. If <code>len</code> is not
+     * Reads uncompressed data into an array of bytes. If <userCode>len</userCode> is not
      * zero, the method will block until some input can be decompressed; otherwise,
-     * no bytes are read and <code>0</code> is returned.
+     * no bytes are read and <userCode>0</userCode> is returned.
      *
      * @param b   the buffer into which the data is read
-     * @param off the start offset in the destination array <code>b</code>
+     * @param off the start offset in the destination array <userCode>b</userCode>
      * @param len the maximum number of bytes read
      * @return the actual number of bytes read, or -1 if the end of the
      * compressed input is reached or a preset dictionary is needed
-     * @throws NullPointerException      If <code>b</code> is <code>null</code>.
-     * @throws IndexOutOfBoundsException If <code>off</code> is negative,
-     *                                   <code>len</code> is negative, or <code>len</code> is greater than
-     *                                   <code>b.length - off</code>
+     * @throws NullPointerException      If <userCode>b</userCode> is <userCode>null</userCode>.
+     * @throws IndexOutOfBoundsException If <userCode>off</userCode> is negative,
+     *                                   <userCode>len</userCode> is negative, or <userCode>len</userCode> is greater than
+     *                                   <userCode>b.length - off</userCode>
      * @throws ZipException              if a ZIP format error has occurred
      * @throws IOException               if an I/O error has occurred
      */
@@ -263,13 +263,13 @@ public class PartialInflaterInputStream extends FilterInputStream {
     }
 
     /**
-     * Tests if this input stream supports the <code>mark</code> and
-     * <code>reset</code> methods. The <code>markSupported</code>
-     * method of <code>InflaterInputStream</code> returns
-     * <code>false</code>.
+     * Tests if this input stream supports the <userCode>mark</userCode> and
+     * <userCode>reset</userCode> methods. The <userCode>markSupported</userCode>
+     * method of <userCode>InflaterInputStream</userCode> returns
+     * <userCode>false</userCode>.
      *
-     * @return a <code>boolean</code> indicating if this stream type supports
-     * the <code>mark</code> and <code>reset</code> methods.
+     * @return a <userCode>boolean</userCode> indicating if this stream type supports
+     * the <userCode>mark</userCode> and <userCode>reset</userCode> methods.
      * @see InputStream#mark(int)
      * @see InputStream#reset()
      */
@@ -280,7 +280,7 @@ public class PartialInflaterInputStream extends FilterInputStream {
     /**
      * Marks the current position in this input stream.
      *
-     * <p> The <code>mark</code> method of <code>InflaterInputStream</code>
+     * <p> The <userCode>mark</userCode> method of <userCode>InflaterInputStream</userCode>
      * does nothing.
      *
      * @param readlimit the maximum limit of bytes that can be read before
@@ -292,11 +292,11 @@ public class PartialInflaterInputStream extends FilterInputStream {
 
     /**
      * Repositions this stream to the position at the time the
-     * <code>mark</code> method was last called on this input stream.
+     * <userCode>mark</userCode> method was last called on this input stream.
      *
-     * <p> The method <code>reset</code> for class
-     * <code>InflaterInputStream</code> does nothing except throw an
-     * <code>IOException</code>.
+     * <p> The method <userCode>reset</userCode> for class
+     * <userCode>InflaterInputStream</userCode> does nothing except throw an
+     * <userCode>IOException</userCode>.
      *
      * @throws IOException if this method is invoked.
      * @see InputStream#mark(int)

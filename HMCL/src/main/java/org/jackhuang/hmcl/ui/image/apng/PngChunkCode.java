@@ -4,7 +4,7 @@
 package org.jackhuang.hmcl.ui.image.apng;
 
 /**
- * One four-letter (32-byte) code identifying the type of a PNG chunk.
+ * One four-letter (32-byte) userCode identifying the type of a PNG chunk.
  * <p>
  * Common chunk codes are defined as constants that can be used in a switch statement.
  * Users can add their own chunk codes separately.

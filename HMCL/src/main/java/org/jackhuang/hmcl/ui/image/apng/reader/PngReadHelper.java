@@ -103,7 +103,7 @@ public class PngReadHelper {
 
             // If there are less than 8 bits per pixel, then ensure the last byte of the row is padded.
             int bytesPerRow = bitsPerRow / 8 + ((0 == (bitsPerRow % 8)) ? 0 : (8 - bitsPerRow % 8));
-            return 1 + bytesPerRow; // need 1 byte for filter code
+            return 1 + bytesPerRow; // need 1 byte for filter userCode
         }
     }
 

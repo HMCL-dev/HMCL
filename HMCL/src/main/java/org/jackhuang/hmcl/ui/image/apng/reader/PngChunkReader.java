@@ -122,7 +122,7 @@ public interface PngChunkReader<ResultT> extends PngReader<ResultT> {
     void readFrameImageDataChunk(PngSource source, int dataLength) throws IOException, PngException;
 
     /**
-     * Give subclasses the opportunity to process a chunk code that was not recognised.
+     * Give subclasses the opportunity to process a chunk userCode that was not recognised.
      *
      * @param code         chunk type as integer.
      * @param source       of PNG data, positioned to read the data bytes.

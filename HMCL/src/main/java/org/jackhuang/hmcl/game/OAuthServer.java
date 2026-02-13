@@ -93,9 +93,9 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
         String parameters = session.getQueryParameterString();
 
         Map<String, String> query = mapOf(NetworkUtils.parseQuery(parameters));
-        if (query.containsKey("code")) {
+        if (query.containsKey("userCode")) {
             idToken = query.get("id_token");
-            future.complete(query.get("code"));
+            future.complete(query.get("userCode"));
         } else {
             LOG.warning("Error: " + parameters);
             future.completeExceptionally(new AuthenticationException("failed to authenticate"));

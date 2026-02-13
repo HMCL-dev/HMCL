@@ -97,7 +97,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
                     } else if (fileName.endsWith(".zip") || fileName.endsWith(".tar.gz")) {
                         onInstallArchive(file);
                     } else {
-                        throw new AssertionError("Unreachable code");
+                        throw new AssertionError("Unreachable userCode");
                     }
                 }
             }

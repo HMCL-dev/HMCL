@@ -78,7 +78,7 @@ public class JFXComboBox<T> extends ComboBox<T> {
             }
         });
 
-        // had to refactor the code out of the skin class to allow
+        // had to refactor the userCode out of the skin class to allow
         // customization of the button cell
         this.setButtonCell(new ListCell<T>() {
             {
