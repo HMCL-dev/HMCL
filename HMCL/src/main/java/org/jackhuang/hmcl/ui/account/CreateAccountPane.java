@@ -273,9 +273,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             btnAccept.disableProperty().unbind();
             detailsContainer.getChildren().remove(detailsPane);
             lblErrorMessage.setText("");
-            lblErrorMessage.setVisible(true);
-            actions.setVisible(true);
-            actions.setManaged(true);
+            setActions(lblErrorMessage, actions);
         }
 
         if (factory == Accounts.FACTORY_MICROSOFT) {
@@ -284,12 +282,11 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
                 fireEvent(new DialogCloseEvent());
                 Controllers.dialog(new MicrosoftAccountLoginPane());
             });
-            actions.setManaged(false);
-            actions.setVisible(false);
-            btnAccept.setDisable(false);
+            setActions();
         } else {
             detailsPane = new AccountDetailsInputPane(factory, btnAccept::fire);
             btnAccept.disableProperty().bind(((AccountDetailsInputPane) detailsPane).validProperty().not());
+            setActions(lblErrorMessage, actions);
         }
 
         detailsContainer.getChildren().add(detailsPane);
