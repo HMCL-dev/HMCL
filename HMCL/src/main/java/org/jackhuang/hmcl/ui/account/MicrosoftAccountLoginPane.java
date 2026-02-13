@@ -194,6 +194,7 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
 
             HintPane errHintPane = new HintPane(MessageDialogPane.MessageType.ERROR);
             errHintPane.setText(failed.message());
+            rootContainer.getChildren().add(errHintPane);
         }
 
         HBox linkBox = new HBox(8);
