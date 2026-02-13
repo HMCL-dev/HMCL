@@ -132,7 +132,7 @@ public final class Main {
             ResourceBundle resourceBundle = BootProperties.getResourceBundle();
             String warningTitle = resourceBundle.getString("boot.message.warning");
             String warningMessage = resourceBundle.getString("boot.wine_warning");
-            System.err.println("HMCL is running under Wine or its distributions!");
+            System.err.println("HMCL is running under Wine or its distributions! It's not recommended!");
 
             int result = JOptionPane.showOptionDialog(null, warningMessage, warningTitle, JOptionPane.OK_CANCEL_OPTION,
                     JOptionPane.WARNING_MESSAGE, null, null, null);
