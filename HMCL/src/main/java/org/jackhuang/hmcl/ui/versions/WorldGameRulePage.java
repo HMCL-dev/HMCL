@@ -46,7 +46,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
  */
 public class WorldGameRulePage extends SpinnerPane implements WorldManagePage.WorldRefreshable {
 
-    // 注意： 若采用驼峰式命名法的在i18n中的键名为snake case版本的。
+    // 注意： 若采用驼峰式命名法的游戏规则名，在i18n中的键名也为snake case版本的游戏规则名。
     // 代码会判断 游戏规则名 是否为驼峰式命名，若是，这直接将其作为键名；若不是，则会使用index + 1的 游戏规则名 作为键名
     // 若修改了名称， 如useLocatorBar -> locatorBar， 则两个名称都要写进去
     static final List<String> PLAYER = List.of(
