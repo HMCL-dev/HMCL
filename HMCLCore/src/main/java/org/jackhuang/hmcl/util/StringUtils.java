@@ -28,6 +28,8 @@ import java.util.regex.Pattern;
  */
 public final class StringUtils {
 
+    private static final Pattern UPPER_CASE_PATTERN = Pattern.compile("[A-Z]");
+
     private StringUtils() {
     }
 
@@ -108,6 +110,13 @@ public final class StringUtils {
             return str;
 
         return Character.toUpperCase(str.charAt(0)) + str.substring(1);
+    }
+
+    public static boolean containsUpperCase(String str) {
+        if (str == null || str.isEmpty()) {
+            return false;
+        }
+        return UPPER_CASE_PATTERN.matcher(str).find();
     }
 
     public static String substringBeforeLast(String str, char delimiter) {

@@ -33,7 +33,9 @@ import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -103,6 +105,20 @@ public final class World {
                 data.get("Version") instanceof CompoundTag versionTag &&
                 versionTag.get("Name") instanceof StringTag nameTag) {
             return GameVersionNumber.asGameVersion(nameTag.getValue());
+        }
+        return null;
+    }
+
+    public @Nullable Map<String, String> getGameRules() {
+        if (levelData.get("Data") instanceof CompoundTag data &&
+                data.get("GameRules") instanceof CompoundTag gameRules) {
+            Map<String, String> gameRuleMap = new HashMap<>();
+            gameRules.getValue().forEach((rule, value) -> {
+                if (value instanceof StringTag stringTag) {
+                    gameRuleMap.put(rule, stringTag.getValue());
+                }
+            });
+            return gameRuleMap;
         }
         return null;
     }
