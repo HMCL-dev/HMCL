@@ -141,6 +141,13 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
             browserTaskExecutor = Task.supplyAsync(() -> Accounts.FACTORY_MICROSOFT.create(null, null, null, null, OAuth.GrantFlow.AUTHORIZATION_CODE))
                     .whenComplete(Schedulers.javafx(), this::onLoginCompleted)
                     .executor(true);
+        } else if (currentStep instanceof Step.StartDeviceCodeLogin) {
+            loginButtonSpinner.setLoading(true);
+            cancelAllTasks();
+
+            deviceTaskExecutor = Task.supplyAsync(() -> Accounts.FACTORY_MICROSOFT.create(null, null, null, null, OAuth.GrantFlow.DEVICE))
+                    .whenComplete(Schedulers.javafx(), this::onLoginCompleted)
+                    .executor(true);
         } else if (currentStep instanceof Step.WaitForOpenBrowser wait) {
             btnLogin.setText(i18n("account.methods.microsoft.methods.browser.open"));
             btnLogin.setOnAction(e -> {
@@ -153,13 +160,6 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
             hintPane.setSegment(i18n("account.methods.microsoft.methods.browser.hint", StringUtils.escapeXmlAttribute(wait.url()), wait.url()));
 
             rootContainer.getChildren().add(hintPane);
-        } else if (currentStep instanceof Step.StartDeviceCodeLogin) {
-            loginButtonSpinner.setLoading(true);
-            cancelAllTasks();
-
-            deviceTaskExecutor = Task.supplyAsync(() -> Accounts.FACTORY_MICROSOFT.create(null, null, null, null, OAuth.GrantFlow.DEVICE))
-                    .whenComplete(Schedulers.javafx(), this::onLoginCompleted)
-                    .executor(true);
         } else if (currentStep instanceof Step.WaitForScanQrCode wait) {
             loginButtonSpinner.setLoading(true);
 
