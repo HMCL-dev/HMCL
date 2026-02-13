@@ -156,7 +156,10 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
             loginButtonSpinner.setLoading(false);
 
             HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
-            hintPane.setSegment(i18n("account.methods.microsoft.methods.browser.hint", StringUtils.escapeXmlAttribute(wait.url()), wait.url()));
+            hintPane.setSegment(
+                    i18n("account.methods.microsoft.methods.browser.hint", StringUtils.escapeXmlAttribute(wait.url()), wait.url()),
+                    FXUtils::copyText
+            );
 
             rootContainer.getChildren().add(hintPane);
         } else if (currentStep instanceof Step.WaitForScanQrCode wait) {
