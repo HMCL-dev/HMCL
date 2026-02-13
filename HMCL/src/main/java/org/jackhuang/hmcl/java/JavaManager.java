@@ -226,7 +226,7 @@ public final class JavaManager {
                 try {
                     removeJava(java);
                 } catch (InterruptedException e) {
-                    throw new AssertionError("Unreachable userCode", e);
+                    throw new AssertionError("Unreachable code", e);
                 }
             });
 
