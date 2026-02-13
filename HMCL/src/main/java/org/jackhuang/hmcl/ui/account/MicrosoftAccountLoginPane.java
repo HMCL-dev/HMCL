@@ -176,13 +176,11 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
             var deviceHint = new HintPane(MessageDialogPane.MessageType.INFO);
             deviceHint.setSegment(i18n("account.methods.microsoft.methods.device.hint", wait.verificationUri()));
 
-            QrCode qrCode = QrCode.encodeText(wait.verificationUri(), QrCode.Ecc.MEDIUM);
-
-            var qrCodeView = new SVGPath();
-            qrCodeView.fillProperty().bind(Themes.colorSchemeProperty().getPrimary());
-            qrCodeView.setContent(QrCodeUtils.toSVGPath(qrCode));
-            qrCodeView.setScaleX(4);
-            qrCodeView.setScaleY(4);
+            var qrCode = new SVGPath();
+            qrCode.fillProperty().bind(Themes.colorSchemeProperty().getPrimary());
+            qrCode.setContent(QrCodeUtils.toSVGPath(QrCode.encodeText(wait.verificationUri(), QrCode.Ecc.MEDIUM)));
+            qrCode.setScaleX(4);
+            qrCode.setScaleY(4);
 
             var lblCode = new Label(wait.userCode());
             lblCode.getStyleClass().add("code-label");
@@ -194,7 +192,7 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
             FXUtils.onClicked(codeBox, () -> FXUtils.copyText(wait.userCode()));
             codeBox.setMaxWidth(USE_PREF_SIZE);
 
-            rootContainer.getChildren().addAll(deviceHint, new Group(qrCodeView), codeBox);
+            rootContainer.getChildren().addAll(deviceHint, new Group(qrCode), codeBox);
         } else if (currentStep instanceof Step.LoginFailed failed) {
             loginButtonSpinner.setLoading(true);
 
