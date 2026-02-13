@@ -548,7 +548,7 @@ public final class FXUtils {
                     if (exitCode == 0 || (exitCode == 1 && OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS))
                         return;
                     else
-                        LOG.warning("Open " + path + " failed with userCode " + exitCode);
+                        LOG.warning("Open " + path + " failed with code " + exitCode);
                 } catch (Throwable e) {
                     LOG.warning("Unable to open " + path + " by executing " + openCommand, e);
                 }
@@ -593,7 +593,7 @@ public final class FXUtils {
                     if (exitCode == 0 || (exitCode == 1 && OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS))
                         return;
                     else
-                        LOG.warning("Show " + path + " in explorer failed with userCode " + exitCode);
+                        LOG.warning("Show " + path + " in explorer failed with code " + exitCode);
                 } catch (Throwable e) {
                     LOG.warning("Unable to show " + path + " in explorer", e);
                 }

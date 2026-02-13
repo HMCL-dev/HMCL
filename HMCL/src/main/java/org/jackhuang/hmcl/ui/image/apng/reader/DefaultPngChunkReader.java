@@ -96,7 +96,7 @@ public class DefaultPngChunkReader<ResultT> implements PngChunkReader<ResultT> {
     @Override
     public void processChunkEnd(int code, int dataPosition, int dataLength, int chunkChecksum) throws PngException {
         processor.processChunkMapItem(new PngChunkMap(PngChunkCode.from(code), dataPosition, dataLength, chunkChecksum));
-        //container.chunks.add(new PngChunkMap(PngChunkCode.from(userCode), dataLength, dataPosition, chunkChecksum));
+        //container.chunks.add(new PngChunkMap(PngChunkCode.from(code), dataLength, dataPosition, chunkChecksum));
     }
 
     @Override
