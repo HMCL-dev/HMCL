@@ -275,7 +275,7 @@ public class CreateAccountPane extends JFXDialogLayout implements DialogAware {
             lblErrorMessage.setText("");
             lblErrorMessage.setVisible(true);
             actions.setVisible(true);
-            actions.setVisible(true);
+            actions.setManaged(true);
         }
 
         if (factory == Accounts.FACTORY_MICROSOFT) {
