@@ -2,6 +2,7 @@ package org.jackhuang.hmcl.ui.account;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
+import com.jfoenix.controls.JFXSpinner;
 import io.nayuki.qrcodegen.QrCode;
 import javafx.application.Platform;
 import javafx.beans.property.ObjectProperty;
@@ -143,12 +144,16 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
             loginButtonSpinner.setLoading(true);
             cancelAllTasks();
 
+            rootContainer.getChildren().add(new JFXSpinner());
+
             browserTaskExecutor = Task.supplyAsync(() -> Accounts.FACTORY_MICROSOFT.create(null, null, null, null, OAuth.GrantFlow.AUTHORIZATION_CODE))
                     .whenComplete(Schedulers.javafx(), this::onLoginCompleted)
                     .executor(true);
         } else if (currentStep instanceof Step.StartDeviceCodeLogin) {
             loginButtonSpinner.setLoading(true);
             cancelAllTasks();
+
+            rootContainer.getChildren().add(new JFXSpinner());
 
             deviceTaskExecutor = Task.supplyAsync(() -> Accounts.FACTORY_MICROSOFT.create(null, null, null, null, OAuth.GrantFlow.DEVICE))
                     .whenComplete(Schedulers.javafx(), this::onLoginCompleted)
