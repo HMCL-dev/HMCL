@@ -111,8 +111,8 @@ public final class ImageUtils {
             return image.toImage(snapshotParameters);
         }
 
-        double scaleX = requestedWidth / image.getWidth();
-        double scaleY = requestedHeight / image.getHeight();
+        double scaleX = requestedWidth / image.getScaledWidth();
+        double scaleY = requestedHeight / image.getScaledHeight();
 
         if (preserveRatio || scaleX == scaleY) {
             double scale = Math.min(scaleX, scaleY);
