@@ -92,12 +92,12 @@ public class SpinnerPane extends Control {
             loading = new BooleanPropertyBase() {
                 @Override
                 public Object getBean() {
-                    return null;
+                    return SpinnerPane.this;
                 }
 
                 @Override
                 public String getName() {
-                    return "";
+                    return "loading";
                 }
 
                 @Override
