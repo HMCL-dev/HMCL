@@ -46,9 +46,11 @@ public final class EntryPoint {
         System.getProperties().putIfAbsent("javafx.autoproxy.disable", "true");
         System.getProperties().putIfAbsent("http.agent", "HMCL/" + Metadata.VERSION);
 
-        createHMCLDirectories();
         LOG.start(Metadata.HMCL_CURRENT_DIRECTORY.resolve("logs"));
+        
+        checkOperatingSystem();
 
+        createHMCLDirectories();
         setupJavaFXVMOptions();
 
         if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
@@ -220,6 +222,24 @@ public final class EntryPoint {
         } catch (Exception e) {
             LOG.warning("JavaFX is incomplete or not found", e);
             showErrorAndExit(i18n("fatal.javafx.incomplete"));
+        }
+    }
+
+    private static void checkOperatingSystem() {
+        String osName = System.getProperty("os.name", "").toLowerCase(java.util.Locale.ROOT);
+
+        String errorMessageKey = null;
+        if (!osName.contains("haiku")) {
+            errorMessageKey = "fatal.unsupported_platform.haiku";
+        } else if (osName.contains("os/2") || osName.contains("os2")) {
+            errorMessageKey = "fatal.unsupported_platform.os2";
+        }
+
+        if (errorMessageKey != null) {
+            SwingUtils.initLookAndFeel();
+            LOG.error("Unsupported OS: " + System.getProperty("os.name", ""));
+            SwingUtils.showErrorDialog(i18n(errorMessageKey), i18n("message.error"));
+            exit(1);
         }
     }
 
