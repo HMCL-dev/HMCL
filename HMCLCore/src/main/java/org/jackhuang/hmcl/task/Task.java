@@ -796,7 +796,7 @@ public abstract class Task<T> {
                 if (isDependentsSucceeded() != (Task.this.getException() == null))
                     throw new AssertionError("When whenComplete succeeded, Task.exception must be null.", Task.this.getException());
 
-                if (isDependenciesSucceeded()) {
+                if (isDependentsSucceeded()) {
                     setResult(Result.success(Task.this.getResult()));
                 } else {
                     setSignificance(TaskSignificance.MINOR);

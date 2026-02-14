@@ -196,7 +196,7 @@ public final class JavaDownloadDialog extends StackPane {
 
                         if (exceptionToDisplay != null) {
                             LOG.warning("Failed to download java", exceptionToDisplay);
-                            Controllers.dialog(DownloadProviders.localizeErrorMessage(exception), i18n("install.failed"));
+                            Controllers.dialog(DownloadProviders.localizeErrorMessage(exceptionToDisplay), i18n("install.failed"));
                         }
                     });
 
