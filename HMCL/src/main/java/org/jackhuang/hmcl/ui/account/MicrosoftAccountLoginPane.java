@@ -184,7 +184,7 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
 
             var qrCode = new SVGPath();
             qrCode.fillProperty().bind(Themes.colorSchemeProperty().getPrimary());
-            qrCode.setContent(QrCodeUtils.toSVGPath(QrCode.encodeText(wait.verificationUri(), QrCode.Ecc.MEDIUM)));
+            qrCode.setContent(QrCodeUtils.toSVGPath(QrCode.encodeText(wait.verificationUri() + "?otc=" + wait.userCode(), QrCode.Ecc.MEDIUM)));
             qrCode.setScaleX(3);
             qrCode.setScaleY(3);
 
