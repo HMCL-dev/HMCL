@@ -200,8 +200,9 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
 
             rootContainer.getChildren().addAll(deviceHint, new Group(qrCode), codeBox);
         } else if (currentStep instanceof Step.LoginFailed failed) {
+            btnLogin.setOnAction(e -> this.step.set(new Step.StartAuthorizationCodeLogin()));
             loginButtonSpinner.setLoading(false);
-            btnLogin.setDisable(true);
+            cancelAllTasks();
 
             HintPane errHintPane = new HintPane(MessageDialogPane.MessageType.ERROR);
             errHintPane.setText(failed.message());
