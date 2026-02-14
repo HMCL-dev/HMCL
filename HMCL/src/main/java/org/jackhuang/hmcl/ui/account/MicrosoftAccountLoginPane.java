@@ -116,7 +116,6 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
     private void onStep(Step currentStep) {
         VBox rootContainer = new VBox(10);
         setBody(rootContainer);
-        rootContainer.setPadding(new Insets(5, 0, 0, 0));
         rootContainer.setAlignment(Pos.TOP_CENTER);
 
         if (Accounts.OAUTH_CALLBACK.getClientId().isEmpty()) {
@@ -206,7 +205,6 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
 
         var linkBox = new FlowPane(8, 8);
         linkBox.setAlignment(Pos.CENTER_LEFT);
-        linkBox.setPadding(new Insets(5, 0, 0, 0));
         linkBox.setPrefWrapLength(500);
 
         if (currentStep instanceof Step.Init || currentStep instanceof Step.StartAuthorizationCodeLogin || currentStep instanceof Step.WaitForOpenBrowser) {
