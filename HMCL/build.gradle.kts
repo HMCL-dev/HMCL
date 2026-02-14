@@ -61,6 +61,7 @@ dependencies {
     implementation(libs.fxsvgimage)
     implementation(libs.java.info)
     implementation(libs.monet.fx)
+    implementation(libs.nayuki.qrcodegen)
 
     if (launcherExe.isBlank()) {
         implementation(libs.hmclauncher)
