@@ -225,10 +225,8 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
         profileLink.setExternalLink("https://account.live.com/editprof.aspx");
         JFXHyperlink purchaseLink = new JFXHyperlink(i18n("account.methods.microsoft.purchase"));
         purchaseLink.setExternalLink(YggdrasilService.PURCHASE_URL);
-        JFXHyperlink forgotLink = new JFXHyperlink(i18n("account.methods.forgot_password"));
-        forgotLink.setExternalLink("https://account.live.com/ResetPassword.aspx");
 
-        linkBox.getChildren().addAll(profileLink, purchaseLink, forgotLink);
+        linkBox.getChildren().addAll(profileLink, purchaseLink);
         rootContainer.getChildren().add(linkBox);
 
         setBody(rootContainer);
