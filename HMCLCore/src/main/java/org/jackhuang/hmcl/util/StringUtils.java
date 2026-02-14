@@ -548,7 +548,10 @@ public final class StringUtils {
     public static String escapeXmlAttribute(String str) {
         return str
                 .replace("&", "&amp;")
-                .replace("\"", "&quot;");
+                .replace("\"", "&quot;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("'", "&apos;");
     }
 
     public static String repeats(char ch, int repeat) {

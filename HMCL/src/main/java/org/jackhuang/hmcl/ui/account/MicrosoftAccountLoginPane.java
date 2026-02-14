@@ -79,6 +79,8 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
             setHeading(heading);
         }
 
+        this.setMaxWidth(600);
+
         onEscPressed(this, this::onCancel);
 
         btnLogin = new JFXButton(i18n("account.login"));
