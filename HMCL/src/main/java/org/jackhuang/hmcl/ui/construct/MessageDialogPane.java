@@ -31,16 +31,12 @@ import javafx.scene.text.TextFlow;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
-import org.jackhuang.hmcl.util.Lang;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
-import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public final class MessageDialogPane extends HBox {
@@ -216,36 +212,6 @@ public final class MessageDialogPane extends HBox {
             dialog.addButton(actionButton);
 
             addCancel(cancel);
-            return this;
-        }
-
-        public Builder cancelOnTimeout(long timeoutMs) {
-            if (dialog.getCancelButton() == null) {
-                throw new IllegalStateException("Call ok/yesOrNo/actionOrCancel before calling cancelOnTimeout");
-            }
-
-            ButtonBase cancelButton = dialog.getCancelButton();
-            String originalText = cancelButton.getText();
-
-            Timer timer = Lang.getTimer();
-            timer.scheduleAtFixedRate(new TimerTask() {
-                long timeout = timeoutMs;
-
-                @Override
-                public void run() {
-                    if (timeout <= 0) {
-                        cancel();
-                        runInFX(() -> {
-                            cancelButton.fire();
-                        });
-                        return;
-                    }
-                    timeout -= 1000;
-                    long currentTimeout = timeout;
-                    runInFX(() -> cancelButton.setText(originalText + " (" + (currentTimeout / 1000) + ")"));
-                }
-            }, 1000, 1000);
-
             return this;
         }
 
