@@ -16,12 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.jackhuang.hmcl.util;
+package org.jackhuang.hmcl.util.platform;
 
 public final class WineDetector {
     public static boolean isRunningUnderWine() {
-        String osName = System.getProperty("os.name", "");
-        if (!osName.toLowerCase(java.util.Locale.ROOT).contains("win")) {
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
             return false;
         }
 
