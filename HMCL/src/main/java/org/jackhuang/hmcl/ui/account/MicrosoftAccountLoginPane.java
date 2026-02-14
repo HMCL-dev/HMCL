@@ -12,6 +12,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Group;
 import javafx.scene.control.Label;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -199,9 +200,10 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
             rootContainer.getChildren().add(errHintPane);
         }
 
-        HBox linkBox = new HBox(8);
+        var linkBox = new FlowPane(8, 8);
         linkBox.setAlignment(Pos.CENTER_LEFT);
         linkBox.setPadding(new Insets(5, 0, 0, 0));
+        linkBox.setPrefWrapLength(500);
 
         if (currentStep instanceof Step.Init || currentStep instanceof Step.StartAuthorizationCodeLogin || currentStep instanceof Step.WaitForOpenBrowser) {
             JFXHyperlink useQrCode = new JFXHyperlink(i18n("account.methods.microsoft.methods.device"));
