@@ -13,7 +13,6 @@ import javafx.scene.Cursor;
 import javafx.scene.Group;
 import javafx.scene.control.Label;
 import javafx.scene.layout.FlowPane;
-import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.SVGPath;
@@ -31,6 +30,7 @@ import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.*;
+import org.jackhuang.hmcl.upgrade.IntegrityChecker;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.QrCodeUtils;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -50,7 +50,7 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
     @SuppressWarnings("FieldCanBeLocal")
     private final WeakListenerHolder holder = new WeakListenerHolder();
 
-    private final ObjectProperty<Step> step = new SimpleObjectProperty<>(new Step.Init());
+    private final ObjectProperty<Step> step = new SimpleObjectProperty<>();
 
     private TaskExecutor browserTaskExecutor;
     private TaskExecutor deviceTaskExecutor;
@@ -86,7 +86,6 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
 
         btnLogin = new JFXButton(i18n("account.login"));
         btnLogin.getStyleClass().add("dialog-accept");
-        btnLogin.setOnAction(e -> step.set(new Step.StartAuthorizationCodeLogin()));
 
         loginButtonSpinner = new SpinnerPane();
         loginButtonSpinner.getStyleClass().add("small-spinner-pane");
@@ -108,6 +107,9 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
                 step.set(new Step.WaitForScanQrCode(event.getUserCode(), event.getVerificationUri()));
         }));
 
+        this.step.set(bodyonly || Accounts.OAUTH_CALLBACK.getClientId().isEmpty()
+                ? new Step.Init()
+                : new Step.StartAuthorizationCodeLogin());
         FXUtils.onChangeAndOperate(step, this::onStep);
     }
 
@@ -117,14 +119,8 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
         rootContainer.setPadding(new Insets(5, 0, 0, 0));
         rootContainer.setAlignment(Pos.TOP_CENTER);
 
-        if (currentStep instanceof Step.Init) {
-            HintPane hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
-            hintPane.setText(i18n("account.methods.microsoft.hint"));
-            rootContainer.getChildren().add(hintPane);
-        }
-
         if (Accounts.OAUTH_CALLBACK.getClientId().isEmpty()) {
-            HintPane snapshotHint = new HintPane(MessageDialogPane.MessageType.WARNING);
+            var snapshotHint = new HintPane(MessageDialogPane.MessageType.WARNING);
             snapshotHint.setSegment(i18n("account.methods.microsoft.snapshot"));
             rootContainer.getChildren().add(snapshotHint);
             btnLogin.setDisable(true);
@@ -132,10 +128,20 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
             return;
         }
 
+        if (!IntegrityChecker.isOfficial()) {
+            var unofficialHintPane = new HintPane(MessageDialogPane.MessageType.WARNING);
+            unofficialHintPane.setSegment(i18n("unofficial.hint"));
+            rootContainer.getChildren().add(unofficialHintPane);
+        }
+
         if (currentStep instanceof Step.Init) {
             btnLogin.setText(i18n("account.login"));
             btnLogin.setOnAction(e -> this.step.set(new Step.StartAuthorizationCodeLogin()));
             loginButtonSpinner.setLoading(false);
+
+            var hintPane = new HintPane(MessageDialogPane.MessageType.INFO);
+            hintPane.setText(i18n("account.methods.microsoft.hint"));
+            rootContainer.getChildren().add(hintPane);
         } else if (currentStep instanceof Step.StartAuthorizationCodeLogin) {
             loginButtonSpinner.setLoading(true);
             cancelAllTasks();
@@ -178,8 +184,8 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
             var qrCode = new SVGPath();
             qrCode.fillProperty().bind(Themes.colorSchemeProperty().getPrimary());
             qrCode.setContent(QrCodeUtils.toSVGPath(QrCode.encodeText(wait.verificationUri(), QrCode.Ecc.MEDIUM)));
-            qrCode.setScaleX(4);
-            qrCode.setScaleY(4);
+            qrCode.setScaleX(3);
+            qrCode.setScaleY(3);
 
             var lblCode = new Label(wait.userCode());
             lblCode.getStyleClass().add("code-label");
