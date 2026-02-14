@@ -229,7 +229,7 @@ public final class EntryPoint {
         String osName = System.getProperty("os.name", "").toLowerCase(java.util.Locale.ROOT);
 
         String errorMessageKey = null;
-        if (!osName.contains("haiku")) {
+        if (osName.contains("haiku")) {
             errorMessageKey = "fatal.unsupported_platform.haiku";
         } else if (osName.contains("os/2") || osName.contains("os2")) {
             errorMessageKey = "fatal.unsupported_platform.os2";
