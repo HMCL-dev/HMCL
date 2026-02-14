@@ -80,7 +80,7 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
             setHeading(heading);
         }
 
-        this.setMaxWidth(600);
+        this.setMaxWidth(650);
 
         onEscPressed(this, this::onCancel);
 
@@ -107,7 +107,7 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
                 step.set(new Step.WaitForScanQrCode(event.getUserCode(), event.getVerificationUri()));
         }));
 
-        this.step.set(bodyonly || Accounts.OAUTH_CALLBACK.getClientId().isEmpty()
+        this.step.set(Accounts.OAUTH_CALLBACK.getClientId().isEmpty()
                 ? new Step.Init()
                 : new Step.StartAuthorizationCodeLogin());
         FXUtils.onChangeAndOperate(step, this::onStep);
@@ -135,7 +135,6 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
         }
 
         if (currentStep instanceof Step.Init) {
-            btnLogin.setText(i18n("account.login"));
             btnLogin.setOnAction(e -> this.step.set(new Step.StartAuthorizationCodeLogin()));
             loginButtonSpinner.setLoading(false);
 
@@ -157,7 +156,6 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
                     .whenComplete(Schedulers.javafx(), this::onLoginCompleted)
                     .executor(true);
         } else if (currentStep instanceof Step.WaitForOpenBrowser wait) {
-            btnLogin.setText(i18n("account.methods.microsoft.methods.browser.open"));
             btnLogin.setOnAction(e -> {
                 FXUtils.openLink(wait.url());
                 loginButtonSpinner.setLoading(true);
