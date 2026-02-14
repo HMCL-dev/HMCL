@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.wizard;
 
 import javafx.beans.property.StringProperty;
 import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.ui.task.TaskCenter;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.task.TaskListener;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -58,6 +59,8 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
         }
 
         runInFX(() -> {
+            boolean backgroundable = Boolean.TRUE.equals(settings.get("backgroundable"));
+
             TaskExecutor executor = task.executor(new TaskListener() {
                 @Override
                 public void onStop(boolean success, TaskExecutor executor) {
@@ -84,13 +87,52 @@ public abstract class TaskExecutorDialogWizardDisplayer extends AbstractWizardDi
                             else if (!settings.containsKey("forbid_failure_message"))
                                 Controllers.dialog(appendix, i18n("wizard.failed"), MessageType.ERROR, () -> onEnd());
                         }
-
                     });
                 }
             });
+
             pane.setExecutor(executor);
+
+            pane.addEventHandler(DialogCloseEvent.CLOSE, event -> {
+                boolean returnToDownloadList = Boolean.TRUE.equals(settings.get("return_to_download_list"));
+                if (returnToDownloadList) {
+                    onEnd();
+                    Controllers.getDownloadPage().showGameDownloads();
+                    Controllers.navigate(Controllers.getDownloadPage());
+                }
+            });
+
+            if (backgroundable) {
+                Object detailObj = settings.get("task_detail");
+                String detail = detailObj != null ? detailObj.toString() : pane.getTitle();
+
+                TaskCenter.TaskKind kind = (TaskCenter.TaskKind) settings.get("task_kind");
+                String taskName = (String) settings.get("task_name");
+
+                pane.setBackgroundAction(() -> {
+                    TaskCenter.getInstance().enqueue(executor, pane.getTitle(), detail, kind, taskName);
+                    pane.refreshTaskList();
+
+                    boolean returnToDownloadList = Boolean.TRUE.equals(settings.get("return_to_download_list"));
+                    onEnd();
+                    if (returnToDownloadList) {
+                        Controllers.getDownloadPage().showGameDownloads();
+                        Controllers.navigate(Controllers.getDownloadPage());
+                    }
+
+                    pane.fireEvent(new DialogCloseEvent());
+                });
+
+                TaskCenter.getInstance().enqueue(executor, pane.getTitle(), detail, kind, taskName);
+                pane.refreshTaskList();
+            }
+
             Controllers.dialog(pane);
-            executor.start();
+
+            if (!backgroundable) {
+                executor.start();
+                pane.refreshTaskList();
+            }
         });
     }
 }
