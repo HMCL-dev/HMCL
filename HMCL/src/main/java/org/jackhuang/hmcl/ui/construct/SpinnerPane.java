@@ -31,6 +31,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
 
+/// A spinner pane that can show spinner, failed reason, or content.
 public class SpinnerPane extends Control {
     private static final String DEFAULT_STYLE_CLASS = "spinner-pane";
 
@@ -198,8 +199,6 @@ public class SpinnerPane extends Control {
         private StackPane failedPane;
         private Label failedReasonLabel;
 
-        private Node currentContent;
-
         void updateContent() {
             SpinnerPane control = getSkinnable();
 
@@ -237,10 +236,7 @@ public class SpinnerPane extends Control {
                 failedReasonLabel.setText(null);
             }
 
-            if (currentContent != nextContent) {
-                currentContent = nextContent;
-                root.setContent(nextContent, ContainerAnimations.FADE);
-            }
+            root.setContent(nextContent, ContainerAnimations.FADE);
         }
     }
 
