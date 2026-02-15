@@ -69,7 +69,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
-import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.ui.FXUtils.ignoreEvent;
 import static org.jackhuang.hmcl.ui.FXUtils.onEscPressed;
@@ -260,17 +259,11 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             listView.getItems().clear();
 
             Predicate<@Nullable String> predicate;
-            if (queryString.startsWith("regex:")) {
-                try {
-                    Pattern pattern = Pattern.compile(queryString.substring("regex:".length()));
-                    predicate = s -> s != null && pattern.matcher(s).find();
-                } catch (Throwable e) {
-                    LOG.warning("Illegal regular expression", e);
-                    return;
-                }
-            } else {
-                String lowerQueryString = queryString.toLowerCase(Locale.ROOT);
-                predicate = s -> s != null && s.toLowerCase(Locale.ROOT).contains(lowerQueryString);
+            try {
+                predicate = StringUtils.compileQuery(queryString);
+            } catch (Throwable e) {
+                LOG.warning("Illegal regular expression", e);
+                return;
             }
 
             // Do we need to search in the background thread?
@@ -465,7 +458,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                     RemoteModRepository repository = item.getValue();
                     JFXHyperlink button = new JFXHyperlink(i18n(item.getKey()));
                     Task.runAsync(() -> {
-                        Optional<RemoteMod.Version> versionOptional = repository.getRemoteVersionByLocalFile(modInfo.getModInfo(), modInfo.getModInfo().getFile());
+                        Optional<RemoteMod.Version> versionOptional = repository.getRemoteVersionByLocalFile(modInfo.getModInfo().getFile());
                         if (versionOptional.isPresent()) {
                             RemoteMod remoteMod = repository.getModById(versionOptional.get().getModid());
                             FXUtils.runInFX(() -> {
@@ -495,7 +488,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                                             repository instanceof CurseForgeRemoteModRepository ? HMCLLocalizedDownloadListPage.ofCurseForgeMod(null, false) : HMCLLocalizedDownloadListPage.ofModrinthMod(null, false),
                                             remoteMod,
                                             new Profile.ProfileVersion(ModListPageSkin.this.getSkinnable().getProfile(), ModListPageSkin.this.getSkinnable().getInstanceId()),
-                                            (profile, version, mod, file) -> org.jackhuang.hmcl.ui.download.DownloadPage.download(profile, version, file, "mods")
+                                            org.jackhuang.hmcl.ui.download.DownloadPage.FOR_MOD
                                     ));
                                 });
                                 button.setDisable(false);
