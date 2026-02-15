@@ -94,7 +94,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     }
 
     @Override
-    public SearchResult search(DownloadProvider downloadProvider, String gameVersion, @Nullable RemoteModRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder) throws IOException {
+    public SearchResult search(DownloadProvider downloadProvider, String gameVersion, @Nullable RemoteModRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sort, SortOrder sortOrder, LoaderType loaderType) throws IOException {
         SEMAPHORE.acquireUninterruptibly();
         try {
             List<List<String>> facets = new ArrayList<>();
@@ -102,8 +102,18 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
             if (StringUtils.isNotBlank(gameVersion)) {
                 facets.add(Collections.singletonList("versions:" + gameVersion));
             }
+
+            List<String> categorys = new ArrayList<>();
+
             if (category != null && StringUtils.isNotBlank(category.getId())) {
-                facets.add(Collections.singletonList("categories:" + category.getId()));
+                categorys.add(category.getId());
+            }
+            if (loaderType != null && loaderType != LoaderType.ALL) {
+                categorys.add(loaderType.name());
+            }
+
+            if (!categorys.isEmpty()) {
+                facets.add(Collections.singletonList("categories:" + String.join(",", categorys)));
             }
             Map<String, String> query = mapOf(
                     pair("query", searchFilter),
