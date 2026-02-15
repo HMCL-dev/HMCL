@@ -347,7 +347,7 @@ public abstract class Task<T> {
             throw new IllegalArgumentException("Invalid count or total: count=" + count + ", total=" + total);
 
         double progress;
-        if (total >= count)
+        if (count >= total)
             progress = 1.0;
         else
             progress = (double) count / total;
