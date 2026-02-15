@@ -228,17 +228,17 @@ public final class EntryPoint {
     private static void checkOperatingSystem() {
         String osName = System.getProperty("os.name", "").toLowerCase(java.util.Locale.ROOT);
 
-        String errorMessageKey = null;
+        String errorMessage = null;
         if (osName.contains("haiku")) {
-            errorMessageKey = "fatal.unsupported_platform.haiku";
+            errorMessage = i18n("fatal.unsupported_platform.haiku");
         } else if (osName.contains("os/2") || osName.contains("os2")) {
-            errorMessageKey = "fatal.unsupported_platform.os2";
+            errorMessage = i18n("fatal.unsupported_platform.os2");
         }
 
-        if (errorMessageKey != null) {
+        if (errorMessage != null) {
             SwingUtils.initLookAndFeel();
             LOG.error("Unsupported OS: " + System.getProperty("os.name", ""));
-            SwingUtils.showErrorDialog(i18n(errorMessageKey), i18n("message.error"));
+            SwingUtils.showErrorDialog(errorMessage, i18n("message.error"));
             exit(1);
         }
     }
