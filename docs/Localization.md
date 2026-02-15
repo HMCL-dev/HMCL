@@ -126,7 +126,7 @@ Then you can start translating in this file.
 The `I18N.properties` file follows the [resource fallback mechanism](#resource-fallback-mechanism) to look up missing translations.
 That is, you can translate entry by entry, and any untranslated entries will automatically fall back to English.
 
-After translating part of the file, you can [build HMCL yourself](./README.md#compilation), 
+After translating part of the file, you can [build HMCL yourself](./Contributing.md#build-hmcl), 
 and your translations will be included in the compiled HMCL.
 If your computer's default environment is not the target language,
 you can set the environment variable `HMCL_LANGUAGE` to the language tag you just found from the table,
