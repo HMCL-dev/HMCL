@@ -532,6 +532,7 @@
 }
 
 .jfx-layout-heading {
+    -fx-font-weight: BOLD;
     -fx-font-size: 20.0px;
     -fx-alignment: center-left;
     -fx-padding: 5.0 0.0 5.0 0.0;
