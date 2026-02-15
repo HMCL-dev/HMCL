@@ -578,6 +578,10 @@
  *                                                                             *
  ******************************************************************************/
 
+.microsoft-login-dialog:bodyonly {
+    -fx-padding: 0px 0px 0px 0px;
+}
+
 .method-title {
     -fx-text-fill: -monet-on-surface;
     -fx-font-weight: bold;
@@ -594,6 +598,7 @@
 .code-box {
     -fx-background-color: -monet-surface-variant;
     -fx-background-radius: 6;
+    -fx-padding: 0 10 0 10;
     -fx-alignment: center;
 }
 

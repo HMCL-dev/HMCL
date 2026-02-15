@@ -22,6 +22,7 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import org.jackhuang.hmcl.event.EventManager;
+import org.jackhuang.hmcl.util.Result;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
@@ -345,12 +346,7 @@ public abstract class Task<T> {
         if (count < 0 || total < 0)
             throw new IllegalArgumentException("Invalid count or total: count=" + count + ", total=" + total);
 
-        double progress;
-        if (total >= count)
-            progress = 1.0;
-        else
-            progress = (double) count / total;
-        updateProgress(progress);
+        updateProgress(count < total ? (double) count / total : 1.0);
     }
 
     protected void updateProgress(double progress) {
@@ -782,6 +778,37 @@ public abstract class Task<T> {
      */
     public Task<Void> whenComplete(Executor executor, FinalizedCallbackWithResult<T> action) {
         return whenComplete(executor, (exception -> action.execute(getResult(), exception)));
+    }
+
+    public Task<Result<T>> wrapResult() {
+        return new Task<Result<T>>() {
+            {
+                setSignificance(TaskSignificance.MODERATE);
+            }
+
+            @Override
+            public void execute() throws Exception {
+                if (isDependentsSucceeded() != (Task.this.getException() == null))
+                    throw new AssertionError("When whenComplete succeeded, Task.exception must be null.", Task.this.getException());
+
+                if (isDependentsSucceeded()) {
+                    setResult(Result.success(Task.this.getResult()));
+                } else {
+                    setSignificance(TaskSignificance.MINOR);
+                    setResult(Result.failure(Task.this.getException()));
+                }
+            }
+
+            @Override
+            public Collection<Task<?>> getDependents() {
+                return Collections.singleton(Task.this);
+            }
+
+            @Override
+            public boolean isRelyingOnDependents() {
+                return false;
+            }
+        }.setExecutor(executor).setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
     }
 
     /**
