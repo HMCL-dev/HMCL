@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.mod.modinfo;
 
 import com.google.gson.*;
 import com.google.gson.annotations.JsonAdapter;
+import com.google.gson.annotations.SerializedName;
 import kala.compress.archivers.zip.ZipArchiveEntry;
 import org.jackhuang.hmcl.mod.LocalModFile;
 import org.jackhuang.hmcl.mod.ModLoaderType;
@@ -44,12 +45,13 @@ public final class FabricModMetadata {
     private final String icon;
     private final List<FabricModAuthor> authors;
     private final Map<String, String> contact;
+    private final List<FabricNestedJar> jars;
 
     public FabricModMetadata() {
-        this("", "", "", "", "", Collections.emptyList(), Collections.emptyMap());
+        this("", "", "", "", "", Collections.emptyList(), Collections.emptyMap(), Collections.emptyList());
     }
 
-    public FabricModMetadata(String id, String name, String version, String icon, String description, List<FabricModAuthor> authors, Map<String, String> contact) {
+    public FabricModMetadata(String id, String name, String version, String icon, String description, List<FabricModAuthor> authors, Map<String, String> contact, List<FabricNestedJar> jars) {
         this.id = id;
         this.name = name;
         this.version = version;
@@ -57,6 +59,7 @@ public final class FabricModMetadata {
         this.description = description;
         this.authors = authors;
         this.contact = contact;
+        this.jars = jars;
     }
 
     public static LocalModFile fromFile(ModManager modManager, Path modFile, ZipFileTree tree) throws IOException, JsonParseException {
@@ -65,8 +68,12 @@ public final class FabricModMetadata {
             throw new IOException("File " + modFile + " is not a Fabric mod.");
         FabricModMetadata metadata = JsonUtils.fromNonNullJsonFully(tree.getInputStream(mcmod), FabricModMetadata.class);
         String authors = metadata.authors == null ? "" : metadata.authors.stream().map(author -> author.name).collect(Collectors.joining(", "));
+
+        List<String> bundledMods = metadata.jars != null ?
+                metadata.jars.stream().map(jar -> jar.file).toList() :
+                Collections.emptyList();
         return new LocalModFile(modManager, modManager.getLocalMod(metadata.id, ModLoaderType.FABRIC), modFile, metadata.name, new LocalModFile.Description(metadata.description),
-                authors, metadata.version, "", metadata.contact != null ? metadata.contact.getOrDefault("homepage", "") : "", metadata.icon);
+                authors, metadata.version, "", metadata.contact != null ? metadata.contact.getOrDefault("homepage", "") : "", metadata.icon, bundledMods);
     }
 
     @JsonAdapter(FabricModAuthorSerializer.class)
@@ -91,6 +98,19 @@ public final class FabricModMetadata {
         @Override
         public JsonElement serialize(FabricModAuthor src, Type typeOfSrc, JsonSerializationContext context) {
             return src == null ? JsonNull.INSTANCE : new JsonPrimitive(src.name);
+        }
+    }
+
+    public static final class FabricNestedJar {
+        @SerializedName("file")
+        private final String file;
+
+        public FabricNestedJar() {
+            this("");
+        }
+
+        public FabricNestedJar(String file) {
+            this.file = file;
         }
     }
 }
