@@ -17,13 +17,15 @@
  */
 package org.jackhuang.hmcl.game;
 
-import com.github.steveice10.opennbt.NBTIO;
-import com.github.steveice10.opennbt.tag.builtin.*;
 import javafx.scene.image.Image;
 import org.jackhuang.hmcl.util.io.*;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
+import tech.minediamond.micanbt.NBT.NBT;
+import tech.minediamond.micanbt.NBT.NBTWriter;
+import tech.minediamond.micanbt.tag.*;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -34,8 +36,8 @@ import java.nio.channels.OverlappingFileLockException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Stream;
-import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -44,9 +46,14 @@ public final class World {
 
     private final Path file;
     private String fileName;
-    private CompoundTag levelData;
     private Image icon;
+
+    private CompoundTag levelData;
     private Path levelDataPath;
+    private CompoundTag worldGenSettingsData;
+    private Path worldGenSettingsDataPath;
+    private CompoundTag playerData;
+    private Path playerDataPath;
 
     public World(Path file) throws IOException {
         this.file = file;
@@ -68,20 +75,14 @@ public final class World {
     }
 
     public String getWorldName() {
-        CompoundTag data = levelData.get("Data");
-        StringTag levelNameTag = data.get("LevelName");
-        return levelNameTag.getValue();
+        return ((StringTag) levelData.at("Data.LevelName")).getClonedValue();
     }
 
     public void setWorldName(String worldName) throws IOException {
-        if (levelData.get("Data") instanceof CompoundTag data && data.get("LevelName") instanceof StringTag levelNameTag) {
+        if (levelData.at("Data.LevelName") instanceof StringTag levelNameTag) {
             levelNameTag.setValue(worldName);
-            writeLevelDat(levelData);
+            writeLevelData();
         }
-    }
-
-    public Path getLevelDatFile() {
-        return file.resolve("level.dat");
     }
 
     public Path getSessionLockFile() {
@@ -92,49 +93,62 @@ public final class World {
         return levelData;
     }
 
+    public @Nullable CompoundTag getWorldGenSettingsData() {
+        return worldGenSettingsData;
+    }
+
+    public @Nullable CompoundTag getPlayerData() {
+        return playerData;
+    }
+
     public long getLastPlayed() {
-        CompoundTag data = levelData.get("Data");
-        LongTag lastPlayedTag = data.get("LastPlayed");
-        return lastPlayedTag.getValue();
+        return ((LongTag) levelData.at("Data.LastPlayed")).getClonedValue();
     }
 
     public @Nullable GameVersionNumber getGameVersion() {
-        if (levelData.get("Data") instanceof CompoundTag data &&
-                data.get("Version") instanceof CompoundTag versionTag &&
-                versionTag.get("Name") instanceof StringTag nameTag) {
-            return GameVersionNumber.asGameVersion(nameTag.getValue());
+        if (levelData.at("Data.Version.Name") instanceof StringTag nameTag) {
+            return GameVersionNumber.asGameVersion(nameTag.getClonedValue());
         }
         return null;
     }
 
     public @Nullable Long getSeed() {
-        CompoundTag data = levelData.get("Data");
-        if (data.get("WorldGenSettings") instanceof CompoundTag worldGenSettingsTag && worldGenSettingsTag.get("seed") instanceof LongTag seedTag) { //Valid after 1.16
-            return seedTag.getValue();
-        } else if (data.get("RandomSeed") instanceof LongTag seedTag) { //Valid before 1.16
-            return seedTag.getValue();
+        // Valid between 1.16(20w20a) and 26.1-snapshot-6
+        if (levelData.at("Data.WorldGenSettings.seed") instanceof LongTag seedTag) {
+            return seedTag.getClonedValue();
+        }
+        // Valid before 1.16(20w20a)
+        else if (levelData.at("Data.RandomSeed") instanceof LongTag seedTag) {
+            return seedTag.getClonedValue();
+        }
+        // Valid after 26.1-snapshot-6
+        else if (worldGenSettingsData != null && worldGenSettingsData.at("data.seed") instanceof LongTag seedTag) {
+            return seedTag.getClonedValue();
         }
         return null;
     }
 
     public boolean isLargeBiomes() {
-        CompoundTag data = levelData.get("Data");
-        if (data.get("generatorName") instanceof StringTag generatorNameTag) { //Valid before 1.16
-            return "largeBiomes".equals(generatorNameTag.getValue());
-        } else {
-            if (data.get("WorldGenSettings") instanceof CompoundTag worldGenSettingsTag
-                    && worldGenSettingsTag.get("dimensions") instanceof CompoundTag dimensionsTag
-                    && dimensionsTag.get("minecraft:overworld") instanceof CompoundTag overworldTag
-                    && overworldTag.get("generator") instanceof CompoundTag generatorTag) {
-                if (generatorTag.get("biome_source") instanceof CompoundTag biomeSourceTag
-                        && biomeSourceTag.get("large_biomes") instanceof ByteTag largeBiomesTag) { //Valid between 1.16 and 1.16.2
-                    return largeBiomesTag.getValue() == (byte) 1;
-                } else if (generatorTag.get("settings") instanceof StringTag settingsTag) { //Valid after 1.16.2
-                    return "minecraft:large_biomes".equals(settingsTag.getValue());
-                }
-            }
-            return false;
+        // Valid before 1.16(20w20a)
+        if (levelData.at("Data.generatorName") instanceof StringTag generatorNameTag) {
+            return "largeBiomes".equals(generatorNameTag.getClonedValue());
         }
+        // Valid after 26.1-snapshot-6
+        else if (worldGenSettingsData != null) {
+            if (worldGenSettingsData.at("data.dimensions.minecraft:overworld.generator.settings") instanceof StringTag settingsTag) {
+                return "minecraft:large_biomes".equals(settingsTag.getClonedValue());
+            }
+        }
+        // Valid between 1.16(20w20a) and 1.18(21w37a)
+        else if (levelData.at("Data.WorldGenSettings.dimensions.minecraft:overworld.generator.biome_source.large_biomes") instanceof ByteTag largeBiomesTag) {
+            return largeBiomesTag.getClonedValue() == (byte) 1;
+        }
+        // Valid between 1.18(21w37a) and 26.1-snapshot-6
+        // Note: In versions 1.16(20w20a) and 1.18(21w37a), the settings tag exists but does not indicate large biomes information
+        else if (levelData.at("Data.WorldGenSettings.dimensions.minecraft:overworld.generator.settings") instanceof StringTag settingsTag) {
+            return "minecraft:large_biomes".equals(settingsTag.getClonedValue());
+        }
+        return false;
     }
 
     public Image getIcon() {
@@ -166,8 +180,8 @@ public final class World {
         if (!Files.exists(levelDat)) {
             throw new IOException("Not a valid world directory since level.dat or special_level.dat cannot be found.");
         }
-        loadAndCheckLevelDat(levelDat);
         this.levelDataPath = levelDat;
+        loadAndCheckWorldData();
 
         Path iconFile = file.resolve("icon.png");
         if (Files.isRegularFile(iconFile)) {
@@ -189,7 +203,7 @@ public final class World {
         if (!Files.exists(levelDat)) {
             throw new IOException("Not a valid world zip file since level.dat or special_level.dat cannot be found.");
         }
-        loadAndCheckLevelDat(levelDat);
+        loadAndCheckLevelData(levelDat);
 
         Path iconFile = root.resolve("icon.png");
         if (Files.isRegularFile(iconFile)) {
@@ -221,9 +235,14 @@ public final class World {
         }
     }
 
-    private void loadAndCheckLevelDat(Path levelDat) throws IOException {
-        this.levelData = parseLevelDat(levelDat);
-        CompoundTag data = levelData.get("Data");
+    private void loadAndCheckWorldData() throws IOException {
+        loadAndCheckLevelData(levelDataPath);
+        loadOtherData();
+    }
+
+    private void loadAndCheckLevelData(Path levelDat) throws IOException {
+        this.levelData = NBT.read(levelDat);
+        CompoundTag data = (CompoundTag) levelData.get("Data");
         if (data == null)
             throw new IOException("level.dat missing Data");
 
@@ -234,10 +253,39 @@ public final class World {
             throw new IOException("level.dat missing LastPlayed");
     }
 
-    public void reloadLevelDat() throws IOException {
-        if (levelDataPath != null) {
-            loadAndCheckLevelDat(this.levelDataPath);
+    private void loadOtherData() throws IOException {
+        Path worldGenSettingsDatPath = file.resolve("data/minecraft/world_gen_settings.dat");
+        if (Files.exists(worldGenSettingsDatPath)) {
+            this.worldGenSettingsDataPath = worldGenSettingsDatPath;
+            this.worldGenSettingsData = NBT.read(worldGenSettingsDatPath);
+        } else {
+            this.worldGenSettingsDataPath = null;
+            this.worldGenSettingsData = null;
         }
+
+        if (levelData.at("Data.Player") instanceof CompoundTag playerTag) {
+            this.playerData = playerTag;
+            this.playerDataPath = null;
+        } else if (levelData.at("Data.singleplayer_uuid") instanceof IntArrayTag uuidTag) {
+            int[] uuidValue = uuidTag.getClonedValue();
+            if (uuidValue.length == 4) {
+                long mostSigBits = ((long) uuidValue[0] << 32) | (uuidValue[1] & 0xFFFFFFFFL);
+                long leastSigBits = ((long) uuidValue[2] << 32) | (uuidValue[3] & 0xFFFFFFFFL);
+                String playerUUID = new UUID(mostSigBits, leastSigBits).toString();
+                Path playerDatPath = file.resolve("players/data/" + playerUUID + ".dat");
+                if (Files.exists(playerDatPath)) {
+                    this.playerData = NBT.read(playerDatPath);
+                    this.playerDataPath = playerDatPath;
+                }
+            }
+        } else {
+            this.playerData = null;
+            this.playerDataPath = null;
+        }
+    }
+
+    public void reloadWorldData() throws IOException {
+        loadAndCheckWorldData();
     }
 
     // The rename method is used to rename temporary world object during installation and copying,
@@ -247,9 +295,9 @@ public final class World {
             throw new IOException("Not a valid world directory");
 
         // Change the name recorded in level.dat
-        CompoundTag data = levelData.get("Data");
+        CompoundTag data = (CompoundTag) levelData.get("Data");
         data.put(new StringTag("LevelName", newName));
-        writeLevelDat(levelData);
+        writeLevelData();
 
         // then change the folder's name
         Files.move(file, file.resolveSibling(newName));
@@ -345,25 +393,34 @@ public final class World {
         }
     }
 
-    public void writeLevelDat(CompoundTag nbt) throws IOException {
+    public void writeWorldData() throws IOException {
         if (!Files.isDirectory(file))
             throw new IOException("Not a valid world directory");
 
-        FileUtils.saveSafely(getLevelDatFile(), os -> {
-            try (OutputStream gos = new GZIPOutputStream(os)) {
-                NBTIO.writeTag(gos, nbt);
-            }
-        });
+        writeLevelData();
+
+        if (worldGenSettingsDataPath != null) {
+            writeTag(worldGenSettingsData, worldGenSettingsDataPath);
+        }
+
+        if (playerDataPath != null) {
+            writeTag(playerData, playerDataPath);
+        }
     }
 
-    private static CompoundTag parseLevelDat(Path path) throws IOException {
-        try (InputStream is = new GZIPInputStream(Files.newInputStream(path))) {
-            Tag nbt = NBTIO.readTag(is);
-            if (nbt instanceof CompoundTag compoundTag)
-                return compoundTag;
-            else
-                throw new IOException("level.dat malformed");
-        }
+    public void writeLevelData() throws IOException {
+        writeTag(levelData, levelDataPath);
+    }
+
+    public void writeTag(CompoundTag nbt, Path path) throws IOException {
+        if (!Files.isDirectory(file))
+            throw new IOException("Not a valid world directory");
+
+        FileUtils.saveSafely(path, os -> {
+            try (OutputStream bos = new BufferedOutputStream(os); OutputStream gos = new GZIPOutputStream(bos)) {
+                NBTWriter.writeTag(gos, nbt);
+            }
+        });
     }
 
     private static boolean isLocked(Path sessionLockFile) {
