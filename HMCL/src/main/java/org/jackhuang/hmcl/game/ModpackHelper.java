@@ -227,8 +227,8 @@ public final class ModpackHelper {
         switch (configuration.getType()) {
             case ServerModpackRemoteInstallTask.MODPACK_TYPE:
                 return new ModpackUpdateTask(profile.getRepository(), name, new ServerModpackRemoteInstallTask(profile.getDependency(), manifest, name))
-                        .withStagesHint(Arrays.asList("hmcl.modpack", "hmcl.modpack.download"))
-                        .thenComposeAsync(profile.getRepository().refreshVersionsAsync());
+                        .thenComposeAsync(profile.getRepository().refreshVersionsAsync())
+                        .withStagesHint(Arrays.asList("hmcl.modpack", "hmcl.modpack.download"));
             default:
                 throw new UnsupportedModpackException();
         }
