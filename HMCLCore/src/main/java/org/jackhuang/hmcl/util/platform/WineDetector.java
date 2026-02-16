@@ -19,8 +19,10 @@
 package org.jackhuang.hmcl.util.platform;
 
 public final class WineDetector {
-    public static boolean isRunningUnderWine() {
-        if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
+    public static final boolean IN_WINE = isRunningUnderWine();
+
+    private static boolean isRunningUnderWine() {
+        if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS) {
             return false;
         }
 
@@ -31,7 +33,7 @@ public final class WineDetector {
         Process process = null;
         try {
             process = Runtime.getRuntime().exec(
-                    new String[]{"reg", "query", "HKLM\\Software\\Wine", "/reg:64"}
+                    new String[]{"reg", "query", "HKLM\\Software\\Wine"}
             );
             if (!process.waitFor(800, java.util.concurrent.TimeUnit.MILLISECONDS)) {
                 process.destroyForcibly();

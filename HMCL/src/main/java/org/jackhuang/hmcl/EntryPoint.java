@@ -228,7 +228,7 @@ public final class EntryPoint {
     }
 
     private static void checkWine() {
-        if (WineDetector.isRunningUnderWine()) {
+        if (WineDetector.IN_WINE) {
             SwingUtils.initLookAndFeel();
             LOG.warning("HMCL is running under Wine or its distributions!");
 
