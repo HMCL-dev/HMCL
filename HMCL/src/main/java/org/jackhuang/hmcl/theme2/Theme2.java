@@ -31,14 +31,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// @author Glavo
 public record Theme2(
         @Nullable String version,
-        @Nullable Brightness brightness,
 
+        @Nullable Brightness brightness,
         @Nullable ThemeColor2 color,
         @Nullable ColorStyle colorStyle,
         @Nullable ThemeBackground background,
@@ -54,12 +55,53 @@ public record Theme2(
         return overrides.isEmpty();
     }
 
-    public Theme2 resolve() {
+    public Theme2 resolve(Map<String, Boolean> features) {
         if (isResolved())
             return this;
 
-        // TODO: resolve overrides
-        return this;
+        String version = this.version;
+        Brightness brightness = this.brightness;
+        ThemeColor2 color = this.color;
+        ColorStyle colorStyle = this.colorStyle;
+        ThemeBackground background = this.background;
+        Double backgroundOpacity = this.backgroundOpacity;
+        Contrast contrast = this.contrast;
+
+        boolean hasOverride = false;
+        for (Theme2 override : overrides) {
+            if (!override.rules().isEmpty()) {
+                if (!CompatibilityRule.appliesToCurrentEnvironment(override.rules(), features)) {
+                    continue;
+                }
+            }
+
+            hasOverride = true;
+
+            if (override.brightness != null)
+                brightness = override.brightness;
+            if (override.color != null)
+                color = override.color;
+            if (override.colorStyle != null)
+                colorStyle = override.colorStyle;
+            if (override.background != null)
+                background = override.background;
+            if (override.backgroundOpacity != null)
+                backgroundOpacity = override.backgroundOpacity;
+            if (override.contrast != null)
+                contrast = override.contrast;
+        }
+
+        return hasOverride ? new Theme2(
+                version,
+                brightness,
+                color,
+                colorStyle,
+                background,
+                backgroundOpacity,
+                contrast,
+                rules,
+                overrides
+        ) : this;
     }
 
     public static Theme2 fromJson(JsonObject json) throws JsonParseException {
@@ -109,6 +151,19 @@ public record Theme2(
             colorStyle = null;
         }
 
+        ThemeBackground background;
+        JsonElement backgroundJson = json.get("background");
+        if (backgroundJson != null) {
+            try {
+                background = ThemeBackground.fromJson(backgroundJson);
+            } catch (Exception e) {
+                LOG.warning("Invalid theme background: " + backgroundJson, e);
+                background = null;
+            }
+        } else {
+            background = null;
+        }
+
         Double backgroundOpacity;
         JsonElement backgroundOpacityJson = json.get("backgroundOpacity");
         if (backgroundOpacityJson != null) {
@@ -123,14 +178,32 @@ public record Theme2(
             backgroundOpacity = null;
         }
 
+        Contrast contrast;
+        JsonElement contrastJson = json.get("contrast");
+        if (contrastJson != null) {
+            if (contrastJson instanceof JsonPrimitive primitive)
+                contrast = switch (primitive.getAsString().toLowerCase(Locale.ROOT)) {
+                    case "high" -> Contrast.HIGH;
+                    case "low" -> Contrast.LOW;
+                    default -> null;
+                };
+            else
+                contrast = null;
+
+            if (contrast == null)
+                LOG.warning("Invalid contrast: " + contrastJson);
+        } else {
+            contrast = null;
+        }
+
         return new Theme2(
                 json.get("version") instanceof JsonPrimitive version ? version.getAsString() : null,
                 brightness,
                 color,
                 colorStyle,
-                null,
+                background,
                 backgroundOpacity,
-                null,
+                contrast,
                 List.of(),
                 List.of()
         );
