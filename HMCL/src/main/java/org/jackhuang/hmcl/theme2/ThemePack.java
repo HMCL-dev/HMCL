@@ -29,7 +29,7 @@ public record ThemePack(
         @NotNull LocalizedText name,
         @Nullable LocalizedText author,
         @Nullable LocalizedText description,
-        @NotNull List<Theme2> themes,
+        @NotNull List<Theme> themes,
         @NotNull Path file
 ) {
 

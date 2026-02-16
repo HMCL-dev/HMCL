@@ -19,12 +19,10 @@ package org.jackhuang.hmcl.theme;
 
 import org.glavo.monetfx.*;
 
-import java.util.*;
-
 /// @author Glavo
-public record Theme(ThemeColor primaryColorSeed, Brightness brightness, ColorStyle colorStyle, Contrast contrast) {
+public record ColorTheme(ThemeColor primaryColorSeed, Brightness brightness, ColorStyle colorStyle, Contrast contrast) {
 
-    public static final Theme DEFAULT = new Theme(ThemeColor.DEFAULT, Brightness.DEFAULT, ColorStyle.FIDELITY, Contrast.DEFAULT);
+    public static final ColorTheme DEFAULT = new ColorTheme(ThemeColor.DEFAULT, Brightness.DEFAULT, ColorStyle.FIDELITY, Contrast.DEFAULT);
 
     public ColorScheme toColorScheme() {
         return ColorScheme.newBuilder()

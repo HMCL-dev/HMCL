@@ -36,7 +36,7 @@ import java.util.Map;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 /// @author Glavo
-public record Theme2(
+public record Theme(
         @Nullable String version,
 
         @Nullable Brightness brightness,
@@ -47,7 +47,7 @@ public record Theme2(
         @Nullable Contrast contrast,
 
         @NotNull List<CompatibilityRule> rules,
-        @NotNull List<Theme2> overrides
+        @NotNull List<Theme> overrides
 ) {
     public static final String DEFAULT_VERSION = "1";
 
@@ -55,7 +55,7 @@ public record Theme2(
         return overrides.isEmpty();
     }
 
-    public Theme2 resolve(Map<String, Boolean> features) {
+    public Theme resolve(Map<String, Boolean> features) {
         if (isResolved())
             return this;
 
@@ -68,7 +68,7 @@ public record Theme2(
         Contrast contrast = this.contrast;
 
         boolean hasOverride = false;
-        for (Theme2 override : overrides) {
+        for (Theme override : overrides) {
             if (!override.rules().isEmpty()) {
                 if (!CompatibilityRule.appliesToCurrentEnvironment(override.rules(), features)) {
                     continue;
@@ -91,7 +91,7 @@ public record Theme2(
                 contrast = override.contrast;
         }
 
-        return hasOverride ? new Theme2(
+        return hasOverride ? new Theme(
                 version,
                 brightness,
                 color,
@@ -104,7 +104,7 @@ public record Theme2(
         ) : this;
     }
 
-    public static Theme2 fromJson(JsonObject json) throws JsonParseException {
+    public static Theme fromJson(JsonObject json) throws JsonParseException {
         if (json.get("version") instanceof JsonPrimitive version) {
             if (VersionNumber.compare(version.getAsString(), DEFAULT_VERSION) >= 0)
                 throw new JsonParseException("Unsupported theme version: " + version.getAsString());
@@ -196,7 +196,7 @@ public record Theme2(
             contrast = null;
         }
 
-        return new Theme2(
+        return new Theme(
                 json.get("version") instanceof JsonPrimitive version ? version.getAsString() : null,
                 brightness,
                 color,
