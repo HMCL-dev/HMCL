@@ -17,15 +17,49 @@
  */
 package org.jackhuang.hmcl.theme2;
 
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.JsonPrimitive;
+
 /// @author Glavo
 public sealed interface ThemeBackground {
+
+    static ThemeBackground fromJson(JsonElement json) throws JsonParseException {
+        if (json instanceof JsonPrimitive primitive) {
+            return new Local(primitive.getAsString());
+        } else if (json instanceof JsonObject object) {
+            String type;
+            if (object.get("type") instanceof JsonPrimitive elementType)
+                type = elementType.getAsString();
+            else
+                throw new JsonParseException("Invalid theme background: " + json);
+
+            switch (type) {
+                case "local" -> {
+                    if (object.get("path") instanceof JsonPrimitive path)
+                        return new Local(path.getAsString());
+                    else
+                        throw new JsonParseException("Invalid theme background: " + json);
+                }
+                case "remote" -> {
+                    if (object.get("url") instanceof JsonPrimitive url)
+                        return new Remote(url.getAsString());
+                    else
+                        throw new JsonParseException("Invalid theme background: " + json);
+                }
+                default -> throw new JsonParseException("Invalid theme background: " + json);
+            }
+        } else {
+            throw new JsonParseException("Invalid theme background: " + json);
+        }
+    }
 
     final class Default implements ThemeBackground {
         public static Default INSTANCE = new Default();
     }
 
     record Local(String path) implements ThemeBackground {
-
     }
 
     record Remote(String url) implements ThemeBackground {

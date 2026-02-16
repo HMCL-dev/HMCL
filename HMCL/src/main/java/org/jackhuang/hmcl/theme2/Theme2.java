@@ -42,6 +42,7 @@ public record Theme2(
         @Nullable ThemeColor2 color,
         @Nullable ColorStyle colorStyle,
         @Nullable ThemeBackground background,
+        @Nullable Double backgroundOpacity,
         @Nullable Contrast contrast,
 
         @NotNull List<CompatibilityRule> rules,
@@ -108,6 +109,19 @@ public record Theme2(
             colorStyle = null;
         }
 
+        Double backgroundOpacity;
+        JsonElement backgroundOpacityJson = json.get("backgroundOpacity");
+        if (backgroundOpacityJson != null) {
+            if (backgroundOpacityJson instanceof JsonPrimitive primitive) {
+                double value = primitive.getAsDouble();
+                backgroundOpacity = value >= 0 && value <= 1 ? value : null;
+            } else
+                backgroundOpacity = null;
+            if (backgroundOpacity == null)
+                LOG.warning("Invalid background opacity: " + backgroundOpacityJson);
+        } else {
+            backgroundOpacity = null;
+        }
 
         return new Theme2(
                 json.get("version") instanceof JsonPrimitive version ? version.getAsString() : null,
@@ -115,6 +129,7 @@ public record Theme2(
                 color,
                 colorStyle,
                 null,
+                backgroundOpacity,
                 null,
                 List.of(),
                 List.of()

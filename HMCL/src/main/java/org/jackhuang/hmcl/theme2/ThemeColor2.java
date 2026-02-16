@@ -45,7 +45,6 @@ public sealed interface ThemeColor2 {
             FollowBackground.INSTANCE
     ));
 
-
     static @Nullable ThemeColor2 of(String name) {
         if (name == null)
             return null;
