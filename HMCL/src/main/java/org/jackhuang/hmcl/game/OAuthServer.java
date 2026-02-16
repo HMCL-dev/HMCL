@@ -104,7 +104,7 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
         String html;
         try {
             html = IOUtils.readFullyAsString(OAuthServer.class.getResourceAsStream("/assets/microsoft_auth.html"))
-                    .replace("%style%", Themes.getTheme().toColorScheme().toStyleSheet().replace("-monet", "--monet"))
+                    .replace("%style%", Themes.getColorScheme().toStyleSheet().replace("-monet", "--monet"))
                     .replace("%lang%", Locale.getDefault().toLanguageTag())
                     .replace("%success%", i18n("message.success"))
                     .replace("%ok%", i18n("button.ok"))
