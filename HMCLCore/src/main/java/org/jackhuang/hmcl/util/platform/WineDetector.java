@@ -44,7 +44,7 @@ public final class WineDetector {
             return false;
         } finally {
             if (process != null && process.isAlive()) {
-                process.destroy();
+                process.destroyForcibly();
             }
         }
     }
