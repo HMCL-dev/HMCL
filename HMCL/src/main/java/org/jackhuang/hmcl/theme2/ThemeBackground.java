@@ -21,6 +21,8 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
+import javafx.scene.paint.Color;
+import javafx.scene.paint.Paint;
 
 /// @author Glavo
 public sealed interface ThemeBackground {
@@ -48,6 +50,30 @@ public sealed interface ThemeBackground {
                     else
                         throw new JsonParseException("Invalid theme background: " + json);
                 }
+                case "fill" -> {
+                    Paint paint;
+
+                    if (object.get("paint") instanceof JsonPrimitive paintJson) {
+                        try {
+                            paint = Paint.valueOf(paintJson.getAsString());
+                        } catch (IllegalArgumentException ignored) {
+                            paint = null;
+                        }
+                    } else if (object.get("color") instanceof JsonPrimitive colorJson) {
+                        try {
+                            paint = Color.web(colorJson.getAsString());
+                        } catch (IllegalArgumentException ignored) {
+                            paint = null;
+                        }
+                    } else {
+                        paint = null;
+                    }
+
+                    if (paint != null)
+                        return new Fill(paint);
+                    else
+                        throw new JsonParseException("Invalid theme background: " + json);
+                }
                 default -> throw new JsonParseException("Invalid theme background: " + json);
             }
         } else {
@@ -63,5 +89,8 @@ public sealed interface ThemeBackground {
     }
 
     record Remote(String url) implements ThemeBackground {
+    }
+
+    record Fill(Paint paint) implements ThemeBackground {
     }
 }
