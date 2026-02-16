@@ -24,12 +24,20 @@ import com.google.gson.JsonPrimitive;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 
+import java.util.Locale;
+
 /// @author Glavo
 public sealed interface ThemeBackground {
 
     static ThemeBackground fromJson(JsonElement json) throws JsonParseException {
         if (json instanceof JsonPrimitive primitive) {
-            return new Local(primitive.getAsString());
+            String value = primitive.getAsString();
+
+            try {
+                return BuiltIn.valueOf(value.toUpperCase(Locale.ROOT));
+            } catch (IllegalArgumentException ignored) {
+                return new Local(value);
+            }
         } else if (json instanceof JsonObject object) {
             String type;
             if (object.get("type") instanceof JsonPrimitive elementType)
