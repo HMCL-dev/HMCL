@@ -139,7 +139,7 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
                         } else {
                             handler.reject(e.getMessage());
                         }
-                    }).executor(true), i18n("message.downloading"), TaskCancellationAction.NORMAL);
+                    }).executor(), i18n("message.downloading"), TaskCancellationAction.NORMAL);
                 } else {
                     // otherwise we still consider the file as modpack zip file
                     // since casually the url may not ends with ".zip"
@@ -156,7 +156,7 @@ public final class ModpackSelectionPage extends VBox implements WizardPage {
                                         } else {
                                             handler.reject(e.getMessage());
                                         }
-                                    }).executor(true),
+                                    }).executor(),
                             i18n("message.downloading"),
                             TaskCancellationAction.NORMAL
                     );

@@ -103,7 +103,7 @@ public final class Versions {
                                         i18n("install.failed.downloading.detail", file.getFile().getUrl()) + "\n" + StringUtils.getStackTrace(e),
                                         i18n("download.failed.no_code"), MessageDialogPane.MessageType.ERROR);
                             }
-                        }).executor(true),
+                        }).executor(),
                 i18n("message.downloading"),
                 TaskCancellationAction.NORMAL
         );
