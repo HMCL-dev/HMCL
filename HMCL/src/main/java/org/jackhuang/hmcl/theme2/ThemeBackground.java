@@ -81,8 +81,9 @@ public sealed interface ThemeBackground {
         }
     }
 
-    final class Default implements ThemeBackground {
-        public static Default INSTANCE = new Default();
+    enum BuiltIn implements ThemeBackground {
+        DEFAULT,
+        CLASSIC
     }
 
     record Local(String path) implements ThemeBackground {
