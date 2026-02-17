@@ -21,7 +21,6 @@ import javafx.beans.property.BooleanProperty;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
-import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.mod.Datapack;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
