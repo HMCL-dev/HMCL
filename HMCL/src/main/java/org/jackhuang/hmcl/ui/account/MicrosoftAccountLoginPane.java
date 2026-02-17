@@ -205,7 +205,7 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
             cancelAllTasks();
 
             HintPane errHintPane = new HintPane(MessageDialogPane.MessageType.ERROR);
-            errHintPane.setText(failed.message());
+            errHintPane.setSegment(failed.message());
             rootContainer.getChildren().add(errHintPane);
         }
 
