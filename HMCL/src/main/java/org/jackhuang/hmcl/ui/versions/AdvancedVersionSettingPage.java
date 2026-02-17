@@ -15,6 +15,7 @@ import org.jackhuang.hmcl.setting.VersionSetting;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 import org.jackhuang.hmcl.util.platform.Platform;
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.FileSystems;
 import java.util.Arrays;
 import java.util.Locale;
+import java.util.function.Function;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -170,7 +172,10 @@ public final class AdvancedVersionSettingPage extends StackPane implements Decor
             rendererPane = new LineSelectButton<>();
             rendererPane.setTitle(i18n("settings.advanced.renderer"));
             rendererPane.setConverter(e -> i18n("settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT)));
-            rendererPane.setDescriptionConverter(e -> i18n("settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT) + ".desc"));
+            rendererPane.setDescriptionConverter(e -> {
+                String bundleKey = "settings.advanced.renderer." + e.name().toLowerCase(Locale.ROOT) + ".desc";
+                return I18n.hasKey(bundleKey) ? i18n(bundleKey) : null;
+            });
             rendererPane.setItems(Renderer.values());
 
             noJVMArgsPane = new LineToggleButton();
