@@ -76,12 +76,12 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
 
             InstallerItem.InstallerItemGroup group = new InstallerItem.InstallerItemGroup(gameVersion, InstallerItem.Style.LIST_ITEM);
 
-            // Conventional libraries: game, fabric, forge, cleanroom, neoforge, liteloader, optifine
+            // Conventional libraries: game, fabric, legacyfabric, forge, cleanroom, neoforge, liteloader, optifine
             for (InstallerItem item : group.getLibraries()) {
                 String libraryId = item.getLibraryId();
 
-                // Skip fabric-api and quilt-api
-                if (libraryId.contains("fabric-api") || libraryId.contains("quilt-api")) {
+                // Skip fabric-api and quilt-api and legacyfabric-api
+                if (libraryId.endsWith("-api")) {
                     continue;
                 }
 
@@ -136,7 +136,7 @@ public class InstallerListPage extends ListPageBase<InstallerItem> implements Ve
 
     public void installOffline() {
         FileChooser chooser = new FileChooser();
-        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("install.installer.install_offline.extension"), "*.jar", "*.exe"));
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(i18n("extension.modloader.installer"), "*.jar", "*.exe"));
         Path file = FileUtils.toPath(chooser.showOpenDialog(Controllers.getStage()));
         if (file != null) doInstallOffline(file);
     }

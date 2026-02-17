@@ -30,7 +30,9 @@ import org.jackhuang.hmcl.util.platform.Platform;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.file.*;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -57,7 +59,7 @@ public final class HMCLJavaRepository implements JavaRepository {
     }
 
     public Path getJavaDir(Platform platform, GameJavaVersion gameJavaVersion) {
-        return getJavaDir(platform, MOJANG_JAVA_PREFIX + gameJavaVersion.getComponent());
+        return getJavaDir(platform, MOJANG_JAVA_PREFIX + gameJavaVersion.component());
     }
 
     @Override
@@ -66,7 +68,7 @@ public final class HMCLJavaRepository implements JavaRepository {
     }
 
     public Path getManifestFile(Platform platform, GameJavaVersion gameJavaVersion) {
-        return getManifestFile(platform, MOJANG_JAVA_PREFIX + gameJavaVersion.getComponent());
+        return getManifestFile(platform, MOJANG_JAVA_PREFIX + gameJavaVersion.component());
     }
 
     public boolean isInstalled(Platform platform, String name) {
@@ -74,7 +76,7 @@ public final class HMCLJavaRepository implements JavaRepository {
     }
 
     public boolean isInstalled(Platform platform, GameJavaVersion gameJavaVersion) {
-        return isInstalled(platform, MOJANG_JAVA_PREFIX + gameJavaVersion.getComponent());
+        return isInstalled(platform, MOJANG_JAVA_PREFIX + gameJavaVersion.component());
     }
 
     public @Nullable Path getJavaExecutable(Platform platform, String name) {
@@ -94,7 +96,7 @@ public final class HMCLJavaRepository implements JavaRepository {
     }
 
     public @Nullable Path getJavaExecutable(Platform platform, GameJavaVersion gameJavaVersion) {
-        return getJavaExecutable(platform, MOJANG_JAVA_PREFIX + gameJavaVersion.getComponent());
+        return getJavaExecutable(platform, MOJANG_JAVA_PREFIX + gameJavaVersion.component());
     }
 
     private static void getAllJava(List<JavaRuntime> list, Platform platform, Path platformRoot, boolean isManaged) {
@@ -169,7 +171,7 @@ public final class HMCLJavaRepository implements JavaRepository {
 
             Map<String, Object> update = new LinkedHashMap<>();
             update.put("provider", "mojang");
-            update.put("component", gameJavaVersion.getComponent());
+            update.put("component", gameJavaVersion.component());
 
             Map<String, JavaLocalFiles.Local> files = new LinkedHashMap<>();
             result.remoteFiles.getFiles().forEach((path, file) -> {

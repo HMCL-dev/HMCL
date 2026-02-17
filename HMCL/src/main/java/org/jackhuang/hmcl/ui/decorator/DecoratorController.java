@@ -18,6 +18,7 @@
 package org.jackhuang.hmcl.ui.decorator;
 
 import com.jfoenix.controls.JFXSnackbar;
+import com.jfoenix.controls.JFXSnackbarLayout;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
@@ -264,7 +265,7 @@ public class DecoratorController {
     private Background createBackgroundWithOpacity(Image image, int opacity) {
         if (opacity <= 0) {
             return new Background(new BackgroundFill(new Color(1, 1, 1, 0), CornerRadii.EMPTY, Insets.EMPTY));
-        } else if (opacity >= 100) {
+        } else if (opacity >= 100 || image.getPixelReader() == null) {
             return new Background(new BackgroundImage(
                     image,
                     BackgroundRepeat.NO_REPEAT,
@@ -454,7 +455,7 @@ public class DecoratorController {
     // ==== Toast ====
 
     public void showToast(String content) {
-        decorator.getSnackbar().fireEvent(new JFXSnackbar.SnackbarEvent(content, null, 2000L, false, null));
+        decorator.getSnackbar().fireEvent(new JFXSnackbar.SnackbarEvent(new JFXSnackbarLayout(content)));
     }
 
     // ==== Wizard ====

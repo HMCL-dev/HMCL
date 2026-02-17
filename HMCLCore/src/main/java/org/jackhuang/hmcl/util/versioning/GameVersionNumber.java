@@ -348,6 +348,11 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
                 needNormalize = true;
                 releaseType = ReleaseType.PRE_RELEASE;
                 eaVersion = VersionNumber.asVersion(suffix.substring(" Pre-Release ".length()));
+            } else if (suffix.startsWith(" Pre-release ")) {
+                // https://github.com/HMCL-dev/HMCL/issues/5476
+                needNormalize = true;
+                releaseType = ReleaseType.PRE_RELEASE;
+                eaVersion = VersionNumber.asVersion(suffix.substring(" Pre-release ".length()));
             } else if (suffix.startsWith("-rc")) {
                 releaseType = ReleaseType.RELEASE_CANDIDATE;
                 eaVersion = VersionNumber.asVersion(suffix.substring("-rc".length()));
@@ -795,7 +800,8 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
                     } else if (version instanceof Release release) {
                         currentRelease = release;
 
-                        if (currentRelease.eaType == Release.ReleaseType.GA) {
+                        if (currentRelease.eaType == Release.ReleaseType.GA
+                                && currentRelease.additional == Release.Additional.NONE) {
                             defaultGameVersions.addFirst(currentRelease.value);
                         }
                     } else if (version instanceof Special special) {

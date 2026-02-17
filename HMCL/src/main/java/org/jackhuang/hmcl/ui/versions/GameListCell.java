@@ -81,7 +81,9 @@ public final class GameListCell extends ListCell<GameListItem> {
 
         {
             HBox center = new HBox();
+            center.setMouseTransparent(true);
             root.setCenter(center);
+            center.setPrefWidth(Region.USE_PREF_SIZE);
             center.setSpacing(8);
             center.setAlignment(Pos.CENTER_LEFT);
 
@@ -113,7 +115,7 @@ public final class GameListCell extends ListCell<GameListItem> {
                     item.update();
             });
             btnUpgrade.getStyleClass().add("toggle-icon4");
-            btnUpgrade.setGraphic(FXUtils.limitingSize(SVG.UPDATE.createIcon(24), 24, 24));
+            btnUpgrade.setGraphic(SVG.UPDATE.createIcon());
             FXUtils.installFastTooltip(btnUpgrade, i18n("version.update"));
             right.getChildren().add(btnUpgrade);
 
@@ -125,7 +127,7 @@ public final class GameListCell extends ListCell<GameListItem> {
             });
             btnLaunch.getStyleClass().add("toggle-icon4");
             BorderPane.setAlignment(btnLaunch, Pos.CENTER);
-            btnLaunch.setGraphic(FXUtils.limitingSize(SVG.ROCKET_LAUNCH.createIcon(24), 24, 24));
+            btnLaunch.setGraphic(SVG.ROCKET_LAUNCH.createIcon());
             FXUtils.installFastTooltip(btnLaunch, i18n("version.launch.test"));
             right.getChildren().add(btnLaunch);
 
@@ -141,7 +143,7 @@ public final class GameListCell extends ListCell<GameListItem> {
             });
             btnManage.getStyleClass().add("toggle-icon4");
             BorderPane.setAlignment(btnManage, Pos.CENTER);
-            btnManage.setGraphic(FXUtils.limitingSize(SVG.MORE_VERT.createIcon(24), 24, 24));
+            btnManage.setGraphic(SVG.MORE_VERT.createIcon());
             FXUtils.installFastTooltip(btnManage, i18n("settings.game.management"));
             right.getChildren().add(btnManage);
         }

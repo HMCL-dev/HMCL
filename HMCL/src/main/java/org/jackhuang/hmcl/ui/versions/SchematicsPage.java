@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXDialogLayout;
+import com.jfoenix.controls.JFXListView;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -143,9 +144,9 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
 
     public void onAddFiles() {
         FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle(i18n("schematics.add"));
+        fileChooser.setTitle(i18n("schematics.add.title"));
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter(
-                i18n("schematics"), "*.litematic"));
+                i18n("extension.schematic"), "*.litematic"));
         List<Path> files = FileUtils.toPaths(fileChooser.showOpenMultipleDialog(Controllers.getStage()));
         if (files != null && !files.isEmpty()) {
             addFiles(files);
@@ -160,30 +161,30 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         Controllers.dialog(new InputDialogPane(
                 i18n("schematics.create_directory.prompt"),
                 "",
-                (result, resolve, reject) -> {
+                (result, handler) -> {
                     if (StringUtils.isBlank(result)) {
-                        reject.accept(i18n("schematics.create_directory.failed.empty_name"));
+                        handler.reject(i18n("schematics.create_directory.failed.empty_name"));
                         return;
                     }
 
                     if (result.contains("/") || result.contains("\\") || !FileUtils.isNameValid(result)) {
-                        reject.accept(i18n("schematics.create_directory.failed.invalid_name"));
+                        handler.reject(i18n("schematics.create_directory.failed.invalid_name"));
                         return;
                     }
 
                     Path targetDir = parent.resolve(result);
                     if (Files.exists(targetDir)) {
-                        reject.accept(i18n("schematics.create_directory.failed.already_exists"));
+                        handler.reject(i18n("schematics.create_directory.failed.already_exists"));
                         return;
                     }
 
                     try {
                         Files.createDirectories(targetDir);
-                        resolve.run();
+                        handler.resolve();
                         refresh();
                     } catch (IOException e) {
                         LOG.warning("Failed to create directory: " + targetDir, e);
-                        reject.accept(i18n("schematics.create_directory.failed", targetDir));
+                        handler.reject(i18n("schematics.create_directory.failed", targetDir));
                     }
                 }));
     }
@@ -221,7 +222,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         getItems().addAll(item.children);
     }
 
-    abstract class Item extends Control implements Comparable<Item> {
+    abstract sealed class Item implements Comparable<Item> {
 
         boolean isDirectory() {
             return this instanceof DirItem;
@@ -257,11 +258,6 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 return Integer.compare(this.order(), o.order());
 
             return this.getName().compareTo(o.getName());
-        }
-
-        @Override
-        protected Skin<?> createDefaultSkin() {
-            return new ItemSkin(this);
         }
     }
 
@@ -438,6 +434,10 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             return SVG.SCHEMA;
         }
 
+        public @Nullable Image getImage() {
+            return image;
+        }
+
         Node getIcon(int size) {
             if (image == null) {
                 return super.getIcon(size);
@@ -540,62 +540,113 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         }
     }
 
-    private static final class ItemSkin extends SkinBase<Item> {
-        public ItemSkin(Item item) {
-            super(item);
+    private static final class Cell extends ListCell<Item> {
 
-            BorderPane root = new BorderPane();
+        private final RipplerContainer graphics;
+        private final BorderPane root;
+        private final StackPane left;
+        private final TwoLineListItem center;
+        private final HBox right;
+
+        private final ImageView iconImageView;
+        private final SVGContainer iconSVGView;
+
+        private final Tooltip tooltip = new Tooltip();
+
+        public Cell() {
+            this.root = new BorderPane();
             root.getStyleClass().add("md-list-cell");
             root.setPadding(new Insets(8));
 
             {
-                StackPane left = new StackPane();
-                left.setMaxSize(32, 32);
-                left.setPrefSize(32, 32);
-                left.getChildren().add(item.getIcon(24));
+                this.left = new StackPane();
                 left.setPadding(new Insets(0, 8, 0, 0));
 
-                Path path = item.getPath();
-                if (path != null) {
-                    FXUtils.installSlowTooltip(left, path.toAbsolutePath().normalize().toString());
-                }
+                this.iconImageView = new ImageView();
+                FXUtils.limitSize(iconImageView, 32, 32);
+
+                this.iconSVGView = new SVGContainer(32);
 
                 BorderPane.setAlignment(left, Pos.CENTER);
                 root.setLeft(left);
             }
 
             {
-                TwoLineListItem center = new TwoLineListItem();
-                center.setTitle(item.getName());
-                center.setSubtitle(item.getDescription());
-
+                this.center = new TwoLineListItem();
                 root.setCenter(center);
             }
 
-            if (!(item instanceof BackItem)) {
-                HBox right = new HBox(8);
+            {
+                this.right = new HBox(8);
                 right.setAlignment(Pos.CENTER_RIGHT);
 
                 JFXButton btnReveal = new JFXButton();
                 FXUtils.installFastTooltip(btnReveal, i18n("reveal.in_file_manager"));
                 btnReveal.getStyleClass().add("toggle-icon4");
                 btnReveal.setGraphic(SVG.FOLDER_OPEN.createIcon());
-                btnReveal.setOnAction(event -> item.onReveal());
+                btnReveal.setOnAction(event -> {
+                    Item item = getItem();
+                    if (item != null && !(item instanceof BackItem))
+                        item.onReveal();
+                });
 
                 JFXButton btnDelete = new JFXButton();
                 btnDelete.getStyleClass().add("toggle-icon4");
                 btnDelete.setGraphic(SVG.DELETE_FOREVER.createIcon());
-                btnDelete.setOnAction(event ->
+                btnDelete.setOnAction(event -> {
+                    Item item = getItem();
+                    if (item != null && !(item instanceof BackItem)) {
                         Controllers.confirm(i18n("button.remove.confirm"), i18n("button.remove"),
-                                item::onDelete, null));
+                                item::onDelete, null);
+                    }
+                });
 
                 right.getChildren().setAll(btnReveal, btnDelete);
-                root.setRight(right);
             }
 
-            RipplerContainer container = new RipplerContainer(root);
-            FXUtils.onClicked(container, item::onClick);
-            this.getChildren().add(container);
+            this.graphics = new RipplerContainer(root);
+            FXUtils.onClicked(graphics, () -> {
+                Item item = getItem();
+                if (item != null)
+                    item.onClick();
+            });
+        }
+
+        @Override
+        protected void updateItem(Item item, boolean empty) {
+            super.updateItem(item, empty);
+
+            iconImageView.setImage(null);
+
+            if (empty || item == null) {
+                setGraphic(null);
+                center.setTitle("");
+                center.setSubtitle("");
+            } else {
+                if (item instanceof LitematicFileItem fileItem && fileItem.getImage() != null) {
+                    iconImageView.setImage(fileItem.getImage());
+                    left.getChildren().setAll(iconImageView);
+                } else {
+                    iconSVGView.setIcon(item.getIcon());
+                    left.getChildren().setAll(iconSVGView);
+                }
+
+                center.setTitle(item.getName());
+                center.setSubtitle(item.getDescription());
+
+                Path path = item.getPath();
+                if (path != null) {
+                    tooltip.setText(FileUtils.getAbsolutePath(path));
+                    FXUtils.installSlowTooltip(left, tooltip);
+                } else {
+                    tooltip.setText("");
+                    Tooltip.uninstall(left, tooltip);
+                }
+
+                root.setRight(item instanceof BackItem ? null : right);
+
+                setGraphic(graphics);
+            }
         }
     }
 
@@ -611,6 +662,11 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                     createToolbarButton2(i18n("schematics.add"), SVG.ADD, skinnable::onAddFiles),
                     createToolbarButton2(i18n("schematics.create_directory"), SVG.CREATE_NEW_FOLDER, skinnable::onCreateDirectory)
             );
+        }
+
+        @Override
+        protected ListCell<Item> createListCell(JFXListView<Item> listView) {
+            return new Cell();
         }
     }
 }

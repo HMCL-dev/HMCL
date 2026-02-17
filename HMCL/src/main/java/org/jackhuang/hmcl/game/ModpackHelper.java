@@ -227,6 +227,7 @@ public final class ModpackHelper {
         switch (configuration.getType()) {
             case ServerModpackRemoteInstallTask.MODPACK_TYPE:
                 return new ModpackUpdateTask(profile.getRepository(), name, new ServerModpackRemoteInstallTask(profile.getDependency(), manifest, name))
+                        .thenComposeAsync(profile.getRepository().refreshVersionsAsync())
                         .withStagesHint(Arrays.asList("hmcl.modpack", "hmcl.modpack.download"));
             default:
                 throw new UnsupportedModpackException();
@@ -241,9 +242,11 @@ public final class ModpackHelper {
         }
         if (modpack.getManifest() instanceof MultiMCInstanceConfiguration)
             return provider.createUpdateTask(profile.getDependency(), name, zipFile, modpack)
-                    .thenComposeAsync(() -> createMultiMCPostUpdateTask(profile, (MultiMCInstanceConfiguration) modpack.getManifest(), name));
+                    .thenComposeAsync(() -> createMultiMCPostUpdateTask(profile, (MultiMCInstanceConfiguration) modpack.getManifest(), name))
+                    .thenComposeAsync(profile.getRepository().refreshVersionsAsync());
         else
-            return provider.createUpdateTask(profile.getDependency(), name, zipFile, modpack);
+            return provider.createUpdateTask(profile.getDependency(), name, zipFile, modpack)
+                    .thenComposeAsync(profile.getRepository().refreshVersionsAsync());
     }
 
     public static void toVersionSetting(MultiMCInstanceConfiguration c, VersionSetting vs) {

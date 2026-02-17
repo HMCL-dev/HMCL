@@ -27,9 +27,18 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.control.*;
+import javafx.scene.control.Control;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Skin;
+import javafx.scene.control.SkinBase;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.*;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.download.LibraryAnalyzer;
 import org.jackhuang.hmcl.game.HMCLGameRepository;
@@ -46,7 +55,11 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.util.*;
+import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.Pair;
+import org.jackhuang.hmcl.util.SimpleMultimap;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
@@ -54,7 +67,14 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -230,6 +250,7 @@ public class DownloadPage extends Control implements DecoratorPage {
                 ModTranslations.Mod mod = getSkinnable().translations.getModByCurseForgeId(getSkinnable().addon.getSlug());
                 content.setTitle(mod != null && I18n.isUseChinese() ? mod.getDisplayName() : getSkinnable().addon.getTitle());
                 content.setSubtitle(getSkinnable().addon.getDescription());
+                content.getSubtitleLabel().setWrapText(true);
                 getSkinnable().addon.getCategories().stream()
                         .map(category -> getSkinnable().page.getLocalizedCategory(category))
                         .forEach(content::addTag);
@@ -299,13 +320,13 @@ public class DownloadPage extends Control implements DecoratorPage {
 
                     for (String gameVersion : control.versions.keys().stream()
                             .sorted(Collections.reverseOrder(GameVersionNumber::compare))
-                            .collect(Collectors.toList())) {
+                            .toList()) {
                         List<RemoteMod.Version> versions = control.versions.get(gameVersion);
                         if (versions == null || versions.isEmpty()) {
                             continue;
                         }
 
-                        ComponentList sublist = new ComponentList(() -> {
+                        var sublist = new ComponentSublist(() -> {
                             ArrayList<ModItem> items = new ArrayList<>(versions.size());
                             for (RemoteMod.Version v : versions) {
                                 items.add(new ModItem(control.addon, v, control));
@@ -464,13 +485,14 @@ public class DownloadPage extends Control implements DecoratorPage {
             box.getChildren().setAll(modItem);
             SpinnerPane spinnerPane = new SpinnerPane();
             ScrollPane scrollPane = new ScrollPane();
-            ComponentList dependenciesList = new ComponentList(Lang::immutableListOf);
+            ComponentList dependenciesList = new ComponentList();
             loadDependencies(version, selfPage, spinnerPane, dependenciesList);
             spinnerPane.setOnFailedAction(e -> loadDependencies(version, selfPage, spinnerPane, dependenciesList));
 
             scrollPane.setContent(dependenciesList);
             scrollPane.setFitToWidth(true);
             scrollPane.setFitToHeight(true);
+            FXUtils.smoothScrolling(scrollPane);
             spinnerPane.setContent(scrollPane);
             box.getChildren().add(spinnerPane);
             VBox.setVgrow(spinnerPane, Priority.SOMETIMES);
@@ -516,8 +538,10 @@ public class DownloadPage extends Control implements DecoratorPage {
 
         private void loadDependencies(RemoteMod.Version version, DownloadPage selfPage, SpinnerPane spinnerPane, ComponentList dependenciesList) {
             spinnerPane.setLoading(true);
-            Task.supplyAsync(() -> {
+            Task.composeAsync(() -> {
+                // TODO: Massive tasks may cause OOM.
                 EnumMap<RemoteMod.DependencyType, List<Node>> dependencies = new EnumMap<>(RemoteMod.DependencyType.class);
+                List<Task<?>> queue = new ArrayList<>(version.getDependencies().size());
                 for (RemoteMod.Dependency dependency : version.getDependencies()) {
                     if (dependency.getType() == RemoteMod.DependencyType.INCOMPATIBLE || dependency.getType() == RemoteMod.DependencyType.BROKEN) {
                         continue;
@@ -530,11 +554,22 @@ public class DownloadPage extends Control implements DecoratorPage {
                         list.add(title);
                         dependencies.put(dependency.getType(), list);
                     }
-                    DependencyModItem dependencyModItem = new DependencyModItem(selfPage.page, dependency.load(), selfPage.version, selfPage.callback);
-                    dependencies.get(dependency.getType()).add(dependencyModItem);
+
+                    queue.add(Task.supplyAsync(Schedulers.io(), dependency::load)
+                            .setSignificance(Task.TaskSignificance.MINOR)
+                            .thenAcceptAsync(Schedulers.javafx(), dep -> {
+                                if (dep == RemoteMod.BROKEN) {
+                                    return;
+                                }
+                                DependencyModItem dependencyModItem = new DependencyModItem(selfPage.page, dep, selfPage.version, selfPage.callback);
+                                dependencies.get(dependency.getType()).add(dependencyModItem);
+                            })
+                            .setSignificance(Task.TaskSignificance.MINOR));
                 }
 
-                return dependencies.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
+                return Task.allOf(queue).thenSupplyAsync(() ->
+                        dependencies.values().stream().flatMap(Collection::stream).collect(Collectors.toList())
+                );
             }).whenComplete(Schedulers.javafx(), (result, exception) -> {
                 spinnerPane.setLoading(false);
                 if (exception == null) {

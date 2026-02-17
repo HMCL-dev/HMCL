@@ -30,7 +30,6 @@ import org.jackhuang.hmcl.util.platform.*;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.*;
-import java.net.Proxy;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -73,14 +72,14 @@ public class DefaultLauncher extends Launcher {
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                     // res.add("cmd", "/C", "start", "unused title", "/B", "/high");
                 } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() || OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
-                    res.add("nice", "-n", "-5");
+                    res.addAll("nice", "-n", "-5");
                 }
                 break;
             case ABOVE_NORMAL:
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                     // res.add("cmd", "/C", "start", "unused title", "/B", "/abovenormal");
                 } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() || OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
-                    res.add("nice", "-n", "-1");
+                    res.addAll("nice", "-n", "-1");
                 }
                 break;
             case NORMAL:
@@ -90,14 +89,14 @@ public class DefaultLauncher extends Launcher {
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                     // res.add("cmd", "/C", "start", "unused title", "/B", "/belownormal");
                 } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() || OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
-                    res.add("nice", "-n", "1");
+                    res.addAll("nice", "-n", "1");
                 }
                 break;
             case LOW:
                 if (OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                     // res.add("cmd", "/C", "start", "unused title", "/B", "/low");
                 } else if (OperatingSystem.CURRENT_OS.isLinuxOrBSD() || OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
-                    res.add("nice", "-n", "5");
+                    res.addAll("nice", "-n", "5");
                 }
                 break;
         }
@@ -170,22 +169,36 @@ public class DefaultLauncher extends Launcher {
             if (OperatingSystem.CURRENT_OS != OperatingSystem.WINDOWS)
                 res.addDefault("-Duser.home=", options.getGameDir().toAbsolutePath().getParent().toString());
 
-            Proxy.Type proxyType = options.getProxyType();
-            if (proxyType == null) {
-                res.addDefault("-Djava.net.useSystemProxies", "true");
-            } else {
-                String proxyHost = options.getProxyHost();
-                int proxyPort = options.getProxyPort();
+            boolean addProxyOptions = res.noneMatch(arg ->
+                    arg.startsWith("-Djava.net.useSystemProxies=")
+                            || arg.startsWith("-Dhttp.proxy")
+                            || arg.startsWith("-Dhttps.proxy")
+                            || arg.startsWith("-DsocksProxy")
+                            || arg.startsWith("-Djava.net.socks.")
+            );
 
-                if (StringUtils.isNotBlank(proxyHost) && proxyPort >= 0 && proxyPort <= 0xFFFF) {
-                    if (proxyType == Proxy.Type.HTTP) {
-                        res.addDefault("-Dhttp.proxyHost=", proxyHost);
-                        res.addDefault("-Dhttp.proxyPort=", String.valueOf(proxyPort));
-                        res.addDefault("-Dhttps.proxyHost=", proxyHost);
-                        res.addDefault("-Dhttps.proxyPort=", String.valueOf(proxyPort));
-                    } else if (proxyType == Proxy.Type.SOCKS) {
-                        res.addDefault("-DsocksProxyHost=", proxyHost);
-                        res.addDefault("-DsocksProxyPort=", String.valueOf(proxyPort));
+            if (addProxyOptions) {
+                if (options.getProxyOption() == null || options.getProxyOption() == ProxyOption.Default.INSTANCE) {
+                    res.add("-Djava.net.useSystemProxies=true");
+                } else if (options.getProxyOption() instanceof ProxyOption.Http httpProxy) {
+                    res.add("-Dhttp.proxyHost=" + httpProxy.host());
+                    res.add("-Dhttp.proxyPort=" + httpProxy.port());
+                    res.add("-Dhttps.proxyHost=" + httpProxy.host());
+                    res.add("-Dhttps.proxyPort=" + httpProxy.port());
+
+                    if (StringUtils.isNotBlank(httpProxy.username())) {
+                        res.add("-Dhttp.proxyUser=" + httpProxy.username());
+                        res.add("-Dhttp.proxyPassword=" + Objects.requireNonNullElse(httpProxy.password(), ""));
+                        res.add("-Dhttps.proxyUser=" + httpProxy.username());
+                        res.add("-Dhttps.proxyPassword=" + Objects.requireNonNullElse(httpProxy.password(), ""));
+                    }
+                } else if (options.getProxyOption() instanceof ProxyOption.Socks socksProxy) {
+                    res.add("-DsocksProxyHost=" + socksProxy.host());
+                    res.add("-DsocksProxyPort=" + socksProxy.port());
+
+                    if (StringUtils.isNotBlank(socksProxy.username())) {
+                        res.add("-Djava.net.socks.username=" + socksProxy.username());
+                        res.add("-Djava.net.socks.password=" + Objects.requireNonNullElse(socksProxy.password(), ""));
                     }
                 }
             }
@@ -230,7 +243,7 @@ public class DefaultLauncher extends Launcher {
                     }
                 }
 
-                if (is64bit && javaVersion == 25) {
+                if (is64bit && (javaVersion >= 25 && javaVersion <= 26)) {
                     res.addUnstableDefault("UseCompactObjectHeaders", true);
                 }
 
@@ -309,7 +322,7 @@ public class DefaultLauncher extends Launcher {
 
             try {
                 ServerAddress parsed = ServerAddress.parse(address);
-                if (GameVersionNumber.asGameVersion(gameVersion).isAtLeast("1.20", "23w14a")) {
+                if (World.supportQuickPlay(GameVersionNumber.asGameVersion(gameVersion))) {
                     res.add("--quickPlayMultiplayer");
                     res.add(parsed.getPort() >= 0 ? address : parsed.getHost() + ":25565");
                 } else {
@@ -322,11 +335,11 @@ public class DefaultLauncher extends Launcher {
                 LOG.warning("Invalid server address: " + address, e);
             }
         } else if (options.getQuickPlayOption() instanceof QuickPlayOption.SinglePlayer singlePlayer
-                && GameVersionNumber.asGameVersion(gameVersion).isAtLeast("1.20", "23w14a")) {
+                && World.supportQuickPlay(GameVersionNumber.asGameVersion(gameVersion))) {
             res.add("--quickPlaySingleplayer");
             res.add(singlePlayer.worldFolderName());
         } else if (options.getQuickPlayOption() instanceof QuickPlayOption.Realm realm
-                && GameVersionNumber.asGameVersion(gameVersion).isAtLeast("1.20", "23w14a")) {
+                && World.supportQuickPlay(GameVersionNumber.asGameVersion(gameVersion))) {
             res.add("--quickPlayRealms");
             res.add(realm.realmID());
         }
@@ -334,21 +347,17 @@ public class DefaultLauncher extends Launcher {
         if (options.isFullscreen())
             res.add("--fullscreen");
 
-        if (options.getProxyType() == Proxy.Type.SOCKS) {
-            String proxyHost = options.getProxyHost();
-            int proxyPort = options.getProxyPort();
-
-            if (StringUtils.isNotBlank(proxyHost) && proxyPort >= 0 && proxyPort <= 0xFFFF) {
-                res.add("--proxyHost");
-                res.add(proxyHost);
-                res.add("--proxyPort");
-                res.add(String.valueOf(proxyPort));
-                if (StringUtils.isNotBlank(options.getProxyUser()) && StringUtils.isNotBlank(options.getProxyPass())) {
-                    res.add("--proxyUser");
-                    res.add(options.getProxyUser());
-                    res.add("--proxyPass");
-                    res.add(options.getProxyPass());
-                }
+        // https://github.com/HMCL-dev/HMCL/issues/774
+        if (options.getProxyOption() instanceof ProxyOption.Socks socksProxy) {
+            res.add("--proxyHost");
+            res.add(socksProxy.host());
+            res.add("--proxyPort");
+            res.add(String.valueOf(socksProxy.port()));
+            if (StringUtils.isNotBlank(socksProxy.username())) {
+                res.add("--proxyUser");
+                res.add(socksProxy.username());
+                res.add("--proxyPass");
+                res.add(Objects.requireNonNullElse(socksProxy.password(), ""));
             }
         }
 
@@ -600,6 +609,9 @@ public class DefaultLauncher extends Launcher {
         if (analyzer.has(LibraryAnalyzer.LibraryType.QUILT)) {
             env.put("INST_QUILT", "1");
         }
+        if (analyzer.has(LibraryAnalyzer.LibraryType.LEGACY_FABRIC)) {
+            env.put("INST_LEGACYFABRIC", "1");
+        }
 
         env.putAll(options.getEnvironmentVariables());
 
@@ -680,7 +692,7 @@ public class DefaultLauncher extends Launcher {
                         writer.write(CommandBuilder.pwshString(entry.getValue()));
                         writer.newLine();
                     }
-                    writer.write("Set-Location -Path ");
+                    writer.write("Set-Location -LiteralPath ");
                     writer.write(CommandBuilder.pwshString(FileUtils.getAbsolutePath(repository.getRunDirectory(version.getId()))));
                     writer.newLine();
 
@@ -725,7 +737,7 @@ public class DefaultLauncher extends Launcher {
                             writer.newLine();
                         }
                         writer.newLine();
-                        writer.write(new CommandBuilder().add("cd", "/D", FileUtils.getAbsolutePath(repository.getRunDirectory(version.getId()))).toString());
+                        writer.write(new CommandBuilder().addAll("cd", "/D", FileUtils.getAbsolutePath(repository.getRunDirectory(version.getId()))).toString());
                     } else {
                         writer.write("#!/usr/bin/env bash");
                         writer.newLine();
@@ -734,10 +746,10 @@ public class DefaultLauncher extends Launcher {
                             writer.newLine();
                         }
                         if (commandLine.tempNativeFolder != null) {
-                            writer.write(new CommandBuilder().add("ln", "-s", FileUtils.getAbsolutePath(nativeFolder), commandLine.tempNativeFolder.toString()).toString());
+                            writer.write(new CommandBuilder().addAll("ln", "-s", FileUtils.getAbsolutePath(nativeFolder), commandLine.tempNativeFolder.toString()).toString());
                             writer.newLine();
                         }
-                        writer.write(new CommandBuilder().add("cd", FileUtils.getAbsolutePath(repository.getRunDirectory(version.getId()))).toString());
+                        writer.write(new CommandBuilder().addAll("cd", FileUtils.getAbsolutePath(repository.getRunDirectory(version.getId()))).toString());
                     }
                     writer.newLine();
                     if (StringUtils.isNotBlank(options.getPreLaunchCommand())) {
@@ -757,7 +769,7 @@ public class DefaultLauncher extends Launcher {
                         writer.newLine();
                     }
                     if (commandLine.tempNativeFolder != null) {
-                        writer.write(new CommandBuilder().add("rm", commandLine.tempNativeFolder.toString()).toString());
+                        writer.write(new CommandBuilder().addAll("rm", commandLine.tempNativeFolder.toString()).toString());
                         writer.newLine();
                     }
                 }

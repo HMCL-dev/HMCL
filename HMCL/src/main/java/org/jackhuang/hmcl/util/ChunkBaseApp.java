@@ -28,6 +28,7 @@ public final class ChunkBaseApp {
     private static final String CHUNK_BASE_URL = "https://www.chunkbase.com";
 
     private static final GameVersionNumber MIN_GAME_VERSION = GameVersionNumber.asGameVersion("1.7");
+    private static final GameVersionNumber MIN_END_CITY_VERSION = GameVersionNumber.asGameVersion("1.13");
 
     private static final String[] SEED_MAP_GAME_VERSIONS = {
             "1.21.9", "1.21.6", "1.21.5", "1.21.4", "1.21.2", "1.21", "1.20",
@@ -50,6 +51,11 @@ public final class ChunkBaseApp {
     public static boolean isSupported(@NotNull World world) {
         return world.getSeed() != null && world.getGameVersion() != null &&
                 world.getGameVersion().compareTo(MIN_GAME_VERSION) >= 0;
+    }
+
+    public static boolean supportEndCity(@NotNull World world) {
+        return world.getSeed() != null && world.getGameVersion() != null &&
+                world.getGameVersion().compareTo(MIN_END_CITY_VERSION) >= 0;
     }
 
     public static ChunkBaseApp newBuilder(String app, long seed) {

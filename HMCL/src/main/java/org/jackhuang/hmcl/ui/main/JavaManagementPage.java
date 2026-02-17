@@ -30,6 +30,7 @@ import javafx.scene.control.Skin;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.stage.FileChooser;
 import org.jackhuang.hmcl.java.JavaInfo;
@@ -210,7 +211,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
 
         @Override
         protected ListCell<JavaRuntime> createListCell(JFXListView<JavaRuntime> listView) {
-            return new JavaItemCell();
+            return new JavaItemCell(listView);
         }
     }
 
@@ -222,7 +223,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
         private final StackPane removeIconPane;
         private final Tooltip removeTooltip = new Tooltip();
 
-        JavaItemCell() {
+        JavaItemCell(JFXListView<JavaRuntime> listView) {
             BorderPane root = new BorderPane();
 
             HBox center = new HBox();
@@ -231,6 +232,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
             center.setAlignment(Pos.CENTER_LEFT);
 
             this.content = new TwoLineListItem();
+            HBox.setHgrow(content, Priority.ALWAYS);
 
             BorderPane.setAlignment(content, Pos.CENTER);
             center.getChildren().setAll(content);
@@ -240,7 +242,7 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
             right.setAlignment(Pos.CENTER_RIGHT);
             {
                 JFXButton revealButton = new JFXButton();
-                revealButton.setGraphic(FXUtils.limitingSize(SVG.FOLDER_OPEN.createIcon(24), 24, 24));
+                revealButton.setGraphic(SVG.FOLDER_OPEN.createIcon());
                 revealButton.getStyleClass().add("toggle-icon4");
                 revealButton.setOnAction(e -> {
                     JavaRuntime java = getItem();
@@ -272,6 +274,8 @@ public final class JavaManagementPage extends ListPageBase<JavaRuntime> {
             root.setPadding(new Insets(8));
 
             this.graphic = new RipplerContainer(root);
+
+            FXUtils.limitCellWidth(listView, this);
         }
 
         @Override

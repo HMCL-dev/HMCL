@@ -35,6 +35,7 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -155,6 +156,20 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
     }
 
     @Override
+    public RemoteMod resolveDependency(String id) throws IOException {
+        try {
+            return getModById(id);
+        } catch (ResponseCodeException e) {
+            if (e.getResponseCode() == 502 || e.getResponseCode() == 404) {
+                return RemoteMod.BROKEN;
+            }
+            throw e;
+        } catch (FileNotFoundException e) {
+            return RemoteMod.BROKEN;
+        }
+    }
+
+    @Override
     public RemoteMod.File getModFile(String modId, String fileId) throws IOException {
         throw new UnsupportedOperationException();
     }
@@ -164,7 +179,7 @@ public final class ModrinthRemoteModRepository implements RemoteModRepository {
         SEMAPHORE.acquireUninterruptibly();
         try {
             id = StringUtils.removePrefix(id, "local-");
-            List<ProjectVersion> versions = HttpRequest.GET(PREFIX + "/v2/project/" + id + "/version")
+            List<ProjectVersion> versions = HttpRequest.GET(PREFIX + "/v2/project/" + id + "/version?include_changelog=false")
                     .getJson(listTypeOf(ProjectVersion.class));
             return versions.stream().map(ProjectVersion::toVersion).flatMap(Lang::toStream);
         } finally {

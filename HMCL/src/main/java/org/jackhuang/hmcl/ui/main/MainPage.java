@@ -59,18 +59,17 @@ import org.jackhuang.hmcl.ui.animation.TransitionPane;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
-import org.jackhuang.hmcl.ui.versions.GameItem;
 import org.jackhuang.hmcl.ui.versions.GameListPopupMenu;
 import org.jackhuang.hmcl.ui.versions.Versions;
 import org.jackhuang.hmcl.upgrade.RemoteVersion;
 import org.jackhuang.hmcl.upgrade.UpdateChecker;
 import org.jackhuang.hmcl.upgrade.UpdateHandler;
-import org.jackhuang.hmcl.util.Holder;
-import org.jackhuang.hmcl.util.Lang;
-import org.jackhuang.hmcl.util.StringUtils;
-import org.jackhuang.hmcl.util.TaskCancellationAction;
+import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.javafx.BindingMapping;
+import org.jackhuang.hmcl.util.platform.OperatingSystem;
+import org.jackhuang.hmcl.util.platform.Platform;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
 import java.util.List;
@@ -154,11 +153,13 @@ public final class MainPage extends StackPane implements DecoratorPage {
             announcementCard.getStyleClass().addAll("card", "announcement");
 
             VBox announcementBox = new VBox(16);
+            announcementBox.setPadding(new Insets(15));
             announcementBox.getChildren().add(announcementCard);
 
             announcementPane = new TransitionPane();
             announcementPane.setContent(announcementBox, ContainerAnimations.NONE);
 
+            StackPane.setMargin(announcementPane, new Insets(-15));
             getChildren().add(announcementPane);
         }
 
@@ -246,7 +247,14 @@ public final class MainPage extends StackPane implements DecoratorPage {
 
             menuButton = new JFXButton();
             menuButton.getStyleClass().add("menu-button");
-            menuButton.setOnAction(e -> onMenu());
+            menuButton.setOnAction(e -> GameListPopupMenu.show(
+                    menuButton,
+                    JFXPopup.PopupVPosition.BOTTOM,
+                    JFXPopup.PopupHPosition.RIGHT,
+                    0,
+                    -menuButton.getHeight(),
+                    profile, versions
+            ));
             FXUtils.installFastTooltip(menuButton, i18n("version.switch"));
             menuButton.setGraphic(SVG.ARROW_DROP_UP.createIcon(30));
 
@@ -312,6 +320,7 @@ public final class MainPage extends StackPane implements DecoratorPage {
         Task<?> task = versionList.refreshAsync("")
                 .thenSupplyAsync(() -> versionList.getVersions("").stream()
                         .filter(it -> it.getVersionType() == RELEASE)
+                        .filter(it -> NativePatcher.checkSupportedStatus(GameVersionNumber.asGameVersion(it.getGameVersion()), Platform.SYSTEM_PLATFORM, OperatingSystem.SYSTEM_VERSION) != NativePatcher.SupportStatus.UNSUPPORTED)
                         .sorted()
                         .findFirst()
                         .orElseThrow(() -> new IOException("No versions found")))
@@ -340,19 +349,6 @@ public final class MainPage extends StackPane implements DecoratorPage {
                     }
                 });
         Controllers.taskDialog(task, i18n("version.launch.empty.installing"), TaskCancellationAction.NORMAL);
-    }
-
-    private void onMenu() {
-        GameListPopupMenu menu = new GameListPopupMenu();
-        menu.getItems().setAll(versions.stream().map(it -> new GameItem(profile, it.getId())).toList());
-        JFXPopup popup = new JFXPopup(menu);
-        popup.show(
-                menuButton,
-                JFXPopup.PopupVPosition.BOTTOM,
-                JFXPopup.PopupHPosition.RIGHT,
-                0,
-                -menuButton.getHeight()
-        );
     }
 
     private void onUpgrade() {
