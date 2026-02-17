@@ -45,14 +45,13 @@ import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.DatapackInfoObject> implements WorldManagePage.WorldRefreshable {
+    private final WorldManagePage worldManagePage;
     private final Path worldDir;
     private final Datapack datapack;
     final BooleanProperty readOnly;
 
-    private final World world;
-
     public DatapackListPage(WorldManagePage worldManagePage) {
-        this.world = worldManagePage.getWorld();
+        this.worldManagePage = worldManagePage;
         this.worldDir = worldManagePage.getWorld().getFile();
         datapack = new Datapack(worldDir.resolve("datapacks"));
         setItems(MappedObservableList.create(datapack.getPacks(), DatapackListPageSkin.DatapackInfoObject::new));
@@ -72,7 +71,7 @@ public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.Da
 
     private void installSingleDatapack(Path datapack) {
         try {
-            this.datapack.installPack(datapack, world.getGameVersion());
+            this.datapack.installPack(datapack, worldManagePage.getWorld().getGameVersion());
         } catch (IOException | IllegalArgumentException e) {
             LOG.warning("Unable to parse datapack file " + datapack, e);
         }
