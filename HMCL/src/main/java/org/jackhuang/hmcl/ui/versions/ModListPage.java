@@ -252,7 +252,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
                                 Controllers.navigateForward(new ModUpdatesPage(modManager, result));
                             }
                         })
-                        .withStagesHint(Collections.singletonList("update.checking")),
+                        .withStagesHints("update.checking"),
                 i18n("mods.check_updates"), TaskCancellationAction.NORMAL);
 
         if (profile.getRepository().isModpack(instanceId)) {
