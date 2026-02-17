@@ -38,6 +38,7 @@ import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.game.Version;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.ui.FXUtils;
+import org.jackhuang.hmcl.ui.construct.JFXImageView;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -103,7 +104,7 @@ public final class GameListPopupMenu extends StackPane {
             FXUtils.setLimitWidth(imageViewContainer, 32);
             FXUtils.setLimitHeight(imageViewContainer, 32);
 
-            this.imageView = new ImageView();
+            this.imageView = new JFXImageView();
             FXUtils.limitSize(imageView, 32, 32);
             imageViewContainer.getChildren().setAll(imageView);
 

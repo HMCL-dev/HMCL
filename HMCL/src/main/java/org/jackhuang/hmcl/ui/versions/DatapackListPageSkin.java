@@ -50,10 +50,7 @@ import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.animation.ContainerAnimations;
 import org.jackhuang.hmcl.ui.animation.TransitionPane;
-import org.jackhuang.hmcl.ui.construct.ComponentList;
-import org.jackhuang.hmcl.ui.construct.MDListCell;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
-import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -304,7 +301,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
 
     private final class DatapackInfoListCell extends MDListCell<DatapackInfoObject> {
         final JFXCheckBox checkBox = new JFXCheckBox();
-        ImageView imageView = new ImageView();
+        ImageView imageView = new JFXImageView();
         final TwoLineListItem content = new TwoLineListItem();
         BooleanProperty booleanProperty;
 

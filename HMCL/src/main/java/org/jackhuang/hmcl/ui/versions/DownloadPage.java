@@ -237,7 +237,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             descriptionPane.getStyleClass().add("card-non-transparent");
             BorderPane.setMargin(descriptionPane, new Insets(11, 11, 0, 11));
             {
-                ImageView imageView = new ImageView();
+                ImageView imageView = new JFXImageView();
                 imageView.setFitWidth(40);
                 imageView.setFitHeight(40);
                 if (StringUtils.isNotBlank(getSkinnable().addon.getIconUrl())) {
@@ -362,7 +362,7 @@ public class DownloadPage extends Control implements DecoratorPage {
             pane.setAlignment(Pos.CENTER_LEFT);
             TwoLineListItem content = new TwoLineListItem();
             HBox.setHgrow(content, Priority.ALWAYS);
-            ImageView imageView = new ImageView();
+            ImageView imageView = new JFXImageView();
             imageView.setFitWidth(40);
             imageView.setFitHeight(40);
             pane.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), content);

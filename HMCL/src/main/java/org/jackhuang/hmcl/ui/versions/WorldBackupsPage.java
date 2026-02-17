@@ -35,6 +35,7 @@ import org.jackhuang.hmcl.game.WorldLockedException;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
+import org.jackhuang.hmcl.ui.construct.JFXImageView;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
@@ -232,7 +233,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                 root.setLeft(left);
                 left.setPadding(new Insets(0, 8, 0, 0));
 
-                ImageView imageView = new ImageView();
+                ImageView imageView = new JFXImageView();
                 left.getChildren().add(imageView);
                 FXUtils.limitSize(imageView, 32, 32);
                 imageView.setImage(world.getIcon() == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : world.getIcon());

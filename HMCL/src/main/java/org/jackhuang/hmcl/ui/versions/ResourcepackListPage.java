@@ -19,10 +19,7 @@ import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.*;
-import org.jackhuang.hmcl.ui.construct.MDListCell;
-import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
-import org.jackhuang.hmcl.ui.construct.RipplerContainer;
-import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.io.FileUtils;
 
 import java.io.ByteArrayInputStream;
@@ -181,7 +178,7 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
     }
 
     private static final class ResourcepackListCell extends MDListCell<ResourcepackInfoObject> {
-        private final ImageView imageView = new ImageView();
+        private final ImageView imageView = new JFXImageView();
         private final TwoLineListItem content = new TwoLineListItem();
         private final JFXButton btnReveal = new JFXButton();
         private final JFXButton btnDelete = new JFXButton();

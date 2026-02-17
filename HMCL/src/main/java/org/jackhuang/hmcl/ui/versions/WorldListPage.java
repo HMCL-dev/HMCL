@@ -262,7 +262,7 @@ public final class WorldListPage extends ListPageBase<World> implements VersionP
                 root.setLeft(left);
                 left.setPadding(new Insets(0, 8, 0, 0));
 
-                this.imageView = new ImageView();
+                this.imageView = new JFXImageView();
                 left.getChildren().add(imageView);
                 FXUtils.limitSize(imageView, 32, 32);
             }

@@ -414,7 +414,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             Stage stage = Controllers.getStage();
             maxWidthProperty().bind(stage.widthProperty().multiply(0.7));
 
-            ImageView imageView = new ImageView();
+            ImageView imageView = new JFXImageView();
             FXUtils.limitSize(imageView, 40, 40);
             modInfo.loadIcon(imageView, null);
 
@@ -554,7 +554,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         private static final PseudoClass WARNING = PseudoClass.getPseudoClass("warning");
 
         JFXCheckBox checkBox = new JFXCheckBox();
-        ImageView imageView = new ImageView();
+        ImageView imageView = new JFXImageView();
         TwoLineListItem content = new TwoLineListItem();
         JFXButton restoreButton = new JFXButton();
         JFXButton infoButton = new JFXButton();
