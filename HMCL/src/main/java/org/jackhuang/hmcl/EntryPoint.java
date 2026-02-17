@@ -46,11 +46,9 @@ public final class EntryPoint {
         System.getProperties().putIfAbsent("javafx.autoproxy.disable", "true");
         System.getProperties().putIfAbsent("http.agent", "HMCL/" + Metadata.VERSION);
 
-        LOG.start(Metadata.HMCL_CURRENT_DIRECTORY.resolve("logs"));
-        
-        checkOperatingSystem();
-
         createHMCLDirectories();
+        LOG.start(Metadata.HMCL_CURRENT_DIRECTORY.resolve("logs"));
+
         setupJavaFXVMOptions();
 
         if (OperatingSystem.CURRENT_OS == OperatingSystem.MACOS) {
@@ -61,6 +59,7 @@ public final class EntryPoint {
 
         checkJavaFX();
         verifyJavaFX();
+        checkOperatingSystem();
         addEnableNativeAccess();
         enableUnsafeMemoryAccess();
 
@@ -231,8 +230,6 @@ public final class EntryPoint {
         String errorMessage = null;
         if (osName.contains("haiku")) {
             errorMessage = i18n("fatal.unsupported_platform.haiku");
-        } else if (osName.contains("os/2") || osName.contains("os2")) {
-            errorMessage = i18n("fatal.unsupported_platform.os2");
         }
 
         if (errorMessage != null) {
