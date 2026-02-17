@@ -147,6 +147,21 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
 
     @Override
     public Node createPage(WizardController controller, int step, SettingsMap settings) {
+        boolean hasSource = controller.getSettings().containsKey(LocalModpackPage.MODPACK_FILE) || settings.containsKey(RemoteModpackPage.MODPACK_SERVER_MANIFEST);
+
+        if (hasSource) {
+            if (step == 0) {
+                if (controller.getSettings().containsKey(LocalModpackPage.MODPACK_FILE))
+                    return new LocalModpackPage(controller);
+                else if (controller.getSettings().containsKey(RemoteModpackPage.MODPACK_SERVER_MANIFEST))
+                    return new RemoteModpackPage(controller);
+                else
+                    throw new IllegalArgumentException();
+            } else {
+                throw new IllegalStateException("error step " + step + ", settings: " + settings + ", pages: " + controller.getPages());
+            }
+        }
+
         switch (step) {
             case 0:
                 return new ModpackSelectionPage(controller);
