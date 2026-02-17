@@ -107,13 +107,13 @@ public class Datapack {
                     .setSubDirectory("/datapacks/")
                     .unzip();
 
-            boolean newFormat = gameVersionNumber.compareTo(GameVersionNumber.asGameVersion("26.1-snapshot-6")) >= 0;
+            boolean useNewWorldResourcePackLocation = gameVersionNumber.compareTo(GameVersionNumber.asGameVersion("26.1-snapshot-6")) >= 0;
 
-            if (newFormat) {
+            if (useNewWorldResourcePackLocation) {
                 Files.createDirectories(targetDatapackDirectory.getParent().resolve("resourcepacks"));
             }
 
-            try (FileSystem outputResourcesZipFS = CompressingUtils.createWritableZipFileSystem(targetDatapackDirectory.getParent().resolve(newFormat ? "resourcepacks/resources.zip" : "resources.zip"));
+            try (FileSystem outputResourcesZipFS = CompressingUtils.createWritableZipFileSystem(targetDatapackDirectory.getParent().resolve(useNewWorldResourcePackLocation ? "resourcepacks/resources.zip" : "resources.zip"));
                  FileSystem inputPackZipFS = CompressingUtils.createReadOnlyZipFileSystem(sourceDatapackPath)) {
                 Path resourcesZip = inputPackZipFS.getPath("resources.zip");
                 if (Files.isRegularFile(resourcesZip)) {
