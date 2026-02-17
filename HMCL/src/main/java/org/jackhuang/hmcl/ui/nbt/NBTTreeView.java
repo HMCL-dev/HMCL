@@ -28,7 +28,6 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.util.Callback;
 import org.jackhuang.hmcl.ui.FXUtils;
-import org.jackhuang.hmcl.ui.construct.JFXImageView;
 
 import java.lang.reflect.Array;
 import java.util.EnumMap;
@@ -81,7 +80,7 @@ public final class NBTTreeView extends TreeView<Tag> {
 
                 ImageView imageView = (ImageView) this.getGraphic();
                 if (imageView == null) {
-                    imageView = new JFXImageView();
+                    imageView = new ImageView();
                     this.setGraphic(imageView);
                 }
 
