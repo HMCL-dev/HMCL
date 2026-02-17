@@ -22,6 +22,7 @@ import javafx.beans.property.DoubleProperty;
 import javafx.beans.property.ReadOnlyDoubleProperty;
 import javafx.beans.property.SimpleDoubleProperty;
 import org.jackhuang.hmcl.event.EventManager;
+import org.jackhuang.hmcl.util.Result;
 import org.jackhuang.hmcl.util.function.ExceptionalConsumer;
 import org.jackhuang.hmcl.util.function.ExceptionalFunction;
 import org.jackhuang.hmcl.util.function.ExceptionalRunnable;
@@ -341,13 +342,16 @@ public abstract class Task<T> {
 
     private long lastUpdateProgressTime = 0L;
 
-    protected void updateProgress(long progress, long total) {
-        updateProgress(1.0 * progress / total);
+    protected void updateProgress(long count, long total) {
+        if (count < 0 || total < 0)
+            throw new IllegalArgumentException("Invalid count or total: count=" + count + ", total=" + total);
+
+        updateProgress(count < total ? (double) count / total : 1.0);
     }
 
     protected void updateProgress(double progress) {
         if (progress < 0 || progress > 1.0 || Double.isNaN(progress))
-            throw new IllegalArgumentException("Progress must be between 0 and 1.");
+            throw new IllegalArgumentException("Invalid progress: " + progress);
 
         long now = System.currentTimeMillis();
         if (progress == 1.0 || now - lastUpdateProgressTime >= 1000L) {
@@ -774,6 +778,37 @@ public abstract class Task<T> {
      */
     public Task<Void> whenComplete(Executor executor, FinalizedCallbackWithResult<T> action) {
         return whenComplete(executor, (exception -> action.execute(getResult(), exception)));
+    }
+
+    public Task<Result<T>> wrapResult() {
+        return new Task<Result<T>>() {
+            {
+                setSignificance(TaskSignificance.MODERATE);
+            }
+
+            @Override
+            public void execute() throws Exception {
+                if (isDependentsSucceeded() != (Task.this.getException() == null))
+                    throw new AssertionError("When whenComplete succeeded, Task.exception must be null.", Task.this.getException());
+
+                if (isDependentsSucceeded()) {
+                    setResult(Result.success(Task.this.getResult()));
+                } else {
+                    setSignificance(TaskSignificance.MINOR);
+                    setResult(Result.failure(Task.this.getException()));
+                }
+            }
+
+            @Override
+            public Collection<Task<?>> getDependents() {
+                return Collections.singleton(Task.this);
+            }
+
+            @Override
+            public boolean isRelyingOnDependents() {
+                return false;
+            }
+        }.setExecutor(executor).setName(getCaller()).setSignificance(TaskSignificance.MODERATE);
     }
 
     /**

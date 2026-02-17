@@ -1,7 +1,7 @@
 # 贡献指南
 
 <!-- #BEGIN LANGUAGE_SWITCHER -->
-[English](Contributing.md) | **中文**
+[English](Contributing.md) | **中文** (**简体**, [繁體](Contributing_zh_Hant.md))
 <!-- #END LANGUAGE_SWITCHER -->
 
 ## 构建 HMCL
@@ -87,8 +87,9 @@ HMCL 提供了一系列调试选项，用于控制启动器的行为。
 | `HMCL_FORCE_GPU`            |                                              | 指定是否强制使用 GPU 加速渲染              | `false`                                                                                                     |
 | `HMCL_ANIMATION_FRAME_RATE` |                                              | 指定 HMCL 的动画帧率                  | `60`                                                                                                        |              |
 | `HMCL_LANGUAGE`             |                                              | 指定 HMCL 的默认语言                  | 使用系统默认语言                                                                                                    |
+| `HMCL_UI_SCALE`             |                                              | 指定 HMCL 的 UI 缩放比例                 | 遵循系统当前的缩放比例                                                                                       | 支持倍数 (1.5)、百分比 (150%) 或 DPI (144dpi) |
 |                             | `-Dhmcl.dir=<path>`                          | 指定 HMCL 的当前数据文件夹               | `./.hmcl`                                                                                                   |              |
-|                             | `-Dhmcl.home=<path>`                         | 指定 HMCL 的用户数据文件夹               | Windows: `%APPDATA\.hmcl`<br>Linux/BSD: `$XDG_DATA_HOME/hmcl`<br>macOS: `~Library/Application Support/hmcl` |              |
+|                             | `-Dhmcl.home=<path>`                         | 指定 HMCL 的用户数据文件夹               | Windows: `%APPDATA%\.hmcl`<br>Linux/BSD: `$XDG_DATA_HOME/hmcl`<br>macOS: `~Library/Application Support/hmcl` |              |
 |                             | `-Dhmcl.self_integrity_check.disable=true`   | 检查更新时不检查本体完整性                  |                                                                                                             |              |
 |                             | `-Dhmcl.bmclapi.override=<url>`              | 指定 BMCLAPI 的 API Root          | `https://bmclapi2.bangbang93.com`                                                                           |              |
 |                             | `-Dhmcl.discoapi.override=<url>`             | 指定 foojay Disco API 的 API Root | `https://api.foojay.io/disco/v3.0`                                                                          |

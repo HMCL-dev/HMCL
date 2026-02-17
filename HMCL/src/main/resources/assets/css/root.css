@@ -324,20 +324,25 @@
     -fx-fill: -monet-on-surface-variant;
 }
 
-.two-line-list-item > .first-line > .tag {
+.two-line-list-item > .first-line .scroll-bar {
+    -fx-opacity: 0;
+    -fx-max-height: 0;
+    -fx-min-height: 0;
+    -fx-pref-height: 0;
+}
+
+.two-line-list-item > .first-line .tag {
     -fx-text-fill: -monet-on-secondary-container;
     -fx-background-color: -monet-secondary-container;
+    -fx-background-radius: 2;
     -fx-padding: 2;
     -fx-font-weight: normal;
     -fx-font-size: 12px;
 }
 
-.two-line-list-item > .first-line > .tag-warning {
+.two-line-list-item > .first-line .tag:warning {
     -fx-text-fill: -monet-on-error-container;
     -fx-background-color: -fixed-warning-tag-background;
-    -fx-padding: 2;
-    -fx-font-weight: normal;
-    -fx-font-size: 12px;
 }
 
 .two-line-item-second-large {
@@ -527,6 +532,7 @@
 }
 
 .jfx-layout-heading {
+    -fx-font-weight: BOLD;
     -fx-font-size: 20.0px;
     -fx-alignment: center-left;
     -fx-padding: 5.0 0.0 5.0 0.0;
@@ -567,6 +573,41 @@
     -fx-text-fill: -monet-on-surface;
 }
 
+/*******************************************************************************
+ *                                                                             *
+ * Microsoft Login Dialog                                                      *
+ *                                                                             *
+ ******************************************************************************/
+
+.microsoft-login-dialog:bodyonly {
+    -fx-padding: 0px 0px 0px 0px;
+}
+
+.method-title {
+    -fx-text-fill: -monet-on-surface;
+    -fx-font-weight: bold;
+}
+
+.method-desc {
+    -fx-text-fill: -monet-outline;
+    -fx-font-size: 0.9em;
+    -fx-line-spacing: 2;
+    -fx-wrap-text: true;
+    -fx-text-alignment: center;
+}
+
+.code-box {
+    -fx-background-color: -monet-surface-variant;
+    -fx-background-radius: 6;
+    -fx-padding: 0 10 0 10;
+    -fx-alignment: center;
+}
+
+.code-box .code-label {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -monet-primary;
+}
 
 /*******************************************************************************
  *                                                                             *
@@ -587,8 +628,16 @@
     -fx-pref-width: 150.0px;
 }
 
+/*******************************************************************************
+ *                                                                             *
+ * JFX Snack Bar                                                               *
+ *                                                                             *
+ ******************************************************************************/
+
 .jfx-snackbar-content {
     -fx-background-color: -monet-inverse-surface;
+    -fx-padding: 5;
+    -fx-spacing: 5;
 }
 
 .jfx-snackbar-toast {
@@ -1076,6 +1125,14 @@
     -fx-border-width: 0;
 }
 
+.options-sublist-wrapper .expand-icon .svg {
+    -fx-fill: -monet-on-surface-variant;
+}
+
+.options-sublist-wrapper .expand-icon .svg:disabled {
+    -fx-opacity: 0.4;
+}
+
 /*******************************************************************************
 *                                                                              *
 * JFX Toggle Button                                                            *
@@ -1103,15 +1160,16 @@
 .jfx-toggle-button Line {
     -fx-stroke: -jfx-untoggle-line-color;
 }
-.jfx-toggle-button:selected Line{
+
+.jfx-toggle-button:selected Line {
     -fx-stroke: -jfx-toggle-line-color;
 }
 
-.jfx-toggle-button Circle{
+.jfx-toggle-button Circle {
     -fx-fill: -jfx-untoggle-color;
 }
 
-.jfx-toggle-button:selected Circle{
+.jfx-toggle-button:selected Circle {
     -fx-fill: -jfx-toggle-color;
 }
 
@@ -1268,6 +1326,7 @@
 
 .log-toggle {
     -fx-border: 1px;
+    -fx-background-insets: 0;
     -fx-border-color: -fixed-log-toggle-unselected;
     -fx-text-fill: -fixed-log-toggle-unselected;
 }
@@ -1348,6 +1407,10 @@
     -fx-background-color: -fixed-log-info;
 }
 
+.log-window-list-cell {
+    -fx-background-color: -fixed-log-info;
+}
+
 .log-window-list-cell:debug {
     -fx-text-fill: -fixed-log-text-fill;
     -fx-background-color: -fixed-log-debug;
@@ -1401,14 +1464,6 @@
 
 .small-spinner-pane .jfx-spinner > .arc {
     -fx-stroke-width: 3.0;
-}
-
-.large-spinner-pane .jfx-spinner {
-    -jfx-radius: 20;
-}
-
-.large-spinner-pane .jfx-spinner {
-    -fx-stroke-width: 5.0;
 }
 
 .second-spinner {
@@ -1860,32 +1915,51 @@
 
 /*******************************************************************************
  *                                                                             *
- * Line Button                                                                 *
+ * Line Component                                                              *
  *                                                                             *
  ******************************************************************************/
 
-
-.line-select-button .svg {
-    -fx-opacity: 1;
+.line-component .line-component-container {
+    -fx-padding: 10 16 10 16;
 }
 
-.line-select-button .svg:disabled {
+.line-component.no-padding .line-component-container {
+    -fx-padding: 0;
+}
+
+.line-component:large-title .title-label {
+    -fx-font-size: 15px;
+}
+
+.line-button .svg:disabled {
     -fx-opacity: 0.4;
 }
 
-.line-select-button .menu-container .title {
-    -fx-font-size: 13px;
-    -fx-text-fill: -monet-on-surface;
-}
-
-.line-select-button .menu-container:selected .title {
-    -fx-text-fill: -monet-primary;
-}
-
-.line-select-button .menu-container .subtitle {
+.line-button .trailing-label {
     -fx-text-fill: -monet-on-surface-variant;
 }
 
-.line-select-button .menu-container:selected .subtitle {
+.line-button .trailing-icon .svg {
+    -fx-fill: -monet-on-surface-variant;
+    -fx-opacity: 1;
+}
+
+.line-button .trailing-icon .svg:disabled {
+    -fx-opacity: 0.4;
+}
+
+.line-select-button .menu-container .title-label {
+    -fx-font-size: 13px;
+}
+
+.line-select-button .menu-container:selected .title-label {
     -fx-text-fill: -monet-primary;
+}
+
+.line-select-button .menu-container:selected .subtitle-label {
+    -fx-text-fill: -monet-primary;
+}
+
+.line-toggle-button .jfx-toggle-button {
+    -fx-padding: 0;
 }

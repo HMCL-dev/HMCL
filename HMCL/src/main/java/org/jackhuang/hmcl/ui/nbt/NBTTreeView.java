@@ -41,6 +41,7 @@ public final class NBTTreeView extends TreeView<Tag> {
 
     public NBTTreeView(NBTTreeView.Item tree) {
         this.setRoot(tree);
+        if (tree != null) tree.setExpanded(true);
         this.setCellFactory(cellFactory());
     }
 
@@ -141,6 +142,9 @@ public final class NBTTreeView extends TreeView<Tag> {
                 item.getChildren().add(subTree);
             }
         }
+        FXUtils.onChangeAndOperate(item.expandedProperty(), expanded -> {
+            if (expanded && item.getChildren().size() == 1) item.getChildren().get(0).setExpanded(true);
+        });
 
         return item;
     }
