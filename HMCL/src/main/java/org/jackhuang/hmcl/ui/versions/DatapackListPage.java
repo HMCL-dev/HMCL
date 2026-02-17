@@ -21,6 +21,7 @@ import javafx.beans.property.BooleanProperty;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Skin;
 import javafx.stage.FileChooser;
+import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.mod.Datapack;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -48,7 +49,10 @@ public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.Da
     private final Datapack datapack;
     final BooleanProperty readOnly;
 
+    private final World world;
+
     public DatapackListPage(WorldManagePage worldManagePage) {
+        this.world = worldManagePage.getWorld();
         this.worldDir = worldManagePage.getWorld().getFile();
         datapack = new Datapack(worldDir.resolve("datapacks"));
         setItems(MappedObservableList.create(datapack.getPacks(), DatapackListPageSkin.DatapackInfoObject::new));
@@ -68,7 +72,7 @@ public final class DatapackListPage extends ListPageBase<DatapackListPageSkin.Da
 
     private void installSingleDatapack(Path datapack) {
         try {
-            this.datapack.installPack(datapack);
+            this.datapack.installPack(datapack, world.getGameVersion());
         } catch (IOException | IllegalArgumentException e) {
             LOG.warning("Unable to parse datapack file " + datapack, e);
         }

@@ -29,6 +29,7 @@ import org.jackhuang.hmcl.util.gson.JsonUtils;
 import org.jackhuang.hmcl.util.io.CompressingUtils;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Unzipper;
+import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -57,7 +58,7 @@ public class Datapack {
         return packs;
     }
 
-    public static void installPack(Path sourceDatapackPath, Path targetDatapackDirectory) throws IOException {
+    public static void installPack(Path sourceDatapackPath, Path targetDatapackDirectory, GameVersionNumber gameVersionNumber) throws IOException {
         boolean containsMultiplePacks;
         Set<String> packs = new HashSet<>();
         try (FileSystem fs = CompressingUtils.readonly(sourceDatapackPath).setAutoDetectEncoding(true).build()) {
@@ -106,7 +107,13 @@ public class Datapack {
                     .setSubDirectory("/datapacks/")
                     .unzip();
 
-            try (FileSystem outputResourcesZipFS = CompressingUtils.createWritableZipFileSystem(targetDatapackDirectory.getParent().resolve("resources.zip"));
+            boolean newFormat = gameVersionNumber.compareTo(GameVersionNumber.asGameVersion("26.1-snapshot-6")) >= 0;
+
+            if (newFormat) {
+                Files.createDirectories(targetDatapackDirectory.getParent().resolve("resourcepacks"));
+            }
+
+            try (FileSystem outputResourcesZipFS = CompressingUtils.createWritableZipFileSystem(targetDatapackDirectory.getParent().resolve(newFormat ? "resourcepacks/resources.zip" : "resources.zip"));
                  FileSystem inputPackZipFS = CompressingUtils.createReadOnlyZipFileSystem(sourceDatapackPath)) {
                 Path resourcesZip = inputPackZipFS.getPath("resources.zip");
                 if (Files.isRegularFile(resourcesZip)) {
@@ -138,8 +145,8 @@ public class Datapack {
         }
     }
 
-    public void installPack(Path sourcePackPath) throws IOException {
-        installPack(sourcePackPath, path);
+    public void installPack(Path sourcePackPath, GameVersionNumber gameVersionNumber) throws IOException {
+        installPack(sourcePackPath, path, gameVersionNumber);
         loadFromDir();
     }
 
