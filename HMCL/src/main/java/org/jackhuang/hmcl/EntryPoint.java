@@ -57,9 +57,12 @@ public final class EntryPoint {
                 initIcon();
         }
 
+        if (!Boolean.getBoolean("hmcl.bypass.osheck")) {
+            checkOperatingSystem();
+        }
+
         checkJavaFX();
         verifyJavaFX();
-        checkOperatingSystem();
         addEnableNativeAccess();
         enableUnsafeMemoryAccess();
 
