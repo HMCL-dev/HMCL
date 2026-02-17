@@ -375,7 +375,7 @@ public class BuiltInModListPageSkin extends SkinBase<BuiltInModListPage> {
 
             for (String modPath : bundledMods) {
                 String fileName = modPath.contains("/") ? modPath.substring(modPath.lastIndexOf('/') + 1) : modPath;
-                sb.append("\t|->").append(fileName).append(System.lineSeparator());
+                sb.append("\t|-> ").append(fileName).append(System.lineSeparator());
             }
 
             Task.runAsync(() -> {

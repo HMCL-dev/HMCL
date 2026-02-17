@@ -116,7 +116,7 @@ public final class LogExporter {
                             hasJij = true;
                             infoBuilder.append(mod.getName());
                             if (!mod.getName().equals(mod.getFileName())) {
-                                infoBuilder.append(" (").append(mod.getFileName()).append(")");
+                                infoBuilder.append("[").append(mod.getFileName()).append("]");
                             }
                             infoBuilder.append(System.lineSeparator());
 

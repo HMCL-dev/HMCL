@@ -208,10 +208,10 @@ public final class ForgeNewModMetadata {
         }
 
         List<String> bundledMods = new ArrayList<>();
-        ZipArchiveEntry jarInJarEntry = tree.getEntry("META-INF/jarjar/metadata.json");
-        if (jarInJarEntry != null) {
+        ZipArchiveEntry jijEntry = tree.getEntry("META-INF/jarjar/metadata.json");
+        if (jijEntry != null) {
             try {
-                JarInJarMetadata jijMetadata = JsonUtils.fromJsonFully(tree.getInputStream(jarInJarEntry), JarInJarMetadata.class);
+                JarInJarMetadata jijMetadata = JsonUtils.fromJsonFully(tree.getInputStream(jijEntry), JarInJarMetadata.class);
                 if (jijMetadata != null && jijMetadata.jars != null) {
                     jijMetadata.jars.stream()
                             .map(jar -> jar.path)
