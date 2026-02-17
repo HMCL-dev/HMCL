@@ -587,7 +587,7 @@ public class DefaultLauncher extends Launcher {
             else env.put("INST_" + type.name().toUpperCase(Locale.ROOT), "1");
         }
 
-        if (analyzer.hasOptiFine()) {
+        if (analyzer.getVersion(LibraryAnalyzer.LibraryType.OPTIFINE).isPresent()) {
             env.put("INST_OPTIFINE", "1");
         }
         env.putAll(options.getEnvironmentVariables());
