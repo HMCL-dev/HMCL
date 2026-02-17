@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.file.FileSystems;
 import java.util.Arrays;
 import java.util.Locale;
-import java.util.function.Function;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
