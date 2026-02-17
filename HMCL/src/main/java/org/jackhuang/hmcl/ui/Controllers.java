@@ -523,14 +523,15 @@ public final class Controllers {
         TaskExecutorDialogPane pane = new TaskExecutorDialogPane(onCancel);
         pane.setTitle(title);
         pane.setExecutor(executor);
-        executor.start();
         dialog(pane);
         return pane;
     }
 
     public static TaskExecutorDialogPane taskDialog(Task<?> task, String title, TaskCancellationAction onCancel) {
         TaskExecutor executor = task.executor();
-        return taskDialog(executor, title, onCancel);
+        TaskExecutorDialogPane pane = taskDialog(executor, title, onCancel);
+        executor.start();
+        return pane;
     }
 
     public static void navigate(Node node) {
