@@ -247,15 +247,14 @@ public class GameListPage extends DecoratorAnimatedPage implements DecoratorPage
                 {
                     SpinnerPane center = new SpinnerPane();
                     ComponentList.setVgrow(center, Priority.ALWAYS);
-                    center.getStyleClass().add("large-spinner-pane");
                     center.loadingProperty().bind(skinnable.loadingProperty());
+                    center.failedReasonProperty().bind(skinnable.failedReasonProperty());
 
                     listView.setCellFactory(x -> new GameListCell());
-                    Bindings.bindContent(listView.getItems(), skinnable.getItems());
+                    listView.setItems(skinnable.getItems());
 
                     ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
 
-                    center.failedReasonProperty().bind(skinnable.failedReasonProperty());
                     center.setContent(listView);
                     root.getContent().add(center);
                 }
