@@ -468,8 +468,7 @@ public final class TaskListPane extends StackPane {
         }
 
         public void succeed() {
-            int remaining = runningTasksCount - 1;
-            runningTasksCount = Math.max(0, remaining);
+            runningTasksCount = Math.max(0, runningTasksCount - 1);
 
             if (runningTasksCount == 0) {
                 status.set(Status.SUCCESS);
