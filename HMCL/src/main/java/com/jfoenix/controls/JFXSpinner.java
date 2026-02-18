@@ -51,7 +51,7 @@ public class JFXSpinner extends ProgressIndicator {
         init();
     }
 
-    private void init(){
+    private void init() {
         getStyleClass().add(DEFAULT_STYLE_CLASS);
     }
 
@@ -66,49 +66,50 @@ public class JFXSpinner extends ProgressIndicator {
      *                                                                         *
      **************************************************************************/
 
-    /**
-     * Initialize the style class to 'jfx-spinner'.
-     * <p>
-     * This is the selector class from which CSS can be used to style
-     * this control.
-     */
+    /// Initialize the style class to 'jfx-spinner'.
+    ///
+    /// This is the selector class from which CSS can be used to style
+    /// this control.
     private static final String DEFAULT_STYLE_CLASS = "jfx-spinner";
-
 
     /**
      * specifies the radius of the spinner node, by default it's set to -1 (USE_COMPUTED_SIZE)
      */
-    private StyleableDoubleProperty radius = new SimpleStyleableDoubleProperty(StyleableProperties.RADIUS,
-        JFXSpinner.this,
-        "radius",
-        Region.USE_COMPUTED_SIZE);
+    private StyleableDoubleProperty radius;
 
     public final StyleableDoubleProperty radiusProperty() {
+        if (this.radius == null) {
+            this.radius = new SimpleStyleableDoubleProperty(StyleableProperties.RADIUS,
+                    JFXSpinner.this,
+                    "radius",
+                    Region.USE_COMPUTED_SIZE);
+        }
         return this.radius;
     }
 
     public final double getRadius() {
-        return this.radiusProperty().get();
+        return radius != null ? radius.get() : Region.USE_COMPUTED_SIZE;
     }
 
     public final void setRadius(final double radius) {
         this.radiusProperty().set(radius);
     }
 
-    /**
-     * specifies from which angle the spinner should start spinning
-     */
-    private StyleableDoubleProperty startingAngle = new SimpleStyleableDoubleProperty(StyleableProperties.STARTING_ANGLE,
-        JFXSpinner.this,
-        "starting_angle",
-        360 - Math.random() * 720);
+    /// specifies from which angle the spinner should start spinning
+    private StyleableDoubleProperty startingAngle;
 
     public final StyleableDoubleProperty startingAngleProperty() {
+        if (this.startingAngle == null) {
+            startingAngle = new SimpleStyleableDoubleProperty(StyleableProperties.STARTING_ANGLE,
+                    JFXSpinner.this,
+                    "starting_angle",
+                    0.0);
+        }
         return this.startingAngle;
     }
 
     public final double getStartingAngle() {
-        return this.startingAngleProperty().get();
+        return startingAngle != null ? startingAngle.get() : 0.0;
     }
 
     public final void setStartingAngle(final double startingAngle) {
@@ -117,41 +118,40 @@ public class JFXSpinner extends ProgressIndicator {
 
     private static class StyleableProperties {
         private static final CssMetaData<JFXSpinner, Number> RADIUS =
-            new CssMetaData<JFXSpinner, Number>("-jfx-radius",
-                SizeConverter.getInstance(), Region.USE_COMPUTED_SIZE) {
-                @Override
-                public boolean isSettable(JFXSpinner control) {
-                    return control.radius == null || !control.radius.isBound();
-                }
+                new CssMetaData<>("-jfx-radius",
+                        SizeConverter.getInstance(), Region.USE_COMPUTED_SIZE) {
+                    @Override
+                    public boolean isSettable(JFXSpinner control) {
+                        return control.radius == null || !control.radius.isBound();
+                    }
 
-                @Override
-                public StyleableDoubleProperty getStyleableProperty(JFXSpinner control) {
-                    return control.radius;
-                }
-            };
+                    @Override
+                    public StyleableDoubleProperty getStyleableProperty(JFXSpinner control) {
+                        return control.radius;
+                    }
+                };
 
         private static final CssMetaData<JFXSpinner, Number> STARTING_ANGLE =
-            new CssMetaData<JFXSpinner, Number>("-jfx-starting-angle",
-                SizeConverter.getInstance(), 360 - Math.random() * 720) {
-                @Override
-                public boolean isSettable(JFXSpinner control) {
-                    return control.startingAngle == null || !control.startingAngle.isBound();
-                }
+                new CssMetaData<>("-jfx-starting-angle",
+                        SizeConverter.getInstance(), 0.0) {
+                    @Override
+                    public boolean isSettable(JFXSpinner control) {
+                        return control.startingAngle == null || !control.startingAngle.isBound();
+                    }
 
-                @Override
-                public StyleableDoubleProperty getStyleableProperty(JFXSpinner control) {
-                    return control.startingAngle;
-                }
-            };
-
+                    @Override
+                    public StyleableDoubleProperty getStyleableProperty(JFXSpinner control) {
+                        return control.startingAngle;
+                    }
+                };
 
         private static final List<CssMetaData<? extends Styleable, ?>> CHILD_STYLEABLES;
 
         static {
             final List<CssMetaData<? extends Styleable, ?>> styleables =
-                new ArrayList<>(ProgressIndicator.getClassCssMetaData());
+                    new ArrayList<>(ProgressIndicator.getClassCssMetaData());
             Collections.addAll(styleables, RADIUS, STARTING_ANGLE);
-            CHILD_STYLEABLES = Collections.unmodifiableList(styleables);
+            CHILD_STYLEABLES = List.copyOf(styleables);
         }
     }
 
@@ -163,6 +163,5 @@ public class JFXSpinner extends ProgressIndicator {
     public static List<CssMetaData<? extends Styleable, ?>> getClassCssMetaData() {
         return StyleableProperties.CHILD_STYLEABLES;
     }
-
 
 }
