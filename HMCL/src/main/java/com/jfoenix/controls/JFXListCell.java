@@ -89,36 +89,34 @@ public class JFXListCell<T> extends ListCell<T> {
      */
     private void initListeners() {
         listViewProperty().addListener((listObj, oldList, newList) -> {
-            if (newList != null) {
-                if (getListView() instanceof JFXListView) {
-                    ((JFXListView<?>) newList).currentVerticalGapProperty().addListener((o, oldVal, newVal) -> {
-                        cellRippler.rippler.setClip(null);
-                        if (newVal.doubleValue() != 0) {
-                            playExpandAnimation = true;
-                            getListView().requestLayout();
-                        } else {
-                            // fake expand state
-                            double gap = clip.getY() * 2;
-                            gapAnimation = new Timeline(
-                                    new KeyFrame(Duration.millis(240),
-                                            new KeyValue(this.translateYProperty(),
-                                                    -gap / 2 - (gap * (getIndex())),
-                                                    Interpolator.EASE_BOTH)
-                                    ));
-                            gapAnimation.play();
-                            gapAnimation.setOnFinished((finish) -> {
-                                requestLayout();
-                                Platform.runLater(() -> getListView().requestLayout());
-                            });
-                        }
-                    });
+            if (newList != null && getListView() instanceof JFXListView<?> newJFXListView) {
+                newJFXListView.currentVerticalGapProperty().addListener((o, oldVal, newVal) -> {
+                    cellRippler.rippler.setClip(null);
+                    if (newVal.doubleValue() != 0) {
+                        playExpandAnimation = true;
+                        getListView().requestLayout();
+                    } else {
+                        // fake expand state
+                        double gap = clip.getY() * 2;
+                        gapAnimation = new Timeline(
+                                new KeyFrame(Duration.millis(240),
+                                        new KeyValue(this.translateYProperty(),
+                                                -gap / 2 - (gap * (getIndex())),
+                                                Interpolator.EASE_BOTH)
+                                ));
+                        gapAnimation.play();
+                        gapAnimation.setOnFinished((finish) -> {
+                            requestLayout();
+                            Platform.runLater(() -> getListView().requestLayout());
+                        });
+                    }
+                });
 
-                    selectedProperty().addListener((o, oldVal, newVal) -> {
-                        if (newVal) {
-                            selectionChanged = true;
-                        }
-                    });
-                }
+                selectedProperty().addListener((o, oldVal, newVal) -> {
+                    if (newVal) {
+                        selectionChanged = true;
+                    }
+                });
             }
         });
     }
