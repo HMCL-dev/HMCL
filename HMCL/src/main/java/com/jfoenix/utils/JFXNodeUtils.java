@@ -19,14 +19,21 @@
 
 package com.jfoenix.utils;
 
+import com.sun.javafx.scene.NodeHelper;
+import javafx.beans.binding.BooleanBinding;
+import javafx.beans.binding.BooleanExpression;
 import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableBooleanValue;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
+import javafx.stage.Window;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -68,23 +75,23 @@ public final class JFXNodeUtils {
         }
     }
 
-    private static final Function<Node, ObservableBooleanValue> treeVisiblePropertyGetter = initTreeVisiblePropertyGetter();
+    private static final @NotNull Function<Node, ObservableBooleanValue> treeVisiblePropertyGetter = initTreeVisiblePropertyGetter();
 
-    private static Function<Node, ObservableBooleanValue> initTreeVisiblePropertyGetter() {
+    private static @NotNull Function<Node, ObservableBooleanValue> initTreeVisiblePropertyGetter() {
 
         MethodHandles.Lookup lookup;
         try {
             lookup = MethodHandles.privateLookupIn(Node.class, MethodHandles.lookup());
         } catch (IllegalAccessException e) {
             LOG.warning("Failed to get private lookup for Node", e);
-            return null;
+            return JFXNodeUtils::defaultTreeVisibleProperty;
         }
 
         try {
             Method treeVisiblePropertyMethod = Node.class.getDeclaredMethod("treeVisibleProperty");
             if (ObservableBooleanValue.class.isAssignableFrom(treeVisiblePropertyMethod.getReturnType())) {
                 LOG.warning("Node.treeVisibleProperty() does not return ObservableBooleanValue");
-                return null;
+                return JFXNodeUtils::defaultTreeVisibleProperty;
             }
 
             MethodHandle handle = lookup.unreflect(treeVisiblePropertyMethod)
@@ -100,17 +107,36 @@ public final class JFXNodeUtils {
             };
         } catch (Exception e) {
             LOG.warning("Failed to get method handle for Node.treeVisibleProperty()", e);
-            return null;
+            return JFXNodeUtils::defaultTreeVisibleProperty;
         }
     }
 
-    public static ObservableBooleanValue treeVisibleProperty(Node item) {
-        return treeVisiblePropertyGetter != null ? treeVisiblePropertyGetter.apply(item) : null;
+    /// If `Node.treeVisibleProperty()` does not exist, use `Node.visibleProperty()` as a fallback
+    private static @NotNull ObservableBooleanValue defaultTreeVisibleProperty(Node item) {
+        return item.visibleProperty();
+    }
+
+    public static @NotNull ObservableBooleanValue treeVisibleProperty(Node item) {
+        return treeVisiblePropertyGetter.apply(item);
     }
 
     public static boolean isTreeVisible(Node item) {
-        ObservableBooleanValue property = treeVisibleProperty(item);
-        return property == null || property.getValue();
+        return treeVisibleProperty(item).getValue();
+    }
+
+    public static boolean isTreeShowing(Node node) {
+        if (node == null)
+            return false;
+
+        Scene scene = node.getScene();
+        if (scene == null)
+            return false;
+
+        Window window = scene.getWindow();
+        if (window == null || !window.isShowing())
+            return false;
+
+        return isTreeVisible(node);
     }
 
     private JFXNodeUtils() {
