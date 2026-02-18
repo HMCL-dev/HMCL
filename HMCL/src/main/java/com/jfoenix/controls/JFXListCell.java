@@ -268,8 +268,8 @@ public class JFXListCell<T> extends ListCell<T> {
     }
 
     private double getGap() {
-        return (getListView() instanceof JFXListView) ? (((JFXListView<?>) getListView()).isExpanded() ? ((JFXListView<?>) getListView())
-            .currentVerticalGapProperty()
-            .get() : 0) : 0;
+        return (getListView() instanceof JFXListView<?> listView)
+                ? (listView.isExpanded() ? listView.currentVerticalGapProperty().get() : 0)
+                : 0;
     }
 }
