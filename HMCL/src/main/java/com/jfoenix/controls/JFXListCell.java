@@ -217,12 +217,12 @@ public class JFXListCell<T> extends ListCell<T> {
                     cellRippler.rippler.cacheRippleClip(false);
                     // build the Cell node
                     // RIPPLER ITEM : in case if the list item has its own rippler bind the list rippler and item rippler properties
-                    if (newNode instanceof JFXRippler) {
+                    if (newNode instanceof JFXRippler newRippler) {
                         // build cell container from exisiting rippler
-                        cellRippler.ripplerFillProperty().bind(((JFXRippler) newNode).ripplerFillProperty());
-                        cellRippler.maskTypeProperty().bind(((JFXRippler) newNode).maskTypeProperty());
-                        cellRippler.positionProperty().bind(((JFXRippler) newNode).positionProperty());
-                        cellContent = ((JFXRippler) newNode).getControl();
+                        cellRippler.ripplerFillProperty().bind(newRippler.ripplerFillProperty());
+                        cellRippler.maskTypeProperty().bind(newRippler.maskTypeProperty());
+                        cellRippler.positionProperty().bind(newRippler.positionProperty());
+                        cellContent = newRippler.getControl();
                     }
                     ((Region) cellContent).setMaxHeight(cellContent.prefHeight(-1));
                     setGraphic(cellContent);
