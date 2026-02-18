@@ -1446,6 +1446,10 @@
     -fx-stroke-line-cap: round;
 }
 
+.jfx-spinner:determinate .percentage{
+    -fx-fill: -monet-on-surface-variant;
+}
+
 .first-spinner {
     -jfx-radius: 20;
 }
