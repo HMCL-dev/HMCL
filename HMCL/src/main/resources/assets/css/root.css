@@ -819,14 +819,14 @@
 }
 
 .jfx-slider .slider-value {
-    -fx-stroke: -monet-on-primary;
+    -fx-stroke: -monet-inverse-on-surface;
     -fx-font-size: 10;
 }
 
 .jfx-slider .animated-thumb {
     -fx-pref-width: 30px;
     -fx-pref-height: 30px;
-    -fx-background-color: -jfx-default-thumb;
+    -fx-background-color: -monet-inverse-surface;
     -fx-background-radius: 50% 50% 50% 0%;
     -fx-background-insets: 0;
 }
@@ -839,7 +839,7 @@
 }
 
 .jfx-slider:min .animated-thumb {
-    -fx-background-color: -jfx-default-track;
+    -fx-background-color: -monet-inverse-surface;
     -fx-background-radius: 50% 50% 50% 0%;
     -fx-background-insets: 0;
 }
