@@ -21,10 +21,8 @@ package com.jfoenix.skins;
 
 import com.jfoenix.controls.JFXProgressBar;
 import com.jfoenix.utils.JFXNodeUtils;
-import com.sun.javafx.scene.NodeHelper;
-import com.sun.javafx.scene.TreeShowingExpression;
+import com.jfoenix.utils.TreeShowingProperty;
 import javafx.animation.*;
-import javafx.beans.value.ObservableBooleanValue;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.ProgressIndicator;
@@ -49,12 +47,12 @@ public class JFXProgressBarSkin extends ProgressIndicatorSkin {
     private double secondaryBarWidth = 0;
     private Animation indeterminateTransition;
     private Region clip;
-    private ObservableBooleanValue treeShowingExpression;
+    private TreeShowingProperty treeShowingExpression;
 
     public JFXProgressBarSkin(JFXProgressBar bar) {
         super(bar);
 
-        this.treeShowingExpression = JFXNodeUtils.treeVisibleProperty(bar);
+        this.treeShowingExpression = new TreeShowingProperty(bar);
 
         bar.widthProperty().addListener(observable -> {
             updateProgress();
