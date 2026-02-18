@@ -103,7 +103,7 @@ public class JFXSpinner extends ProgressIndicator {
         if (this.startingAngle == null) {
             startingAngle = new SimpleStyleableDoubleProperty(StyleableProperties.STARTING_ANGLE,
                     JFXSpinner.this,
-                    "starting_angle",
+                    "startingAngle",
                     0.0);
         }
         return this.startingAngle;
