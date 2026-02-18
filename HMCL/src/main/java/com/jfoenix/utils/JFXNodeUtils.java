@@ -84,8 +84,8 @@ public final class JFXNodeUtils {
 
         try {
             Method treeVisiblePropertyMethod = Node.class.getDeclaredMethod("treeVisibleProperty");
-            if (ObservableBooleanValue.class.isAssignableFrom(treeVisiblePropertyMethod.getReturnType())) {
-                LOG.warning("Node.treeVisibleProperty() does not return ObservableBooleanValue");
+            if (!ObservableBooleanValue.class.isAssignableFrom(treeVisiblePropertyMethod.getReturnType())) {
+                LOG.warning("Node.treeVisibleProperty() does not return ObservableBooleanValue: " + treeVisiblePropertyMethod.getReturnType());
                 return JFXNodeUtils::defaultTreeVisibleProperty;
             }
 
