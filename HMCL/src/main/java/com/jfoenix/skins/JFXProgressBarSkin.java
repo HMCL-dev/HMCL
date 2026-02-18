@@ -45,12 +45,12 @@ public class JFXProgressBarSkin extends ProgressIndicatorSkin {
     private double secondaryBarWidth = 0;
     private Timeline indeterminateTransition;
     private Region clip;
-    private final TreeShowingProperty treeShowingExpression;
+    private final TreeShowingProperty treeShowingProperty;
 
     public JFXProgressBarSkin(JFXProgressBar bar) {
         super(bar);
 
-        this.treeShowingExpression = new TreeShowingProperty(bar);
+        this.treeShowingProperty = new TreeShowingProperty(bar);
 
         bar.widthProperty().addListener(observable -> {
             updateProgress();
@@ -63,10 +63,10 @@ public class JFXProgressBarSkin extends ProgressIndicatorSkin {
         registerChangeListener(bar.parentProperty(), obs -> updateAnimation());
         registerChangeListener(bar.sceneProperty(), obs -> updateAnimation());
 
-        unregisterChangeListeners(treeShowingExpression);
+        unregisterChangeListeners(treeShowingProperty);
         unregisterChangeListeners(bar.indeterminateProperty());
 
-        registerChangeListener(treeShowingExpression, obs -> this.updateAnimation());
+        registerChangeListener(treeShowingProperty, obs -> this.updateAnimation());
         registerChangeListener(bar.indeterminateProperty(), obs -> initialize());
 
         initialize();
@@ -161,7 +161,7 @@ public class JFXProgressBarSkin extends ProgressIndicatorSkin {
     }
 
     private void updateAnimation() {
-        final boolean isTreeShowing = treeShowingExpression.get();
+        final boolean isTreeShowing = treeShowingProperty.get();
         if (indeterminateTransition != null) {
             pauseTimeline(!isTreeShowing);
         } else if (isTreeShowing) {
@@ -216,7 +216,7 @@ public class JFXProgressBarSkin extends ProgressIndicatorSkin {
     @Override
     public void dispose() {
         super.dispose();
-        treeShowingExpression.dispose();
+        treeShowingProperty.dispose();
         if (indeterminateTransition != null) {
             clearAnimation();
         }
