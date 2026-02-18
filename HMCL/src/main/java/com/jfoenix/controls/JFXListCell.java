@@ -89,8 +89,8 @@ public class JFXListCell<T> extends ListCell<T> {
      */
     private void initListeners() {
         listViewProperty().addListener((listObj, oldList, newList) -> {
-            if (newList != null && getListView() instanceof JFXListView<?> newJFXListView) {
-                newJFXListView.currentVerticalGapProperty().addListener((o, oldVal, newVal) -> {
+            if (newList instanceof JFXListView<?> listView) {
+                listView.currentVerticalGapProperty().addListener((o, oldVal, newVal) -> {
                     cellRippler.rippler.setClip(null);
                     if (newVal.doubleValue() != 0) {
                         playExpandAnimation = true;
