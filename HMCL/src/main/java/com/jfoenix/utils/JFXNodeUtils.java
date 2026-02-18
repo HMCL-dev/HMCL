@@ -19,11 +19,6 @@
 
 package com.jfoenix.utils;
 
-import com.sun.javafx.scene.NodeHelper;
-import javafx.beans.binding.BooleanBinding;
-import javafx.beans.binding.BooleanExpression;
-import javafx.beans.property.ReadOnlyBooleanProperty;
-import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableBooleanValue;
 import javafx.scene.Node;
 import javafx.scene.Scene;
