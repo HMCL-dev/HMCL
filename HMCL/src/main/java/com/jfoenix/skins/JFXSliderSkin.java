@@ -68,7 +68,6 @@ public class JFXSliderSkin extends SliderSkin {
     private double horizontalRotation;
     private double shifting;
 
-
     public JFXSliderSkin(JFXSlider slider) {
         super(slider);
 
@@ -233,7 +232,6 @@ public class JFXSliderSkin extends SliderSkin {
         getSkinnable().pseudoClassStateChanged(MIN_VALUE, getSkinnable().getMin() == getSkinnable().getValue());
         getSkinnable().pseudoClassStateChanged(MAX_VALUE, getSkinnable().getMax() == getSkinnable().getValue());
     }
-
 
     private void initAnimation(Orientation orientation) {
         initializeVariables();
