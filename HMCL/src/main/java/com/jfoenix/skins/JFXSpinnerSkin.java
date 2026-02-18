@@ -35,6 +35,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.scene.shape.Arc;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.shape.StrokeLineCap;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
@@ -76,6 +77,7 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
         arc.getStyleClass().setAll("arc");
         arc.setFill(Color.TRANSPARENT);
         arc.setStrokeWidth(3);
+        arc.setStrokeLineCap(StrokeLineCap.ROUND);
 
         track = new Arc();
         track.setManaged(false);

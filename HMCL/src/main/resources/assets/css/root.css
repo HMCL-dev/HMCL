@@ -1445,10 +1445,7 @@
 *******************************************************************************/
 
 .jfx-spinner .arc {
-    -fx-stroke-width: 3.0;
-    -fx-fill: transparent;
     -fx-stroke: -monet-primary-container;
-    -fx-stroke-line-cap: round;
 }
 
 .jfx-spinner:determinate .percentage {
