@@ -61,7 +61,7 @@ public class JFXProgressBar extends ProgressBar {
 
     public DoubleProperty secondaryProgressProperty() {
         if (secondaryProgress == null) {
-            secondaryProgress = new SimpleDoubleProperty(this, "INDETERMINATE_PROGRESS", INDETERMINATE_PROGRESS);
+            secondaryProgress = new SimpleDoubleProperty(this, "secondaryProgress", INDETERMINATE_PROGRESS);
         }
         return secondaryProgress;
     }
