@@ -72,6 +72,8 @@ public class JFXSpinner extends ProgressIndicator {
     /// this control.
     private static final String DEFAULT_STYLE_CLASS = "jfx-spinner";
 
+    private static final double DEFAULT_RADIUS = 12.0;
+
     /**
      * specifies the radius of the spinner node, by default it's set to -1 (USE_COMPUTED_SIZE)
      */
@@ -82,13 +84,13 @@ public class JFXSpinner extends ProgressIndicator {
             this.radius = new SimpleStyleableDoubleProperty(StyleableProperties.RADIUS,
                     JFXSpinner.this,
                     "radius",
-                    Region.USE_COMPUTED_SIZE);
+                    DEFAULT_RADIUS);
         }
         return this.radius;
     }
 
     public final double getRadius() {
-        return radius != null ? radius.get() : Region.USE_COMPUTED_SIZE;
+        return radius != null ? radius.get() : DEFAULT_RADIUS;
     }
 
     public final void setRadius(final double radius) {
@@ -119,7 +121,7 @@ public class JFXSpinner extends ProgressIndicator {
     private static class StyleableProperties {
         private static final CssMetaData<JFXSpinner, Number> RADIUS =
                 new CssMetaData<>("-jfx-radius",
-                        SizeConverter.getInstance(), Region.USE_COMPUTED_SIZE) {
+                        SizeConverter.getInstance(), DEFAULT_RADIUS) {
                     @Override
                     public boolean isSettable(JFXSpinner control) {
                         return control.radius == null || !control.radius.isBound();
