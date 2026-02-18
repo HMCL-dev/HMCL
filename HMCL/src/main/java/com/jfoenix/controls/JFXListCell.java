@@ -234,9 +234,8 @@ public class JFXListCell<T> extends ListCell<T> {
                 setText(item == null ? "null" : item.toString());
                 setGraphic(null);
             }
-            boolean isJFXListView = getListView() instanceof JFXListView;
             // show cell tooltip if it's toggled in JFXListView
-            if (isJFXListView && ((JFXListView<?>) getListView()).isShowTooltip()) {
+            if (getListView() instanceof JFXListView<?> listView && listView.isShowTooltip()) {
                 if (item instanceof Label label) {
                     setTooltip(new Tooltip(label.getText()));
                 } else if (getText() != null) {
