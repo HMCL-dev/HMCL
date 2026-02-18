@@ -96,18 +96,14 @@ public class JFXSlider extends Slider {
         return valueFactory;
     }
 
-    /**
-     * @return the current slider value factory
-     */
+    /// @return the current slider value factory
     public final Callback<JFXSlider, StringBinding> getValueFactory() {
         return valueFactory == null ? null : valueFactory.get();
     }
 
-    /**
-     * sets custom string binding for the slider text value
-     *
-     * @param valueFactory a callback to create the string value binding
-     */
+    /// sets custom string binding for the slider text value
+    ///
+    /// @param valueFactory a callback to create the string value binding
     public final void setValueFactory(final Callback<JFXSlider, StringBinding> valueFactory) {
         this.valueFactoryProperty().set(valueFactory);
     }
