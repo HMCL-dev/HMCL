@@ -31,12 +31,11 @@ import javafx.scene.control.Skin;
 import javafx.scene.control.TextField;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
+import org.jackhuang.hmcl.ui.FXUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import static org.jackhuang.hmcl.ui.FXUtils.useJFXContextMenu;
 
 /**
  * JFXTextField is the material design implementation of a text Field.
@@ -72,7 +71,7 @@ public class JFXTextField extends TextField implements IFXLabelFloatControl {
 
     private void initialize() {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
-        useJFXContextMenu(this);
+        FXUtils.useJFXContextMenu(this);
     }
 
     /***************************************************************************
