@@ -1443,9 +1443,6 @@
     -fx-stroke-width: 3.0;
     -fx-fill: transparent;
     -fx-stroke: -monet-primary-container;
-}
-
-.jfx-spinner .arc {
     -fx-stroke-line-cap: round;
 }
 
