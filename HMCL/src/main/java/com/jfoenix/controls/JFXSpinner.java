@@ -27,7 +27,6 @@ import javafx.css.StyleableDoubleProperty;
 import javafx.css.converter.SizeConverter;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.Skin;
-import javafx.scene.layout.Region;
 
 import java.util.ArrayList;
 import java.util.Collections;
