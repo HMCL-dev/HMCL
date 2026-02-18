@@ -53,7 +53,7 @@ public class JFXListView<T> extends ListView<T> {
         return new JFXListViewSkin<>(this);
     }
 
-    private final IntegerProperty depthProperty = new SimpleIntegerProperty(0);
+    private final IntegerProperty depthProperty = new SimpleIntegerProperty(this, "depth", 0);
 
     public IntegerProperty depthProperty() {
         return depthProperty;
@@ -67,18 +67,21 @@ public class JFXListView<T> extends ListView<T> {
         depthProperty.set(depth);
     }
 
-    private final ReadOnlyDoubleWrapper currentVerticalGapProperty = new ReadOnlyDoubleWrapper();
+    private DoubleProperty currentVerticalGap;
 
-    ReadOnlyDoubleProperty currentVerticalGapProperty() {
-        return currentVerticalGapProperty.getReadOnlyProperty();
+    DoubleProperty currentVerticalGapProperty() {
+        if (currentVerticalGap == null) {
+            currentVerticalGap = new SimpleDoubleProperty(this, "currentVerticalGap");
+        }
+        return currentVerticalGap;
     }
 
     private void expand() {
-        currentVerticalGapProperty.set(verticalGap.get());
+        currentVerticalGap.set(verticalGap.get());
     }
 
     private void collapse() {
-        currentVerticalGapProperty.set(0);
+        currentVerticalGap.set(0);
     }
 
     /*
@@ -202,7 +205,7 @@ public class JFXListView<T> extends ListView<T> {
                     }
                 };
         private static final CssMetaData<JFXListView<?>, Boolean> EXPANDED =
-                new CssMetaData<JFXListView<?>, Boolean>("-jfx-expanded",
+                new CssMetaData<>("-jfx-expanded",
                         BooleanConverter.getInstance(), false) {
                     @Override
                     public boolean isSettable(JFXListView<?> control) {
@@ -221,7 +224,7 @@ public class JFXListView<T> extends ListView<T> {
             final List<CssMetaData<? extends Styleable, ?>> styleables =
                     new ArrayList<>(ListView.getClassCssMetaData());
             Collections.addAll(styleables, VERTICAL_GAP, EXPANDED);
-            CHILD_STYLEABLES = Collections.unmodifiableList(styleables);
+            CHILD_STYLEABLES = List.copyOf(styleables);
         }
     }
 
