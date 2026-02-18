@@ -74,15 +74,15 @@ public class JFXSlider extends Slider {
     ///
     ///
     /// For example, to have the value displayed as a percentage (assuming the slider has a range of (0, 100)):
-    /// <pre><code>
+    /// ```java
     /// JFXSlider mySlider = ...
     /// mySlider.setValueFactory(slider ->
-    /// 		Bindings.createStringBinding(
+    ///        Bindings.createStringBinding(
     ///            () -> ((int) slider.getValue()) + "%",
-    /// 			slider.valueProperty()
+    ///            slider.valueProperty()
     ///        )
     /// );
-    /// </code></pre>
+    /// ```
     ///
     /// NOTE: might be replaced later with a call back to create the animated thumb node
     ///

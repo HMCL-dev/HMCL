@@ -176,7 +176,6 @@ public class JFXSliderSkin extends SliderSkin {
         mouseHandlerPane.resizeRelocate(x, y, w, h);
     }
 
-
     private void initializeVariables() {
         shifting = 30 + thumb.getWidth();
         if (getSkinnable().getOrientation() != Orientation.HORIZONTAL) {
