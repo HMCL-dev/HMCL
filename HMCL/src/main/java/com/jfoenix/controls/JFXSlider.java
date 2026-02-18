@@ -144,11 +144,11 @@ public class JFXSlider extends Slider {
     }
 
     public void setIndicatorPosition(IndicatorPosition pos) {
-        this.indicatorPosition.set(pos);
+        indicatorPositionProperty().set(pos);
     }
 
     private static final class StyleableProperties {
-        private static final CssMetaData<JFXSlider, IndicatorPosition> INDICATOR_POSITION = new CssMetaData<JFXSlider, IndicatorPosition>(
+        private static final CssMetaData<JFXSlider, IndicatorPosition> INDICATOR_POSITION = new CssMetaData<>(
                 "-jfx-indicator-position",
                 IndicatorPositionConverter.getInstance(),
                 IndicatorPosition.LEFT) {
