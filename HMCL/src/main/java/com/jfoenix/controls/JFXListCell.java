@@ -82,9 +82,7 @@ public class JFXListCell<T> extends ListCell<T> {
     private Rectangle clip;
 
     //	private Timeline animateGap;
-    private Timeline expandAnimation;
     private Timeline gapAnimation;
-    private double animatedHeight = 0;
     private boolean playExpandAnimation = false;
     private boolean selectionChanged = false;
 
@@ -246,130 +244,6 @@ public class JFXListCell<T> extends ListCell<T> {
                         cellRippler.maskTypeProperty().bind(((JFXRippler) newNode).maskTypeProperty());
                         cellRippler.positionProperty().bind(((JFXRippler) newNode).positionProperty());
                         cellContent = ((JFXRippler) newNode).getControl();
-                    }
-
-                    // SUBLIST ITEM : build the Cell node as sublist the sublist
-                    else if (newNode instanceof JFXListView<?>) {
-                        // add the sublist to the parent and style the cell as sublist item
-                        ((JFXListView<?>) getListView()).addSublist((JFXListView<?>) newNode, this.getIndex());
-                        this.getStyleClass().add("sublist-item");
-
-                        if (this.getPadding() != null) {
-                            this.setPadding(new Insets(this.getPadding().getTop(),
-                                0,
-                                this.getPadding().getBottom(),
-                                0));
-                        }
-
-                        // First build the group item used to expand / hide the sublist
-                        StackPane groupNode = new StackPane();
-                        groupNode.getStyleClass().add("sublist-header");
-                        SVGGlyph dropIcon = new SVGGlyph(0,
-                            "ANGLE_RIGHT",
-                            "M340 548.571q0 7.429-5.714 13.143l-266.286 266.286q-5.714 5.714-13.143 5.714t-13.143-5.714l-28.571-28.571q-5.714-5.714-5.714-13.143t5.714-13.143l224.571-224.571-224.571-224.571q-5.714-5.714-5.714-13.143t5.714-13.143l28.571-28.571q5.714-5.714 13.143-5.714t13.143 5.714l266.286 266.286q5.714 5.714 5.714 13.143z",
-                            Color.BLACK);
-                        dropIcon.setStyle(
-                            "-fx-min-width:0.4em;-fx-max-width:0.4em;-fx-min-height:0.6em;-fx-max-height:0.6em;");
-                        dropIcon.getStyleClass().add("drop-icon");
-                        //  alignment of the group node can be changed using the following css selector
-                        //  .jfx-list-view .sublist-header{ }
-                        groupNode.getChildren().setAll(((JFXListView<?>) newNode).getGroupnode(), dropIcon);
-                        // the margin is needed when rotating the angle
-                        StackPane.setMargin(dropIcon, new Insets(0, 19, 0, 0));
-                        StackPane.setAlignment(dropIcon, Pos.CENTER_RIGHT);
-
-                        // Second build the sublist container
-                        StackPane sublistContainer = new StackPane();
-                        sublistContainer.setMinHeight(0);
-                        sublistContainer.setMaxHeight(0);
-                        sublistContainer.getChildren().setAll(newNode);
-                        sublistContainer.setTranslateY(this.snappedBottomInset());
-                        sublistContainer.setOpacity(0);
-                        StackPane.setMargin(newNode, new Insets(-1, -1, 0, -1));
-
-                        // Third, create container of group title and the sublist
-                        VBox contentHolder = new VBox();
-                        contentHolder.getChildren().setAll(groupNode, sublistContainer);
-                        contentHolder.getStyleClass().add("sublist-container");
-                        VBox.setVgrow(groupNode, Priority.ALWAYS);
-                        cellContent = contentHolder;
-                        cellRippler.ripplerPane.addEventHandler(MouseEvent.ANY, e -> e.consume());
-                        contentHolder.addEventHandler(MouseEvent.ANY, e -> {
-                            if (!e.isConsumed()) {
-                                cellRippler.ripplerPane.fireEvent(e);
-                                e.consume();
-                            }
-                        });
-                        cellRippler.ripplerPane.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
-                            if (!e.isConsumed()) {
-                                e.consume();
-                                contentHolder.fireEvent(e);
-                            }
-                        });
-                        // cache rippler clip in subnodes
-                        cellRippler.rippler.cacheRippleClip(true);
-
-                        this.setOnMouseClicked(e -> e.consume());
-                        // Finally, add sublist animation
-                        contentHolder.setOnMouseClicked((click) -> {
-                            click.consume();
-                            // stop the animation or change the list height
-                            if (expandAnimation != null && expandAnimation.getStatus() == Status.RUNNING) {
-                                expandAnimation.stop();
-                            }
-
-                            // invert the expand property
-                            expandedProperty.set(!expandedProperty.get());
-
-                            double newAnimatedHeight = newNode.prefHeight(-1) * (expandedProperty.get() ? 1 : -1);
-                            double newHeight = expandedProperty.get() ? this.getHeight() + newAnimatedHeight : this.prefHeight(
-                                -1);
-                            // animate showing/hiding the sublist
-                            double contentHeight = expandedProperty.get() ? newAnimatedHeight : 0;
-
-                            if (expandedProperty.get()) {
-                                updateClipHeight(newHeight);
-                                getListView().setPrefHeight(getListView().getHeight() + newAnimatedHeight + animatedHeight);
-                            }
-                            // update the animated height
-                            animatedHeight = newAnimatedHeight;
-
-                            int opacity = expandedProperty.get() ? 1 : 0;
-                            expandAnimation = new Timeline(new KeyFrame(Duration.millis(320),
-                                new KeyValue(sublistContainer.minHeightProperty(),
-                                    contentHeight,
-                                    Interpolator.EASE_BOTH),
-                                new KeyValue(sublistContainer.maxHeightProperty(),
-                                    contentHeight,
-                                    Interpolator.EASE_BOTH),
-                                new KeyValue(sublistContainer.opacityProperty(),
-                                    opacity,
-                                    Interpolator.EASE_BOTH)));
-
-                            if (!expandedProperty.get()) {
-                                expandAnimation.setOnFinished((finish) -> {
-                                    updateClipHeight(newHeight);
-                                    getListView().setPrefHeight(getListView().getHeight() + newAnimatedHeight);
-                                    animatedHeight = 0;
-                                });
-                            }
-                            expandAnimation.play();
-                        });
-
-                        // animate arrow
-                        expandedProperty.addListener((o, oldVal, newVal) -> {
-                            if (newVal) {
-                                new Timeline(new KeyFrame(Duration.millis(160),
-                                    new KeyValue(dropIcon.rotateProperty(),
-                                        90,
-                                        Interpolator.EASE_BOTH))).play();
-                            } else {
-                                new Timeline(new KeyFrame(Duration.millis(160),
-                                    new KeyValue(dropIcon.rotateProperty(),
-                                        0,
-                                        Interpolator.EASE_BOTH))).play();
-                            }
-                        });
                     }
                     ((Region) cellContent).setMaxHeight(cellContent.prefHeight(-1));
                     setGraphic(cellContent);

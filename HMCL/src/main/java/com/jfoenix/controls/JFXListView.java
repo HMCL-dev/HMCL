@@ -143,20 +143,6 @@ public class JFXListView<T> extends ListView<T> {
     @Deprecated
     private final LinkedHashMap<Integer, JFXListView<?>> sublistsIndices = new LinkedHashMap<>();
 
-    // this method shouldn't be called from user
-    @Deprecated
-    void addSublist(JFXListView<?> subList, int index) {
-        if (!sublistsProperty.get().contains(subList)) {
-            sublistsProperty.get().add(subList);
-            sublistsIndices.put(index, subList);
-            subList.getSelectionModel().selectedIndexProperty().addListener((o, oldVal, newVal) -> {
-                if (newVal.intValue() != -1) {
-                    updateOverAllSelectedIndex();
-                }
-            });
-        }
-    }
-
     private void updateOverAllSelectedIndex() {
         // if item from the list is selected
         if (this.getSelectionModel().getSelectedIndex() != -1) {
