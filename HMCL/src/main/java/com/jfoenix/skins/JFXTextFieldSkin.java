@@ -41,13 +41,13 @@ public class JFXTextFieldSkin<T extends TextField & IFXLabelFloatControl> extend
     private boolean invalid = true;
 
     private Text promptText;
-    private Pane textPane;
-    private Node textNode;
-    private ObservableDoubleValue textRight;
-    private DoubleProperty textTranslateX;
+    private final Pane textPane;
+    private final Node textNode;
+    private final ObservableDoubleValue textRight;
+    private final DoubleProperty textTranslateX;
 
-    private ValidationPane<T> errorContainer;
-    private PromptLinesWrapper<T> linesWrapper;
+    private final ValidationPane<T> errorContainer;
+    private final PromptLinesWrapper<T> linesWrapper;
 
     public JFXTextFieldSkin(T textField) {
         super(textField);
@@ -58,14 +58,14 @@ public class JFXTextFieldSkin<T extends TextField & IFXLabelFloatControl> extend
         textTranslateX = ReflectionHelper.getFieldContent(TextFieldSkin.class, this, "textTranslateX");
         textRight = ReflectionHelper.getFieldContent(TextFieldSkin.class, this, "textRight");
 
-        linesWrapper = new PromptLinesWrapper<T>(
-            textField,
-            promptTextFillProperty(),
-            textField.textProperty(),
-            textField.promptTextProperty(),
-            () -> promptText);
+        linesWrapper = new PromptLinesWrapper<>(
+                textField,
+                promptTextFillProperty(),
+                textField.textProperty(),
+                textField.promptTextProperty(),
+                () -> promptText);
 
-        linesWrapper.init(() -> createPromptNode(), textPane);
+        linesWrapper.init(this::createPromptNode, textPane);
 
         ReflectionHelper.setFieldContent(TextFieldSkin.class, this, "usePromptText", linesWrapper.usePromptText);
 
