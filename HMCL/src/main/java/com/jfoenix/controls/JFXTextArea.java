@@ -19,16 +19,14 @@
 
 package com.jfoenix.controls;
 
+import com.jfoenix.controls.base.IFXLabelFloatControl;
 import com.jfoenix.skins.JFXTextAreaSkin;
 import com.jfoenix.validation.base.ValidatorBase;
 import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.beans.property.ReadOnlyObjectWrapper;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.*;
 import javafx.css.converter.BooleanConverter;
 import javafx.css.converter.PaintConverter;
-import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
 import javafx.scene.control.TextArea;
 import javafx.scene.paint.Color;
@@ -38,8 +36,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static org.jackhuang.hmcl.ui.FXUtils.useJFXContextMenu;
-
 /**
  * JFXTextArea is the material design implementation of a text area.
  *
@@ -47,33 +43,17 @@ import static org.jackhuang.hmcl.ui.FXUtils.useJFXContextMenu;
  * @version 1.0
  * @since 2016-03-09
  */
-public class JFXTextArea extends TextArea {
-    /**
-     * Initialize the style class to 'jfx-text-field'.
-     * <p>
-     * This is the selector class from which CSS can be used to style
-     * this control.
-     */
-    private static final String DEFAULT_STYLE_CLASS = "jfx-text-area";
+public class JFXTextArea extends TextArea implements IFXLabelFloatControl {
 
-    /**
-     * {@inheritDoc}
-     */
     public JFXTextArea() {
         initialize();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public JFXTextArea(String text) {
         super(text);
         initialize();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
     protected Skin<?> createDefaultSkin() {
         return new JFXTextAreaSkin(this);
@@ -81,11 +61,6 @@ public class JFXTextArea extends TextArea {
 
     private void initialize() {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
-        if ("dalvik".equalsIgnoreCase(System.getProperty("java.vm.name"))) {
-            this.setStyle("-fx-skin: \"com.jfoenix.android.skins.JFXTextAreaSkinAndroid\";");
-        }
-
-        useJFXContextMenu(this);
     }
 
     /***************************************************************************
@@ -95,68 +70,55 @@ public class JFXTextArea extends TextArea {
      **************************************************************************/
 
     /**
-     * holds the current active validator on the text area in case of validation error
+     * wrapper for validation properties / methods
      */
-    private ReadOnlyObjectWrapper<ValidatorBase> activeValidator = new ReadOnlyObjectWrapper<>();
+    protected final ValidationControl validationControl = new ValidationControl(this);
 
+    @Override
     public ValidatorBase getActiveValidator() {
-        return activeValidator == null ? null : activeValidator.get();
+        return validationControl.getActiveValidator();
     }
 
+    @Override
     public ReadOnlyObjectProperty<ValidatorBase> activeValidatorProperty() {
-        return this.activeValidator.getReadOnlyProperty();
+        return validationControl.activeValidatorProperty();
     }
 
-    /**
-     * list of validators that will validate the text value upon calling
-     * {{@link #validate()}
-     */
-    private ObservableList<ValidatorBase> validators = FXCollections.observableArrayList();
-
+    @Override
     public ObservableList<ValidatorBase> getValidators() {
-        return validators;
+        return validationControl.getValidators();
     }
 
+    @Override
     public void setValidators(ValidatorBase... validators) {
-        this.validators.addAll(validators);
+        validationControl.setValidators(validators);
     }
 
-    /**
-     * validates the text value using the list of validators provided by the user
-     * {{@link #setValidators(ValidatorBase...)}
-     *
-     * @return true if the value is valid else false
-     */
+    @Override
     public boolean validate() {
-        for (ValidatorBase validator : validators) {
-            if (validator.getSrcControl() == null) {
-                validator.setSrcControl(this);
-            }
-            validator.validate();
-            if (validator.getHasErrors()) {
-                activeValidator.set(validator);
-                return false;
-            }
-        }
-        activeValidator.set(null);
-        return true;
+        return validationControl.validate();
     }
 
+    @Override
     public void resetValidation() {
-        pseudoClassStateChanged(ValidatorBase.PSEUDO_CLASS_ERROR, false);
-        activeValidator.set(null);
+        validationControl.resetValidation();
     }
 
     /***************************************************************************
      *                                                                         *
-     * styleable Properties                                                    *
+     * Styleable Properties                                                    *
      *                                                                         *
      **************************************************************************/
 
-    /**
-     * set true to show a float the prompt text when focusing the field
-     */
-    private StyleableBooleanProperty labelFloat = new SimpleStyleableBooleanProperty(StyleableProperties.LABEL_FLOAT, JFXTextArea.this, "lableFloat", false);
+    /// Initialize the style class to 'jfx-text-field'.
+    ///
+    /// This is the selector class from which CSS can be used to style
+    /// this control.
+    private static final String DEFAULT_STYLE_CLASS = "jfx-text-area";
+
+    /// set true to show a float the prompt text when focusing the field
+    private final StyleableBooleanProperty labelFloat = new SimpleStyleableBooleanProperty(StyleableProperties.LABEL_FLOAT,
+            JFXTextArea.this, "labelFloat", false);
 
     public final StyleableBooleanProperty labelFloatProperty() {
         return this.labelFloat;
@@ -170,10 +132,9 @@ public class JFXTextArea extends TextArea {
         this.labelFloatProperty().set(labelFloat);
     }
 
-    /**
-     * default color used when the text area is unfocused
-     */
-    private StyleableObjectProperty<Paint> unFocusColor = new SimpleStyleableObjectProperty<>(StyleableProperties.UNFOCUS_COLOR, JFXTextArea.this, "unFocusColor", Color.rgb(77, 77, 77));
+    /// default color used when the text area is unfocused
+    private final StyleableObjectProperty<Paint> unFocusColor = new SimpleStyleableObjectProperty<>(StyleableProperties.UNFOCUS_COLOR,
+            JFXTextArea.this, "unFocusColor", Color.rgb(77, 77, 77));
 
     public Paint getUnFocusColor() {
         return unFocusColor == null ? Color.rgb(77, 77, 77) : unFocusColor.get();
@@ -187,10 +148,11 @@ public class JFXTextArea extends TextArea {
         this.unFocusColor.set(color);
     }
 
-    /**
-     * default color used when the text area is focused
-     */
-    private StyleableObjectProperty<Paint> focusColor = new SimpleStyleableObjectProperty<>(StyleableProperties.FOCUS_COLOR, JFXTextArea.this, "focusColor", Color.valueOf("#4059A9"));
+    /// default color used when the text area is focused
+    private final StyleableObjectProperty<Paint> focusColor = new SimpleStyleableObjectProperty<>(StyleableProperties.FOCUS_COLOR,
+            JFXTextArea.this,
+            "focusColor",
+            Color.valueOf("#4059A9"));
 
     public Paint getFocusColor() {
         return focusColor == null ? Color.valueOf("#4059A9") : focusColor.get();
@@ -207,7 +169,10 @@ public class JFXTextArea extends TextArea {
     /**
      * disable animation on validation
      */
-    private StyleableBooleanProperty disableAnimation = new SimpleStyleableBooleanProperty(StyleableProperties.DISABLE_ANIMATION, JFXTextArea.this, "disableAnimation", false);
+    private final StyleableBooleanProperty disableAnimation = new SimpleStyleableBooleanProperty(StyleableProperties.DISABLE_ANIMATION,
+            JFXTextArea.this,
+            "disableAnimation",
+            false);
 
     public final StyleableBooleanProperty disableAnimationProperty() {
         return this.disableAnimation;
@@ -221,8 +186,11 @@ public class JFXTextArea extends TextArea {
         this.disableAnimationProperty().set(disabled);
     }
 
-    private final static class StyleableProperties {
-        private static final CssMetaData<JFXTextArea, Paint> UNFOCUS_COLOR = new CssMetaData<JFXTextArea, Paint>("-jfx-unfocus-color", PaintConverter.getInstance(), Color.rgb(77, 77, 77)) {
+    private static class StyleableProperties {
+        private static final CssMetaData<JFXTextArea, Paint> UNFOCUS_COLOR = new CssMetaData<>(
+                "-jfx-unfocus-color",
+                PaintConverter.getInstance(),
+                Color.rgb(77, 77, 77)) {
             @Override
             public boolean isSettable(JFXTextArea control) {
                 return control.unFocusColor == null || !control.unFocusColor.isBound();
@@ -233,7 +201,10 @@ public class JFXTextArea extends TextArea {
                 return control.unFocusColorProperty();
             }
         };
-        private static final CssMetaData<JFXTextArea, Paint> FOCUS_COLOR = new CssMetaData<JFXTextArea, Paint>("-jfx-focus-color", PaintConverter.getInstance(), Color.valueOf("#4059A9")) {
+        private static final CssMetaData<JFXTextArea, Paint> FOCUS_COLOR = new CssMetaData<>(
+                "-jfx-focus-color",
+                PaintConverter.getInstance(),
+                Color.valueOf("#4059A9")) {
             @Override
             public boolean isSettable(JFXTextArea control) {
                 return control.focusColor == null || !control.focusColor.isBound();
@@ -244,7 +215,10 @@ public class JFXTextArea extends TextArea {
                 return control.focusColorProperty();
             }
         };
-        private static final CssMetaData<JFXTextArea, Boolean> LABEL_FLOAT = new CssMetaData<JFXTextArea, Boolean>("-jfx-label-float", BooleanConverter.getInstance(), false) {
+        private static final CssMetaData<JFXTextArea, Boolean> LABEL_FLOAT = new CssMetaData<>(
+                "-jfx-label-float",
+                BooleanConverter.getInstance(),
+                false) {
             @Override
             public boolean isSettable(JFXTextArea control) {
                 return control.labelFloat == null || !control.labelFloat.isBound();
@@ -256,39 +230,33 @@ public class JFXTextArea extends TextArea {
             }
         };
 
-        private static final CssMetaData<JFXTextArea, Boolean> DISABLE_ANIMATION = new CssMetaData<JFXTextArea, Boolean>("-jfx-disable-animation", BooleanConverter.getInstance(), false) {
-            @Override
-            public boolean isSettable(JFXTextArea control) {
-                return control.disableAnimation == null || !control.disableAnimation.isBound();
-            }
+        private static final CssMetaData<JFXTextArea, Boolean> DISABLE_ANIMATION =
+                new CssMetaData<>("-jfx-disable-animation",
+                        BooleanConverter.getInstance(), false) {
+                    @Override
+                    public boolean isSettable(JFXTextArea control) {
+                        return control.disableAnimation == null || !control.disableAnimation.isBound();
+                    }
 
-            @Override
-            public StyleableBooleanProperty getStyleableProperty(JFXTextArea control) {
-                return control.disableAnimationProperty();
-            }
-        };
+                    @Override
+                    public StyleableBooleanProperty getStyleableProperty(JFXTextArea control) {
+                        return control.disableAnimationProperty();
+                    }
+                };
 
         private static final List<CssMetaData<? extends Styleable, ?>> CHILD_STYLEABLES;
 
         static {
-            final List<CssMetaData<? extends Styleable, ?>> styleables = new ArrayList<>(Control.getClassCssMetaData());
+            final List<CssMetaData<? extends Styleable, ?>> styleables = new ArrayList<>(
+                    TextArea.getClassCssMetaData());
             Collections.addAll(styleables, UNFOCUS_COLOR, FOCUS_COLOR, LABEL_FLOAT, DISABLE_ANIMATION);
-            CHILD_STYLEABLES = Collections.unmodifiableList(styleables);
+            CHILD_STYLEABLES = List.copyOf(styleables);
         }
     }
 
-    // inherit the styleable properties from parent
-    private List<CssMetaData<? extends Styleable, ?>> STYLEABLES;
-
     @Override
     public List<CssMetaData<? extends Styleable, ?>> getControlCssMetaData() {
-        if (STYLEABLES == null) {
-            final List<CssMetaData<? extends Styleable, ?>> styleables = new ArrayList<>(Control.getClassCssMetaData());
-            styleables.addAll(getClassCssMetaData());
-            styleables.addAll(TextArea.getClassCssMetaData());
-            STYLEABLES = Collections.unmodifiableList(styleables);
-        }
-        return STYLEABLES;
+        return getClassCssMetaData();
     }
 
     public static List<CssMetaData<? extends Styleable, ?>> getClassCssMetaData() {

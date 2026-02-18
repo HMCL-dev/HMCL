@@ -258,12 +258,10 @@ public class JFXComboBox<T> extends ComboBox<T> implements IFXLabelFloatControl 
      *                                                                         *
      **************************************************************************/
 
-    /**
-     * set true to show a float the prompt text when focusing the field
-     */
+    /// set true to show a float the prompt text when focusing the field
     private final StyleableBooleanProperty labelFloat = new SimpleStyleableBooleanProperty(StyleableProperties.LABEL_FLOAT,
             JFXComboBox.this,
-            "lableFloat",
+            "labelFloat",
             false);
 
     public final StyleableBooleanProperty labelFloatProperty() {
