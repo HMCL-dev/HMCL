@@ -53,9 +53,9 @@ public class JFXListView<T> extends ListView<T> {
         return new JFXListViewSkin<>(this);
     }
 
-    private final ObjectProperty<Integer> depthProperty = new SimpleObjectProperty<>(0);
+    private final IntegerProperty depthProperty = new SimpleIntegerProperty(0);
 
-    public ObjectProperty<Integer> depthProperty() {
+    public IntegerProperty depthProperty() {
         return depthProperty;
     }
 
