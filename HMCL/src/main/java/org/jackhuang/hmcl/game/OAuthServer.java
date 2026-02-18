@@ -177,7 +177,7 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
 
         @Override
         public boolean isPublicClient() {
-            return true; // We have turned on the device auth flow.
+            return false; // We have enabled the authorize flow.
         }
     }
 
