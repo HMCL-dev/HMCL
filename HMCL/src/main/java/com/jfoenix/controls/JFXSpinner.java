@@ -74,7 +74,7 @@ public class JFXSpinner extends ProgressIndicator {
     private static final double DEFAULT_RADIUS = 12.0;
 
     /**
-     * specifies the radius of the spinner node, by default it's set to -1 (USE_COMPUTED_SIZE)
+     * specifies the radius of the spinner node, by default it's set to `12.0`
      */
     private StyleableDoubleProperty radius;
 
