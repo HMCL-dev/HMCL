@@ -791,14 +791,9 @@
  *                                                                             *
  ******************************************************************************/
 
-.jfx-slider {
-    -jfx-default-thumb: -monet-primary;
-    -jfx-default-track: -monet-surface-variant;
-}
-
 .jfx-slider .track,
 .jfx-slider:vertical .track {
-    -fx-background-color: -jfx-default-track;
+    -fx-background-color: -monet-secondary-container;
     -fx-background-radius: 5;
     -fx-background-insets: 0;
     -fx-pref-width: 2px;
@@ -807,13 +802,13 @@
 
 .jfx-slider .thumb,
 .jfx-slider:focused .thumb {
-    -fx-background-color: -jfx-default-thumb;
+    -fx-background-color: -monet-primary;
     -fx-background-radius: 20;
     -fx-background-insets: 0;
 }
 
 .jfx-slider .colored-track {
-    -fx-background-color: -jfx-default-thumb;
+    -fx-background-color: -monet-primary;
     -fx-background-radius: 5 0 0 5;
     -fx-background-insets: 0;
 }
@@ -830,20 +825,6 @@
     -fx-background-radius: 50% 50% 50% 0%;
     -fx-background-insets: 0;
 }
-
-.jfx-slider:min .thumb,
-.jfx-slider:min:focused .thumb {
-    -fx-background-color: -jfx-default-track;
-    -fx-background-radius: 20;
-    -fx-background-insets: 0;
-}
-
-.jfx-slider:min .animated-thumb {
-    -fx-background-color: -monet-inverse-surface;
-    -fx-background-radius: 50% 50% 50% 0%;
-    -fx-background-insets: 0;
-}
-
 
 /*******************************************************************************
 *                                                                              *
