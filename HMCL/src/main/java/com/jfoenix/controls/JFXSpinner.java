@@ -39,7 +39,7 @@ import java.util.List;
 /// @since 2016-03-09
 public class JFXSpinner extends ProgressIndicator {
 
-    public static final double INDETERMINATE_PROGRESS = -1;
+    public static final double INDETERMINATE_PROGRESS = ProgressIndicator.INDETERMINATE_PROGRESS;
 
     public JFXSpinner() {
         this(INDETERMINATE_PROGRESS);
