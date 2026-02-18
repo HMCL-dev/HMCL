@@ -19,28 +19,18 @@
 
 package com.jfoenix.controls;
 
-import com.jfoenix.svg.SVGGlyph;
 import com.jfoenix.utils.JFXNodeUtils;
-import javafx.animation.Animation.Status;
 import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
-import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.SimpleBooleanProperty;
 import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.Tooltip;
-import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.shape.Shape;
 import javafx.util.Duration;
@@ -188,13 +178,6 @@ public class JFXListCell<T> extends ListCell<T> {
             getChildren().add(0, cellRippler);
             cellRippler.rippler.clear();
         }
-
-        // refresh sublist style class
-        if (this.getGraphic() != null && this.getGraphic().getStyleClass().contains("sublist-container")) {
-            this.getStyleClass().add("sublist-item");
-        } else {
-            this.getStyleClass().remove("sublist-item");
-        }
     }
 
     /**
@@ -229,10 +212,9 @@ public class JFXListCell<T> extends ListCell<T> {
         } else {
             setMouseTransparent(false);
             setStyle(null);
-            if (item instanceof Node) {
+            if (item instanceof Node newNode) {
                 setText(null);
                 Node currentNode = getGraphic();
-                Node newNode = (Node) item;
                 if (currentNode == null || !currentNode.equals(newNode)) {
                     cellContent = newNode;
                     cellRippler.rippler.cacheRippleClip(false);
@@ -253,46 +235,15 @@ public class JFXListCell<T> extends ListCell<T> {
                 setGraphic(null);
             }
             boolean isJFXListView = getListView() instanceof JFXListView;
-            // show cell tooltip if its toggled in JFXListView
+            // show cell tooltip if it's toggled in JFXListView
             if (isJFXListView && ((JFXListView<?>) getListView()).isShowTooltip()) {
-                if (item instanceof Label) {
-                    setTooltip(new Tooltip(((Label) item).getText()));
+                if (item instanceof Label label) {
+                    setTooltip(new Tooltip(label.getText()));
                 } else if (getText() != null) {
                     setTooltip(new Tooltip(getText()));
                 }
             }
         }
-    }
-
-
-    private void updateClipHeight(double newHeight) {
-        clip.setHeight(newHeight - getGap());
-    }
-
-
-    /***************************************************************************
-     *                                                                         *
-     * Properties                                                              *
-     *                                                                         *
-     **************************************************************************/
-
-    // indicate whether the sub list is expanded or not
-    @Deprecated
-    private final BooleanProperty expandedProperty = new SimpleBooleanProperty(false);
-
-    @Deprecated
-    public BooleanProperty expandedProperty() {
-        return expandedProperty;
-    }
-
-    @Deprecated
-    public void setExpanded(boolean expand) {
-        expandedProperty.set(expand);
-    }
-
-    @Deprecated
-    public boolean isExpanded() {
-        return expandedProperty.get();
     }
 
     // Stylesheet Handling                                                     *
