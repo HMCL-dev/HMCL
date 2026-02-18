@@ -31,13 +31,11 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
 
-/**
- * <h1>Material Design ProgressBar Skin</h1>
- *
- * @author Shadi Shaheen
- * @version 2.0
- * @since 2017-10-06
- */
+/// # Material Design ProgressBar Skin
+///
+/// @author Shadi Shaheen
+/// @version 2.0
+/// @since 2017-10-06
 public class JFXProgressBarSkin extends ProgressIndicatorSkin {
 
     private StackPane track;
@@ -45,7 +43,7 @@ public class JFXProgressBarSkin extends ProgressIndicatorSkin {
     private StackPane bar;
     private double barWidth = 0;
     private double secondaryBarWidth = 0;
-    private Animation indeterminateTransition;
+    private Timeline indeterminateTransition;
     private Region clip;
     private TreeShowingProperty treeShowingExpression;
 
@@ -214,7 +212,7 @@ public class JFXProgressBarSkin extends ProgressIndicatorSkin {
 
     private void clearAnimation() {
         indeterminateTransition.stop();
-        ((Timeline) indeterminateTransition).getKeyFrames().clear();
+        indeterminateTransition.getKeyFrames().clear();
         indeterminateTransition = null;
     }
 
