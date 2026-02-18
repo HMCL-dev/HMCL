@@ -28,9 +28,6 @@ import javafx.css.*;
 import javafx.css.converter.BooleanConverter;
 import javafx.css.converter.SizeConverter;
 import javafx.event.Event;
-import javafx.scene.Node;
-import javafx.scene.control.Control;
-import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import javafx.scene.control.Skin;
 import javafx.scene.input.ContextMenuEvent;
@@ -111,19 +108,6 @@ public class JFXListView<T> extends ListView<T> {
      * SubList Properties                                                      *
      *                                                                         *
      **************************************************************************/
-
-    @Deprecated
-    private final ObjectProperty<Node> groupnode = new SimpleObjectProperty<>(new Label("GROUP"));
-
-    @Deprecated
-    public Node getGroupnode() {
-        return groupnode.get();
-    }
-
-    @Deprecated
-    public void setGroupnode(Node node) {
-        this.groupnode.set(node);
-    }
 
     /*
      *  selected index property that includes the sublists
