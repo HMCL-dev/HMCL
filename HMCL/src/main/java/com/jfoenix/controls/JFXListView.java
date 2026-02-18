@@ -132,20 +132,6 @@ public class JFXListView<T> extends ListView<T> {
         });
     }
 
-
-    // allow single selection across the list and all sublits
-    private boolean allowClear = true;
-
-    private void clearSelection(JFXListView<?> selectedList) {
-        if (allowClear) {
-            allowClear = false;
-            if (this != selectedList) {
-                this.getSelectionModel().clearSelection();
-            }
-            allowClear = true;
-        }
-    }
-
     /**
      * propagate mouse events to the parent node ( e.g. to allow dragging while clicking on the list)
      */
