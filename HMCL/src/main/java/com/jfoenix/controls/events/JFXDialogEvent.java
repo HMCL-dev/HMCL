@@ -26,6 +26,7 @@ import java.io.Serial;
 
 /// JFXDialog events, used exclusively by the following methods:
 ///
+///   - [com.jfoenix.controls.JFXDialog#show()]
 ///   - [com.jfoenix.controls.JFXDialog#close()]
 ///
 /// @author Shadi Shaheen
