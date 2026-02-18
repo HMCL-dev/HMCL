@@ -21,16 +21,11 @@ package com.jfoenix.controls;
 
 import com.jfoenix.skins.JFXListViewSkin;
 import javafx.beans.property.*;
-import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
-import javafx.collections.ObservableList;
 import javafx.css.*;
 import javafx.css.converter.BooleanConverter;
 import javafx.css.converter.SizeConverter;
-import javafx.event.Event;
 import javafx.scene.control.ListView;
 import javafx.scene.control.Skin;
-import javafx.scene.input.ContextMenuEvent;
 import javafx.scene.input.MouseEvent;
 
 import java.util.*;
@@ -105,70 +100,6 @@ public class JFXListView<T> extends ListView<T> {
 
     /***************************************************************************
      *                                                                         *
-     * SubList Properties                                                      *
-     *                                                                         *
-     **************************************************************************/
-
-    /*
-     *  selected index property that includes the sublists
-     */
-    @Deprecated
-    private final ReadOnlyObjectWrapper<Integer> overAllIndexProperty = new ReadOnlyObjectWrapper<>(-1);
-
-    @Deprecated
-    public ReadOnlyObjectProperty<Integer> overAllIndexProperty() {
-        return overAllIndexProperty.getReadOnlyProperty();
-    }
-
-    // private sublists property
-    @Deprecated
-    private final ObjectProperty<ObservableList<JFXListView<?>>> sublistsProperty = new SimpleObjectProperty<>(
-            FXCollections.observableArrayList());
-    @Deprecated
-    private final LinkedHashMap<Integer, JFXListView<?>> sublistsIndices = new LinkedHashMap<>();
-
-    private void updateOverAllSelectedIndex() {
-        // if item from the list is selected
-        if (this.getSelectionModel().getSelectedIndex() != -1) {
-            int selectedIndex = this.getSelectionModel().getSelectedIndex();
-            Iterator<Map.Entry<Integer, JFXListView<?>>> itr = sublistsIndices.entrySet().iterator();
-            int preItemsSize = 0;
-            while (itr.hasNext()) {
-                Map.Entry<Integer, JFXListView<?>> entry = itr.next();
-                if (entry.getKey() < selectedIndex) {
-                    preItemsSize += entry.getValue().getItems().size() - 1;
-                }
-            }
-            overAllIndexProperty.set(selectedIndex + preItemsSize);
-        } else {
-            Iterator<Map.Entry<Integer, JFXListView<?>>> itr = sublistsIndices.entrySet().iterator();
-            ArrayList<Object> selectedList = new ArrayList<>();
-            while (itr.hasNext()) {
-                Map.Entry<Integer, JFXListView<?>> entry = itr.next();
-                if (entry.getValue().getSelectionModel().getSelectedIndex() != -1) {
-                    selectedList.add(entry.getKey());
-                }
-            }
-            if (!selectedList.isEmpty()) {
-                itr = sublistsIndices.entrySet().iterator();
-                int preItemsSize = 0;
-                while (itr.hasNext()) {
-                    Map.Entry<Integer, JFXListView<?>> entry = itr.next();
-                    if (entry.getKey() < ((Integer) selectedList.get(0))) {
-                        preItemsSize += entry.getValue().getItems().size() - 1;
-                    }
-                }
-                overAllIndexProperty.set(preItemsSize + (Integer) selectedList.get(0) + sublistsIndices.get(selectedList.get(0))
-                        .getSelectionModel()
-                        .getSelectedIndex());
-            } else {
-                overAllIndexProperty.set(-1);
-            }
-        }
-    }
-
-    /***************************************************************************
-     *                                                                         *
      * Stylesheet Handling                                                     *
      *                                                                         *
      **************************************************************************/
@@ -196,32 +127,6 @@ public class JFXListView<T> extends ListView<T> {
                 collapse();
             }
         });
-
-        // handle selection model on the list ( FOR NOW : we only support single selection on the list if it contains sublists)
-        sublistsProperty.get().addListener((ListChangeListener.Change<? extends JFXListView<?>> c) -> {
-            while (c.next()) {
-                if (c.wasAdded() || c.wasUpdated() || c.wasReplaced()) {
-                    if (sublistsProperty.get().size() == 1) {
-                        this.getSelectionModel()
-                                .selectedItemProperty()
-                                .addListener((o, oldVal, newVal) -> clearSelection(this));
-                        // prevent selecting the sublist item by clicking the right mouse button
-                        this.addEventFilter(ContextMenuEvent.CONTEXT_MENU_REQUESTED, Event::consume);
-                    }
-                    c.getAddedSubList()
-                            .forEach(item -> item.getSelectionModel()
-                                    .selectedItemProperty()
-                                    .addListener((o, oldVal, newVal) -> clearSelection(item)));
-                }
-            }
-        });
-
-        // listen to index changes
-        this.getSelectionModel().selectedIndexProperty().addListener((o, oldVal, newVal) -> {
-            if (newVal.intValue() != -1) {
-                updateOverAllSelectedIndex();
-            }
-        });
     }
 
 
@@ -233,11 +138,6 @@ public class JFXListView<T> extends ListView<T> {
             allowClear = false;
             if (this != selectedList) {
                 this.getSelectionModel().clearSelection();
-            }
-            for (int i = 0; i < sublistsProperty.get().size(); i++) {
-                if (sublistsProperty.get().get(i) != selectedList) {
-                    sublistsProperty.get().get(i).getSelectionModel().clearSelection();
-                }
             }
             allowClear = true;
         }
