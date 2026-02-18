@@ -23,6 +23,8 @@ import com.jfoenix.controls.JFXTooltip;
 import com.jfoenix.validation.RegexValidator;
 import com.jfoenix.validation.RequiredFieldValidator;
 import javafx.beans.property.*;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableMap;
 import javafx.css.PseudoClass;
 import javafx.scene.Node;
 import javafx.scene.control.Control;
@@ -72,10 +74,10 @@ public abstract class ValidatorBase {
      * supported tooltips keys
      */
     private static final Set<String> supportedTooltipKeys = new HashSet<>(
-        Arrays.asList(
-            "javafx.scene.control.Tooltip",
-            "jfoenix-tooltip"
-        )
+            Arrays.asList(
+                    "javafx.scene.control.Tooltip",
+                    "jfoenix-tooltip"
+            )
     );
 
     /**
@@ -203,6 +205,14 @@ public abstract class ValidatorBase {
         } else {
             Tooltip.install(node, tooltip);
         }
+    }
+
+    private ObservableMap<Object, Object> properties;
+
+    public ObservableMap<Object, Object> getProperties() {
+        if (properties == null) properties = FXCollections.observableHashMap();
+        return properties;
+
     }
 
     ///////////////////////////////////////////////////////////////////////////

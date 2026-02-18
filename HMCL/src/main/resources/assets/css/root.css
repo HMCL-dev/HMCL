@@ -923,22 +923,48 @@
 
 /*******************************************************************************
 *                                                                              *
-* JFX Textfield                                                                *
+* JFX Text Field                                                               *
 *                                                                              *
 *******************************************************************************/
 
-.jfx-text-field, .jfx-password-field, .jfx-text-area {
-    -fx-background-color: -monet-surface-container-highest;
-    -fx-highlight-fill: -monet-primary;
-    -fx-text-fill: -monet-on-surface;
-    -fx-font-weight: BOLD;
-    -fx-prompt-text-fill: -monet-on-surface-variant;
-    -fx-alignment: top-left;
-    -fx-max-width: 1000000000;
+.jfx-text-field {
     -jfx-focus-color: -monet-primary;
-    -fx-padding: 8;
-    -jfx-unfocus-color: transparent;
+    -jfx-unfocus-color: #4d4d4d;
+    -fx-padding: 0.333333em 0 0.333333em 0;
 }
+
+.jfx-text-field > .input-line {
+    -fx-background-color: -jfx-unfocus-color;
+    -fx-pref-height: 1px;
+    -fx-translate-y: 1px;
+}
+
+.jfx-text-field > .input-focused-line {
+    -fx-background-color: -jfx-focus-color;
+    -fx-pref-height: 2px;
+}
+
+.jfx-text-field,
+.jfx-text-field:focused {
+    -fx-background-color: TRANSPARENT, TRANSPARENT, TRANSPARENT;
+    -fx-prompt-text-fill: -monet-on-surface-variant;
+}
+
+.jfx-text-field:error {
+    -jfx-focus-color: -monet-error;
+    -jfx-unfocus-color: -monet-error;
+}
+
+.jfx-text-field .error-label {
+    -fx-text-fill: -monet-error;
+    -fx-font-size: 0.75em;
+}
+
+.jfx-text-field .error-icon {
+    -fx-fill: -monet-error;
+}
+
+/* ??? */
 
 .jfx-text-field .context-menu {
     -fx-background-color: -monet-surface-container;
@@ -949,6 +975,133 @@
     -fx-background-color: -monet-secondary-container;
     -fx-text-fill: -monet-on-secondary-container;
 }
+
+/* -------------- STYLES FOR THE DEFAULT JFXTEXTFIELD-BASED COMBOBOX ------------- */
+
+.combo-box-base:editable > .jfx-text-field,
+.date-picker > .jfx-text-field,
+.jfx-date-picker > .jfx-text-field,
+.combo-box-base:editable:focused > .text-field,
+.combo-box-base:editable > .text-field:focused,
+.date-picker:focused > .text-field,
+.date-picker > .text-field:focused {
+    -fx-background-color: TRANSPARENT, TRANSPARENT, TRANSPARENT;
+}
+
+.jfx-date-picker > .jfx-text-field,
+.jfx-time-picker > .jfx-text-field{
+    -jfx-focus-color: -jfx-default-color;
+}
+
+.combo-box-base:error > .jfx-text-field,
+.combo-box-base:error > .jfx-text-field {
+    -jfx-focus-color: -monet-error;
+    -jfx-unfocus-color: -monet-error;
+}
+
+/*******************************************************************************
+*                                                                              *
+* JFX Password Field                                                           *
+*                                                                              *
+*******************************************************************************/
+
+.jfx-password-field {
+    -jfx-focus-color: #4059A9;
+    -jfx-unfocus-color: #4d4d4d;
+    -fx-padding: 0.333333em 0 0.333333em 0;
+}
+
+.jfx-password-field > .input-line {
+    -fx-background-color: -jfx-unfocus-color;
+    -fx-pref-height: 1px;
+    -fx-translate-y: 1px;
+}
+
+.jfx-password-field > .input-focused-line{
+    -fx-background-color: -jfx-focus-color;
+    -fx-pref-height: 2px;
+}
+
+.jfx-password-field > .input-focused-line{
+    -fx-pref-height: 2px;
+    -fx-background-color: -jfx-focus-color;
+}
+
+.jfx-password-field,
+.jfx-password-field:focused {
+    -fx-prompt-text-fill: -monet-on-surface-variant;
+    -fx-background-color: TRANSPARENT, TRANSPARENT, TRANSPARENT;
+}
+
+.jfx-password-field:error {
+    -jfx-focus-color: -monet-error;
+    -jfx-unfocus-color: -monet-error;
+}
+
+.jfx-password-field .error-label {
+    -fx-text-fill: -monet-error;
+    -fx-font-size: 0.75em;
+}
+
+.jfx-password-field .error-icon {
+    -fx-fill: -monet-error;
+}
+
+/*******************************************************************************
+*                                                                              *
+* JFX TextArea                                                                 *
+*                                                                              *
+*******************************************************************************/
+
+.jfx-text-area {
+    -jfx-focus-color: -monet-primary;
+    -jfx-unfocus-color: -monet-surface-container-highest;
+    -fx-padding: 0.333333em 0 0 0 ;
+}
+
+.jfx-text-area > .input-line {
+    -fx-background-color: -jfx-unfocus-color;
+    -fx-pref-height: 1px;
+    -fx-translate-y: 1px;
+}
+
+.jfx-text-area > .input-focused-line {
+    -fx-background-color: -jfx-focus-color;
+    -fx-pref-height: 2px;
+}
+
+.jfx-text-area,
+.jfx-text-area:focused {
+    -fx-prompt-text-fill: -monet-on-surface-variant;
+}
+
+.jfx-text-area,
+.jfx-text-area .scroll-pane,
+.jfx-text-area:focused,
+.jfx-text-area:focused .scroll-pane{
+    -fx-background-color: TRANSPARENT, TRANSPARENT, TRANSPARENT, TRANSPARENT;
+}
+
+.jfx-text-area .content,
+.jfx-text-area:focused .content{
+    -fx-background-color:TRANSPARENT, TRANSPARENT, TRANSPARENT, TRANSPARENT;
+    -fx-padding: 0 0 0 0;
+}
+
+.jfx-text-area:error {
+    -jfx-focus-color: -monet-error;
+    -jfx-unfocus-color: -monet-error;
+}
+
+.jfx-text-area .error-label {
+    -fx-text-fill: -monet-error;
+    -fx-font-size: 0.75em;
+}
+
+.jfx-text-area .error-icon {
+    -fx-fill: -monet-error;
+}
+
 
 /*******************************************************************************
 *                                                                              *
@@ -1528,49 +1681,59 @@
 *******************************************************************************/
 
 .jfx-combo-box {
-    -jfx-focus-color: transparent;
-    -jfx-unfocus-color: transparent;
-    -fx-background-color: -monet-surface-container-highest;
-    -fx-padding: 4;
-    -fx-max-width: 1000000000;
+    -jfx-focus-color: -monet-primary;
+    -jfx-unfocus-color: -monet-surface-container-highest;
+    -fx-prompt-text-fill: -monet-on-surface-variant;
 }
 
-.jfx-combo-box .text {
-    -fx-fill: -monet-on-surface;
+.jfx-combo-box > .input-line {
+    -fx-background-color: -jfx-unfocus-color;
+    -fx-pref-height: 1px;
+    -fx-translate-y: 1px;
 }
 
-.jfx-combo-box .text-field {
-    -fx-text-fill: -monet-on-surface;
+.jfx-combo-box > .input-focused-line {
+    -fx-background-color: -jfx-focus-color;
+    -fx-pref-height: 2px;
 }
 
-.combo-box-popup .list-view {
-    -fx-background-color: -monet-surface-container;
+.jfx-combo-box > .prompt-container {
+    -fx-alignment: center-left;
 }
 
-.combo-box-popup .list-view .jfx-list-cell {
-    -fx-background-color: -monet-surface-container;
-    -fx-text-fill: -monet-on-surface;
-    -fx-background-insets: 0.0;
+.jfx-combo-box,
+.jfx-combo-box:focused,
+.jfx-combo-box:editable,
+.jfx-combo-box:editable:focused {
+    -fx-background-color: TRANSPARENT, TRANSPARENT, TRANSPARENT, TRANSPARENT;
+    -fx-background-radius: 3px;
+    -fx-background-insets: 0px;
 }
 
-.combo-box-popup .list-view .list-cell:odd:selected > .jfx-rippler > StackPane,
-.combo-box-popup .list-view .list-cell:even:selected > .jfx-rippler > StackPane {
-    -fx-background-color: -monet-secondary-container;
-    -fx-text-fill: -monet-on-secondary-container;
+.jfx-combo-box .combo-box-button-container {
+    -fx-background-color: TRANSPARENT;
 }
 
-.jfx-combo-box-warning {
-    -jfx-focus-color: #D34336;
-    -jfx-unfocus-color: #D34336;
+.jfx-combo-box > .arrow-button,
+.jfx-combo-box:editable > .arrow-button,
+.jfx-combo-box:editable:focused > .arrow-button {
+    -fx-background-color: TRANSPARENT;
 }
 
-.jfx-combo-box-warning .text {
-    -fx-fill: #D34336;
+.jfx-combo-box:error {
+    -jfx-focus-color: -monet-error;
+    -jfx-unfocus-color: -monet-error;
 }
 
-/*.combo-box-popup .list-view .jfx-list-cell .jfx-rippler {*/
-/*    -jfx-rippler-fill: -monet-primary-container;*/
-/*}*/
+.jfx-combo-box .error-label {
+    -fx-text-fill: -monet-error;
+    -fx-font-size: 0.75em;
+}
+
+.jfx-combo-box .error-icon {
+    -fx-fill: -monet-error;
+}
+
 
 /*******************************************************************************
 *                                                                              *
@@ -1837,35 +2000,9 @@
 
 /*******************************************************************************
 *                                                                              *
-* Error Facade                                                                 *
+* Error Facade (???)                                                           *
 *                                                                              *
 *******************************************************************************/
-
-.error-label {
-    -fx-text-fill: -monet-error;
-    -fx-font-size: 0.75em;
-    -fx-font-weight: bold;
-}
-
-.error-icon {
-    -fx-fill: -monet-error;
-    -fx-font-size: 1.0em;
-}
-
-.jfx-text-field:error, .jfx-password-field:error, .jfx-text-area:error, .jfx-combo-box:error {
-    -jfx-focus-color: -monet-error;
-    -jfx-unfocus-color: -monet-error;
-}
-
-.jfx-text-field .error-label, .jfx-password-field .error-label, .jfx-text-area .error-label {
-    -fx-text-fill: -monet-error;
-    -fx-font-size: 0.75em;
-}
-
-.jfx-text-field .error-icon, .jfx-password-field .error-icon, .jfx-text-area .error-icon {
-    -fx-fill: -monet-error;
-    -fx-font-size: 1.0em;
-}
 
 .fit-width {
     -fx-pref-width: 100%;
