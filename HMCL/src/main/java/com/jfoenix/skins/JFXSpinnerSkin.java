@@ -53,7 +53,7 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
     private static final Color BLUE_COLOR = Color.valueOf("#4285f4");
 
     private JFXSpinner control;
-    private TreeShowingProperty treeShowingProperty;
+    private final TreeShowingProperty treeShowingProperty;
     private boolean isValid = false;
 
     private Timeline timeline;
@@ -160,8 +160,7 @@ public class JFXSpinnerSkin extends SkinBase<JFXSpinner> {
     }
 
     private void updateAnimation() {
-        ProgressIndicator control = getSkinnable();
-        final boolean isTreeShowing = JFXNodeUtils.isTreeShowing(control) && control.getScene() != null;
+        final boolean isTreeShowing = treeShowingProperty.get();
         if (timeline != null) {
             pauseTimeline(!isTreeShowing);
         } else if (isTreeShowing) {
