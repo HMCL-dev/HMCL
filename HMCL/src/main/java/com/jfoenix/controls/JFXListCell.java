@@ -100,11 +100,11 @@ public class JFXListCell<T> extends ListCell<T> {
                             // fake expand state
                             double gap = clip.getY() * 2;
                             gapAnimation = new Timeline(
-                                new KeyFrame(Duration.millis(240),
-                                    new KeyValue(this.translateYProperty(),
-                                        -gap / 2 - (gap * (getIndex())),
-                                        Interpolator.EASE_BOTH)
-                                ));
+                                    new KeyFrame(Duration.millis(240),
+                                            new KeyValue(this.translateYProperty(),
+                                                    -gap / 2 - (gap * (getIndex())),
+                                                    Interpolator.EASE_BOTH)
+                                    ));
                             gapAnimation.play();
                             gapAnimation.setOnFinished((finish) -> {
                                 requestLayout();
@@ -141,18 +141,18 @@ public class JFXListCell<T> extends ListCell<T> {
                         clip.setY(gap / 2);
                         clip.setHeight(getHeight() - gap);
                         gapAnimation = new Timeline(new KeyFrame(Duration.millis(240),
-                            new KeyValue(this.translateYProperty(),
-                                0,
-                                Interpolator.EASE_BOTH)));
+                                new KeyValue(this.translateYProperty(),
+                                        0,
+                                        Interpolator.EASE_BOTH)));
                         playExpandAnimation = false;
                     } else if (selectionChanged) {
                         clip.setY(0);
                         clip.setHeight(getHeight());
                         gapAnimation = new Timeline(
-                            new KeyFrame(Duration.millis(240),
-                                new KeyValue(clip.yProperty(), gap / 2, Interpolator.EASE_BOTH),
-                                new KeyValue(clip.heightProperty(), getHeight() - gap, Interpolator.EASE_BOTH)
-                            ));
+                                new KeyFrame(Duration.millis(240),
+                                        new KeyValue(clip.yProperty(), gap / 2, Interpolator.EASE_BOTH),
+                                        new KeyValue(clip.heightProperty(), getHeight() - gap, Interpolator.EASE_BOTH)
+                                ));
                     }
                     playExpandAnimation = false;
                     selectionChanged = false;

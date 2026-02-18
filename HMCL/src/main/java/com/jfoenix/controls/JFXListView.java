@@ -77,11 +77,11 @@ public class JFXListView<T> extends ListView<T> {
     }
 
     private void expand() {
-        currentVerticalGap.set(verticalGap.get());
+        currentVerticalGapProperty().set(verticalGap.get());
     }
 
     private void collapse() {
-        currentVerticalGap.set(0);
+        currentVerticalGapProperty().set(0);
     }
 
     /*
@@ -147,16 +147,16 @@ public class JFXListView<T> extends ListView<T> {
             "verticalGap",
             0.0);
 
-    public Double getVerticalGap() {
-        return verticalGap == null ? 0 : verticalGap.get();
-    }
-
     public StyleableDoubleProperty verticalGapProperty() {
         return this.verticalGap;
     }
 
+    public Double getVerticalGap() {
+        return verticalGap == null ? 0.0 : verticalGap.get();
+    }
+
     public void setVerticalGap(Double gap) {
-        this.verticalGap.set(gap);
+        verticalGapProperty().set(gap);
     }
 
     private final StyleableBooleanProperty expanded = new SimpleStyleableBooleanProperty(StyleableProperties.EXPANDED,
@@ -164,12 +164,12 @@ public class JFXListView<T> extends ListView<T> {
             "expanded",
             false);
 
-    public Boolean isExpanded() {
-        return expanded != null && expanded.get();
-    }
-
     public StyleableBooleanProperty expandedProperty() {
         return this.expanded;
+    }
+
+    public Boolean isExpanded() {
+        return expanded != null && expanded.get();
     }
 
     public void setExpanded(Boolean expanded) {
