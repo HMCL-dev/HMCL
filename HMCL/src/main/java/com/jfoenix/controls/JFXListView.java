@@ -208,7 +208,7 @@ public class JFXListView<T> extends ListView<T> {
         expandedProperty().set(expanded);
     }
 
-    private static class StyleableProperties {
+    private static final class StyleableProperties {
         private static final CssMetaData<JFXListView<?>, Number> VERTICAL_GAP =
                 new CssMetaData<>("-jfx-vertical-gap",
                         SizeConverter.getInstance(), 0) {

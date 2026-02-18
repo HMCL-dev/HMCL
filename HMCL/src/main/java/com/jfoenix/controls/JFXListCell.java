@@ -71,7 +71,6 @@ public class JFXListCell<T> extends ListCell<T> {
     protected Node cellContent;
     private Rectangle clip;
 
-    //	private Timeline animateGap;
     private Timeline gapAnimation;
     private boolean playExpandAnimation = false;
     private boolean selectionChanged = false;
