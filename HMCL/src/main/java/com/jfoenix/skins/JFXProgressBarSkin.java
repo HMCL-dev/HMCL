@@ -45,7 +45,7 @@ public class JFXProgressBarSkin extends ProgressIndicatorSkin {
     private double secondaryBarWidth = 0;
     private Timeline indeterminateTransition;
     private Region clip;
-    private TreeShowingProperty treeShowingExpression;
+    private final TreeShowingProperty treeShowingExpression;
 
     public JFXProgressBarSkin(JFXProgressBar bar) {
         super(bar);
@@ -161,13 +161,10 @@ public class JFXProgressBarSkin extends ProgressIndicatorSkin {
     }
 
     private void updateAnimation() {
-        ProgressIndicator control = getSkinnable();
-        final boolean isTreeVisible = control.isVisible() &&
-                control.getParent() != null &&
-                control.getScene() != null;
+        final boolean isTreeShowing = treeShowingExpression.get();
         if (indeterminateTransition != null) {
-            pauseTimeline(!isTreeVisible);
-        } else if (isTreeVisible) {
+            pauseTimeline(!isTreeShowing);
+        } else if (isTreeShowing) {
             createIndeterminateTimeline();
         }
     }

@@ -31,7 +31,6 @@ import javafx.beans.value.ObservableBooleanValue;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.stage.Window;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Used to observe changes in tree showing status for a {@link Node}.  For a Node's tree to be showing
@@ -47,7 +46,7 @@ public class TreeShowingProperty extends ReadOnlyBooleanPropertyBase {
     private final ChangeListener<Scene> nodeSceneChangedListener = (obs, old, current) -> sceneChanged(old, current);
 
     private final Node node;
-    private final @Nullable ObservableBooleanValue treeVisibleProperty;
+    private final ObservableBooleanValue treeVisibleProperty;
 
     private boolean valid;
     private boolean treeShowing;

@@ -117,7 +117,7 @@ public class JFXSpinner extends ProgressIndicator {
         this.startingAngleProperty().set(startingAngle);
     }
 
-    private static class StyleableProperties {
+    private static final class StyleableProperties {
         private static final CssMetaData<JFXSpinner, Number> RADIUS =
                 new CssMetaData<>("-jfx-radius",
                         SizeConverter.getInstance(), DEFAULT_RADIUS) {
