@@ -43,6 +43,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
 import javafx.util.StringConverter;
+import org.jackhuang.hmcl.ui.FXUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -102,6 +103,8 @@ public class JFXComboBox<T> extends ComboBox<T> implements IFXLabelFloatControl 
             }
 
         });
+
+        FXUtils.useJFXContextMenu(editorProperty().get());
     }
 
     /**

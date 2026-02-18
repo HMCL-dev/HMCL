@@ -31,6 +31,7 @@ import javafx.scene.control.Skin;
 import javafx.scene.control.TextArea;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
+import org.jackhuang.hmcl.ui.FXUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -61,6 +62,7 @@ public class JFXTextArea extends TextArea implements IFXLabelFloatControl {
 
     private void initialize() {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
+        FXUtils.useJFXContextMenu(this);
     }
 
     /***************************************************************************
