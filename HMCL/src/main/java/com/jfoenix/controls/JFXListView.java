@@ -53,18 +53,21 @@ public class JFXListView<T> extends ListView<T> {
         return new JFXListViewSkin<>(this);
     }
 
-    private final IntegerProperty depthProperty = new SimpleIntegerProperty(this, "depth", 0);
+    private IntegerProperty depth;
 
     public IntegerProperty depthProperty() {
-        return depthProperty;
+        if (depth == null) {
+            depth = new SimpleIntegerProperty(this, "depth", 0);
+        }
+        return depth;
     }
 
     public int getDepth() {
-        return depthProperty.get();
+        return depth != null ? depth.get() : 0;
     }
 
     public void setDepth(int depth) {
-        depthProperty.set(depth);
+        depthProperty().set(depth);
     }
 
     private DoubleProperty currentVerticalGap;
