@@ -28,7 +28,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
-import org.jackhuang.hmcl.task.Task;
+import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jsoup.internal.StringUtil;
@@ -66,12 +66,12 @@ public final class HTMLRenderer {
         return new HTMLRenderer(FXUtils::openUriInBrowser);
     }
 
-    ///  @see StringUtil#isWhitespace(int)
+    /// @see StringUtil#isWhitespace(int)
     public static boolean isWhitespace(int c) {
         return c == ' ' || c == '\t' || c == '\n' || c == '\f' || c == '\r';
     }
 
-    ///  @see StringUtil#isInvisibleChar(int)
+    /// @see StringUtil#isInvisibleChar(int)
     public static boolean isInvisibleChar(int c) {
         return c == 8203 || c == 173; // zero width sp, soft hyphen
         // previously also included zw non join, zw join - but removing those breaks semantic meaning of text
@@ -91,8 +91,7 @@ public final class HTMLRenderer {
                     continue;
                 accum.append(' ');
                 lastWasWhite = true;
-            }
-            else if (!isInvisibleChar(c)) {
+            } else if (!isInvisibleChar(c)) {
                 accum.appendCodePoint(c);
                 lastWasWhite = false;
             }
@@ -248,18 +247,17 @@ public final class HTMLRenderer {
             try {
                 ImageView imageView = new ImageView();
 
-                int finalWidth = width;
-                int finalHeight = height;
-                Task.runAsync(() -> {
-                    try {
-                        var result = FXUtils.getRemoteImageTask(src, finalWidth, finalHeight, true, true).run();
-                        if (result == null) {
-                            throw new AssertionError("Image loading task returned null");
-                        }
-                        imageView.setImage(result);
-                    } catch (Throwable e) {
+                FXUtils.getRemoteImageTask(
+                        src, width, height, true, true
+                ).whenComplete(Schedulers.javafx(), (res, e) -> {
+                    if (e != null) {
                         LOG.warning("Failed to load image: " + src, e);
+                        return;
                     }
+                    if (res == null) {
+                        LOG.warning("Failed to load image: " + src, new AssertionError("Image loading task returned null"));
+                    }
+                    imageView.setImage(res);
                 }).start();
 
                 if (hyperlink != null) {
