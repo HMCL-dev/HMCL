@@ -29,6 +29,8 @@ import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.IOException;
+import java.security.SecureRandom;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -43,6 +45,7 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
     private final int port;
     private final CompletableFuture<String> future = new CompletableFuture<>();
+    private final String codeVerifier;
 
     public static String lastlyOpenedURL;
 
@@ -52,6 +55,19 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
         super(port);
 
         this.port = port;
+        this.codeVerifier = generateCodeVerifier();
+    }
+
+    private String generateCodeVerifier() {
+        SecureRandom sr = new SecureRandom();
+        byte[] code = new byte[64];
+        sr.nextBytes(code);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(code);
+    }
+
+    @Override
+    public String getCodeVerifier() {
+        return codeVerifier;
     }
 
     @Override
@@ -167,17 +183,6 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
         public String getClientId() {
             return System.getProperty("hmcl.microsoft.auth.id",
                     JarUtils.getAttribute("hmcl.microsoft.auth.id", ""));
-        }
-
-        @Override
-        public String getClientSecret() {
-            return System.getProperty("hmcl.microsoft.auth.secret",
-                    JarUtils.getAttribute("hmcl.microsoft.auth.secret", ""));
-        }
-
-        @Override
-        public boolean isPublicClient() {
-            return true; // We have turned on the device auth flow.
         }
     }
 
