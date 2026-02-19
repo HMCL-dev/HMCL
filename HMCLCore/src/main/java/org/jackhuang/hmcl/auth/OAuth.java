@@ -187,6 +187,7 @@ public class OAuth {
     }
 
     private static String generateCodeChallenge(String codeVerifier) {
+        // https://datatracker.ietf.org/doc/html/rfc7636#section-4.2
         try {
             byte[] bytes = codeVerifier.getBytes(StandardCharsets.US_ASCII);
             MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");

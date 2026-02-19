@@ -58,6 +58,7 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
         this.codeVerifier = generateCodeVerifier();
     }
 
+    // https://datatracker.ietf.org/doc/html/rfc7636#section-4.1
     private String generateCodeVerifier() {
         SecureRandom sr = new SecureRandom();
         byte[] code = new byte[64];
