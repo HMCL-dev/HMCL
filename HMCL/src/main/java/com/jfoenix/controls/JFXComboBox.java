@@ -138,7 +138,7 @@ public class JFXComboBox<T> extends ComboBox<T> implements IFXLabelFloatControl 
     }
 
     private ObjectProperty<NodeConverter<T>> nodeConverter = new SimpleObjectProperty<>(this, "nodeConverter",
-            JFXComboBox.<T>defaultNodeConverter());
+            JFXComboBox.defaultNodeConverter());
 
     public final void setNodeConverter(NodeConverter<T> value) {
         nodeConverterProperty().set(value);
@@ -149,7 +149,7 @@ public class JFXComboBox<T> extends ComboBox<T> implements IFXLabelFloatControl 
     }
 
     private static <T> NodeConverter<T> defaultNodeConverter() {
-        return new NodeConverter<T>() {
+        return new NodeConverter<>() {
             @Override
             public Node toNode(T object) {
                 if (object == null) {
