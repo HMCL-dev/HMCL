@@ -221,7 +221,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
                                 Controllers.navigateForward(new AddonUpdatesPage<>(resourcePackManager, result));
                             }
                         })
-                        .withStagesHint(Collections.singletonList("update.checking")),
+                        .withStagesHints("update.checking"),
                 i18n("mods.check_updates"), TaskCancellationAction.NORMAL);
 
         if (profile.getRepository().isModpack(instanceId)) {
