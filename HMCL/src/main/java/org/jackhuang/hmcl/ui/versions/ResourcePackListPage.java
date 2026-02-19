@@ -62,13 +62,13 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class ResourcePackListPage extends ListPageBase<ResourcePackListPage.ResourcePackInfoObject> implements VersionPage.VersionLoadable {
 
     private static final String TIP_KEY = "resourcePackWarning";
-    private static @Nullable String getWarningKey(ResourcePackFile.Compatibility compatibility) {
+    private static @Nullable String getWarning(ResourcePackFile.Compatibility compatibility) {
         return switch (compatibility) {
-            case TOO_NEW -> "resourcepack.warning.too_new";
-            case TOO_OLD -> "resourcepack.warning.too_old";
-            case INVALID -> "resourcepack.warning.invalid";
-            case MISSING_PACK_META -> "resourcepack.warning.missing_pack_meta";
-            case MISSING_GAME_META -> "resourcepack.warning.missing_game_meta";
+            case TOO_NEW -> i18n("resourcepack.warning.too_new");
+            case TOO_OLD -> i18n("resourcepack.warning.too_old");
+            case INVALID -> i18n("resourcepack.warning.invalid");
+            case MISSING_PACK_META -> i18n("resourcepack.warning.missing_pack_meta");
+            case MISSING_GAME_META -> i18n("resourcepack.warning.missing_game_meta");
             default -> null;
         };
     }
@@ -468,7 +468,6 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         private final JFXButton btnInfo = new JFXButton();
 
         private ResourcePackInfoObject object = null;
-        private Tooltip warningTooltip = null;
 
         private BooleanProperty booleanProperty = null;
 
@@ -524,10 +523,6 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         @Override
         protected void updateControl(ResourcePackInfoObject item, boolean empty) {
             pseudoClassStateChanged(WARNING, false);
-            if (warningTooltip != null) {
-                Tooltip.uninstall(this, warningTooltip);
-                warningTooltip = null;
-            }
 
             if (empty || item == null) {
                 return;
@@ -550,10 +545,12 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             checkBox.selectedProperty().bindBidirectional(booleanProperty = item.enabledProperty());
 
             {
-                String warningKey = getWarningKey(file.getCompatibility());
-                if (warningKey != null) {
+                var compatibility = file.getCompatibility();
+                if (compatibility == ResourcePackFile.Compatibility.COMPATIBLE) {
+                    content.addTag(i18n("resourcepack.compatible"));
+                } else {
                     pseudoClassStateChanged(WARNING, true);
-                    FXUtils.installFastTooltip(this, warningTooltip = new Tooltip(i18n(warningKey)));
+                    content.addTagWarning(getWarning(compatibility));
                 }
             }
         }
@@ -577,10 +574,11 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
             TwoLineListItem title = new TwoLineListItem();
             title.setTitle(pack.getFileName());
             title.setSubtitle(pack.getFileNameWithExtension());
-            if (pack.getCompatibility() == ResourcePackFile.Compatibility.COMPATIBLE) {
+            var compatibility = pack.getCompatibility();
+            if (compatibility == ResourcePackFile.Compatibility.COMPATIBLE) {
                 title.addTag(i18n("resourcepack.compatible"));
             } else {
-                title.addTagWarning(i18n(getWarningKey(packInfoObject.file.getCompatibility())));
+                title.addTagWarning(getWarning(compatibility));
             }
 
             titleContainer.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), title);
