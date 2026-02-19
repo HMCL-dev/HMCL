@@ -968,15 +968,6 @@
     -jfx-unfocus-color: -monet-error;
 }
 
-.jfx-text-field .error-label {
-    -fx-text-fill: -monet-error;
-    -fx-font-size: 0.75em;
-}
-
-.jfx-text-field .error-icon {
-    -fx-fill: -monet-error;
-}
-
 /* ??? */
 
 .jfx-text-field .context-menu {
@@ -1051,15 +1042,6 @@
     -jfx-unfocus-color: -monet-error;
 }
 
-.jfx-password-field .error-label {
-    -fx-text-fill: -monet-error;
-    -fx-font-size: 0.75em;
-}
-
-.jfx-password-field .error-icon {
-    -fx-fill: -monet-error;
-}
-
 /*******************************************************************************
 *                                                                              *
 * JFX TextArea                                                                 *
@@ -1105,16 +1087,6 @@
     -jfx-focus-color: -monet-error;
     -jfx-unfocus-color: -monet-error;
 }
-
-.jfx-text-area .error-label {
-    -fx-text-fill: -monet-error;
-    -fx-font-size: 0.75em;
-}
-
-.jfx-text-area .error-icon {
-    -fx-fill: -monet-error;
-}
-
 
 /*******************************************************************************
 *                                                                              *
@@ -2011,9 +1983,36 @@
 
 /*******************************************************************************
 *                                                                              *
-* Error Facade (???)                                                           *
+* Error Facade                                                                 *
 *                                                                              *
 *******************************************************************************/
+
+.jfx-text-field .error-label {
+    -fx-text-fill: -monet-error;
+    -fx-font-size: 0.75em;
+}
+
+.jfx-text-field .error-icon {
+    -fx-fill: -monet-error;
+}
+
+.jfx-password-field .error-label {
+    -fx-text-fill: -monet-error;
+    -fx-font-size: 0.75em;
+}
+
+.jfx-password-field .error-icon {
+    -fx-fill: -monet-error;
+}
+
+.jfx-text-area .error-label {
+    -fx-text-fill: -monet-error;
+    -fx-font-size: 0.75em;
+}
+
+.jfx-text-area .error-icon {
+    -fx-fill: -monet-error;
+}
 
 .fit-width {
     -fx-pref-width: 100%;
