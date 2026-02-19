@@ -146,7 +146,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         if (!failures.isEmpty()) {
             StringBuilder failure = new StringBuilder(i18n("resourcepack.add.failed"));
             for (Path file: failures) {
-                failure.append(System.lineSeparator()).append(file.toString());
+                failure.append("\n").append(file.toString());
             }
             Controllers.dialog(failure.toString(), i18n("message.error"), MessageDialogPane.MessageType.ERROR);
         }
