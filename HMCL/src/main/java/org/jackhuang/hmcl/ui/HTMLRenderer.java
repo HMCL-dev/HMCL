@@ -37,9 +37,7 @@ import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
 
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
@@ -280,48 +278,113 @@ public final class HTMLRenderer {
     }
 
     private void appendTable(Node table) {
-        var childNodes = table.childNodes();
+        var childElements = ((Element) table).children();
+        List<Element> captions = new ArrayList<>();
 
-        var headOptional = childNodes.stream().filter(n -> n.nameIs("thead")).findFirst();
-        if (headOptional.isEmpty()) return;
-        var head = (Element) headOptional.get();
-        String[] headRow = head.getAllElements().stream()
-                .filter(n -> n.nameIs("th"))
-                .map(Element::text)
-                .toArray(String[]::new);
-        if (headRow.length == 0) return;
+        List<String> head = new ArrayList<>();
+        List<List<String>> body = new ArrayList<>();
+        List<String> foot = new ArrayList<>();
 
-        appendAutoLineBreak("\n");
-        var bodyOptional = childNodes.stream().filter(n -> n.nameIs("tbody")).findFirst();
-        String[][] bodyRows;
-        if (bodyOptional.isEmpty()) {
-            bodyRows = new String[0][headRow.length];
-        } else {
-            var body = (Element) bodyOptional.get();
-            var r = body.getAllElements().stream()
-                    .filter(n -> n.nameIs("tr"))
-                    .map(n -> n.getAllElements().stream()
-                            .filter(e -> e.nameIs("td"))
-                            .map(Element::text)
-                            .toArray(String[]::new))
-                    .toList();
-            bodyRows = new String[r.size()][headRow.length];
-            for (int i = 0; i < r.size(); i++) {
-                bodyRows[i] = r.get(i);
+        boolean hasHead = false;
+        boolean hasBody = false;
+        boolean hasFoot = false;
+        int columnCount = 0;
+        for (Element child : childElements) {
+            if (child.nameIs("caption")) {
+                captions.add(child);
+                continue;
+            }
+            if (child.nameIs("thead")) {
+                if (hasHead) continue;
+                hasHead = true;
+                for (Element e : child.children()) {
+                    if (e.nameIs("tr")) {
+                        head.clear();
+                        head.addAll(
+                                e.children().stream()
+                                        .filter(n -> n.nameIs("th") || n.nameIs("td"))
+                                        .map(Element::text)
+                                        .toList()
+                        );
+                        break;
+                    }
+                    if (e.nameIs("th") || e.nameIs("td")) {
+                        head.add(e.text());
+                    }
+                }
+                columnCount = Math.max(columnCount, head.size());
+                continue;
+            }
+            if (child.nameIs("tbody")) {
+                if (hasBody) continue;
+                hasBody = true;
+                body.clear();
+                for (Element e : child.children()) {
+                    if (e.nameIs("tr")) {
+                        List<String> row = e.children().stream()
+                                .filter(n -> n.nameIs("th") || n.nameIs("td"))
+                                .map(Element::text)
+                                .toList();
+                        columnCount = Math.max(columnCount, row.size());
+                        if (!row.isEmpty()) body.add(row);
+                    }
+                }
+                continue;
+            }
+            if (child.nameIs("tfoot")) {
+                if (hasFoot) continue;
+                hasFoot = true;
+                for (Element e : child.children()) {
+                    if (e.nameIs("tr")) {
+                        foot.clear();
+                        foot.addAll(
+                                e.children().stream()
+                                        .filter(n -> n.nameIs("th") || n.nameIs("td"))
+                                        .map(Element::text)
+                                        .toList()
+                        );
+                        break;
+                    }
+                    if (e.nameIs("th") || e.nameIs("td")) {
+                        foot.add(e.text());
+                    }
+                }
+                columnCount = Math.max(columnCount, foot.size());
+                continue;
+            }
+            if (child.nameIs("tr") && !hasBody) {
+                List<String> row = child.children().stream()
+                        .filter(n -> n.nameIs("th") || n.nameIs("td"))
+                        .map(Element::text)
+                        .toList();
+                columnCount = Math.max(columnCount, row.size());
+                if (!row.isEmpty()) body.add(row);
             }
         }
 
-        TableView<String[]> tableView = new TableView<>(FXCollections.observableList(Arrays.asList(bodyRows)));
+        List<List<String>> rows = new ArrayList<>(hasFoot ? body.size() + 1 : body.size());
+        for (List<String> row : body)
+            rows.add(Lang.copyWithSize(row, columnCount, ""));
+        if (hasFoot)
+            rows.add(Lang.copyWithSize(foot, columnCount, ""));
+
+        TableView<List<String>> tableView = new TableView<>(FXCollections.observableList(rows));
         tableView.setFixedCellSize(25);
-        tableView.setPrefHeight(25 * (bodyRows.length + 1) + 5);
-        for (int i = 0; i < headRow.length; i++) {
+        tableView.setPrefHeight(25 * (rows.size() + 1) + 5);
+        for (int i = 0; i < columnCount; i++) {
             int finalI = i;
-            TableColumn<String[], String> c = new TableColumn<>(headRow[i]);
-            c.setCellValueFactory(param -> new SimpleStringProperty(param.getValue()[finalI]));
+            TableColumn<List<String>, String> c = new TableColumn<>(head.size() > i ? head.get(i) : "");
+            c.setCellValueFactory(param -> new SimpleStringProperty(param.getValue().get(finalI)));
             tableView.getColumns().add(c);
         }
 
         children.add(tableView);
+
+        for (Element caption : captions) {
+            appendAutoLineBreak("\n\n");
+            appendText(normaliseWhitespace(caption.wholeText()));
+            appendAutoLineBreak("\n");
+        }
     }
 
     public void appendNode(Node node) {
