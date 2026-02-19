@@ -233,6 +233,7 @@ public class OAuth {
 
     public interface Session {
         String getCodeVerifier();
+
         String getRedirectURI();
 
         /**
