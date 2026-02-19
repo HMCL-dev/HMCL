@@ -332,7 +332,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
             closeButton.getStyleClass().add("dialog-accept");
             closeButton.setOnAction(e -> fireEvent(new DialogCloseEvent()));
 
-            setActions(closeButton);
+            setActions(versionPageBtn, closeButton);
 
             this.prefWidthProperty().bind(BindingMapping.of(Controllers.getStage().widthProperty()).map(w -> w.doubleValue() * 0.7));
             this.prefHeightProperty().bind(BindingMapping.of(Controllers.getStage().heightProperty()).map(w -> w.doubleValue() * 0.7));
