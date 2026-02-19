@@ -215,7 +215,6 @@ public class ValidationPane<T extends Region & IFXValidatableControl & IFXStatic
             KeyValue(errorClipScale.yProperty(), 1, Interpolator.EASE_BOTH));
     }
 
-
     private void showError(ValidatorBase validator) {
         // set text in error label
         errorLabel.setText(validator.getMessage());

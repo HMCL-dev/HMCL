@@ -33,7 +33,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 
 import java.lang.reflect.Field;
-import java.util.Arrays;
 import java.util.List;
 
 /// # Material Design TextArea Skin
@@ -74,7 +73,6 @@ public class JFXTextAreaSkin extends TextAreaSkin {
         registerChangeListener(textArea.disableAnimationProperty(), obs -> errorContainer.updateClip());
 
     }
-
 
     @Override
     protected void layoutChildren(final double x, final double y, final double w, final double h) {

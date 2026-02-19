@@ -41,7 +41,7 @@ import java.text.ParsePosition;
 @DefaultProperty(value = "icon")
 public class NumberValidator extends ValidatorBase {
 
-    private NumberStringConverter numberStringConverter = new NumberStringConverter(){
+    private NumberStringConverter numberStringConverter = new NumberStringConverter() {
         @Override
         public Number fromString(String string) {
             try {
@@ -67,7 +67,8 @@ public class NumberValidator extends ValidatorBase {
         }
     };
 
-    public NumberValidator() { }
+    public NumberValidator() {
+    }
 
     public NumberValidator(String message) {
         super(message);

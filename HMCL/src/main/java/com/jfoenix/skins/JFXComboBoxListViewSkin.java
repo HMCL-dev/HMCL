@@ -167,7 +167,7 @@ public class JFXComboBoxListViewSkin<T> extends ComboBoxListViewSkin<T> {
         }
     }
 
-    private static class StyleableProperties {
+    private static final class StyleableProperties {
         private static final CssMetaData<JFXComboBox<?>, Paint> PROMPT_TEXT_FILL =
             new CssMetaData<>("-fx-prompt-text-fill",
                 PaintConverter.getInstance(), Color.GRAY) {
@@ -195,7 +195,6 @@ public class JFXComboBoxListViewSkin<T> extends ComboBoxListViewSkin<T> {
             STYLEABLES = Collections.unmodifiableList(styleables);
         }
     }
-
 
     /// @return The CssMetaData associated with this class, which may include the
     /// CssMetaData of its super classes.

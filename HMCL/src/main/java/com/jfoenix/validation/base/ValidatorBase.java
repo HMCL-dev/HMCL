@@ -146,7 +146,7 @@ public abstract class ValidatorBase {
         }
     }
 
-    private final Tooltip getActiveTooltip(Node node) {
+    private Tooltip getActiveTooltip(Node node) {
         Tooltip tooltip = null;
         for (String key : supportedTooltipKeys) {
             tooltip = (Tooltip) node.getProperties().get(key);

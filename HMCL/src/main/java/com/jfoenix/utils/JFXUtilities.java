@@ -24,15 +24,13 @@ import javafx.application.Platform;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Function;
 
-
 /// # JavaFX FX Thread utilities
 /// JFXUtilities allow sync mechanism to the FX thread
-///
 ///
 /// @author pmoufarrej
 /// @version 1.0
 /// @since 2016-03-09
-public class JFXUtilities {
+public final class JFXUtilities {
 
     /// This method is used to run a specified Runnable in the FX Application thread,
     /// it returns before the task finished execution
@@ -77,5 +75,8 @@ public class JFXUtilities {
         System.arraycopy(a, 0, array, 0, aLen);
         System.arraycopy(b, 0, array, aLen, bLen);
         return array;
+    }
+
+    private JFXUtilities() {
     }
 }

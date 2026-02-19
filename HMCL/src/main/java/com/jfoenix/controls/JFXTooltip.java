@@ -297,7 +297,6 @@ public class JFXTooltip extends Tooltip {
         return parent.getY() + sceneBounds.getMinY() + ownerNode.getScene().getY();
     }
 
-
     public void showOnAnchors(Node ownerNode, double anchorX, double anchorY) {
         hiding = false;
         final Bounds sceneBounds = ownerNode.localToScene(ownerNode.getBoundsInLocal());
@@ -364,12 +363,11 @@ public class JFXTooltip extends Tooltip {
         return super.buildEventDispatchChain(tail).prepend(eventHandlerManager);
     }
 
-    private static class TooltipBehavior {
-
-        private static String TOOLTIP_PROP = "jfoenix-tooltip";
-        private Timeline hoverTimer = new Timeline();
-        private Timeline visibleTimer = new Timeline();
-        private Timeline leftTimer = new Timeline();
+    private static final class TooltipBehavior {
+        private static final String TOOLTIP_PROP = "jfoenix-tooltip";
+        private final Timeline hoverTimer = new Timeline();
+        private final Timeline visibleTimer = new Timeline();
+        private final Timeline leftTimer = new Timeline();
         /**
          * the currently hovered node
          */

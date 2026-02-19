@@ -191,7 +191,7 @@ public class JFXTextArea extends TextArea implements IFXLabelFloatControl {
         this.disableAnimationProperty().set(disabled);
     }
 
-    private static class StyleableProperties {
+    private static final class StyleableProperties {
         private static final CssMetaData<JFXTextArea, Paint> UNFOCUS_COLOR = new CssMetaData<>(
                 "-jfx-unfocus-color",
                 PaintConverter.getInstance(),

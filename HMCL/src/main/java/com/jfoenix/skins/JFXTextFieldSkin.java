@@ -102,7 +102,6 @@ public class JFXTextFieldSkin<T extends TextField & IFXLabelFloatControl> extend
         }
     }
 
-
     private void updateTextPos() {
         double textWidth = textNode.getLayoutBounds().getWidth();
         final double promptWidth = promptText == null ? 0 : promptText.getLayoutBounds().getWidth();

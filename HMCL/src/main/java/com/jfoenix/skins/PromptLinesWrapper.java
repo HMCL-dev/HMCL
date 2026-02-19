@@ -212,7 +212,7 @@ public class PromptLinesWrapper<T extends Control & IFXLabelFloatControl> {
     }
 
     private Object validateComboBox(Object text) {
-        if (control instanceof ComboBox<?> comboBox&& comboBox.isEditable()) {
+        if (control instanceof ComboBox<?> comboBox && comboBox.isEditable()) {
             final String editorText = comboBox.getEditor().getText();
             text = editorText == null || editorText.isEmpty() ? null : text;
         }
