@@ -15,12 +15,12 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-public abstract class LocalFileManager<T extends LocalAddonFile> {
+public abstract class LocalAddonManager<T extends LocalAddonFile> {
 
     public static final String DISABLED_EXTENSION = ".disabled";
     public static final String OLD_EXTENSION = ".old";
 
-    public static String getLocalFileName(Path file) {
+    public static String getLocalAddonName(Path file) {
         return StringUtils.removeSuffix(FileUtils.getName(file), DISABLED_EXTENSION, OLD_EXTENSION);
     }
 
@@ -29,7 +29,7 @@ public abstract class LocalFileManager<T extends LocalAddonFile> {
     protected final GameRepository repository;
     protected final String id;
 
-    public LocalFileManager(GameRepository gameRepository, String versionId) {
+    public LocalAddonManager(GameRepository gameRepository, String versionId) {
         this.repository = gameRepository;
         this.id = versionId;
     }

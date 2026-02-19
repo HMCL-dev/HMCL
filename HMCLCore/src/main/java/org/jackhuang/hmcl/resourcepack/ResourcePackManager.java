@@ -19,7 +19,7 @@ package org.jackhuang.hmcl.resourcepack;
 
 import com.google.gson.annotations.SerializedName;
 import org.jackhuang.hmcl.game.GameRepository;
-import org.jackhuang.hmcl.mod.LocalFileManager;
+import org.jackhuang.hmcl.mod.LocalAddonManager;
 import org.jackhuang.hmcl.mod.modinfo.PackMcMeta;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonSerializable;
@@ -40,7 +40,7 @@ import java.util.*;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public final class ResourcePackManager extends LocalFileManager<ResourcePackFile> {
+public final class ResourcePackManager extends LocalAddonManager<ResourcePackFile> {
 
     private static final List<String> RESOURCE_PACK_VERSION_OLD = List.of(
             "13w24a", // 1

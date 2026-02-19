@@ -210,7 +210,7 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
         Runnable action = () -> Controllers.taskDialog(Task
                         .composeAsync(() -> {
                             Optional<String> gameVersion = profile.getRepository().getGameVersion(instanceId);
-                            return gameVersion.map(g -> new CheckUpdatesTask<>(g, resourcePacks)).orElse(null);
+                            return gameVersion.map(g -> new AddonCheckUpdatesTask<>(g, resourcePacks)).orElse(null);
                         })
                         .whenComplete(Schedulers.javafx(), (result, exception) -> {
                             if (exception != null || result == null) {

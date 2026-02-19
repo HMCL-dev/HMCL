@@ -53,7 +53,7 @@ final class ResourcePackFolder extends ResourcePackFile {
     }
 
     @Override
-    public ModUpdate checkUpdates(String gameVersion, RemoteMod.Type type) {
+    public AddonUpdate checkUpdates(String gameVersion, RemoteMod.Type type) {
         return null;
     }
 }

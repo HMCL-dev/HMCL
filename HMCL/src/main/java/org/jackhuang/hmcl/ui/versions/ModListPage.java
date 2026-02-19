@@ -238,7 +238,7 @@ public final class ModListPage extends ListPageBase<ModListPageSkin.ModInfoObjec
         Runnable action = () -> Controllers.taskDialog(Task
                         .composeAsync(() -> {
                             Optional<String> gameVersion = profile.getRepository().getGameVersion(instanceId);
-                            return gameVersion.map(g -> new CheckUpdatesTask<>(g, mods)).orElse(null);
+                            return gameVersion.map(g -> new AddonCheckUpdatesTask<>(g, mods)).orElse(null);
                         })
                         .whenComplete(Schedulers.javafx(), (result, exception) -> {
                             if (exception != null || result == null) {

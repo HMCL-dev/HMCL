@@ -21,7 +21,7 @@ public abstract class LocalAddonFile {
     public abstract String getFileName();
 
     public boolean isDisabled() {
-        return FileUtils.getName(getFile()).endsWith(LocalFileManager.DISABLED_EXTENSION);
+        return FileUtils.getName(getFile()).endsWith(LocalAddonManager.DISABLED_EXTENSION);
     }
 
     public abstract void markDisabled() throws IOException;
@@ -35,10 +35,10 @@ public abstract class LocalAddonFile {
     public abstract void delete() throws IOException;
 
     @Nullable
-    public abstract ModUpdate checkUpdates(String gameVersion, RemoteMod.Type type) throws IOException;
+    public abstract AddonUpdate checkUpdates(String gameVersion, RemoteMod.Type type) throws IOException;
 
-    public record ModUpdate(LocalAddonFile localFile, RemoteMod.Version currentVersion,
-                            RemoteMod.Version candidate) {
+    public record AddonUpdate(LocalAddonFile localAddonFile, RemoteMod.Version currentVersion,
+                              RemoteMod.Version candidate) {
     }
 
 }
