@@ -599,7 +599,7 @@ public final class StringUtils {
 
     @Contract(pure = true)
     public static Optional<String> nullIfBlank(String str) {
-        return Optional.ofNullable(str).map(s -> s.isBlank() ? null : s);
+        return Optional.ofNullable(str).filter(s -> !s.isBlank());
     }
 
     /// @see StringUtil#normaliseWhitespace(String)
