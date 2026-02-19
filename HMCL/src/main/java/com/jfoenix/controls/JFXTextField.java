@@ -223,7 +223,7 @@ public class JFXTextField extends TextField implements IFXLabelFloatControl {
 
 
     private static class StyleableProperties {
-        private static final CssMetaData<JFXTextField, Paint> UNFOCUS_COLOR = new CssMetaData<JFXTextField, Paint>(
+        private static final CssMetaData<JFXTextField, Paint> UNFOCUS_COLOR = new CssMetaData<>(
                 "-jfx-unfocus-color",
                 PaintConverter.getInstance(),
                 Color.valueOf("#A6A6A6")) {
@@ -237,7 +237,7 @@ public class JFXTextField extends TextField implements IFXLabelFloatControl {
                 return control.unFocusColorProperty();
             }
         };
-        private static final CssMetaData<JFXTextField, Paint> FOCUS_COLOR = new CssMetaData<JFXTextField, Paint>(
+        private static final CssMetaData<JFXTextField, Paint> FOCUS_COLOR = new CssMetaData<>(
                 "-jfx-focus-color",
                 PaintConverter.getInstance(),
                 Color.valueOf("#3f51b5")) {
@@ -251,7 +251,7 @@ public class JFXTextField extends TextField implements IFXLabelFloatControl {
                 return control.focusColorProperty();
             }
         };
-        private static final CssMetaData<JFXTextField, Boolean> LABEL_FLOAT = new CssMetaData<JFXTextField, Boolean>(
+        private static final CssMetaData<JFXTextField, Boolean> LABEL_FLOAT = new CssMetaData<>(
                 "-jfx-label-float",
                 BooleanConverter.getInstance(),
                 false) {
@@ -267,7 +267,7 @@ public class JFXTextField extends TextField implements IFXLabelFloatControl {
         };
 
         private static final CssMetaData<JFXTextField, Boolean> DISABLE_ANIMATION =
-                new CssMetaData<JFXTextField, Boolean>("-jfx-disable-animation",
+                new CssMetaData<>("-jfx-disable-animation",
                         BooleanConverter.getInstance(), false) {
                     @Override
                     public boolean isSettable(JFXTextField control) {
@@ -279,7 +279,6 @@ public class JFXTextField extends TextField implements IFXLabelFloatControl {
                         return control.disableAnimationProperty();
                     }
                 };
-
 
         private static final List<CssMetaData<? extends Styleable, ?>> CHILD_STYLEABLES;
 
