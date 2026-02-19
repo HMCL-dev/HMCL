@@ -31,6 +31,7 @@ import javafx.scene.text.TextFlow;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jsoup.internal.StringUtil;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
@@ -63,6 +64,40 @@ public final class HTMLRenderer {
 
     public static HTMLRenderer openHyperlinkInBrowser() {
         return new HTMLRenderer(FXUtils::openUriInBrowser);
+    }
+
+    ///  @see StringUtil#isWhitespace(int)
+    public static boolean isWhitespace(int c) {
+        return c == ' ' || c == '\t' || c == '\n' || c == '\f' || c == '\r';
+    }
+
+    ///  @see StringUtil#isInvisibleChar(int)
+    public static boolean isInvisibleChar(int c) {
+        return c == 8203 || c == 173; // zero width sp, soft hyphen
+        // previously also included zw non join, zw join - but removing those breaks semantic meaning of text
+    }
+
+    /// @see StringUtil#normaliseWhitespace(String)
+    /// @see StringUtil#isActuallyWhitespace(int)
+    public static String normaliseWhitespace(String str) {
+        var accum = new StringBuilder();
+        boolean lastWasWhite = false;
+        int len = str.length();
+        int c;
+        for (int i = 0; i < len; i += Character.charCount(c)) {
+            c = str.codePointAt(i);
+            if (isWhitespace(c)) { // Ignore &nbsp;
+                if (lastWasWhite)
+                    continue;
+                accum.append(' ');
+                lastWasWhite = true;
+            }
+            else if (!isInvisibleChar(c)) {
+                accum.appendCodePoint(c);
+                lastWasWhite = false;
+            }
+        }
+        return accum.toString();
     }
 
     private final List<javafx.scene.Node> children = new ArrayList<>();
@@ -293,7 +328,7 @@ public final class HTMLRenderer {
 
     public void appendNode(Node node) {
         if (node instanceof TextNode n) {
-            appendText(StringUtils.normaliseWhitespace(n.getWholeText()));
+            appendText(normaliseWhitespace(n.getWholeText()));
         }
 
         String name = node.nodeName();

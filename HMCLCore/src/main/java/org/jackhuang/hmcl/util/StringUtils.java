@@ -25,7 +25,6 @@ import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 import org.jetbrains.annotations.Contract;
 import org.jsoup.Jsoup;
-import org.jsoup.internal.StringUtil;
 import org.jsoup.safety.Safelist;
 
 import java.io.PrintWriter;
@@ -600,29 +599,6 @@ public final class StringUtils {
     @Contract(pure = true)
     public static Optional<String> nullIfBlank(String str) {
         return Optional.ofNullable(str).filter(s -> !s.isBlank());
-    }
-
-    /// @see StringUtil#normaliseWhitespace(String)
-    /// @see StringUtil#isActuallyWhitespace(int)
-    public static String normaliseWhitespace(String str) {
-        var accum = new StringBuilder();
-        boolean lastWasWhite = false;
-        int len = str.length();
-        int c;
-        for (int i = 0; i < len; i += Character.charCount(c)) {
-            c = str.codePointAt(i);
-            if (StringUtil.isWhitespace(c)) { // Ignore &nbsp;
-                if (lastWasWhite)
-                    continue;
-                accum.append(' ');
-                lastWasWhite = true;
-            }
-            else if (!StringUtil.isInvisibleChar(c)) {
-                accum.appendCodePoint(c);
-                lastWasWhite = false;
-            }
-        }
-        return accum.toString();
     }
 
     private static final Safelist all = Safelist.relaxed()
