@@ -31,7 +31,6 @@ import javafx.scene.text.TextFlow;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
-import org.jsoup.internal.StringUtil;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
@@ -64,19 +63,19 @@ public final class HTMLRenderer {
         return new HTMLRenderer(FXUtils::openUriInBrowser);
     }
 
-    /// @see StringUtil#isWhitespace(int)
+    /// @see org.jsoup.internal.StringUtil#isWhitespace(int)
     public static boolean isWhitespace(int c) {
         return c == ' ' || c == '\t' || c == '\n' || c == '\f' || c == '\r';
     }
 
-    /// @see StringUtil#isInvisibleChar(int)
+    /// @see org.jsoup.internal.StringUtil#isInvisibleChar(int)
     public static boolean isInvisibleChar(int c) {
         return c == 8203 || c == 173; // zero width sp, soft hyphen
         // previously also included zw non join, zw join - but removing those breaks semantic meaning of text
     }
 
-    /// @see StringUtil#normaliseWhitespace(String)
-    /// @see StringUtil#isActuallyWhitespace(int)
+    /// @see org.jsoup.internal.StringUtil#normaliseWhitespace(String)
+    /// @see org.jsoup.internal.StringUtil#isActuallyWhitespace(int)
     public static String normaliseWhitespace(String str) {
         var accum = new StringBuilder();
         boolean lastWasWhite = false;
