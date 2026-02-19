@@ -29,7 +29,7 @@ dependencies {
     api(libs.commonmark)
     api(libs.commonmark.autolink)
     api(libs.commonmark.underline)
-    api(libs.commonmark.stikethrough)
+    api(libs.commonmark.strikethrough)
     api(libs.commonmark.table)
 
     compileOnlyApi(libs.jetbrains.annotations)

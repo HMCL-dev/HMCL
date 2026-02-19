@@ -55,7 +55,7 @@ nayuki-qrcodegen = { module = "io.nayuki:qrcodegen", version.ref = "nayuki-qrcod
 commonmark = { module = "org.commonmark:commonmark", version.ref = "commonmark" }
 commonmark-autolink = { module = "org.commonmark:commonmark-ext-autolink", version.ref = "commonmark" }
 commonmark-underline = { module = "org.commonmark:commonmark-ext-ins", version.ref = "commonmark" }
-commonmark-stikethrough = { module = "org.commonmark:commonmark-ext-gfm-strikethrough", version.ref = "commonmark" }
+commonmark-strikethrough = { module = "org.commonmark:commonmark-ext-gfm-strikethrough", version.ref = "commonmark" }
 commonmark-table = { module = "org.commonmark:commonmark-ext-gfm-tables", version.ref = "commonmark" }
 
 # testing
