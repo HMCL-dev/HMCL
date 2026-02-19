@@ -26,7 +26,6 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
@@ -34,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.jackhuang.hmcl.util.Lang.mapOf;
 import static org.jackhuang.hmcl.util.Pair.pair;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class OAuth {
     public static final OAuth MICROSOFT = new OAuth(
@@ -101,7 +101,6 @@ public class OAuth {
                 .form(pair("client_id", options.callback.getClientId()),
                         pair("code", code),
                         pair("grant_type", "authorization_code"),
-                        // Replace client_secret with code_verifier
                         pair("code_verifier", codeVerifier),
                         pair("redirect_uri", session.getRedirectURI()),
                         pair("scope", options.scope))
@@ -194,8 +193,9 @@ public class OAuth {
             messageDigest.update(bytes, 0, bytes.length);
             byte[] digest = messageDigest.digest();
             return Base64.getUrlEncoder().withoutPadding().encodeToString(digest);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("SHA-256 algorithm not available", e);
+        } catch (Exception e) {
+            LOG.warning("Failed to generate code challenge", e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -269,8 +269,6 @@ public class OAuth {
 
         String getClientId();
     }
-
-    // ... Enums and Response classes remain unchanged ...
 
     public enum GrantFlow {
         AUTHORIZATION_CODE,
