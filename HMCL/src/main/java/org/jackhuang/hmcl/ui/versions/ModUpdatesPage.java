@@ -100,7 +100,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
         TableColumn<ModUpdateObject, String> sourceColumn = new TableColumn<>(i18n("mods.check_updates.source"));
         setupCellValueFactory(sourceColumn, ModUpdateObject::sourceProperty);
 
-        TableColumn<ModUpdateObject, String> changelogColumn = new TableColumn<>();
+        TableColumn<ModUpdateObject, String> changelogColumn = new TableColumn<>(i18n("mods.changelog"));
         {
             var oldCellFactory = changelogColumn.getCellFactory();
             changelogColumn.setCellFactory(param -> {
@@ -116,7 +116,7 @@ public class ModUpdatesPage extends BorderPane implements DecoratorPage {
                 });
                 return cell;
             });
-            changelogColumn.setCellValueFactory(__ -> new SimpleStringProperty(i18n("mods.changelog")));
+            changelogColumn.setCellValueFactory(__ -> new SimpleStringProperty(i18n("button.view")));
         }
 
         objects = FXCollections.observableList(updates.stream().map(ModUpdateObject::new).collect(Collectors.toList()));
