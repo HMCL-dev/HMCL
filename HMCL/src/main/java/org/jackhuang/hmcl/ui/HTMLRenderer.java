@@ -110,9 +110,12 @@ public final class HTMLRenderer {
 
             String style = node.attr("style");
             if (StringUtils.isNotBlank(style)) {
-                fxStyle = style
-                        .replace("color:", "-fx-fill:")
-                        .replace("font-size:", "-fx-font-size:"); // And more
+                fxStyle = StringUtils.addSuffix(
+                        style
+                                .replace("color:", "-fx-fill:")
+                                .replace("font-size:", "-fx-font-size:"), // And more
+                        ";"
+                );
             }
         }
     }
@@ -128,6 +131,8 @@ public final class HTMLRenderer {
     }
 
     private void applyStyle(Text text) {
+        var styleBuilder = new StringBuilder();
+
         if (hyperlink != null) {
             URI target = resolveLink(hyperlink);
             if (target != null) {
@@ -151,14 +156,15 @@ public final class HTMLRenderer {
 
         if (code) {
             text.getStyleClass().add("html-code");
-            text.setStyle("-fx-font-family: \"%s\";".formatted(Lang.requireNonNullElse(config().getFontFamily(), FXUtils.DEFAULT_MONOSPACE_FONT)));
+            styleBuilder.append("-fx-font-family: \"%s\";".formatted(Lang.requireNonNullElse(config().getFontFamily(), FXUtils.DEFAULT_MONOSPACE_FONT)));
         }
 
         if (headerLevel != null)
             text.getStyleClass().add("html-" + headerLevel);
 
         if (fxStyle != null)
-            text.setStyle(fxStyle);
+            styleBuilder.append(fxStyle);
+        text.setStyle(styleBuilder.toString());
     }
 
     private void appendText(String text) {
