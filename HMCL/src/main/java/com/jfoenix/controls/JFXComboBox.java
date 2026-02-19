@@ -49,25 +49,17 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * JFXComboBox is the material design implementation of a combobox.
- *
- * @author Shadi Shaheen
- * @version 1.0
- * @since 2016-03-09
- */
+/// JFXComboBox is the material design implementation of a combobox.
+///
+/// @author Shadi Shaheen
+/// @version 1.0
+/// @since 2016-03-09
 public class JFXComboBox<T> extends ComboBox<T> implements IFXLabelFloatControl {
 
-    /**
-     * {@inheritDoc}
-     */
     public JFXComboBox() {
         initialize();
     }
 
-    /**
-     * {@inheritDoc}
-     */
     public JFXComboBox(ObservableList<T> items) {
         super(items);
         initialize();
@@ -128,62 +120,68 @@ public class JFXComboBox<T> extends ComboBox<T> implements IFXLabelFloatControl 
      * Node Converter Property                                                 *
      *                                                                         *
      **************************************************************************/
-    /**
-     * Converts the user-typed input (when the ComboBox is
-     * {@link #editableProperty() editable}) to an object of type T, such that
-     * the input may be retrieved via the  {@link #valueProperty() value} property.
-     */
-    public ObjectProperty<NodeConverter<T>> nodeConverterProperty() {
-        return nodeConverter;
+
+    private static final class DefaultNodeConverter<T> extends NodeConverter<T> {
+        private static final DefaultNodeConverter<?> INSTANCE = new DefaultNodeConverter<>();
+
+        @SuppressWarnings("unchecked")
+        static <T> DefaultNodeConverter<T> getInstance() {
+            return (DefaultNodeConverter<T>) INSTANCE;
+        }
+
+        @Override
+        public Node toNode(T object) {
+            if (object == null) {
+                return null;
+            }
+            StackPane selectedValueContainer = new StackPane();
+            selectedValueContainer.getStyleClass().add("combo-box-selected-value-container");
+            selectedValueContainer.setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, null, null)));
+            Label selectedValueLabel = object instanceof Label label
+                    ? new Label(label.getText())
+                    : new Label(object.toString());
+            selectedValueLabel.setTextFill(Color.BLACK);
+            selectedValueContainer.getChildren().add(selectedValueLabel);
+            StackPane.setAlignment(selectedValueLabel, Pos.CENTER_LEFT);
+            StackPane.setMargin(selectedValueLabel, new Insets(0, 0, 0, 5));
+            return selectedValueContainer;
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public T fromNode(Node node) {
+            return (T) node;
+        }
+
+        @Override
+        public String toString(T object) {
+            if (object == null) {
+                return null;
+            }
+            if (object instanceof Label label) {
+                return label.getText();
+            }
+            return object.toString();
+        }
     }
 
-    private ObjectProperty<NodeConverter<T>> nodeConverter = new SimpleObjectProperty<>(this, "nodeConverter",
-            JFXComboBox.defaultNodeConverter());
+    private ObjectProperty<NodeConverter<T>> nodeConverter;
+
+    /// Converts the user-typed input (when the ComboBox is
+    /// [editable][#editableProperty()]) to an object of type T, such that
+    /// the input may be retrieved via the  [value][#valueProperty()] property.
+    public ObjectProperty<NodeConverter<T>> nodeConverterProperty() {
+        if (nodeConverter == null)
+            nodeConverter = new SimpleObjectProperty<>(this, "nodeConverter", DefaultNodeConverter.getInstance());
+        return nodeConverter;
+    }
 
     public final void setNodeConverter(NodeConverter<T> value) {
         nodeConverterProperty().set(value);
     }
 
     public final NodeConverter<T> getNodeConverter() {
-        return nodeConverterProperty().get();
-    }
-
-    private static <T> NodeConverter<T> defaultNodeConverter() {
-        return new NodeConverter<>() {
-            @Override
-            public Node toNode(T object) {
-                if (object == null) {
-                    return null;
-                }
-                StackPane selectedValueContainer = new StackPane();
-                selectedValueContainer.getStyleClass().add("combo-box-selected-value-container");
-                selectedValueContainer.setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, null, null)));
-                Label selectedValueLabel = object instanceof Label ? new Label(((Label) object).getText()) : new Label(
-                        object.toString());
-                selectedValueLabel.setTextFill(Color.BLACK);
-                selectedValueContainer.getChildren().add(selectedValueLabel);
-                StackPane.setAlignment(selectedValueLabel, Pos.CENTER_LEFT);
-                StackPane.setMargin(selectedValueLabel, new Insets(0, 0, 0, 5));
-                return selectedValueContainer;
-            }
-
-            @SuppressWarnings("unchecked")
-            @Override
-            public T fromNode(Node node) {
-                return (T) node;
-            }
-
-            @Override
-            public String toString(T object) {
-                if (object == null) {
-                    return null;
-                }
-                if (object instanceof Label) {
-                    return ((Label) object).getText();
-                }
-                return object.toString();
-            }
-        };
+        return nodeConverter != null ? nodeConverter.get() : DefaultNodeConverter.getInstance();
     }
 
     private boolean updateDisplayText(ListCell<T> cell, T item, boolean empty) {
@@ -321,10 +319,7 @@ public class JFXComboBox<T> extends ComboBox<T> implements IFXLabelFloatControl 
         this.focusColor.set(color);
     }
 
-
-    /**
-     * disable animation on validation
-     */
+    /// disable animation on validation
     private final StyleableBooleanProperty disableAnimation = new SimpleStyleableBooleanProperty(StyleableProperties.DISABLE_ANIMATION,
             JFXComboBox.this,
             "disableAnimation",
