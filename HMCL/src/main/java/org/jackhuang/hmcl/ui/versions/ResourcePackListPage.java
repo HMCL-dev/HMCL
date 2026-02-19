@@ -177,10 +177,9 @@ public final class ResourcePackListPage extends ListPageBase<ResourcePackListPag
 
     private void setSelectedEnabled(List<ResourcePackInfoObject> selectedItems, boolean enabled) {
         if (!ConfigHolder.config().getShownTips().containsKey(TIP_KEY) && enabled && !selectedItems.stream().map(ResourcePackInfoObject::getFile).allMatch(ResourcePackFile::isCompatible)) {
-            Controllers.confirmWithCountdown(
+            Controllers.confirm(
                     i18n("resourcepack.warning.manipulate"),
                     i18n("message.warning"),
-                    5,
                     MessageDialogPane.MessageType.WARNING,
                     () -> {
                         ConfigHolder.config().getShownTips().put(TIP_KEY, 0);
