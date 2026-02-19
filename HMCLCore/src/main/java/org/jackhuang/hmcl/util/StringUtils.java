@@ -293,6 +293,58 @@ public final class StringUtils {
         return false;
     }
 
+    /// Check if the code point is a full-width character.
+    public static boolean isFullWidth(int codePoint) {
+        return codePoint >= '\uff10' && codePoint <= '\uff19'       // full-width digits
+                || codePoint >= '\uff21' && codePoint <= '\uff3a'   // full-width uppercase letters
+                || codePoint >= '\uff41' && codePoint <= '\uff5a'   // full-width lowercase letters
+                || codePoint == '\uff08'                            // full-width left parenthesis
+                || codePoint == '\uff09'                            // full-width right parenthesis
+                || codePoint == '\uff0c'                            // full-width comma
+                || codePoint == '\uff05'                            // full-width percent sign
+                || codePoint == '\uff0e'                            // full-width period
+                || codePoint == '\u3000'                            // full-width ideographic space
+                || codePoint == '\uff03';                           // full-width number sign
+    }
+
+    /// Convert full-width characters to half-width characters.
+    public static String toHalfWidth(String str) {
+        int i = 0;
+        while (i < str.length()) {
+            int cp = str.codePointAt(i);
+
+            if (isFullWidth(cp)) {
+                break;
+            }
+
+            i += Character.charCount(cp);
+        }
+
+        if (i == str.length())
+            return str;
+
+        var builder = new StringBuilder(str.length());
+        builder.append(str, 0, i);
+        while (i < str.length()) {
+            int c = str.codePointAt(i);
+
+            if (c >= '\uff10' && c <= '\uff19') builder.append((char) (c - 0xfee0));
+            else if (c >= '\uff21' && c <= '\uff3a') builder.append((char) (c - 0xfee0));
+            else if (c >= '\uff41' && c <= '\uff5a') builder.append((char) (c - 0xfee0));
+            else if (c == '\uff08') builder.append('(');
+            else if (c == '\uff09') builder.append(')');
+            else if (c == '\uff0c') builder.append(',');
+            else if (c == '\uff05') builder.append('%');
+            else if (c == '\uff0e') builder.append('.');
+            else if (c == '\u3000') builder.append(' ');
+            else if (c == '\uff03') builder.append('#');
+            else builder.appendCodePoint(c);
+
+            i += Character.charCount(c);
+        }
+        return builder.toString();
+    }
+
     private static boolean isVarNameStart(char ch) {
         return (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || ch == '_';
     }
@@ -508,6 +560,15 @@ public final class StringUtils {
             }
         }
         return builder.toString();
+    }
+
+    public static String escapeXmlAttribute(String str) {
+        return str
+                .replace("&", "&amp;")
+                .replace("\"", "&quot;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("'", "&apos;");
     }
 
     public static String repeats(char ch, int repeat) {
