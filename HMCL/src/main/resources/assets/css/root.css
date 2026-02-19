@@ -1019,8 +1019,8 @@
 *******************************************************************************/
 
 .jfx-password-field {
-    -jfx-focus-color: #4059A9;
-    -jfx-unfocus-color: #4d4d4d;
+    -jfx-focus-color: -monet-primary;
+    -jfx-unfocus-color: -monet-on-surface;
     -fx-padding: 0.333333em 0 0.333333em 0;
 }
 
