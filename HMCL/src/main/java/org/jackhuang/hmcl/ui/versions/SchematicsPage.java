@@ -27,7 +27,6 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
@@ -40,9 +39,8 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
-import javafx.scene.shape.SVGPath;
-import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
+import javafx.scene.text.Text;
 import org.jackhuang.hmcl.mod.ModLoaderType;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
@@ -664,8 +662,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         private final HBox right;
 
         private final ImageView iconImageView;
-        private final SVGPath iconSVG;
-        private final StackPane iconSVGWrapper;
+        private final SVGContainer iconSVGView;
 
         private final BooleanProperty isFileProperty = new SimpleBooleanProperty(this, "isFile", false);
         private final BooleanProperty isDirectoryProperty = new SimpleBooleanProperty(this, "isDirectory", false);
@@ -686,15 +683,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 this.iconImageView = new ImageView();
                 FXUtils.limitSize(iconImageView, 32, 32);
 
-                this.iconSVG = new SVGPath();
-                iconSVG.getStyleClass().add("svg");
-                iconSVG.setScaleX(32.0 / SVG.DEFAULT_SIZE);
-                iconSVG.setScaleY(32.0 / SVG.DEFAULT_SIZE);
-
-                this.iconSVGWrapper = new StackPane(new Group(iconSVG));
-                iconSVGWrapper.setAlignment(Pos.CENTER);
-                FXUtils.setLimitWidth(iconSVGWrapper, 32);
-                FXUtils.setLimitHeight(iconSVGWrapper, 32);
+                this.iconSVGView = new SVGContainer(32);
             }
             {
                 this.center = new TwoLineListItem();
@@ -767,8 +756,8 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 iconImageView.setImage(fileItem.getImage());
                 left.getChildren().setAll(iconImageView);
             } else {
-                iconSVG.setContent(item.getIcon().getPath());
-                left.getChildren().setAll(iconSVGWrapper);
+                iconSVGView.setIcon(item.getIcon());
+                left.getChildren().setAll(iconSVGView);
             }
 
             center.setTitle(item.getName());

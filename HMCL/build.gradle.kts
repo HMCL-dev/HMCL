@@ -60,6 +60,7 @@ dependencies {
     implementation(libs.twelvemonkeys.imageio.webp)
     implementation(libs.java.info)
     implementation(libs.monet.fx)
+    implementation(libs.nayuki.qrcodegen)
 
     if (launcherExe.isBlank()) {
         implementation(libs.hmclauncher)
@@ -129,6 +130,7 @@ val addOpens = listOf(
     "javafx.base/javafx.beans.property",
     "javafx.graphics/javafx.css",
     "javafx.graphics/javafx.stage",
+    "javafx.graphics/javafx.scene",
     "javafx.graphics/com.sun.glass.ui",
     "javafx.graphics/com.sun.javafx.stage",
     "javafx.graphics/com.sun.javafx.util",
