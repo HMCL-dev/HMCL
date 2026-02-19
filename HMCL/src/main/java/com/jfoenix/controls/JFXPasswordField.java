@@ -204,15 +204,14 @@ public class JFXPasswordField extends PasswordField implements IFXLabelFloatCont
     }
 
     @Override
-    public final Boolean isDisableAnimation() {
+    public final boolean isDisableAnimation() {
         return disableAnimation != null && this.disableAnimationProperty().get();
     }
 
     @Override
-    public final void setDisableAnimation(final Boolean disabled) {
+    public final void setDisableAnimation(final boolean disabled) {
         this.disableAnimationProperty().set(disabled);
     }
-
 
     private static class StyleableProperties {
         private static final CssMetaData<JFXPasswordField, Paint> UNFOCUS_COLOR = new CssMetaData<>(

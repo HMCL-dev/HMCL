@@ -176,15 +176,18 @@ public class JFXTextArea extends TextArea implements IFXLabelFloatControl {
             "disableAnimation",
             false);
 
+    @Override
     public final StyleableBooleanProperty disableAnimationProperty() {
         return this.disableAnimation;
     }
 
-    public final Boolean isDisableAnimation() {
+    @Override
+    public final boolean isDisableAnimation() {
         return disableAnimation != null && this.disableAnimationProperty().get();
     }
 
-    public final void setDisableAnimation(final Boolean disabled) {
+    @Override
+    public final void setDisableAnimation(final boolean disabled) {
         this.disableAnimationProperty().set(disabled);
     }
 

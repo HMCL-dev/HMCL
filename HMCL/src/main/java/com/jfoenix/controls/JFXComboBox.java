@@ -336,15 +336,14 @@ public class JFXComboBox<T> extends ComboBox<T> implements IFXLabelFloatControl 
     }
 
     @Override
-    public final Boolean isDisableAnimation() {
+    public final boolean isDisableAnimation() {
         return disableAnimation != null && this.disableAnimationProperty().get();
     }
 
     @Override
-    public final void setDisableAnimation(final Boolean disabled) {
+    public final void setDisableAnimation(final boolean disabled) {
         this.disableAnimationProperty().set(disabled);
     }
-
 
     private static class StyleableProperties {
         private static final CssMetaData<JFXComboBox<?>, Paint> UNFOCUS_COLOR = new CssMetaData<>(

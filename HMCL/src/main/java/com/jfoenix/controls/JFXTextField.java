@@ -212,17 +212,16 @@ public class JFXTextField extends TextField implements IFXLabelFloatControl {
     }
 
     @Override
-    public final Boolean isDisableAnimation() {
+    public final boolean isDisableAnimation() {
         return disableAnimation != null && this.disableAnimationProperty().get();
     }
 
     @Override
-    public final void setDisableAnimation(final Boolean disabled) {
+    public final void setDisableAnimation(final boolean disabled) {
         this.disableAnimationProperty().set(disabled);
     }
 
-
-    private static class StyleableProperties {
+    private static final class StyleableProperties {
         private static final CssMetaData<JFXTextField, Paint> UNFOCUS_COLOR = new CssMetaData<>(
                 "-jfx-unfocus-color",
                 PaintConverter.getInstance(),

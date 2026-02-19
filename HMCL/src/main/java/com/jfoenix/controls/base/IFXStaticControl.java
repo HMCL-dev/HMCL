@@ -25,7 +25,7 @@ public interface IFXStaticControl {
 
     StyleableBooleanProperty disableAnimationProperty();
 
-    Boolean isDisableAnimation();
+    boolean isDisableAnimation();
 
-    void setDisableAnimation(Boolean disabled);
+    void setDisableAnimation(boolean disabled);
 }
