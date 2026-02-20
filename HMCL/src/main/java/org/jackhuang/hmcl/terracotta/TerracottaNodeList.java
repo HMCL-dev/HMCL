@@ -37,7 +37,6 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class TerracottaNodeList {
     private static final String NODE_LIST_URL = "https://terracotta.glavo.site/nodes";
 
-
     private static String maskForLog(String s) {
         if (s == null || s.isEmpty()) return "";
         int half = s.length() / 2;
