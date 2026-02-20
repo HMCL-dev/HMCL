@@ -96,6 +96,7 @@ public class MultipleSourceVersionList extends VersionList<RemoteVersion> {
                     } else {
                         LOG.warning("Failed to fetch versions list and try to fetch from other source", exception);
                         nextTask = refreshAsync(gameVersion, sourceIndex + 1);
+                        nextTask.storeTo(this::setResult);
                     }
                 }
             }
