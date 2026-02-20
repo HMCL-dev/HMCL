@@ -86,7 +86,7 @@ public final class LauncherHelper {
     private boolean showLogs;
     private QuickPlayOption quickPlayOption;
     private boolean disableOfflineSkin = false;
-    private boolean modifyedGpuReg = false;
+    private boolean modifiedGpuReg = false;
 
     public LauncherHelper(Profile profile, Account account, String selectedVersion) {
         this.profile = Objects.requireNonNull(profile);
@@ -226,7 +226,7 @@ public final class LauncherHelper {
                                             FileUtils.getAbsolutePath(javaVersionRef.get().getBinary()),
                                             "GpuPreference=2;"
                                     );
-                                    modifyedGpuReg = true;
+                                    modifiedGpuReg = true;
                                 }
                             }
                         } catch (Exception e) {
@@ -849,7 +849,7 @@ public final class LauncherHelper {
         }
 
         private void finishLaunch() {
-            if (modifyedGpuReg) {
+            if (modifiedGpuReg) {
                 try {
                     Thread.sleep(5000L);
                 } catch (InterruptedException ignored) {
