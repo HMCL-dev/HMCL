@@ -37,6 +37,13 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class TerracottaNodeList {
     private static final String NODE_LIST_URL = "https://terracotta.glavo.site/nodes";
 
+
+    private static String maskForLog(String s) {
+        if (s == null || s.isEmpty()) return "";
+        int half = s.length() / 2;
+        return s.substring(0, half) + "*".repeat(s.length() - half);
+    }
+
     @JsonSerializable
     private record TerracottaNode(String url, @Nullable String region) implements Validation {
         @Override
@@ -78,7 +85,7 @@ public final class TerracottaNodeList {
                                 try {
                                     node.validate();
                                 } catch (Exception e) {
-                                    LOG.warning("Invalid terracotta node: " + node, e);
+                                    LOG.warning("Invalid terracotta node: " + maskForLog(node.toString()), e);
                                     return false;
                                 }
 
@@ -86,7 +93,7 @@ public final class TerracottaNodeList {
                             })
                             .map(it -> URI.create(it.url()))
                             .toList();
-                    LOG.info("Terracotta node list: " + list);
+                    LOG.info("Terracotta node list: " + list.stream().map(uri -> maskForLog(uri.toString())).toList());
                 }
             } catch (Exception e) {
                 LOG.warning("Failed to fetch terracotta node list", e);
