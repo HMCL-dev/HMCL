@@ -110,7 +110,7 @@ public class Datapack {
             Path targetResourceZipPath;
             // When the version cannot be obtained, the old version logic is used by default.
             boolean useNewResourcePath = gameVersionNumber != null
-                    && gameVersionNumber.compareTo(GameVersionNumber.asGameVersion("26.1-snapshot-6")) >= 0;
+                    && gameVersionNumber.compareTo("26.1-snapshot-6") >= 0;
 
             if (useNewResourcePath) {
                 Files.createDirectories(targetDatapackDirectory.getParent().resolve("resourcepacks"));
