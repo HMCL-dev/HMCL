@@ -35,15 +35,6 @@ public class JFXImageView extends ImageView {
 
     public JFXImageView() {
         super();
-        init();
-    }
-
-    public JFXImageView(String url) {
-        super(url);
-        init();
-    }
-
-    private void init() {
         clip.widthProperty().bind(this.fitWidthProperty());
         clip.heightProperty().bind(this.fitHeightProperty());
 
@@ -76,7 +67,7 @@ public class JFXImageView extends ImageView {
 
                 @Override
                 public CssMetaData<? extends Styleable, Number> getCssMetaData() {
-                    return null;
+                    return StyleableProperties.CORNER_RADIUS;
                 }
 
                 @Override
