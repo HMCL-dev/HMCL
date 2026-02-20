@@ -36,7 +36,8 @@ import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
 
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.setting.ConfigHolder.config;
@@ -104,7 +105,9 @@ public final class HTMLRenderer {
     private boolean underline;
     private boolean strike;
     private boolean highlight;
+    private boolean preformatted;
     private boolean code;
+    private int listDepth;
     private String headerLevel;
     private Node hyperlink;
     private String fxStyle;
@@ -121,7 +124,9 @@ public final class HTMLRenderer {
         underline = false;
         strike = false;
         highlight = false;
+        preformatted = false;
         code = false;
+        listDepth = 0;
         headerLevel = null;
         hyperlink = null;
         fxStyle = null;
@@ -134,9 +139,11 @@ public final class HTMLRenderer {
                 case "ins" -> underline = true;
                 case "del" -> strike = true;
                 case "mark" -> highlight = true;
+                case "pre" -> preformatted = true;
                 case "code" -> code = true;
                 case "a" -> hyperlink = node;
                 case "h1", "h2", "h3", "h4", "h5", "h6" -> headerLevel = nodeName;
+                case "li" -> listDepth++;
             }
 
             String style = node.attr("style");
@@ -289,75 +296,72 @@ public final class HTMLRenderer {
         boolean hasFoot = false;
         int columnCount = 0;
         for (Element child : childElements) {
-            if (child.nameIs("caption")) {
-                captions.add(child);
-                continue;
-            }
-            if (child.nameIs("thead")) {
-                if (hasHead) continue;
-                hasHead = true;
-                for (Element e : child.children()) {
-                    if (e.nameIs("tr")) {
-                        head.clear();
-                        head.addAll(
-                                e.children().stream()
-                                        .filter(n -> n.nameIs("th") || n.nameIs("td"))
-                                        .map(Element::text)
-                                        .toList()
-                        );
-                        break;
+            switch (child.nodeName()) {
+                case "caption" -> captions.add(child);
+                case "thead" -> {
+                    if (hasHead) continue;
+                    hasHead = true;
+                    for (Element e : child.children()) {
+                        if (e.nameIs("tr")) {
+                            head.clear();
+                            head.addAll(
+                                    e.children().stream()
+                                            .filter(n -> n.nameIs("th") || n.nameIs("td"))
+                                            .map(Element::text)
+                                            .toList()
+                            );
+                            break;
+                        }
+                        if (e.nameIs("th") || e.nameIs("td")) {
+                            head.add(e.text());
+                        }
                     }
-                    if (e.nameIs("th") || e.nameIs("td")) {
-                        head.add(e.text());
+                    columnCount = Math.max(columnCount, head.size());
+                }
+                case "tbody" -> {
+                    if (hasBody) continue;
+                    hasBody = true;
+                    body.clear();
+                    for (Element e : child.children()) {
+                        if (e.nameIs("tr")) {
+                            List<String> row = e.children().stream()
+                                    .filter(n -> n.nameIs("th") || n.nameIs("td"))
+                                    .map(Element::text)
+                                    .toList();
+                            columnCount = Math.max(columnCount, row.size());
+                            if (!row.isEmpty()) body.add(row);
+                        }
                     }
                 }
-                columnCount = Math.max(columnCount, head.size());
-                continue;
-            }
-            if (child.nameIs("tbody")) {
-                if (hasBody) continue;
-                hasBody = true;
-                body.clear();
-                for (Element e : child.children()) {
-                    if (e.nameIs("tr")) {
-                        List<String> row = e.children().stream()
-                                .filter(n -> n.nameIs("th") || n.nameIs("td"))
-                                .map(Element::text)
-                                .toList();
-                        columnCount = Math.max(columnCount, row.size());
-                        if (!row.isEmpty()) body.add(row);
+                case "tfoot" -> {
+                    if (hasFoot) continue;
+                    hasFoot = true;
+                    for (Element e : child.children()) {
+                        if (e.nameIs("tr")) {
+                            foot.clear();
+                            foot.addAll(
+                                    e.children().stream()
+                                            .filter(n -> n.nameIs("th") || n.nameIs("td"))
+                                            .map(Element::text)
+                                            .toList()
+                            );
+                            break;
+                        }
+                        if (e.nameIs("th") || e.nameIs("td")) {
+                            foot.add(e.text());
+                        }
                     }
+                    columnCount = Math.max(columnCount, foot.size());
                 }
-                continue;
-            }
-            if (child.nameIs("tfoot")) {
-                if (hasFoot) continue;
-                hasFoot = true;
-                for (Element e : child.children()) {
-                    if (e.nameIs("tr")) {
-                        foot.clear();
-                        foot.addAll(
-                                e.children().stream()
-                                        .filter(n -> n.nameIs("th") || n.nameIs("td"))
-                                        .map(Element::text)
-                                        .toList()
-                        );
-                        break;
-                    }
-                    if (e.nameIs("th") || e.nameIs("td")) {
-                        foot.add(e.text());
-                    }
+                case "tr" -> {
+                    if (hasBody) continue;
+                    List<String> row = child.children().stream()
+                            .filter(n -> n.nameIs("th") || n.nameIs("td"))
+                            .map(Element::text)
+                            .toList();
+                    columnCount = Math.max(columnCount, row.size());
+                    if (!row.isEmpty()) body.add(row);
                 }
-                columnCount = Math.max(columnCount, foot.size());
-                continue;
-            }
-            if (child.nameIs("tr") && !hasBody) {
-                List<String> row = child.children().stream()
-                        .filter(n -> n.nameIs("th") || n.nameIs("td"))
-                        .map(Element::text)
-                        .toList();
-                columnCount = Math.max(columnCount, row.size());
-                if (!row.isEmpty()) body.add(row);
             }
         }
 
@@ -386,9 +390,39 @@ public final class HTMLRenderer {
         }
     }
 
+    private void appendOrderedList(Node node) {
+        pushNode(node);
+        int ordinal = 0;
+        for (Node childNode : node.childNodes()) {
+            if (childNode.nameIs("li")) {
+                appendText("\n " + "  ".repeat(listDepth) + ++ordinal + ". ");
+                appendChildren(childNode);
+                continue;
+            }
+            appendNode(childNode);
+        }
+        popNode();
+    }
+
+    private void appendChildren(Node node) {
+        if (node.childNodeSize() > 0) {
+            if (node.nameIs("table")) {
+                appendTable(node);
+            } else if (node.nameIs("ol")) {
+                appendOrderedList(node);
+            } else {
+                pushNode(node);
+                for (Node childNode : node.childNodes()) {
+                    appendNode(childNode);
+                }
+                popNode();
+            }
+        }
+    }
+
     public void appendNode(Node node) {
         if (node instanceof TextNode n) {
-            appendText(normaliseWhitespace(n.getWholeText()));
+            appendText(preformatted ? n.getWholeText() : normaliseWhitespace(n.getWholeText()));
         }
 
         String name = node.nodeName();
@@ -399,16 +433,7 @@ public final class HTMLRenderer {
                 appendImage(node);
                 appendAutoLineBreak("\n");
             }
-            case "li" -> {
-                int i = 0;
-                var n = node;
-                while (true) {
-                    n = n.parent();
-                    if (n == null) break;
-                    if (n.nameIs("li")) i++;
-                }
-                appendText("\n " + "  ".repeat(Math.max(0, i)) + "\u2022 ");
-            }
+            case "li" -> appendText("\n " + "  ".repeat(listDepth) + "\u2022 ");
             case "dt" -> appendText(" ");
             case "p" -> {
                 var n = node.parent();
@@ -421,17 +446,7 @@ public final class HTMLRenderer {
             }
         }
 
-        if (node.childNodeSize() > 0) {
-            if ("table".equals(name)) {
-                appendTable(node);
-            } else {
-                pushNode(node);
-                for (Node childNode : node.childNodes()) {
-                    appendNode(childNode);
-                }
-                popNode();
-            }
-        }
+        appendChildren(node);
 
         switch (name) {
             case "br", "dd", "h1", "h2", "h3", "h4", "h5", "h6" -> appendAutoLineBreak("\n");
