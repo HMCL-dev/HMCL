@@ -385,7 +385,7 @@ public final class HTMLRenderer {
 
         for (Element caption : captions) {
             appendAutoLineBreak("\n\n");
-            appendText(normaliseWhitespace(caption.wholeText()));
+            appendChildren(caption);
             appendAutoLineBreak("\n");
         }
     }
