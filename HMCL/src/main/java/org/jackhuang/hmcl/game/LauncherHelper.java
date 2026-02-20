@@ -86,7 +86,7 @@ public final class LauncherHelper {
     private boolean showLogs;
     private QuickPlayOption quickPlayOption;
     private boolean disableOfflineSkin = false;
-    private boolean gpuRegAlreadyExistsed = false;
+    private boolean modifyedGpuReg = false;
 
     public LauncherHelper(Profile profile, Account account, String selectedVersion) {
         this.profile = Objects.requireNonNull(profile);
@@ -211,20 +211,26 @@ public final class LauncherHelper {
                         launchOptionsBuilder.setQuickPlayOption(quickPlayOption);
                     }
                     if (config().isWindowsHighPerformance()) {
-                        Object current = WinReg.INSTANCE.queryValue(
-                                WinReg.HKEY.HKEY_CURRENT_USER,
-                                "Software\\Microsoft\\DirectX\\UserGpuPreferences",
-                                FileUtils.getAbsolutePath(javaVersionRef.get().getBinary())
-                        );
-                        if (current instanceof String) {
-                            gpuRegAlreadyExistsed = true;
-                        } else {
-                            WinReg.INSTANCE.setValue(
-                                    WinReg.HKEY.HKEY_CURRENT_USER,
-                                    "Software\\Microsoft\\DirectX\\UserGpuPreferences",
-                                    FileUtils.getAbsolutePath(javaVersionRef.get().getBinary()),
-                                    "GpuPreference=2;"
-                            );
+                        try {
+                            WinReg reg = WinReg.INSTANCE;
+                            if (reg != null) {
+                                Object current = reg.queryValue(
+                                        WinReg.HKEY.HKEY_CURRENT_USER,
+                                        "Software\\Microsoft\\DirectX\\UserGpuPreferences",
+                                        FileUtils.getAbsolutePath(javaVersionRef.get().getBinary())
+                                );
+                                if (!(current instanceof String)) {
+                                    reg.setValue(
+                                            WinReg.HKEY.HKEY_CURRENT_USER,
+                                            "Software\\Microsoft\\DirectX\\UserGpuPreferences",
+                                            FileUtils.getAbsolutePath(javaVersionRef.get().getBinary()),
+                                            "GpuPreference=2;"
+                                    );
+                                    modifyedGpuReg = true;
+                                }
+                            }
+                        } catch (Exception e) {
+                            LOG.warning("Failed to apply high performance GPU preference", e);
                         }
                     }
 
@@ -843,15 +849,20 @@ public final class LauncherHelper {
         }
 
         private void finishLaunch() {
-            if (!gpuRegAlreadyExistsed && config().isWindowsHighPerformance()) {
+            if (modifyedGpuReg) {
                 try {
                     Thread.sleep(5000L);
-                } catch (InterruptedException ignored) {}
-                WinReg.INSTANCE.deleteValue(
-                        WinReg.HKEY.HKEY_CURRENT_USER,
-                        "Software\\Microsoft\\DirectX\\UserGpuPreferences",
-                        process.getProcess().info().command().orElseThrow()
-                );
+                } catch (InterruptedException ignored) {
+                }
+                try {
+                    WinReg.INSTANCE.deleteValue(
+                            WinReg.HKEY.HKEY_CURRENT_USER,
+                            "Software\\Microsoft\\DirectX\\UserGpuPreferences",
+                            process.getProcess().info().command().orElseThrow()
+                    );
+                } catch (Exception e) {
+                    LOG.warning("Failed to revert high performance GPU preference", e);
+                }
             }
             switch (launcherVisibility) {
                 case HIDE_AND_REOPEN:
