@@ -8,7 +8,6 @@ import javafx.scene.Node;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.Skin;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
@@ -178,7 +177,7 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
     }
 
     private static final class ResourcepackListCell extends MDListCell<ResourcepackInfoObject> {
-        private final ImageView imageView = new JFXImageView();
+        private final JFXImageView imageView = new JFXImageView();
         private final TwoLineListItem content = new TwoLineListItem();
         private final JFXButton btnReveal = new JFXButton();
         private final JFXButton btnDelete = new JFXButton();
@@ -195,7 +194,7 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
 
             HBox left = new HBox(8);
             left.setAlignment(Pos.CENTER);
-            FXUtils.limitSize(imageView, 32, 32);
+            imageView.setLimitSize(32, 32);
             left.getChildren().add(imageView);
             left.setPadding(new Insets(0, 8, 0, 0));
             FXUtils.setLimitWidth(left, 48);

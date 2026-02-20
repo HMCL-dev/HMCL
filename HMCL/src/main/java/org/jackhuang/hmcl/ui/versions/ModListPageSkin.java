@@ -414,8 +414,8 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             Stage stage = Controllers.getStage();
             maxWidthProperty().bind(stage.widthProperty().multiply(0.7));
 
-            ImageView imageView = new JFXImageView();
-            FXUtils.limitSize(imageView, 40, 40);
+            JFXImageView imageView = new JFXImageView();
+            imageView.setLimitSize(40, 40);
             modInfo.loadIcon(imageView, null);
 
             TwoLineListItem title = new TwoLineListItem();

@@ -26,7 +26,6 @@ import javafx.scene.Node;
 import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
 import javafx.scene.control.SkinBase;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -233,7 +232,7 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                 root.setLeft(left);
                 left.setPadding(new Insets(0, 8, 0, 0));
 
-                ImageView imageView = new JFXImageView();
+                var imageView = new JFXImageView();
                 left.getChildren().add(imageView);
                 FXUtils.limitSize(imageView, 32, 32);
                 imageView.setImage(world.getIcon() == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : world.getIcon());

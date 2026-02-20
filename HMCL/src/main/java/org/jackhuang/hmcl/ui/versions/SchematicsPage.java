@@ -25,7 +25,6 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 import javafx.scene.layout.BorderPane;
@@ -442,7 +441,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             if (image == null) {
                 return super.getIcon(size);
             } else {
-                ImageView imageView = new JFXImageView();
+                var imageView = new JFXImageView();
                 imageView.setFitHeight(size);
                 imageView.setFitWidth(size);
                 imageView.setImage(image);
@@ -548,7 +547,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
         private final TwoLineListItem center;
         private final HBox right;
 
-        private final ImageView iconImageView;
+        private final JFXImageView iconImageView;
         private final SVGContainer iconSVGView;
 
         private final Tooltip tooltip = new Tooltip();
