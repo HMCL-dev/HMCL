@@ -20,6 +20,8 @@ package org.jackhuang.hmcl.download;
 import org.jackhuang.hmcl.task.Task;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
@@ -47,25 +49,58 @@ public class MultipleSourceVersionList extends VersionList<RemoteVersion> {
 
     private Task<?> refreshAsync(String gameVersion, int sourceIndex) {
         VersionList<?> versionList = backends[sourceIndex];
-        return versionList.refreshAsync(gameVersion)
-                .thenComposeAsync(() -> {
+        Task<?> refreshTask = versionList.refreshAsync(gameVersion);
+
+        return new Task<Object>() {
+            private Task<?> nextTask = null;
+
+            {
+                setSignificance(TaskSignificance.MODERATE);
+                setName("MultipleSourceVersionList.refreshAsync(" + sourceIndex + ")");
+            }
+
+            @Override
+            public Collection<Task<?>> getDependents() {
+                return List.of(refreshTask);
+            }
+
+            @Override
+            public Collection<? extends Task<?>> getDependencies() {
+                return nextTask != null ? List.of(nextTask) : List.of();
+            }
+
+            @Override
+            public boolean isRelyingOnDependents() {
+                return false;
+            }
+
+            @Override
+            public void execute() throws Exception {
+                if (isDependentsSucceeded()) {
                     lock.writeLock().lock();
                     try {
                         versions.putAll(gameVersion, versionList.getVersions(gameVersion));
-                    } catch (Exception e) {
-                        if (sourceIndex == backends.length - 1) {
-                            LOG.warning("Failed to fetch versions list from all sources", e);
-                            throw e;
-                        } else {
-                            LOG.warning("Failed to fetch versions list and try to fetch from other source", e);
-                            return refreshAsync(gameVersion, sourceIndex + 1);
-                        }
                     } finally {
                         lock.writeLock().unlock();
                     }
 
-                    return null;
-                });
+                    setResult(refreshTask.getResult());
+                } else {
+                    Exception exception = refreshTask.getException();
+                    assert exception != null;
+
+                    if (sourceIndex == backends.length - 1) {
+                        LOG.warning("Failed to fetch versions list from all sources", exception);
+                        setSignificance(TaskSignificance.MINOR);
+                        throw exception;
+                    } else {
+                        LOG.warning("Failed to fetch versions list and try to fetch from other source", exception);
+                        nextTask = refreshAsync(gameVersion, sourceIndex + 1);
+                        nextTask.storeTo(this::setResult);
+                    }
+                }
+            }
+        };
     }
 
     @Override
