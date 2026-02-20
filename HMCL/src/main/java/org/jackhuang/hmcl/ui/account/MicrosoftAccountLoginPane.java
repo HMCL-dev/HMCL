@@ -141,7 +141,7 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
             hintPane.setText(i18n("account.methods.microsoft.hint"));
             rootContainer.getChildren().add(hintPane);
         } else if (currentStep instanceof Step.StartAuthorizationCodeLogin) {
-            loginButtonSpinner.setLoading(true);
+            loginButtonSpinner.setLoading(false);
             cancelAllTasks();
 
             rootContainer.getChildren().add(new JFXSpinner());
