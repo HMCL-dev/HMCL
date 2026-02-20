@@ -17,10 +17,7 @@
  */
 package org.jackhuang.hmcl.ui;
 
-import com.jfoenix.controls.JFXButton;
-import com.jfoenix.controls.JFXCheckBox;
-import com.jfoenix.controls.JFXComboBox;
-import com.jfoenix.controls.JFXListView;
+import com.jfoenix.controls.*;
 import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.binding.Bindings;
@@ -43,8 +40,12 @@ import org.jackhuang.hmcl.theme.Themes;
 import org.jackhuang.hmcl.ui.construct.MessageDialogPane;
 import org.jackhuang.hmcl.ui.construct.NoneMultipleSelectionModel;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
-import org.jackhuang.hmcl.util.*;
-import org.jackhuang.hmcl.util.platform.*;
+import org.jackhuang.hmcl.util.CircularArrayList;
+import org.jackhuang.hmcl.util.Lang;
+import org.jackhuang.hmcl.util.Log4jLevel;
+import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.platform.ManagedProcess;
+import org.jackhuang.hmcl.util.platform.SystemUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -257,6 +258,7 @@ public final class LogWindow extends Stage {
         private static final PseudoClass SELECTED = PseudoClass.getPseudoClass("selected");
 
         private final Set<ListCell<Log>> selected = new HashSet<>();
+        private final JFXSnackbar snackbar = new JFXSnackbar();
 
         LogWindowSkin(LogWindowImpl control) {
             super(control);
@@ -265,7 +267,7 @@ public final class LogWindow extends Stage {
             vbox.setPadding(new Insets(3, 0, 3, 0));
             getSkinnable().stackPane.getChildren().setAll(vbox);
             getChildren().setAll(getSkinnable().stackPane);
-
+            snackbar.registerSnackbarContainer(getSkinnable().stackPane);
 
             {
                 BorderPane borderPane = new BorderPane();
@@ -381,7 +383,8 @@ public final class LogWindow extends Stage {
                             }
                         }
 
-                        FXUtils.copyText(stringBuilder.toString());
+                        FXUtils.copyText(stringBuilder.toString(), null);
+                        snackbar.fireEvent(new JFXSnackbar.SnackbarEvent(new JFXSnackbarLayout(i18n("message.copied"))));
                     }
                 });
 
