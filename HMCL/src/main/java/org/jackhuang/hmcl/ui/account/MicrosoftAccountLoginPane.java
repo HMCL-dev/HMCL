@@ -141,7 +141,7 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
             hintPane.setText(i18n("account.methods.microsoft.hint"));
             rootContainer.getChildren().add(hintPane);
         } else if (currentStep instanceof Step.StartAuthorizationCodeLogin) {
-            loginButtonSpinner.setLoading(true);
+            loginButtonSpinner.setLoading(false);
             cancelAllTasks();
 
             rootContainer.getChildren().add(new JFXSpinner());
@@ -205,7 +205,7 @@ public class MicrosoftAccountLoginPane extends JFXDialogLayout implements Dialog
             cancelAllTasks();
 
             HintPane errHintPane = new HintPane(MessageDialogPane.MessageType.ERROR);
-            errHintPane.setText(failed.message());
+            errHintPane.setSegment(failed.message());
             rootContainer.getChildren().add(errHintPane);
         }
 

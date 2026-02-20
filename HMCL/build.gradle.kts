@@ -130,6 +130,7 @@ val addOpens = listOf(
     "javafx.base/javafx.beans.property",
     "javafx.graphics/javafx.css",
     "javafx.graphics/javafx.stage",
+    "javafx.graphics/javafx.scene",
     "javafx.graphics/com.sun.glass.ui",
     "javafx.graphics/com.sun.javafx.stage",
     "javafx.graphics/com.sun.javafx.util",
