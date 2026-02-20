@@ -22,8 +22,10 @@ import javafx.css.Styleable;
 import javafx.css.StyleableDoubleProperty;
 import javafx.css.StyleableProperty;
 import javafx.css.converter.SizeConverter;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.shape.Rectangle;
+import org.jackhuang.hmcl.ui.FXUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,6 +43,15 @@ public class JFXImageView extends ImageView {
         updateCornerRadius(getCornerRadius());
 
         this.setClip(clip);
+    }
+
+    public JFXImageView(Image image) {
+        this();
+        setImage(image);
+    }
+
+    public void setLimitSize(double width, double height) {
+        FXUtils.limitSize(this, width, height);
     }
 
     private void updateCornerRadius(double radius) {
