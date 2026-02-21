@@ -123,10 +123,11 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
 
         Map<String, String> query = mapOf(NetworkUtils.parseQuery(parameters));
 
-        if (query.containsKey("code")) {
+        String code = query.get("code");
+        if (code != null) {
             if (this.state.equals(query.get("state"))) {
                 idToken = query.get("id_token");
-                future.complete(query.get("code"));
+                future.complete(code);
             } else if (query.containsKey("state")) {
                 LOG.warning("Failed to authenticate: missing state in parameters");
                 future.completeExceptionally(new AuthenticationException("Missing state"));
