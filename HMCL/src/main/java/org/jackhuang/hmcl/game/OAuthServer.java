@@ -52,25 +52,27 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
     private OAuthServer(int port) {
         super(port);
 
+        SecureRandom random = new SecureRandom();
+        String state, codeVerifier;
+
+        {
+            // https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.1
+            // https://datatracker.ietf.org/doc/html/rfc6749#section-10.12
+            byte[] bytes = new byte[32];
+            random.nextBytes(bytes);
+            state = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+        }
+
+        {
+            // https://datatracker.ietf.org/doc/html/rfc7636#section-4.1
+            byte[] code = new byte[64];
+            random.nextBytes(code);
+            codeVerifier = Base64.getUrlEncoder().withoutPadding().encodeToString(code);
+        }
+
         this.port = port;
-        this.codeVerifier = generateCodeVerifier();
-        this.state = generateState();
-    }
-
-    // https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.1
-    // https://datatracker.ietf.org/doc/html/rfc6749#section-10.12
-    private String generateState() {
-        byte[] bytes = new byte[32];
-        new SecureRandom().nextBytes(bytes);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
-    }
-
-    // https://datatracker.ietf.org/doc/html/rfc7636#section-4.1
-    private String generateCodeVerifier() {
-        SecureRandom sr = new SecureRandom();
-        byte[] code = new byte[64];
-        sr.nextBytes(code);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(code);
+        this.codeVerifier = codeVerifier;
+        this.state = state;
     }
 
     @Override
@@ -123,9 +125,10 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
 
         Map<String, String> query = mapOf(NetworkUtils.parseQuery(parameters));
 
-        if (query.containsKey("state")) {
-            if (!Objects.equals(query.get("state"), this.state)) future.completeExceptionally( new AuthenticationException("invalid state"));
-        }
+        if (!(query.containsKey("state"))) {
+            if (!Objects.equals(query.get("state"), this.state))
+                future.completeExceptionally(new AuthenticationException("invalid state"));
+        } else future.completeExceptionally(new AuthenticationException("missing state"));
 
         if (query.containsKey("code")) {
             idToken = query.get("id_token");
