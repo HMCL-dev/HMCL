@@ -51,12 +51,14 @@ public class MultipleSourceVersionList extends VersionList<RemoteVersion> {
         VersionList<?> versionList = backends[sourceIndex];
         Task<?> refreshTask = versionList.refreshAsync(gameVersion);
 
-        return new Task<Object>() {
+        return new Task<>() {
             private Task<?> nextTask = null;
 
             {
                 setSignificance(TaskSignificance.MODERATE);
-                setName("MultipleSourceVersionList.refreshAsync(" + sourceIndex + ")");
+                setName("MultipleSourceVersionList.refreshAsync(task=%s, index=%d, all=%d)".formatted(
+                        refreshTask.getName(), sourceIndex, backends.length)
+                );
             }
 
             @Override
