@@ -484,11 +484,11 @@ public class JFXRippler extends StackPane {
                 KeyValue[] inKeyValues = new KeyValue[isRipplerRecenter() ? 4 : 2];
                 outKeyValues = new KeyValue[isRipplerRecenter() ? 5 : 3];
 
-                inKeyValues[0] = new KeyValue(scaleXProperty(), 1, RIPPLE_INTERPOLATOR);
-                inKeyValues[1] = new KeyValue(scaleYProperty(), 1, RIPPLE_INTERPOLATOR);
+                inKeyValues[0] = new KeyValue(scaleXProperty(), 0.9, RIPPLE_INTERPOLATOR);
+                inKeyValues[1] = new KeyValue(scaleYProperty(), 0.9, RIPPLE_INTERPOLATOR);
 
-                outKeyValues[0] = new KeyValue(this.scaleXProperty(), 0.9, RIPPLE_INTERPOLATOR);
-                outKeyValues[1] = new KeyValue(this.scaleYProperty(), 0.9, RIPPLE_INTERPOLATOR);
+                outKeyValues[0] = new KeyValue(this.scaleXProperty(), 1, RIPPLE_INTERPOLATOR);
+                outKeyValues[1] = new KeyValue(this.scaleYProperty(), 1, RIPPLE_INTERPOLATOR);
                 outKeyValues[2] = new KeyValue(this.opacityProperty(), 0, RIPPLE_INTERPOLATOR);
 
                 if (isRipplerRecenter()) {
