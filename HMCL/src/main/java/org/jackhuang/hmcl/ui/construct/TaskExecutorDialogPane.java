@@ -83,6 +83,7 @@ public class TaskExecutorDialogPane extends BorderPane {
         setCancel(cancel);
 
         btnCancel.setOnAction(e -> {
+            if (onCancel.getCancellationAction() == null) return;
             Optional.ofNullable(executor).ifPresent(TaskExecutor::cancel);
             if (onCancel.getCancellationAction() != null) {
                 onCancel.getCancellationAction().accept(this);
