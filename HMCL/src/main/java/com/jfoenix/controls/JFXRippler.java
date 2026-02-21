@@ -235,7 +235,7 @@ public class JFXRippler extends StackPane {
         double dx = Math.max(centerX, control.getLayoutBounds().getWidth() - centerX);
         double dy = Math.max(centerY, control.getLayoutBounds().getHeight() - centerY);
 
-        return Math.sqrt(dx * dx + dy * dy) + 5;
+        return (Math.sqrt(dx * dx + dy * dy) / 0.9) + 2;
     }
 
     protected void setOverLayBounds(Rectangle overlay) {
@@ -487,8 +487,8 @@ public class JFXRippler extends StackPane {
                 inKeyValues[0] = new KeyValue(scaleXProperty(), 1, RIPPLE_INTERPOLATOR);
                 inKeyValues[1] = new KeyValue(scaleYProperty(), 1, RIPPLE_INTERPOLATOR);
 
-                outKeyValues[0] = new KeyValue(this.scaleXProperty(), 1, RIPPLE_INTERPOLATOR);
-                outKeyValues[1] = new KeyValue(this.scaleYProperty(), 1, RIPPLE_INTERPOLATOR);
+                outKeyValues[0] = new KeyValue(this.scaleXProperty(), 0.9, RIPPLE_INTERPOLATOR);
+                outKeyValues[1] = new KeyValue(this.scaleYProperty(), 0.9, RIPPLE_INTERPOLATOR);
                 outKeyValues[2] = new KeyValue(this.opacityProperty(), 0, RIPPLE_INTERPOLATOR);
 
                 if (isRipplerRecenter()) {
