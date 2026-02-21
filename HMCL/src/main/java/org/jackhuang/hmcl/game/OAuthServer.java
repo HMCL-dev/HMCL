@@ -52,28 +52,25 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
     private OAuthServer(int port) {
         super(port);
 
+        this.port = port;
+
         var encoder = Base64.getUrlEncoder().withoutPadding();
         SecureRandom random = new SecureRandom();
-        String state, codeVerifier;
 
         {
             // https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.1
             // https://datatracker.ietf.org/doc/html/rfc6749#section-10.12
             byte[] bytes = new byte[32];
             random.nextBytes(bytes);
-            state = encoder.encodeToString(bytes);
+            this.state = encoder.encodeToString(bytes);
         }
 
         {
             // https://datatracker.ietf.org/doc/html/rfc7636#section-4.1
             byte[] bytes = new byte[64];
             random.nextBytes(bytes);
-            codeVerifier = encoder.encodeToString(bytes);
+            this.codeVerifier = encoder.encodeToString(bytes);
         }
-
-        this.port = port;
-        this.codeVerifier = codeVerifier;
-        this.state = state;
     }
 
     @Override
@@ -126,10 +123,9 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
 
         Map<String, String> query = mapOf(NetworkUtils.parseQuery(parameters));
 
-        if (!(query.containsKey("state"))) {
-            if (!Objects.equals(query.get("state"), this.state))
-                future.completeExceptionally(new AuthenticationException("invalid state"));
-        } else future.completeExceptionally(new AuthenticationException("missing state"));
+        if (!this.state.equals(query.get("state")))
+            future.completeExceptionally(new AuthenticationException(
+                    query.containsKey("state") ? "invalid state" : "missing state"));
 
         if (query.containsKey("code")) {
             idToken = query.get("id_token");
