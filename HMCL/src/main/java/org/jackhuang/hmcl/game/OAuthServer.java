@@ -30,10 +30,7 @@ import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.IOException;
 import java.security.SecureRandom;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -46,6 +43,7 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
     private final int port;
     private final CompletableFuture<String> future = new CompletableFuture<>();
     private final String codeVerifier;
+    private final String state;
 
     public static String lastlyOpenedURL;
 
@@ -56,6 +54,15 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
 
         this.port = port;
         this.codeVerifier = generateCodeVerifier();
+        this.state = generateState();
+    }
+
+    // https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.1
+    // https://datatracker.ietf.org/doc/html/rfc6749#section-10.12
+    private String generateState() {
+        byte[] bytes = new byte[32];
+        new SecureRandom().nextBytes(bytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
     // https://datatracker.ietf.org/doc/html/rfc7636#section-4.1
@@ -69,6 +76,11 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
     @Override
     public String getCodeVerifier() {
         return codeVerifier;
+    }
+
+    @Override
+    public String getState() {
+        return state;
     }
 
     @Override
@@ -110,6 +122,11 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
         String parameters = session.getQueryParameterString();
 
         Map<String, String> query = mapOf(NetworkUtils.parseQuery(parameters));
+
+        if (query.containsKey("state")) {
+            if (!Objects.equals(query.get("state"), this.state)) future.completeExceptionally( new AuthenticationException("invalid state"));
+        }
+
         if (query.containsKey("code")) {
             idToken = query.get("id_token");
             future.complete(query.get("code"));

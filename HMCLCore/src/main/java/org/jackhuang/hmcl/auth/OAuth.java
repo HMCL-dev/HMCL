@@ -83,6 +83,7 @@ public class OAuth {
         Session session = options.callback.startServer();
 
         String codeVerifier = session.getCodeVerifier();
+        String state = session.getState();
         String codeChallenge = generateCodeChallenge(codeVerifier);
 
         options.callback.openBrowser(GrantFlow.AUTHORIZATION_CODE, NetworkUtils.withQuery(authorizationURL,
@@ -92,6 +93,7 @@ public class OAuth {
                         pair("scope", options.scope),
                         pair("prompt", "select_account"),
                         pair("code_challenge", codeChallenge),
+                        pair("state", state),
                         pair("code_challenge_method", "S256")
                 )));
         String code = session.waitFor();
@@ -233,6 +235,8 @@ public class OAuth {
     }
 
     public interface Session {
+        String getState();
+
         String getCodeVerifier();
 
         String getRedirectURI();
