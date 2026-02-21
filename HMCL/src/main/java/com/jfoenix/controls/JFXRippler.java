@@ -231,8 +231,11 @@ public class JFXRippler extends StackPane {
      *
      * @return the ripple radius size
      */
-    protected double computeRippleRadius() {
-        return Math.sqrt(Math.pow(control.getLayoutBounds().getWidth(), 2) + Math.pow(control.getLayoutBounds().getHeight(), 2));
+    protected double computeRippleRadius(double centerX, double centerY) {
+        double dx = Math.max(centerX, control.getLayoutBounds().getWidth() - centerX);
+        double dy = Math.max(centerY, control.getLayoutBounds().getHeight() - centerY);
+
+        return Math.sqrt(dx * dx + dy * dy) + 5;
     }
 
     protected void setOverLayBounds(Rectangle overlay) {
@@ -471,7 +474,7 @@ public class JFXRippler extends StackPane {
                 super(centerX,
                         centerY,
                         getRipplerRadius() == Region.USE_COMPUTED_SIZE ?
-                                computeRippleRadius() : getRipplerRadius(), null);
+                                computeRippleRadius(centerX, centerY) : getRipplerRadius(), null);
                 setCache(true);
                 setCacheHint(CacheHint.SPEED);
                 setCacheShape(true);
@@ -481,8 +484,8 @@ public class JFXRippler extends StackPane {
                 KeyValue[] inKeyValues = new KeyValue[isRipplerRecenter() ? 4 : 2];
                 outKeyValues = new KeyValue[isRipplerRecenter() ? 5 : 3];
 
-                inKeyValues[0] = new KeyValue(scaleXProperty(), 0.9, RIPPLE_INTERPOLATOR);
-                inKeyValues[1] = new KeyValue(scaleYProperty(), 0.9, RIPPLE_INTERPOLATOR);
+                inKeyValues[0] = new KeyValue(scaleXProperty(), 1, RIPPLE_INTERPOLATOR);
+                inKeyValues[1] = new KeyValue(scaleYProperty(), 1, RIPPLE_INTERPOLATOR);
 
                 outKeyValues[0] = new KeyValue(this.scaleXProperty(), 1, RIPPLE_INTERPOLATOR);
                 outKeyValues[1] = new KeyValue(this.scaleYProperty(), 1, RIPPLE_INTERPOLATOR);
