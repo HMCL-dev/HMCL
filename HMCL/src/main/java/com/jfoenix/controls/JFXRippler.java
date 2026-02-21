@@ -232,9 +232,7 @@ public class JFXRippler extends StackPane {
      * @return the ripple radius size
      */
     protected double computeRippleRadius() {
-        double width2 = control.getLayoutBounds().getWidth() * control.getLayoutBounds().getWidth();
-        double height2 = control.getLayoutBounds().getHeight() * control.getLayoutBounds().getHeight();
-        return Math.min(Math.sqrt(width2 + height2), RIPPLE_MAX_RADIUS) * 1.1 + 5;
+        return Math.sqrt(Math.pow(control.getLayoutBounds().getWidth(), 2) + Math.pow(control.getLayoutBounds().getHeight(), 2));
     }
 
     protected void setOverLayBounds(Rectangle overlay) {
