@@ -52,6 +52,7 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
     private OAuthServer(int port) {
         super(port);
 
+        var encoder = Base64.getUrlEncoder().withoutPadding();
         SecureRandom random = new SecureRandom();
         String state, codeVerifier;
 
@@ -60,14 +61,14 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
             // https://datatracker.ietf.org/doc/html/rfc6749#section-10.12
             byte[] bytes = new byte[32];
             random.nextBytes(bytes);
-            state = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+            state = encoder.encodeToString(bytes);
         }
 
         {
             // https://datatracker.ietf.org/doc/html/rfc7636#section-4.1
-            byte[] code = new byte[64];
-            random.nextBytes(code);
-            codeVerifier = Base64.getUrlEncoder().withoutPadding().encodeToString(code);
+            byte[] bytes = new byte[64];
+            random.nextBytes(bytes);
+            codeVerifier = encoder.encodeToString(bytes);
         }
 
         this.port = port;
