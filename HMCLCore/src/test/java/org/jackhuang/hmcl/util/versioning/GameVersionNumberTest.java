@@ -28,6 +28,7 @@ import java.util.*;
 import java.util.function.Supplier;
 
 import static org.jackhuang.hmcl.util.versioning.GameVersionNumber.asGameVersion;
+import static org.jackhuang.hmcl.util.versioning.GameVersionNumber.getReleaseOfSnapshot;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -502,5 +503,16 @@ public final class GameVersionNumberTest {
         assertThrows(IllegalArgumentException.class, () -> asGameVersion("17w43a").isAtLeast("1.13", "1.13", false));
         assertThrows(IllegalArgumentException.class, () -> asGameVersion("17w43a").isAtLeast("1.13", "22w13oneblockatatime", true));
         assertThrows(IllegalArgumentException.class, () -> asGameVersion("17w43a").isAtLeast("1.13", "22w13oneblockatatime", false));
+    }
+
+    @Test
+    public void testGetReleaseOfSnapshot() {
+        assertEquals("1.21.11", getReleaseOfSnapshot("25w45a"));
+        assertEquals("1.21.11", getReleaseOfSnapshot("25w45a_unobfuscated"));
+        assertEquals("1.21.11", getReleaseOfSnapshot("1.21.11-pre3"));
+        assertEquals("1.21.11", getReleaseOfSnapshot("1.21.11-pre3"));
+        assertEquals("26.1", getReleaseOfSnapshot("26.1-snapshot-9"));
+        assertNull(getReleaseOfSnapshot("26.1"));
+        assertNull(getReleaseOfSnapshot("20w14infinite"));
     }
 }
