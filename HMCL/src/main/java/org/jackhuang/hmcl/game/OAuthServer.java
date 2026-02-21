@@ -129,11 +129,11 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
                 idToken = query.get("id_token");
                 future.complete(code);
             } else if (query.containsKey("state")) {
-                LOG.warning("Failed to authenticate: missing state in parameters");
-                future.completeExceptionally(new AuthenticationException("Failed to authenticate: missing state"));
-            } else {
                 LOG.warning("Failed to authenticate: invalid state in parameters");
                 future.completeExceptionally(new AuthenticationException("Failed to authenticate: invalid state"));
+            } else {
+                LOG.warning("Failed to authenticate: missing state in parameters");
+                future.completeExceptionally(new AuthenticationException("Failed to authenticate: missing state"));
             }
         } else {
             LOG.warning("Failed to authenticate: missing authorization code in parameters");
