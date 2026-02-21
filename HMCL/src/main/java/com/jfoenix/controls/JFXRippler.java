@@ -519,7 +519,7 @@ public class JFXRippler extends StackPane {
                         new KeyValue(opacityProperty(),
                                 1,
                                 RIPPLE_INTERPOLATOR)
-                ), new KeyFrame(Duration.millis(900), inKeyValues));
+                ), new KeyFrame(Duration.millis(600), inKeyValues));
 
                 setScaleX(0);
                 setScaleY(0);
