@@ -114,7 +114,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
         ScrollPane scrollPane = new ScrollPane();
         scrollPane.setFitToHeight(true);
         scrollPane.setFitToWidth(true);
-        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.ALWAYS);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
         getChildren().setAll(scrollPane);
 
         rootPane = new VBox();
@@ -173,30 +173,21 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
 
         {
             componentList = new ComponentList();
-            componentList.setDepth(1);
 
             if (!globalSetting) {
-                BorderPane copyGlobalPane = new BorderPane();
-                {
-                    Label label = new Label(i18n("settings.game.copy_global"));
-                    copyGlobalPane.setLeft(label);
-                    BorderPane.setAlignment(label, Pos.CENTER_LEFT);
+                var copyGlobalButton = LineButton.createNavigationButton();
+                copyGlobalButton.setTitle(i18n("settings.game.copy_global"));
+                copyGlobalButton.setOnAction(event ->
+                        Controllers.confirm(i18n("settings.game.copy_global.copy_all.confirm"), null, () -> {
+                            Set<String> ignored = new HashSet<>(Arrays.asList(
+                                    "usesGlobal",
+                                    "versionIcon"
+                            ));
 
-                    JFXButton copyAll = FXUtils.newBorderButton(i18n("settings.game.copy_global.copy_all"));
-                    copyAll.disableProperty().bind(modpack);
-                    copyGlobalPane.setRight(copyAll);
-                    copyAll.setOnAction(e -> Controllers.confirm(i18n("settings.game.copy_global.copy_all.confirm"), null, () -> {
-                        Set<String> ignored = new HashSet<>(Arrays.asList(
-                                "usesGlobal",
-                                "versionIcon"
-                        ));
+                            PropertyUtils.copyProperties(profile.getGlobal(), lastVersionSetting, name -> !ignored.contains(name));
+                        }, null));
 
-                        PropertyUtils.copyProperties(profile.getGlobal(), lastVersionSetting, name -> !ignored.contains(name));
-                    }, null));
-                    BorderPane.setAlignment(copyAll, Pos.CENTER_RIGHT);
-                }
-
-                componentList.getContent().add(copyGlobalPane);
+                componentList.getContent().add(copyGlobalButton);
             }
 
             javaItem = new MultiFileItem<>();
@@ -425,7 +416,7 @@ public final class VersionSettingsPage extends StackPane implements DecoratorPag
                 serverPane.addRow(0, new Label(i18n("settings.advanced.server_ip")), txtServerIP);
             }
 
-            LineNavigationButton showAdvancedSettingPane = new LineNavigationButton();
+            var showAdvancedSettingPane = LineButton.createNavigationButton();
             showAdvancedSettingPane.setTitle(i18n("settings.advanced"));
             showAdvancedSettingPane.setOnAction(event -> {
                 if (lastVersionSetting != null) {

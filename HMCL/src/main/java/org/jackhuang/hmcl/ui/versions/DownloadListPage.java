@@ -17,8 +17,10 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import com.jfoenix.controls.*;
-import com.jfoenix.effects.JFXDepthManager;
+import com.jfoenix.controls.JFXButton;
+import com.jfoenix.controls.JFXComboBox;
+import com.jfoenix.controls.JFXListView;
+import com.jfoenix.controls.JFXTextField;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ObjectBinding;
 import javafx.beans.property.*;
@@ -48,6 +50,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
+import org.jackhuang.hmcl.ui.construct.NoneMultipleSelectionModel;
 import org.jackhuang.hmcl.ui.construct.RipplerContainer;
 import org.jackhuang.hmcl.ui.construct.SpinnerPane;
 import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
@@ -243,6 +246,8 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
         protected ModDownloadListPageSkin(DownloadListPage control) {
             super(control);
+
+            listView.getStyleClass().add("no-horizontal-scrollbar");
 
             BorderPane pane = new BorderPane();
 
@@ -521,7 +526,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
                 spinnerPane.setContent(listView);
                 Bindings.bindContent(listView.getItems(), getSkinnable().items);
-                listView.setSelectionModel(null);
+                listView.setSelectionModel(new NoneMultipleSelectionModel<>());
                 // ListViewBehavior would consume ESC pressed event, preventing us from handling it, so we ignore it here
                 ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
 
@@ -529,6 +534,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                     private static final Insets PADDING = new Insets(9, 9, 0, 9);
 
                     private final RipplerContainer graphic;
+                    private final StackPane wrapper = new StackPane();
 
                     private final TwoLineListItem content = new TwoLineListItem();
                     private final ImageView imageView = new ImageView();
@@ -537,20 +543,22 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         setPadding(PADDING);
 
                         HBox container = new HBox(8);
-                        container.getStyleClass().add("card");
+                        container.setPadding(new Insets(8));
                         container.setCursor(Cursor.HAND);
                         container.setAlignment(Pos.CENTER_LEFT);
-                        JFXDepthManager.setDepth(container, 1);
 
                         imageView.setFitWidth(40);
                         imageView.setFitHeight(40);
+                        imageView.setMouseTransparent(true);
 
                         container.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), content);
                         HBox.setHgrow(content, Priority.ALWAYS);
 
                         this.graphic = new RipplerContainer(container);
-                        graphic.setPosition(JFXRippler.RipplerPos.FRONT);
-                        FXUtils.onClicked(graphic, () -> {
+                        wrapper.getChildren().setAll(this.graphic);
+                        wrapper.getStyleClass().add("card-no-padding");
+
+                        FXUtils.onClicked(wrapper, () -> {
                             RemoteMod item = getItem();
                             if (item != null)
                                 Controllers.navigate(new DownloadPage(getSkinnable(), item, getSkinnable().getProfileVersion(), getSkinnable().callback));
@@ -577,7 +585,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                                     content.addTag(getSkinnable().getLocalizedCategory(category));
                             }
                             iconLoader.load(imageView.imageProperty(), item.getIconUrl());
-                            setGraphic(graphic);
+                            setGraphic(wrapper);
                         }
                     }
                 });
