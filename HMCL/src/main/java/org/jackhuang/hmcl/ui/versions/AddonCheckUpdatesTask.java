@@ -17,7 +17,7 @@
  */
 package org.jackhuang.hmcl.ui.versions;
 
-import org.jackhuang.hmcl.mod.LocalModFile;
+import org.jackhuang.hmcl.mod.LocalAddonFile;
 import org.jackhuang.hmcl.mod.RemoteMod;
 import org.jackhuang.hmcl.task.Schedulers;
 import org.jackhuang.hmcl.task.Task;
@@ -29,17 +29,17 @@ import java.util.Objects;
 
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
-public class ModCheckUpdatesTask extends Task<List<LocalModFile.ModUpdate>> {
-    private final List<Task<LocalModFile.ModUpdate>> dependents;
+public class AddonCheckUpdatesTask<T extends LocalAddonFile> extends Task<List<LocalAddonFile.AddonUpdate>> {
+    private final List<Task<LocalAddonFile.AddonUpdate>> dependents;
 
-    public ModCheckUpdatesTask(String gameVersion, Collection<LocalModFile> mods) {
+    public AddonCheckUpdatesTask(String gameVersion, Collection<T> mods) {
         dependents = mods.stream().map(mod ->
                 Task.supplyAsync(Schedulers.io(), () -> {
-                    LocalModFile.ModUpdate candidate = null;
+                    LocalAddonFile.AddonUpdate candidate = null;
                     for (RemoteMod.Type type : RemoteMod.Type.values()) {
-                        LocalModFile.ModUpdate update = null;
+                        LocalAddonFile.AddonUpdate update = null;
                         try {
-                            update = mod.checkUpdates(gameVersion, type.getRemoteModRepository());
+                            update = mod.checkUpdates(gameVersion, type);
                         } catch (IOException e) {
                             LOG.warning(String.format("Cannot check update for mod %s.", mod.getFileName()), e);
                         }
@@ -47,7 +47,7 @@ public class ModCheckUpdatesTask extends Task<List<LocalModFile.ModUpdate>> {
                             continue;
                         }
 
-                        if (candidate == null || candidate.getCandidate().getDatePublished().isBefore(update.getCandidate().getDatePublished())) {
+                        if (candidate == null || candidate.candidate().getDatePublished().isBefore(update.candidate().getDatePublished())) {
                             candidate = update;
                         }
                     }
