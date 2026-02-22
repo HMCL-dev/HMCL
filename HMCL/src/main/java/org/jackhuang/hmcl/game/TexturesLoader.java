@@ -196,8 +196,7 @@ public final class TexturesLoader {
 
     public static ObservableValue<LoadedTexture> skinBinding(Account account) {
         LoadedTexture uuidFallback = getDefaultSkin(account.getUUID());
-        if (account instanceof OfflineAccount) {
-            OfflineAccount offlineAccount = (OfflineAccount) account;
+        if (account instanceof OfflineAccount offlineAccount) {
 
             SimpleObjectProperty<LoadedTexture> binding = new SimpleObjectProperty<>();
             InvalidationListener listener = o -> {
@@ -248,6 +247,54 @@ public final class TexturesLoader {
 
                         return CompletableFuture.completedFuture(uuidFallback);
                     }, uuidFallback);
+        }
+    }
+
+    public static ObservableValue<LoadedTexture> capeBinding(Account account) {
+        if (account instanceof OfflineAccount offlineAccount) {
+
+            SimpleObjectProperty<LoadedTexture> binding = new SimpleObjectProperty<>();
+            InvalidationListener listener = o -> {
+                Skin skin = offlineAccount.getSkin();
+                String username = offlineAccount.getUsername();
+
+                binding.set(null);
+                if (skin != null) {
+                    skin.load(username).setExecutor(POOL).whenComplete(Schedulers.javafx(), (result, exception) -> {
+                        if (exception != null) {
+                            LOG.warning("Failed to load texture", exception);
+                        } else if (result != null && result.getCape() != null && result.getCape().getImage() != null) {
+                            binding.set(new LoadedTexture(result.getCape().getImage(), emptyMap()));
+                        }
+                    }).start();
+                }
+            };
+
+            listener.invalidated(offlineAccount);
+
+            binding.addListener(new Holder<>(listener));
+            offlineAccount.addListener(new WeakInvalidationListener(listener));
+
+            return binding;
+        } else {
+            return BindingMapping.of(account.getTextures())
+                    .asyncMap(textures -> {
+                        if (textures.isPresent()) {
+                            Texture texture = textures.get().get(TextureType.CAPE);
+                            if (texture != null && StringUtils.isNotBlank(texture.getUrl())) {
+                                return CompletableFuture.supplyAsync(() -> {
+                                    try {
+                                        return loadTexture(texture);
+                                    } catch (Throwable e) {
+                                        LOG.warning("Failed to load texture " + texture.getUrl() + ", using fallback texture", e);
+                                        return null;
+                                    }
+                                }, POOL);
+                            }
+                        }
+
+                        return CompletableFuture.completedFuture(null);
+                    }, null);
         }
     }
 
