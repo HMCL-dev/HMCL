@@ -21,7 +21,6 @@ import com.github.steveice10.opennbt.tag.builtin.ByteTag;
 import com.github.steveice10.opennbt.tag.builtin.IntTag;
 import com.github.steveice10.opennbt.tag.builtin.StringTag;
 import com.github.steveice10.opennbt.tag.builtin.Tag;
-import org.jackhuang.hmcl.util.Lang;
 
 /// A sealed abstract wrapper for a game rule stored in NBT.
 ///
