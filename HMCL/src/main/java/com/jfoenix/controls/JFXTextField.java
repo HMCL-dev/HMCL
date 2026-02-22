@@ -19,26 +19,23 @@
 
 package com.jfoenix.controls;
 
+import com.jfoenix.controls.base.IFXLabelFloatControl;
 import com.jfoenix.skins.JFXTextFieldSkin;
 import com.jfoenix.validation.base.ValidatorBase;
 import javafx.beans.property.ReadOnlyObjectProperty;
-import javafx.beans.property.ReadOnlyObjectWrapper;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.css.*;
 import javafx.css.converter.BooleanConverter;
 import javafx.css.converter.PaintConverter;
-import javafx.scene.control.Control;
 import javafx.scene.control.Skin;
 import javafx.scene.control.TextField;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.Paint;
+import org.jackhuang.hmcl.ui.FXUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import static org.jackhuang.hmcl.ui.FXUtils.useJFXContextMenu;
 
 /**
  * JFXTextField is the material design implementation of a text Field.
@@ -47,14 +44,7 @@ import static org.jackhuang.hmcl.ui.FXUtils.useJFXContextMenu;
  * @version 1.0
  * @since 2016-03-09
  */
-public class JFXTextField extends TextField {
-    /**
-     * Initialize the style class to 'jfx-text-field'.
-     * <p>
-     * This is the selector class from which CSS can be used to style
-     * this control.
-     */
-    private static final String DEFAULT_STYLE_CLASS = "jfx-text-field";
+public class JFXTextField extends TextField implements IFXLabelFloatControl {
 
     /**
      * {@inheritDoc}
@@ -76,16 +66,12 @@ public class JFXTextField extends TextField {
      */
     @Override
     protected Skin<?> createDefaultSkin() {
-        return new JFXTextFieldSkin(this);
+        return new JFXTextFieldSkin<>(this);
     }
 
     private void initialize() {
         this.getStyleClass().add(DEFAULT_STYLE_CLASS);
-        if ("dalvik".equalsIgnoreCase(System.getProperty("java.vm.name"))) {
-            this.setStyle("-fx-skin: \"com.jfoenix.android.skins.JFXTextFieldSkinAndroid\";");
-        }
-
-        useJFXContextMenu(this);
+        FXUtils.useJFXContextMenu(this);
     }
 
     /***************************************************************************
@@ -94,78 +80,72 @@ public class JFXTextField extends TextField {
      *                                                                         *
      **************************************************************************/
 
-    /**
-     * holds the current active validator on the text field in case of validation error
-     */
-    private ReadOnlyObjectWrapper<ValidatorBase> activeValidator = new ReadOnlyObjectWrapper<>();
+    /// wrapper for validation properties / methods
+    protected final ValidationControl validationControl = new ValidationControl(this);
 
+    @Override
     public ValidatorBase getActiveValidator() {
-        return activeValidator == null ? null : activeValidator.get();
+        return validationControl.getActiveValidator();
     }
 
+    @Override
     public ReadOnlyObjectProperty<ValidatorBase> activeValidatorProperty() {
-        return this.activeValidator.getReadOnlyProperty();
+        return validationControl.activeValidatorProperty();
     }
 
-    /**
-     * list of validators that will validate the text value upon calling
-     * {{@link #validate()}
-     */
-    private ObservableList<ValidatorBase> validators = FXCollections.observableArrayList();
-
+    @Override
     public ObservableList<ValidatorBase> getValidators() {
-        return validators;
+        return validationControl.getValidators();
     }
 
+    @Override
     public void setValidators(ValidatorBase... validators) {
-        this.validators.addAll(validators);
+        validationControl.setValidators(validators);
     }
 
-    /**
-     * validates the text value using the list of validators provided by the user
-     * {{@link #setValidators(ValidatorBase...)}
-     *
-     * @return true if the value is valid else false
-     */
+    @Override
     public boolean validate() {
-        for (ValidatorBase validator : validators) {
-            if (validator.getSrcControl() == null) {
-                validator.setSrcControl(this);
-            }
-            validator.validate();
-            if (validator.getHasErrors()) {
-                activeValidator.set(validator);
-                return false;
-            }
-        }
-        activeValidator.set(null);
-        return true;
+        return validationControl.validate();
     }
 
+    @Override
     public void resetValidation() {
-        pseudoClassStateChanged(ValidatorBase.PSEUDO_CLASS_ERROR, false);
-        activeValidator.set(null);
+        validationControl.resetValidation();
     }
 
     /***************************************************************************
      *                                                                         *
-     * styleable Properties                                                    *
+     * Styleable Properties                                                    *
      *                                                                         *
      **************************************************************************/
 
     /**
+     * Initialize the style class to 'jfx-text-field'.
+     * <p>
+     * This is the selector class from which CSS can be used to style
+     * this control.
+     */
+    private static final String DEFAULT_STYLE_CLASS = "jfx-text-field";
+
+    /**
      * set true to show a float the prompt text when focusing the field
      */
-    private StyleableBooleanProperty labelFloat = new SimpleStyleableBooleanProperty(StyleableProperties.LABEL_FLOAT, JFXTextField.this, "lableFloat", false);
+    private final StyleableBooleanProperty labelFloat = new SimpleStyleableBooleanProperty(StyleableProperties.LABEL_FLOAT,
+            JFXTextField.this,
+            "labelFloat",
+            false);
 
+    @Override
     public final StyleableBooleanProperty labelFloatProperty() {
         return this.labelFloat;
     }
 
+    @Override
     public final boolean isLabelFloat() {
         return this.labelFloatProperty().get();
     }
 
+    @Override
     public final void setLabelFloat(final boolean labelFloat) {
         this.labelFloatProperty().set(labelFloat);
     }
@@ -173,16 +153,24 @@ public class JFXTextField extends TextField {
     /**
      * default color used when the field is unfocused
      */
-    private StyleableObjectProperty<Paint> unFocusColor = new SimpleStyleableObjectProperty<>(StyleableProperties.UNFOCUS_COLOR, JFXTextField.this, "unFocusColor", Color.rgb(77, 77, 77));
+    private final StyleableObjectProperty<Paint> unFocusColor = new SimpleStyleableObjectProperty<>(StyleableProperties.UNFOCUS_COLOR,
+            JFXTextField.this,
+            "unFocusColor",
+            Color.rgb(77,
+                    77,
+                    77));
 
+    @Override
     public Paint getUnFocusColor() {
         return unFocusColor == null ? Color.rgb(77, 77, 77) : unFocusColor.get();
     }
 
+    @Override
     public StyleableObjectProperty<Paint> unFocusColorProperty() {
         return this.unFocusColor;
     }
 
+    @Override
     public void setUnFocusColor(Paint color) {
         this.unFocusColor.set(color);
     }
@@ -190,16 +178,22 @@ public class JFXTextField extends TextField {
     /**
      * default color used when the field is focused
      */
-    private StyleableObjectProperty<Paint> focusColor = new SimpleStyleableObjectProperty<>(StyleableProperties.FOCUS_COLOR, JFXTextField.this, "focusColor", Color.valueOf("#4059A9"));
+    private final StyleableObjectProperty<Paint> focusColor = new SimpleStyleableObjectProperty<>(StyleableProperties.FOCUS_COLOR,
+            JFXTextField.this,
+            "focusColor",
+            Color.valueOf("#4059A9"));
 
+    @Override
     public Paint getFocusColor() {
         return focusColor == null ? Color.valueOf("#4059A9") : focusColor.get();
     }
 
+    @Override
     public StyleableObjectProperty<Paint> focusColorProperty() {
         return this.focusColor;
     }
 
+    @Override
     public void setFocusColor(Paint color) {
         this.focusColor.set(color);
     }
@@ -207,22 +201,31 @@ public class JFXTextField extends TextField {
     /**
      * disable animation on validation
      */
-    private StyleableBooleanProperty disableAnimation = new SimpleStyleableBooleanProperty(StyleableProperties.DISABLE_ANIMATION, JFXTextField.this, "disableAnimation", false);
+    private StyleableBooleanProperty disableAnimation = new SimpleStyleableBooleanProperty(StyleableProperties.DISABLE_ANIMATION,
+            JFXTextField.this,
+            "disableAnimation",
+            false);
 
+    @Override
     public final StyleableBooleanProperty disableAnimationProperty() {
         return this.disableAnimation;
     }
 
-    public final Boolean isDisableAnimation() {
+    @Override
+    public final boolean isDisableAnimation() {
         return disableAnimation != null && this.disableAnimationProperty().get();
     }
 
-    public final void setDisableAnimation(final Boolean disabled) {
+    @Override
+    public final void setDisableAnimation(final boolean disabled) {
         this.disableAnimationProperty().set(disabled);
     }
 
-    private final static class StyleableProperties {
-        private static final CssMetaData<JFXTextField, Paint> UNFOCUS_COLOR = new CssMetaData<JFXTextField, Paint>("-jfx-unfocus-color", PaintConverter.getInstance(), Color.valueOf("#A6A6A6")) {
+    private static final class StyleableProperties {
+        private static final CssMetaData<JFXTextField, Paint> UNFOCUS_COLOR = new CssMetaData<>(
+                "-jfx-unfocus-color",
+                PaintConverter.getInstance(),
+                Color.valueOf("#A6A6A6")) {
             @Override
             public boolean isSettable(JFXTextField control) {
                 return control.unFocusColor == null || !control.unFocusColor.isBound();
@@ -233,7 +236,10 @@ public class JFXTextField extends TextField {
                 return control.unFocusColorProperty();
             }
         };
-        private static final CssMetaData<JFXTextField, Paint> FOCUS_COLOR = new CssMetaData<JFXTextField, Paint>("-jfx-focus-color", PaintConverter.getInstance(), Color.valueOf("#3f51b5")) {
+        private static final CssMetaData<JFXTextField, Paint> FOCUS_COLOR = new CssMetaData<>(
+                "-jfx-focus-color",
+                PaintConverter.getInstance(),
+                Color.valueOf("#3f51b5")) {
             @Override
             public boolean isSettable(JFXTextField control) {
                 return control.focusColor == null || !control.focusColor.isBound();
@@ -244,7 +250,10 @@ public class JFXTextField extends TextField {
                 return control.focusColorProperty();
             }
         };
-        private static final CssMetaData<JFXTextField, Boolean> LABEL_FLOAT = new CssMetaData<JFXTextField, Boolean>("-jfx-label-float", BooleanConverter.getInstance(), false) {
+        private static final CssMetaData<JFXTextField, Boolean> LABEL_FLOAT = new CssMetaData<>(
+                "-jfx-label-float",
+                BooleanConverter.getInstance(),
+                false) {
             @Override
             public boolean isSettable(JFXTextField control) {
                 return control.labelFloat == null || !control.labelFloat.isBound();
@@ -256,44 +265,36 @@ public class JFXTextField extends TextField {
             }
         };
 
-        private static final CssMetaData<JFXTextField, Boolean> DISABLE_ANIMATION = new CssMetaData<JFXTextField, Boolean>("-jfx-disable-animation", BooleanConverter.getInstance(), false) {
-            @Override
-            public boolean isSettable(JFXTextField control) {
-                return control.disableAnimation == null || !control.disableAnimation.isBound();
-            }
+        private static final CssMetaData<JFXTextField, Boolean> DISABLE_ANIMATION =
+                new CssMetaData<>("-jfx-disable-animation",
+                        BooleanConverter.getInstance(), false) {
+                    @Override
+                    public boolean isSettable(JFXTextField control) {
+                        return control.disableAnimation == null || !control.disableAnimation.isBound();
+                    }
 
-            @Override
-            public StyleableBooleanProperty getStyleableProperty(JFXTextField control) {
-                return control.disableAnimationProperty();
-            }
-        };
-
+                    @Override
+                    public StyleableBooleanProperty getStyleableProperty(JFXTextField control) {
+                        return control.disableAnimationProperty();
+                    }
+                };
 
         private static final List<CssMetaData<? extends Styleable, ?>> CHILD_STYLEABLES;
 
         static {
-            final List<CssMetaData<? extends Styleable, ?>> styleables = new ArrayList<>(Control.getClassCssMetaData());
+            final List<CssMetaData<? extends Styleable, ?>> styleables = new ArrayList<>(
+                    TextField.getClassCssMetaData());
             Collections.addAll(styleables, UNFOCUS_COLOR, FOCUS_COLOR, LABEL_FLOAT, DISABLE_ANIMATION);
             CHILD_STYLEABLES = Collections.unmodifiableList(styleables);
         }
     }
 
-    // inherit the styleable properties from parent
-    private List<CssMetaData<? extends Styleable, ?>> STYLEABLES;
-
     @Override
     public List<CssMetaData<? extends Styleable, ?>> getControlCssMetaData() {
-        if (STYLEABLES == null) {
-            final List<CssMetaData<? extends Styleable, ?>> styleables = new ArrayList<>(Control.getClassCssMetaData());
-            styleables.addAll(getClassCssMetaData());
-            styleables.addAll(TextField.getClassCssMetaData());
-            STYLEABLES = Collections.unmodifiableList(styleables);
-        }
-        return STYLEABLES;
+        return getClassCssMetaData();
     }
 
     public static List<CssMetaData<? extends Styleable, ?>> getClassCssMetaData() {
         return StyleableProperties.CHILD_STYLEABLES;
     }
 }
-
