@@ -248,11 +248,11 @@ public class MicrosoftService {
                 .createConnection();
         int responseCode = conn.getResponseCode();
         if (responseCode == HTTP_NOT_FOUND) {
-            var license = HttpRequest.GET("https://api.minecraftservices.com/entitlements/mcstore")
+            var license = HttpRequest.GET("https://api.minecraftservices.com/entitlements/license")
                     .authorization(tokenType, accessToken)
                     .getJson(MinecraftLicense.class);
             boolean hasMinecraftLicense = license.items().stream()
-                    .anyMatch(item -> "product_minecraft".equals(item.name()) || "game_minecraft".equals(item.name()));
+                    .anyMatch(item -> "game_minecraft".equals(item.name()));
             if (!hasMinecraftLicense) {
                 throw new MinecraftJavaEditionLicenseNotFoundException();
             }
