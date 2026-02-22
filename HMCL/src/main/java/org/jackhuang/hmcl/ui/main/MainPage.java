@@ -227,7 +227,10 @@ public final class MainPage extends StackPane implements DecoratorPage {
                             launchLabel.setText(i18n("version.launch.empty"));
                             currentLabel.setText(null);
                             graphic.getChildren().setAll(launchLabel);
-                            launchButton.setOnAction(e -> MainPage.this.launchNoGame());
+                            launchButton.setOnMouseClicked(e -> {
+                                if (e.getClickCount() == 1)
+                                    MainPage.this.launchNoGame();
+                            });
                             if (tooltip == null)
                                 tooltip = new Tooltip(i18n("version.launch.empty.tooltip"));
                             FXUtils.installFastTooltip(launchButton, tooltip);
@@ -235,7 +238,10 @@ public final class MainPage extends StackPane implements DecoratorPage {
                             launchLabel.setText(i18n("version.launch"));
                             currentLabel.setText(currentGame);
                             graphic.getChildren().setAll(launchLabel, currentLabel);
-                            launchButton.setOnAction(e -> MainPage.this.launch());
+                            launchButton.setOnMouseClicked(e -> {
+                                if (e.getClickCount() == 1)
+                                    MainPage.this.launch();
+                            });
                             if (tooltip != null)
                                 Tooltip.uninstall(launchButton, tooltip);
                         }
