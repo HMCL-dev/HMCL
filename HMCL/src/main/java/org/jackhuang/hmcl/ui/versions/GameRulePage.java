@@ -33,7 +33,6 @@ import org.jackhuang.hmcl.ui.ListPageBase;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Locale;
@@ -94,7 +93,7 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> implements World
         }
 
         if (!Files.isDirectory(world.getFile())) {
-            LOG.warning("Failed to load level.dat", new IOException("Not a valid world directory"));
+            LOG.warning("Failed to load level.dat");
             setFailedReason(i18n("world.info.failed"));
         }
 
