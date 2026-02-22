@@ -19,11 +19,11 @@ package org.jackhuang.hmcl.ui.construct;
 
 import com.jfoenix.controls.JFXButton;
 import com.jfoenix.controls.JFXToggleButton;
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
-import javafx.scene.control.Tooltip;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import org.jackhuang.hmcl.ui.FXUtils;
@@ -48,9 +48,21 @@ public class LineToggleResetButton extends LineButtonBase {
         resetButton = new JFXButton();
         resetButton.setGraphic(SVG.RESTORE.createIcon(24));
         resetButton.getStyleClass().add("toggle-icon4");
+        resetButton.setFocusTraversable(false); // Prevent the focus from automatically moving to other node when it is disabled after clicking.
         resetButtonWrapperPane = new StackPane(resetButton);
         resetButtonWrapperPane.setMaxSize(Region.USE_PREF_SIZE, Region.USE_PREF_SIZE);
         setNode(IDX_RESET_BUTTON, resetButtonWrapperPane);
+
+        resetButton.disableProperty().bind(Bindings.createBooleanBinding(() -> {
+            Boolean def = defaultSelect.get();
+            return def != null && def.equals(selected.get());
+        }, defaultSelect, selected));
+
+        resetButton.setOnAction(e -> {
+            if (getDefaultSelect() != null) {
+                setSelected(getDefaultSelect());
+            }
+        });
     }
 
     @Override
@@ -73,20 +85,22 @@ public class LineToggleResetButton extends LineButtonBase {
         selectedProperty().set(selected);
     }
 
-    public void setOnResetButtonClicked(EventHandler<ActionEvent> eventHandler) {
-        resetButton.setOnAction(eventHandler);
+    private final ObjectProperty<Boolean> defaultSelect = new SimpleObjectProperty<>(this, "defaultSelect", null);
+
+    public ObjectProperty<Boolean> defaultSelectProperty() {
+        return defaultSelect;
     }
 
-    public BooleanProperty resetButtonDisableProperty() {
-        return resetButton.disableProperty();
+    public Boolean getDefaultSelect() {
+        return defaultSelectProperty().get();
     }
 
-    public void setResetButtonDisable(boolean disable) {
-        resetButton.setDisable(disable);
+    public void setDefaultSelect(Boolean defaultSelected) {
+        defaultSelectProperty().set(defaultSelected);
     }
 
     public void setResetButtonTooltipWhenEnable(String tooltip) {
-        resetButton.setTooltip(new Tooltip(tooltip));
+        FXUtils.installFastTooltip(resetButton, tooltip);
     }
 
     public void setResetButtonTooltipWhenDisable(String tooltip) {

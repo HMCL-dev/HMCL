@@ -56,25 +56,26 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
         StackPane pane = new StackPane(root);
         {
             pane.setPadding(new Insets(10));
-            pane.getStyleClass().add("notice-pane");
-            root.getStyleClass().add("no-padding");
+            pane.getStyleClass().addAll("notice-pane", "no-padding");
 
             getChildren().add(pane);
         }
 
+        toolBar = new HBox();
         {
-            toolBar = new HBox();
             toolBar.setAlignment(Pos.CENTER);
             toolBar.setPadding(new Insets(0, 5, 0, 5));
             toolBar.setSpacing(5);
 
-            JFXComboBox<GameRulePage.RuleModifiedType> viewFilterComboBox = new JFXComboBox<>(GameRulePage.RuleModifiedType.items);
-            viewFilterComboBox.setValue(GameRulePage.RuleModifiedType.ALL);
-            // Changes to the modifiedList are only applied at the time a type is manually selected; this is by design.
-            viewFilterComboBox.valueProperty().addListener((observable, oldValue, newValue) -> {
-                getSkinnable().changeRuleModifiedType(newValue);
-            });
-            viewFilterComboBox.setPrefWidth(100);
+            var viewFilterComboBox = new JFXComboBox<>(GameRulePage.RuleModifiedType.items);
+            {
+                viewFilterComboBox.setValue(GameRulePage.RuleModifiedType.ALL);
+                // Changes to the modifiedList are only applied at the time a type is manually selected; this is by design.
+                viewFilterComboBox.valueProperty().addListener((observable, oldValue, newValue) -> {
+                    getSkinnable().changeRuleModifiedType(newValue);
+                });
+                viewFilterComboBox.setPrefWidth(100);
+            }
 
             searchField = new JFXTextField();
             {
@@ -86,7 +87,10 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
             }
 
             JFXButton resetAllButton = createToolbarButton2(i18n("gamerule.restore_default_values_all"), SVG.RESTORE,
-                    () -> Controllers.dialog(new ResetDefaultValuesLayout(skinnable::resettingAllGameRule, getSkinnable().getModifiedItems(), () -> getSkinnable().changeRuleModifiedType(viewFilterComboBox.getSelectionModel().getSelectedItem()))));
+                    () -> Controllers.dialog(new ResetDefaultValuesLayout(
+                            skinnable::resettingAllGameRule,
+                            getSkinnable().getModifiedItems(),
+                            () -> getSkinnable().applyRuleModifiedType())));
             resetAllButton.disableProperty().bind(getSkinnable().readOnly);
 
             toolBar.getChildren().addAll(searchField, new Label(i18n("gamerule.filter")), viewFilterComboBox, resetAllButton);
@@ -96,7 +100,6 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
         SpinnerPane center = new SpinnerPane();
         {
             ComponentList.setVgrow(center, Priority.ALWAYS);
-            center.getStyleClass().add("large-spinner-pane");
             center.setContent(listView);
 
             listView.setItems(getSkinnable().getDisplayedItems());
@@ -134,19 +137,20 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
             });
             if (hBox != null) {
                 getContainer().getChildren().setAll(hBox);
+            } else {
+                getContainer().getChildren().clear();
             }
         }
 
         private HBox buildNodeForIntGameRule(GameRuleInfo.IntGameRuleInfo gameRule) {
             HBox cellBox = new HBox();
             {
-                cellBox.setPadding(new Insets(0, 8, 0, 0));
                 HBox.setHgrow(cellBox, Priority.ALWAYS);
             }
 
             LinePane cellPane = new LinePane();
-            HBox.setHgrow(cellPane, Priority.ALWAYS);
             {
+                HBox.setHgrow(cellPane, Priority.ALWAYS);
                 if (StringUtils.isNotBlank(gameRule.getDisplayName())) {
                     cellPane.setTitle(gameRule.getDisplayName());
                     cellPane.setSubtitle(gameRule.getRuleKey());
@@ -176,7 +180,6 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
             {
                 HBox.setHgrow(cellBox, Priority.ALWAYS);
                 cellBox.setAlignment(Pos.CENTER_LEFT);
-                cellBox.setPadding(new Insets(0, 8, 0, 0));
             }
 
             LineToggleResetButton toggleButton = new LineToggleResetButton();
@@ -191,12 +194,10 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
                 toggleButton.selectedProperty().bindBidirectional(gameRule.currentValueProperty());
 
                 if (StringUtils.isNotBlank(gameRule.getDefaultValueText())) {
-                    toggleButton.setOnResetButtonClicked(event -> gameRule.resetValue());
-                    toggleButton.resetButtonDisableProperty().bind(gameRule.modifiedProperty().not());
+                    toggleButton.setDefaultSelect(gameRule.getDefaultValue());
                     toggleButton.setResetButtonTooltipWhenEnable(i18n("gamerule.restore_default_values.tooltip", gameRule.getDefaultValueText()));
                     toggleButton.setResetButtonTooltipWhenDisable(i18n("gamerule.now_is_default_values.tooltip"));
                 } else {
-                    toggleButton.setResetButtonDisable(true);
                     toggleButton.setResetButtonTooltipWhenDisable(i18n("gamerule.not_have_default_values.tooltip"));
                 }
             }

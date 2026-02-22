@@ -144,6 +144,10 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
         public BooleanProperty currentValueProperty() {
             return currentValue;
         }
+
+        public Boolean getDefaultValue() {
+            return defaultValue;
+        }
     }
 
     static final class IntGameRuleInfo extends GameRuleInfo<String> {
@@ -193,6 +197,10 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
 
         public int getMaxValue() {
             return maxValue;
+        }
+
+        public Integer getDefaultValue() {
+            return defaultValue;
         }
     }
 }
