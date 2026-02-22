@@ -60,7 +60,7 @@ HMCL 是一个社区驱动的开源项目，欢迎任何人参与贡献代码或
 
 ## 贡献者
 
-自 2015 年以来，HMCL 已经有超过 110 位贡献者参与其中，感谢他们的辛勤付出！
+自 2015 年以来，HMCL 已经有超过 120 位贡献者参与其中，感谢他们的辛勤付出！
 
 [![Contributors](https://contrib.rocks/image?repo=HMCL-dev/HMCL)](https://github.com/HMCL-dev/HMCL/graphs/contributors)
 
