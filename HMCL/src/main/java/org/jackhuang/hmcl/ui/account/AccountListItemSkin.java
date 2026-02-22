@@ -172,7 +172,7 @@ public final class AccountListItemSkin extends SkinBase<AccountListItem> {
         JFXButton btnCopyUUID = new JFXButton();
         SpinnerPane spinnerCopyUUID = new SpinnerPane();
         spinnerCopyUUID.getStyleClass().add("small-spinner-pane");
-        btnUpload.getStyleClass().add("toggle-icon4");
+        btnCopyUUID.getStyleClass().add("toggle-icon4");
         btnCopyUUID.setOnAction(e -> FXUtils.copyText(skinnable.getAccount().getUUID().toString()));
         btnCopyUUID.setGraphic(SVG.CONTENT_COPY.createIcon());
         FXUtils.installFastTooltip(btnCopyUUID, i18n("account.copy_uuid"));
