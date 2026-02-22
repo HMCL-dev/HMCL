@@ -47,6 +47,7 @@ import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.ResponseCodeException;
 import org.jackhuang.hmcl.util.platform.*;
+import org.jackhuang.hmcl.util.platform.windows.WinReg;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import org.jackhuang.hmcl.util.versioning.VersionNumber;
 
@@ -65,6 +66,7 @@ import java.util.stream.Collectors;
 
 import static javafx.application.Platform.runLater;
 import static javafx.application.Platform.setImplicitExit;
+import static org.jackhuang.hmcl.setting.ConfigHolder.config;
 import static org.jackhuang.hmcl.ui.FXUtils.runInFX;
 import static org.jackhuang.hmcl.util.DataSizeUnit.MEGABYTES;
 import static org.jackhuang.hmcl.util.Lang.resolveException;
@@ -84,6 +86,7 @@ public final class LauncherHelper {
     private boolean showLogs;
     private QuickPlayOption quickPlayOption;
     private boolean disableOfflineSkin = false;
+    private boolean modifiedGpuReg = false;
 
     public LauncherHelper(Profile profile, Account account, String selectedVersion) {
         this.profile = Objects.requireNonNull(profile);
@@ -207,6 +210,30 @@ public final class LauncherHelper {
                     if (quickPlayOption != null) {
                         launchOptionsBuilder.setQuickPlayOption(quickPlayOption);
                     }
+                    if (config().isWindowsHighPerformance()) {
+                        try {
+                            WinReg reg = WinReg.INSTANCE;
+                            if (reg != null) {
+                                Object current = reg.queryValue(
+                                        WinReg.HKEY.HKEY_CURRENT_USER,
+                                        "Software\\Microsoft\\DirectX\\UserGpuPreferences",
+                                        FileUtils.getAbsolutePath(javaVersionRef.get().getBinary())
+                                );
+                                if (!(current instanceof String)) {
+                                    reg.setValue(
+                                            WinReg.HKEY.HKEY_CURRENT_USER,
+                                            "Software\\Microsoft\\DirectX\\UserGpuPreferences",
+                                            FileUtils.getAbsolutePath(javaVersionRef.get().getBinary()),
+                                            "GpuPreference=2;"
+                                    );
+                                    modifiedGpuReg = true;
+                                }
+                            }
+                        } catch (Exception e) {
+                            LOG.warning("Failed to apply high performance GPU preference", e);
+                        }
+                    }
+
                     LaunchOptions launchOptions = launchOptionsBuilder.create();
 
                     LOG.info("Here's the structure of game mod directory:\n" + FileUtils.printFileStructure(repository.getModsDirectory(selectedVersion), 10));
@@ -822,6 +849,21 @@ public final class LauncherHelper {
         }
 
         private void finishLaunch() {
+            if (modifiedGpuReg) {
+                try {
+                    Thread.sleep(5000L);
+                } catch (InterruptedException ignored) {
+                }
+                try {
+                    WinReg.INSTANCE.deleteValue(
+                            WinReg.HKEY.HKEY_CURRENT_USER,
+                            "Software\\Microsoft\\DirectX\\UserGpuPreferences",
+                            process.getProcess().info().command().orElseThrow()
+                    );
+                } catch (Exception e) {
+                    LOG.warning("Failed to revert high performance GPU preference", e);
+                }
+            }
             switch (launcherVisibility) {
                 case HIDE_AND_REOPEN:
                     runLater(() -> {
