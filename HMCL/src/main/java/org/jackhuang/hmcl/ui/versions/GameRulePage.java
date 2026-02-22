@@ -124,7 +124,7 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> implements World
                 });
             });
         });
-        applyModifiedFilter(ruleModifiedType);
+        applyRuleModifiedType();
     }
 
     @Override
@@ -140,9 +140,8 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> implements World
         switch (type) {
             case ALL -> modifiedList.setAll(getItems());
             case MODIFIED -> modifiedList.setAll(modifiedItems);
-            case UNMODIFIED -> {
-                modifiedList.setAll(getItems().stream().filter(gameRuleInfo -> !modifiedItems.contains(gameRuleInfo)).collect(Collectors.toSet()));
-            }
+            case UNMODIFIED -> modifiedList.setAll(getItems().stream().filter(gameRuleInfo ->
+                    !modifiedItems.contains(gameRuleInfo)).collect(Collectors.toSet()));
         }
     }
 
