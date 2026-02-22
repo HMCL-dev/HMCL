@@ -23,10 +23,14 @@ import org.jackhuang.hmcl.mod.ModAdviser;
 import org.jackhuang.hmcl.mod.Modpack;
 import org.jackhuang.hmcl.mod.ModpackConfiguration;
 import org.jackhuang.hmcl.mod.ModpackExportInfo;
+import org.jackhuang.hmcl.mod.RemoteMod;
+import org.jackhuang.hmcl.mod.curse.CurseForgeRemoteModRepository;
+import org.jackhuang.hmcl.mod.modrinth.ModrinthRemoteModRepository;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.util.DigestUtils;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.JsonUtils;
+import org.jackhuang.hmcl.util.io.FileUtils;
 import org.jackhuang.hmcl.util.io.Zipper;
 
 import java.io.File;
@@ -35,6 +39,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.jackhuang.hmcl.download.LibraryAnalyzer.LibraryType.*;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
@@ -75,8 +80,31 @@ public class ServerModpackExportTask extends Task<Void> {
                 if (Modpack.acceptFile(path, blackList, exportInfo.getWhitelist())) {
                     Path file = runDirectory.resolve(path);
                     if (Files.isRegularFile(file)) {
+                        String downloadUrl = null;
+                        if (FileUtils.getExtension(file).equals("jar")) {
+                            Optional<RemoteMod.Version> modrinthVersion = Optional.empty();
+                            try {
+                                modrinthVersion = ModrinthRemoteModRepository.MODS.getRemoteVersionByLocalFile(null, file);
+                            } catch (IOException e) {
+                                LOG.warning("Failed to get remote file from Modrinth for: " + file, e);
+                            }
+                            if (modrinthVersion.isPresent())
+                                downloadUrl = modrinthVersion.get().getFile().getUrl();
+                            else {
+                                Optional<RemoteMod.Version> curseForgeVersion = Optional.empty();
+                                if (!exportInfo.isSkipCurseForgeRemoteFiles() && CurseForgeRemoteModRepository.isAvailable()) {
+                                    try {
+                                        curseForgeVersion = CurseForgeRemoteModRepository.MODS.getRemoteVersionByLocalFile(null, file);
+                                    } catch (IOException e) {
+                                        LOG.warning("Failed to get remote file from CurseForge for: " + file, e);
+                                    }
+                                }
+                                if (curseForgeVersion.isPresent())
+                                    downloadUrl = curseForgeVersion.get().getFile().getUrl();
+                            }
+                        }
                         String relativePath = runDirectory.relativize(file).normalize().toString().replace(File.separatorChar, '/');
-                        files.add(new ModpackConfiguration.FileInformation(relativePath, DigestUtils.digestToString("SHA-1", file)));
+                        files.add(new ModpackConfiguration.FileInformation(relativePath, DigestUtils.digestToString("SHA-1", file), downloadUrl));
                     }
                     return true;
                 } else {
