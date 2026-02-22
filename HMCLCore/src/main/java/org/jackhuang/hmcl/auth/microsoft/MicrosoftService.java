@@ -25,7 +25,10 @@ import org.jackhuang.hmcl.auth.AuthenticationException;
 import org.jackhuang.hmcl.auth.OAuth;
 import org.jackhuang.hmcl.auth.ServerDisconnectException;
 import org.jackhuang.hmcl.auth.ServerResponseMalformedException;
-import org.jackhuang.hmcl.auth.yggdrasil.*;
+import org.jackhuang.hmcl.auth.yggdrasil.CompleteGameProfile;
+import org.jackhuang.hmcl.auth.yggdrasil.RemoteAuthenticationException;
+import org.jackhuang.hmcl.auth.yggdrasil.Texture;
+import org.jackhuang.hmcl.auth.yggdrasil.TextureType;
 import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.gson.*;
 import org.jackhuang.hmcl.util.io.*;
@@ -245,7 +248,14 @@ public class MicrosoftService {
                 .createConnection();
         int responseCode = conn.getResponseCode();
         if (responseCode == HTTP_NOT_FOUND) {
-            throw new NoMinecraftJavaEditionProfileException();
+            var license = HttpRequest.GET("https://api.minecraftservices.com/entitlements/mcstore")
+                    .authorization(tokenType, accessToken)
+                    .getJson(MinecraftLicense.class);
+            boolean hasMinecraftLicense = license.items().stream()
+                    .anyMatch(item -> "product_minecraft".equals(item.name()) || "game_minecraft".equals(item.name()));
+            if (!hasMinecraftLicense) {
+                throw new MinecraftJavaEditionLicenseNotFoundException();
+            }
         } else if (responseCode != 200) {
             throw new ResponseCodeException("https://api.minecraftservices.com/minecraft/profile", responseCode);
         }
@@ -324,7 +334,10 @@ public class MicrosoftService {
     public final static class XBox400Exception extends AuthenticationException {
     }
 
-    public final static class NoMinecraftJavaEditionProfileException extends AuthenticationException {
+    public final static class MinecraftJavaEditionProfileNotFoundException extends AuthenticationException {
+    }
+
+    public final static class MinecraftJavaEditionLicenseNotFoundException extends AuthenticationException {
     }
 
     public final static class NoXuiException extends AuthenticationException {
@@ -423,6 +436,19 @@ public class MicrosoftService {
 
     public static class MinecraftProfileResponseCape {
 
+    }
+
+    public record MinecraftLicense(
+            List<MinecraftLicenseItem> items,
+            String signature,
+            String keyId
+    ) {
+    }
+
+    public record MinecraftLicenseItem(
+            String name,
+            String signature
+    ) {
     }
 
     public static class MinecraftProfileResponse extends MinecraftErrorResponse implements Validation {
