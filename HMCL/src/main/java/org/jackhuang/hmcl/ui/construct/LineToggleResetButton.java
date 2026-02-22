@@ -45,6 +45,7 @@ public class LineToggleResetButton extends LineButtonBase {
         toggleButton.setSize(8);
         FXUtils.setLimitHeight(toggleButton, 30);
         setNode(IDX_TRAILING, toggleButton);
+
         resetButton = new JFXButton();
         resetButton.setGraphic(SVG.RESTORE.createIcon(24));
         resetButton.getStyleClass().add("toggle-icon4");

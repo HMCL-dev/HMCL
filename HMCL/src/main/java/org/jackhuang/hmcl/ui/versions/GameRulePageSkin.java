@@ -144,9 +144,7 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
 
         private HBox buildNodeForIntGameRule(GameRuleInfo.IntGameRuleInfo gameRule) {
             HBox cellBox = new HBox();
-            {
-                HBox.setHgrow(cellBox, Priority.ALWAYS);
-            }
+            HBox.setHgrow(cellBox, Priority.ALWAYS);
 
             LinePane cellPane = new LinePane();
             {
@@ -176,24 +174,20 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
         }
 
         private HBox buildNodeForBooleanGameRule(GameRuleInfo.BooleanGameRuleInfo gameRule) {
-            HBox cellBox = new HBox();
-            {
-                HBox.setHgrow(cellBox, Priority.ALWAYS);
-                cellBox.setAlignment(Pos.CENTER_LEFT);
-            }
-
             LineToggleResetButton toggleButton = new LineToggleResetButton();
+            HBox cellBox = new HBox(toggleButton);
             {
+                HBox.setHgrow(toggleButton, Priority.ALWAYS);
+                toggleButton.selectedProperty().bindBidirectional(gameRule.currentValueProperty());
+
                 if (StringUtils.isNotBlank(gameRule.getDisplayName())) {
                     toggleButton.setTitle(gameRule.getDisplayName());
                     toggleButton.setSubtitle(gameRule.getRuleKey());
                 } else {
                     toggleButton.setTitle(gameRule.getRuleKey());
                 }
-                HBox.setHgrow(toggleButton, Priority.ALWAYS);
-                toggleButton.selectedProperty().bindBidirectional(gameRule.currentValueProperty());
 
-                if (StringUtils.isNotBlank(gameRule.getDefaultValueText())) {
+                if (gameRule.getDefaultValue() != null) {
                     toggleButton.setDefaultSelect(gameRule.getDefaultValue());
                     toggleButton.setResetButtonTooltipWhenEnable(i18n("gamerule.restore_default_values.tooltip", gameRule.getDefaultValueText()));
                     toggleButton.setResetButtonTooltipWhenDisable(i18n("gamerule.now_is_default_values.tooltip"));
@@ -201,8 +195,6 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
                     toggleButton.setResetButtonTooltipWhenDisable(i18n("gamerule.not_have_default_values.tooltip"));
                 }
             }
-
-            cellBox.getChildren().addAll(toggleButton);
 
             return cellBox;
         }
