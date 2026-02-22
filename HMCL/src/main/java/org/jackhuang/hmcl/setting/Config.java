@@ -448,16 +448,31 @@ public final class Config extends ObservableSetting {
     @SerializedName("bgImageOpacity")
     private final IntegerProperty backgroundImageOpacity = new SimpleIntegerProperty(100);
 
+    @SerializedName("bgImageBlur")
+    private final IntegerProperty backgroundImageBlur = new SimpleIntegerProperty(0);
+
     public IntegerProperty backgroundImageOpacityProperty() {
         return backgroundImageOpacity;
+    }
+
+    public IntegerProperty backgroundImageBlurProperty() {
+        return backgroundImageBlur;
     }
 
     public int getBackgroundImageOpacity() {
         return backgroundImageOpacity.get();
     }
 
+    public int getBackgroundImageBlur() {
+        return backgroundImageBlur.get();
+    }
+
     public void setBackgroundImageOpacity(int backgroundImageOpacity) {
         this.backgroundImageOpacity.set(backgroundImageOpacity);
+    }
+
+    public void setBackgroundImageBlur(int backgroundImageBlur) {
+        this.backgroundImageBlur.set(backgroundImageBlur);
     }
 
     // Networks

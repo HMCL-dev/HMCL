@@ -153,6 +153,7 @@ public class PersonalizationPage extends StackPane {
                 opacityItem.setAlignment(Pos.CENTER);
 
                 Label label = new Label(i18n("settings.launcher.background.settings.opacity"));
+                FXUtils.setLimitWidth(label, 60);
 
                 JFXSlider slider = new JFXSlider(0, 100,
                         config().getBackgroundImageType() != EnumBackgroundImage.TRANSLUCENT
@@ -192,7 +193,40 @@ public class PersonalizationPage extends StackPane {
                 opacityItem.getChildren().setAll(label, slider, textOpacity);
             }
 
-            componentList.getContent().setAll(backgroundItem, opacityItem);
+            HBox blurItem = new HBox(8);
+            {
+                blurItem.setAlignment(Pos.CENTER);
+
+                Label label = new Label(i18n("settings.launcher.background.settings.blur"));
+                FXUtils.setLimitWidth(label, 60);
+
+                JFXSlider blurSlider = new JFXSlider(0, 50, config().getBackgroundImageBlur());
+                blurSlider.setShowTickMarks(true);
+                blurSlider.setMajorTickUnit(10);
+                blurSlider.setMinorTickCount(1);
+                blurSlider.setBlockIncrement(1);
+                blurSlider.setSnapToTicks(true);
+                blurSlider.setPadding(new Insets(9, 0, 0, 0));
+                HBox.setHgrow(blurSlider, Priority.ALWAYS);
+
+                if (config().getBackgroundImageType() == EnumBackgroundImage.TRANSLUCENT) {
+                    blurSlider.setDisable(true);
+                }
+
+                Label textBlur = new Label();
+                FXUtils.setLimitWidth(textBlur, 50);
+
+                StringBinding blurValueBinding = Bindings.createStringBinding(() -> ((int) blurSlider.getValue()) + "px", blurSlider.valueProperty());
+                textBlur.textProperty().bind(blurValueBinding);
+                blurSlider.setValueFactory(s -> blurValueBinding);
+
+                blurSlider.valueProperty().addListener((observable, oldValue, newValue) ->
+                        config().setBackgroundImageBlur(newValue.intValue()));
+
+                blurItem.getChildren().setAll(label, blurSlider, textBlur);
+            }
+
+            componentList.getContent().setAll(backgroundItem, opacityItem, blurItem);
             content.getChildren().addAll(ComponentList.createComponentListTitle(i18n("launcher.background")), componentList);
         }
 
