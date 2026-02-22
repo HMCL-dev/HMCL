@@ -80,7 +80,7 @@ public final class ModpackInstallWizardProvider implements WizardProvider {
         if (StringUtils.isNotBlank(iconUrl))
             settings.put(LocalModpackPage.MODPACK_ICON_URL, iconUrl);
         settings.put(ModpackPage.PROFILE, profile);
-        hasSource = controller.getSettings().containsKey(LocalModpackPage.MODPACK_FILE) || settings.containsKey(RemoteModpackPage.MODPACK_SERVER_MANIFEST);
+        hasSource = settings.containsKey(LocalModpackPage.MODPACK_FILE) || settings.containsKey(RemoteModpackPage.MODPACK_SERVER_MANIFEST);
     }
 
     private Task<?> finishModpackInstallingAsync(SettingsMap settings) {
