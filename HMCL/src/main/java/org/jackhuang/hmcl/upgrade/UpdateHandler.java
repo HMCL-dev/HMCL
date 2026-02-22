@@ -125,6 +125,7 @@ public final class UpdateHandler {
                         }
 
                         requestUpdate(downloaded, getCurrentLocation());
+                        Controllers.onApplicationStop();
                         EntryPoint.exit(0);
                     } catch (IOException e) {
                         LOG.warning("Failed to update to " + version, e);
