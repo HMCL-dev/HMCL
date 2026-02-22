@@ -79,7 +79,7 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
             searchField = new JFXTextField();
             {
                 searchField.setPromptText(i18n("search"));
-                PauseTransition searchPause = new PauseTransition(Duration.millis(1000));
+                PauseTransition searchPause = new PauseTransition(Duration.millis(300));
                 searchPause.setOnFinished(event -> getSkinnable().updateSearchPredicate(searchField.getText()));
                 searchField.textProperty().addListener((observable) -> searchPause.playFromStart());
                 HBox.setHgrow(searchField, Priority.ALWAYS);
@@ -87,6 +87,7 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
 
             JFXButton resetAllButton = createToolbarButton2(i18n("gamerule.restore_default_values_all"), SVG.RESTORE,
                     () -> Controllers.dialog(new ResetDefaultValuesLayout(skinnable::resettingAllGameRule, getSkinnable().getModifiedItems(), () -> getSkinnable().changeRuleModifiedType(viewFilterComboBox.getSelectionModel().getSelectedItem()))));
+            resetAllButton.disableProperty().bind(getSkinnable().readOnly);
 
             toolBar.getChildren().addAll(searchField, new Label(i18n("gamerule.filter")), viewFilterComboBox, resetAllButton);
             root.getContent().add(toolBar);

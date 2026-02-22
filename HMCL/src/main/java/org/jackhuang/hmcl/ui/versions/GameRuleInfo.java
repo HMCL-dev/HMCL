@@ -33,7 +33,6 @@ import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 import java.util.Objects;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRuleInfo, GameRuleInfo.IntGameRuleInfo {
     private final String ruleKey;
