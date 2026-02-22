@@ -19,7 +19,6 @@ package org.jackhuang.hmcl.ui.versions;
 
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.image.ImageView;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
@@ -27,13 +26,14 @@ import org.jackhuang.hmcl.setting.VersionIconType;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
 import org.jackhuang.hmcl.ui.construct.AdvancedListItem;
+import org.jackhuang.hmcl.ui.construct.JFXImageView;
 
 import java.util.function.Consumer;
 
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameAdvancedListItem extends AdvancedListItem {
-    private final ImageView imageView;
+    private final JFXImageView imageView;
     private final WeakListenerHolder holder = new WeakListenerHolder();
     private Profile profile;
     @SuppressWarnings("unused")
@@ -41,8 +41,8 @@ public class GameAdvancedListItem extends AdvancedListItem {
 
     @SuppressWarnings("SuspiciousNameCombination")
     public GameAdvancedListItem() {
-        this.imageView = new ImageView();
-        FXUtils.limitSize(imageView, LEFT_GRAPHIC_SIZE, LEFT_GRAPHIC_SIZE);
+        this.imageView = new JFXImageView();
+        imageView.setLimitSize(LEFT_GRAPHIC_SIZE, LEFT_GRAPHIC_SIZE);
         imageView.setPreserveRatio(true);
         imageView.setImage(null);
 

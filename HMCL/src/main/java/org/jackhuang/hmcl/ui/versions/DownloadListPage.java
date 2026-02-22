@@ -50,10 +50,7 @@ import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.FXUtils;
 import org.jackhuang.hmcl.ui.WeakListenerHolder;
-import org.jackhuang.hmcl.ui.construct.NoneMultipleSelectionModel;
-import org.jackhuang.hmcl.ui.construct.RipplerContainer;
-import org.jackhuang.hmcl.ui.construct.SpinnerPane;
-import org.jackhuang.hmcl.ui.construct.TwoLineListItem;
+import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.ui.decorator.DecoratorPage;
 import org.jackhuang.hmcl.util.*;
 import org.jackhuang.hmcl.util.i18n.I18n;
@@ -537,7 +534,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                     private final StackPane wrapper = new StackPane();
 
                     private final TwoLineListItem content = new TwoLineListItem();
-                    private final ImageView imageView = new ImageView();
+                    private final ImageView imageView = new JFXImageView();
 
                     {
                         setPadding(PADDING);
