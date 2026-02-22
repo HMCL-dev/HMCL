@@ -71,7 +71,7 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
             viewFilterComboBox.setValue(GameRulePage.RuleModifiedType.ALL);
             // Changes to the modifiedList are only applied at the time a type is manually selected; this is by design.
             viewFilterComboBox.valueProperty().addListener((observable, oldValue, newValue) -> {
-                getSkinnable().applyModifiedFilter(newValue);
+                getSkinnable().changeRuleModifiedType(newValue);
             });
             viewFilterComboBox.setPrefWidth(100);
 
@@ -85,7 +85,7 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
             }
 
             JFXButton resetAllButton = createToolbarButton2(i18n("gamerule.restore_default_values_all"), SVG.RESTORE,
-                    () -> Controllers.dialog(new ResetDefaultValuesLayout(skinnable::resettingAllGameRule, getSkinnable().getModifiedItems(), () -> getSkinnable().applyModifiedFilter(viewFilterComboBox.getSelectionModel().getSelectedItem()))));
+                    () -> Controllers.dialog(new ResetDefaultValuesLayout(skinnable::resettingAllGameRule, getSkinnable().getModifiedItems(), () -> getSkinnable().changeRuleModifiedType(viewFilterComboBox.getSelectionModel().getSelectedItem()))));
 
             toolBar.getChildren().addAll(searchField, new Label(i18n("gamerule.filter")), viewFilterComboBox, resetAllButton);
             root.getContent().add(toolBar);
@@ -103,6 +103,10 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
 
             root.getContent().add(center);
         }
+    }
+
+    public void resetCellMap() {
+        cellMap.clear();
     }
 
     static class GameRuleListCell extends MDListCell<GameRuleInfo<?>> {

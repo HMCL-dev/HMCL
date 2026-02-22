@@ -48,7 +48,6 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public class GameRulePage extends ListPageBase<GameRuleInfo<?>> implements WorldManagePage.WorldRefreshable {
 
-    private final WorldManagePage worldManagePage;
     private final World world;
     private CompoundTag levelDat;
     final BooleanProperty readOnly;
@@ -64,7 +63,6 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> implements World
     private final PauseTransition saveLevelDatPause;
 
     public GameRulePage(WorldManagePage worldManagePage) {
-        this.worldManagePage = worldManagePage;
         this.world = worldManagePage.getWorld();
         this.readOnly = worldManagePage.readOnlyProperty();
 
@@ -92,6 +90,9 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> implements World
         Task.runAsync(Schedulers.javafx(), () -> {
             gameRuleList.clear();
             modifiedList.clear();
+            if (skinProperty().get() instanceof GameRulePageSkin gameRulePageSkin) {
+                gameRulePageSkin.resetCellMap();
+            }
         }).thenSupplyAsync(this::loadWorldInfo).whenComplete(Schedulers.javafx(), ((result, exception) -> {
             if (exception == null) {
                 this.levelDat = result;
@@ -135,7 +136,7 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> implements World
         return modifiedList;
     }
 
-    public void applyModifiedFilter(RuleModifiedType type) {
+    private void applyModifiedFilter(RuleModifiedType type) {
         switch (type) {
             case ALL -> modifiedList.setAll(getItems());
             case MODIFIED -> modifiedList.setAll(modifiedItems);
@@ -157,8 +158,13 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> implements World
         return ruleModifiedType;
     }
 
-    public void setRuleModifiedType(RuleModifiedType ruleModifiedType) {
-        this.ruleModifiedType = ruleModifiedType;
+    public void changeRuleModifiedType(RuleModifiedType type) {
+        this.ruleModifiedType = type;
+        applyModifiedFilter(ruleModifiedType);
+    }
+
+    public void applyRuleModifiedType() {
+        applyModifiedFilter(ruleModifiedType);
     }
 
     public boolean isBatchUpdating() {
