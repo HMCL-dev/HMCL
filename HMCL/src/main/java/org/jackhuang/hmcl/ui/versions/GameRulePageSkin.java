@@ -19,6 +19,7 @@ package org.jackhuang.hmcl.ui.versions;
 
 import com.jfoenix.controls.*;
 import javafx.animation.PauseTransition;
+import javafx.beans.property.BooleanProperty;
 import javafx.collections.transformation.FilteredList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -98,7 +99,7 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
             center.setContent(listView);
 
             listView.setItems(getSkinnable().getDisplayedItems());
-            listView.setCellFactory(x -> new GameRuleListCell(listView, cellMap));
+            listView.setCellFactory(x -> new GameRuleListCell(listView, cellMap, getSkinnable().readOnly));
             FXUtils.ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
 
             root.getContent().add(center);
@@ -112,9 +113,10 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
     static class GameRuleListCell extends MDListCell<GameRuleInfo<?>> {
         private final Map<String, HBox> cellMap;
 
-        public GameRuleListCell(JFXListView<GameRuleInfo<?>> listView, Map<String, HBox> cellMap) {
+        public GameRuleListCell(JFXListView<GameRuleInfo<?>> listView, Map<String, HBox> cellMap, BooleanProperty readOnly) {
             super(listView);
             this.cellMap = cellMap;
+            this.disableProperty().bind(readOnly);
         }
 
         @Override

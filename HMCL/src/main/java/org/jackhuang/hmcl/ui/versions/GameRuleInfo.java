@@ -27,6 +27,7 @@ import org.jackhuang.hmcl.gamerule.GameRule;
 import org.jackhuang.hmcl.gamerule.GameRuleNBT;
 import org.jackhuang.hmcl.util.Lang;
 import org.jackhuang.hmcl.util.StringUtils;
+import org.jackhuang.hmcl.util.i18n.I18n;
 import org.jackhuang.hmcl.util.versioning.GameVersionNumber;
 
 import java.util.Objects;
@@ -47,12 +48,8 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
     private GameRuleInfo(GameRule gameRule, GameRuleNBT<T, ? extends Tag> gameRuleNBT, Runnable onSave) {
         ruleKey = gameRule.getRuleKey().get(0);
         String displayName = "";
-        try {
-            if (StringUtils.isNotBlank(gameRule.getDisplayI18nKey())) {
-                displayName = i18n(gameRule.getDisplayI18nKey());
-            }
-        } catch (Exception e) {
-            LOG.warning("Failed to get i18n text for key: " + gameRule.getDisplayI18nKey(), e);
+        if (StringUtils.isNotBlank(gameRule.getDisplayI18nKey()) && I18n.hasKey(gameRule.getDisplayI18nKey())) {
+            displayName = i18n(gameRule.getDisplayI18nKey());
         }
         this.displayName = displayName;
         this.gameRuleNBT = gameRuleNBT;
