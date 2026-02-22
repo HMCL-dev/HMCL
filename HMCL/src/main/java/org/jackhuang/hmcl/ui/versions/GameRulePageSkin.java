@@ -100,6 +100,8 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
         SpinnerPane center = new SpinnerPane();
         {
             ComponentList.setVgrow(center, Priority.ALWAYS);
+            center.loadingProperty().bind(getSkinnable().loadingProperty());
+            center.failedReasonProperty().bind(getSkinnable().failedReasonProperty());
             center.setContent(listView);
 
             listView.setItems(getSkinnable().getDisplayedItems());

@@ -31,7 +31,7 @@ import org.jackhuang.hmcl.ui.SVG;
 
 public class LineToggleResetButton extends LineButtonBase {
     private static final String DEFAULT_STYLE_CLASS = "line-toggle-button";
-    private static final int IDX_RESET_BUTTON = 3;
+    private static final int IDX_RESET_BUTTON = IDX_TRAILING + 1;
 
     private final JFXToggleButton toggleButton;
     private final JFXButton resetButton;
@@ -56,7 +56,7 @@ public class LineToggleResetButton extends LineButtonBase {
 
         resetButton.disableProperty().bind(Bindings.createBooleanBinding(() -> {
             Boolean def = defaultSelect.get();
-            return def != null && def.equals(selected.get());
+            return def == null || def.equals(selected.get());
         }, defaultSelect, selected));
 
         resetButton.setOnAction(e -> {

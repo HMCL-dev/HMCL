@@ -180,7 +180,7 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
 
         @Override
         public String getDefaultValueText() {
-            return defaultValue == null ? null : defaultValue.toString();
+            return defaultValue == null ? "" : defaultValue.toString();
         }
 
         @Override

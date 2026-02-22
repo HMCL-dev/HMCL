@@ -45,6 +45,8 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 /// * Deserializing rules form `resources/assets/gamerule/gamerule.json`
 ///
 /// It is a sealed class permitting only [BooleanGameRule] and [IntGameRule].
+///
+/// @author mineDiamond
 @JsonSerializable
 @JsonAdapter(GameRule.GameRuleDeserializer.class)
 public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule.IntGameRule {
@@ -339,10 +341,12 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
                         metaDataGameRuleMap.put(s, gameRule);
                     }
                 }
+            } catch (NullPointerException e) {
+                LOG.warning("Cannot find /assets/gamerule/gamerule.json", e);
             } catch (IOException e) {
-                LOG.warning("Cannot read gamerule.json" + e.getMessage());
+                LOG.warning("Cannot read gamerule.json", e);
             } catch (JsonParseException e) {
-                LOG.warning("Cannot parse gamerule.json" + e.getMessage());
+                LOG.warning("Cannot parse gamerule.json", e);
             }
         }
 

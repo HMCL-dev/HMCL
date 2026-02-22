@@ -28,8 +28,6 @@ import javafx.scene.control.Skin;
 import javafx.util.Duration;
 import org.jackhuang.hmcl.game.World;
 import org.jackhuang.hmcl.gamerule.GameRule;
-import org.jackhuang.hmcl.task.Schedulers;
-import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.ui.Controllers;
 import org.jackhuang.hmcl.ui.ListPageBase;
 import org.jackhuang.hmcl.util.StringUtils;
@@ -46,6 +44,7 @@ import java.util.stream.Collectors;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
+/// @author mineDiamond
 public class GameRulePage extends ListPageBase<GameRuleInfo<?>> implements WorldManagePage.WorldRefreshable {
 
     private final World world;
@@ -87,22 +86,22 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> implements World
     @Override
     public void refresh() {
         this.setLoading(true);
-        Task.runAsync(Schedulers.javafx(), () -> {
-            gameRuleList.clear();
-            modifiedList.clear();
-            if (skinProperty().get() instanceof GameRulePageSkin gameRulePageSkin) {
-                gameRulePageSkin.resetCellMap();
-            }
-        }).thenSupplyAsync(this::loadWorldInfo).whenComplete(Schedulers.javafx(), ((result, exception) -> {
-            if (exception == null) {
-                this.levelDat = result;
-                updateList();
-                setLoading(false);
-            } else {
-                LOG.warning("Failed to load level.dat", exception);
-                setFailedReason(i18n("world.info.failed"));
-            }
-        })).start();
+
+        gameRuleList.clear();
+        modifiedList.clear();
+        if (skinProperty().get() instanceof GameRulePageSkin gameRulePageSkin) {
+            gameRulePageSkin.resetCellMap();
+        }
+
+        if (!Files.isDirectory(world.getFile())) {
+            LOG.warning("Failed to load level.dat", new IOException("Not a valid world directory"));
+            setFailedReason(i18n("world.info.failed"));
+        }
+
+        this.levelDat = world.getLevelData();
+        updateList();
+
+        setLoading(false);
     }
 
     public void updateList() {
@@ -172,12 +171,6 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> implements World
 
     public void setBatchUpdating(boolean isResettingAll) {
         this.batchUpdating = isResettingAll;
-    }
-
-    private CompoundTag loadWorldInfo() throws IOException {
-        if (!Files.isDirectory(world.getFile())) throw new IOException("Not a valid world directory");
-
-        return world.getLevelData();
     }
 
     void saveLevelDat() {
