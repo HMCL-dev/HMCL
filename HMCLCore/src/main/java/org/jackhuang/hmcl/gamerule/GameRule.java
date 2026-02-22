@@ -82,20 +82,20 @@ public sealed abstract class GameRule permits GameRule.BooleanGameRule, GameRule
     /// @param tag The NBT tag to parse.
     /// @return An Optional containing the GameRule if parsing was successful.
     private static Optional<GameRule> createSimpleRuleFromTag(Tag tag) {
-        String name = tag.getName();
+        String ruleKey = tag.getName();
 
         if (tag instanceof IntTag intTag) {
-            return Optional.of(new IntGameRule(name, intTag.getValue()));
+            return Optional.of(new IntGameRule(ruleKey, intTag.getValue()));
         } else if (tag instanceof ByteTag byteTag) {
-            return Optional.of(new BooleanGameRule(name, byteTag.getValue() == 1));
+            return Optional.of(new BooleanGameRule(ruleKey, byteTag.getValue() == 1));
         } else if (tag instanceof StringTag stringTag) {
             String value = stringTag.getValue();
             if ("true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value)) {
-                return Optional.of(new BooleanGameRule(name, Boolean.parseBoolean(value)));
+                return Optional.of(new BooleanGameRule(ruleKey, Boolean.parseBoolean(value)));
             }
             Integer intValue = Lang.toIntOrNull(value);
             if (intValue != null) {
-                return Optional.of(new IntGameRule(name, intValue));
+                return Optional.of(new IntGameRule(ruleKey, intValue));
             }
         }
 

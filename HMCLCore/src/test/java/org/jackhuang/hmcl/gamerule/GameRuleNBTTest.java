@@ -54,7 +54,7 @@ public class GameRuleNBTTest {
         GameRuleNBT<?, ? extends Tag> gameRuleNBT = GameRule.createGameRuleNBT(tag).orElseThrow(() -> new AssertionError("Expected GameRuleNBT to be created for IntTag"));
 
         GameRuleNBT.IntGameRuleNBT intGameRuleNBT = assertInstanceOf(GameRuleNBT.IntGameRuleNBT.class, gameRuleNBT);
-        intGameRuleNBT.changeValue("2");
+        intGameRuleNBT.changeValue(2);
         assertEquals(2, tag.getValue());
     }
 
@@ -64,7 +64,7 @@ public class GameRuleNBTTest {
         GameRuleNBT<?, ? extends Tag> gameRuleNBT = GameRule.createGameRuleNBT(tag).orElseThrow(() -> new AssertionError("Expected GameRuleNBT to be created for StringedIntTag"));
 
         GameRuleNBT.StringIntGameRuleNBT stringIntGameRuleNBT = assertInstanceOf(GameRuleNBT.StringIntGameRuleNBT.class, gameRuleNBT);
-        stringIntGameRuleNBT.changeValue("2");
+        stringIntGameRuleNBT.changeValue(2);
         assertEquals("2", tag.getValue());
     }
 

@@ -44,18 +44,15 @@ public sealed abstract class GameRuleNBT<T, V extends Tag> permits GameRuleNBT.I
         return gameRuleTag;
     }
 
-    static final class IntGameRuleNBT extends GameRuleNBT<String, IntTag> {
+    static final class IntGameRuleNBT extends GameRuleNBT<Integer, IntTag> {
 
         public IntGameRuleNBT(IntTag gameRuleTag) {
             super(gameRuleTag);
         }
 
         @Override
-        public void changeValue(String newValue) {
-            Integer value = Lang.toIntOrNull(newValue);
-            if (value != null) {
-                getGameRuleTag().setValue(value);
-            }
+        public void changeValue(Integer newValue) {
+            getGameRuleTag().setValue(newValue);
         }
     }
 
@@ -71,15 +68,15 @@ public sealed abstract class GameRuleNBT<T, V extends Tag> permits GameRuleNBT.I
         }
     }
 
-    static final class StringIntGameRuleNBT extends GameRuleNBT<String, StringTag> {
+    static final class StringIntGameRuleNBT extends GameRuleNBT<Integer, StringTag> {
 
         public StringIntGameRuleNBT(StringTag gameRuleTag) {
             super(gameRuleTag);
         }
 
         @Override
-        public void changeValue(String newValue) {
-            getGameRuleTag().setValue(newValue);
+        public void changeValue(Integer newValue) {
+            getGameRuleTag().setValue(String.valueOf(newValue));
         }
     }
 

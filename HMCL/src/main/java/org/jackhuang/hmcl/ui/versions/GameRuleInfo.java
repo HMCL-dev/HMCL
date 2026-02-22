@@ -41,8 +41,6 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
     private final BooleanProperty modified = new SimpleBooleanProperty(this, "modified", false);
 
     private final Runnable onSave;
-    private Runnable resetValue = () -> {
-    };
 
     private GameRuleInfo(GameRule gameRule, GameRuleNBT<T, ? extends Tag> gameRuleNBT, Runnable onSave) {
         ruleKey = gameRule.getRuleKey().get(0);
@@ -57,7 +55,7 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
 
     public static GameRuleInfo<?> createGameRuleInfo(GameRule gameRule, GameRuleNBT<?, ? extends Tag> gameRuleNBT, Runnable onSave, GameVersionNumber gameVersion) {
         if (gameRule instanceof GameRule.IntGameRule intGameRule) {
-            @SuppressWarnings("unchecked") var typedGameRuleNBT = (GameRuleNBT<String, Tag>) gameRuleNBT;
+            @SuppressWarnings("unchecked") var typedGameRuleNBT = (GameRuleNBT<Integer, Tag>) gameRuleNBT;
             return new GameRuleInfo.IntGameRuleInfo(intGameRule, typedGameRuleNBT, onSave, gameVersion);
         } else if (gameRule instanceof GameRule.BooleanGameRule booleanGameRule) {
             @SuppressWarnings("unchecked") var typedGameRuleNBT = (GameRuleNBT<Boolean, Tag>) gameRuleNBT;
@@ -70,9 +68,9 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
 
     public abstract String getDefaultValueText();
 
-    public void resetValue() {
-        resetValue.run();
-    }
+    public abstract T getDefaultValue();
+
+    public abstract void resetValue();
 
     public void save() {
         onSave.run();
@@ -92,14 +90,6 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
 
     public Runnable getOnSave() {
         return onSave;
-    }
-
-    public Runnable getResetValue() {
-        return resetValue;
-    }
-
-    public void setResetValue(Runnable resetValue) {
-        this.resetValue = resetValue;
     }
 
     public BooleanProperty modifiedProperty() {
@@ -125,7 +115,6 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
             });
 
             if (defaultValue != null) {
-                setResetValue(() -> currentValue.set(defaultValue));
                 modifiedProperty().bind(Bindings.createBooleanBinding(() -> currentValue.getValue() != defaultValue, currentValue));
             }
 
@@ -141,22 +130,30 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
             return defaultValue == null ? "" : defaultValue.toString();
         }
 
-        public BooleanProperty currentValueProperty() {
-            return currentValue;
-        }
-
+        @Override
         public Boolean getDefaultValue() {
             return defaultValue;
         }
+
+        @Override
+        public void resetValue() {
+            if (defaultValue != null) {
+                currentValue.setValue(defaultValue);
+            }
+        }
+
+        public BooleanProperty currentValueProperty() {
+            return currentValue;
+        }
     }
 
-    static final class IntGameRuleInfo extends GameRuleInfo<String> {
+    static final class IntGameRuleInfo extends GameRuleInfo<Integer> {
         private final StringProperty currentValue;
         private final Integer defaultValue;
         private final int minValue;
         private final int maxValue;
 
-        public IntGameRuleInfo(GameRule.IntGameRule intGameRule, GameRuleNBT<String, Tag> gameRuleNBT, Runnable onSave, GameVersionNumber gameVersionNumber) {
+        public IntGameRuleInfo(GameRule.IntGameRule intGameRule, GameRuleNBT<Integer, Tag> gameRuleNBT, Runnable onSave, GameVersionNumber gameVersionNumber) {
             super(intGameRule, gameRuleNBT, onSave);
             currentValue = new SimpleStringProperty(String.valueOf(intGameRule.getValue()));
             defaultValue = intGameRule.getDefaultValue(gameVersionNumber).orElse(null);
@@ -166,13 +163,12 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
             currentValue.addListener((observable, oldValue, newValue) -> {
                 Integer value = Lang.toIntOrNull(newValue);
                 if (value != null && value >= minValue && value <= maxValue) {
-                    getGameRuleNBT().changeValue(newValue);
+                    getGameRuleNBT().changeValue(value);
                     save();
                 }
             });
 
             if (defaultValue != null) {
-                setResetValue(() -> currentValue.set(String.valueOf(defaultValue)));
                 modifiedProperty().bind(Bindings.createBooleanBinding(() -> !Objects.equals(Lang.toIntOrNull(currentValue.getValue()), defaultValue), currentValue));
             }
         }
@@ -187,6 +183,18 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
             return defaultValue == null ? null : defaultValue.toString();
         }
 
+        @Override
+        public Integer getDefaultValue() {
+            return defaultValue;
+        }
+
+        @Override
+        public void resetValue() {
+            if (defaultValue != null) {
+                currentValue.set(String.valueOf(defaultValue));
+            }
+        }
+
         public StringProperty currentValueProperty() {
             return currentValue;
         }
@@ -197,10 +205,6 @@ public sealed abstract class GameRuleInfo<T> permits GameRuleInfo.BooleanGameRul
 
         public int getMaxValue() {
             return maxValue;
-        }
-
-        public Integer getDefaultValue() {
-            return defaultValue;
         }
     }
 }
