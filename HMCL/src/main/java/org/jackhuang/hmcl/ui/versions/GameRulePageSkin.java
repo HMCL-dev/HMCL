@@ -137,45 +137,33 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
         private HBox buildNodeForIntGameRule(GameRuleInfo.IntGameRuleInfo gameRule) {
             HBox cellBox = new HBox();
             {
-                cellBox.setPadding(new Insets(8, 8, 8, 16));
+                cellBox.setPadding(new Insets(0, 8, 0, 0));
                 HBox.setHgrow(cellBox, Priority.ALWAYS);
-                cellBox.setAlignment(Pos.CENTER_LEFT);
             }
 
-            VBox displayInfoVBox = new VBox();
+            LinePane cellPane = new LinePane();
+            HBox.setHgrow(cellPane, Priority.ALWAYS);
             {
                 if (StringUtils.isNotBlank(gameRule.getDisplayName())) {
-                    Label displayNameLabel = new Label(gameRule.getDisplayName());
-                    Label ruleKeyLabel = new Label(gameRule.getRuleKey());
-                    ruleKeyLabel.getStyleClass().add("subtitle");
-
-                    displayInfoVBox.getChildren().addAll(displayNameLabel, ruleKeyLabel);
+                    cellPane.setTitle(gameRule.getDisplayName());
+                    cellPane.setSubtitle(gameRule.getRuleKey());
                 } else {
-                    displayInfoVBox.getChildren().addAll(new Label(gameRule.getRuleKey()));
+                    cellPane.setTitle(gameRule.getRuleKey());
                 }
-                displayInfoVBox.setAlignment(Pos.CENTER_LEFT);
-                HBox.setHgrow(displayInfoVBox, Priority.ALWAYS);
+
+                JFXTextField textField = new JFXTextField();
+                {
+                    textField.textProperty().bindBidirectional(gameRule.currentValueProperty());
+                    FXUtils.setValidateWhileTextChanged(textField, true);
+                    textField.setValidators(
+                            new NumberValidator(i18n("input.integer"), false),
+                            new NumberRangeValidator(i18n("input.number_range", gameRule.getMinValue(), gameRule.getMaxValue()), gameRule.getMinValue(), gameRule.getMaxValue()));
+
+                    textField.setPrefWidth(150);
+                }
+                cellPane.setRight(new HBox(12, textField, buildResetButton(gameRule)));
             }
-
-            HBox rightHBox = new HBox();
-            {
-                rightHBox.setSpacing(12);
-                rightHBox.setAlignment(Pos.CENTER_LEFT);
-            }
-
-            JFXTextField textField = new JFXTextField();
-            {
-                textField.textProperty().bindBidirectional(gameRule.currentValueProperty());
-                FXUtils.setValidateWhileTextChanged(textField, true);
-                textField.setValidators(
-                        new NumberValidator(i18n("input.integer"), false),
-                        new NumberRangeValidator(i18n("input.number_range", gameRule.getMinValue(), gameRule.getMaxValue()), gameRule.getMinValue(), gameRule.getMaxValue()));
-
-                textField.setPrefWidth(150);
-            }
-
-            rightHBox.getChildren().addAll(textField, buildResetButton(gameRule));
-            cellBox.getChildren().addAll(displayInfoVBox, rightHBox);
+            cellBox.getChildren().addAll(cellPane);
 
             return cellBox;
         }
@@ -188,7 +176,7 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
                 cellBox.setPadding(new Insets(0, 8, 0, 0));
             }
 
-            LineToggleButton toggleButton = new LineToggleButton();
+            LineToggleResetButton toggleButton = new LineToggleResetButton();
             {
                 if (StringUtils.isNotBlank(gameRule.getDisplayName())) {
                     toggleButton.setTitle(gameRule.getDisplayName());
@@ -198,9 +186,19 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
                 }
                 HBox.setHgrow(toggleButton, Priority.ALWAYS);
                 toggleButton.selectedProperty().bindBidirectional(gameRule.currentValueProperty());
+
+                if (StringUtils.isNotBlank(gameRule.getDefaultValueText())) {
+                    toggleButton.setOnResetButtonClicked(event -> gameRule.resetValue());
+                    toggleButton.resetButtonDisableProperty().bind(gameRule.modifiedProperty().not());
+                    toggleButton.setResetButtonTooltipWhenEnable(i18n("gamerule.restore_default_values.tooltip", gameRule.getDefaultValueText()));
+                    toggleButton.setResetButtonTooltipWhenDisable(i18n("gamerule.now_is_default_values.tooltip"));
+                } else {
+                    toggleButton.setResetButtonDisable(true);
+                    toggleButton.setResetButtonTooltipWhenDisable(i18n("gamerule.not_have_default_values.tooltip"));
+                }
             }
 
-            cellBox.getChildren().addAll(toggleButton, buildResetButton(gameRule));
+            cellBox.getChildren().addAll(toggleButton);
 
             return cellBox;
         }
