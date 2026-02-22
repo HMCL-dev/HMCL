@@ -189,6 +189,39 @@ public abstract sealed class GameVersionNumber implements Comparable<GameVersion
         return buildDebugString().toString();
     }
 
+    public static String getReleaseOfSnapshot(String version) {
+        if (version == null || version.isEmpty()) {
+            return null;
+        }
+
+        GameVersionNumber gvn = asGameVersion(version);
+
+        if (gvn instanceof Release release) {
+            if (release.getEaType() == Release.ReleaseType.GA) {
+                return null;
+            }
+            if (release.getPatch() > 0) {
+                return release.getMajor() + "." + release.getMinor() + "." + release.getPatch();
+            } else {
+                return release.getMajor() + "." + release.getMinor();
+            }
+        }
+
+        if (gvn instanceof LegacySnapshot snapshot) {
+            String[] defaultVersions = Versions.DEFAULT_GAME_VERSIONS;
+            for (int i = defaultVersions.length - 1; i >= 0; i--) {
+                String gaStr = defaultVersions[i];
+                Release gaRel = Release.parseSimple(gaStr);
+
+                if (gaRel.compareToSnapshot(snapshot) > 0) {
+                    return gaStr;
+                }
+            }
+        }
+
+        return null;
+    }
+
     public static final class Old extends GameVersionNumber {
         static Old parse(String value) {
             if (value.isEmpty())
