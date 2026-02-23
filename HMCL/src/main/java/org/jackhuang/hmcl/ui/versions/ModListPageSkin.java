@@ -556,9 +556,9 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         JFXCheckBox checkBox = new JFXCheckBox();
         ImageView imageView = new ImageView();
         TwoLineListItem content = new TwoLineListItem();
-        JFXButton restoreButton = new JFXButton();
-        JFXButton infoButton = new JFXButton();
-        JFXButton revealButton = new JFXButton();
+        JFXButton restoreButton = FXUtils.newToggleButton4(SVG.RESTORE);
+        JFXButton infoButton = FXUtils.newToggleButton4(SVG.INFO);
+        JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
         BooleanProperty booleanProperty;
 
         Tooltip warningTooltip;
@@ -580,16 +580,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             imageView.setPreserveRatio(true);
             imageView.setImage(VersionIconType.COMMAND.getIcon());
 
-            restoreButton.getStyleClass().add("toggle-icon4");
-            restoreButton.setGraphic(SVG.RESTORE.createIcon());
-
             FXUtils.installFastTooltip(restoreButton, i18n("mods.restore"));
-
-            revealButton.getStyleClass().add("toggle-icon4");
-            revealButton.setGraphic(SVG.FOLDER.createIcon());
-
-            infoButton.getStyleClass().add("toggle-icon4");
-            infoButton.setGraphic(SVG.INFO.createIcon());
 
             container.getChildren().setAll(checkBox, imageView, content, restoreButton, revealButton, infoButton);
 

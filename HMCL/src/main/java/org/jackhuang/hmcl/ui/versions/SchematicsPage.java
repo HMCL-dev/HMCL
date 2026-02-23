@@ -580,19 +580,15 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 this.right = new HBox(8);
                 right.setAlignment(Pos.CENTER_RIGHT);
 
-                JFXButton btnReveal = new JFXButton();
+                JFXButton btnReveal = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
                 FXUtils.installFastTooltip(btnReveal, i18n("reveal.in_file_manager"));
-                btnReveal.getStyleClass().add("toggle-icon4");
-                btnReveal.setGraphic(SVG.FOLDER_OPEN.createIcon());
                 btnReveal.setOnAction(event -> {
                     Item item = getItem();
                     if (item != null && !(item instanceof BackItem))
                         item.onReveal();
                 });
 
-                JFXButton btnDelete = new JFXButton();
-                btnDelete.getStyleClass().add("toggle-icon4");
-                btnDelete.setGraphic(SVG.DELETE_FOREVER.createIcon());
+                JFXButton btnDelete = FXUtils.newToggleButton4(SVG.DELETE_FOREVER);
                 btnDelete.setOnAction(event -> {
                     Item item = getItem();
                     if (item != null && !(item instanceof BackItem)) {

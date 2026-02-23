@@ -157,26 +157,20 @@ public final class JavaRestorePage extends ListPageBase<JavaRestorePage.Disabled
             HBox right = new HBox();
             right.setAlignment(Pos.CENTER_RIGHT);
             {
-                JFXButton revealButton = new JFXButton();
-                revealButton.getStyleClass().add("toggle-icon4");
-                revealButton.setGraphic(SVG.FOLDER_OPEN.createIcon());
+                JFXButton revealButton = FXUtils.newToggleButton4(SVG.FOLDER_OPEN);
                 revealButton.setOnAction(e -> skinnable.onReveal());
                 FXUtils.installFastTooltip(revealButton, i18n("reveal.in_file_manager"));
 
                 if (skinnable.realPath == null) {
                     revealButton.setDisable(true);
 
-                    JFXButton removeButton = new JFXButton();
-                    removeButton.getStyleClass().add("toggle-icon4");
-                    removeButton.setGraphic(SVG.DELETE.createIcon());
+                    JFXButton removeButton = FXUtils.newToggleButton4(SVG.DELETE);
                     removeButton.setOnAction(e -> skinnable.onRemove());
                     FXUtils.installFastTooltip(removeButton, i18n("java.disabled.management.remove"));
 
                     right.getChildren().setAll(revealButton, removeButton);
                 } else {
-                    JFXButton restoreButton = new JFXButton();
-                    restoreButton.getStyleClass().add("toggle-icon4");
-                    restoreButton.setGraphic(SVG.RESTORE.createIcon());
+                    JFXButton restoreButton = FXUtils.newToggleButton4(SVG.RESTORE);
                     restoreButton.setOnAction(e -> skinnable.onRestore());
                     FXUtils.installFastTooltip(restoreButton, i18n("java.disabled.management.restore"));
 

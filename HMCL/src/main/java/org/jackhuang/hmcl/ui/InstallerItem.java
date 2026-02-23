@@ -348,9 +348,7 @@ public class InstallerItem extends Control {
             buttonsContainer.setAlignment(Pos.CENTER);
             pane.getChildren().add(buttonsContainer);
 
-            JFXButton removeButton = new JFXButton();
-            removeButton.setGraphic(SVG.CLOSE.createIcon());
-            removeButton.getStyleClass().add("toggle-icon4");
+            JFXButton removeButton = FXUtils.newToggleButton4(SVG.CLOSE);
             if (control.id.equals(MINECRAFT.getPatchId())) {
                 removeButton.setVisible(false);
             } else {
