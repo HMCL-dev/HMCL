@@ -30,7 +30,6 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
@@ -377,20 +376,20 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             return VersionIconType.getIconType(this.localModFile.getModLoaderType()).getIcon();
         }
 
-        public void loadIcon(ImageView imageView, @Nullable WeakReference<ObjectProperty<ModInfoObject>> current) {
+        public void loadIcon(ImageContainer imageContainer, @Nullable WeakReference<ObjectProperty<ModInfoObject>> current) {
             SoftReference<CompletableFuture<Image>> iconCache = this.iconCache;
             CompletableFuture<Image> imageFuture;
             if (iconCache != null && (imageFuture = iconCache.get()) != null) {
                 Image image = imageFuture.getNow(null);
                 if (image != null) {
-                    imageView.setImage(image);
+                    imageContainer.setImage(image);
                     return;
                 }
             } else {
                 imageFuture = CompletableFuture.supplyAsync(this::loadIcon, Schedulers.io());
                 this.iconCache = new SoftReference<>(imageFuture);
             }
-            imageView.setImage(VersionIconType.getIconType(localModFile.getModLoaderType()).getIcon());
+            imageContainer.setImage(VersionIconType.getIconType(localModFile.getModLoaderType()).getIcon());
             imageFuture.thenAcceptAsync(image -> {
                 if (current != null) {
                     ObjectProperty<ModInfoObject> infoObjectProperty = current.get();
@@ -400,7 +399,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
                     }
                 }
 
-                imageView.setImage(image);
+                imageContainer.setImage(image);
             }, Schedulers.javafx());
         }
     }
@@ -414,9 +413,8 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             Stage stage = Controllers.getStage();
             maxWidthProperty().bind(stage.widthProperty().multiply(0.7));
 
-            ImageView imageView = new ImageView();
-            FXUtils.limitSize(imageView, 40, 40);
-            modInfo.loadIcon(imageView, null);
+            var imageContainer = new ImageContainer(40);
+            modInfo.loadIcon(imageContainer, null);
 
             TwoLineListItem title = new TwoLineListItem();
             if (modInfo.getModTranslations() != null && I18n.isUseChinese())
@@ -437,7 +435,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             }
             title.setSubtitle(subtitle.toString());
 
-            titleContainer.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), title);
+            titleContainer.getChildren().setAll(imageContainer, title);
             setHeading(titleContainer);
 
             Label description = new Label(modInfo.getModInfo().getDescription().toString());
@@ -554,7 +552,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         private static final PseudoClass WARNING = PseudoClass.getPseudoClass("warning");
 
         JFXCheckBox checkBox = new JFXCheckBox();
-        ImageView imageView = new ImageView();
+        ImageContainer imageContainer = new ImageContainer(24);
         TwoLineListItem content = new TwoLineListItem();
         JFXButton restoreButton = new JFXButton();
         JFXButton infoButton = new JFXButton();
@@ -575,10 +573,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             content.setMouseTransparent(true);
             setSelectable();
 
-            imageView.setFitWidth(24);
-            imageView.setFitHeight(24);
-            imageView.setPreserveRatio(true);
-            imageView.setImage(VersionIconType.COMMAND.getIcon());
+            imageContainer.setImage(VersionIconType.COMMAND.getIcon());
 
             restoreButton.getStyleClass().add("toggle-icon4");
             restoreButton.setGraphic(SVG.RESTORE.createIcon());
@@ -591,7 +586,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             infoButton.getStyleClass().add("toggle-icon4");
             infoButton.setGraphic(SVG.INFO.createIcon());
 
-            container.getChildren().setAll(checkBox, imageView, content, restoreButton, revealButton, infoButton);
+            container.getChildren().setAll(checkBox, imageContainer, content, restoreButton, revealButton, infoButton);
 
             StackPane.setMargin(container, new Insets(8));
             getContainer().getChildren().setAll(container);
@@ -616,7 +611,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
 
             ModLoaderType modLoaderType = modInfo.getModLoaderType();
 
-            dataItem.loadIcon(imageView, new WeakReference<>(this.itemProperty()));
+            dataItem.loadIcon(imageContainer, new WeakReference<>(this.itemProperty()));
 
             String displayName = modInfo.getName();
             if (modTranslations != null && I18n.isUseChinese()) {

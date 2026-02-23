@@ -30,7 +30,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.effect.BoxBlur;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -69,7 +68,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
     private final World world;
     private CompoundTag levelDat;
 
-    ImageView iconImageView = new ImageView();
+    private final ImageContainer iconImageView = new ImageContainer(32);
 
     public WorldInfoPage(WorldManagePage worldManagePage) {
         this.worldManagePage = worldManagePage;
@@ -137,7 +136,6 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 iconPane.setTitle(i18n("world.icon"));
 
                 {
-                    FXUtils.limitSize(iconImageView, 32, 32);
                     iconImageView.setImage(world.getIcon() == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : world.getIcon());
                 }
 
