@@ -20,10 +20,10 @@ package org.jackhuang.hmcl.upgrade;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import javafx.application.Platform;
-
 import org.jackhuang.hmcl.EntryPoint;
 import org.jackhuang.hmcl.Main;
 import org.jackhuang.hmcl.Metadata;
+import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.task.Task;
 import org.jackhuang.hmcl.task.TaskExecutor;
 import org.jackhuang.hmcl.ui.Controllers;
@@ -33,10 +33,10 @@ import org.jackhuang.hmcl.util.StringUtils;
 import org.jackhuang.hmcl.util.SwingUtils;
 import org.jackhuang.hmcl.util.TaskCancellationAction;
 import org.jackhuang.hmcl.util.io.JarUtils;
-import org.jackhuang.hmcl.java.JavaRuntime;
 import org.jackhuang.hmcl.util.platform.OperatingSystem;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -47,8 +47,8 @@ import java.util.regex.Pattern;
 
 import static org.jackhuang.hmcl.ui.FXUtils.checkFxUserThread;
 import static org.jackhuang.hmcl.util.Lang.thread;
-import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
+import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 
 public final class UpdateHandler {
     private UpdateHandler() {
@@ -177,12 +177,7 @@ public final class UpdateHandler {
     private static void startJava(Path jar, String... appArgs) throws IOException {
         List<String> commandline = new ArrayList<>();
         commandline.add(JavaRuntime.getDefault().getBinary().toString());
-        for (Map.Entry<Object, Object> entry : System.getProperties().entrySet()) {
-            Object key = entry.getKey();
-            if (key instanceof String && ((String) key).startsWith("hmcl.")) {
-                commandline.add("-D" + key + "=" + entry.getValue());
-            }
-        }
+        commandline.addAll(ManagementFactory.getRuntimeMXBean().getInputArguments());
         commandline.add("-jar");
         commandline.add(jar.toAbsolutePath().toString());
         commandline.addAll(Arrays.asList(appArgs));
