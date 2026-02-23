@@ -24,6 +24,7 @@ import javafx.css.Styleable;
 import javafx.css.StyleableDoubleProperty;
 import javafx.css.StyleableProperty;
 import javafx.css.converter.SizeConverter;
+import javafx.geometry.Pos;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
@@ -47,13 +48,15 @@ public class ImageContainer extends StackPane {
         FXUtils.setLimitWidth(this, width);
         FXUtils.setLimitHeight(this, height);
 
+        imageView.setPreserveRatio(true);
+        FXUtils.limitSize(imageView, width, height);
+        StackPane.setAlignment(imageView, Pos.CENTER);
+
         clip.setWidth(width);
         clip.setHeight(height);
         updateCornerRadius(getCornerRadius());
         this.setClip(clip);
 
-        imageView.setPreserveRatio(true);
-        FXUtils.limitSize(imageView, width, height);
         this.getChildren().setAll(imageView);
     }
 
