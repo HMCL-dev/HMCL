@@ -37,9 +37,6 @@ import org.jackhuang.hmcl.ui.SVG;
 import org.jackhuang.hmcl.ui.construct.*;
 import org.jackhuang.hmcl.util.StringUtils;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import static org.jackhuang.hmcl.ui.ToolbarListPageSkin.createToolbarButton2;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
@@ -48,7 +45,6 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
     private final HBox toolBar;
     private final JFXTextField searchField;
     private final JFXListView<GameRuleInfo<?>> listView = new JFXListView<>();
-    private final Map<String, HBox> cellMap = new HashMap<>();
 
     GameRulePageSkin(GameRulePage skinnable) {
         super(skinnable);
@@ -105,23 +101,17 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
             center.setContent(listView);
 
             listView.setItems(getSkinnable().getDisplayedItems());
-            listView.setCellFactory(x -> new GameRuleListCell(listView, cellMap, getSkinnable().readOnly));
+            listView.setCellFactory(x -> new GameRuleListCell(listView, getSkinnable().readOnly));
             FXUtils.ignoreEvent(listView, KeyEvent.KEY_PRESSED, e -> e.getCode() == KeyCode.ESCAPE);
 
             root.getContent().add(center);
         }
     }
 
-    public void resetCellMap() {
-        cellMap.clear();
-    }
-
     static class GameRuleListCell extends MDListCell<GameRuleInfo<?>> {
-        private final Map<String, HBox> cellMap;
 
-        public GameRuleListCell(JFXListView<GameRuleInfo<?>> listView, Map<String, HBox> cellMap, BooleanProperty readOnly) {
+        public GameRuleListCell(JFXListView<GameRuleInfo<?>> listView, BooleanProperty readOnly) {
             super(listView);
-            this.cellMap = cellMap;
             this.disableProperty().bind(readOnly);
         }
 
@@ -129,14 +119,12 @@ class GameRulePageSkin extends SkinBase<GameRulePage> {
         protected void updateControl(GameRuleInfo<?> item, boolean empty) {
             if (empty) return;
 
-            HBox hBox = cellMap.computeIfAbsent(item.getRuleKey(), key -> {
-                if (item instanceof GameRuleInfo.IntGameRuleInfo intInfo) {
-                    return buildNodeForIntGameRule(intInfo);
-                } else if (item instanceof GameRuleInfo.BooleanGameRuleInfo booleanInfo) {
-                    return buildNodeForBooleanGameRule(booleanInfo);
-                }
-                return null;
-            });
+            HBox hBox = null;
+            if (item instanceof GameRuleInfo.IntGameRuleInfo intInfo) {
+                hBox = buildNodeForIntGameRule(intInfo);
+            } else if (item instanceof GameRuleInfo.BooleanGameRuleInfo booleanInfo) {
+                hBox = buildNodeForBooleanGameRule(booleanInfo);
+            }
             if (hBox != null) {
                 getContainer().getChildren().setAll(hBox);
             } else {

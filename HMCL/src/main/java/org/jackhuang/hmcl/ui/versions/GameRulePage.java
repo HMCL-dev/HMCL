@@ -84,13 +84,8 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> implements World
 
     @Override
     public void refresh() {
-        this.setLoading(true);
-
         gameRuleList.clear();
         modifiedList.clear();
-        if (skinProperty().get() instanceof GameRulePageSkin gameRulePageSkin) {
-            gameRulePageSkin.resetCellMap();
-        }
 
         if (!Files.isDirectory(world.getFile())) {
             LOG.warning("Failed to load level.dat");
@@ -99,8 +94,6 @@ public class GameRulePage extends ListPageBase<GameRuleInfo<?>> implements World
 
         this.levelDat = world.getLevelData();
         updateList();
-
-        setLoading(false);
     }
 
     public void updateList() {
