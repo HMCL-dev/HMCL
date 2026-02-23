@@ -44,7 +44,6 @@ public class GameAdvancedListItem extends AdvancedListItem {
         this.imageView = new JFXImageView();
         imageView.setLimitSize(LEFT_GRAPHIC_SIZE, LEFT_GRAPHIC_SIZE);
         imageView.setPreserveRatio(true);
-        imageView.setImage(null);
 
         Node imageViewWrapper = FXUtils.limitingSize(imageView, LEFT_GRAPHIC_SIZE, LEFT_GRAPHIC_SIZE);
         imageView.setMouseTransparent(true);
@@ -52,7 +51,6 @@ public class GameAdvancedListItem extends AdvancedListItem {
         setLeftGraphic(imageViewWrapper);
 
         holder.add(FXUtils.onWeakChangeAndOperate(Profiles.selectedVersionProperty(), this::loadVersion));
-
     }
 
     private void loadVersion(String version) {
