@@ -2661,6 +2661,34 @@
       }
     },
     "org.lwjgl:lwjgl-freetype:3.3.3:natives-linux": null,
+    "org.lwjgl:lwjgl:3.4.1:natives-linux": {
+      "name": "org.glavo.hmcl:lwjgl3-natives:3.4.1-rc1",
+      "downloads": {
+        "classifiers": {
+          "linux-loongarch64": {
+            "path": "org/glavo/hmcl/lwjgl3-natives/3.4.1-rc1/lwjgl3-natives-3.4.1-rc1-linux-loongarch64.jar",
+            "url": "https://repo1.maven.org/maven2/org/glavo/hmcl/lwjgl3-natives/3.4.1-rc1-linux-loongarch64/lwjgl3-natives-3.4.1-rc1-linux-loongarch64.jar",
+            "sha1": "3fed872fc2f9929d2be25389dd312dfb48e9f89e",
+            "size": 22854580
+          }
+        }
+      },
+      "extract": {
+        "exclude": [
+          "META-INF/"
+        ]
+      },
+      "natives": {
+        "linux": "linux-loongarch64"
+      }
+    },
+    "org.lwjgl:lwjgl-jemalloc:3.4.1:natives-linux": null,
+    "org.lwjgl:lwjgl-openal:3.4.1:natives-linux": null,
+    "org.lwjgl:lwjgl-opengl:3.4.1:natives-linux": null,
+    "org.lwjgl:lwjgl-glfw:3.4.1:natives-linux": null,
+    "org.lwjgl:lwjgl-stb:3.4.1:natives-linux": null,
+    "org.lwjgl:lwjgl-tinyfd:3.4.1:natives-linux": null,
+    "org.lwjgl:lwjgl-freetype:3.4.1:natives-linux": null,
     "net.java.dev.jna:jna:5.8.0": {
       "name": "net.java.dev.jna:jna:5.13.0",
       "downloads": {
