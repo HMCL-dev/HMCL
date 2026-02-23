@@ -37,6 +37,8 @@ import java.util.List;
 /// A custom ImageView with fixed size and corner radius support.
 public class ImageContainer extends StackPane {
 
+    private static final String DEFAULT_STYLE_CLASS = "image-container";
+
     private final ImageView imageView = new ImageView();
     private final Rectangle clip = new Rectangle();
 
@@ -45,6 +47,8 @@ public class ImageContainer extends StackPane {
     }
 
     public ImageContainer(double width, double height) {
+        this.getStyleClass().add(DEFAULT_STYLE_CLASS);
+
         FXUtils.setLimitWidth(this, width);
         FXUtils.setLimitHeight(this, height);
 
