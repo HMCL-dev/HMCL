@@ -18,7 +18,6 @@
 package org.jackhuang.hmcl.ui.versions;
 
 import javafx.geometry.Pos;
-import javafx.scene.Node;
 import org.jackhuang.hmcl.event.Event;
 import org.jackhuang.hmcl.setting.Profile;
 import org.jackhuang.hmcl.setting.Profiles;
@@ -33,19 +32,17 @@ import java.util.function.Consumer;
 import static org.jackhuang.hmcl.util.i18n.I18n.i18n;
 
 public class GameAdvancedListItem extends AdvancedListItem {
-    private final ImageContainer imageView;
+    private final ImageContainer imageContainer;
     private final WeakListenerHolder holder = new WeakListenerHolder();
     private Profile profile;
     @SuppressWarnings("unused")
     private Consumer<Event> onVersionIconChangedListener;
 
-    @SuppressWarnings("SuspiciousNameCombination")
     public GameAdvancedListItem() {
-        this.imageView = new ImageContainer(LEFT_GRAPHIC_SIZE);
-        Node imageViewWrapper = FXUtils.limitingSize(imageView, LEFT_GRAPHIC_SIZE, LEFT_GRAPHIC_SIZE);
-        imageView.setMouseTransparent(true);
-        AdvancedListItem.setAlignment(imageViewWrapper, Pos.CENTER);
-        setLeftGraphic(imageViewWrapper);
+        this.imageContainer = new ImageContainer(LEFT_GRAPHIC_SIZE);
+        imageContainer.setMouseTransparent(true);
+        AdvancedListItem.setAlignment(imageContainer, Pos.CENTER);
+        setLeftGraphic(imageContainer);
 
         holder.add(FXUtils.onWeakChangeAndOperate(Profiles.selectedVersionProperty(), this::loadVersion));
     }
@@ -63,11 +60,11 @@ public class GameAdvancedListItem extends AdvancedListItem {
                 Profiles.getSelectedProfile().getRepository().hasVersion(version)) {
             setTitle(i18n("version.manage.manage"));
             setSubtitle(version);
-            imageView.setImage(Profiles.getSelectedProfile().getRepository().getVersionIconImage(version));
+            imageContainer.setImage(Profiles.getSelectedProfile().getRepository().getVersionIconImage(version));
         } else {
             setTitle(i18n("version.empty"));
             setSubtitle(i18n("version.empty.add"));
-            imageView.setImage(VersionIconType.DEFAULT.getIcon());
+            imageContainer.setImage(VersionIconType.DEFAULT.getIcon());
         }
     }
 }

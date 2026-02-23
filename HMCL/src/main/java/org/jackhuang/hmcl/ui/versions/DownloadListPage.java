@@ -545,7 +545,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
 
                         imageContainer.setMouseTransparent(true);
 
-                        container.getChildren().setAll(FXUtils.limitingSize(imageContainer, 40, 40), content);
+                        container.getChildren().setAll(imageContainer, content);
                         HBox.setHgrow(content, Priority.ALWAYS);
 
                         this.graphic = new RipplerContainer(container);
