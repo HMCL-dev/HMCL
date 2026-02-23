@@ -95,6 +95,22 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
         }
     }
 
+    private int toModsSearchModloaderField(LoaderType sort) {
+        https://docs.curseforge.com/rest-api/#tocS_MinecraftModLoaderIndex
+        switch (sort) {
+            case FORGE:
+                return 1;
+            case FABRIC:
+                return 4;
+            case QUILT:
+                return 5;
+            case NEOFORGE:
+                return 6;
+            default:
+                return 0;
+        }
+    }
+
     private String toSortOrder(SortOrder sortOrder) {
         // https://docs.curseforge.com/#tocS_SortOrder
         switch (sortOrder) {
@@ -111,7 +127,7 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
     }
 
     @Override
-    public SearchResult search(DownloadProvider downloadProvider, String gameVersion, @Nullable RemoteModRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder) throws IOException {
+    public SearchResult search(DownloadProvider downloadProvider, String gameVersion, @Nullable RemoteModRepository.Category category, int pageOffset, int pageSize, String searchFilter, SortType sortType, SortOrder sortOrder, LoaderType loaderType) throws IOException {
         SEMAPHORE.acquireUninterruptibly();
         try {
             int categoryId = 0;
@@ -130,6 +146,10 @@ public final class CurseForgeRemoteModRepository implements RemoteModRepository 
             query.put("sortOrder", toSortOrder(sortOrder));
             query.put("index", Integer.toString(pageOffset * pageSize));
             query.put("pageSize", Integer.toString(pageSize));
+
+            if (loaderType != LoaderType.ALL) {
+                query.put("modLoaderTypes", String.format("[%s]", toModsSearchModloaderField(loaderType)));
+            }
 
             Response<List<CurseAddon>> response = withApiKey(HttpRequest.GET(downloadProvider.injectURL(NetworkUtils.withQuery(PREFIX + "/v1/mods/search", query))))
                     .getJson(Response.typeOf(listTypeOf(CurseAddon.class)));
