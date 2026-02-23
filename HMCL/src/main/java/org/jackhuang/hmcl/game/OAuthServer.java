@@ -29,9 +29,8 @@ import org.jackhuang.hmcl.util.io.JarUtils;
 import org.jackhuang.hmcl.util.io.NetworkUtils;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
+import java.security.SecureRandom;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -43,6 +42,8 @@ import static org.jackhuang.hmcl.util.logging.Logger.LOG;
 public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
     private final int port;
     private final CompletableFuture<String> future = new CompletableFuture<>();
+    private final String codeVerifier;
+    private final String state;
 
     public static String lastlyOpenedURL;
 
@@ -52,6 +53,34 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
         super(port);
 
         this.port = port;
+
+        var encoder = Base64.getUrlEncoder().withoutPadding();
+        var random = new SecureRandom();
+
+        {
+            // https://datatracker.ietf.org/doc/html/rfc6749#section-4.1.1
+            // https://datatracker.ietf.org/doc/html/rfc6749#section-10.12
+            byte[] bytes = new byte[32];
+            random.nextBytes(bytes);
+            this.state = encoder.encodeToString(bytes);
+        }
+
+        {
+            // https://datatracker.ietf.org/doc/html/rfc7636#section-4.1
+            byte[] bytes = new byte[64];
+            random.nextBytes(bytes);
+            this.codeVerifier = encoder.encodeToString(bytes);
+        }
+    }
+
+    @Override
+    public String getCodeVerifier() {
+        return codeVerifier;
+    }
+
+    @Override
+    public String getState() {
+        return state;
     }
 
     @Override
@@ -93,12 +122,22 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
         String parameters = session.getQueryParameterString();
 
         Map<String, String> query = mapOf(NetworkUtils.parseQuery(parameters));
-        if (query.containsKey("code")) {
-            idToken = query.get("id_token");
-            future.complete(query.get("code"));
+
+        String code = query.get("code");
+        if (code != null) {
+            if (this.state.equals(query.get("state"))) {
+                idToken = query.get("id_token");
+                future.complete(code);
+            } else if (query.containsKey("state")) {
+                LOG.warning("Failed to authenticate: invalid state in parameters");
+                future.completeExceptionally(new AuthenticationException("Failed to authenticate: invalid state"));
+            } else {
+                LOG.warning("Failed to authenticate: missing state in parameters");
+                future.completeExceptionally(new AuthenticationException("Failed to authenticate: missing state"));
+            }
         } else {
-            LOG.warning("Error: " + parameters);
-            future.completeExceptionally(new AuthenticationException("failed to authenticate"));
+            LOG.warning("Failed to authenticate: missing authorization code in parameters");
+            future.completeExceptionally(new AuthenticationException("Failed to authenticate: missing authorization code"));
         }
 
         String html;
@@ -167,17 +206,6 @@ public final class OAuthServer extends NanoHTTPD implements OAuth.Session {
         public String getClientId() {
             return System.getProperty("hmcl.microsoft.auth.id",
                     JarUtils.getAttribute("hmcl.microsoft.auth.id", ""));
-        }
-
-        @Override
-        public String getClientSecret() {
-            return System.getProperty("hmcl.microsoft.auth.secret",
-                    JarUtils.getAttribute("hmcl.microsoft.auth.secret", ""));
-        }
-
-        @Override
-        public boolean isPublicClient() {
-            return true; // We have turned on the device auth flow.
         }
     }
 

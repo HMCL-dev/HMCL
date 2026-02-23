@@ -61,7 +61,7 @@ HMCL 乃社群共驅之開源項目，迎諸君獻碼或建言。
 
 ## 貢獻者
 
-自乙未年（2015）始，百十余人參與 HMCL，謝其勤勞！
+自乙未年（2015）始，百二十余人參與 HMCL，謝其勤勞！
 
 [![Contributors](https://contrib.rocks/image?repo=HMCL-dev/HMCL)](https://github.com/HMCL-dev/HMCL/graphs/contributors)
 
