@@ -28,31 +28,8 @@ import org.jackhuang.hmcl.util.gson.Validation;
  * @author huangyuhui
  */
 @Immutable
-public final class CurseManifestModLoader implements Validation {
-
-    @SerializedName("id")
-    private final String id;
-
-    @SerializedName("primary")
-    private final boolean primary;
-
-    public CurseManifestModLoader() {
-        this("", false);
-    }
-
-    public CurseManifestModLoader(String id, boolean primary) {
-        this.id = id;
-        this.primary = primary;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public boolean isPrimary() {
-        return primary;
-    }
-
+public record CurseManifestModLoader(@SerializedName("id") String id,
+                                     @SerializedName("primary") boolean primary) implements Validation {
     @Override
     public void validate() throws JsonParseException {
         if (StringUtils.isBlank(id))
