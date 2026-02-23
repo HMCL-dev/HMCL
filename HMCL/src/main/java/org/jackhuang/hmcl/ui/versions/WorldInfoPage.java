@@ -68,7 +68,7 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
     private final World world;
     private CompoundTag levelDat;
 
-    private final JFXImageView iconImageView = new JFXImageView();
+    private final JFXImageView iconImageView = new JFXImageView(32);
 
     public WorldInfoPage(WorldManagePage worldManagePage) {
         this.worldManagePage = worldManagePage;
@@ -136,7 +136,6 @@ public final class WorldInfoPage extends SpinnerPane implements WorldManagePage.
                 iconPane.setTitle(i18n("world.icon"));
 
                 {
-                    iconImageView.setLimitSize(32, 32);
                     iconImageView.setImage(world.getIcon() == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : world.getIcon());
                 }
 

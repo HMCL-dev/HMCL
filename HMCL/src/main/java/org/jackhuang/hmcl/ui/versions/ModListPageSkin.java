@@ -414,8 +414,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             Stage stage = Controllers.getStage();
             maxWidthProperty().bind(stage.widthProperty().multiply(0.7));
 
-            JFXImageView imageView = new JFXImageView();
-            imageView.setLimitSize(40, 40);
+            JFXImageView imageView = new JFXImageView(40);
             modInfo.loadIcon(imageView, null);
 
             TwoLineListItem title = new TwoLineListItem();
@@ -554,7 +553,7 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
         private static final PseudoClass WARNING = PseudoClass.getPseudoClass("warning");
 
         JFXCheckBox checkBox = new JFXCheckBox();
-        ImageView imageView = new JFXImageView();
+        ImageView imageView = new JFXImageView(24);
         TwoLineListItem content = new TwoLineListItem();
         JFXButton restoreButton = new JFXButton();
         JFXButton infoButton = new JFXButton();
@@ -575,9 +574,6 @@ final class ModListPageSkin extends SkinBase<ModListPage> {
             content.setMouseTransparent(true);
             setSelectable();
 
-            imageView.setFitWidth(24);
-            imageView.setFitHeight(24);
-            imageView.setPreserveRatio(true);
             imageView.setImage(VersionIconType.COMMAND.getIcon());
 
             restoreButton.getStyleClass().add("toggle-icon4");

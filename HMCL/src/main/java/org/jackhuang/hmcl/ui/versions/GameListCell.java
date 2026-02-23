@@ -86,8 +86,7 @@ public final class GameListCell extends ListCell<GameListItem> {
             center.setSpacing(8);
             center.setAlignment(Pos.CENTER_LEFT);
 
-            this.imageView = new JFXImageView();
-            imageView.setLimitSize(32, 32);
+            this.imageView = new JFXImageView(32);
 
             this.content = new TwoLineListItem();
             BorderPane.setAlignment(content, Pos.CENTER);

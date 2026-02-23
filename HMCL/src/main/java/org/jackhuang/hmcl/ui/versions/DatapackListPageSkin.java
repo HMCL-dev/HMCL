@@ -301,7 +301,7 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
 
     private final class DatapackInfoListCell extends MDListCell<DatapackInfoObject> {
         final JFXCheckBox checkBox = new JFXCheckBox();
-        ImageView imageView = new JFXImageView();
+        ImageView imageView = new JFXImageView(32);
         final TwoLineListItem content = new TwoLineListItem();
         BooleanProperty booleanProperty;
 
@@ -317,9 +317,6 @@ final class DatapackListPageSkin extends SkinBase<DatapackListPage> {
 
             checkBox.disableProperty().bind(isReadOnlyProperty);
 
-            imageView.setFitWidth(32);
-            imageView.setFitHeight(32);
-            imageView.setPreserveRatio(true);
             imageView.setImage(FXUtils.newBuiltinImage("/assets/img/unknown_pack.png"));
 
             StackPane.setMargin(container, new Insets(8));

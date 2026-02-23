@@ -232,9 +232,8 @@ public final class WorldBackupsPage extends ListPageBase<WorldBackupsPage.Backup
                 root.setLeft(left);
                 left.setPadding(new Insets(0, 8, 0, 0));
 
-                var imageView = new JFXImageView();
+                var imageView = new JFXImageView(32);
                 left.getChildren().add(imageView);
-                FXUtils.limitSize(imageView, 32, 32);
                 imageView.setImage(world.getIcon() == null ? FXUtils.newBuiltinImage("/assets/img/unknown_server.png") : world.getIcon());
             }
 

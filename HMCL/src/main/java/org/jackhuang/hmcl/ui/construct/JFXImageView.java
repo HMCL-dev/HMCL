@@ -35,19 +35,28 @@ public class JFXImageView extends ImageView {
 
     private final Rectangle clip = new Rectangle();
 
-    public JFXImageView() {
-        super();
-        clip.widthProperty().bind(this.fitWidthProperty());
-        clip.heightProperty().bind(this.fitHeightProperty());
+    public JFXImageView(double size) {
+        this(size, size);
+    }
+
+    public JFXImageView(double width, double height) {
+        clip.setWidth(width);
+        clip.setHeight(height);
 
         updateCornerRadius(getCornerRadius());
 
         this.setClip(clip);
-    }
 
-    public JFXImageView(Image image) {
-        this();
-        setImage(image);
+        this.setPreserveRatio(true);
+        imageProperty().addListener((obs, oldImage, newImage) -> {
+            if (newImage != null && (newImage.getWidth() > width || newImage.getHeight() > height)) {
+                setFitHeight(height);
+                setFitWidth(width);
+            } else {
+                setFitHeight(-1);
+                setFitWidth(-1);
+            }
+        });
     }
 
     public void setLimitSize(double width, double height) {

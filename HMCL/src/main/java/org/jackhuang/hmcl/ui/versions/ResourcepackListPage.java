@@ -177,7 +177,7 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
     }
 
     private static final class ResourcepackListCell extends MDListCell<ResourcepackInfoObject> {
-        private final JFXImageView imageView = new JFXImageView();
+        private final JFXImageView imageView = new JFXImageView(32);
         private final TwoLineListItem content = new TwoLineListItem();
         private final JFXButton btnReveal = new JFXButton();
         private final JFXButton btnDelete = new JFXButton();
@@ -194,7 +194,6 @@ public final class ResourcepackListPage extends ListPageBase<ResourcepackListPag
 
             HBox left = new HBox(8);
             left.setAlignment(Pos.CENTER);
-            imageView.setLimitSize(32, 32);
             left.getChildren().add(imageView);
             left.setPadding(new Insets(0, 8, 0, 0));
             FXUtils.setLimitWidth(left, 48);

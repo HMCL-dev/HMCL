@@ -103,8 +103,7 @@ public final class GameListPopupMenu extends StackPane {
             FXUtils.setLimitWidth(imageViewContainer, 32);
             FXUtils.setLimitHeight(imageViewContainer, 32);
 
-            this.imageView = new JFXImageView();
-            imageView.setLimitSize(32, 32);
+            this.imageView = new JFXImageView(32);
             imageViewContainer.getChildren().setAll(imageView);
 
             this.content = new TwoLineListItem();

@@ -41,10 +41,7 @@ public class GameAdvancedListItem extends AdvancedListItem {
 
     @SuppressWarnings("SuspiciousNameCombination")
     public GameAdvancedListItem() {
-        this.imageView = new JFXImageView();
-        imageView.setLimitSize(LEFT_GRAPHIC_SIZE, LEFT_GRAPHIC_SIZE);
-        imageView.setPreserveRatio(true);
-
+        this.imageView = new JFXImageView(LEFT_GRAPHIC_SIZE);
         Node imageViewWrapper = FXUtils.limitingSize(imageView, LEFT_GRAPHIC_SIZE, LEFT_GRAPHIC_SIZE);
         imageView.setMouseTransparent(true);
         AdvancedListItem.setAlignment(imageViewWrapper, Pos.CENTER);

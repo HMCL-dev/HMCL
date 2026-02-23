@@ -441,9 +441,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
             if (image == null) {
                 return super.getIcon(size);
             } else {
-                var imageView = new JFXImageView();
-                imageView.setFitHeight(size);
-                imageView.setFitWidth(size);
+                var imageView = new JFXImageView(size);
                 imageView.setImage(image);
                 return imageView;
             }
@@ -561,9 +559,7 @@ public final class SchematicsPage extends ListPageBase<SchematicsPage.Item> impl
                 this.left = new StackPane();
                 left.setPadding(new Insets(0, 8, 0, 0));
 
-                this.iconImageView = new JFXImageView();
-                FXUtils.limitSize(iconImageView, 32, 32);
-
+                this.iconImageView = new JFXImageView(32);
                 this.iconSVGView = new SVGContainer(32);
 
                 BorderPane.setAlignment(left, Pos.CENTER);

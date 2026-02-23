@@ -534,7 +534,7 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                     private final StackPane wrapper = new StackPane();
 
                     private final TwoLineListItem content = new TwoLineListItem();
-                    private final ImageView imageView = new JFXImageView();
+                    private final ImageView imageView = new JFXImageView(40);
 
                     {
                         setPadding(PADDING);
@@ -544,8 +544,6 @@ public class DownloadListPage extends Control implements DecoratorPage, VersionP
                         container.setCursor(Cursor.HAND);
                         container.setAlignment(Pos.CENTER_LEFT);
 
-                        imageView.setFitWidth(40);
-                        imageView.setFitHeight(40);
                         imageView.setMouseTransparent(true);
 
                         container.getChildren().setAll(FXUtils.limitingSize(imageView, 40, 40), content);

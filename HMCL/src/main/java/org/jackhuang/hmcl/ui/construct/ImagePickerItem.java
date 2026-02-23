@@ -48,9 +48,8 @@ public final class ImagePickerItem extends BorderPane {
     private final ObjectProperty<Image> image = new SimpleObjectProperty<>(this, "image");
 
     public ImagePickerItem() {
-        imageView = new JFXImageView();
+        imageView = new JFXImageView(32);
         imageView.setSmooth(false);
-        imageView.setPreserveRatio(true);
 
         JFXButton selectButton = new JFXButton();
         selectButton.setGraphic(SVG.EDIT.createIcon(20));
