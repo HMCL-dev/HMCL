@@ -33,6 +33,10 @@ import java.util.Objects;
 public record CurseManifestFile(@SerializedName("projectID") int projectID, @SerializedName("fileID") int fileID,
                                 @SerializedName("fileName") String fileName, @SerializedName("url") String url,
                                 @SerializedName("required") boolean required) implements Validation {
+    public CurseManifestFile() {
+        this(0, 0, null, null, true);
+    }
+
     @Override
     public void validate() throws JsonParseException {
         if (projectID == 0 || fileID == 0)

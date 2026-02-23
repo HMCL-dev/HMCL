@@ -22,6 +22,7 @@ import org.jackhuang.hmcl.mod.ModpackManifest;
 import org.jackhuang.hmcl.mod.ModpackProvider;
 import org.jackhuang.hmcl.util.Immutable;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -35,6 +36,9 @@ public record CurseManifest(@SerializedName("manifestType") String manifestType,
                             @SerializedName("overrides") String overrides,
                             @SerializedName("minecraft") CurseManifestMinecraft minecraft,
                             @SerializedName("files") List<CurseManifestFile> files) implements ModpackManifest {
+    public CurseManifest() {
+        this(MINECRAFT_MODPACK, 1, "", "1.0", "", "overrides", new CurseManifestMinecraft(), Collections.emptyList());
+    }
 
     public CurseManifest setFiles(List<CurseManifestFile> files) {
         return new CurseManifest(manifestType, manifestVersion, name, version, author, overrides, minecraft, files);

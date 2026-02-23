@@ -34,6 +34,10 @@ import java.util.List;
 @Immutable
 public record CurseManifestMinecraft(@SerializedName("version") String gameVersion,
                                      @SerializedName("modLoaders") List<CurseManifestModLoader> modLoaders) implements Validation {
+    public CurseManifestMinecraft() {
+        this("", Collections.emptyList());
+    }
+
     public CurseManifestMinecraft(String gameVersion, List<CurseManifestModLoader> modLoaders) {
         this.gameVersion = gameVersion;
         this.modLoaders = new ArrayList<>(modLoaders);

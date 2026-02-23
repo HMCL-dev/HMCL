@@ -30,6 +30,10 @@ import org.jackhuang.hmcl.util.gson.Validation;
 @Immutable
 public record CurseManifestModLoader(@SerializedName("id") String id,
                                      @SerializedName("primary") boolean primary) implements Validation {
+    public CurseManifestModLoader() {
+        this("", false);
+    }
+
     @Override
     public void validate() throws JsonParseException {
         if (StringUtils.isBlank(id))
